@@ -41,7 +41,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           width={props.def.w}
           height={props.def.h}
           fill="transparent"
-          style={{ stroke: props.isSelected ? 'blue' : 'transparent', strokeWidth: '1' }}
+          style={{ stroke: 'transparent' }}
           onMouseDown={onMouseDown}
         />
         {props.def.children.map(c => (
@@ -62,7 +62,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         width={props.def.w}
         height={props.def.h}
         fill="#ffccff"
-        style={{ stroke: 'black', strokeWidth: props.isSelected ? '6' : '2' }}
+        style={{ stroke: 'black', strokeWidth: '1' }}
         rx="5"
         ry="5"
         onMouseDown={onMouseDown}

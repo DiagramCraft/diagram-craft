@@ -22,7 +22,6 @@ export type EdgeDef<NodeRef = Reference> = {
 };
 
 
-
 export type ResolvedNodeDef = Omit<NodeDef<ResolvedReference<EdgeDef>>, 'children'> & {
   parent?: ResolvedNodeDef,
   world: Coord
