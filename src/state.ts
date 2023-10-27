@@ -17,5 +17,24 @@ export const SelectionState = {
     d.pos = bb.pos;
     d.size = bb.size;
     return d as SelectionState;
+  },
+
+  set: (dest: SelectionState | undefined, element: ResolvedNodeDef) => {
+    return SelectionState.update(dest, [element]);
+  },
+
+  recalculate: (state: SelectionState) => {
+    return SelectionState.update(state, state.elements);
+  },
+
+  toggle: (dest: SelectionState | undefined, element: ResolvedNodeDef) => {
+    if (dest?.elements?.includes(element)) {
+      return SelectionState.update(
+        dest,
+        (dest?.elements ?? []).filter(e => e !== element)
+      );
+    } else {
+      return SelectionState.update(dest, [...(dest?.elements ?? []), element]);
+    }
   }
 };

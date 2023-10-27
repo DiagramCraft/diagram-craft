@@ -10,7 +10,6 @@ import { Selection, SelectionApi } from './Selection.tsx';
 import { SelectionState } from './state.ts';
 
 type Drag = {
-  id: string;
   x: number;
   y: number;
 };
@@ -78,14 +77,13 @@ const App = () => {
 
   const onMouseDown = useCallback(
     (id: string, coord: Coord, add: boolean) => {
-      console.log(id, add);
       const node = nodeLookup[id];
       if (add) {
-        setSelected(SelectionState.update(selected, [...(selected?.elements ?? []), node]));
+        setSelected(SelectionState.toggle(selected, node));
       } else {
-        setSelected(SelectionState.update(selected, [node]));
+        setSelected(SelectionState.set(selected, node));
       }
-      setDrag({ id, ...coord });
+      setDrag({ ...coord });
     },
     [selected]
   );
@@ -104,26 +102,31 @@ const App = () => {
             onMouseUp={() => {
               setDrag(undefined);
               if (selected) {
-                setSelected(SelectionState.update(selected, selected?.elements ?? []));
+                setSelected(SelectionState.recalculate(selected));
               }
             }}
             onMouseMove={e => {
               if (drag !== undefined) {
-                const node = nodeLookup[drag.id];
+                if (!selected) throw new Error('invalid state');
 
-                NodeDef.move(node, {
-                  x: e.nativeEvent.offsetX - drag.x,
-                  y: e.nativeEvent.offsetY - drag.y
-                });
+                for (const node of selected.elements) {
+                  NodeDef.move(node, {
+                    x: e.nativeEvent.offsetX - drag.x,
+                    y: e.nativeEvent.offsetY - drag.y
+                  });
 
-                SelectionState.update(selected, selected?.elements ?? []);
+                  if (selected) {
+                    SelectionState.recalculate(selected);
+                  }
 
-                nodeRefs.current[drag.id]?.repaint();
-                selectionRef.current?.repaint();
+                  nodeRefs.current[node.id]?.repaint();
 
-                for (const edge of NodeDef.edges(node)) {
-                  edgeRefs.current[edge.id]?.repaint();
+                  for (const edge of NodeDef.edges(node)) {
+                    edgeRefs.current[edge.id]?.repaint();
+                  }
                 }
+
+                selectionRef.current?.repaint();
               }
             }}
           >
@@ -152,16 +155,7 @@ const App = () => {
               }
             })}
 
-            {selected && (
-              <Selection
-                ref={selectionRef}
-                selection={selected}
-                onMouseDown={(c: Coord) => {
-                  // TODO: Need a way to get to the underlying object
-                  onMouseDown(selected?.elements?.[0]?.id, c, false);
-                }}
-              />
-            )}
+            {selected && <Selection ref={selectionRef} selection={selected} />}
           </svg>
         </div>
       </DndProvider>

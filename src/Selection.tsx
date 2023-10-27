@@ -17,28 +17,21 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
     };
   });
 
-  const wx = props.selection.pos.x;
-  const wy = props.selection.pos.y;
+  const points: Coord[] = [
+    props.selection.pos,
+    { x: props.selection.pos.x + props.selection.size.w, y: props.selection.pos.y },
+    {
+      x: props.selection.pos.x + props.selection.size.w,
+      y: props.selection.pos.y + props.selection.size.h
+    },
+    { x: props.selection.pos.x, y: props.selection.pos.y + props.selection.size.h },
+    props.selection.pos
+  ];
+  const pointsString = points.map(c => `${c.x},${c.y}`).join(' ');
 
-  return (
-    <rect
-      x={props.selection.pos.x}
-      y={props.selection.pos.y}
-      width={props.selection.size.w}
-      height={props.selection.size.h}
-      fill="transparent"
-      style={{ stroke: 'red', strokeWidth: '5' }}
-      onMouseDown={e => {
-        const x = e.nativeEvent.offsetX - wx;
-        const y = e.nativeEvent.offsetY - wy;
-        props.onMouseDown({ x, y });
-        e.stopPropagation();
-      }}
-    />
-  );
+  return <polyline points={pointsString} style={{ stroke: 'red', strokeWidth: '5' }} fill="none" />;
 });
 
 type Props = {
   selection: SelectionState;
-  onMouseDown: (c: Coord) => void;
 };
