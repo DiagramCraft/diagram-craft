@@ -1,5 +1,6 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { ResolvedEdgeDef } from './diagram.ts';
+import { Extent } from './types.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -16,15 +17,13 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     };
   });
 
-  return (
-    <line
-      x1={props.def.start.node.val.world.x + props.def.start.node.val.w / 2}
-      y1={props.def.start.node.val.world.y + props.def.start.node.val.h / 2}
-      x2={props.def.end.node.val.world.x + props.def.end.node.val.w / 2}
-      y2={props.def.end.node.val.world.y + props.def.end.node.val.h / 2}
-      stroke={'black'}
-    />
-  );
+  const startNode = props.def.start.node.val;
+  const endNode = props.def.end.node.val;
+
+  const sm = Extent.midpoint(startNode.size, startNode.world);
+  const em = Extent.midpoint(endNode.size, endNode.world);
+
+  return <line x1={sm.x} y1={sm.y} x2={em.x} y2={em.y} stroke={'black'} />;
 });
 
 type Props = {

@@ -1,26 +1,18 @@
-import {ResolvedNodeDef} from "./diagram.ts";
-
 export type Coord = {
   x: number;
   y: number;
 };
 
-export type SelectionState = {
-  x: number;
-  y: number;
+export type Extent = {
   w: number;
   h: number;
-  elements: string
-}
+};
 
-export const SelectionState = {
-  update: (dest: SelectionState | undefined, elements: ResolvedNodeDef) => {
-    const d: Partial<SelectionState> = dest || {};
-    d.elements = elements.id;
-    d.x = elements.world.x;
-    d.y = elements.world.y;
-    d.w = elements.w;
-    d.h = elements.h;
-    return d as SelectionState;
+export const Extent = {
+  midpoint: (e: Extent, p: Coord) => {
+    return {
+      x: p.x + e.w / 2,
+      y: p.y + e.h / 2
+    };
   }
 };

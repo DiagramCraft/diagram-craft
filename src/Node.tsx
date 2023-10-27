@@ -38,8 +38,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         <rect
           x={wx}
           y={wy}
-          width={props.def.w}
-          height={props.def.h}
+          width={props.def.size.w}
+          height={props.def.size.h}
           fill="transparent"
           style={{ stroke: 'transparent' }}
           onMouseDown={onMouseDown}
@@ -49,7 +49,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             key={c.id}
             def={c}
             isSelected={false}
-            onMouseDown={(_id, coord) => props.onMouseDown(props.def.id, { x: c.x + coord.x, y: c.y + coord.y })}
+            onMouseDown={(_id, coord) =>
+              props.onMouseDown(props.def.id, { x: c.pos.x + coord.x, y: c.pos.y + coord.y })
+            }
           />
         ))}
       </>
@@ -59,8 +61,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       <rect
         x={wx}
         y={wy}
-        width={props.def.w}
-        height={props.def.h}
+        width={props.def.size.w}
+        height={props.def.size.h}
         fill="#ffccff"
         style={{ stroke: 'black', strokeWidth: '1' }}
         rx="5"

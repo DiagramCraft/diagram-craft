@@ -2,11 +2,12 @@ import './App.css';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useCallback, useRef, useState } from 'react';
-import {Coord, SelectionState} from './types.ts';
+import { Coord } from './types.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Diagram, loadDiagram, NodeDef } from './diagram.ts';
-import {Selection, SelectionApi} from './Selection.tsx';
+import { Selection, SelectionApi } from './Selection.tsx';
+import { SelectionState } from './state.ts';
 
 type Drag = {
   id: string;
@@ -32,16 +33,35 @@ const diagram: Diagram = {
       type: 'node',
       nodeType: 'group',
       id: '1',
-      x: 50,
-      y: 50,
-      w: 100,
-      h: 100,
+      pos: { x: 50, y: 50 },
+      size: { w: 100, h: 100 },
       children: [
-        { type: 'node', nodeType: 'rect', id: '1_1', x: 10, y: 10, w: 20, h: 20, children: [] },
-        { type: 'node', nodeType: 'rect', id: '1_2', x: 50, y: 50, w: 40, h: 40, children: [] }
+        {
+          type: 'node',
+          nodeType: 'rect',
+          id: '1_1',
+          pos: { x: 10, y: 10 },
+          size: { w: 20, h: 20 },
+          children: []
+        },
+        {
+          type: 'node',
+          nodeType: 'rect',
+          id: '1_2',
+          pos: { x: 50, y: 50 },
+          size: { w: 40, h: 40 },
+          children: []
+        }
       ]
     },
-    { type: 'node', nodeType: 'rect', id: '2', x: 250, y: 220, w: 100, h: 100, children: [] }
+    {
+      type: 'node',
+      nodeType: 'rect',
+      id: '2',
+      pos: { x: 250, y: 220 },
+      size: { w: 100, h: 100 },
+      children: []
+    }
   ]
 };
 
