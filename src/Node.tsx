@@ -17,19 +17,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     };
   });
 
-  // TODO: Will this work with two level nesting?
-  const baseX = props.def.parent?.x ?? 0;
-  const baseY = props.def.parent?.y ?? 0;
-
-  const wx = baseX + props.def.x;
-  const wy = baseY + props.def.y;
-
+  const wx = props.def.world.x;
+  const wy = props.def.world.y;
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
       const x = e.nativeEvent.offsetX - wx;
       const y = e.nativeEvent.offsetY - wy;
-      props.onMouseDown(props.id, { x, y });
+      props.onMouseDown(props.def.id, { x, y });
       e.stopPropagation();
 
       return false;
@@ -52,10 +47,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         {props.def.children.map(c => (
           <Node
             key={c.id}
-            id={c.id}
             def={c}
             isSelected={false}
-            onMouseDown={(_id, coord) => props.onMouseDown(props.id, { x: baseX + c.x + coord.x, y: baseY + c.y + coord.y })}
+            onMouseDown={(_id, coord) => props.onMouseDown(props.def.id, { x: c.x + coord.x, y: c.y + coord.y })}
           />
         ))}
       </>
@@ -78,7 +72,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 });
 
 type Props = {
-  id: string;
   def: ResolvedNodeDef;
   onMouseDown: (id: string, coord: Coord) => void;
   isSelected: boolean;

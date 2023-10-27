@@ -1,3 +1,5 @@
+import {Coord} from "./types.ts";
+
 export type NodeDef<EdgeRef = Reference> = {
   type: 'node',
   nodeType: 'group' | string;
@@ -21,11 +23,13 @@ export type EdgeDef<NodeRef = Reference> = {
 
 
 
-export type ResolvedNodeDef = NodeDef<ResolvedReference<EdgeDef>> & {
-  parent?: ResolvedNodeDef
+export type ResolvedNodeDef = Omit<NodeDef<ResolvedReference<EdgeDef>>, 'children'> & {
+  parent?: ResolvedNodeDef,
+  world: Coord
+  children: ResolvedNodeDef[]
 };
 
-export type ResolvedEdgeDef = EdgeDef<ResolvedReference<NodeDef>>;
+export type ResolvedEdgeDef = EdgeDef<ResolvedReference<ResolvedNodeDef>>;
 
 
 
@@ -47,11 +51,18 @@ export type LoadedDiagram = {
   edgeLookup: Record<string, ResolvedEdgeDef>
 }
 
-const enumerateAllNodes = (nodes: NodeDef[], parentId?: string): (NodeDef & { parentId?: string })[] => {
-  return [...nodes.map(n => ({ ...n, parentId })), ...nodes.flatMap(n => enumerateAllNodes(n.children, n.id))];
+const makeWorldCoord = (
+  n: NodeDef,
+  refCoord?: Coord,
+) => ({x: (refCoord?.x ?? 0) + n.x, y: (refCoord?.y ?? 0) + n.y});
+
+const enumerateAllNodes = (nodes: NodeDef[], parentId?: string, refCoord?: Coord): (NodeDef & { parentId?: string, world: Coord })[] => {
+  return [...nodes.map(n => ({ ...n, parentId,
+    world: makeWorldCoord(n, refCoord)
+  })), ...nodes.flatMap(n => enumerateAllNodes(n.children, n.id, makeWorldCoord(n, refCoord)))];
 };
 
-const isNodeDef = (element: any): element is NodeDef => element.type === 'node';
+const isNodeDef = (element: NodeDef | EdgeDef): element is NodeDef => element.type === 'node';
 
 export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
   const nodeLookup: Record<string, ResolvedNodeDef> = {};
@@ -99,4 +110,30 @@ export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
   }
 
   return { diagram, edgeLookup, nodeLookup }
+};
+
+export const NodeDef = {
+  move: (node: ResolvedNodeDef, newWorldCoord: Coord) => {
+
+    if (! node.parent) {
+      const dx = newWorldCoord.x - node.world.x;
+      const dy = newWorldCoord.y - node.world.y;
+
+      node.x += dx;
+      node.y += dy;
+      node.world.x += dx;
+      node.world.y += dy;
+    } else {
+      node.world.x = node.parent.world.x + node.x;
+      node.world.y = node.parent.world.y + node.y;
+    }
+
+    for (const cn of node.children) {
+      NodeDef.move(cn, newWorldCoord);
+    }
+  },
+
+  edges: (node: ResolvedNodeDef): EdgeDef[] => {
+    return [...Object.values(node.edges ?? {}).flatMap(e => e).map(e => e.val), ...node.children.flatMap(c => NodeDef.edges(c))]
+  }
 };

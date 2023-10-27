@@ -18,16 +18,15 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
   return (
     <line
-      x1={props.def.start.node.val.x + props.def.start.node.val.w / 2}
-      y1={props.def.start.node.val.y + props.def.start.node.val.h / 2}
-      x2={props.def.end.node.val.x + props.def.end.node.val.w / 2}
-      y2={props.def.end.node.val.y + props.def.end.node.val.h / 2}
+      x1={props.def.start.node.val.world.x + props.def.start.node.val.w / 2}
+      y1={props.def.start.node.val.world.y + props.def.start.node.val.h / 2}
+      x2={props.def.end.node.val.world.x + props.def.end.node.val.w / 2}
+      y2={props.def.end.node.val.world.y + props.def.end.node.val.h / 2}
       stroke={'black'}
     />
   );
 });
 
 type Props = {
-  id: string;
   def: ResolvedEdgeDef;
 };

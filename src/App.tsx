@@ -5,7 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Coord } from './types.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
-import { Diagram, loadDiagram } from './diagram.ts';
+import {Diagram, loadDiagram, NodeDef } from './diagram.ts';
 
 type Drag = {
   id: string;
@@ -18,7 +18,13 @@ const diagram: Diagram = {
     {
       type: 'edge',
       id: 'e1',
-      start: { anchor: 'c', node: { id: '1' } },
+      start: { anchor: 'c', node: { id: '1_1' } },
+      end: { anchor: 'c', node: { id: '2' } }
+    },
+    {
+      type: 'edge',
+      id: 'e2',
+      start: { anchor: 'c', node: { id: '1_2' } },
       end: { anchor: 'c', node: { id: '2' } }
     },
     {
@@ -67,15 +73,14 @@ const App = () => {
             }}
             onMouseMove={e => {
               if (drag !== undefined) {
-                nodeLookup[drag.id].x = e.nativeEvent.offsetX - drag.x;
-                nodeLookup[drag.id].y = e.nativeEvent.offsetY - drag.y;
+                const node = nodeLookup[drag.id];
+
+                NodeDef.move(node, { x: e.nativeEvent.offsetX - drag.x, y:  e.nativeEvent.offsetY - drag.y });
 
                 nodeRefs.current[drag.id]?.repaint();
 
-                for (const edges of Object.values(nodeLookup[drag.id].edges ?? {})) {
-                  for (const edge of edges) {
-                    edgeRefs.current[edge.id]?.repaint();
-                  }
+                for (const edge of NodeDef.edges(node)) {
+                  edgeRefs.current[edge.id]?.repaint();
                 }
               }
             }}
@@ -87,7 +92,6 @@ const App = () => {
                 return (
                   <Edge
                     key={id}
-                    id={id}
                     ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
                     def={edge}
                   />
@@ -97,7 +101,6 @@ const App = () => {
                 return (
                   <Node
                     key={id}
-                    id={id}
                     ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
                     isSelected={selected === id}
                     onMouseDown={onMouseDown}
