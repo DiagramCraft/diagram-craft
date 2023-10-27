@@ -24,7 +24,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     e => {
       const x = e.nativeEvent.offsetX - wx;
       const y = e.nativeEvent.offsetY - wy;
-      props.onMouseDown(props.def.id, { x, y });
+      props.onMouseDown(props.def.id, { x, y }, e.shiftKey);
       e.stopPropagation();
 
       return false;
@@ -49,8 +49,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             key={c.id}
             def={c}
             isSelected={false}
-            onMouseDown={(_id, coord) =>
-              props.onMouseDown(props.def.id, { x: c.pos.x + coord.x, y: c.pos.y + coord.y })
+            onMouseDown={(_id, coord, add) =>
+              props.onMouseDown(props.def.id, { x: c.pos.x + coord.x, y: c.pos.y + coord.y }, add)
             }
           />
         ))}
@@ -75,6 +75,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
 type Props = {
   def: ResolvedNodeDef;
-  onMouseDown: (id: string, coord: Coord) => void;
+  onMouseDown: (id: string, coord: Coord, add: boolean) => void;
   isSelected: boolean;
 };

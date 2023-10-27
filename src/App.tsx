@@ -20,12 +20,6 @@ const diagram: Diagram = {
     {
       type: 'edge',
       id: 'e1',
-      start: { anchor: 'c', node: { id: '1_1' } },
-      end: { anchor: 'c', node: { id: '2' } }
-    },
-    {
-      type: 'edge',
-      id: 'e2',
       start: { anchor: 'c', node: { id: '1_2' } },
       end: { anchor: 'c', node: { id: '2' } }
     },
@@ -61,6 +55,14 @@ const diagram: Diagram = {
       pos: { x: 250, y: 220 },
       size: { w: 100, h: 100 },
       children: []
+    },
+    {
+      type: 'node',
+      nodeType: 'rect',
+      id: '3',
+      pos: { x: 370, y: 20 },
+      size: { w: 100, h: 100 },
+      children: []
     }
   ]
 };
@@ -74,11 +76,19 @@ const App = () => {
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
 
-  const onMouseDown = useCallback((id: string, coord: Coord) => {
-    const node = nodeLookup[id];
-    setSelected(SelectionState.update(selected, node));
-    setDrag({ id, ...coord });
-  }, []);
+  const onMouseDown = useCallback(
+    (id: string, coord: Coord, add: boolean) => {
+      console.log(id, add);
+      const node = nodeLookup[id];
+      if (add) {
+        setSelected(SelectionState.update(selected, [...(selected?.elements ?? []), node]));
+      } else {
+        setSelected(SelectionState.update(selected, [node]));
+      }
+      setDrag({ id, ...coord });
+    },
+    [selected]
+  );
 
   return (
     <>
@@ -94,7 +104,7 @@ const App = () => {
             onMouseUp={() => {
               setDrag(undefined);
               if (selected) {
-                setSelected(SelectionState.update(selected, nodeLookup[selected?.elements]));
+                setSelected(SelectionState.update(selected, selected?.elements ?? []));
               }
             }}
             onMouseMove={e => {
@@ -106,7 +116,7 @@ const App = () => {
                   y: e.nativeEvent.offsetY - drag.y
                 });
 
-                SelectionState.update(selected, node);
+                SelectionState.update(selected, selected?.elements ?? []);
 
                 nodeRefs.current[drag.id]?.repaint();
                 selectionRef.current?.repaint();
@@ -134,7 +144,7 @@ const App = () => {
                   <Node
                     key={id}
                     ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-                    isSelected={selected?.elements === id}
+                    isSelected={!!selected?.elements?.includes(node)}
                     onMouseDown={onMouseDown}
                     def={node}
                   />
@@ -147,7 +157,8 @@ const App = () => {
                 ref={selectionRef}
                 selection={selected}
                 onMouseDown={(c: Coord) => {
-                  onMouseDown(selected?.elements, c);
+                  // TODO: Need a way to get to the underlying object
+                  onMouseDown(selected?.elements?.[0]?.id, c, false);
                 }}
               />
             )}
