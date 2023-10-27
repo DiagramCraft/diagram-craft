@@ -1,11 +1,15 @@
 export type NodeDef<EdgeRef = Reference> = {
   type: 'node',
+  nodeType: 'group' | string;
   id: string;
   x: number;
   y: number;
   w: number;
   h: number;
   edges?: Record<string, EdgeRef[]>;
+
+  // TODO: Should allow edges as part of group
+  children: NodeDef<EdgeRef>[]
 };
 
 export type EdgeDef<NodeRef = Reference> = {
@@ -17,7 +21,10 @@ export type EdgeDef<NodeRef = Reference> = {
 
 
 
-export type ResolvedNodeDef = NodeDef<ResolvedReference<EdgeDef>>;
+export type ResolvedNodeDef = NodeDef<ResolvedReference<EdgeDef>> & {
+  parent?: ResolvedNodeDef
+};
+
 export type ResolvedEdgeDef = EdgeDef<ResolvedReference<NodeDef>>;
 
 
@@ -40,15 +47,29 @@ export type LoadedDiagram = {
   edgeLookup: Record<string, ResolvedEdgeDef>
 }
 
+const enumerateAllNodes = (nodes: NodeDef[], parentId?: string): (NodeDef & { parentId?: string })[] => {
+  return [...nodes.map(n => ({ ...n, parentId })), ...nodes.flatMap(n => enumerateAllNodes(n.children, n.id))];
+};
+
+const isNodeDef = (element: any): element is NodeDef => element.type === 'node';
+
 export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
   const nodeLookup: Record<string, ResolvedNodeDef> = {};
-  for (const e of diagram.elements) {
-    if (e.type !== 'node') continue;
 
-    nodeLookup[e.id] = {
-      ...e,
-      edges: {}
+  const allNodes = enumerateAllNodes(diagram.elements.filter(isNodeDef));
+  for (const n of allNodes) {
+    nodeLookup[n.id] = {
+      ...n,
+      edges: {},
+      children: []
     };
+  }
+
+  for (const n of allNodes) {
+    nodeLookup[n.id].children = n.children.map(c => nodeLookup[c.id]);
+    if (n.parentId) {
+      nodeLookup[n.id].parent = nodeLookup[n.parentId]
+    }
   }
 
   const edgeLookup: Record<string, ResolvedEdgeDef> = {};

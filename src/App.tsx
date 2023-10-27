@@ -21,8 +21,20 @@ const diagram: Diagram = {
       start: { anchor: 'c', node: { id: '1' } },
       end: { anchor: 'c', node: { id: '2' } }
     },
-    { type: 'node', id: '1', x: 50, y: 50, w: 100, h: 100 },
-    { type: 'node', id: '2', x: 250, y: 220, w: 100, h: 100 }
+    {
+      type: 'node',
+      nodeType: 'group',
+      id: '1',
+      x: 50,
+      y: 50,
+      w: 100,
+      h: 100,
+      children: [
+        { type: 'node', nodeType: 'rect', id: '1_1', x: 10, y: 10, w: 20, h: 20, children: [] },
+        { type: 'node', nodeType: 'rect', id: '1_2', x: 50, y: 50, w: 40, h: 40, children: [] },
+      ]
+    },
+    { type: 'node', nodeType: 'rect', id: '2', x: 250, y: 220, w: 100, h: 100, children: [] }
   ]
 };
 
