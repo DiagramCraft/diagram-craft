@@ -17,14 +17,22 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
     };
   });
 
+  if (SelectionState.isEmpty(props.selection)) return null;
+
   const points: Coord[] = [
     props.selection.pos,
-    { x: props.selection.pos.x + props.selection.size.w, y: props.selection.pos.y },
+    {
+      x: props.selection.pos.x + props.selection.size.w,
+      y: props.selection.pos.y
+    },
     {
       x: props.selection.pos.x + props.selection.size.w,
       y: props.selection.pos.y + props.selection.size.h
     },
-    { x: props.selection.pos.x, y: props.selection.pos.y + props.selection.size.h },
+    {
+      x: props.selection.pos.x,
+      y: props.selection.pos.y + props.selection.size.h
+    },
     props.selection.pos
   ];
   const pointsString = points.map(c => `${c.x},${c.y}`).join(' ');

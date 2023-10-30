@@ -9,10 +9,13 @@ export type SelectionState = {
 
 export const SelectionState = {
   update: (dest: SelectionState | undefined, elements: ResolvedNodeDef[]) => {
-    const d: Partial<SelectionState> = dest || {};
+    const d: Partial<SelectionState> = dest ?? {};
     d.elements = elements;
 
-    const bb = Box.boundingBox(elements.map(e => ({ pos: e.world, size: e.size })));
+    const bb =
+      d.elements.length === 0
+        ? SelectionState.EMPTY()
+        : Box.boundingBox(elements.map(e => ({ pos: e.world, size: e.size })));
 
     d.pos = bb.pos;
     d.size = bb.size;
@@ -36,5 +39,24 @@ export const SelectionState = {
     } else {
       return SelectionState.update(dest, [...(dest?.elements ?? []), element]);
     }
+  },
+
+  clear: (dest: SelectionState) => {
+    return SelectionState.update(dest, []);
+  },
+
+  EMPTY: () => ({
+    pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
+    size: { w: 0, h: 0 },
+    elements: []
+  }),
+
+  isEmpty(selection: SelectionState) {
+    return (
+      selection.size.w === 0 &&
+      selection.size.h === 0 &&
+      selection.pos.x === SelectionState.EMPTY().pos.x &&
+      selection.pos.y === SelectionState.EMPTY().pos.y
+    );
   }
 };
