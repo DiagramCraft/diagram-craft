@@ -1,5 +1,5 @@
 import { ResolvedNodeDef } from './diagram.ts';
-import { Coord, Extent } from './types.ts';
+import { Coord, Extent, Box } from './geometry.ts';
 
 export type SelectionState = {
   pos: Coord;
@@ -12,7 +12,7 @@ export const SelectionState = {
     const d: Partial<SelectionState> = dest || {};
     d.elements = elements;
 
-    const bb = Extent.boundingBox(elements.map(e => ({ pos: e.world, size: e.size })));
+    const bb = Box.boundingBox(elements.map(e => ({ pos: e.world, size: e.size })));
 
     d.pos = bb.pos;
     d.size = bb.size;

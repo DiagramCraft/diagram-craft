@@ -2,16 +2,18 @@ import './App.css';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useCallback, useRef, useState } from 'react';
-import { Coord } from './types.ts';
+import { Coord, Box } from './geometry.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Diagram, loadDiagram, NodeDef } from './diagram.ts';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { SelectionState } from './state.ts';
 
-type Drag = {
-  x: number;
-  y: number;
+type Drag = Coord;
+
+type DeferedMouseAction = {
+  id: 'background' | string;
+  add?: boolean;
 };
 
 const diagram: Diagram = {
@@ -69,21 +71,41 @@ const diagram: Diagram = {
 const { nodeLookup, edgeLookup } = loadDiagram(diagram);
 
 const App = () => {
+  // TODO: Maybe change all of these states to useRef?
   const [selected, setSelected] = useState<SelectionState | undefined>(undefined);
   const [drag, setDrag] = useState<Drag | undefined>(undefined);
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
+  const deferedMouseAction = useRef<DeferedMouseAction | null>(null);
 
   const onMouseDown = useCallback(
     (id: string, coord: Coord, add: boolean) => {
       const node = nodeLookup[id];
+
+      let newSelectionState: SelectionState | undefined;
       if (add) {
-        setSelected(SelectionState.toggle(selected, node));
+        newSelectionState = SelectionState.toggle(selected, node);
       } else {
-        setSelected(SelectionState.set(selected, node));
+        if (Box.contains(selected, coord)) {
+          deferedMouseAction.current = { id };
+        } else {
+          newSelectionState = SelectionState.set(selected, node);
+        }
       }
-      setDrag({ ...coord });
+
+      if (newSelectionState) {
+        setSelected(newSelectionState);
+      }
+
+      newSelectionState ??= selected;
+
+      if (!newSelectionState) return;
+
+      // Calculate anchor point
+      const localCoord = Coord.subtract(coord, newSelectionState.pos);
+
+      setDrag({ ...localCoord });
     },
     [selected]
   );
@@ -96,38 +118,63 @@ const App = () => {
             width="640px"
             height="480px"
             style={{ border: '1px solid white', background: 'white' }}
-            onMouseDown={() => {
-              setSelected(undefined);
-            }}
-            onMouseUp={() => {
-              setDrag(undefined);
-              if (selected) {
-                setSelected(SelectionState.recalculate(selected));
+            onMouseDown={e => {
+              if (selected && Box.contains(selected, Coord.fromEvent(e.nativeEvent))) {
+                deferedMouseAction.current = { id: 'background' };
+              } else {
+                setSelected(undefined);
               }
             }}
-            onMouseMove={e => {
-              if (drag !== undefined) {
-                if (!selected) throw new Error('invalid state');
+            onMouseUp={() => {
+              try {
+                setDrag(undefined);
 
-                for (const node of selected.elements) {
-                  NodeDef.move(node, {
-                    x: e.nativeEvent.offsetX - drag.x,
-                    y: e.nativeEvent.offsetY - drag.y
-                  });
-
-                  if (selected) {
-                    SelectionState.recalculate(selected);
-                  }
-
-                  nodeRefs.current[node.id]?.repaint();
-
-                  for (const edge of NodeDef.edges(node)) {
-                    edgeRefs.current[edge.id]?.repaint();
+                if (deferedMouseAction.current) {
+                  if (deferedMouseAction.current.id === 'background') {
+                    setSelected(undefined);
+                    return;
+                  } else {
+                    const node = nodeLookup[deferedMouseAction.current!.id];
+                    setSelected(SelectionState.set(selected, node));
+                    return;
                   }
                 }
 
-                selectionRef.current?.repaint();
+                if (selected) {
+                  setSelected(SelectionState.recalculate(selected));
+                }
+              } finally {
+                deferedMouseAction.current = null;
               }
+            }}
+            onMouseMove={e => {
+              if (drag === undefined) return;
+              if (!selected) throw new Error('invalid state');
+
+              deferedMouseAction.current = null;
+
+              const dx = e.nativeEvent.offsetX - selected.pos.x - drag.x;
+              const dy = e.nativeEvent.offsetY - selected.pos.y - drag.y;
+
+              for (const node of selected.elements) {
+                // Need to calculate relative locations
+                NodeDef.move(node, {
+                  x: node.world.x + dx,
+                  y: node.world.y + dy
+                });
+
+                if (selected) {
+                  SelectionState.recalculate(selected);
+                }
+
+                nodeRefs.current[node.id]?.repaint();
+
+                for (const edge of NodeDef.edges(node)) {
+                  edgeRefs.current[edge.id]?.repaint();
+                }
+              }
+
+              selectionRef.current?.repaint();
             }}
           >
             {diagram.elements.map(e => {

@@ -1,4 +1,4 @@
-import { Coord } from './types.ts';
+import { Coord } from './geometry.ts';
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle, useState } from 'react';
 import { ResolvedNodeDef } from './diagram.ts';
 
@@ -22,19 +22,18 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
-      const x = e.nativeEvent.offsetX - wx;
-      const y = e.nativeEvent.offsetY - wy;
-      props.onMouseDown(props.def.id, { x, y }, e.shiftKey);
+      props.onMouseDown(props.def.id, Coord.fromEvent(e.nativeEvent), e.shiftKey);
       e.stopPropagation();
 
       return false;
     },
-    [props, wx, wy]
+    [props]
   );
 
   if (props.def.nodeType === 'group') {
     return (
       <>
+        {/* TODO: Probably remove the rect here? */}
         <rect
           x={wx}
           y={wy}
@@ -49,9 +48,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             key={c.id}
             def={c}
             isSelected={false}
-            onMouseDown={(_id, coord, add) =>
-              props.onMouseDown(props.def.id, { x: c.pos.x + coord.x, y: c.pos.y + coord.y }, add)
-            }
+            onMouseDown={(_id, coord, add) => props.onMouseDown(props.def.id, coord, add)}
           />
         ))}
       </>

@@ -1,4 +1,4 @@
-import { Coord, Extent } from './types.ts';
+import { Coord, Extent } from './geometry.ts';
 
 export type NodeDef<EdgeRef = Reference> = {
   type: 'node';

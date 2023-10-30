@@ -1,4 +1,4 @@
-import { Coord } from './types.ts';
+import { Coord } from './geometry.ts';
 import { forwardRef, useImperativeHandle, useState } from 'react';
 import { SelectionState } from './state.ts';
 
