@@ -17,8 +17,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     };
   });
 
-  const wx = props.def.world.x;
-  const wy = props.def.world.y;
+  const wx = props.def.pos.x;
+  const wy = props.def.pos.y;
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
@@ -44,7 +44,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           width={props.def.size.w}
           height={props.def.size.h}
           fill="transparent"
-          style={{ stroke: 'transparent' }}
+          style={{ stroke: 'green' }}
           onMouseDown={onMouseDown}
         />
         {props.def.children.map(c => (

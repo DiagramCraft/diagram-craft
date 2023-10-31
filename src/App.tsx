@@ -70,7 +70,7 @@ const diagram: Diagram = {
   ]
 };
 
-const { nodeLookup, edgeLookup } = loadDiagram(diagram);
+const $d = loadDiagram(diagram);
 
 const App = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -102,7 +102,7 @@ const App = () => {
       try {
         if (add) {
           if (!isClickOnBackground) {
-            selection.current = SelectionState.toggle(selection.current, nodeLookup[id]);
+            selection.current = SelectionState.toggle(selection.current, $d.nodeLookup[id]);
           }
         } else {
           if (Box.contains(selection.current, coord)) {
@@ -111,7 +111,7 @@ const App = () => {
             if (isClickOnBackground) {
               selection.current = SelectionState.clear(selection.current);
             } else {
-              selection.current = SelectionState.set(selection.current, nodeLookup[id]);
+              selection.current = SelectionState.set(selection.current, $d.nodeLookup[id]);
             }
           }
         }
@@ -141,7 +141,7 @@ const App = () => {
         } else {
           selection.current = SelectionState.set(
             selection.current,
-            nodeLookup[deferedMouseAction.current.id]
+            $d.nodeLookup[deferedMouseAction.current.id]
           );
           return;
         }
@@ -169,7 +169,7 @@ const App = () => {
         const d = Coord.subtract(coord, Coord.add(selection.current.pos, drag.current?.offset));
 
         for (const node of selection.current.elements) {
-          NodeDef.move(node, Coord.add(node.world, d));
+          NodeDef.move(node, d);
 
           SelectionState.recalculate(selection.current);
         }
@@ -203,10 +203,10 @@ const App = () => {
             onMouseUp={e => onMouseUp(BACKGROUND, Coord.fromEvent(e.nativeEvent))}
             onMouseMove={e => onMouseMove(Coord.fromEvent(e.nativeEvent))}
           >
-            {diagram.elements.map(e => {
+            {$d.elements.map(e => {
               const id = e.id;
               if (e.type === 'edge') {
-                const edge = edgeLookup[id]!;
+                const edge = $d.edgeLookup[id]!;
                 return (
                   <Edge
                     key={id}
@@ -215,7 +215,7 @@ const App = () => {
                   />
                 );
               } else {
-                const node = nodeLookup[id]!;
+                const node = $d.nodeLookup[id]!;
                 return (
                   <Node
                     key={id}

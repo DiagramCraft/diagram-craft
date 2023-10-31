@@ -17,11 +17,11 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     };
   });
 
-  const startNode = props.def.start.node.val;
-  const endNode = props.def.end.node.val;
+  const startNode = props.def.start.node;
+  const endNode = props.def.end.node;
 
-  const sm = Box.center({ size: startNode.size, pos: startNode.world });
-  const em = Box.center({ size: endNode.size, pos: endNode.world });
+  const sm = Box.center(startNode);
+  const em = Box.center(endNode);
 
   return <line x1={sm.x} y1={sm.y} x2={em.x} y2={em.y} stroke={'black'} />;
 });

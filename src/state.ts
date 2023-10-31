@@ -29,10 +29,7 @@ export const SelectionState = {
     const d: Partial<SelectionState> = dest ?? {};
     d.elements = elements;
 
-    const bb =
-      d.elements.length === 0
-        ? SelectionState.EMPTY()
-        : Box.boundingBox(elements.map(e => ({ pos: e.world, size: e.size })));
+    const bb = d.elements.length === 0 ? SelectionState.EMPTY() : Box.boundingBox(elements);
 
     d.pos = bb.pos;
     d.size = bb.size;
