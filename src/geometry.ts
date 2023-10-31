@@ -17,6 +17,8 @@ export const Coord = {
   add: (c1: Coord, c2: Coord) => ({ x: c1.x + c2.x, y: c1.y + c2.y }),
   subtract: (c1: Coord, c2: Coord) => ({ x: c1.x - c2.x, y: c1.y - c2.y }),
 
+  midpoint: (c1: Coord, c2: Coord) => ({ x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 }),
+
   fromEvent: (e: { offsetX: number; offsetY: number }) => {
     return { x: e.offsetX, y: e.offsetY };
   }
@@ -57,5 +59,8 @@ export const Box = {
       c.y >= box.pos.y &&
       c.y <= box.pos.y + box.size.h
     );
+  },
+  snapshot(b: Box) {
+    return { size: { ...b.size }, pos: { ...b.pos } };
   }
 };

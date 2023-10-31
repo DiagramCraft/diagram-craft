@@ -1,4 +1,4 @@
-import { Coord, Extent } from './geometry.ts';
+import { Box, Coord, Extent } from './geometry.ts';
 
 export type NodeDef<EdgeRef = Reference> = {
   type: 'node';
@@ -132,6 +132,30 @@ export const NodeDef = {
 
     for (const cn of node.children) {
       NodeDef.move(cn, newWorldCoord);
+    }
+  },
+
+  transform: (node: ResolvedNodeDef, before: Box, after: Box) => {
+    // Calculate relative position of node within before
+    const relX = (node.world.x - before.pos.x) / before.size.w;
+    const relY = (node.world.y - before.pos.y) / before.size.h;
+
+    // Calculate relative size of node within before
+    const relW = node.size.w / before.size.w;
+    const relH = node.size.h / before.size.h;
+
+    // Calculate new position of node within after
+    node.world.x = after.pos.x + relX * after.size.w;
+    node.world.y = after.pos.y + relY * after.size.h;
+    node.pos.x = after.size.w * relX;
+    node.pos.y = after.size.h * relY;
+
+    // Calculate new size of node within after
+    node.size.w = relW * after.size.w;
+    node.size.h = relH * after.size.h;
+
+    for (const cn of node.children) {
+      NodeDef.transform(cn, before, after);
     }
   },
 

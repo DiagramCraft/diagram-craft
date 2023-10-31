@@ -6,10 +6,8 @@ import { Box, Coord } from './geometry.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Diagram, loadDiagram, NodeDef } from './diagram.ts';
-import { Selection, SelectionApi } from './Selection.tsx';
-import { SelectionState } from './state.ts';
-
-type Drag = Coord;
+import { Selection, SelectionApi, selectionResize } from './Selection.tsx';
+import { Drag, SelectionState } from './state.ts';
 
 const BACKGROUND = 'background';
 
@@ -75,6 +73,7 @@ const diagram: Diagram = {
 const { nodeLookup, edgeLookup } = loadDiagram(diagram);
 
 const App = () => {
+  const svgRef = useRef<SVGSVGElement>(null);
   const selection = useRef<SelectionState>(SelectionState.EMPTY());
   const drag = useRef<Drag | undefined>(undefined);
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
@@ -82,34 +81,55 @@ const App = () => {
   const selectionRef = useRef<SelectionApi | null>(null);
   const deferedMouseAction = useRef<DeferedMouseAction | null>(null);
 
-  const onMouseDown = useCallback((id: ObjectId, coord: Coord, add: boolean) => {
-    const isClickOnBackground = id === BACKGROUND;
-    try {
-      if (add) {
-        if (!isClickOnBackground) {
-          selection.current = SelectionState.toggle(selection.current, nodeLookup[id]);
-        }
+  const updateCursor = useCallback(
+    (coord: Coord) => {
+      if (Box.contains(selection.current, coord)) {
+        svgRef.current!.style.cursor = 'move';
       } else {
-        if (Box.contains(selection.current, coord)) {
-          deferedMouseAction.current = { id };
-        } else {
-          if (isClickOnBackground) {
-            selection.current = SelectionState.clear(selection.current);
-          } else {
-            selection.current = SelectionState.set(selection.current, nodeLookup[id]);
-          }
-        }
+        svgRef.current!.style.cursor = 'default';
       }
+    },
+    [svgRef]
+  );
 
-      if (SelectionState.isEmpty(selection.current)) return;
-
-      const localCoord = Coord.subtract(coord, selection.current.pos);
-      drag.current = { ...localCoord };
-    } finally {
-      selectionRef.current?.repaint();
-    }
+  const onDragStart = useCallback((coord: Coord, type: Drag['type'], original: Box) => {
+    drag.current = { type, offset: coord, original };
   }, []);
 
+  const onMouseDown = useCallback(
+    (id: ObjectId, coord: Coord, add: boolean) => {
+      const isClickOnBackground = id === BACKGROUND;
+      try {
+        if (add) {
+          if (!isClickOnBackground) {
+            selection.current = SelectionState.toggle(selection.current, nodeLookup[id]);
+          }
+        } else {
+          if (Box.contains(selection.current, coord)) {
+            deferedMouseAction.current = { id };
+          } else {
+            if (isClickOnBackground) {
+              selection.current = SelectionState.clear(selection.current);
+            } else {
+              selection.current = SelectionState.set(selection.current, nodeLookup[id]);
+            }
+          }
+        }
+
+        if (SelectionState.isEmpty(selection.current)) return;
+
+        updateCursor(coord);
+
+        const localCoord = Coord.subtract(coord, selection.current.pos);
+        onDragStart(localCoord, 'move', Box.snapshot(selection.current));
+      } finally {
+        selectionRef.current?.repaint();
+      }
+    },
+    [onDragStart, updateCursor]
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onMouseUp = useCallback((_id: ObjectId, _coord: Coord) => {
     try {
       drag.current = undefined;
@@ -134,34 +154,48 @@ const App = () => {
     }
   }, []);
 
-  const onMouseMove = useCallback((coord: Coord) => {
-    if (drag.current === undefined) return;
-    if (SelectionState.isEmpty(selection.current)) throw new Error('invalid state');
+  const onMouseMove = useCallback(
+    (coord: Coord) => {
+      if (drag.current === undefined) return;
 
-    deferedMouseAction.current = null;
+      try {
+        if (drag.current?.type?.startsWith('resize-'))
+          return selectionResize(coord, selection.current, drag.current!);
 
-    const d = Coord.subtract(coord, Coord.add(selection.current.pos, drag.current));
+        if (SelectionState.isEmpty(selection.current)) throw new Error('invalid state');
 
-    for (const node of selection.current.elements) {
-      NodeDef.move(node, Coord.add(node.world, d));
+        deferedMouseAction.current = null;
 
-      SelectionState.recalculate(selection.current);
+        const d = Coord.subtract(coord, Coord.add(selection.current.pos, drag.current?.offset));
 
-      nodeRefs.current[node.id]?.repaint();
+        for (const node of selection.current.elements) {
+          NodeDef.move(node, Coord.add(node.world, d));
 
-      for (const edge of NodeDef.edges(node)) {
-        edgeRefs.current[edge.id]?.repaint();
+          SelectionState.recalculate(selection.current);
+        }
+      } finally {
+        updateCursor(coord);
+
+        for (const node of selection.current.elements) {
+          nodeRefs.current[node.id]?.repaint();
+
+          for (const edge of NodeDef.edges(node)) {
+            edgeRefs.current[edge.id]?.repaint();
+          }
+        }
+
+        selectionRef.current?.repaint();
       }
-    }
-
-    selectionRef.current?.repaint();
-  }, []);
+    },
+    [updateCursor]
+  );
 
   return (
     <>
       <DndProvider backend={HTML5Backend}>
         <div>
           <svg
+            ref={svgRef}
             width="640px"
             height="480px"
             style={{ border: '1px solid white', background: 'white' }}
@@ -194,7 +228,7 @@ const App = () => {
               }
             })}
 
-            <Selection ref={selectionRef} selection={selection.current} />
+            <Selection ref={selectionRef} selection={selection.current} onDragStart={onDragStart} />
           </svg>
         </div>
       </DndProvider>
