@@ -11,7 +11,8 @@ export type Drag = {
     | 'resize-n'
     | 'resize-s'
     | 'resize-w'
-    | 'resize-e';
+    | 'resize-e'
+    | 'rotate';
   offset: Coord;
   original: Box;
 };
@@ -19,6 +20,7 @@ export type Drag = {
 export type SelectionState = {
   pos: Coord;
   size: Extent;
+  rotation?: number;
   elements: ResolvedNodeDef[];
 };
 
@@ -38,6 +40,7 @@ export const SelectionState = {
   },
 
   set: (dest: SelectionState | undefined, element: ResolvedNodeDef) => {
+    if (dest) dest.rotation = undefined;
     return SelectionState.update(dest, [element]);
   },
 
@@ -46,6 +49,7 @@ export const SelectionState = {
   },
 
   toggle: (dest: SelectionState | undefined, element: ResolvedNodeDef) => {
+    if (dest) dest.rotation = undefined;
     if (dest?.elements?.includes(element)) {
       return SelectionState.update(
         dest,
@@ -57,6 +61,7 @@ export const SelectionState = {
   },
 
   clear: (dest: SelectionState) => {
+    if (dest) dest.rotation = undefined;
     return SelectionState.update(dest, []);
   },
 

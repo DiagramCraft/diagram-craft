@@ -32,7 +32,11 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   if (props.def.nodeType === 'group') {
     return (
-      <>
+      <g
+        transform={`rotate(${props.def.rotation ?? 0} ${props.def.pos.x + props.def.size.w / 2} ${
+          props.def.pos.y + props.def.size.h / 2
+        })`}
+      >
         {/* TODO: Probably remove the rect here? */}
         <rect
           x={wx}
@@ -51,21 +55,27 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             onMouseDown={(_id, coord, add) => props.onMouseDown(props.def.id, coord, add)}
           />
         ))}
-      </>
+      </g>
     );
   } else {
     return (
-      <rect
-        x={wx}
-        y={wy}
-        width={props.def.size.w}
-        height={props.def.size.h}
-        fill="#ffccff"
-        style={{ stroke: 'black', strokeWidth: '1' }}
-        rx="5"
-        ry="5"
-        onMouseDown={onMouseDown}
-      />
+      <g
+        transform={`rotate(${props.def.rotation ?? 0} ${props.def.pos.x + props.def.size.w / 2} ${
+          props.def.pos.y + props.def.size.h / 2
+        })`}
+      >
+        <rect
+          x={wx}
+          y={wy}
+          width={props.def.size.w}
+          height={props.def.size.h}
+          fill="#ffccff"
+          style={{ stroke: 'black', strokeWidth: '1' }}
+          rx="5"
+          ry="5"
+          onMouseDown={onMouseDown}
+        />
+      </g>
     );
   }
 });

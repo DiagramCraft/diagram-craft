@@ -159,7 +159,7 @@ const App = () => {
       if (drag.current === undefined) return;
 
       try {
-        if (drag.current?.type?.startsWith('resize-'))
+        if (drag.current?.type?.startsWith('resize-') || drag.current?.type === 'rotate')
           return selectionResize(coord, selection.current, drag.current!);
 
         if (SelectionState.isEmpty(selection.current)) throw new Error('invalid state');

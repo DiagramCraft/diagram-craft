@@ -38,6 +38,9 @@ export const selectionResize = (coord: Coord, selection: SelectionState, drag: D
     selection.size.h = drag.original.size.h + delta.y;
     selection.size.w = drag.original.size.w - delta.x;
     selection.pos.x = drag.original.pos.x + delta.x;
+  } else if (drag.type === 'rotate') {
+    const center = Box.center(drag.original.size, drag.original.pos);
+    selection.rotation = Coord.angle(center, coord);
   }
 
   for (const node of selection.elements) {
@@ -77,8 +80,21 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
   const pointsString = points.map(c => `${c.x},${c.y}`).join(' ');
 
   return (
-    <>
+    <g
+      transform={`rotate(${props.selection.rotation ?? 0} ${
+        props.selection.pos.x + props.selection.size.w / 2
+      } ${props.selection.pos.y + props.selection.size.h / 2})`}
+    >
       <polyline points={pointsString} style={{ stroke: 'blue', strokeWidth: '1' }} fill="none" />
+
+      <line
+        x1={Coord.midpoint(points[0], points[1]).x}
+        y1={Coord.midpoint(points[0], points[1]).y}
+        x2={Coord.midpoint(points[0], points[1]).x}
+        y2={Coord.midpoint(points[0], points[1]).y - 20}
+        strokeWidth={1}
+        stroke="blue"
+      />
 
       <circle
         cx={points[0].x}
@@ -171,6 +187,24 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
       />
 
       <circle
+        cx={Coord.midpoint(points[0], points[1]).x}
+        cy={Coord.midpoint(points[0], points[1]).y - 20}
+        r="4"
+        fill="white"
+        strokeWidth={1}
+        stroke="blue"
+        style={{ cursor: 'ew-resize' }}
+        onMouseDown={e => {
+          props.onDragStart(
+            Coord.fromEvent(e.nativeEvent),
+            'rotate',
+            Box.snapshot(props.selection)
+          );
+          e.stopPropagation();
+        }}
+      />
+
+      <circle
         cx={Coord.midpoint(points[1], points[2]).x}
         cy={Coord.midpoint(points[1], points[2]).y}
         r="4"
@@ -223,7 +257,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           e.stopPropagation();
         }}
       />
-    </>
+    </g>
   );
 });
 

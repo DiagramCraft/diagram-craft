@@ -7,6 +7,7 @@ export type NodeDef<EdgeRef = Reference> = {
 
   pos: Coord;
   size: Extent;
+  rotation?: number;
 
   edges?: Record<string, EdgeRef[]>;
 

@@ -11,6 +11,11 @@ export type Extent = {
 export type Box = {
   pos: Coord;
   size: Extent;
+  rotation?: number;
+};
+
+const toDegrees = (radians: number) => {
+  return radians * (180 / Math.PI);
 };
 
 export const Coord = {
@@ -21,6 +26,12 @@ export const Coord = {
 
   fromEvent: (e: { offsetX: number; offsetY: number }) => {
     return { x: e.offsetX, y: e.offsetY };
+  },
+
+  angle: (c1: Coord, c2: Coord) => {
+    const dx = c2.x - c1.x;
+    const dy = c2.y - c1.y;
+    return toDegrees(Math.atan2(dy, dx) + Math.PI / 2);
   }
 };
 
