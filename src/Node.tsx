@@ -33,8 +33,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   if (props.def.nodeType === 'group') {
     return (
       <g
-        transform={`rotate(${props.def.rotation ?? 0} ${props.def.pos.x + props.def.size.w / 2} ${
-          props.def.pos.y + props.def.size.h / 2
+        transform={`rotate(${props.def.rotation ?? 0} ${wx + props.def.size.w / 2} ${
+          wy + props.def.size.h / 2
         })`}
       >
         {/* TODO: Probably remove the rect here? */}
@@ -60,8 +60,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   } else {
     return (
       <g
-        transform={`rotate(${props.def.rotation ?? 0} ${props.def.pos.x + props.def.size.w / 2} ${
-          props.def.pos.y + props.def.size.h / 2
+        transform={`rotate(${props.def.rotation ?? 0} ${wx + props.def.size.w / 2} ${
+          wy + props.def.size.h / 2
         })`}
       >
         <rect

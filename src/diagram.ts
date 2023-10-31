@@ -155,6 +155,15 @@ export const NodeDef = {
     node.size.w = relW * after.size.w;
     node.size.h = relH * after.size.h;
 
+    /*    if (after.rotation !== before.rotation) {
+      const nb = Box.rotateAround(node, after.rotation ?? 0, Box.center(after));
+      node.size = nb.size;
+      node.world = nb.pos;
+      node.rotation = nb.rotation;
+    }*/
+
+    node.rotation = after.rotation;
+
     for (const cn of node.children) {
       NodeDef.transform(cn, before, after);
     }

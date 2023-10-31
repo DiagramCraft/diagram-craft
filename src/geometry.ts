@@ -14,8 +14,14 @@ export type Box = {
   rotation?: number;
 };
 
-const toDegrees = (radians: number) => {
-  return radians * (180 / Math.PI);
+export const Angle = {
+  toDegrees: (radians: number) => {
+    return radians * (180 / Math.PI);
+  },
+
+  toRadians: (degrees: number) => {
+    return degrees * (Math.PI / 180);
+  }
 };
 
 export const Coord = {
@@ -31,18 +37,40 @@ export const Coord = {
   angle: (c1: Coord, c2: Coord) => {
     const dx = c2.x - c1.x;
     const dy = c2.y - c1.y;
-    return toDegrees(Math.atan2(dy, dx) + Math.PI / 2);
+    return Angle.toDegrees(Math.atan2(dy, dx) + Math.PI / 2);
+  },
+
+  round: (c: Coord) => {
+    return { x: Math.round(c.x), y: Math.round(c.y) };
+  },
+
+  negate: (c: Coord) => ({ x: -c.x, y: -c.y }),
+
+  translate: (c: Coord, d: Coord) => {
+    return { x: c.x + d.x, y: c.y + d.y };
+  },
+
+  scale: (c: Coord, s: number) => {
+    return { x: c.x * s, y: c.y * s };
+  },
+
+  rotate: (c: Coord, r: number) => {
+    return {
+      x: c.x * Math.cos(r) - c.y * Math.sin(r),
+      y: c.x * Math.sin(r) + c.y * Math.cos(r)
+    };
   }
 };
 
 export const Box = {
-  center: (e: Extent, p: Coord) => {
+  center: (b: Box) => {
     return {
-      x: p.x + e.w / 2,
-      y: p.y + e.h / 2
+      x: b.pos.x + b.size.w / 2,
+      y: b.pos.y + b.size.h / 2
     };
   },
 
+  // TODO: This doesn't respect rotation
   boundingBox: (boxes: Box[]): Box => {
     let minX = Number.MAX_SAFE_INTEGER;
     let minY = Number.MAX_SAFE_INTEGER;
@@ -71,7 +99,52 @@ export const Box = {
       c.y <= box.pos.y + box.size.h
     );
   },
+
   snapshot(b: Box) {
     return { size: { ...b.size }, pos: { ...b.pos } };
+  },
+
+  translate: (b: Box, c: Coord): Box => {
+    return {
+      pos: Coord.add(b.pos, c),
+      size: { ...b.size }
+    };
+  },
+
+  scale: (b: Box, s: number): Box => {
+    const midpoint = Box.center(b);
+    const newMidpoint = Coord.subtract(midpoint, b.pos);
+    const scaledMidpoint = Coord.subtract(newMidpoint, {
+      x: newMidpoint.x * s,
+      y: newMidpoint.y * s
+    });
+    const newBox = Box.translate(b, scaledMidpoint);
+    newBox.size.w *= s;
+    newBox.size.h *= s;
+    return newBox;
+  },
+
+  rotate: (b: Box, r: number): Box => {
+    const midpoint = Box.center(b);
+    const newMidpoint = Coord.subtract(midpoint, b.pos);
+    const rotatedMidpoint = {
+      x: newMidpoint.x * Math.cos(r) - newMidpoint.y * Math.sin(r),
+      y: newMidpoint.x * Math.sin(r) + newMidpoint.y * Math.cos(r)
+    };
+    const newBox = Box.translate(b, rotatedMidpoint);
+    newBox.rotation = r;
+    return newBox;
+  },
+
+  rotateAround: (b: Box, r: number, centerOfRotation: Coord): Box => {
+    const midpoint = Box.center(b);
+    const newMidpoint = Coord.subtract(midpoint, centerOfRotation);
+    const rotatedMidpoint = {
+      x: newMidpoint.x * Math.cos(r) - newMidpoint.y * Math.sin(r),
+      y: newMidpoint.x * Math.sin(r) + newMidpoint.y * Math.cos(r)
+    };
+    const newBox = Box.translate(b, rotatedMidpoint);
+    newBox.rotation = r;
+    return newBox;
   }
 };

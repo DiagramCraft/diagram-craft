@@ -39,7 +39,7 @@ export const selectionResize = (coord: Coord, selection: SelectionState, drag: D
     selection.size.w = drag.original.size.w - delta.x;
     selection.pos.x = drag.original.pos.x + delta.x;
   } else if (drag.type === 'rotate') {
-    const center = Box.center(drag.original.size, drag.original.pos);
+    const center = Box.center(drag.original);
     selection.rotation = Coord.angle(center, coord);
   }
 
