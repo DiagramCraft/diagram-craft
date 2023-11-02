@@ -146,8 +146,6 @@ const App = () => {
           return;
         }
       }
-
-      selection.current = SelectionState.recalculate(selection.current);
     } finally {
       selectionRef.current?.repaint();
       deferedMouseAction.current = null;
