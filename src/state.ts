@@ -33,6 +33,7 @@ export const SelectionState = {
 
     d.pos = bb.pos;
     d.size = bb.size;
+    d.rotation = d.rotation ?? bb.rotation ?? 0;
     return d as SelectionState;
   },
 
@@ -65,6 +66,7 @@ export const SelectionState = {
   EMPTY: () => ({
     pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
     size: { w: 0, h: 0 },
+    rotation: undefined,
     elements: []
   }),
 

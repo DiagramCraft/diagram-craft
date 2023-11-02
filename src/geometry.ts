@@ -59,6 +59,12 @@ export const Coord = {
       x: c.x * Math.cos(r) - c.y * Math.sin(r),
       y: c.x * Math.sin(r) + c.y * Math.cos(r)
     };
+  },
+
+  rotateAround: (c: Coord, r: number, centerOfRotation: Coord) => {
+    const newCoord = Coord.subtract(c, centerOfRotation);
+    const rotatedCoord = Coord.rotate(newCoord, r);
+    return Coord.translate(rotatedCoord, centerOfRotation);
   }
 };
 
@@ -78,24 +84,59 @@ export const Box = {
     return b;
   },
 
-  // TODO: This doesn't respect rotation
   boundingBox: (boxes: Box[]): Box => {
     let minX = Number.MAX_SAFE_INTEGER;
     let minY = Number.MAX_SAFE_INTEGER;
     let maxX = Number.MIN_SAFE_INTEGER;
     let maxY = Number.MIN_SAFE_INTEGER;
 
-    for (const box of boxes) {
-      minX = Math.min(minX, box.pos.x, box.pos.x + box.size.w);
-      minY = Math.min(minY, box.pos.y, box.pos.y + box.size.h);
-      maxX = Math.max(maxX, box.pos.x, box.pos.x + box.size.w);
-      maxY = Math.max(maxY, box.pos.y, box.pos.y + box.size.h);
-    }
+    // If all boxes have the same rotation
+    // TODO: The calculation is only correct when there's only one box
+    if (
+      boxes.length === 1 &&
+      boxes.every(b => b.rotation === boxes[0].rotation) &&
+      boxes[0].rotation !== undefined
+    ) {
+      for (const box of boxes) {
+        minX = Math.min(minX, box.pos.x, box.pos.x + box.size.w);
+        minY = Math.min(minY, box.pos.y, box.pos.y + box.size.h);
+        maxX = Math.max(maxX, box.pos.x, box.pos.x + box.size.w);
+        maxY = Math.max(maxY, box.pos.y, box.pos.y + box.size.h);
+      }
 
-    return {
-      pos: { x: minX, y: minY },
-      size: { w: maxX - minX, h: maxY - minY }
-    };
+      return {
+        pos: { x: minX, y: minY },
+        size: { w: maxX - minX, h: maxY - minY },
+        rotation: boxes[0].rotation
+      };
+    } else {
+      for (const box of boxes) {
+        minX = Math.min(minX, box.pos.x, box.pos.x + box.size.w);
+        minY = Math.min(minY, box.pos.y, box.pos.y + box.size.h);
+        maxX = Math.max(maxX, box.pos.x, box.pos.x + box.size.w);
+        maxY = Math.max(maxY, box.pos.y, box.pos.y + box.size.h);
+
+        const corners = [
+          { x: box.pos.x, y: box.pos.y },
+          { x: box.pos.x + box.size.w, y: box.pos.y },
+          { x: box.pos.x, y: box.pos.y + box.size.h },
+          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
+        ];
+        for (const c of corners) {
+          const rotated = Coord.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box));
+
+          minX = Math.min(minX, rotated.x);
+          minY = Math.min(minY, rotated.y);
+          maxX = Math.max(maxX, rotated.x);
+          maxY = Math.max(maxY, rotated.y);
+        }
+      }
+
+      return {
+        pos: { x: minX, y: minY },
+        size: { w: maxX - minX, h: maxY - minY }
+      };
+    }
   },
 
   contains: (box: Box | undefined, c: Coord): boolean => {
