@@ -91,22 +91,39 @@ export const Box = {
     let maxY = Number.MIN_SAFE_INTEGER;
 
     // If all boxes have the same rotation
-    // TODO: The calculation is only correct when there's only one box
-    if (
-      boxes.length === 1 &&
-      boxes.every(b => b.rotation === boxes[0].rotation) &&
-      boxes[0].rotation !== undefined
-    ) {
+    if (boxes.every(b => b.rotation === boxes[0].rotation) && boxes[0].rotation !== undefined) {
+      // Pick one corner of one box and rotate each corner of each box around it
+      const rotationPoint = Box.corners(boxes[0], true)[0];
       for (const box of boxes) {
-        minX = Math.min(minX, box.pos.x, box.pos.x + box.size.w);
-        minY = Math.min(minY, box.pos.y, box.pos.y + box.size.h);
-        maxX = Math.max(maxX, box.pos.x, box.pos.x + box.size.w);
-        maxY = Math.max(maxY, box.pos.y, box.pos.y + box.size.h);
+        for (const c of Box.corners(box, true)) {
+          const rotated = Coord.rotate(
+            Coord.subtract(c, rotationPoint),
+            -Angle.toRad(box.rotation ?? 0)
+          );
+
+          minX = Math.min(minX, rotated.x);
+          minY = Math.min(minY, rotated.y);
+          maxX = Math.max(maxX, rotated.x);
+          maxY = Math.max(maxY, rotated.y);
+        }
       }
 
+      const w = maxX - minX;
+      const h = maxY - minY;
+
+      const centerOfSelection = Coord.rotate(
+        { x: minX + w / 2, y: minY + h / 2 },
+        Angle.toRad(boxes[0].rotation ?? 0)
+      );
+
+      const posOfSelection = Coord.add(
+        rotationPoint,
+        Coord.subtract(centerOfSelection, { x: w / 2, y: h / 2 })
+      );
+
       return {
-        pos: { x: minX, y: minY },
-        size: { w: maxX - minX, h: maxY - minY },
+        pos: posOfSelection,
+        size: { w: w, h: h },
         rotation: boxes[0].rotation
       };
     } else {
@@ -137,6 +154,25 @@ export const Box = {
         size: { w: maxX - minX, h: maxY - minY }
       };
     }
+  },
+
+  corners: (box: Box, oppositeOnly = false) => {
+    const corners = oppositeOnly
+      ? [
+          { x: box.pos.x, y: box.pos.y },
+          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
+        ]
+      : [
+          { x: box.pos.x, y: box.pos.y },
+          { x: box.pos.x + box.size.w, y: box.pos.y },
+          { x: box.pos.x, y: box.pos.y + box.size.h },
+          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
+        ];
+
+    // TODO: We can probalby check for rouding to one decimal here
+    if (box.rotation === undefined || box.rotation === 0) return corners;
+
+    return corners.map(c => Coord.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box)));
   },
 
   contains: (box: Box | undefined, c: Coord): boolean => {
