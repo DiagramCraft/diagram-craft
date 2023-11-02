@@ -55,7 +55,7 @@ const diagram: Diagram = {
       type: 'node',
       nodeType: 'rect',
       id: '2',
-      pos: { x: 250, y: 220 },
+      pos: { x: 400, y: 220 },
       size: { w: 100, h: 100 },
       children: []
     },

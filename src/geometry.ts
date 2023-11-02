@@ -15,11 +15,11 @@ export type Box = {
 };
 
 export const Angle = {
-  toDegrees: (radians: number) => {
+  toDeg: (radians: number) => {
     return radians * (180 / Math.PI);
   },
 
-  toRadians: (degrees: number) => {
+  toRad: (degrees: number) => {
     return degrees * (Math.PI / 180);
   }
 };
@@ -37,7 +37,7 @@ export const Coord = {
   angle: (c1: Coord, c2: Coord) => {
     const dx = c2.x - c1.x;
     const dy = c2.y - c1.y;
-    return Angle.toDegrees(Math.atan2(dy, dx) + Math.PI / 2);
+    return Angle.toDeg(Math.atan2(dy, dx) + Math.PI / 2);
   },
 
   round: (c: Coord) => {
@@ -46,7 +46,7 @@ export const Coord = {
 
   negate: (c: Coord) => ({ x: -c.x, y: -c.y }),
 
-  translate: (c: Coord, d: Coord) => {
+  translate: (c: Coord, d: Coord): Coord => {
     return { x: c.x + d.x, y: c.y + d.y };
   },
 
@@ -68,6 +68,14 @@ export const Box = {
       x: b.pos.x + b.size.w / 2,
       y: b.pos.y + b.size.h / 2
     };
+  },
+
+  positionFromCenter: (b: Box, center: Coord): Box => {
+    b.pos = {
+      x: center.x - b.size.w / 2,
+      y: center.y - b.size.h / 2
+    };
+    return b;
   },
 
   // TODO: This doesn't respect rotation
@@ -101,7 +109,7 @@ export const Box = {
   },
 
   snapshot(b: Box) {
-    return { size: { ...b.size }, pos: { ...b.pos } };
+    return { size: { ...b.size }, pos: { ...b.pos }, rotation: b.rotation };
   },
 
   translate: (b: Box, c: Coord): Box => {
@@ -148,3 +156,86 @@ export const Box = {
     return newBox;
   }
 };
+
+export interface Transform {
+  asSvgTransform(): string;
+  apply(b: Box): Box;
+  apply(b: Coord): Coord;
+  apply(b: Box | Coord): Box | Coord;
+  reverse(): Transform;
+}
+
+export const Transform = {
+  box: (b: Box, ...transforms: Transform[]): Box => {
+    return transforms.reduce((b, t) => t.apply(b), b);
+  },
+  coord: (b: Coord, ...transforms: Transform[]): Coord => {
+    return transforms.reduce((b, t) => t.apply(b), b);
+  }
+};
+
+export class Translation implements Transform {
+  constructor(private readonly c: Coord) {}
+
+  asSvgTransform() {
+    return `translate(${this.c.x},${this.c.y})`;
+  }
+
+  apply(b: Box): Box;
+  apply(b: Coord): Coord;
+  apply(b: Box | Coord): Box | Coord {
+    if ('pos' in b) {
+      return Box.translate(b, this.c) as Box;
+    } else {
+      return Coord.translate(b, this.c) as Coord;
+    }
+  }
+
+  reverse(): Transform {
+    return new Translation(Coord.negate(this.c));
+  }
+}
+
+export class Scale implements Transform {
+  constructor(private readonly s: number) {}
+
+  asSvgTransform() {
+    return `scale(${this.s})`;
+  }
+
+  apply(b: Box): Box;
+  apply(b: Coord): Coord;
+  apply(b: Box | Coord): Box | Coord {
+    if ('pos' in b) {
+      return Box.scale(b, this.s);
+    } else {
+      return Coord.scale(b, this.s);
+    }
+  }
+
+  reverse(): Transform {
+    return new Scale(1 / this.s);
+  }
+}
+
+export class Rotation implements Transform {
+  constructor(private readonly r: number) {}
+
+  asSvgTransform() {
+    return `rotate(${this.r})`;
+  }
+
+  apply(b: Box): Box;
+  apply(b: Coord): Coord;
+  apply(b: Box | Coord): Box | Coord {
+    if ('pos' in b) {
+      return Box.rotate(b, this.r);
+    } else {
+      return Coord.rotate(b, this.r);
+    }
+  }
+
+  reverse(): Transform {
+    return new Rotation(-this.r);
+  }
+}

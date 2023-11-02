@@ -32,11 +32,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   if (props.def.nodeType === 'group') {
     return (
-      <g
-        transform={`rotate(${props.def.rotation ?? 0} ${wx + props.def.size.w / 2} ${
-          wy + props.def.size.h / 2
-        })`}
-      >
+      <g>
         {/* TODO: Probably remove the rect here? */}
         <rect
           x={wx}
@@ -46,6 +42,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           fill="transparent"
           style={{ stroke: 'green' }}
           onMouseDown={onMouseDown}
+          transform={`rotate(${props.def.rotation ?? 0} ${wx + props.def.size.w / 2} ${
+            wy + props.def.size.h / 2
+          })`}
         />
         {props.def.children.map(c => (
           <Node
