@@ -1,38 +1,38 @@
 import { Box, Point, Vector } from './geometry.ts';
-import { ResizeDrag, RotateDrag, SelectionState } from './state.ts';
+import { ResizeDrag, SelectionState } from './state.ts';
 import { NodeDef } from './diagram.ts';
 
 export const selectionResize = (coord: Point, selection: SelectionState, drag: ResizeDrag) => {
   const delta = Point.subtract(coord, drag.offset);
-
   const before = Box.snapshot(selection);
+  const original = selection.source.boundingBox;
 
   if (drag.type === 'resize-e') {
-    selection.size.w = drag.original.size.w + delta.x;
+    selection.size.w = original.size.w + delta.x;
   } else if (drag.type === 'resize-w') {
-    selection.size.w = drag.original.size.w - delta.x;
-    selection.pos.x = drag.original.pos.x + delta.x;
+    selection.size.w = original.size.w - delta.x;
+    selection.pos.x = original.pos.x + delta.x;
   } else if (drag.type === 'resize-n') {
-    selection.size.h = drag.original.size.h - delta.y;
-    selection.pos.y = drag.original.pos.y + delta.y;
+    selection.size.h = original.size.h - delta.y;
+    selection.pos.y = original.pos.y + delta.y;
   } else if (drag.type === 'resize-s') {
-    selection.size.h = drag.original.size.h + delta.y;
+    selection.size.h = original.size.h + delta.y;
   } else if (drag.type === 'resize-nw') {
-    selection.size.h = drag.original.size.h - delta.y;
-    selection.pos.y = drag.original.pos.y + delta.y;
-    selection.size.w = drag.original.size.w - delta.x;
-    selection.pos.x = drag.original.pos.x + delta.x;
+    selection.size.h = original.size.h - delta.y;
+    selection.pos.y = original.pos.y + delta.y;
+    selection.size.w = original.size.w - delta.x;
+    selection.pos.x = original.pos.x + delta.x;
   } else if (drag.type === 'resize-ne') {
-    selection.size.h = drag.original.size.h - delta.y;
-    selection.pos.y = drag.original.pos.y + delta.y;
-    selection.size.w = drag.original.size.w + delta.x;
+    selection.size.h = original.size.h - delta.y;
+    selection.pos.y = original.pos.y + delta.y;
+    selection.size.w = original.size.w + delta.x;
   } else if (drag.type === 'resize-se') {
-    selection.size.h = drag.original.size.h + delta.y;
-    selection.size.w = drag.original.size.w + delta.x;
+    selection.size.h = original.size.h + delta.y;
+    selection.size.w = original.size.w + delta.x;
   } else if (drag.type === 'resize-sw') {
-    selection.size.h = drag.original.size.h + delta.y;
-    selection.size.w = drag.original.size.w - delta.x;
-    selection.pos.x = drag.original.pos.x + delta.x;
+    selection.size.h = original.size.h + delta.y;
+    selection.size.w = original.size.w - delta.x;
+    selection.pos.x = original.pos.x + delta.x;
   }
 
   for (const node of selection.elements) {
@@ -40,10 +40,10 @@ export const selectionResize = (coord: Point, selection: SelectionState, drag: R
   }
 };
 
-export const selectionRotate = (coord: Point, selection: SelectionState, drag: RotateDrag) => {
+export const selectionRotate = (coord: Point, selection: SelectionState) => {
   const before = Box.snapshot(selection);
 
-  const center = Box.center(drag.original);
+  const center = Box.center(selection.source.boundingBox);
   selection.rotation = Vector.angle(Vector.from(center, coord));
 
   for (const node of selection.elements) {

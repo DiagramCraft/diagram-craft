@@ -12,9 +12,6 @@ export type ResizeDrag = {
     | 'resize-w'
     | 'resize-e';
   offset: Point;
-
-  // TODO: Can we use SelectionState.sourceElements instead?
-  original: Box;
 };
 
 export const isResizeDrag = (drag: Drag | undefined): drag is ResizeDrag => {
@@ -34,27 +31,19 @@ export const isResizeDrag = (drag: Drag | undefined): drag is ResizeDrag => {
 export type MoveDrag = {
   type: 'move';
   offset: Point;
-
-  // TODO: Can we use SelectionState.sourceElements instead?
-  original: Box;
 };
 
 export type RotateDrag = {
   type: 'rotate';
   offset: Point;
-
-  // TODO: Can we use SelectionState.sourceElements instead?
-  original: Box;
 };
 
-export type Drag =
-  | ResizeDrag
-  | MoveDrag
-  | RotateDrag
-  | {
-      type: 'marquee';
-      offset: Point;
-    };
+type MarqueeDrag = {
+  type: 'marquee';
+  offset: Point;
+};
+
+export type Drag = ResizeDrag | MoveDrag | RotateDrag | MarqueeDrag;
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
@@ -97,7 +86,8 @@ export class SelectionState implements Box {
   }
 
   recalculateSourceBoundingBox() {
-    const sourcebb = this.source.elements ? EMPTY_BOX : Box.boundingBox(this.source.elements);
+    const sourcebb =
+      this.source.elements.length === 0 ? EMPTY_BOX : Box.boundingBox(this.source.elements);
     this.source.boundingBox.pos = sourcebb.pos;
     this.source.boundingBox.size = sourcebb.size;
     this.source.boundingBox.rotation ??= sourcebb.rotation;

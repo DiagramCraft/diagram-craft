@@ -60,8 +60,8 @@ export const Canvas = (props: Props) => {
     [svgRef]
   );
 
-  const onDragStart = useCallback((coord: Point, type: Drag['type'], original: Box) => {
-    drag.current = { type, offset: coord, original };
+  const onDragStart = useCallback((coord: Point, type: Drag['type']) => {
+    drag.current = { type, offset: coord };
   }, []);
 
   const onMouseDown = useCallback(
@@ -91,7 +91,7 @@ export const Canvas = (props: Props) => {
         if (selection.current.isEmpty()) return;
 
         const localCoord = Point.subtract(coord, selection.current.pos);
-        onDragStart(localCoord, 'move', Box.snapshot(selection.current));
+        onDragStart(localCoord, 'move');
       } finally {
         selectionRef.current?.repaint();
       }
@@ -172,7 +172,7 @@ export const Canvas = (props: Props) => {
           return selectionResize(coord, selection.current, drag.current);
         } else if (drag.current?.type === 'rotate') {
           assert.false(selection.current.isEmpty());
-          return selectionRotate(coord, selection.current, drag.current);
+          return selectionRotate(coord, selection.current);
         } else if (drag.current.type === 'move') {
           assert.false(selection.current.isEmpty());
 
