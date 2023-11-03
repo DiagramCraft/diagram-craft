@@ -23,7 +23,7 @@ export const Canvas = (props: Props) => {
   const diagram = props.diagram;
 
   const svgRef = useRef<SVGSVGElement>(null);
-  const selection = useRef<SelectionState>(SelectionState.EMPTY());
+  const selection = useRef<SelectionState>(new SelectionState());
   const drag = useRef<Drag | undefined>(undefined);
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
@@ -52,25 +52,25 @@ export const Canvas = (props: Props) => {
       try {
         if (add) {
           if (!isClickOnBackground) {
-            SelectionState.toggle(selection.current, diagram.nodeLookup[id]);
+            selection.current.toggle(diagram.nodeLookup[id]);
           }
         } else {
           if (Box.contains(selection.current, coord)) {
             deferedMouseAction.current = { id };
           } else {
             if (isClickOnBackground) {
-              SelectionState.clear(selection.current);
+              selection.current.clear();
               drag.current = { type: 'marquee', offset: coord };
             } else {
-              SelectionState.clear(selection.current);
-              SelectionState.toggle(selection.current, diagram.nodeLookup[id]);
+              selection.current.clear();
+              selection.current.toggle(diagram.nodeLookup[id]);
             }
           }
         }
 
         updateCursor(coord);
 
-        if (SelectionState.isEmpty(selection.current)) return;
+        if (selection.current.isEmpty()) return;
 
         const localCoord = Coord.subtract(coord, selection.current.pos);
         onDragStart(localCoord, 'move', Box.snapshot(selection.current));
@@ -90,14 +90,11 @@ export const Canvas = (props: Props) => {
 
         if (deferedMouseAction.current) {
           if (deferedMouseAction.current.id === BACKGROUND) {
-            SelectionState.clear(selection.current);
+            selection.current.clear();
             return;
           } else {
-            SelectionState.clear(selection.current);
-            SelectionState.toggle(
-              selection.current,
-              diagram.nodeLookup[deferedMouseAction.current.id]
-            );
+            selection.current.clear();
+            selection.current.toggle(diagram.nodeLookup[deferedMouseAction.current.id]);
             return;
           }
         }
@@ -118,7 +115,7 @@ export const Canvas = (props: Props) => {
           // TODO: Fix this "as" cast
           return selectionResize(coord, selection.current, drag.current! as ObjectDrag);
         } else if (drag.current.type === 'move') {
-          if (SelectionState.isEmpty(selection.current)) throw new Error('invalid state');
+          if (selection.current.isEmpty()) throw new Error('invalid state');
 
           deferedMouseAction.current = null;
 
@@ -127,7 +124,7 @@ export const Canvas = (props: Props) => {
           for (const node of selection.current.elements) {
             NodeDef.move(node, d);
 
-            SelectionState.recalculate(selection.current);
+            selection.current.recalculateBoundingBox();
           }
         } else if (drag.current.type === 'marquee') {
           selectionMarqueeRef.current?.repaint(

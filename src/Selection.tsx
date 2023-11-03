@@ -17,7 +17,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
     };
   });
 
-  if (SelectionState.isEmpty(props.selection)) return null;
+  if (props.selection.isEmpty()) return null;
 
   const points: Coord[] = [
     props.selection.pos,

@@ -1,5 +1,5 @@
 import { ResolvedNodeDef } from './diagram.ts';
-import { Coord, Box } from './geometry.ts';
+import { Box, Coord } from './geometry.ts';
 
 export type ObjectDrag = {
   type:
@@ -24,51 +24,53 @@ export type Drag =
       offset: Coord;
     };
 
-export interface SelectionState extends Box {
-  elements: ResolvedNodeDef[];
+const EMPTY_BOX = {
+  pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
+  size: { w: 0, h: 0 },
+  rotation: undefined
+};
+
+export class SelectionState implements Box {
+  pos: Box['pos'];
+  size: Box['size'];
+  rotation: Box['rotation'];
+
+  elements: ResolvedNodeDef[] = [];
 
   marquee?: Box;
   pendingElements?: ResolvedNodeDef[];
-}
 
-export const SelectionState = {
-  update: (dest: SelectionState, elements: ResolvedNodeDef[]) => {
-    dest.elements = elements;
-
-    const bb = dest.elements.length === 0 ? SelectionState.EMPTY() : Box.boundingBox(elements);
-
-    dest.pos = bb.pos;
-    dest.size = bb.size;
-    dest.rotation = dest.rotation ?? bb.rotation ?? 0;
-  },
-
-  recalculate: (state: SelectionState) => {
-    SelectionState.update(state, state.elements);
-  },
-
-  toggle: (dest: SelectionState, element: ResolvedNodeDef) => {
-    dest.rotation = undefined;
-
-    const newElements = dest.elements.includes(element)
-      ? dest.elements.filter(e => e !== element)
-      : [...dest.elements, element];
-
-    SelectionState.update(dest, newElements);
-  },
-
-  clear: (dest: SelectionState) => {
-    dest.rotation = undefined;
-    SelectionState.update(dest, []);
-  },
-
-  EMPTY: () => ({
-    pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
-    size: { w: 0, h: 0 },
-    rotation: undefined,
-    elements: []
-  }),
-
-  isEmpty(selection: SelectionState) {
-    return selection.elements.length === 0;
+  constructor() {
+    this.pos = EMPTY_BOX.pos;
+    this.size = EMPTY_BOX.size;
+    this.rotation = EMPTY_BOX.rotation;
+    this.elements = [];
   }
-};
+
+  recalculateBoundingBox() {
+    const bb = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements);
+
+    this.pos = bb.pos;
+    this.size = bb.size;
+    this.rotation = this.rotation ?? bb.rotation ?? 0;
+  }
+
+  toggle(element: ResolvedNodeDef) {
+    this.rotation = undefined;
+
+    this.elements = this.elements.includes(element)
+      ? this.elements.filter(e => e !== element)
+      : [...this.elements, element];
+    this.recalculateBoundingBox();
+  }
+
+  clear() {
+    this.rotation = undefined;
+    this.elements = [];
+    this.recalculateBoundingBox();
+  }
+
+  isEmpty() {
+    return this.elements.length === 0;
+  }
+}

@@ -1,25 +1,34 @@
 import { SelectionState } from './state.ts';
 import { expect, test, describe } from 'vitest';
+import { ResolvedNodeDef } from './diagram.ts';
 
 describe('SelectionState', () => {
   test('empty selection has zero size', () => {
-    expect(SelectionState.isEmpty(SelectionState.EMPTY())).toBe(true);
-    expect(SelectionState.EMPTY().size.w).toBe(0);
-    expect(SelectionState.EMPTY().size.h).toBe(0);
+    expect(new SelectionState().isEmpty()).toBe(true);
+    expect(new SelectionState().size.w).toBe(0);
+    expect(new SelectionState().size.h).toBe(0);
   });
 
-  test('update with empty elements is empty', () => {
-    const s = SelectionState.EMPTY();
-    SelectionState.toggle(s, {
+  test('toggle twice clears selection', () => {
+    const element: ResolvedNodeDef = {
       id: '1',
       type: 'node',
       pos: { x: 0, y: 0 },
       size: { w: 10, h: 10 },
       children: [],
       nodeType: 'test'
-    });
-    expect(SelectionState.isEmpty(s)).toBe(false);
-    SelectionState.update(s, []);
-    expect(SelectionState.isEmpty(s)).toBe(true);
+    };
+
+    const s = new SelectionState();
+
+    s.toggle(element);
+    expect(s.isEmpty()).toBe(false);
+    expect(s.size.w).toBe(10);
+    expect(s.size.h).toBe(10);
+
+    s.toggle(element);
+    expect(s.isEmpty()).toBe(true);
+    expect(s.size.w).toBe(0);
+    expect(s.size.h).toBe(0);
   });
 });
