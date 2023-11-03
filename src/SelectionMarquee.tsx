@@ -44,8 +44,8 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
         y={props.selection.marquee.pos.y}
         width={props.selection.marquee.size.w}
         height={props.selection.marquee.size.h}
-        fill="rgba(0, 0, 255, 0.2)"
-        style={{ stroke: 'blue' }}
+        fill="rgba(43, 117, 221, 0.2)"
+        style={{ stroke: '#2673dd' }}
       />
 
       {props.selection.pendingElements?.map(e => (
@@ -59,7 +59,7 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
             e.pos.y + e.size.h / 2
           })`}
           fill="transparent"
-          stroke={'blue'}
+          stroke={'#2673dd'}
         />
       ))}
     </>

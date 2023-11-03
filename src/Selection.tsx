@@ -44,7 +44,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         props.selection.pos.x + props.selection.size.w / 2
       } ${props.selection.pos.y + props.selection.size.h / 2})`}
     >
-      <polyline points={pointsString} style={{ stroke: 'blue', strokeWidth: '1' }} fill="none" />
+      <polyline points={pointsString} style={{ stroke: '#2673dd', strokeWidth: '1' }} fill="none" />
 
       <line
         x1={Point.midpoint(points[0], points[1]).x}
@@ -52,7 +52,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         x2={Point.midpoint(points[0], points[1]).x}
         y2={Point.midpoint(points[0], points[1]).y - 20}
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
       />
 
       <circle
@@ -61,7 +61,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'nw-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -79,7 +79,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'ne-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -97,7 +97,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'se-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -115,7 +115,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'sw-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -133,7 +133,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'n-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -151,7 +151,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'ew-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -169,7 +169,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'e-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -187,7 +187,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 's-resize' }}
         onMouseDown={e => {
           props.onDragStart(
@@ -205,7 +205,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         r="4"
         fill="white"
         strokeWidth={1}
-        stroke="blue"
+        stroke="#2673dd"
         style={{ cursor: 'w-resize' }}
         onMouseDown={e => {
           props.onDragStart(

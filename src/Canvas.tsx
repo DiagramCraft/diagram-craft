@@ -119,20 +119,19 @@ export const Canvas = (props: Props) => {
 
   const onMouseMove = useCallback(
     (coord: Point) => {
-      if (drag.current === undefined) return;
-
       try {
+        if (drag.current === undefined) return;
         deferedMouseAction.current = null;
 
         if (
           drag.current.type === 'resize-se' ||
           drag.current.type === 'resize-sw' ||
-          drag.current?.type === 'resize-ne' ||
-          drag.current?.type === 'resize-nw' ||
-          drag.current?.type === 'resize-n' ||
-          drag.current?.type === 'resize-s' ||
-          drag.current?.type === 'resize-e' ||
-          drag.current?.type === 'resize-w'
+          drag.current.type === 'resize-ne' ||
+          drag.current.type === 'resize-nw' ||
+          drag.current.type === 'resize-n' ||
+          drag.current.type === 'resize-s' ||
+          drag.current.type === 'resize-e' ||
+          drag.current.type === 'resize-w'
         ) {
           assert.false(selection.current.isEmpty());
           return selectionResize(coord, selection.current, drag.current);
@@ -175,7 +174,7 @@ export const Canvas = (props: Props) => {
         selectionRef.current?.repaint();
       }
     },
-    [updateCursor]
+    [updateCursor, diagram]
   );
 
   return (
