@@ -3,7 +3,7 @@ import { Drag, SelectionState } from './state.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
-import { Box, Coord } from './geometry.ts';
+import { Box, Point } from './geometry.ts';
 import { LoadedDiagram, NodeDef } from './diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -37,7 +37,7 @@ export const Canvas = (props: Props) => {
   const deferedMouseAction = useRef<DeferedMouseAction | null>(null);
 
   const updateCursor = useCallback(
-    (coord: Coord) => {
+    (coord: Point) => {
       if (Box.contains(selection.current, coord)) {
         svgRef.current!.style.cursor = 'move';
       } else {
@@ -47,12 +47,12 @@ export const Canvas = (props: Props) => {
     [svgRef]
   );
 
-  const onDragStart = useCallback((coord: Coord, type: Drag['type'], original: Box) => {
+  const onDragStart = useCallback((coord: Point, type: Drag['type'], original: Box) => {
     drag.current = { type, offset: coord, original };
   }, []);
 
   const onMouseDown = useCallback(
-    (id: ObjectId, coord: Coord, add: boolean) => {
+    (id: ObjectId, coord: Point, add: boolean) => {
       const isClickOnBackground = id === BACKGROUND;
       try {
         if (add) {
@@ -77,7 +77,7 @@ export const Canvas = (props: Props) => {
 
         if (selection.current.isEmpty()) return;
 
-        const localCoord = Coord.subtract(coord, selection.current.pos);
+        const localCoord = Point.subtract(coord, selection.current.pos);
         onDragStart(localCoord, 'move', Box.snapshot(selection.current));
       } finally {
         selectionRef.current?.repaint();
@@ -88,7 +88,7 @@ export const Canvas = (props: Props) => {
 
   const onMouseUp = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (_id: ObjectId, _coord: Coord) => {
+    (_id: ObjectId, _coord: Point) => {
       try {
         drag.current = undefined;
 
@@ -118,7 +118,7 @@ export const Canvas = (props: Props) => {
   );
 
   const onMouseMove = useCallback(
-    (coord: Coord) => {
+    (coord: Point) => {
       if (drag.current === undefined) return;
 
       try {
@@ -142,7 +142,7 @@ export const Canvas = (props: Props) => {
         } else if (drag.current.type === 'move') {
           assert.false(selection.current.isEmpty());
 
-          const d = Coord.subtract(coord, Coord.add(selection.current.pos, drag.current?.offset));
+          const d = Point.subtract(coord, Point.add(selection.current.pos, drag.current?.offset));
 
           for (const node of selection.current.elements) {
             NodeDef.move(node, d);
@@ -187,9 +187,9 @@ export const Canvas = (props: Props) => {
             width="640px"
             height="480px"
             style={{ border: '1px solid white', background: 'white' }}
-            onMouseDown={e => onMouseDown(BACKGROUND, Coord.fromEvent(e.nativeEvent), e.shiftKey)}
-            onMouseUp={e => onMouseUp(BACKGROUND, Coord.fromEvent(e.nativeEvent))}
-            onMouseMove={e => onMouseMove(Coord.fromEvent(e.nativeEvent))}
+            onMouseDown={e => onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.shiftKey)}
+            onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
+            onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent))}
           >
             {diagram.elements.map(e => {
               const id = e.id;

@@ -1,4 +1,6 @@
-export type Coord = {
+import { invariant } from './assert.ts';
+
+export type Point = {
   x: number;
   y: number;
 };
@@ -9,7 +11,7 @@ export type Extent = {
 };
 
 export type Box = {
-  pos: Coord;
+  pos: Point;
   size: Extent;
   rotation?: number;
 };
@@ -24,47 +26,47 @@ export const Angle = {
   }
 };
 
-export const Coord = {
-  add: (c1: Coord, c2: Coord) => ({ x: c1.x + c2.x, y: c1.y + c2.y }),
-  subtract: (c1: Coord, c2: Coord) => ({ x: c1.x - c2.x, y: c1.y - c2.y }),
+export const Point = {
+  add: (c1: Point, c2: Point) => ({ x: c1.x + c2.x, y: c1.y + c2.y }),
+  subtract: (c1: Point, c2: Point) => ({ x: c1.x - c2.x, y: c1.y - c2.y }),
 
-  midpoint: (c1: Coord, c2: Coord) => ({ x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 }),
+  midpoint: (c1: Point, c2: Point) => ({ x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 }),
 
   fromEvent: (e: { offsetX: number; offsetY: number }) => {
     return { x: e.offsetX, y: e.offsetY };
   },
 
-  angle: (c1: Coord, c2: Coord) => {
+  angle: (c1: Point, c2: Point) => {
     const dx = c2.x - c1.x;
     const dy = c2.y - c1.y;
     return Angle.toDeg(Math.atan2(dy, dx) + Math.PI / 2);
   },
 
-  round: (c: Coord) => {
+  round: (c: Point) => {
     return { x: Math.round(c.x), y: Math.round(c.y) };
   },
 
-  negate: (c: Coord) => ({ x: -c.x, y: -c.y }),
+  negate: (c: Point) => ({ x: -c.x, y: -c.y }),
 
-  translate: (c: Coord, d: Coord): Coord => {
+  translate: (c: Point, d: Point): Point => {
     return { x: c.x + d.x, y: c.y + d.y };
   },
 
-  scale: (c: Coord, s: number) => {
+  scale: (c: Point, s: number) => {
     return { x: c.x * s, y: c.y * s };
   },
 
-  rotate: (c: Coord, r: number) => {
+  rotate: (c: Point, r: number) => {
     return {
       x: c.x * Math.cos(r) - c.y * Math.sin(r),
       y: c.x * Math.sin(r) + c.y * Math.cos(r)
     };
   },
 
-  rotateAround: (c: Coord, r: number, centerOfRotation: Coord) => {
-    const newCoord = Coord.subtract(c, centerOfRotation);
-    const rotatedCoord = Coord.rotate(newCoord, r);
-    return Coord.translate(rotatedCoord, centerOfRotation);
+  rotateAround: (c: Point, r: number, centerOfRotation: Point) => {
+    const newCoord = Point.subtract(c, centerOfRotation);
+    const rotatedCoord = Point.rotate(newCoord, r);
+    return Point.translate(rotatedCoord, centerOfRotation);
   }
 };
 
@@ -76,7 +78,7 @@ export const Box = {
     };
   },
 
-  positionFromCenter: (b: Box, center: Coord): Box => {
+  positionFromCenter: (b: Box, center: Point): Box => {
     b.pos = {
       x: center.x - b.size.w / 2,
       y: center.y - b.size.h / 2
@@ -96,8 +98,8 @@ export const Box = {
       const rotationPoint = Box.corners(boxes[0], true)[0];
       for (const box of boxes) {
         for (const c of Box.corners(box, true)) {
-          const rotated = Coord.rotate(
-            Coord.subtract(c, rotationPoint),
+          const rotated = Point.rotate(
+            Point.subtract(c, rotationPoint),
             -Angle.toRad(box.rotation ?? 0)
           );
 
@@ -111,14 +113,14 @@ export const Box = {
       const w = maxX - minX;
       const h = maxY - minY;
 
-      const centerOfSelection = Coord.rotate(
+      const centerOfSelection = Point.rotate(
         { x: minX + w / 2, y: minY + h / 2 },
         Angle.toRad(boxes[0].rotation ?? 0)
       );
 
-      const posOfSelection = Coord.add(
+      const posOfSelection = Point.add(
         rotationPoint,
-        Coord.subtract(centerOfSelection, { x: w / 2, y: h / 2 })
+        Point.subtract(centerOfSelection, { x: w / 2, y: h / 2 })
       );
 
       return {
@@ -140,7 +142,7 @@ export const Box = {
           { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
         ];
         for (const c of corners) {
-          const rotated = Coord.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box));
+          const rotated = Point.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box));
 
           minX = Math.min(minX, rotated.x);
           minY = Math.min(minY, rotated.y);
@@ -172,11 +174,15 @@ export const Box = {
     // TODO: We can probalby check for rouding to one decimal here
     if (box.rotation === undefined || box.rotation === 0) return corners;
 
-    return corners.map(c => Coord.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box)));
+    return corners.map(c => Point.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box)));
+  },
+
+  asPolygon: (box: Box): Polygon => {
+    return { points: Box.corners(box) };
   },
 
   // TODO: This doesn't respect rotation
-  contains: (box: Box | undefined, c: Box | Coord): boolean => {
+  contains: (box: Box | undefined, c: Box | Point): boolean => {
     if (!box) return false;
 
     if ('pos' in c) {
@@ -191,29 +197,17 @@ export const Box = {
     }
   },
 
-  // TODO: This is probably not correct when rotation is involved
   intersects: (box: Box, otherBox: Box) => {
-    const corners = Box.corners(box);
-    const otherCorners = Box.corners(otherBox);
-
-    for (const c of corners) {
-      if (Box.contains(otherBox, c)) return true;
-    }
-
-    for (const c of otherCorners) {
-      if (Box.contains(box, c)) return true;
-    }
-
-    return false;
+    return Polygon.intersects(Box.asPolygon(box), Box.asPolygon(otherBox));
   },
 
   snapshot(b: Box) {
     return { size: { ...b.size }, pos: { ...b.pos }, rotation: b.rotation };
   },
 
-  translate: (b: Box, c: Coord): Box => {
+  translate: (b: Box, c: Point): Box => {
     return {
-      pos: Coord.add(b.pos, c),
+      pos: Point.add(b.pos, c),
       size: { ...b.size }
     };
   },
@@ -234,8 +228,8 @@ export const Box = {
 
   scale: (b: Box, s: number): Box => {
     const midpoint = Box.center(b);
-    const newMidpoint = Coord.subtract(midpoint, b.pos);
-    const scaledMidpoint = Coord.subtract(newMidpoint, {
+    const newMidpoint = Point.subtract(midpoint, b.pos);
+    const scaledMidpoint = Point.subtract(newMidpoint, {
       x: newMidpoint.x * s,
       y: newMidpoint.y * s
     });
@@ -247,7 +241,7 @@ export const Box = {
 
   rotate: (b: Box, r: number): Box => {
     const midpoint = Box.center(b);
-    const newMidpoint = Coord.subtract(midpoint, b.pos);
+    const newMidpoint = Point.subtract(midpoint, b.pos);
     const rotatedMidpoint = {
       x: newMidpoint.x * Math.cos(r) - newMidpoint.y * Math.sin(r),
       y: newMidpoint.x * Math.sin(r) + newMidpoint.y * Math.cos(r)
@@ -258,11 +252,55 @@ export const Box = {
   }
 };
 
+export type Polygon = {
+  points: Point[];
+};
+
+export const Polygon = {
+  intersects(a: Polygon, b: Polygon) {
+    for (let polygon of [a, b]) {
+      for (let i = 0; i < polygon.points.length; i++) {
+        const j = (i + 1) % polygon.points.length;
+
+        const start = polygon.points[i];
+        const end = polygon.points[j];
+
+        const normal = { y: end.y - start.y, x: start.x - end.x };
+
+        let minA: number | undefined = undefined;
+        let maxA: number | undefined = undefined;
+        for (const p of a.points) {
+          const projected = normal.x * p.x + normal.y * p.y;
+          if (minA === undefined || projected < minA) minA = projected;
+          if (maxA === undefined || projected > maxA) maxA = projected;
+        }
+
+        invariant.is.present(minA);
+        invariant.is.present(maxA);
+
+        let minB: number | undefined = undefined;
+        let maxB: number | undefined = undefined;
+        for (const p of b.points) {
+          const projected = normal.x * p.x + normal.y * p.y;
+          if (minB === undefined || projected < minB) minB = projected;
+          if (maxB === undefined || projected > maxB) maxB = projected;
+        }
+
+        invariant.is.present(minB);
+        invariant.is.present(maxB);
+
+        if (maxA < minB || maxB < minA) return false;
+      }
+    }
+    return true;
+  }
+};
+
 export interface Transform {
   asSvgTransform(): string;
   apply(b: Box): Box;
-  apply(b: Coord): Coord;
-  apply(b: Box | Coord): Box | Coord;
+  apply(b: Point): Point;
+  apply(b: Box | Point): Box | Point;
   reverse(): Transform;
 }
 
@@ -270,30 +308,30 @@ export const Transform = {
   box: (b: Box, ...transforms: Transform[]): Box => {
     return transforms.reduce((b, t) => t.apply(b), b);
   },
-  coord: (b: Coord, ...transforms: Transform[]): Coord => {
+  coord: (b: Point, ...transforms: Transform[]): Point => {
     return transforms.reduce((b, t) => t.apply(b), b);
   }
 };
 
 export class Translation implements Transform {
-  constructor(private readonly c: Coord) {}
+  constructor(private readonly c: Point) {}
 
   asSvgTransform() {
     return `translate(${this.c.x},${this.c.y})`;
   }
 
   apply(b: Box): Box;
-  apply(b: Coord): Coord;
-  apply(b: Box | Coord): Box | Coord {
+  apply(b: Point): Point;
+  apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
       return Box.translate(b, this.c) as Box;
     } else {
-      return Coord.translate(b, this.c) as Coord;
+      return Point.translate(b, this.c) as Point;
     }
   }
 
   reverse(): Transform {
-    return new Translation(Coord.negate(this.c));
+    return new Translation(Point.negate(this.c));
   }
 }
 
@@ -305,12 +343,12 @@ export class Scale implements Transform {
   }
 
   apply(b: Box): Box;
-  apply(b: Coord): Coord;
-  apply(b: Box | Coord): Box | Coord {
+  apply(b: Point): Point;
+  apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
       return Box.scale(b, this.s);
     } else {
-      return Coord.scale(b, this.s);
+      return Point.scale(b, this.s);
     }
   }
 
@@ -327,12 +365,12 @@ export class Rotation implements Transform {
   }
 
   apply(b: Box): Box;
-  apply(b: Coord): Coord;
-  apply(b: Box | Coord): Box | Coord {
+  apply(b: Point): Point;
+  apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
       return Box.rotate(b, this.r);
     } else {
-      return Coord.rotate(b, this.r);
+      return Point.rotate(b, this.r);
     }
   }
 

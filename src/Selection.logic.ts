@@ -1,9 +1,9 @@
-import { Box, Coord } from './geometry.ts';
+import { Box, Point } from './geometry.ts';
 import { ObjectDrag, SelectionState } from './state.ts';
 import { NodeDef } from './diagram.ts';
 
-export const selectionResize = (coord: Coord, selection: SelectionState, drag: ObjectDrag) => {
-  const delta = Coord.subtract(coord, drag.offset);
+export const selectionResize = (coord: Point, selection: SelectionState, drag: ObjectDrag) => {
+  const delta = Point.subtract(coord, drag.offset);
 
   const before = Box.snapshot(selection);
 
@@ -40,11 +40,11 @@ export const selectionResize = (coord: Coord, selection: SelectionState, drag: O
   }
 };
 
-export const selectionRotate = (coord: Coord, selection: SelectionState, drag: ObjectDrag) => {
+export const selectionRotate = (coord: Point, selection: SelectionState, drag: ObjectDrag) => {
   const before = Box.snapshot(selection);
 
   const center = Box.center(drag.original);
-  selection.rotation = Coord.angle(center, coord);
+  selection.rotation = Point.angle(center, coord);
 
   for (const node of selection.elements) {
     NodeDef.transform(node, before, selection);

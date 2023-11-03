@@ -1,5 +1,5 @@
 import { ResolvedNodeDef } from './diagram.ts';
-import { Box, Coord } from './geometry.ts';
+import { Box, Point } from './geometry.ts';
 
 export type ObjectDrag = {
   type:
@@ -13,7 +13,7 @@ export type ObjectDrag = {
     | 'resize-w'
     | 'resize-e'
     | 'rotate';
-  offset: Coord;
+  offset: Point;
   original: Box;
 };
 
@@ -21,7 +21,7 @@ export type Drag =
   | ObjectDrag
   | {
       type: 'marquee';
-      offset: Coord;
+      offset: Point;
     };
 
 const EMPTY_BOX = {

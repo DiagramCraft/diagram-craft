@@ -3,16 +3,20 @@ import { SelectionState } from './state.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { LoadedDiagram, ResolvedNodeDef } from './diagram.ts';
 import { Box } from './geometry.ts';
+import { precondition } from './assert.ts';
 
 export type SelectionMarqueeApi = {
   repaint: () => void;
 };
 
 export const updatePendingElements = (selection: SelectionState, diagram: LoadedDiagram) => {
+  precondition.is.present(selection.marquee);
+
   const pending: ResolvedNodeDef[] = [];
   for (const e of diagram.elements) {
     if (e.type !== 'node') continue;
 
+    // if (Box.intersects(selection.marquee!, e)) {
     if (Box.contains(selection.marquee, e)) {
       pending.push(e);
     }

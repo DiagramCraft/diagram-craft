@@ -1,4 +1,4 @@
-import { Angle, Box, Coord, Extent, Rotation, Transform, Translation } from './geometry.ts';
+import { Angle, Box, Point, Extent, Rotation, Transform, Translation } from './geometry.ts';
 import { VERIFY_NOT_REACHED } from './assert.ts';
 
 export interface Reference {
@@ -11,7 +11,7 @@ export interface AbstractNodeDef {
   id: string;
 
   // Note, here position is in local coordinates
-  pos: Coord;
+  pos: Point;
   size: Extent;
   rotation?: number;
 }
@@ -95,7 +95,7 @@ export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
   for (const n of allNodes) {
     for (const child of unfoldGroup(n)) {
       if (child.parent) {
-        nodeLookup[child.id].pos = Coord.add(
+        nodeLookup[child.id].pos = Point.add(
           nodeLookup[child.id].pos,
           nodeLookup[child.parent.id].pos
         );
@@ -152,8 +152,8 @@ export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
 };
 
 export const NodeDef = {
-  move: (node: ResolvedNodeDef, d: Coord) => {
-    node.pos = Coord.add(node.pos, d);
+  move: (node: ResolvedNodeDef, d: Point) => {
+    node.pos = Point.add(node.pos, d);
     for (const cn of node.children) {
       NodeDef.move(cn, d);
     }
@@ -177,7 +177,7 @@ export const NodeDef = {
     node.size.h = relH * after.size.h;
 
     if (before.rotation !== after.rotation) {
-      const center = new Translation(Coord.negate(Box.center(before)));
+      const center = new Translation(Point.negate(Box.center(before)));
       const rotate = new Rotation(Angle.toRad((after.rotation ?? 0) - (before.rotation ?? 0)));
       const moveBack = center.reverse();
 

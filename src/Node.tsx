@@ -1,4 +1,4 @@
-import { Coord } from './geometry.ts';
+import { Point } from './geometry.ts';
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
 import { ResolvedNodeDef } from './diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
@@ -23,7 +23,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
-      props.onMouseDown(props.def.id, Coord.fromEvent(e.nativeEvent), e.shiftKey);
+      props.onMouseDown(props.def.id, Point.fromEvent(e.nativeEvent), e.shiftKey);
       e.stopPropagation();
 
       return false;
@@ -82,6 +82,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
 type Props = {
   def: ResolvedNodeDef;
-  onMouseDown: (id: string, coord: Coord, add: boolean) => void;
+  onMouseDown: (id: string, coord: Point, add: boolean) => void;
   isSelected: boolean;
 };

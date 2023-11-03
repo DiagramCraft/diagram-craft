@@ -1,33 +1,33 @@
 import { expect, test, describe } from 'vitest';
-import { Coord, Box } from './geometry.ts';
+import { Point, Box } from './geometry.ts';
 
 describe('Coord', () => {
   test('adds two coords', () => {
-    expect(Coord.add({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 4, y: 6 });
+    expect(Point.add({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 4, y: 6 });
   });
 
   test('subtracts two coords', () => {
-    expect(Coord.subtract({ x: 3, y: 4 }, { x: 1, y: 2 })).toStrictEqual({ x: 2, y: 2 });
+    expect(Point.subtract({ x: 3, y: 4 }, { x: 1, y: 2 })).toStrictEqual({ x: 2, y: 2 });
   });
 
   test('midpoint of two coords', () => {
-    expect(Coord.midpoint({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 2, y: 3 });
+    expect(Point.midpoint({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 2, y: 3 });
   });
 
   test('negates coord', () => {
-    expect(Coord.negate({ x: 1, y: 2 })).toStrictEqual({ x: -1, y: -2 });
+    expect(Point.negate({ x: 1, y: 2 })).toStrictEqual({ x: -1, y: -2 });
   });
 
   test('translates coord', () => {
-    expect(Coord.translate({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 4, y: 6 });
+    expect(Point.translate({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 4, y: 6 });
   });
 
   test('scales coord', () => {
-    expect(Coord.scale({ x: 1, y: 2 }, 2)).toStrictEqual({ x: 2, y: 4 });
+    expect(Point.scale({ x: 1, y: 2 }, 2)).toStrictEqual({ x: 2, y: 4 });
   });
 
   test('rotates coord', () => {
-    expect(Coord.round(Coord.rotate({ x: 1, y: 0 }, Math.PI / 2))).toStrictEqual({ x: 0, y: 1 });
+    expect(Point.round(Point.rotate({ x: 1, y: 0 }, Math.PI / 2))).toStrictEqual({ x: 0, y: 1 });
   });
 });
 
