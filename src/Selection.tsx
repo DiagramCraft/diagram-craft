@@ -1,18 +1,19 @@
 import { Box, Coord } from './geometry.ts';
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { Drag, SelectionState } from './state.ts';
+import { useRedraw } from './useRedraw.tsx';
 
 export type SelectionApi = {
   repaint: () => void;
 };
 
 export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
-  const [redraw, setRedraw] = useState(1);
+  const redraw = useRedraw();
 
   useImperativeHandle(ref, () => {
     return {
       repaint: () => {
-        setRedraw(redraw + 1);
+        redraw();
       }
     };
   });

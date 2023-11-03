@@ -1,17 +1,18 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { SelectionState } from './state.ts';
+import { useRedraw } from './useRedraw.tsx';
 
 export type SelectionMarqueeApi = {
   repaint: () => void;
 };
 
 export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, ref) => {
-  const [redraw, setRedraw] = useState(1);
+  const redraw = useRedraw();
 
   useImperativeHandle(ref, () => {
     return {
       repaint: () => {
-        setRedraw(redraw + 1);
+        redraw();
       }
     };
   });

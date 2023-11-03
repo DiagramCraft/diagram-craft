@@ -1,18 +1,19 @@
 import { Coord } from './geometry.ts';
-import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle, useState } from 'react';
+import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
 import { ResolvedNodeDef } from './diagram.ts';
+import { useRedraw } from './useRedraw.tsx';
 
 export type NodeApi = {
   repaint: () => void;
 };
 
 export const Node = forwardRef<NodeApi, Props>((props, ref) => {
-  const [redraw, setRedraw] = useState(1);
+  const redraw = useRedraw();
 
   useImperativeHandle(ref, () => {
     return {
       repaint: () => {
-        setRedraw(redraw + 1);
+        redraw();
       }
     };
   });

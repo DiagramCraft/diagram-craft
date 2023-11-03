@@ -1,18 +1,19 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { ResolvedEdgeDef } from './diagram.ts';
 import { Box } from './geometry.ts';
+import { useRedraw } from './useRedraw.tsx';
 
 export type EdgeApi = {
   repaint: () => void;
 };
 
 export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
-  const [redraw, setRedraw] = useState(1);
+  const redraw = useRedraw();
 
   useImperativeHandle(ref, () => {
     return {
       repaint: () => {
-        setRedraw(redraw + 1);
+        redraw();
       }
     };
   });
