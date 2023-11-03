@@ -1,4 +1,4 @@
-import { Box, Point } from './geometry.ts';
+import { Box, Point, Vector } from './geometry.ts';
 import { ObjectDrag, SelectionState } from './state.ts';
 import { NodeDef } from './diagram.ts';
 
@@ -44,7 +44,7 @@ export const selectionRotate = (coord: Point, selection: SelectionState, drag: O
   const before = Box.snapshot(selection);
 
   const center = Box.center(drag.original);
-  selection.rotation = Point.angle(center, coord);
+  selection.rotation = Vector.angle(Vector.from(center, coord));
 
   for (const node of selection.elements) {
     NodeDef.transform(node, before, selection);

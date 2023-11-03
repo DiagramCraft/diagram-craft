@@ -1,4 +1,8 @@
-import { invariant } from './assert.ts';
+import { invariant, precondition } from './assert.ts';
+
+const round = (n: number) => {
+  return Math.round(n * 100) / 100;
+};
 
 export type Point = {
   x: number;
@@ -16,13 +20,28 @@ export type Box = {
   rotation?: number;
 };
 
+export type Polygon = {
+  points: Point[];
+};
+
+export type Vector = Point;
+
+export type Angle = {
+  type: 'deg' | 'rad';
+  amount: number;
+};
+
 export const Angle = {
-  toDeg: (radians: number) => {
-    return radians * (180 / Math.PI);
+  toDeg: (radians: Angle | number) => {
+    if (typeof radians === 'number') return radians * (180 / Math.PI);
+    if (radians.type === 'deg') return radians.amount;
+    return radians.amount * (180 / Math.PI);
   },
 
-  toRad: (degrees: number) => {
-    return degrees * (Math.PI / 180);
+  toRad: (degrees: Angle | number) => {
+    if (typeof degrees === 'number') return degrees * (Math.PI / 180);
+    if (degrees.type === 'rad') return degrees.amount;
+    return degrees.amount * (Math.PI / 180);
   }
 };
 
@@ -36,24 +55,12 @@ export const Point = {
     return { x: e.offsetX, y: e.offsetY };
   },
 
-  angle: (c1: Point, c2: Point) => {
-    const dx = c2.x - c1.x;
-    const dy = c2.y - c1.y;
-    return Angle.toDeg(Math.atan2(dy, dx) + Math.PI / 2);
-  },
-
   round: (c: Point) => {
-    return { x: Math.round(c.x), y: Math.round(c.y) };
+    return { x: round(c.x), y: round(c.y) };
   },
 
-  negate: (c: Point) => ({ x: -c.x, y: -c.y }),
-
-  translate: (c: Point, d: Point): Point => {
+  translate: (c: Point, d: Vector): Point => {
     return { x: c.x + d.x, y: c.y + d.y };
-  },
-
-  scale: (c: Point, s: number) => {
-    return { x: c.x * s, y: c.y * s };
   },
 
   rotate: (c: Point, r: number) => {
@@ -67,6 +74,10 @@ export const Point = {
     const newCoord = Point.subtract(c, centerOfRotation);
     const rotatedCoord = Point.rotate(newCoord, r);
     return Point.translate(rotatedCoord, centerOfRotation);
+  },
+
+  isEqual: (a: Point, b: Point) => {
+    return a.x === b.x && a.y === b.y;
   }
 };
 
@@ -78,7 +89,7 @@ export const Box = {
     };
   },
 
-  positionFromCenter: (b: Box, center: Point): Box => {
+  moveCenterPoint: (b: Box, center: Point): Box => {
     b.pos = {
       x: center.x - b.size.w / 2,
       y: center.y - b.size.h / 2
@@ -167,12 +178,11 @@ export const Box = {
       : [
           { x: box.pos.x, y: box.pos.y },
           { x: box.pos.x + box.size.w, y: box.pos.y },
-          { x: box.pos.x, y: box.pos.y + box.size.h },
-          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
+          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h },
+          { x: box.pos.x, y: box.pos.y + box.size.h }
         ];
 
-    // TODO: We can probalby check for rouding to one decimal here
-    if (box.rotation === undefined || box.rotation === 0) return corners;
+    if (box.rotation === undefined || round(box.rotation) === 0) return corners;
 
     return corners.map(c => Point.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box)));
   },
@@ -181,19 +191,22 @@ export const Box = {
     return { points: Box.corners(box) };
   },
 
-  // TODO: This doesn't respect rotation
   contains: (box: Box | undefined, c: Box | Point): boolean => {
     if (!box) return false;
 
     if ('pos' in c) {
       return Box.corners(c).every(c2 => Box.contains(box, c2));
     } else {
-      return (
-        c.x >= box.pos.x &&
-        c.x <= box.pos.x + box.size.w &&
-        c.y >= box.pos.y &&
-        c.y <= box.pos.y + box.size.h
-      );
+      if (box.rotation === undefined || box.rotation === 0) {
+        return (
+          c.x >= box.pos.x &&
+          c.x <= box.pos.x + box.size.w &&
+          c.y >= box.pos.y &&
+          c.y <= box.pos.y + box.size.h
+        );
+      } else {
+        return Polygon.contains(Box.asPolygon(box), c);
+      }
     }
   },
 
@@ -252,10 +265,6 @@ export const Box = {
   }
 };
 
-export type Polygon = {
-  points: Point[];
-};
-
 export const Polygon = {
   intersects(a: Polygon, b: Polygon) {
     for (let polygon of [a, b]) {
@@ -293,6 +302,42 @@ export const Polygon = {
       }
     }
     return true;
+  },
+
+  contains: (polygon: Polygon, testPoint: Point) => {
+    precondition.is.true(polygon.points.length >= 3);
+
+    const crossProducts: number[] = [];
+
+    for (let i = 0; i < polygon.points.length; i++) {
+      if (Point.isEqual(polygon.points[i], testPoint)) return true;
+
+      const start = polygon.points[i];
+      const end = polygon.points[(i + 1) % polygon.points.length];
+
+      crossProducts.push(
+        Vector.crossProduct(Vector.from(start, end), Vector.from(testPoint, start))
+      );
+    }
+
+    return crossProducts.every(d => d >= 0) || crossProducts.every(d => d <= 0);
+  }
+};
+
+export const Vector = {
+  from: (c1: Point, c2: Point) => {
+    return { x: c2.x - c1.x, y: c2.y - c1.y };
+  },
+  crossProduct: (v1: Vector, v2: Vector) => {
+    return v1.x * v2.y - v1.y * v2.x;
+  },
+  angle: (v: Vector) => {
+    return Angle.toDeg(Math.atan2(v.y, v.x) + Math.PI / 2);
+  },
+  negate: (c: Vector) => ({ x: -c.x, y: -c.y }),
+
+  scale: (c: Vector, s: number) => {
+    return { x: c.x * s, y: c.y * s };
   }
 };
 
@@ -331,7 +376,7 @@ export class Translation implements Transform {
   }
 
   reverse(): Transform {
-    return new Translation(Point.negate(this.c));
+    return new Translation(Vector.negate(this.c));
   }
 }
 
@@ -348,7 +393,7 @@ export class Scale implements Transform {
     if ('pos' in b) {
       return Box.scale(b, this.s);
     } else {
-      return Point.scale(b, this.s);
+      return Vector.scale(b, this.s);
     }
   }
 

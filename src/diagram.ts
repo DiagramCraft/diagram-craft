@@ -1,4 +1,4 @@
-import { Angle, Box, Point, Extent, Rotation, Transform, Translation } from './geometry.ts';
+import { Angle, Box, Point, Extent, Rotation, Transform, Translation, Vector } from './geometry.ts';
 import { VERIFY_NOT_REACHED } from './assert.ts';
 
 export interface Reference {
@@ -177,13 +177,13 @@ export const NodeDef = {
     node.size.h = relH * after.size.h;
 
     if (before.rotation !== after.rotation) {
-      const center = new Translation(Point.negate(Box.center(before)));
+      const center = new Translation(Vector.negate(Box.center(before)));
       const rotate = new Rotation(Angle.toRad((after.rotation ?? 0) - (before.rotation ?? 0)));
       const moveBack = center.reverse();
 
       const np = Transform.coord(Box.center(node), center, rotate, moveBack);
 
-      Box.positionFromCenter(node, np);
+      Box.moveCenterPoint(node, np);
 
       node.rotation = after.rotation;
     }
