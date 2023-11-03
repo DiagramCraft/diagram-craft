@@ -176,14 +176,35 @@ export const Box = {
   },
 
   // TODO: This doesn't respect rotation
-  contains: (box: Box | undefined, c: Coord): boolean => {
+  contains: (box: Box | undefined, c: Box | Coord): boolean => {
     if (!box) return false;
-    return (
-      c.x >= box.pos.x &&
-      c.x <= box.pos.x + box.size.w &&
-      c.y >= box.pos.y &&
-      c.y <= box.pos.y + box.size.h
-    );
+
+    if ('pos' in c) {
+      return Box.corners(c).every(c2 => Box.contains(box, c2));
+    } else {
+      return (
+        c.x >= box.pos.x &&
+        c.x <= box.pos.x + box.size.w &&
+        c.y >= box.pos.y &&
+        c.y <= box.pos.y + box.size.h
+      );
+    }
+  },
+
+  // TODO: This is probably not correct when rotation is involved
+  intersects: (box: Box, otherBox: Box) => {
+    const corners = Box.corners(box);
+    const otherCorners = Box.corners(otherBox);
+
+    for (const c of corners) {
+      if (Box.contains(otherBox, c)) return true;
+    }
+
+    for (const c of otherCorners) {
+      if (Box.contains(box, c)) return true;
+    }
+
+    return false;
   },
 
   snapshot(b: Box) {

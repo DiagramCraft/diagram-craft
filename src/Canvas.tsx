@@ -7,7 +7,11 @@ import { Box, Coord } from './geometry.ts';
 import { LoadedDiagram, NodeDef } from './diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
+import {
+  SelectionMarquee,
+  SelectionMarqueeApi,
+  updatePendingElements
+} from './SelectionMarquee.tsx';
 import { selectionResize, selectionRotate } from './Selection.logic.ts';
 import { assert } from './assert.ts';
 
@@ -86,7 +90,6 @@ export const Canvas = (props: Props) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (_id: ObjectId, _coord: Coord) => {
       try {
-        selection.current.clearMarquee();
         drag.current = undefined;
 
         if (deferedMouseAction.current) {
@@ -98,6 +101,12 @@ export const Canvas = (props: Props) => {
             selection.current.toggle(diagram.nodeLookup[deferedMouseAction.current.id]);
             return;
           }
+        } else if (selection.current.pendingElements) {
+          selection.current.rotation = undefined;
+          selection.current.elements = selection.current.pendingElements;
+
+          selection.current.recalculateBoundingBox();
+          selection.current.clearMarquee();
         }
       } finally {
         selectionRef.current?.repaint();
@@ -147,6 +156,8 @@ export const Canvas = (props: Props) => {
               size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y }
             })
           );
+
+          updatePendingElements(selection.current, diagram);
 
           selectionMarqueeRef.current?.repaint();
         }

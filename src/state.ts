@@ -49,10 +49,9 @@ export class SelectionState implements Box {
 
   recalculateBoundingBox() {
     const bb = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements);
-
     this.pos = bb.pos;
     this.size = bb.size;
-    this.rotation = this.rotation ?? bb.rotation ?? 0;
+    this.rotation ??= bb.rotation;
   }
 
   toggle(element: ResolvedNodeDef) {
