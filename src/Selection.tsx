@@ -1,13 +1,13 @@
 import { Box, Coord } from './geometry.ts';
 import { forwardRef, useImperativeHandle, useState } from 'react';
-import { Drag, SelectionState } from './state.ts';
+import { Drag, ObjectDrag, SelectionState } from './state.ts';
 import { NodeDef } from './diagram.ts';
 
 export type SelectionApi = {
   repaint: () => void;
 };
 
-export const selectionResize = (coord: Coord, selection: SelectionState, drag: Drag) => {
+export const selectionResize = (coord: Coord, selection: SelectionState, drag: ObjectDrag) => {
   const delta = Coord.subtract(coord, drag.offset);
 
   const before = Box.snapshot(selection);

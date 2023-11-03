@@ -196,6 +196,20 @@ export const Box = {
     };
   },
 
+  normalize: (b: Box) => {
+    if (b.size.w < 0) {
+      b.pos.x += b.size.w;
+      b.size.w *= -1;
+    }
+
+    if (b.size.h < 0) {
+      b.pos.y += b.size.h;
+      b.size.h *= -1;
+    }
+
+    return b;
+  },
+
   scale: (b: Box, s: number): Box => {
     const midpoint = Box.center(b);
     const newMidpoint = Coord.subtract(midpoint, b.pos);

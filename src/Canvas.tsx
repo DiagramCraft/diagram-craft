@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { Drag, SelectionState } from './state.ts';
+import { Drag, ObjectDrag, SelectionState } from './state.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi, selectionResize } from './Selection.tsx';
@@ -7,6 +7,7 @@ import { Box, Coord } from './geometry.ts';
 import { LoadedDiagram, NodeDef } from './diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 
 const BACKGROUND = 'background';
 
@@ -26,6 +27,7 @@ export const Canvas = (props: Props) => {
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
+  const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
   const deferedMouseAction = useRef<DeferedMouseAction | null>(null);
 
   const updateCursor = useCallback(
@@ -57,15 +59,16 @@ export const Canvas = (props: Props) => {
           } else {
             if (isClickOnBackground) {
               selection.current = SelectionState.clear(selection.current);
+              drag.current = { type: 'marquee', offset: coord };
             } else {
               selection.current = SelectionState.set(selection.current, diagram.nodeLookup[id]);
             }
           }
         }
 
-        if (SelectionState.isEmpty(selection.current)) return;
-
         updateCursor(coord);
+
+        if (SelectionState.isEmpty(selection.current)) return;
 
         const localCoord = Coord.subtract(coord, selection.current.pos);
         onDragStart(localCoord, 'move', Box.snapshot(selection.current));
@@ -79,6 +82,7 @@ export const Canvas = (props: Props) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onMouseUp = useCallback((_id: ObjectId, _coord: Coord) => {
     try {
+      selectionMarqueeRef.current?.clear();
       drag.current = undefined;
 
       if (deferedMouseAction.current) {
@@ -104,19 +108,28 @@ export const Canvas = (props: Props) => {
       if (drag.current === undefined) return;
 
       try {
-        if (drag.current?.type?.startsWith('resize-') || drag.current?.type === 'rotate')
-          return selectionResize(coord, selection.current, drag.current!);
+        if (drag.current.type.startsWith('resize-') || drag.current.type === 'rotate') {
+          // TODO: Fix this "as" cast
+          return selectionResize(coord, selection.current, drag.current! as ObjectDrag);
+        } else if (drag.current.type === 'move') {
+          if (SelectionState.isEmpty(selection.current)) throw new Error('invalid state');
 
-        if (SelectionState.isEmpty(selection.current)) throw new Error('invalid state');
+          deferedMouseAction.current = null;
 
-        deferedMouseAction.current = null;
+          const d = Coord.subtract(coord, Coord.add(selection.current.pos, drag.current?.offset));
 
-        const d = Coord.subtract(coord, Coord.add(selection.current.pos, drag.current?.offset));
+          for (const node of selection.current.elements) {
+            NodeDef.move(node, d);
 
-        for (const node of selection.current.elements) {
-          NodeDef.move(node, d);
-
-          SelectionState.recalculate(selection.current);
+            SelectionState.recalculate(selection.current);
+          }
+        } else if (drag.current.type === 'marquee') {
+          selectionMarqueeRef.current?.repaint(
+            Box.snapshot({
+              pos: drag.current.offset,
+              size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y }
+            })
+          );
         }
       } finally {
         updateCursor(coord);
@@ -174,6 +187,7 @@ export const Canvas = (props: Props) => {
             })}
 
             <Selection ref={selectionRef} selection={selection.current} onDragStart={onDragStart} />
+            <SelectionMarquee ref={selectionMarqueeRef} />
           </svg>
         </div>
       </DndProvider>

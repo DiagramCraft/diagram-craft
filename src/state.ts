@@ -1,7 +1,7 @@
 import { ResolvedNodeDef } from './diagram.ts';
 import { Coord, Extent, Box } from './geometry.ts';
 
-export type Drag = {
+export type ObjectDrag = {
   type:
     | 'move'
     | 'resize-nw'
@@ -16,6 +16,13 @@ export type Drag = {
   offset: Coord;
   original: Box;
 };
+
+export type Drag =
+  | ObjectDrag
+  | {
+      type: 'marquee';
+      offset: Coord;
+    };
 
 export type SelectionState = {
   pos: Coord;
