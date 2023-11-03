@@ -38,4 +38,6 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((_props, 
   );
 });
 
-type Props = {};
+type Props = {
+  dummy?: string;
+};

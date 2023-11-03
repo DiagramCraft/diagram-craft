@@ -9,6 +9,17 @@ describe('SelectionState', () => {
   });
 
   test('update with empty elements is empty', () => {
-    expect(SelectionState.isEmpty(SelectionState.update(undefined, []))).toBe(true);
+    const s = SelectionState.EMPTY();
+    SelectionState.toggle(s, {
+      id: '1',
+      type: 'node',
+      pos: { x: 0, y: 0 },
+      size: { w: 10, h: 10 },
+      children: [],
+      nodeType: 'test'
+    });
+    expect(SelectionState.isEmpty(s)).toBe(false);
+    SelectionState.update(s, []);
+    expect(SelectionState.isEmpty(s)).toBe(true);
   });
 });

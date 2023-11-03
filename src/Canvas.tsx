@@ -2,12 +2,13 @@ import { useCallback, useRef } from 'react';
 import { Drag, ObjectDrag, SelectionState } from './state.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
-import { Selection, SelectionApi, selectionResize } from './Selection.tsx';
+import { Selection, SelectionApi } from './Selection.tsx';
 import { Box, Coord } from './geometry.ts';
 import { LoadedDiagram, NodeDef } from './diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
+import { selectionResize } from './Selection.logic.ts';
 
 const BACKGROUND = 'background';
 
@@ -51,17 +52,18 @@ export const Canvas = (props: Props) => {
       try {
         if (add) {
           if (!isClickOnBackground) {
-            selection.current = SelectionState.toggle(selection.current, diagram.nodeLookup[id]);
+            SelectionState.toggle(selection.current, diagram.nodeLookup[id]);
           }
         } else {
           if (Box.contains(selection.current, coord)) {
             deferedMouseAction.current = { id };
           } else {
             if (isClickOnBackground) {
-              selection.current = SelectionState.clear(selection.current);
+              SelectionState.clear(selection.current);
               drag.current = { type: 'marquee', offset: coord };
             } else {
-              selection.current = SelectionState.set(selection.current, diagram.nodeLookup[id]);
+              SelectionState.clear(selection.current);
+              SelectionState.toggle(selection.current, diagram.nodeLookup[id]);
             }
           }
         }
@@ -76,32 +78,36 @@ export const Canvas = (props: Props) => {
         selectionRef.current?.repaint();
       }
     },
-    [onDragStart, updateCursor]
+    [onDragStart, updateCursor, diagram]
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onMouseUp = useCallback((_id: ObjectId, _coord: Coord) => {
-    try {
-      selectionMarqueeRef.current?.clear();
-      drag.current = undefined;
+  const onMouseUp = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_id: ObjectId, _coord: Coord) => {
+      try {
+        selectionMarqueeRef.current?.clear();
+        drag.current = undefined;
 
-      if (deferedMouseAction.current) {
-        if (deferedMouseAction.current.id === BACKGROUND) {
-          selection.current = SelectionState.clear(selection.current);
-          return;
-        } else {
-          selection.current = SelectionState.set(
-            selection.current,
-            diagram.nodeLookup[deferedMouseAction.current.id]
-          );
-          return;
+        if (deferedMouseAction.current) {
+          if (deferedMouseAction.current.id === BACKGROUND) {
+            SelectionState.clear(selection.current);
+            return;
+          } else {
+            SelectionState.clear(selection.current);
+            SelectionState.toggle(
+              selection.current,
+              diagram.nodeLookup[deferedMouseAction.current.id]
+            );
+            return;
+          }
         }
+      } finally {
+        selectionRef.current?.repaint();
+        deferedMouseAction.current = null;
       }
-    } finally {
-      selectionRef.current?.repaint();
-      deferedMouseAction.current = null;
-    }
-  }, []);
+    },
+    [diagram]
+  );
 
   const onMouseMove = useCallback(
     (coord: Coord) => {

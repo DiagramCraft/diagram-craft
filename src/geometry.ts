@@ -175,6 +175,7 @@ export const Box = {
     return corners.map(c => Coord.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box)));
   },
 
+  // TODO: This doesn't respect rotation
   contains: (box: Box | undefined, c: Coord): boolean => {
     if (!box) return false;
     return (
@@ -226,18 +227,6 @@ export const Box = {
   rotate: (b: Box, r: number): Box => {
     const midpoint = Box.center(b);
     const newMidpoint = Coord.subtract(midpoint, b.pos);
-    const rotatedMidpoint = {
-      x: newMidpoint.x * Math.cos(r) - newMidpoint.y * Math.sin(r),
-      y: newMidpoint.x * Math.sin(r) + newMidpoint.y * Math.cos(r)
-    };
-    const newBox = Box.translate(b, rotatedMidpoint);
-    newBox.rotation = r;
-    return newBox;
-  },
-
-  rotateAround: (b: Box, r: number, centerOfRotation: Coord): Box => {
-    const midpoint = Box.center(b);
-    const newMidpoint = Coord.subtract(midpoint, centerOfRotation);
     const rotatedMidpoint = {
       x: newMidpoint.x * Math.cos(r) - newMidpoint.y * Math.sin(r),
       y: newMidpoint.x * Math.sin(r) + newMidpoint.y * Math.cos(r)
