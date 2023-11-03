@@ -1,9 +1,8 @@
 import { ResolvedNodeDef } from './diagram.ts';
 import { Box, Point } from './geometry.ts';
 
-export type ObjectDrag = {
+export type ResizeDrag = {
   type:
-    | 'move'
     | 'resize-nw'
     | 'resize-ne'
     | 'resize-sw'
@@ -11,14 +10,47 @@ export type ObjectDrag = {
     | 'resize-n'
     | 'resize-s'
     | 'resize-w'
-    | 'resize-e'
-    | 'rotate';
+    | 'resize-e';
   offset: Point;
+
+  // TODO: Can we use SelectionState.sourceElements instead?
+  original: Box;
+};
+
+export const isResizeDrag = (drag: Drag | undefined): drag is ResizeDrag => {
+  if (!drag) return false;
+  return (
+    drag.type === 'resize-se' ||
+    drag.type === 'resize-sw' ||
+    drag.type === 'resize-ne' ||
+    drag.type === 'resize-nw' ||
+    drag.type === 'resize-n' ||
+    drag.type === 'resize-s' ||
+    drag.type === 'resize-e' ||
+    drag.type === 'resize-w'
+  );
+};
+
+export type MoveDrag = {
+  type: 'move';
+  offset: Point;
+
+  // TODO: Can we use SelectionState.sourceElements instead?
+  original: Box;
+};
+
+export type RotateDrag = {
+  type: 'rotate';
+  offset: Point;
+
+  // TODO: Can we use SelectionState.sourceElements instead?
   original: Box;
 };
 
 export type Drag =
-  | ObjectDrag
+  | ResizeDrag
+  | MoveDrag
+  | RotateDrag
   | {
       type: 'marquee';
       offset: Point;
@@ -30,12 +62,22 @@ const EMPTY_BOX = {
   rotation: undefined
 };
 
+type SelectionSource = {
+  elements: Box[];
+  boundingBox: Box;
+};
+
 export class SelectionState implements Box {
   pos: Box['pos'];
   size: Box['size'];
   rotation: Box['rotation'];
 
   elements: ResolvedNodeDef[] = [];
+
+  source: SelectionSource = {
+    elements: [],
+    boundingBox: Box.snapshot(EMPTY_BOX)
+  };
 
   marquee?: Box;
   pendingElements?: ResolvedNodeDef[];
@@ -54,21 +96,33 @@ export class SelectionState implements Box {
     this.rotation ??= bb.rotation;
   }
 
+  recalculateSourceBoundingBox() {
+    const sourcebb = this.source.elements ? EMPTY_BOX : Box.boundingBox(this.source.elements);
+    this.source.boundingBox.pos = sourcebb.pos;
+    this.source.boundingBox.size = sourcebb.size;
+    this.source.boundingBox.rotation ??= sourcebb.rotation;
+  }
+
   toggle(element: ResolvedNodeDef) {
     this.rotation = undefined;
 
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
+    this.source.elements = this.elements.map(e => Box.snapshot(e));
+
     this.recalculateBoundingBox();
+    this.recalculateSourceBoundingBox();
   }
 
   clear() {
     this.rotation = undefined;
     this.elements = [];
+    this.source.elements = [];
     this.marquee = undefined;
     this.pendingElements = undefined;
     this.recalculateBoundingBox();
+    this.recalculateSourceBoundingBox();
   }
 
   isEmpty() {
@@ -78,5 +132,10 @@ export class SelectionState implements Box {
   clearMarquee() {
     this.marquee = undefined;
     this.pendingElements = undefined;
+  }
+
+  rebaseline() {
+    this.source.elements = this.elements.map(e => Box.snapshot(e));
+    this.recalculateSourceBoundingBox();
   }
 }

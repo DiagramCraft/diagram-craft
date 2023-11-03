@@ -1,10 +1,10 @@
-import { useCallback, useRef } from 'react';
-import { Drag, SelectionState } from './state.ts';
+import { useCallback, useEffect, useRef } from 'react';
+import { Drag, isResizeDrag, SelectionState } from './state.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box, Point } from './geometry.ts';
-import { LoadedDiagram, NodeDef } from './diagram.ts';
+import { LoadedDiagram, MoveAction, NodeDef, ResizeAction, RotateAction } from './diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import {
@@ -14,6 +14,7 @@ import {
 } from './SelectionMarquee.tsx';
 import { selectionResize, selectionRotate } from './Selection.logic.ts';
 import { assert } from './assert.ts';
+import { useRedraw } from './useRedraw.tsx';
 
 const BACKGROUND = 'background';
 
@@ -25,6 +26,7 @@ type DeferedMouseAction = {
 };
 
 export const Canvas = (props: Props) => {
+  const redraw = useRedraw();
   const diagram = props.diagram;
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -35,6 +37,17 @@ export const Canvas = (props: Props) => {
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
   const deferedMouseAction = useRef<DeferedMouseAction | null>(null);
+
+  useEffect(() => {
+    const callback = () => {
+      selection.current.clear();
+      redraw();
+    };
+    diagram.addListener(callback);
+    return () => {
+      diagram.removeListener(callback);
+    };
+  }, [diagram, redraw]);
 
   const updateCursor = useCallback(
     (coord: Point) => {
@@ -90,6 +103,37 @@ export const Canvas = (props: Props) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (_id: ObjectId, _coord: Point) => {
       try {
+        if (drag.current) {
+          if (drag.current?.type === 'move') {
+            diagram.undoManager.add(
+              new MoveAction(
+                selection.current.source.elements,
+                selection.current.elements,
+                selection.current.elements
+              )
+            );
+            selection.current.rebaseline();
+          } else if (drag.current?.type === 'rotate') {
+            diagram.undoManager.add(
+              new RotateAction(
+                selection.current.source.elements,
+                selection.current.elements,
+                selection.current.elements
+              )
+            );
+            selection.current.rebaseline();
+          } else if (isResizeDrag(drag.current)) {
+            diagram.undoManager.add(
+              new ResizeAction(
+                selection.current.source.elements,
+                selection.current.elements,
+                selection.current.elements
+              )
+            );
+            selection.current.rebaseline();
+          }
+        }
+
         drag.current = undefined;
 
         if (deferedMouseAction.current) {
@@ -123,16 +167,7 @@ export const Canvas = (props: Props) => {
         if (drag.current === undefined) return;
         deferedMouseAction.current = null;
 
-        if (
-          drag.current.type === 'resize-se' ||
-          drag.current.type === 'resize-sw' ||
-          drag.current.type === 'resize-ne' ||
-          drag.current.type === 'resize-nw' ||
-          drag.current.type === 'resize-n' ||
-          drag.current.type === 'resize-s' ||
-          drag.current.type === 'resize-e' ||
-          drag.current.type === 'resize-w'
-        ) {
+        if (isResizeDrag(drag.current)) {
           assert.false(selection.current.isEmpty());
           return selectionResize(coord, selection.current, drag.current);
         } else if (drag.current?.type === 'rotate') {

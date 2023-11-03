@@ -1,6 +1,7 @@
 import './App.css';
 import { Diagram, loadDiagram } from './diagram.ts';
 import { Canvas } from './Canvas.tsx';
+import { useEffect } from 'react';
 
 const diagram: Diagram = {
   elements: [
@@ -57,6 +58,21 @@ const diagram: Diagram = {
 const $d = loadDiagram(diagram);
 
 const App = () => {
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.code === 'KeyZ') {
+        if (e.metaKey && e.shiftKey) {
+          $d.undoManager.redo();
+        } else if (e.metaKey) {
+          $d.undoManager.undo();
+        }
+      }
+    };
+    document.addEventListener('keydown', listener);
+    return () => {
+      document.removeEventListener('keydown', listener);
+    };
+  }, []);
   return <Canvas diagram={$d} />;
 };
 

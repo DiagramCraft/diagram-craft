@@ -1,5 +1,6 @@
 import { Angle, Box, Point, Extent, Rotation, Transform, Translation, Vector } from './geometry.ts';
 import { VERIFY_NOT_REACHED } from './assert.ts';
+import { UndoableAction, UndoManager } from './UndoManager.ts';
 
 export interface Reference {
   id: string;
@@ -49,11 +50,41 @@ export interface Diagram {
   elements: (SerializedNodeDef | SerializedEdgeDef)[];
 }
 
-export type LoadedDiagram = {
+type Listener = () => void;
+
+export class LoadedDiagram {
   elements: (ResolvedEdgeDef | ResolvedNodeDef)[];
   nodeLookup: Record<string, ResolvedNodeDef>;
   edgeLookup: Record<string, ResolvedEdgeDef>;
-};
+  undoManager = new UndoManager(() => {
+    this.commit();
+  });
+
+  private listeners: Listener[];
+
+  constructor(
+    elements: (ResolvedEdgeDef | ResolvedNodeDef)[],
+    nodeLookup: Record<string, ResolvedNodeDef>,
+    edgeLookup: Record<string, ResolvedEdgeDef>
+  ) {
+    this.elements = elements;
+    this.nodeLookup = nodeLookup;
+    this.edgeLookup = edgeLookup;
+    this.listeners = [];
+  }
+
+  commit() {
+    this.listeners.forEach(l => l());
+  }
+
+  addListener(l: Listener) {
+    this.listeners.push(l);
+  }
+
+  removeListener(l: Listener) {
+    this.listeners = this.listeners.filter(l2 => l2 !== l);
+  }
+}
 
 const unfoldGroup = (node: SerializedNodeDef) => {
   const recurse = (
@@ -148,7 +179,7 @@ export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
     }
   }
 
-  return { elements, edgeLookup, nodeLookup };
+  return new LoadedDiagram(elements, nodeLookup, edgeLookup);
 };
 
 export const NodeDef = {
@@ -200,3 +231,39 @@ export const NodeDef = {
     ];
   }
 };
+
+class AbstractTransformAction implements UndoableAction {
+  private nodes: ResolvedNodeDef[] = [];
+  private source: Box[] = [];
+  private target: Box[] = [];
+
+  constructor(source: Box[], target: Box[], nodes: ResolvedNodeDef[]) {
+    for (let i = 0; i < target.length; i++) {
+      this.nodes.push(nodes[i]);
+      this.source.push(Box.snapshot(source[i]));
+      this.target.push(Box.snapshot(target[i]));
+    }
+  }
+
+  undo() {
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.nodes[i].rotation = this.source[i].rotation;
+      this.nodes[i].pos = this.source[i].pos;
+      this.nodes[i].size = this.source[i].size;
+    }
+  }
+
+  redo() {
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.nodes[i].rotation = this.target[i].rotation;
+      this.nodes[i].pos = this.target[i].pos;
+      this.nodes[i].size = this.target[i].size;
+    }
+  }
+}
+
+export class MoveAction extends AbstractTransformAction {}
+
+export class RotateAction extends AbstractTransformAction {}
+
+export class ResizeAction extends AbstractTransformAction {}

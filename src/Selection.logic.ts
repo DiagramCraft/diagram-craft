@@ -1,8 +1,8 @@
 import { Box, Point, Vector } from './geometry.ts';
-import { ObjectDrag, SelectionState } from './state.ts';
+import { ResizeDrag, RotateDrag, SelectionState } from './state.ts';
 import { NodeDef } from './diagram.ts';
 
-export const selectionResize = (coord: Point, selection: SelectionState, drag: ObjectDrag) => {
+export const selectionResize = (coord: Point, selection: SelectionState, drag: ResizeDrag) => {
   const delta = Point.subtract(coord, drag.offset);
 
   const before = Box.snapshot(selection);
@@ -40,7 +40,7 @@ export const selectionResize = (coord: Point, selection: SelectionState, drag: O
   }
 };
 
-export const selectionRotate = (coord: Point, selection: SelectionState, drag: ObjectDrag) => {
+export const selectionRotate = (coord: Point, selection: SelectionState, drag: RotateDrag) => {
   const before = Box.snapshot(selection);
 
   const center = Box.center(drag.original);
