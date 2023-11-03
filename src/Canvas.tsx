@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { Drag, ObjectDrag, SelectionState } from './state.ts';
+import { Drag, SelectionState } from './state.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
@@ -8,7 +8,8 @@ import { LoadedDiagram, NodeDef } from './diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
-import { selectionResize } from './Selection.logic.ts';
+import { selectionResize, selectionRotate } from './Selection.logic.ts';
+import { assert } from './assert.ts';
 
 const BACKGROUND = 'background';
 
@@ -111,13 +112,25 @@ export const Canvas = (props: Props) => {
       if (drag.current === undefined) return;
 
       try {
-        if (drag.current.type.startsWith('resize-') || drag.current.type === 'rotate') {
-          // TODO: Fix this "as" cast
-          return selectionResize(coord, selection.current, drag.current! as ObjectDrag);
-        } else if (drag.current.type === 'move') {
-          if (selection.current.isEmpty()) throw new Error('invalid state');
+        deferedMouseAction.current = null;
 
-          deferedMouseAction.current = null;
+        if (
+          drag.current.type === 'resize-se' ||
+          drag.current.type === 'resize-sw' ||
+          drag.current?.type === 'resize-ne' ||
+          drag.current?.type === 'resize-nw' ||
+          drag.current?.type === 'resize-n' ||
+          drag.current?.type === 'resize-s' ||
+          drag.current?.type === 'resize-e' ||
+          drag.current?.type === 'resize-w'
+        ) {
+          assert.false(selection.current.isEmpty());
+          return selectionResize(coord, selection.current, drag.current);
+        } else if (drag.current?.type === 'rotate') {
+          assert.false(selection.current.isEmpty());
+          return selectionRotate(coord, selection.current, drag.current);
+        } else if (drag.current.type === 'move') {
+          assert.false(selection.current.isEmpty());
 
           const d = Coord.subtract(coord, Coord.add(selection.current.pos, drag.current?.offset));
 

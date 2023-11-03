@@ -33,10 +33,18 @@ export const selectionResize = (coord: Coord, selection: SelectionState, drag: O
     selection.size.h = drag.original.size.h + delta.y;
     selection.size.w = drag.original.size.w - delta.x;
     selection.pos.x = drag.original.pos.x + delta.x;
-  } else if (drag.type === 'rotate') {
-    const center = Box.center(drag.original);
-    selection.rotation = Coord.angle(center, coord);
   }
+
+  for (const node of selection.elements) {
+    NodeDef.transform(node, before, selection);
+  }
+};
+
+export const selectionRotate = (coord: Coord, selection: SelectionState, drag: ObjectDrag) => {
+  const before = Box.snapshot(selection);
+
+  const center = Box.center(drag.original);
+  selection.rotation = Coord.angle(center, coord);
 
   for (const node of selection.elements) {
     NodeDef.transform(node, before, selection);

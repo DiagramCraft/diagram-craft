@@ -1,4 +1,5 @@
 import { Angle, Box, Coord, Extent, Rotation, Transform, Translation } from './geometry.ts';
+import { VERIFY_NOT_REACHED } from './assert.ts';
 
 export interface Reference {
   id: string;
@@ -143,7 +144,7 @@ export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
     } else if (n.type === 'edge') {
       elements.push(edgeLookup[n.id]);
     } else {
-      throw new Error();
+      VERIFY_NOT_REACHED();
     }
   }
 
