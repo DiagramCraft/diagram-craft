@@ -86,7 +86,7 @@ export const Canvas = (props: Props) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (_id: ObjectId, _coord: Coord) => {
       try {
-        selectionMarqueeRef.current?.clear();
+        selection.current.clearMarquee();
         drag.current = undefined;
 
         if (deferedMouseAction.current) {
@@ -101,6 +101,7 @@ export const Canvas = (props: Props) => {
         }
       } finally {
         selectionRef.current?.repaint();
+        selectionMarqueeRef.current?.repaint();
         deferedMouseAction.current = null;
       }
     },
@@ -140,12 +141,14 @@ export const Canvas = (props: Props) => {
             selection.current.recalculateBoundingBox();
           }
         } else if (drag.current.type === 'marquee') {
-          selectionMarqueeRef.current?.repaint(
+          selection.current.marquee = Box.normalize(
             Box.snapshot({
               pos: drag.current.offset,
               size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y }
             })
           );
+
+          selectionMarqueeRef.current?.repaint();
         }
       } finally {
         updateCursor(coord);
@@ -203,7 +206,7 @@ export const Canvas = (props: Props) => {
             })}
 
             <Selection ref={selectionRef} selection={selection.current} onDragStart={onDragStart} />
-            <SelectionMarquee ref={selectionMarqueeRef} />
+            <SelectionMarquee ref={selectionMarqueeRef} selection={selection.current} />
           </svg>
         </div>
       </DndProvider>

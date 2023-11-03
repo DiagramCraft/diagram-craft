@@ -1,37 +1,29 @@
 import { forwardRef, useImperativeHandle, useState } from 'react';
-import { Box } from './geometry.ts';
+import { SelectionState } from './state.ts';
 
 export type SelectionMarqueeApi = {
-  repaint: (b: Box) => void;
-  clear: () => void;
+  repaint: () => void;
 };
 
-// TODO: We should keep a state variable for this instead of using the redraw hack.
-export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((_props, ref) => {
+export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, ref) => {
   const [redraw, setRedraw] = useState(1);
-  const [box, setBox] = useState<Box | null>(null);
 
   useImperativeHandle(ref, () => {
     return {
-      repaint: (b: Box) => {
-        setBox(Box.normalize(b));
-        setRedraw(redraw + 1);
-      },
-      clear: () => {
-        setBox(null);
+      repaint: () => {
         setRedraw(redraw + 1);
       }
     };
   });
 
-  if (!box) return null;
+  if (!props.selection.marquee) return null;
 
   return (
     <rect
-      x={box.pos.x}
-      y={box.pos.y}
-      width={box.size.w}
-      height={box.size.h}
+      x={props.selection.marquee.pos.x}
+      y={props.selection.marquee.pos.y}
+      width={props.selection.marquee.size.w}
+      height={props.selection.marquee.size.h}
       fill="rgba(0, 255, 0, 0.2)"
       style={{ stroke: 'green' }}
     />
@@ -39,5 +31,5 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((_props, 
 });
 
 type Props = {
-  dummy?: string;
+  selection: SelectionState;
 };

@@ -67,10 +67,17 @@ export class SelectionState implements Box {
   clear() {
     this.rotation = undefined;
     this.elements = [];
+    this.marquee = undefined;
+    this.pendingElements = undefined;
     this.recalculateBoundingBox();
   }
 
   isEmpty() {
     return this.elements.length === 0;
+  }
+
+  clearMarquee() {
+    this.marquee = undefined;
+    this.pendingElements = undefined;
   }
 }
