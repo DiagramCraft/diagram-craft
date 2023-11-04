@@ -104,33 +104,46 @@ export const Canvas = (props: Props) => {
     (_id: ObjectId, _coord: Point) => {
       try {
         if (drag.current) {
-          if (drag.current?.type === 'move') {
-            diagram.undoManager.add(
-              new MoveAction(
-                selection.current.source.elements,
-                selection.current.elements,
-                selection.current.elements
-              )
-            );
-            selection.current.rebaseline();
-          } else if (drag.current?.type === 'rotate') {
-            diagram.undoManager.add(
-              new RotateAction(
-                selection.current.source.elements,
-                selection.current.elements,
-                selection.current.elements
-              )
-            );
-            selection.current.rebaseline();
-          } else if (isResizeDrag(drag.current)) {
-            diagram.undoManager.add(
-              new ResizeAction(
-                selection.current.source.elements,
-                selection.current.elements,
-                selection.current.elements
-              )
-            );
-            selection.current.rebaseline();
+          let changed = false;
+          for (let i = 0; i < selection.current.elements.length; i++) {
+            const node = selection.current.elements[i];
+            const original = selection.current.source.elements[i];
+
+            if (!Box.equals(node, original)) {
+              changed = true;
+              break;
+            }
+          }
+
+          if (changed) {
+            if (drag.current?.type === 'move') {
+              diagram.undoManager.add(
+                new MoveAction(
+                  selection.current.source.elements,
+                  selection.current.elements,
+                  selection.current.elements
+                )
+              );
+              selection.current.rebaseline();
+            } else if (drag.current?.type === 'rotate') {
+              diagram.undoManager.add(
+                new RotateAction(
+                  selection.current.source.elements,
+                  selection.current.elements,
+                  selection.current.elements
+                )
+              );
+              selection.current.rebaseline();
+            } else if (isResizeDrag(drag.current)) {
+              diagram.undoManager.add(
+                new ResizeAction(
+                  selection.current.source.elements,
+                  selection.current.elements,
+                  selection.current.elements
+                )
+              );
+              selection.current.rebaseline();
+            }
           }
         }
 

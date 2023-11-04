@@ -191,32 +191,43 @@ export const NodeDef = {
   },
 
   transform: (node: ResolvedNodeDef, before: Box, after: Box) => {
-    // Calculate relative position of node within before
-    const relX = (node.pos.x - before.pos.x) / before.size.w;
-    const relY = (node.pos.y - before.pos.y) / before.size.h;
-
-    // Calculate relative size of node within before
-    const relW = node.size.w / before.size.w;
-    const relH = node.size.h / before.size.h;
-
-    // Calculate new position of node within after
-    node.pos.x = after.pos.x + relX * after.size.w;
-    node.pos.y = after.pos.y + relY * after.size.h;
-
-    // Calculate new size of node within after
-    node.size.w = relW * after.size.w;
-    node.size.h = relH * after.size.h;
-
-    if (before.rotation !== after.rotation) {
-      const center = new Translation(Vector.negate(Box.center(before)));
-      const rotate = new Rotation(Angle.toRad((after.rotation ?? 0) - (before.rotation ?? 0)));
-      const moveBack = center.reverse();
-
-      const np = Transform.coord(Box.center(node), center, rotate, moveBack);
-
-      Box.moveCenterPoint(node, np);
-
+    // TODO: Why do we need this fast-path?
+    // TODO: Add tests for this
+    // Fast-path when the node and selection are the same
+    if (node.size.w === before.size.w && node.size.h === before.size.h) {
+      node.size.w = after.size.w;
+      node.size.h = after.size.h;
+      node.pos.x = after.pos.x;
+      node.pos.y = after.pos.y;
       node.rotation = after.rotation;
+    } else {
+      // Calculate relative position of node within before
+      const relX = (node.pos.x - before.pos.x) / before.size.w;
+      const relY = (node.pos.y - before.pos.y) / before.size.h;
+
+      // Calculate relative size of node within before
+      const relW = node.size.w / before.size.w;
+      const relH = node.size.h / before.size.h;
+
+      // Calculate new position of node within after
+      node.pos.x = after.pos.x + relX * after.size.w;
+      node.pos.y = after.pos.y + relY * after.size.h;
+
+      // Calculate new size of node within after
+      node.size.w = relW * after.size.w;
+      node.size.h = relH * after.size.h;
+
+      if (before.rotation !== after.rotation) {
+        const center = new Translation(Vector.negate(Box.center(before)));
+        const rotate = new Rotation(Angle.toRad((after.rotation ?? 0) - (before.rotation ?? 0)));
+        const moveBack = center.reverse();
+
+        const np = Transform.coord(Box.center(node), center, rotate, moveBack);
+
+        Box.moveCenterPoint(node, np);
+
+        node.rotation = after.rotation;
+      }
     }
 
     for (const cn of node.children) {
@@ -247,17 +258,19 @@ class AbstractTransformAction implements UndoableAction {
 
   undo() {
     for (let i = 0; i < this.nodes.length; i++) {
-      this.nodes[i].rotation = this.source[i].rotation;
-      this.nodes[i].pos = this.source[i].pos;
-      this.nodes[i].size = this.source[i].size;
+      NodeDef.transform(this.nodes[i], this.target[i], this.source[i]);
+      //      this.nodes[i].rotation = this.source[i].rotation;
+      //      this.nodes[i].pos = this.source[i].pos;
+      //      this.nodes[i].size = this.source[i].size;
     }
   }
 
   redo() {
     for (let i = 0; i < this.nodes.length; i++) {
-      this.nodes[i].rotation = this.target[i].rotation;
-      this.nodes[i].pos = this.target[i].pos;
-      this.nodes[i].size = this.target[i].size;
+      NodeDef.transform(this.nodes[i], this.source[i], this.target[i]);
+      //      this.nodes[i].rotation = this.target[i].rotation;
+      //      this.nodes[i].pos = this.target[i].pos;
+      //      this.nodes[i].size = this.target[i].size;
     }
   }
 }

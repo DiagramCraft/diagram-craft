@@ -89,6 +89,16 @@ export const Box = {
     };
   },
 
+  equals: (a: Box, b: Box) => {
+    return (
+      a.pos.x === b.pos.x &&
+      a.pos.y === b.pos.y &&
+      a.size.w === b.size.w &&
+      a.size.h === b.size.h &&
+      a.rotation === b.rotation
+    );
+  },
+
   moveCenterPoint: (b: Box, center: Point): Box => {
     b.pos = {
       x: center.x - b.size.w / 2,
@@ -267,7 +277,7 @@ export const Box = {
 
 export const Polygon = {
   intersects(a: Polygon, b: Polygon) {
-    for (let polygon of [a, b]) {
+    for (const polygon of [a, b]) {
       for (let i = 0; i < polygon.points.length; i++) {
         const j = (i + 1) % polygon.points.length;
 

@@ -55,6 +55,17 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             onMouseDown={(_id, coord, add) => props.onMouseDown(props.def.id, coord, add)}
           />
         ))}
+
+        {/*<text
+          x={wx + props.def.size.w / 2}
+          y={wy + props.def.size.h / 2}
+          fill="black"
+          style={{ fontSize: '10px' }}
+          dominantBaseline="middle"
+          textAnchor="middle"
+        >
+          {wx}, {wy} {props.def.size.w}x{props.def.size.h} rot{Math.round(props.def.rotation ?? 0)}
+        </text>*/}
       </g>
     );
   } else {
@@ -75,6 +86,20 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           ry="5"
           onMouseDown={onMouseDown}
         />
+
+        {/*
+        <text
+          x={wx + props.def.size.w / 2}
+          y={wy + props.def.size.h / 2}
+          fill="black"
+          style={{ fontSize: '10px' }}
+          dominantBaseline="middle"
+          textAnchor="middle"
+        >
+          {Math.round(wx)}, {Math.round(wy)} {props.def.size.w}x{props.def.size.h} rot
+          {Math.round(props.def.rotation ?? 0)}
+        </text>
+        */}
       </g>
     );
   }
