@@ -49,8 +49,10 @@ export const Angle = {
 };
 
 export const Point = {
-  add: (c1: Point, c2: Point) => ({ x: c1.x + c2.x, y: c1.y + c2.y }),
-  subtract: (c1: Point, c2: Point) => ({ x: c1.x - c2.x, y: c1.y - c2.y }),
+  ORIGIN: { x: 0, y: 0 },
+
+  add: (c1: Point, c2: Vector) => ({ x: c1.x + c2.x, y: c1.y + c2.y }),
+  subtract: (c1: Point, c2: Vector) => ({ x: c1.x - c2.x, y: c1.y - c2.y }),
 
   midpoint: (c1: Point, c2: Point) => ({ x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 }),
 
@@ -60,10 +62,6 @@ export const Point = {
 
   round: (c: Point) => {
     return { x: round(c.x), y: round(c.y) };
-  },
-
-  translate: (c: Point, d: Vector): Point => {
-    return { x: c.x + d.x, y: c.y + d.y };
   },
 
   rotate: (c: Point, r: number) => {
@@ -76,7 +74,7 @@ export const Point = {
   rotateAround: (c: Point, r: number, centerOfRotation: Point) => {
     const newCoord = Point.subtract(c, centerOfRotation);
     const rotatedCoord = Point.rotate(newCoord, r);
-    return Point.translate(rotatedCoord, centerOfRotation);
+    return Point.add(rotatedCoord, centerOfRotation);
   },
 
   isEqual: (a: Point, b: Point) => {
@@ -110,6 +108,7 @@ export const Box = {
     return b;
   },
 
+  // TODO: This should not be part of the Box API
   boundingBox: (boxes: Box[]): Box => {
     let minX = Number.MAX_SAFE_INTEGER;
     let minY = Number.MAX_SAFE_INTEGER;
@@ -234,10 +233,13 @@ export const Box = {
   translate: (b: Box, c: Point): Box => {
     return {
       pos: Point.add(b.pos, c),
-      size: { ...b.size }
+      size: { ...b.size },
+      rotation: b.rotation
     };
   },
 
+  // TODO: Do we want this, or should we use negative width and negative heigh
+  //       as an indicator for flipping a node
   normalize: (b: Box) => {
     if (b.size.w < 0) {
       b.pos.x += b.size.w;
@@ -250,31 +252,6 @@ export const Box = {
     }
 
     return b;
-  },
-
-  scale: (b: Box, s: number): Box => {
-    const midpoint = Box.center(b);
-    const newMidpoint = Point.subtract(midpoint, b.pos);
-    const scaledMidpoint = Point.subtract(newMidpoint, {
-      x: newMidpoint.x * s,
-      y: newMidpoint.y * s
-    });
-    const newBox = Box.translate(b, scaledMidpoint);
-    newBox.size.w *= s;
-    newBox.size.h *= s;
-    return newBox;
-  },
-
-  rotate: (b: Box, r: number): Box => {
-    const midpoint = Box.center(b);
-    const newMidpoint = Point.subtract(midpoint, b.pos);
-    const rotatedMidpoint = {
-      x: newMidpoint.x * Math.cos(r) - newMidpoint.y * Math.sin(r),
-      y: newMidpoint.x * Math.sin(r) + newMidpoint.y * Math.cos(r)
-    };
-    const newBox = Box.translate(b, rotatedMidpoint);
-    newBox.rotation = r;
-    return newBox;
   }
 };
 
@@ -359,19 +336,47 @@ export interface Transform {
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point;
-  reverse(): Transform;
+  invert(): Transform;
 }
 
 export const Transform = {
   box: (b: Box, ...transforms: Transform[]): Box => {
     return transforms.reduce((b, t) => t.apply(b), b);
   },
-  coord: (b: Point, ...transforms: Transform[]): Point => {
+  point: (b: Point, ...transforms: Transform[]): Point => {
     return transforms.reduce((b, t) => t.apply(b), b);
   }
 };
 
+export class Noop implements Transform {
+  asSvgTransform() {
+    return '';
+  }
+
+  apply(b: Box): Box;
+  apply(b: Point): Point;
+  apply(b: Box | Point): Box | Point {
+    return b;
+  }
+
+  invert(): Transform {
+    return new Noop();
+  }
+}
+
 export class Translation implements Transform {
+  static toOrigin(b: Box | Point, pointOfReference: 'center' | 'top-left' = 'top-left') {
+    if ('pos' in b) {
+      if (pointOfReference === 'center') {
+        return new Translation(Vector.negate(Box.center(b)));
+      } else {
+        return new Translation(Vector.negate(b.pos));
+      }
+    } else {
+      return new Translation(Vector.negate(b));
+    }
+  }
+
   constructor(private readonly c: Point) {}
 
   asSvgTransform() {
@@ -382,40 +387,52 @@ export class Translation implements Transform {
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
-      return Box.translate(b, this.c) as Box;
+      return Box.translate(b, this.c);
     } else {
-      return Point.translate(b, this.c) as Point;
+      return Point.add(b, this.c);
     }
   }
 
-  reverse(): Transform {
+  invert(): Transform {
     return new Translation(Vector.negate(this.c));
   }
 }
 
 export class Scale implements Transform {
-  constructor(private readonly s: number) {}
+  constructor(
+    private readonly x: number,
+    private readonly y: number
+  ) {}
 
   asSvgTransform() {
-    return `scale(${this.s})`;
+    return `scale(${this.x},${this.y})`;
   }
 
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
-      return Box.scale(b, this.s);
+      return {
+        pos: { x: b.pos.x * this.x, y: b.pos.y * this.y },
+        size: { w: b.size.w * this.x, h: b.size.h * this.y },
+        rotation: b.rotation
+      };
     } else {
-      return Vector.scale(b, this.s);
+      return { x: b.x * this.x, y: b.y * this.y };
     }
   }
 
-  reverse(): Transform {
-    return new Scale(1 / this.s);
+  invert(): Transform {
+    return new Scale(1 / this.x, 1 / this.y);
   }
 }
 
 export class Rotation implements Transform {
+  static reset(b: Box) {
+    if (b.rotation === undefined || round(b.rotation) === 0) return new Noop();
+    return new Rotation(-b.rotation);
+  }
+
   constructor(private readonly r: number) {}
 
   asSvgTransform() {
@@ -426,13 +443,73 @@ export class Rotation implements Transform {
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
-      return Box.rotate(b, this.r);
+      const ret = Box.moveCenterPoint(Box.snapshot(b), Point.rotate(Box.center(b), this.r));
+      ret.rotation = Angle.toDeg(this.r);
+      return ret;
     } else {
       return Point.rotate(b, this.r);
     }
   }
 
-  reverse(): Transform {
+  invert(): Transform {
     return new Rotation(-this.r);
   }
 }
+
+// TODO: For this to work, we need to keep a shear x and shear y on the node
+export class Shear implements Transform {
+  constructor(
+    private readonly amount: number,
+    private readonly axis: 'x' | 'y'
+  ) {}
+
+  asSvgTransform() {
+    return `skew${this.axis.toUpperCase()}(${this.amount})`;
+  }
+
+  apply(b: Box): Box;
+  apply(b: Point): Point;
+  apply(b: Box | Point): Box | Point {
+    if ('pos' in b) {
+      if (this.axis === 'x') {
+        b.size.w += b.size.h * this.amount;
+      } else {
+        b.size.h += b.size.w * this.amount;
+      }
+      return b;
+    } else {
+      if (this.axis === 'x') {
+        b.x += b.y * this.amount;
+      } else {
+        b.y += b.x * this.amount;
+      }
+      return b;
+    }
+  }
+
+  invert(): Transform {
+    return new Shear(-this.amount, this.axis);
+  }
+}
+
+// TODO: We probably want to add flipX and flipY
+
+export const TransformFactory = {
+  fromTo: (before: Box, after: Box): Transform[] => {
+    const scaleX = after.size.w / before.size.w;
+    const scaleY = after.size.h / before.size.h;
+
+    const rot = Angle.toRad(after.rotation ?? 0) - Angle.toRad(before.rotation ?? 0);
+
+    const toOrigin = Translation.toOrigin(before, 'center');
+    const translateBack = Translation.toOrigin(after, 'center').invert();
+
+    const transforms: Transform[] = [];
+    transforms.push(toOrigin);
+    if (scaleX !== 1 || scaleY !== 1) transforms.push(new Scale(scaleX, scaleY));
+    if (rot !== 0) transforms.push(new Rotation(rot));
+    transforms.push(translateBack);
+
+    return transforms;
+  }
+};

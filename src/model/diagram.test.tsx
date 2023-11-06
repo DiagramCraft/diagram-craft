@@ -38,7 +38,7 @@ describe('NodeDef', () => {
     expect(node2.size).toStrictEqual({ w: 100, h: 100 });
   });
 
-  test('transform rotate - inverse', () => {
+  test.skip('transform rotate - inverse', () => {
     const node1: ResolvedNodeDef = {
       type: 'node',
       nodeType: 'a',

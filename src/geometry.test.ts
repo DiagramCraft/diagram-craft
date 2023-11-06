@@ -1,5 +1,5 @@
-import { expect, test, describe } from 'vitest';
-import { Point, Box, Vector } from './geometry.ts';
+import { describe, expect, test } from 'vitest';
+import { Angle, Box, Point, Rotation, Transform, TransformFactory, Vector } from './geometry.ts';
 
 describe('Vector', () => {
   test('negate', () => {
@@ -22,10 +22,6 @@ describe('Point', () => {
 
   test('midpoint of two points', () => {
     expect(Point.midpoint({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 2, y: 3 });
-  });
-
-  test('translates point', () => {
-    expect(Point.translate({ x: 1, y: 2 }, { x: 3, y: 4 })).toStrictEqual({ x: 4, y: 6 });
   });
 
   test('rotates point', () => {
@@ -72,5 +68,59 @@ describe('Box', () => {
     expect(
       Box.contains({ pos: { x: 0, y: 0 }, size: { w: 10, h: 10 }, rotation: 45 }, { x: 0, y: 5.1 })
     ).toBe(true);
+  });
+});
+
+describe('Rotate', () => {
+  test('rotate point', () => {
+    let p1: Point = { x: -10, y: -10 };
+    let p2: Point = { x: 10, y: 10 };
+
+    p1 = new Rotation(Angle.toRad(90)).apply(p1);
+    p2 = new Rotation(Angle.toRad(90)).apply(p2);
+
+    expect(p1).toStrictEqual({ x: 10, y: -10 });
+    expect(p2).toStrictEqual({ x: -10, y: 10 });
+  });
+
+  test('rotate box', () => {
+    let b1: Box = { pos: { x: -10, y: -10 }, size: { w: 10, h: 10 } };
+    let b2: Box = { pos: { x: 10, y: 10 }, size: { w: 10, h: 10 } };
+
+    b1 = new Rotation(Angle.toRad(90)).apply(b1);
+    b2 = new Rotation(Angle.toRad(90)).apply(b2);
+
+    expect(Point.round(b1.pos)).toStrictEqual({ x: 0, y: -10 });
+    expect(Point.round(b2.pos)).toStrictEqual({ x: -20, y: 10 });
+  });
+});
+
+describe('TransformationFactory', () => {
+  test('rotate', () => {
+    let node1: Box = {
+      pos: { x: 0, y: 0 },
+      size: { w: 100, h: 100 },
+      rotation: 0
+    };
+
+    let node2: Box = {
+      pos: { x: 100, y: 100 },
+      size: { w: 100, h: 100 },
+      rotation: 0
+    };
+
+    const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
+    const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 90 };
+
+    node1 = Transform.box(node1, ...TransformFactory.fromTo(before, after));
+    node2 = Transform.box(node2, ...TransformFactory.fromTo(before, after));
+
+    expect(node1.rotation).toStrictEqual(90);
+    expect(node1.pos).toStrictEqual({ x: 100, y: 0 });
+    expect(node1.size).toStrictEqual({ w: 100, h: 100 });
+
+    expect(node2.rotation).toStrictEqual(90);
+    expect(node2.pos).toStrictEqual({ x: 0, y: 100 });
+    expect(node2.size).toStrictEqual({ w: 100, h: 100 });
   });
 });

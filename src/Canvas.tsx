@@ -192,10 +192,12 @@ export const Canvas = (props: Props) => {
           const d = Point.subtract(coord, Point.add(selection.current.pos, drag.current?.offset));
 
           for (const node of selection.current.elements) {
-            NodeDef.move(node, d);
-
-            selection.current.recalculateBoundingBox();
+            const after = Box.snapshot(node);
+            after.pos = Point.add(after.pos, d);
+            NodeDef.transform(node, Box.snapshot(node), after);
           }
+
+          selection.current.recalculateBoundingBox();
         } else if (drag.current.type === 'marquee') {
           selection.current.marquee = Box.normalize(
             Box.snapshot({
