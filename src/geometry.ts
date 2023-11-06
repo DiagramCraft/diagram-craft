@@ -1,7 +1,10 @@
 import { invariant, precondition } from './assert.ts';
 
 const round = (n: number) => {
-  return Math.round(n * 100) / 100;
+  const res = Math.round(n * 100) / 100;
+  // To ensure -0 === 0
+  if (res === 0) return 0;
+  return res;
 };
 
 export type Point = {
