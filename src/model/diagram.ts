@@ -1,10 +1,15 @@
-import { Angle, Box, Point, Extent, Rotation, Transform, Translation, Vector } from './geometry.ts';
-import { VERIFY_NOT_REACHED } from './assert.ts';
+import {
+  Angle,
+  Box,
+  Extent,
+  Point,
+  Rotation,
+  Transform,
+  Translation,
+  Vector
+} from '../geometry.ts';
 import { UndoableAction, UndoManager } from './UndoManager.ts';
-
-export interface Reference {
-  id: string;
-}
+import { EventEmitter } from './event.ts';
 
 export interface AbstractNodeDef {
   type: 'node';
@@ -15,23 +20,14 @@ export interface AbstractNodeDef {
   pos: Point;
   size: Extent;
   rotation?: number;
+
+  // TODO: We should use interface for this and make it extendable by nodeType
+  props?: Record<string, unknown>;
 }
 
 export interface AbstractEdgeDef {
   type: 'edge';
   id: string;
-}
-
-export interface SerializedNodeDef extends AbstractNodeDef {
-  edges?: Record<string, Reference[]>;
-
-  // TODO: Should allow edges as part of group
-  children: SerializedNodeDef[];
-}
-
-export interface SerializedEdgeDef extends AbstractEdgeDef {
-  start: { anchor: string; node: Reference };
-  end: { anchor: string; node: Reference };
 }
 
 export interface ResolvedNodeDef extends AbstractNodeDef {
@@ -46,13 +42,15 @@ export interface ResolvedEdgeDef extends AbstractEdgeDef {
   end: { anchor: string; node: ResolvedNodeDef };
 }
 
-export interface Diagram {
-  elements: (SerializedNodeDef | SerializedEdgeDef)[];
-}
-
-type Listener = () => void;
-
-export class LoadedDiagram {
+export class LoadedDiagram extends EventEmitter<{
+  nodechanged: { before: ResolvedNodeDef; after: ResolvedNodeDef };
+  nodeadded: { node: ResolvedNodeDef };
+  noderemoved: { node: ResolvedNodeDef };
+  edgechanged: { before: ResolvedEdgeDef; after: ResolvedEdgeDef };
+  edgeadded: { edge: ResolvedEdgeDef };
+  edgeremoved: { edge: ResolvedEdgeDef };
+  change: void;
+}> {
   elements: (ResolvedEdgeDef | ResolvedNodeDef)[];
   nodeLookup: Record<string, ResolvedNodeDef>;
   edgeLookup: Record<string, ResolvedEdgeDef>;
@@ -60,127 +58,66 @@ export class LoadedDiagram {
     this.commit();
   });
 
-  private listeners: Listener[];
-
   constructor(
     elements: (ResolvedEdgeDef | ResolvedNodeDef)[],
     nodeLookup: Record<string, ResolvedNodeDef>,
     edgeLookup: Record<string, ResolvedEdgeDef>
   ) {
+    super();
     this.elements = elements;
     this.nodeLookup = nodeLookup;
     this.edgeLookup = edgeLookup;
-    this.listeners = [];
   }
 
+  addNode(node: ResolvedNodeDef) {
+    this.nodeLookup[node.id] = node;
+    this.elements.push(node);
+    this.emit('nodeadded', { node });
+  }
+
+  removeNode(node: ResolvedNodeDef) {
+    delete this.nodeLookup[node.id];
+    this.elements = this.elements.filter(e => e !== node);
+    this.emit('noderemoved', { node });
+  }
+
+  updateNodeProps(node: ResolvedNodeDef, props: Record<string, unknown>) {
+    node.props = props;
+    // TODO: Need to keep a before state
+    this.emit('nodechanged', { before: node, after: node });
+  }
+
+  transformNode(nodes: ResolvedNodeDef[], transforms: Transform[]) {
+    for (const node of nodes) {
+      const newBox = Transform.box(node, ...transforms);
+      node.pos = newBox.pos;
+      node.size = newBox.size;
+      node.rotation = newBox.rotation;
+    }
+
+    for (const node of nodes) {
+      // TODO: Need to keep a before state
+      this.emit('nodechanged', { before: node, after: node });
+    }
+  }
+
+  addEdge(edge: ResolvedEdgeDef) {
+    this.edgeLookup[edge.id] = edge;
+    this.elements.push(edge);
+    this.emit('edgeadded', { edge });
+  }
+
+  removeEdge(edge: ResolvedEdgeDef) {
+    delete this.edgeLookup[edge.id];
+    this.elements = this.elements.filter(e => e !== edge);
+    this.emit('edgeremoved', { edge });
+  }
+
+  // TODO: We should change this
   commit() {
-    this.listeners.forEach(l => l());
-  }
-
-  addListener(l: Listener) {
-    this.listeners.push(l);
-  }
-
-  removeListener(l: Listener) {
-    this.listeners = this.listeners.filter(l2 => l2 !== l);
+    this.emit('change');
   }
 }
-
-const unfoldGroup = (node: SerializedNodeDef) => {
-  const recurse = (
-    nodes: SerializedNodeDef[],
-    parent?: SerializedNodeDef | undefined
-  ): (SerializedNodeDef & { parent?: SerializedNodeDef | undefined })[] => {
-    return [...nodes.map(n => ({ ...n, parent })), ...nodes.flatMap(n => recurse(n.children, n))];
-  };
-
-  if (node.nodeType === 'group') {
-    return [{ ...node }, ...recurse(node.children, node)];
-  } else {
-    return [{ ...node }];
-  }
-};
-
-const isNodeDef = (element: SerializedNodeDef | SerializedEdgeDef): element is SerializedNodeDef =>
-  element.type === 'node';
-
-export const loadDiagram = (diagram: Diagram): LoadedDiagram => {
-  const nodeLookup: Record<string, ResolvedNodeDef> = {};
-  const edgeLookup: Record<string, ResolvedEdgeDef> = {};
-
-  const allNodes = diagram.elements.filter(isNodeDef);
-
-  // Index skeleton nodes
-  for (const n of allNodes) {
-    for (const c of unfoldGroup(n)) {
-      nodeLookup[c.id] = {
-        ...c,
-        parent: undefined,
-        edges: {},
-        children: []
-      };
-    }
-  }
-
-  // Resolve relative positions
-  for (const n of allNodes) {
-    for (const child of unfoldGroup(n)) {
-      if (child.parent) {
-        nodeLookup[child.id].pos = Point.add(
-          nodeLookup[child.id].pos,
-          nodeLookup[child.parent.id].pos
-        );
-      }
-    }
-  }
-
-  // Resolve relations
-  for (const n of allNodes) {
-    for (const c of unfoldGroup(n)) {
-      nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
-      if (c.parent) {
-        nodeLookup[n.id].parent = nodeLookup[c.parent.id];
-      }
-    }
-  }
-
-  for (const e of diagram.elements) {
-    if (e.type !== 'edge') continue;
-
-    const edge = {
-      ...e,
-      start: { anchor: e.start.anchor, node: nodeLookup[e.start.node.id] },
-      end: { anchor: e.end.anchor, node: nodeLookup[e.end.node.id] }
-    };
-
-    const startNode = nodeLookup[edge.start.node.id];
-
-    startNode.edges ??= {};
-    startNode.edges[edge.start.anchor] ??= [];
-    startNode.edges[edge.start.anchor].push(edge);
-
-    const endNode = nodeLookup[edge.end.node.id];
-
-    endNode.edges ??= {};
-    endNode.edges[edge.end.anchor] ??= [];
-    endNode.edges[edge.end.anchor].push(edge);
-
-    edgeLookup[e.id] = edge;
-  }
-
-  const elements: (ResolvedEdgeDef | ResolvedNodeDef)[] = [];
-  for (const n of diagram.elements) {
-    if (n.type === 'node') {
-      elements.push(nodeLookup[n.id]);
-    } else if (n.type === 'edge') {
-      elements.push(edgeLookup[n.id]);
-    } else {
-      VERIFY_NOT_REACHED();
-    }
-  }
-
-  return new LoadedDiagram(elements, nodeLookup, edgeLookup);
-};
 
 export const NodeDef = {
   move: (node: ResolvedNodeDef, d: Point) => {
@@ -235,7 +172,7 @@ export const NodeDef = {
     }
   },
 
-  edges: (node: ResolvedNodeDef): SerializedEdgeDef[] => {
+  edges: (node: ResolvedNodeDef): ResolvedEdgeDef[] => {
     return [
       ...Object.values(node.edges ?? {}).flatMap(e => e),
       ...node.children.flatMap(c => NodeDef.edges(c))

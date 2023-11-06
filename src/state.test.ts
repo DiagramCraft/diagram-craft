@@ -1,6 +1,6 @@
 import { SelectionState } from './state.ts';
 import { expect, test, describe } from 'vitest';
-import { ResolvedNodeDef } from './diagram.ts';
+import { ResolvedNodeDef } from './model/diagram.ts';
 
 describe('SelectionState', () => {
   test('empty selection has zero size', () => {

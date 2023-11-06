@@ -1,4 +1,4 @@
-import { ResolvedNodeDef } from './diagram.ts';
+import { ResolvedNodeDef } from './model/diagram.ts';
 import { Box, Point } from './geometry.ts';
 
 export type ResizeDrag = {

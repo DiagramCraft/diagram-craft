@@ -4,7 +4,7 @@ import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box, Point } from './geometry.ts';
-import { LoadedDiagram, MoveAction, NodeDef, ResizeAction, RotateAction } from './diagram.ts';
+import { LoadedDiagram, MoveAction, NodeDef, ResizeAction, RotateAction } from './model/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import {
@@ -43,9 +43,9 @@ export const Canvas = (props: Props) => {
       selection.current.clear();
       redraw();
     };
-    diagram.addListener(callback);
+    diagram.undoManager.on('*', callback);
     return () => {
-      diagram.removeListener(callback);
+      diagram.undoManager.off('*', callback);
     };
   }, [diagram, redraw]);
 

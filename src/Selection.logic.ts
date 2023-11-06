@@ -1,6 +1,6 @@
 import { Box, Point, Vector } from './geometry.ts';
 import { ResizeDrag, SelectionState } from './state.ts';
-import { NodeDef } from './diagram.ts';
+import { NodeDef } from './model/diagram.ts';
 
 export const selectionResize = (coord: Point, selection: SelectionState, drag: ResizeDrag) => {
   const delta = Point.subtract(coord, drag.offset);

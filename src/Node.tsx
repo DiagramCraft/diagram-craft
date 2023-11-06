@@ -1,6 +1,6 @@
 import { Point } from './geometry.ts';
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { ResolvedNodeDef } from './diagram.ts';
+import { ResolvedNodeDef } from './model/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 
 export type NodeApi = {

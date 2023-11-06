@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle } from 'react';
-import { ResolvedEdgeDef } from './diagram.ts';
+import { ResolvedEdgeDef } from './model/diagram.ts';
 import { Box } from './geometry.ts';
 import { useRedraw } from './useRedraw.tsx';
 

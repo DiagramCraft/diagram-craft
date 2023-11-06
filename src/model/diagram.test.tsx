@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'vitest';
 import { NodeDef, ResolvedNodeDef } from './diagram.ts';
-import { Point } from './geometry.ts';
+import { Point } from '../geometry.ts';
 
 describe('NodeDef', () => {
   test('transform rotate', () => {

@@ -1,9 +1,10 @@
 import './App.css';
-import { Diagram, loadDiagram } from './diagram.ts';
+import { SerializedDiagram } from './model/serialization.ts';
+import { deserializeDiagram } from './model/serialization.ts';
 import { Canvas } from './Canvas.tsx';
 import { useEffect } from 'react';
 
-const diagram: Diagram = {
+const diagram: SerializedDiagram = {
   elements: [
     {
       type: 'edge',
@@ -55,7 +56,7 @@ const diagram: Diagram = {
   ]
 };
 
-const $d = loadDiagram(diagram);
+const $d = deserializeDiagram(diagram);
 
 const App = () => {
   useEffect(() => {

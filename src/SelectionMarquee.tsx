@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import { SelectionState } from './state.ts';
 import { useRedraw } from './useRedraw.tsx';
-import { LoadedDiagram, ResolvedNodeDef } from './diagram.ts';
+import { LoadedDiagram, ResolvedNodeDef } from './model/diagram.ts';
 import { Box } from './geometry.ts';
 import { precondition } from './assert.ts';
 
