@@ -13,8 +13,10 @@ describe('SelectionState', () => {
     const element: ResolvedNodeDef = {
       id: '1',
       type: 'node',
-      pos: { x: 0, y: 0 },
-      size: { w: 10, h: 10 },
+      bounds: {
+        pos: { x: 0, y: 0 },
+        size: { w: 10, h: 10 }
+      },
       children: [],
       nodeType: 'test'
     };

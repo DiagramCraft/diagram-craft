@@ -240,6 +240,13 @@ export const Box = {
     }
 
     return b;
+  },
+  assign(target: Box, source: Box) {
+    target.pos.x = source.pos.x;
+    target.pos.y = source.pos.y;
+    target.size.w = source.size.w;
+    target.size.h = source.size.h;
+    target.rotation = source.rotation;
   }
 };
 

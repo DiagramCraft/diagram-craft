@@ -18,8 +18,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     };
   });
 
-  const wx = props.def.pos.x;
-  const wy = props.def.pos.y;
+  const wx = props.def.bounds.pos.x;
+  const wy = props.def.bounds.pos.y;
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
@@ -38,14 +38,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         <rect
           x={wx}
           y={wy}
-          width={props.def.size.w}
-          height={props.def.size.h}
+          width={props.def.bounds.size.w}
+          height={props.def.bounds.size.h}
           fill="transparent"
           style={{ stroke: 'green' }}
           onMouseDown={onMouseDown}
-          transform={`rotate(${Angle.toDeg(props.def.rotation ?? 0)} ${wx + props.def.size.w / 2} ${
-            wy + props.def.size.h / 2
-          })`}
+          transform={`rotate(${Angle.toDeg(props.def.bounds.rotation ?? 0)} ${
+            wx + props.def.bounds.size.w / 2
+          } ${wy + props.def.bounds.size.h / 2})`}
         />
         {props.def.children.map(c => (
           <Node
@@ -71,15 +71,15 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   } else {
     return (
       <g
-        transform={`rotate(${Angle.toDeg(props.def.rotation ?? 0)} ${wx + props.def.size.w / 2} ${
-          wy + props.def.size.h / 2
-        })`}
+        transform={`rotate(${Angle.toDeg(props.def.bounds.rotation ?? 0)} ${
+          wx + props.def.bounds.size.w / 2
+        } ${wy + props.def.bounds.size.h / 2})`}
       >
         <rect
           x={wx}
           y={wy}
-          width={props.def.size.w}
-          height={props.def.size.h}
+          width={props.def.bounds.size.w}
+          height={props.def.bounds.size.h}
           fill="#ffccff"
           style={{ stroke: 'black', strokeWidth: '1' }}
           rx="5"

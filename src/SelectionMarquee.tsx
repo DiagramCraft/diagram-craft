@@ -17,7 +17,7 @@ export const updatePendingElements = (selection: SelectionState, diagram: Loaded
     if (e.type !== 'node') continue;
 
     // if (Box.intersects(selection.marquee!, e)) {
-    if (Box.contains(selection.marquee, e)) {
+    if (Box.contains(selection.marquee, e.bounds)) {
       pending.push(e);
     }
   }
@@ -51,13 +51,13 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
       {props.selection.pendingElements?.map(e => (
         <rect
           key={e.id}
-          x={e.pos.x}
-          y={e.pos.y}
-          width={e.size.w}
-          height={e.size.h}
-          transform={`rotate(${Angle.toDeg(e.rotation ?? 0)} ${e.pos.x + e.size.w / 2} ${
-            e.pos.y + e.size.h / 2
-          })`}
+          x={e.bounds.pos.x}
+          y={e.bounds.pos.y}
+          width={e.bounds.size.w}
+          height={e.bounds.size.h}
+          transform={`rotate(${Angle.toDeg(e.bounds.rotation ?? 0)} ${
+            e.bounds.pos.x + e.bounds.size.w / 2
+          } ${e.bounds.pos.y + e.bounds.size.h / 2})`}
           fill="transparent"
           stroke={'#2673dd'}
         />

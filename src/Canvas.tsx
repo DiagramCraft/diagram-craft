@@ -109,7 +109,7 @@ export const Canvas = (props: Props) => {
             const node = selection.current.elements[i];
             const original = selection.current.source.elements[i];
 
-            if (!Box.equals(node, original)) {
+            if (!Box.equals(node.bounds, original)) {
               changed = true;
               break;
             }
@@ -120,7 +120,7 @@ export const Canvas = (props: Props) => {
               diagram.undoManager.add(
                 new MoveAction(
                   selection.current.source.elements,
-                  selection.current.elements,
+                  selection.current.elements.map(e => e.bounds),
                   selection.current.elements
                 )
               );
@@ -129,7 +129,7 @@ export const Canvas = (props: Props) => {
               diagram.undoManager.add(
                 new RotateAction(
                   selection.current.source.elements,
-                  selection.current.elements,
+                  selection.current.elements.map(e => e.bounds),
                   selection.current.elements
                 )
               );
@@ -138,7 +138,7 @@ export const Canvas = (props: Props) => {
               diagram.undoManager.add(
                 new ResizeAction(
                   selection.current.source.elements,
-                  selection.current.elements,
+                  selection.current.elements.map(e => e.bounds),
                   selection.current.elements
                 )
               );
@@ -192,9 +192,9 @@ export const Canvas = (props: Props) => {
           const d = Point.subtract(coord, Point.add(selection.current.pos, drag.current?.offset));
 
           for (const node of selection.current.elements) {
-            const after = Box.snapshot(node);
+            const after = Box.snapshot(node.bounds);
             after.pos = Point.add(after.pos, d);
-            NodeDef.transform(node, Box.snapshot(node), after);
+            NodeDef.transform(node, Box.snapshot(node.bounds), after);
           }
 
           selection.current.recalculateBoundingBox();

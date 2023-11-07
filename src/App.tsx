@@ -16,23 +16,29 @@ const diagram: SerializedDiagram = {
       type: 'node',
       nodeType: 'group',
       id: '1',
-      pos: { x: 50, y: 50 },
-      size: { w: 100, h: 100 },
+      bounds: {
+        pos: { x: 50, y: 50 },
+        size: { w: 100, h: 100 }
+      },
       children: [
         {
           type: 'node',
           nodeType: 'rect',
           id: '1_1',
-          pos: { x: 10, y: 10 },
-          size: { w: 20, h: 20 },
+          bounds: {
+            pos: { x: 10, y: 10 },
+            size: { w: 20, h: 20 }
+          },
           children: []
         },
         {
           type: 'node',
           nodeType: 'rect',
           id: '1_2',
-          pos: { x: 50, y: 50 },
-          size: { w: 40, h: 40 },
+          bounds: {
+            pos: { x: 50, y: 50 },
+            size: { w: 40, h: 40 }
+          },
           children: []
         }
       ]
@@ -41,16 +47,20 @@ const diagram: SerializedDiagram = {
       type: 'node',
       nodeType: 'rect',
       id: '2',
-      pos: { x: 400, y: 220 },
-      size: { w: 100, h: 100 },
+      bounds: {
+        pos: { x: 400, y: 220 },
+        size: { w: 100, h: 100 }
+      },
       children: []
     },
     {
       type: 'node',
       nodeType: 'rect',
       id: '3',
-      pos: { x: 370, y: 20 },
-      size: { w: 100, h: 100 },
+      bounds: {
+        pos: { x: 370, y: 20 },
+        size: { w: 100, h: 100 }
+      },
       children: []
     }
   ]

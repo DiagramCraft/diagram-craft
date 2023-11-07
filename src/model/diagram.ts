@@ -1,4 +1,4 @@
-import { Box, Extent, Point, Transform, TransformFactory } from '../geometry.ts';
+import { Box, Transform, TransformFactory } from '../geometry.ts';
 import { UndoableAction, UndoManager } from './UndoManager.ts';
 import { EventEmitter } from './event.ts';
 import { invariant } from '../assert.ts';
@@ -8,10 +8,7 @@ export interface AbstractNodeDef {
   nodeType: 'group' | string;
   id: string;
 
-  // Note, here position is in local coordinates
-  pos: Point;
-  size: Extent;
-  rotation?: number;
+  bounds: Box;
 
   // TODO: We should use interface for this and make it extendable by nodeType
   props?: Record<string, unknown>;
@@ -81,10 +78,8 @@ export class LoadedDiagram extends EventEmitter<{
 
   transformNode(nodes: ResolvedNodeDef[], transforms: Transform[]) {
     for (const node of nodes) {
-      const newBox = Transform.box(node, ...transforms);
-      node.pos = newBox.pos;
-      node.size = newBox.size;
-      node.rotation = newBox.rotation;
+      const newBox = Transform.box(node.bounds, ...transforms);
+      Box.assign(node.bounds, newBox);
     }
 
     for (const node of nodes) {
@@ -113,17 +108,14 @@ export class LoadedDiagram extends EventEmitter<{
 
 export const NodeDef = {
   transform: (node: ResolvedNodeDef, before: Box, after: Box) => {
-    invariant.is.false(node === before);
+    invariant.is.false(node.bounds === before);
 
     // Fast-path when the node and selection are the same
-    const newBox = Transform.box(node, ...TransformFactory.fromTo(before, after));
-    node.size.w = newBox.size.w;
-    node.size.h = newBox.size.h;
-    node.pos.x = newBox.pos.x;
-    node.pos.y = newBox.pos.y;
+    const newBox = Transform.box(node.bounds, ...TransformFactory.fromTo(before, after));
+    Box.assign(node.bounds, newBox);
 
     // TODO: Why do we need this?
-    node.rotation = after.rotation; // newBox.rotation ?? 0;
+    node.bounds.rotation = after.rotation; // newBox.rotation ?? 0;
 
     for (const cn of node.children) {
       NodeDef.transform(cn, before, after);

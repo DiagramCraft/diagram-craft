@@ -79,7 +79,7 @@ export class SelectionState implements Box {
   }
 
   recalculateBoundingBox() {
-    const bb = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements);
+    const bb = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
     this.pos = bb.pos;
     this.size = bb.size;
     this.rotation ??= bb.rotation;
@@ -99,7 +99,7 @@ export class SelectionState implements Box {
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
-    this.source.elements = this.elements.map(e => Box.snapshot(e));
+    this.source.elements = this.elements.map(e => Box.snapshot(e.bounds));
 
     this.recalculateBoundingBox();
     this.recalculateSourceBoundingBox();
@@ -125,7 +125,7 @@ export class SelectionState implements Box {
   }
 
   rebaseline() {
-    this.source.elements = this.elements.map(e => Box.snapshot(e));
+    this.source.elements = this.elements.map(e => Box.snapshot(e.bounds));
     this.recalculateSourceBoundingBox();
   }
 }
