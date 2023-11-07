@@ -7,14 +7,11 @@ import { Box, Point } from './geometry.ts';
 import { LoadedDiagram, MoveAction, NodeDef, ResizeAction, RotateAction } from './model/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import {
-  SelectionMarquee,
-  SelectionMarqueeApi,
-  updatePendingElements
-} from './SelectionMarquee.tsx';
+import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 import { selectionResize, selectionRotate } from './Selection.logic.ts';
 import { assert } from './assert.ts';
 import { useRedraw } from './useRedraw.tsx';
+import { updatePendingElements } from './SelectionMarquee.logic.tsx';
 
 const BACKGROUND = 'background';
 
