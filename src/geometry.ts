@@ -29,22 +29,13 @@ export type Polygon = {
 
 export type Vector = Point;
 
-export type Angle = {
-  type: 'deg' | 'rad';
-  amount: number;
-};
-
 export const Angle = {
-  toDeg: (radians: Angle | number) => {
-    if (typeof radians === 'number') return radians * (180 / Math.PI);
-    if (radians.type === 'deg') return radians.amount;
-    return radians.amount * (180 / Math.PI);
+  toDeg: (radians: number) => {
+    return radians * (180 / Math.PI);
   },
 
-  toRad: (degrees: Angle | number) => {
-    if (typeof degrees === 'number') return degrees * (Math.PI / 180);
-    if (degrees.type === 'rad') return degrees.amount;
-    return degrees.amount * (Math.PI / 180);
+  toRad: (degrees: number) => {
+    return degrees * (Math.PI / 180);
   }
 };
 
@@ -121,10 +112,7 @@ export const Box = {
       const rotationPoint = Box.corners(boxes[0], true)[0];
       for (const box of boxes) {
         for (const c of Box.corners(box, true)) {
-          const rotated = Point.rotate(
-            Point.subtract(c, rotationPoint),
-            -Angle.toRad(box.rotation ?? 0)
-          );
+          const rotated = Point.rotate(Point.subtract(c, rotationPoint), -(box.rotation ?? 0));
 
           minX = Math.min(minX, rotated.x);
           minY = Math.min(minY, rotated.y);
@@ -138,7 +126,7 @@ export const Box = {
 
       const centerOfSelection = Point.rotate(
         { x: minX + w / 2, y: minY + h / 2 },
-        Angle.toRad(boxes[0].rotation ?? 0)
+        boxes[0].rotation ?? 0
       );
 
       const posOfSelection = Point.add(
@@ -165,7 +153,7 @@ export const Box = {
           { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
         ];
         for (const c of corners) {
-          const rotated = Point.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box));
+          const rotated = Point.rotateAround(c, box.rotation ?? 0, Box.center(box));
 
           minX = Math.min(minX, rotated.x);
           minY = Math.min(minY, rotated.y);
@@ -196,7 +184,7 @@ export const Box = {
 
     if (box.rotation === undefined || round(box.rotation) === 0) return corners;
 
-    return corners.map(c => Point.rotateAround(c, Angle.toRad(box.rotation ?? 0), Box.center(box)));
+    return corners.map(c => Point.rotateAround(c, box.rotation ?? 0, Box.center(box)));
   },
 
   asPolygon: (box: Box): Polygon => {
@@ -322,7 +310,7 @@ export const Vector = {
     return v1.x * v2.y - v1.y * v2.x;
   },
   angle: (v: Vector) => {
-    return Angle.toDeg(Math.atan2(v.y, v.x) + Math.PI / 2);
+    return Math.atan2(v.y, v.x) + Math.PI / 2;
   },
   negate: (c: Vector) => ({ x: -c.x, y: -c.y }),
 
@@ -430,7 +418,7 @@ export class Scale implements Transform {
 export class Rotation implements Transform {
   static reset(b: Box) {
     if (b.rotation === undefined || round(b.rotation) === 0) return new Noop();
-    return new Rotation(-Angle.toRad(b.rotation));
+    return new Rotation(-b.rotation);
   }
 
   constructor(private readonly r: number) {}
@@ -444,7 +432,7 @@ export class Rotation implements Transform {
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
       const ret = Box.moveCenterPoint(Box.snapshot(b), Point.rotate(Box.center(b), this.r));
-      ret.rotation = Angle.toDeg(this.r);
+      ret.rotation = this.r;
       return ret;
     } else {
       return Point.rotate(b, this.r);
@@ -499,7 +487,7 @@ export const TransformFactory = {
     const scaleX = after.size.w / before.size.w;
     const scaleY = after.size.h / before.size.h;
 
-    const rot = Angle.toRad(after.rotation ?? 0) - Angle.toRad(before.rotation ?? 0);
+    const rot = (after.rotation ?? 0) - (before.rotation ?? 0);
 
     const toOrigin = Translation.toOrigin(before, 'center');
     const translateBack = Translation.toOrigin(after, 'center').invert();
@@ -511,7 +499,7 @@ export const TransformFactory = {
       // TODO: If both scale and rotation, we need to reset the rotation first
       transforms.push(Rotation.reset(before));
       transforms.push(new Scale(scaleX, scaleY));
-      transforms.push(new Rotation(Angle.toRad(after.rotation ?? 0)));
+      transforms.push(new Rotation(after.rotation ?? 0));
     } else {
       if (rot !== 0) transforms.push(new Rotation(rot));
     }
@@ -541,8 +529,8 @@ export class LocalCoordinateSystem {
   toGlobal(c: Box | Point): Box | Point {
     // TODO: Need to use translation when needed
     if (this.origin !== this.origin) NOT_IMPLEMENTED_YET();
-    if ('pos' in c) return new Rotation(Angle.toRad(this.rotation)).apply(c);
-    return new Rotation(Angle.toRad(this.rotation)).apply(c);
+    if ('pos' in c) return new Rotation(this.rotation).apply(c);
+    return new Rotation(this.rotation).apply(c);
   }
 
   toLocal(c: Box): Box;
@@ -550,7 +538,7 @@ export class LocalCoordinateSystem {
   toLocal(c: Box | Point): Box | Point {
     // TODO: Need to use translation when needed
     if (this.origin !== this.origin) NOT_IMPLEMENTED_YET();
-    if ('pos' in c) return new Rotation(-Angle.toRad(this.rotation)).apply(c);
-    return new Rotation(-Angle.toRad(this.rotation)).apply(c);
+    if ('pos' in c) return new Rotation(-this.rotation).apply(c);
+    return new Rotation(-this.rotation).apply(c);
   }
 }

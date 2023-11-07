@@ -41,7 +41,9 @@ type AssertType = {
     arg: T[] | undefined | null,
     msg?: string
   ) => asserts arg is [T, ...T[]];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   true: (arg: any, msg?: string) => asserts arg is true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   false: (arg: any, msg?: string) => asserts arg is false;
   fail: (msg?: string) => void;
 };
@@ -62,9 +64,11 @@ const makeAssertions = (error: (m: string) => void) => ({
   arrayNotEmpty: <T = unknown>(arg: T[] | undefined | null, msg?: string): asserts arg is [T] => {
     if (!is.arrayNotEmpty(arg)) error(msg ?? 'array has at least one element');
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   true: (arg: any, msg?: string): asserts arg is true => {
     if (!is.true(arg)) error(msg ?? 'must be true');
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   false: (arg: any, msg?: string): asserts arg is true => {
     if (!is.false(arg)) error(msg ?? 'must be false');
   },

@@ -1,4 +1,4 @@
-import { Point } from './geometry.ts';
+import { Angle, Point } from './geometry.ts';
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
 import { ResolvedNodeDef } from './model/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
@@ -43,7 +43,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           fill="transparent"
           style={{ stroke: 'green' }}
           onMouseDown={onMouseDown}
-          transform={`rotate(${props.def.rotation ?? 0} ${wx + props.def.size.w / 2} ${
+          transform={`rotate(${Angle.toDeg(props.def.rotation ?? 0)} ${wx + props.def.size.w / 2} ${
             wy + props.def.size.h / 2
           })`}
         />
@@ -71,7 +71,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   } else {
     return (
       <g
-        transform={`rotate(${props.def.rotation ?? 0} ${wx + props.def.size.w / 2} ${
+        transform={`rotate(${Angle.toDeg(props.def.rotation ?? 0)} ${wx + props.def.size.w / 2} ${
           wy + props.def.size.h / 2
         })`}
       >

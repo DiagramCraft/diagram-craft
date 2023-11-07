@@ -1,4 +1,4 @@
-import { Box, Point } from './geometry.ts';
+import { Angle, Box, Point } from './geometry.ts';
 import { forwardRef, useImperativeHandle } from 'react';
 import { Drag, SelectionState } from './state.ts';
 import { useRedraw } from './useRedraw.tsx';
@@ -40,7 +40,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <g
-      transform={`rotate(${props.selection.rotation ?? 0} ${
+      transform={`rotate(${Angle.toDeg(props.selection.rotation ?? 0)} ${
         props.selection.pos.x + props.selection.size.w / 2
       } ${props.selection.pos.y + props.selection.size.h / 2})`}
     >

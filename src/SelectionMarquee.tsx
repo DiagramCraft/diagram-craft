@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { SelectionState } from './state.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { LoadedDiagram, ResolvedNodeDef } from './model/diagram.ts';
-import { Box } from './geometry.ts';
+import { Angle, Box } from './geometry.ts';
 import { precondition } from './assert.ts';
 
 export type SelectionMarqueeApi = {
@@ -55,7 +55,7 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
           y={e.pos.y}
           width={e.size.w}
           height={e.size.h}
-          transform={`rotate(${e.rotation ?? 0} ${e.pos.x + e.size.w / 2} ${
+          transform={`rotate(${Angle.toDeg(e.rotation ?? 0)} ${e.pos.x + e.size.w / 2} ${
             e.pos.y + e.size.h / 2
           })`}
           fill="transparent"
