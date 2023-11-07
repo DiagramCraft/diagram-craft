@@ -173,10 +173,9 @@ export const Canvas = (props: Props) => {
 
   const onMouseMove = useCallback(
     (coord: Point) => {
+      if (!drag.current) return;
+
       try {
-        // TODO: This means we are repainting for each mouse move event
-        //       Why do we not abort earlier?
-        if (drag.current === undefined) return;
         deferedMouseAction.current = null;
 
         if (isResizeDrag(drag.current)) {
