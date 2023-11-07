@@ -43,7 +43,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           fill="transparent"
           style={{ stroke: 'green' }}
           onMouseDown={onMouseDown}
-          transform={`rotate(${Angle.toDeg(props.def.bounds.rotation ?? 0)} ${
+          transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${
             wx + props.def.bounds.size.w / 2
           } ${wy + props.def.bounds.size.h / 2})`}
         />
@@ -64,14 +64,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           dominantBaseline="middle"
           textAnchor="middle"
         >
-          {wx}, {wy} {props.def.size.w}x{props.def.size.h} rot{Math.round(props.def.rotation ?? 0)}
+          {wx}, {wy} {props.def.size.w}x{props.def.size.h} rot{Math.round(props.def.rotation)}
         </text>*/}
       </g>
     );
   } else {
     return (
       <g
-        transform={`rotate(${Angle.toDeg(props.def.bounds.rotation ?? 0)} ${
+        transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${
           wx + props.def.bounds.size.w / 2
         } ${wy + props.def.bounds.size.h / 2})`}
       >
@@ -97,7 +97,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           textAnchor="middle"
         >
           {Math.round(wx)}, {Math.round(wy)} {props.def.size.w}x{props.def.size.h} rot
-          {Math.round(props.def.rotation ?? 0)}
+          {Math.round(props.def.rotation)}
         </text>
         */}
       </g>

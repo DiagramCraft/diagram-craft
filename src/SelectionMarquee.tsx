@@ -55,7 +55,7 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
           y={e.bounds.pos.y}
           width={e.bounds.size.w}
           height={e.bounds.size.h}
-          transform={`rotate(${Angle.toDeg(e.bounds.rotation ?? 0)} ${
+          transform={`rotate(${Angle.toDeg(e.bounds.rotation)} ${
             e.bounds.pos.x + e.bounds.size.w / 2
           } ${e.bounds.pos.y + e.bounds.size.h / 2})`}
           fill="transparent"

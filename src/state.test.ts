@@ -15,7 +15,8 @@ describe('SelectionState', () => {
       type: 'node',
       bounds: {
         pos: { x: 0, y: 0 },
-        size: { w: 10, h: 10 }
+        size: { w: 10, h: 10 },
+        rotation: 0
       },
       children: [],
       nodeType: 'test'

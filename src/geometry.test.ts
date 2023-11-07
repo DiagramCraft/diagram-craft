@@ -31,7 +31,7 @@ describe('Point', () => {
 
 describe('Box', () => {
   test('calculates center', () => {
-    expect(Box.center({ pos: { x: 0, y: 0 }, size: { w: 10, h: 10 } })).toStrictEqual({
+    expect(Box.center({ pos: { x: 0, y: 0 }, size: { w: 10, h: 10 }, rotation: 0 })).toStrictEqual({
       x: 5,
       y: 5
     });
@@ -40,22 +40,22 @@ describe('Box', () => {
   test('calculates bounding box', () => {
     expect(
       Box.boundingBox([
-        { pos: { x: 0, y: 0 }, size: { w: 10, h: 10 } },
-        { pos: { x: 5, y: 5 }, size: { w: 10, h: 10 } }
+        { pos: { x: 0, y: 0 }, size: { w: 10, h: 10 }, rotation: 0 },
+        { pos: { x: 5, y: 5 }, size: { w: 10, h: 10 }, rotation: 0 }
       ])
-    ).toStrictEqual({ pos: { x: 0, y: 0 }, size: { w: 15, h: 15 } });
+    ).toStrictEqual({ pos: { x: 0, y: 0 }, size: { w: 15, h: 15 }, rotation: 0 });
   });
 
   test('contains point', () => {
-    expect(Box.contains({ pos: { x: 0, y: 0 }, size: { w: 10, h: 10 } }, { x: 5, y: 5 })).toBe(
-      true
-    );
+    expect(
+      Box.contains({ pos: { x: 0, y: 0 }, size: { w: 10, h: 10 }, rotation: 0 }, { x: 5, y: 5 })
+    ).toBe(true);
   });
 
   test("doesn't contain point", () => {
-    expect(Box.contains({ pos: { x: 0, y: 0 }, size: { w: 10, h: 10 } }, { x: 15, y: 15 })).toBe(
-      false
-    );
+    expect(
+      Box.contains({ pos: { x: 0, y: 0 }, size: { w: 10, h: 10 }, rotation: 0 }, { x: 15, y: 15 })
+    ).toBe(false);
   });
 
   test('contains point with rotated box', () => {
@@ -90,8 +90,8 @@ describe('Rotate', () => {
   });
 
   test('rotate box', () => {
-    let b1: Box = { pos: { x: -10, y: -10 }, size: { w: 10, h: 10 } };
-    let b2: Box = { pos: { x: 10, y: 10 }, size: { w: 10, h: 10 } };
+    let b1: Box = { pos: { x: -10, y: -10 }, size: { w: 10, h: 10 }, rotation: 0 };
+    let b2: Box = { pos: { x: 10, y: 10 }, size: { w: 10, h: 10 }, rotation: 0 };
 
     b1 = new Rotation(Math.PI / 2).apply(b1);
     b2 = new Rotation(Math.PI / 2).apply(b2);

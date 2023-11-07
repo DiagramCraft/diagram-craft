@@ -40,7 +40,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <g
-      transform={`rotate(${Angle.toDeg(props.selection.rotation ?? 0)} ${
+      transform={`rotate(${Angle.toDeg(props.selection.rotation)} ${
         props.selection.pos.x + props.selection.size.w / 2
       } ${props.selection.pos.y + props.selection.size.h / 2})`}
     >

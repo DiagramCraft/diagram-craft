@@ -18,7 +18,8 @@ const diagram: SerializedDiagram = {
       id: '1',
       bounds: {
         pos: { x: 50, y: 50 },
-        size: { w: 100, h: 100 }
+        size: { w: 100, h: 100 },
+        rotation: 0
       },
       children: [
         {
@@ -27,7 +28,8 @@ const diagram: SerializedDiagram = {
           id: '1_1',
           bounds: {
             pos: { x: 10, y: 10 },
-            size: { w: 20, h: 20 }
+            size: { w: 20, h: 20 },
+            rotation: 0
           },
           children: []
         },
@@ -37,7 +39,8 @@ const diagram: SerializedDiagram = {
           id: '1_2',
           bounds: {
             pos: { x: 50, y: 50 },
-            size: { w: 40, h: 40 }
+            size: { w: 40, h: 40 },
+            rotation: 0
           },
           children: []
         }
@@ -49,7 +52,8 @@ const diagram: SerializedDiagram = {
       id: '2',
       bounds: {
         pos: { x: 400, y: 220 },
-        size: { w: 100, h: 100 }
+        size: { w: 100, h: 100 },
+        rotation: 0
       },
       children: []
     },
@@ -59,7 +63,8 @@ const diagram: SerializedDiagram = {
       id: '3',
       bounds: {
         pos: { x: 370, y: 20 },
-        size: { w: 100, h: 100 }
+        size: { w: 100, h: 100 },
+        rotation: 0
       },
       children: []
     }

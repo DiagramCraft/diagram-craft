@@ -20,7 +20,7 @@ export type Extent = {
 export type Box = {
   pos: Point;
   size: Extent;
-  rotation?: number;
+  rotation: number;
 };
 
 export type Polygon = {
@@ -107,12 +107,12 @@ export const Box = {
     let maxY = Number.MIN_SAFE_INTEGER;
 
     // If all boxes have the same rotation
-    if (boxes.every(b => b.rotation === boxes[0].rotation) && boxes[0].rotation !== undefined) {
+    if (boxes.every(b => b.rotation === boxes[0].rotation)) {
       // Pick one corner of one box and rotate each corner of each box around it
       const rotationPoint = Box.corners(boxes[0], true)[0];
       for (const box of boxes) {
         for (const c of Box.corners(box, true)) {
-          const rotated = Point.rotate(Point.subtract(c, rotationPoint), -(box.rotation ?? 0));
+          const rotated = Point.rotate(Point.subtract(c, rotationPoint), -box.rotation);
 
           minX = Math.min(minX, rotated.x);
           minY = Math.min(minY, rotated.y);
@@ -126,7 +126,7 @@ export const Box = {
 
       const centerOfSelection = Point.rotate(
         { x: minX + w / 2, y: minY + h / 2 },
-        boxes[0].rotation ?? 0
+        boxes[0].rotation
       );
 
       const posOfSelection = Point.add(
@@ -153,7 +153,7 @@ export const Box = {
           { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
         ];
         for (const c of corners) {
-          const rotated = Point.rotateAround(c, box.rotation ?? 0, Box.center(box));
+          const rotated = Point.rotateAround(c, box.rotation, Box.center(box));
 
           minX = Math.min(minX, rotated.x);
           minY = Math.min(minY, rotated.y);
@@ -164,7 +164,8 @@ export const Box = {
 
       return {
         pos: { x: minX, y: minY },
-        size: { w: maxX - minX, h: maxY - minY }
+        size: { w: maxX - minX, h: maxY - minY },
+        rotation: 0
       };
     }
   },
@@ -182,9 +183,9 @@ export const Box = {
           { x: box.pos.x, y: box.pos.y + box.size.h }
         ];
 
-    if (box.rotation === undefined || round(box.rotation) === 0) return corners;
+    if (round(box.rotation) === 0) return corners;
 
-    return corners.map(c => Point.rotateAround(c, box.rotation ?? 0, Box.center(box)));
+    return corners.map(c => Point.rotateAround(c, box.rotation, Box.center(box)));
   },
 
   asPolygon: (box: Box): Polygon => {
@@ -197,7 +198,7 @@ export const Box = {
     if ('pos' in c) {
       return Box.corners(c).every(c2 => Box.contains(box, c2));
     } else {
-      if (box.rotation === undefined || box.rotation === 0) {
+      if (box.rotation === 0) {
         return (
           c.x >= box.pos.x &&
           c.x <= box.pos.x + box.size.w &&
@@ -424,7 +425,7 @@ export class Scale implements Transform {
 
 export class Rotation implements Transform {
   static reset(b: Box) {
-    if (b.rotation === undefined || round(b.rotation) === 0) return new Noop();
+    if (round(b.rotation) === 0) return new Noop();
     return new Rotation(-b.rotation);
   }
 
@@ -494,7 +495,7 @@ export const TransformFactory = {
     const scaleX = after.size.w / before.size.w;
     const scaleY = after.size.h / before.size.h;
 
-    const rot = (after.rotation ?? 0) - (before.rotation ?? 0);
+    const rot = after.rotation - before.rotation;
 
     const toOrigin = Translation.toOrigin(before, 'center');
     const translateBack = Translation.toOrigin(after, 'center').invert();
@@ -503,10 +504,14 @@ export const TransformFactory = {
     transforms.push(toOrigin);
 
     if (scaleX !== 1 || scaleY !== 1) {
-      // TODO: If both scale and rotation, we need to reset the rotation first
-      transforms.push(Rotation.reset(before));
-      transforms.push(new Scale(scaleX, scaleY));
-      transforms.push(new Rotation(after.rotation ?? 0));
+      // If both scale and rotation, we need to reset the rotation first
+      if (after.rotation !== 0 || before.rotation !== 0) {
+        transforms.push(Rotation.reset(before));
+        transforms.push(new Scale(scaleX, scaleY));
+        transforms.push(new Rotation(after.rotation));
+      } else {
+        transforms.push(new Scale(scaleX, scaleY));
+      }
     } else {
       if (rot !== 0) transforms.push(new Rotation(rot));
     }
@@ -521,9 +526,8 @@ export class LocalCoordinateSystem {
   static UNITY = new LocalCoordinateSystem({ x: 0, y: 0 }, 0);
 
   static fromBox(box: Box) {
-    if (Point.isEqual(Point.ORIGIN, box.pos) && (box.rotation === undefined || box.rotation === 0))
-      return this.UNITY;
-    return new LocalCoordinateSystem(Box.center(box), box.rotation ?? 0);
+    if (Point.isEqual(Point.ORIGIN, box.pos) && box.rotation === 0) return this.UNITY;
+    return new LocalCoordinateSystem(Box.center(box), box.rotation);
   }
 
   constructor(

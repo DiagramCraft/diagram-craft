@@ -159,7 +159,7 @@ export const Canvas = (props: Props) => {
             return;
           }
         } else if (selection.current.pendingElements) {
-          selection.current.rotation = undefined;
+          selection.current.rotation = 0;
           selection.current.elements = selection.current.pendingElements;
 
           selection.current.recalculateBoundingBox();
@@ -202,7 +202,8 @@ export const Canvas = (props: Props) => {
           selection.current.marquee = Box.normalize(
             Box.snapshot({
               pos: drag.current.offset,
-              size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y }
+              size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y },
+              rotation: 0
             })
           );
 

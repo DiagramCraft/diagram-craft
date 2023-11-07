@@ -48,7 +48,7 @@ export type Drag = ResizeDrag | MoveDrag | RotateDrag | MarqueeDrag;
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
   size: { w: 0, h: 0 },
-  rotation: undefined
+  rotation: 0
 };
 
 type SelectionSource = {
@@ -94,7 +94,7 @@ export class SelectionState implements Box {
   }
 
   toggle(element: ResolvedNodeDef) {
-    this.rotation = undefined;
+    this.rotation = 0;
 
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
@@ -106,7 +106,7 @@ export class SelectionState implements Box {
   }
 
   clear() {
-    this.rotation = undefined;
+    this.rotation = 0;
     this.elements = [];
     this.source.elements = [];
     this.marquee = undefined;
