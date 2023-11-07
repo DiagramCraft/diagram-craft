@@ -1,7 +1,6 @@
 import { Box, Transform, TransformFactory } from '../geometry.ts';
 import { UndoableAction, UndoManager } from './UndoManager.ts';
 import { EventEmitter } from './event.ts';
-import { invariant } from '../assert.ts';
 
 export interface AbstractNodeDef {
   type: 'node';
@@ -108,14 +107,8 @@ export class LoadedDiagram extends EventEmitter<{
 
 export const NodeDef = {
   transform: (node: ResolvedNodeDef, before: Box, after: Box) => {
-    invariant.is.false(node.bounds === before);
-
-    // Fast-path when the node and selection are the same
     const newBox = Transform.box(node.bounds, ...TransformFactory.fromTo(before, after));
     Box.assign(node.bounds, newBox);
-
-    // TODO: Why do we need this?
-    node.bounds.rotation = after.rotation; // newBox.rotation ?? 0;
 
     for (const cn of node.children) {
       NodeDef.transform(cn, before, after);

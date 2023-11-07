@@ -82,7 +82,7 @@ export class SelectionState implements Box {
     const bb = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
     this.pos = bb.pos;
     this.size = bb.size;
-    this.rotation ??= bb.rotation;
+    this.rotation = bb.rotation;
   }
 
   recalculateSourceBoundingBox() {
@@ -90,7 +90,7 @@ export class SelectionState implements Box {
       this.source.elements.length === 0 ? EMPTY_BOX : Box.boundingBox(this.source.elements);
     this.source.boundingBox.pos = sourcebb.pos;
     this.source.boundingBox.size = sourcebb.size;
-    this.source.boundingBox.rotation ??= sourcebb.rotation;
+    this.source.boundingBox.rotation = sourcebb.rotation;
   }
 
   toggle(element: ResolvedNodeDef) {

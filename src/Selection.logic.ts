@@ -13,32 +13,41 @@ export const selectionResize = (point: Point, selection: SelectionState, drag: R
 
   const delta = Point.subtract(lcs.toLocal(point), lcs.toLocal(drag.offset));
 
-  if (drag.type === 'resize-e') {
-    localTarget.size.w = localOriginal.size.w + delta.x;
-  } else if (drag.type === 'resize-w') {
-    localTarget.size.w = localOriginal.size.w - delta.x;
-    localTarget.pos.x = localOriginal.pos.x + delta.x;
-  } else if (drag.type === 'resize-n') {
-    localTarget.size.h = localOriginal.size.h - delta.y;
-    localTarget.pos.y = localOriginal.pos.y + delta.y;
-  } else if (drag.type === 'resize-s') {
-    localTarget.size.h = localOriginal.size.h + delta.y;
-  } else if (drag.type === 'resize-nw') {
-    localTarget.size.h = localOriginal.size.h - delta.y;
-    localTarget.pos.y = localOriginal.pos.y + delta.y;
-    localTarget.size.w = localOriginal.size.w - delta.x;
-    localTarget.pos.x = localOriginal.pos.x + delta.x;
-  } else if (drag.type === 'resize-ne') {
-    localTarget.size.h = localOriginal.size.h - delta.y;
-    localTarget.pos.y = localOriginal.pos.y + delta.y;
-    localTarget.size.w = localOriginal.size.w + delta.x;
-  } else if (drag.type === 'resize-se') {
-    localTarget.size.h = localOriginal.size.h + delta.y;
-    localTarget.size.w = localOriginal.size.w + delta.x;
-  } else if (drag.type === 'resize-sw') {
-    localTarget.size.h = localOriginal.size.h + delta.y;
-    localTarget.size.w = localOriginal.size.w - delta.x;
-    localTarget.pos.x = localOriginal.pos.x + delta.x;
+  switch (drag.type) {
+    case 'resize-e':
+      localTarget.size.w = localOriginal.size.w + delta.x;
+      break;
+    case 'resize-w':
+      localTarget.size.w = localOriginal.size.w - delta.x;
+      localTarget.pos.x = localOriginal.pos.x + delta.x;
+      break;
+    case 'resize-n':
+      localTarget.size.h = localOriginal.size.h - delta.y;
+      localTarget.pos.y = localOriginal.pos.y + delta.y;
+      break;
+    case 'resize-s':
+      localTarget.size.h = localOriginal.size.h + delta.y;
+      break;
+    case 'resize-nw':
+      localTarget.size.h = localOriginal.size.h - delta.y;
+      localTarget.pos.y = localOriginal.pos.y + delta.y;
+      localTarget.size.w = localOriginal.size.w - delta.x;
+      localTarget.pos.x = localOriginal.pos.x + delta.x;
+      break;
+    case 'resize-ne':
+      localTarget.size.h = localOriginal.size.h - delta.y;
+      localTarget.pos.y = localOriginal.pos.y + delta.y;
+      localTarget.size.w = localOriginal.size.w + delta.x;
+      break;
+    case 'resize-se':
+      localTarget.size.h = localOriginal.size.h + delta.y;
+      localTarget.size.w = localOriginal.size.w + delta.x;
+      break;
+    case 'resize-sw':
+      localTarget.size.h = localOriginal.size.h + delta.y;
+      localTarget.size.w = localOriginal.size.w - delta.x;
+      localTarget.pos.x = localOriginal.pos.x + delta.x;
+      break;
   }
 
   const globalTarget = lcs.toGlobal(localTarget);

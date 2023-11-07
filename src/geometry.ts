@@ -440,7 +440,7 @@ export class Rotation implements Transform {
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
       const ret = Box.moveCenterPoint(Box.snapshot(b), Point.rotate(Box.center(b), this.r));
-      ret.rotation = this.r;
+      ret.rotation += this.r;
       return ret;
     } else {
       return Point.rotate(b, this.r);
