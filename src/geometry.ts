@@ -256,10 +256,6 @@ export const Box = {
     return Polygon.intersects(Box.asPolygon(box), Box.asPolygon(otherBox));
   },
 
-  snapshot(b: Box): Box {
-    return { size: { ...b.size }, pos: { ...b.pos }, rotation: b.rotation };
-  },
-
   translate: (b: Box, c: Point): Box => {
     return {
       pos: Point.add(b.pos, c),
@@ -290,8 +286,8 @@ export const Polygon = {
 
         const normal = { y: end.y - start.y, x: start.x - end.x };
 
-        let minA: number | undefined = undefined;
-        let maxA: number | undefined = undefined;
+        let minA: number | undefined;
+        let maxA: number | undefined;
         for (const p of a.points) {
           const projected = normal.x * p.x + normal.y * p.y;
           if (minA === undefined || projected < minA) minA = projected;
@@ -301,8 +297,8 @@ export const Polygon = {
         invariant.is.present(minA);
         invariant.is.present(maxA);
 
-        let minB: number | undefined = undefined;
-        let maxB: number | undefined = undefined;
+        let minB: number | undefined;
+        let maxB: number | undefined;
         for (const p of b.points) {
           const projected = normal.x * p.x + normal.y * p.y;
           if (minB === undefined || projected < minB) minB = projected;

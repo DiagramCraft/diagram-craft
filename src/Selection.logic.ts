@@ -3,12 +3,12 @@ import { ResizeDrag, SelectionState } from './state.ts';
 import { NodeDef } from './model/diagram.ts';
 
 export const selectionResize = (point: Point, selection: SelectionState, drag: ResizeDrag) => {
-  const before = selection;
+  const before = selection.bounds;
   const original = selection.source.boundingBox;
 
-  const lcs = LocalCoordinateSystem.fromBox(selection);
+  const lcs = LocalCoordinateSystem.fromBox(selection.bounds);
 
-  const localTarget = Box.asMutableSnapshot(lcs.toLocal(selection));
+  const localTarget = Box.asMutableSnapshot(lcs.toLocal(selection.bounds));
   const localOriginal = lcs.toLocal(original);
 
   const delta = Point.subtract(lcs.toLocal(point), lcs.toLocal(drag.offset));
@@ -50,22 +50,23 @@ export const selectionResize = (point: Point, selection: SelectionState, drag: R
       break;
   }
 
-  const globalTarget = lcs.toGlobal(localTarget.getSnapshot());
-  selection.size = globalTarget.size;
-  selection.pos = globalTarget.pos;
+  selection.bounds = lcs.toGlobal(localTarget.getSnapshot());
 
   for (const node of selection.elements) {
-    NodeDef.transform(node, before, selection);
+    NodeDef.transform(node, before, selection.bounds);
   }
 };
 
 export const selectionRotate = (coord: Point, selection: SelectionState) => {
-  const before = Box.snapshot(selection);
+  const before = selection.bounds;
 
   const center = Box.center(selection.source.boundingBox);
-  selection.rotation = Vector.angle(Vector.from(center, coord));
+  selection.bounds = {
+    ...selection.bounds,
+    rotation: Vector.angle(Vector.from(center, coord))
+  };
 
   for (const node of selection.elements) {
-    NodeDef.transform(node, before, selection);
+    NodeDef.transform(node, before, selection.bounds);
   }
 };

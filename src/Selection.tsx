@@ -20,29 +20,31 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   if (props.selection.isEmpty()) return null;
 
+  const bounds = props.selection.bounds;
+
   const points: Point[] = [
-    props.selection.pos,
+    bounds.pos,
     {
-      x: props.selection.pos.x + props.selection.size.w,
-      y: props.selection.pos.y
+      x: bounds.pos.x + bounds.size.w,
+      y: bounds.pos.y
     },
     {
-      x: props.selection.pos.x + props.selection.size.w,
-      y: props.selection.pos.y + props.selection.size.h
+      x: bounds.pos.x + bounds.size.w,
+      y: bounds.pos.y + bounds.size.h
     },
     {
-      x: props.selection.pos.x,
-      y: props.selection.pos.y + props.selection.size.h
+      x: bounds.pos.x,
+      y: bounds.pos.y + bounds.size.h
     },
-    props.selection.pos
+    bounds.pos
   ];
   const pointsString = points.map(c => `${c.x},${c.y}`).join(' ');
 
   return (
     <g
-      transform={`rotate(${Angle.toDeg(props.selection.rotation)} ${
-        props.selection.pos.x + props.selection.size.w / 2
-      } ${props.selection.pos.y + props.selection.size.h / 2})`}
+      transform={`rotate(${Angle.toDeg(bounds.rotation)} ${bounds.pos.x + bounds.size.w / 2} ${
+        bounds.pos.y + bounds.size.h / 2
+      })`}
     >
       <polyline points={pointsString} style={{ stroke: '#2673dd', strokeWidth: '1' }} fill="none" />
 
@@ -64,7 +66,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'nw-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', bounds);
           e.stopPropagation();
         }}
       />
@@ -78,7 +80,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'ne-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', bounds);
           e.stopPropagation();
         }}
       />
@@ -92,7 +94,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'se-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', bounds);
           e.stopPropagation();
         }}
       />
@@ -106,7 +108,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'sw-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', bounds);
           e.stopPropagation();
         }}
       />
@@ -120,7 +122,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'n-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', bounds);
           e.stopPropagation();
         }}
       />
@@ -134,7 +136,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'ew-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', bounds);
           e.stopPropagation();
         }}
       />
@@ -148,7 +150,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'e-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', bounds);
           e.stopPropagation();
         }}
       />
@@ -162,7 +164,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 's-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', bounds);
           e.stopPropagation();
         }}
       />
@@ -176,7 +178,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'w-resize' }}
         onMouseDown={e => {
-          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', props.selection);
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', bounds);
           e.stopPropagation();
         }}
       />

@@ -57,10 +57,8 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
-export class SelectionState implements Box {
-  pos: Box['pos'];
-  size: Box['size'];
-  rotation: Box['rotation'];
+export class SelectionState {
+  bounds: Box;
 
   elements: ResolvedNodeDef[] = [];
 
@@ -73,17 +71,12 @@ export class SelectionState implements Box {
   pendingElements?: ResolvedNodeDef[];
 
   constructor() {
-    this.pos = EMPTY_BOX.pos;
-    this.size = EMPTY_BOX.size;
-    this.rotation = EMPTY_BOX.rotation;
+    this.bounds = EMPTY_BOX;
     this.elements = [];
   }
 
   recalculateBoundingBox() {
-    const bb = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
-    this.pos = bb.pos;
-    this.size = bb.size;
-    this.rotation = bb.rotation;
+    this.bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
   }
 
   recalculateSourceBoundingBox() {
@@ -92,8 +85,6 @@ export class SelectionState implements Box {
   }
 
   toggle(element: ResolvedNodeDef) {
-    this.rotation = 0;
-
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
@@ -104,7 +95,6 @@ export class SelectionState implements Box {
   }
 
   clear() {
-    this.rotation = 0;
     this.elements = [];
     this.source.elements = [];
     this.marquee = undefined;
@@ -119,8 +109,6 @@ export class SelectionState implements Box {
 
   convertMarqueeToSelection() {
     precondition.is.present(this.pendingElements);
-
-    this.rotation = 0;
 
     this.elements = this.pendingElements;
     this.source.elements = this.pendingElements.map(e => e.bounds);

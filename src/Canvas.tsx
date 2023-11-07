@@ -48,7 +48,7 @@ export const Canvas = (props: Props) => {
 
   const updateCursor = useCallback(
     (coord: Point) => {
-      if (Box.contains(selection.current, coord)) {
+      if (Box.contains(selection.current.bounds, coord)) {
         svgRef.current!.style.cursor = 'move';
       } else {
         svgRef.current!.style.cursor = 'default';
@@ -70,7 +70,7 @@ export const Canvas = (props: Props) => {
             selection.current.toggle(diagram.nodeLookup[id]);
           }
         } else {
-          if (Box.contains(selection.current, coord)) {
+          if (Box.contains(selection.current.bounds, coord)) {
             deferedMouseAction.current = { id };
           } else {
             if (isClickOnBackground) {
@@ -87,7 +87,7 @@ export const Canvas = (props: Props) => {
 
         if (selection.current.isEmpty()) return;
 
-        const localCoord = Point.subtract(coord, selection.current.pos);
+        const localCoord = Point.subtract(coord, selection.current.bounds.pos);
         onDragStart(localCoord, 'move');
       } finally {
         selectionRef.current?.repaint();
@@ -183,7 +183,10 @@ export const Canvas = (props: Props) => {
         } else if (drag.current.type === 'move') {
           assert.false(selection.current.isEmpty());
 
-          const d = Point.subtract(coord, Point.add(selection.current.pos, drag.current?.offset));
+          const d = Point.subtract(
+            coord,
+            Point.add(selection.current.bounds.pos, drag.current?.offset)
+          );
 
           for (const node of selection.current.elements) {
             const after = node.bounds;
