@@ -129,8 +129,8 @@ class AbstractTransformAction implements UndoableAction {
   constructor(source: Box[], target: Box[], nodes: ResolvedNodeDef[]) {
     for (let i = 0; i < target.length; i++) {
       this.nodes.push(nodes[i]);
-      this.source.push(Box.snapshot(source[i]));
-      this.target.push(Box.snapshot(target[i]));
+      this.source.push(source[i]);
+      this.target.push(target[i]);
     }
   }
 

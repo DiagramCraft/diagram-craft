@@ -186,8 +186,8 @@ export const Canvas = (props: Props) => {
           const d = Point.subtract(coord, Point.add(selection.current.pos, drag.current?.offset));
 
           for (const node of selection.current.elements) {
-            const after = Box.snapshot(node.bounds);
-            NodeDef.transform(node, Box.snapshot(node.bounds), {
+            const after = node.bounds;
+            NodeDef.transform(node, node.bounds, {
               ...after,
               pos: Point.add(after.pos, d)
             });
@@ -195,13 +195,11 @@ export const Canvas = (props: Props) => {
 
           selection.current.recalculateBoundingBox();
         } else if (drag.current.type === 'marquee') {
-          selection.current.marquee = Box.normalize(
-            Box.snapshot({
-              pos: drag.current.offset,
-              size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y },
-              rotation: 0
-            })
-          );
+          selection.current.marquee = Box.normalize({
+            pos: drag.current.offset,
+            size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y },
+            rotation: 0
+          });
 
           updatePendingElements(selection.current, diagram);
 

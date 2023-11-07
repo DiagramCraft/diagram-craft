@@ -3,12 +3,12 @@ import { ResizeDrag, SelectionState } from './state.ts';
 import { NodeDef } from './model/diagram.ts';
 
 export const selectionResize = (point: Point, selection: SelectionState, drag: ResizeDrag) => {
-  const before = Box.snapshot(selection);
+  const before = selection;
   const original = selection.source.boundingBox;
 
   const lcs = LocalCoordinateSystem.fromBox(selection);
 
-  const localTarget = Box.asMutableSnapshot(lcs.toLocal(Box.snapshot(selection)));
+  const localTarget = Box.asMutableSnapshot(lcs.toLocal(selection));
   const localOriginal = lcs.toLocal(original);
 
   const delta = Point.subtract(lcs.toLocal(point), lcs.toLocal(drag.offset));

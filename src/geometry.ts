@@ -45,7 +45,11 @@ export type Box = Readonly<{
 
 class BoxMutableSnapshot extends MutableSnapshot<Box> {
   getSnapshot(): Box {
-    return Box.snapshot(this.value);
+    return {
+      size: { ...this.value.size },
+      pos: { ...this.value.pos },
+      rotation: this.value.rotation
+    };
   }
 }
 
@@ -463,7 +467,7 @@ export class Rotation implements Transform {
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
-      const ret = Box.moveCenterPoint(Box.snapshot(b), Point.rotate(Box.center(b), this.r));
+      const ret = Box.moveCenterPoint(b, Point.rotate(Box.center(b), this.r));
       return {
         pos: ret.pos,
         size: ret.size,

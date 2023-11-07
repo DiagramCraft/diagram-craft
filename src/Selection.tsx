@@ -64,11 +64,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'nw-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-nw',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', props.selection);
           e.stopPropagation();
         }}
       />
@@ -82,11 +78,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'ne-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-ne',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', props.selection);
           e.stopPropagation();
         }}
       />
@@ -100,11 +92,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'se-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-se',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', props.selection);
           e.stopPropagation();
         }}
       />
@@ -118,11 +106,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'sw-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-sw',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', props.selection);
           e.stopPropagation();
         }}
       />
@@ -136,11 +120,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'n-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-n',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', props.selection);
           e.stopPropagation();
         }}
       />
@@ -154,11 +134,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'ew-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'rotate',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', props.selection);
           e.stopPropagation();
         }}
       />
@@ -172,11 +148,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'e-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-e',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', props.selection);
           e.stopPropagation();
         }}
       />
@@ -190,11 +162,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 's-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-s',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', props.selection);
           e.stopPropagation();
         }}
       />
@@ -208,11 +176,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         stroke="#2673dd"
         style={{ cursor: 'w-resize' }}
         onMouseDown={e => {
-          props.onDragStart(
-            Point.fromEvent(e.nativeEvent),
-            'resize-w',
-            Box.snapshot(props.selection)
-          );
+          props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', props.selection);
           e.stopPropagation();
         }}
       />
