@@ -1,4 +1,4 @@
-import { invariant, precondition } from './assert.ts';
+import { invariant, NOT_IMPLEMENTED_YET, precondition } from './assert.ts';
 
 const round = (n: number) => {
   const res = Math.round(n * 100) / 100;
@@ -226,7 +226,7 @@ export const Box = {
     return Polygon.intersects(Box.asPolygon(box), Box.asPolygon(otherBox));
   },
 
-  snapshot(b: Box) {
+  snapshot(b: Box): Box {
     return { size: { ...b.size }, pos: { ...b.pos }, rotation: b.rotation };
   },
 
@@ -430,7 +430,7 @@ export class Scale implements Transform {
 export class Rotation implements Transform {
   static reset(b: Box) {
     if (b.rotation === undefined || round(b.rotation) === 0) return new Noop();
-    return new Rotation(-b.rotation);
+    return new Rotation(-Angle.toRad(b.rotation));
   }
 
   constructor(private readonly r: number) {}
@@ -506,10 +506,51 @@ export const TransformFactory = {
 
     const transforms: Transform[] = [];
     transforms.push(toOrigin);
-    if (scaleX !== 1 || scaleY !== 1) transforms.push(new Scale(scaleX, scaleY));
-    if (rot !== 0) transforms.push(new Rotation(rot));
+
+    if (scaleX !== 1 || scaleY !== 1) {
+      // TODO: If both scale and rotation, we need to reset the rotation first
+      transforms.push(Rotation.reset(before));
+      transforms.push(new Scale(scaleX, scaleY));
+      transforms.push(new Rotation(Angle.toRad(after.rotation ?? 0)));
+    } else {
+      if (rot !== 0) transforms.push(new Rotation(rot));
+    }
+
     transforms.push(translateBack);
 
     return transforms;
   }
 };
+
+export class LocalCoordinateSystem {
+  static UNITY = new LocalCoordinateSystem({ x: 0, y: 0 }, 0);
+
+  static fromBox(box: Box) {
+    if (Point.isEqual(Point.ORIGIN, box.pos) && (box.rotation === undefined || box.rotation === 0))
+      return this.UNITY;
+    return new LocalCoordinateSystem(Box.center(box), box.rotation ?? 0);
+  }
+
+  constructor(
+    private readonly origin: Point,
+    private readonly rotation: number
+  ) {}
+
+  toGlobal(c: Box): Box;
+  toGlobal(c: Point): Point;
+  toGlobal(c: Box | Point): Box | Point {
+    // TODO: Need to use translation when needed
+    if (this.origin !== this.origin) NOT_IMPLEMENTED_YET();
+    if ('pos' in c) return new Rotation(Angle.toRad(this.rotation)).apply(c);
+    return new Rotation(Angle.toRad(this.rotation)).apply(c);
+  }
+
+  toLocal(c: Box): Box;
+  toLocal(c: Point): Point;
+  toLocal(c: Box | Point): Box | Point {
+    // TODO: Need to use translation when needed
+    if (this.origin !== this.origin) NOT_IMPLEMENTED_YET();
+    if ('pos' in c) return new Rotation(-Angle.toRad(this.rotation)).apply(c);
+    return new Rotation(-Angle.toRad(this.rotation)).apply(c);
+  }
+}

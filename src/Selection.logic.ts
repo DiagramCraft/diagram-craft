@@ -1,39 +1,49 @@
-import { Box, Point, Vector } from './geometry.ts';
+import { Box, LocalCoordinateSystem, Point, Vector } from './geometry.ts';
 import { ResizeDrag, SelectionState } from './state.ts';
 import { NodeDef } from './model/diagram.ts';
 
-export const selectionResize = (coord: Point, selection: SelectionState, drag: ResizeDrag) => {
-  const delta = Point.subtract(coord, drag.offset);
+export const selectionResize = (point: Point, selection: SelectionState, drag: ResizeDrag) => {
   const before = Box.snapshot(selection);
   const original = selection.source.boundingBox;
 
+  const lcs = LocalCoordinateSystem.fromBox(selection);
+
+  const localTarget = lcs.toLocal(Box.snapshot(selection));
+  const localOriginal = lcs.toLocal(original);
+
+  const delta = Point.subtract(lcs.toLocal(point), lcs.toLocal(drag.offset));
+
   if (drag.type === 'resize-e') {
-    selection.size.w = original.size.w + delta.x;
+    localTarget.size.w = localOriginal.size.w + delta.x;
   } else if (drag.type === 'resize-w') {
-    selection.size.w = original.size.w - delta.x;
-    selection.pos.x = original.pos.x + delta.x;
+    localTarget.size.w = localOriginal.size.w - delta.x;
+    localTarget.pos.x = localOriginal.pos.x + delta.x;
   } else if (drag.type === 'resize-n') {
-    selection.size.h = original.size.h - delta.y;
-    selection.pos.y = original.pos.y + delta.y;
+    localTarget.size.h = localOriginal.size.h - delta.y;
+    localTarget.pos.y = localOriginal.pos.y + delta.y;
   } else if (drag.type === 'resize-s') {
-    selection.size.h = original.size.h + delta.y;
+    localTarget.size.h = localOriginal.size.h + delta.y;
   } else if (drag.type === 'resize-nw') {
-    selection.size.h = original.size.h - delta.y;
-    selection.pos.y = original.pos.y + delta.y;
-    selection.size.w = original.size.w - delta.x;
-    selection.pos.x = original.pos.x + delta.x;
+    localTarget.size.h = localOriginal.size.h - delta.y;
+    localTarget.pos.y = localOriginal.pos.y + delta.y;
+    localTarget.size.w = localOriginal.size.w - delta.x;
+    localTarget.pos.x = localOriginal.pos.x + delta.x;
   } else if (drag.type === 'resize-ne') {
-    selection.size.h = original.size.h - delta.y;
-    selection.pos.y = original.pos.y + delta.y;
-    selection.size.w = original.size.w + delta.x;
+    localTarget.size.h = localOriginal.size.h - delta.y;
+    localTarget.pos.y = localOriginal.pos.y + delta.y;
+    localTarget.size.w = localOriginal.size.w + delta.x;
   } else if (drag.type === 'resize-se') {
-    selection.size.h = original.size.h + delta.y;
-    selection.size.w = original.size.w + delta.x;
+    localTarget.size.h = localOriginal.size.h + delta.y;
+    localTarget.size.w = localOriginal.size.w + delta.x;
   } else if (drag.type === 'resize-sw') {
-    selection.size.h = original.size.h + delta.y;
-    selection.size.w = original.size.w - delta.x;
-    selection.pos.x = original.pos.x + delta.x;
+    localTarget.size.h = localOriginal.size.h + delta.y;
+    localTarget.size.w = localOriginal.size.w - delta.x;
+    localTarget.pos.x = localOriginal.pos.x + delta.x;
   }
+
+  const globalTarget = lcs.toGlobal(localTarget);
+  selection.size = globalTarget.size;
+  selection.pos = globalTarget.pos;
 
   for (const node of selection.elements) {
     NodeDef.transform(node, before, selection);
