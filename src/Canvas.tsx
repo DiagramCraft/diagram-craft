@@ -156,11 +156,7 @@ export const Canvas = (props: Props) => {
             return;
           }
         } else if (selection.current.pendingElements) {
-          selection.current.rotation = 0;
-          selection.current.elements = selection.current.pendingElements;
-
-          selection.current.recalculateBoundingBox();
-          selection.current.clearMarquee();
+          selection.current.convertMarqueeToSelection();
         }
       } finally {
         selectionRef.current?.repaint();

@@ -1,5 +1,6 @@
 import { ResolvedNodeDef } from './model/diagram.ts';
 import { Box, Point } from './geometry.ts';
+import { precondition } from './assert.ts';
 
 export type ResizeDrag = {
   type:
@@ -119,7 +120,17 @@ export class SelectionState implements Box {
     return this.elements.length === 0;
   }
 
-  clearMarquee() {
+  convertMarqueeToSelection() {
+    precondition.is.present(this.pendingElements);
+
+    this.rotation = 0;
+
+    this.elements = this.pendingElements;
+    this.source.elements = this.pendingElements.map(e => Box.snapshot(e.bounds));
+
+    this.recalculateBoundingBox();
+    this.recalculateSourceBoundingBox();
+
     this.marquee = undefined;
     this.pendingElements = undefined;
   }
