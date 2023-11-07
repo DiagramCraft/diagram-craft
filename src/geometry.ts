@@ -1,5 +1,25 @@
 import { invariant, NOT_IMPLEMENTED_YET, precondition } from './assert.ts';
 
+type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
+
+abstract class MutableSnapshot<T> {
+  protected value: DeepWriteable<T>;
+
+  constructor(value: T) {
+    this.value = value;
+  }
+
+  get<K extends keyof T>(k: K) {
+    return this.value[k];
+  }
+
+  set<K extends keyof T>(k: K, v: T[K]) {
+    this.value[k] = v;
+  }
+
+  abstract getSnapshot(): T;
+}
+
 const round = (n: number) => {
   const res = Math.round(n * 100) / 100;
   // To ensure -0 === 0
@@ -7,21 +27,27 @@ const round = (n: number) => {
   return res;
 };
 
-export type Point = {
+export type Point = Readonly<{
   x: number;
   y: number;
-};
+}>;
 
-export type Extent = {
+export type Extent = Readonly<{
   w: number;
   h: number;
-};
+}>;
 
-export type Box = {
+export type Box = Readonly<{
   pos: Point;
   size: Extent;
   rotation: number;
-};
+}>;
+
+class BoxMutableSnapshot extends MutableSnapshot<Box> {
+  getSnapshot(): Box {
+    return Box.snapshot(this.value);
+  }
+}
 
 export type Polygon = {
   points: Point[];
@@ -74,6 +100,14 @@ export const Point = {
 };
 
 export const Box = {
+  asMutableSnapshot: (b: Box): MutableSnapshot<Box> => {
+    return new BoxMutableSnapshot({
+      pos: { ...b.pos },
+      size: { ...b.size },
+      rotation: b.rotation
+    });
+  },
+
   center: (b: Box) => {
     return {
       x: b.pos.x + b.size.w / 2,
@@ -92,11 +126,14 @@ export const Box = {
   },
 
   moveCenterPoint: (b: Box, center: Point): Box => {
-    b.pos = {
-      x: center.x - b.size.w / 2,
-      y: center.y - b.size.h / 2
+    return {
+      pos: {
+        x: center.x - b.size.w / 2,
+        y: center.y - b.size.h / 2
+      },
+      size: { ...b.size },
+      rotation: b.rotation
     };
-    return b;
   },
 
   // TODO: This should not be part of the Box API
@@ -230,24 +267,11 @@ export const Box = {
   // TODO: Do we want this, or should we use negative width and negative heigh
   //       as an indicator for flipping a node
   normalize: (b: Box) => {
-    if (b.size.w < 0) {
-      b.pos.x += b.size.w;
-      b.size.w *= -1;
-    }
-
-    if (b.size.h < 0) {
-      b.pos.y += b.size.h;
-      b.size.h *= -1;
-    }
-
-    return b;
-  },
-  assign(target: Box, source: Box) {
-    target.pos.x = source.pos.x;
-    target.pos.y = source.pos.y;
-    target.size.w = source.size.w;
-    target.size.h = source.size.h;
-    target.rotation = source.rotation;
+    return {
+      pos: { x: Math.min(b.pos.x, b.pos.x + b.size.w), y: Math.min(b.pos.y, b.pos.y + b.size.h) },
+      rotation: b.rotation,
+      size: { w: Math.abs(b.size.w), h: Math.abs(b.size.h) }
+    };
   }
 };
 
@@ -440,8 +464,11 @@ export class Rotation implements Transform {
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
       const ret = Box.moveCenterPoint(Box.snapshot(b), Point.rotate(Box.center(b), this.r));
-      ret.rotation += this.r;
-      return ret;
+      return {
+        pos: ret.pos,
+        size: ret.size,
+        rotation: ret.rotation + this.r
+      };
     } else {
       return Point.rotate(b, this.r);
     }
@@ -467,19 +494,20 @@ export class Shear implements Transform {
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
-      if (this.axis === 'x') {
-        b.size.w += b.size.h * this.amount;
-      } else {
-        b.size.h += b.size.w * this.amount;
-      }
+      return {
+        pos: b.pos,
+        size: {
+          w: this.axis === 'x' ? b.size.w + b.size.h * this.amount : b.size.w,
+          h: this.axis === 'y' ? b.size.h + b.size.w * this.amount : b.size.h
+        },
+        rotation: b.rotation
+      };
       return b;
     } else {
-      if (this.axis === 'x') {
-        b.x += b.y * this.amount;
-      } else {
-        b.y += b.x * this.amount;
-      }
-      return b;
+      return {
+        x: this.axis === 'x' ? b.x + b.y * this.amount : b.x,
+        y: this.axis === 'y' ? b.y + b.x * this.amount : b.y
+      };
     }
   }
 

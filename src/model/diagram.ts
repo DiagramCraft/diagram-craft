@@ -77,8 +77,7 @@ export class LoadedDiagram extends EventEmitter<{
 
   transformNode(nodes: ResolvedNodeDef[], transforms: Transform[]) {
     for (const node of nodes) {
-      const newBox = Transform.box(node.bounds, ...transforms);
-      Box.assign(node.bounds, newBox);
+      node.bounds = Transform.box(node.bounds, ...transforms);
     }
 
     for (const node of nodes) {
@@ -107,8 +106,7 @@ export class LoadedDiagram extends EventEmitter<{
 
 export const NodeDef = {
   transform: (node: ResolvedNodeDef, before: Box, after: Box) => {
-    const newBox = Transform.box(node.bounds, ...TransformFactory.fromTo(before, after));
-    Box.assign(node.bounds, newBox);
+    node.bounds = Transform.box(node.bounds, ...TransformFactory.fromTo(before, after));
 
     for (const cn of node.children) {
       NodeDef.transform(cn, before, after);

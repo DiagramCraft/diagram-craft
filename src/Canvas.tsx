@@ -187,8 +187,10 @@ export const Canvas = (props: Props) => {
 
           for (const node of selection.current.elements) {
             const after = Box.snapshot(node.bounds);
-            after.pos = Point.add(after.pos, d);
-            NodeDef.transform(node, Box.snapshot(node.bounds), after);
+            NodeDef.transform(node, Box.snapshot(node.bounds), {
+              ...after,
+              pos: Point.add(after.pos, d)
+            });
           }
 
           selection.current.recalculateBoundingBox();

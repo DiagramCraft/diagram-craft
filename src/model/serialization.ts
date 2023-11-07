@@ -68,10 +68,10 @@ export const deserializeDiagram = (diagram: SerializedDiagram): LoadedDiagram =>
   for (const n of allNodes) {
     for (const child of unfoldGroup(n)) {
       if (child.parent) {
-        nodeLookup[child.id].bounds.pos = Point.add(
-          nodeLookup[child.id].bounds.pos,
-          nodeLookup[child.parent.id].bounds.pos
-        );
+        nodeLookup[child.id].bounds = {
+          ...nodeLookup[child.id].bounds,
+          pos: Point.add(nodeLookup[child.id].bounds.pos, nodeLookup[child.parent.id].bounds.pos)
+        };
       }
     }
   }

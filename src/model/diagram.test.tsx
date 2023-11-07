@@ -1,6 +1,5 @@
-import { expect, test, describe } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { NodeDef, ResolvedNodeDef } from './diagram.ts';
-import { Point } from '../geometry.ts';
 
 describe('NodeDef', () => {
   test('transform rotate', () => {
@@ -74,9 +73,6 @@ describe('NodeDef', () => {
 
     NodeDef.transform(node1, after, before);
     NodeDef.transform(node2, after, before);
-
-    node1.bounds.pos = Point.round(node1.bounds.pos);
-    node2.bounds.pos = Point.round(node2.bounds.pos);
 
     expect(node1.bounds.rotation).toStrictEqual(0);
     expect(node1.bounds.pos).toStrictEqual({ x: 10, y: 10 });
