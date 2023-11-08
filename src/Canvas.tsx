@@ -18,8 +18,7 @@ const BACKGROUND = 'background';
 type ObjectId = typeof BACKGROUND | string;
 
 type DeferedMouseAction = {
-  id: ObjectId;
-  add?: boolean;
+  callback: () => void;
 };
 
 type DragActions = {
@@ -131,7 +130,7 @@ export const Canvas = (props: Props) => {
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
-  const deferedMouseAction = useRef<DeferedMouseAction | null>(null);
+  const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
 
   useEffect(() => {
     const callback = () => {
@@ -181,7 +180,16 @@ export const Canvas = (props: Props) => {
           }
         } else {
           if (isClickOnSelection) {
-            deferedMouseAction.current = { id };
+            deferedMouseAction.current = {
+              callback: () => {
+                if (id === BACKGROUND) {
+                  selection.current.clear();
+                } else {
+                  selection.current.clear();
+                  selection.current.toggle(diagram.nodeLookup[id]);
+                }
+              }
+            };
           } else {
             if (isClickOnBackground) {
               selection.current.clear();
@@ -205,26 +213,20 @@ export const Canvas = (props: Props) => {
   );
 
   const onMouseUp = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (_id: ObjectId, coord: Point) => {
+    (_id: ObjectId, point: Point) => {
       try {
         if (drag.current) {
-          dragActions[drag.current.type].onDragEnd(coord, drag.current, diagram, selection.current);
+          dragActions[drag.current.type].onDragEnd(point, drag.current, diagram, selection.current);
         }
 
         if (deferedMouseAction.current) {
-          if (deferedMouseAction.current.id === BACKGROUND) {
-            selection.current.clear();
-          } else {
-            selection.current.clear();
-            selection.current.toggle(diagram.nodeLookup[deferedMouseAction.current.id]);
-          }
+          deferedMouseAction.current?.callback();
         }
       } finally {
         drag.current = undefined;
-        deferedMouseAction.current = null;
+        deferedMouseAction.current = undefined;
 
-        repaintSelection(coord);
+        repaintSelection(point);
       }
     },
     [diagram, repaintSelection]
@@ -238,7 +240,7 @@ export const Canvas = (props: Props) => {
       try {
         dragActions[drag.current.type].onDrag(coord, drag.current, diagram, selection.current);
       } finally {
-        deferedMouseAction.current = null;
+        deferedMouseAction.current = undefined;
 
         for (const node of selection.current.elements) {
           nodeRefs.current[node.id]?.repaint();
