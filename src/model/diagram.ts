@@ -1,6 +1,19 @@
 import { Box, Transform, TransformFactory } from '../geometry/geometry.ts';
 import { UndoableAction, UndoManager } from './undoManager.ts';
 import { EventEmitter } from '../utils/event.ts';
+import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
+
+const cloneNodeBounds = (node: ResolvedNodeDef): ResolvedNodeDef => {
+  return {
+    ...node,
+    bounds: {
+      pos: { ...node.bounds.pos },
+      size: { ...node.bounds.size },
+      rotation: node.bounds.rotation
+    },
+    children: node.children.map(c => cloneNodeBounds(c))
+  };
+};
 
 export interface AbstractNodeDef {
   type: 'node';
@@ -42,21 +55,23 @@ export type DiagramEvents = {
 
 export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   elements: (ResolvedEdgeDef | ResolvedNodeDef)[];
-  nodeLookup: Record<string, ResolvedNodeDef>;
-  edgeLookup: Record<string, ResolvedEdgeDef>;
-  undoManager = new UndoManager(() => {
-    this.emit('change');
-  });
+  readonly nodeLookup: Record<string, ResolvedNodeDef> = {};
+  readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
+  readonly undoManager = new UndoManager();
 
-  constructor(
-    elements: (ResolvedEdgeDef | ResolvedNodeDef)[],
-    nodeLookup: Record<string, ResolvedNodeDef>,
-    edgeLookup: Record<string, ResolvedEdgeDef>
-  ) {
+  constructor(elements: (ResolvedEdgeDef | ResolvedNodeDef)[]) {
     super();
     this.elements = elements;
-    this.nodeLookup = nodeLookup;
-    this.edgeLookup = edgeLookup;
+
+    for (const e of this.elements) {
+      if (e.type === 'edge') {
+        this.edgeLookup[e.id] = e;
+      } else if (e.type === 'node') {
+        this.nodeLookup[e.id] = e;
+      } else {
+        VERIFY_NOT_REACHED();
+      }
+    }
   }
 
   addNode(node: ResolvedNodeDef) {
@@ -78,10 +93,16 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   }
 
   transformNodes(nodes: ResolvedNodeDef[], transforms: Transform[]) {
-    const before = nodes.map(n => NodeDef.cloneBounds(n));
+    const before = nodes.map(n => cloneNodeBounds(n));
 
     for (const node of nodes) {
       node.bounds = Transform.box(node.bounds, ...transforms);
+    }
+
+    for (const node of nodes) {
+      if (node.nodeType === 'group') {
+        this.transformNodes(node.children, transforms);
+      }
     }
 
     for (let i = 0; i < nodes.length; i++) {
@@ -105,26 +126,6 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
 }
 
 export const NodeDef = {
-  cloneBounds: (node: ResolvedNodeDef): ResolvedNodeDef => {
-    return {
-      ...node,
-      bounds: {
-        pos: { ...node.bounds.pos },
-        size: { ...node.bounds.size },
-        rotation: node.bounds.rotation
-      },
-      children: node.children.map(c => NodeDef.cloneBounds(c))
-    };
-  },
-
-  transform: (node: ResolvedNodeDef, before: Box, after: Box) => {
-    node.bounds = Transform.box(node.bounds, ...TransformFactory.fromTo(before, after));
-
-    for (const cn of node.children) {
-      NodeDef.transform(cn, before, after);
-    }
-  },
-
   edges: (node: ResolvedNodeDef): ResolvedEdgeDef[] => {
     return [
       ...Object.values(node.edges ?? {}).flatMap(e => e),

@@ -5,24 +5,22 @@ export type UndoableAction = {
   redo: () => void;
 };
 
-export class UndoManager extends EventEmitter<{
+export type UndoEvents = {
   undo: { action: UndoableAction };
   redo: { action: UndoableAction };
   execute: { action: UndoableAction };
   add: { action: UndoableAction };
-}> {
+};
+
+export class UndoManager extends EventEmitter<UndoEvents> {
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
 
-  // TODO: We should remove this callback and use events instead
-  private callback: (() => void) | undefined;
-
-  constructor(callback?: () => void) {
+  constructor() {
     super();
 
     this.undoableActions = [];
     this.redoableActions = [];
-    this.callback = callback;
   }
 
   add(action: UndoableAction) {
@@ -30,19 +28,17 @@ export class UndoManager extends EventEmitter<{
 
     this.undoableActions.push(action);
     this.redoableActions = [];
+
+    this.emit('add', { action });
     this.prune();
   }
 
   execute(action: UndoableAction) {
-    this.clearPending();
+    this.add(action);
 
-    this.undoableActions.push(action);
-    this.redoableActions = [];
     action.redo();
 
-    this.callback?.();
     this.emit('execute', { action });
-    this.prune();
   }
 
   undo() {
@@ -52,7 +48,6 @@ export class UndoManager extends EventEmitter<{
     action!.undo();
     this.redoableActions.push(action!);
 
-    this.callback?.();
     this.emit('undo', { action: action! });
     this.prune();
   }
@@ -64,7 +59,6 @@ export class UndoManager extends EventEmitter<{
     action!.redo();
     this.undoableActions.push(action!);
 
-    this.callback?.();
     this.emit('redo', { action: action! });
     this.prune();
   }

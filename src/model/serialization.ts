@@ -121,5 +121,5 @@ export const deserializeDiagram = (diagram: SerializedDiagram): LoadedDiagram =>
     }
   }
 
-  return new LoadedDiagram(elements, nodeLookup, edgeLookup);
+  return new LoadedDiagram(elements);
 };

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { NodeDef, ResolvedNodeDef } from './diagram.ts';
+import { LoadedDiagram, ResolvedNodeDef } from './diagram.ts';
+import { TransformFactory } from '../geometry/geometry.ts';
 
-describe('NodeDef', () => {
+describe('Diagram', () => {
   test('transform rotate', () => {
     const node1: ResolvedNodeDef = {
       type: 'node',
@@ -27,10 +28,12 @@ describe('NodeDef', () => {
       }
     };
 
+    const nodes = [node1, node2];
+    const diagram = new LoadedDiagram(nodes);
+
     const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
     const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: Math.PI / 2 };
-    NodeDef.transform(node1, before, after);
-    NodeDef.transform(node2, before, after);
+    diagram.transformNodes(nodes, TransformFactory.fromTo(before, after));
 
     expect(node1.bounds.rotation).toStrictEqual(Math.PI / 2);
     expect(node1.bounds.pos).toStrictEqual({ x: 100, y: 0 });
@@ -66,13 +69,14 @@ describe('NodeDef', () => {
       }
     };
 
+    const nodes = [node1, node2];
+    const diagram = new LoadedDiagram(nodes);
+
     const before = { pos: { x: 10, y: 10 }, size: { w: 200, h: 300 }, rotation: 0 };
     const after = { pos: { x: 10, y: 10 }, size: { w: 200, h: 300 }, rotation: Math.PI / 3 };
-    NodeDef.transform(node1, before, after);
-    NodeDef.transform(node2, before, after);
 
-    NodeDef.transform(node1, after, before);
-    NodeDef.transform(node2, after, before);
+    diagram.transformNodes(nodes, TransformFactory.fromTo(before, after));
+    diagram.transformNodes(nodes, TransformFactory.fromTo(after, before));
 
     expect(node1.bounds.rotation).toStrictEqual(0);
     expect(node1.bounds.pos).toStrictEqual({ x: 10, y: 10 });

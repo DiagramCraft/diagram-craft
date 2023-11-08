@@ -24,16 +24,18 @@ type DeferedMouseAction = {
 export const Canvas = (props: Props) => {
   const diagram = props.diagram;
 
-  const svgRef = useRef<SVGSVGElement>(null);
+  // State
   const selection = useRef<SelectionState>(new SelectionState());
+  const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
   const drag = useRef<Drag | undefined>(undefined);
+
+  // Component/node refs
+  const svgRef = useRef<SVGSVGElement>(null);
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
-  const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
 
-  // TODO: Maybe have a useEventListener hook?
   useEffect(() => {
     const nodeChanged = (e: DiagramEvents['nodechanged']) => {
       nodeRefs.current[e.after.id]?.repaint();
@@ -43,17 +45,20 @@ export const Canvas = (props: Props) => {
       }
     };
 
-    const onUndo = () => {
+    const onUndo = debounce(() => {
       selection.current.clear();
-    };
+    });
 
-    // TODO: Should listen to something else than '*' to avoid unnecessary repaints
-    diagram.undoManager.on('*', onUndo);
+    diagram.undoManager.on('execute', onUndo);
+    diagram.undoManager.on('undo', onUndo);
+    diagram.undoManager.on('redo', onUndo);
     diagram.on('nodechanged', nodeChanged);
 
     return () => {
       diagram.off('nodechanged', nodeChanged);
-      diagram.undoManager.off('*', onUndo);
+      diagram.undoManager.off('execute', onUndo);
+      diagram.undoManager.off('undo', onUndo);
+      diagram.undoManager.off('redo', onUndo);
     };
   }, [diagram]);
 
