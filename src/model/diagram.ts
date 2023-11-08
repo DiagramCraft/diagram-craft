@@ -125,11 +125,11 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   }
 }
 
-export const NodeDef = {
+export const NodeHelper = {
   edges: (node: ResolvedNodeDef): ResolvedEdgeDef[] => {
     return [
       ...Object.values(node.edges ?? {}).flatMap(e => e),
-      ...node.children.flatMap(c => NodeDef.edges(c))
+      ...node.children.flatMap(c => NodeHelper.edges(c))
     ];
   }
 };

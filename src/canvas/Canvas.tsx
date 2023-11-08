@@ -4,7 +4,7 @@ import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box, Point } from '../geometry/geometry.ts';
-import { DiagramEvents, LoadedDiagram, NodeDef } from '../model/diagram.ts';
+import { DiagramEvents, LoadedDiagram, NodeHelper } from '../model/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
@@ -40,7 +40,7 @@ export const Canvas = (props: Props) => {
     const nodeChanged = (e: DiagramEvents['nodechanged']) => {
       nodeRefs.current[e.after.id]?.repaint();
 
-      for (const edge of NodeDef.edges(e.after)) {
+      for (const edge of NodeHelper.edges(e.after)) {
         edgeRefs.current[edge.id]?.repaint();
       }
     };
@@ -95,32 +95,24 @@ export const Canvas = (props: Props) => {
       const isClickOnSelection = Box.contains(selection.current.bounds, point);
 
       try {
-        if (add) {
-          if (!isClickOnBackground) {
-            selection.current.toggle(diagram.nodeLookup[id]);
-          }
-        } else {
-          if (isClickOnSelection) {
-            deferedMouseAction.current = {
-              callback: () => {
-                if (id === BACKGROUND) {
-                  selection.current.clear();
-                } else {
-                  selection.current.clear();
-                  selection.current.toggle(diagram.nodeLookup[id]);
-                }
+        if (isClickOnSelection) {
+          deferedMouseAction.current = {
+            callback: () => {
+              if (id === BACKGROUND) {
+                selection.current.clear();
+              } else {
+                selection.current.clear();
+                selection.current.toggle(diagram.nodeLookup[id]);
               }
-            };
-          } else {
-            if (isClickOnBackground) {
-              selection.current.clear();
-              onDragStart(point, 'marquee', marqueeDragActions);
-              return;
-            } else {
-              selection.current.clear();
-              selection.current.toggle(diagram.nodeLookup[id]);
             }
-          }
+          };
+        } else if (isClickOnBackground) {
+          if (!add) selection.current.clear();
+          onDragStart(point, 'marquee', marqueeDragActions);
+          return;
+        } else {
+          if (!add) selection.current.clear();
+          selection.current.toggle(diagram.nodeLookup[id]);
         }
 
         if (!selection.current.isEmpty()) {

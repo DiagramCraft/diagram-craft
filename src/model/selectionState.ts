@@ -101,8 +101,9 @@ export class SelectionState extends EventEmitter<{
   convertMarqueeToSelection() {
     precondition.is.present(this.pendingElements);
 
-    this.elements = this.pendingElements;
-    this.source.elements = this.pendingElements.map(e => e.bounds);
+    for (const e of this.pendingElements) {
+      if (!this.elements.includes(e)) this.toggle(e);
+    }
 
     this.recalculateSourceBoundingBox();
     this.recalculateBoundingBox();
