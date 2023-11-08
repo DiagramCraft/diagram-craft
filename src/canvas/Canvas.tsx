@@ -98,20 +98,22 @@ export const Canvas = (props: Props) => {
         if (isClickOnSelection) {
           deferedMouseAction.current = {
             callback: () => {
-              if (id === BACKGROUND) {
-                selection.current.clear();
-              } else {
-                selection.current.clear();
+              selection.current.clear();
+              if (!isClickOnBackground) {
                 selection.current.toggle(diagram.nodeLookup[id]);
               }
             }
           };
         } else if (isClickOnBackground) {
-          if (!add) selection.current.clear();
+          if (!add) {
+            selection.current.clear();
+          }
           onDragStart(point, 'marquee', marqueeDragActions);
           return;
         } else {
-          if (!add) selection.current.clear();
+          if (!add) {
+            selection.current.clear();
+          }
           selection.current.toggle(diagram.nodeLookup[id]);
         }
 

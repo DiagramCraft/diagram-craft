@@ -120,8 +120,10 @@ export const moveDragActions: DragActions = {
 
     diagram.transformNodes(selection.elements, [new Translation(d)]);
 
-    // TODO: Maybe selection should listen to diagram changes?
-    selection.recalculateBoundingBox();
+    const newBounds = Box.asMutableSnapshot(selection.bounds);
+    newBounds.set('pos', { x: selection.bounds.pos.x + d.x, y: selection.bounds.pos.y + d.y });
+
+    selection.bounds = newBounds.getSnapshot();
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
     if (selection.isChanged()) {
