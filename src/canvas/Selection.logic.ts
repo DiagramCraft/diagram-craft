@@ -1,9 +1,16 @@
-import { Box, LocalCoordinateSystem, Point, Vector } from './geometry.ts';
-import { Drag, DragActions, ResizeDrag, SelectionState } from './state.ts';
-import { LoadedDiagram, MoveAction, NodeDef, ResizeAction, RotateAction } from './model/diagram.ts';
-import { assert } from './assert.ts';
+import { Box, LocalCoordinateSystem, Point, Vector } from '../geometry/geometry.ts';
+import { SelectionState } from '../model/selectionState.ts';
+import {
+  LoadedDiagram,
+  MoveAction,
+  NodeDef,
+  ResizeAction,
+  RotateAction
+} from '../model/diagram.ts';
+import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
+import { Drag, DragActions } from './drag.ts';
 
-const selectionResize = (point: Point, selection: SelectionState, drag: ResizeDrag) => {
+const selectionResize = (point: Point, selection: SelectionState, drag: Drag) => {
   const before = selection.bounds;
   const original = selection.source.boundingBox;
 
@@ -49,6 +56,8 @@ const selectionResize = (point: Point, selection: SelectionState, drag: ResizeDr
       localTarget.get('size').w = localOriginal.size.w - delta.x;
       localTarget.get('pos').x = localOriginal.pos.x + delta.x;
       break;
+    default:
+      VERIFY_NOT_REACHED();
   }
 
   selection.bounds = lcs.toGlobal(localTarget.getSnapshot());
@@ -72,7 +81,7 @@ const selectionRotate = (coord: Point, selection: SelectionState) => {
   }
 };
 
-export const rotateDragActions = {
+export const rotateDragActions: DragActions = {
   onDrag: (coord: Point, _drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
     assert.false(selection.isEmpty());
     return selectionRotate(coord, selection);
@@ -94,7 +103,7 @@ export const rotateDragActions = {
 export const resizeDragActions: DragActions = {
   onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
     assert.false(selection.isEmpty());
-    return selectionResize(coord, selection, drag as ResizeDrag);
+    return selectionResize(coord, selection, drag);
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
     if (selection.isChanged()) {
@@ -110,7 +119,7 @@ export const resizeDragActions: DragActions = {
   }
 };
 
-export const moveDragActions = {
+export const moveDragActions: DragActions = {
   onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
     assert.false(selection.isEmpty());
 

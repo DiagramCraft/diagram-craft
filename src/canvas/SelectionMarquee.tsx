@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle } from 'react';
-import { SelectionState } from './state.ts';
+import { SelectionState } from '../model/selectionState.ts';
 import { useRedraw } from './useRedraw.tsx';
-import { Angle } from './geometry.ts';
+import { Angle } from '../geometry/geometry.ts';
 
 export type SelectionMarqueeApi = {
   repaint: () => void;

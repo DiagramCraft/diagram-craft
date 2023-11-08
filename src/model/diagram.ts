@@ -1,6 +1,6 @@
-import { Box, Transform, TransformFactory } from '../geometry.ts';
-import { UndoableAction, UndoManager } from './UndoManager.ts';
-import { EventEmitter } from './event.ts';
+import { Box, Transform, TransformFactory } from '../geometry/geometry.ts';
+import { UndoableAction, UndoManager } from './undoManager.ts';
+import { EventEmitter } from '../utils/event.ts';
 
 export interface AbstractNodeDef {
   type: 'node';

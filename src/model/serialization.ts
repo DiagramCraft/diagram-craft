@@ -1,5 +1,5 @@
-import { Point } from '../geometry.ts';
-import { VERIFY_NOT_REACHED } from '../assert.ts';
+import { Point } from '../geometry/geometry.ts';
+import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import {
   AbstractEdgeDef,
   AbstractNodeDef,

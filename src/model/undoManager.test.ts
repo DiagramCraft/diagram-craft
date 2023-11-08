@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'vitest';
-import { UndoManager } from './UndoManager.ts';
+import { UndoManager } from './undoManager.ts';
 
 describe('UndoManager', () => {
   test('executes action', () => {

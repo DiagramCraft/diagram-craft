@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Drag, DragActions, SelectionState } from './state.ts';
+import { SelectionState } from '../model/selectionState.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
-import { Box, Point } from './geometry.ts';
-import { LoadedDiagram, NodeDef } from './model/diagram.ts';
+import { Box, Point } from '../geometry/geometry.ts';
+import { LoadedDiagram, NodeDef } from '../model/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
-import { moveDragActions, resizeDragActions, rotateDragActions } from './Selection.logic.ts';
 import { useRedraw } from './useRedraw.tsx';
+import { debounce } from '../utils/debounce.ts';
 import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
-import { debounce } from './utils.ts';
+import { moveDragActions } from './Selection.logic.ts';
+import { Drag, DragActions } from './drag.ts';
 
 const BACKGROUND = 'background';
 
@@ -19,20 +20,6 @@ type ObjectId = typeof BACKGROUND | string;
 
 type DeferedMouseAction = {
   callback: () => void;
-};
-
-const dragActions: Record<Drag['type'], DragActions> = {
-  move: moveDragActions,
-  rotate: rotateDragActions,
-  marquee: marqueeDragActions,
-  'resize-se': resizeDragActions,
-  'resize-sw': resizeDragActions,
-  'resize-nw': resizeDragActions,
-  'resize-ne': resizeDragActions,
-  'resize-n': resizeDragActions,
-  'resize-s': resizeDragActions,
-  'resize-w': resizeDragActions,
-  'resize-e': resizeDragActions
 };
 
 export const Canvas = (props: Props) => {
@@ -83,8 +70,8 @@ export const Canvas = (props: Props) => {
     [svgRef]
   );
 
-  const onDragStart = useCallback((point: Point, type: Drag['type']) => {
-    drag.current = { type, offset: point };
+  const onDragStart = useCallback((point: Point, type: Drag['type'], actions: DragActions) => {
+    drag.current = { type, offset: point, actions };
   }, []);
 
   const onMouseDown = useCallback(
@@ -112,7 +99,7 @@ export const Canvas = (props: Props) => {
           } else {
             if (isClickOnBackground) {
               selection.current.clear();
-              onDragStart(point, 'marquee');
+              onDragStart(point, 'marquee', marqueeDragActions);
               return;
             } else {
               selection.current.clear();
@@ -122,7 +109,7 @@ export const Canvas = (props: Props) => {
         }
 
         if (!selection.current.isEmpty()) {
-          onDragStart(Point.subtract(point, selection.current.bounds.pos), 'move');
+          onDragStart(Point.subtract(point, selection.current.bounds.pos), 'move', moveDragActions);
         }
       } finally {
         updateCursor(point);
@@ -135,7 +122,7 @@ export const Canvas = (props: Props) => {
     (_id: ObjectId, point: Point) => {
       try {
         if (drag.current) {
-          dragActions[drag.current.type].onDragEnd(point, drag.current, diagram, selection.current);
+          drag.current.actions.onDragEnd(point, drag.current, diagram, selection.current);
         }
 
         if (deferedMouseAction.current) {
@@ -157,7 +144,7 @@ export const Canvas = (props: Props) => {
       if (!drag.current) return;
 
       try {
-        dragActions[drag.current.type].onDrag(point, drag.current, diagram, selection.current);
+        drag.current.actions.onDrag(point, drag.current, diagram, selection.current);
       } finally {
         deferedMouseAction.current = undefined;
 

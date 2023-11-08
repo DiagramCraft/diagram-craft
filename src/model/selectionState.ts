@@ -1,56 +1,7 @@
-import { LoadedDiagram, ResolvedNodeDef } from './model/diagram.ts';
-import { Box, Point } from './geometry.ts';
-import { precondition } from './assert.ts';
-import { EventEmitter } from './model/event.ts';
-
-export type ResizeDrag = {
-  type:
-    | 'resize-nw'
-    | 'resize-ne'
-    | 'resize-sw'
-    | 'resize-se'
-    | 'resize-n'
-    | 'resize-s'
-    | 'resize-w'
-    | 'resize-e';
-  offset: Point;
-};
-
-export const isResizeDrag = (drag: Drag | undefined): drag is ResizeDrag => {
-  if (!drag) return false;
-  return (
-    drag.type === 'resize-se' ||
-    drag.type === 'resize-sw' ||
-    drag.type === 'resize-ne' ||
-    drag.type === 'resize-nw' ||
-    drag.type === 'resize-n' ||
-    drag.type === 'resize-s' ||
-    drag.type === 'resize-e' ||
-    drag.type === 'resize-w'
-  );
-};
-
-export type MoveDrag = {
-  type: 'move';
-  offset: Point;
-};
-
-export type RotateDrag = {
-  type: 'rotate';
-  offset: Point;
-};
-
-type MarqueeDrag = {
-  type: 'marquee';
-  offset: Point;
-};
-
-export type Drag = ResizeDrag | MoveDrag | RotateDrag | MarqueeDrag;
-
-export type DragActions = {
-  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
-  onDragEnd: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
-};
+import { ResolvedNodeDef } from './diagram.ts';
+import { Box } from '../geometry/geometry.ts';
+import { precondition } from '../utils/assert.ts';
+import { EventEmitter } from '../utils/event.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },

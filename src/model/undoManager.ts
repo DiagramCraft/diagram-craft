@@ -1,4 +1,4 @@
-import { EventEmitter } from './event.ts';
+import { EventEmitter } from '../utils/event.ts';
 
 export type UndoableAction = {
   undo: () => void;

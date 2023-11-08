@@ -1,7 +1,7 @@
 import './App.css';
 import { SerializedDiagram } from './model/serialization.ts';
 import { deserializeDiagram } from './model/serialization.ts';
-import { Canvas } from './Canvas.tsx';
+import { Canvas } from './canvas/Canvas.tsx';
 import { useEffect } from 'react';
 
 const diagram: SerializedDiagram = {

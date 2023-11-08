@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from 'react';
-import { ResolvedEdgeDef } from './model/diagram.ts';
-import { Box } from './geometry.ts';
+import { ResolvedEdgeDef } from '../model/diagram.ts';
+import { Box } from '../geometry/geometry.ts';
 import { useRedraw } from './useRedraw.tsx';
 
 export type EdgeApi = {

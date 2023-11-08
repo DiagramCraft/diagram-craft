@@ -1,4 +1,4 @@
-import { invariant, NOT_IMPLEMENTED_YET, precondition } from './assert.ts';
+import { invariant, NOT_IMPLEMENTED_YET, precondition } from '../utils/assert.ts';
 
 type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
 
