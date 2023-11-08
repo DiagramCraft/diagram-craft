@@ -4,11 +4,10 @@ import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box, Point } from '../geometry/geometry.ts';
-import { LoadedDiagram, NodeDef } from '../model/diagram.ts';
+import { DiagramEvents, LoadedDiagram, NodeDef } from '../model/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
-import { useRedraw } from './useRedraw.tsx';
 import { debounce } from '../utils/debounce.ts';
 import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
 import { moveDragActions } from './Selection.logic.ts';
@@ -23,7 +22,6 @@ type DeferedMouseAction = {
 };
 
 export const Canvas = (props: Props) => {
-  const redraw = useRedraw();
   const diagram = props.diagram;
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -35,17 +33,29 @@ export const Canvas = (props: Props) => {
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
   const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
 
-  // TODO: Ideally we should not need this once we have events for all updates in the diagram
+  // TODO: Maybe have a useEventListener hook?
   useEffect(() => {
-    const callback = () => {
+    const nodeChanged = (e: DiagramEvents['nodechanged']) => {
+      nodeRefs.current[e.after.id]?.repaint();
+
+      for (const edge of NodeDef.edges(e.after)) {
+        edgeRefs.current[edge.id]?.repaint();
+      }
+    };
+
+    const onUndo = () => {
       selection.current.clear();
-      redraw();
     };
-    diagram.undoManager.on('*', callback);
+
+    // TODO: Should listen to something else than '*' to avoid unnecessary repaints
+    diagram.undoManager.on('*', onUndo);
+    diagram.on('nodechanged', nodeChanged);
+
     return () => {
-      diagram.undoManager.off('*', callback);
+      diagram.off('nodechanged', nodeChanged);
+      diagram.undoManager.off('*', onUndo);
     };
-  }, [diagram, redraw]);
+  }, [diagram]);
 
   useEffect(() => {
     const callback = debounce(() => {
@@ -147,15 +157,6 @@ export const Canvas = (props: Props) => {
         drag.current.actions.onDrag(point, drag.current, diagram, selection.current);
       } finally {
         deferedMouseAction.current = undefined;
-
-        for (const node of selection.current.elements) {
-          nodeRefs.current[node.id]?.repaint();
-
-          for (const edge of NodeDef.edges(node)) {
-            edgeRefs.current[edge.id]?.repaint();
-          }
-        }
-
         updateCursor(point);
       }
     },

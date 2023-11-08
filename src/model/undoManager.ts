@@ -9,6 +9,7 @@ export class UndoManager extends EventEmitter<{
   undo: { action: UndoableAction };
   redo: { action: UndoableAction };
   execute: { action: UndoableAction };
+  add: { action: UndoableAction };
 }> {
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
@@ -25,12 +26,16 @@ export class UndoManager extends EventEmitter<{
   }
 
   add(action: UndoableAction) {
+    this.clearPending();
+
     this.undoableActions.push(action);
     this.redoableActions = [];
     this.prune();
   }
 
   execute(action: UndoableAction) {
+    this.clearPending();
+
     this.undoableActions.push(action);
     this.redoableActions = [];
     action.redo();
@@ -67,5 +72,9 @@ export class UndoManager extends EventEmitter<{
   private prune() {
     this.undoableActions = this.undoableActions.slice(-100);
     this.redoableActions = this.redoableActions.slice(-100);
+  }
+
+  clearPending() {
+    // TODO: To be implemented
   }
 }

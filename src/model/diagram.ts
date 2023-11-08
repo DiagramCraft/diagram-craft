@@ -30,7 +30,7 @@ export interface ResolvedEdgeDef extends AbstractEdgeDef {
   end: { anchor: string; node: ResolvedNodeDef };
 }
 
-export class LoadedDiagram extends EventEmitter<{
+export type DiagramEvents = {
   nodechanged: { before: ResolvedNodeDef; after: ResolvedNodeDef };
   nodeadded: { node: ResolvedNodeDef };
   noderemoved: { node: ResolvedNodeDef };
@@ -38,12 +38,14 @@ export class LoadedDiagram extends EventEmitter<{
   edgeadded: { edge: ResolvedEdgeDef };
   edgeremoved: { edge: ResolvedEdgeDef };
   change: void;
-}> {
+};
+
+export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   elements: (ResolvedEdgeDef | ResolvedNodeDef)[];
   nodeLookup: Record<string, ResolvedNodeDef>;
   edgeLookup: Record<string, ResolvedEdgeDef>;
   undoManager = new UndoManager(() => {
-    this.commit();
+    this.emit('change');
   });
 
   constructor(
@@ -75,15 +77,18 @@ export class LoadedDiagram extends EventEmitter<{
     this.emit('nodechanged', { before: node, after: node });
   }
 
-  transformNode(nodes: ResolvedNodeDef[], transforms: Transform[]) {
+  transformNodes(nodes: ResolvedNodeDef[], transforms: Transform[]) {
+    const before = nodes.map(n => NodeDef.cloneBounds(n));
+
     for (const node of nodes) {
       node.bounds = Transform.box(node.bounds, ...transforms);
     }
 
-    for (const node of nodes) {
-      // TODO: Need to keep a before state
-      this.emit('nodechanged', { before: node, after: node });
+    for (let i = 0; i < nodes.length; i++) {
+      this.emit('nodechanged', { before: before[i], after: nodes[i] });
     }
+
+    // TODO: Automatically create undoable action?
   }
 
   addEdge(edge: ResolvedEdgeDef) {
@@ -97,14 +102,21 @@ export class LoadedDiagram extends EventEmitter<{
     this.elements = this.elements.filter(e => e !== edge);
     this.emit('edgeremoved', { edge });
   }
-
-  // TODO: We should change this
-  commit() {
-    this.emit('change');
-  }
 }
 
 export const NodeDef = {
+  cloneBounds: (node: ResolvedNodeDef): ResolvedNodeDef => {
+    return {
+      ...node,
+      bounds: {
+        pos: { ...node.bounds.pos },
+        size: { ...node.bounds.size },
+        rotation: node.bounds.rotation
+      },
+      children: node.children.map(c => NodeDef.cloneBounds(c))
+    };
+  },
+
   transform: (node: ResolvedNodeDef, before: Box, after: Box) => {
     node.bounds = Transform.box(node.bounds, ...TransformFactory.fromTo(before, after));
 
@@ -125,8 +137,10 @@ class AbstractTransformAction implements UndoableAction {
   private nodes: ResolvedNodeDef[] = [];
   private source: Box[] = [];
   private target: Box[] = [];
+  private diagram: LoadedDiagram;
 
-  constructor(source: Box[], target: Box[], nodes: ResolvedNodeDef[]) {
+  constructor(source: Box[], target: Box[], nodes: ResolvedNodeDef[], diagram: LoadedDiagram) {
+    this.diagram = diagram;
     for (let i = 0; i < target.length; i++) {
       this.nodes.push(nodes[i]);
       this.source.push(source[i]);
@@ -136,14 +150,22 @@ class AbstractTransformAction implements UndoableAction {
 
   undo() {
     for (let i = 0; i < this.nodes.length; i++) {
-      NodeDef.transform(this.nodes[i], this.target[i], this.source[i]);
+      this.diagram.transformNodes(
+        [this.nodes[i]],
+        TransformFactory.fromTo(this.target[i], this.source[i])
+      );
     }
+    this.diagram.undoManager.clearPending();
   }
 
   redo() {
     for (let i = 0; i < this.nodes.length; i++) {
-      NodeDef.transform(this.nodes[i], this.source[i], this.target[i]);
+      this.diagram.transformNodes(
+        [this.nodes[i]],
+        TransformFactory.fromTo(this.source[i], this.target[i])
+      );
     }
+    this.diagram.undoManager.clearPending();
   }
 }
 
