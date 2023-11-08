@@ -75,6 +75,13 @@ export class SelectionState {
     this.elements = [];
   }
 
+  isChanged(): boolean {
+    return this.elements.some((node, i) => {
+      const original = this.source.elements[i];
+      return !Box.equals(node.bounds, original);
+    });
+  }
+
   recalculateBoundingBox() {
     this.bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
   }

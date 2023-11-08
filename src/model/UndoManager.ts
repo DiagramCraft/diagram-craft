@@ -41,8 +41,6 @@ export class UndoManager extends EventEmitter<{
   }
 
   undo() {
-    console.log('undo');
-
     if (this.undoableActions.length === 0) return;
 
     const action = this.undoableActions.pop();

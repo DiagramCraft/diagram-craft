@@ -41,21 +41,3 @@ export class EventEmitter<T extends EventMap, Q = WithWildcardEvent<WithEventNam
     });
   }
 }
-
-/*
-const a = new EventEmitter<{
-  a: { a: string };
-  b: { b: string };
-}>();
-a.on('a', e => console.log(e.a, e.name));
-a.on('b', e => console.log(e.b, e.name));
-a.on('*', e => {
-  console.log(e.name);
-  if (e.name === 'a') {
-    console.log(e.a);
-  } else if (e.name === 'b') {
-    console.log(e.b);
-  }
-});
-a.emit('jksjdk', { a: 'a' });
-*/

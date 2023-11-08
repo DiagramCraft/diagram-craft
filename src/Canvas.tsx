@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Drag, isResizeDrag, SelectionState } from './state.ts';
+import { Drag, ResizeDrag, SelectionState } from './state.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
@@ -20,6 +20,104 @@ type ObjectId = typeof BACKGROUND | string;
 type DeferedMouseAction = {
   id: ObjectId;
   add?: boolean;
+};
+
+type DragActions = {
+  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
+  onDragEnd: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
+};
+
+const resizeDragActions: DragActions = {
+  onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+    assert.false(selection.isEmpty());
+    return selectionResize(coord, selection, drag as ResizeDrag);
+  },
+  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+    if (selection.isChanged()) {
+      diagram.undoManager.add(
+        new ResizeAction(
+          selection.source.elements,
+          selection.elements.map(e => e.bounds),
+          selection.elements
+        )
+      );
+      selection.rebaseline();
+    }
+  }
+};
+
+const dragActions: Record<Partial<Drag['type']>, DragActions> = {
+  move: {
+    onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+      assert.false(selection.isEmpty());
+
+      const d = Point.subtract(coord, Point.add(selection.bounds.pos, drag.offset));
+
+      for (const node of selection.elements) {
+        const after = node.bounds;
+        NodeDef.transform(node, node.bounds, {
+          ...after,
+          pos: Point.add(after.pos, d)
+        });
+      }
+
+      selection.recalculateBoundingBox();
+    },
+    onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+      if (selection.isChanged()) {
+        diagram.undoManager.add(
+          new MoveAction(
+            selection.source.elements,
+            selection.elements.map(e => e.bounds),
+            selection.elements
+          )
+        );
+        selection.rebaseline();
+      }
+    }
+  },
+  rotate: {
+    onDrag: (coord: Point, _drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+      assert.false(selection.isEmpty());
+      return selectionRotate(coord, selection);
+    },
+    onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+      if (selection.isChanged()) {
+        diagram.undoManager.add(
+          new RotateAction(
+            selection.source.elements,
+            selection.elements.map(e => e.bounds),
+            selection.elements
+          )
+        );
+        selection.rebaseline();
+      }
+    }
+  },
+  marquee: {
+    onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+      selection.marquee = Box.normalize({
+        pos: drag.offset,
+        size: { w: coord.x - drag.offset.x, h: coord.y - drag.offset.y },
+        rotation: 0
+      });
+
+      updatePendingElements(selection, diagram);
+    },
+    onDragEnd: (_coord: Point, _drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+      if (selection.pendingElements) {
+        selection.convertMarqueeToSelection();
+      }
+    }
+  },
+  'resize-se': resizeDragActions,
+  'resize-sw': resizeDragActions,
+  'resize-nw': resizeDragActions,
+  'resize-ne': resizeDragActions,
+  'resize-n': resizeDragActions,
+  'resize-s': resizeDragActions,
+  'resize-w': resizeDragActions,
+  'resize-e': resizeDragActions
 };
 
 export const Canvas = (props: Props) => {
@@ -57,25 +155,38 @@ export const Canvas = (props: Props) => {
     [svgRef]
   );
 
-  const onDragStart = useCallback((coord: Point, type: Drag['type']) => {
-    drag.current = { type, offset: coord };
+  const repaintSelection = useCallback(
+    (coord: Point) => {
+      updateCursor(coord);
+
+      selectionRef.current?.repaint();
+      selectionMarqueeRef.current?.repaint();
+    },
+    [updateCursor]
+  );
+
+  const onDragStart = useCallback((point: Point, type: Drag['type']) => {
+    drag.current = { type, offset: point };
   }, []);
 
   const onMouseDown = useCallback(
     (id: ObjectId, coord: Point, add: boolean) => {
       const isClickOnBackground = id === BACKGROUND;
+      const isClickOnSelection = Box.contains(selection.current.bounds, coord);
+
       try {
         if (add) {
           if (!isClickOnBackground) {
             selection.current.toggle(diagram.nodeLookup[id]);
           }
         } else {
-          if (Box.contains(selection.current.bounds, coord)) {
+          if (isClickOnSelection) {
             deferedMouseAction.current = { id };
           } else {
             if (isClickOnBackground) {
               selection.current.clear();
-              drag.current = { type: 'marquee', offset: coord };
+              onDragStart(coord, 'marquee');
+              return;
             } else {
               selection.current.clear();
               selection.current.toggle(diagram.nodeLookup[id]);
@@ -83,133 +194,51 @@ export const Canvas = (props: Props) => {
           }
         }
 
-        updateCursor(coord);
-
-        if (selection.current.isEmpty()) return;
-
-        const localCoord = Point.subtract(coord, selection.current.bounds.pos);
-        onDragStart(localCoord, 'move');
+        if (!selection.current.isEmpty()) {
+          onDragStart(Point.subtract(coord, selection.current.bounds.pos), 'move');
+        }
       } finally {
-        selectionRef.current?.repaint();
+        repaintSelection(coord);
       }
     },
-    [onDragStart, updateCursor, diagram]
+    [onDragStart, diagram, repaintSelection]
   );
 
   const onMouseUp = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (_id: ObjectId, _coord: Point) => {
+    (_id: ObjectId, coord: Point) => {
       try {
         if (drag.current) {
-          let changed = false;
-          for (let i = 0; i < selection.current.elements.length; i++) {
-            const node = selection.current.elements[i];
-            const original = selection.current.source.elements[i];
-
-            if (!Box.equals(node.bounds, original)) {
-              changed = true;
-              break;
-            }
-          }
-
-          if (changed) {
-            if (drag.current?.type === 'move') {
-              diagram.undoManager.add(
-                new MoveAction(
-                  selection.current.source.elements,
-                  selection.current.elements.map(e => e.bounds),
-                  selection.current.elements
-                )
-              );
-              selection.current.rebaseline();
-            } else if (drag.current?.type === 'rotate') {
-              diagram.undoManager.add(
-                new RotateAction(
-                  selection.current.source.elements,
-                  selection.current.elements.map(e => e.bounds),
-                  selection.current.elements
-                )
-              );
-              selection.current.rebaseline();
-            } else if (isResizeDrag(drag.current)) {
-              diagram.undoManager.add(
-                new ResizeAction(
-                  selection.current.source.elements,
-                  selection.current.elements.map(e => e.bounds),
-                  selection.current.elements
-                )
-              );
-              selection.current.rebaseline();
-            }
-          }
+          dragActions[drag.current.type].onDragEnd(coord, drag.current, diagram, selection.current);
         }
-
-        drag.current = undefined;
 
         if (deferedMouseAction.current) {
           if (deferedMouseAction.current.id === BACKGROUND) {
             selection.current.clear();
-            return;
           } else {
             selection.current.clear();
             selection.current.toggle(diagram.nodeLookup[deferedMouseAction.current.id]);
-            return;
           }
-        } else if (selection.current.pendingElements) {
-          selection.current.convertMarqueeToSelection();
         }
       } finally {
-        selectionRef.current?.repaint();
-        selectionMarqueeRef.current?.repaint();
+        drag.current = undefined;
         deferedMouseAction.current = null;
+
+        repaintSelection(coord);
       }
     },
-    [diagram]
+    [diagram, repaintSelection]
   );
 
   const onMouseMove = useCallback(
     (coord: Point) => {
+      // Abort early in case there's no drag in progress
       if (!drag.current) return;
 
       try {
-        deferedMouseAction.current = null;
-
-        if (isResizeDrag(drag.current)) {
-          assert.false(selection.current.isEmpty());
-          return selectionResize(coord, selection.current, drag.current);
-        } else if (drag.current?.type === 'rotate') {
-          assert.false(selection.current.isEmpty());
-          return selectionRotate(coord, selection.current);
-        } else if (drag.current.type === 'move') {
-          assert.false(selection.current.isEmpty());
-
-          const d = Point.subtract(
-            coord,
-            Point.add(selection.current.bounds.pos, drag.current?.offset)
-          );
-
-          for (const node of selection.current.elements) {
-            const after = node.bounds;
-            NodeDef.transform(node, node.bounds, {
-              ...after,
-              pos: Point.add(after.pos, d)
-            });
-          }
-
-          selection.current.recalculateBoundingBox();
-        } else if (drag.current.type === 'marquee') {
-          selection.current.marquee = Box.normalize({
-            pos: drag.current.offset,
-            size: { w: coord.x - drag.current?.offset.x, h: coord.y - drag.current?.offset.y },
-            rotation: 0
-          });
-
-          updatePendingElements(selection.current, diagram);
-
-          selectionMarqueeRef.current?.repaint();
-        }
+        dragActions[drag.current.type].onDrag(coord, drag.current, diagram, selection.current);
       } finally {
-        updateCursor(coord);
+        deferedMouseAction.current = null;
 
         for (const node of selection.current.elements) {
           nodeRefs.current[node.id]?.repaint();
@@ -219,10 +248,10 @@ export const Canvas = (props: Props) => {
           }
         }
 
-        selectionRef.current?.repaint();
+        repaintSelection(coord);
       }
     },
-    [updateCursor, diagram]
+    [repaintSelection, diagram]
   );
 
   return (
