@@ -1,4 +1,4 @@
-import { ResolvedNodeDef } from './model/diagram.ts';
+import { LoadedDiagram, ResolvedNodeDef } from './model/diagram.ts';
 import { Box, Point } from './geometry.ts';
 import { precondition } from './assert.ts';
 import { EventEmitter } from './model/event.ts';
@@ -46,6 +46,11 @@ type MarqueeDrag = {
 };
 
 export type Drag = ResizeDrag | MoveDrag | RotateDrag | MarqueeDrag;
+
+export type DragActions = {
+  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
+  onDragEnd: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
+};
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },

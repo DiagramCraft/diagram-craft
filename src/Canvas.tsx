@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Drag, ResizeDrag, SelectionState } from './state.ts';
+import { Drag, DragActions, SelectionState } from './state.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box, Point } from './geometry.ts';
-import { LoadedDiagram, MoveAction, NodeDef, ResizeAction, RotateAction } from './model/diagram.ts';
+import { LoadedDiagram, NodeDef } from './model/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
-import { selectionResize, selectionRotate } from './Selection.logic.ts';
-import { assert } from './assert.ts';
+import { moveDragActions, resizeDragActions, rotateDragActions } from './Selection.logic.ts';
 import { useRedraw } from './useRedraw.tsx';
-import { updatePendingElements } from './SelectionMarquee.logic.tsx';
+import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
 import { debounce } from './utils.ts';
 
 const BACKGROUND = 'background';
@@ -22,94 +21,10 @@ type DeferedMouseAction = {
   callback: () => void;
 };
 
-type DragActions = {
-  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
-  onDragEnd: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
-};
-
-const resizeDragActions: DragActions = {
-  onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
-    assert.false(selection.isEmpty());
-    return selectionResize(coord, selection, drag as ResizeDrag);
-  },
-  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
-    if (selection.isChanged()) {
-      diagram.undoManager.add(
-        new ResizeAction(
-          selection.source.elements,
-          selection.elements.map(e => e.bounds),
-          selection.elements
-        )
-      );
-      selection.rebaseline();
-    }
-  }
-};
-
-const dragActions: Record<Partial<Drag['type']>, DragActions> = {
-  move: {
-    onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
-      assert.false(selection.isEmpty());
-
-      const d = Point.subtract(coord, Point.add(selection.bounds.pos, drag.offset));
-
-      for (const node of selection.elements) {
-        const after = node.bounds;
-        NodeDef.transform(node, node.bounds, {
-          ...after,
-          pos: Point.add(after.pos, d)
-        });
-      }
-
-      selection.recalculateBoundingBox();
-    },
-    onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
-      if (selection.isChanged()) {
-        diagram.undoManager.add(
-          new MoveAction(
-            selection.source.elements,
-            selection.elements.map(e => e.bounds),
-            selection.elements
-          )
-        );
-        selection.rebaseline();
-      }
-    }
-  },
-  rotate: {
-    onDrag: (coord: Point, _drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
-      assert.false(selection.isEmpty());
-      return selectionRotate(coord, selection);
-    },
-    onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
-      if (selection.isChanged()) {
-        diagram.undoManager.add(
-          new RotateAction(
-            selection.source.elements,
-            selection.elements.map(e => e.bounds),
-            selection.elements
-          )
-        );
-        selection.rebaseline();
-      }
-    }
-  },
-  marquee: {
-    onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
-      selection.marquee = Box.normalize({
-        pos: drag.offset,
-        size: { w: coord.x - drag.offset.x, h: coord.y - drag.offset.y },
-        rotation: 0
-      });
-
-      updatePendingElements(selection, diagram);
-    },
-    onDragEnd: (_coord: Point, _drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
-      if (selection.pendingElements) {
-        selection.convertMarqueeToSelection();
-      }
-    }
-  },
+const dragActions: Record<Drag['type'], DragActions> = {
+  move: moveDragActions,
+  rotate: rotateDragActions,
+  marquee: marqueeDragActions,
   'resize-se': resizeDragActions,
   'resize-sw': resizeDragActions,
   'resize-nw': resizeDragActions,

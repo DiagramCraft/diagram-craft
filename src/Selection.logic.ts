@@ -1,8 +1,9 @@
 import { Box, LocalCoordinateSystem, Point, Vector } from './geometry.ts';
-import { ResizeDrag, SelectionState } from './state.ts';
-import { NodeDef } from './model/diagram.ts';
+import { Drag, DragActions, ResizeDrag, SelectionState } from './state.ts';
+import { LoadedDiagram, MoveAction, NodeDef, ResizeAction, RotateAction } from './model/diagram.ts';
+import { assert } from './assert.ts';
 
-export const selectionResize = (point: Point, selection: SelectionState, drag: ResizeDrag) => {
+const selectionResize = (point: Point, selection: SelectionState, drag: ResizeDrag) => {
   const before = selection.bounds;
   const original = selection.source.boundingBox;
 
@@ -57,7 +58,7 @@ export const selectionResize = (point: Point, selection: SelectionState, drag: R
   }
 };
 
-export const selectionRotate = (coord: Point, selection: SelectionState) => {
+const selectionRotate = (coord: Point, selection: SelectionState) => {
   const before = selection.bounds;
 
   const center = Box.center(selection.source.boundingBox);
@@ -68,5 +69,73 @@ export const selectionRotate = (coord: Point, selection: SelectionState) => {
 
   for (const node of selection.elements) {
     NodeDef.transform(node, before, selection.bounds);
+  }
+};
+
+export const rotateDragActions = {
+  onDrag: (coord: Point, _drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+    assert.false(selection.isEmpty());
+    return selectionRotate(coord, selection);
+  },
+  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+    if (selection.isChanged()) {
+      diagram.undoManager.add(
+        new RotateAction(
+          selection.source.elements,
+          selection.elements.map(e => e.bounds),
+          selection.elements
+        )
+      );
+      selection.rebaseline();
+    }
+  }
+};
+
+export const resizeDragActions: DragActions = {
+  onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+    assert.false(selection.isEmpty());
+    return selectionResize(coord, selection, drag as ResizeDrag);
+  },
+  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+    if (selection.isChanged()) {
+      diagram.undoManager.add(
+        new ResizeAction(
+          selection.source.elements,
+          selection.elements.map(e => e.bounds),
+          selection.elements
+        )
+      );
+      selection.rebaseline();
+    }
+  }
+};
+
+export const moveDragActions = {
+  onDrag: (coord: Point, drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+    assert.false(selection.isEmpty());
+
+    const d = Point.subtract(coord, Point.add(selection.bounds.pos, drag.offset));
+
+    for (const node of selection.elements) {
+      const after = node.bounds;
+      NodeDef.transform(node, node.bounds, {
+        ...after,
+        pos: Point.add(after.pos, d)
+      });
+    }
+
+    selection.recalculateBoundingBox();
+  },
+  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+    if (selection.isChanged()) {
+      diagram.undoManager.add(
+        new MoveAction(
+          selection.source.elements,
+          selection.elements.map(e => e.bounds),
+          selection.elements
+        )
+      );
+      selection.rebaseline();
+    }
   }
 };
