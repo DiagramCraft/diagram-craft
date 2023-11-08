@@ -43,6 +43,30 @@ export type Box = Readonly<{
   rotation: number;
 }>;
 
+export type Line = Readonly<{
+  from: Point;
+  to: Point;
+}>;
+
+export const Line = {
+  extend: (line: Line, fromLength: number, toLength: number) => {
+    const v = Vector.from(line.from, line.to);
+    const unit = Vector.scale(v, 1 / Math.sqrt(v.x * v.x + v.y * v.y));
+    return {
+      from: Point.subtract(line.from, Vector.scale(unit, fromLength)),
+      to: Point.add(line.to, Vector.scale(unit, toLength))
+    };
+  },
+
+  isHorizontal: (line: Line) => {
+    return round(line.from.y) === round(line.to.y);
+  },
+
+  isVertical: (line: Line) => {
+    return round(line.from.x) === round(line.to.x);
+  }
+};
+
 class BoxMutableSnapshot extends MutableSnapshot<Box> {
   getSnapshot(): Box {
     return {
@@ -100,6 +124,9 @@ export const Point = {
 
   isEqual: (a: Point, b: Point) => {
     return a.x === b.x && a.y === b.y;
+  },
+  distance(posA: Point, posB: Point) {
+    return Math.sqrt(Math.pow(posA.x - posB.x, 2) + Math.pow(posA.y - posB.y, 2));
   }
 };
 

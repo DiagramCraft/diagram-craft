@@ -1,5 +1,5 @@
-import { ResolvedNodeDef } from './diagram.ts';
-import { Box } from '../geometry/geometry.ts';
+import { Anchor, ResolvedNodeDef } from './diagram.ts';
+import { Box, Line } from '../geometry/geometry.ts';
 import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
 
@@ -14,11 +14,18 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
+// TODO: Should probably include the anchors as well
+export type Guide = {
+  line: Line;
+  type: Anchor['type'];
+};
+
 export class SelectionState extends EventEmitter<{
   change: { selection: SelectionState };
 }> {
   private _bounds: Box;
   private _marquee?: Box;
+  private _guides: Guide[] = [];
 
   elements: ResolvedNodeDef[] = [];
 
@@ -33,6 +40,15 @@ export class SelectionState extends EventEmitter<{
     super();
     this._bounds = EMPTY_BOX;
     this.elements = [];
+  }
+
+  get guides(): Guide[] {
+    return this._guides;
+  }
+
+  set guides(guides: Guide[]) {
+    this._guides = guides;
+    this.emit('change', { selection: this });
   }
 
   get bounds(): Box {
@@ -88,6 +104,7 @@ export class SelectionState extends EventEmitter<{
     this.elements = [];
     this.source.elements = [];
     this._marquee = undefined;
+    this._guides = [];
     this.pendingElements = undefined;
 
     this.recalculateSourceBoundingBox();
