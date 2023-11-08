@@ -1,6 +1,7 @@
 import { ResolvedNodeDef } from './model/diagram.ts';
 import { Box, Point } from './geometry.ts';
 import { precondition } from './assert.ts';
+import { EventEmitter } from './model/event.ts';
 
 export type ResizeDrag = {
   type:
@@ -57,8 +58,11 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
-export class SelectionState {
-  bounds: Box;
+export class SelectionState extends EventEmitter<{
+  change: { selection: SelectionState };
+}> {
+  private _bounds: Box;
+  private _marquee?: Box;
 
   elements: ResolvedNodeDef[] = [];
 
@@ -67,12 +71,30 @@ export class SelectionState {
     boundingBox: EMPTY_BOX
   };
 
-  marquee?: Box;
   pendingElements?: ResolvedNodeDef[];
 
   constructor() {
-    this.bounds = EMPTY_BOX;
+    super();
+    this._bounds = EMPTY_BOX;
     this.elements = [];
+  }
+
+  get bounds(): Box {
+    return this._bounds;
+  }
+
+  set bounds(bounds: Box) {
+    this._bounds = bounds;
+    this.emit('change', { selection: this });
+  }
+
+  get marquee(): Box | undefined {
+    return this._marquee;
+  }
+
+  set marquee(marquee: Box | undefined) {
+    this._marquee = marquee;
+    this.emit('change', { selection: this });
   }
 
   isChanged(): boolean {
@@ -82,8 +104,13 @@ export class SelectionState {
     });
   }
 
+  isEmpty() {
+    return this.elements.length === 0;
+  }
+
   recalculateBoundingBox() {
-    this.bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
+    this._bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
+    this.emit('change', { selection: this });
   }
 
   recalculateSourceBoundingBox() {
@@ -97,21 +124,22 @@ export class SelectionState {
       : [...this.elements, element];
     this.source.elements = this.elements.map(e => e.bounds);
 
-    this.recalculateBoundingBox();
     this.recalculateSourceBoundingBox();
+    this.recalculateBoundingBox();
   }
 
   clear() {
     this.elements = [];
     this.source.elements = [];
-    this.marquee = undefined;
+    this._marquee = undefined;
     this.pendingElements = undefined;
-    this.recalculateBoundingBox();
+
     this.recalculateSourceBoundingBox();
+    this.recalculateBoundingBox();
   }
 
-  isEmpty() {
-    return this.elements.length === 0;
+  setPendingElements(pendingElemenets: ResolvedNodeDef[]) {
+    this.pendingElements = pendingElemenets;
   }
 
   convertMarqueeToSelection() {
@@ -120,15 +148,18 @@ export class SelectionState {
     this.elements = this.pendingElements;
     this.source.elements = this.pendingElements.map(e => e.bounds);
 
-    this.recalculateBoundingBox();
     this.recalculateSourceBoundingBox();
+    this.recalculateBoundingBox();
+
+    this.pendingElements = undefined;
 
     this.marquee = undefined;
-    this.pendingElements = undefined;
   }
 
   rebaseline() {
     this.source.elements = this.elements.map(e => e.bounds);
     this.recalculateSourceBoundingBox();
+
+    this.emit('change', { selection: this });
   }
 }

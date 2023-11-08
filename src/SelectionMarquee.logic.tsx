@@ -15,5 +15,5 @@ export const updatePendingElements = (selection: SelectionState, diagram: Loaded
       pending.push(e);
     }
   }
-  selection.pendingElements = pending;
+  selection.setPendingElements(pending);
 };

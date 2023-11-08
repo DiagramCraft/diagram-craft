@@ -35,6 +35,7 @@ export class EventEmitter<T extends EventMap, Q = WithWildcardEvent<WithEventNam
     this.listeners[eventName] = (this.listeners[eventName] ?? []).filter(f => f !== fn);
   }
 
+  // TODO: Add debounce here somehow
   emit<K extends EventKey<Q>>(eventName: K, params?: Omit<Q[K], 'name'>) {
     [...(this.listeners[eventName] ?? []), ...(this.listeners['*'] ?? [])].forEach(function (fn) {
       fn({ ...(params ?? {}), name: eventName });

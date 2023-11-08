@@ -12,6 +12,7 @@ import { selectionResize, selectionRotate } from './Selection.logic.ts';
 import { assert } from './assert.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { updatePendingElements } from './SelectionMarquee.logic.tsx';
+import { debounce } from './utils.ts';
 
 const BACKGROUND = 'background';
 
@@ -132,6 +133,7 @@ export const Canvas = (props: Props) => {
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
   const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
 
+  // TODO: Ideally we should not need this once we have events for all updates in the diagram
   useEffect(() => {
     const callback = () => {
       selection.current.clear();
@@ -142,6 +144,18 @@ export const Canvas = (props: Props) => {
       diagram.undoManager.off('*', callback);
     };
   }, [diagram, redraw]);
+
+  useEffect(() => {
+    const callback = debounce(() => {
+      selectionRef.current?.repaint();
+      selectionMarqueeRef.current?.repaint();
+    });
+    const sel = selection.current;
+    sel.on('change', callback);
+    return () => {
+      sel.off('change', callback);
+    };
+  }, []);
 
   const updateCursor = useCallback(
     (coord: Point) => {
@@ -154,24 +168,14 @@ export const Canvas = (props: Props) => {
     [svgRef]
   );
 
-  const repaintSelection = useCallback(
-    (coord: Point) => {
-      updateCursor(coord);
-
-      selectionRef.current?.repaint();
-      selectionMarqueeRef.current?.repaint();
-    },
-    [updateCursor]
-  );
-
   const onDragStart = useCallback((point: Point, type: Drag['type']) => {
     drag.current = { type, offset: point };
   }, []);
 
   const onMouseDown = useCallback(
-    (id: ObjectId, coord: Point, add: boolean) => {
+    (id: ObjectId, point: Point, add: boolean) => {
       const isClickOnBackground = id === BACKGROUND;
-      const isClickOnSelection = Box.contains(selection.current.bounds, coord);
+      const isClickOnSelection = Box.contains(selection.current.bounds, point);
 
       try {
         if (add) {
@@ -193,7 +197,7 @@ export const Canvas = (props: Props) => {
           } else {
             if (isClickOnBackground) {
               selection.current.clear();
-              onDragStart(coord, 'marquee');
+              onDragStart(point, 'marquee');
               return;
             } else {
               selection.current.clear();
@@ -203,13 +207,13 @@ export const Canvas = (props: Props) => {
         }
 
         if (!selection.current.isEmpty()) {
-          onDragStart(Point.subtract(coord, selection.current.bounds.pos), 'move');
+          onDragStart(Point.subtract(point, selection.current.bounds.pos), 'move');
         }
       } finally {
-        repaintSelection(coord);
+        updateCursor(point);
       }
     },
-    [onDragStart, diagram, repaintSelection]
+    [onDragStart, diagram, updateCursor]
   );
 
   const onMouseUp = useCallback(
@@ -226,19 +230,19 @@ export const Canvas = (props: Props) => {
         drag.current = undefined;
         deferedMouseAction.current = undefined;
 
-        repaintSelection(point);
+        updateCursor(point);
       }
     },
-    [diagram, repaintSelection]
+    [diagram, updateCursor]
   );
 
   const onMouseMove = useCallback(
-    (coord: Point) => {
+    (point: Point) => {
       // Abort early in case there's no drag in progress
       if (!drag.current) return;
 
       try {
-        dragActions[drag.current.type].onDrag(coord, drag.current, diagram, selection.current);
+        dragActions[drag.current.type].onDrag(point, drag.current, diagram, selection.current);
       } finally {
         deferedMouseAction.current = undefined;
 
@@ -250,10 +254,10 @@ export const Canvas = (props: Props) => {
           }
         }
 
-        repaintSelection(coord);
+        updateCursor(point);
       }
     },
-    [repaintSelection, diagram]
+    [updateCursor, diagram]
   );
 
   return (
