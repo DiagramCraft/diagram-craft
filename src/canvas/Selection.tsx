@@ -58,6 +58,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               strokeWidth={1}
               stroke={color}
             />
+
             <line
               x1={g.line.from.x}
               y1={g.line.from.y}
@@ -66,6 +67,29 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               strokeWidth={1}
               stroke={color}
             />
+
+            {/* TODO: These numbers are a bit of a hack */}
+            {g.label !== undefined && (
+              <>
+                <rect
+                  x={Line.midpoint(g.line).x - g.label.length * 5}
+                  y={Line.midpoint(g.line).y - 10}
+                  width={g.label.length * 10}
+                  height={16}
+                  fill="white"
+                />
+                <text
+                  x={Line.midpoint(g.line).x}
+                  y={Line.midpoint(g.line).y}
+                  fill="black"
+                  style={{ fontSize: '10px' }}
+                  dominantBaseline="middle"
+                  textAnchor="middle"
+                >
+                  {g.label}
+                </text>
+              </>
+            )}
           </Fragment>
         );
       })}

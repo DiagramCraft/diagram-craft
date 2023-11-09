@@ -18,6 +18,7 @@ type SelectionSource = {
 export type Guide = {
   line: Line;
   type: Anchor['type'];
+  label?: string;
 };
 
 export class SelectionState extends EventEmitter<{

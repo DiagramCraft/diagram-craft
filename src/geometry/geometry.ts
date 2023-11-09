@@ -62,6 +62,10 @@ export const Line = {
     return { from, to };
   },
 
+  midpoint: (line: Line) => {
+    return Point.midpoint(line.from, line.to);
+  },
+
   isHorizontal: (line: Line) => {
     return round(line.from.y) === round(line.to.y);
   },
