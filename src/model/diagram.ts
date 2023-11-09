@@ -171,10 +171,9 @@ export const NodeHelper = {
     ];
   },
 
-  // TODO: Should probably only have center for a rotated node
-  //       ... or possibly use corners for rotated nodes somehow
+  // TODO: Maybe include use corners for rotated nodes somehow
   anchors: (node: Box): Anchor[] => {
-    return [
+    const center: Anchor[] = [
       {
         pos: Box.center(node),
         offset: { x: node.size.w / 2, y: node.size.h / 2 },
@@ -186,7 +185,13 @@ export const NodeHelper = {
         offset: { x: node.size.w / 2, y: node.size.h / 2 },
         axis: 'y',
         type: 'node'
-      },
+      }
+    ];
+
+    if (node.rotation !== 0) return center;
+
+    return [
+      ...center,
       {
         pos: {
           x: node.pos.x + node.size.w / 2,
