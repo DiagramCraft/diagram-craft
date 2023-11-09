@@ -1,5 +1,7 @@
 import { invariant, NOT_IMPLEMENTED_YET, precondition } from '../utils/assert.ts';
 
+export type Direction = 'n' | 's' | 'w' | 'e';
+
 type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
 
 abstract class MutableSnapshot<T> {

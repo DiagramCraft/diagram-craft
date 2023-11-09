@@ -1,4 +1,4 @@
-import { Box, Line, Point } from '../geometry/geometry.ts';
+import { Box, Direction, Line, Point } from '../geometry/geometry.ts';
 import { Anchor, Axis, LoadedDiagram, NodeHelper, ResolvedNodeDef } from './diagram.ts';
 import { Guide } from './selectionState.ts';
 import { largest, smallest } from '../utils/array.ts';
@@ -94,29 +94,15 @@ class NodeDistanceSnapProvider implements SnapProvider {
   }
 
   private getMidpoint(a: Box, b: Box, axis: Axis) {
-    if (axis === 'x') {
-      return Range.midpoint(
-        Range.intersection(
-          Range.create(a.pos.x, a.pos.x + a.size.w),
-          Range.create(b.pos.x, b.pos.x + b.size.w)
-        )!
-      );
-    } else {
-      return Range.midpoint(
-        Range.intersection(
-          Range.create(a.pos.y, a.pos.y + a.size.h),
-          Range.create(b.pos.y, b.pos.y + b.size.h)
-        )!
-      );
-    }
+    return Range.midpoint(Range.intersection(this.getRange(a, axis), this.getRange(b, axis))!);
   }
 
   getAnchors(box: Box): Anchor[] {
-    const result = {
-      n: [] as { node: ResolvedNodeDef }[],
-      w: [] as { node: ResolvedNodeDef }[],
-      e: [] as { node: ResolvedNodeDef }[],
-      s: [] as { node: ResolvedNodeDef }[]
+    const result: Record<Direction, { node: ResolvedNodeDef }[]> = {
+      n: [],
+      w: [],
+      e: [],
+      s: []
     };
 
     for (const node of this.diagram.queryNodes()) {
@@ -142,33 +128,10 @@ class NodeDistanceSnapProvider implements SnapProvider {
       }
     }
 
-    // Sort all by being closest
-    // ... for north and south we want to sort with largest first
-    result.n.sort((a, b) => {
-      const ab = a.node.bounds;
-      const bb = b.node.bounds;
-      return -(this.get(ab, 's') - this.get(bb, 's'));
-    });
-    result.w.sort((a, b) => {
-      const ab = a.node.bounds;
-      const bb = b.node.bounds;
-      return -(this.get(ab, 'e') - this.get(bb, 'e'));
-    });
-
-    // ... for east and south we want to sort with smallest first
-    result.e.sort((a, b) => {
-      const ab = a.node.bounds;
-      const bb = b.node.bounds;
-      return this.get(ab, 'w') - this.get(bb, 'w');
-    });
-    result.s.sort((a, b) => {
-      const ab = a.node.bounds;
-      const bb = b.node.bounds;
-      return this.get(ab, 'n') - this.get(bb, 'n');
-    });
-
-    const ys = new Set<number>();
-    const xs = new Set<number>();
+    const anchorPositions = {
+      x: new Set<number>(),
+      y: new Set<number>()
+    };
 
     const baseDistanceAnchor = {
       offset: { x: 0, y: 0 },
@@ -177,99 +140,54 @@ class NodeDistanceSnapProvider implements SnapProvider {
 
     const anchors: Anchor[] = [];
 
-    for (let i = 0; i < result.n.length - 1; i++) {
-      const first = result.n[i].node.bounds;
+    const directions: {
+      dir: Direction;
+      oDir: Direction;
+      sign: 1 | -1;
+      axis: Axis;
+      oAxis: Axis;
+    }[] = [
+      { dir: 'n', oDir: 's', axis: 'x', oAxis: 'y', sign: -1 },
+      { dir: 's', oDir: 'n', axis: 'x', oAxis: 'y', sign: 1 },
+      { dir: 'w', oDir: 'e', axis: 'y', oAxis: 'x', sign: -1 },
+      { dir: 'e', oDir: 'w', axis: 'y', oAxis: 'x', sign: 1 }
+    ];
 
-      const distances: number[] = [];
-      for (let j = i + 1; j < result.n.length; j++) {
-        const distance = this.get(first, 'n') - this.get(result.n[j].node.bounds, 's');
-        if (distance > 0) distances.push(distance);
-      }
+    for (const { dir, axis, sign, oDir, oAxis } of directions) {
+      // Sort all by being closest
+      // ... for north and south we want to sort with largest first
+      // ... for east and south we want to sort with smallest first
+      result[dir].sort((a, b) => {
+        const ab = a.node.bounds;
+        const bb = b.node.bounds;
+        return sign * (this.get(ab, oDir) - this.get(bb, oDir));
+      });
 
-      for (const d of distances) {
-        const y = this.get(first, 's') + d;
-        if (ys.has(y)) continue;
+      for (let i = 0; i < result[dir].length - 1; i++) {
+        const first = result[dir][i].node.bounds;
 
-        anchors.push({
-          ...baseDistanceAnchor,
-          pos: { x: this.getMidpoint(first, box, 'x'), y },
-          axis: 'x',
-          matchDirection: 'n'
-        });
+        const distances: number[] = [];
+        for (let j = i + 1; j < result[dir].length; j++) {
+          const d = sign * (this.get(result[dir][j].node.bounds, oDir) - this.get(first, dir));
+          if (d > 0) distances.push(d);
+        }
 
-        ys.add(y);
-      }
-    }
+        for (const d of distances) {
+          const pos = this.get(first, oDir) - sign * d;
+          if (anchorPositions[oAxis].has(pos)) continue;
 
-    for (let i = 0; i < result.s.length - 1; i++) {
-      const first = result.s[i].node.bounds;
+          anchors.push({
+            ...baseDistanceAnchor,
+            pos: {
+              x: axis === 'x' ? this.getMidpoint(first, box, axis) : pos,
+              y: axis === 'y' ? this.getMidpoint(first, box, axis) : pos
+            },
+            axis,
+            matchDirection: dir
+          });
 
-      const distances: number[] = [];
-      for (let j = i + 1; j < result.s.length; j++) {
-        const distance = -1 * (this.get(first, 's') - this.get(result.s[j].node.bounds, 'n'));
-        if (distance > 0) distances.push(distance);
-      }
-
-      for (const d of distances) {
-        const y = this.get(first, 'n') - d;
-        if (ys.has(y)) continue;
-
-        anchors.push({
-          ...baseDistanceAnchor,
-          pos: { x: this.getMidpoint(first, box, 'x'), y },
-          axis: 'x',
-          matchDirection: 's'
-        });
-
-        ys.add(y);
-      }
-    }
-
-    for (let i = 0; i < result.w.length - 1; i++) {
-      const first = result.w[i].node.bounds;
-
-      const distances: number[] = [];
-      for (let j = i + 1; j < result.w.length; j++) {
-        const distance = this.get(first, 'w') - this.get(result.w[j].node.bounds, 'e');
-        if (distance > 0) distances.push(distance);
-      }
-
-      for (const d of distances) {
-        const x = this.get(first, 'e') + d;
-        if (xs.has(x)) continue;
-
-        anchors.push({
-          ...baseDistanceAnchor,
-          pos: { x, y: this.getMidpoint(first, box, 'y') },
-          axis: 'y',
-          matchDirection: 'w'
-        });
-
-        xs.add(x);
-      }
-    }
-
-    for (let i = 0; i < result.e.length - 1; i++) {
-      const first = result.e[i].node.bounds;
-
-      const distances: number[] = [];
-      for (let j = i + 1; j < result.e.length; j++) {
-        const distance = -1 * (this.get(first, 'e') - this.get(result.e[j].node.bounds, 'w'));
-        if (distance > 0) distances.push(distance);
-      }
-
-      for (const d of distances) {
-        const x = this.get(first, 'w') - d;
-        if (xs.has(x)) continue;
-
-        anchors.push({
-          ...baseDistanceAnchor,
-          pos: { x, y: this.getMidpoint(first, box, 'y') },
-          axis: 'y',
-          matchDirection: 'e'
-        });
-
-        xs.add(x);
+          anchorPositions[oAxis].add(pos);
+        }
       }
     }
 
