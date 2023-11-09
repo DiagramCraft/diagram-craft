@@ -148,8 +148,19 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
 export type Anchor = {
   pos: Point;
   offset: Point;
-  axis: 'x' | 'y';
+  axis: Axis;
   type: 'node' | 'canvas';
+};
+
+export type Axis = 'x' | 'y';
+
+export const Axis = {
+  orthogonal: (axis: Axis): Axis => {
+    return axis === 'x' ? 'y' : 'x';
+  },
+  axises(): Axis[] {
+    return ['x', 'y'];
+  }
 };
 
 export const NodeHelper = {
