@@ -149,7 +149,8 @@ export type Anchor = {
   pos: Point;
   offset: Point;
   axis: Axis;
-  type: 'node' | 'canvas';
+  type: 'node' | 'canvas' | 'distance';
+  matchDirection?: 'n' | 's' | 'e' | 'w';
 };
 
 export type Axis = 'x' | 'y';
@@ -199,7 +200,8 @@ export const NodeHelper = {
         },
         offset: { x: node.size.w / 2, y: 0 },
         axis: 'x',
-        type: 'node'
+        type: 'node',
+        matchDirection: 'n'
       },
       {
         pos: {
@@ -208,7 +210,8 @@ export const NodeHelper = {
         },
         offset: { x: node.size.w / 2, y: node.size.h },
         axis: 'x',
-        type: 'node'
+        type: 'node',
+        matchDirection: 's'
       },
       {
         pos: {
@@ -217,7 +220,8 @@ export const NodeHelper = {
         },
         offset: { x: 0, y: node.size.h / 2 },
         axis: 'y',
-        type: 'node'
+        type: 'node',
+        matchDirection: 'w'
       },
       {
         pos: {
@@ -226,7 +230,8 @@ export const NodeHelper = {
         },
         offset: { x: node.size.w, y: node.size.h / 2 },
         axis: 'y',
-        type: 'node'
+        type: 'node',
+        matchDirection: 'e'
       }
     ];
   }

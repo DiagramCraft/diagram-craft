@@ -28,6 +28,9 @@ export class SelectionState extends EventEmitter<{
   private _marquee?: Box;
   private _guides: Guide[] = [];
 
+  // TODO: This is mostly here for debugging purposes
+  private _anchors: Anchor[] = [];
+
   elements: ResolvedNodeDef[] = [];
 
   source: SelectionSource = {
@@ -49,6 +52,15 @@ export class SelectionState extends EventEmitter<{
 
   set guides(guides: Guide[]) {
     this._guides = guides;
+    this.emit('change', { selection: this });
+  }
+
+  get anchors(): Anchor[] {
+    return this._anchors;
+  }
+
+  set anchors(anchors: Anchor[]) {
+    this._anchors = anchors;
     this.emit('change', { selection: this });
   }
 

@@ -44,6 +44,46 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
+      {props.selection.anchors.map(g => {
+        if (g.axis === 'x') {
+          return (
+            <line
+              key={`x_${g.pos.y}`}
+              x1={0}
+              y1={g.pos.y}
+              x2={'640'}
+              y2={g.pos.y}
+              strokeDasharray={'5 5'}
+              stroke={'gray'}
+            />
+          );
+        } else {
+          return (
+            <line
+              key={`y_${g.pos.x}`}
+              x1={g.pos.x}
+              y1={0}
+              x2={g.pos.x}
+              y2={480}
+              strokeDasharray={'5 5'}
+              stroke={'gray'}
+            />
+          );
+        }
+      })}
+
+      {props.selection.anchors.map(g => (
+        <circle
+          key={`${g.pos.x}_${g.pos.y}`}
+          cx={g.pos.x}
+          cy={g.pos.y}
+          r="4"
+          fill="pink"
+          strokeWidth={1}
+          stroke="black"
+        />
+      ))}
+
       {props.selection.guides.map(g => {
         const l = Line.extend(g.line, 30, 30);
         const color = g.type === 'node' ? 'red' : 'green';

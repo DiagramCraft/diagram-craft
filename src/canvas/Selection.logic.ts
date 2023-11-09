@@ -132,6 +132,7 @@ export const moveDragActions: DragActions = {
       selection.elements.map(e => e.id)
     );
     selection.guides = result.guides;
+    selection.anchors = result.anchors;
 
     newBounds.set('pos', result.adjusted.pos);
 
