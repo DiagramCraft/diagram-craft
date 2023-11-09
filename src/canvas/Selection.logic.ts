@@ -127,7 +127,10 @@ export const moveDragActions: DragActions = {
       y: selection.bounds.pos.y + d.y
     });
 
-    const result = snapManager.snap(newBounds.getSnapshot());
+    const result = snapManager.snap(
+      newBounds.getSnapshot(),
+      selection.elements.map(e => e.id)
+    );
     selection.guides = result.guides;
 
     newBounds.set('pos', result.adjusted.pos);

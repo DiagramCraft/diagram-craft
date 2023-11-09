@@ -1,10 +1,16 @@
 import { Box, Line, Point } from '../geometry/geometry.ts';
 import { Anchor, Axis, LoadedDiagram, NodeHelper } from './diagram.ts';
 import { Guide } from './selectionState.ts';
+import { largest, smallest } from '../utils/array.ts';
 
 type SnapResult = {
   guides: Guide[];
   adjusted: Box;
+};
+
+type MatchingAnchorPair = {
+  self: Anchor;
+  matching: Anchor;
 };
 
 export class SnapManager {
@@ -14,10 +20,10 @@ export class SnapManager {
 
   // TODO: This can probably be optimized to first check the bounds of the node
   //       before add all the anchors of that node
-  private getNodeAnchors(b: Box): Anchor[] {
+  private getNodeAnchors(excludeNodeIds: string[] = []): Anchor[] {
     const dest: Anchor[] = [];
     for (const node of this.diagram.queryNodes()) {
-      if (Box.equals(node.bounds, b)) continue;
+      if (excludeNodeIds.includes(node.id)) continue;
       for (const other of NodeHelper.anchors(node.bounds)) {
         dest.push(other);
       }
@@ -55,30 +61,31 @@ export class SnapManager {
     ];
   }
 
-  private matchAnchors(selfAnchors: Anchor[], otherAnchors: Anchor[]) {
-    const dest = selfAnchors.map(a => ({
-      anchor: a,
-      matches: [] as Anchor[]
-    }));
+  private matchAnchors(selfAnchors: Anchor[], otherAnchors: Anchor[]): MatchingAnchorPair[] {
+    const dest: MatchingAnchorPair[] = [];
 
     for (const other of otherAnchors) {
-      for (const self of dest) {
-        if (other.axis !== self.anchor.axis) continue;
+      for (const self of selfAnchors) {
+        if (other.axis !== self.axis) continue;
 
         const oAxis = Axis.orthogonal(other.axis);
-        if (Math.abs(other.pos[oAxis] - self.anchor.pos[oAxis]) < this.threshold) {
-          self.matches.push(other);
+        if (Math.abs(other.pos[oAxis] - self.pos[oAxis]) < this.threshold) {
+          dest.push({ self, matching: other });
         }
       }
     }
 
-    return dest.filter(a => a.matches.length > 0);
+    return dest;
   }
 
-  snap(b: Box): SnapResult {
+  // TODO: Ideally we should find a better way to exclude the currently selected node
+  //       maybe we can pass in the current selection instead of just the box (bounds)
+  snap(b: Box, excludeNodeIds: string[] = []): SnapResult {
+    const selfAnchors = NodeHelper.anchors(b);
+
     // TODO: Maybe we should also snap to the "old" location
-    const matchingAnchors = this.matchAnchors(NodeHelper.anchors(b), [
-      ...this.getNodeAnchors(b),
+    const matchingAnchors = this.matchAnchors(selfAnchors, [
+      ...this.getNodeAnchors(excludeNodeIds),
       ...this.getCanvasAnchors()
     ]);
 
@@ -88,103 +95,63 @@ export class SnapManager {
     for (const axis of Axis.axises()) {
       const oAxis = Axis.orthogonal(axis);
 
-      // Find anchor with the closest orthogonal distance to the matching anchor
-      let currentDistance = Number.MAX_SAFE_INTEGER;
-      let closestAnchor: Anchor | undefined = undefined;
-      let sourceAnchor: Anchor | undefined = undefined;
-      for (const a of matchingAnchors) {
-        if (a.anchor.axis !== axis) continue;
+      // Find anchor with the closest orthogonal distance to the matching anchor line
+      // i.e. optimize for snapping the least distance
+      const closest = smallest(
+        matchingAnchors.filter(a => a.self.axis === axis),
+        (a, b) =>
+          Math.abs(a.matching.pos[oAxis] - a.self.pos[oAxis]) -
+          Math.abs(b.matching.pos[oAxis] - b.self.pos[oAxis])
+      );
 
-        for (const m of a.matches) {
-          const d = Math.abs(m.pos[oAxis] - a.anchor.pos[oAxis]);
-          if (d < currentDistance) {
-            currentDistance = d;
-            closestAnchor = m;
-            sourceAnchor = a.anchor;
-          }
-        }
-      }
+      if (closest === undefined) continue;
 
-      if (closestAnchor === undefined || sourceAnchor === undefined) continue;
-
-      // TODO: We should be able to express this in a better way
-      if (closestAnchor.axis === 'x') {
-        newBounds.set('pos', {
-          x: newBounds.get('pos').x,
-          y: closestAnchor.pos.y - sourceAnchor.offset.y
-        });
-      } else {
-        newBounds.set('pos', {
-          x: closestAnchor.pos.x - sourceAnchor.offset.x,
-          y: newBounds.get('pos').y
-        });
-      }
+      newBounds.get('pos')[oAxis] = closest.matching.pos[oAxis] - closest.self.offset[oAxis];
     }
 
-    // TODO: Maybe we should adjust the position of the self anchors as well
-    //       ... to reduce complexity later on
+    // Readjust self anchors to the new position - post snapping
+    for (const a of selfAnchors) {
+      a.pos = Point.add(newBounds.get('pos'), a.offset);
+    }
 
     // Check for guides in all four directions for each matching anchor
     // ... also draw the guide to the matching anchor that is furthest away
     const guides: Guide[] = [];
-    for (const axis of Axis.axises()) {
+    for (const self of selfAnchors) {
+      const axis = self.axis;
+      const oAxis = Axis.orthogonal(axis);
+
+      const otherAnchorsForAnchor = matchingAnchors.filter(a => a.self === self);
+      if (otherAnchorsForAnchor.length === 0) continue;
+
       for (const dir of [-1, 1]) {
-        for (const m of matchingAnchors) {
-          if (m.anchor.axis !== axis) continue;
+        const match = largest(
+          otherAnchorsForAnchor
+            .map(anchor => ({
+              anchor,
+              distance: Point.subtract(self.pos, anchor.matching.pos)
+            }))
 
-          let match: Anchor | undefined = undefined;
-          let matchDistance = 0;
+            // only keep items on the right side of the self anchor
+            .filter(e => e.distance[axis] * dir > 0)
 
-          for (const a of m.matches) {
-            const distance = Point.subtract(
-              Point.add(newBounds.get('pos'), m.anchor.offset),
-              a.pos
-            );
-
-            const oAxis = Axis.orthogonal(axis);
-
-            // Check if the anchor is on the other side of the matching anchor
-            if (distance[axis] * dir < 0) continue;
-
-            // Check if the resulting guide is not orto-linear
-            if (Math.abs(distance[oAxis]) > 1) continue;
-
-            if (Math.abs(distance[axis]) > matchDistance) {
-              match = a;
-              matchDistance = Math.abs(distance[axis]);
-            }
+            // and remove anything that is not ortho-linear
+            .filter(e => Math.abs(e.distance[oAxis]) < 1),
+          (a, b) => {
+            return Math.abs(a.distance[axis]) - Math.abs(b.distance[axis]);
           }
+        )?.anchor;
 
-          if (!match) continue;
+        if (!match) continue;
 
-          if (match.axis === 'x') {
-            // TODO: I wonder if we should modify the selfAnchors instead of
-            //       just modifying the line
-            guides.push({
-              line: Line.extend(
-                {
-                  from: match.pos,
-                  to: Point.add(newBounds.get('pos'), m.anchor.offset)
-                },
-                match.offset.x,
-                m.anchor.offset.x
-              ),
-              type: match.type
-            });
-          } else {
-            guides.push({
-              line: Line.extend(
-                {
-                  from: match.pos,
-                  to: Point.add(newBounds.get('pos'), m.anchor.offset)
-                },
-                match.offset.y,
-                m.anchor.offset.y
-              ),
-              type: match.type
-            });
-          }
-        }
+        guides.push({
+          line: Line.extend(
+            Line.from(match.matching.pos, match.self.pos),
+            match.self.offset[axis],
+            match.self.offset[axis]
+          ),
+          type: match.matching.type
+        });
       }
     }
 

@@ -58,6 +58,10 @@ export const Line = {
     };
   },
 
+  from: (from: Point, to: Point) => {
+    return { from, to };
+  },
+
   isHorizontal: (line: Line) => {
     return round(line.from.y) === round(line.to.y);
   },
