@@ -1,4 +1,5 @@
-import { Box, Point, Transform, TransformFactory } from '../geometry/geometry.ts';
+import { Box, Direction, Point, Transform, TransformFactory } from '../geometry/geometry.ts';
+import { Range } from '../geometry/range.ts';
 import { UndoableAction, UndoManager } from './undoManager.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
@@ -145,13 +146,37 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   }
 }
 
-export type Anchor = {
+type BaseAnchor = {
   pos: Point;
-  offset: Point;
   axis: Axis;
-  type: 'node' | 'canvas' | 'distance';
-  matchDirection?: 'n' | 's' | 'e' | 'w';
+  matchDirection?: Direction;
+  offset: Point;
 };
+
+export type DistancePair = {
+  distance: number;
+
+  pointA: Point;
+  pointB: Point;
+
+  rangeA: Range;
+  rangeB: Range;
+};
+
+export type Anchor = BaseAnchor &
+  (
+    | {
+        type: 'node' | 'canvas';
+      }
+    | {
+        type: 'distance';
+        distancePairs: DistancePair[];
+      }
+  );
+
+export type AnchorType = Anchor['type'];
+
+export type AnchorOfType<T extends AnchorType> = Anchor & { type: T };
 
 export type Axis = 'x' | 'y';
 

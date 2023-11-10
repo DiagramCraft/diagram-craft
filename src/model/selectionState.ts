@@ -19,6 +19,8 @@ export type Guide = {
   line: Line;
   type: Anchor['type'];
   label?: string;
+  selfAnchor: Anchor;
+  matchingAnchor: Anchor;
 };
 
 export class SelectionState extends EventEmitter<{

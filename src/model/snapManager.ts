@@ -1,5 +1,13 @@
-import { Box, Direction, Line, Point } from '../geometry/geometry.ts';
-import { Anchor, Axis, LoadedDiagram, NodeHelper, ResolvedNodeDef } from './diagram.ts';
+import { Box, Direction, Line, Point, Vector } from '../geometry/geometry.ts';
+import {
+  Anchor,
+  AnchorType,
+  Axis,
+  DistancePair,
+  LoadedDiagram,
+  NodeHelper,
+  ResolvedNodeDef
+} from './diagram.ts';
 import { Guide } from './selectionState.ts';
 import { largest, smallest } from '../utils/array.ts';
 import { Range } from '../geometry/range.ts';
@@ -18,6 +26,7 @@ type MatchingAnchorPair = {
 
 interface SnapProvider {
   getAnchors(box: Box): Anchor[];
+  makeGuide(box: Box, match: MatchingAnchorPair, axis: Axis): Guide;
 }
 
 class CanvasSnapProvider implements SnapProvider {
@@ -49,6 +58,19 @@ class CanvasSnapProvider implements SnapProvider {
       }
     ];
   }
+
+  makeGuide(_box: Box, match: MatchingAnchorPair, axis: Axis): Guide {
+    return {
+      line: Line.extend(
+        Line.from(match.matching.pos, match.self.pos),
+        match.self.offset[axis],
+        match.self.offset[axis]
+      ),
+      type: match.matching.type,
+      matchingAnchor: match.matching,
+      selfAnchor: match.self
+    };
+  }
 }
 
 class NodeSnapProvider implements SnapProvider {
@@ -69,6 +91,19 @@ class NodeSnapProvider implements SnapProvider {
     }
     return dest;
   }
+
+  makeGuide(_box: Box, match: MatchingAnchorPair, axis: Axis): Guide {
+    return {
+      line: Line.extend(
+        Line.from(match.matching.pos, match.self.pos),
+        match.self.offset[axis],
+        match.self.offset[axis]
+      ),
+      type: match.matching.type,
+      matchingAnchor: match.matching,
+      selfAnchor: match.self
+    };
+  }
 }
 
 class NodeDistanceSnapProvider implements SnapProvider {
@@ -77,7 +112,7 @@ class NodeDistanceSnapProvider implements SnapProvider {
     private readonly excludedNodeIds: string[]
   ) {}
 
-  private get(b: Box, dir: 'e' | 'w' | 'n' | 's') {
+  private get(b: Box, dir: Direction) {
     if (dir === 'e' || dir === 'w') {
       return dir === 'e' ? b.pos.x + b.size.w : b.pos.x;
     } else {
@@ -94,7 +129,9 @@ class NodeDistanceSnapProvider implements SnapProvider {
   }
 
   private getMidpoint(a: Box, b: Box, axis: Axis) {
-    return Range.midpoint(Range.intersection(this.getRange(a, axis), this.getRange(b, axis))!);
+    const intersection = Range.intersection(this.getRange(a, axis), this.getRange(b, axis));
+    if (!intersection) return undefined;
+    return Range.midpoint(intersection);
   }
 
   getAnchors(box: Box): Anchor[] {
@@ -166,24 +203,51 @@ class NodeDistanceSnapProvider implements SnapProvider {
       for (let i = 0; i < result[dir].length - 1; i++) {
         const first = result[dir][i].node.bounds;
 
-        const distances: number[] = [];
+        const distances: DistancePair[] = [];
         for (let j = i + 1; j < result[dir].length; j++) {
           const d = sign * (this.get(result[dir][j].node.bounds, oDir) - this.get(first, dir));
-          if (d > 0) distances.push(d);
+
+          if (d <= 0) continue;
+
+          const rangeA = this.getRange(first, axis);
+          const rangeB = this.getRange(result[dir][j].node.bounds, axis);
+
+          const intersection = Range.intersection(rangeA, rangeB);
+
+          // This means there no intersection between the two nodes
+          if (!intersection) continue;
+
+          const mp = Range.midpoint(intersection);
+
+          distances.push({
+            distance: d,
+            pointA: {
+              x: axis === 'x' ? mp : this.get(first, dir),
+              y: axis === 'y' ? mp : this.get(first, dir)
+            },
+            pointB: {
+              x: axis === 'x' ? mp : this.get(result[dir][j].node.bounds, oDir),
+              y: axis === 'y' ? mp : this.get(result[dir][j].node.bounds, oDir)
+            },
+            rangeA: rangeA,
+            rangeB: rangeB
+          });
         }
 
-        for (const d of distances) {
-          const pos = this.get(first, oDir) - sign * d;
+        for (const dp of distances) {
+          const pos = this.get(first, oDir) - sign * dp.distance;
           if (anchorPositions[oAxis].has(pos)) continue;
 
+          const anchorPos = {
+            x: axis === 'x' ? this.getMidpoint(first, box, axis)! : pos,
+            y: axis === 'y' ? this.getMidpoint(first, box, axis)! : pos
+          };
           anchors.push({
             ...baseDistanceAnchor,
-            pos: {
-              x: axis === 'x' ? this.getMidpoint(first, box, axis) : pos,
-              y: axis === 'y' ? this.getMidpoint(first, box, axis) : pos
-            },
+            pos: anchorPos,
             axis,
-            matchDirection: dir
+            matchDirection: dir,
+            distancePairs: [dp]
           });
 
           anchorPositions[oAxis].add(pos);
@@ -192,6 +256,57 @@ class NodeDistanceSnapProvider implements SnapProvider {
     }
 
     return anchors;
+  }
+
+  makeGuide(box: Box, match: MatchingAnchorPair, axis: Axis): Guide {
+    const m = match.matching;
+
+    // TODO: Can we type this a bit better
+    if (m.type === 'distance') {
+      const tp = Point.add(
+        match.matching.pos,
+        Vector.from(m.distancePairs[0].pointA, m.distancePairs[0].pointB)
+      );
+
+      const instersection = Range.intersection(
+        Range.intersection(m.distancePairs[0].rangeA, m.distancePairs[0].rangeB)!,
+        this.getRange(box, axis)
+      );
+
+      const mp = Range.midpoint(instersection!);
+
+      m.distancePairs.push({
+        distance: m.distancePairs[0].distance,
+        pointA: match.matching.pos,
+        pointB: tp,
+        rangeA: instersection!,
+        rangeB: instersection!
+      });
+
+      for (const dp of m.distancePairs) {
+        dp.pointA = {
+          x: axis === 'x' ? mp : dp.pointA.x,
+          y: axis === 'y' ? mp : dp.pointA.y
+        };
+        dp.pointB = {
+          x: axis === 'x' ? mp : dp.pointB.x,
+          y: axis === 'y' ? mp : dp.pointB.y
+        };
+      }
+    } else {
+      VERIFY_NOT_REACHED();
+    }
+
+    return {
+      line: Line.extend(
+        Line.from(match.matching.pos, match.self.pos),
+        match.self.offset[axis],
+        match.self.offset[axis]
+      ),
+      type: match.matching.type,
+      matchingAnchor: match.matching,
+      selfAnchor: match.self
+    };
   }
 }
 
@@ -225,13 +340,17 @@ export class SnapManager {
     const selfAnchors = NodeHelper.anchors(b);
 
     // TODO: Maybe we should also snap to the "old" location
-    const snapProviders = [
-      //new NodeSnapProvider(this.diagram, excludeNodeIds),
-      new NodeDistanceSnapProvider(this.diagram, excludeNodeIds)
-      //new CanvasSnapProvider()
-    ];
+    const snapProviders: Record<AnchorType, SnapProvider> = {
+      node: new NodeSnapProvider(this.diagram, excludeNodeIds),
+      distance: new NodeDistanceSnapProvider(this.diagram, excludeNodeIds),
+      canvas: new CanvasSnapProvider()
+    };
 
-    const anchorsToMatchAgainst = snapProviders.flatMap(e => e.getAnchors(b));
+    const enabledSnapProviders: AnchorType[] = ['distance', 'canvas'];
+
+    const anchorsToMatchAgainst = enabledSnapProviders
+      .map(e => snapProviders[e])
+      .flatMap(e => e.getAnchors(b));
 
     const matchingAnchors = this.matchAnchors(selfAnchors, anchorsToMatchAgainst);
 
@@ -262,6 +381,8 @@ export class SnapManager {
 
     // Check for guides in all four directions for each matching anchor
     // ... also draw the guide to the matching anchor that is furthest away
+
+    // TODO: ... of each type of anchor
     const guides: Guide[] = [];
     for (const self of selfAnchors) {
       const axis = self.axis;
@@ -290,14 +411,7 @@ export class SnapManager {
 
         if (!match) continue;
 
-        guides.push({
-          line: Line.extend(
-            Line.from(match.matching.pos, match.self.pos),
-            match.self.offset[axis],
-            match.self.offset[axis]
-          ),
-          type: match.matching.type
-        });
+        guides.push(snapProviders[match.matching.type].makeGuide(b, match, axis));
       }
     }
 

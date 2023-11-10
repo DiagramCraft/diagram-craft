@@ -1,4 +1,4 @@
-import { Angle, Line, Point } from '../geometry/geometry.ts';
+import { Angle, Line, Point, round } from '../geometry/geometry.ts';
 import { forwardRef, Fragment, useImperativeHandle } from 'react';
 import { SelectionState } from '../model/selectionState.ts';
 import { useRedraw } from './useRedraw.tsx';
@@ -44,6 +44,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
+      {/*
       {props.selection.anchors.map(g => {
         if (g.axis === 'x') {
           return (
@@ -83,10 +84,11 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           stroke="black"
         />
       ))}
+      */}
 
       {props.selection.guides.map(g => {
         const l = Line.extend(g.line, 30, 30);
-        const color = g.type === 'node' ? 'red' : 'green';
+        const color = g.type === 'node' ? 'red' : g.type === 'distance' ? 'pink' : 'green';
         return (
           <Fragment key={`u_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}>
             <line
@@ -107,6 +109,56 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               strokeWidth={1}
               stroke={color}
             />
+
+            {g.matchingAnchor.type === 'distance' &&
+              g.matchingAnchor.distancePairs.map(dp => {
+                const l = Line.from(dp.pointA, dp.pointB);
+                const lbl = round(dp.distance).toString();
+                return (
+                  <Fragment key={`a_${dp.pointA.x}_${dp.pointA.y}`}>
+                    <marker
+                      id={`arrow_${dp.pointA.x}_${dp.pointA.y}`}
+                      viewBox="0 0 10 10"
+                      refX="10"
+                      refY="5"
+                      markerWidth="6"
+                      markerHeight="6"
+                      orient="auto-start-reverse"
+                    >
+                      <path d="M 0 0 L 10 5 L 0 10 z" stroke="red" fill="red" />
+                    </marker>
+
+                    <line
+                      x1={dp.pointA.x}
+                      y1={dp.pointA.y}
+                      x2={dp.pointB.x}
+                      y2={dp.pointB.y}
+                      strokeWidth={1}
+                      stroke={'red'}
+                      fill={'red'}
+                      markerEnd={`url(#arrow_${dp.pointA.x}_${dp.pointA.y})`}
+                      markerStart={`url(#arrow_${dp.pointA.x}_${dp.pointA.y})`}
+                    />
+                    <rect
+                      x={Line.midpoint(l).x - lbl.length * 5}
+                      y={Line.midpoint(l).y - 10}
+                      width={lbl.length * 10}
+                      height={17}
+                      fill="white"
+                    />
+                    <text
+                      x={Line.midpoint(l).x}
+                      y={Line.midpoint(l).y}
+                      fill="blue"
+                      style={{ fontSize: '10px' }}
+                      dominantBaseline="middle"
+                      textAnchor="middle"
+                    >
+                      {lbl}
+                    </text>
+                  </Fragment>
+                );
+              })}
 
             {/* TODO: These numbers are a bit of a hack */}
             {g.label !== undefined && (
