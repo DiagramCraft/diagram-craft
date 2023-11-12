@@ -150,6 +150,7 @@ type BaseAnchor = {
   pos: Point;
   axis: Axis;
   matchDirection?: Direction;
+  respectDirection?: boolean;
   offset: Point;
 };
 

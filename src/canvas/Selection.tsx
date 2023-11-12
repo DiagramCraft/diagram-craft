@@ -44,48 +44,6 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
-      {/*
-      {props.selection.anchors.map(g => {
-        if (g.axis === 'x') {
-          return (
-            <line
-              key={`x_${g.pos.y}`}
-              x1={0}
-              y1={g.pos.y}
-              x2={'640'}
-              y2={g.pos.y}
-              strokeDasharray={'5 5'}
-              stroke={'gray'}
-            />
-          );
-        } else {
-          return (
-            <line
-              key={`y_${g.pos.x}`}
-              x1={g.pos.x}
-              y1={0}
-              x2={g.pos.x}
-              y2={480}
-              strokeDasharray={'5 5'}
-              stroke={'gray'}
-            />
-          );
-        }
-      })}
-
-      {props.selection.anchors.map(g => (
-        <circle
-          key={`${g.pos.x}_${g.pos.y}`}
-          cx={g.pos.x}
-          cy={g.pos.y}
-          r="4"
-          fill="pink"
-          strokeWidth={1}
-          stroke="black"
-        />
-      ))}
-      */}
-
       {props.selection.guides.map(g => {
         const l = Line.extend(g.line, 30, 30);
         const color = g.type === 'node' ? 'red' : g.type === 'distance' ? 'pink' : 'green';
@@ -125,7 +83,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                       markerHeight="6"
                       orient="auto-start-reverse"
                     >
-                      <path d="M 0 0 L 10 5 L 0 10 z" stroke="red" fill="red" />
+                      <path d="M 0 0 L 10 5 L 0 10 z" stroke="pink" fill="pink" />
                     </marker>
 
                     <line
@@ -134,8 +92,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                       x2={dp.pointB.x}
                       y2={dp.pointB.y}
                       strokeWidth={1}
-                      stroke={'red'}
-                      fill={'red'}
+                      stroke={'pink'}
+                      fill={'pink'}
                       markerEnd={`url(#arrow_${dp.pointA.x}_${dp.pointA.y})`}
                       markerStart={`url(#arrow_${dp.pointA.x}_${dp.pointA.y})`}
                     />
@@ -149,7 +107,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                     <text
                       x={Line.midpoint(l).x}
                       y={Line.midpoint(l).y}
-                      fill="blue"
+                      fill="pink"
                       style={{ fontSize: '10px' }}
                       dominantBaseline="middle"
                       textAnchor="middle"

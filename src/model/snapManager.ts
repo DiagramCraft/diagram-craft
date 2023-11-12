@@ -96,7 +96,7 @@ class NodeSnapProvider implements SnapProvider {
     return {
       line: Line.extend(
         Line.from(match.matching.pos, match.self.pos),
-        match.self.offset[axis],
+        match.matching.offset[axis],
         match.self.offset[axis]
       ),
       type: match.matching.type,
@@ -247,6 +247,7 @@ class NodeDistanceSnapProvider implements SnapProvider {
             pos: anchorPos,
             axis,
             matchDirection: dir,
+            respectDirection: true,
             distancePairs: [dp]
           });
 
@@ -330,7 +331,12 @@ export class SnapManager {
       for (const self of selfAnchors) {
         if (other.axis !== self.axis) continue;
 
-        if (other.matchDirection && other.matchDirection !== self.matchDirection) continue;
+        if (
+          other.matchDirection &&
+          other.respectDirection &&
+          other.matchDirection !== self.matchDirection
+        )
+          continue;
 
         const oAxis = Axis.orthogonal(other.axis);
         if (Math.abs(other.pos[oAxis] - self.pos[oAxis]) < this.threshold) {
