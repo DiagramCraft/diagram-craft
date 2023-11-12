@@ -20,5 +20,9 @@ export const Range = {
 
   midpoint: (r: Range): number => {
     return (r[0] + r[1]) / 2;
+  },
+
+  add: (r: Range, d: number): Range => {
+    return [r[0] + d, r[1] + d];
   }
 };

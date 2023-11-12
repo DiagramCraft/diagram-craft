@@ -162,11 +162,26 @@ export const Canvas = (props: Props) => {
     [updateCursor, diagram]
   );
 
+  /*
+  useEffect(() => {
+    console.log(
+      svgRef.current!.viewBox.baseVal,
+      svgRef.current!.width.baseVal,
+      svgRef.current!.height.baseVal
+    );
+
+    const zoomX = svgRef.current!.width.baseVal.value / svgRef.current!.viewBox.baseVal.width;
+    const zoomY = svgRef.current!.height.baseVal.value / svgRef.current!.viewBox.baseVal.height;
+    console.log(zoomX, zoomY);
+  }, []);
+  */
+
   return (
     <>
       <DndProvider backend={HTML5Backend}>
         <div>
           <svg
+            viewBox={`0 0 640 480`}
             ref={svgRef}
             width="640px"
             height="480px"

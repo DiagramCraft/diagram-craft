@@ -44,7 +44,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
-      {props.selection.guides.map(g => {
+      {[
+        ...props.selection.guides.filter(s => s.type !== 'distance'),
+        ...props.selection.guides.filter(s => s.type === 'distance')
+      ].map(g => {
         const l = Line.extend(g.line, 30, 30);
         const color = g.type === 'node' ? 'red' : g.type === 'distance' ? 'pink' : 'green';
         return (

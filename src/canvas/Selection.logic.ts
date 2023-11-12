@@ -10,7 +10,7 @@ import { SelectionState } from '../model/selectionState.ts';
 import { LoadedDiagram, MoveAction, ResizeAction, RotateAction } from '../model/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions } from './drag.ts';
-import { SnapManager } from '../model/snapManager.ts';
+import { SnapManager } from '../model/snap/snapManager.ts';
 
 export const rotateDragActions: DragActions = {
   onDrag: (coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
