@@ -90,7 +90,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         const l = Line.extend(g.line, 30, 30);
         const color = g.type === 'node' ? 'red' : g.type === 'distance' ? 'pink' : 'green';
         return (
-          <Fragment key={`u_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}>
+          <Fragment key={`u_${g.type}_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}>
             <line
               x1={l.from.x}
               y1={l.from.y}

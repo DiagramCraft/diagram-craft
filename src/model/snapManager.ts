@@ -297,16 +297,24 @@ class NodeDistanceSnapProvider implements SnapProvider {
       VERIFY_NOT_REACHED();
     }
 
-    return {
-      line: Line.extend(
-        Line.from(match.matching.pos, match.self.pos),
-        match.self.offset[axis],
-        match.self.offset[axis]
-      ),
+    const from = {
+      x: axis === 'x' ? match.self.pos.x - match.self.offset.x : match.self.pos.x,
+      y: axis === 'y' ? match.self.pos.y - match.self.offset.y : match.self.pos.y
+    };
+
+    const to = {
+      x: axis === 'x' ? match.self.pos.x + match.self.offset.x : match.self.pos.x,
+      y: axis === 'y' ? match.self.pos.y + match.self.offset.y : match.self.pos.y
+    };
+
+    const dest = {
+      line: Line.from(from, to),
       type: match.matching.type,
       matchingAnchor: match.matching,
       selfAnchor: match.self
     };
+
+    return dest;
   }
 }
 
@@ -346,7 +354,7 @@ export class SnapManager {
       canvas: new CanvasSnapProvider()
     };
 
-    const enabledSnapProviders: AnchorType[] = ['distance', 'canvas'];
+    const enabledSnapProviders: AnchorType[] = ['node', 'distance', 'canvas'];
 
     const anchorsToMatchAgainst = enabledSnapProviders
       .map(e => snapProviders[e])
@@ -400,18 +408,31 @@ export class SnapManager {
             }))
 
             // only keep items on the right side of the self anchor
-            .filter(e => e.distance[axis] * dir > 0)
+            .filter(e => e.distance[axis] * dir >= 0)
 
             // and remove anything that is not ortho-linear
             .filter(e => Math.abs(e.distance[oAxis]) < 1),
           (a, b) => {
-            return Math.abs(a.distance[axis]) - Math.abs(b.distance[axis]);
+            const d = Math.abs(a.distance[axis]) - Math.abs(b.distance[axis]);
+            if (d !== 0) return Math.abs(a.distance[axis]) - Math.abs(b.distance[axis]);
+
+            if (a.anchor.matching.type === 'distance') return -1;
+            if (b.anchor.matching.type === 'distance') return 1;
+            return 0;
           }
-        )?.anchor;
+        );
 
         if (!match) continue;
 
-        guides.push(snapProviders[match.matching.type].makeGuide(b, match, axis));
+        // Special case if distance is zero, we need to check that we don't create duplicates
+        if (match.distance[axis] === 0) {
+          const existing = guides.find(
+            g => g.matchingAnchor === match.anchor.matching && g.selfAnchor === match.anchor.self
+          );
+          if (existing) continue;
+        }
+
+        guides.push(snapProviders[match.anchor.matching.type].makeGuide(b, match.anchor, axis));
       }
     }
 

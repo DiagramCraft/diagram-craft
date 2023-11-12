@@ -54,6 +54,7 @@ export const Line = {
   extend: (line: Line, fromLength: number, toLength: number) => {
     const v = Vector.from(line.from, line.to);
     const unit = Vector.scale(v, 1 / Math.sqrt(v.x * v.x + v.y * v.y));
+    if (isNaN(unit.x) || isNaN(unit.y)) return line;
     return {
       from: Point.subtract(line.from, Vector.scale(unit, fromLength)),
       to: Point.add(line.to, Vector.scale(unit, toLength))
