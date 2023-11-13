@@ -167,7 +167,7 @@ export type DistancePair = {
 export type Anchor = BaseAnchor &
   (
     | {
-        type: 'node' | 'canvas';
+        type: 'source' | 'node' | 'canvas';
       }
     | {
         type: 'distance';
@@ -199,19 +199,19 @@ export const NodeHelper = {
   },
 
   // TODO: Maybe include use corners for rotated nodes somehow
-  anchors: (node: Box): Anchor[] => {
+  anchors: (node: Box, type: 'source' | 'node' = 'node'): Anchor[] => {
     const center: Anchor[] = [
       {
         pos: Box.center(node),
         offset: { x: node.size.w / 2, y: node.size.h / 2 },
         axis: 'x',
-        type: 'node'
+        type
       },
       {
         pos: Box.center(node),
         offset: { x: node.size.w / 2, y: node.size.h / 2 },
         axis: 'y',
-        type: 'node'
+        type
       }
     ];
 

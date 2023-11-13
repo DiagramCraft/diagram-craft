@@ -5,6 +5,7 @@ import { largest, smallest } from '../../utils/array.ts';
 import { CanvasSnapProvider } from './canvasSnapProvider.ts';
 import { NodeSnapProvider } from './nodeSnapProvider.ts';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider.ts';
+import { VerifyNotReached } from '../../utils/assert.ts';
 
 type SnapResult = {
   guides: Guide[];
@@ -23,6 +24,20 @@ export interface SnapProvider<T extends AnchorType> {
   moveAnchor(anchor: AnchorOfType<T>, delta: Point): void;
 }
 
+class SourceSnapProvider implements SnapProvider<'source'> {
+  getAnchors(_box: Box): Anchor[] {
+    throw new VerifyNotReached();
+  }
+
+  makeGuide(_box: Box, _match: MatchingAnchorPair<'source'>, _axis: Axis): Guide {
+    throw new VerifyNotReached();
+  }
+
+  moveAnchor(anchor: AnchorOfType<'source'>, delta: Point): void {
+    anchor.pos = Point.add(anchor.pos, delta);
+  }
+}
+
 class SnapProviders {
   private readonly providers: {
     [T in AnchorType]: SnapProvider<T>;
@@ -30,6 +45,7 @@ class SnapProviders {
 
   constructor(diagram: LoadedDiagram, excludeNodeIds: string[]) {
     this.providers = {
+      source: new SourceSnapProvider(),
       node: new NodeSnapProvider(diagram, excludeNodeIds),
       distance: new NodeDistanceSnapProvider(diagram, excludeNodeIds),
       canvas: new CanvasSnapProvider()
@@ -73,7 +89,7 @@ export class SnapManager {
   // TODO: Ideally we should find a better way to exclude the currently selected node
   //       maybe we can pass in the current selection instead of just the box (bounds)
   snap(b: Box, excludeNodeIds: string[] = []): SnapResult {
-    const selfAnchors = NodeHelper.anchors(b);
+    const selfAnchors = NodeHelper.anchors(b, 'node');
 
     const snapProviders = new SnapProviders(this.diagram, excludeNodeIds);
     const enabledSnapProviders: AnchorType[] = ['node', 'distance', 'canvas'];
