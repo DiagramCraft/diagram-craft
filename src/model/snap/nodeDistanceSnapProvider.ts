@@ -6,7 +6,7 @@ import {
   LoadedDiagram,
   ResolvedNodeDef
 } from '../diagram.ts';
-import { Box, Direction, Line, Point, Vector } from '../../geometry/geometry.ts';
+import { Box, Direction, Line, OLine, Point } from '../../geometry/geometry.ts';
 import { Range } from '../../geometry/range.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Guide } from '../selectionState.ts';
@@ -32,12 +32,6 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     } else {
       return Range.create(b.pos.y, b.pos.y + b.size.h)!;
     }
-  }
-
-  private getMidpoint(a: Box, b: Box, axis: Axis) {
-    const intersection = Range.intersection(this.getRange(a, axis), this.getRange(b, axis));
-    if (!intersection) return undefined;
-    return Range.midpoint(intersection);
   }
 
   getAnchors(box: Box): Anchor[] {
@@ -144,13 +138,17 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
           const pos = this.get(first, oDir) - sign * dp.distance;
           if (anchorPositions[oAxis].has(pos)) continue;
 
-          const anchorPos = {
-            x: axis === 'h' ? this.getMidpoint(first, box, axis)! : pos,
-            y: axis === 'v' ? this.getMidpoint(first, box, axis)! : pos
-          };
+          const intersection = Range.intersection(
+            this.getRange(first, axis),
+            this.getRange(box, axis)
+          )!;
+
           anchors.push({
             ...baseDistanceAnchor,
-            pos: anchorPos,
+            line:
+              axis === 'v'
+                ? OLine.fromRange({ x: pos }, intersection)
+                : OLine.fromRange({ y: pos }, intersection),
             axis,
             matchDirection: dir,
             respectDirection: true,
@@ -168,10 +166,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
   makeGuide(box: Box, match: MatchingAnchorPair<'distance'>, axis: Axis): Guide {
     const m = match.matching;
 
-    const tp = Point.add(
-      match.matching.pos,
-      Vector.from(m.distancePairs[0].pointA, m.distancePairs[0].pointB)
-    );
+    const tp = Line.midpoint(match.self.line);
 
     const instersection = Range.intersection(
       Range.intersection(m.distancePairs[0].rangeA, m.distancePairs[0].rangeB)!,
@@ -182,7 +177,10 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
     m.distancePairs.push({
       distance: m.distancePairs[0].distance,
-      pointA: match.matching.pos,
+      pointA: Point.subtract(tp, {
+        x: axis === 'v' ? m.distancePairs[0].distance : 0,
+        y: axis === 'h' ? m.distancePairs[0].distance : 0
+      }),
       pointB: tp,
       rangeA: instersection!,
       rangeB: instersection!
@@ -199,18 +197,8 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       };
     }
 
-    const from = {
-      x: axis === 'h' ? match.self.pos.x - match.self.offset.x : match.self.pos.x,
-      y: axis === 'v' ? match.self.pos.y - match.self.offset.y : match.self.pos.y
-    };
-
-    const to = {
-      x: axis === 'h' ? match.self.pos.x + match.self.offset.x : match.self.pos.x,
-      y: axis === 'v' ? match.self.pos.y + match.self.offset.y : match.self.pos.y
-    };
-
     return {
-      line: Line.from(from, to),
+      line: match.self.line,
       type: match.matching.type,
       matchingAnchor: match.matching,
       selfAnchor: match.self
@@ -218,7 +206,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
   }
 
   moveAnchor(anchor: AnchorOfType<'distance'>, delta: Point): void {
-    anchor.pos = Point.add(anchor.pos, delta);
+    anchor.line = Line.move(anchor.line, delta);
     anchor.distancePairs.forEach(dp => {
       dp.pointA = Point.add(dp.pointA, delta);
       dp.pointB = Point.add(dp.pointB, delta);

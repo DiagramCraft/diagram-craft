@@ -1,4 +1,4 @@
-import { Box, Direction, Point, Transform, TransformFactory } from '../geometry/geometry.ts';
+import { Box, Direction, Line, Point, Transform, TransformFactory } from '../geometry/geometry.ts';
 import { Range } from '../geometry/range.ts';
 import { UndoableAction, UndoManager } from './undoManager.ts';
 import { EventEmitter } from '../utils/event.ts';
@@ -74,6 +74,10 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   readonly nodeLookup: Record<string, ResolvedNodeDef> = {};
   readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
   readonly undoManager = new UndoManager();
+  readonly dimensions = {
+    w: 640,
+    h: 480
+  };
 
   constructor(elements: (ResolvedEdgeDef | ResolvedNodeDef)[]) {
     super();
@@ -147,11 +151,10 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
 }
 
 type BaseAnchor = {
-  pos: Point;
+  line: Line;
   axis: Axis;
   matchDirection?: Direction;
   respectDirection?: boolean;
-  offset: Point;
 };
 
 export type DistancePair = {
@@ -167,7 +170,11 @@ export type DistancePair = {
 export type Anchor = BaseAnchor &
   (
     | {
-        type: 'source' | 'node' | 'canvas';
+        type: 'source' | 'canvas';
+      }
+    | {
+        type: 'node';
+        node: ResolvedNodeDef;
       }
     | {
         type: 'distance';
@@ -182,15 +189,9 @@ export type AnchorOfType<T extends AnchorType> = Anchor & { type: T };
 export type Axis = 'h' | 'v';
 
 export const Axis = {
-  orthogonal: (axis: Axis): Axis => {
-    return axis === 'h' ? 'v' : 'h';
-  },
-  axises(): Axis[] {
-    return ['h', 'v'];
-  },
-  toXY(axis: Axis): 'x' | 'y' {
-    return axis === 'h' ? 'x' : 'y';
-  }
+  orthogonal: (axis: Axis): Axis => (axis === 'h' ? 'v' : 'h'),
+  axises: (): Axis[] => ['h', 'v'],
+  toXY: (axis: Axis): 'x' | 'y' => (axis === 'h' ? 'x' : 'y')
 };
 
 export const NodeHelper = {
@@ -202,17 +203,21 @@ export const NodeHelper = {
   },
 
   // TODO: Maybe include use corners for rotated nodes somehow
-  anchors: (node: Box, type: 'source' | 'node' = 'node'): Anchor[] => {
+  anchors: (node: Box, type: 'source' = 'source'): Anchor[] => {
     const center: Anchor[] = [
       {
-        pos: Box.center(node),
-        offset: { x: node.size.w / 2, y: node.size.h / 2 },
+        line: {
+          from: { x: node.pos.x, y: node.pos.y + node.size.h / 2 },
+          to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h / 2 }
+        },
         axis: 'h',
         type
       },
       {
-        pos: Box.center(node),
-        offset: { x: node.size.w / 2, y: node.size.h / 2 },
+        line: {
+          from: { x: node.pos.x + node.size.w / 2, y: node.pos.y },
+          to: { x: node.pos.x + node.size.w / 2, y: node.pos.y + node.size.h }
+        },
         axis: 'v',
         type
       }
@@ -223,43 +228,39 @@ export const NodeHelper = {
     return [
       ...center,
       {
-        pos: {
-          x: node.pos.x + node.size.w / 2,
-          y: node.pos.y
+        line: {
+          from: { x: node.pos.x, y: node.pos.y },
+          to: { x: node.pos.x + node.size.w, y: node.pos.y }
         },
-        offset: { x: node.size.w / 2, y: 0 },
         axis: 'h',
-        type: 'node',
+        type,
         matchDirection: 'n'
       },
       {
-        pos: {
-          x: node.pos.x + node.size.w / 2,
-          y: node.pos.y + node.size.h
+        line: {
+          from: { x: node.pos.x, y: node.pos.y + node.size.h },
+          to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
         },
-        offset: { x: node.size.w / 2, y: node.size.h },
         axis: 'h',
-        type: 'node',
+        type,
         matchDirection: 's'
       },
       {
-        pos: {
-          x: node.pos.x,
-          y: node.pos.y + node.size.h / 2
+        line: {
+          from: { x: node.pos.x, y: node.pos.y },
+          to: { x: node.pos.x, y: node.pos.y + node.size.h }
         },
-        offset: { x: 0, y: node.size.h / 2 },
         axis: 'v',
-        type: 'node',
+        type,
         matchDirection: 'w'
       },
       {
-        pos: {
-          x: node.pos.x + node.size.w,
-          y: node.pos.y + node.size.h / 2
+        line: {
+          from: { x: node.pos.x + node.size.w, y: node.pos.y },
+          to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
         },
-        offset: { x: node.size.w, y: node.size.h / 2 },
         axis: 'v',
-        type: 'node',
+        type,
         matchDirection: 'e'
       }
     ];

@@ -1,45 +1,30 @@
 import { Box, Line, Point } from '../../geometry/geometry.ts';
-import { Anchor, AnchorOfType, Axis } from '../diagram.ts';
+import { Anchor, AnchorOfType, Axis, LoadedDiagram } from '../diagram.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
+  constructor(private readonly diagram: LoadedDiagram) {}
+
   getAnchors(_box: Box): Anchor[] {
+    const { w, h } = this.diagram.dimensions;
     return [
       {
-        offset: { x: 0, y: 0 },
-        pos: { x: 320, y: 0 },
+        line: Line.from({ x: w / 2, y: 0 }, { x: w / 2, y: h }),
         axis: 'v',
         type: 'canvas'
       },
       {
-        offset: { x: 0, y: 0 },
-        pos: { x: 320, y: 480 },
-        axis: 'v',
-        type: 'canvas'
-      },
-      {
-        offset: { x: 0, y: 0 },
-        pos: { x: 0, y: 240 },
-        axis: 'h',
-        type: 'canvas'
-      },
-      {
-        offset: { x: 0, y: 0 },
-        pos: { x: 640, y: 240 },
+        line: Line.from({ x: 0, y: h / 2 }, { x: w, y: h / 2 }),
         axis: 'h',
         type: 'canvas'
       }
     ];
   }
 
-  makeGuide(_box: Box, match: MatchingAnchorPair<'canvas'>, axis: Axis): Guide {
+  makeGuide(_box: Box, match: MatchingAnchorPair<'canvas'>, _axis: Axis): Guide {
     return {
-      line: Line.extend(
-        Line.from(match.matching.pos, match.self.pos),
-        match.self.offset[Axis.toXY(axis)],
-        match.self.offset[Axis.toXY(axis)]
-      ),
+      line: match.matching.line,
       type: match.matching.type,
       matchingAnchor: match.matching,
       selfAnchor: match.self
@@ -47,6 +32,6 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   }
 
   moveAnchor(anchor: AnchorOfType<'canvas'>, delta: Point): void {
-    anchor.pos = Point.add(anchor.pos, delta);
+    anchor.line = Line.move(anchor.line, delta);
   }
 }

@@ -1,4 +1,5 @@
 import { invariant, NOT_IMPLEMENTED_YET, precondition } from '../utils/assert.ts';
+import { Range } from './range.ts';
 
 export type Direction = 'n' | 's' | 'w' | 'e';
 
@@ -50,6 +51,13 @@ export type Line = Readonly<{
   to: Point;
 }>;
 
+export const OLine = {
+  fromRange: (pos: { x: number } | { y: number }, range: Range) => {
+    const axis = 'x' in pos ? 'y' : 'x';
+    return Line.from({ ...(pos as any), [axis]: range[0] }, { ...(pos as any), [axis]: range[1] });
+  }
+};
+
 export const Line = {
   extend: (line: Line, fromLength: number, toLength: number) => {
     const v = Vector.from(line.from, line.to);
@@ -69,12 +77,15 @@ export const Line = {
     return Point.midpoint(line.from, line.to);
   },
 
-  isHorizontal: (line: Line) => {
-    return round(line.from.y) === round(line.to.y);
+  move: (line: Line, delta: Vector) => {
+    return {
+      from: Point.add(line.from, delta),
+      to: Point.add(line.to, delta)
+    };
   },
 
-  isVertical: (line: Line) => {
-    return round(line.from.x) === round(line.to.x);
+  isHorizontal: (line: Line) => {
+    return round(line.from.y) === round(line.to.y);
   }
 };
 
