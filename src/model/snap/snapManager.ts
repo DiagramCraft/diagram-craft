@@ -117,7 +117,11 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      newBounds.get('pos')[oAxis] = closest.matching.pos[oAxis] - closest.self.offset[oAxis];
+      // TODO: This calculation can be simplified
+      newBounds.get('pos')[oAxis] = Point.add(
+        newBounds.get('pos'),
+        Point.subtract(closest.matching.pos, closest.self.pos)
+      )[oAxis];
     }
 
     // Readjust self anchors to the new position - post snapping

@@ -209,14 +209,12 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       y: axis === 'y' ? match.self.pos.y + match.self.offset.y : match.self.pos.y
     };
 
-    const dest = {
+    return {
       line: Line.from(from, to),
       type: match.matching.type,
       matchingAnchor: match.matching,
       selfAnchor: match.self
     };
-
-    return dest;
   }
 
   moveAnchor(anchor: AnchorOfType<'distance'>, delta: Point): void {
