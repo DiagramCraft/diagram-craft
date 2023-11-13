@@ -147,8 +147,8 @@ export const Point = {
   isEqual: (a: Point, b: Point) => {
     return a.x === b.x && a.y === b.y;
   },
-  distance(posA: Point, posB: Point) {
-    return Math.sqrt(Math.pow(posA.x - posB.x, 2) + Math.pow(posA.y - posB.y, 2));
+  squareDistance(posA: Point, posB: Point) {
+    return Math.pow(posA.x - posB.x, 2) + Math.pow(posA.y - posB.y, 2);
   }
 };
 
