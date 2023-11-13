@@ -25,7 +25,6 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   makeGuide(_box: Box, match: MatchingAnchorPair<'canvas'>, _axis: Axis): Guide {
     return {
       line: match.matching.line,
-      type: match.matching.type,
       matchingAnchor: match.matching,
       selfAnchor: match.self
     };

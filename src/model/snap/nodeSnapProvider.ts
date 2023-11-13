@@ -45,7 +45,6 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
       line: Line.isHorizontal(match.matching.line)
         ? OLine.fromRange({ y: match.matching.line.from.y }, [minX(mBox, box), maxX(mBox, box)])
         : OLine.fromRange({ x: match.matching.line.from.x }, [minY(mBox, box), maxY(mBox, box)]),
-      type: match.matching.type,
       matchingAnchor: match.matching,
       selfAnchor: match.self
     };

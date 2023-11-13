@@ -199,7 +199,6 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
     return {
       line: match.self.line,
-      type: match.matching.type,
       matchingAnchor: match.matching,
       selfAnchor: match.self
     };

@@ -17,8 +17,6 @@ type SelectionSource = {
 // TODO: Should probably include the anchors as well
 export type Guide = {
   line: Line;
-  // TODO: Typs is not really needed, as it can be inferred from the matchingAnchor
-  type: Anchor['type'];
   label?: string;
   selfAnchor: Anchor;
   matchingAnchor: Anchor;

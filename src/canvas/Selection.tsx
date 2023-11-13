@@ -4,9 +4,17 @@ import { SelectionState } from '../model/selectionState.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { resizeDragActions, rotateDragActions } from './Selection.logic.ts';
 import { Drag, DragActions } from './drag.ts';
+import { AnchorType } from '../model/diagram.ts';
 
 export type SelectionApi = {
   repaint: () => void;
+};
+
+const anchorTypeColor: Record<AnchorType, string> = {
+  node: 'red',
+  distance: 'pink',
+  canvas: 'green',
+  source: 'black'
 };
 
 export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
@@ -45,13 +53,13 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
   return (
     <>
       {[
-        ...props.selection.guides.filter(s => s.type !== 'distance'),
-        ...props.selection.guides.filter(s => s.type === 'distance')
+        ...props.selection.guides.filter(s => s.matchingAnchor.type !== 'distance'),
+        ...props.selection.guides.filter(s => s.matchingAnchor.type === 'distance')
       ].map(g => {
         const l = Line.extend(g.line, 30, 30);
-        const color = g.type === 'node' ? 'red' : g.type === 'distance' ? 'pink' : 'green';
+        const color = anchorTypeColor[g.matchingAnchor.type];
         return (
-          <Fragment key={`u_${g.type}_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}>
+          <Fragment key={`u_${g.matchingAnchor.type}_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}>
             <line
               x1={l.from.x}
               y1={l.from.y}
