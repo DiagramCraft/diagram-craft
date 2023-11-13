@@ -27,7 +27,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
   }
 
   private getRange(b: Box, axis: Axis) {
-    if (axis === 'x') {
+    if (axis === 'h') {
       return Range.create(b.pos.x, b.pos.x + b.size.w)!;
     } else {
       return Range.create(b.pos.y, b.pos.y + b.size.h)!;
@@ -54,8 +54,8 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       if (node.bounds.rotation !== 0) continue;
 
       if (
-        Range.overlaps(this.getRange(node.bounds, 'x'), this.getRange(box, 'x')) ||
-        Range.overlaps(this.getRange(node.bounds, 'y'), this.getRange(box, 'y'))
+        Range.overlaps(this.getRange(node.bounds, 'h'), this.getRange(box, 'h')) ||
+        Range.overlaps(this.getRange(node.bounds, 'v'), this.getRange(box, 'v'))
       ) {
         if (this.get(node.bounds, 's') < box.pos.y) {
           result.n.push({ node });
@@ -72,8 +72,8 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     }
 
     const anchorPositions = {
-      x: new Set<number>(),
-      y: new Set<number>()
+      h: new Set<number>(),
+      v: new Set<number>()
     };
 
     const baseDistanceAnchor = {
@@ -90,10 +90,10 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       axis: Axis;
       oAxis: Axis;
     }[] = [
-      { dir: 'n', oDir: 's', axis: 'x', oAxis: 'y', sign: -1 },
-      { dir: 's', oDir: 'n', axis: 'x', oAxis: 'y', sign: 1 },
-      { dir: 'w', oDir: 'e', axis: 'y', oAxis: 'x', sign: -1 },
-      { dir: 'e', oDir: 'w', axis: 'y', oAxis: 'x', sign: 1 }
+      { dir: 'n', oDir: 's', axis: 'h', oAxis: 'v', sign: -1 },
+      { dir: 's', oDir: 'n', axis: 'h', oAxis: 'v', sign: 1 },
+      { dir: 'w', oDir: 'e', axis: 'v', oAxis: 'h', sign: -1 },
+      { dir: 'e', oDir: 'w', axis: 'v', oAxis: 'h', sign: 1 }
     ];
 
     for (const { dir, axis, sign, oDir, oAxis } of directions) {
@@ -128,12 +128,12 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
           distances.push({
             distance: d,
             pointA: {
-              x: axis === 'x' ? mp : this.get(first, dir),
-              y: axis === 'y' ? mp : this.get(first, dir)
+              x: axis === 'h' ? mp : this.get(first, dir),
+              y: axis === 'v' ? mp : this.get(first, dir)
             },
             pointB: {
-              x: axis === 'x' ? mp : this.get(result[dir][j].node.bounds, oDir),
-              y: axis === 'y' ? mp : this.get(result[dir][j].node.bounds, oDir)
+              x: axis === 'h' ? mp : this.get(result[dir][j].node.bounds, oDir),
+              y: axis === 'v' ? mp : this.get(result[dir][j].node.bounds, oDir)
             },
             rangeA: rangeA,
             rangeB: rangeB
@@ -145,8 +145,8 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
           if (anchorPositions[oAxis].has(pos)) continue;
 
           const anchorPos = {
-            x: axis === 'x' ? this.getMidpoint(first, box, axis)! : pos,
-            y: axis === 'y' ? this.getMidpoint(first, box, axis)! : pos
+            x: axis === 'h' ? this.getMidpoint(first, box, axis)! : pos,
+            y: axis === 'v' ? this.getMidpoint(first, box, axis)! : pos
           };
           anchors.push({
             ...baseDistanceAnchor,
@@ -190,23 +190,23 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
     for (const dp of m.distancePairs) {
       dp.pointA = {
-        x: axis === 'x' ? mp : dp.pointA.x,
-        y: axis === 'y' ? mp : dp.pointA.y
+        x: axis === 'h' ? mp : dp.pointA.x,
+        y: axis === 'v' ? mp : dp.pointA.y
       };
       dp.pointB = {
-        x: axis === 'x' ? mp : dp.pointB.x,
-        y: axis === 'y' ? mp : dp.pointB.y
+        x: axis === 'h' ? mp : dp.pointB.x,
+        y: axis === 'v' ? mp : dp.pointB.y
       };
     }
 
     const from = {
-      x: axis === 'x' ? match.self.pos.x - match.self.offset.x : match.self.pos.x,
-      y: axis === 'y' ? match.self.pos.y - match.self.offset.y : match.self.pos.y
+      x: axis === 'h' ? match.self.pos.x - match.self.offset.x : match.self.pos.x,
+      y: axis === 'v' ? match.self.pos.y - match.self.offset.y : match.self.pos.y
     };
 
     const to = {
-      x: axis === 'x' ? match.self.pos.x + match.self.offset.x : match.self.pos.x,
-      y: axis === 'y' ? match.self.pos.y + match.self.offset.y : match.self.pos.y
+      x: axis === 'h' ? match.self.pos.x + match.self.offset.x : match.self.pos.x,
+      y: axis === 'v' ? match.self.pos.y + match.self.offset.y : match.self.pos.y
     };
 
     return {
@@ -222,8 +222,8 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     anchor.distancePairs.forEach(dp => {
       dp.pointA = Point.add(dp.pointA, delta);
       dp.pointB = Point.add(dp.pointB, delta);
-      dp.rangeA = Range.add(dp.rangeA, delta[anchor.axis]);
-      dp.rangeB = Range.add(dp.rangeB, delta[anchor.axis]);
+      dp.rangeA = Range.add(dp.rangeA, delta[Axis.toXY(anchor.axis)]);
+      dp.rangeB = Range.add(dp.rangeB, delta[Axis.toXY(anchor.axis)]);
     });
   }
 }

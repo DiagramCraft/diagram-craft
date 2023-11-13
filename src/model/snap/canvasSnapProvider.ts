@@ -9,25 +9,25 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
       {
         offset: { x: 0, y: 0 },
         pos: { x: 320, y: 0 },
-        axis: 'y',
+        axis: 'v',
         type: 'canvas'
       },
       {
         offset: { x: 0, y: 0 },
         pos: { x: 320, y: 480 },
-        axis: 'y',
+        axis: 'v',
         type: 'canvas'
       },
       {
         offset: { x: 0, y: 0 },
         pos: { x: 0, y: 240 },
-        axis: 'x',
+        axis: 'h',
         type: 'canvas'
       },
       {
         offset: { x: 0, y: 0 },
         pos: { x: 640, y: 240 },
-        axis: 'x',
+        axis: 'h',
         type: 'canvas'
       }
     ];
@@ -37,8 +37,8 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     return {
       line: Line.extend(
         Line.from(match.matching.pos, match.self.pos),
-        match.self.offset[axis],
-        match.self.offset[axis]
+        match.self.offset[Axis.toXY(axis)],
+        match.self.offset[Axis.toXY(axis)]
       ),
       type: match.matching.type,
       matchingAnchor: match.matching,

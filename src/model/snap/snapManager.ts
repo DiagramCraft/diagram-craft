@@ -77,7 +77,7 @@ export class SnapManager {
           continue;
 
         const oAxis = Axis.orthogonal(other.axis);
-        if (Math.abs(other.pos[oAxis] - self.pos[oAxis]) < this.threshold) {
+        if (Math.abs(other.pos[Axis.toXY(oAxis)] - self.pos[Axis.toXY(oAxis)]) < this.threshold) {
           dest.push({ self, matching: other });
         }
       }
@@ -111,17 +111,17 @@ export class SnapManager {
       const closest = smallest(
         matchingAnchors.filter(a => a.self.axis === axis),
         (a, b) =>
-          Math.abs(a.matching.pos[oAxis] - a.self.pos[oAxis]) -
-          Math.abs(b.matching.pos[oAxis] - b.self.pos[oAxis])
+          Math.abs(a.matching.pos[Axis.toXY(oAxis)] - a.self.pos[Axis.toXY(oAxis)]) -
+          Math.abs(b.matching.pos[Axis.toXY(oAxis)] - b.self.pos[Axis.toXY(oAxis)])
       );
 
       if (closest === undefined) continue;
 
       // TODO: This calculation can be simplified
-      newBounds.get('pos')[oAxis] = Point.add(
+      newBounds.get('pos')[Axis.toXY(oAxis)] = Point.add(
         newBounds.get('pos'),
         Point.subtract(closest.matching.pos, closest.self.pos)
-      )[oAxis];
+      )[Axis.toXY(oAxis)];
     }
 
     // Readjust self anchors to the new position - post snapping
@@ -150,13 +150,17 @@ export class SnapManager {
             }))
 
             // only keep items on the right side of the self anchor
-            .filter(e => e.distance[axis] * dir >= 0)
+            .filter(e => e.distance[Axis.toXY(axis)] * dir >= 0)
 
             // and remove anything that is not ortho-linear
-            .filter(e => Math.abs(e.distance[oAxis]) < 1),
+            .filter(e => Math.abs(e.distance[Axis.toXY(oAxis)]) < 1),
           (a, b) => {
-            const d = Math.abs(a.distance[axis]) - Math.abs(b.distance[axis]);
-            if (d !== 0) return Math.abs(a.distance[axis]) - Math.abs(b.distance[axis]);
+            const d =
+              Math.abs(a.distance[Axis.toXY(oAxis)]) - Math.abs(b.distance[Axis.toXY(oAxis)]);
+            if (d !== 0)
+              return (
+                Math.abs(a.distance[Axis.toXY(oAxis)]) - Math.abs(b.distance[Axis.toXY(oAxis)])
+              );
 
             if (a.anchor.matching.type === 'distance') return -1;
             if (b.anchor.matching.type === 'distance') return 1;
@@ -167,7 +171,7 @@ export class SnapManager {
         if (!match) continue;
 
         // Special case if distance is zero, we need to check that we don't create duplicates
-        if (match.distance[axis] === 0) {
+        if (match.distance[Axis.toXY(oAxis)] === 0) {
           const existing = guides.find(
             g => g.matchingAnchor === match.anchor.matching && g.selfAnchor === match.anchor.self
           );

@@ -179,14 +179,17 @@ export type AnchorType = Anchor['type'];
 
 export type AnchorOfType<T extends AnchorType> = Anchor & { type: T };
 
-export type Axis = 'x' | 'y';
+export type Axis = 'h' | 'v';
 
 export const Axis = {
   orthogonal: (axis: Axis): Axis => {
-    return axis === 'x' ? 'y' : 'x';
+    return axis === 'h' ? 'v' : 'h';
   },
   axises(): Axis[] {
-    return ['x', 'y'];
+    return ['h', 'v'];
+  },
+  toXY(axis: Axis): 'x' | 'y' {
+    return axis === 'h' ? 'x' : 'y';
   }
 };
 
@@ -204,13 +207,13 @@ export const NodeHelper = {
       {
         pos: Box.center(node),
         offset: { x: node.size.w / 2, y: node.size.h / 2 },
-        axis: 'x',
+        axis: 'h',
         type
       },
       {
         pos: Box.center(node),
         offset: { x: node.size.w / 2, y: node.size.h / 2 },
-        axis: 'y',
+        axis: 'v',
         type
       }
     ];
@@ -225,7 +228,7 @@ export const NodeHelper = {
           y: node.pos.y
         },
         offset: { x: node.size.w / 2, y: 0 },
-        axis: 'x',
+        axis: 'h',
         type: 'node',
         matchDirection: 'n'
       },
@@ -235,7 +238,7 @@ export const NodeHelper = {
           y: node.pos.y + node.size.h
         },
         offset: { x: node.size.w / 2, y: node.size.h },
-        axis: 'x',
+        axis: 'h',
         type: 'node',
         matchDirection: 's'
       },
@@ -245,7 +248,7 @@ export const NodeHelper = {
           y: node.pos.y + node.size.h / 2
         },
         offset: { x: 0, y: node.size.h / 2 },
-        axis: 'y',
+        axis: 'v',
         type: 'node',
         matchDirection: 'w'
       },
@@ -255,7 +258,7 @@ export const NodeHelper = {
           y: node.pos.y + node.size.h / 2
         },
         offset: { x: node.size.w, y: node.size.h / 2 },
-        axis: 'y',
+        axis: 'v',
         type: 'node',
         matchDirection: 'e'
       }

@@ -26,8 +26,8 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     return {
       line: Line.extend(
         Line.from(match.matching.pos, match.self.pos),
-        match.matching.offset[axis],
-        match.self.offset[axis]
+        match.matching.offset[Axis.toXY(axis)],
+        match.self.offset[Axis.toXY(axis)]
       ),
       type: match.matching.type,
       matchingAnchor: match.matching,

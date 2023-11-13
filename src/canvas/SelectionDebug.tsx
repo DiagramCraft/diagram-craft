@@ -24,7 +24,7 @@ export const SelectionDebug = forwardRef<SelectionApi, Props>((props, ref) => {
   return (
     <>
       {props.selection.anchors.map(g => {
-        if (g.axis === 'x') {
+        if (g.axis === 'h') {
           return (
             <line
               key={`x_${g.pos.y}`}
