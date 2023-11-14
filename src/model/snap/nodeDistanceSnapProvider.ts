@@ -12,6 +12,22 @@ import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 
+const directions: Record<
+  Direction,
+  {
+    dir: Direction;
+    oDir: Direction;
+    sign: 1 | -1;
+    axis: Axis;
+    oAxis: Axis;
+  }
+> = {
+  n: { dir: 'n', oDir: 's', axis: 'h', oAxis: 'v', sign: -1 },
+  s: { dir: 's', oDir: 'n', axis: 'h', oAxis: 'v', sign: 1 },
+  w: { dir: 'w', oDir: 'e', axis: 'v', oAxis: 'h', sign: -1 },
+  e: { dir: 'e', oDir: 'w', axis: 'v', oAxis: 'h', sign: 1 }
+};
+
 export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
   constructor(
     private readonly diagram: LoadedDiagram,
@@ -77,20 +93,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
     const anchors: Anchor[] = [];
 
-    const directions: {
-      dir: Direction;
-      oDir: Direction;
-      sign: 1 | -1;
-      axis: Axis;
-      oAxis: Axis;
-    }[] = [
-      { dir: 'n', oDir: 's', axis: 'h', oAxis: 'v', sign: -1 },
-      { dir: 's', oDir: 'n', axis: 'h', oAxis: 'v', sign: 1 },
-      { dir: 'w', oDir: 'e', axis: 'v', oAxis: 'h', sign: -1 },
-      { dir: 'e', oDir: 'w', axis: 'v', oAxis: 'h', sign: 1 }
-    ];
-
-    for (const { dir, axis, sign, oDir, oAxis } of directions) {
+    for (const { dir, axis, sign, oDir, oAxis } of Object.values(directions)) {
       // Sort all by being closest
       // ... for north and south we want to sort with largest first
       // ... for east and south we want to sort with smallest first
@@ -175,11 +178,12 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
     const mp = Range.midpoint(instersection!);
 
+    // Add new distance pair from match to first node
     m.distancePairs.push({
       distance: m.distancePairs[0].distance,
-      pointA: Point.subtract(tp, {
-        x: axis === 'v' ? m.distancePairs[0].distance : 0,
-        y: axis === 'h' ? m.distancePairs[0].distance : 0
+      pointA: Point.add(tp, {
+        x: axis === 'v' ? directions[m.matchDirection!].sign * m.distancePairs[0].distance : 0,
+        y: axis === 'h' ? directions[m.matchDirection!].sign * m.distancePairs[0].distance : 0
       }),
       pointB: tp,
       rangeA: instersection!,
