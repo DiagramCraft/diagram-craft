@@ -281,6 +281,14 @@ export const Box = {
     return corners.map(c => Point.rotateAround(c, box.rotation, Box.center(box)));
   },
 
+  line: (box: Box, dir: Direction) => {
+    const corners = Box.corners(box);
+    if (dir === 'n') return Line.from(corners[0], corners[1]);
+    if (dir === 's') return Line.from(corners[2], corners[3]);
+    if (dir === 'w') return Line.from(corners[3], corners[0]);
+    return Line.from(corners[1], corners[2]);
+  },
+
   asPolygon: (box: Box): Polygon => {
     return { points: Box.corners(box) };
   },

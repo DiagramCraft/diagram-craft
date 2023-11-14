@@ -5,6 +5,7 @@ import { useRedraw } from './useRedraw.tsx';
 import { resizeDragActions, rotateDragActions } from './Selection.logic.ts';
 import { Drag, DragActions } from './drag.ts';
 import { AnchorType } from '../model/diagram.ts';
+import { DistanceMarker } from './DistanceMarker.tsx';
 
 export type SelectionApi = {
   repaint: () => void;
@@ -13,6 +14,7 @@ export type SelectionApi = {
 const anchorTypeColor: Record<AnchorType, string> = {
   node: 'red',
   distance: 'pink',
+  size: 'pink',
   canvas: 'green',
   source: 'black',
   grid: 'purple'
@@ -80,53 +82,37 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               stroke={color}
             />
 
-            {g.matchingAnchor.type === 'distance' &&
+            {g.matchingAnchor.type === 'size' &&
               g.matchingAnchor.distancePairs.map(dp => {
-                const l = Line.from(dp.pointA, dp.pointB);
                 const lbl = round(dp.distance).toString();
                 return (
-                  <Fragment key={`a_${dp.pointA.x}_${dp.pointA.y}`}>
-                    <marker
-                      id={`arrow_${dp.pointA.x}_${dp.pointA.y}`}
-                      viewBox="0 0 10 10"
-                      refX="10"
-                      refY="5"
-                      markerWidth="6"
-                      markerHeight="6"
-                      orient="auto-start-reverse"
-                    >
-                      <path d="M 0 0 L 10 5 L 0 10 z" stroke="pink" fill="pink" />
-                    </marker>
+                  <DistanceMarker
+                    key={`a_${dp.pointA.x}_${dp.pointA.y}`}
+                    id={`nd_${dp.pointA.x}_${dp.pointA.y}`}
+                    x1={dp.pointA.x}
+                    y1={dp.pointA.y}
+                    x2={dp.pointB.x}
+                    y2={dp.pointB.y}
+                    color={'pink'}
+                    label={lbl}
+                  />
+                );
+              })}
 
-                    <line
-                      x1={dp.pointA.x}
-                      y1={dp.pointA.y}
-                      x2={dp.pointB.x}
-                      y2={dp.pointB.y}
-                      strokeWidth={1}
-                      stroke={'pink'}
-                      fill={'pink'}
-                      markerEnd={`url(#arrow_${dp.pointA.x}_${dp.pointA.y})`}
-                      markerStart={`url(#arrow_${dp.pointA.x}_${dp.pointA.y})`}
-                    />
-                    <rect
-                      x={Line.midpoint(l).x - lbl.length * 5}
-                      y={Line.midpoint(l).y - 10}
-                      width={lbl.length * 10}
-                      height={17}
-                      fill="white"
-                    />
-                    <text
-                      x={Line.midpoint(l).x}
-                      y={Line.midpoint(l).y}
-                      fill="pink"
-                      style={{ fontSize: '10px' }}
-                      dominantBaseline="middle"
-                      textAnchor="middle"
-                    >
-                      {lbl}
-                    </text>
-                  </Fragment>
+            {g.matchingAnchor.type === 'distance' &&
+              g.matchingAnchor.distancePairs.map(dp => {
+                const lbl = round(dp.distance).toString();
+                return (
+                  <DistanceMarker
+                    key={`a_${dp.pointA.x}_${dp.pointA.y}`}
+                    id={`nd_${dp.pointA.x}_${dp.pointA.y}`}
+                    x1={dp.pointA.x}
+                    y1={dp.pointA.y}
+                    x2={dp.pointB.x}
+                    y2={dp.pointB.y}
+                    color={'pink'}
+                    label={lbl}
+                  />
                 );
               })}
 
@@ -301,7 +287,6 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           }}
         />
       </g>
-
       {/*<SelectionDebug selection={props.selection} />*/}
     </>
   );

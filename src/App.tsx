@@ -17,7 +17,7 @@ const diagrams = [
 ];
 
 const App = () => {
-  const [selectedDiagram, setSelectedDiagram] = useState(0);
+  const [selectedDiagram, setSelectedDiagram] = useState(1);
   const $d = diagrams[selectedDiagram].diagram;
   //useEffect(() => {
   //  perftest(new SnapManagerPerftest());
@@ -41,7 +41,7 @@ const App = () => {
 
   return (
     <div>
-      <Canvas diagram={$d} />
+      <Canvas key={selectedDiagram} diagram={$d} />
 
       <select
         onChange={e => {

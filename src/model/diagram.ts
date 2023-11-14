@@ -166,11 +166,14 @@ type BaseAnchor = {
 };
 
 export type DistancePair = {
+  // TODO: This is a bit redundant as the distance will be the same for all pairs
   distance: number;
 
   pointA: Point;
   pointB: Point;
+};
 
+export type DistancePairWithRange = DistancePair & {
   rangeA: Range;
   rangeB: Range;
 };
@@ -181,12 +184,18 @@ export type Anchor = BaseAnchor &
         type: 'source' | 'canvas' | 'grid';
       }
     | {
+        type: 'size';
+        size: number;
+        node: ResolvedNodeDef;
+        distancePairs: DistancePair[];
+      }
+    | {
         type: 'node';
         node: ResolvedNodeDef;
       }
     | {
         type: 'distance';
-        distancePairs: DistancePair[];
+        distancePairs: DistancePairWithRange[];
       }
   );
 

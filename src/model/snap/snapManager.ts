@@ -8,6 +8,7 @@ import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider.ts';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { Range } from '../../geometry/range.ts';
 import { GridSnapProvider } from './gridSnapProvider.ts';
+import { NodeSizeSnapProvider } from './nodeSizeSnapProvider.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -54,6 +55,7 @@ class SnapProviders {
       source: new SourceSnapProvider(),
       node: new NodeSnapProvider(diagram, excludeNodeIds),
       distance: new NodeDistanceSnapProvider(diagram, excludeNodeIds),
+      size: new NodeSizeSnapProvider(diagram, excludeNodeIds),
       canvas: new CanvasSnapProvider(diagram)
     };
   }
@@ -114,7 +116,14 @@ export class SnapManager {
 
   // TODO: We should be able to merge snapResize and snapMove
   snapResize(b: Box, directions: Direction[]): SnapResult {
-    const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance'];
+    const enabledSnapProviders: AnchorType[] = [
+      'size',
+      'grid',
+      'node',
+      'canvas',
+      'distance',
+      'size'
+    ];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfAnchors = NodeHelper.anchors(b, 'source').filter(s =>

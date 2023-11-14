@@ -1,4 +1,10 @@
-import { AnchorOfType, Axis, DistancePair, LoadedDiagram, ResolvedNodeDef } from '../diagram.ts';
+import {
+  AnchorOfType,
+  Axis,
+  DistancePairWithRange,
+  LoadedDiagram,
+  ResolvedNodeDef
+} from '../diagram.ts';
 import { Box, Direction, Line, OLine, Point } from '../../geometry/geometry.ts';
 import { Range } from '../../geometry/range.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
@@ -102,7 +108,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       for (let i = 0; i < result[dir].length - 1; i++) {
         const first = result[dir][i].bounds;
 
-        const distances: DistancePair[] = [];
+        const distances: DistancePairWithRange[] = [];
         for (let j = i + 1; j < result[dir].length; j++) {
           const d = sign * (this.get(result[dir][j].bounds, oDir) - this.get(first, dir));
 
