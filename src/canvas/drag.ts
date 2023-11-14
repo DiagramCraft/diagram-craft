@@ -24,6 +24,7 @@ export type Drag = {
     | 'marquee';
   offset: Point;
   actions: DragActions;
+  state?: Record<string, string>;
 };
 
 export type DragActions = {

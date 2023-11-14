@@ -79,7 +79,8 @@ export class SnapManager {
   //       maybe we can pass in the current selection instead of just the box (bounds)
   constructor(
     private readonly diagram: LoadedDiagram,
-    private readonly excludeNodeIds: string[] = []
+    private readonly excludeNodeIds: string[] = [],
+    private readonly snapDirections: Direction[] = ['n', 's', 'w', 'e']
   ) {}
 
   private rangeOverlap(a1: Anchor, a2: Anchor) {
@@ -102,6 +103,7 @@ export class SnapManager {
       for (const self of selfAnchors) {
         if (other.axis !== self.axis) continue;
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
+        if (!this.snapDirections.includes(self.matchDirection!)) continue;
         if (!this.rangeOverlap(self, other)) continue;
 
         const distance = this.orhogonalDistance(self, other);

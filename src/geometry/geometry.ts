@@ -115,6 +115,14 @@ export const Angle = {
 
   toRad: (degrees: number) => {
     return degrees * (Math.PI / 180);
+  },
+
+  isVertical: (angle: number) => {
+    return round(angle) === round(Math.PI / 2) || round(angle) === round((3 * Math.PI) / 2);
+  },
+
+  isHorizontal: (angle: number) => {
+    return round(angle) === 0 || round(angle) === round(Math.PI);
   }
 };
 
@@ -126,6 +134,7 @@ export const Point = {
 
   midpoint: (c1: Point, c2: Point) => ({ x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 }),
 
+  // TODO: Better name for this
   fromEvent: (e: { offsetX: number; offsetY: number }) => {
     return { x: e.offsetX, y: e.offsetY };
   },
@@ -402,7 +411,13 @@ export const Vector = {
     return v1.x * v2.y - v1.y * v2.x;
   },
   angle: (v: Vector) => {
-    return Math.atan2(v.y, v.x) + Math.PI / 2;
+    return Math.atan2(v.y, v.x);
+  },
+  length: (v: Vector) => {
+    return Math.sqrt(v.x * v.x + v.y * v.y);
+  },
+  fromPolar: (angle: number, length: number) => {
+    return { x: length * Math.cos(angle), y: length * Math.sin(angle) };
   },
   negate: (c: Vector) => ({ x: -c.x, y: -c.y }),
 

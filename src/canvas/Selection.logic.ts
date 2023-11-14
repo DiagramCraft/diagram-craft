@@ -1,4 +1,5 @@
 import {
+  Angle,
   Box,
   Direction,
   LocalCoordinateSystem,
@@ -22,7 +23,7 @@ export const rotateDragActions: DragActions = {
     const center = Box.center(selection.source.boundingBox);
     selection.bounds = {
       ...selection.bounds,
-      rotation: Vector.angle(Vector.from(center, coord))
+      rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
     };
 
     diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
@@ -164,17 +165,44 @@ export const moveDragActions: DragActions = {
 
     const newBounds = Box.asMutableSnapshot(selection.bounds);
 
-    newBounds.set('pos', {
-      x: selection.bounds.pos.x + d.x,
-      y: selection.bounds.pos.y + d.y
-    });
+    newBounds.set('pos', Point.add(selection.bounds.pos, d));
+
+    let snapDirections: Direction[] = ['n', 'w', 'e', 's'];
+
+    // TODO: Perhaps support 45 degree angles
+    if (modifiers.shiftKey) {
+      const source = Point.add(selection.source.boundingBox.pos, drag.offset);
+
+      const v = Vector.from(source, coord);
+      const length = Vector.length(v);
+      const angle = Vector.angle(v);
+
+      let snapAngle = Math.round(angle / (Math.PI / 2)) * (Math.PI / 2);
+
+      drag.state ??= {};
+      if (drag.state.snapAngle === 'h') {
+        snapAngle = Math.round(angle / Math.PI) * Math.PI;
+      } else if (drag.state.snapAngle === 'v') {
+        snapAngle = Math.round((angle + Math.PI / 2) / Math.PI) * Math.PI - Math.PI / 2;
+        snapDirections = ['n', 's'];
+      } else if (length > 20) {
+        drag.state.snapAngle = Angle.isHorizontal(snapAngle) ? 'h' : 'v';
+        snapDirections = ['e', 'w'];
+      }
+
+      newBounds.set(
+        'pos',
+        Point.add(selection.source.boundingBox.pos, Vector.fromPolar(snapAngle, length))
+      );
+    }
 
     if (modifiers.altKey) {
       selection.guides = [];
     } else {
       const snapManager = new SnapManager(
         diagram,
-        selection.elements.map(e => e.id)
+        selection.elements.map(e => e.id),
+        snapDirections
       );
 
       const result = snapManager.snapMove(newBounds.getSnapshot());
