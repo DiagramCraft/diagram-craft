@@ -1,5 +1,6 @@
 import {
   Box,
+  Direction,
   LocalCoordinateSystem,
   Point,
   TransformFactory,
@@ -55,46 +56,73 @@ export const resizeDragActions: DragActions = {
 
     const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(drag.offset));
 
+    const snapDirection: Direction[] = [];
     switch (drag.type) {
       case 'resize-e':
         localTarget.get('size').w = localOriginal.size.w + delta.x;
+        snapDirection.push('e');
         break;
       case 'resize-w':
         localTarget.get('size').w = localOriginal.size.w - delta.x;
         localTarget.get('pos').x = localOriginal.pos.x + delta.x;
+        snapDirection.push('w');
         break;
       case 'resize-n':
         localTarget.get('size').h = localOriginal.size.h - delta.y;
         localTarget.get('pos').y = localOriginal.pos.y + delta.y;
+        snapDirection.push('n');
         break;
       case 'resize-s':
         localTarget.get('size').h = localOriginal.size.h + delta.y;
+        snapDirection.push('s');
         break;
       case 'resize-nw':
         localTarget.get('size').h = localOriginal.size.h - delta.y;
         localTarget.get('pos').y = localOriginal.pos.y + delta.y;
         localTarget.get('size').w = localOriginal.size.w - delta.x;
         localTarget.get('pos').x = localOriginal.pos.x + delta.x;
+        snapDirection.push('n');
+        snapDirection.push('w');
         break;
       case 'resize-ne':
         localTarget.get('size').h = localOriginal.size.h - delta.y;
         localTarget.get('pos').y = localOriginal.pos.y + delta.y;
         localTarget.get('size').w = localOriginal.size.w + delta.x;
+        snapDirection.push('n');
+        snapDirection.push('e');
         break;
       case 'resize-se':
         localTarget.get('size').h = localOriginal.size.h + delta.y;
         localTarget.get('size').w = localOriginal.size.w + delta.x;
+        snapDirection.push('s');
+        snapDirection.push('e');
         break;
       case 'resize-sw':
         localTarget.get('size').h = localOriginal.size.h + delta.y;
         localTarget.get('size').w = localOriginal.size.w - delta.x;
         localTarget.get('pos').x = localOriginal.pos.x + delta.x;
+        snapDirection.push('s');
+        snapDirection.push('w');
         break;
       default:
         VERIFY_NOT_REACHED();
     }
 
-    selection.bounds = lcs.toGlobal(localTarget.getSnapshot());
+    const newBounds = Box.asMutableSnapshot(lcs.toGlobal(localTarget.getSnapshot()));
+
+    const snapManager = new SnapManager(
+      diagram,
+      selection.elements.map(e => e.id)
+    );
+
+    const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
+    selection.guides = result.guides;
+    selection.anchors = result.anchors;
+
+    newBounds.set('pos', result.adjusted.pos);
+    newBounds.set('size', result.adjusted.size);
+
+    selection.bounds = newBounds.getSnapshot();
 
     diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
   },
@@ -117,7 +145,10 @@ export const moveDragActions: DragActions = {
   onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
     assert.false(selection.isEmpty());
 
-    const snapManager = new SnapManager(diagram);
+    const snapManager = new SnapManager(
+      diagram,
+      selection.elements.map(e => e.id)
+    );
 
     const d = Point.subtract(coord, Point.add(selection.bounds.pos, drag.offset));
 
@@ -127,10 +158,7 @@ export const moveDragActions: DragActions = {
       y: selection.bounds.pos.y + d.y
     });
 
-    const result = snapManager.snap(
-      newBounds.getSnapshot(),
-      selection.elements.map(e => e.id)
-    );
+    const result = snapManager.snapMove(newBounds.getSnapshot());
     selection.guides = result.guides;
     selection.anchors = result.anchors;
 

@@ -41,7 +41,7 @@ export class SnapManagerPerftest implements PerformanceTest {
         label: 'snapManager',
         run: () => {
           for (let i = 0; i < 60; i++) {
-            this.snapManager!.snap(this.randomBox());
+            this.snapManager!.snapMove(this.randomBox());
           }
         }
       }

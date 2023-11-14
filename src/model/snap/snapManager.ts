@@ -1,4 +1,4 @@
-import { Box, Line, Point } from '../../geometry/geometry.ts';
+import { Box, Direction, Line, Point } from '../../geometry/geometry.ts';
 import { Anchor, AnchorOfType, AnchorType, Axis, LoadedDiagram, NodeHelper } from '../diagram.ts';
 import { Guide } from '../selectionState.ts';
 import { largest, smallest } from '../../utils/array.ts';
@@ -7,6 +7,8 @@ import { NodeSnapProvider } from './nodeSnapProvider.ts';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider.ts';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { Range } from '../../geometry/range.ts';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 type SnapResult = {
   guides: Guide[];
@@ -57,6 +59,10 @@ class SnapProviders {
   get<T extends AnchorType>(type: T): SnapProvider<T> {
     return this.providers[type];
   }
+
+  getAnchors(types: AnchorType[], b: Box) {
+    return types.flatMap(t => this.get(t).getAnchors(b));
+  }
 }
 
 const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: 'h' | 'v') =>
@@ -65,7 +71,12 @@ const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: 'h' | 'v') =>
 export class SnapManager {
   private threshold = 10;
 
-  constructor(private readonly diagram: LoadedDiagram) {}
+  // TODO: Ideally we should find a better way to exclude the currently selected node
+  //       maybe we can pass in the current selection instead of just the box (bounds)
+  constructor(
+    private readonly diagram: LoadedDiagram,
+    private readonly excludeNodeIds: string[] = []
+  ) {}
 
   private rangeOverlap(a1: Anchor, a2: Anchor) {
     const axis = Axis.toXY(a1.axis);
@@ -99,26 +110,22 @@ export class SnapManager {
     return dest;
   }
 
-  // TODO: Ideally we should find a better way to exclude the currently selected node
-  //       maybe we can pass in the current selection instead of just the box (bounds)
-  snap(b: Box, excludeNodeIds: string[] = []): SnapResult {
-    const selfAnchors = NodeHelper.anchors(b, 'source');
-
-    const snapProviders = new SnapProviders(this.diagram, excludeNodeIds);
-
+  // TODO: We should be able to merge snapResize and snapMove
+  snapResize(b: Box, directions: Direction[]): SnapResult {
     const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'distance'];
-    const anchorsToMatchAgainst = enabledSnapProviders.flatMap(e =>
-      snapProviders.get(e).getAnchors(b)
+    const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
+
+    const selfAnchors = NodeHelper.anchors(b, 'source').filter(s =>
+      directions.includes(s.matchDirection!)
     );
+
+    const anchorsToMatchAgainst = snapProviders.getAnchors(enabledSnapProviders, b);
 
     const matchingAnchors = this.matchAnchors(selfAnchors, anchorsToMatchAgainst);
 
     const newBounds = Box.asMutableSnapshot(b);
 
-    // Snap to the closest matching anchor in each direction
     for (const axis of Axis.axises()) {
-      const oAxis = Axis.orthogonal(axis);
-
       // Find anchor with the closest orthogonal distance to the matching anchor line
       // i.e. optimize for snapping the least distance
       const closest = smallest(
@@ -128,7 +135,61 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      newBounds.get('pos')[Axis.toXY(oAxis)] -= this.orhogonalDistance(
+      const distance = this.orhogonalDistance(closest.self, closest.matching);
+
+      if (closest.self.matchDirection === 'n' || closest.self.matchDirection === 'w') {
+        newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= distance;
+        newBounds.get('size')[axis === 'h' ? 'h' : 'w'] += distance;
+      } else {
+        newBounds.get('size')[axis === 'h' ? 'h' : 'w'] -= distance;
+      }
+    }
+
+    // Readjust self anchors to the new position - post snapping
+    const newAnchors = NodeHelper.anchors(newBounds.getSnapshot(), 'source');
+    selfAnchors.forEach(a => {
+      a.line = newAnchors.find(b => b.matchDirection === a.matchDirection)!.line;
+    });
+
+    const newB = newBounds.getSnapshot();
+
+    return {
+      guides: this.generateGuides(
+        newB,
+        selfAnchors,
+        matchingAnchors,
+        snapProviders,
+        enabledSnapProviders
+      ),
+      anchors: [...anchorsToMatchAgainst, ...selfAnchors],
+      adjusted: newB
+    };
+  }
+
+  snapMove(b: Box): SnapResult {
+    const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'distance'];
+    const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
+
+    const selfAnchors = NodeHelper.anchors(b, 'source');
+
+    const anchorsToMatchAgainst = snapProviders.getAnchors(enabledSnapProviders, b);
+
+    const matchingAnchors = this.matchAnchors(selfAnchors, anchorsToMatchAgainst);
+
+    const newBounds = Box.asMutableSnapshot(b);
+
+    // Snap to the closest matching anchor in each direction
+    for (const axis of Axis.axises()) {
+      // Find anchor with the closest orthogonal distance to the matching anchor line
+      // i.e. optimize for snapping the least distance
+      const closest = smallest(
+        matchingAnchors.filter(a => a.self.axis === axis),
+        (a, b) => Math.abs(a.distance) - Math.abs(b.distance)
+      );
+
+      if (closest === undefined) continue;
+
+      newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= this.orhogonalDistance(
         closest.self,
         closest.matching
       );
@@ -141,6 +202,26 @@ export class SnapManager {
 
     const newB = newBounds.getSnapshot();
 
+    return {
+      guides: this.generateGuides(
+        newB,
+        selfAnchors,
+        matchingAnchors,
+        snapProviders,
+        enabledSnapProviders
+      ),
+      anchors: [...anchorsToMatchAgainst, ...selfAnchors],
+      adjusted: newB
+    };
+  }
+
+  private generateGuides(
+    b: Box,
+    selfAnchors: Anchor[],
+    matchingAnchors: MatchingAnchorPair<any>[],
+    snapProviders: SnapProviders,
+    enabledSnapProviders: AnchorType[]
+  ) {
     // Check for guides in all four directions for each matching anchor
     // ... also draw the guide to the matching anchor that is furthest away
     const guides: Guide[] = [];
@@ -170,16 +251,12 @@ export class SnapManager {
 
       if (!match) continue;
 
-      const guide = snapProviders.get(match.matching.type).makeGuide(newB, match, axis);
+      const guide = snapProviders.get(match.matching.type).makeGuide(b, match, axis);
       if (guide) guides.push(guide);
     }
 
     // TODO: Remove guides that are too close to each other or redundant (e.g. center if both left and right)
 
-    return {
-      guides,
-      anchors: [...anchorsToMatchAgainst, ...selfAnchors],
-      adjusted: newB
-    };
+    return guides;
   }
 }

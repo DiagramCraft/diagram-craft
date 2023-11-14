@@ -39,6 +39,8 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     for (const node of this.diagram.queryNodes()) {
       if (this.excludedNodeIds.includes(node.id)) continue;
       for (const other of NodeHelper.anchors(node.bounds)) {
+        // TODO: We should be able to filter out even more here
+        //       by considering the direction of the anchor line
         if (
           !Range.overlaps(this.getRange(node.bounds, 'h'), boxHRange) &&
           !Range.overlaps(this.getRange(node.bounds, 'v'), boxVRange)
