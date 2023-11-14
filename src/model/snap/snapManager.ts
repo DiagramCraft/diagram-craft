@@ -156,32 +156,22 @@ export class SnapManager {
         e.distance = this.orhogonalDistance(self, e.matching);
       });
 
-      for (const dir of [-1, 1]) {
-        const match = largest(
-          otherAnchorsForAnchor
-            // only keep items on the right side of the self anchor
-            .filter(e => e.distance * dir >= 0)
+      const match = largest(
+        otherAnchorsForAnchor
+          // only keep items on the right side of the self anchor
+          .filter(e => e.distance >= 0)
 
-            // and remove anything that is close post anspping
-            .filter(e => Math.abs(orhogonalLineDistance(e.matching.line, e.self.line, oAxis)) < 1),
-          (a, b) =>
-            enabledSnapProviders.indexOf(a.matching.type) -
-            enabledSnapProviders.indexOf(b.matching.type)
-        );
+          // and remove anything that is close post anspping
+          .filter(e => Math.abs(orhogonalLineDistance(e.matching.line, e.self.line, oAxis)) < 1),
+        (a, b) =>
+          enabledSnapProviders.indexOf(a.matching.type) -
+          enabledSnapProviders.indexOf(b.matching.type)
+      );
 
-        if (!match) continue;
+      if (!match) continue;
 
-        // Special case if distance is zero, we need to check that we don't create duplicates
-        if (match.distance === 0) {
-          const existing = guides.find(
-            g => g.matchingAnchor === match.matching && g.selfAnchor === match.self
-          );
-          if (existing) continue;
-        }
-
-        const guide = snapProviders.get(match.matching.type).makeGuide(newB, match, axis);
-        if (guide) guides.push(guide);
-      }
+      const guide = snapProviders.get(match.matching.type).makeGuide(newB, match, axis);
+      if (guide) guides.push(guide);
     }
 
     // TODO: Remove guides that are too close to each other or redundant (e.g. center if both left and right)
