@@ -1,11 +1,4 @@
-import {
-  Anchor,
-  AnchorOfType,
-  Axis,
-  DistancePair,
-  LoadedDiagram,
-  ResolvedNodeDef
-} from '../diagram.ts';
+import { AnchorOfType, Axis, DistancePair, LoadedDiagram, ResolvedNodeDef } from '../diagram.ts';
 import { Box, Direction, Line, OLine, Point } from '../../geometry/geometry.ts';
 import { Range } from '../../geometry/range.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
@@ -50,7 +43,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     }
   }
 
-  getAnchors(box: Box): Anchor[] {
+  getAnchors(box: Box): AnchorOfType<'distance'>[] {
     const boxHRange = this.getRange(box, 'h');
     const boxVRange = this.getRange(box, 'v');
 
@@ -94,7 +87,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       type: 'distance' as const
     };
 
-    const anchors: Anchor[] = [];
+    const anchors: AnchorOfType<'distance'>[] = [];
 
     for (const { dir, axis, sign, oDir, oAxis } of Object.values(directions)) {
       // Sort all by being closest

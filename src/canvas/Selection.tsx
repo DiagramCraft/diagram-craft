@@ -14,7 +14,8 @@ const anchorTypeColor: Record<AnchorType, string> = {
   node: 'red',
   distance: 'pink',
   canvas: 'green',
-  source: 'black'
+  source: 'black',
+  grid: 'purple'
 };
 
 export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {

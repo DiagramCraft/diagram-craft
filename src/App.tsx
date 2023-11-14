@@ -49,7 +49,9 @@ const App = () => {
         }}
       >
         {diagrams.map((d, idx) => (
-          <option value={idx}>{d.name}</option>
+          <option key={idx} value={idx}>
+            {d.name}
+          </option>
         ))}
       </select>
     </div>

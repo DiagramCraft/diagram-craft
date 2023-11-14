@@ -7,6 +7,7 @@ import { NodeSnapProvider } from './nodeSnapProvider.ts';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider.ts';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { Range } from '../../geometry/range.ts';
+import { GridSnapProvider } from './gridSnapProvider.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -23,13 +24,13 @@ export type MatchingAnchorPair<T extends AnchorType> = {
 };
 
 export interface SnapProvider<T extends AnchorType> {
-  getAnchors(box: Box): Anchor[];
+  getAnchors(box: Box): AnchorOfType<T>[];
   makeGuide(box: Box, match: MatchingAnchorPair<T>, axis: Axis): Guide | undefined;
   moveAnchor(anchor: AnchorOfType<T>, delta: Point): void;
 }
 
 class SourceSnapProvider implements SnapProvider<'source'> {
-  getAnchors(_box: Box): Anchor[] {
+  getAnchors(_box: Box): AnchorOfType<'source'>[] {
     throw new VerifyNotReached();
   }
 
@@ -49,6 +50,7 @@ class SnapProviders {
 
   constructor(diagram: LoadedDiagram, excludeNodeIds: string[]) {
     this.providers = {
+      grid: new GridSnapProvider(),
       source: new SourceSnapProvider(),
       node: new NodeSnapProvider(diagram, excludeNodeIds),
       distance: new NodeDistanceSnapProvider(diagram, excludeNodeIds),
@@ -112,7 +114,7 @@ export class SnapManager {
 
   // TODO: We should be able to merge snapResize and snapMove
   snapResize(b: Box, directions: Direction[]): SnapResult {
-    const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'distance'];
+    const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'grid', 'distance'];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfAnchors = NodeHelper.anchors(b, 'source').filter(s =>
@@ -167,7 +169,7 @@ export class SnapManager {
   }
 
   snapMove(b: Box): SnapResult {
-    const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'distance'];
+    const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'grid', 'distance'];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfAnchors = NodeHelper.anchors(b, 'source');

@@ -1,4 +1,4 @@
-import { Anchor, AnchorOfType, Axis, LoadedDiagram, NodeHelper } from '../diagram.ts';
+import { AnchorOfType, Axis, LoadedDiagram, NodeHelper } from '../diagram.ts';
 import { Box, Line, OLine, Point } from '../../geometry/geometry.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
@@ -11,7 +11,7 @@ const maxX = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.pos.x, b.pos.x 
 const minY = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.y, b.pos.y + b.size.h), N);
 const maxY = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.pos.y, b.pos.y + b.size.h), 0);
 
-type AnchorWithDistance = [Anchor, number];
+type AnchorWithDistance = [AnchorOfType<'node'>, number];
 
 const compareFn = (a: AnchorWithDistance, b: AnchorWithDistance) => b[1] - a[1];
 
@@ -29,7 +29,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     }
   }
 
-  getAnchors(box: Box): Anchor[] {
+  getAnchors(box: Box): AnchorOfType<'node'>[] {
     const dest: { h: AnchorWithDistance[]; v: AnchorWithDistance[] } = { h: [], v: [] };
     const center = Box.center(box);
 
@@ -56,13 +56,19 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
             { x: 0, y: other.line.to.y },
             { x: this.diagram.dimensions.w, y: other.line.to.y }
           );
-          dest.h.push([other, Point.squareDistance(center, Box.center(node.bounds))]);
+          dest.h.push([
+            other as AnchorOfType<'node'>,
+            Point.squareDistance(center, Box.center(node.bounds))
+          ]);
         } else {
           other.line = Line.from(
             { x: other.line.to.x, y: 0 },
             { x: other.line.to.x, y: this.diagram.dimensions.h }
           );
-          dest.v.push([other, Point.squareDistance(center, Box.center(node.bounds))]);
+          dest.v.push([
+            other as AnchorOfType<'node'>,
+            Point.squareDistance(center, Box.center(node.bounds))
+          ]);
         }
       }
     }

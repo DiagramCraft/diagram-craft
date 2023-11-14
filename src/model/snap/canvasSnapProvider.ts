@@ -1,12 +1,12 @@
 import { Box, Line, Point } from '../../geometry/geometry.ts';
-import { Anchor, AnchorOfType, Axis, LoadedDiagram } from '../diagram.ts';
+import { AnchorOfType, Axis, LoadedDiagram } from '../diagram.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: LoadedDiagram) {}
 
-  getAnchors(_box: Box): Anchor[] {
+  getAnchors(_box: Box): AnchorOfType<'canvas'>[] {
     const { w, h } = this.diagram.dimensions;
     return [
       {

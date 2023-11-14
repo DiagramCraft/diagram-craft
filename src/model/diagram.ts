@@ -170,7 +170,7 @@ export type DistancePair = {
 export type Anchor = BaseAnchor &
   (
     | {
-        type: 'source' | 'canvas';
+        type: 'source' | 'canvas' | 'grid';
       }
     | {
         type: 'node';
