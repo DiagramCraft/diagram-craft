@@ -50,7 +50,7 @@ class SnapProviders {
 
   constructor(diagram: LoadedDiagram, excludeNodeIds: string[]) {
     this.providers = {
-      grid: new GridSnapProvider(),
+      grid: new GridSnapProvider(diagram),
       source: new SourceSnapProvider(),
       node: new NodeSnapProvider(diagram, excludeNodeIds),
       distance: new NodeDistanceSnapProvider(diagram, excludeNodeIds),

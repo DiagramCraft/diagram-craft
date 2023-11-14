@@ -1,32 +1,23 @@
 import { Box, Line, Point } from '../../geometry/geometry.ts';
-import { AnchorOfType, Axis } from '../diagram.ts';
+import { AnchorOfType, Axis, LoadedDiagram } from '../diagram.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 
 export class GridSnapProvider implements SnapProvider<'grid'> {
-  private grid: { x: number; y: number };
-
-  constructor() {
-    this.grid = {
-      x: 20,
-      y: 40
-    };
-  }
+  constructor(private readonly diagram: LoadedDiagram) {}
 
   getAnchors(box: Box): AnchorOfType<'grid'>[] {
     const anchors: AnchorOfType<'grid'>[] = [];
+    const grid = this.diagram.grid;
 
-    const minX = Math.floor(box.pos.x / this.grid.x);
-    const maxX = Math.ceil((box.pos.x + box.size.w) / this.grid.x);
-    const minY = Math.floor(box.pos.y / this.grid.y);
-    const maxY = Math.ceil((box.pos.y + box.size.h) / this.grid.y);
+    const minX = Math.floor(box.pos.x / grid.x);
+    const maxX = Math.ceil((box.pos.x + box.size.w) / grid.x);
+    const minY = Math.floor(box.pos.y / grid.y);
+    const maxY = Math.ceil((box.pos.y + box.size.h) / grid.y);
 
     for (let x = minX; x <= maxX; x++) {
       anchors.push({
-        line: Line.from(
-          { x: x * this.grid.x, y: minY * this.grid.y },
-          { x: x * this.grid.x, y: maxY * this.grid.y }
-        ),
+        line: Line.from({ x: x * grid.x, y: minY * grid.y }, { x: x * grid.x, y: maxY * grid.y }),
         axis: 'v',
         type: 'grid'
       });
@@ -34,10 +25,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
 
     for (let y = minY; y <= maxY; y++) {
       anchors.push({
-        line: Line.from(
-          { x: minX * this.grid.x, y: y * this.grid.y },
-          { x: maxX * this.grid.x, y: y * this.grid.y }
-        ),
+        line: Line.from({ x: minX * grid.x, y: y * grid.y }, { x: maxX * grid.x, y: y * grid.y }),
         axis: 'h',
         type: 'grid'
       });

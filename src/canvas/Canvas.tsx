@@ -12,6 +12,7 @@ import { debounce } from '../utils/debounce.ts';
 import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
 import { moveDragActions } from './Selection.logic.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
+import { Grid } from './Grid.tsx';
 
 const BACKGROUND = 'background';
 
@@ -178,6 +179,8 @@ export const Canvas = (props: Props) => {
             onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
             onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
           >
+            <Grid diagram={diagram} />
+
             {diagram.elements.map(e => {
               const id = e.id;
               if (e.type === 'edge') {

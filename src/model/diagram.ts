@@ -74,9 +74,17 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   readonly nodeLookup: Record<string, ResolvedNodeDef> = {};
   readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
   readonly undoManager = new UndoManager();
+
+  // TODO: Add listener/event on dimension change
   readonly dimensions = {
     w: 640,
     h: 480
+  };
+
+  // TODO: Add listener/event on grid change
+  readonly grid = {
+    x: 20,
+    y: 20
   };
 
   constructor(elements: (ResolvedEdgeDef | ResolvedNodeDef)[]) {
