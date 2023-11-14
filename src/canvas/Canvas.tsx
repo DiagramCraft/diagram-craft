@@ -11,7 +11,7 @@ import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
 import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
 import { moveDragActions } from './Selection.logic.ts';
-import { Drag, DragActions } from './drag.ts';
+import { Drag, DragActions, Modifiers } from './drag.ts';
 
 const BACKGROUND = 'background';
 
@@ -90,7 +90,7 @@ export const Canvas = (props: Props) => {
   }, []);
 
   const onMouseDown = useCallback(
-    (id: ObjectId, point: Point, add: boolean) => {
+    (id: ObjectId, point: Point, modifiers: Modifiers) => {
       const isClickOnBackground = id === BACKGROUND;
       const isClickOnSelection = Box.contains(selection.current.bounds, point);
 
@@ -105,13 +105,13 @@ export const Canvas = (props: Props) => {
             }
           };
         } else if (isClickOnBackground) {
-          if (!add) {
+          if (!modifiers.shiftKey) {
             selection.current.clear();
           }
           onDragStart(point, 'marquee', marqueeDragActions);
           return;
         } else {
-          if (!add) {
+          if (!modifiers.shiftKey) {
             selection.current.clear();
           }
           selection.current.toggle(diagram.nodeLookup[id]);
@@ -148,12 +148,12 @@ export const Canvas = (props: Props) => {
   );
 
   const onMouseMove = useCallback(
-    (point: Point, altKey: boolean) => {
+    (point: Point, modifiers: Modifiers) => {
       // Abort early in case there's no drag in progress
       if (!drag.current) return;
 
       try {
-        drag.current.actions.onDrag(point, drag.current, diagram, selection.current, altKey);
+        drag.current.actions.onDrag(point, drag.current, diagram, selection.current, modifiers);
       } finally {
         deferedMouseAction.current = undefined;
         updateCursor(point);
@@ -161,20 +161,6 @@ export const Canvas = (props: Props) => {
     },
     [updateCursor, diagram]
   );
-
-  /*
-  useEffect(() => {
-    console.log(
-      svgRef.current!.viewBox.baseVal,
-      svgRef.current!.width.baseVal,
-      svgRef.current!.height.baseVal
-    );
-
-    const zoomX = svgRef.current!.width.baseVal.value / svgRef.current!.viewBox.baseVal.width;
-    const zoomY = svgRef.current!.height.baseVal.value / svgRef.current!.viewBox.baseVal.height;
-    console.log(zoomX, zoomY);
-  }, []);
-  */
 
   return (
     <>
@@ -186,9 +172,11 @@ export const Canvas = (props: Props) => {
             width="640px"
             height="480px"
             style={{ border: '1px solid white', background: 'white' }}
-            onMouseDown={e => onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.shiftKey)}
+            onMouseDown={e =>
+              onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent)
+            }
             onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
-            onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent.altKey)}
+            onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
           >
             {diagram.elements.map(e => {
               const id = e.id;

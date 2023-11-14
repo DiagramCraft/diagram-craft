@@ -114,7 +114,7 @@ export class SnapManager {
 
   // TODO: We should be able to merge snapResize and snapMove
   snapResize(b: Box, directions: Direction[]): SnapResult {
-    const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'grid', 'distance'];
+    const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance'];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfAnchors = NodeHelper.anchors(b, 'source').filter(s =>
@@ -169,7 +169,7 @@ export class SnapManager {
   }
 
   snapMove(b: Box): SnapResult {
-    const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'grid', 'distance'];
+    const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance'];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfAnchors = NodeHelper.anchors(b, 'source');

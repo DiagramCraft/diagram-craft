@@ -10,7 +10,7 @@ import {
 import { SelectionState } from '../model/selectionState.ts';
 import { LoadedDiagram, MoveAction, ResizeAction, RotateAction } from '../model/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import { Drag, DragActions } from './drag.ts';
+import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model/snap/snapManager.ts';
 
 export const rotateDragActions: DragActions = {
@@ -48,7 +48,7 @@ export const resizeDragActions: DragActions = {
     drag: Drag,
     diagram: LoadedDiagram,
     selection: SelectionState,
-    altKey: boolean
+    modifiers: Modifiers
   ) => {
     assert.false(selection.isEmpty());
 
@@ -116,7 +116,7 @@ export const resizeDragActions: DragActions = {
 
     const newBounds = Box.asMutableSnapshot(lcs.toGlobal(localTarget.getSnapshot()));
 
-    if (altKey) {
+    if (modifiers.altKey) {
       selection.guides = [];
     } else {
       const snapManager = new SnapManager(
@@ -156,7 +156,7 @@ export const moveDragActions: DragActions = {
     drag: Drag,
     diagram: LoadedDiagram,
     selection: SelectionState,
-    altKey: boolean
+    modifiers: Modifiers
   ) => {
     assert.false(selection.isEmpty());
 
@@ -169,7 +169,7 @@ export const moveDragActions: DragActions = {
       y: selection.bounds.pos.y + d.y
     });
 
-    if (altKey) {
+    if (modifiers.altKey) {
       selection.guides = [];
     } else {
       const snapManager = new SnapManager(

@@ -2,6 +2,13 @@ import { Point } from '../geometry/geometry.ts';
 import { LoadedDiagram } from '../model/diagram.ts';
 import { SelectionState } from '../model/selectionState.ts';
 
+export type Modifiers = {
+  shiftKey: boolean;
+  altKey: boolean;
+  metaKey: boolean;
+  ctrlKey: boolean;
+};
+
 export type Drag = {
   type:
     | 'resize-nw'
@@ -25,7 +32,7 @@ export type DragActions = {
     drag: Drag,
     diagram: LoadedDiagram,
     selection: SelectionState,
-    altKey: boolean
+    modifiers: Modifiers
   ) => void;
   onDragEnd: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
 };
