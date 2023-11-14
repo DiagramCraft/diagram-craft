@@ -22,7 +22,7 @@ export type MatchingAnchorPair<T extends AnchorType> = {
 
 export interface SnapProvider<T extends AnchorType> {
   getAnchors(box: Box): Anchor[];
-  makeGuide(box: Box, match: MatchingAnchorPair<T>, axis: Axis): Guide;
+  makeGuide(box: Box, match: MatchingAnchorPair<T>, axis: Axis): Guide | undefined;
   moveAnchor(anchor: AnchorOfType<T>, delta: Point): void;
 }
 
@@ -107,9 +107,9 @@ export class SnapManager {
     const snapProviders = new SnapProviders(this.diagram, excludeNodeIds);
 
     const enabledSnapProviders: AnchorType[] = ['node', 'canvas', 'distance'];
-    const anchorsToMatchAgainst = enabledSnapProviders
-      .map(e => snapProviders.get(e))
-      .flatMap(e => e.getAnchors(b));
+    const anchorsToMatchAgainst = enabledSnapProviders.flatMap(e =>
+      snapProviders.get(e).getAnchors(b)
+    );
 
     const matchingAnchors = this.matchAnchors(selfAnchors, anchorsToMatchAgainst);
 
@@ -179,7 +179,8 @@ export class SnapManager {
           if (existing) continue;
         }
 
-        guides.push(snapProviders.get(match.matching.type).makeGuide(newB, match, axis));
+        const guide = snapProviders.get(match.matching.type).makeGuide(newB, match, axis);
+        if (guide) guides.push(guide);
       }
     }
 

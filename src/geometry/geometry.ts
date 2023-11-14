@@ -53,8 +53,11 @@ export type Line = Readonly<{
 
 export const OLine = {
   fromRange: (pos: { x: number } | { y: number }, range: Range) => {
-    const axis = 'x' in pos ? 'y' : 'x';
-    return Line.from({ ...(pos as any), [axis]: range[0] }, { ...(pos as any), [axis]: range[1] });
+    if ('x' in pos) {
+      return Line.from({ x: pos.x, y: range[0] }, { x: pos.x, y: range[1] });
+    } else {
+      return Line.from({ y: pos.y, x: range[0] }, { y: pos.y, x: range[1] });
+    }
   }
 };
 

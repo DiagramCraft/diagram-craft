@@ -3,6 +3,7 @@ import { Box, Line, OLine, Point } from '../../geometry/geometry.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';
+import { Range } from '../../geometry/range.ts';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.x, b.pos.x + b.size.w), N);
@@ -20,30 +21,52 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     private readonly excludedNodeIds: string[]
   ) {}
 
-  // TODO: This can probably be optimized to first check the bounds of the node
-  //       before add all the anchors of that node
+  private getRange(b: Box, axis: Axis) {
+    if (axis === 'h') {
+      return Range.create(b.pos.x, b.pos.x + b.size.w);
+    } else {
+      return Range.create(b.pos.y, b.pos.y + b.size.h);
+    }
+  }
+
   getAnchors(box: Box): Anchor[] {
     const dest: { h: AnchorWithDistance[]; v: AnchorWithDistance[] } = { h: [], v: [] };
     const center = Box.center(box);
 
+    const boxHRange = this.getRange(box, 'h');
+    const boxVRange = this.getRange(box, 'v');
+
     for (const node of this.diagram.queryNodes()) {
       if (this.excludedNodeIds.includes(node.id)) continue;
       for (const other of NodeHelper.anchors(node.bounds)) {
+        if (
+          !Range.overlaps(this.getRange(node.bounds, 'h'), boxHRange) &&
+          !Range.overlaps(this.getRange(node.bounds, 'v'), boxVRange)
+        ) {
+          continue;
+        }
+
         other.type = 'node';
         (other as AnchorOfType<'node'>).node = node;
 
         if (Line.isHorizontal(other.line)) {
-          other.line = OLine.fromRange({ y: other.line.to.y }, [0, this.diagram.dimensions.w]);
+          other.line = Line.from(
+            { x: 0, y: other.line.to.y },
+            { x: this.diagram.dimensions.w, y: other.line.to.y }
+          );
           dest.h.push([other, Point.squareDistance(center, Box.center(node.bounds))]);
         } else {
-          other.line = OLine.fromRange({ x: other.line.to.x }, [0, this.diagram.dimensions.h]);
+          other.line = Line.from(
+            { x: other.line.to.x, y: 0 },
+            { x: other.line.to.x, y: this.diagram.dimensions.h }
+          );
           dest.v.push([other, Point.squareDistance(center, Box.center(node.bounds))]);
         }
       }
     }
 
-    dest.h = unique(dest.h.sort(compareFn), e => e[0].line.from.y);
-    dest.v = unique(dest.v.sort(compareFn), e => e[0].line.from.x);
+    if (dest.h.length > 1) dest.h = unique(dest.h.sort(compareFn), e => e[0].line.from.y);
+    if (dest.v.length > 1) dest.v = unique(dest.v.sort(compareFn), e => e[0].line.from.x);
 
     return [...dest.h.map(e => e[0]), ...dest.v.map(e => e[0])];
   }

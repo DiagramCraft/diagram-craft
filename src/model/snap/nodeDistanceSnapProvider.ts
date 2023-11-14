@@ -44,14 +44,17 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
   private getRange(b: Box, axis: Axis) {
     if (axis === 'h') {
-      return Range.create(b.pos.x, b.pos.x + b.size.w)!;
+      return Range.create(b.pos.x, b.pos.x + b.size.w);
     } else {
-      return Range.create(b.pos.y, b.pos.y + b.size.h)!;
+      return Range.create(b.pos.y, b.pos.y + b.size.h);
     }
   }
 
   getAnchors(box: Box): Anchor[] {
-    const result: Record<Direction, { node: ResolvedNodeDef }[]> = {
+    const boxHRange = this.getRange(box, 'h');
+    const boxVRange = this.getRange(box, 'v');
+
+    const result: Record<Direction, ResolvedNodeDef[]> = {
       n: [],
       w: [],
       e: [],
@@ -64,17 +67,17 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       if (node.bounds.rotation !== 0) continue;
 
       if (
-        Range.overlaps(this.getRange(node.bounds, 'h'), this.getRange(box, 'h')) ||
-        Range.overlaps(this.getRange(node.bounds, 'v'), this.getRange(box, 'v'))
+        Range.overlaps(this.getRange(node.bounds, 'h'), boxHRange) ||
+        Range.overlaps(this.getRange(node.bounds, 'v'), boxVRange)
       ) {
         if (this.get(node.bounds, 's') < box.pos.y) {
-          result.n.push({ node });
+          result.n.push(node);
         } else if (this.get(node.bounds, 'e') < box.pos.x) {
-          result.w.push({ node });
+          result.w.push(node);
         } else if (node.bounds.pos.x > this.get(box, 'e')) {
-          result.e.push({ node });
+          result.e.push(node);
         } else if (node.bounds.pos.y > this.get(box, 's')) {
-          result.s.push({ node });
+          result.s.push(node);
         } else {
           VERIFY_NOT_REACHED();
         }
@@ -98,22 +101,22 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       // ... for north and south we want to sort with largest first
       // ... for east and south we want to sort with smallest first
       result[dir].sort((a, b) => {
-        const ab = a.node.bounds;
-        const bb = b.node.bounds;
+        const ab = a.bounds;
+        const bb = b.bounds;
         return sign * (this.get(ab, oDir) - this.get(bb, oDir));
       });
 
       for (let i = 0; i < result[dir].length - 1; i++) {
-        const first = result[dir][i].node.bounds;
+        const first = result[dir][i].bounds;
 
         const distances: DistancePair[] = [];
         for (let j = i + 1; j < result[dir].length; j++) {
-          const d = sign * (this.get(result[dir][j].node.bounds, oDir) - this.get(first, dir));
+          const d = sign * (this.get(result[dir][j].bounds, oDir) - this.get(first, dir));
 
           if (d <= 0) continue;
 
           const rangeA = this.getRange(first, axis);
-          const rangeB = this.getRange(result[dir][j].node.bounds, axis);
+          const rangeB = this.getRange(result[dir][j].bounds, axis);
 
           const intersection = Range.intersection(rangeA, rangeB);
 
@@ -129,8 +132,8 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
               y: axis === 'v' ? mp : this.get(first, dir)
             },
             pointB: {
-              x: axis === 'h' ? mp : this.get(result[dir][j].node.bounds, oDir),
-              y: axis === 'v' ? mp : this.get(result[dir][j].node.bounds, oDir)
+              x: axis === 'h' ? mp : this.get(result[dir][j].bounds, oDir),
+              y: axis === 'v' ? mp : this.get(result[dir][j].bounds, oDir)
             },
             rangeA: rangeA,
             rangeB: rangeB
@@ -166,7 +169,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     return anchors;
   }
 
-  makeGuide(box: Box, match: MatchingAnchorPair<'distance'>, axis: Axis): Guide {
+  makeGuide(box: Box, match: MatchingAnchorPair<'distance'>, axis: Axis): Guide | undefined {
     const m = match.matching;
 
     const tp = Line.midpoint(match.self.line);
@@ -175,6 +178,8 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       Range.intersection(m.distancePairs[0].rangeA, m.distancePairs[0].rangeB)!,
       this.getRange(box, axis)
     );
+
+    if (!instersection) return undefined;
 
     const mp = Range.midpoint(instersection!);
 

@@ -225,45 +225,43 @@ export const NodeHelper = {
 
     if (node.rotation !== 0) return center;
 
-    return [
-      ...center,
-      {
-        line: {
-          from: { x: node.pos.x, y: node.pos.y },
-          to: { x: node.pos.x + node.size.w, y: node.pos.y }
-        },
-        axis: 'h',
-        type,
-        matchDirection: 'n'
+    center.push({
+      line: {
+        from: { x: node.pos.x, y: node.pos.y },
+        to: { x: node.pos.x + node.size.w, y: node.pos.y }
       },
-      {
-        line: {
-          from: { x: node.pos.x, y: node.pos.y + node.size.h },
-          to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
-        },
-        axis: 'h',
-        type,
-        matchDirection: 's'
+      axis: 'h',
+      type,
+      matchDirection: 'n'
+    });
+    center.push({
+      line: {
+        from: { x: node.pos.x, y: node.pos.y + node.size.h },
+        to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
       },
-      {
-        line: {
-          from: { x: node.pos.x, y: node.pos.y },
-          to: { x: node.pos.x, y: node.pos.y + node.size.h }
-        },
-        axis: 'v',
-        type,
-        matchDirection: 'w'
+      axis: 'h',
+      type,
+      matchDirection: 's'
+    });
+    center.push({
+      line: {
+        from: { x: node.pos.x, y: node.pos.y },
+        to: { x: node.pos.x, y: node.pos.y + node.size.h }
       },
-      {
-        line: {
-          from: { x: node.pos.x + node.size.w, y: node.pos.y },
-          to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
-        },
-        axis: 'v',
-        type,
-        matchDirection: 'e'
-      }
-    ];
+      axis: 'v',
+      type,
+      matchDirection: 'w'
+    });
+    center.push({
+      line: {
+        from: { x: node.pos.x + node.size.w, y: node.pos.y },
+        to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
+      },
+      axis: 'v',
+      type,
+      matchDirection: 'e'
+    });
+    return center;
   }
 };
 

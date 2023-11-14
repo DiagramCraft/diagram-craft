@@ -3,6 +3,8 @@ import { SerializedDiagram } from './model/serialization.ts';
 import { deserializeDiagram } from './model/serialization.ts';
 import { Canvas } from './canvas/Canvas.tsx';
 import { useEffect } from 'react';
+import { perftest } from './utils/perftest.ts';
+import { SnapManagerPerftest } from './model/snap/snapManager.perftest.ts';
 
 const diagram: SerializedDiagram = {
   elements: [
@@ -184,6 +186,10 @@ const diagram: SerializedDiagram = {
 const $d = deserializeDiagram(diagram);
 
 const App = () => {
+  //  useEffect(() => {
+  //    perftest(new SnapManagerPerftest());
+  //}, []);
+
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (e.code === 'KeyZ') {
