@@ -148,12 +148,12 @@ export const Canvas = (props: Props) => {
   );
 
   const onMouseMove = useCallback(
-    (point: Point) => {
+    (point: Point, altKey: boolean) => {
       // Abort early in case there's no drag in progress
       if (!drag.current) return;
 
       try {
-        drag.current.actions.onDrag(point, drag.current, diagram, selection.current);
+        drag.current.actions.onDrag(point, drag.current, diagram, selection.current, altKey);
       } finally {
         deferedMouseAction.current = undefined;
         updateCursor(point);
@@ -188,7 +188,7 @@ export const Canvas = (props: Props) => {
             style={{ border: '1px solid white', background: 'white' }}
             onMouseDown={e => onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.shiftKey)}
             onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
-            onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent))}
+            onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent.altKey)}
           >
             {diagram.elements.map(e => {
               const id = e.id;

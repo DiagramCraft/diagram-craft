@@ -43,7 +43,13 @@ export const rotateDragActions: DragActions = {
 };
 
 export const resizeDragActions: DragActions = {
-  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+  onDrag: (
+    coord: Point,
+    drag: Drag,
+    diagram: LoadedDiagram,
+    selection: SelectionState,
+    altKey: boolean
+  ) => {
     assert.false(selection.isEmpty());
 
     const before = selection.bounds;
@@ -110,20 +116,23 @@ export const resizeDragActions: DragActions = {
 
     const newBounds = Box.asMutableSnapshot(lcs.toGlobal(localTarget.getSnapshot()));
 
-    const snapManager = new SnapManager(
-      diagram,
-      selection.elements.map(e => e.id)
-    );
+    if (altKey) {
+      selection.guides = [];
+    } else {
+      const snapManager = new SnapManager(
+        diagram,
+        selection.elements.map(e => e.id)
+      );
 
-    const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
-    selection.guides = result.guides;
-    selection.anchors = result.anchors;
+      const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
+      selection.guides = result.guides;
+      selection.anchors = result.anchors;
 
-    newBounds.set('pos', result.adjusted.pos);
-    newBounds.set('size', result.adjusted.size);
+      newBounds.set('pos', result.adjusted.pos);
+      newBounds.set('size', result.adjusted.size);
+    }
 
     selection.bounds = newBounds.getSnapshot();
-
     diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
@@ -142,32 +151,42 @@ export const resizeDragActions: DragActions = {
 };
 
 export const moveDragActions: DragActions = {
-  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+  onDrag: (
+    coord: Point,
+    drag: Drag,
+    diagram: LoadedDiagram,
+    selection: SelectionState,
+    altKey: boolean
+  ) => {
     assert.false(selection.isEmpty());
-
-    const snapManager = new SnapManager(
-      diagram,
-      selection.elements.map(e => e.id)
-    );
 
     const d = Point.subtract(coord, Point.add(selection.bounds.pos, drag.offset));
 
     const newBounds = Box.asMutableSnapshot(selection.bounds);
+
     newBounds.set('pos', {
       x: selection.bounds.pos.x + d.x,
       y: selection.bounds.pos.y + d.y
     });
 
-    const result = snapManager.snapMove(newBounds.getSnapshot());
-    selection.guides = result.guides;
-    selection.anchors = result.anchors;
+    if (altKey) {
+      selection.guides = [];
+    } else {
+      const snapManager = new SnapManager(
+        diagram,
+        selection.elements.map(e => e.id)
+      );
 
-    newBounds.set('pos', result.adjusted.pos);
+      const result = snapManager.snapMove(newBounds.getSnapshot());
+      selection.guides = result.guides;
+      selection.anchors = result.anchors;
+
+      newBounds.set('pos', result.adjusted.pos);
+    }
 
     diagram.transformNodes(selection.elements, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
-
     selection.bounds = newBounds.getSnapshot();
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {

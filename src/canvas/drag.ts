@@ -20,6 +20,12 @@ export type Drag = {
 };
 
 export type DragActions = {
-  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
+  onDrag: (
+    coord: Point,
+    drag: Drag,
+    diagram: LoadedDiagram,
+    selection: SelectionState,
+    altKey: boolean
+  ) => void;
   onDragEnd: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
 };
