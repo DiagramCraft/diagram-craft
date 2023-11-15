@@ -1,4 +1,4 @@
-import { LoadedDiagram } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
 
 export const Grid = (props: Props) => {
   const { diagram } = props;
@@ -49,5 +49,5 @@ export const Grid = (props: Props) => {
 };
 
 type Props = {
-  diagram: LoadedDiagram;
+  diagram: Diagram;
 };

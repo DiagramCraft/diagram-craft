@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { LoadedDiagram, ResolvedNodeDef } from './diagram.ts';
+import { Diagram, ResolvedNodeDef } from './diagram.ts';
 import { TransformFactory } from '../geometry/transform.ts';
 
 describe('Diagram', () => {
@@ -29,7 +29,7 @@ describe('Diagram', () => {
     };
 
     const nodes = [node1, node2];
-    const diagram = new LoadedDiagram(nodes);
+    const diagram = new Diagram(nodes);
 
     const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
     const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: Math.PI / 2 };
@@ -70,7 +70,7 @@ describe('Diagram', () => {
     };
 
     const nodes = [node1, node2];
-    const diagram = new LoadedDiagram(nodes);
+    const diagram = new Diagram(nodes);
 
     const before = { pos: { x: 10, y: 10 }, size: { w: 200, h: 300 }, rotation: 0 };
     const after = { pos: { x: 10, y: 10 }, size: { w: 200, h: 300 }, rotation: Math.PI / 3 };

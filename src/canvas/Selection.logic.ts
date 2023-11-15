@@ -1,5 +1,5 @@
 import { Direction } from '../geometry/direction.ts';
-import { LoadedDiagram, MoveAction, ResizeAction, RotateAction } from '../model-viewer/diagram.ts';
+import { Diagram, MoveAction, ResizeAction, RotateAction } from '../model-viewer/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model-editor/snap/snapManager.ts';
@@ -14,7 +14,7 @@ import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 
 export const rotateDragActions: DragActions = {
-  onDrag: (coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+  onDrag: (coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     assert.false(selection.isEmpty());
 
     const before = selection.bounds;
@@ -27,7 +27,7 @@ export const rotateDragActions: DragActions = {
 
     diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
   },
-  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+  onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new RotateAction(
@@ -83,7 +83,7 @@ export const resizeDragActions: DragActions = {
   onDrag: (
     coord: Point,
     drag: Drag,
-    diagram: LoadedDiagram,
+    diagram: Diagram,
     selection: SelectionState,
     modifiers: Modifiers
   ) => {
@@ -183,7 +183,7 @@ export const resizeDragActions: DragActions = {
     selection.bounds = newBounds.getSnapshot();
     diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
   },
-  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+  onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new ResizeAction(
@@ -202,7 +202,7 @@ export const moveDragActions: DragActions = {
   onDrag: (
     coord: Point,
     drag: Drag,
-    diagram: LoadedDiagram,
+    diagram: Diagram,
     selection: SelectionState,
     modifiers: Modifiers
   ) => {
@@ -296,7 +296,7 @@ export const moveDragActions: DragActions = {
     ]);
     selection.bounds = newBounds.getSnapshot();
   },
-  onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+  onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     selection.state['metaKey'] = false;
 
     if (selection.isChanged()) {

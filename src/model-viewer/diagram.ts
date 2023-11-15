@@ -73,7 +73,7 @@ export type DiagramEvents = {
   change: void;
 };
 
-export class LoadedDiagram extends EventEmitter<DiagramEvents> {
+export class Diagram extends EventEmitter<DiagramEvents> {
   elements: (ResolvedEdgeDef | ResolvedNodeDef)[];
   readonly nodeLookup: Record<string, ResolvedNodeDef> = {};
   readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
@@ -295,9 +295,9 @@ class AbstractTransformAction implements UndoableAction {
   private nodes: ResolvedNodeDef[] = [];
   private source: Box[] = [];
   private target: Box[] = [];
-  private diagram: LoadedDiagram;
+  private diagram: Diagram;
 
-  constructor(source: Box[], target: Box[], nodes: ResolvedNodeDef[], diagram: LoadedDiagram) {
+  constructor(source: Box[], target: Box[], nodes: ResolvedNodeDef[], diagram: Diagram) {
     this.diagram = diagram;
     for (let i = 0; i < target.length; i++) {
       this.nodes.push(nodes[i]);

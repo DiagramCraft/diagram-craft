@@ -7,7 +7,7 @@ import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Guide } from '../selectionState.ts';
-import { AnchorOfType, Axis, LoadedDiagram, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
+import { AnchorOfType, Axis, Diagram, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
 
 const forward: Partial<Record<Direction, Direction>> = {
   n: 's',
@@ -21,7 +21,7 @@ const backward: Partial<Record<Direction, Direction>> = {
 
 export class NodeSizeSnapProvider implements SnapProvider<'size'> {
   constructor(
-    private readonly diagram: LoadedDiagram,
+    private readonly diagram: Diagram,
     private readonly excludedNodeIds: string[]
   ) {}
 

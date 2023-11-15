@@ -4,7 +4,7 @@ import {
   AnchorOfType,
   AnchorType,
   Axis,
-  LoadedDiagram,
+  Diagram,
   NodeHelper
 } from '../../model-viewer/diagram.ts';
 import { largest, smallest } from '../../utils/array.ts';
@@ -59,7 +59,7 @@ class SnapProviders {
     [T in AnchorType]: SnapProvider<T>;
   };
 
-  constructor(diagram: LoadedDiagram, excludeNodeIds: string[]) {
+  constructor(diagram: Diagram, excludeNodeIds: string[]) {
     this.providers = {
       grid: new GridSnapProvider(diagram),
       source: new SourceSnapProvider(),
@@ -88,7 +88,7 @@ export class SnapManager {
   // TODO: Ideally we should find a better way to exclude the currently selected node
   //       maybe we can pass in the current selection instead of just the box (bounds)
   constructor(
-    private readonly diagram: LoadedDiagram,
+    private readonly diagram: Diagram,
     private readonly excludeNodeIds: string[] = []
   ) {}
 

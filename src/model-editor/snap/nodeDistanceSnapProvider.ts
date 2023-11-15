@@ -10,7 +10,7 @@ import {
   AnchorOfType,
   Axis,
   DistancePairWithRange,
-  LoadedDiagram,
+  Diagram,
   ResolvedNodeDef
 } from '../../model-viewer/diagram.ts';
 
@@ -32,7 +32,7 @@ const directions: Record<
 
 export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
   constructor(
-    private readonly diagram: LoadedDiagram,
+    private readonly diagram: Diagram,
     private readonly excludedNodeIds: string[]
   ) {}
 

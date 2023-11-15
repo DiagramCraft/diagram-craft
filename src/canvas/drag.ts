@@ -1,5 +1,5 @@
 import { Point } from '../geometry/point.ts';
-import { LoadedDiagram } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 
 export type Modifiers = {
@@ -31,9 +31,9 @@ export type DragActions = {
   onDrag: (
     coord: Point,
     drag: Drag,
-    diagram: LoadedDiagram,
+    diagram: Diagram,
     selection: SelectionState,
     modifiers: Modifiers
   ) => void;
-  onDragEnd: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => void;
+  onDragEnd: (coord: Point, drag: Drag, diagram: Diagram, selection: SelectionState) => void;
 };

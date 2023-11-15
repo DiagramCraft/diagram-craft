@@ -1,11 +1,11 @@
-import { LoadedDiagram, ResolvedNodeDef } from '../model-viewer/diagram.ts';
+import { Diagram, ResolvedNodeDef } from '../model-viewer/diagram.ts';
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
 import { Drag, DragActions } from './drag.ts';
 import { Point } from '../geometry/point.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 
-const updatePendingElements = (selection: SelectionState, diagram: LoadedDiagram) => {
+const updatePendingElements = (selection: SelectionState, diagram: Diagram) => {
   precondition.is.present(selection.marquee);
 
   const pending: ResolvedNodeDef[] = [];
@@ -21,7 +21,7 @@ const updatePendingElements = (selection: SelectionState, diagram: LoadedDiagram
 };
 
 export const marqueeDragActions: DragActions = {
-  onDrag: (coord: Point, drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+  onDrag: (coord: Point, drag: Drag, diagram: Diagram, selection: SelectionState) => {
     selection.marquee = Box.normalize({
       pos: drag.offset,
       size: { w: coord.x - drag.offset.x, h: coord.y - drag.offset.y },
@@ -30,7 +30,7 @@ export const marqueeDragActions: DragActions = {
 
     updatePendingElements(selection, diagram);
   },
-  onDragEnd: (_coord: Point, _drag: Drag, _diagram: LoadedDiagram, selection: SelectionState) => {
+  onDragEnd: (_coord: Point, _drag: Drag, _diagram: Diagram, selection: SelectionState) => {
     if (selection.pendingElements) {
       selection.convertMarqueeToSelection();
     }

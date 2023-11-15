@@ -1,9 +1,9 @@
-import { LoadedDiagram } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
 import { Drag } from './drag.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 
 export type Action = {
-  execute: (diagram: LoadedDiagram, selection: SelectionState, drag?: Drag) => void;
+  execute: (diagram: Diagram, selection: SelectionState, drag?: Drag) => void;
 };
 
 export type KeyMap = Record<string, string>;
@@ -11,12 +11,12 @@ export type ActionMap = Record<string, Action>;
 
 export const Actions: ActionMap = {
   UNDO: {
-    execute: (diagram: LoadedDiagram) => {
+    execute: (diagram: Diagram) => {
       diagram.undoManager.undo();
     }
   },
   REDO: {
-    execute: (diagram: LoadedDiagram) => {
+    execute: (diagram: Diagram) => {
       diagram.undoManager.redo();
     }
   }

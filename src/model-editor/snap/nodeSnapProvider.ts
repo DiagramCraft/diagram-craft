@@ -1,4 +1,4 @@
-import { AnchorOfType, Axis, LoadedDiagram, NodeHelper } from '../../model-viewer/diagram.ts';
+import { AnchorOfType, Axis, Diagram, NodeHelper } from '../../model-viewer/diagram.ts';
 import { Line, OLine } from '../../geometry/line.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';
@@ -19,7 +19,7 @@ const compareFn = (a: AnchorWithDistance, b: AnchorWithDistance) => b[1] - a[1];
 
 export class NodeSnapProvider implements SnapProvider<'node'> {
   constructor(
-    private readonly diagram: LoadedDiagram,
+    private readonly diagram: Diagram,
     private readonly excludedNodeIds: string[]
   ) {}
 

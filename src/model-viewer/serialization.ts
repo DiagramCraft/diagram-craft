@@ -3,7 +3,7 @@ import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import {
   AbstractEdgeDef,
   AbstractNodeDef,
-  LoadedDiagram,
+  Diagram,
   ResolvedEdgeDef,
   ResolvedNodeDef
 } from './diagram.ts';
@@ -46,7 +46,7 @@ const unfoldGroup = (node: SerializedNodeDef) => {
   }
 };
 
-export const deserializeDiagram = (diagram: SerializedDiagram): LoadedDiagram => {
+export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
   const nodeLookup: Record<string, ResolvedNodeDef> = {};
   const edgeLookup: Record<string, ResolvedEdgeDef> = {};
 
@@ -121,5 +121,5 @@ export const deserializeDiagram = (diagram: SerializedDiagram): LoadedDiagram =>
     }
   }
 
-  return new LoadedDiagram(elements);
+  return new Diagram(elements);
 };
