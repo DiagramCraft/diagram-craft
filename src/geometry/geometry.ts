@@ -5,7 +5,7 @@ export type Direction = 'n' | 's' | 'w' | 'e';
 
 type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
 
-abstract class MutableSnapshot<T> {
+export abstract class MutableSnapshot<T> {
   protected value: DeepWriteable<T>;
 
   constructor(value: T) {

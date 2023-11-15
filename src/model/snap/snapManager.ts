@@ -79,8 +79,7 @@ export class SnapManager {
   //       maybe we can pass in the current selection instead of just the box (bounds)
   constructor(
     private readonly diagram: LoadedDiagram,
-    private readonly excludeNodeIds: string[] = [],
-    private readonly snapDirections: Direction[] = ['n', 's', 'w', 'e']
+    private readonly excludeNodeIds: string[] = []
   ) {}
 
   private rangeOverlap(a1: Anchor, a2: Anchor) {
@@ -103,7 +102,6 @@ export class SnapManager {
       for (const self of selfAnchors) {
         if (other.axis !== self.axis) continue;
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
-        if (!this.snapDirections.includes(self.matchDirection!)) continue;
         if (!this.rangeOverlap(self, other)) continue;
 
         const distance = this.orhogonalDistance(self, other);
@@ -179,11 +177,13 @@ export class SnapManager {
     };
   }
 
-  snapMove(b: Box): SnapResult {
+  snapMove(b: Box, directions: Direction[] = ['n', 'w', 'e', 's']): SnapResult {
     const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance'];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
-    const selfAnchors = NodeHelper.anchors(b, 'source');
+    const selfAnchors = NodeHelper.anchors(b, 'source').filter(s =>
+      directions.includes(s.matchDirection!)
+    );
 
     const anchorsToMatchAgainst = snapProviders.getAnchors(enabledSnapProviders, b);
 
@@ -271,5 +271,15 @@ export class SnapManager {
     // TODO: Remove guides that are too close to each other or redundant (e.g. center if both left and right)
 
     return guides;
+  }
+
+  reviseGuides(guides: Guide[], b: Box): Guide[] {
+    return guides.filter(g => {
+      if (Line.isHorizontal(g.line)) {
+        return g.line.from.y === b.pos.y || g.line.from.y === b.pos.y + b.size.h;
+      } else {
+        return g.line.from.x === b.pos.x || g.line.from.x === b.pos.x + b.size.w;
+      }
+    });
   }
 }

@@ -3,6 +3,7 @@ import {
   Box,
   Direction,
   LocalCoordinateSystem,
+  MutableSnapshot,
   Point,
   TransformFactory,
   Translation,
@@ -43,6 +44,54 @@ export const rotateDragActions: DragActions = {
   }
 };
 
+const applyAspectRatio = (
+  aspectRatio: number,
+  newBounds: MutableSnapshot<Box>,
+  localOriginal: Box,
+  lcs: LocalCoordinateSystem,
+  direction: Drag['type']
+) => {
+  const localTarget = Box.asMutableSnapshot(lcs.toLocal(newBounds.getSnapshot()));
+
+  const targetSize = localTarget.get('size');
+  const targetPos = localTarget.get('pos');
+
+  switch (direction) {
+    case 'resize-e':
+      targetSize.h = targetSize.w / aspectRatio;
+      break;
+    case 'resize-w':
+      targetSize.h = targetSize.w / aspectRatio;
+      break;
+    case 'resize-n':
+      targetSize.w = targetSize.h * aspectRatio;
+      break;
+    case 'resize-s':
+      targetSize.w = targetSize.h * aspectRatio;
+      break;
+    case 'resize-nw':
+      targetSize.w = targetSize.h * aspectRatio;
+      targetPos.x = localOriginal.pos.x + localOriginal.size.w - targetSize.w;
+      break;
+    case 'resize-ne':
+      targetSize.w = targetSize.h * aspectRatio;
+      break;
+    case 'resize-se':
+      targetSize.w = targetSize.h * aspectRatio;
+      break;
+    case 'resize-sw':
+      targetSize.w = targetSize.h * aspectRatio;
+      targetPos.x = localOriginal.pos.x + localOriginal.size.w - targetSize.w;
+      break;
+    default:
+      VERIFY_NOT_REACHED();
+  }
+
+  const globalTarget = lcs.toGlobal(localTarget.getSnapshot());
+  newBounds.set('size', globalTarget.size);
+  newBounds.set('pos', globalTarget.pos);
+};
+
 export const resizeDragActions: DragActions = {
   onDrag: (
     coord: Point,
@@ -63,53 +112,55 @@ export const resizeDragActions: DragActions = {
 
     const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(drag.offset));
 
+    const constrainAspectRatio = modifiers.shiftKey;
+    const aspectRatio = localOriginal.size.w / localOriginal.size.h;
+
+    const targetSize = localTarget.get('size');
+    const targetPos = localTarget.get('pos');
+
     const snapDirection: Direction[] = [];
     switch (drag.type) {
       case 'resize-e':
-        localTarget.get('size').w = localOriginal.size.w + delta.x;
+        targetSize.w = localOriginal.size.w + delta.x;
         snapDirection.push('e');
         break;
       case 'resize-w':
-        localTarget.get('size').w = localOriginal.size.w - delta.x;
-        localTarget.get('pos').x = localOriginal.pos.x + delta.x;
+        targetSize.w = localOriginal.size.w - delta.x;
+        targetPos.x = localOriginal.pos.x + delta.x;
         snapDirection.push('w');
         break;
       case 'resize-n':
-        localTarget.get('size').h = localOriginal.size.h - delta.y;
-        localTarget.get('pos').y = localOriginal.pos.y + delta.y;
+        targetSize.h = localOriginal.size.h - delta.y;
+        targetPos.y = localOriginal.pos.y + delta.y;
         snapDirection.push('n');
         break;
       case 'resize-s':
-        localTarget.get('size').h = localOriginal.size.h + delta.y;
+        targetSize.h = localOriginal.size.h + delta.y;
         snapDirection.push('s');
         break;
       case 'resize-nw':
-        localTarget.get('size').h = localOriginal.size.h - delta.y;
-        localTarget.get('pos').y = localOriginal.pos.y + delta.y;
-        localTarget.get('size').w = localOriginal.size.w - delta.x;
-        localTarget.get('pos').x = localOriginal.pos.x + delta.x;
-        snapDirection.push('n');
-        snapDirection.push('w');
+        targetSize.h = localOriginal.size.h - delta.y;
+        targetPos.y = localOriginal.pos.y + delta.y;
+        targetSize.w = localOriginal.size.w - delta.x;
+        targetPos.x = localOriginal.pos.x + delta.x;
+        snapDirection.push('n', 'w');
         break;
       case 'resize-ne':
-        localTarget.get('size').h = localOriginal.size.h - delta.y;
-        localTarget.get('pos').y = localOriginal.pos.y + delta.y;
-        localTarget.get('size').w = localOriginal.size.w + delta.x;
-        snapDirection.push('n');
-        snapDirection.push('e');
+        targetSize.h = localOriginal.size.h - delta.y;
+        targetPos.y = localOriginal.pos.y + delta.y;
+        targetSize.w = localOriginal.size.w + delta.x;
+        snapDirection.push('n', 'e');
         break;
       case 'resize-se':
-        localTarget.get('size').h = localOriginal.size.h + delta.y;
-        localTarget.get('size').w = localOriginal.size.w + delta.x;
-        snapDirection.push('s');
-        snapDirection.push('e');
+        targetSize.h = localOriginal.size.h + delta.y;
+        targetSize.w = localOriginal.size.w + delta.x;
+        snapDirection.push('s', 'e');
         break;
       case 'resize-sw':
-        localTarget.get('size').h = localOriginal.size.h + delta.y;
-        localTarget.get('size').w = localOriginal.size.w - delta.x;
-        localTarget.get('pos').x = localOriginal.pos.x + delta.x;
-        snapDirection.push('s');
-        snapDirection.push('w');
+        targetSize.h = localOriginal.size.h + delta.y;
+        targetSize.w = localOriginal.size.w - delta.x;
+        targetPos.x = localOriginal.pos.x + delta.x;
+        snapDirection.push('s', 'w');
         break;
       default:
         VERIFY_NOT_REACHED();
@@ -119,6 +170,10 @@ export const resizeDragActions: DragActions = {
 
     if (modifiers.altKey) {
       selection.guides = [];
+
+      if (constrainAspectRatio) {
+        applyAspectRatio(aspectRatio, newBounds, localOriginal, lcs, drag.type);
+      }
     } else {
       const snapManager = new SnapManager(
         diagram,
@@ -131,6 +186,12 @@ export const resizeDragActions: DragActions = {
 
       newBounds.set('pos', result.adjusted.pos);
       newBounds.set('size', result.adjusted.size);
+
+      // TODO: Need to somehow reapply the aspect ratio
+      if (constrainAspectRatio) {
+        applyAspectRatio(aspectRatio, newBounds, localOriginal, lcs, drag.type);
+        selection.guides = snapManager.reviseGuides(result.guides, newBounds.getSnapshot());
+      }
     }
 
     selection.bounds = newBounds.getSnapshot();
@@ -201,11 +262,10 @@ export const moveDragActions: DragActions = {
     } else {
       const snapManager = new SnapManager(
         diagram,
-        selection.elements.map(e => e.id),
-        snapDirections
+        selection.elements.map(e => e.id)
       );
 
-      const result = snapManager.snapMove(newBounds.getSnapshot());
+      const result = snapManager.snapMove(newBounds.getSnapshot(), snapDirections);
       selection.guides = result.guides;
       selection.anchors = result.anchors;
 
