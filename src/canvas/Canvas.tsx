@@ -13,6 +13,7 @@ import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
 import { moveDragActions } from './Selection.logic.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { Grid } from './Grid.tsx';
+import { useRedraw } from './useRedraw.tsx';
 
 const BACKGROUND = 'background';
 
@@ -23,6 +24,8 @@ type DeferedMouseAction = {
 };
 
 export const Canvas = (props: Props) => {
+  const redraw = useRedraw();
+
   const diagram = props.diagram;
 
   // State
@@ -46,6 +49,10 @@ export const Canvas = (props: Props) => {
       }
     };
 
+    const nodeAdded = () => {
+      redraw();
+    };
+
     const onUndo = debounce(() => {
       selection.current.clear();
     });
@@ -54,14 +61,18 @@ export const Canvas = (props: Props) => {
     diagram.undoManager.on('undo', onUndo);
     diagram.undoManager.on('redo', onUndo);
     diagram.on('nodechanged', nodeChanged);
+    diagram.on('nodeadded', nodeAdded);
+    diagram.on('noderemoved', nodeAdded);
 
     return () => {
       diagram.off('nodechanged', nodeChanged);
+      diagram.off('nodeadded', nodeAdded);
+      diagram.off('noderemoved', nodeAdded);
       diagram.undoManager.off('execute', onUndo);
       diagram.undoManager.off('undo', onUndo);
       diagram.undoManager.off('redo', onUndo);
     };
-  }, [diagram]);
+  }, [diagram, redraw]);
 
   useEffect(() => {
     const callback = debounce(() => {

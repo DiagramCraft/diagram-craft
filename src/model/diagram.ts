@@ -102,6 +102,10 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
     }
   }
 
+  newid() {
+    return Math.random().toString(36).substring(2, 9);
+  }
+
   addNode(node: ResolvedNodeDef) {
     this.nodeLookup[node.id] = node;
     this.elements.push(node);

@@ -10,7 +10,7 @@ const EMPTY_BOX = {
 };
 
 type SelectionSource = {
-  elements: Box[];
+  elements: ResolvedNodeDef[];
   boundingBox: Box;
 };
 
@@ -39,7 +39,10 @@ export class SelectionState extends EventEmitter<{
     boundingBox: EMPTY_BOX
   };
 
+  // For marquee selection
   pendingElements?: ResolvedNodeDef[];
+
+  state: Record<string, unknown> = {};
 
   constructor() {
     super();
@@ -69,6 +72,7 @@ export class SelectionState extends EventEmitter<{
     return this._bounds;
   }
 
+  // TODO: Why do we need set bounds - can't we just recalculate the bounding box?
   set bounds(bounds: Box) {
     this._bounds = bounds;
     this.emit('change', { selection: this });
@@ -86,7 +90,7 @@ export class SelectionState extends EventEmitter<{
   isChanged(): boolean {
     return this.elements.some((node, i) => {
       const original = this.source.elements[i];
-      return !Box.equals(node.bounds, original);
+      return !Box.equals(node.bounds, original.bounds);
     });
   }
 
@@ -101,14 +105,16 @@ export class SelectionState extends EventEmitter<{
 
   recalculateSourceBoundingBox() {
     this.source.boundingBox =
-      this.source.elements.length === 0 ? EMPTY_BOX : Box.boundingBox(this.source.elements);
+      this.source.elements.length === 0
+        ? EMPTY_BOX
+        : Box.boundingBox(this.source.elements.map(e => e.bounds));
   }
 
   toggle(element: ResolvedNodeDef) {
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
-    this.source.elements = this.elements.map(e => e.bounds);
+    this.source.elements = this.elements;
 
     this.recalculateSourceBoundingBox();
     this.recalculateBoundingBox();
@@ -145,7 +151,7 @@ export class SelectionState extends EventEmitter<{
   }
 
   rebaseline() {
-    this.source.elements = this.elements.map(e => e.bounds);
+    this.source.elements = this.elements;
     this.recalculateSourceBoundingBox();
 
     this.emit('change', { selection: this });

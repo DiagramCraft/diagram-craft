@@ -14,6 +14,7 @@ import { LoadedDiagram, MoveAction, ResizeAction, RotateAction } from '../model/
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model/snap/snapManager.ts';
+import { deepClone } from '../utils/clone.ts';
 
 export const rotateDragActions: DragActions = {
   onDrag: (coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
@@ -33,7 +34,7 @@ export const rotateDragActions: DragActions = {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new RotateAction(
-          selection.source.elements,
+          selection.source.elements.map(e => e.bounds),
           selection.elements.map(e => e.bounds),
           selection.elements,
           diagram
@@ -44,7 +45,7 @@ export const rotateDragActions: DragActions = {
   }
 };
 
-const applyAspectRatio = (
+const applyAspectRatioContraint = (
   aspectRatio: number,
   newBounds: MutableSnapshot<Box>,
   localOriginal: Box,
@@ -58,27 +59,16 @@ const applyAspectRatio = (
 
   switch (direction) {
     case 'resize-e':
-      targetSize.h = targetSize.w / aspectRatio;
-      break;
     case 'resize-w':
       targetSize.h = targetSize.w / aspectRatio;
       break;
     case 'resize-n':
-      targetSize.w = targetSize.h * aspectRatio;
-      break;
     case 'resize-s':
-      targetSize.w = targetSize.h * aspectRatio;
-      break;
-    case 'resize-nw':
-      targetSize.w = targetSize.h * aspectRatio;
-      targetPos.x = localOriginal.pos.x + localOriginal.size.w - targetSize.w;
-      break;
     case 'resize-ne':
-      targetSize.w = targetSize.h * aspectRatio;
-      break;
     case 'resize-se':
       targetSize.w = targetSize.h * aspectRatio;
       break;
+    case 'resize-nw':
     case 'resize-sw':
       targetSize.w = targetSize.h * aspectRatio;
       targetPos.x = localOriginal.pos.x + localOriginal.size.w - targetSize.w;
@@ -125,13 +115,13 @@ export const resizeDragActions: DragActions = {
         snapDirection.push('e');
         break;
       case 'resize-w':
-        targetSize.w = localOriginal.size.w - delta.x;
         targetPos.x = localOriginal.pos.x + delta.x;
+        targetSize.w = localOriginal.size.w - delta.x;
         snapDirection.push('w');
         break;
       case 'resize-n':
-        targetSize.h = localOriginal.size.h - delta.y;
         targetPos.y = localOriginal.pos.y + delta.y;
+        targetSize.h = localOriginal.size.h - delta.y;
         snapDirection.push('n');
         break;
       case 'resize-s':
@@ -139,27 +129,27 @@ export const resizeDragActions: DragActions = {
         snapDirection.push('s');
         break;
       case 'resize-nw':
-        targetSize.h = localOriginal.size.h - delta.y;
+        targetPos.x = localOriginal.pos.x + delta.x;
         targetPos.y = localOriginal.pos.y + delta.y;
         targetSize.w = localOriginal.size.w - delta.x;
-        targetPos.x = localOriginal.pos.x + delta.x;
+        targetSize.h = localOriginal.size.h - delta.y;
         snapDirection.push('n', 'w');
         break;
       case 'resize-ne':
-        targetSize.h = localOriginal.size.h - delta.y;
         targetPos.y = localOriginal.pos.y + delta.y;
         targetSize.w = localOriginal.size.w + delta.x;
+        targetSize.h = localOriginal.size.h - delta.y;
         snapDirection.push('n', 'e');
         break;
       case 'resize-se':
-        targetSize.h = localOriginal.size.h + delta.y;
         targetSize.w = localOriginal.size.w + delta.x;
+        targetSize.h = localOriginal.size.h + delta.y;
         snapDirection.push('s', 'e');
         break;
       case 'resize-sw':
-        targetSize.h = localOriginal.size.h + delta.y;
-        targetSize.w = localOriginal.size.w - delta.x;
         targetPos.x = localOriginal.pos.x + delta.x;
+        targetSize.w = localOriginal.size.w - delta.x;
+        targetSize.h = localOriginal.size.h + delta.y;
         snapDirection.push('s', 'w');
         break;
       default:
@@ -172,7 +162,7 @@ export const resizeDragActions: DragActions = {
       selection.guides = [];
 
       if (constrainAspectRatio) {
-        applyAspectRatio(aspectRatio, newBounds, localOriginal, lcs, drag.type);
+        applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs, drag.type);
       }
     } else {
       const snapManager = new SnapManager(
@@ -187,9 +177,8 @@ export const resizeDragActions: DragActions = {
       newBounds.set('pos', result.adjusted.pos);
       newBounds.set('size', result.adjusted.size);
 
-      // TODO: Need to somehow reapply the aspect ratio
       if (constrainAspectRatio) {
-        applyAspectRatio(aspectRatio, newBounds, localOriginal, lcs, drag.type);
+        applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs, drag.type);
         selection.guides = snapManager.reviseGuides(result.guides, newBounds.getSnapshot());
       }
     }
@@ -201,7 +190,7 @@ export const resizeDragActions: DragActions = {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new ResizeAction(
-          selection.source.elements,
+          selection.source.elements.map(e => e.bounds),
           selection.elements.map(e => e.bounds),
           selection.elements,
           diagram
@@ -229,6 +218,39 @@ export const moveDragActions: DragActions = {
     newBounds.set('pos', Point.add(selection.bounds.pos, d));
 
     let snapDirections: Direction[] = ['n', 'w', 'e', 's'];
+
+    // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
+    if (modifiers.metaKey && !selection.state['metaKey']) {
+      // Reset current selection back to original
+      diagram.transformNodes(selection.elements, [
+        new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))
+      ]);
+
+      newBounds.set('pos', selection.source.boundingBox.pos);
+      selection.bounds = newBounds.getSnapshot();
+      selection.guides = [];
+
+      const newElements = selection.source.elements.map(e => deepClone(e));
+      newElements.forEach(e => {
+        e.id = diagram.newid();
+        diagram.addNode(e);
+      });
+      selection.elements = newElements;
+
+      selection.state['metaKey'] = true;
+    } else if (!modifiers.metaKey && selection.state['metaKey']) {
+      selection.state['metaKey'] = false;
+
+      const elementsToRemove = selection.elements;
+
+      selection.elements = selection.source.elements;
+      selection.recalculateBoundingBox();
+      selection.guides = [];
+
+      elementsToRemove.forEach(e => {
+        diagram.removeNode(e);
+      });
+    }
 
     // TODO: Perhaps support 45 degree angles
     if (modifiers.shiftKey) {
@@ -278,10 +300,12 @@ export const moveDragActions: DragActions = {
     selection.bounds = newBounds.getSnapshot();
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {
+    selection.state['metaKey'] = false;
+
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new MoveAction(
-          selection.source.elements,
+          selection.source.elements.map(e => e.bounds),
           selection.elements.map(e => e.bounds),
           selection.elements,
           diagram
