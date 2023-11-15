@@ -19,25 +19,32 @@ const diagrams = [
 const App = () => {
   const [selectedDiagram, setSelectedDiagram] = useState(1);
   const $d = diagrams[selectedDiagram].diagram;
+
   //useEffect(() => {
   //  perftest(new SnapManagerPerftest());
   //}, []);
 
   return (
-    <div>
-      <Canvas key={selectedDiagram} diagram={$d} />
+    <div id="app">
+      <div id="left">
+        <select
+          onChange={e => {
+            setSelectedDiagram(Number(e.target.value));
+          }}
+        >
+          {diagrams.map((d, idx) => (
+            <option key={idx} value={idx}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <select
-        onChange={e => {
-          setSelectedDiagram(Number(e.target.value));
-        }}
-      >
-        {diagrams.map((d, idx) => (
-          <option key={idx} value={idx}>
-            {d.name}
-          </option>
-        ))}
-      </select>
+      <div id="middle">
+        <Canvas key={selectedDiagram} diagram={$d} />
+      </div>
+
+      <div id="right">Right</div>
     </div>
   );
 };

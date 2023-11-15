@@ -30,6 +30,7 @@ export const rotateDragActions: DragActions = {
       ...selection.bounds,
       rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
     };
+    selection.guides = [];
 
     diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
   },

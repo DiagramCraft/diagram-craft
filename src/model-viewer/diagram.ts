@@ -79,23 +79,26 @@ export type ViewboxEvents = {
 };
 
 class Viewbox extends EventEmitter<ViewboxEvents> {
-  #dimensions: Extent = {
-    w: 640,
-    h: 480
-  };
+  #dimensions: Extent;
 
   #offset: Point = {
     x: 0,
     y: 0
   };
 
-  constructor() {
+  zoomLevel = 1;
+
+  windowSize: Extent;
+
+  constructor(size: Extent) {
     super();
+    this.#dimensions = size;
+    this.windowSize = size;
   }
 
   toDiagramPoint(point: Point) {
     const transforms = TransformFactory.fromTo(
-      { pos: { x: 0, y: 0 }, size: { w: 640, h: 480 }, rotation: 0 },
+      { pos: { x: 0, y: 0 }, size: { w: this.windowSize.w, h: this.windowSize.h }, rotation: 0 },
       { pos: { x: this.#offset.x, y: this.#offset.y }, size: this.#dimensions, rotation: 0 }
     );
     return Transform.point(point, ...transforms);
@@ -112,6 +115,8 @@ class Viewbox extends EventEmitter<ViewboxEvents> {
       w: this.#dimensions.w * factor,
       h: this.#dimensions.h * factor
     };
+    this.zoomLevel *= factor;
+
     this.emit('viewbox', { viewbox: this });
   }
 
@@ -122,6 +127,11 @@ class Viewbox extends EventEmitter<ViewboxEvents> {
 
   get dimensions(): Extent {
     return this.#dimensions;
+  }
+
+  set dimensions(d: Extent) {
+    this.#dimensions = d;
+    this.emit('viewbox', { viewbox: this });
   }
 
   get offset(): Point {
@@ -139,7 +149,12 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
   readonly undoManager = new UndoManager();
 
-  viewBox = new Viewbox();
+  size: Extent = {
+    w: 640,
+    h: 640
+  };
+
+  viewBox = new Viewbox(this.size);
 
   // TODO: Add listener/event on grid change
   readonly grid = {

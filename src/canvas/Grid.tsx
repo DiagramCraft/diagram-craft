@@ -12,41 +12,38 @@ export const Grid = (props: Props) => {
 
   const gridLines = [];
 
-  for (let i = 0; i <= rows; i++) {
-    const yCoord = i * y;
+  for (let i = 0; i < rows; i++) {
+    const yCoord = i * y + y;
+    if (yCoord >= diagram.size.h - 1) continue;
+
     gridLines.push(
       <line
         key={`row-${i}`}
-        x1={0}
+        x1={1}
         y1={yCoord}
-        x2={w}
+        x2={w - 1}
         y2={yCoord}
-        stroke={i % 5 === 0 ? '#dedede' : '#eeeeee'}
-        strokeWidth={1}
+        className={'grid ' + (i % 5 === 0 ? 'grid--major' : 'grid--minor')}
       />
     );
   }
 
-  for (let i = 0; i <= cols; i++) {
-    const xCoord = i * x;
+  for (let i = 0; i < cols; i++) {
+    const xCoord = i * x + x;
+    if (xCoord >= diagram.size.w - 1) continue;
     gridLines.push(
       <line
         key={`col-${i}`}
         x1={xCoord}
-        y1={0}
+        y1={1}
         x2={xCoord}
-        y2={h}
-        stroke={i % 5 === 0 ? '#dedede' : '#eeeeee'}
-        strokeWidth={1}
+        y2={h - 1}
+        className={'grid ' + (i % 5 === 0 ? 'grid--major' : 'grid--minor')}
       />
     );
   }
 
-  return (
-    <svg width={w} height={h}>
-      {gridLines}
-    </svg>
-  );
+  return <>{gridLines}</>;
 };
 
 type Props = {

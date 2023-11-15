@@ -16,6 +16,7 @@ import { Grid } from './Grid.tsx';
 import { useRedraw } from './useRedraw.tsx';
 import { findAction, MacKeymap } from './keyMap.ts';
 import { Point } from '../geometry/point.ts';
+import { DocumentBounds } from './DocumentBounds.tsx';
 
 const BACKGROUND = 'background';
 
@@ -73,6 +74,35 @@ export const Canvas = (props: Props) => {
       svgRef.current?.removeEventListener('wheel', wheelEventHandler);
     };
   });
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    const adjustViewbox = () => {
+      // TODO: Respect zoom level
+      if (diagram.viewBox.zoomLevel === 1) {
+        diagram.viewBox.pan({
+          x: Math.floor(-(svgRef.current!.getBoundingClientRect().width - diagram.size.w) / 2),
+          y: Math.floor(-(svgRef.current!.getBoundingClientRect().height - diagram.size.h) / 2)
+        });
+      }
+      diagram.viewBox.dimensions = {
+        w: Math.floor(svgRef.current!.getBoundingClientRect().width * diagram.viewBox.zoomLevel),
+        h: Math.floor(svgRef.current!.getBoundingClientRect().height * diagram.viewBox.zoomLevel)
+      };
+      diagram.viewBox.windowSize = {
+        w: Math.floor(svgRef.current!.getBoundingClientRect().width),
+        h: Math.floor(svgRef.current!.getBoundingClientRect().height)
+      };
+    };
+
+    adjustViewbox();
+
+    window.addEventListener('resize', adjustViewbox);
+    return () => {
+      window.removeEventListener('resize', adjustViewbox);
+    };
+  }, [diagram]);
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -235,56 +265,51 @@ export const Canvas = (props: Props) => {
   return (
     <>
       <DndProvider backend={HTML5Backend}>
-        <div>
-          <svg
-            viewBox={`0 0 640 480`}
-            ref={svgRef}
-            width="640px"
-            height="480px"
-            style={{ border: '1px solid white', background: 'white' }}
-            onMouseDown={e =>
-              onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent)
+        <svg
+          ref={svgRef}
+          preserveAspectRatio="none"
+          viewBox={diagram.viewBox.svgViewboxString}
+          onMouseDown={e => onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent)}
+          onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
+          onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
+        >
+          <DocumentBounds diagram={diagram} />
+          <Grid diagram={diagram} />
+
+          {diagram.elements.map(e => {
+            const id = e.id;
+            if (e.type === 'edge') {
+              const edge = diagram.edgeLookup[id]!;
+              return (
+                <Edge
+                  key={id}
+                  ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
+                  def={edge}
+                />
+              );
+            } else {
+              const node = diagram.nodeLookup[id]!;
+              return (
+                <Node
+                  key={id}
+                  ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
+                  isSelected={!!selection.current?.elements?.includes(node)}
+                  onMouseDown={onMouseDown}
+                  def={node}
+                />
+              );
             }
-            onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
-            onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
-          >
-            <Grid diagram={diagram} />
+          })}
 
-            {diagram.elements.map(e => {
-              const id = e.id;
-              if (e.type === 'edge') {
-                const edge = diagram.edgeLookup[id]!;
-                return (
-                  <Edge
-                    key={id}
-                    ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
-                    def={edge}
-                  />
-                );
-              } else {
-                const node = diagram.nodeLookup[id]!;
-                return (
-                  <Node
-                    key={id}
-                    ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-                    isSelected={!!selection.current?.elements?.includes(node)}
-                    onMouseDown={onMouseDown}
-                    def={node}
-                  />
-                );
-              }
-            })}
-
-            <Selection
-              ref={selectionRef}
-              selection={selection.current}
-              onDragStart={(point, type, actions) =>
-                onDragStart(diagram.viewBox.toDiagramPoint(point), type, actions)
-              }
-            />
-            <SelectionMarquee ref={selectionMarqueeRef} selection={selection.current} />
-          </svg>
-        </div>
+          <Selection
+            ref={selectionRef}
+            selection={selection.current}
+            onDragStart={(point, type, actions) =>
+              onDragStart(diagram.viewBox.toDiagramPoint(point), type, actions)
+            }
+          />
+          <SelectionMarquee ref={selectionMarqueeRef} selection={selection.current} />
+        </svg>
       </DndProvider>
     </>
   );

@@ -82,10 +82,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           y={wy}
           width={props.def.bounds.size.w}
           height={props.def.bounds.size.h}
-          fill="#ffccff"
-          style={{ stroke: 'black', strokeWidth: '1' }}
-          rx="5"
-          ry="5"
+          className={'node'}
+          rx="2"
+          ry="2"
           onMouseDown={onMouseDown}
         />
 

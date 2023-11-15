@@ -4,3 +4,65 @@
   padding: 2rem;
   text-align: center;
 }
+
+
+#app {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+
+  display: grid;
+  grid-template-columns: 20% 60% 20%;
+  grid-template-rows: 1fr;
+}
+
+#left {
+  background: white;
+  border-right: 2px solid gray;
+}
+
+#right {
+  background: white;
+  border-left: 2px solid gray;
+}
+
+#middle {
+  position: relative;
+}
+
+#middle svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: #e7e5e4;
+  height: 100%;
+  width: 100%;
+}
+
+.documentBounds {
+  fill: white;
+  stroke: #1c1917;
+  stroke-width: 1;
+  filter: drop-shadow(2px 2px 4px rgba(27, 25, 23, 0.05));
+}
+
+.grid {
+  stroke-width: 1;
+}
+.grid--minor {
+  stroke: #f5f5f4;
+}
+.grid--major {
+  stroke: #e7e5e4;
+}
+
+.node {
+  fill: #e2e8f0;
+  stroke: #64748b;
+  stroke-width: 1;
+  filter: drop-shadow(2px 2px 4px rgba(103, 116, 137, 0.1));
+}
