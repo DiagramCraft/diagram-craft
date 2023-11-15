@@ -1,6 +1,6 @@
 import { Angle } from '../geometry/angle.ts';
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { ResolvedNodeDef } from '../model/diagram.ts';
+import { ResolvedNodeDef } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from './drag.ts';
 import { Point } from '../geometry/point.ts';

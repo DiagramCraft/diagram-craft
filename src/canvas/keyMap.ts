@@ -1,4 +1,4 @@
-import { LoadedDiagram } from '../model/diagram.ts';
+import { LoadedDiagram } from '../model-viewer/diagram.ts';
 import { Drag } from './drag.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 

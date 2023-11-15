@@ -12,7 +12,7 @@ import {
   DistancePairWithRange,
   LoadedDiagram,
   ResolvedNodeDef
-} from '../../model/diagram.ts';
+} from '../../model-viewer/diagram.ts';
 
 const directions: Record<
   Direction,

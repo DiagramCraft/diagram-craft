@@ -1,4 +1,4 @@
-import { LoadedDiagram } from '../model/diagram.ts';
+import { LoadedDiagram } from '../model-viewer/diagram.ts';
 
 export const Grid = (props: Props) => {
   const { diagram } = props;

@@ -1,5 +1,5 @@
 import { Direction } from '../geometry/direction.ts';
-import { LoadedDiagram, MoveAction, ResizeAction, RotateAction } from '../model/diagram.ts';
+import { LoadedDiagram, MoveAction, ResizeAction, RotateAction } from '../model-viewer/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model-editor/snap/snapManager.ts';

@@ -6,7 +6,7 @@ import {
   Axis,
   LoadedDiagram,
   NodeHelper
-} from '../../model/diagram.ts';
+} from '../../model-viewer/diagram.ts';
 import { largest, smallest } from '../../utils/array.ts';
 import { CanvasSnapProvider } from './canvasSnapProvider.ts';
 import { NodeSnapProvider } from './nodeSnapProvider.ts';

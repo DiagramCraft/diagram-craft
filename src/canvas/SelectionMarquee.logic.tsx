@@ -1,4 +1,4 @@
-import { LoadedDiagram, ResolvedNodeDef } from '../model/diagram.ts';
+import { LoadedDiagram, ResolvedNodeDef } from '../model-viewer/diagram.ts';
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
 import { Drag, DragActions } from './drag.ts';

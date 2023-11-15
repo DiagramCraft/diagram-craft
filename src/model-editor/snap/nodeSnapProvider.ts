@@ -1,4 +1,4 @@
-import { AnchorOfType, Axis, LoadedDiagram, NodeHelper } from '../../model/diagram.ts';
+import { AnchorOfType, Axis, LoadedDiagram, NodeHelper } from '../../model-viewer/diagram.ts';
 import { Line, OLine } from '../../geometry/line.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';

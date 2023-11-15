@@ -4,7 +4,7 @@ import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
-import { DiagramEvents, LoadedDiagram, NodeHelper } from '../model/diagram.ts';
+import { DiagramEvents, LoadedDiagram, NodeHelper } from '../model-viewer/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';

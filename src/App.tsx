@@ -1,5 +1,5 @@
 import './App.css';
-import { deserializeDiagram } from './model/serialization.ts';
+import { deserializeDiagram } from './model-viewer/serialization.ts';
 import { Canvas } from './canvas/Canvas.tsx';
 import { useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';

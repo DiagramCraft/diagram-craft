@@ -1,5 +1,5 @@
 import { Point } from '../geometry/point.ts';
-import { LoadedDiagram } from '../model/diagram.ts';
+import { LoadedDiagram } from '../model-viewer/diagram.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 
 export type Modifiers = {

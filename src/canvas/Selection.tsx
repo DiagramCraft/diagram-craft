@@ -2,7 +2,7 @@ import { forwardRef, Fragment, useImperativeHandle } from 'react';
 import { useRedraw } from './useRedraw.tsx';
 import { resizeDragActions, rotateDragActions } from './Selection.logic.ts';
 import { Drag, DragActions } from './drag.ts';
-import { AnchorType } from '../model/diagram.ts';
+import { AnchorType } from '../model-viewer/diagram.ts';
 import { DistanceMarker } from './DistanceMarker.tsx';
 import { Point } from '../geometry/point.ts';
 import { Line } from '../geometry/line.ts';
