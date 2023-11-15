@@ -1,5 +1,11 @@
 import { Direction } from '../geometry/direction.ts';
-import { Diagram, MoveAction, ResizeAction, RotateAction } from '../model-viewer/diagram.ts';
+import {
+  Diagram,
+  MoveAction,
+  NodeAddAction,
+  ResizeAction,
+  RotateAction
+} from '../model-viewer/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model-editor/snap/snapManager.ts';
@@ -297,18 +303,22 @@ export const moveDragActions: DragActions = {
     selection.bounds = newBounds.getSnapshot();
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
-    selection.state['metaKey'] = false;
-
     if (selection.isChanged()) {
-      diagram.undoManager.add(
-        new MoveAction(
-          selection.source.elementBoxes,
-          selection.elements.map(e => e.bounds),
-          selection.elements,
-          diagram
-        )
-      );
+      if (selection.state['metaKey']) {
+        diagram.undoManager.add(new NodeAddAction(selection.elements, diagram));
+      } else {
+        diagram.undoManager.add(
+          new MoveAction(
+            selection.source.elementBoxes,
+            selection.elements.map(e => e.bounds),
+            selection.elements,
+            diagram
+          )
+        );
+      }
       selection.rebaseline();
     }
+
+    selection.state['metaKey'] = false;
   }
 };
