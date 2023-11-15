@@ -149,7 +149,10 @@ export const Canvas = (props: Props) => {
   const onMouseDown = useCallback(
     (id: ObjectId, point: Point, modifiers: Modifiers) => {
       const isClickOnBackground = id === BACKGROUND;
-      const isClickOnSelection = Box.contains(selection.current.bounds, point);
+      const isClickOnSelection = Box.contains(
+        selection.current.bounds,
+        diagram.viewBox.toDiagramPoint(point)
+      );
 
       try {
         if (isClickOnSelection) {
@@ -165,7 +168,7 @@ export const Canvas = (props: Props) => {
           if (!modifiers.shiftKey) {
             selection.current.clear();
           }
-          onDragStart(point, 'marquee', marqueeDragActions);
+          onDragStart(diagram.viewBox.toDiagramPoint(point), 'marquee', marqueeDragActions);
           return;
         } else {
           if (!modifiers.shiftKey) {
@@ -175,10 +178,14 @@ export const Canvas = (props: Props) => {
         }
 
         if (!selection.current.isEmpty()) {
-          onDragStart(Point.subtract(point, selection.current.bounds.pos), 'move', moveDragActions);
+          onDragStart(
+            Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.current.bounds.pos),
+            'move',
+            moveDragActions
+          );
         }
       } finally {
-        updateCursor(point);
+        updateCursor(diagram.viewBox.toDiagramPoint(point));
       }
     },
     [onDragStart, diagram, updateCursor]
@@ -210,7 +217,13 @@ export const Canvas = (props: Props) => {
       if (!drag.current) return;
 
       try {
-        drag.current.actions.onDrag(point, drag.current, diagram, selection.current, modifiers);
+        drag.current.actions.onDrag(
+          diagram.viewBox.toDiagramPoint(point),
+          drag.current,
+          diagram,
+          selection.current,
+          modifiers
+        );
       } finally {
         deferedMouseAction.current = undefined;
         updateCursor(point);
@@ -262,7 +275,13 @@ export const Canvas = (props: Props) => {
               }
             })}
 
-            <Selection ref={selectionRef} selection={selection.current} onDragStart={onDragStart} />
+            <Selection
+              ref={selectionRef}
+              selection={selection.current}
+              onDragStart={(point, type, actions) =>
+                onDragStart(diagram.viewBox.toDiagramPoint(point), type, actions)
+              }
+            />
             <SelectionMarquee ref={selectionMarqueeRef} selection={selection.current} />
           </svg>
         </div>
