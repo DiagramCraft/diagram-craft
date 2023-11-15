@@ -9,7 +9,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: Diagram) {}
 
   getAnchors(_box: Box): AnchorOfType<'canvas'>[] {
-    const { w, h } = this.diagram.dimensions;
+    const { w, h } = this.diagram.viewBox.dimensions;
     return [
       {
         line: Line.from({ x: w / 2, y: 0 }, { x: w / 2, y: h }),

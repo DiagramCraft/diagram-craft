@@ -2,7 +2,8 @@ import { Diagram } from '../model-viewer/diagram.ts';
 
 export const Grid = (props: Props) => {
   const { diagram } = props;
-  const { dimensions, grid } = diagram;
+  const { grid } = diagram;
+  const dimensions = diagram.viewBox.dimensions;
   const { w, h } = dimensions;
   const { x, y } = grid;
 

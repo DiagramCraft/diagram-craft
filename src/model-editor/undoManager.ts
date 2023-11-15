@@ -24,7 +24,6 @@ export class UndoManager extends EventEmitter<UndoEvents> {
   }
 
   add(action: UndoableAction) {
-    console.log('add');
     this.clearPending();
 
     this.undoableActions.push(action);

@@ -7,6 +7,7 @@ import { Point } from '../geometry/point.ts';
 import { Box } from '../geometry/box.ts';
 import { Line } from '../geometry/line.ts';
 import { UndoableAction, UndoManager } from '../model-editor/undoManager.ts';
+import { Extent } from '../geometry/extent.ts';
 
 /*
 type BoundsCriteria = {
@@ -73,17 +74,72 @@ export type DiagramEvents = {
   change: void;
 };
 
+export type ViewboxEvents = {
+  viewbox: { viewbox: Viewbox };
+};
+
+class Viewbox extends EventEmitter<ViewboxEvents> {
+  #dimensions: Extent = {
+    w: 640,
+    h: 480
+  };
+
+  #offset: Point = {
+    x: 0,
+    y: 0
+  };
+
+  constructor() {
+    super();
+  }
+
+  toDiagramPoint(point: Point) {
+    const transforms = TransformFactory.fromTo(
+      { pos: { x: 0, y: 0 }, size: { w: 640, h: 480 }, rotation: 0 },
+      { pos: { x: this.#offset.x, y: this.#offset.y }, size: this.#dimensions, rotation: 0 }
+    );
+    return Transform.point(point, ...transforms);
+  }
+
+  zoom(point: Point, factor: number) {
+    const p = this.toDiagramPoint(point);
+
+    this.#offset = {
+      x: this.#offset.x - (p.x - this.#offset.x) * (factor - 1),
+      y: this.#offset.y - (p.y - this.#offset.y) * (factor - 1)
+    };
+    this.#dimensions = {
+      w: this.#dimensions.w * factor,
+      h: this.#dimensions.h * factor
+    };
+    this.emit('viewbox', { viewbox: this });
+  }
+
+  pan(point: Point) {
+    this.#offset = point;
+    this.emit('viewbox', { viewbox: this });
+  }
+
+  get dimensions(): Extent {
+    return this.#dimensions;
+  }
+
+  get offset(): Point {
+    return this.#offset;
+  }
+
+  get svgViewboxString() {
+    return `${this.#offset.x} ${this.#offset.y} ${this.#dimensions.w} ${this.#dimensions.h}`;
+  }
+}
+
 export class Diagram extends EventEmitter<DiagramEvents> {
   elements: (ResolvedEdgeDef | ResolvedNodeDef)[];
   readonly nodeLookup: Record<string, ResolvedNodeDef> = {};
   readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
   readonly undoManager = new UndoManager();
 
-  // TODO: Add listener/event on dimension change
-  readonly dimensions = {
-    w: 640,
-    h: 480
-  };
+  viewBox = new Viewbox();
 
   // TODO: Add listener/event on grid change
   readonly grid = {

@@ -4,7 +4,7 @@ import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
-import { DiagramEvents, Diagram, NodeHelper } from '../model-viewer/diagram.ts';
+import { Diagram, DiagramEvents, NodeHelper, ViewboxEvents } from '../model-viewer/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
@@ -41,6 +41,38 @@ export const Canvas = (props: Props) => {
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    // TODO: Add listeners for middle button pan
+
+    const wheelEventHandler = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey) {
+        const delta = e.deltaY ?? e.detail ?? 0;
+        const normalized = -(delta % 3 ? delta * 10 : delta / 3);
+        diagram.viewBox.zoom(Point.fromEvent(e), normalized > 0 ? 1 / 1.008 : 1.008);
+      } else {
+        diagram.viewBox.pan({
+          x: diagram.viewBox.offset.x + e.deltaX * 0.7,
+          y: diagram.viewBox.offset.y + e.deltaY * 0.7
+        });
+      }
+    };
+
+    const viewboxEventHandler = ({ viewbox }: ViewboxEvents['viewbox']) => {
+      svgRef.current!.setAttribute('viewBox', viewbox.svgViewboxString);
+    };
+
+    diagram.viewBox.on('viewbox', viewboxEventHandler);
+    svgRef.current.addEventListener('wheel', wheelEventHandler);
+
+    return () => {
+      diagram.viewBox.off('viewbox', viewboxEventHandler);
+      svgRef.current?.removeEventListener('wheel', wheelEventHandler);
+    };
+  });
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {

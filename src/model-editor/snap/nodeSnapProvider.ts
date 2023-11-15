@@ -56,7 +56,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
         if (Line.isHorizontal(other.line)) {
           other.line = Line.from(
             { x: 0, y: other.line.to.y },
-            { x: this.diagram.dimensions.w, y: other.line.to.y }
+            { x: this.diagram.viewBox.dimensions.w, y: other.line.to.y }
           );
           dest.h.push([
             other as AnchorOfType<'node'>,
@@ -65,7 +65,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
         } else {
           other.line = Line.from(
             { x: other.line.to.x, y: 0 },
-            { x: other.line.to.x, y: this.diagram.dimensions.h }
+            { x: other.line.to.x, y: this.diagram.viewBox.dimensions.h }
           );
           dest.v.push([
             other as AnchorOfType<'node'>,
