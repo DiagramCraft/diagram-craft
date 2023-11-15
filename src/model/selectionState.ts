@@ -1,7 +1,8 @@
 import { Anchor, ResolvedNodeDef } from './diagram.ts';
-import { Box, Line } from '../geometry/geometry.ts';
+import { Line } from '../geometry/line.ts';
 import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
+import { Box } from '../geometry/box.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },

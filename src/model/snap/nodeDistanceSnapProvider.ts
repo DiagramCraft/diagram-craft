@@ -5,11 +5,14 @@ import {
   LoadedDiagram,
   ResolvedNodeDef
 } from '../diagram.ts';
-import { Box, Direction, Line, OLine, Point } from '../../geometry/geometry.ts';
+import { Direction } from '../../geometry/direction.ts';
 import { Range } from '../../geometry/range.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { Point } from '../../geometry/point.ts';
+import { Box } from '../../geometry/box.ts';
+import { Line, OLine } from '../../geometry/line.ts';
 
 const directions: Record<
   Direction,

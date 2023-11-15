@@ -1,8 +1,9 @@
 import { SelectionState } from '../model/selectionState.ts';
 import { LoadedDiagram, ResolvedNodeDef } from '../model/diagram.ts';
 import { precondition } from '../utils/assert.ts';
-import { Box, Point } from '../geometry/geometry.ts';
+import { Box } from '../geometry/box.ts';
 import { Drag, DragActions } from './drag.ts';
+import { Point } from '../geometry/point.ts';
 
 const updatePendingElements = (selection: SelectionState, diagram: LoadedDiagram) => {
   precondition.is.present(selection.marquee);

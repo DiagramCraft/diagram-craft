@@ -1,4 +1,3 @@
-import { Angle, Line, Point, round } from '../geometry/geometry.ts';
 import { forwardRef, Fragment, useImperativeHandle } from 'react';
 import { SelectionState } from '../model/selectionState.ts';
 import { useRedraw } from './useRedraw.tsx';
@@ -6,6 +5,10 @@ import { resizeDragActions, rotateDragActions } from './Selection.logic.ts';
 import { Drag, DragActions } from './drag.ts';
 import { AnchorType } from '../model/diagram.ts';
 import { DistanceMarker } from './DistanceMarker.tsx';
+import { Point } from '../geometry/point.ts';
+import { Line } from '../geometry/line.ts';
+import { Angle } from '../geometry/angle.ts';
+import { round } from '../utils/math.ts';
 
 export type SelectionApi = {
   repaint: () => void;

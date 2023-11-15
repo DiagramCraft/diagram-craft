@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { LoadedDiagram, ResolvedNodeDef } from './diagram.ts';
-import { TransformFactory } from '../geometry/geometry.ts';
+import { TransformFactory } from '../geometry/transform.ts';
 
 describe('Diagram', () => {
   test('transform rotate', () => {

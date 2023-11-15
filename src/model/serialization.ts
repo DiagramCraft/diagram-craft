@@ -1,4 +1,4 @@
-import { Point } from '../geometry/geometry.ts';
+import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import {
   AbstractEdgeDef,

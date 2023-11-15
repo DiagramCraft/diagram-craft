@@ -1,4 +1,4 @@
-import { Box, Direction, Line, Point } from '../../geometry/geometry.ts';
+import { Direction } from '../../geometry/direction.ts';
 import { Anchor, AnchorOfType, AnchorType, Axis, LoadedDiagram, NodeHelper } from '../diagram.ts';
 import { Guide } from '../selectionState.ts';
 import { largest, smallest } from '../../utils/array.ts';
@@ -9,6 +9,9 @@ import { VerifyNotReached } from '../../utils/assert.ts';
 import { Range } from '../../geometry/range.ts';
 import { GridSnapProvider } from './gridSnapProvider.ts';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider.ts';
+import { Point } from '../../geometry/point.ts';
+import { Box } from '../../geometry/box.ts';
+import { Line } from '../../geometry/line.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

@@ -1,7 +1,9 @@
-import { Box, Line, Point } from '../../geometry/geometry.ts';
+import { Line } from '../../geometry/line.ts';
 import { AnchorOfType, Axis, LoadedDiagram } from '../diagram.ts';
 import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { Point } from '../../geometry/point.ts';
+import { Box } from '../../geometry/box.ts';
 
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: LoadedDiagram) {}

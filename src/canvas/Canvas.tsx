@@ -3,7 +3,7 @@ import { SelectionState } from '../model/selectionState.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
-import { Box, Point } from '../geometry/geometry.ts';
+import { Box } from '../geometry/box.ts';
 import { DiagramEvents, LoadedDiagram, NodeHelper } from '../model/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -15,6 +15,7 @@ import { Drag, DragActions, Modifiers } from './drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from './useRedraw.tsx';
 import { findAction, MacKeymap } from './keyMap.ts';
+import { Point } from '../geometry/point.ts';
 
 const BACKGROUND = 'background';
 

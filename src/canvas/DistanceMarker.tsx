@@ -1,4 +1,4 @@
-import { Line } from '../geometry/geometry.ts';
+import { Line } from '../geometry/line.ts';
 
 export const DistanceMarker = (props: Props) => {
   const l = Line.from({ x: props.x1, y: props.y1 }, { x: props.x2, y: props.y2 });

@@ -1,4 +1,4 @@
-import { Point } from '../geometry/geometry.ts';
+import { Point } from '../geometry/point.ts';
 import { LoadedDiagram } from '../model/diagram.ts';
 import { SelectionState } from '../model/selectionState.ts';
 
