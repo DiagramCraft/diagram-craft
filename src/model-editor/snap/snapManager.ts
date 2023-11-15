@@ -1,6 +1,12 @@
 import { Direction } from '../../geometry/direction.ts';
-import { Anchor, AnchorOfType, AnchorType, Axis, LoadedDiagram, NodeHelper } from '../diagram.ts';
-import { Guide } from '../selectionState.ts';
+import {
+  Anchor,
+  AnchorOfType,
+  AnchorType,
+  Axis,
+  LoadedDiagram,
+  NodeHelper
+} from '../../model/diagram.ts';
 import { largest, smallest } from '../../utils/array.ts';
 import { CanvasSnapProvider } from './canvasSnapProvider.ts';
 import { NodeSnapProvider } from './nodeSnapProvider.ts';
@@ -12,6 +18,7 @@ import { NodeSizeSnapProvider } from './nodeSizeSnapProvider.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
+import { Guide } from '../selectionState.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

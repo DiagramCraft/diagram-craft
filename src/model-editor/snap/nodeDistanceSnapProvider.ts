@@ -1,18 +1,18 @@
+import { Direction } from '../../geometry/direction.ts';
+import { Range } from '../../geometry/range.ts';
+import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { Point } from '../../geometry/point.ts';
+import { Box } from '../../geometry/box.ts';
+import { Line, OLine } from '../../geometry/line.ts';
+import { Guide } from '../selectionState.ts';
 import {
   AnchorOfType,
   Axis,
   DistancePairWithRange,
   LoadedDiagram,
   ResolvedNodeDef
-} from '../diagram.ts';
-import { Direction } from '../../geometry/direction.ts';
-import { Range } from '../../geometry/range.ts';
-import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { Guide } from '../selectionState.ts';
-import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
-import { Point } from '../../geometry/point.ts';
-import { Box } from '../../geometry/box.ts';
-import { Line, OLine } from '../../geometry/line.ts';
+} from '../../model/diagram.ts';
 
 const directions: Record<
   Direction,

@@ -1,5 +1,5 @@
 import { PerformanceTest } from '../../utils/perftest.ts';
-import { LoadedDiagram, ResolvedNodeDef } from '../diagram.ts';
+import { LoadedDiagram, ResolvedNodeDef } from '../../model/diagram.ts';
 import { SnapManager } from './snapManager.ts';
 
 export class SnapManagerPerftest implements PerformanceTest {

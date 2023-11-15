@@ -1,6 +1,6 @@
 import { LoadedDiagram } from '../model/diagram.ts';
-import { SelectionState } from '../model/selectionState.ts';
 import { Drag } from './drag.ts';
+import { SelectionState } from '../model-editor/selectionState.ts';
 
 export type Action = {
   execute: (diagram: LoadedDiagram, selection: SelectionState, drag?: Drag) => void;

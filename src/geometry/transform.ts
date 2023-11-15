@@ -4,6 +4,7 @@ import { Box } from './box.ts';
 import { round } from '../utils/math.ts';
 
 export interface Transform {
+  // TODO: Do we need this?
   asSvgTransform(): string;
   apply(b: Box): Box;
   apply(b: Point): Point;

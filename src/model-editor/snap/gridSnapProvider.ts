@@ -1,9 +1,9 @@
-import { AnchorOfType, Axis, LoadedDiagram } from '../diagram.ts';
-import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Line } from '../../geometry/line.ts';
 import { Box } from '../../geometry/box.ts';
+import { Guide } from '../selectionState.ts';
+import { AnchorOfType, Axis, LoadedDiagram } from '../../model/diagram.ts';
 
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: LoadedDiagram) {}

@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from 'react';
-import { SelectionState } from '../model/selectionState.ts';
 import { useRedraw } from './useRedraw.tsx';
+import { SelectionState } from '../model-editor/selectionState.ts';
 
 export type SelectionApi = {
   repaint: () => void;

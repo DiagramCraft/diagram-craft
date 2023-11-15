@@ -1,11 +1,11 @@
-import { AnchorOfType, Axis, LoadedDiagram, NodeHelper } from '../diagram.ts';
+import { AnchorOfType, Axis, LoadedDiagram, NodeHelper } from '../../model/diagram.ts';
 import { Line, OLine } from '../../geometry/line.ts';
-import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';
 import { Range } from '../../geometry/range.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
+import { Guide } from '../selectionState.ts';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.x, b.pos.x + b.size.w), N);

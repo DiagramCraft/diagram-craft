@@ -1,6 +1,4 @@
 import { Direction } from '../../geometry/direction.ts';
-import { AnchorOfType, Axis, LoadedDiagram, ResolvedNodeDef } from '../diagram.ts';
-import { Guide } from '../selectionState.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Range } from '../../geometry/range.ts';
@@ -8,6 +6,8 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Extent } from '../../geometry/extent.ts';
+import { Guide } from '../selectionState.ts';
+import { AnchorOfType, Axis, LoadedDiagram, ResolvedNodeDef } from '../../model/diagram.ts';
 
 const forward: Partial<Record<Direction, Direction>> = {
   n: 's',

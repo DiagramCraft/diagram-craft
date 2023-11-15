@@ -1,9 +1,8 @@
 import { Direction } from '../geometry/direction.ts';
-import { SelectionState } from '../model/selectionState.ts';
 import { LoadedDiagram, MoveAction, ResizeAction, RotateAction } from '../model/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
-import { SnapManager } from '../model/snap/snapManager.ts';
+import { SnapManager } from '../model-editor/snap/snapManager.ts';
 import { deepClone } from '../utils/clone.ts';
 import { LocalCoordinateSystem } from '../geometry/lcs.ts';
 import { TransformFactory, Translation } from '../geometry/transform.ts';
@@ -12,6 +11,7 @@ import { Point } from '../geometry/point.ts';
 import { Box } from '../geometry/box.ts';
 import { Angle } from '../geometry/angle.ts';
 import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
+import { SelectionState } from '../model-editor/selectionState.ts';
 
 export const rotateDragActions: DragActions = {
   onDrag: (coord: Point, _drag: Drag, diagram: LoadedDiagram, selection: SelectionState) => {

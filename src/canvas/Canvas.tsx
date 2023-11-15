@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { SelectionState } from '../model/selectionState.ts';
+import { SelectionState } from '../model-editor/selectionState.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';

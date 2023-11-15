@@ -1,12 +1,12 @@
 import { Direction } from '../geometry/direction.ts';
 import { Range } from '../geometry/range.ts';
-import { UndoableAction, UndoManager } from './undoManager.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Transform, TransformFactory } from '../geometry/transform.ts';
 import { Point } from '../geometry/point.ts';
 import { Box } from '../geometry/box.ts';
 import { Line } from '../geometry/line.ts';
+import { UndoableAction, UndoManager } from '../model-editor/undoManager.ts';
 
 /*
 type BoundsCriteria = {
@@ -166,6 +166,7 @@ export class LoadedDiagram extends EventEmitter<DiagramEvents> {
   }
 }
 
+// TODO: Quite a bit of this should not be in diagram.ts
 type BaseAnchor = {
   line: Line;
   axis: Axis;
