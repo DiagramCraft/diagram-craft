@@ -10,7 +10,8 @@ const EMPTY_BOX = {
 };
 
 type SelectionSource = {
-  elements: ResolvedNodeDef[];
+  elementBoxes: Box[];
+  elementIds: string[];
   boundingBox: Box;
 };
 
@@ -35,7 +36,8 @@ export class SelectionState extends EventEmitter<{
   elements: ResolvedNodeDef[] = [];
 
   source: SelectionSource = {
-    elements: [],
+    elementBoxes: [],
+    elementIds: [],
     boundingBox: EMPTY_BOX
   };
 
@@ -89,8 +91,8 @@ export class SelectionState extends EventEmitter<{
 
   isChanged(): boolean {
     return this.elements.some((node, i) => {
-      const original = this.source.elements[i];
-      return !Box.equals(node.bounds, original.bounds);
+      const original = this.source.elementBoxes[i];
+      return !Box.equals(node.bounds, original);
     });
   }
 
@@ -105,16 +107,17 @@ export class SelectionState extends EventEmitter<{
 
   recalculateSourceBoundingBox() {
     this.source.boundingBox =
-      this.source.elements.length === 0
+      this.source.elementBoxes.length === 0
         ? EMPTY_BOX
-        : Box.boundingBox(this.source.elements.map(e => e.bounds));
+        : Box.boundingBox(this.source.elementBoxes.map(e => e));
   }
 
   toggle(element: ResolvedNodeDef) {
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
-    this.source.elements = this.elements;
+    this.source.elementBoxes = this.elements.map(e => e.bounds);
+    this.source.elementIds = this.elements.map(e => e.id);
 
     this.recalculateSourceBoundingBox();
     this.recalculateBoundingBox();
@@ -122,7 +125,8 @@ export class SelectionState extends EventEmitter<{
 
   clear() {
     this.elements = [];
-    this.source.elements = [];
+    this.source.elementBoxes = [];
+    this.source.elementIds = [];
     this._marquee = undefined;
     this._guides = [];
     this.pendingElements = undefined;
@@ -151,7 +155,8 @@ export class SelectionState extends EventEmitter<{
   }
 
   rebaseline() {
-    this.source.elements = this.elements;
+    this.source.elementBoxes = this.elements.map(e => e.bounds);
+    this.source.elementIds = this.elements.map(e => e.id);
     this.recalculateSourceBoundingBox();
 
     this.emit('change', { selection: this });

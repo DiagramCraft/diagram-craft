@@ -1,7 +1,7 @@
 import './App.css';
 import { deserializeDiagram } from './model/serialization.ts';
 import { Canvas } from './canvas/Canvas.tsx';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
 
@@ -22,22 +22,6 @@ const App = () => {
   //useEffect(() => {
   //  perftest(new SnapManagerPerftest());
   //}, []);
-
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      if (e.code === 'KeyZ') {
-        if (e.metaKey && e.shiftKey) {
-          $d.undoManager.redo();
-        } else if (e.metaKey) {
-          $d.undoManager.undo();
-        }
-      }
-    };
-    document.addEventListener('keydown', listener);
-    return () => {
-      document.removeEventListener('keydown', listener);
-    };
-  }, [$d]);
 
   return (
     <div>

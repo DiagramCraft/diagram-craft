@@ -34,7 +34,7 @@ export const rotateDragActions: DragActions = {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new RotateAction(
-          selection.source.elements.map(e => e.bounds),
+          selection.source.elementBoxes,
           selection.elements.map(e => e.bounds),
           selection.elements,
           diagram
@@ -190,7 +190,7 @@ export const resizeDragActions: DragActions = {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new ResizeAction(
-          selection.source.elements.map(e => e.bounds),
+          selection.source.elementBoxes,
           selection.elements.map(e => e.bounds),
           selection.elements,
           diagram
@@ -230,7 +230,7 @@ export const moveDragActions: DragActions = {
       selection.bounds = newBounds.getSnapshot();
       selection.guides = [];
 
-      const newElements = selection.source.elements.map(e => deepClone(e));
+      const newElements = selection.source.elementIds.map(e => deepClone(diagram.nodeLookup[e]));
       newElements.forEach(e => {
         e.id = diagram.newid();
         diagram.addNode(e);
@@ -243,7 +243,7 @@ export const moveDragActions: DragActions = {
 
       const elementsToRemove = selection.elements;
 
-      selection.elements = selection.source.elements;
+      selection.elements = selection.source.elementIds.map(e => diagram.nodeLookup[e]);
       selection.recalculateBoundingBox();
       selection.guides = [];
 
@@ -305,7 +305,7 @@ export const moveDragActions: DragActions = {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new MoveAction(
-          selection.source.elements.map(e => e.bounds),
+          selection.source.elementBoxes,
           selection.elements.map(e => e.bounds),
           selection.elements,
           diagram

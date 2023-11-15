@@ -14,6 +14,7 @@ import { moveDragActions } from './Selection.logic.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from './useRedraw.tsx';
+import { findAction, MacKeymap } from './keyMap.ts';
 
 const BACKGROUND = 'background';
 
@@ -39,6 +40,17 @@ export const Canvas = (props: Props) => {
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      const action = findAction(e, MacKeymap);
+      action?.execute(props.diagram, selection.current, drag.current);
+    };
+    document.addEventListener('keydown', listener);
+    return () => {
+      document.removeEventListener('keydown', listener);
+    };
+  }, [props.diagram]);
 
   useEffect(() => {
     const nodeChanged = (e: DiagramEvents['nodechanged']) => {
