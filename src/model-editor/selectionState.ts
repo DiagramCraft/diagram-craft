@@ -2,7 +2,7 @@ import { Line } from '../geometry/line.ts';
 import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
-import { DiagramNode } from '../model-viewer/diagram.ts';
+import { DiagramEdge, DiagramNode } from '../model-viewer/diagram.ts';
 import { Anchor } from './snap/anchor.ts';
 
 const EMPTY_BOX = {
@@ -35,7 +35,7 @@ export class SelectionState extends EventEmitter<{
   // TODO: This is mostly here for debugging purposes
   private _anchors: Anchor[] = [];
 
-  elements: DiagramNode[] = [];
+  elements: (DiagramEdge | DiagramNode)[] = [];
 
   source: SelectionSource = {
     elementBoxes: [],
@@ -52,6 +52,14 @@ export class SelectionState extends EventEmitter<{
     super();
     this._bounds = EMPTY_BOX;
     this.elements = [];
+  }
+
+  get nodes(): DiagramNode[] {
+    return this.elements.filter(e => e.type === 'node') as DiagramNode[];
+  }
+
+  get edges(): DiagramEdge[] {
+    return this.elements.filter(e => e.type === 'edge') as DiagramEdge[];
   }
 
   get guides(): Guide[] {

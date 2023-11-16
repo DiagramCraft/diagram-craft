@@ -3,6 +3,12 @@ import { SerializedDiagram } from '../model-viewer/serialization.ts';
 export const simpleDiagram: SerializedDiagram = {
   elements: [
     {
+      type: 'edge',
+      id: 'e1',
+      start: { anchor: 'c', node: { id: '3' } },
+      end: { anchor: 'c', node: { id: '4' } }
+    },
+    {
       type: 'node',
       nodeType: 'rect',
       id: '2',

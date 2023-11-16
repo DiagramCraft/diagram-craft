@@ -28,15 +28,15 @@ export const rotateDragActions: DragActions = {
     };
     selection.guides = [];
 
-    diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
+    diagram.transformNodes(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new RotateAction(
           selection.source.elementBoxes,
-          selection.elements.map(e => e.bounds),
-          selection.elements,
+          selection.nodes.map(e => e.bounds),
+          selection.nodes,
           diagram
         )
       );
@@ -184,15 +184,15 @@ export const resizeDragActions: DragActions = {
     }
 
     selection.bounds = newBounds.getSnapshot();
-    diagram.transformNodes(selection.elements, TransformFactory.fromTo(before, selection.bounds));
+    diagram.transformNodes(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new ResizeAction(
           selection.source.elementBoxes,
-          selection.elements.map(e => e.bounds),
-          selection.elements,
+          selection.nodes.map(e => e.bounds),
+          selection.nodes,
           diagram
         )
       );
@@ -222,7 +222,7 @@ export const moveDragActions: DragActions = {
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (modifiers.metaKey && !selection.state['metaKey']) {
       // Reset current selection back to original
-      diagram.transformNodes(selection.elements, [
+      diagram.transformNodes(selection.nodes, [
         new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))
       ]);
 
@@ -241,7 +241,7 @@ export const moveDragActions: DragActions = {
     } else if (!modifiers.metaKey && selection.state['metaKey']) {
       selection.state['metaKey'] = false;
 
-      const elementsToRemove = selection.elements;
+      const elementsToRemove = selection.nodes;
 
       selection.elements = selection.source.elementIds.map(e => diagram.nodeLookup[e]);
       selection.recalculateBoundingBox();
@@ -294,7 +294,7 @@ export const moveDragActions: DragActions = {
       newBounds.set('pos', result.adjusted.pos);
     }
 
-    diagram.transformNodes(selection.elements, [
+    diagram.transformNodes(selection.nodes, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
     selection.bounds = newBounds.getSnapshot();
@@ -305,7 +305,7 @@ export const moveDragActions: DragActions = {
       const resizeCanvasAction = createResizeCanvasActionToFit(
         diagram,
         Box.boundingBox(
-          selection.elements.map(e => e.bounds),
+          selection.nodes.map(e => e.bounds),
           true
         )
       );
@@ -314,13 +314,13 @@ export const moveDragActions: DragActions = {
       }
 
       if (selection.state['metaKey']) {
-        diagram.undoManager.add(new NodeAddAction(selection.elements, diagram));
+        diagram.undoManager.add(new NodeAddAction(selection.nodes, diagram));
       } else {
         diagram.undoManager.add(
           new MoveAction(
             selection.source.elementBoxes,
-            selection.elements.map(e => e.bounds),
-            selection.elements,
+            selection.nodes.map(e => e.bounds),
+            selection.nodes,
             diagram
           )
         );

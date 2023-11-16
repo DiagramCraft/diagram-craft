@@ -35,6 +35,8 @@ export interface DiagramNode extends AbstractNode {
 }
 
 export interface DiagramEdge extends AbstractEdge {
+  bounds: Box;
+
   start: { anchor: string; node: DiagramNode };
   end: { anchor: string; node: DiagramNode };
 }

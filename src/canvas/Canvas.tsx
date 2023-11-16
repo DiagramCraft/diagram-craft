@@ -212,7 +212,7 @@ export const Canvas = (props: Props) => {
           if (!modifiers.shiftKey) {
             selection.current.clear();
           }
-          selection.current.toggle(diagram.nodeLookup[id]);
+          selection.current.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
         }
 
         if (!selection.current.isEmpty()) {
@@ -292,6 +292,7 @@ export const Canvas = (props: Props) => {
                 <Edge
                   key={id}
                   ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
+                  onMouseDown={onMouseDown}
                   def={edge}
                 />
               );
@@ -301,7 +302,6 @@ export const Canvas = (props: Props) => {
                 <Node
                   key={id}
                   ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-                  isSelected={!!selection.current?.elements?.includes(node)}
                   onMouseDown={onMouseDown}
                   def={node}
                 />

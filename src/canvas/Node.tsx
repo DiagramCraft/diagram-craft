@@ -53,7 +53,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           <Node
             key={c.id}
             def={c}
-            isSelected={false}
             onMouseDown={(_id, coord, add) => props.onMouseDown(props.def.id, coord, add)}
           />
         ))}
@@ -109,5 +108,4 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 type Props = {
   def: DiagramNode;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-  isSelected: boolean;
 };

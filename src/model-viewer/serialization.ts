@@ -86,7 +86,14 @@ export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
     const edge = {
       ...e,
       start: { anchor: e.start.anchor, node: nodeLookup[e.start.node.id] },
-      end: { anchor: e.end.anchor, node: nodeLookup[e.end.node.id] }
+      end: { anchor: e.end.anchor, node: nodeLookup[e.end.node.id] },
+
+      // TODO: Fix this
+      bounds: {
+        pos: { x: 0, y: 0 },
+        size: { w: 0, h: 0 },
+        rotation: 0
+      }
     };
 
     const startNode = nodeLookup[edge.start.node.id];
