@@ -1,7 +1,7 @@
 export type Range = [number, number];
 
 export const Range = {
-  create: (from: number, to: number): Range => {
+  of: (from: number, to: number): Range => {
     return [from, to];
   },
 
@@ -12,10 +12,7 @@ export const Range = {
   intersection: (r1: Range, r2: Range): Range | undefined => {
     if (!Range.overlaps(r1, r2)) return undefined;
 
-    const from = Math.max(r1[0], r2[0]);
-    const to = Math.min(r1[1], r2[1]);
-
-    return Range.create(from, to);
+    return Range.of(Math.max(r1[0], r2[0]), Math.min(r1[1], r2[1]));
   },
 
   midpoint: (r: Range): number => {

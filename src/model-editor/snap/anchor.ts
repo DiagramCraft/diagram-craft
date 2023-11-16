@@ -63,18 +63,12 @@ export const Anchor = {
   forNode: (node: Box, type: 'source' = 'source'): Anchor[] => {
     const center: Anchor[] = [
       {
-        line: {
-          from: { x: node.pos.x, y: node.pos.y + node.size.h / 2 },
-          to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h / 2 }
-        },
+        line: Line.horizontal(node.pos.y + node.size.h / 2, [node.pos.x, node.pos.x + node.size.w]),
         axis: 'h',
         type
       },
       {
-        line: {
-          from: { x: node.pos.x + node.size.w / 2, y: node.pos.y },
-          to: { x: node.pos.x + node.size.w / 2, y: node.pos.y + node.size.h }
-        },
+        line: Line.vertical(node.pos.x + node.size.w / 2, [node.pos.y, node.pos.y + node.size.h]),
         axis: 'v',
         type
       }
@@ -83,37 +77,37 @@ export const Anchor = {
     if (node.rotation !== 0) return center;
 
     center.push({
-      line: {
-        from: { x: node.pos.x, y: node.pos.y },
-        to: { x: node.pos.x + node.size.w, y: node.pos.y }
-      },
+      line: Line.of(
+        { x: node.pos.x, y: node.pos.y },
+        { x: node.pos.x + node.size.w, y: node.pos.y }
+      ),
       axis: 'h',
       type,
       matchDirection: 'n'
     });
     center.push({
-      line: {
-        from: { x: node.pos.x, y: node.pos.y + node.size.h },
-        to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
-      },
+      line: Line.of(
+        { x: node.pos.x, y: node.pos.y + node.size.h },
+        { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
+      ),
       axis: 'h',
       type,
       matchDirection: 's'
     });
     center.push({
-      line: {
-        from: { x: node.pos.x, y: node.pos.y },
-        to: { x: node.pos.x, y: node.pos.y + node.size.h }
-      },
+      line: Line.of(
+        { x: node.pos.x, y: node.pos.y },
+        { x: node.pos.x, y: node.pos.y + node.size.h }
+      ),
       axis: 'v',
       type,
       matchDirection: 'w'
     });
     center.push({
-      line: {
-        from: { x: node.pos.x + node.size.w, y: node.pos.y },
-        to: { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
-      },
+      line: Line.of(
+        { x: node.pos.x + node.size.w, y: node.pos.y },
+        { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
+      ),
       axis: 'v',
       type,
       matchDirection: 'e'

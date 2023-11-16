@@ -4,7 +4,6 @@ export type Extent = Readonly<{
 }>;
 
 export const Extent = {
-  isEqual: (a: Extent, b: Extent) => {
-    return a.w === b.w && a.h === b.h;
-  }
+  of: (w: number, h: number): Extent => ({ w, h }),
+  isEqual: (a: Extent, b: Extent) => a.w === b.w && a.h === b.h
 };

@@ -1,4 +1,5 @@
 import { Point } from './point.ts';
+import { round } from '../utils/math.ts';
 
 export type Vector = Point;
 
@@ -19,8 +20,10 @@ export const Vector = {
     return { x: length * Math.cos(angle), y: length * Math.sin(angle) };
   },
   negate: (c: Vector) => ({ x: -c.x, y: -c.y }),
-
   scale: (c: Vector, s: number) => {
     return { x: c.x * s, y: c.y * s };
+  },
+  round: (c: Vector) => {
+    return { x: round(c.x), y: round(c.y) };
   }
 };

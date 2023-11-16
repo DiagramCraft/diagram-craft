@@ -20,7 +20,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
 
     for (let x = minX; x <= maxX; x++) {
       anchors.push({
-        line: Line.from({ x: x * grid.x, y: minY * grid.y }, { x: x * grid.x, y: maxY * grid.y }),
+        line: Line.of({ x: x * grid.x, y: minY * grid.y }, { x: x * grid.x, y: maxY * grid.y }),
         axis: 'v',
         type: 'grid'
       });
@@ -28,7 +28,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
 
     for (let y = minY; y <= maxY; y++) {
       anchors.push({
-        line: Line.from({ x: minX * grid.x, y: y * grid.y }, { x: maxX * grid.x, y: y * grid.y }),
+        line: Line.of({ x: minX * grid.x, y: y * grid.y }, { x: maxX * grid.x, y: y * grid.y }),
         axis: 'h',
         type: 'grid'
       });
@@ -40,11 +40,11 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
   makeGuide(box: Box, match: MatchingAnchorPair<'grid'>, _axis: Axis): Guide {
     return {
       line: Line.isHorizontal(match.matching.line)
-        ? Line.from(
+        ? Line.of(
             { x: box.pos.x, y: match.matching.line.from.y },
             { x: box.pos.x + box.size.w, y: match.matching.line.from.y }
           )
-        : Line.from(
+        : Line.of(
             { x: match.matching.line.from.x, y: box.pos.y },
             { x: match.matching.line.from.x, y: box.pos.y + box.size.h }
           ),

@@ -8,16 +8,6 @@ export type Line = Readonly<{
   to: Point;
 }>;
 
-export const OLine = {
-  fromRange: (pos: { x: number } | { y: number }, range: Range) => {
-    if ('x' in pos) {
-      return Line.from({ x: pos.x, y: range[0] }, { x: pos.x, y: range[1] });
-    } else {
-      return Line.from({ y: pos.y, x: range[0] }, { y: pos.y, x: range[1] });
-    }
-  }
-};
-
 export const Line = {
   extend: (line: Line, fromLength: number, toLength: number) => {
     const v = Vector.from(line.from, line.to);
@@ -29,7 +19,15 @@ export const Line = {
     };
   },
 
-  from: (from: Point, to: Point) => {
+  vertical: (x: number, range: Range) => {
+    return Line.of({ x, y: range[0] }, { x, y: range[1] });
+  },
+
+  horizontal: (y: number, range: Range) => {
+    return Line.of({ y, x: range[0] }, { y, x: range[1] });
+  },
+
+  of: (from: Point, to: Point) => {
     return { from, to };
   },
 
@@ -38,10 +36,7 @@ export const Line = {
   },
 
   move: (line: Line, delta: Vector) => {
-    return {
-      from: Point.add(line.from, delta),
-      to: Point.add(line.to, delta)
-    };
+    return Line.of(Point.add(line.from, delta), Point.add(line.to, delta));
   },
 
   isHorizontal: (line: Line) => {

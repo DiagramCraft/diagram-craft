@@ -4,8 +4,6 @@ import { Box } from './box.ts';
 import { round } from '../utils/math.ts';
 
 export interface Transform {
-  // TODO: Do we need this?
-  asSvgTransform(): string;
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point;
@@ -22,10 +20,6 @@ export const Transform = {
 };
 
 export class Noop implements Transform {
-  asSvgTransform() {
-    return '';
-  }
-
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
@@ -52,15 +46,15 @@ export class Translation implements Transform {
 
   constructor(private readonly c: Point) {}
 
-  asSvgTransform() {
-    return `translate(${this.c.x},${this.c.y})`;
-  }
-
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
-      return Box.translate(b, this.c);
+      return {
+        pos: Point.add(b.pos, this.c),
+        size: { ...b.size },
+        rotation: b.rotation
+      };
     } else {
       return Point.add(b, this.c);
     }
@@ -76,10 +70,6 @@ export class Scale implements Transform {
     private readonly x: number,
     private readonly y: number
   ) {}
-
-  asSvgTransform() {
-    return `scale(${this.x},${this.y})`;
-  }
 
   apply(b: Box): Box;
   apply(b: Point): Point;
@@ -108,15 +98,22 @@ export class Rotation implements Transform {
 
   constructor(private readonly r: number) {}
 
-  asSvgTransform() {
-    return `rotate(${this.r})`;
+  private moveCenterPoint(b: Box, center: Point): Box {
+    return {
+      pos: {
+        x: center.x - b.size.w / 2,
+        y: center.y - b.size.h / 2
+      },
+      size: { ...b.size },
+      rotation: b.rotation
+    };
   }
 
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
     if ('pos' in b) {
-      const ret = Box.moveCenterPoint(b, Point.rotate(Box.center(b), this.r));
+      const ret = this.moveCenterPoint(b, Point.rotate(Box.center(b), this.r));
       return {
         pos: ret.pos,
         size: ret.size,
@@ -138,10 +135,6 @@ export class Shear implements Transform {
     private readonly amount: number,
     private readonly axis: 'x' | 'y'
   ) {}
-
-  asSvgTransform() {
-    return `skew${this.axis.toUpperCase()}(${this.amount})`;
-  }
 
   apply(b: Box): Box;
   apply(b: Point): Point;

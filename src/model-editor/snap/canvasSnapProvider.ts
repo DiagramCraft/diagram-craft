@@ -13,12 +13,12 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     const { w, h } = this.diagram.canvas.size;
     return [
       {
-        line: Line.from({ x: w / 2, y: 0 }, { x: w / 2, y: h }),
+        line: Line.of({ x: w / 2, y: 0 }, { x: w / 2, y: h }),
         axis: 'v',
         type: 'canvas'
       },
       {
-        line: Line.from({ x: 0, y: h / 2 }, { x: w, y: h / 2 }),
+        line: Line.of({ x: 0, y: h / 2 }, { x: w, y: h / 2 }),
         axis: 'h',
         type: 'canvas'
       }

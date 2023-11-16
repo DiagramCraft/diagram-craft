@@ -4,7 +4,7 @@ import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
-import { Line, OLine } from '../../geometry/line.ts';
+import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
 import { AnchorOfType, Axis, DistancePairWithRange } from './anchor.ts';
@@ -41,9 +41,9 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
   private getRange(b: Box, axis: Axis) {
     if (axis === 'h') {
-      return Range.create(b.pos.x, b.pos.x + b.size.w);
+      return Range.of(b.pos.x, b.pos.x + b.size.w);
     } else {
-      return Range.create(b.pos.y, b.pos.y + b.size.h);
+      return Range.of(b.pos.y, b.pos.y + b.size.h);
     }
   }
 
@@ -151,9 +151,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
           anchors.push({
             ...baseDistanceAnchor,
             line:
-              axis === 'v'
-                ? OLine.fromRange({ x: pos }, intersection)
-                : OLine.fromRange({ y: pos }, intersection),
+              axis === 'v' ? Line.vertical(pos, intersection) : Line.horizontal(pos, intersection),
             axis,
             matchDirection: dir,
             respectDirection: true,

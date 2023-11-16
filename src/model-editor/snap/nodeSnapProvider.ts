@@ -1,5 +1,5 @@
 import { Diagram } from '../../model-viewer/diagram.ts';
-import { Line, OLine } from '../../geometry/line.ts';
+import { Line } from '../../geometry/line.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';
 import { Range } from '../../geometry/range.ts';
@@ -26,9 +26,9 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
 
   private getRange(b: Box, axis: Axis) {
     if (axis === 'h') {
-      return Range.create(b.pos.x, b.pos.x + b.size.w);
+      return Range.of(b.pos.x, b.pos.x + b.size.w);
     } else {
-      return Range.create(b.pos.y, b.pos.y + b.size.h);
+      return Range.of(b.pos.y, b.pos.y + b.size.h);
     }
   }
 
@@ -55,7 +55,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
         (other as AnchorOfType<'node'>).node = node;
 
         if (Line.isHorizontal(other.line)) {
-          other.line = Line.from(
+          other.line = Line.of(
             { x: 0, y: other.line.to.y },
             { x: this.diagram.viewBox.dimensions.w, y: other.line.to.y }
           );
@@ -64,7 +64,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
             Point.squareDistance(center, Box.center(node.bounds))
           ]);
         } else {
-          other.line = Line.from(
+          other.line = Line.of(
             { x: other.line.to.x, y: 0 },
             { x: other.line.to.x, y: this.diagram.viewBox.dimensions.h }
           );
@@ -86,8 +86,8 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     const mBox = match.matching.node.bounds;
     return {
       line: Line.isHorizontal(match.matching.line)
-        ? OLine.fromRange({ y: match.matching.line.from.y }, [minX(mBox, box), maxX(mBox, box)])
-        : OLine.fromRange({ x: match.matching.line.from.x }, [minY(mBox, box), maxY(mBox, box)]),
+        ? Line.horizontal(match.matching.line.from.y, [minX(mBox, box), maxX(mBox, box)])
+        : Line.vertical(match.matching.line.from.x, [minY(mBox, box), maxY(mBox, box)]),
       matchingAnchor: match.matching,
       selfAnchor: match.self
     };

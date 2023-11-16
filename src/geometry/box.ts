@@ -46,7 +46,7 @@ export const Box = {
     };
   },
 
-  equals: (a: Box, b: Box) => {
+  isEqual: (a: Box, b: Box) => {
     return (
       a.pos.x === b.pos.x &&
       a.pos.y === b.pos.y &&
@@ -54,17 +54,6 @@ export const Box = {
       a.size.h === b.size.h &&
       a.rotation === b.rotation
     );
-  },
-
-  moveCenterPoint: (b: Box, center: Point): Box => {
-    return {
-      pos: {
-        x: center.x - b.size.w / 2,
-        y: center.y - b.size.h / 2
-      },
-      size: { ...b.size },
-      rotation: b.rotation
-    };
   },
 
   // TODO: This should not be part of the Box API
@@ -156,12 +145,15 @@ export const Box = {
     return corners.map(c => Point.rotateAround(c, box.rotation, Box.center(box)));
   },
 
+  // TODO: This can be used in a large number of situations
+  //       ... and it can be optimized to not use the corners method
+  //       ... except whem rotating
   line: (box: Box, dir: Direction) => {
     const corners = Box.corners(box);
-    if (dir === 'n') return Line.from(corners[0], corners[1]);
-    if (dir === 's') return Line.from(corners[2], corners[3]);
-    if (dir === 'w') return Line.from(corners[3], corners[0]);
-    return Line.from(corners[1], corners[2]);
+    if (dir === 'n') return Line.of(corners[0], corners[1]);
+    if (dir === 's') return Line.of(corners[2], corners[3]);
+    if (dir === 'w') return Line.of(corners[3], corners[0]);
+    return Line.of(corners[1], corners[2]);
   },
 
   asPolygon: (box: Box): Polygon => {
@@ -191,16 +183,6 @@ export const Box = {
     return Polygon.intersects(Box.asPolygon(box), Box.asPolygon(otherBox));
   },
 
-  translate: (b: Box, c: Point): Box => {
-    return {
-      pos: Point.add(b.pos, c),
-      size: { ...b.size },
-      rotation: b.rotation
-    };
-  },
-
-  // TODO: Do we want this, or should we use negative width and negative heigh
-  //       as an indicator for flipping a node
   normalize: (b: Box) => {
     return {
       pos: { x: Math.min(b.pos.x, b.pos.x + b.size.w), y: Math.min(b.pos.y, b.pos.y + b.size.h) },

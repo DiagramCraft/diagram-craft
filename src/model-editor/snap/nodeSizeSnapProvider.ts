@@ -36,9 +36,9 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
 
   private getRange(b: Box, axis: Axis) {
     if (axis === 'h') {
-      return Range.create(b.pos.x, b.pos.x + b.size.w);
+      return Range.of(b.pos.x, b.pos.x + b.size.w);
     } else {
-      return Range.create(b.pos.y, b.pos.y + b.size.h);
+      return Range.of(b.pos.y, b.pos.y + b.size.h);
     }
   }
 
@@ -106,11 +106,11 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
         size: nodeDim,
         line:
           dir === 'h'
-            ? Line.from(
+            ? Line.of(
                 { x: box.pos.x, y: box.pos.y + box.size.h + diff },
                 { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h + diff }
               )
-            : Line.from(
+            : Line.of(
                 { x: box.pos.x + box.size.w + diff, y: box.pos.y },
                 { x: box.pos.x + box.size.w + diff, y: box.pos.y + box.size.h }
               ),
@@ -125,11 +125,11 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
         size: nodeDim,
         line:
           dir === 'h'
-            ? Line.from(
+            ? Line.of(
                 { x: box.pos.x, y: box.pos.y - diff },
                 { x: box.pos.x + box.size.w, y: box.pos.y - diff }
               )
-            : Line.from(
+            : Line.of(
                 { x: box.pos.x - diff, y: box.pos.y },
                 { x: box.pos.x - diff, y: box.pos.y + box.size.h }
               ),
