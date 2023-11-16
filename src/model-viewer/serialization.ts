@@ -17,13 +17,20 @@ export interface SerializedNode extends AbstractNode {
   children: SerializedNode[];
 }
 
+type SerializedConnectedEndpoint = { anchor: string; node: Reference };
+
+type SerializedEndpoint = SerializedConnectedEndpoint | { position: Point };
+
 export interface SerializedEdge extends AbstractEdge {
-  start: { anchor: string; node: Reference };
-  end: { anchor: string; node: Reference };
+  start: SerializedEndpoint;
+  end: SerializedEndpoint;
 }
 
 const isNodeDef = (element: SerializedNode | SerializedEdge): element is SerializedNode =>
   element.type === 'node';
+
+const isConnected = (endpoint: SerializedEndpoint): endpoint is SerializedConnectedEndpoint =>
+  'node' in endpoint;
 
 const unfoldGroup = (node: SerializedNode) => {
   const recurse = (
@@ -49,12 +56,8 @@ export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
   // Index skeleton nodes
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
-      nodeLookup[c.id] = {
-        ...c,
-        parent: undefined,
-        edges: {},
-        children: []
-      };
+      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds);
+      nodeLookup[c.id].props = c.props;
     }
   }
 
@@ -83,30 +86,34 @@ export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
   for (const e of diagram.elements) {
     if (e.type !== 'edge') continue;
 
-    const edge = {
-      ...e,
-      start: { anchor: e.start.anchor, node: nodeLookup[e.start.node.id] },
-      end: { anchor: e.end.anchor, node: nodeLookup[e.end.node.id] },
+    const start = e.start;
+    const end = e.end;
 
-      // TODO: Fix this
-      bounds: {
-        pos: { x: 0, y: 0 },
-        size: { w: 0, h: 0 },
-        rotation: 0
-      }
-    };
+    const edge = new DiagramEdge(
+      e.id,
+      isConnected(start)
+        ? { anchor: start.anchor, node: nodeLookup[start.node.id] }
+        : { position: start.position },
+      isConnected(end)
+        ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
+        : { position: end.position }
+    );
 
-    const startNode = nodeLookup[edge.start.node.id];
+    if (isConnected(start)) {
+      const startNode = nodeLookup[start.node.id];
 
-    startNode.edges ??= {};
-    startNode.edges[edge.start.anchor] ??= [];
-    startNode.edges[edge.start.anchor].push(edge);
+      startNode.edges ??= {};
+      startNode.edges[start.anchor] ??= [];
+      startNode.edges[start.anchor].push(edge);
+    }
 
-    const endNode = nodeLookup[edge.end.node.id];
+    if (isConnected(end)) {
+      const endNode = nodeLookup[end.node.id];
 
-    endNode.edges ??= {};
-    endNode.edges[edge.end.anchor] ??= [];
-    endNode.edges[edge.end.anchor].push(edge);
+      endNode.edges ??= {};
+      endNode.edges[end.anchor] ??= [];
+      endNode.edges[end.anchor].push(edge);
+    }
 
     edgeLookup[e.id] = edge;
   }

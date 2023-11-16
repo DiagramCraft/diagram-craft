@@ -31,6 +31,14 @@ export const Box = {
     });
   },
 
+  fromCorners: (a: Point, b: Point): Box => {
+    return {
+      pos: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) },
+      size: { w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) },
+      rotation: 0
+    };
+  },
+
   center: (b: Box) => {
     return {
       x: b.pos.x + b.size.w / 2,

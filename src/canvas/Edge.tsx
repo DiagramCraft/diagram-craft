@@ -1,5 +1,5 @@
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { DiagramEdge } from '../model-viewer/diagram.ts';
+import { DiagramEdge, isConnectedEndpoint } from '../model-viewer/diagram.ts';
 import { Box } from '../geometry/box.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
@@ -20,11 +20,11 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     };
   });
 
-  const startNode = props.def.start.node;
-  const endNode = props.def.end.node;
+  const start = props.def.start;
+  const end = props.def.end;
 
-  const sm = Box.center(startNode.bounds);
-  const em = Box.center(endNode.bounds);
+  const sm = isConnectedEndpoint(start) ? Box.center(start.node.bounds) : start.position;
+  const em = isConnectedEndpoint(end) ? Box.center(end.node.bounds) : end.position;
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
@@ -43,11 +43,20 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         y1={sm.y}
         x2={em.x}
         y2={em.y}
-        stroke={'pink'}
-        strokeWidth={10}
+        stroke={'transparent'}
+        strokeWidth={15}
         onMouseDown={onMouseDown}
+        style={{ cursor: 'move' }}
       />
-      <line x1={sm.x} y1={sm.y} x2={em.x} y2={em.y} stroke={'black'} />
+      <line
+        x1={sm.x}
+        y1={sm.y}
+        x2={em.x}
+        y2={em.y}
+        stroke={'black'}
+        onMouseDown={onMouseDown}
+        style={{ cursor: 'move' }}
+      />
     </>
   );
 });

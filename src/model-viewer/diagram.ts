@@ -4,7 +4,8 @@ import { Transform } from '../geometry/transform.ts';
 import { Box } from '../geometry/box.ts';
 import { UndoManager } from '../model-editor/undoManager.ts';
 import { Viewbox } from './viewBox.ts';
-import { NodeHelper } from './nodeHelper.ts';
+import { deepClone } from '../utils/clone.ts';
+import { Point } from '../geometry/point.ts';
 
 export interface DiagramElement {
   id: string;
@@ -27,18 +28,85 @@ export interface AbstractEdge extends DiagramElement {
   id: string;
 }
 
-export interface DiagramNode extends AbstractNode {
+export class DiagramNode implements AbstractNode {
+  id: string;
+  bounds: Box;
+  type: 'node';
+  nodeType: 'group' | string;
+
   parent?: DiagramNode;
+  children: DiagramNode[];
 
   edges?: Record<string, DiagramEdge[]>;
-  children: DiagramNode[];
+
+  // TODO: We should use interface for this and make it extendable by nodeType
+  props?: Record<string, unknown>;
+
+  constructor(id: string, nodeType: 'group' | string, bounds: Box) {
+    this.id = id;
+    this.bounds = bounds;
+    this.type = 'node';
+    this.nodeType = nodeType;
+    this.children = [];
+  }
+
+  clone() {
+    const node = new DiagramNode(this.id, this.nodeType, deepClone(this.bounds));
+    node.props = deepClone(this.props);
+    node.children = this.children.map(c => c.clone());
+    return node;
+  }
+
+  listEdges(includeChildren = true): DiagramEdge[] {
+    return [
+      ...Object.values(this.edges ?? {}).flatMap(e => e),
+      ...(includeChildren ? this.children.flatMap(c => c.listEdges(includeChildren)) : [])
+    ];
+  }
 }
 
-export interface DiagramEdge extends AbstractEdge {
-  bounds: Box;
+export type ConnectedEndpoint = { anchor: string; node: DiagramNode };
+export type Endpoint = ConnectedEndpoint | { position: Point };
 
-  start: { anchor: string; node: DiagramNode };
-  end: { anchor: string; node: DiagramNode };
+export const isConnectedEndpoint = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
+  'node' in endpoint;
+
+export class DiagramEdge implements AbstractEdge {
+  id: string;
+  type: 'edge';
+
+  start: Endpoint;
+  end: Endpoint;
+
+  constructor(id: string, start: Endpoint, end: Endpoint) {
+    this.id = id;
+    this.type = 'edge';
+    this.start = start;
+    this.end = end;
+  }
+
+  // TODO: This is probably not a sufficient way to calculate the bounding box
+  get bounds() {
+    return Box.fromCorners(this.startPosition, this.endPosition);
+  }
+
+  get startPosition() {
+    return isConnectedEndpoint(this.start)
+      ? Box.center(this.start.node.bounds)
+      : this.start.position;
+  }
+
+  isStartConnected() {
+    return isConnectedEndpoint(this.start);
+  }
+
+  get endPosition() {
+    return isConnectedEndpoint(this.end) ? Box.center(this.end.node.bounds) : this.end.position;
+  }
+
+  isEndConnected() {
+    return isConnectedEndpoint(this.end);
+  }
 }
 
 export type Canvas = Omit<Box, 'rotation'>;
@@ -130,7 +198,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   }
 
   transformNodes(nodes: DiagramNode[], transforms: Transform[]) {
-    const before = nodes.map(n => NodeHelper.cloneNodeBounds(n));
+    const before = nodes.map(n => n.clone());
 
     for (const node of nodes) {
       node.bounds = Transform.box(node.bounds, ...transforms);

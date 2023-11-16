@@ -126,6 +126,7 @@ export class SelectionState extends EventEmitter<{
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
+
     this.source.elementBoxes = this.elements.map(e => e.bounds);
     this.source.elementIds = this.elements.map(e => e.id);
 

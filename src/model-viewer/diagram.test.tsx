@@ -4,29 +4,17 @@ import { TransformFactory } from '../geometry/transform.ts';
 
 describe('Diagram', () => {
   test('transform rotate', () => {
-    const node1: DiagramNode = {
-      type: 'node',
-      nodeType: 'a',
-      id: '1',
-      children: [],
-      bounds: {
-        pos: { x: 0, y: 0 },
-        size: { w: 100, h: 100 },
-        rotation: 0
-      }
-    };
+    const node1 = new DiagramNode('1', 'a', {
+      pos: { x: 0, y: 0 },
+      size: { w: 100, h: 100 },
+      rotation: 0
+    });
 
-    const node2: DiagramNode = {
-      type: 'node',
-      nodeType: 'a',
-      id: '2',
-      children: [],
-      bounds: {
-        pos: { x: 100, y: 100 },
-        size: { w: 100, h: 100 },
-        rotation: 0
-      }
-    };
+    const node2 = new DiagramNode('2', 'a', {
+      pos: { x: 100, y: 100 },
+      size: { w: 100, h: 100 },
+      rotation: 0
+    });
 
     const nodes = [node1, node2];
     const diagram = new Diagram(nodes);
@@ -45,29 +33,17 @@ describe('Diagram', () => {
   });
 
   test.skip('transform rotate - inverse', () => {
-    const node1: DiagramNode = {
-      type: 'node',
-      nodeType: 'a',
-      id: '1',
-      children: [],
-      bounds: {
-        pos: { x: 10, y: 10 },
-        size: { w: 100, h: 100 },
-        rotation: 0
-      }
-    };
+    const node1 = new DiagramNode('1', 'a', {
+      pos: { x: 10, y: 10 },
+      size: { w: 100, h: 100 },
+      rotation: 0
+    });
 
-    const node2: DiagramNode = {
-      type: 'node',
-      nodeType: 'a',
-      id: '2',
-      children: [],
-      bounds: {
-        pos: { x: 100, y: 100 },
-        size: { w: 100, h: 100 },
-        rotation: 0
-      }
-    };
+    const node2 = new DiagramNode('2', 'a', {
+      pos: { x: 100, y: 100 },
+      size: { w: 100, h: 100 },
+      rotation: 0
+    });
 
     const nodes = [node1, node2];
     const diagram = new Diagram(nodes);

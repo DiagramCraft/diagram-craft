@@ -65,4 +65,8 @@
   stroke: #64748b;
   stroke-width: 1;
   filter: drop-shadow(2px 2px 4px rgba(103, 116, 137, 0.1));
+  cursor: move;
+}
+.node:hover {
+  filter: drop-shadow(2px 2px 4px rgba(103, 116, 137, 0.25));
 }

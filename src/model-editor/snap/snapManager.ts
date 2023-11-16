@@ -77,7 +77,7 @@ const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: 'h' | 'v') =>
   line1.from[Axis.toXY(oAxis)] - line2.from[Axis.toXY(oAxis)];
 
 export class SnapManager {
-  private threshold = 10;
+  private threshold = 5;
 
   // TODO: Ideally we should find a better way to exclude the currently selected node
   //       maybe we can pass in the current selection instead of just the box (bounds)

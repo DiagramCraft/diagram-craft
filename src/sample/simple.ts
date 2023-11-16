@@ -9,6 +9,12 @@ export const simpleDiagram: SerializedDiagram = {
       end: { anchor: 'c', node: { id: '4' } }
     },
     {
+      type: 'edge',
+      id: 'e2',
+      start: { position: { x: 20, y: 20 } },
+      end: { position: { x: 100, y: 100 } }
+    },
+    {
       type: 'node',
       nodeType: 'rect',
       id: '2',

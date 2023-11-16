@@ -8,13 +8,7 @@ export class SnapManagerPerftest implements PerformanceTest {
   setup(): void {
     const defs: DiagramNode[] = [];
     for (let i = 0; i < 1000; i++) {
-      defs.push({
-        id: i.toString(),
-        bounds: this.randomBox(),
-        type: 'node',
-        nodeType: 'box',
-        children: []
-      });
+      defs.push(new DiagramNode(i.toString(), 'box', this.randomBox()));
     }
 
     const d = new Diagram(defs);

@@ -18,7 +18,6 @@ import { findAction, MacKeymap } from './keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from './DocumentBounds.tsx';
 import { ViewboxEvents } from '../model-viewer/viewBox.ts';
-import { NodeHelper } from '../model-viewer/nodeHelper.ts';
 
 const BACKGROUND = 'background';
 
@@ -125,7 +124,7 @@ export const Canvas = (props: Props) => {
     const nodeChanged = (e: DiagramEvents['nodechanged']) => {
       nodeRefs.current[e.after.id]?.repaint();
 
-      for (const edge of NodeHelper.edges(e.after)) {
+      for (const edge of e.after.listEdges(true)) {
         edgeRefs.current[edge.id]?.repaint();
       }
     };
@@ -198,7 +197,7 @@ export const Canvas = (props: Props) => {
             callback: () => {
               selection.current.clear();
               if (!isClickOnBackground) {
-                selection.current.toggle(diagram.nodeLookup[id]);
+                selection.current.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
               }
             }
           };

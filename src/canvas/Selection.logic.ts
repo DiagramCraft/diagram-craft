@@ -3,7 +3,6 @@ import { Diagram } from '../model-viewer/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model-editor/snap/snapManager.ts';
-import { deepClone } from '../utils/clone.ts';
 import { LocalCoordinateSystem } from '../geometry/lcs.ts';
 import { TransformFactory, Translation } from '../geometry/transform.ts';
 import { Vector } from '../geometry/vector.ts';
@@ -230,7 +229,7 @@ export const moveDragActions: DragActions = {
       selection.bounds = newBounds.getSnapshot();
       selection.guides = [];
 
-      const newElements = selection.source.elementIds.map(e => deepClone(diagram.nodeLookup[e]));
+      const newElements = selection.source.elementIds.map(e => diagram.nodeLookup[e].clone());
       newElements.forEach(e => {
         e.id = diagram.newid();
         diagram.addNode(e);

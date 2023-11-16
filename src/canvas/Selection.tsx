@@ -36,6 +36,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   if (props.selection.isEmpty()) return null;
 
+  const isOnlyEdges = props.selection.nodes.length === 0 && props.selection.edges.length > 0;
+
   const bounds = props.selection.bounds;
 
   const points: Point[] = [
@@ -152,143 +154,164 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         <polyline
           points={pointsString}
           style={{ stroke: '#2673dd', strokeWidth: '1' }}
+          strokeDasharray={isOnlyEdges ? '5 5' : undefined}
           fill="none"
         />
 
-        <line
-          x1={Point.midpoint(points[0], points[1]).x}
-          y1={Point.midpoint(points[0], points[1]).y}
-          x2={Point.midpoint(points[0], points[1]).x}
-          y2={Point.midpoint(points[0], points[1]).y - 20}
-          strokeWidth={1}
-          stroke="#2673dd"
-        />
-
-        <circle
-          cx={points[0].x}
-          cy={points[0].y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'nw-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={points[1].x}
-          cy={points[1].y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'ne-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={points[2].x}
-          cy={points[2].y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'se-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={points[3].x}
-          cy={points[3].y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'sw-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={Point.midpoint(points[0], points[1]).x}
-          cy={Point.midpoint(points[0], points[1]).y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'n-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={Point.midpoint(points[0], points[1]).x}
-          cy={Point.midpoint(points[0], points[1]).y - 20}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'ew-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', rotateDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={Point.midpoint(points[1], points[2]).x}
-          cy={Point.midpoint(points[1], points[2]).y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'e-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={Point.midpoint(points[2], points[3]).x}
-          cy={Point.midpoint(points[2], points[3]).y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 's-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
-
-        <circle
-          cx={Point.midpoint(points[3], points[4]).x}
-          cy={Point.midpoint(points[3], points[4]).y}
-          r="4"
-          fill="white"
-          strokeWidth={1}
-          stroke="#2673dd"
-          style={{ cursor: 'w-resize' }}
-          onMouseDown={e => {
-            props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', resizeDragActions);
-            e.stopPropagation();
-          }}
-        />
+        {!isOnlyEdges && (
+          <>
+            <line
+              x1={Point.midpoint(points[0], points[1]).x}
+              y1={Point.midpoint(points[0], points[1]).y}
+              x2={Point.midpoint(points[0], points[1]).x}
+              y2={Point.midpoint(points[0], points[1]).y - 20}
+              strokeWidth={1}
+              stroke="#2673dd"
+            />
+            <circle
+              cx={Point.midpoint(points[0], points[1]).x}
+              cy={Point.midpoint(points[0], points[1]).y - 20}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'ew-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', rotateDragActions);
+                e.stopPropagation();
+              }}
+            />
+            <circle
+              cx={points[0].x}
+              cy={points[0].y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'nw-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+            <circle
+              cx={points[1].x}
+              cy={points[1].y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'ne-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+            <circle
+              cx={points[2].x}
+              cy={points[2].y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'se-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+            <circle
+              cx={points[3].x}
+              cy={points[3].y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'sw-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+            <circle
+              cx={Point.midpoint(points[0], points[1]).x}
+              cy={Point.midpoint(points[0], points[1]).y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'n-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+            <circle
+              cx={Point.midpoint(points[1], points[2]).x}
+              cy={Point.midpoint(points[1], points[2]).y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'e-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+            ;
+            <circle
+              cx={Point.midpoint(points[2], points[3]).x}
+              cy={Point.midpoint(points[2], points[3]).y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 's-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+            <circle
+              cx={Point.midpoint(points[3], points[4]).x}
+              cy={Point.midpoint(points[3], points[4]).y}
+              r="4"
+              fill="white"
+              strokeWidth={1}
+              stroke="#2673dd"
+              style={{ cursor: 'w-resize' }}
+              onMouseDown={e => {
+                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', resizeDragActions);
+                e.stopPropagation();
+              }}
+            />
+          </>
+        )}
+        {props.selection.edges.map(e => {
+          return (
+            <Fragment key={e.id}>
+              <circle
+                cx={e.startPosition.x}
+                cy={e.startPosition.y}
+                r="4"
+                fill={e.isStartConnected() ? '#2673dd' : 'white'}
+                strokeWidth={1}
+                stroke="#2673dd"
+                style={{ cursor: 'move' }}
+              />
+              <circle
+                cx={e.endPosition.x}
+                cy={e.endPosition.y}
+                r="4"
+                fill={e.isEndConnected() ? '#2673dd' : 'white'}
+                strokeWidth={1}
+                stroke="#2673dd"
+                style={{ cursor: 'move' }}
+              />
+            </Fragment>
+          );
+        })}
       </g>
       {/*<SelectionDebug selection={props.selection} />*/}
     </>
