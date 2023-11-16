@@ -7,7 +7,8 @@ import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Guide } from '../selectionState.ts';
-import { AnchorOfType, Axis, Diagram, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
+import { Diagram, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
+import { AnchorOfType, Axis } from './anchor.ts';
 
 const forward: Partial<Record<Direction, Direction>> = {
   n: 's',

@@ -6,13 +6,8 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line, OLine } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
-import {
-  AnchorOfType,
-  Axis,
-  DistancePairWithRange,
-  Diagram,
-  ResolvedNodeDef
-} from '../../model-viewer/diagram.ts';
+import { Diagram, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
+import { AnchorOfType, Axis, DistancePairWithRange } from './anchor.ts';
 
 const directions: Record<
   Direction,

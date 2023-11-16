@@ -1,12 +1,5 @@
 import { Direction } from '../../geometry/direction.ts';
-import {
-  Anchor,
-  AnchorOfType,
-  AnchorType,
-  Axis,
-  Diagram,
-  NodeHelper
-} from '../../model-viewer/diagram.ts';
+import { Diagram } from '../../model-viewer/diagram.ts';
 import { largest, smallest } from '../../utils/array.ts';
 import { CanvasSnapProvider } from './canvasSnapProvider.ts';
 import { NodeSnapProvider } from './nodeSnapProvider.ts';
@@ -19,6 +12,7 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
+import { Anchor, AnchorOfType, AnchorType, Axis } from './anchor.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -129,7 +123,7 @@ export class SnapManager {
     const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance', 'size'];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
-    const selfAnchors = NodeHelper.anchors(b, 'source').filter(s =>
+    const selfAnchors = Anchor.forNode(b, 'source').filter(s =>
       directions.includes(s.matchDirection!)
     );
 
@@ -160,7 +154,7 @@ export class SnapManager {
     }
 
     // Readjust self anchors to the new position - post snapping
-    const newAnchors = NodeHelper.anchors(newBounds.getSnapshot(), 'source');
+    const newAnchors = Anchor.forNode(newBounds.getSnapshot(), 'source');
     selfAnchors.forEach(a => {
       a.line = newAnchors.find(b => b.matchDirection === a.matchDirection)!.line;
     });
@@ -184,7 +178,7 @@ export class SnapManager {
     const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance'];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
-    const selfAnchors = NodeHelper.anchors(b, 'source').filter(s =>
+    const selfAnchors = Anchor.forNode(b, 'source').filter(s =>
       directions.includes(s.matchDirection!)
     );
 

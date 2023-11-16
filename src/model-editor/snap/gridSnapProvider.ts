@@ -3,7 +3,8 @@ import { Point } from '../../geometry/point.ts';
 import { Line } from '../../geometry/line.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
-import { AnchorOfType, Axis, Diagram } from '../../model-viewer/diagram.ts';
+import { Diagram } from '../../model-viewer/diagram.ts';
+import { AnchorOfType, Axis } from './anchor.ts';
 
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: Diagram) {}

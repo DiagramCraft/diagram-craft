@@ -4,7 +4,7 @@ import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
-import { Diagram, DiagramEvents, NodeHelper, ViewboxEvents } from '../model-viewer/diagram.ts';
+import { Diagram, DiagramEvents } from '../model-viewer/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
@@ -17,6 +17,8 @@ import { useRedraw } from './useRedraw.tsx';
 import { findAction, MacKeymap } from './keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from './DocumentBounds.tsx';
+import { ViewboxEvents } from '../model-viewer/viewBox.ts';
+import { NodeHelper } from '../model-editor/snap/anchor.ts';
 
 const BACKGROUND = 'background';
 

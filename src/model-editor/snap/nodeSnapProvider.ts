@@ -1,4 +1,4 @@
-import { AnchorOfType, Axis, Diagram, NodeHelper } from '../../model-viewer/diagram.ts';
+import { Diagram } from '../../model-viewer/diagram.ts';
 import { Line, OLine } from '../../geometry/line.ts';
 import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';
@@ -6,6 +6,7 @@ import { Range } from '../../geometry/range.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
+import { Anchor, AnchorOfType, Axis } from './anchor.ts';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.x, b.pos.x + b.size.w), N);
@@ -40,7 +41,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
 
     for (const node of this.diagram.queryNodes()) {
       if (this.excludedNodeIds.includes(node.id)) continue;
-      for (const other of NodeHelper.anchors(node.bounds)) {
+      for (const other of Anchor.forNode(node.bounds)) {
         // TODO: We should be able to filter out even more here
         //       by considering the direction of the anchor line
         if (

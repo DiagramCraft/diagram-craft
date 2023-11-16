@@ -1,11 +1,5 @@
 import { Direction } from '../geometry/direction.ts';
-import {
-  Diagram,
-  MoveAction,
-  NodeAddAction,
-  ResizeAction,
-  RotateAction
-} from '../model-viewer/diagram.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model-editor/snap/snapManager.ts';
@@ -19,6 +13,7 @@ import { Angle } from '../geometry/angle.ts';
 import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 import { createResizeCanvasActionToFit } from '../model-editor/helpers/canvasResizeHelper.ts';
+import { MoveAction, NodeAddAction, ResizeAction, RotateAction } from '../model-viewer/actions.ts';
 
 export const rotateDragActions: DragActions = {
   onDrag: (coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
