@@ -64,6 +64,8 @@ export interface ResolvedEdgeDef extends AbstractEdgeDef {
   end: { anchor: string; node: ResolvedNodeDef };
 }
 
+export type Canvas = Omit<Box, 'rotation'>;
+
 export type DiagramEvents = {
   nodechanged: { before: ResolvedNodeDef; after: ResolvedNodeDef };
   nodeadded: { node: ResolvedNodeDef };
@@ -71,7 +73,7 @@ export type DiagramEvents = {
   edgechanged: { before: ResolvedEdgeDef; after: ResolvedEdgeDef };
   edgeadded: { edge: ResolvedEdgeDef };
   edgeremoved: { edge: ResolvedEdgeDef };
-  change: void;
+  canvaschanged: { before: Canvas; after: Canvas };
 };
 
 export type ViewboxEvents = {
@@ -149,12 +151,15 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
   readonly undoManager = new UndoManager();
 
-  size: Extent = {
-    w: 640,
-    h: 640
+  #canvas: Canvas = {
+    pos: { x: 0, y: 0 },
+    size: {
+      w: 640,
+      h: 640
+    }
   };
 
-  viewBox = new Viewbox(this.size);
+  viewBox = new Viewbox(this.#canvas.size);
 
   // TODO: Add listener/event on grid change
   readonly grid = {
@@ -175,6 +180,18 @@ export class Diagram extends EventEmitter<DiagramEvents> {
         VERIFY_NOT_REACHED();
       }
     }
+  }
+
+  get canvas() {
+    return this.#canvas;
+  }
+
+  set canvas(b: Canvas) {
+    const before = this.#canvas;
+    this.#canvas = b;
+    this.emit('canvaschanged', { before, after: b });
+
+    console.log('CANVAS CHANGED');
   }
 
   newid() {

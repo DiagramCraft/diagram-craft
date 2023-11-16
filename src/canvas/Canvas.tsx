@@ -82,8 +82,12 @@ export const Canvas = (props: Props) => {
       // TODO: Respect zoom level
       if (diagram.viewBox.zoomLevel === 1) {
         diagram.viewBox.pan({
-          x: Math.floor(-(svgRef.current!.getBoundingClientRect().width - diagram.size.w) / 2),
-          y: Math.floor(-(svgRef.current!.getBoundingClientRect().height - diagram.size.h) / 2)
+          x: Math.floor(
+            -(svgRef.current!.getBoundingClientRect().width - diagram.canvas.size.w) / 2
+          ),
+          y: Math.floor(
+            -(svgRef.current!.getBoundingClientRect().height - diagram.canvas.size.h) / 2
+          )
         });
       }
       diagram.viewBox.dimensions = {
@@ -124,7 +128,7 @@ export const Canvas = (props: Props) => {
       }
     };
 
-    const nodeAdded = () => {
+    const triggerRedraw = () => {
       redraw();
     };
 
@@ -136,16 +140,18 @@ export const Canvas = (props: Props) => {
     diagram.undoManager.on('undo', onUndo);
     diagram.undoManager.on('redo', onUndo);
     diagram.on('nodechanged', nodeChanged);
-    diagram.on('nodeadded', nodeAdded);
-    diagram.on('noderemoved', nodeAdded);
+    diagram.on('nodeadded', triggerRedraw);
+    diagram.on('noderemoved', triggerRedraw);
+    diagram.on('canvaschanged', triggerRedraw);
 
     return () => {
       diagram.off('nodechanged', nodeChanged);
-      diagram.off('nodeadded', nodeAdded);
-      diagram.off('noderemoved', nodeAdded);
+      diagram.off('nodeadded', triggerRedraw);
+      diagram.off('noderemoved', triggerRedraw);
       diagram.undoManager.off('execute', onUndo);
       diagram.undoManager.off('undo', onUndo);
       diagram.undoManager.off('redo', onUndo);
+      diagram.off('canvaschanged', triggerRedraw);
     };
   }, [diagram, redraw]);
 

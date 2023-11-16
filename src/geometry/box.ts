@@ -60,14 +60,14 @@ export const Box = {
   },
 
   // TODO: This should not be part of the Box API
-  boundingBox: (boxes: Box[]): Box => {
+  boundingBox: (boxes: Box[], forceAxisAligned = false): Box => {
     let minX = Number.MAX_SAFE_INTEGER;
     let minY = Number.MAX_SAFE_INTEGER;
     let maxX = Number.MIN_SAFE_INTEGER;
     let maxY = Number.MIN_SAFE_INTEGER;
 
     // If all boxes have the same rotation
-    if (boxes.every(b => b.rotation === boxes[0].rotation)) {
+    if (!forceAxisAligned && boxes.every(b => b.rotation === boxes[0].rotation)) {
       // Pick one corner of one box and rotate each corner of each box around it
       const rotationPoint = Box.corners(boxes[0], true)[0];
       for (const box of boxes) {

@@ -18,6 +18,7 @@ import { Box } from '../geometry/box.ts';
 import { Angle } from '../geometry/angle.ts';
 import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
+import { createResizeCanvasActionToFit } from '../model-editor/helpers/canvasResizeHelper.ts';
 
 export const rotateDragActions: DragActions = {
   onDrag: (coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
@@ -305,6 +306,18 @@ export const moveDragActions: DragActions = {
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     if (selection.isChanged()) {
+      // TODO: Maybe add a compound action here
+      const resizeCanvasAction = createResizeCanvasActionToFit(
+        diagram,
+        Box.boundingBox(
+          selection.elements.map(e => e.bounds),
+          true
+        )
+      );
+      if (resizeCanvasAction) {
+        diagram.undoManager.execute(resizeCanvasAction);
+      }
+
       if (selection.state['metaKey']) {
         diagram.undoManager.add(new NodeAddAction(selection.elements, diagram));
       } else {
