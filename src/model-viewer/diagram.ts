@@ -4,35 +4,14 @@ import { Transform } from '../geometry/transform.ts';
 import { Box } from '../geometry/box.ts';
 import { UndoManager } from '../model-editor/undoManager.ts';
 import { Viewbox } from './viewBox.ts';
+import { NodeHelper } from './nodeHelper.ts';
 
-/*
-type BoundsCriteria = {
-  criteria: 'bounds';
-  bounds: Box;
-  type: ('intersect' | 'corners' | 'center' | 'alignment-anchors')[];
-  mode: 'any' | 'all';
-};
+export interface DiagramElement {
+  id: string;
+  type: string;
+}
 
-type NodeQueryCriteria = BoundsCriteria;
-
-type NodeQuery = {
-  criteria: NodeQueryCriteria[];
-};
-*/
-
-const cloneNodeBounds = (node: ResolvedNodeDef): ResolvedNodeDef => {
-  return {
-    ...node,
-    bounds: {
-      pos: { ...node.bounds.pos },
-      size: { ...node.bounds.size },
-      rotation: node.bounds.rotation
-    },
-    children: node.children.map(c => cloneNodeBounds(c))
-  };
-};
-
-export interface AbstractNodeDef {
+export interface AbstractNode extends DiagramElement {
   type: 'node';
   nodeType: 'group' | string;
   id: string;
@@ -43,39 +22,39 @@ export interface AbstractNodeDef {
   props?: Record<string, unknown>;
 }
 
-export interface AbstractEdgeDef {
+export interface AbstractEdge extends DiagramElement {
   type: 'edge';
   id: string;
 }
 
-export interface ResolvedNodeDef extends AbstractNodeDef {
-  parent?: ResolvedNodeDef;
+export interface DiagramNode extends AbstractNode {
+  parent?: DiagramNode;
 
-  edges?: Record<string, ResolvedEdgeDef[]>;
-  children: ResolvedNodeDef[];
+  edges?: Record<string, DiagramEdge[]>;
+  children: DiagramNode[];
 }
 
-export interface ResolvedEdgeDef extends AbstractEdgeDef {
-  start: { anchor: string; node: ResolvedNodeDef };
-  end: { anchor: string; node: ResolvedNodeDef };
+export interface DiagramEdge extends AbstractEdge {
+  start: { anchor: string; node: DiagramNode };
+  end: { anchor: string; node: DiagramNode };
 }
 
 export type Canvas = Omit<Box, 'rotation'>;
 
 export type DiagramEvents = {
-  nodechanged: { before: ResolvedNodeDef; after: ResolvedNodeDef };
-  nodeadded: { node: ResolvedNodeDef };
-  noderemoved: { node: ResolvedNodeDef };
-  edgechanged: { before: ResolvedEdgeDef; after: ResolvedEdgeDef };
-  edgeadded: { edge: ResolvedEdgeDef };
-  edgeremoved: { edge: ResolvedEdgeDef };
+  nodechanged: { before: DiagramNode; after: DiagramNode };
+  nodeadded: { node: DiagramNode };
+  noderemoved: { node: DiagramNode };
+  edgechanged: { before: DiagramEdge; after: DiagramEdge };
+  edgeadded: { edge: DiagramEdge };
+  edgeremoved: { edge: DiagramEdge };
   canvaschanged: { before: Canvas; after: Canvas };
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> {
-  elements: (ResolvedEdgeDef | ResolvedNodeDef)[];
-  readonly nodeLookup: Record<string, ResolvedNodeDef> = {};
-  readonly edgeLookup: Record<string, ResolvedEdgeDef> = {};
+  elements: (DiagramEdge | DiagramNode)[];
+  readonly nodeLookup: Record<string, DiagramNode> = {};
+  readonly edgeLookup: Record<string, DiagramEdge> = {};
   readonly undoManager = new UndoManager();
 
   #canvas: Canvas = {
@@ -94,7 +73,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     y: 20
   };
 
-  constructor(elements: (ResolvedEdgeDef | ResolvedNodeDef)[]) {
+  constructor(elements: (DiagramEdge | DiagramNode)[]) {
     super();
     this.elements = elements;
 
@@ -125,19 +104,19 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     return Math.random().toString(36).substring(2, 9);
   }
 
-  addNode(node: ResolvedNodeDef) {
+  addNode(node: DiagramNode) {
     this.nodeLookup[node.id] = node;
     this.elements.push(node);
     this.emit('nodeadded', { node });
   }
 
-  removeNode(node: ResolvedNodeDef) {
+  removeNode(node: DiagramNode) {
     delete this.nodeLookup[node.id];
     this.elements = this.elements.filter(e => e !== node);
     this.emit('noderemoved', { node });
   }
 
-  updateNodeProps(node: ResolvedNodeDef, props: Record<string, unknown>) {
+  updateNodeProps(node: DiagramNode, props: Record<string, unknown>) {
     node.props = props;
     // TODO: Need to keep a before state
     this.emit('nodechanged', { before: node, after: node });
@@ -148,8 +127,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     return Object.values(this.nodeLookup);
   }
 
-  transformNodes(nodes: ResolvedNodeDef[], transforms: Transform[]) {
-    const before = nodes.map(n => cloneNodeBounds(n));
+  transformNodes(nodes: DiagramNode[], transforms: Transform[]) {
+    const before = nodes.map(n => NodeHelper.cloneNodeBounds(n));
 
     for (const node of nodes) {
       node.bounds = Transform.box(node.bounds, ...transforms);
@@ -168,13 +147,13 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     // TODO: Automatically create undoable action?
   }
 
-  addEdge(edge: ResolvedEdgeDef) {
+  addEdge(edge: DiagramEdge) {
     this.edgeLookup[edge.id] = edge;
     this.elements.push(edge);
     this.emit('edgeadded', { edge });
   }
 
-  removeEdge(edge: ResolvedEdgeDef) {
+  removeEdge(edge: DiagramEdge) {
     delete this.edgeLookup[edge.id];
     this.elements = this.elements.filter(e => e !== edge);
     this.emit('edgeremoved', { edge });

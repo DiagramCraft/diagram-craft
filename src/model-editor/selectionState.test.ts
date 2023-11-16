@@ -1,6 +1,6 @@
 import { SelectionState } from './selectionState.ts';
 import { expect, test, describe } from 'vitest';
-import { ResolvedNodeDef } from '../model-viewer/diagram.ts';
+import { DiagramNode } from '../model-viewer/diagram.ts';
 
 describe('SelectionState', () => {
   test('empty selection has zero size', () => {
@@ -10,7 +10,7 @@ describe('SelectionState', () => {
   });
 
   test('toggle twice clears selection', () => {
-    const element: ResolvedNodeDef = {
+    const element: DiagramNode = {
       id: '1',
       type: 'node',
       bounds: {

@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle } from 'react';
-import { ResolvedEdgeDef } from '../model-viewer/diagram.ts';
+import { DiagramEdge } from '../model-viewer/diagram.ts';
 import { Box } from '../geometry/box.ts';
 import { useRedraw } from './useRedraw.tsx';
 
@@ -28,5 +28,5 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 });
 
 type Props = {
-  def: ResolvedEdgeDef;
+  def: DiagramEdge;
 };

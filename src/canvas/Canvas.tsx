@@ -18,7 +18,7 @@ import { findAction, MacKeymap } from './keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from './DocumentBounds.tsx';
 import { ViewboxEvents } from '../model-viewer/viewBox.ts';
-import { NodeHelper } from '../model-editor/snap/anchor.ts';
+import { NodeHelper } from '../model-viewer/nodeHelper.ts';
 
 const BACKGROUND = 'background';
 

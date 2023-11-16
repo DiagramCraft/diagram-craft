@@ -1,15 +1,15 @@
 import { UndoableAction } from '../model-editor/undoManager.ts';
 import { Box } from '../geometry/box.ts';
 import { TransformFactory } from '../geometry/transform.ts';
-import { Diagram, ResolvedNodeDef } from './diagram.ts';
+import { Diagram, DiagramNode } from './diagram.ts';
 
 class AbstractTransformAction implements UndoableAction {
-  private nodes: ResolvedNodeDef[] = [];
+  private nodes: DiagramNode[] = [];
   private source: Box[] = [];
   private target: Box[] = [];
   private diagram: Diagram;
 
-  constructor(source: Box[], target: Box[], nodes: ResolvedNodeDef[], diagram: Diagram) {
+  constructor(source: Box[], target: Box[], nodes: DiagramNode[], diagram: Diagram) {
     this.diagram = diagram;
     this.nodes.push(...nodes);
     this.source.push(...source);
@@ -40,7 +40,7 @@ export class ResizeAction extends AbstractTransformAction {}
 
 export class NodeAddAction implements UndoableAction {
   constructor(
-    private readonly nodes: ResolvedNodeDef[],
+    private readonly nodes: DiagramNode[],
     private readonly diagram: Diagram
   ) {}
 

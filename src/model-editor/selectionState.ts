@@ -2,7 +2,7 @@ import { Line } from '../geometry/line.ts';
 import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
-import { ResolvedNodeDef } from '../model-viewer/diagram.ts';
+import { DiagramNode } from '../model-viewer/diagram.ts';
 import { Anchor } from './snap/anchor.ts';
 
 const EMPTY_BOX = {
@@ -35,7 +35,7 @@ export class SelectionState extends EventEmitter<{
   // TODO: This is mostly here for debugging purposes
   private _anchors: Anchor[] = [];
 
-  elements: ResolvedNodeDef[] = [];
+  elements: DiagramNode[] = [];
 
   source: SelectionSource = {
     elementBoxes: [],
@@ -44,7 +44,7 @@ export class SelectionState extends EventEmitter<{
   };
 
   // For marquee selection
-  pendingElements?: ResolvedNodeDef[];
+  pendingElements?: DiagramNode[];
 
   state: Record<string, unknown> = {};
 
@@ -114,7 +114,7 @@ export class SelectionState extends EventEmitter<{
         : Box.boundingBox(this.source.elementBoxes.map(e => e));
   }
 
-  toggle(element: ResolvedNodeDef) {
+  toggle(element: DiagramNode) {
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
@@ -137,7 +137,7 @@ export class SelectionState extends EventEmitter<{
     this.recalculateBoundingBox();
   }
 
-  setPendingElements(pendingElemenets: ResolvedNodeDef[]) {
+  setPendingElements(pendingElemenets: DiagramNode[]) {
     this.pendingElements = pendingElemenets;
   }
 

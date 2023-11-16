@@ -1,6 +1,6 @@
 import { Angle } from '../geometry/angle.ts';
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { ResolvedNodeDef } from '../model-viewer/diagram.ts';
+import { DiagramNode } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from './drag.ts';
 import { Point } from '../geometry/point.ts';
@@ -107,7 +107,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 });
 
 type Props = {
-  def: ResolvedNodeDef;
+  def: DiagramNode;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   isSelected: boolean;
 };

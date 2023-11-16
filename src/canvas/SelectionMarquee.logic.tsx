@@ -1,4 +1,4 @@
-import { Diagram, ResolvedNodeDef } from '../model-viewer/diagram.ts';
+import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
 import { Drag, DragActions } from './drag.ts';
@@ -8,7 +8,7 @@ import { SelectionState } from '../model-editor/selectionState.ts';
 const updatePendingElements = (selection: SelectionState, diagram: Diagram) => {
   precondition.is.present(selection.marquee);
 
-  const pending: ResolvedNodeDef[] = [];
+  const pending: DiagramNode[] = [];
   for (const e of diagram.elements) {
     if (e.type !== 'node') continue;
 

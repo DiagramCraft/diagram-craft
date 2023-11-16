@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { Diagram, ResolvedNodeDef } from './diagram.ts';
+import { Diagram, DiagramNode } from './diagram.ts';
 import { TransformFactory } from '../geometry/transform.ts';
 
 describe('Diagram', () => {
   test('transform rotate', () => {
-    const node1: ResolvedNodeDef = {
+    const node1: DiagramNode = {
       type: 'node',
       nodeType: 'a',
       id: '1',
@@ -16,7 +16,7 @@ describe('Diagram', () => {
       }
     };
 
-    const node2: ResolvedNodeDef = {
+    const node2: DiagramNode = {
       type: 'node',
       nodeType: 'a',
       id: '2',
@@ -45,7 +45,7 @@ describe('Diagram', () => {
   });
 
   test.skip('transform rotate - inverse', () => {
-    const node1: ResolvedNodeDef = {
+    const node1: DiagramNode = {
       type: 'node',
       nodeType: 'a',
       id: '1',
@@ -57,7 +57,7 @@ describe('Diagram', () => {
       }
     };
 
-    const node2: ResolvedNodeDef = {
+    const node2: DiagramNode = {
       type: 'node',
       nodeType: 'a',
       id: '2',

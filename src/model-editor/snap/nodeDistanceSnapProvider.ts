@@ -6,7 +6,7 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line, OLine } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
-import { Diagram, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
+import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
 import { AnchorOfType, Axis, DistancePairWithRange } from './anchor.ts';
 
 const directions: Record<
@@ -51,7 +51,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     const boxHRange = this.getRange(box, 'h');
     const boxVRange = this.getRange(box, 'v');
 
-    const result: Record<Direction, ResolvedNodeDef[]> = {
+    const result: Record<Direction, DiagramNode[]> = {
       n: [],
       w: [],
       e: [],

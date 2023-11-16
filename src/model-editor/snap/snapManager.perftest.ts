@@ -1,12 +1,12 @@
 import { PerformanceTest } from '../../utils/perftest.ts';
-import { Diagram, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
+import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
 import { SnapManager } from './snapManager.ts';
 
 export class SnapManagerPerftest implements PerformanceTest {
   private snapManager: SnapManager | undefined;
 
   setup(): void {
-    const defs: ResolvedNodeDef[] = [];
+    const defs: DiagramNode[] = [];
     for (let i = 0; i < 1000; i++) {
       defs.push({
         id: i.toString(),

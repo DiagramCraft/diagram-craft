@@ -1,5 +1,5 @@
 import { Box } from '../../geometry/box.ts';
-import { ResolvedEdgeDef, ResolvedNodeDef } from '../../model-viewer/diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagram.ts';
 import { Line } from '../../geometry/line.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { Point } from '../../geometry/point.ts';
@@ -12,15 +12,6 @@ export const Axis = {
   orthogonal: (axis: Axis): Axis => (axis === 'h' ? 'v' : 'h'),
   axises: (): Axis[] => ['h', 'v'],
   toXY: (axis: Axis): 'x' | 'y' => (axis === 'h' ? 'x' : 'y')
-};
-
-export const NodeHelper = {
-  edges: (node: ResolvedNodeDef): ResolvedEdgeDef[] => {
-    return [
-      ...Object.values(node.edges ?? {}).flatMap(e => e),
-      ...node.children.flatMap(c => NodeHelper.edges(c))
-    ];
-  }
 };
 
 type BaseAnchor = {
@@ -51,12 +42,12 @@ export type Anchor = BaseAnchor &
     | {
         type: 'size';
         size: number;
-        node: ResolvedNodeDef;
+        node: DiagramNode;
         distancePairs: DistancePair[];
       }
     | {
         type: 'node';
-        node: ResolvedNodeDef;
+        node: DiagramNode;
       }
     | {
         type: 'distance';

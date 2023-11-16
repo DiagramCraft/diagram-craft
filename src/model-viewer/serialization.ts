@@ -1,41 +1,35 @@
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import {
-  AbstractEdgeDef,
-  AbstractNodeDef,
-  Diagram,
-  ResolvedEdgeDef,
-  ResolvedNodeDef
-} from './diagram.ts';
+import { AbstractEdge, AbstractNode, Diagram, DiagramEdge, DiagramNode } from './diagram.ts';
 
 interface Reference {
   id: string;
 }
 
 export interface SerializedDiagram {
-  elements: (SerializedNodeDef | SerializedEdgeDef)[];
+  elements: (SerializedNode | SerializedEdge)[];
 }
 
-export interface SerializedNodeDef extends AbstractNodeDef {
+export interface SerializedNode extends AbstractNode {
   edges?: Record<string, Reference[]>;
 
   // TODO: Should allow edges as part of group
-  children: SerializedNodeDef[];
+  children: SerializedNode[];
 }
 
-export interface SerializedEdgeDef extends AbstractEdgeDef {
+export interface SerializedEdge extends AbstractEdge {
   start: { anchor: string; node: Reference };
   end: { anchor: string; node: Reference };
 }
 
-const isNodeDef = (element: SerializedNodeDef | SerializedEdgeDef): element is SerializedNodeDef =>
+const isNodeDef = (element: SerializedNode | SerializedEdge): element is SerializedNode =>
   element.type === 'node';
 
-const unfoldGroup = (node: SerializedNodeDef) => {
+const unfoldGroup = (node: SerializedNode) => {
   const recurse = (
-    nodes: SerializedNodeDef[],
-    parent?: SerializedNodeDef | undefined
-  ): (SerializedNodeDef & { parent?: SerializedNodeDef | undefined })[] => {
+    nodes: SerializedNode[],
+    parent?: SerializedNode | undefined
+  ): (SerializedNode & { parent?: SerializedNode | undefined })[] => {
     return [...nodes.map(n => ({ ...n, parent })), ...nodes.flatMap(n => recurse(n.children, n))];
   };
 
@@ -47,8 +41,8 @@ const unfoldGroup = (node: SerializedNodeDef) => {
 };
 
 export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
-  const nodeLookup: Record<string, ResolvedNodeDef> = {};
-  const edgeLookup: Record<string, ResolvedEdgeDef> = {};
+  const nodeLookup: Record<string, DiagramNode> = {};
+  const edgeLookup: Record<string, DiagramEdge> = {};
 
   const allNodes = diagram.elements.filter(isNodeDef);
 
@@ -110,7 +104,7 @@ export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
     edgeLookup[e.id] = edge;
   }
 
-  const elements: (ResolvedEdgeDef | ResolvedNodeDef)[] = [];
+  const elements: (DiagramEdge | DiagramNode)[] = [];
   for (const n of diagram.elements) {
     if (n.type === 'node') {
       elements.push(nodeLookup[n.id]);
