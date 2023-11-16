@@ -37,7 +37,7 @@ export class DiagramNode implements AbstractNode {
   parent?: DiagramNode;
   children: DiagramNode[];
 
-  edges?: Record<string, DiagramEdge[]>;
+  edges: Record<string, DiagramEdge[]>;
 
   // TODO: We should use interface for this and make it extendable by nodeType
   props?: Record<string, unknown>;
@@ -48,6 +48,7 @@ export class DiagramNode implements AbstractNode {
     this.type = 'node';
     this.nodeType = nodeType;
     this.children = [];
+    this.edges = {};
   }
 
   clone() {
@@ -75,14 +76,14 @@ export class DiagramEdge implements AbstractEdge {
   id: string;
   type: 'edge';
 
-  start: Endpoint;
-  end: Endpoint;
+  #start: Endpoint;
+  #end: Endpoint;
 
   constructor(id: string, start: Endpoint, end: Endpoint) {
     this.id = id;
     this.type = 'edge';
-    this.start = start;
-    this.end = end;
+    this.#start = start;
+    this.#end = end;
   }
 
   // TODO: This is probably not a sufficient way to calculate the bounding box
@@ -106,6 +107,30 @@ export class DiagramEdge implements AbstractEdge {
 
   isEndConnected() {
     return isConnectedEndpoint(this.end);
+  }
+
+  set start(start: Endpoint) {
+    if (isConnectedEndpoint(this.#start) && !isConnectedEndpoint(start)) {
+      const a = this.#start.anchor;
+      this.#start.node.edges![a] = this.#start.node.edges[a].filter(e => e !== this);
+    }
+    this.#start = start;
+  }
+
+  get start() {
+    return this.#start;
+  }
+
+  set end(end: Endpoint) {
+    if (isConnectedEndpoint(this.#end) && !isConnectedEndpoint(end)) {
+      const a = this.#end.anchor;
+      this.#end.node.edges![a] = this.#end.node.edges[a].filter(e => e !== this);
+    }
+    this.#end = end;
+  }
+
+  get end() {
+    return this.#end;
   }
 }
 
@@ -227,5 +252,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     delete this.edgeLookup[edge.id];
     this.elements = this.elements.filter(e => e !== edge);
     this.emit('edgeremoved', { edge });
+  }
+
+  updateEdge(edge: DiagramEdge) {
+    // TODO: We don't have before here
+    this.emit('edgechanged', { before: edge, after: edge });
   }
 }

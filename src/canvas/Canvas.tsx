@@ -129,6 +129,10 @@ export const Canvas = (props: Props) => {
       }
     };
 
+    const edgeChanged = (e: DiagramEvents['edgechanged']) => {
+      edgeRefs.current[e.after.id]?.repaint();
+    };
+
     const triggerRedraw = () => {
       redraw();
     };
@@ -143,15 +147,17 @@ export const Canvas = (props: Props) => {
     diagram.on('nodechanged', nodeChanged);
     diagram.on('nodeadded', triggerRedraw);
     diagram.on('noderemoved', triggerRedraw);
+    diagram.on('edgechanged', edgeChanged);
     diagram.on('canvaschanged', triggerRedraw);
 
     return () => {
-      diagram.off('nodechanged', nodeChanged);
-      diagram.off('nodeadded', triggerRedraw);
-      diagram.off('noderemoved', triggerRedraw);
       diagram.undoManager.off('execute', onUndo);
       diagram.undoManager.off('undo', onUndo);
       diagram.undoManager.off('redo', onUndo);
+      diagram.off('nodechanged', nodeChanged);
+      diagram.off('nodeadded', triggerRedraw);
+      diagram.off('noderemoved', triggerRedraw);
+      diagram.off('edgechanged', edgeChanged);
       diagram.off('canvaschanged', triggerRedraw);
     };
   }, [diagram, redraw]);

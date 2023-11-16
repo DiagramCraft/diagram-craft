@@ -1,6 +1,10 @@
 import { forwardRef, Fragment, useImperativeHandle } from 'react';
 import { useRedraw } from './useRedraw.tsx';
-import { resizeDragActions, rotateDragActions } from './Selection.logic.ts';
+import {
+  EdgeEndpointMoveActions,
+  resizeDragActions,
+  rotateDragActions
+} from './Selection.logic.ts';
 import { Drag, DragActions } from './drag.ts';
 import { DistanceMarker } from './DistanceMarker.tsx';
 import { Point } from '../geometry/point.ts';
@@ -299,6 +303,14 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 strokeWidth={1}
                 stroke="#2673dd"
                 style={{ cursor: 'move' }}
+                onMouseDown={ev => {
+                  props.onDragStart(
+                    Point.fromEvent(ev.nativeEvent),
+                    'move-edge-start',
+                    new EdgeEndpointMoveActions(e)
+                  );
+                  ev.stopPropagation();
+                }}
               />
               <circle
                 cx={e.endPosition.x}
@@ -308,6 +320,14 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 strokeWidth={1}
                 stroke="#2673dd"
                 style={{ cursor: 'move' }}
+                onMouseDown={ev => {
+                  props.onDragStart(
+                    Point.fromEvent(ev.nativeEvent),
+                    'move-edge-end',
+                    new EdgeEndpointMoveActions(e)
+                  );
+                  ev.stopPropagation();
+                }}
               />
             </Fragment>
           );

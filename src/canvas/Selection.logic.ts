@@ -1,6 +1,6 @@
 import { Direction } from '../geometry/direction.ts';
-import { Diagram } from '../model-viewer/diagram.ts';
-import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
+import { Diagram, DiagramEdge } from '../model-viewer/diagram.ts';
+import { assert, precondition, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { SnapManager } from '../model-editor/snap/snapManager.ts';
 import { LocalCoordinateSystem } from '../geometry/lcs.ts';
@@ -13,6 +13,27 @@ import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 import { createResizeCanvasActionToFit } from '../model-editor/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction, ResizeAction, RotateAction } from '../model-viewer/actions.ts';
+
+export class EdgeEndpointMoveActions implements DragActions {
+  constructor(private readonly edge: DiagramEdge) {}
+
+  onDrag(coord: Point, drag: Drag, diagram: Diagram, selection: SelectionState) {
+    precondition.is.true(drag.type === 'move-edge-start' || drag.type === 'move-edge-end');
+
+    if (drag.type === 'move-edge-start') {
+      this.edge.start = { position: coord };
+    } else {
+      this.edge.end = { position: coord };
+    }
+
+    diagram.updateEdge(this.edge);
+    selection.recalculateBoundingBox();
+  }
+
+  onDragEnd(_coord: Point, _drag: Drag, _diagram: Diagram, _selection: SelectionState) {
+    // TODO: Create undoable action
+  }
+}
 
 export const rotateDragActions: DragActions = {
   onDrag: (coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {

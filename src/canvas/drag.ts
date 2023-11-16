@@ -19,6 +19,8 @@ export type Drag = {
     | 'resize-s'
     | 'resize-w'
     | 'resize-e'
+    | 'move-edge-start'
+    | 'move-edge-end'
     | 'move'
     | 'rotate'
     | 'marquee';
