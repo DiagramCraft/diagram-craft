@@ -25,9 +25,11 @@ export type Guide = {
   matchingAnchor: Anchor;
 };
 
-export class SelectionState extends EventEmitter<{
+export type SelectionStateEvents = {
   change: { selection: SelectionState };
-}> {
+};
+
+export class SelectionState extends EventEmitter<SelectionStateEvents> {
   private _bounds: Box;
   private _marquee?: Box;
   private _guides: Guide[] = [];

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { SelectionState } from '../model-editor/selectionState.ts';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
-import { Diagram, DiagramEvents } from '../model-viewer/diagram.ts';
+import { DiagramEvents } from '../model-viewer/diagram.ts';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
@@ -18,6 +17,7 @@ import { findAction, MacKeymap } from './keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from './DocumentBounds.tsx';
 import { ViewboxEvents } from '../model-viewer/viewBox.ts';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 const BACKGROUND = 'background';
 
@@ -33,7 +33,7 @@ export const Canvas = (props: Props) => {
   const diagram = props.diagram;
 
   // State
-  const selection = useRef<SelectionState>(new SelectionState());
+  const selection = diagram.selectionState;
   const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
   const drag = useRef<Drag | undefined>(undefined);
 
@@ -112,7 +112,7 @@ export const Canvas = (props: Props) => {
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       const action = findAction(e, MacKeymap);
-      action?.execute(props.diagram, selection.current, drag.current);
+      action?.execute(props.diagram, selection, drag.current);
     };
     document.addEventListener('keydown', listener);
     return () => {
@@ -138,7 +138,7 @@ export const Canvas = (props: Props) => {
     };
 
     const onUndo = debounce(() => {
-      selection.current.clear();
+      selection.clear();
     });
 
     diagram.undoManager.on('execute', onUndo);
@@ -167,7 +167,7 @@ export const Canvas = (props: Props) => {
       selectionRef.current?.repaint();
       selectionMarqueeRef.current?.repaint();
     });
-    const sel = selection.current;
+    const sel = selection;
     sel.on('change', callback);
     return () => {
       sel.off('change', callback);
@@ -184,7 +184,7 @@ export const Canvas = (props: Props) => {
 
   const updateCursor = useCallback(
     (coord: Point) => {
-      if (Box.contains(selection.current.bounds, coord)) {
+      if (Box.contains(selection.bounds, coord)) {
         svgRef.current!.style.cursor = 'move';
       } else {
         svgRef.current!.style.cursor = 'default';
@@ -201,7 +201,7 @@ export const Canvas = (props: Props) => {
     (id: ObjectId, point: Point, modifiers: Modifiers) => {
       const isClickOnBackground = id === BACKGROUND;
       const isClickOnSelection = Box.contains(
-        selection.current.bounds,
+        selection.bounds,
         diagram.viewBox.toDiagramPoint(point)
       );
 
@@ -209,28 +209,28 @@ export const Canvas = (props: Props) => {
         if (isClickOnSelection) {
           deferedMouseAction.current = {
             callback: () => {
-              selection.current.clear();
+              selection.clear();
               if (!isClickOnBackground) {
-                selection.current.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
+                selection.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
               }
             }
           };
         } else if (isClickOnBackground) {
           if (!modifiers.shiftKey) {
-            selection.current.clear();
+            selection.clear();
           }
           onDragStart(diagram.viewBox.toDiagramPoint(point), 'marquee', marqueeDragActions);
           return;
         } else {
           if (!modifiers.shiftKey) {
-            selection.current.clear();
+            selection.clear();
           }
-          selection.current.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
+          selection.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
         }
 
-        if (!selection.current.isEmpty()) {
+        if (!selection.isEmpty()) {
           onDragStart(
-            Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.current.bounds.pos),
+            Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.bounds.pos),
             'move',
             moveDragActions
           );
@@ -246,7 +246,7 @@ export const Canvas = (props: Props) => {
     (_id: ObjectId, point: Point) => {
       try {
         if (drag.current) {
-          drag.current.actions.onDragEnd(point, drag.current, diagram, selection.current);
+          drag.current.actions.onDragEnd(point, drag.current, diagram, selection);
         }
 
         if (deferedMouseAction.current) {
@@ -272,7 +272,7 @@ export const Canvas = (props: Props) => {
           diagram.viewBox.toDiagramPoint(point),
           drag.current,
           diagram,
-          selection.current,
+          selection,
           modifiers
         );
       } finally {
@@ -328,12 +328,12 @@ export const Canvas = (props: Props) => {
 
           <Selection
             ref={selectionRef}
-            selection={selection.current}
+            selection={selection}
             onDragStart={(point, type, actions) =>
               onDragStart(diagram.viewBox.toDiagramPoint(point), type, actions)
             }
           />
-          <SelectionMarquee ref={selectionMarqueeRef} selection={selection.current} />
+          <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
         </svg>
       </DndProvider>
     </>
@@ -341,5 +341,6 @@ export const Canvas = (props: Props) => {
 };
 
 type Props = {
-  diagram: Diagram;
+  // TODO: We should split Canvas and EditableCanvas somehow
+  diagram: EditableDiagram;
 };

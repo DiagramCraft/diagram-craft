@@ -1,6 +1,6 @@
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import { AbstractEdge, AbstractNode, Diagram, DiagramEdge, DiagramNode } from './diagram.ts';
+import { AbstractEdge, AbstractNode, DiagramEdge, DiagramNode } from './diagram.ts';
 
 interface Reference {
   id: string;
@@ -47,7 +47,7 @@ const unfoldGroup = (node: SerializedNode) => {
   }
 };
 
-export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
+export const deserializeDiagram = (diagram: SerializedDiagram): (DiagramNode | DiagramEdge)[] => {
   const nodeLookup: Record<string, DiagramNode> = {};
   const edgeLookup: Record<string, DiagramEdge> = {};
 
@@ -129,5 +129,5 @@ export const deserializeDiagram = (diagram: SerializedDiagram): Diagram => {
     }
   }
 
-  return new Diagram(elements);
+  return elements;
 };

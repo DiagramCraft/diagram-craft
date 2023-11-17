@@ -14,6 +14,7 @@ specifiers:
   react-dnd: ^16.0.1
   react-dnd-html5-backend: ^16.0.1
   react-dom: ^18.2.0
+  react-icons: ^4.12.0
   typescript: ^5.0.2
   vite: ^4.4.5
   vitest: ^0.34.6
@@ -24,6 +25,7 @@ dependencies:
   react-dnd: 16.0.1_o5ysialsahsznabqayk7pree4e
   react-dnd-html5-backend: 16.0.1
   react-dom: 18.2.0_react@18.2.0
+  react-icons: 4.12.0_react@18.2.0
 
 devDependencies:
   '@types/react': 18.2.33
@@ -1782,6 +1784,14 @@ packages:
       loose-envify: 1.4.0
       react: 18.2.0
       scheduler: 0.23.0
+    dev: false
+
+  /react-icons/4.12.0_react@18.2.0:
+    resolution: {integrity: sha512-IBaDuHiShdZqmfc/TwHu6+d6k2ltNCf3AszxNmjJc1KUfXdEeRJOKyNvLmAHaarhzGmTSVygNdyu8/opXv2gaw==}
+    peerDependencies:
+      react: '*'
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /react-is/16.13.1:

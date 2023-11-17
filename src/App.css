@@ -14,21 +14,56 @@
   right: 0;
 
   display: grid;
-  grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 1fr;
+  grid-template-areas: "menu menu menu menu menu"
+    "toolbar toolbar toolbar toolbar toolbar"
+    "left-buttons left middle right right-buttons";
+  grid-template-columns: 40px minmax(15rem, 1fr) 5fr minmax(15rem, 1fr) 40px;
+  grid-template-rows: 40px 50px 1fr;
+}
+
+#menu {
+  grid-area: menu;
+  background: #262626;
+}
+
+#toolbar {
+  grid-area: toolbar;
+  display: flex;
+  background: #262626;
+  border-top: 2px solid #171717;
+  border-bottom: 2px solid #171717;
+  padding: 0.2rem;
+  padding-left: 0.5rem;
+}
+
+#left-buttons {
+  grid-area: left-buttons;
+  background: #262626;
+  border-right: 2px solid #171717;
+  padding: 0.5rem 0.2rem 0.2rem 0.2rem;
 }
 
 #left {
-  background: white;
-  border-right: 2px solid gray;
+  grid-area: left;
+  background: #262626;
+  border-right: 1px solid #171717;
+}
+
+#right-buttons {
+  grid-area: right-buttons;
+  background: #262626;
+  border-left: 2px solid #171717;
+  padding: 0.5rem 0.2rem 0.2rem 0.2rem;
 }
 
 #right {
-  background: white;
-  border-left: 2px solid gray;
+  grid-area: right;
+  background: #262626;
+  border-left: 1px solid #171717;
 }
 
 #middle {
+  grid-area: middle;
   position: relative;
 }
 
@@ -43,6 +78,120 @@
   width: 100%;
 }
 
+
+/* Components */
+.cmp-toolbar-button {
+  padding: 0.4rem;
+  border-radius: 0.2rem;
+  margin-bottom: 0.2rem;
+  background: #171717;
+  margin-right: 0.1rem;
+  margin-left: 0.1rem;
+}
+.cmp-toolbar-button svg {
+  display: block;
+  margin: auto;
+}
+.cmp-toolbar-button--selected svg {
+  color: #60a5fa;
+}
+.cmp-toolbar-button:hover {
+  background: #404040;
+}
+
+.cmp-toolbar-group,
+.cmp-toolbar-group__content{
+  display: flex;
+  align-items: center;
+}
+.cmp-toolbar-group__label {
+  font-size: 13px;
+  margin-right: 0.5rem;
+}
+
+
+.cmp-tool-window-button {
+  padding: 0.4rem;
+  border-radius: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+.cmp-tool-window-button svg {
+  display: block;
+  margin: auto;
+}
+.cmp-tool-window-button--selected svg {
+  color: #60a5fa;
+}
+
+.cmp-tool-window-button:hover {
+  background: #404040;
+}
+
+.cmp-tool-window-layer__element {
+  padding: 0.25rem 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.cmp-tool-window-layer__element--selected {
+  background: #404040;
+  border-radius: 0.25rem;
+}
+
+.cmp-tool-window-accordion {
+  border-bottom: 2px solid #171717;
+  font-size: 12px;
+}
+
+.cmp-tool-window-accordion__header {
+  background: #262626;
+  text-align: left;
+  padding: 0.5rem;
+  font-weight: bold;
+  display: flex;
+}
+.cmp-tool-window-accordion__header > svg {
+  width: 1rem;
+}
+.cmp-tool-window-accordion__header__tabs {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+.cmp-tool-window-accordion__header__tab {
+  margin: 0 0.5rem 0 0;
+  font-weight: normal;
+}
+.cmp-tool-window-accordion__header__tab--active {
+  border-bottom: 2px solid green;
+}
+
+.cmp-tool-window-accordion__content {
+  background: #262626;
+  text-align: left;
+  padding: 0.5rem 0.5rem 1rem;
+}
+
+
+dl {
+  display: grid;
+  grid-template: auto / 1fr 2fr;
+  margin: 0;
+}
+
+dt {
+  font-weight: bold;
+  text-align: right;
+  padding-right: .5em;
+}
+dd {}
+
+dt, dd {
+  margin: 0;
+  padding: .3em .5em;
+  border-top: 1px solid rgba(0,0,0,.1);
+}
+
+
+/* SVG Document */
 .documentBounds {
   fill: white;
   stroke: #1c1917;
@@ -88,7 +237,7 @@
 }
 .selection-edge-handle {
   fill: white;
-  strok-width: 1;
+  stroke-width: 1;
   stroke: #1d4ed8;
   cursor: move
 }
