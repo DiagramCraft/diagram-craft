@@ -60,6 +60,7 @@
   stroke: #e7e5e4;
 }
 
+/* Node */
 .node {
   fill: #e2e8f0;
   stroke: #64748b;
@@ -69,4 +70,35 @@
 }
 .node:hover {
   filter: drop-shadow(2px 2px 4px rgba(103, 116, 137, 0.25));
+}
+
+/* Selection */
+.selection-bb {
+  strok-width: 1;
+  stroke: #1d4ed8;
+}
+.selection-bb--only-edges {
+  stroke: #a8a29e;
+  stroke-dasharray: 5 5;
+}
+.selection-handle {
+  fill: white;
+  strok-width: 1;
+  stroke: #1d4ed8;
+}
+.selection-edge-handle {
+  fill: white;
+  strok-width: 1;
+  stroke: #1d4ed8;
+  cursor: move
+}
+.selection-handle:hover,
+.selection-handle--active,
+.selection-edge-handle:hover,
+.selection-edge-handle--active {
+  fill: #bfdbfe;
+  stroke-width: 2;
+}
+.selection-edge-handle--connected {
+  fill: #1d4ed8;
 }

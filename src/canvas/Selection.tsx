@@ -13,6 +13,7 @@ import { Angle } from '../geometry/angle.ts';
 import { round } from '../utils/math.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 import { AnchorType } from '../model-editor/snap/anchor.ts';
+import { $c } from '../utils/classname.ts';
 
 export type SelectionApi = {
   repaint: () => void;
@@ -157,9 +158,9 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
       >
         <polyline
           points={pointsString}
-          style={{ stroke: '#2673dd', strokeWidth: '1' }}
-          strokeDasharray={isOnlyEdges ? '5 5' : undefined}
+          className={$c('selection-bb', { 'only-edges': isOnlyEdges })}
           fill="none"
+          pointerEvents={'none'}
         />
 
         {!isOnlyEdges && (
@@ -169,17 +170,14 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               y1={Point.midpoint(points[0], points[1]).y}
               x2={Point.midpoint(points[0], points[1]).x}
               y2={Point.midpoint(points[0], points[1]).y - 20}
-              strokeWidth={1}
-              stroke="#2673dd"
+              className="selection-handle"
             />
             <circle
               cx={Point.midpoint(points[0], points[1]).x}
               cy={Point.midpoint(points[0], points[1]).y - 20}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'ew-resize' }}
+              className="selection-handle"
+              cursor={'n-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', rotateDragActions);
                 e.stopPropagation();
@@ -189,10 +187,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[0].x}
               cy={points[0].y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'nw-resize' }}
+              className="selection-handle"
+              cursor={'nw-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', resizeDragActions);
                 e.stopPropagation();
@@ -202,10 +198,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[1].x}
               cy={points[1].y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'ne-resize' }}
+              className="selection-handle"
+              cursor={'ne-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', resizeDragActions);
                 e.stopPropagation();
@@ -215,10 +209,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[2].x}
               cy={points[2].y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'se-resize' }}
+              className="selection-handle"
+              cursor={'se-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', resizeDragActions);
                 e.stopPropagation();
@@ -228,10 +220,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[3].x}
               cy={points[3].y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'sw-resize' }}
+              className="selection-handle"
+              cursor={'sw-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', resizeDragActions);
                 e.stopPropagation();
@@ -241,10 +231,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[0], points[1]).x}
               cy={Point.midpoint(points[0], points[1]).y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'n-resize' }}
+              className="selection-handle"
+              cursor={'n-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', resizeDragActions);
                 e.stopPropagation();
@@ -254,10 +242,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[1], points[2]).x}
               cy={Point.midpoint(points[1], points[2]).y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'e-resize' }}
+              className="selection-handle"
+              cursor={'e-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', resizeDragActions);
                 e.stopPropagation();
@@ -268,10 +254,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[2], points[3]).x}
               cy={Point.midpoint(points[2], points[3]).y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 's-resize' }}
+              className="selection-handle"
+              cursor={'s-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', resizeDragActions);
                 e.stopPropagation();
@@ -281,10 +265,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[3], points[4]).x}
               cy={Point.midpoint(points[3], points[4]).y}
               r="4"
-              fill="white"
-              strokeWidth={1}
-              stroke="#2673dd"
-              style={{ cursor: 'w-resize' }}
+              className="selection-handle"
+              cursor={'w-resize'}
               onMouseDown={e => {
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', resizeDragActions);
                 e.stopPropagation();
@@ -299,15 +281,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 cx={e.startPosition.x}
                 cy={e.startPosition.y}
                 r="4"
-                fill={e.isStartConnected() ? '#2673dd' : 'white'}
-                strokeWidth={1}
-                stroke="#2673dd"
-                style={{ cursor: 'move' }}
+                className={$c('selection-edge-handle', { connected: e.isStartConnected() })}
                 onMouseDown={ev => {
                   props.onDragStart(
                     Point.fromEvent(ev.nativeEvent),
                     'move-edge-start',
-                    new EdgeEndpointMoveActions(e)
+                    new EdgeEndpointMoveActions(e, ev.currentTarget)
                   );
                   ev.stopPropagation();
                 }}
@@ -316,15 +295,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 cx={e.endPosition.x}
                 cy={e.endPosition.y}
                 r="4"
-                fill={e.isEndConnected() ? '#2673dd' : 'white'}
-                strokeWidth={1}
-                stroke="#2673dd"
-                style={{ cursor: 'move' }}
+                className={$c('selection-edge-handle', { connected: e.isEndConnected() })}
                 onMouseDown={ev => {
                   props.onDragStart(
                     Point.fromEvent(ev.nativeEvent),
                     'move-edge-end',
-                    new EdgeEndpointMoveActions(e)
+                    new EdgeEndpointMoveActions(e, ev.currentTarget)
                   );
                   ev.stopPropagation();
                 }}

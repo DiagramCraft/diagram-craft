@@ -27,6 +27,7 @@ export type Drag = {
   offset: Point;
   actions: DragActions;
   state?: Record<string, string>;
+  hoverElement?: string;
 };
 
 export type DragActions = {

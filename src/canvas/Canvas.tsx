@@ -174,6 +174,14 @@ export const Canvas = (props: Props) => {
     };
   }, []);
 
+  const onMouseEnter = useCallback((id: string) => {
+    if (drag.current) drag.current.hoverElement = id;
+  }, []);
+
+  const onMouseLeave = useCallback((_id: string) => {
+    if (drag.current) drag.current.hoverElement = undefined;
+  }, []);
+
   const updateCursor = useCallback(
     (coord: Point) => {
       if (Box.contains(selection.current.bounds, coord)) {
@@ -298,6 +306,8 @@ export const Canvas = (props: Props) => {
                   key={id}
                   ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
                   onMouseDown={onMouseDown}
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
                   def={edge}
                 />
               );
@@ -308,6 +318,8 @@ export const Canvas = (props: Props) => {
                   key={id}
                   ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
                   onMouseDown={onMouseDown}
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
                   def={node}
                 />
               );

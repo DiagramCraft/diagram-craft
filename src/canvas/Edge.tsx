@@ -37,7 +37,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   );
 
   return (
-    <>
+    <g>
       <line
         x1={sm.x}
         y1={sm.y}
@@ -46,6 +46,8 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         stroke={'transparent'}
         strokeWidth={15}
         onMouseDown={onMouseDown}
+        onMouseEnter={() => props.onMouseEnter(props.def.id)}
+        onMouseLeave={() => props.onMouseLeave(props.def.id)}
         style={{ cursor: 'move' }}
       />
       <line
@@ -55,13 +57,17 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         y2={em.y}
         stroke={'black'}
         onMouseDown={onMouseDown}
+        onMouseEnter={() => props.onMouseEnter(props.def.id)}
+        onMouseLeave={() => props.onMouseLeave(props.def.id)}
         style={{ cursor: 'move' }}
       />
-    </>
+    </g>
   );
 });
 
 type Props = {
   def: DiagramEdge;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
+  onMouseEnter: (id: string) => void;
+  onMouseLeave: (id: string) => void;
 };

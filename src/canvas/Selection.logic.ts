@@ -14,11 +14,27 @@ import { SelectionState } from '../model-editor/selectionState.ts';
 import { createResizeCanvasActionToFit } from '../model-editor/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction, ResizeAction, RotateAction } from '../model-viewer/actions.ts';
 
+// TODO: Maybe convert the rest of the DragActions to classes to allow for state instead
+//       of having to use the drag object for all of this - breaking encapsulation
+
 export class EdgeEndpointMoveActions implements DragActions {
-  constructor(private readonly edge: DiagramEdge) {}
+  private readonly originalPointerEvents: string;
+
+  constructor(
+    private readonly edge: DiagramEdge,
+    private readonly element: SVGElement
+  ) {
+    this.originalPointerEvents = element.getAttribute('pointer-events') ?? 'all';
+    element.classList.add('selection-edge-handle--active');
+
+    // TODO: Should disable point-events on all elements that makes up the edge
+    element.setAttribute('pointer-events', 'none');
+  }
 
   onDrag(coord: Point, drag: Drag, diagram: Diagram, selection: SelectionState) {
     precondition.is.true(drag.type === 'move-edge-start' || drag.type === 'move-edge-end');
+
+    selection.guides = [];
 
     if (drag.type === 'move-edge-start') {
       this.edge.start = { position: coord };
@@ -31,6 +47,8 @@ export class EdgeEndpointMoveActions implements DragActions {
   }
 
   onDragEnd(_coord: Point, _drag: Drag, _diagram: Diagram, _selection: SelectionState) {
+    this.element.setAttribute('pointer-events', this.originalPointerEvents);
+    this.element.classList.remove('selection-edge-handle--active');
     // TODO: Create undoable action
   }
 }

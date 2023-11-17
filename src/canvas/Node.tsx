@@ -35,7 +35,10 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   if (props.def.nodeType === 'group') {
     return (
-      <g>
+      <g
+        onMouseEnter={() => props.onMouseEnter(props.def.id)}
+        onMouseLeave={() => props.onMouseLeave(props.def.id)}
+      >
         {/* TODO: Probably remove the rect here? */}
         <rect
           x={wx}
@@ -54,6 +57,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             key={c.id}
             def={c}
             onMouseDown={(_id, coord, add) => props.onMouseDown(props.def.id, coord, add)}
+            onMouseLeave={props.onMouseLeave}
+            onMouseEnter={props.onMouseEnter}
           />
         ))}
 
@@ -75,6 +80,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${
           wx + props.def.bounds.size.w / 2
         } ${wy + props.def.bounds.size.h / 2})`}
+        onMouseEnter={() => props.onMouseEnter(props.def.id)}
+        onMouseLeave={() => props.onMouseLeave(props.def.id)}
       >
         <rect
           x={wx}
@@ -108,4 +115,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 type Props = {
   def: DiagramNode;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
+  onMouseEnter: (id: string) => void;
+  onMouseLeave: (id: string) => void;
 };
