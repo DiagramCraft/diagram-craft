@@ -74,7 +74,7 @@
 
 /* Selection */
 .selection-bb {
-  strok-width: 1;
+  stroke-width: 1;
   stroke: #1d4ed8;
 }
 .selection-bb--only-edges {
@@ -83,7 +83,7 @@
 }
 .selection-handle {
   fill: white;
-  strok-width: 1;
+  stroke-width: 1;
   stroke: #1d4ed8;
 }
 .selection-edge-handle {
@@ -96,9 +96,9 @@
 .selection-handle--active,
 .selection-edge-handle:hover,
 .selection-edge-handle--active {
-  fill: #bfdbfe;
   stroke-width: 2;
 }
 .selection-edge-handle--connected {
-  fill: #1d4ed8;
+  stroke: #16a34a;
+  fill: #16a34a;
 }

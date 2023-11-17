@@ -1,5 +1,5 @@
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { DiagramEdge, isConnectedEndpoint } from '../model-viewer/diagram.ts';
+import { DiagramEdge, isConnected } from '../model-viewer/diagram.ts';
 import { Box } from '../geometry/box.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
@@ -23,8 +23,8 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const start = props.def.start;
   const end = props.def.end;
 
-  const sm = isConnectedEndpoint(start) ? Box.center(start.node.bounds) : start.position;
-  const em = isConnectedEndpoint(end) ? Box.center(end.node.bounds) : end.position;
+  const sm = isConnected(start) ? Box.center(start.node.bounds) : start.position;
+  const em = isConnected(end) ? Box.center(end.node.bounds) : end.position;
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {

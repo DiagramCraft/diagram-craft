@@ -65,92 +65,95 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
-      {[
-        ...props.selection.guides.filter(s => s.matchingAnchor.type !== 'distance'),
-        ...props.selection.guides.filter(s => s.matchingAnchor.type === 'distance')
-      ].map(g => {
-        const l = Line.extend(g.line, 30, 30);
-        const color = anchorTypeColor[g.matchingAnchor.type];
-        return (
-          <Fragment key={`u_${g.matchingAnchor.type}_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}>
-            <line
-              x1={l.from.x}
-              y1={l.from.y}
-              x2={l.to.x}
-              y2={l.to.y}
-              strokeDasharray={'5 5'}
-              strokeWidth={1}
-              stroke={color}
-            />
+      {!isOnlyEdges &&
+        [
+          ...props.selection.guides.filter(s => s.matchingAnchor.type !== 'distance'),
+          ...props.selection.guides.filter(s => s.matchingAnchor.type === 'distance')
+        ].map(g => {
+          const l = Line.extend(g.line, 30, 30);
+          const color = anchorTypeColor[g.matchingAnchor.type];
+          return (
+            <Fragment
+              key={`u_${g.matchingAnchor.type}_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}
+            >
+              <line
+                x1={l.from.x}
+                y1={l.from.y}
+                x2={l.to.x}
+                y2={l.to.y}
+                strokeDasharray={'5 5'}
+                strokeWidth={1}
+                stroke={color}
+              />
 
-            <line
-              x1={g.line.from.x}
-              y1={g.line.from.y}
-              x2={g.line.to.x}
-              y2={g.line.to.y}
-              strokeWidth={1}
-              stroke={color}
-            />
+              <line
+                x1={g.line.from.x}
+                y1={g.line.from.y}
+                x2={g.line.to.x}
+                y2={g.line.to.y}
+                strokeWidth={1}
+                stroke={color}
+              />
 
-            {g.matchingAnchor.type === 'size' &&
-              g.matchingAnchor.distancePairs.map(dp => {
-                const lbl = round(dp.distance).toString();
-                return (
-                  <DistanceMarker
-                    key={`a_${dp.pointA.x}_${dp.pointA.y}`}
-                    id={`nd_${dp.pointA.x}_${dp.pointA.y}`}
-                    x1={dp.pointA.x}
-                    y1={dp.pointA.y}
-                    x2={dp.pointB.x}
-                    y2={dp.pointB.y}
-                    color={'pink'}
-                    label={lbl}
+              {g.matchingAnchor.type === 'size' &&
+                g.matchingAnchor.distancePairs.map(dp => {
+                  const lbl = round(dp.distance).toString();
+                  return (
+                    <DistanceMarker
+                      key={`a_${dp.pointA.x}_${dp.pointA.y}`}
+                      id={`nd_${dp.pointA.x}_${dp.pointA.y}`}
+                      x1={dp.pointA.x}
+                      y1={dp.pointA.y}
+                      x2={dp.pointB.x}
+                      y2={dp.pointB.y}
+                      color={'pink'}
+                      label={lbl}
+                    />
+                  );
+                })}
+
+              {g.matchingAnchor.type === 'distance' &&
+                g.matchingAnchor.distancePairs.map(dp => {
+                  const lbl = round(dp.distance).toString();
+                  return (
+                    <DistanceMarker
+                      key={`a_${dp.pointA.x}_${dp.pointA.y}`}
+                      id={`nd_${dp.pointA.x}_${dp.pointA.y}`}
+                      x1={dp.pointA.x}
+                      y1={dp.pointA.y}
+                      x2={dp.pointB.x}
+                      y2={dp.pointB.y}
+                      color={'pink'}
+                      label={lbl}
+                    />
+                  );
+                })}
+
+              {/* TODO: These numbers are a bit of a hack */}
+              {g.label !== undefined && (
+                <>
+                  <rect
+                    x={Line.midpoint(g.line).x - g.label.length * 5}
+                    y={Line.midpoint(g.line).y - 10}
+                    width={g.label.length * 10}
+                    height={16}
+                    fill="white"
                   />
-                );
-              })}
-
-            {g.matchingAnchor.type === 'distance' &&
-              g.matchingAnchor.distancePairs.map(dp => {
-                const lbl = round(dp.distance).toString();
-                return (
-                  <DistanceMarker
-                    key={`a_${dp.pointA.x}_${dp.pointA.y}`}
-                    id={`nd_${dp.pointA.x}_${dp.pointA.y}`}
-                    x1={dp.pointA.x}
-                    y1={dp.pointA.y}
-                    x2={dp.pointB.x}
-                    y2={dp.pointB.y}
-                    color={'pink'}
-                    label={lbl}
-                  />
-                );
-              })}
-
-            {/* TODO: These numbers are a bit of a hack */}
-            {g.label !== undefined && (
-              <>
-                <rect
-                  x={Line.midpoint(g.line).x - g.label.length * 5}
-                  y={Line.midpoint(g.line).y - 10}
-                  width={g.label.length * 10}
-                  height={16}
-                  fill="white"
-                />
-                <text
-                  x={Line.midpoint(g.line).x}
-                  y={Line.midpoint(g.line).y}
-                  fill="black"
-                  style={{ fontSize: '10px' }}
-                  dominantBaseline="middle"
-                  textAnchor="middle"
-                >
-                  {g.label}
-                </text>
-              </>
-            )}
-          </Fragment>
-        );
-      })}
+                  <text
+                    x={Line.midpoint(g.line).x}
+                    y={Line.midpoint(g.line).y}
+                    fill="black"
+                    style={{ fontSize: '10px' }}
+                    dominantBaseline="middle"
+                    textAnchor="middle"
+                  >
+                    {g.label}
+                  </text>
+                </>
+              )}
+            </Fragment>
+          );
+        })}
       <g
         transform={`rotate(${Angle.toDeg(bounds.rotation)} ${bounds.pos.x + bounds.size.w / 2} ${
           bounds.pos.y + bounds.size.h / 2

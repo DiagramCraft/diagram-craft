@@ -51,6 +51,23 @@ export class DiagramNode implements AbstractNode {
     this.edges = {};
   }
 
+  removeEdge(edge: DiagramEdge) {
+    for (const [anchor, edges] of Object.entries(this.edges)) {
+      this.edges[anchor] = edges.filter(e => e !== edge);
+    }
+  }
+
+  addEdge(anchor: string, edge: DiagramEdge) {
+    this.edges[anchor] = [...(this.edges[anchor] ?? []), edge];
+  }
+
+  updateEdge(anchor: string, edge: DiagramEdge) {
+    if (this.edges[anchor].includes(edge)) return;
+
+    this.removeEdge(edge);
+    this.addEdge(anchor, edge);
+  }
+
   clone() {
     const node = new DiagramNode(this.id, this.nodeType, deepClone(this.bounds));
     node.props = deepClone(this.props);
@@ -69,7 +86,9 @@ export class DiagramNode implements AbstractNode {
 export type ConnectedEndpoint = { anchor: string; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
 
-export const isConnectedEndpoint = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
+// TODO: Maybe make endpoint a class with this as a method?
+//       ...or perhaps a property as discriminator
+export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   'node' in endpoint;
 
 export class DiagramEdge implements AbstractEdge {
@@ -92,28 +111,38 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   get startPosition() {
-    return isConnectedEndpoint(this.start)
-      ? Box.center(this.start.node.bounds)
-      : this.start.position;
+    return isConnected(this.start) ? Box.center(this.start.node.bounds) : this.start.position;
   }
 
   isStartConnected() {
-    return isConnectedEndpoint(this.start);
+    return isConnected(this.start);
   }
 
   get endPosition() {
-    return isConnectedEndpoint(this.end) ? Box.center(this.end.node.bounds) : this.end.position;
+    return isConnected(this.end) ? Box.center(this.end.node.bounds) : this.end.position;
   }
 
   isEndConnected() {
-    return isConnectedEndpoint(this.end);
+    return isConnected(this.end);
   }
 
   set start(start: Endpoint) {
-    if (isConnectedEndpoint(this.#start) && !isConnectedEndpoint(start)) {
-      const a = this.#start.anchor;
-      this.#start.node.edges![a] = this.#start.node.edges[a].filter(e => e !== this);
+    if (isConnected(this.#start) && isConnected(start)) {
+      // both before and after are connected
+      if (this.#start.node === start.node) {
+        this.#start.node.updateEdge(start.anchor, this);
+      } else {
+        this.#start.node.removeEdge(this);
+        start.node.addEdge(start.anchor, this);
+      }
+    } else if (isConnected(this.#start)) {
+      // before is connected, after is not
+      this.#start.node.removeEdge(this);
+    } else if (isConnected(start)) {
+      // before is not connected, after is connected
+      start.node.addEdge(start.anchor, this);
     }
+
     this.#start = start;
   }
 
@@ -122,10 +151,22 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   set end(end: Endpoint) {
-    if (isConnectedEndpoint(this.#end) && !isConnectedEndpoint(end)) {
-      const a = this.#end.anchor;
-      this.#end.node.edges![a] = this.#end.node.edges[a].filter(e => e !== this);
+    if (isConnected(this.#end) && isConnected(end)) {
+      // both before and after are connected
+      if (this.#end.node === end.node) {
+        this.#end.node.updateEdge(end.anchor, this);
+      } else {
+        this.#end.node.removeEdge(this);
+        end.node.addEdge(end.anchor, this);
+      }
+    } else if (isConnected(this.#end)) {
+      // before is connected, after is not
+      this.#end.node.removeEdge(this);
+    } else if (isConnected(end)) {
+      // before is not connected, after is connected
+      end.node.addEdge(end.anchor, this);
     }
+
     this.#end = end;
   }
 

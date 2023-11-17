@@ -36,6 +36,12 @@ export class EdgeEndpointMoveActions implements DragActions {
 
     selection.guides = [];
 
+    if (drag.hoverElement && diagram.nodeLookup[drag.hoverElement]) {
+      this.element.classList.add('selection-edge-handle--connected');
+    } else {
+      this.element.classList.remove('selection-edge-handle--connected');
+    }
+
     if (drag.type === 'move-edge-start') {
       this.edge.start = { position: coord };
     } else {
@@ -46,9 +52,18 @@ export class EdgeEndpointMoveActions implements DragActions {
     selection.recalculateBoundingBox();
   }
 
-  onDragEnd(_coord: Point, _drag: Drag, _diagram: Diagram, _selection: SelectionState) {
+  onDragEnd(_coord: Point, drag: Drag, diagram: Diagram, _selection: SelectionState) {
     this.element.setAttribute('pointer-events', this.originalPointerEvents);
     this.element.classList.remove('selection-edge-handle--active');
+
+    if (drag.hoverElement && diagram.nodeLookup[drag.hoverElement]) {
+      if (drag.type === 'move-edge-start') {
+        this.edge.start = { node: diagram.nodeLookup[drag.hoverElement], anchor: 'center' };
+      } else {
+        this.edge.end = { node: diagram.nodeLookup[drag.hoverElement], anchor: 'center' };
+      }
+    }
+
     // TODO: Create undoable action
   }
 }
