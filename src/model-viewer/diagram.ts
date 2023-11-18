@@ -110,6 +110,11 @@ export class DiagramEdge implements AbstractEdge {
     return Box.fromCorners(this.startPosition, this.endPosition);
   }
 
+  set bounds(b: Box) {
+    this.start = { position: { x: b.pos.x, y: b.pos.y } };
+    this.end = { position: { x: b.pos.x + b.size.w, y: b.pos.y + b.size.h } };
+  }
+
   get startPosition() {
     return isConnected(this.start) ? Box.center(this.start.node.bounds) : this.start.position;
   }
@@ -172,6 +177,10 @@ export class DiagramEdge implements AbstractEdge {
 
   get end() {
     return this.#end;
+  }
+
+  clone() {
+    return new DiagramEdge(this.id, deepClone(this.start), deepClone(this.end));
   }
 }
 
@@ -261,6 +270,20 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   // TODO: Implement this part
   queryNodes() {
     return Object.values(this.nodeLookup);
+  }
+
+  transformEdges(edges: DiagramEdge[], transforms: Transform[]) {
+    const before = edges.map(n => n.clone());
+
+    for (const edge of edges) {
+      edge.bounds = Transform.box(edge.bounds, ...transforms);
+    }
+
+    for (let i = 0; i < edges.length; i++) {
+      this.emit('edgechanged', { before: before[i], after: edges[i] });
+    }
+
+    // TODO: Automatically create undoable action?
   }
 
   transformNodes(nodes: DiagramNode[], transforms: Transform[]) {

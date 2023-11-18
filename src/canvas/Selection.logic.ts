@@ -350,6 +350,9 @@ export const moveDragActions: DragActions = {
     diagram.transformNodes(selection.nodes, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
+    diagram.transformEdges(selection.edges, [
+      new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
+    ]);
     selection.bounds = newBounds.getSnapshot();
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
