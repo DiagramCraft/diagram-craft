@@ -4,15 +4,6 @@ import { Canvas } from './canvas/Canvas.tsx';
 import { useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
-import {
-  MdDataObject,
-  MdFormatShapes,
-  MdInfoOutline,
-  MdOutlineAccountTree,
-  MdOutlineLayers,
-  MdOutlineWidgets,
-  MdSelectAll
-} from 'react-icons/md';
 import { ToolWindowButton } from './app/ToolWindowButton.tsx';
 import { EditableDiagram } from './model-editor/editable-diagram.ts';
 import { InfoToolWindow } from './app/InfoToolWindow.tsx';
@@ -21,7 +12,12 @@ import {
   TbArrowAutofitWidth,
   TbArrowsMoveHorizontal,
   TbBorderInner,
+  TbCategoryPlus,
+  TbDatabaseEdit,
+  TbFiles,
   TbGrid3X3,
+  TbHistory,
+  TbInfoCircle,
   TbLayout,
   TbLayoutAlignBottom,
   TbLayoutAlignCenter,
@@ -31,7 +27,10 @@ import {
   TbLayoutAlignTop,
   TbLayoutDistributeHorizontal,
   TbLayoutDistributeVertical,
-  TbPlus
+  TbPalette,
+  TbPlus,
+  TbSelectAll,
+  TbStack2
 } from 'react-icons/tb';
 import { ToolBarButton } from './app/ToolBarButton.tsx';
 import { ToolBarGroup } from './app/ToolBarGroup.tsx';
@@ -93,10 +92,11 @@ const App = () => {
       </div>
 
       <div id="left-buttons">
-        <ToolWindowButton icon={MdOutlineWidgets} />
-        <ToolWindowButton icon={MdOutlineLayers} isSelected />
-        <ToolWindowButton icon={MdSelectAll} />
-        <ToolWindowButton icon={MdOutlineAccountTree} />
+        <ToolWindowButton icon={TbCategoryPlus} />
+        <ToolWindowButton icon={TbStack2} isSelected />
+        <ToolWindowButton icon={TbSelectAll} />
+        <ToolWindowButton icon={TbFiles} />
+        <ToolWindowButton icon={TbHistory} />
       </div>
       <div id="left">
         <LayerToolWindow diagram={$d} />
@@ -129,9 +129,9 @@ const App = () => {
       </div>
 
       <div id="right-buttons">
-        <ToolWindowButton icon={MdInfoOutline} isSelected />
-        <ToolWindowButton icon={MdFormatShapes} />
-        <ToolWindowButton icon={MdDataObject} />
+        <ToolWindowButton icon={TbInfoCircle} isSelected />
+        <ToolWindowButton icon={TbPalette} />
+        <ToolWindowButton icon={TbDatabaseEdit} />
       </div>
       <div id="right">
         <InfoToolWindow diagram={$d} />
