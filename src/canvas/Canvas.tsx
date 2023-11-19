@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useRef } from 'react';
+import React, {
+  forwardRef,
+  SVGProps,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef
+} from 'react';
 import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
 import { DiagramEvents } from '../model-viewer/diagram.ts';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
 import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
@@ -27,7 +32,7 @@ type DeferedMouseAction = {
   callback: () => void;
 };
 
-export const Canvas = (props: Props) => {
+export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const redraw = useRedraw();
 
   const diagram = props.diagram;
@@ -43,6 +48,10 @@ export const Canvas = (props: Props) => {
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
+
+  useImperativeHandle(ref, () => {
+    return svgRef.current!;
+  });
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -284,63 +293,96 @@ export const Canvas = (props: Props) => {
   );
 
   return (
-    <>
-      <DndProvider backend={HTML5Backend}>
-        <svg
-          ref={svgRef}
-          preserveAspectRatio="none"
-          viewBox={diagram.viewBox.svgViewboxString}
-          onMouseDown={e => onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent)}
-          onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
-          onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
-        >
-          <DocumentBounds diagram={diagram} />
-          <Grid diagram={diagram} />
+    <svg
+      ref={svgRef}
+      {...props}
+      preserveAspectRatio="none"
+      viewBox={diagram.viewBox.svgViewboxString}
+      onMouseDown={e => onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent)}
+      onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
+      onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
+      onContextMenu={event => {
+        const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
 
-          {diagram.elements.map(e => {
-            const id = e.id;
-            if (e.type === 'edge') {
-              const edge = diagram.edgeLookup[id]!;
-              return (
-                <Edge
-                  key={id}
-                  ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
-                  onMouseDown={onMouseDown}
-                  onMouseEnter={onMouseEnter}
-                  onMouseLeave={onMouseLeave}
-                  def={edge}
-                />
-              );
-            } else {
-              const node = diagram.nodeLookup[id]!;
-              return (
-                <Node
-                  key={id}
-                  ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-                  onMouseDown={onMouseDown}
-                  onMouseEnter={onMouseEnter}
-                  onMouseLeave={onMouseLeave}
-                  def={node}
-                />
-              );
-            }
-          })}
+        const point = {
+          x: event.nativeEvent.offsetX,
+          y: event.nativeEvent.offsetY
+        };
 
-          <Selection
-            ref={selectionRef}
-            selection={selection}
-            onDragStart={(point, type, actions) =>
-              onDragStart(diagram.viewBox.toDiagramPoint(point), type, actions)
-            }
-          />
-          <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
-        </svg>
-      </DndProvider>
-    </>
+        const isClickOnSelection = Box.contains(
+          selection.bounds,
+          diagram.viewBox.toDiagramPoint(point)
+        );
+
+        e.contextMenuTarget = {
+          type: isClickOnSelection ? 'selection' : 'canvas',
+          pos: diagram.viewBox.toDiagramPoint(point)
+        };
+        props.onContextMenu?.(e);
+      }}
+    >
+      <DocumentBounds diagram={diagram} />
+      <Grid diagram={diagram} />
+
+      {diagram.elements.map(e => {
+        const id = e.id;
+        if (e.type === 'edge') {
+          const edge = diagram.edgeLookup[id]!;
+          return (
+            <Edge
+              key={id}
+              ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
+              onMouseDown={onMouseDown}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              def={edge}
+            />
+          );
+        } else {
+          const node = diagram.nodeLookup[id]!;
+          return (
+            <Node
+              key={id}
+              ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
+              onMouseDown={onMouseDown}
+              onMouseEnter={onMouseEnter}
+              onMouseLeave={onMouseLeave}
+              def={node}
+            />
+          );
+        }
+      })}
+
+      <Selection
+        ref={selectionRef}
+        selection={selection}
+        onDragStart={(point, type, actions) =>
+          onDragStart(diagram.viewBox.toDiagramPoint(point), type, actions)
+        }
+      />
+      <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
+    </svg>
   );
-};
+});
 
 type Props = {
   // TODO: We should split Canvas and EditableCanvas somehow
   diagram: EditableDiagram;
+
+  onContextMenu: (event: ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
+} & Omit<
+  SVGProps<SVGSVGElement>,
+  'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
+>;
+
+export type ContextMenuTarget = { pos: Point } & (
+  | {
+      type: 'canvas';
+    }
+  | {
+      type: 'selection';
+    }
+);
+type ContextMenuEvent = {
+  contextMenuTarget: ContextMenuTarget;
 };
