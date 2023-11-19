@@ -189,5 +189,21 @@ export const Box = {
       rotation: b.rotation,
       size: { w: Math.abs(b.size.w), h: Math.abs(b.size.h) }
     };
-  }
+  },
+
+  withX: (b: Box, x: number) => ({
+    ...b,
+    size: { ...b.size },
+    pos: { ...b.pos, x },
+    rotation: b.rotation
+  }),
+  withY: (b: Box, y: number) => ({
+    ...b,
+    size: { ...b.size },
+    pos: { ...b.pos, y },
+    rotation: b.rotation
+  }),
+  withW: (b: Box, w: number) => ({ ...b, size: { ...b.size, w }, rotation: b.rotation }),
+  withH: (b: Box, h: number) => ({ ...b, size: { ...b.size, h }, rotation: b.rotation }),
+  withRotation: (b: Box, r: number) => ({ ...b, size: { ...b.size }, rotation: r })
 };

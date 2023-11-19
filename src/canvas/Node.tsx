@@ -25,6 +25,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
+      if (e.button !== 0) return;
       props.onMouseDown(props.def.id, Point.fromEvent(e.nativeEvent), e.nativeEvent);
       e.stopPropagation();
 

@@ -272,6 +272,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     return Object.values(this.nodeLookup);
   }
 
+  // TODO: Can we merge transformEdges and transformNodes?
   transformEdges(edges: DiagramEdge[], transforms: Transform[]) {
     const before = edges.map(n => n.clone());
 
@@ -318,8 +319,12 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     this.emit('edgeremoved', { edge });
   }
 
-  updateEdge(edge: DiagramEdge) {
+  updateElement(element: DiagramEdge | DiagramNode) {
     // TODO: We don't have before here
-    this.emit('edgechanged', { before: edge, after: edge });
+    if (element.type === 'node') {
+      this.emit('nodechanged', { before: element, after: element });
+    } else {
+      this.emit('edgechanged', { before: element, after: element });
+    }
   }
 }

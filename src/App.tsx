@@ -132,7 +132,7 @@ const App = () => {
                   if (state.type === 'canvas') {
                     return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
                   } else {
-                    return <SelectionContextMenu />;
+                    return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
                   }
                 }}
               />

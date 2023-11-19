@@ -12,7 +12,8 @@ export const ActionContextMenuItem = (props: Props) => {
         props.actionMap[props.action]!.execute();
       }}
     >
-      {props.children} <div className="RightSlot">{findKeyBindings('UNDO', props.keyMap)}</div>
+      {props.children}{' '}
+      <div className="RightSlot">{findKeyBindings(props.action, props.keyMap)}</div>
     </ContextMenu.Item>
   );
 };

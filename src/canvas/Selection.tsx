@@ -182,6 +182,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'n-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', rotateDragActions);
                 e.stopPropagation();
               }}
@@ -193,6 +194,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'nw-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -204,6 +206,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'ne-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -215,6 +218,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'se-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -226,6 +230,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'sw-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -237,6 +242,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'n-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -248,6 +254,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'e-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -260,6 +267,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'s-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -271,6 +279,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               className="selection-handle"
               cursor={'w-resize'}
               onMouseDown={e => {
+                if (e.button !== 0) return;
                 props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', resizeDragActions);
                 e.stopPropagation();
               }}
@@ -286,6 +295,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 r="4"
                 className={$c('selection-edge-handle', { connected: e.isStartConnected() })}
                 onMouseDown={ev => {
+                  if (ev.button !== 0) return;
                   props.onDragStart(
                     Point.fromEvent(ev.nativeEvent),
                     'move-edge-start',
@@ -300,6 +310,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 r="4"
                 className={$c('selection-edge-handle', { connected: e.isEndConnected() })}
                 onMouseDown={ev => {
+                  if (ev.button !== 0) return;
                   props.onDragStart(
                     Point.fromEvent(ev.nativeEvent),
                     'move-edge-end',

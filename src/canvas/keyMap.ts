@@ -3,6 +3,7 @@ import { RedoAction } from './actions/redoAction.ts';
 import { Emitter } from '../utils/event.ts';
 import { SelectAllAction } from './actions/selectAllAction.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { AlignAction } from './actions/alignAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -35,7 +36,13 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   REDO: new RedoAction(state.diagram),
   SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
   SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
-  SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges')
+  SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges'),
+  ALIGN_TOP: new AlignAction(state.diagram, 'top'),
+  ALIGN_BOTTOM: new AlignAction(state.diagram, 'bottom'),
+  ALIGN_CENTER_HORIZONTAL: new AlignAction(state.diagram, 'center-horizontal'),
+  ALIGN_LEFT: new AlignAction(state.diagram, 'left'),
+  ALIGN_RIGHT: new AlignAction(state.diagram, 'right'),
+  ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical')
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {

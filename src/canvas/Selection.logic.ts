@@ -48,7 +48,7 @@ export class EdgeEndpointMoveActions implements DragActions {
       this.edge.end = { position: coord };
     }
 
-    diagram.updateEdge(this.edge);
+    diagram.updateElement(this.edge);
     selection.recalculateBoundingBox();
   }
 
