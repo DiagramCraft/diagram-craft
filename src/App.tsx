@@ -10,35 +10,20 @@ import { InfoToolWindow } from './app/InfoToolWindow.tsx';
 import { LayerToolWindow } from './app/LayerToolWindow.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
-  TbArrowAutofitWidth,
-  TbArrowsMoveHorizontal,
-  TbBorderInner,
   TbCategoryPlus,
   TbDatabaseEdit,
   TbFiles,
-  TbGrid3X3,
   TbHistory,
   TbInfoCircle,
-  TbLayout,
-  TbLayoutAlignBottom,
-  TbLayoutAlignCenter,
-  TbLayoutAlignLeft,
-  TbLayoutAlignMiddle,
-  TbLayoutAlignRight,
-  TbLayoutAlignTop,
-  TbLayoutDistributeHorizontal,
-  TbLayoutDistributeVertical,
   TbPalette,
-  TbPlus,
   TbSelectAll,
   TbStack2
 } from 'react-icons/tb';
-import { ToolBarButton } from './app/ToolBarButton.tsx';
-import { ToolBarGroup } from './app/ToolBarGroup.tsx';
 import { CanvasContextMenu } from './app/context-menu/CanvasContextMenu.tsx';
 import { ContextMenuDispatcher } from './app/context-menu/ContextMenuDispatcher.tsx';
 import { SelectionContextMenu } from './app/context-menu/SelectionContextMenu.tsx';
 import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './canvas/keyMap.ts';
+import { Toolbar } from './app/toolbar/Toolbar.tsx';
 
 const diagrams = [
   {
@@ -79,25 +64,7 @@ const App = () => {
         </select>
       </div>
       <div id="toolbar">
-        <ToolBarGroup label={'Snap:'}>
-          <ToolBarButton icon={TbGrid3X3} />
-          <ToolBarButton icon={TbLayout} isSelected />
-          <ToolBarButton icon={TbPlus} isSelected />
-          <ToolBarButton icon={TbArrowsMoveHorizontal} />
-          <ToolBarButton icon={TbArrowAutofitWidth} />
-          <ToolBarButton icon={TbBorderInner} />
-        </ToolBarGroup>
-
-        <ToolBarGroup label={'Align:'}>
-          <ToolBarButton icon={TbLayoutAlignTop} />
-          <ToolBarButton icon={TbLayoutAlignBottom} />
-          <ToolBarButton icon={TbLayoutAlignLeft} />
-          <ToolBarButton icon={TbLayoutAlignRight} />
-          <ToolBarButton icon={TbLayoutAlignCenter} />
-          <ToolBarButton icon={TbLayoutAlignMiddle} />
-          <ToolBarButton icon={TbLayoutDistributeHorizontal} />
-          <ToolBarButton icon={TbLayoutDistributeVertical} />
-        </ToolBarGroup>
+        <Toolbar actionMap={actionMap} keyMap={keyMap} />
       </div>
 
       <div id="left-buttons">

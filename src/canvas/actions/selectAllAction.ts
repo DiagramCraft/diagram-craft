@@ -28,5 +28,6 @@ export class SelectAllAction extends EventEmitter<ActionEvents> implements Actio
     } else if (this.mode === 'edges') {
       this.diagram.selectionState.setElements(Object.values(this.diagram.edgeLookup));
     }
+    this.emit('actiontriggered', { action: this });
   }
 }

@@ -18,7 +18,7 @@ declare global {
 }
 
 export class AlignAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
+  enabled = false;
 
   constructor(
     private readonly diagram: EditableDiagram,
@@ -33,6 +33,7 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
     super();
     this.diagram.selectionState.on('*', () => {
       this.enabled = this.diagram.selectionState.elements.length > 1;
+      this.emit('actionchanged', { action: this });
     });
   }
 
@@ -58,6 +59,7 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
 
     action.commit();
     this.diagram.undoManager.add(action);
+    this.emit('actiontriggered', { action: this });
   }
 
   // y + h === Y       => y = Y - h       => y = Y - h * offset (offset = 1)
