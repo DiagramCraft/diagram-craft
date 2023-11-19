@@ -1,36 +1,80 @@
 import { Diagram } from '../model-viewer/diagram.ts';
-import { Drag } from './drag.ts';
-import { SelectionState } from '../model-editor/selectionState.ts';
+import { UndoAction } from './actions/undoAction.ts';
+import { RedoAction } from './actions/redoAction.ts';
+import { Emitter } from '../utils/event.ts';
 
-export type Action = {
-  execute: (diagram: Diagram, selection: SelectionState, drag?: Drag) => void;
+export type ActionEvents = {
+  actionchanged: { action: Action };
+  actiontriggered: { action: Action };
 };
 
-export type KeyMap = Record<string, string>;
-export type ActionMap = Record<string, Action>;
+export interface Action extends Emitter<ActionEvents> {
+  execute: () => void;
+  enabled: boolean;
+}
 
-export const Actions: ActionMap = {
-  UNDO: {
-    execute: (diagram: Diagram) => {
-      diagram.undoManager.undo();
-    }
-  },
-  REDO: {
-    execute: (diagram: Diagram) => {
-      diagram.undoManager.redo();
-    }
-  }
+export interface ToggleAction extends Action {
+  state: boolean;
+}
+
+type State = {
+  diagram: Diagram;
 };
 
-export const MacKeymap: KeyMap = {
+export type KeyMap = Record<string, keyof ActionMap>;
+
+declare global {
+  interface ActionMap {}
+}
+
+export type ActionMapFactory = (state: State) => Partial<ActionMap>;
+
+export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
+  UNDO: new UndoAction(state.diagram),
+  REDO: new RedoAction(state.diagram)
+});
+
+export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
+  return (state: State) => {
+    const actions: Partial<ActionMap> = {};
+    for (const factory of factories) {
+      Object.assign(actions, factory(state));
+    }
+    return actions;
+  };
+};
+
+export const defaultMacKeymap: KeyMap = {
   'M-KeyZ': 'UNDO',
   'MS-KeyZ': 'REDO'
 };
 
-export const findAction = (e: KeyboardEvent, keyMap: KeyMap): Action | undefined => {
+export const findAction = (
+  e: KeyboardEvent,
+  keyMap: KeyMap,
+  actionMap: Partial<ActionMap>
+): Action | undefined => {
   const actionKey = `${e.altKey ? 'A' : ''}${e.ctrlKey ? 'C' : ''}${e.metaKey ? 'M' : ''}${
     e.shiftKey ? 'S' : ''
   }-${e.code}`;
-  if (actionKey.startsWith('-')) return Actions[keyMap[actionKey.slice(1)]];
-  return Actions[keyMap[actionKey]];
+  if (actionKey.startsWith('-')) return actionMap[keyMap[actionKey.slice(1)]];
+  return actionMap[keyMap[actionKey]];
+};
+
+export const executeAction = (
+  e: KeyboardEvent,
+  keyMap: KeyMap,
+  actionMap: Partial<ActionMap>
+): boolean => {
+  const action = findAction(e, keyMap, actionMap);
+  if (!action || !action.enabled) return false;
+
+  action.execute();
+  return true;
+};
+
+export const findKeyBindings = (action: keyof ActionMap, keyMap: KeyMap): string[] => {
+  return Object.entries(keyMap)
+    .filter(([_, a]) => a === action)
+    .map(([k, _]) => k);
 };

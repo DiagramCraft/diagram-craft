@@ -18,11 +18,12 @@ import { moveDragActions } from './Selection.logic.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from './useRedraw.tsx';
-import { findAction, MacKeymap } from './keyMap.ts';
+import { executeAction, KeyMap } from './keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from './DocumentBounds.tsx';
 import { ViewboxEvents } from '../model-viewer/viewBox.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { propsUtils } from './propsUtils.ts';
 
 const BACKGROUND = 'background';
 
@@ -120,8 +121,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      const action = findAction(e, MacKeymap);
-      action?.execute(props.diagram, selection, drag.current);
+      executeAction(e, props.keyMap, props.actionMap);
     };
     document.addEventListener('keydown', listener);
     return () => {
@@ -295,10 +295,13 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   return (
     <svg
       ref={svgRef}
-      {...props}
+      {...propsUtils.except(props, 'actionMap', 'keyMap', 'diagram')}
       preserveAspectRatio="none"
       viewBox={diagram.viewBox.svgViewboxString}
-      onMouseDown={e => onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent)}
+      onMouseDown={e => {
+        if (e.button !== 0) return;
+        onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent);
+      }}
       onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
       onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
       onContextMenu={event => {
@@ -370,6 +373,9 @@ type Props = {
   diagram: EditableDiagram;
 
   onContextMenu: (event: ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
+
+  actionMap: Partial<ActionMap>;
+  keyMap: KeyMap;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'

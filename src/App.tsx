@@ -38,6 +38,7 @@ import { ToolBarGroup } from './app/ToolBarGroup.tsx';
 import { CanvasContextMenu } from './app/context-menu/CanvasContextMenu.tsx';
 import { ContextMenuDispatcher } from './app/context-menu/ContextMenuDispatcher.tsx';
 import { SelectionContextMenu } from './app/context-menu/SelectionContextMenu.tsx';
+import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './canvas/keyMap.ts';
 
 const diagrams = [
   {
@@ -59,6 +60,8 @@ const App = () => {
   //  perftest(new SnapManagerPerftest());
   //}, []);
 
+  const actionMap = makeActionMap(defaultCanvasActions)({ diagram: $d });
+  const keyMap = defaultMacKeymap;
   return (
     <div id="app" className={'dark-theme'}>
       <div id="menu">
@@ -117,6 +120,8 @@ const App = () => {
               onContextMenu={e => {
                 contextMenuTarget.current = e.contextMenuTarget;
               }}
+              actionMap={actionMap}
+              keyMap={keyMap}
             />
           </ContextMenu.Trigger>
           <ContextMenu.Portal>
@@ -125,7 +130,7 @@ const App = () => {
                 state={contextMenuTarget}
                 createContextMenu={state => {
                   if (state.type === 'canvas') {
-                    return <CanvasContextMenu />;
+                    return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
                   } else {
                     return <SelectionContextMenu />;
                   }
