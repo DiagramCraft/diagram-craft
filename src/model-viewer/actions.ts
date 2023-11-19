@@ -1,7 +1,7 @@
 import { UndoableAction } from '../model-editor/undoManager.ts';
 import { Box } from '../geometry/box.ts';
 import { TransformFactory } from '../geometry/transform.ts';
-import { Diagram, DiagramNode } from './diagram.ts';
+import { Diagram, DiagramNode, DiagramNodeSnapshot } from './diagram.ts';
 
 class AbstractTransformAction implements UndoableAction {
   private nodes: DiagramNode[] = [];
@@ -17,16 +17,19 @@ class AbstractTransformAction implements UndoableAction {
   }
 
   undo() {
-    this.transformNodesAction(this.target, this.source);
+    this.transformElementsAction(this.target, this.source);
   }
 
   redo() {
-    this.transformNodesAction(this.source, this.target);
+    this.transformElementsAction(this.source, this.target);
   }
 
-  private transformNodesAction(source: Box[], target: Box[]): void {
+  private transformElementsAction(source: Box[], target: Box[]): void {
     for (let i = 0; i < this.nodes.length; i++) {
-      this.diagram.transformNodes([this.nodes[i]], TransformFactory.fromTo(source[i], target[i]));
+      this.diagram.transformElements(
+        [this.nodes[i]],
+        TransformFactory.fromTo(source[i], target[i])
+      );
     }
     this.diagram.undoManager.clearPending();
   }
@@ -51,6 +54,38 @@ export class NodeAddAction implements UndoableAction {
 
   redo() {
     this.nodes.forEach(node => this.diagram.addNode(node));
+    this.diagram.undoManager.clearPending();
+  }
+}
+
+export class NodeChangeAction implements UndoableAction {
+  private after: DiagramNodeSnapshot[] = [];
+  private before: DiagramNodeSnapshot[];
+
+  constructor(
+    private readonly nodes: DiagramNode[],
+    private readonly diagram: Diagram
+  ) {
+    this.before = nodes.map(node => node.snapshot());
+  }
+
+  commit() {
+    this.after = this.nodes.map(node => node.snapshot());
+  }
+
+  undo() {
+    this.nodes.forEach(node => {
+      node.restore(this.before.find(n => n.id === node.id)!);
+      this.diagram.updateElement(node);
+    });
+    this.diagram.undoManager.clearPending();
+  }
+
+  redo() {
+    this.nodes.forEach(node => {
+      node.restore(this.after.find(n => n.id === node.id)!);
+      this.diagram.updateElement(node);
+    });
     this.diagram.undoManager.clearPending();
   }
 }

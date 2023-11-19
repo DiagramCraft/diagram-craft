@@ -28,6 +28,8 @@ export interface AbstractEdge extends DiagramElement {
   id: string;
 }
 
+export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
+
 export class DiagramNode implements AbstractNode {
   id: string;
   bounds: Box;
@@ -73,6 +75,20 @@ export class DiagramNode implements AbstractNode {
     node.props = deepClone(this.props);
     node.children = this.children.map(c => c.clone());
     return node;
+  }
+
+  snapshot() {
+    return {
+      id: this.id,
+      bounds: deepClone(this.bounds),
+      props: deepClone(this.props)
+    };
+  }
+
+  restore(snapshot: DiagramNodeSnapshot) {
+    this.id = snapshot.id;
+    this.bounds = snapshot.bounds;
+    this.props = snapshot.props;
   }
 
   listEdges(includeChildren = true): DiagramEdge[] {
@@ -261,47 +277,26 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     this.emit('noderemoved', { node });
   }
 
-  updateNodeProps(node: DiagramNode, props: Record<string, unknown>) {
-    node.props = props;
-    // TODO: Need to keep a before state
-    this.emit('nodechanged', { before: node, after: node });
-  }
-
   // TODO: Implement this part
   queryNodes() {
     return Object.values(this.nodeLookup);
   }
 
-  // TODO: Can we merge transformEdges and transformNodes?
-  transformEdges(edges: DiagramEdge[], transforms: Transform[]) {
-    const before = edges.map(n => n.clone());
+  transformElements(elements: (DiagramNode | DiagramEdge)[], transforms: Transform[]) {
+    const before = elements.map(n => n.clone());
 
-    for (const edge of edges) {
-      edge.bounds = Transform.box(edge.bounds, ...transforms);
+    for (const el of elements) {
+      el.bounds = Transform.box(el.bounds, ...transforms);
     }
 
-    for (let i = 0; i < edges.length; i++) {
-      this.emit('edgechanged', { before: before[i], after: edges[i] });
-    }
-
-    // TODO: Automatically create undoable action?
-  }
-
-  transformNodes(nodes: DiagramNode[], transforms: Transform[]) {
-    const before = nodes.map(n => n.clone());
-
-    for (const node of nodes) {
-      node.bounds = Transform.box(node.bounds, ...transforms);
-    }
-
-    for (const node of nodes) {
-      if (node.nodeType === 'group') {
-        this.transformNodes(node.children, transforms);
+    for (const el of elements) {
+      if (el.type === 'node' && el.nodeType === 'group') {
+        this.transformElements(el.children, transforms);
       }
     }
 
-    for (let i = 0; i < nodes.length; i++) {
-      this.emit('nodechanged', { before: before[i], after: nodes[i] });
+    for (let i = 0; i < elements.length; i++) {
+      this.updateElement(elements[i], before[i]);
     }
 
     // TODO: Automatically create undoable action?
@@ -319,12 +314,13 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     this.emit('edgeremoved', { edge });
   }
 
-  updateElement(element: DiagramEdge | DiagramNode) {
+  updateElement(element: DiagramEdge | DiagramNode, before?: DiagramEdge | DiagramNode) {
     // TODO: We don't have before here
+    //       ... should we perhaps remove the before thing
     if (element.type === 'node') {
-      this.emit('nodechanged', { before: element, after: element });
+      this.emit('nodechanged', { before: (before as DiagramNode) ?? element, after: element });
     } else {
-      this.emit('edgechanged', { before: element, after: element });
+      this.emit('edgechanged', { before: (before as DiagramEdge) ?? element, after: element });
     }
   }
 }

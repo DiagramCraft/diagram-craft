@@ -81,7 +81,7 @@ export const rotateDragActions: DragActions = {
     };
     selection.guides = [];
 
-    diagram.transformNodes(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
+    diagram.transformElements(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     if (selection.isChanged()) {
@@ -237,7 +237,7 @@ export const resizeDragActions: DragActions = {
     }
 
     selection.bounds = newBounds.getSnapshot();
-    diagram.transformNodes(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
+    diagram.transformElements(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
   },
   onDragEnd: (_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) => {
     if (selection.isChanged()) {
@@ -275,7 +275,7 @@ export const moveDragActions: DragActions = {
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (modifiers.metaKey && !selection.state['metaKey']) {
       // Reset current selection back to original
-      diagram.transformNodes(selection.nodes, [
+      diagram.transformElements(selection.nodes, [
         new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))
       ]);
 
@@ -347,10 +347,10 @@ export const moveDragActions: DragActions = {
       newBounds.set('pos', result.adjusted.pos);
     }
 
-    diagram.transformNodes(selection.nodes, [
+    diagram.transformElements(selection.nodes, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
-    diagram.transformEdges(selection.edges, [
+    diagram.transformElements(selection.edges, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
     selection.bounds = newBounds.getSnapshot();

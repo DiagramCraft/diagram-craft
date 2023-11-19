@@ -4,6 +4,7 @@ import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { DiagramNode } from '../../model-viewer/diagram.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
+import { NodeChangeAction } from '../../model-viewer/actions.ts';
 
 declare global {
   interface ActionMap {
@@ -36,6 +37,8 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
   }
 
   execute(): void {
+    const action = new NodeChangeAction(this.diagram.selectionState.nodes, this.diagram);
+
     const first = this.diagram.selectionState.elements[0];
     if (this.mode === 'top') {
       this.alignY(first.bounds.pos.y, 0);
@@ -52,6 +55,9 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
     } else {
       VERIFY_NOT_REACHED();
     }
+
+    action.commit();
+    this.diagram.undoManager.add(action);
   }
 
   // y + h === Y       => y = Y - h       => y = Y - h * offset (offset = 1)
