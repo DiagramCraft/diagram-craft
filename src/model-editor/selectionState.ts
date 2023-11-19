@@ -124,11 +124,20 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
         : Box.boundingBox(this.source.elementBoxes.map(e => e));
   }
 
-  toggle(element: DiagramNode) {
+  toggle(element: DiagramNode | DiagramEdge) {
     this.elements = this.elements.includes(element)
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
 
+    this.source.elementBoxes = this.elements.map(e => e.bounds);
+    this.source.elementIds = this.elements.map(e => e.id);
+
+    this.recalculateSourceBoundingBox();
+    this.recalculateBoundingBox();
+  }
+
+  setElements(element: (DiagramNode | DiagramEdge)[]) {
+    this.elements = element;
     this.source.elementBoxes = this.elements.map(e => e.bounds);
     this.source.elementIds = this.elements.map(e => e.id);
 

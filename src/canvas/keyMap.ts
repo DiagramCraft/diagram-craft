@@ -1,7 +1,8 @@
-import { Diagram } from '../model-viewer/diagram.ts';
 import { UndoAction } from './actions/undoAction.ts';
 import { RedoAction } from './actions/redoAction.ts';
 import { Emitter } from '../utils/event.ts';
+import { SelectAllAction } from './actions/selectAllAction.ts';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -18,7 +19,7 @@ export interface ToggleAction extends Action {
 }
 
 type State = {
-  diagram: Diagram;
+  diagram: EditableDiagram;
 };
 
 export type KeyMap = Record<string, keyof ActionMap>;
@@ -31,7 +32,10 @@ export type ActionMapFactory = (state: State) => Partial<ActionMap>;
 
 export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   UNDO: new UndoAction(state.diagram),
-  REDO: new RedoAction(state.diagram)
+  REDO: new RedoAction(state.diagram),
+  SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
+  SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
+  SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges')
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
