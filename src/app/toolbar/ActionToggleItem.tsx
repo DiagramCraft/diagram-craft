@@ -2,6 +2,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useContext, useEffect } from 'react';
 import { ActionToggleGroupContext } from './ActionToggleGroup.tsx';
 import { ToggleAction } from '../../canvas/keyMap.ts';
+import { useEventListener } from '../hooks/useEventListener.ts';
 
 export const ActionToggleItem = (props: Props) => {
   const actions = useContext(ActionToggleGroupContext);
@@ -9,6 +10,10 @@ export const ActionToggleItem = (props: Props) => {
   useEffect(() => {
     actions!.setActionState(props.action, (props.actionMap[props.action] as ToggleAction)?.state);
   }, [props.action, props.actionMap, actions]);
+
+  useEventListener(props.actionMap[props.action]!, 'actionchanged', ({ action }) => {
+    actions!.setActionState(props.action, (action as ToggleAction)?.state);
+  });
 
   return (
     <ReactToolbar.ToggleItem

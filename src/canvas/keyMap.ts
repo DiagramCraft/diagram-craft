@@ -5,6 +5,7 @@ import { SelectAllAction } from './actions/selectAllAction.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { AlignAction } from './actions/alignAction.ts';
 import { ToggleAnchorTypeAction } from './actions/toggleAnchorTypeAction.ts';
+import { ToggleDarkModeAction } from './actions/toggleDarkMode.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -48,7 +49,8 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   TOGGLE_ANCHOR_TYPE_GRID: new ToggleAnchorTypeAction(state.diagram, 'grid'),
   TOGGLE_ANCHOR_TYPE_CANVAS: new ToggleAnchorTypeAction(state.diagram, 'canvas'),
   TOGGLE_ANCHOR_TYPE_NODE: new ToggleAnchorTypeAction(state.diagram, 'node'),
-  TOGGLE_ANCHOR_TYPE_DISTANCE: new ToggleAnchorTypeAction(state.diagram, 'distance')
+  TOGGLE_ANCHOR_TYPE_DISTANCE: new ToggleAnchorTypeAction(state.diagram, 'distance'),
+  TOGGLE_DARK_MODE: new ToggleDarkModeAction()
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {

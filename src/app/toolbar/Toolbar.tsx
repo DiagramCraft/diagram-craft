@@ -11,6 +11,7 @@ import {
   TbLayoutAlignTop,
   TbLayoutDistributeHorizontal,
   TbLayoutDistributeVertical,
+  TbMoon,
   TbPlus
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
@@ -66,6 +67,14 @@ export const Toolbar = (props: Props) => {
       <ReactToolbar.Button className="ToolbarButton" value="bold" aria-label="Bold">
         <TbLayoutDistributeVertical />
       </ReactToolbar.Button>
+
+      <ReactToolbar.Separator className="ToolbarSeparator" />
+
+      <ActionToggleGroup {...props}>
+        <ActionToggleItem action={'TOGGLE_DARK_MODE'} {...props}>
+          <TbMoon />
+        </ActionToggleItem>
+      </ActionToggleGroup>
     </ReactToolbar.Root>
   );
 };

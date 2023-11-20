@@ -26,6 +26,7 @@ export class ToggleAnchorTypeAction extends EventEmitter<ActionEvents> implement
 
     this.diagram.snapManagerConfig.on('change', () => {
       this.state = diagram.snapManagerConfig.anchorTypes.includes(anchorType);
+      this.emit('actionchanged', { action: this });
     });
   }
 
