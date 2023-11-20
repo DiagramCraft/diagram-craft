@@ -191,6 +191,13 @@ export const Box = {
     };
   },
 
+  minBounds: (b: Box) => {
+    return { x: Math.min(b.pos.x, b.pos.x + b.size.w), y: Math.min(b.pos.y, b.pos.y + b.size.h) };
+  },
+  maxBounds: (b: Box) => {
+    return { x: Math.max(b.pos.x, b.pos.x + b.size.w), y: Math.max(b.pos.y, b.pos.y + b.size.h) };
+  },
+
   withX: (b: Box, x: number) => ({
     ...b,
     size: { ...b.size },

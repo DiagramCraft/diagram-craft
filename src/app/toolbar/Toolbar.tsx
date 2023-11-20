@@ -61,12 +61,12 @@ export const Toolbar = (props: Props) => {
       <ActionToolbarButton action={'ALIGN_CENTER_HORIZONTAL'} {...props}>
         <TbLayoutAlignMiddle />
       </ActionToolbarButton>
-      <ReactToolbar.Button className="ToolbarButton" value="bold" aria-label="Bold">
+      <ActionToolbarButton action={'DISTRIBUTE_VERTICAL'} {...props}>
         <TbLayoutDistributeHorizontal />
-      </ReactToolbar.Button>
-      <ReactToolbar.Button className="ToolbarButton" value="bold" aria-label="Bold">
+      </ActionToolbarButton>
+      <ActionToolbarButton action={'DISTRIBUTE_HORIZONTAL'} {...props}>
         <TbLayoutDistributeVertical />
-      </ReactToolbar.Button>
+      </ActionToolbarButton>
 
       <ReactToolbar.Separator className="ToolbarSeparator" />
 
