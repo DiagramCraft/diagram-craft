@@ -57,7 +57,6 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
       VERIFY_NOT_REACHED();
     }
 
-    action.commit();
     this.diagram.undoManager.add(action);
     this.emit('actiontriggered', { action: this });
   }

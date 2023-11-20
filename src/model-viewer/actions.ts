@@ -9,6 +9,9 @@ class AbstractTransformAction implements UndoableAction {
   private target: Box[] = [];
   private diagram: Diagram;
 
+  canUndo = true;
+  canRedo = true;
+
   constructor(source: Box[], target: Box[], nodes: DiagramNode[], diagram: Diagram) {
     this.diagram = diagram;
     this.nodes.push(...nodes);
@@ -42,6 +45,9 @@ export class RotateAction extends AbstractTransformAction {}
 export class ResizeAction extends AbstractTransformAction {}
 
 export class NodeAddAction implements UndoableAction {
+  canUndo = true;
+  canRedo = true;
+
   constructor(
     private readonly nodes: DiagramNode[],
     private readonly diagram: Diagram
@@ -59,33 +65,46 @@ export class NodeAddAction implements UndoableAction {
 }
 
 export class NodeChangeAction implements UndoableAction {
-  private after: DiagramNodeSnapshot[] = [];
-  private before: DiagramNodeSnapshot[];
+  private snapshots: DiagramNodeSnapshot[] = [];
+  canUndo: boolean;
+  canRedo: boolean;
 
   constructor(
     private readonly nodes: DiagramNode[],
     private readonly diagram: Diagram
   ) {
-    this.before = nodes.map(node => node.snapshot());
-  }
-
-  commit() {
-    this.after = this.nodes.map(node => node.snapshot());
+    this.snapshots = nodes.map(node => node.snapshot());
+    this.canUndo = true;
+    this.canRedo = true;
   }
 
   undo() {
+    const newSnapshots = this.nodes.map(node => node.snapshot());
+
     this.nodes.forEach(node => {
-      node.restore(this.before.find(n => n.id === node.id)!);
+      node.restore(this.snapshots.find(n => n.id === node.id)!);
       this.diagram.updateElement(node);
     });
     this.diagram.undoManager.clearPending();
+
+    this.snapshots = newSnapshots;
+
+    this.canUndo = false;
+    this.canRedo = true;
   }
 
   redo() {
+    const newSnapshots = this.nodes.map(node => node.snapshot());
+
     this.nodes.forEach(node => {
-      node.restore(this.after.find(n => n.id === node.id)!);
+      node.restore(this.snapshots.find(n => n.id === node.id)!);
       this.diagram.updateElement(node);
     });
     this.diagram.undoManager.clearPending();
+
+    this.snapshots = newSnapshots;
+
+    this.canUndo = true;
+    this.canRedo = false;
   }
 }

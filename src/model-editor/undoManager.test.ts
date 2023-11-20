@@ -7,6 +7,9 @@ describe('UndoManager', () => {
     let x = 0;
 
     manager.execute({
+      canUndo: true,
+      canRedo: true,
+
       undo: () => {
         x--;
       },
@@ -23,6 +26,9 @@ describe('UndoManager', () => {
     let x = 0;
 
     manager.execute({
+      canUndo: true,
+      canRedo: true,
+
       undo: () => {
         x--;
       },
@@ -41,6 +47,9 @@ describe('UndoManager', () => {
     let x = 0;
 
     manager.execute({
+      canUndo: true,
+      canRedo: true,
+
       undo: () => {
         x--;
       },

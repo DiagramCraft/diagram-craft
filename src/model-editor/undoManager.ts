@@ -1,8 +1,12 @@
 import { EventEmitter } from '../utils/event.ts';
+import { assert } from '../utils/assert.ts';
 
 export type UndoableAction = {
   undo: () => void;
   redo: () => void;
+
+  canUndo: boolean;
+  canRedo: boolean;
 };
 
 export type UndoEvents = {
@@ -45,10 +49,14 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     if (this.undoableActions.length === 0) return;
 
     const action = this.undoableActions.pop();
-    action!.undo();
-    this.redoableActions.push(action!);
 
-    this.emit('undo', { action: action! });
+    assert.present(action);
+    assert.true(action.canUndo);
+
+    action.undo();
+    this.redoableActions.push(action);
+
+    this.emit('undo', { action: action });
     this.prune();
   }
 
@@ -56,10 +64,14 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     if (this.redoableActions.length === 0) return;
 
     const action = this.redoableActions.pop();
-    action!.redo();
-    this.undoableActions.push(action!);
 
-    this.emit('redo', { action: action! });
+    assert.present(action);
+    assert.true(action.canRedo);
+
+    action.redo();
+    this.undoableActions.push(action);
+
+    this.emit('redo', { action: action });
     this.prune();
   }
 
