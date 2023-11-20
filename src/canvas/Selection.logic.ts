@@ -2,7 +2,6 @@ import { Direction } from '../geometry/direction.ts';
 import { Diagram, DiagramEdge } from '../model-viewer/diagram.ts';
 import { assert, precondition, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
-import { SnapManager } from '../model-editor/snap/snapManager.ts';
 import { LocalCoordinateSystem } from '../geometry/lcs.ts';
 import { TransformFactory, Translation } from '../geometry/transform.ts';
 import { Vector } from '../geometry/vector.ts';
@@ -13,6 +12,7 @@ import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 import { createResizeCanvasActionToFit } from '../model-editor/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction, ResizeAction, RotateAction } from '../model-viewer/actions.ts';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 // TODO: Maybe convert the rest of the DragActions to classes to allow for state instead
 //       of having to use the drag object for all of this - breaking encapsulation
@@ -139,7 +139,7 @@ export const resizeDragActions: DragActions = {
   onDrag: (
     coord: Point,
     drag: Drag,
-    diagram: Diagram,
+    diagram: EditableDiagram,
     selection: SelectionState,
     modifiers: Modifiers
   ) => {
@@ -218,10 +218,7 @@ export const resizeDragActions: DragActions = {
         applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs, drag.type);
       }
     } else {
-      const snapManager = new SnapManager(
-        diagram,
-        selection.elements.map(e => e.id)
-      );
+      const snapManager = diagram.createSnapManager();
 
       const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
       selection.guides = result.guides;
@@ -258,7 +255,7 @@ export const moveDragActions: DragActions = {
   onDrag: (
     coord: Point,
     drag: Drag,
-    diagram: Diagram,
+    diagram: EditableDiagram,
     selection: SelectionState,
     modifiers: Modifiers
   ) => {
@@ -335,10 +332,7 @@ export const moveDragActions: DragActions = {
     if (modifiers.altKey) {
       selection.guides = [];
     } else {
-      const snapManager = new SnapManager(
-        diagram,
-        selection.elements.map(e => e.id)
-      );
+      const snapManager = diagram.createSnapManager();
 
       const result = snapManager.snapMove(newBounds.getSnapshot(), snapDirections);
       selection.guides = result.guides;

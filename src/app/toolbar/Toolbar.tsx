@@ -16,42 +16,29 @@ import {
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { KeyMap } from '../../canvas/keyMap.ts';
 import { ActionToolbarButton } from './ActionToolbarButton.tsx';
+import { ActionToggleGroup } from './ActionToggleGroup.tsx';
+import { ActionToggleItem } from './ActionToggleItem.tsx';
 
 export const Toolbar = (props: Props) => {
   return (
     <ReactToolbar.Root className="ToolbarRoot" aria-label="Formatting options">
-      <ReactToolbar.ToggleGroup
-        type="multiple"
-        aria-label="Text formatting"
-        defaultValue={['grid', 'node', 'canvas', 'size', 'guides']}
-        onValueChange={value => {
-          console.log(value);
-        }}
-      >
-        <ReactToolbar.ToggleItem className="ToolbarToggleItem" value="grid" aria-label="Bold">
+      <ActionToggleGroup {...props}>
+        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_GRID'} {...props}>
           <TbGrid3X3 />
-        </ReactToolbar.ToggleItem>
-        <ReactToolbar.ToggleItem className="ToolbarToggleItem" value="node" aria-label="Italic">
+        </ActionToggleItem>
+        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_NODE'} {...props}>
           <TbLayout />
-        </ReactToolbar.ToggleItem>
-        <ReactToolbar.ToggleItem className="ToolbarToggleItem" value="canvas" aria-label="Italic">
+        </ActionToggleItem>
+        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_CANVAS'} {...props}>
           <TbPlus />
-        </ReactToolbar.ToggleItem>
-        <ReactToolbar.ToggleItem className="ToolbarToggleItem" value="distance" aria-label="Italic">
+        </ActionToggleItem>
+        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_DISTANCE'} {...props}>
           <TbArrowsMoveHorizontal />
-        </ReactToolbar.ToggleItem>
-        <ReactToolbar.ToggleItem className="ToolbarToggleItem" value="size" aria-label="Italic">
+        </ActionToggleItem>
+        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_SIZE'} {...props}>
           <TbArrowAutofitWidth />
-        </ReactToolbar.ToggleItem>
-        {/*
-        <ReactToolbar.ToggleItem className="ToolbarToggleItem" value="guides" aria-label="Italic">
-          <TbBorderInner />
-        </ReactToolbar.ToggleItem>
-        <ReactToolbar.Button className="ToolbarButton" value="bold" aria-label="Bold">
-          <TbLocationCog />
-        </ReactToolbar.Button>
-        */}
-      </ReactToolbar.ToggleGroup>
+        </ActionToggleItem>
+      </ActionToggleGroup>
 
       <ReactToolbar.Separator className="ToolbarSeparator" />
 

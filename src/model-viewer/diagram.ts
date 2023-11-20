@@ -212,7 +212,7 @@ export type DiagramEvents = {
   canvaschanged: { before: Canvas; after: Canvas };
 };
 
-export class Diagram extends EventEmitter<DiagramEvents> {
+export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitter<T> {
   elements: (DiagramEdge | DiagramNode)[];
   readonly nodeLookup: Record<string, DiagramNode> = {};
   readonly edgeLookup: Record<string, DiagramEdge> = {};

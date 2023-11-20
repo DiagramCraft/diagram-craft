@@ -4,6 +4,7 @@ import { Emitter } from '../utils/event.ts';
 import { SelectAllAction } from './actions/selectAllAction.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { AlignAction } from './actions/alignAction.ts';
+import { ToggleAnchorTypeAction } from './actions/toggleAnchorTypeAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -42,7 +43,12 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   ALIGN_CENTER_HORIZONTAL: new AlignAction(state.diagram, 'center-horizontal'),
   ALIGN_LEFT: new AlignAction(state.diagram, 'left'),
   ALIGN_RIGHT: new AlignAction(state.diagram, 'right'),
-  ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical')
+  ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical'),
+  TOGGLE_ANCHOR_TYPE_SIZE: new ToggleAnchorTypeAction(state.diagram, 'size'),
+  TOGGLE_ANCHOR_TYPE_GRID: new ToggleAnchorTypeAction(state.diagram, 'grid'),
+  TOGGLE_ANCHOR_TYPE_CANVAS: new ToggleAnchorTypeAction(state.diagram, 'canvas'),
+  TOGGLE_ANCHOR_TYPE_NODE: new ToggleAnchorTypeAction(state.diagram, 'node'),
+  TOGGLE_ANCHOR_TYPE_DISTANCE: new ToggleAnchorTypeAction(state.diagram, 'distance')
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {

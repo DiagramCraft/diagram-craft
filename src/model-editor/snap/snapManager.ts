@@ -83,7 +83,8 @@ export class SnapManager {
   //       maybe we can pass in the current selection instead of just the box (bounds)
   constructor(
     private readonly diagram: Diagram,
-    private readonly excludeNodeIds: string[] = []
+    private readonly excludeNodeIds: string[] = [],
+    private readonly anchorTypes: Readonly<AnchorType[]> = []
   ) {}
 
   private rangeOverlap(a1: Anchor, a2: Anchor) {
@@ -120,7 +121,7 @@ export class SnapManager {
 
   // TODO: We should be able to merge snapResize and snapMove
   snapResize(b: Box, directions: Direction[]): SnapResult {
-    const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance', 'size'];
+    const enabledSnapProviders: AnchorType[] = [...this.anchorTypes];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfAnchors = Anchor.forNode(b, 'source').filter(s =>
@@ -175,7 +176,7 @@ export class SnapManager {
   }
 
   snapMove(b: Box, directions: Direction[] = ['n', 'w', 'e', 's']): SnapResult {
-    const enabledSnapProviders: AnchorType[] = ['grid', 'node', 'canvas', 'distance'];
+    const enabledSnapProviders: AnchorType[] = this.anchorTypes.filter(a => a !== 'size');
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfAnchors = Anchor.forNode(b, 'source').filter(s =>
