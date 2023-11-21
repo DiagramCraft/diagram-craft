@@ -28,7 +28,7 @@ export const simpleDiagram: SerializedDiagram = {
 
     {
       type: 'node',
-      nodeType: 'rect',
+      nodeType: 'rounded-rect',
       id: '3',
       bounds: {
         pos: { x: 370, y: 20 },

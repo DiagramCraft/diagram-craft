@@ -7,6 +7,7 @@ import { Point } from '../geometry/point.ts';
 import { Rect } from './node-types/Rect.tsx';
 import { Star } from './node-types/Star.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { RoundedRect } from './node-types/RoundedRect.tsx';
 
 export type NodeApi = {
   repaint: () => void;
@@ -95,6 +96,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         )}
         {props.def.nodeType === 'star' && (
           <Star
+            def={props.def}
+            onMouseDown={onMouseDown}
+            isSelected={isSelected}
+            isSingleSelected={isSingleSelected}
+          />
+        )}
+        {props.def.nodeType === 'rounded-rect' && (
+          <RoundedRect
             def={props.def}
             onMouseDown={onMouseDown}
             isSelected={isSelected}

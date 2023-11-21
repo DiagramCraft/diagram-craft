@@ -10,8 +10,6 @@ export const Rect = (props: Props) => {
       width={props.def.bounds.size.w}
       height={props.def.bounds.size.h}
       className={'node'}
-      rx="2"
-      ry="2"
       {...propsUtils.except(props, 'def', 'isSelected', 'isSingleSelected')}
     />
   );

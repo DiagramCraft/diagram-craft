@@ -22,6 +22,10 @@ export class Path {
     this.path.push({ type: 'lineTo', x, y });
   }
 
+  arcTo(x: number, y: number) {
+    this.path.push({ type: 'arcTo', x, y });
+  }
+
   positionAt(n: number) {
     const { x, y } = this.path[n];
     return this.toWorldCoordinate(x, y);
