@@ -2,10 +2,10 @@ import { forwardRef, Fragment, useImperativeHandle } from 'react';
 import { useRedraw } from './useRedraw.tsx';
 import {
   EdgeEndpointMoveActions,
-  resizeDragActions,
-  rotateDragActions
+  ResizeDragActions,
+  RotateDragActions
 } from './Selection.logic.ts';
-import { Drag, DragActions } from './drag.ts';
+import { DragActions } from './drag.ts';
 import { DistanceMarker } from './DistanceMarker.tsx';
 import { Point } from '../geometry/point.ts';
 import { Line } from '../geometry/line.ts';
@@ -180,10 +180,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cy={Point.midpoint(points[0], points[1]).y - 20}
               r="4"
               className="selection-handle"
-              cursor={'n-resize'}
+              cursor={'ew-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'rotate', rotateDragActions);
+                props.onDragStart(Point.fromEvent(e.nativeEvent), new RotateDragActions());
                 e.stopPropagation();
               }}
             />
@@ -195,7 +195,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'nw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-nw', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-nw')
+                );
                 e.stopPropagation();
               }}
             />
@@ -207,7 +210,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'ne-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-ne', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-ne')
+                );
                 e.stopPropagation();
               }}
             />
@@ -219,7 +225,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'se-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-se', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-se')
+                );
                 e.stopPropagation();
               }}
             />
@@ -231,7 +240,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'sw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-sw', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-sw')
+                );
                 e.stopPropagation();
               }}
             />
@@ -243,7 +255,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'n-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-n', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-n')
+                );
                 e.stopPropagation();
               }}
             />
@@ -255,7 +270,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'e-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-e', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-e')
+                );
                 e.stopPropagation();
               }}
             />
@@ -268,7 +286,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'s-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-s', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-s')
+                );
                 e.stopPropagation();
               }}
             />
@@ -280,7 +301,10 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'w-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                props.onDragStart(Point.fromEvent(e.nativeEvent), 'resize-w', resizeDragActions);
+                props.onDragStart(
+                  Point.fromEvent(e.nativeEvent),
+                  new ResizeDragActions('resize-w')
+                );
                 e.stopPropagation();
               }}
             />
@@ -298,8 +322,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                   if (ev.button !== 0) return;
                   props.onDragStart(
                     Point.fromEvent(ev.nativeEvent),
-                    'move-edge-start',
-                    new EdgeEndpointMoveActions(e, ev.currentTarget)
+                    new EdgeEndpointMoveActions(e, ev.currentTarget, 'start')
                   );
                   ev.stopPropagation();
                 }}
@@ -313,8 +336,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                   if (ev.button !== 0) return;
                   props.onDragStart(
                     Point.fromEvent(ev.nativeEvent),
-                    'move-edge-end',
-                    new EdgeEndpointMoveActions(e, ev.currentTarget)
+                    new EdgeEndpointMoveActions(e, ev.currentTarget, 'end')
                   );
                   ev.stopPropagation();
                 }}
@@ -330,5 +352,5 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
 type Props = {
   selection: SelectionState;
-  onDragStart: (coord: Point, type: Drag['type'], actions: DragActions) => void;
+  onDragStart: (coord: Point, actions: DragActions) => void;
 };

@@ -14,7 +14,6 @@ import { DiagramEvents } from '../model-viewer/diagram.ts';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
 import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
-import { moveDragActions } from './Selection.logic.ts';
 import { Drag, DragActions, Modifiers } from './drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from './useRedraw.tsx';
@@ -25,6 +24,7 @@ import { ViewboxEvents } from '../model-viewer/viewBox.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { propsUtils } from './propsUtils.ts';
 import { SelectionStateEvents } from '../model-editor/selectionState.ts';
+import { MoveDragActions } from './Selection.logic.ts';
 
 const BACKGROUND = 'background';
 
@@ -195,7 +195,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       sel.off('add', redrawElement);
       sel.off('remove', redrawElement);
     };
-  }, []);
+  }, [selection]);
 
   const onMouseEnter = useCallback((id: string) => {
     if (drag.current) drag.current.hoverElement = id;
@@ -216,8 +216,8 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     [svgRef]
   );
 
-  const onDragStart = useCallback((point: Point, type: Drag['type'], actions: DragActions) => {
-    drag.current = { type, offset: point, actions };
+  const onDragStart = useCallback((point: Point, actions: DragActions) => {
+    drag.current = { offset: point, actions };
   }, []);
 
   const onMouseDown = useCallback(
@@ -242,7 +242,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           if (!modifiers.shiftKey) {
             selection.clear();
           }
-          onDragStart(diagram.viewBox.toDiagramPoint(point), 'marquee', marqueeDragActions);
+          onDragStart(diagram.viewBox.toDiagramPoint(point), marqueeDragActions);
           return;
         } else {
           if (!modifiers.shiftKey) {
@@ -254,8 +254,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         if (!selection.isEmpty()) {
           onDragStart(
             Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.bounds.pos),
-            'move',
-            moveDragActions
+            new MoveDragActions()
           );
         }
       } finally {
@@ -375,8 +374,8 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       <Selection
         ref={selectionRef}
         selection={selection}
-        onDragStart={(point, type, actions) =>
-          onDragStart(diagram.viewBox.toDiagramPoint(point), type, actions)
+        onDragStart={(point, actions) =>
+          onDragStart(diagram.viewBox.toDiagramPoint(point), actions)
         }
       />
       <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />

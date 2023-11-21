@@ -11,23 +11,11 @@ export type Modifiers = {
 };
 
 export type Drag = {
-  type:
-    | 'resize-nw'
-    | 'resize-ne'
-    | 'resize-sw'
-    | 'resize-se'
-    | 'resize-n'
-    | 'resize-s'
-    | 'resize-w'
-    | 'resize-e'
-    | 'move-edge-start'
-    | 'move-edge-end'
-    | 'move'
-    | 'rotate'
-    | 'marquee';
+  // TODO: We should move this into the drag actions
   offset: Point;
   actions: DragActions;
-  state?: Record<string, string>;
+
+  // TODO: We should refactor this to be a callback onto the DragActions, e.g. onDragEnter and onDragLeave
   hoverElement?: string;
 };
 
