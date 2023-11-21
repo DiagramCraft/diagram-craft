@@ -7,6 +7,15 @@ import { Viewbox } from './viewBox.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Point } from '../geometry/point.ts';
 
+declare global {
+  interface EdgeProps {
+    highlight?: string[];
+  }
+  interface NodeProps {
+    highlight?: string[];
+  }
+}
+
 export interface DiagramElement {
   id: string;
   type: string;
@@ -16,16 +25,14 @@ export interface AbstractNode extends DiagramElement {
   type: 'node';
   nodeType: 'group' | string;
   id: string;
-
   bounds: Box;
-
-  // TODO: We should use interface for this and make it extendable by nodeType
-  props?: Record<string, unknown>;
+  props: NodeProps;
 }
 
 export interface AbstractEdge extends DiagramElement {
   type: 'edge';
   id: string;
+  props: EdgeProps;
 }
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
@@ -41,8 +48,7 @@ export class DiagramNode implements AbstractNode {
 
   edges: Record<string, DiagramEdge[]>;
 
-  // TODO: We should use interface for this and make it extendable by nodeType
-  props?: Record<string, unknown>;
+  props: NodeProps = {};
 
   constructor(id: string, nodeType: 'group' | string, bounds: Box) {
     this.id = id;
@@ -113,6 +119,8 @@ export class DiagramEdge implements AbstractEdge {
 
   #start: Endpoint;
   #end: Endpoint;
+
+  props: EdgeProps = {};
 
   constructor(id: string, start: Endpoint, end: Endpoint) {
     this.id = id;
@@ -322,5 +330,18 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     } else {
       this.emit('edgechanged', { before: (before as DiagramEdge) ?? element, after: element });
     }
+  }
+
+  addHighlight(element: DiagramNode | DiagramEdge, highlight: string) {
+    element.props ??= {};
+    element.props.highlight ??= [];
+    element.props.highlight.push(highlight);
+    this.updateElement(element);
+  }
+
+  removeHighlight(element: DiagramNode | DiagramEdge, highlight: string) {
+    if (!element.props?.highlight) return;
+    element.props.highlight = element.props.highlight.filter(h => h !== highlight);
+    this.updateElement(element);
   }
 }

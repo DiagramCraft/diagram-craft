@@ -7,9 +7,18 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
 
+declare global {
+  interface NodeProps {
+    star?: {
+      numberOfSides?: number;
+      innerRadius?: number;
+    };
+  }
+}
+
 export const Star = (props: Props) => {
-  const sides = (props.def.props?.numberOfSides ?? 5) as number;
-  const innerRadius = (props.def.props?.innerRadius ?? 0.5) as number;
+  const sides = props.def.props?.star?.numberOfSides ?? 5;
+  const innerRadius = props.def.props?.star?.innerRadius ?? 0.5;
 
   const theta = Math.PI / 2;
   const dTheta = (2 * Math.PI) / sides;
@@ -48,8 +57,8 @@ export const Star = (props: Props) => {
             def={props.def}
             onDrag={(x, y) => {
               const distance = Point.distance({ x, y }, Box.center(props.def.bounds));
-              props.def.props ??= {};
-              props.def.props.innerRadius = distance / (props.def.bounds.size.w / 2);
+              props.def.props.star ??= {};
+              props.def.props.star.innerRadius = distance / (props.def.bounds.size.w / 2);
             }}
           />
           <ShapeControlPoint
@@ -61,8 +70,8 @@ export const Star = (props: Props) => {
                 Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.def.bounds)));
               const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-              props.def.props ??= {};
-              props.def.props.numberOfSides = numberOfSides;
+              props.def.props.star ??= {};
+              props.def.props.star.numberOfSides = numberOfSides;
             }}
           />
         </>

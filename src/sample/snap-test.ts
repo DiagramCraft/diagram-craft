@@ -6,7 +6,8 @@ export const snapTestDiagram: SerializedDiagram = {
       type: 'edge',
       id: 'e1',
       start: { anchor: 'c', node: { id: '1_2' } },
-      end: { anchor: 'c', node: { id: '2' } }
+      end: { anchor: 'c', node: { id: '2' } },
+      props: {}
     },
     {
       type: 'node',
@@ -27,7 +28,8 @@ export const snapTestDiagram: SerializedDiagram = {
             size: { w: 20, h: 20 },
             rotation: 0
           },
-          children: []
+          children: [],
+          props: {}
         },
         {
           type: 'node',
@@ -38,9 +40,11 @@ export const snapTestDiagram: SerializedDiagram = {
             size: { w: 40, h: 40 },
             rotation: 0
           },
-          children: []
+          children: [],
+          props: {}
         }
-      ]
+      ],
+      props: {}
     },
     {
       type: 'node',
@@ -51,7 +55,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 50, h: 50 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -62,7 +67,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 100, h: 100 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -73,7 +79,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 50, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -84,7 +91,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -95,7 +103,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -106,7 +115,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -117,7 +127,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -128,7 +139,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -139,7 +151,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -150,7 +163,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -161,7 +175,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
     {
       type: 'node',
@@ -172,7 +187,8 @@ export const snapTestDiagram: SerializedDiagram = {
         size: { w: 20, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     }
   ]
 };

@@ -6,13 +6,15 @@ export const simpleDiagram: SerializedDiagram = {
       type: 'edge',
       id: 'e1',
       start: { anchor: 'c', node: { id: '3' } },
-      end: { anchor: 'c', node: { id: '4' } }
+      end: { anchor: 'c', node: { id: '4' } },
+      props: {}
     },
     {
       type: 'edge',
       id: 'e2',
       start: { position: { x: 20, y: 20 } },
-      end: { position: { x: 100, y: 100 } }
+      end: { position: { x: 100, y: 100 } },
+      props: {}
     },
     {
       type: 'node',
@@ -23,7 +25,8 @@ export const simpleDiagram: SerializedDiagram = {
         size: { w: 150, h: 150 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
 
     {
@@ -35,7 +38,8 @@ export const simpleDiagram: SerializedDiagram = {
         size: { w: 100, h: 100 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     },
 
     {
@@ -47,7 +51,8 @@ export const simpleDiagram: SerializedDiagram = {
         size: { w: 50, h: 20 },
         rotation: 0
       },
-      children: []
+      children: [],
+      props: {}
     }
   ]
 };

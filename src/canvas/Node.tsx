@@ -1,5 +1,11 @@
 import { Angle } from '../geometry/angle.ts';
-import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
+import {
+  CSSProperties,
+  forwardRef,
+  MouseEventHandler,
+  useCallback,
+  useImperativeHandle
+} from 'react';
 import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from './drag.ts';
@@ -45,6 +51,11 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     },
     [props]
   );
+
+  const style: CSSProperties = {};
+  if ((props.def.props?.highlight?.length ?? 0) > 0) {
+    style.stroke = 'red';
+  }
 
   if (props.def.nodeType === 'group') {
     return (
@@ -92,6 +103,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             onMouseDown={onMouseDown}
             isSelected={isSelected}
             isSingleSelected={isSingleSelected}
+            style={style}
           />
         )}
         {props.def.nodeType === 'star' && (
@@ -100,6 +112,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             onMouseDown={onMouseDown}
             isSelected={isSelected}
             isSingleSelected={isSingleSelected}
+            style={style}
           />
         )}
         {props.def.nodeType === 'rounded-rect' && (
@@ -108,6 +121,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             onMouseDown={onMouseDown}
             isSelected={isSelected}
             isSingleSelected={isSingleSelected}
+            style={style}
           />
         )}
       </g>

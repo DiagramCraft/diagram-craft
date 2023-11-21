@@ -3,8 +3,16 @@ import React from 'react';
 import { propsUtils } from '../propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 
+declare global {
+  interface NodeProps {
+    roundedRect?: {
+      radius?: number;
+    };
+  }
+}
+
 export const RoundedRect = (props: Props) => {
-  const radius = (props.def.props?.radius ?? 10) as number;
+  const radius = props.def.props?.roundedRect?.radius ?? 10;
 
   return (
     <>
@@ -26,8 +34,8 @@ export const RoundedRect = (props: Props) => {
           def={props.def}
           onDrag={x => {
             const distance = Math.max(0, x - props.def.bounds.pos.x);
-            props.def.props ??= {};
-            props.def.props.radius = distance;
+            props.def.props.roundedRect ??= {};
+            props.def.props.roundedRect.radius = distance;
           }}
         />
       )}

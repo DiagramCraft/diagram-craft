@@ -334,7 +334,9 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 className={$c('selection-edge-handle', { connected: e.isStartConnected() })}
                 onMouseDown={ev => {
                   if (ev.button !== 0) return;
-                  drag.initiateDrag(new EdgeEndpointMoveDrag(e, ev.currentTarget, 'start'));
+                  drag.initiateDrag(
+                    new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'start')
+                  );
                   ev.stopPropagation();
                 }}
               />
@@ -345,7 +347,9 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 className={$c('selection-edge-handle', { connected: e.isEndConnected() })}
                 onMouseDown={ev => {
                   if (ev.button !== 0) return;
-                  drag.initiateDrag(new EdgeEndpointMoveDrag(e, ev.currentTarget, 'end'));
+                  drag.initiateDrag(
+                    new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'end')
+                  );
                   ev.stopPropagation();
                 }}
               />

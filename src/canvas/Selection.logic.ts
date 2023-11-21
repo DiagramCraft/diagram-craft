@@ -1,5 +1,5 @@
 import { Direction } from '../geometry/direction.ts';
-import { Diagram, DiagramEdge } from '../model-viewer/diagram.ts';
+import { DiagramEdge } from '../model-viewer/diagram.ts';
 import { assert, precondition, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Drag, Modifiers } from './drag.ts';
 import { LocalCoordinateSystem } from '../geometry/lcs.ts';
@@ -18,6 +18,7 @@ export class EdgeEndpointMoveDrag implements Drag {
   private hoverElement: string | undefined;
 
   constructor(
+    private readonly diagram: EditableDiagram,
     private readonly edge: DiagramEdge,
     private readonly element: SVGElement,
     private readonly type: 'start' | 'end'
@@ -31,9 +32,19 @@ export class EdgeEndpointMoveDrag implements Drag {
 
   onDragEnter(id: string): void {
     this.hoverElement = id;
+    this.diagram.addHighlight(
+      this.diagram.nodeLookup[id] || this.diagram.edgeLookup[id],
+      'edge-connect'
+    );
   }
 
   onDragLeave(): void {
+    if (this.hoverElement) {
+      this.diagram.removeHighlight(
+        this.diagram.nodeLookup[this.hoverElement] || this.diagram.edgeLookup[this.hoverElement],
+        'edge-connect'
+      );
+    }
     this.hoverElement = undefined;
   }
 
@@ -43,26 +54,42 @@ export class EdgeEndpointMoveDrag implements Drag {
 
     selection.guides = [];
 
-    if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
-      this.element.classList.add('selection-edge-handle--connected');
-    } else {
-      this.element.classList.remove('selection-edge-handle--connected');
-    }
-
     if (this.type === 'start') {
       this.edge.start = { position: coord };
     } else {
       this.edge.end = { position: coord };
     }
 
+    // TODO: We should snap to the connection point
+    if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
+      this.element.classList.add('selection-edge-handle--connected');
+
+      this.attachToClosestEdge(diagram);
+    } else {
+      this.element.classList.remove('selection-edge-handle--connected');
+    }
+
     diagram.updateElement(this.edge);
     selection.recalculateBoundingBox();
   }
 
-  onDragEnd(_coord: Point, diagram: Diagram): void {
+  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
     this.element.setAttribute('pointer-events', this.originalPointerEvents);
     this.element.classList.remove('selection-edge-handle--active');
 
+    this.attachToClosestEdge(diagram);
+
+    if (this.hoverElement) {
+      this.diagram.removeHighlight(
+        this.diagram.nodeLookup[this.hoverElement] || this.diagram.edgeLookup[this.hoverElement],
+        'edge-connect'
+      );
+    }
+
+    // TODO: Create undoable action
+  }
+
+  private attachToClosestEdge(diagram: EditableDiagram) {
     if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
       if (this.type === 'start') {
         this.edge.start = { node: diagram.nodeLookup[this.hoverElement], anchor: 'center' };
@@ -70,8 +97,6 @@ export class EdgeEndpointMoveDrag implements Drag {
         this.edge.end = { node: diagram.nodeLookup[this.hoverElement], anchor: 'center' };
       }
     }
-
-    // TODO: Create undoable action
   }
 }
 
