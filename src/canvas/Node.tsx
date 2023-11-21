@@ -1,9 +1,12 @@
 import { Angle } from '../geometry/angle.ts';
 import { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { DiagramNode } from '../model-viewer/diagram.ts';
+import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from './drag.ts';
 import { Point } from '../geometry/point.ts';
+import { Rect } from './node-types/Rect.tsx';
+import { Star } from './node-types/Star.tsx';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -22,6 +25,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const wx = props.def.bounds.pos.x;
   const wy = props.def.bounds.pos.y;
+
+  const isSelected =
+    props.diagram instanceof EditableDiagram &&
+    props.diagram.selectionState.elements.includes(props.def);
+  const isSingleSelected =
+    isSelected &&
+    props.diagram instanceof EditableDiagram &&
+    props.diagram.selectionState.elements.length === 1;
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
@@ -57,22 +68,12 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           <Node
             key={c.id}
             def={c}
+            diagram={props.diagram}
             onMouseDown={(_id, coord, add) => props.onMouseDown(props.def.id, coord, add)}
             onMouseLeave={props.onMouseLeave}
             onMouseEnter={props.onMouseEnter}
           />
         ))}
-
-        {/*<text
-          x={wx + props.def.size.w / 2}
-          y={wy + props.def.size.h / 2}
-          fill="black"
-          style={{ fontSize: '10px' }}
-          dominantBaseline="middle"
-          textAnchor="middle"
-        >
-          {wx}, {wy} {props.def.size.w}x{props.def.size.h} rot{Math.round(props.def.rotation)}
-        </text>*/}
       </g>
     );
   } else {
@@ -84,30 +85,22 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
       >
-        <rect
-          x={wx}
-          y={wy}
-          width={props.def.bounds.size.w}
-          height={props.def.bounds.size.h}
-          className={'node'}
-          rx="2"
-          ry="2"
-          onMouseDown={onMouseDown}
-        />
-
-        {/*
-        <text
-          x={wx + props.def.size.w / 2}
-          y={wy + props.def.size.h / 2}
-          fill="black"
-          style={{ fontSize: '10px' }}
-          dominantBaseline="middle"
-          textAnchor="middle"
-        >
-          {Math.round(wx)}, {Math.round(wy)} {props.def.size.w}x{props.def.size.h} rot
-          {Math.round(props.def.rotation)}
-        </text>
-        */}
+        {props.def.nodeType === 'rect' && (
+          <Rect
+            def={props.def}
+            onMouseDown={onMouseDown}
+            isSelected={isSelected}
+            isSingleSelected={isSingleSelected}
+          />
+        )}
+        {props.def.nodeType === 'star' && (
+          <Star
+            def={props.def}
+            onMouseDown={onMouseDown}
+            isSelected={isSelected}
+            isSingleSelected={isSingleSelected}
+          />
+        )}
       </g>
     );
   }
@@ -115,6 +108,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
 type Props = {
   def: DiagramNode;
+  diagram: Diagram;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;

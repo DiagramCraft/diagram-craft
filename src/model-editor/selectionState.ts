@@ -27,6 +27,8 @@ export type Guide = {
 
 export type SelectionStateEvents = {
   change: { selection: SelectionState };
+  add: { element: DiagramNode | DiagramEdge };
+  remove: { element: DiagramNode | DiagramEdge };
 };
 
 export class SelectionState extends EventEmitter<SelectionStateEvents> {
@@ -125,7 +127,8 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   toggle(element: DiagramNode | DiagramEdge) {
-    this.elements = this.elements.includes(element)
+    const shouldRemove = this.elements.includes(element);
+    this.elements = shouldRemove
       ? this.elements.filter(e => e !== element)
       : [...this.elements, element];
 
@@ -134,6 +137,12 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
     this.recalculateSourceBoundingBox();
     this.recalculateBoundingBox();
+
+    if (shouldRemove) {
+      this.emit('remove', { element });
+    } else {
+      this.emit('add', { element });
+    }
   }
 
   setElements(element: (DiagramNode | DiagramEdge)[]) {
@@ -146,6 +155,10 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   clear() {
+    this.elements.forEach(e => {
+      this.emit('remove', { element: e });
+    });
+
     this.elements = [];
     this.source.elementBoxes = [];
     this.source.elementIds = [];

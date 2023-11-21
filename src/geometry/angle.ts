@@ -1,7 +1,7 @@
 import { round } from '../utils/math.ts';
 
 export const Angle = {
-  toDeg: (radians: number) => radians * (180 / Math.PI),
+  toDeg: (radians: number) => (radians * (180 / Math.PI)) % 360,
 
   toRad: (degrees: number) => degrees * (Math.PI / 180),
 

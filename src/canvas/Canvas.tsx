@@ -24,6 +24,7 @@ import { DocumentBounds } from './DocumentBounds.tsx';
 import { ViewboxEvents } from '../model-viewer/viewBox.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { propsUtils } from './propsUtils.ts';
+import { SelectionStateEvents } from '../model-editor/selectionState.ts';
 
 const BACKGROUND = 'background';
 
@@ -176,10 +177,23 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       selectionRef.current?.repaint();
       selectionMarqueeRef.current?.repaint();
     });
+
+    const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
+      if (e.element.type === 'node') {
+        nodeRefs.current[e.element.id]?.repaint();
+      } else {
+        edgeRefs.current[e.element.id]?.repaint();
+      }
+    };
+
     const sel = selection;
     sel.on('change', callback);
+    sel.on('add', redrawElement);
+    sel.on('remove', redrawElement);
     return () => {
       sel.off('change', callback);
+      sel.off('add', redrawElement);
+      sel.off('remove', redrawElement);
     };
   }, []);
 
@@ -339,6 +353,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
               onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}
               def={edge}
+              diagram={diagram}
             />
           );
         } else {
@@ -351,6 +366,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
               onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}
               def={node}
+              diagram={diagram}
             />
           );
         }

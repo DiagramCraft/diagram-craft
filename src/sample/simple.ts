@@ -16,11 +16,11 @@ export const simpleDiagram: SerializedDiagram = {
     },
     {
       type: 'node',
-      nodeType: 'rect',
+      nodeType: 'star',
       id: '2',
       bounds: {
         pos: { x: 400, y: 270 },
-        size: { w: 50, h: 50 },
+        size: { w: 150, h: 150 },
         rotation: 0
       },
       children: []
