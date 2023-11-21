@@ -24,6 +24,7 @@ import { ContextMenuDispatcher } from './app/context-menu/ContextMenuDispatcher.
 import { SelectionContextMenu } from './app/context-menu/SelectionContextMenu.tsx';
 import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './canvas/keyMap.ts';
 import { Toolbar } from './app/toolbar/Toolbar.tsx';
+import { DragDropManager } from './canvas/DragDropManager.tsx';
 
 const diagrams = [
   {
@@ -48,75 +49,77 @@ const App = () => {
   const actionMap = makeActionMap(defaultCanvasActions)({ diagram: $d });
   const keyMap = defaultMacKeymap;
   return (
-    <div id="app" className={'dark-theme'}>
-      <div id="menu">
-        <select
-          onChange={e => {
-            setSelectedDiagram(Number(e.target.value));
-          }}
-          defaultValue={selectedDiagram}
-        >
-          {diagrams.map((d, idx) => (
-            <option key={idx} value={idx}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div id="toolbar">
-        <Toolbar actionMap={actionMap} keyMap={keyMap} />
-      </div>
+    <DragDropManager>
+      <div id="app" className={'dark-theme'}>
+        <div id="menu">
+          <select
+            onChange={e => {
+              setSelectedDiagram(Number(e.target.value));
+            }}
+            defaultValue={selectedDiagram}
+          >
+            {diagrams.map((d, idx) => (
+              <option key={idx} value={idx}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div id="toolbar">
+          <Toolbar actionMap={actionMap} keyMap={keyMap} />
+        </div>
 
-      <div id="left-buttons">
-        <ToolWindowButton icon={TbCategoryPlus} />
-        <ToolWindowButton icon={TbStack2} isSelected />
-        <ToolWindowButton icon={TbSelectAll} />
-        <ToolWindowButton icon={TbFiles} />
-        <ToolWindowButton icon={TbHistory} />
-      </div>
-      <div id="left">
-        <LayerToolWindow diagram={$d} />
-      </div>
+        <div id="left-buttons">
+          <ToolWindowButton icon={TbCategoryPlus} />
+          <ToolWindowButton icon={TbStack2} isSelected />
+          <ToolWindowButton icon={TbSelectAll} />
+          <ToolWindowButton icon={TbFiles} />
+          <ToolWindowButton icon={TbHistory} />
+        </div>
+        <div id="left">
+          <LayerToolWindow diagram={$d} />
+        </div>
 
-      <div id="middle" className={'light-theme'}>
-        <ContextMenu.Root>
-          <ContextMenu.Trigger asChild={true}>
-            <Canvas
-              key={selectedDiagram}
-              diagram={$d}
-              onContextMenu={e => {
-                contextMenuTarget.current = e.contextMenuTarget;
-              }}
-              actionMap={actionMap}
-              keyMap={keyMap}
-            />
-          </ContextMenu.Trigger>
-          <ContextMenu.Portal>
-            <ContextMenu.Content className="ContextMenuContent dark-theme">
-              <ContextMenuDispatcher
-                state={contextMenuTarget}
-                createContextMenu={state => {
-                  if (state.type === 'canvas') {
-                    return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                  } else {
-                    return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                  }
+        <div id="middle" className={'light-theme'}>
+          <ContextMenu.Root>
+            <ContextMenu.Trigger asChild={true}>
+              <Canvas
+                key={selectedDiagram}
+                diagram={$d}
+                onContextMenu={e => {
+                  contextMenuTarget.current = e.contextMenuTarget;
                 }}
+                actionMap={actionMap}
+                keyMap={keyMap}
               />
-            </ContextMenu.Content>
-          </ContextMenu.Portal>
-        </ContextMenu.Root>
-      </div>
+            </ContextMenu.Trigger>
+            <ContextMenu.Portal>
+              <ContextMenu.Content className="ContextMenuContent dark-theme">
+                <ContextMenuDispatcher
+                  state={contextMenuTarget}
+                  createContextMenu={state => {
+                    if (state.type === 'canvas') {
+                      return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
+                    } else {
+                      return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
+                    }
+                  }}
+                />
+              </ContextMenu.Content>
+            </ContextMenu.Portal>
+          </ContextMenu.Root>
+        </div>
 
-      <div id="right-buttons">
-        <ToolWindowButton icon={TbInfoCircle} isSelected />
-        <ToolWindowButton icon={TbPalette} />
-        <ToolWindowButton icon={TbDatabaseEdit} />
+        <div id="right-buttons">
+          <ToolWindowButton icon={TbInfoCircle} isSelected />
+          <ToolWindowButton icon={TbPalette} />
+          <ToolWindowButton icon={TbDatabaseEdit} />
+        </div>
+        <div id="right">
+          <InfoToolWindow diagram={$d} />
+        </div>
       </div>
-      <div id="right">
-        <InfoToolWindow diagram={$d} />
-      </div>
-    </div>
+    </DragDropManager>
   );
 };
 

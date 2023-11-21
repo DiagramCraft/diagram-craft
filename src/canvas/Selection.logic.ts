@@ -1,7 +1,7 @@
 import { Direction } from '../geometry/direction.ts';
 import { Diagram, DiagramEdge } from '../model-viewer/diagram.ts';
 import { assert, precondition, VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import { Drag, DragActions, Modifiers } from './drag.ts';
+import { Drag, Modifiers } from './drag.ts';
 import { LocalCoordinateSystem } from '../geometry/lcs.ts';
 import { TransformFactory, Translation } from '../geometry/transform.ts';
 import { Vector } from '../geometry/vector.ts';
@@ -9,13 +9,13 @@ import { Point } from '../geometry/point.ts';
 import { Box } from '../geometry/box.ts';
 import { Angle } from '../geometry/angle.ts';
 import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
-import { SelectionState } from '../model-editor/selectionState.ts';
 import { createResizeCanvasActionToFit } from '../model-editor/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction, ResizeAction, RotateAction } from '../model-viewer/actions.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
-export class EdgeEndpointMoveActions implements DragActions {
+export class EdgeEndpointMoveDrag implements Drag {
   private readonly originalPointerEvents: string;
+  private hoverElement: string | undefined;
 
   constructor(
     private readonly edge: DiagramEdge,
@@ -29,12 +29,21 @@ export class EdgeEndpointMoveActions implements DragActions {
     element.setAttribute('pointer-events', 'none');
   }
 
-  onDrag(coord: Point, drag: Drag, diagram: Diagram, selection: SelectionState) {
+  onDragEnter(id: string): void {
+    this.hoverElement = id;
+  }
+
+  onDragLeave(): void {
+    this.hoverElement = undefined;
+  }
+
+  onDrag(coord: Point, diagram: EditableDiagram) {
+    const selection = diagram.selectionState;
     precondition.is.true(this.type === 'start' || this.type === 'end');
 
     selection.guides = [];
 
-    if (drag.hoverElement && diagram.nodeLookup[drag.hoverElement]) {
+    if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
       this.element.classList.add('selection-edge-handle--connected');
     } else {
       this.element.classList.remove('selection-edge-handle--connected');
@@ -50,15 +59,15 @@ export class EdgeEndpointMoveActions implements DragActions {
     selection.recalculateBoundingBox();
   }
 
-  onDragEnd(_coord: Point, drag: Drag, diagram: Diagram, _selection: SelectionState) {
+  onDragEnd(_coord: Point, diagram: Diagram): void {
     this.element.setAttribute('pointer-events', this.originalPointerEvents);
     this.element.classList.remove('selection-edge-handle--active');
 
-    if (drag.hoverElement && diagram.nodeLookup[drag.hoverElement]) {
+    if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
       if (this.type === 'start') {
-        this.edge.start = { node: diagram.nodeLookup[drag.hoverElement], anchor: 'center' };
+        this.edge.start = { node: diagram.nodeLookup[this.hoverElement], anchor: 'center' };
       } else {
-        this.edge.end = { node: diagram.nodeLookup[drag.hoverElement], anchor: 'center' };
+        this.edge.end = { node: diagram.nodeLookup[this.hoverElement], anchor: 'center' };
       }
     }
 
@@ -66,8 +75,9 @@ export class EdgeEndpointMoveActions implements DragActions {
   }
 }
 
-export class RotateDragActions implements DragActions {
-  onDrag(coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) {
+export class RotateDrag implements Drag {
+  onDrag(coord: Point, diagram: EditableDiagram) {
+    const selection = diagram.selectionState;
     assert.false(selection.isEmpty());
 
     const before = selection.bounds;
@@ -81,7 +91,9 @@ export class RotateDragActions implements DragActions {
 
     diagram.transformElements(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
   }
-  onDragEnd(_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) {
+
+  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
+    const selection = diagram.selectionState;
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new RotateAction(
@@ -96,7 +108,7 @@ export class RotateDragActions implements DragActions {
   }
 }
 
-export class ResizeDragActions implements DragActions {
+export class ResizeDrag implements Drag {
   constructor(
     private readonly type:
       | 'resize-nw'
@@ -106,16 +118,12 @@ export class ResizeDragActions implements DragActions {
       | 'resize-n'
       | 'resize-s'
       | 'resize-w'
-      | 'resize-e'
+      | 'resize-e',
+    private readonly offset: Point
   ) {}
 
-  onDrag(
-    coord: Point,
-    drag: Drag,
-    diagram: EditableDiagram,
-    selection: SelectionState,
-    modifiers: Modifiers
-  ) {
+  onDrag(coord: Point, diagram: EditableDiagram, modifiers: Modifiers): void {
+    const selection = diagram.selectionState;
     assert.false(selection.isEmpty());
 
     const before = selection.bounds;
@@ -126,7 +134,7 @@ export class ResizeDragActions implements DragActions {
     const localTarget = Box.asMutableSnapshot(lcs.toLocal(selection.bounds));
     const localOriginal = lcs.toLocal(original);
 
-    const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(drag.offset));
+    const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(this.offset));
 
     const constrainAspectRatio = modifiers.shiftKey;
     const aspectRatio = localOriginal.size.w / localOriginal.size.h;
@@ -210,7 +218,8 @@ export class ResizeDragActions implements DragActions {
     diagram.transformElements(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
   }
 
-  onDragEnd(_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) {
+  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
+    const selection = diagram.selectionState;
     if (selection.isChanged()) {
       diagram.undoManager.add(
         new ResizeAction(
@@ -261,19 +270,16 @@ export class ResizeDragActions implements DragActions {
   }
 }
 
-export class MoveDragActions implements DragActions {
+export class MoveDrag implements Drag {
   snapAngle?: 'h' | 'v';
 
-  onDrag(
-    coord: Point,
-    drag: Drag,
-    diagram: EditableDiagram,
-    selection: SelectionState,
-    modifiers: Modifiers
-  ) {
+  constructor(private readonly offset: Point) {}
+
+  onDrag(coord: Point, diagram: EditableDiagram, modifiers: Modifiers): void {
+    const selection = diagram.selectionState;
     assert.false(selection.isEmpty());
 
-    const d = Point.subtract(coord, Point.add(selection.bounds.pos, drag.offset));
+    const d = Point.subtract(coord, Point.add(selection.bounds.pos, this.offset));
 
     const newBounds = Box.asMutableSnapshot(selection.bounds);
 
@@ -316,7 +322,7 @@ export class MoveDragActions implements DragActions {
 
     // TODO: Perhaps support 45 degree angles
     if (modifiers.shiftKey) {
-      const source = Point.add(selection.source.boundingBox.pos, drag.offset);
+      const source = Point.add(selection.source.boundingBox.pos, this.offset);
 
       const v = Vector.from(source, coord);
       const length = Vector.length(v);
@@ -360,7 +366,9 @@ export class MoveDragActions implements DragActions {
     ]);
     selection.bounds = newBounds.getSnapshot();
   }
-  onDragEnd(_coord: Point, _drag: Drag, diagram: Diagram, selection: SelectionState) {
+
+  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
+    const selection = diagram.selectionState;
     if (selection.isChanged()) {
       // TODO: Maybe add a compound action here
       const resizeCanvasAction = createResizeCanvasActionToFit(

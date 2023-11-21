@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventMap = Record<string, any>;
 
-type WithWildcardEvent<T> = {
+export type WithWildcardEvent<T> = {
   [K in keyof T]: T[K];
 } & {
   '*': T[keyof T] & { name: string };

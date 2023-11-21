@@ -1,38 +1,42 @@
 import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
-import { Drag, DragActions } from './drag.ts';
+import { Drag } from './drag.ts';
 import { Point } from '../geometry/point.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
-const updatePendingElements = (selection: SelectionState, diagram: Diagram) => {
-  precondition.is.present(selection.marquee);
+export class MarqueeDrag implements Drag {
+  constructor(private readonly offset: Point) {}
 
-  const pending: DiagramNode[] = [];
-  for (const e of diagram.elements) {
-    if (e.type !== 'node') continue;
-
-    // if (Box.intersects(selection.marquee!, e)) {
-    if (Box.contains(selection.marquee, e.bounds)) {
-      pending.push(e);
-    }
-  }
-  selection.setPendingElements(pending);
-};
-
-export const marqueeDragActions: DragActions = {
-  onDrag: (coord: Point, drag: Drag, diagram: Diagram, selection: SelectionState) => {
-    selection.marquee = Box.normalize({
-      pos: drag.offset,
-      size: { w: coord.x - drag.offset.x, h: coord.y - drag.offset.y },
+  onDrag(coord: Point, diagram: EditableDiagram) {
+    diagram.selectionState.marquee = Box.normalize({
+      pos: this.offset,
+      size: { w: coord.x - this.offset.x, h: coord.y - this.offset.y },
       rotation: 0
     });
 
-    updatePendingElements(selection, diagram);
-  },
-  onDragEnd: (_coord: Point, _drag: Drag, _diagram: Diagram, selection: SelectionState) => {
-    if (selection.pendingElements) {
-      selection.convertMarqueeToSelection();
+    this.updatePendingElements(diagram.selectionState, diagram);
+  }
+
+  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
+    if (diagram.selectionState.pendingElements) {
+      diagram.selectionState.convertMarqueeToSelection();
     }
   }
-};
+
+  private updatePendingElements(selection: SelectionState, diagram: Diagram) {
+    precondition.is.present(selection.marquee);
+
+    const pending: DiagramNode[] = [];
+    for (const e of diagram.elements) {
+      if (e.type !== 'node') continue;
+
+      // if (Box.intersects(selection.marquee!, e)) {
+      if (Box.contains(selection.marquee, e.bounds)) {
+        pending.push(e);
+      }
+    }
+    selection.setPendingElements(pending);
+  }
+}

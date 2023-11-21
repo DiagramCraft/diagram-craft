@@ -10,11 +10,9 @@ import { Node, NodeApi } from './Node.tsx';
 import { Edge, EdgeApi } from './Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
-import { DiagramEvents } from '../model-viewer/diagram.ts';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
-import { marqueeDragActions } from './SelectionMarquee.logic.tsx';
-import { Drag, DragActions, Modifiers } from './drag.ts';
+import { Modifiers } from './drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from './useRedraw.tsx';
 import { executeAction, KeyMap } from './keyMap.ts';
@@ -24,7 +22,10 @@ import { ViewboxEvents } from '../model-viewer/viewBox.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { propsUtils } from './propsUtils.ts';
 import { SelectionStateEvents } from '../model-editor/selectionState.ts';
-import { MoveDragActions } from './Selection.logic.ts';
+import { MoveDrag } from './Selection.logic.ts';
+import { useDomEventListener, useEventListener } from '../app/hooks/useEventListener.ts';
+import { useDragDrop } from './DragDropManager.tsx';
+import { MarqueeDrag } from './SelectionMarquee.logic.tsx';
 
 const BACKGROUND = 'background';
 
@@ -42,7 +43,9 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   // State
   const selection = diagram.selectionState;
   const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
-  const drag = useRef<Drag | undefined>(undefined);
+  //const drag = useRef<Drag | undefined>(undefined);
+
+  const drag = useDragDrop();
 
   // Component/node refs
   const svgRef = useRef<SVGSVGElement>(null);
@@ -55,12 +58,17 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     return svgRef.current!;
   });
 
-  useEffect(() => {
-    if (!svgRef.current) return;
+  useEventListener(
+    'viewbox',
+    ({ viewbox }: ViewboxEvents['viewbox']) => {
+      svgRef.current!.setAttribute('viewBox', viewbox.svgViewboxString);
+    },
+    diagram.viewBox
+  );
 
-    // TODO: Add listeners for middle button pan
-
-    const wheelEventHandler = (e: WheelEvent) => {
+  useDomEventListener(
+    'wheel',
+    e => {
       e.preventDefault();
       if (e.ctrlKey) {
         const delta = e.deltaY ?? e.detail ?? 0;
@@ -72,138 +80,101 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           y: diagram.viewBox.offset.y + e.deltaY * 0.7
         });
       }
-    };
+    },
+    svgRef
+  );
 
-    const viewboxEventHandler = ({ viewbox }: ViewboxEvents['viewbox']) => {
-      svgRef.current!.setAttribute('viewBox', viewbox.svgViewboxString);
+  const adjustViewbox = () => {
+    // TODO: Respect zoom level
+    if (diagram.viewBox.zoomLevel === 1) {
+      diagram.viewBox.pan({
+        x: Math.floor(-(svgRef.current!.getBoundingClientRect().width - diagram.canvas.size.w) / 2),
+        y: Math.floor(-(svgRef.current!.getBoundingClientRect().height - diagram.canvas.size.h) / 2)
+      });
+    }
+    diagram.viewBox.dimensions = {
+      w: Math.floor(svgRef.current!.getBoundingClientRect().width * diagram.viewBox.zoomLevel),
+      h: Math.floor(svgRef.current!.getBoundingClientRect().height * diagram.viewBox.zoomLevel)
     };
-
-    diagram.viewBox.on('viewbox', viewboxEventHandler);
-    svgRef.current.addEventListener('wheel', wheelEventHandler);
-
-    return () => {
-      diagram.viewBox.off('viewbox', viewboxEventHandler);
-      svgRef.current?.removeEventListener('wheel', wheelEventHandler);
+    diagram.viewBox.windowSize = {
+      w: Math.floor(svgRef.current!.getBoundingClientRect().width),
+      h: Math.floor(svgRef.current!.getBoundingClientRect().height)
     };
+  };
+
+  useDomEventListener('resize', adjustViewbox, window);
+
+  useEffect(() => {
+    if (svgRef.current) adjustViewbox();
+  }, [adjustViewbox]);
+
+  useDomEventListener(
+    'keydown',
+    e => {
+      executeAction(e, props.keyMap, props.actionMap);
+    },
+    document
+  );
+
+  const clearSelection = debounce(() => {
+    selection.clear();
   });
 
-  useEffect(() => {
-    if (!svgRef.current) return;
+  useEventListener('execute', clearSelection, diagram.undoManager);
+  useEventListener('undo', clearSelection, diagram.undoManager);
+  useEventListener('redo', clearSelection, diagram.undoManager);
 
-    const adjustViewbox = () => {
-      // TODO: Respect zoom level
-      if (diagram.viewBox.zoomLevel === 1) {
-        diagram.viewBox.pan({
-          x: Math.floor(
-            -(svgRef.current!.getBoundingClientRect().width - diagram.canvas.size.w) / 2
-          ),
-          y: Math.floor(
-            -(svgRef.current!.getBoundingClientRect().height - diagram.canvas.size.h) / 2
-          )
-        });
-      }
-      diagram.viewBox.dimensions = {
-        w: Math.floor(svgRef.current!.getBoundingClientRect().width * diagram.viewBox.zoomLevel),
-        h: Math.floor(svgRef.current!.getBoundingClientRect().height * diagram.viewBox.zoomLevel)
-      };
-      diagram.viewBox.windowSize = {
-        w: Math.floor(svgRef.current!.getBoundingClientRect().width),
-        h: Math.floor(svgRef.current!.getBoundingClientRect().height)
-      };
-    };
-
-    adjustViewbox();
-
-    window.addEventListener('resize', adjustViewbox);
-    return () => {
-      window.removeEventListener('resize', adjustViewbox);
-    };
-  }, [diagram]);
-
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      executeAction(e, props.keyMap, props.actionMap);
-    };
-    document.addEventListener('keydown', listener);
-    return () => {
-      document.removeEventListener('keydown', listener);
-    };
-  }, [props.diagram]);
-
-  useEffect(() => {
-    const nodeChanged = (e: DiagramEvents['nodechanged']) => {
+  useEventListener(
+    'nodechanged',
+    e => {
       nodeRefs.current[e.after.id]?.repaint();
 
       for (const edge of e.after.listEdges(true)) {
         edgeRefs.current[edge.id]?.repaint();
       }
-    };
-
-    const edgeChanged = (e: DiagramEvents['edgechanged']) => {
+    },
+    diagram
+  );
+  useEventListener(
+    'edgechanged',
+    e => {
       edgeRefs.current[e.after.id]?.repaint();
-    };
+    },
+    diagram
+  );
+  useEventListener('nodeadded', redraw, diagram);
+  useEventListener('noderemoved', redraw, diagram);
+  useEventListener('canvaschanged', redraw, diagram);
 
-    const triggerRedraw = () => {
-      redraw();
-    };
+  const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
+    if (e.element.type === 'node') {
+      nodeRefs.current[e.element.id]?.repaint();
+    } else {
+      edgeRefs.current[e.element.id]?.repaint();
+    }
+  };
 
-    const onUndo = debounce(() => {
-      selection.clear();
-    });
-
-    diagram.undoManager.on('execute', onUndo);
-    diagram.undoManager.on('undo', onUndo);
-    diagram.undoManager.on('redo', onUndo);
-    diagram.on('nodechanged', nodeChanged);
-    diagram.on('nodeadded', triggerRedraw);
-    diagram.on('noderemoved', triggerRedraw);
-    diagram.on('edgechanged', edgeChanged);
-    diagram.on('canvaschanged', triggerRedraw);
-
-    return () => {
-      diagram.undoManager.off('execute', onUndo);
-      diagram.undoManager.off('undo', onUndo);
-      diagram.undoManager.off('redo', onUndo);
-      diagram.off('nodechanged', nodeChanged);
-      diagram.off('nodeadded', triggerRedraw);
-      diagram.off('noderemoved', triggerRedraw);
-      diagram.off('edgechanged', edgeChanged);
-      diagram.off('canvaschanged', triggerRedraw);
-    };
-  }, [diagram, redraw]);
-
-  useEffect(() => {
-    const callback = debounce(() => {
+  useEventListener(
+    'change',
+    debounce(() => {
       selectionRef.current?.repaint();
       selectionMarqueeRef.current?.repaint();
-    });
+    }),
+    selection
+  );
+  useEventListener('add', redrawElement, selection);
+  useEventListener('remove', redrawElement, selection);
 
-    const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
-      if (e.element.type === 'node') {
-        nodeRefs.current[e.element.id]?.repaint();
-      } else {
-        edgeRefs.current[e.element.id]?.repaint();
-      }
-    };
+  const onMouseEnter = useCallback(
+    (id: string) => {
+      drag.currentDrag()?.onDragEnter?.(id);
+    },
+    [drag]
+  );
 
-    const sel = selection;
-    sel.on('change', callback);
-    sel.on('add', redrawElement);
-    sel.on('remove', redrawElement);
-    return () => {
-      sel.off('change', callback);
-      sel.off('add', redrawElement);
-      sel.off('remove', redrawElement);
-    };
-  }, [selection]);
-
-  const onMouseEnter = useCallback((id: string) => {
-    if (drag.current) drag.current.hoverElement = id;
-  }, []);
-
-  const onMouseLeave = useCallback((_id: string) => {
-    if (drag.current) drag.current.hoverElement = undefined;
-  }, []);
+  const onMouseLeave = useCallback(() => {
+    drag.currentDrag()?.onDragLeave?.();
+  }, [drag]);
 
   const updateCursor = useCallback(
     (coord: Point) => {
@@ -213,12 +184,8 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         svgRef.current!.style.cursor = 'default';
       }
     },
-    [svgRef]
+    [selection.bounds]
   );
-
-  const onDragStart = useCallback((point: Point, actions: DragActions) => {
-    drag.current = { offset: point, actions };
-  }, []);
 
   const onMouseDown = useCallback(
     (id: ObjectId, point: Point, modifiers: Modifiers) => {
@@ -242,7 +209,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           if (!modifiers.shiftKey) {
             selection.clear();
           }
-          onDragStart(diagram.viewBox.toDiagramPoint(point), marqueeDragActions);
+          drag.initiateDrag(new MarqueeDrag(diagram.viewBox.toDiagramPoint(point)));
           return;
         } else {
           if (!modifiers.shiftKey) {
@@ -252,57 +219,55 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         }
 
         if (!selection.isEmpty()) {
-          onDragStart(
-            Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.bounds.pos),
-            new MoveDragActions()
+          drag.initiateDrag(
+            new MoveDrag(
+              Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.bounds.pos)
+            )
           );
         }
       } finally {
         updateCursor(diagram.viewBox.toDiagramPoint(point));
       }
     },
-    [onDragStart, diagram, updateCursor]
+    [selection, diagram.viewBox, diagram.nodeLookup, diagram.edgeLookup, drag, updateCursor]
   );
 
   const onMouseUp = useCallback(
     (_id: ObjectId, point: Point) => {
+      const current = drag.currentDrag();
       try {
-        if (drag.current) {
-          drag.current.actions.onDragEnd(point, drag.current, diagram, selection);
+        if (current) {
+          current.onDragEnd(point, diagram);
         }
 
         if (deferedMouseAction.current) {
           deferedMouseAction.current?.callback();
         }
       } finally {
-        drag.current = undefined;
+        drag.clearDrag();
         deferedMouseAction.current = undefined;
 
         updateCursor(point);
       }
     },
-    [diagram, updateCursor]
+    [diagram, drag, selection, updateCursor]
   );
 
   const onMouseMove = useCallback(
     (point: Point, modifiers: Modifiers) => {
+      const current = drag.currentDrag();
+
       // Abort early in case there's no drag in progress
-      if (!drag.current) return;
+      if (!current) return;
 
       try {
-        drag.current.actions.onDrag(
-          diagram.viewBox.toDiagramPoint(point),
-          drag.current,
-          diagram,
-          selection,
-          modifiers
-        );
+        current.onDrag(diagram.viewBox.toDiagramPoint(point), diagram, modifiers);
       } finally {
         deferedMouseAction.current = undefined;
         updateCursor(point);
       }
     },
-    [updateCursor, diagram]
+    [diagram, drag, selection, updateCursor]
   );
 
   return (
@@ -319,11 +284,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
       onContextMenu={event => {
         const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
-
-        const point = {
-          x: event.nativeEvent.offsetX,
-          y: event.nativeEvent.offsetY
-        };
+        const point = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
 
         const isClickOnSelection = Box.contains(
           selection.bounds,
@@ -371,13 +332,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         }
       })}
 
-      <Selection
-        ref={selectionRef}
-        selection={selection}
-        onDragStart={(point, actions) =>
-          onDragStart(diagram.viewBox.toDiagramPoint(point), actions)
-        }
-      />
+      <Selection ref={selectionRef} selection={selection} />
       <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
     </svg>
   );

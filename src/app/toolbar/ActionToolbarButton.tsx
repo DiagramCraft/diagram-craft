@@ -7,11 +7,11 @@ export const ActionToolbarButton = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
 
   useEventListener(
-    props.actionMap[props.action]!,
     'actionchanged',
     ({ action }: ActionEvents['actionchanged']) => {
       setEnabled(action.enabled);
-    }
+    },
+    props.actionMap[props.action]!
   );
 
   return (
