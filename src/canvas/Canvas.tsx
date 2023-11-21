@@ -332,7 +332,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         }
       })}
 
-      <Selection ref={selectionRef} selection={selection} />
+      <Selection ref={selectionRef} selection={selection} diagram={diagram} />
       <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
     </svg>
   );

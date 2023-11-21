@@ -10,6 +10,7 @@ import { SelectionState } from '../model-editor/selectionState.ts';
 import { AnchorType } from '../model-editor/snap/anchor.ts';
 import { $c } from '../utils/classname.ts';
 import { useDragDrop } from './DragDropManager.tsx';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 export type SelectionApi = {
   repaint: () => void;
@@ -192,7 +193,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'nw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-nw', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-nw',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -204,7 +210,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'ne-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-ne', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-ne',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -216,7 +227,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'se-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-se', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-se',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -228,7 +244,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'sw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-sw', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-sw',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -240,7 +261,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'n-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-n', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-n',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -252,7 +278,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'e-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-e', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-e',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -265,7 +296,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'s-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-s', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-s',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -277,7 +313,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'w-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new ResizeDrag('resize-w', Point.fromEvent(e.nativeEvent)));
+                drag.initiateDrag(
+                  new ResizeDrag(
+                    'resize-w',
+                    props.diagram.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent))
+                  )
+                );
                 e.stopPropagation();
               }}
             />
@@ -319,4 +360,5 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
 type Props = {
   selection: SelectionState;
+  diagram: EditableDiagram;
 };
