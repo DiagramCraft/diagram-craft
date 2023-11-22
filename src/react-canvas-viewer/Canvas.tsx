@@ -12,20 +12,20 @@ import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
-import { Modifiers } from './drag.ts';
+import { Modifiers } from '../base-ui/drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from './useRedraw.tsx';
-import { executeAction, KeyMap } from './keyMap.ts';
+import { executeAction, KeyMap } from '../base-ui/keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from './DocumentBounds.tsx';
 import { ViewboxEvents } from '../model-viewer/viewBox.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
-import { propsUtils } from './propsUtils.ts';
+import { propsUtils } from './utils/propsUtils.ts';
 import { SelectionStateEvents } from '../model-editor/selectionState.ts';
-import { MoveDrag } from './Selection.logic.ts';
-import { useDomEventListener, useEventListener } from '../app/hooks/useEventListener.ts';
+import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { MarqueeDrag } from './SelectionMarquee.logic.tsx';
+import { MoveDrag } from '../base-ui/drag/moveDrag.ts';
 
 const BACKGROUND = 'background';
 

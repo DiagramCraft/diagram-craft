@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { ToolWindowAccordion } from './ToolWindowAccordion.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
-import { useRedraw } from '../canvas/useRedraw.tsx';
+import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { $c } from '../utils/classname.ts';
 
 export const LayerToolWindow = (props: Props) => {

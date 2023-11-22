@@ -1,7 +1,7 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useContext, useEffect } from 'react';
 import { ActionToggleGroupContext } from './ActionToggleGroup.tsx';
-import { ToggleAction } from '../../canvas/keyMap.ts';
+import { ToggleAction } from '../../base-ui/keyMap.ts';
 import { useEventListener } from '../hooks/useEventListener.ts';
 
 export const ActionToggleItem = (props: Props) => {

@@ -1,6 +1,5 @@
 import { forwardRef, Fragment, useImperativeHandle } from 'react';
 import { useRedraw } from './useRedraw.tsx';
-import { EdgeEndpointMoveDrag, ResizeDrag, RotateDrag } from './Selection.logic.ts';
 import { DistanceMarker } from './DistanceMarker.tsx';
 import { Point } from '../geometry/point.ts';
 import { Line } from '../geometry/line.ts';
@@ -11,6 +10,9 @@ import { MagnetType } from '../model-editor/snap/magnet.ts';
 import { $c } from '../utils/classname.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { RotateDrag } from '../base-ui/drag/rotateDrag.ts';
+import { ResizeDrag } from '../base-ui/drag/resizeDrag.ts';
+import { EdgeEndpointMoveDrag } from '../base-ui/drag/edgeEndpointMoveDrag.ts';
 
 export type SelectionApi = {
   repaint: () => void;

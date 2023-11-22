@@ -3,7 +3,7 @@ import { Diagram, DiagramEdge, isConnected } from '../model-viewer/diagram.ts';
 import { Box } from '../geometry/box.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
-import { Modifiers } from './drag.ts';
+import { Modifiers } from '../base-ui/drag.ts';
 
 export type EdgeApi = {
   repaint: () => void;

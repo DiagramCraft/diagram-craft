@@ -15,7 +15,7 @@ import {
   TbPlus
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { KeyMap } from '../../canvas/keyMap.ts';
+import { KeyMap } from '../../base-ui/keyMap.ts';
 import { ActionToolbarButton } from './ActionToolbarButton.tsx';
 import { ActionToggleGroup } from './ActionToggleGroup.tsx';
 import { ActionToggleItem } from './ActionToggleItem.tsx';

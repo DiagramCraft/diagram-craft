@@ -1,6 +1,6 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
-import { KeyMap } from '../../canvas/keyMap.ts';
+import { KeyMap } from '../../base-ui/keyMap.ts';
 
 export const SelectionContextMenu = (props: Props) => {
   return (

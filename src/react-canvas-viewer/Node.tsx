@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
-import { Modifiers } from './drag.ts';
+import { Modifiers } from '../base-ui/drag.ts';
 import { Point } from '../geometry/point.ts';
 import { Rect } from './node-types/Rect.tsx';
 import { Star } from './node-types/Star.tsx';

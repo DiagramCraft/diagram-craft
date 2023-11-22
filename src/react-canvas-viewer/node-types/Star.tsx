@@ -1,7 +1,7 @@
 import { DiagramNode } from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { Path } from '../../geometry/path.ts';
-import { propsUtils } from '../propsUtils.ts';
+import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';

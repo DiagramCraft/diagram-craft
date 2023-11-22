@@ -1,5 +1,5 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { findKeyBindings, KeyMap } from '../../canvas/keyMap.ts';
+import { findKeyBindings, KeyMap } from '../../base-ui/keyMap.ts';
 import React from 'react';
 
 // TODO: Maybe attach listener to action and re-render when it changes?

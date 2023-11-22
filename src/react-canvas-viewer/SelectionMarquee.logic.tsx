@@ -1,7 +1,7 @@
 import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
-import { Drag } from './drag.ts';
+import { Drag } from '../base-ui/drag.ts';
 import { Point } from '../geometry/point.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';

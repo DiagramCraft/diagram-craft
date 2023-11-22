@@ -1,6 +1,6 @@
 import { DiagramNode } from '../../model-viewer/diagram.ts';
 import React from 'react';
-import { propsUtils } from '../propsUtils.ts';
+import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 
 declare global {

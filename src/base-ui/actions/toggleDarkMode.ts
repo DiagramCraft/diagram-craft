@@ -7,6 +7,7 @@ declare global {
   }
 }
 
+// TODO: This should probably move into the app/ folder
 export class ToggleDarkModeAction extends EventEmitter<ActionEvents> implements ToggleAction {
   enabled = true;
   state: boolean = false;

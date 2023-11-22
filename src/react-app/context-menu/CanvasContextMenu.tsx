@@ -1,4 +1,4 @@
-import { KeyMap } from '../../canvas/keyMap.ts';
+import { KeyMap } from '../../base-ui/keyMap.ts';
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 

@@ -1,5 +1,5 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { KeyMap, ToggleAction } from '../../canvas/keyMap.ts';
+import { KeyMap, ToggleAction } from '../../base-ui/keyMap.ts';
 import React, { useState } from 'react';
 
 type ActionToggleGroupContextType = {

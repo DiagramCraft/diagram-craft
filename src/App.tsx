@@ -1,13 +1,13 @@
 import './App.css';
 import { deserializeDiagram } from './model-viewer/serialization.ts';
-import { Canvas, ContextMenuTarget } from './canvas/Canvas.tsx';
+import { Canvas, ContextMenuTarget } from './react-canvas-viewer/Canvas.tsx';
 import { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
-import { ToolWindowButton } from './app/ToolWindowButton.tsx';
+import { ToolWindowButton } from './react-app/ToolWindowButton.tsx';
 import { EditableDiagram } from './model-editor/editable-diagram.ts';
-import { InfoToolWindow } from './app/InfoToolWindow.tsx';
-import { LayerToolWindow } from './app/LayerToolWindow.tsx';
+import { InfoToolWindow } from './react-app/InfoToolWindow.tsx';
+import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
   TbCategoryPlus,
@@ -19,12 +19,12 @@ import {
   TbSelectAll,
   TbStack2
 } from 'react-icons/tb';
-import { CanvasContextMenu } from './app/context-menu/CanvasContextMenu.tsx';
-import { ContextMenuDispatcher } from './app/context-menu/ContextMenuDispatcher.tsx';
-import { SelectionContextMenu } from './app/context-menu/SelectionContextMenu.tsx';
-import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './canvas/keyMap.ts';
-import { Toolbar } from './app/toolbar/Toolbar.tsx';
-import { DragDropManager } from './canvas/DragDropManager.tsx';
+import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu.tsx';
+import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher.tsx';
+import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu.tsx';
+import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
+import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
+import { DragDropManager } from './react-canvas-viewer/DragDropManager.tsx';
 
 const diagrams = [
   {

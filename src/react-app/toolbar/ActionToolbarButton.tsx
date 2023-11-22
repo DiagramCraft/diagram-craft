@@ -1,4 +1,4 @@
-import { ActionEvents, KeyMap } from '../../canvas/keyMap.ts';
+import { ActionEvents, KeyMap } from '../../base-ui/keyMap.ts';
 import React, { useState } from 'react';
 import * as Toolbar from '@radix-ui/react-toolbar';
 import { useEventListener } from '../hooks/useEventListener.ts';
