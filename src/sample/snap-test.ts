@@ -5,8 +5,8 @@ export const snapTestDiagram: SerializedDiagram = {
     {
       type: 'edge',
       id: 'e1',
-      start: { anchor: 'c', node: { id: '1_2' } },
-      end: { anchor: 'c', node: { id: '2' } },
+      start: { anchor: 0, node: { id: '1_2' } },
+      end: { anchor: 0, node: { id: '2' } },
       props: {}
     },
     {

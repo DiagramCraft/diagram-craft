@@ -17,7 +17,7 @@ export interface SerializedNode extends AbstractNode {
   children: SerializedNode[];
 }
 
-type SerializedConnectedEndpoint = { anchor: string; node: Reference };
+type SerializedConnectedEndpoint = { anchor: number; node: Reference };
 
 type SerializedEndpoint = SerializedConnectedEndpoint | { position: Point };
 
@@ -56,7 +56,7 @@ export const deserializeDiagram = (diagram: SerializedDiagram): (DiagramNode | D
   // Index skeleton nodes
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
-      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds);
+      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors);
       nodeLookup[c.id].props = c.props;
     }
   }

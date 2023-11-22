@@ -1,7 +1,6 @@
 import { Drag } from '../drag.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { DiagramEdge } from '../../model-viewer/diagram.ts';
-import { svgPathProperties } from 'svg-path-properties';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
 
@@ -27,27 +26,11 @@ export class EdgeEndpointMoveDrag implements Drag {
 
     if (id && this.diagram.nodeLookup[id]) {
       const el = this.diagram.nodeLookup[id];
-      const g = document.getElementById(`node-${id}`);
-      if (g) {
-        const boundary = g.querySelectorAll('.node-boundary');
-        boundary.forEach(b => {
-          if (b instanceof SVGPathElement) {
-            for (const p of new svgPathProperties(b.getAttribute('d') ?? '').getParts()) {
-              const { x, y } = p.getPointAtLength(p.length / 2);
-              const lx = (x - el.bounds.pos.x) / el.bounds.size.w;
-              const ly = (y - el.bounds.pos.y) / el.bounds.size.h;
-
-              console.log(lx, ly);
-            }
-          }
-        });
-      }
+      el.anchors;
     }
 
-    this.diagram.addHighlight(
-      this.diagram.nodeLookup[id] || this.diagram.edgeLookup[id],
-      'edge-connect'
-    );
+    const el = this.diagram.nodeLookup[id] || this.diagram.edgeLookup[id];
+    this.diagram.addHighlight(el, 'edge-connect');
   }
 
   onDragLeave(): void {
@@ -76,7 +59,7 @@ export class EdgeEndpointMoveDrag implements Drag {
     if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
       this.element.classList.add('selection-edge-handle--connected');
 
-      this.attachToClosestEdge(diagram);
+      this.attachToClosestAnchor(coord);
     } else {
       this.element.classList.remove('selection-edge-handle--connected');
     }
@@ -85,11 +68,11 @@ export class EdgeEndpointMoveDrag implements Drag {
     selection.recalculateBoundingBox();
   }
 
-  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
+  onDragEnd(coord: Point, _diagram: EditableDiagram): void {
     this.element.setAttribute('pointer-events', this.originalPointerEvents);
     this.element.classList.remove('selection-edge-handle--active');
 
-    this.attachToClosestEdge(diagram);
+    this.attachToClosestAnchor(coord);
 
     if (this.hoverElement) {
       this.diagram.removeHighlight(
@@ -101,13 +84,42 @@ export class EdgeEndpointMoveDrag implements Drag {
     // TODO: Create undoable action
   }
 
-  private attachToClosestEdge(diagram: EditableDiagram) {
-    if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
+  private attachToClosestAnchor(coord: Point) {
+    if (this.hoverElement && this.diagram.nodeLookup[this.hoverElement]) {
       if (this.type === 'start') {
-        this.edge.start = { node: diagram.nodeLookup[this.hoverElement], anchor: 'center' };
+        this.edge.start = {
+          node: this.diagram.nodeLookup[this.hoverElement],
+          anchor: this.getClosestAnchor(coord)
+        };
       } else {
-        this.edge.end = { node: diagram.nodeLookup[this.hoverElement], anchor: 'center' };
+        this.edge.end = {
+          node: this.diagram.nodeLookup[this.hoverElement],
+          anchor: this.getClosestAnchor(coord)
+        };
       }
     }
+  }
+
+  private getClosestAnchor(coord: Point): number {
+    const node = this.diagram.nodeLookup[this.hoverElement!];
+    const anchors = node.anchors.map((a, idx) => {
+      return {
+        idx,
+        x: node.bounds.pos.x + a.x * node.bounds.size.w,
+        y: node.bounds.pos.y + a.y * node.bounds.size.h
+      };
+    });
+
+    let closestAnchor = 0;
+    let closestDistance = Number.MAX_SAFE_INTEGER;
+    for (let a of anchors) {
+      const d = Point.squareDistance(coord, a);
+      if (d < closestDistance) {
+        closestAnchor = a.idx;
+        closestDistance = d;
+      }
+    }
+
+    return closestAnchor;
   }
 }

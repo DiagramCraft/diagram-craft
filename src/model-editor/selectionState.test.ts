@@ -10,11 +10,16 @@ describe('SelectionState', () => {
   });
 
   test('toggle twice clears selection', () => {
-    const element: DiagramNode = new DiagramNode('1', 'test', {
-      pos: { x: 0, y: 0 },
-      size: { w: 10, h: 10 },
-      rotation: 0
-    });
+    const element: DiagramNode = new DiagramNode(
+      '1',
+      'test',
+      {
+        pos: { x: 0, y: 0 },
+        size: { w: 10, h: 10 },
+        rotation: 0
+      },
+      undefined
+    );
 
     const s = new SelectionState();
 

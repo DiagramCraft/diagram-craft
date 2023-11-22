@@ -10,10 +10,9 @@ import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from '../base-ui/drag.ts';
 import { Point } from '../geometry/point.ts';
-import { Rect } from './node-types/Rect.tsx';
-import { Star } from './node-types/Star.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
-import { RoundedRect } from './node-types/RoundedRect.tsx';
+import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
+import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -53,7 +52,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   );
 
   const style: CSSProperties = {};
-  if ((props.def.props?.highlight?.length ?? 0) > 0) {
+  if (props.def.props?.highlight?.includes('edge-connect')) {
     style.stroke = 'red';
   }
 
@@ -89,6 +88,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       </g>
     );
   } else {
+    const nodeDef = props.diagram.nodDefinitions.get(props.def.nodeType);
+
+    // TODO: Better error handling here
+    if (!nodeDef) VERIFY_NOT_REACHED();
+    if (!(nodeDef instanceof ReactNodeDefinition)) VERIFY_NOT_REACHED();
+
+    const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
+
     return (
       <g
         id={`node-${props.def.id}`}
@@ -98,32 +105,27 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
       >
-        {props.def.nodeType === 'rect' && (
-          <Rect
-            def={props.def}
-            onMouseDown={onMouseDown}
-            isSelected={isSelected}
-            isSingleSelected={isSingleSelected}
-            style={style}
-          />
-        )}
-        {props.def.nodeType === 'star' && (
-          <Star
-            def={props.def}
-            onMouseDown={onMouseDown}
-            isSelected={isSelected}
-            isSingleSelected={isSingleSelected}
-            style={style}
-          />
-        )}
-        {props.def.nodeType === 'rounded-rect' && (
-          <RoundedRect
-            def={props.def}
-            onMouseDown={onMouseDown}
-            isSelected={isSelected}
-            isSingleSelected={isSingleSelected}
-            style={style}
-          />
+        <ReactNodeImpl
+          def={props.def}
+          onMouseDown={onMouseDown}
+          isSelected={isSelected}
+          isSingleSelected={isSingleSelected}
+          style={style}
+        />
+
+        {props.def.props.highlight?.includes('edge-connect') && (
+          <>
+            {props.def.anchors.map(anchor => (
+              <circle
+                key={`${anchor.x}_${anchor.y}`}
+                cx={props.def.bounds.pos.x + anchor.x * props.def.bounds.size.w}
+                cy={props.def.bounds.pos.y + anchor.y * props.def.bounds.size.h}
+                r={5}
+                stroke="red"
+                fill={'transparent'}
+              />
+            ))}
+          </>
         )}
       </g>
     );

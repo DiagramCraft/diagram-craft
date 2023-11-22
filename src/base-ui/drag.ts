@@ -9,6 +9,7 @@ export type Modifiers = {
 };
 
 export type Drag = {
+  // TODO: Remove diagram from these - and use class instance variables instead
   onDrag: (coord: Point, diagram: EditableDiagram, modifiers: Modifiers) => void;
   onDragEnd: (coord: Point, diagram: EditableDiagram) => void;
 

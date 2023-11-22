@@ -182,7 +182,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       const current = drag.currentDrag();
       try {
         if (current) {
-          current.onDragEnd(point, diagram);
+          current.onDragEnd(diagram.viewBox.toDiagramPoint(point), diagram);
         }
 
         if (deferedMouseAction.current) {

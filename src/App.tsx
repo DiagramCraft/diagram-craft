@@ -1,6 +1,6 @@
 import './App.css';
 import { deserializeDiagram } from './model-viewer/serialization.ts';
-import { EditableCanvas, ContextMenuTarget } from './react-canvas-editor/EditableCanvas.tsx';
+import { ContextMenuTarget, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
 import { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
@@ -25,15 +25,24 @@ import { SelectionContextMenu } from './react-app/context-menu/SelectionContextM
 import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
 import { DragDropManager } from './react-canvas-viewer/DragDropManager.tsx';
+import { defaultEdgeRegistry, defaultNodeRegistry } from './react-canvas-viewer/defaultRegistry.ts';
 
 const diagrams = [
   {
     name: 'Snap test',
-    diagram: new EditableDiagram(deserializeDiagram(snapTestDiagram))
+    diagram: new EditableDiagram(
+      deserializeDiagram(snapTestDiagram),
+      defaultNodeRegistry(),
+      defaultEdgeRegistry()
+    )
   },
   {
     name: 'Simple',
-    diagram: new EditableDiagram(deserializeDiagram(simpleDiagram))
+    diagram: new EditableDiagram(
+      deserializeDiagram(simpleDiagram),
+      defaultNodeRegistry(),
+      defaultEdgeRegistry()
+    )
   }
 ];
 

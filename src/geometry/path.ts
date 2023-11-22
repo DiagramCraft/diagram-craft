@@ -1,4 +1,5 @@
 import { Box } from './box.ts';
+import { round } from '../utils/math.ts';
 
 type PathElement = {
   type: 'moveTo' | 'lineTo' | 'arcTo';
@@ -38,11 +39,11 @@ export class Path {
 
         switch (e.type) {
           case 'moveTo':
-            return `M ${x} ${y}`;
+            return `M ${round(x)} ${round(y)}`;
           case 'lineTo':
-            return `L ${x} ${y}`;
+            return `L ${round(x)} ${round(y)}`;
           case 'arcTo':
-            return `A ${x} ${y}`;
+            return `A ${round(x)} ${round(y)}`;
         }
       })
       .join(' ');

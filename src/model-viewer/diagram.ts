@@ -6,6 +6,9 @@ import { UndoManager } from '../model-editor/undoManager.ts';
 import { Viewbox } from './viewBox.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Point } from '../geometry/point.ts';
+import { svgPathProperties } from 'svg-path-properties';
+import { round } from '../utils/math.ts';
+import { assert } from '../utils/assert.ts';
 
 declare global {
   interface EdgeProps {
@@ -26,7 +29,10 @@ export interface AbstractNode extends DiagramElement {
   nodeType: 'group' | string;
   id: string;
   bounds: Box;
+
+  // TODO: Maybe we should make this readonly (deep)?
   props: NodeProps;
+  anchors?: Point[];
 }
 
 export interface AbstractEdge extends DiagramElement {
@@ -46,38 +52,87 @@ export class DiagramNode implements AbstractNode {
   parent?: DiagramNode;
   children: DiagramNode[];
 
-  edges: Record<string, DiagramEdge[]>;
+  edges: Record<number, DiagramEdge[]>;
 
   props: NodeProps = {};
 
-  constructor(id: string, nodeType: 'group' | string, bounds: Box) {
+  _anchors?: Point[];
+
+  diagram?: Diagram;
+
+  constructor(id: string, nodeType: 'group' | string, bounds: Box, anchors: Point[] | undefined) {
     this.id = id;
     this.bounds = bounds;
     this.type = 'node';
     this.nodeType = nodeType;
     this.children = [];
     this.edges = {};
+    this._anchors = anchors;
+  }
+
+  // TODO: Need to make sure this is called when e.g. props are changed
+  private invalidateAnchors() {
+    assert.present(this.diagram);
+
+    this._anchors = [];
+    this._anchors.push({ x: 0.5, y: 0.5 });
+
+    const def = this.diagram!.nodDefinitions.get(this.nodeType);
+
+    const paths = def.getBoundingPaths(this);
+
+    for (const path of paths) {
+      for (const p of new svgPathProperties(path).getParts()) {
+        const { x, y } = p.getPointAtLength(p.length / 2);
+        const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
+        const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
+
+        this._anchors.push({ x: lx, y: ly });
+      }
+    }
+
+    this.diagram.updateElement(this);
+  }
+
+  get anchors(): Point[] {
+    if (this._anchors === undefined) this.invalidateAnchors();
+
+    return this._anchors ?? [];
   }
 
   removeEdge(edge: DiagramEdge) {
     for (const [anchor, edges] of Object.entries(this.edges)) {
-      this.edges[anchor] = edges.filter(e => e !== edge);
+      this.edges[anchor as unknown as number] = edges.filter(e => e !== edge);
     }
   }
 
-  addEdge(anchor: string, edge: DiagramEdge) {
+  addEdge(anchor: number, edge: DiagramEdge) {
     this.edges[anchor] = [...(this.edges[anchor] ?? []), edge];
   }
 
-  updateEdge(anchor: string, edge: DiagramEdge) {
-    if (this.edges[anchor].includes(edge)) return;
+  updateEdge(anchor: number, edge: DiagramEdge) {
+    if (this.edges[anchor]?.includes(edge)) return;
 
     this.removeEdge(edge);
     this.addEdge(anchor, edge);
   }
 
+  getAnchorPosition(anchor: number) {
+    return {
+      x: this.bounds.pos.x + this.bounds.size.w * this.anchors[anchor].x,
+      y: this.bounds.pos.y + this.bounds.size.h * this.anchors[anchor].y
+    };
+  }
+
+  // TODO: This is a bit problematic since it has a relation to edge
+  //       should probably rename this to something else - e.g. copyNode
   clone() {
-    const node = new DiagramNode(this.id, this.nodeType, deepClone(this.bounds));
+    const node = new DiagramNode(
+      this.id,
+      this.nodeType,
+      deepClone(this.bounds),
+      this._anchors ? [...this._anchors] : undefined
+    );
     node.props = deepClone(this.props);
     node.children = this.children.map(c => c.clone());
     return node;
@@ -105,7 +160,7 @@ export class DiagramNode implements AbstractNode {
   }
 }
 
-export type ConnectedEndpoint = { anchor: string; node: DiagramNode };
+export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
 
 // TODO: Maybe make endpoint a class with this as a method?
@@ -140,7 +195,9 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   get startPosition() {
-    return isConnected(this.start) ? Box.center(this.start.node.bounds) : this.start.position;
+    return isConnected(this.start)
+      ? this.start.node.getAnchorPosition(this.start.anchor)
+      : this.start.position;
   }
 
   isStartConnected() {
@@ -148,7 +205,9 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   get endPosition() {
-    return isConnected(this.end) ? Box.center(this.end.node.bounds) : this.end.position;
+    return isConnected(this.end)
+      ? this.end.node.getAnchorPosition(this.end.anchor)
+      : this.end.position;
   }
 
   isEndConnected() {
@@ -202,10 +261,6 @@ export class DiagramEdge implements AbstractEdge {
   get end() {
     return this.#end;
   }
-
-  clone() {
-    return new DiagramEdge(this.id, deepClone(this.start), deepClone(this.end));
-  }
 }
 
 export type Canvas = Omit<Box, 'rotation'>;
@@ -242,9 +297,18 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     y: 20
   };
 
-  constructor(elements: (DiagramEdge | DiagramNode)[]) {
+  constructor(
+    elements: (DiagramEdge | DiagramNode)[],
+    readonly nodDefinitions: NodeDefinitionRegistry,
+    readonly edgeDefinitions: EdgeDefinitionRegistry
+  ) {
     super();
     this.elements = elements;
+    this.elements.forEach(e => {
+      if (e.type === 'node') {
+        e.diagram = this;
+      }
+    });
 
     for (const e of this.elements) {
       if (e.type === 'edge') {
@@ -274,6 +338,8 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   }
 
   addNode(node: DiagramNode) {
+    node.diagram = this;
+
     this.nodeLookup[node.id] = node;
     this.elements.push(node);
     this.emit('nodeadded', { node });
@@ -291,8 +357,6 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   }
 
   transformElements(elements: (DiagramNode | DiagramEdge)[], transforms: Transform[]) {
-    const before = elements.map(n => n.clone());
-
     for (const el of elements) {
       el.bounds = Transform.box(el.bounds, ...transforms);
     }
@@ -304,7 +368,7 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     }
 
     for (let i = 0; i < elements.length; i++) {
-      this.updateElement(elements[i], before[i]);
+      this.updateElement(elements[i]);
     }
 
     // TODO: Automatically create undoable action?
@@ -346,14 +410,14 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   }
 }
 
-type NodeCapability = string;
+export type NodeCapability = string;
 
 export interface NodeDefinition {
   type: string;
 
-  supports(capability: NodeCapability): string;
+  supports(capability: NodeCapability): boolean;
 
-  getBoundingPaths(): string[];
+  getBoundingPaths(node: DiagramNode): string[];
 }
 
 export class NodeDefinitionRegistry {
@@ -368,12 +432,12 @@ export class NodeDefinitionRegistry {
   }
 }
 
-type EdgeCapability = string;
+export type EdgeCapability = string;
 
 export interface EdgeDefinition {
   type: string;
 
-  supports(capability: EdgeCapability): string;
+  supports(capability: EdgeCapability): boolean;
 }
 
 export class EdgeDefinitionRegistry {

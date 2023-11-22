@@ -1,5 +1,9 @@
 import { PerformanceTest } from '../../utils/perftest.ts';
-import { DiagramNode } from '../../model-viewer/diagram.ts';
+import {
+  DiagramNode,
+  EdgeDefinitionRegistry,
+  NodeDefinitionRegistry
+} from '../../model-viewer/diagram.ts';
 import { SnapManager } from './snapManager.ts';
 import { EditableDiagram } from '../editable-diagram.ts';
 
@@ -9,10 +13,10 @@ export class SnapManagerPerftest implements PerformanceTest {
   setup(): void {
     const defs: DiagramNode[] = [];
     for (let i = 0; i < 1000; i++) {
-      defs.push(new DiagramNode(i.toString(), 'box', this.randomBox()));
+      defs.push(new DiagramNode(i.toString(), 'box', this.randomBox(), undefined));
     }
 
-    const d = new EditableDiagram(defs);
+    const d = new EditableDiagram(defs, new NodeDefinitionRegistry(), new EdgeDefinitionRegistry());
     this.snapManager = d.createSnapManager();
   }
 

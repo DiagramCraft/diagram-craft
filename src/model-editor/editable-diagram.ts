@@ -1,4 +1,10 @@
-import { Diagram, DiagramEdge, DiagramNode } from '../model-viewer/diagram.ts';
+import {
+  Diagram,
+  DiagramEdge,
+  DiagramNode,
+  EdgeDefinitionRegistry,
+  NodeDefinitionRegistry
+} from '../model-viewer/diagram.ts';
 import { SelectionState } from './selectionState.ts';
 import { SnapManager } from './snap/snapManager.ts';
 import { MagnetType } from './snap/magnet.ts';
@@ -31,8 +37,12 @@ export class EditableDiagram extends Diagram {
 
   snapManagerConfig = new SnapManagerConfig(['grid', 'node', 'canvas', 'distance', 'size']);
 
-  constructor(elements: (DiagramEdge | DiagramNode)[]) {
-    super(elements);
+  constructor(
+    elements: (DiagramEdge | DiagramNode)[],
+    readonly nodDefinitions: NodeDefinitionRegistry,
+    readonly edgeDefinitions: EdgeDefinitionRegistry
+  ) {
+    super(elements, nodDefinitions, edgeDefinitions);
   }
 
   createSnapManager() {
