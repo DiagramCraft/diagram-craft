@@ -97,6 +97,6 @@ export const executeAction = (
 
 export const findKeyBindings = (action: keyof ActionMap, keyMap: KeyMap): string[] => {
   return Object.entries(keyMap)
-    .filter(([_, a]) => a === action)
-    .map(([k, _]) => k);
+    .filter(([, a]) => a === action)
+    .map(([k]) => k);
 };

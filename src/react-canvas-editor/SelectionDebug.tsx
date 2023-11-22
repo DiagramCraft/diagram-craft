@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle } from 'react';
-import { useRedraw } from './useRedraw.tsx';
+import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { SelectionState } from '../model-editor/selectionState.ts';
 
 export type SelectionApi = {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useMemo, useRef } from 'react';
 import { Drag } from '../base-ui/drag.ts';
 
 type DragDropContextType = {

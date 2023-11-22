@@ -1,5 +1,5 @@
 import { forwardRef, Fragment, useImperativeHandle } from 'react';
-import { useRedraw } from './useRedraw.tsx';
+import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { DistanceMarker } from './DistanceMarker.tsx';
 import { Point } from '../geometry/point.ts';
 import { Line } from '../geometry/line.ts';
@@ -8,7 +8,7 @@ import { round } from '../utils/math.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 import { MagnetType } from '../model-editor/snap/magnet.ts';
 import { $c } from '../utils/classname.ts';
-import { useDragDrop } from './DragDropManager.tsx';
+import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { RotateDrag } from '../base-ui/drag/rotateDrag.ts';
 import { ResizeDrag } from '../base-ui/drag/resizeDrag.ts';

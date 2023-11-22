@@ -1,6 +1,6 @@
 import './App.css';
 import { deserializeDiagram } from './model-viewer/serialization.ts';
-import { Canvas, ContextMenuTarget } from './react-canvas-viewer/Canvas.tsx';
+import { EditableCanvas, ContextMenuTarget } from './react-canvas-editor/EditableCanvas.tsx';
 import { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
@@ -83,7 +83,7 @@ const App = () => {
         <div id="middle" className={'light-theme'}>
           <ContextMenu.Root>
             <ContextMenu.Trigger asChild={true}>
-              <Canvas
+              <EditableCanvas
                 key={selectedDiagram}
                 diagram={$d}
                 onContextMenu={e => {
