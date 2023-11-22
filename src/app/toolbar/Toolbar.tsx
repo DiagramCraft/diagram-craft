@@ -24,19 +24,19 @@ export const Toolbar = (props: Props) => {
   return (
     <ReactToolbar.Root className="ToolbarRoot" aria-label="Formatting options">
       <ActionToggleGroup {...props}>
-        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_GRID'} {...props}>
+        <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_GRID'} {...props}>
           <TbGrid3X3 />
         </ActionToggleItem>
-        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_NODE'} {...props}>
+        <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_NODE'} {...props}>
           <TbLayout />
         </ActionToggleItem>
-        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_CANVAS'} {...props}>
+        <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_CANVAS'} {...props}>
           <TbPlus />
         </ActionToggleItem>
-        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_DISTANCE'} {...props}>
+        <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_DISTANCE'} {...props}>
           <TbArrowsMoveHorizontal />
         </ActionToggleItem>
-        <ActionToggleItem action={'TOGGLE_ANCHOR_TYPE_SIZE'} {...props}>
+        <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_SIZE'} {...props}>
           <TbArrowAutofitWidth />
         </ActionToggleItem>
       </ActionToggleGroup>

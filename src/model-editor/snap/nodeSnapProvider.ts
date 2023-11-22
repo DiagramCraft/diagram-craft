@@ -1,12 +1,12 @@
 import { Diagram } from '../../model-viewer/diagram.ts';
 import { Line } from '../../geometry/line.ts';
-import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';
 import { Range } from '../../geometry/range.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
-import { Anchor, AnchorOfType, Axis } from './anchor.ts';
+import { Magnet, MagnetOfType, Axis } from './magnet.ts';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.x, b.pos.x + b.size.w), N);
@@ -14,7 +14,7 @@ const maxX = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.pos.x, b.pos.x 
 const minY = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.y, b.pos.y + b.size.h), N);
 const maxY = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.pos.y, b.pos.y + b.size.h), 0);
 
-type AnchorWithDistance = [AnchorOfType<'node'>, number];
+type AnchorWithDistance = [MagnetOfType<'node'>, number];
 
 const compareFn = (a: AnchorWithDistance, b: AnchorWithDistance) => b[1] - a[1];
 
@@ -32,7 +32,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     }
   }
 
-  getAnchors(box: Box): AnchorOfType<'node'>[] {
+  getMagnets(box: Box): MagnetOfType<'node'>[] {
     const dest: { h: AnchorWithDistance[]; v: AnchorWithDistance[] } = { h: [], v: [] };
     const center = Box.center(box);
 
@@ -41,9 +41,9 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
 
     for (const node of this.diagram.queryNodes()) {
       if (this.excludedNodeIds.includes(node.id)) continue;
-      for (const other of Anchor.forNode(node.bounds)) {
+      for (const other of Magnet.forNode(node.bounds)) {
         // TODO: We should be able to filter out even more here
-        //       by considering the direction of the anchor line
+        //       by considering the direction of the magnet line
         if (
           !Range.overlaps(this.getRange(node.bounds, 'h'), boxHRange) &&
           !Range.overlaps(this.getRange(node.bounds, 'v'), boxVRange)
@@ -52,7 +52,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
         }
 
         other.type = 'node';
-        (other as AnchorOfType<'node'>).node = node;
+        (other as MagnetOfType<'node'>).node = node;
 
         if (Line.isHorizontal(other.line)) {
           other.line = Line.of(
@@ -60,7 +60,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
             { x: this.diagram.viewBox.dimensions.w, y: other.line.to.y }
           );
           dest.h.push([
-            other as AnchorOfType<'node'>,
+            other as MagnetOfType<'node'>,
             Point.squareDistance(center, Box.center(node.bounds))
           ]);
         } else {
@@ -69,7 +69,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
             { x: other.line.to.x, y: this.diagram.viewBox.dimensions.h }
           );
           dest.v.push([
-            other as AnchorOfType<'node'>,
+            other as MagnetOfType<'node'>,
             Point.squareDistance(center, Box.center(node.bounds))
           ]);
         }
@@ -82,18 +82,18 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     return [...dest.h.map(e => e[0]), ...dest.v.map(e => e[0])];
   }
 
-  makeGuide(box: Box, match: MatchingAnchorPair<'node'>, _axis: Axis): Guide {
+  makeGuide(box: Box, match: MatchingMagnetPair<'node'>, _axis: Axis): Guide {
     const mBox = match.matching.node.bounds;
     return {
       line: Line.isHorizontal(match.matching.line)
         ? Line.horizontal(match.matching.line.from.y, [minX(mBox, box), maxX(mBox, box)])
         : Line.vertical(match.matching.line.from.x, [minY(mBox, box), maxY(mBox, box)]),
-      matchingAnchor: match.matching,
-      selfAnchor: match.self
+      matchingMagnet: match.matching,
+      selfMagnet: match.self
     };
   }
 
-  moveAnchor(anchor: AnchorOfType<'node'>, delta: Point): void {
-    anchor.line = Line.move(anchor.line, delta);
+  Magnet(magnet: MagnetOfType<'node'>, delta: Point): void {
+    magnet.line = Line.move(magnet.line, delta);
   }
 }

@@ -12,45 +12,45 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
-import { Anchor, AnchorOfType, AnchorType, Axis } from './anchor.ts';
+import { Magnet, MagnetOfType, MagnetType, Axis } from './magnet.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type SnapResult = {
   guides: Guide[];
   adjusted: Box;
-  anchors: Anchor[];
+  magnets: Magnet[];
 };
 
-export type MatchingAnchorPair<T extends AnchorType> = {
-  self: Anchor;
-  matching: AnchorOfType<T>;
+export type MatchingMagnetPair<T extends MagnetType> = {
+  self: Magnet;
+  matching: MagnetOfType<T>;
   distance: number;
 };
 
-export interface SnapProvider<T extends AnchorType> {
-  getAnchors(box: Box): AnchorOfType<T>[];
-  makeGuide(box: Box, match: MatchingAnchorPair<T>, axis: Axis): Guide | undefined;
-  moveAnchor(anchor: AnchorOfType<T>, delta: Point): void;
+export interface SnapProvider<T extends MagnetType> {
+  getMagnets(box: Box): MagnetOfType<T>[];
+  makeGuide(box: Box, match: MatchingMagnetPair<T>, axis: Axis): Guide | undefined;
+  Magnet(magnet: MagnetOfType<T>, delta: Point): void;
 }
 
 class SourceSnapProvider implements SnapProvider<'source'> {
-  getAnchors(_box: Box): AnchorOfType<'source'>[] {
+  getMagnets(_box: Box): MagnetOfType<'source'>[] {
     throw new VerifyNotReached();
   }
 
-  makeGuide(_box: Box, _match: MatchingAnchorPair<'source'>, _axis: Axis): Guide {
+  makeGuide(_box: Box, _match: MatchingMagnetPair<'source'>, _axis: Axis): Guide {
     throw new VerifyNotReached();
   }
 
-  moveAnchor(anchor: AnchorOfType<'source'>, delta: Point): void {
-    anchor.line = Line.move(anchor.line, delta);
+  Magnet(magnet: MagnetOfType<'source'>, delta: Point): void {
+    magnet.line = Line.move(magnet.line, delta);
   }
 }
 
 class SnapProviders {
   private readonly providers: {
-    [T in AnchorType]: SnapProvider<T>;
+    [T in MagnetType]: SnapProvider<T>;
   };
 
   constructor(diagram: Diagram, excludeNodeIds: string[]) {
@@ -64,12 +64,12 @@ class SnapProviders {
     };
   }
 
-  get<T extends AnchorType>(type: T): SnapProvider<T> {
+  get<T extends MagnetType>(type: T): SnapProvider<T> {
     return this.providers[type];
   }
 
-  getAnchors(types: AnchorType[], b: Box) {
-    return types.flatMap(t => this.get(t).getAnchors(b));
+  getMagnets(types: MagnetType[], b: Box) {
+    return types.flatMap(t => this.get(t).getMagnets(b));
   }
 }
 
@@ -84,10 +84,10 @@ export class SnapManager {
   constructor(
     private readonly diagram: Diagram,
     private readonly excludeNodeIds: string[] = [],
-    private readonly anchorTypes: Readonly<AnchorType[]> = []
+    private readonly magnetTypes: Readonly<MagnetType[]> = []
   ) {}
 
-  private rangeOverlap(a1: Anchor, a2: Anchor) {
+  private rangeOverlap(a1: Magnet, a2: Magnet) {
     const axis = Axis.toXY(a1.axis);
     return Range.intersection(
       [a1.line.from[axis], a1.line.to[axis]],
@@ -95,16 +95,16 @@ export class SnapManager {
     );
   }
 
-  private orhogonalDistance(a1: Anchor, a2: Anchor) {
+  private orhogonalDistance(a1: Magnet, a2: Magnet) {
     const axis = Axis.toXY(Axis.orthogonal(a1.axis));
     return a1.line.from[axis] - a2.line.from[axis];
   }
 
-  private matchAnchors(selfAnchors: Anchor[], otherAnchors: Anchor[]): MatchingAnchorPair<any>[] {
-    const dest: MatchingAnchorPair<any>[] = [];
+  private matchMagnets(selfMagnets: Magnet[], otherMagnets: Magnet[]): MatchingMagnetPair<any>[] {
+    const dest: MatchingMagnetPair<any>[] = [];
 
-    for (const other of otherAnchors) {
-      for (const self of selfAnchors) {
+    for (const other of otherMagnets) {
+      for (const self of selfMagnets) {
         if (other.axis !== self.axis) continue;
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
         if (!this.rangeOverlap(self, other)) continue;
@@ -121,24 +121,24 @@ export class SnapManager {
 
   // TODO: We should be able to merge snapResize and snapMove
   snapResize(b: Box, directions: Direction[]): SnapResult {
-    const enabledSnapProviders: AnchorType[] = [...this.anchorTypes];
+    const enabledSnapProviders: MagnetType[] = [...this.magnetTypes];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
-    const selfAnchors = Anchor.forNode(b, 'source').filter(s =>
+    const selfMagnets = Magnet.forNode(b, 'source').filter(s =>
       directions.includes(s.matchDirection!)
     );
 
-    const anchorsToMatchAgainst = snapProviders.getAnchors(enabledSnapProviders, b);
+    const magnetsToMatchAgainst = snapProviders.getMagnets(enabledSnapProviders, b);
 
-    const matchingAnchors = this.matchAnchors(selfAnchors, anchorsToMatchAgainst);
+    const matchingMagnets = this.matchMagnets(selfMagnets, magnetsToMatchAgainst);
 
     const newBounds = Box.asMutableSnapshot(b);
 
     for (const axis of Axis.axises()) {
-      // Find anchor with the closest orthogonal distance to the matching anchor line
+      // Find magnet with the closest orthogonal distance to the matching magnet line
       // i.e. optimize for snapping the least distance
       const closest = smallest(
-        matchingAnchors.filter(a => a.self.axis === axis),
+        matchingMagnets.filter(a => a.self.axis === axis),
         (a, b) => Math.abs(a.distance) - Math.abs(b.distance)
       );
 
@@ -154,10 +154,10 @@ export class SnapManager {
       }
     }
 
-    // Readjust self anchors to the new position - post snapping
-    const newAnchors = Anchor.forNode(newBounds.getSnapshot(), 'source');
-    selfAnchors.forEach(a => {
-      a.line = newAnchors.find(b => b.matchDirection === a.matchDirection)!.line;
+    // Readjust self magnets to the new position - post snapping
+    const newMagnets = Magnet.forNode(newBounds.getSnapshot(), 'source');
+    selfMagnets.forEach(a => {
+      a.line = newMagnets.find(b => b.matchDirection === a.matchDirection)!.line;
     });
 
     const newB = newBounds.getSnapshot();
@@ -165,36 +165,34 @@ export class SnapManager {
     return {
       guides: this.generateGuides(
         newB,
-        selfAnchors,
-        matchingAnchors,
+        selfMagnets,
+        matchingMagnets,
         snapProviders,
         enabledSnapProviders
       ),
-      anchors: [...anchorsToMatchAgainst, ...selfAnchors],
+      magnets: [...magnetsToMatchAgainst, ...selfMagnets],
       adjusted: newB
     };
   }
 
   snapMove(b: Box, directions: Direction[] = ['n', 'w', 'e', 's']): SnapResult {
-    const enabledSnapProviders: AnchorType[] = this.anchorTypes.filter(a => a !== 'size');
+    const enabledSnapProviders: MagnetType[] = this.magnetTypes.filter(a => a !== 'size');
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
-    const selfAnchors = Anchor.forNode(b, 'source').filter(s =>
-      directions.includes(s.matchDirection!)
-    );
+    const magnets = Magnet.forNode(b, 'source').filter(s => directions.includes(s.matchDirection!));
 
-    const anchorsToMatchAgainst = snapProviders.getAnchors(enabledSnapProviders, b);
+    const magnetsToMatchAgainst = snapProviders.getMagnets(enabledSnapProviders, b);
 
-    const matchingAnchors = this.matchAnchors(selfAnchors, anchorsToMatchAgainst);
+    const matchingMagnets = this.matchMagnets(magnets, magnetsToMatchAgainst);
 
     const newBounds = Box.asMutableSnapshot(b);
 
-    // Snap to the closest matching anchor in each direction
+    // Snap to the closest matching magnet in each direction
     for (const axis of Axis.axises()) {
-      // Find anchor with the closest orthogonal distance to the matching anchor line
+      // Find magnet with the closest orthogonal distance to the matching magnet line
       // i.e. optimize for snapping the least distance
       const closest = smallest(
-        matchingAnchors.filter(a => a.self.axis === axis),
+        matchingMagnets.filter(a => a.self.axis === axis),
         (a, b) => Math.abs(a.distance) - Math.abs(b.distance)
       );
 
@@ -206,9 +204,9 @@ export class SnapManager {
       );
     }
 
-    // Readjust self anchors to the new position - post snapping
-    for (const a of selfAnchors) {
-      snapProviders.get(a.type).moveAnchor(a, Point.subtract(newBounds.get('pos'), b.pos));
+    // Readjust self magnets to the new position - post snapping
+    for (const a of magnets) {
+      snapProviders.get(a.type).Magnet(a, Point.subtract(newBounds.get('pos'), b.pos));
     }
 
     const newB = newBounds.getSnapshot();
@@ -216,41 +214,41 @@ export class SnapManager {
     return {
       guides: this.generateGuides(
         newB,
-        selfAnchors,
-        matchingAnchors,
+        magnets,
+        matchingMagnets,
         snapProviders,
         enabledSnapProviders
       ),
-      anchors: [...anchorsToMatchAgainst, ...selfAnchors],
+      magnets: [...magnetsToMatchAgainst, ...magnets],
       adjusted: newB
     };
   }
 
   private generateGuides(
     b: Box,
-    selfAnchors: Anchor[],
-    matchingAnchors: MatchingAnchorPair<any>[],
+    selfMagnets: Magnet[],
+    matchingMagnets: MatchingMagnetPair<any>[],
     snapProviders: SnapProviders,
-    enabledSnapProviders: AnchorType[]
+    enabledSnapProviders: MagnetType[]
   ) {
-    // Check for guides in all four directions for each matching anchor
-    // ... also draw the guide to the matching anchor that is furthest away
+    // Check for guides in all four directions for each matching magnet
+    // ... also draw the guide to the matching magnet that is furthest away
     const guides: Guide[] = [];
-    for (const self of selfAnchors) {
+    for (const self of selfMagnets) {
       const axis = self.axis;
       const oAxis = Axis.orthogonal(axis);
 
-      const otherAnchorsForAnchor = matchingAnchors.filter(a => a.self === self);
-      if (otherAnchorsForAnchor.length === 0) continue;
+      const otherMagnetsForMagnet = matchingMagnets.filter(a => a.self === self);
+      if (otherMagnetsForMagnet.length === 0) continue;
 
       // Recalculate distance after snapping
-      otherAnchorsForAnchor.forEach(e => {
+      otherMagnetsForMagnet.forEach(e => {
         e.distance = this.orhogonalDistance(self, e.matching);
       });
 
       const match = largest(
-        otherAnchorsForAnchor
-          // only keep items on the right side of the self anchor
+        otherMagnetsForMagnet
+          // only keep items on the right side of the self magnet
           .filter(e => e.distance >= 0)
 
           // and remove anything that is close post anspping

@@ -1,16 +1,16 @@
-import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Line } from '../../geometry/line.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram } from '../../model-viewer/diagram.ts';
-import { AnchorOfType, Axis } from './anchor.ts';
+import { MagnetOfType, Axis } from './magnet.ts';
 
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: Diagram) {}
 
-  getAnchors(box: Box): AnchorOfType<'grid'>[] {
-    const anchors: AnchorOfType<'grid'>[] = [];
+  getMagnets(box: Box): MagnetOfType<'grid'>[] {
+    const magnets: MagnetOfType<'grid'>[] = [];
     const grid = this.diagram.grid;
 
     const minX = Math.floor(box.pos.x / grid.x);
@@ -19,7 +19,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     const maxY = Math.ceil((box.pos.y + box.size.h) / grid.y);
 
     for (let x = minX; x <= maxX; x++) {
-      anchors.push({
+      magnets.push({
         line: Line.of({ x: x * grid.x, y: minY * grid.y }, { x: x * grid.x, y: maxY * grid.y }),
         axis: 'v',
         type: 'grid'
@@ -27,17 +27,17 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     }
 
     for (let y = minY; y <= maxY; y++) {
-      anchors.push({
+      magnets.push({
         line: Line.of({ x: minX * grid.x, y: y * grid.y }, { x: maxX * grid.x, y: y * grid.y }),
         axis: 'h',
         type: 'grid'
       });
     }
 
-    return anchors;
+    return magnets;
   }
 
-  makeGuide(box: Box, match: MatchingAnchorPair<'grid'>, _axis: Axis): Guide {
+  makeGuide(box: Box, match: MatchingMagnetPair<'grid'>, _axis: Axis): Guide {
     return {
       line: Line.isHorizontal(match.matching.line)
         ? Line.of(
@@ -48,12 +48,12 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
             { x: match.matching.line.from.x, y: box.pos.y },
             { x: match.matching.line.from.x, y: box.pos.y + box.size.h }
           ),
-      matchingAnchor: match.matching,
-      selfAnchor: match.self
+      matchingMagnet: match.matching,
+      selfMagnet: match.self
     };
   }
 
-  moveAnchor(anchor: AnchorOfType<'grid'>, delta: Point): void {
-    anchor.line = Line.move(anchor.line, delta);
+  Magnet(magnet: MagnetOfType<'grid'>, delta: Point): void {
+    magnet.line = Line.move(magnet.line, delta);
   }
 }

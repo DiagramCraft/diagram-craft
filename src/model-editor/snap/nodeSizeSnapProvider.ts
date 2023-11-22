@@ -1,5 +1,5 @@
 import { Direction } from '../../geometry/direction.ts';
-import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Range } from '../../geometry/range.ts';
 import { Point } from '../../geometry/point.ts';
@@ -8,7 +8,7 @@ import { Line } from '../../geometry/line.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
-import { AnchorOfType, Axis } from './anchor.ts';
+import { MagnetOfType, Axis } from './magnet.ts';
 
 const forward: Partial<Record<Direction, Direction>> = {
   n: 's',
@@ -42,7 +42,7 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
     }
   }
 
-  getAnchors(box: Box): AnchorOfType<'size'>[] {
+  getMagnets(box: Box): MagnetOfType<'size'>[] {
     // TODO: The 30 lines or so is duplicated in NodeDistanceSnapProvider
     const boxHRange = this.getRange(box, 'h');
     const boxVRange = this.getRange(box, 'v');
@@ -79,7 +79,7 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
       }
     }
 
-    const anchors: AnchorOfType<'size'>[] = [];
+    const magnets: MagnetOfType<'size'>[] = [];
 
     for (const k of Object.keys(result)) {
       const d = k as Direction;
@@ -97,7 +97,7 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
       const selfDim = box.size[dir];
 
       const diff = nodeDim - selfDim;
-      anchors.push({
+      magnets.push({
         type: 'size',
         axis,
         matchDirection: forward[d] ?? d,
@@ -116,7 +116,7 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
               ),
         distancePairs: []
       });
-      anchors.push({
+      magnets.push({
         type: 'size',
         axis,
         matchDirection: backward[d] ?? d,
@@ -137,11 +137,11 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
       });
     }
 
-    return anchors;
+    return magnets;
   }
 
   // TODO: Do we need _axis in this interface
-  makeGuide(box: Box, match: MatchingAnchorPair<'size'>, _axis: Axis): Guide {
+  makeGuide(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): Guide {
     if (match.matching.axis === 'h') {
       match.matching.distancePairs.push({
         distance: match.matching.size,
@@ -170,12 +170,12 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
 
     return {
       line: match.matching.line,
-      matchingAnchor: match.matching,
-      selfAnchor: match.self
+      matchingMagnet: match.matching,
+      selfMagnet: match.self
     };
   }
 
-  moveAnchor(anchor: AnchorOfType<'size'>, delta: Point): void {
-    anchor.line = Line.move(anchor.line, delta);
+  Magnet(magnet: MagnetOfType<'size'>, delta: Point): void {
+    magnet.line = Line.move(magnet.line, delta);
   }
 }

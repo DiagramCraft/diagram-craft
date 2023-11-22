@@ -1,13 +1,13 @@
 import { Direction } from '../../geometry/direction.ts';
 import { Range } from '../../geometry/range.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
-import { AnchorOfType, Axis, DistancePairWithRange } from './anchor.ts';
+import { MagnetOfType, Axis, DistancePairWithRange } from './magnet.ts';
 
 const directions: Record<
   Direction,
@@ -47,7 +47,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     }
   }
 
-  getAnchors(box: Box): AnchorOfType<'distance'>[] {
+  getMagnets(box: Box): MagnetOfType<'distance'>[] {
     const boxHRange = this.getRange(box, 'h');
     const boxVRange = this.getRange(box, 'v');
 
@@ -83,17 +83,17 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
       }
     }
 
-    const anchorPositions = {
+    const magnetPositions = {
       h: new Set<number>(),
       v: new Set<number>()
     };
 
-    const baseDistanceAnchor = {
+    const baseDistanceMagnet = {
       offset: { x: 0, y: 0 },
       type: 'distance' as const
     };
 
-    const anchors: AnchorOfType<'distance'>[] = [];
+    const magnets: MagnetOfType<'distance'>[] = [];
 
     for (const { dir, axis, sign, oDir, oAxis } of Object.values(directions)) {
       // Sort all by being closest
@@ -141,15 +141,15 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
         for (const dp of distances) {
           const pos = this.get(first, oDir) - sign * dp.distance;
-          if (anchorPositions[oAxis].has(pos)) continue;
+          if (magnetPositions[oAxis].has(pos)) continue;
 
           const intersection = Range.intersection(
             this.getRange(first, axis),
             this.getRange(box, axis)
           )!;
 
-          anchors.push({
-            ...baseDistanceAnchor,
+          magnets.push({
+            ...baseDistanceMagnet,
             line:
               axis === 'v' ? Line.vertical(pos, intersection) : Line.horizontal(pos, intersection),
             axis,
@@ -158,15 +158,15 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
             distancePairs: [dp]
           });
 
-          anchorPositions[oAxis].add(pos);
+          magnetPositions[oAxis].add(pos);
         }
       }
     }
 
-    return anchors;
+    return magnets;
   }
 
-  makeGuide(box: Box, match: MatchingAnchorPair<'distance'>, axis: Axis): Guide | undefined {
+  makeGuide(box: Box, match: MatchingMagnetPair<'distance'>, axis: Axis): Guide | undefined {
     const m = match.matching;
 
     const tp = Line.midpoint(match.self.line);
@@ -205,18 +205,18 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
     return {
       line: match.self.line,
-      matchingAnchor: match.matching,
-      selfAnchor: match.self
+      matchingMagnet: match.matching,
+      selfMagnet: match.self
     };
   }
 
-  moveAnchor(anchor: AnchorOfType<'distance'>, delta: Point): void {
-    anchor.line = Line.move(anchor.line, delta);
-    anchor.distancePairs.forEach(dp => {
+  Magnet(magnet: MagnetOfType<'distance'>, delta: Point): void {
+    magnet.line = Line.move(magnet.line, delta);
+    magnet.distancePairs.forEach(dp => {
       dp.pointA = Point.add(dp.pointA, delta);
       dp.pointB = Point.add(dp.pointB, delta);
-      dp.rangeA = Range.add(dp.rangeA, delta[Axis.toXY(anchor.axis)]);
-      dp.rangeB = Range.add(dp.rangeB, delta[Axis.toXY(anchor.axis)]);
+      dp.rangeA = Range.add(dp.rangeA, delta[Axis.toXY(magnet.axis)]);
+      dp.rangeB = Range.add(dp.rangeB, delta[Axis.toXY(magnet.axis)]);
     });
   }
 }

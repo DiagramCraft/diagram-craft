@@ -1,15 +1,15 @@
 import { Line } from '../../geometry/line.ts';
-import { MatchingAnchorPair, SnapProvider } from './snapManager.ts';
+import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram } from '../../model-viewer/diagram.ts';
-import { AnchorOfType, Axis } from './anchor.ts';
+import { MagnetOfType, Axis } from './magnet.ts';
 
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: Diagram) {}
 
-  getAnchors(_box: Box): AnchorOfType<'canvas'>[] {
+  getMagnets(_box: Box): MagnetOfType<'canvas'>[] {
     const { w, h } = this.diagram.canvas.size;
     return [
       {
@@ -25,15 +25,15 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     ];
   }
 
-  makeGuide(_box: Box, match: MatchingAnchorPair<'canvas'>, _axis: Axis): Guide {
+  makeGuide(_box: Box, match: MatchingMagnetPair<'canvas'>, _axis: Axis): Guide {
     return {
       line: match.matching.line,
-      matchingAnchor: match.matching,
-      selfAnchor: match.self
+      matchingMagnet: match.matching,
+      selfMagnet: match.self
     };
   }
 
-  moveAnchor(anchor: AnchorOfType<'canvas'>, delta: Point): void {
-    anchor.line = Line.move(anchor.line, delta);
+  Magnet(magnet: MagnetOfType<'canvas'>, delta: Point): void {
+    magnet.line = Line.move(magnet.line, delta);
   }
 }

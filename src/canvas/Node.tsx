@@ -91,6 +91,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   } else {
     return (
       <g
+        id={`node-${props.def.id}`}
         transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${
           wx + props.def.bounds.size.w / 2
         } ${wy + props.def.bounds.size.h / 2})`}

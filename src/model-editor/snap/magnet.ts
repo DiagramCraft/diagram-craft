@@ -14,7 +14,7 @@ export const Axis = {
   toXY: (axis: Axis): 'x' | 'y' => (axis === 'h' ? 'x' : 'y')
 };
 
-type BaseAnchor = {
+type BaseMagnet = {
   line: Line;
   axis: Axis;
   matchDirection?: Direction;
@@ -34,7 +34,7 @@ export type DistancePairWithRange = DistancePair & {
   rangeB: Range;
 };
 
-export type Anchor = BaseAnchor &
+export type Magnet = BaseMagnet &
   (
     | {
         type: 'source' | 'canvas' | 'grid';
@@ -55,13 +55,13 @@ export type Anchor = BaseAnchor &
       }
   );
 
-export type AnchorType = Anchor['type'];
+export type MagnetType = Magnet['type'];
 
-export type AnchorOfType<T extends AnchorType> = Anchor & { type: T };
+export type MagnetOfType<T extends MagnetType> = Magnet & { type: T };
 
-export const Anchor = {
-  forNode: (node: Box, type: 'source' = 'source'): Anchor[] => {
-    const center: Anchor[] = [
+export const Magnet = {
+  forNode: (node: Box, type: 'source' = 'source'): Magnet[] => {
+    const center: Magnet[] = [
       {
         line: Line.horizontal(node.pos.y + node.size.h / 2, [node.pos.x, node.pos.x + node.size.w]),
         axis: 'h',

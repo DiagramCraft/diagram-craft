@@ -345,3 +345,45 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     this.updateElement(element);
   }
 }
+
+type NodeCapability = string;
+
+export interface NodeDefinition {
+  type: string;
+
+  supports(capability: NodeCapability): string;
+
+  getBoundingPaths(): string[];
+}
+
+export class NodeDefinitionRegistry {
+  private nodes: Record<string, NodeDefinition> = {};
+
+  register(node: NodeDefinition) {
+    this.nodes[node.type] = node;
+  }
+
+  get(type: string): NodeDefinition {
+    return this.nodes[type];
+  }
+}
+
+type EdgeCapability = string;
+
+export interface EdgeDefinition {
+  type: string;
+
+  supports(capability: EdgeCapability): string;
+}
+
+export class EdgeDefinitionRegistry {
+  private edges: Record<string, EdgeDefinition> = {};
+
+  register(edge: EdgeDefinition) {
+    this.edges[edge.type] = edge;
+  }
+
+  get(type: string): EdgeDefinition {
+    return this.edges[type];
+  }
+}

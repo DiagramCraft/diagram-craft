@@ -1,7 +1,7 @@
 import { Diagram, DiagramEdge, DiagramNode } from '../model-viewer/diagram.ts';
 import { SelectionState } from './selectionState.ts';
 import { SnapManager } from './snap/snapManager.ts';
-import { AnchorType } from './snap/anchor.ts';
+import { MagnetType } from './snap/magnet.ts';
 import { EventEmitter } from '../utils/event.ts';
 
 type SnapManagerConfigEvents = {
@@ -9,20 +9,20 @@ type SnapManagerConfigEvents = {
 };
 
 class SnapManagerConfig extends EventEmitter<SnapManagerConfigEvents> {
-  #anchorTypes: AnchorType[] = [];
+  #magnetTypes: MagnetType[] = [];
 
-  constructor(anchorTypes: AnchorType[]) {
+  constructor(magnetTypes: MagnetType[]) {
     super();
-    this.#anchorTypes = anchorTypes;
+    this.#magnetTypes = magnetTypes;
   }
 
-  set anchorTypes(types: AnchorType[]) {
-    this.#anchorTypes = types;
+  set magnetTypes(types: MagnetType[]) {
+    this.#magnetTypes = types;
     this.emit('change', { config: this });
   }
 
-  get anchorTypes(): Readonly<AnchorType[]> {
-    return this.#anchorTypes;
+  get magnetTypes(): Readonly<MagnetType[]> {
+    return this.#magnetTypes;
   }
 }
 
@@ -39,7 +39,7 @@ export class EditableDiagram extends Diagram {
     return new SnapManager(
       this,
       this.selectionState.elements.map(e => e.id),
-      this.snapManagerConfig.anchorTypes
+      this.snapManagerConfig.magnetTypes
     );
   }
 }

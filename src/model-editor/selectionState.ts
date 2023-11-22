@@ -3,7 +3,7 @@ import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
 import { DiagramEdge, DiagramNode } from '../model-viewer/diagram.ts';
-import { Anchor } from './snap/anchor.ts';
+import { Magnet } from './snap/magnet.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
@@ -17,12 +17,12 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
-// TODO: Should probably include the anchors as well
+// TODO: Should probably include the magnets as well
 export type Guide = {
   line: Line;
   label?: string;
-  selfAnchor: Anchor;
-  matchingAnchor: Anchor;
+  selfMagnet: Magnet;
+  matchingMagnet: Magnet;
 };
 
 export type SelectionStateEvents = {
@@ -37,7 +37,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   private _guides: Guide[] = [];
 
   // TODO: This is mostly here for debugging purposes
-  private _anchors: Anchor[] = [];
+  private _magnets: Magnet[] = [];
 
   elements: (DiagramEdge | DiagramNode)[] = [];
 
@@ -75,12 +75,12 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     this.emit('change', { selection: this });
   }
 
-  get anchors(): Anchor[] {
-    return this._anchors;
+  get magnets(): Magnet[] {
+    return this._magnets;
   }
 
-  set anchors(anchors: Anchor[]) {
-    this._anchors = anchors;
+  set magnets(magnets: Magnet[]) {
+    this._magnets = magnets;
     this.emit('change', { selection: this });
   }
 

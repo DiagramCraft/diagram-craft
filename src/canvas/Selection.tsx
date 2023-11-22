@@ -7,7 +7,7 @@ import { Line } from '../geometry/line.ts';
 import { Angle } from '../geometry/angle.ts';
 import { round } from '../utils/math.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
-import { AnchorType } from '../model-editor/snap/anchor.ts';
+import { MagnetType } from '../model-editor/snap/magnet.ts';
 import { $c } from '../utils/classname.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
@@ -16,7 +16,7 @@ export type SelectionApi = {
   repaint: () => void;
 };
 
-const anchorTypeColor: Record<AnchorType, string> = {
+const snapTypeColor: Record<MagnetType, string> = {
   node: 'red',
   distance: 'pink',
   size: 'pink',
@@ -65,14 +65,14 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
     <>
       {!isOnlyEdges &&
         [
-          ...props.selection.guides.filter(s => s.matchingAnchor.type !== 'distance'),
-          ...props.selection.guides.filter(s => s.matchingAnchor.type === 'distance')
+          ...props.selection.guides.filter(s => s.matchingMagnet.type !== 'distance'),
+          ...props.selection.guides.filter(s => s.matchingMagnet.type === 'distance')
         ].map(g => {
           const l = Line.extend(g.line, 30, 30);
-          const color = anchorTypeColor[g.matchingAnchor.type];
+          const color = snapTypeColor[g.matchingMagnet.type];
           return (
             <Fragment
-              key={`u_${g.matchingAnchor.type}_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}
+              key={`u_${g.matchingMagnet.type}_${l.from.x},${l.from.y}-${l.to.x},${l.to.y}`}
             >
               <line
                 x1={l.from.x}
@@ -93,8 +93,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 stroke={color}
               />
 
-              {g.matchingAnchor.type === 'size' &&
-                g.matchingAnchor.distancePairs.map(dp => {
+              {g.matchingMagnet.type === 'size' &&
+                g.matchingMagnet.distancePairs.map(dp => {
                   const lbl = round(dp.distance).toString();
                   return (
                     <DistanceMarker
@@ -110,8 +110,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                   );
                 })}
 
-              {g.matchingAnchor.type === 'distance' &&
-                g.matchingAnchor.distancePairs.map(dp => {
+              {g.matchingMagnet.type === 'distance' &&
+                g.matchingMagnet.distancePairs.map(dp => {
                   const lbl = round(dp.distance).toString();
                   return (
                     <DistanceMarker

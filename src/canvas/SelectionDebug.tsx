@@ -21,7 +21,7 @@ export const SelectionDebug = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
-      {props.selection.anchors.map(g => (
+      {props.selection.magnets.map(g => (
         <line
           key={Math.random().toString()}
           x1={g.line.from.x}

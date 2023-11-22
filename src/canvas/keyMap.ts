@@ -4,7 +4,7 @@ import { Emitter } from '../utils/event.ts';
 import { SelectAllAction } from './actions/selectAllAction.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { AlignAction } from './actions/alignAction.ts';
-import { ToggleAnchorTypeAction } from './actions/toggleAnchorTypeAction.ts';
+import { ToggleMagnetTypeAction } from './actions/toggleMagnetTypeAction.ts';
 import { ToggleDarkModeAction } from './actions/toggleDarkMode.ts';
 import { DistributeAction } from './actions/distributeAction.ts';
 
@@ -46,11 +46,11 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   ALIGN_LEFT: new AlignAction(state.diagram, 'left'),
   ALIGN_RIGHT: new AlignAction(state.diagram, 'right'),
   ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical'),
-  TOGGLE_ANCHOR_TYPE_SIZE: new ToggleAnchorTypeAction(state.diagram, 'size'),
-  TOGGLE_ANCHOR_TYPE_GRID: new ToggleAnchorTypeAction(state.diagram, 'grid'),
-  TOGGLE_ANCHOR_TYPE_CANVAS: new ToggleAnchorTypeAction(state.diagram, 'canvas'),
-  TOGGLE_ANCHOR_TYPE_NODE: new ToggleAnchorTypeAction(state.diagram, 'node'),
-  TOGGLE_ANCHOR_TYPE_DISTANCE: new ToggleAnchorTypeAction(state.diagram, 'distance'),
+  TOGGLE_MAGNET_TYPE_SIZE: new ToggleMagnetTypeAction(state.diagram, 'size'),
+  TOGGLE_MAGNET_TYPE_GRID: new ToggleMagnetTypeAction(state.diagram, 'grid'),
+  TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction(state.diagram, 'canvas'),
+  TOGGLE_MAGNET_TYPE_NODE: new ToggleMagnetTypeAction(state.diagram, 'node'),
+  TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction(state.diagram, 'distance'),
   TOGGLE_DARK_MODE: new ToggleDarkModeAction(),
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical')

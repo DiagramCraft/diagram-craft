@@ -12,6 +12,7 @@ import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
 import { createResizeCanvasActionToFit } from '../model-editor/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction, ResizeAction, RotateAction } from '../model-viewer/actions.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { svgPathProperties } from 'svg-path-properties';
 
 export class EdgeEndpointMoveDrag implements Drag {
   private readonly originalPointerEvents: string;
@@ -32,6 +33,26 @@ export class EdgeEndpointMoveDrag implements Drag {
 
   onDragEnter(id: string): void {
     this.hoverElement = id;
+
+    if (id && this.diagram.nodeLookup[id]) {
+      const el = this.diagram.nodeLookup[id];
+      const g = document.getElementById(`node-${id}`);
+      if (g) {
+        const boundary = g.querySelectorAll('.node-boundary');
+        boundary.forEach(b => {
+          if (b instanceof SVGPathElement) {
+            for (const p of new svgPathProperties(b.getAttribute('d') ?? '').getParts()) {
+              const { x, y } = p.getPointAtLength(p.length / 2);
+              const lx = (x - el.bounds.pos.x) / el.bounds.size.w;
+              const ly = (y - el.bounds.pos.y) / el.bounds.size.h;
+
+              console.log(lx, ly);
+            }
+          }
+        });
+      }
+    }
+
     this.diagram.addHighlight(
       this.diagram.nodeLookup[id] || this.diagram.edgeLookup[id],
       'edge-connect'
@@ -228,7 +249,7 @@ export class ResizeDrag implements Drag {
 
       const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
       selection.guides = result.guides;
-      selection.anchors = result.anchors;
+      selection.magnets = result.magnets;
 
       newBounds.set('pos', result.adjusted.pos);
       newBounds.set('size', result.adjusted.size);
@@ -378,7 +399,7 @@ export class MoveDrag implements Drag {
 
       const result = snapManager.snapMove(newBounds.getSnapshot(), snapDirections);
       selection.guides = result.guides;
-      selection.anchors = result.anchors;
+      selection.magnets = result.magnets;
 
       newBounds.set('pos', result.adjusted.pos);
     }
