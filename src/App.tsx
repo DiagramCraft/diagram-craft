@@ -4,7 +4,6 @@ import { ContextMenuTarget, EditableCanvas } from './react-canvas-editor/Editabl
 import { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
-import { ToolWindowButton } from './react-app/ToolWindowButton.tsx';
 import { EditableDiagram } from './model-editor/editable-diagram.ts';
 import { InfoToolWindow } from './react-app/InfoToolWindow.tsx';
 import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
@@ -26,6 +25,9 @@ import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './base-ui
 import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
 import { DragDropManager } from './react-canvas-viewer/DragDropManager.tsx';
 import { defaultEdgeRegistry, defaultNodeRegistry } from './react-canvas-viewer/defaultRegistry.ts';
+import { SideBar } from './react-app/SideBar.tsx';
+import { SideBarPage } from './react-app/SideBarPage.tsx';
+import { PickerToolWindow } from './react-app/PickerToolWindow.tsx';
 
 const diagrams = [
   {
@@ -78,16 +80,25 @@ const App = () => {
           <Toolbar actionMap={actionMap} keyMap={keyMap} />
         </div>
 
-        <div id="left-buttons">
-          <ToolWindowButton icon={TbCategoryPlus} />
-          <ToolWindowButton icon={TbStack2} isSelected />
-          <ToolWindowButton icon={TbSelectAll} />
-          <ToolWindowButton icon={TbFiles} />
-          <ToolWindowButton icon={TbHistory} />
-        </div>
-        <div id="left">
-          <LayerToolWindow diagram={$d} />
-        </div>
+        <SideBar side={'left'}>
+          <SideBarPage icon={TbCategoryPlus}>
+            <PickerToolWindow diagram={$d} />
+          </SideBarPage>
+          <SideBarPage icon={TbStack2}>
+            <LayerToolWindow diagram={$d} />
+          </SideBarPage>
+          <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
+          <SideBarPage icon={TbFiles}>TbFiles</SideBarPage>
+          <SideBarPage icon={TbHistory}>TbHistory</SideBarPage>
+        </SideBar>
+
+        <SideBar side={'right'}>
+          <SideBarPage icon={TbInfoCircle}>
+            <InfoToolWindow diagram={$d} />
+          </SideBarPage>
+          <SideBarPage icon={TbPalette}>TbPalette</SideBarPage>
+          <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
+        </SideBar>
 
         <div id="middle" className={'light-theme'}>
           <ContextMenu.Root>
@@ -117,15 +128,6 @@ const App = () => {
               </ContextMenu.Content>
             </ContextMenu.Portal>
           </ContextMenu.Root>
-        </div>
-
-        <div id="right-buttons">
-          <ToolWindowButton icon={TbInfoCircle} isSelected />
-          <ToolWindowButton icon={TbPalette} />
-          <ToolWindowButton icon={TbDatabaseEdit} />
-        </div>
-        <div id="right">
-          <InfoToolWindow diagram={$d} />
         </div>
       </div>
     </DragDropManager>

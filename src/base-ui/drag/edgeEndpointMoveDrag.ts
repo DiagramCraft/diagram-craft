@@ -112,7 +112,7 @@ export class EdgeEndpointMoveDrag implements Drag {
 
     let closestAnchor = 0;
     let closestDistance = Number.MAX_SAFE_INTEGER;
-    for (let a of anchors) {
+    for (const a of anchors) {
       const d = Point.squareDistance(coord, a);
       if (d < closestDistance) {
         closestAnchor = a.idx;

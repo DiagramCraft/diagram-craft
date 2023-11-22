@@ -126,6 +126,7 @@
   padding: 0.4rem;
   border-radius: 0.2rem;
   margin-bottom: 0.2rem;
+  cursor: pointer;
 }
 .cmp-tool-window-button svg {
   display: block;
@@ -215,11 +216,26 @@ dt, dd {
   fill: #e2e8f0;
   stroke: #64748b;
   stroke-width: 1;
-  filter: drop-shadow(2px 2px 4px rgba(103, 116, 137, 0.1));
   cursor: move;
 }
 .node:hover {
   filter: drop-shadow(2px 2px 4px rgba(103, 116, 137, 0.25));
+}
+
+
+.picker {
+  display: flex;
+  gap: 0.6rem;
+}
+.picker > div > svg {
+  margin: 0.2rem;
+  display: block;
+}
+.picker .node {
+  fill: transparent;
+  stroke: var(--slate-12);
+  stroke-width: 2;
+  shape-rendering: geometricprecision;
 }
 
 /* Selection */

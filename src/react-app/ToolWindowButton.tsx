@@ -3,7 +3,10 @@ import { $c } from '../utils/classname.ts';
 
 export const ToolWindowButton = (props: Props) => {
   return (
-    <div className={$c('cmp-tool-window-button', { selected: !!props.isSelected })}>
+    <div
+      className={$c('cmp-tool-window-button', { selected: !!props.isSelected })}
+      onClick={props.onClick}
+    >
       <props.icon size={'1.3rem'} />
     </div>
   );
@@ -12,4 +15,5 @@ export const ToolWindowButton = (props: Props) => {
 type Props = {
   icon: IconType;
   isSelected?: boolean;
+  onClick?: () => void;
 };

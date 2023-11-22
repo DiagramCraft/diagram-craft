@@ -3,6 +3,7 @@ import {
   CSSProperties,
   forwardRef,
   MouseEventHandler,
+  SVGProps,
   useCallback,
   useImperativeHandle
 } from 'react';
@@ -138,4 +139,7 @@ type Props = {
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
-};
+} & Omit<
+  SVGProps<SVGGElement>,
+  'id' | 'transform' | 'onMouseEnter' | 'onMouseMove' | 'onMouseDown'
+>;

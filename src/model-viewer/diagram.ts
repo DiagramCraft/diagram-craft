@@ -430,6 +430,10 @@ export class NodeDefinitionRegistry {
   get(type: string): NodeDefinition {
     return this.nodes[type];
   }
+
+  getAll() {
+    return Object.values(this.nodes);
+  }
 }
 
 export type EdgeCapability = string;
