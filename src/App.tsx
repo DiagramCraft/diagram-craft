@@ -27,7 +27,11 @@ import { DragDropManager } from './react-canvas-viewer/DragDropManager.tsx';
 import { defaultEdgeRegistry, defaultNodeRegistry } from './react-canvas-viewer/defaultRegistry.ts';
 import { SideBar } from './react-app/SideBar.tsx';
 import { SideBarPage } from './react-app/SideBarPage.tsx';
-import { PickerToolWindow } from './react-app/PickerToolWindow.tsx';
+import {
+  canvasDragOverHandler,
+  canvasDropHandler,
+  PickerToolWindow
+} from './react-app/PickerToolWindow.tsx';
 
 const diagrams = [
   {
@@ -111,6 +115,8 @@ const App = () => {
                 }}
                 actionMap={actionMap}
                 keyMap={keyMap}
+                onDrop={canvasDropHandler($d)}
+                onDragOver={canvasDragOverHandler()}
               />
             </ContextMenu.Trigger>
             <ContextMenu.Portal>

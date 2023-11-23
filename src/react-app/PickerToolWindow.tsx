@@ -3,7 +3,32 @@ import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
 import { Edge } from '../react-canvas-viewer/Edge.tsx';
 import { Node } from '../react-canvas-viewer/Node.tsx';
-import { SVGProps } from 'react';
+import React, { SVGProps } from 'react';
+import { Point } from '../geometry/point.ts';
+
+export const canvasDropHandler = ($d: Diagram) => {
+  return (e: React.DragEvent<SVGSVGElement>) => {
+    $d.addNode(
+      new DiagramNode(
+        $d.newid(),
+        e.dataTransfer.getData('application/x-diagram-craft-node-type'),
+        {
+          pos: $d.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent)),
+          size: { w: 100, h: 100 },
+          rotation: 0
+        },
+        undefined
+      )
+    );
+  };
+};
+
+export const canvasDragOverHandler = () => {
+  return (e: React.DragEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+};
 
 const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;
@@ -85,7 +110,8 @@ export const PickerToolWindow = (props: Props) => {
               key={idx}
               draggable={true}
               onDragStart={ev => {
-                ev.dataTransfer.setData('text/plain', 'lorem');
+                ev.dataTransfer.setData('text/plain', nodes[idx].type);
+                ev.dataTransfer.setData('application/x-diagram-craft-node-type', nodes[idx].type);
               }}
               style={{ background: 'transparent' }}
             >
