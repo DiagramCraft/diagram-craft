@@ -11,8 +11,21 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+
+  --primary-bg: var(--slate-4);
+  --primary-fg: var(--slate-11);
+  --secondary-bg: var(--slate-3);
+  --secondary-fg: var(--slate-11);
+  --canvas-bg: var(--slate-1);
 }
 
+.dark-theme {
+  --primary-bg: var(--slate-2);
+  --primary-fg: var(--slate-11);
+  --secondary-bg: var(--slate-4);
+  --secondary-fg: var(--slate-11);
+  --canvas-bg: var(--slate-12);
+}
 
 #app {
   position: absolute;
@@ -23,44 +36,81 @@
 
   display: grid;
   grid-template-areas: "menu"
-    "toolbar"
     "main-row";
   grid-template-columns: 1fr;
-  grid-template-rows: 40px 50px 1fr;
+  grid-template-rows: 45px 1fr;
 }
 
 #main-row {
   grid-area: main-row;
   position: relative;
   display: grid;
-  grid-template-areas:"left-buttons middle right-buttons";
+  grid-template-areas:
+            "left-buttons toolbar right-buttons"
+            "left-buttons middle right-buttons";
+  grid-template-rows: 40px 1fr;
   grid-template-columns: 40px 5fr 40px;
 }
 
 #menu {
+  display: flex;
+  align-items: center;
   grid-area: menu;
-  background: var(--slate-2);
+  background: var(--primary-bg);
+  display: grid;
+  grid-template-areas: "menu tools document extra-tools";
+  grid-template-columns: 80px 1fr 20fr 1fr;
+}
+#menu__menu-button {
+  grid-area: menu;
+  display: flex;
+  gap: 1rem;
+  padding-left: 0.5rem;
+}
+#menu__tools {
+  grid-area: tools;
+  display: flex;
+  gap: 1rem;
+}
+#menu__document {
+  grid-area: document;
+  display: flex;
+  gap: 1rem;
+  justify-self: center;
+}
+#menu__extra-tools {
+  grid-area: extra-tools;
+  display: flex;
+  gap: 1rem;
+  justify-self: end;
+  padding-right: 2rem;
+}
+
+
+#menu div > svg {
+  display: block;
+  color: var(--primary-fg);
 }
 
 #toolbar {
   grid-area: toolbar;
   display: flex;
-  background: var(--slate-2);
+  background: var(--secondary-bg);
   border-top: 2px solid var(--slate-1);
   border-bottom: 2px solid var(--slate-1);
-  padding: 0.2rem;
   padding-left: 0.5rem;
 }
 
 #left-buttons {
   grid-area: left-buttons;
-  background: var(--slate-2);
+  background: var(--primary-bg);
   border-right: 2px solid var(--slate-1);
-  padding: 0.5rem 0.2rem 0.2rem 0.2rem;
+  border-top: 2px solid var(--slate-1);
+  width: auto;
 }
 
 #left {
-  background: var(--slate-2);
+  background: var(--primary-bg);
   border-right: 1px solid var(--slate-1);
   position: absolute;
   left: 40px;
@@ -73,13 +123,14 @@
 
 #right-buttons {
   grid-area: right-buttons;
-  background: var(--slate-2);
+  background: var(--primary-bg);
   border-left: 2px solid var(--slate-1);
-  padding: 0.5rem 0.2rem 0.2rem 0.2rem;
+  border-top: 2px solid var(--slate-1);
+  width: auto;
 }
 
 #right {
-  background: var(--slate-2);
+  background: var(--primary-bg);
   border-left: 1px solid var(--slate-1);
   position: absolute;
   right: 40px;
@@ -101,64 +152,13 @@
   top: 0;
   right: 0;
   bottom: 0;
-  background: var(--slate-2);
+  background: var(--canvas-bg);
   height: 100%;
   width: 100%;
 }
 
 
 /* Components */
-.cmp-toolbar-button {
-  padding: 0.4rem;
-  border-radius: 0.4rem;
-  margin-bottom: 0.2rem;
-  background: var(--slate-2);
-  margin-right: 0.1rem;
-  margin-left: 0.1rem;
-}
-.cmp-toolbar-button svg {
-  display: block;
-  margin: auto;
-}
-.cmp-toolbar-button--selected {
-  border: 2px solid var(--blue-4);
-  color: var(--slate-12);
-}
-.cmp-toolbar-button--selected svg {
-}
-.cmp-toolbar-button:hover {
-  background-color: var(--blue-3);
-  color: var(--slate-12);
-}
-
-.cmp-toolbar-group,
-.cmp-toolbar-group__content{
-  display: flex;
-  align-items: center;
-}
-.cmp-toolbar-group__label {
-  font-size: 13px;
-  margin-right: 0.5rem;
-}
-
-
-.cmp-tool-window-button {
-  padding: 0.4rem;
-  border-radius: 0.2rem;
-  margin-bottom: 0.2rem;
-  cursor: pointer;
-}
-.cmp-tool-window-button svg {
-  display: block;
-  margin: auto;
-}
-.cmp-tool-window-button--selected svg {
-  color: var(--blue-11);
-}
-
-.cmp-tool-window-button:hover {
-  background: var(--slate-4);
-}
 
 .cmp-tool-window-layer__element {
   padding: 0.25rem 0.5rem;
@@ -376,18 +376,29 @@ dt, dd {
 /* ************* Toolbar styles */
 .ToolbarRoot {
   display: flex;
-  padding: 10px 0;
+  padding: 6px 0;
   width: 100%;
   min-width: max-content;
-  background-color: var(--slate-2);
+}
+.ToolbarRoot[data-direction='vertical'] {
+  flex-direction: column;
+  padding: 0 !important;
+}
+.ToolbarRoot[data-direction='vertical'] .ToolbarButton,
+.ToolbarRoot[data-direction='vertical'] .ToolbarToggleItem {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  align-self: center;
+  justify-content: center;
+  margin-top: 0.5rem;
 }
 
 .ToolbarToggleItem,
-.ToolbarLink,
 .ToolbarButton {
   flex: 0 0 auto;
   color: var(--slate-11);
-  background-color: var(--slate-2);
+  background-color: transparent;
   height: 25px;
   padding: 0 5px;
   border-radius: 4px;
@@ -396,22 +407,20 @@ dt, dd {
   line-height: 1;
   align-items: center;
   justify-content: center;
+  margin-left: 2px;
 }
 .ToolbarToggleItem:hover,
-.ToolbarLink:hover,
 .ToolbarButton:hover {
   background-color: var(--blue-3);
   color: var(--blue-11);
 }
 .ToolbarToggleItem:focus,
-.ToolbarLink:focus,
 .ToolbarButton:focus {
   position: relative;
   box-shadow: 0 0 0 2px var(--blue-7);
 }
 
 .ToolbarToggleItem:disabled,
-.ToolbarLink:disabled,
 .ToolbarButton:disabled {
   color: var(--slate-8);
   /* TODO: Is there a better way to disable hover when in disabled state */
@@ -419,11 +428,8 @@ dt, dd {
 }
 
 
-.ToolbarToggleItem {
-  background-color: var(--slate-2);
-  margin-left: 2px;
-}
-.ToolbarToggleItem:first-child {
+.ToolbarToggleItem:first-child,
+.ToolbarButton:first-child {
   margin-left: 0;
 }
 .ToolbarToggleItem[data-state='on'] {
@@ -437,29 +443,3 @@ dt, dd {
   margin: 0 10px;
 }
 
-.ToolbarLink {
-  background-color: transparent;
-  color: var(--slate-11);
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-.ToolbarLink:hover {
-  background-color: transparent;
-  cursor: pointer;
-}
-@media (min-width: 520px) {
-  .ToolbarLink {
-    display: inline-flex;
-  }
-}
-
-.ToolbarButton {
-  padding-left: 10px;
-  padding-right: 10px;
-  color: white;
-}
-.ToolbarButton:hover {
-  background-color: var(--blue-10);
-  color: white;
-}

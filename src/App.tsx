@@ -10,13 +10,22 @@ import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
   TbCategoryPlus,
+  TbClick,
   TbDatabaseEdit,
   TbFiles,
   TbHistory,
   TbInfoCircle,
+  TbLayoutGridAdd,
+  TbLine,
+  TbMenu2,
   TbPalette,
+  TbPencil,
+  TbPolygon,
   TbSelectAll,
-  TbStack2
+  TbStack2,
+  TbTextSize,
+  TbZoomIn,
+  TbZoomOut
 } from 'react-icons/tb';
 import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu.tsx';
 import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher.tsx';
@@ -67,24 +76,63 @@ const App = () => {
     <DragDropManager>
       <div id="app" className={'dark-theme'}>
         <div id="menu">
-          <select
-            onChange={e => {
-              setSelectedDiagram(Number(e.target.value));
-            }}
-            defaultValue={selectedDiagram}
-          >
-            {diagrams.map((d, idx) => (
-              <option key={idx} value={idx}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div id="toolbar">
-          <Toolbar actionMap={actionMap} keyMap={keyMap} />
+          <div id={'menu__menu-button'}>
+            <div>
+              <TbMenu2 size={'1.5rem'} />
+            </div>
+          </div>
+
+          <div id={'menu__tools'}>
+            <div>
+              <TbClick size={'1.1rem'} />
+            </div>
+            <div>
+              <TbLayoutGridAdd size={'1.1rem'} />
+            </div>
+            <div>
+              <TbLine size={'1.1rem'} />
+            </div>
+            <div>
+              <TbTextSize size={'1.1rem'} />
+            </div>
+            <div>
+              <TbPencil size={'1.1rem'} />
+            </div>
+            <div>
+              <TbPolygon size={'1.1rem'} />
+            </div>
+          </div>
+
+          <div id={'menu__document'}>
+            <select
+              onChange={e => {
+                setSelectedDiagram(Number(e.target.value));
+              }}
+              defaultValue={selectedDiagram}
+            >
+              {diagrams.map((d, idx) => (
+                <option key={idx} value={idx}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div id={'menu__extra-tools'}>
+            <div>
+              <TbZoomOut size={'1.1rem'} />
+            </div>
+            <div>
+              <TbZoomIn size={'1.1rem'} />
+            </div>
+          </div>
         </div>
 
         <div id="main-row">
+          <div id="toolbar">
+            <Toolbar actionMap={actionMap} keyMap={keyMap} />
+          </div>
+
           <SideBar side={'left'}>
             <SideBarPage icon={TbCategoryPlus}>
               <PickerToolWindow diagram={$d} />

@@ -29,6 +29,7 @@ export class ToggleDarkModeAction extends EventEmitter<ActionEvents> implements 
       this.state = false;
     } else {
       document.querySelectorAll('.light-theme').forEach(element => {
+        if (element.id === 'middle') return;
         element.classList.remove('light-theme');
         element.classList.add('dark-theme');
       });
