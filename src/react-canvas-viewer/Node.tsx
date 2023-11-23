@@ -14,6 +14,7 @@ import { Point } from '../geometry/point.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
+import { getPoint } from './eventHelper.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -44,7 +45,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
       if (e.button !== 0) return;
-      props.onMouseDown(props.def.id, Point.fromEvent(e.nativeEvent), e.nativeEvent);
+
+      props.onMouseDown(props.def.id, getPoint(e, props.diagram), e.nativeEvent);
       e.stopPropagation();
 
       return false;

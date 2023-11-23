@@ -12,6 +12,7 @@ type State = {
   w?: number;
   h?: number;
   rotation?: number;
+  props?: string;
 };
 
 export const InfoToolWindow = (props: Props) => {
@@ -40,7 +41,8 @@ export const InfoToolWindow = (props: Props) => {
           y: round(element.bounds.pos.y),
           w: round(element.bounds.size.w),
           h: round(element.bounds.size.h),
-          rotation: round(Angle.toDeg(element.bounds.rotation))
+          rotation: round(Angle.toDeg(element.bounds.rotation)),
+          props: JSON.stringify(element.props, null, 2)
         });
       } else if (selection.edges.length === 1) {
         const edge = selection.elements[0];
@@ -76,6 +78,11 @@ export const InfoToolWindow = (props: Props) => {
 
         <dt>Rotation:</dt>
         <dd>{state.rotation ?? '-'}</dd>
+
+        <dt>Props:</dt>
+        <dd>
+          <pre>{state.props ?? '-'}</pre>
+        </dd>
       </dl>
     </ToolWindowAccordion>
   );

@@ -24,6 +24,9 @@ declare global {
       color?: string;
       width?: number;
     };
+    text?: {
+      text?: string;
+    };
   }
 }
 

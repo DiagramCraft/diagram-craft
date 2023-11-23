@@ -6,6 +6,7 @@ import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
+import { TextPart } from '../TextPart.tsx';
 
 declare global {
   interface NodeProps {
@@ -47,6 +48,17 @@ export const Star = (props: Props) => {
         height={props.def.bounds.size.h}
         className={'node-boundary node'}
         {...propsUtils.except(props, 'def', 'isSelected', 'isSingleSelected')}
+      />
+
+      <TextPart
+        text={props.def.props.text?.text}
+        bounds={props.def.bounds}
+        onChange={text => {
+          props.def.props.text ??= {};
+          props.def.props.text.text = text;
+          props.def.diagram!.updateElement(props.def);
+        }}
+        onMouseDown={props.onMouseDown!}
       />
 
       {props.isSingleSelected && (

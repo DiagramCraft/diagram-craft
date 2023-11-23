@@ -39,7 +39,11 @@ export const simpleDiagram: SerializedDiagram = {
         rotation: 0
       },
       children: [],
-      props: {}
+      props: {
+        text: {
+          text: ''
+        }
+      }
     },
 
     {

@@ -19,6 +19,7 @@ import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
 import { MarqueeDrag } from './SelectionMarquee.logic.tsx';
 import { MoveDrag } from '../base-ui/drag/moveDrag.ts';
 import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';
+import { getPoint } from '../react-canvas-viewer/eventHelper.ts';
 
 const BACKGROUND = 'background';
 
@@ -226,7 +227,9 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         onMouseDown(BACKGROUND, Point.fromEvent(e.nativeEvent), e.nativeEvent);
       }}
       onMouseUp={e => onMouseUp(BACKGROUND, Point.fromEvent(e.nativeEvent))}
-      onMouseMove={e => onMouseMove(Point.fromEvent(e.nativeEvent), e.nativeEvent)}
+      onMouseMove={e => {
+        onMouseMove(getPoint(e, diagram), e.nativeEvent);
+      }}
       onContextMenu={event => {
         const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
         const point = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };

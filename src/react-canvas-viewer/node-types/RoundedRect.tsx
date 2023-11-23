@@ -2,6 +2,7 @@ import { DiagramNode } from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
+import { TextPart } from '../TextPart.tsx';
 
 declare global {
   interface NodeProps {
@@ -25,6 +26,17 @@ export const RoundedRect = (props: Props) => {
         rx={radius}
         ry={radius}
         {...propsUtils.except(props, 'def', 'isSelected', 'isSingleSelected')}
+      />
+
+      <TextPart
+        text={props.def.props.text?.text}
+        bounds={props.def.bounds}
+        onChange={text => {
+          props.def.props.text ??= {};
+          props.def.props.text.text = text;
+          props.def.diagram!.updateElement(props.def);
+        }}
+        onMouseDown={props.onMouseDown!}
       />
 
       {props.isSingleSelected && (
