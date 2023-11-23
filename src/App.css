@@ -28,7 +28,7 @@
 }
 
 #app {
-  position: absolute;
+  position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
@@ -631,7 +631,7 @@ dt, dd {
 }
 
 .PopoverArrow {
-  fill: white;
+  fill: var(--secondary-bg);
 }
 
 .PopoverClose {
@@ -653,4 +653,51 @@ dt, dd {
 }
 .PopoverClose:focus {
   color: var(--blue-11);
+}
+
+
+
+
+@keyframes slideUpAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
