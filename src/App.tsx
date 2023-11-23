@@ -84,56 +84,58 @@ const App = () => {
           <Toolbar actionMap={actionMap} keyMap={keyMap} />
         </div>
 
-        <SideBar side={'left'}>
-          <SideBarPage icon={TbCategoryPlus}>
-            <PickerToolWindow diagram={$d} />
-          </SideBarPage>
-          <SideBarPage icon={TbStack2}>
-            <LayerToolWindow diagram={$d} />
-          </SideBarPage>
-          <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
-          <SideBarPage icon={TbFiles}>TbFiles</SideBarPage>
-          <SideBarPage icon={TbHistory}>TbHistory</SideBarPage>
-        </SideBar>
+        <div id="main-row">
+          <SideBar side={'left'}>
+            <SideBarPage icon={TbCategoryPlus}>
+              <PickerToolWindow diagram={$d} />
+            </SideBarPage>
+            <SideBarPage icon={TbStack2}>
+              <LayerToolWindow diagram={$d} />
+            </SideBarPage>
+            <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
+            <SideBarPage icon={TbFiles}>TbFiles</SideBarPage>
+            <SideBarPage icon={TbHistory}>TbHistory</SideBarPage>
+          </SideBar>
 
-        <SideBar side={'right'}>
-          <SideBarPage icon={TbInfoCircle}>
-            <InfoToolWindow diagram={$d} />
-          </SideBarPage>
-          <SideBarPage icon={TbPalette}>TbPalette</SideBarPage>
-          <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
-        </SideBar>
+          <SideBar side={'right'}>
+            <SideBarPage icon={TbInfoCircle}>
+              <InfoToolWindow diagram={$d} />
+            </SideBarPage>
+            <SideBarPage icon={TbPalette}>TbPalette</SideBarPage>
+            <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
+          </SideBar>
 
-        <div id="middle" className={'light-theme'}>
-          <ContextMenu.Root>
-            <ContextMenu.Trigger asChild={true}>
-              <EditableCanvas
-                key={selectedDiagram}
-                diagram={$d}
-                onContextMenu={e => {
-                  contextMenuTarget.current = e.contextMenuTarget;
-                }}
-                actionMap={actionMap}
-                keyMap={keyMap}
-                onDrop={canvasDropHandler($d)}
-                onDragOver={canvasDragOverHandler()}
-              />
-            </ContextMenu.Trigger>
-            <ContextMenu.Portal>
-              <ContextMenu.Content className="ContextMenuContent dark-theme">
-                <ContextMenuDispatcher
-                  state={contextMenuTarget}
-                  createContextMenu={state => {
-                    if (state.type === 'canvas') {
-                      return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                    } else {
-                      return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                    }
+          <div id="middle" className={'light-theme'}>
+            <ContextMenu.Root>
+              <ContextMenu.Trigger asChild={true}>
+                <EditableCanvas
+                  key={selectedDiagram}
+                  diagram={$d}
+                  onContextMenu={e => {
+                    contextMenuTarget.current = e.contextMenuTarget;
                   }}
+                  actionMap={actionMap}
+                  keyMap={keyMap}
+                  onDrop={canvasDropHandler($d)}
+                  onDragOver={canvasDragOverHandler()}
                 />
-              </ContextMenu.Content>
-            </ContextMenu.Portal>
-          </ContextMenu.Root>
+              </ContextMenu.Trigger>
+              <ContextMenu.Portal>
+                <ContextMenu.Content className="ContextMenuContent dark-theme">
+                  <ContextMenuDispatcher
+                    state={contextMenuTarget}
+                    createContextMenu={state => {
+                      if (state.type === 'canvas') {
+                        return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
+                      } else {
+                        return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
+                      }
+                    }}
+                  />
+                </ContextMenu.Content>
+              </ContextMenu.Portal>
+            </ContextMenu.Root>
+          </div>
         </div>
       </div>
     </DragDropManager>

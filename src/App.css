@@ -22,11 +22,19 @@
   right: 0;
 
   display: grid;
-  grid-template-areas: "menu menu menu menu menu"
-    "toolbar toolbar toolbar toolbar toolbar"
-    "left-buttons left middle right right-buttons";
-  grid-template-columns: 40px minmax(15rem, 1fr) 5fr minmax(15rem, 1fr) 40px;
+  grid-template-areas: "menu"
+    "toolbar"
+    "main-row";
+  grid-template-columns: 1fr;
   grid-template-rows: 40px 50px 1fr;
+}
+
+#main-row {
+  grid-area: main-row;
+  position: relative;
+  display: grid;
+  grid-template-areas:"left-buttons middle right-buttons";
+  grid-template-columns: 40px 5fr 40px;
 }
 
 #menu {
@@ -52,9 +60,15 @@
 }
 
 #left {
-  grid-area: left;
   background: var(--slate-2);
   border-right: 1px solid var(--slate-1);
+  position: absolute;
+  left: 40px;
+  top: 0;
+  bottom: 0;
+  width: 15rem;
+  z-index: 10;
+  display: none;
 }
 
 #right-buttons {
@@ -65,9 +79,15 @@
 }
 
 #right {
-  grid-area: right;
   background: var(--slate-2);
   border-left: 1px solid var(--slate-1);
+  position: absolute;
+  right: 40px;
+  top: 0;
+  bottom: 0;
+  width: 15rem;
+  z-index: 10;
+  display: none;
 }
 
 #middle {
