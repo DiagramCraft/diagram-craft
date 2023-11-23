@@ -16,6 +16,14 @@ declare global {
   }
   interface NodeProps {
     highlight?: string[];
+
+    fill?: {
+      color?: string;
+    };
+    stroke?: {
+      color?: string;
+      width?: number;
+    };
   }
 }
 

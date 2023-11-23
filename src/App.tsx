@@ -42,6 +42,7 @@ import {
   canvasDropHandler,
   PickerToolWindow
 } from './react-app/PickerToolWindow.tsx';
+import { ObjectProperties } from './react-app/ObjectProperties.tsx';
 
 const diagrams = [
   {
@@ -128,7 +129,7 @@ const App = () => {
 
         <div id="main-row">
           <div id="toolbar">
-            <Toolbar actionMap={actionMap} keyMap={keyMap} />
+            <Toolbar actionMap={actionMap} keyMap={keyMap} diagram={$d} />
           </div>
 
           <SideBar side={'left'}>
@@ -147,7 +148,9 @@ const App = () => {
             <SideBarPage icon={TbInfoCircle}>
               <InfoToolWindow diagram={$d} />
             </SideBarPage>
-            <SideBarPage icon={TbPalette}>TbPalette</SideBarPage>
+            <SideBarPage icon={TbPalette}>
+              <ObjectProperties diagram={$d} />
+            </SideBarPage>
             <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
           </SideBar>
 

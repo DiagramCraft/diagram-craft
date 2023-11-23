@@ -194,7 +194,7 @@
 
 .cmp-tool-window-accordion__content {
   text-align: left;
-  padding: 0.5rem 0.5rem 1rem;
+  padding: 0 0.5rem 1rem;
 }
 
 
@@ -296,6 +296,32 @@ dt, dd {
   fill: #16a34a;
 }
 
+
+
+.color-grid__primary {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: 1fr;
+  gap: 0.2rem;
+  width: 100%;
+  height: 100%;
+}
+.color-grid__additional {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: 1fr;
+  gap: 0.2rem;
+  width: 100%;
+  height: 100%;
+}
+.color-grid__primary > button,
+.color-grid__additional > button {
+  width: 100%;
+  height: 1rem;
+  border-radius: 0;
+  border: 1px solid var(--slate-11);
+}
 
 
 /* ******* MENU stuff - remove later ********* */
