@@ -80,17 +80,18 @@ type PickerCanvasProps = {
 export const PickerToolWindow = (props: Props) => {
   const nodes = props.diagram.nodDefinitions.getAll();
 
-  const size = 40;
+  const size = 30;
 
   const diagrams = nodes.map(n => {
     return new Diagram(
+      n.type,
       [
         new DiagramNode(
           n.type,
           n.type,
           {
-            pos: { x: 0, y: 0 },
-            size: { w: size, h: size },
+            pos: { x: 1, y: 1 },
+            size: { w: size - 2, h: size - 2 },
             rotation: 0
           },
           undefined
@@ -102,7 +103,7 @@ export const PickerToolWindow = (props: Props) => {
   });
 
   return (
-    <ToolWindowAccordion title={'Shapes'}>
+    <ToolWindowAccordion title={'Basic Shapes'}>
       <div className={'picker'}>
         {diagrams.map((d, idx) => {
           return (

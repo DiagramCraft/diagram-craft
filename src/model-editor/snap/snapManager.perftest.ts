@@ -16,7 +16,12 @@ export class SnapManagerPerftest implements PerformanceTest {
       defs.push(new DiagramNode(i.toString(), 'box', this.randomBox(), undefined));
     }
 
-    const d = new EditableDiagram(defs, new NodeDefinitionRegistry(), new EdgeDefinitionRegistry());
+    const d = new EditableDiagram(
+      '1',
+      defs,
+      new NodeDefinitionRegistry(),
+      new EdgeDefinitionRegistry()
+    );
     this.snapManager = d.createSnapManager();
   }
 

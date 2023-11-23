@@ -72,6 +72,9 @@ export class DiagramNode implements AbstractNode {
 
   // TODO: Need to make sure this is called when e.g. props are changed
   private invalidateAnchors() {
+    if (!this.diagram) {
+      console.log(this);
+    }
     assert.present(this.diagram);
 
     this._anchors = [];
@@ -298,15 +301,17 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   };
 
   constructor(
+    readonly id: string,
     elements: (DiagramEdge | DiagramNode)[],
     readonly nodDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
     this.elements = elements;
+
     this.elements.forEach(e => {
       if (e.type === 'node') {
-        e.diagram = this;
+        this.linkNode(e);
       }
     });
 
@@ -317,6 +322,16 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
         this.nodeLookup[e.id] = e;
       } else {
         VERIFY_NOT_REACHED();
+      }
+    }
+  }
+
+  private linkNode(node: DiagramNode) {
+    node.diagram = this;
+    if (node.nodeType === 'group') {
+      for (const child of node.children) {
+        child.parent = node;
+        this.linkNode(child);
       }
     }
   }
@@ -338,8 +353,7 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   }
 
   addNode(node: DiagramNode) {
-    node.diagram = this;
-
+    this.linkNode(node);
     this.nodeLookup[node.id] = node;
     this.elements.push(node);
     this.emit('nodeadded', { node });

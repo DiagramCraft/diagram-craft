@@ -7,6 +7,7 @@ import { simpleDiagram } from './sample/simple.ts';
 import { EditableDiagram } from './model-editor/editable-diagram.ts';
 import { InfoToolWindow } from './react-app/InfoToolWindow.tsx';
 import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
+import { DocumentSelector } from './react-app/DocumentSelector.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
   TbCategoryPlus,
@@ -46,6 +47,7 @@ const diagrams = [
   {
     name: 'Snap test',
     diagram: new EditableDiagram(
+      'snapTest',
       deserializeDiagram(snapTestDiagram),
       defaultNodeRegistry(),
       defaultEdgeRegistry()
@@ -54,6 +56,7 @@ const diagrams = [
   {
     name: 'Simple',
     diagram: new EditableDiagram(
+      'simple',
       deserializeDiagram(simpleDiagram),
       defaultNodeRegistry(),
       defaultEdgeRegistry()
@@ -62,8 +65,8 @@ const diagrams = [
 ];
 
 const App = () => {
-  const [selectedDiagram, setSelectedDiagram] = useState(1);
-  const $d = diagrams[selectedDiagram].diagram;
+  const defaultDiagram = 1;
+  const [$d, setDiagram] = useState(diagrams[defaultDiagram].diagram);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   //useEffect(() => {
@@ -82,49 +85,44 @@ const App = () => {
             </div>
           </div>
 
-          <div id={'menu__tools'}>
-            <div>
+          <div id={'menu__tools'} className={'ToolbarRoot'}>
+            <button className={'ToolbarToggleItem'} data-state={'on'}>
               <TbClick size={'1.1rem'} />
-            </div>
-            <div>
+            </button>
+            <button className={'ToolbarToggleItem'}>
               <TbLayoutGridAdd size={'1.1rem'} />
-            </div>
-            <div>
+            </button>
+            <button className={'ToolbarToggleItem'}>
               <TbLine size={'1.1rem'} />
-            </div>
-            <div>
+            </button>
+            <button className={'ToolbarToggleItem'}>
               <TbTextSize size={'1.1rem'} />
-            </div>
-            <div>
+            </button>
+            <button className={'ToolbarToggleItem'}>
               <TbPencil size={'1.1rem'} />
-            </div>
-            <div>
+            </button>
+            <button className={'ToolbarToggleItem'}>
               <TbPolygon size={'1.1rem'} />
-            </div>
+            </button>
           </div>
 
           <div id={'menu__document'}>
-            <select
-              onChange={e => {
-                setSelectedDiagram(Number(e.target.value));
+            <DocumentSelector
+              diagrams={diagrams}
+              defaultValue={defaultDiagram}
+              onChange={d => {
+                setDiagram(d);
               }}
-              defaultValue={selectedDiagram}
-            >
-              {diagrams.map((d, idx) => (
-                <option key={idx} value={idx}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
-          <div id={'menu__extra-tools'}>
-            <div>
+          <div id={'menu__extra-tools'} className={'ToolbarRoot'}>
+            <button className={'ToolbarButton'} onClick={() => actionMap['ZOOM_IN']?.execute()}>
               <TbZoomOut size={'1.1rem'} />
-            </div>
-            <div>
+            </button>
+            <button className={'ToolbarButton'} onClick={() => actionMap['ZOOM_OUT']?.execute()}>
               <TbZoomIn size={'1.1rem'} />
-            </div>
+            </button>
           </div>
         </div>
 
@@ -157,7 +155,7 @@ const App = () => {
             <ContextMenu.Root>
               <ContextMenu.Trigger asChild={true}>
                 <EditableCanvas
-                  key={selectedDiagram}
+                  key={$d.id}
                   diagram={$d}
                   onContextMenu={e => {
                     contextMenuTarget.current = e.contextMenuTarget;

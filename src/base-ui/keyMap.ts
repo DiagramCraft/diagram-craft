@@ -7,6 +7,7 @@ import { AlignAction } from './actions/alignAction.ts';
 import { ToggleMagnetTypeAction } from './actions/toggleMagnetTypeAction.ts';
 import { ToggleDarkModeAction } from './actions/toggleDarkMode.ts';
 import { DistributeAction } from './actions/distributeAction.ts';
+import { ZoomAction } from './actions/zoomAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -53,7 +54,9 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction(state.diagram, 'distance'),
   TOGGLE_DARK_MODE: new ToggleDarkModeAction(),
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
-  DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical')
+  DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical'),
+  ZOOM_IN: new ZoomAction(state.diagram, 'in'),
+  ZOOM_OUT: new ZoomAction(state.diagram, 'out')
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {

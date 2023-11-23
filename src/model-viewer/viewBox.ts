@@ -70,4 +70,11 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
   get svgViewboxString() {
     return `${this.#offset.x} ${this.#offset.y} ${this.#dimensions.w} ${this.#dimensions.h}`;
   }
+
+  get midpoint() {
+    return {
+      x: this.windowSize.w / 2,
+      y: this.windowSize.h / 2
+    };
+  }
 }
