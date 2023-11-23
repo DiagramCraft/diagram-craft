@@ -1,5 +1,5 @@
 import { ActionEvents, KeyMap } from '../../base-ui/keyMap.ts';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as Toolbar from '@radix-ui/react-toolbar';
 import { useEventListener } from '../hooks/useEventListener.ts';
 
@@ -13,6 +13,13 @@ export const ActionToolbarButton = (props: Props) => {
     },
     props.actionMap[props.action]!
   );
+
+  useEffect(() => {
+    const v = props.actionMap[props.action]?.enabled;
+    if (v !== enabled) {
+      setEnabled(!!v);
+    }
+  }, [enabled, props.action, props.actionMap]);
 
   return (
     <Toolbar.Button

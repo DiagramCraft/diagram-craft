@@ -61,6 +61,10 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     style.fill = props.def.props?.fill?.color;
   }
 
+  if (props.def.props?.stroke?.color) {
+    style.stroke = props.def.props?.stroke?.color;
+  }
+
   if (props.def.nodeType === 'group') {
     return (
       <g

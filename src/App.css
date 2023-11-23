@@ -6,7 +6,7 @@
 @import '@radix-ui/colors/black-alpha.css';
 
 
-#root {
+:root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -166,6 +166,20 @@
 
 
 /* Components */
+
+.color-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1;
+  height: 30px;
+  gap: 10px;
+  background-color: var(--slate-1);
+  color: var(--primary-fg);
+}
 
 .cmp-tool-window-layer__element {
   padding: 0.25rem 0.5rem;
@@ -577,4 +591,66 @@ dt, dd {
   background-color: white;
   color: var(--blue-11);
   cursor: default;
+}
+
+
+
+
+.PopoverContent {
+  border-radius: 4px;
+  padding: 20px;
+  width: 300px;
+  background-color: var(--secondary-bg);
+  box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  z-index: 100;
+  color: var(--secondary-fg);
+}
+.PopoverContent h2 {
+  margin-top: 0;
+  font-size: 0.8rem;
+  text-align: left;
+}
+.PopoverContent:focus {
+  box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px,
+  0 0 0 2px var(--blue-7);
+}
+.PopoverContent[data-state='open'][data-side='top'] {
+  animation-name: slideDownAndFade;
+}
+.PopoverContent[data-state='open'][data-side='right'] {
+  animation-name: slideLeftAndFade;
+}
+.PopoverContent[data-state='open'][data-side='bottom'] {
+  animation-name: slideUpAndFade;
+}
+.PopoverContent[data-state='open'][data-side='left'] {
+  animation-name: slideRightAndFade;
+}
+
+.PopoverArrow {
+  fill: white;
+}
+
+.PopoverClose {
+  font-family: inherit;
+  background: transparent;
+  height: 25px;
+  width: 25px;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue-12);
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 200;
+  border: none;
+}
+.PopoverClose:hover {
+  color: var(--blue-11);
+}
+.PopoverClose:focus {
+  color: var(--blue-11);
 }

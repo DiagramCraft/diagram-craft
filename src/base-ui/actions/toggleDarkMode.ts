@@ -26,6 +26,8 @@ export class ToggleDarkModeAction extends EventEmitter<ActionEvents> implements 
         element.classList.remove('dark-theme');
         element.classList.add('light-theme');
       });
+      document.body.classList.remove('dark-theme');
+      document.body.classList.add('light-theme');
       this.state = false;
     } else {
       document.querySelectorAll('.light-theme').forEach(element => {
@@ -33,6 +35,8 @@ export class ToggleDarkModeAction extends EventEmitter<ActionEvents> implements 
         element.classList.remove('light-theme');
         element.classList.add('dark-theme');
       });
+      document.body.classList.remove('light-theme');
+      document.body.classList.add('dark-theme');
       this.state = true;
     }
     this.emit('actionchanged', { action: this });
