@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { unique } from '../utils/array.ts';
 import { ColorPicker } from './ColorPicker.tsx';
+import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
 
 export const ObjectProperties = (props: Props) => {
   const [fill, setFill] = useState<string>('transparent');
@@ -93,6 +94,53 @@ export const ObjectProperties = (props: Props) => {
           color={strokeColor ?? 'transparent'}
           onClick={changeStroke}
         />
+      </ToolWindowAccordion>
+      <ToolWindowAccordion title={'Line'}>
+        {props.diagram.selectionState.edges.length > 0 &&
+          props.diagram.selectionState.nodes.length === 0 && (
+            <>
+              <button
+                onClick={() =>
+                  props.diagram.selectionState.edges.forEach(e => {
+                    e.props.type = 'straight';
+                    props.diagram.updateElement(e);
+                  })
+                }
+              >
+                <TbLine />
+              </button>
+              <button
+                onClick={() =>
+                  props.diagram.selectionState.edges.forEach(e => {
+                    e.props.type = 'orthogonal';
+                    props.diagram.updateElement(e);
+                  })
+                }
+              >
+                <TbShape3 />
+              </button>
+              <button
+                onClick={() =>
+                  props.diagram.selectionState.edges.forEach(e => {
+                    e.props.type = 'curved';
+                    props.diagram.updateElement(e);
+                  })
+                }
+              >
+                <TbVectorSpline />
+              </button>
+              <button
+                onClick={() =>
+                  props.diagram.selectionState.edges.forEach(e => {
+                    e.props.type = 'bezier';
+                    props.diagram.updateElement(e);
+                  })
+                }
+              >
+                <TbVectorBezier2 />
+              </button>
+            </>
+          )}
       </ToolWindowAccordion>
     </>
   );

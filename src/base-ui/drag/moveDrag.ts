@@ -19,6 +19,14 @@ export class MoveDrag implements Drag {
     const selection = diagram.selectionState;
     assert.false(selection.isEmpty());
 
+    // Don't move connected edges
+    if (
+      selection.nodes.length === 0 &&
+      selection.edges.every(e => e.isStartConnected() || e.isEndConnected())
+    ) {
+      return;
+    }
+
     const d = Point.subtract(coord, Point.add(selection.bounds.pos, this.offset));
 
     const newBounds = Box.asMutableSnapshot(selection.bounds);

@@ -8,7 +8,7 @@ export const simpleDiagram: SerializedDiagram = {
       start: { anchor: 0, node: { id: '3' } },
       end: { anchor: 0, node: { id: '4' } },
       props: {},
-      waypoints: [{ point: { x: 360, y: 200 }, type: 'horizontal' }]
+      waypoints: [{ point: { x: 360, y: 200 } }]
     },
     {
       type: 'edge',

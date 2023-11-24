@@ -319,6 +319,17 @@ dt, dd {
   stroke: #1d4ed8;
   cursor: move
 }
+.selection-bezier-handle {
+  fill: white;
+  stroke-width: 1;
+  stroke: orange;
+  cursor: move
+}
+.selection-bezier-handle-line {
+  stroke-width: 1;
+  stroke: orange;
+  stroke-dasharray: 5 5;
+}
 .selection-handle:hover,
 .selection-handle--active,
 .selection-edge-handle:hover,

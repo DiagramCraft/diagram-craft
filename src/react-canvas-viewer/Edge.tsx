@@ -22,6 +22,31 @@ class EdgeWaypointDrag implements Drag {
   onDragEnd(_coord: Point, _diagram: EditableDiagram): void {}
 }
 
+class BezierControlPointDrag implements Drag {
+  constructor(
+    private readonly edge: DiagramEdge,
+    private readonly waypointIdx: number,
+    private readonly controlPointIdx: number
+  ) {}
+
+  onDrag(coord: Point, _diagram: EditableDiagram, _modifiers: Modifiers) {
+    const wp = this.edge.waypoints![this.waypointIdx];
+
+    const cIdx = this.controlPointIdx;
+    const ocIdx = cIdx === 0 ? 1 : 0;
+
+    wp.controlPoints![cIdx] = Point.subtract(coord, wp!.point);
+    wp.controlPoints![ocIdx] = {
+      x: wp.controlPoints![cIdx].x * -1,
+      y: wp.controlPoints![cIdx].y * -1
+    };
+
+    _diagram.updateElement(this.edge);
+  }
+
+  onDragEnd(_coord: Point, _diagram: EditableDiagram): void {}
+}
+
 export type EdgeApi = {
   repaint: () => void;
 };
@@ -111,6 +136,39 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
               onContextMenu={onContextMenu}
             />
           ))}
+          {props.diagram.selectionState.edges[0].props.type === 'bezier' &&
+            props.diagram.selectionState.edges[0].waypoints?.map((wp, idx) => {
+              const controlPoints = wp.controlPoints ?? [];
+              return controlPoints.map((cp, cIdx) => {
+                return (
+                  <React.Fragment key={`cp_bz_${idx}_${cp.x}_${cp.y}`}>
+                    <line
+                      x1={wp.point.x + cp.x}
+                      y1={wp.point.y + cp.y}
+                      x2={wp.point.x}
+                      y2={wp.point.y}
+                      className="selection-bezier-handle-line"
+                      cursor={'move'}
+                    />
+                    <circle
+                      cx={wp.point.x + cp.x}
+                      cy={wp.point.y + cp.y}
+                      r="4"
+                      className="selection-bezier-handle"
+                      cursor={'move'}
+                      onMouseDown={e => {
+                        if (e.button !== 0) return;
+
+                        drag.initiateDrag(new BezierControlPointDrag(props.def, idx, cIdx));
+                        e.stopPropagation();
+
+                        return false;
+                      }}
+                    />
+                  </React.Fragment>
+                );
+              });
+            })}
         </>
       )}
     </g>

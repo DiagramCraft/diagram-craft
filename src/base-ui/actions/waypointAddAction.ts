@@ -57,7 +57,7 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
     let inserted = false;
     for (let j = 0; j < waypointDistances.length; j++) {
       if (waypointDistances[j].l > bestLength) {
-        newWaypoints.push({ point: context.point!, type: 'vertical' });
+        newWaypoints.push({ point: context.point! });
         newWaypoints.push(...edge.waypoints!.slice(j));
         inserted = true;
         break;
@@ -67,7 +67,7 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
     }
 
     if (!inserted) {
-      newWaypoints.push({ point: context.point!, type: 'vertical' });
+      newWaypoints.push({ point: context.point! });
     }
 
     edge.waypoints = newWaypoints;

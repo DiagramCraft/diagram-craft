@@ -13,6 +13,7 @@ import { assert } from '../utils/assert.ts';
 declare global {
   interface EdgeProps {
     highlight?: string[];
+    type?: 'straight' | 'bezier' | 'curved' | 'orthogonal';
   }
   interface NodeProps {
     highlight?: string[];
@@ -48,8 +49,7 @@ export interface AbstractNode extends DiagramElement {
 
 export type Waypoint = {
   point: Point;
-  controlPoint?: Point;
-  type: 'vertical' | 'horizontal' | 'bezier';
+  controlPoints?: [Point, Point];
 };
 
 export interface AbstractEdge extends DiagramElement {
