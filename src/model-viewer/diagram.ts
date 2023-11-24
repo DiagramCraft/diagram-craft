@@ -46,9 +46,16 @@ export interface AbstractNode extends DiagramElement {
   anchors?: Point[];
 }
 
+export type Waypoint = {
+  point: Point;
+  controlPoint?: Point;
+  type: 'vertical' | 'horizontal' | 'bezier';
+};
+
 export interface AbstractEdge extends DiagramElement {
   type: 'edge';
   id: string;
+  waypoints?: Waypoint[];
   props: EdgeProps;
 }
 
@@ -190,12 +197,21 @@ export class DiagramEdge implements AbstractEdge {
   #end: Endpoint;
 
   props: EdgeProps = {};
+  waypoints: Waypoint[] | undefined;
 
-  constructor(id: string, start: Endpoint, end: Endpoint) {
+  constructor(
+    id: string,
+    start: Endpoint,
+    end: Endpoint,
+    props: EdgeProps,
+    midpoints?: Waypoint[]
+  ) {
     this.id = id;
     this.type = 'edge';
     this.#start = start;
     this.#end = end;
+    this.props = props;
+    this.waypoints = midpoints;
   }
 
   // TODO: This is probably not a sufficient way to calculate the bounding box

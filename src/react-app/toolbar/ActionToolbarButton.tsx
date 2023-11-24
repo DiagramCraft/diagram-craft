@@ -26,7 +26,7 @@ export const ActionToolbarButton = (props: Props) => {
       className="ToolbarButton"
       disabled={!enabled}
       onClick={() => {
-        props.actionMap[props.action]!.execute();
+        props.actionMap[props.action]!.execute({});
       }}
     >
       {props.children}

@@ -8,14 +8,22 @@ import { ToggleMagnetTypeAction } from './actions/toggleMagnetTypeAction.ts';
 import { ToggleDarkModeAction } from './actions/toggleDarkMode.ts';
 import { DistributeAction } from './actions/distributeAction.ts';
 import { ZoomAction } from './actions/zoomAction.ts';
+import { Point } from '../geometry/point.ts';
+import { WaypointAddAction } from './actions/waypointAddAction.ts';
+import { WaypointDeleteAction } from './actions/waypointDeleteAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
   actiontriggered: { action: Action };
 };
 
+export type ActionContext = {
+  point?: Point;
+  id?: string;
+};
+
 export interface Action extends Emitter<ActionEvents> {
-  execute: () => void;
+  execute: (context: ActionContext) => void;
   enabled: boolean;
 }
 
@@ -56,7 +64,9 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical'),
   ZOOM_IN: new ZoomAction(state.diagram, 'in'),
-  ZOOM_OUT: new ZoomAction(state.diagram, 'out')
+  ZOOM_OUT: new ZoomAction(state.diagram, 'out'),
+  WAYPOINT_ADD: new WaypointAddAction(state.diagram),
+  WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
@@ -88,13 +98,14 @@ export const findAction = (
 
 export const executeAction = (
   e: KeyboardEvent,
+  actionContext: ActionContext,
   keyMap: KeyMap,
   actionMap: Partial<ActionMap>
 ): boolean => {
   const action = findAction(e, keyMap, actionMap);
   if (!action || !action.enabled) return false;
 
-  action.execute();
+  action.execute(actionContext);
   return true;
 };
 

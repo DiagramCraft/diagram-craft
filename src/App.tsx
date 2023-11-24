@@ -1,7 +1,7 @@
 import './App.css';
 import { deserializeDiagram } from './model-viewer/serialization.ts';
-import { ContextMenuTarget, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
-import { useRef, useState } from 'react';
+import { ContextMenuEvent, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
+import React, { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
 import { EditableDiagram } from './model-editor/editable-diagram.ts';
@@ -43,6 +43,7 @@ import {
   PickerToolWindow
 } from './react-app/PickerToolWindow.tsx';
 import { ObjectProperties } from './react-app/ObjectProperties.tsx';
+import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 
 const diagrams = [
   {
@@ -68,7 +69,9 @@ const diagrams = [
 const App = () => {
   const defaultDiagram = 1;
   const [$d, setDiagram] = useState(diagrams[defaultDiagram].diagram);
-  const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
+  const contextMenuTarget = useRef<
+    (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
+  >(null);
 
   //useEffect(() => {
   //  perftest(new SnapManagerPerftest());
@@ -162,7 +165,7 @@ const App = () => {
                     key={$d.id}
                     diagram={$d}
                     onContextMenu={e => {
-                      contextMenuTarget.current = e.contextMenuTarget;
+                      contextMenuTarget.current = e;
                     }}
                     actionMap={actionMap}
                     keyMap={keyMap}
@@ -175,10 +178,18 @@ const App = () => {
                     <ContextMenuDispatcher
                       state={contextMenuTarget}
                       createContextMenu={state => {
-                        if (state.type === 'canvas') {
+                        if (state.contextMenuTarget.type === 'canvas') {
                           return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                        } else {
+                        } else if (state.type === 'selection') {
                           return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
+                        } else {
+                          return (
+                            <EdgeContextMenu
+                              actionMap={actionMap}
+                              keyMap={keyMap}
+                              target={state.contextMenuTarget}
+                            />
+                          );
                         }
                       }}
                     />

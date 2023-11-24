@@ -96,7 +96,9 @@ export const deserializeDiagram = (diagram: SerializedDiagram): (DiagramNode | D
         : { position: start.position },
       isConnected(end)
         ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
-        : { position: end.position }
+        : { position: end.position },
+      e.props,
+      e.waypoints
     );
 
     if (isConnected(start)) {

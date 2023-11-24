@@ -159,15 +159,14 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           bounds.pos.y + bounds.size.h / 2
         })`}
       >
-        <polyline
-          points={pointsString}
-          className={$c('selection-bb', { 'only-edges': isOnlyEdges })}
-          fill="none"
-          pointerEvents={'none'}
-        />
-
         {!isOnlyEdges && (
           <>
+            <polyline
+              points={pointsString}
+              className={$c('selection-bb', { 'only-edges': isOnlyEdges })}
+              fill="none"
+              pointerEvents={'none'}
+            />
             <line
               x1={Point.midpoint(points[0], points[1]).x}
               y1={Point.midpoint(points[0], points[1]).y}

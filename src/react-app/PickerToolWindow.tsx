@@ -5,6 +5,7 @@ import { Edge } from '../react-canvas-viewer/Edge.tsx';
 import { Node } from '../react-canvas-viewer/Node.tsx';
 import React, { SVGProps } from 'react';
 import { Point } from '../geometry/point.ts';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {
@@ -71,7 +72,8 @@ const PickerCanvas = (props: PickerCanvasProps) => {
 };
 
 type PickerCanvasProps = {
-  diagram: Diagram;
+  // TODO: This should really by Diagram and not EditableDiagram
+  diagram: EditableDiagram;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
@@ -83,7 +85,7 @@ export const PickerToolWindow = (props: Props) => {
   const size = 30;
 
   const diagrams = nodes.map(n => {
-    return new Diagram(
+    return new EditableDiagram(
       n.type,
       [
         new DiagramNode(
@@ -126,5 +128,5 @@ export const PickerToolWindow = (props: Props) => {
 };
 
 type Props = {
-  diagram: Diagram;
+  diagram: EditableDiagram;
 };

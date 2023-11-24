@@ -1,6 +1,6 @@
 import * as Popover from '@radix-ui/react-popover';
-import { TbColorSwatch, TbX } from 'react-icons/tb';
-import { useRef } from 'react';
+import { TbChevronDown, TbX } from 'react-icons/tb';
+import React, { useRef } from 'react';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]).map(colNumber =>
@@ -9,25 +9,25 @@ const transpose = (matrix: string[][]) =>
 
 export const ColorPicker = (props: Props) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = React.useState(false);
 
-  // TODO: Need to figure out how to close this once a color has been selected
   const close = () => {
-    contentRef.current!.dataset['state'] = 'closed';
+    setOpen(false);
   };
 
   return (
-    <Popover.Root>
+    <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
       <Popover.Trigger asChild>
         <button className="color-button" aria-label="Update dimensions">
           <div
             style={{
-              width: '10px',
-              height: '10px',
+              width: '16px',
+              height: '16px',
               backgroundColor: props.color,
               border: '1px solid var(--primary-fg)'
             }}
           ></div>
-          <TbColorSwatch size={'1rem'} />
+          <TbChevronDown size={'1rem'} />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
@@ -65,6 +65,39 @@ export const ColorPicker = (props: Props) => {
               </div>
             )}
           </div>
+
+          <h2>Standard colors</h2>
+          <div className={'color-grid'}>
+            <div className={'color-grid__primary'}>
+              {['red', 'green', 'blue', 'yellow', 'gray', 'white', 'black'].map(c => (
+                <button
+                  key={c}
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    close();
+                    props.onClick?.(c);
+                  }}
+                ></button>
+              ))}
+            </div>
+          </div>
+
+          <h2>Custom palette</h2>
+          <div className={'color-grid'}>
+            <div className={'color-grid__primary'}>
+              {props.primaryColors.map(c => (
+                <button
+                  key={c}
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    close();
+                    props.onClick?.(c);
+                  }}
+                ></button>
+              ))}
+            </div>
+          </div>
+
           <Popover.Close className="PopoverClose" aria-label="Close">
             <TbX />
           </Popover.Close>

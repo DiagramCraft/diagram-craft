@@ -57,7 +57,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   useDomEventListener(
     'keydown',
     e => {
-      executeAction(e, props.keyMap, props.actionMap);
+      executeAction(e, {}, props.keyMap, props.actionMap);
     },
     document
   );
@@ -239,7 +239,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           diagram.viewBox.toDiagramPoint(point)
         );
 
-        e.contextMenuTarget = {
+        e.contextMenuTarget ??= {
           type: isClickOnSelection ? 'selection' : 'canvas',
           pos: diagram.viewBox.toDiagramPoint(point)
         };
@@ -304,9 +304,14 @@ export type ContextMenuTarget = { pos: Point } & (
       type: 'canvas';
     }
   | {
+      type: 'edge';
+      id: string;
+    }
+  | {
       type: 'selection';
     }
 );
-type ContextMenuEvent = {
+
+export type ContextMenuEvent = {
   contextMenuTarget: ContextMenuTarget;
 };

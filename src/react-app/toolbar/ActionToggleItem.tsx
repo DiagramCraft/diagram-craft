@@ -1,5 +1,5 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { useContext, useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { ActionToggleGroupContext } from './ActionToggleGroup.tsx';
 import { ToggleAction } from '../../base-ui/keyMap.ts';
 import { useEventListener } from '../hooks/useEventListener.ts';

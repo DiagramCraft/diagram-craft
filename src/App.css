@@ -331,7 +331,10 @@ dt, dd {
 }
 
 
+.color-grid {
+  margin-bottom: 1rem;
 
+}
 .color-grid__primary {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -630,6 +633,7 @@ dt, dd {
 }
 .PopoverContent h2 {
   margin-top: 0;
+  margin-bottom: 0.25rem;
   font-size: 0.8rem;
   text-align: left;
 }
