@@ -5,17 +5,17 @@ import { KeyMap } from '../../base-ui/keyMap.ts';
 export const SelectionContextMenu = (props: Props) => {
   return (
     <>
-      <ContextMenu.Item className="ContextMenuItem">
-        Selection <div className="RightSlot">⌘+[</div>
+      <ContextMenu.Item className="cmp-context-menu__item">
+        Selection <div className="cmp-context-menu__right-slot">⌘+[</div>
       </ContextMenu.Item>
       <ContextMenu.Sub>
-        <ContextMenu.SubTrigger className="ContextMenuSubTrigger">
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
           Align
-          <div className="RightSlot">...</div>
+          <div className="cmp-context-menu__right-slot">...</div>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent
-            className="ContextMenuSubContent dark-theme"
+            className="cmp-context-menu dark-theme"
             sideOffset={2}
             alignOffset={-5}
           >
@@ -31,7 +31,7 @@ export const SelectionContextMenu = (props: Props) => {
             <ActionContextMenuItem action={'ALIGN_RIGHT'} {...props}>
               Align Right Edges
             </ActionContextMenuItem>
-            <ContextMenu.Separator className="ContextMenuSeparator" />
+            <ContextMenu.Separator className="cmp-context-menu__separator" />
             <ActionContextMenuItem action={'ALIGN_CENTER_HORIZONTAL'} {...props}>
               Align Centers Horizontally
             </ActionContextMenuItem>
@@ -42,7 +42,7 @@ export const SelectionContextMenu = (props: Props) => {
         </ContextMenu.Portal>
       </ContextMenu.Sub>
 
-      <ContextMenu.Separator className="ContextMenuSeparator" />
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
     </>
   );
 };

@@ -7,7 +7,7 @@ export const DocumentBounds = (props: Props) => {
 
   return (
     <>
-      <rect className="documentBounds" x={x} y={y} width={w} height={h} />
+      <rect className="svg-doc-bounds" x={x} y={y} width={w} height={h} />
     </>
   );
 };

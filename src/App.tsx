@@ -84,34 +84,36 @@ const App = () => {
       <DragDropManager>
         <div id="app" className={'dark-theme'}>
           <div id="menu">
-            <div id={'menu__menu-button'}>
+            <div className={'_menu-button'}>
               <div>
                 <TbMenu2 size={'1.5rem'} />
               </div>
             </div>
 
-            <div id={'menu__tools'} className={'ToolbarRoot'}>
-              <button className={'ToolbarToggleItem'} data-state={'on'}>
-                <TbClick size={'1.1rem'} />
-              </button>
-              <button className={'ToolbarToggleItem'}>
-                <TbLayoutGridAdd size={'1.1rem'} />
-              </button>
-              <button className={'ToolbarToggleItem'}>
-                <TbLine size={'1.1rem'} />
-              </button>
-              <button className={'ToolbarToggleItem'}>
-                <TbTextSize size={'1.1rem'} />
-              </button>
-              <button className={'ToolbarToggleItem'}>
-                <TbPencil size={'1.1rem'} />
-              </button>
-              <button className={'ToolbarToggleItem'}>
-                <TbPolygon size={'1.1rem'} />
-              </button>
+            <div className={'_tools'}>
+              <div className={'cmp-toolbar'} data-size={'large'}>
+                <button className={'cmp-toolbar__toggle-item'} data-state={'on'}>
+                  <TbClick size={'1.1rem'} />
+                </button>
+                <button className={'cmp-toolbar__toggle-item'}>
+                  <TbLayoutGridAdd size={'1.1rem'} />
+                </button>
+                <button className={'cmp-toolbar__toggle-item'}>
+                  <TbLine size={'1.1rem'} />
+                </button>
+                <button className={'cmp-toolbar__toggle-item'}>
+                  <TbTextSize size={'1.1rem'} />
+                </button>
+                <button className={'cmp-toolbar__toggle-item'}>
+                  <TbPencil size={'1.1rem'} />
+                </button>
+                <button className={'cmp-toolbar__toggle-item'}>
+                  <TbPolygon size={'1.1rem'} />
+                </button>
+              </div>
             </div>
 
-            <div id={'menu__document'}>
+            <div className={'_document'}>
               <DocumentSelector
                 diagrams={diagrams}
                 defaultValue={defaultDiagram}
@@ -121,17 +123,24 @@ const App = () => {
               />
             </div>
 
-            <div id={'menu__extra-tools'} className={'ToolbarRoot'}>
-              <button className={'ToolbarButton'} onClick={() => actionMap['ZOOM_IN']?.execute()}>
-                <TbZoomOut size={'1.1rem'} />
-              </button>
-              <button className={'ToolbarButton'} onClick={() => actionMap['ZOOM_OUT']?.execute()}>
-                <TbZoomIn size={'1.1rem'} />
-              </button>
+            <div className={'_extra-tools'}>
+              <div className={'cmp-toolbar'}>
+                <button
+                  className={'cmp-toolbar__button'}
+                  onClick={() => actionMap['ZOOM_IN']?.execute()}
+                >
+                  <TbZoomOut size={'1.1rem'} />
+                </button>
+                <button
+                  className={'cmp-toolbar__button'}
+                  onClick={() => actionMap['ZOOM_OUT']?.execute()}
+                >
+                  <TbZoomIn size={'1.1rem'} />
+                </button>
+              </div>
             </div>
           </div>
-
-          <div id="main-row">
+          <div id="window-area">
             <div id="toolbar">
               <Toolbar actionMap={actionMap} keyMap={keyMap} diagram={$d} />
             </div>
@@ -158,11 +167,12 @@ const App = () => {
               <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
             </SideBar>
 
-            <div id="middle" className={'light-theme'}>
+            <div id="canvas-area" className={'light-theme'}>
               <ContextMenu.Root>
                 <ContextMenu.Trigger asChild={true}>
                   <EditableCanvas
                     key={$d.id}
+                    className={'canvas'}
                     diagram={$d}
                     onContextMenu={e => {
                       contextMenuTarget.current = e;
@@ -174,13 +184,13 @@ const App = () => {
                   />
                 </ContextMenu.Trigger>
                 <ContextMenu.Portal>
-                  <ContextMenu.Content className="ContextMenuContent dark-theme">
+                  <ContextMenu.Content className="cmp-context-menu dark-theme">
                     <ContextMenuDispatcher
                       state={contextMenuTarget}
                       createContextMenu={state => {
                         if (state.contextMenuTarget.type === 'canvas') {
                           return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                        } else if (state.type === 'selection') {
+                        } else if (state.contextMenuTarget.type === 'selection') {
                           return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
                         } else {
                           return (

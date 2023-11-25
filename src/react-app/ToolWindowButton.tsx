@@ -3,7 +3,7 @@ import { IconType } from 'react-icons/lib/cjs/iconBase';
 export const ToolWindowButton = (props: Props) => {
   return (
     <button
-      className={'ToolbarToggleItem'}
+      className={'cmp-toolbar__toggle-item'}
       onClick={props.onClick}
       data-state={props.isSelected ? 'on' : 'off'}
     >

@@ -21,7 +21,7 @@ export const ActionToggleItem = (props: Props) => {
 
   return (
     <ReactToolbar.ToggleItem
-      className="ToolbarToggleItem"
+      className="cmp-toolbar__toggle-item"
       value={props.action}
       aria-label={props.action}
     >

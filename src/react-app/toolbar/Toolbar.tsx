@@ -38,7 +38,7 @@ export const Toolbar = (props: Props) => {
   );
 
   return (
-    <ReactToolbar.Root className="ToolbarRoot" aria-label="Formatting options">
+    <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
       {enabled && (
         <>
           <ActionToolbarButton action={'ALIGN_TOP'} {...props}>
@@ -66,7 +66,7 @@ export const Toolbar = (props: Props) => {
             <TbLayoutDistributeVertical />
           </ActionToolbarButton>
 
-          <ReactToolbar.Separator className="ToolbarSeparator" />
+          <ReactToolbar.Separator className="cmp-toolbar_cmp-toolbar__separator" />
 
           <ActionToggleGroup {...props}>
             <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_GRID'} {...props}>
@@ -86,7 +86,7 @@ export const Toolbar = (props: Props) => {
             </ActionToggleItem>
           </ActionToggleGroup>
 
-          <ReactToolbar.Separator className="ToolbarSeparator" />
+          <ReactToolbar.Separator className="cmp-toolbar__separator" />
         </>
       )}
 

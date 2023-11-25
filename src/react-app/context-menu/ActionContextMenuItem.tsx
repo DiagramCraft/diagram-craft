@@ -6,14 +6,16 @@ import React from 'react';
 export const ActionContextMenuItem = (props: Props) => {
   return (
     <ContextMenu.Item
-      className="ContextMenuItem"
+      className="cmp-context-menu__item"
       disabled={!props.actionMap[props.action]?.enabled}
       onSelect={() => {
         props.actionMap[props.action]!.execute(props.context ?? {});
       }}
     >
       {props.children}{' '}
-      <div className="RightSlot">{findKeyBindings(props.action, props.keyMap)}</div>
+      <div className="cmp-context-menu__right-slot">
+        {findKeyBindings(props.action, props.keyMap)}
+      </div>
     </ContextMenu.Item>
   );
 };

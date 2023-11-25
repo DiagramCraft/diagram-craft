@@ -5,9 +5,9 @@ import { TbCheck, TbChevronDown } from 'react-icons/tb';
 
 const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>((props, forwardedRef) => {
   return (
-    <Select.Item className={'SelectItem'} ref={forwardedRef} value={props.value}>
+    <Select.Item className={'cmp-select-content__item'} ref={forwardedRef} value={props.value}>
       <Select.ItemText>{props.children}</Select.ItemText>
-      <Select.ItemIndicator className="SelectItemIndicator">
+      <Select.ItemIndicator className="cmp-select-content__item-indicator">
         <TbCheck />
       </Select.ItemIndicator>
     </Select.Item>
@@ -30,15 +30,15 @@ export const DocumentSelector = (props: Props) => {
       }}
       value={selectedDiagram.toString()}
     >
-      <Select.Trigger className="SelectTrigger">
+      <Select.Trigger className="cmp-select-trigger">
         <Select.Value placeholder={props.diagrams[selectedDiagram].name} />
-        <Select.Icon className="SelectIcon">
+        <Select.Icon className="cmp-select-trigger__icon">
           <TbChevronDown />
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="SelectContent">
-          <Select.Viewport className="SelectViewport">
+        <Select.Content className="cmp-select-content">
+          <Select.Viewport className="cmp-select-content__viewpoint">
             <Select.Group>
               {props.diagrams.map((d, idx) => (
                 <SelectItem key={idx} value={idx.toString()}>

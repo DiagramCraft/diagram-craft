@@ -25,7 +25,7 @@ export const Grid = (props: Props) => {
         y1={yCoord}
         x2={x + w - 1}
         y2={yCoord}
-        className={'grid ' + (i % 5 === 0 ? 'grid--major' : 'grid--minor')}
+        className={'svg-grid ' + (i % 5 === 0 ? 'svg-grid--major' : 'svg-grid--minor')}
       />
     );
   }
@@ -40,7 +40,7 @@ export const Grid = (props: Props) => {
         y1={y + 1}
         x2={xCoord}
         y2={y + h - 1}
-        className={'grid ' + (i % 5 === 0 ? 'grid--major' : 'grid--minor')}
+        className={'svg-grid ' + (i % 5 === 0 ? 'svg-grid--major' : 'svg-grid--minor')}
       />
     );
   }

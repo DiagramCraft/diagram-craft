@@ -155,6 +155,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           );
         })}
       <g
+        className={'svg-selection'}
         transform={`rotate(${Angle.toDeg(bounds.rotation)} ${bounds.pos.x + bounds.size.w / 2} ${
           bounds.pos.y + bounds.size.h / 2
         })`}

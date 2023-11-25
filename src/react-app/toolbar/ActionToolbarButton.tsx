@@ -23,7 +23,7 @@ export const ActionToolbarButton = (props: Props) => {
 
   return (
     <Toolbar.Button
-      className="ToolbarButton"
+      className="cmp-toolbar__button"
       disabled={!enabled}
       onClick={() => {
         props.actionMap[props.action]!.execute({});

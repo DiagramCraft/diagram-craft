@@ -11,7 +11,7 @@ export const CanvasContextMenu = (props: Props) => {
       <ActionContextMenuItem action={'REDO'} {...props}>
         Redo
       </ActionContextMenuItem>
-      <ContextMenu.Separator className="ContextMenuSeparator" />
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
       <ActionContextMenuItem action={'SELECT_ALL'} {...props}>
         Select All
       </ActionContextMenuItem>

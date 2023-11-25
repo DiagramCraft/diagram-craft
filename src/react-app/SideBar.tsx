@@ -24,7 +24,7 @@ export const SideBar = (props: Props) => {
   // TODO: Replace the buttons part with the Toolbar component
   return (
     <>
-      <div id={`${props.side}-buttons`} className={'ToolbarRoot'} data-direction={'vertical'}>
+      <div id={`${props.side}-buttons`} className={'cmp-toolbar'} data-direction={'vertical'}>
         {props.children.map((c, idx) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const icon = (c as any).props.icon;

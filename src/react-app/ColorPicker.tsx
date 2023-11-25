@@ -16,95 +16,95 @@ export const ColorPicker = (props: Props) => {
   };
 
   return (
-    <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
-      <Popover.Trigger asChild>
-        <button className="color-button" aria-label="Update dimensions">
-          <div
-            style={{
-              width: '16px',
-              height: '16px',
-              backgroundColor: props.color,
-              border: '1px solid var(--primary-fg)'
-            }}
-          ></div>
-          <TbChevronDown size={'1rem'} />
-        </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content className="PopoverContent" sideOffset={5} ref={contentRef}>
-          <h2>Colors</h2>
+    <div className={'cmp-color-picker'}>
+      <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
+        <Popover.Trigger asChild>
+          <button>
+            <div
+              className={'cmp-color-picker__well'}
+              style={{
+                backgroundColor: props.color
+              }}
+            ></div>
+            <TbChevronDown size={'1rem'} />
+          </button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content className="cmp-popover" sideOffset={5} ref={contentRef}>
+            <h2>Colors</h2>
 
-          <div className={'color-grid'}>
-            <div className={'color-grid__primary'}>
-              {props.primaryColors.map(c => (
-                <button
-                  key={c}
-                  style={{ backgroundColor: c }}
-                  onClick={() => {
-                    close();
-                    props.onClick?.(c);
-                  }}
-                ></button>
-              ))}
-            </div>
-
-            {props.additionalHues && (
-              <div className={'color-grid__additional'}>
-                {transpose(props.additionalHues).map(arr => {
-                  return arr.map((c, idx) => (
-                    <button
-                      key={idx}
-                      style={{ backgroundColor: c }}
-                      onClick={() => {
-                        close();
-                        props.onClick?.(c);
-                      }}
-                    ></button>
-                  ));
-                })}
+            <div className={'cmp-color-grid'}>
+              <div className={'cmp-color-grid__primary'}>
+                {props.primaryColors.map(c => (
+                  <button
+                    key={c}
+                    style={{ backgroundColor: c }}
+                    onClick={() => {
+                      close();
+                      props.onClick?.(c);
+                    }}
+                  ></button>
+                ))}
               </div>
-            )}
-          </div>
 
-          <h2>Standard colors</h2>
-          <div className={'color-grid'}>
-            <div className={'color-grid__primary'}>
-              {['red', 'green', 'blue', 'yellow', 'gray', 'white', 'black'].map(c => (
-                <button
-                  key={c}
-                  style={{ backgroundColor: c }}
-                  onClick={() => {
-                    close();
-                    props.onClick?.(c);
-                  }}
-                ></button>
-              ))}
+              {props.additionalHues && (
+                <div className={'cmp-color-grid__additional'}>
+                  {transpose(props.additionalHues).map(arr => {
+                    return arr.map((c, idx) => (
+                      <button
+                        key={idx}
+                        style={{ backgroundColor: c }}
+                        onClick={() => {
+                          close();
+                          props.onClick?.(c);
+                        }}
+                      ></button>
+                    ));
+                  })}
+                </div>
+              )}
             </div>
-          </div>
 
-          <h2>Custom palette</h2>
-          <div className={'color-grid'}>
-            <div className={'color-grid__primary'}>
-              {props.primaryColors.map(c => (
-                <button
-                  key={c}
-                  style={{ backgroundColor: c }}
-                  onClick={() => {
-                    close();
-                    props.onClick?.(c);
-                  }}
-                ></button>
-              ))}
+            <h2>Standard colors</h2>
+            <div className={'cmp-color-grid'}>
+              <div className={'cmp-color-grid__primary'}>
+                {['red', 'green', 'blue', 'yellow', 'gray', 'white', 'black'].map(c => (
+                  <button
+                    key={c}
+                    style={{ backgroundColor: c }}
+                    onClick={() => {
+                      close();
+                      props.onClick?.(c);
+                    }}
+                  ></button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <Popover.Close className="PopoverClose" aria-label="Close">
-            <TbX />
-          </Popover.Close>
-          <Popover.Arrow className="PopoverArrow" />
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+            <h2>Custom palette</h2>
+            <div className={'cmp-color-grid'}>
+              <div className={'cmp-color-grid__primary'}>
+                {props.primaryColors.map(c => (
+                  <button
+                    key={c}
+                    style={{ backgroundColor: c }}
+                    onClick={() => {
+                      close();
+                      props.onClick?.(c);
+                    }}
+                  ></button>
+                ))}
+              </div>
+            </div>
+
+            <Popover.Close className="cmp-popover__close" aria-label="Close">
+              <TbX />
+            </Popover.Close>
+            <Popover.Arrow className="cmp-popover__arrow" />
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    </div>
   );
 };
 

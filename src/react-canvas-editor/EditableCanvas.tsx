@@ -243,6 +243,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           type: isClickOnSelection ? 'selection' : 'canvas',
           pos: diagram.viewBox.toDiagramPoint(point)
         };
+
         props.onContextMenu?.(e);
       }}
     >
