@@ -1,10 +1,12 @@
-import { ToolWindowAccordion } from './ToolWindowAccordion.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useState } from 'react';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { unique } from '../utils/array.ts';
 import { ColorPicker } from './ColorPicker.tsx';
 import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
+import * as Accordion from '@radix-ui/react-accordion';
+import { AccordionTrigger } from './AccordionTrigger.tsx';
+import { AccordionContent } from './AccordionContext.tsx';
 
 export const ObjectProperties = (props: Props) => {
   const [fill, setFill] = useState<string>('transparent');
@@ -79,69 +81,86 @@ export const ObjectProperties = (props: Props) => {
 
   return (
     <>
-      <ToolWindowAccordion title={'Fill'}>
-        <ColorPicker
-          primaryColors={primaryColors}
-          additionalHues={additionalHues}
-          color={fill ?? 'transparent'}
-          onClick={changeFill}
-        />
-      </ToolWindowAccordion>
-      <ToolWindowAccordion title={'Stroke'}>
-        <ColorPicker
-          primaryColors={primaryColors}
-          additionalHues={additionalHues}
-          color={strokeColor ?? 'transparent'}
-          onClick={changeStroke}
-        />
-      </ToolWindowAccordion>
-      <ToolWindowAccordion title={'Line'}>
-        {props.diagram.selectionState.edges.length > 0 &&
-          props.diagram.selectionState.nodes.length === 0 && (
-            <>
-              <button
-                onClick={() =>
-                  props.diagram.selectionState.edges.forEach(e => {
-                    e.props.type = 'straight';
-                    props.diagram.updateElement(e);
-                  })
-                }
-              >
-                <TbLine />
-              </button>
-              <button
-                onClick={() =>
-                  props.diagram.selectionState.edges.forEach(e => {
-                    e.props.type = 'orthogonal';
-                    props.diagram.updateElement(e);
-                  })
-                }
-              >
-                <TbShape3 />
-              </button>
-              <button
-                onClick={() =>
-                  props.diagram.selectionState.edges.forEach(e => {
-                    e.props.type = 'curved';
-                    props.diagram.updateElement(e);
-                  })
-                }
-              >
-                <TbVectorSpline />
-              </button>
-              <button
-                onClick={() =>
-                  props.diagram.selectionState.edges.forEach(e => {
-                    e.props.type = 'bezier';
-                    props.diagram.updateElement(e);
-                  })
-                }
-              >
-                <TbVectorBezier2 />
-              </button>
-            </>
-          )}
-      </ToolWindowAccordion>
+      <Accordion.Root
+        className="cmp-accordion"
+        type="multiple"
+        defaultValue={['fill', 'stroke', 'line']}
+      >
+        <Accordion.Item className="cmp-accordion__item" value="fill">
+          <AccordionTrigger>Fill</AccordionTrigger>
+          <AccordionContent>
+            <ColorPicker
+              primaryColors={primaryColors}
+              additionalHues={additionalHues}
+              color={fill ?? 'transparent'}
+              onClick={changeFill}
+            />
+          </AccordionContent>
+        </Accordion.Item>
+
+        <Accordion.Item className="cmp-accordion__item" value="stroke">
+          <AccordionTrigger>Stroke</AccordionTrigger>
+          <AccordionContent>
+            <ColorPicker
+              primaryColors={primaryColors}
+              additionalHues={additionalHues}
+              color={strokeColor ?? 'transparent'}
+              onClick={changeStroke}
+            />
+          </AccordionContent>
+        </Accordion.Item>
+
+        <Accordion.Item className="cmp-accordion__item" value="line">
+          <AccordionTrigger>Line</AccordionTrigger>
+          <AccordionContent>
+            {props.diagram.selectionState.edges.length > 0 &&
+              props.diagram.selectionState.nodes.length === 0 && (
+                <>
+                  <button
+                    onClick={() =>
+                      props.diagram.selectionState.edges.forEach(e => {
+                        e.props.type = 'straight';
+                        props.diagram.updateElement(e);
+                      })
+                    }
+                  >
+                    <TbLine />
+                  </button>
+                  <button
+                    onClick={() =>
+                      props.diagram.selectionState.edges.forEach(e => {
+                        e.props.type = 'orthogonal';
+                        props.diagram.updateElement(e);
+                      })
+                    }
+                  >
+                    <TbShape3 />
+                  </button>
+                  <button
+                    onClick={() =>
+                      props.diagram.selectionState.edges.forEach(e => {
+                        e.props.type = 'curved';
+                        props.diagram.updateElement(e);
+                      })
+                    }
+                  >
+                    <TbVectorSpline />
+                  </button>
+                  <button
+                    onClick={() =>
+                      props.diagram.selectionState.edges.forEach(e => {
+                        e.props.type = 'bezier';
+                        props.diagram.updateElement(e);
+                      })
+                    }
+                  >
+                    <TbVectorBezier2 />
+                  </button>
+                </>
+              )}
+          </AccordionContent>
+        </Accordion.Item>
+      </Accordion.Root>
     </>
   );
 };

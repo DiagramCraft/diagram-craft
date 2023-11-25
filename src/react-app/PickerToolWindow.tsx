@@ -1,4 +1,3 @@
-import { ToolWindowAccordion } from './ToolWindowAccordion.tsx';
 import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
 import { Edge } from '../react-canvas-viewer/Edge.tsx';
@@ -6,6 +5,9 @@ import { Node } from '../react-canvas-viewer/Node.tsx';
 import React, { SVGProps } from 'react';
 import { Point } from '../geometry/point.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import * as Accordion from '@radix-ui/react-accordion';
+import { AccordionTrigger } from './AccordionTrigger.tsx';
+import { AccordionContent } from './AccordionContext.tsx';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {
@@ -105,25 +107,33 @@ export const PickerToolWindow = (props: Props) => {
   });
 
   return (
-    <ToolWindowAccordion title={'Basic Shapes'}>
-      <div className={'picker'}>
-        {diagrams.map((d, idx) => {
-          return (
-            <div
-              key={idx}
-              draggable={true}
-              onDragStart={ev => {
-                ev.dataTransfer.setData('text/plain', nodes[idx].type);
-                ev.dataTransfer.setData('application/x-diagram-craft-node-type', nodes[idx].type);
-              }}
-              style={{ background: 'transparent' }}
-            >
-              <PickerCanvas diagram={d} width={size} height={size} />
-            </div>
-          );
-        })}
-      </div>
-    </ToolWindowAccordion>
+    <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['basic-shapes']}>
+      <Accordion.Item className="cmp-accordion__item" value="basic-shapes">
+        <AccordionTrigger>Basic shapes</AccordionTrigger>
+        <AccordionContent>
+          <div className={'picker'}>
+            {diagrams.map((d, idx) => {
+              return (
+                <div
+                  key={idx}
+                  draggable={true}
+                  onDragStart={ev => {
+                    ev.dataTransfer.setData('text/plain', nodes[idx].type);
+                    ev.dataTransfer.setData(
+                      'application/x-diagram-craft-node-type',
+                      nodes[idx].type
+                    );
+                  }}
+                  style={{ background: 'transparent' }}
+                >
+                  <PickerCanvas diagram={d} width={size} height={size} />
+                </div>
+              );
+            })}
+          </div>
+        </AccordionContent>
+      </Accordion.Item>
+    </Accordion.Root>
   );
 };
 

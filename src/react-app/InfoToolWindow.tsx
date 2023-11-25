@@ -1,9 +1,11 @@
-import { ToolWindowAccordion } from './ToolWindowAccordion.tsx';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useEffect, useState } from 'react';
 import { SelectionStateEvents } from '../model-editor/selectionState.ts';
 import { Angle } from '../geometry/angle.ts';
 import { round } from '../utils/math.ts';
+import { AccordionTrigger } from './AccordionTrigger.tsx';
+import { AccordionContent } from './AccordionContext.tsx';
+import * as Accordion from '@radix-ui/react-accordion';
 
 type State = {
   id?: string;
@@ -59,32 +61,37 @@ export const InfoToolWindow = (props: Props) => {
   }, [props.diagram]);
 
   return (
-    <ToolWindowAccordion title={'Info'}>
-      <dl>
-        <dt>Id:</dt>
-        <dd>{state.id ?? '-'}</dd>
+    <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['info']}>
+      <Accordion.Item className="cmp-accordion__item" value="info">
+        <AccordionTrigger>Info</AccordionTrigger>
+        <AccordionContent>
+          <dl>
+            <dt>Id:</dt>
+            <dd>{state.id ?? '-'}</dd>
 
-        <dt>X:</dt>
-        <dd>{state.x ?? '-'}</dd>
+            <dt>X:</dt>
+            <dd>{state.x ?? '-'}</dd>
 
-        <dt>Y:</dt>
-        <dd>{state.y ?? '-'}</dd>
+            <dt>Y:</dt>
+            <dd>{state.y ?? '-'}</dd>
 
-        <dt>W:</dt>
-        <dd>{state.w ?? '-'}</dd>
+            <dt>W:</dt>
+            <dd>{state.w ?? '-'}</dd>
 
-        <dt>H:</dt>
-        <dd>{state.h ?? '-'}</dd>
+            <dt>H:</dt>
+            <dd>{state.h ?? '-'}</dd>
 
-        <dt>Rotation:</dt>
-        <dd>{state.rotation ?? '-'}</dd>
+            <dt>Rotation:</dt>
+            <dd>{state.rotation ?? '-'}</dd>
 
-        <dt>Props:</dt>
-        <dd>
-          <pre>{state.props ?? '-'}</pre>
-        </dd>
-      </dl>
-    </ToolWindowAccordion>
+            <dt>Props:</dt>
+            <dd>
+              <pre>{state.props ?? '-'}</pre>
+            </dd>
+          </dl>
+        </AccordionContent>
+      </Accordion.Item>
+    </Accordion.Root>
   );
 };
 
