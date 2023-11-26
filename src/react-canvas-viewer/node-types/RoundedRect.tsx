@@ -22,7 +22,7 @@ export const RoundedRect = (props: Props) => {
         y={props.def.bounds.pos.y}
         width={props.def.bounds.size.w}
         height={props.def.bounds.size.h}
-        className={'node node-boundary'}
+        className={'svg-node svg-node__boundary'}
         rx={radius}
         ry={radius}
         {...propsUtils.except(props, 'def', 'isSelected', 'isSingleSelected')}

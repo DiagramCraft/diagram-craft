@@ -164,7 +164,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           <>
             <polyline
               points={pointsString}
-              className={$c('selection-bb', { 'only-edges': isOnlyEdges })}
+              className={$c('svg-selection__bb', { 'only-edges': isOnlyEdges })}
               fill="none"
               pointerEvents={'none'}
             />
@@ -173,13 +173,13 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               y1={Point.midpoint(points[0], points[1]).y}
               x2={Point.midpoint(points[0], points[1]).x}
               y2={Point.midpoint(points[0], points[1]).y - 20}
-              className="selection-handle"
+              className="svg-selection__handle"
             />
             <circle
               cx={Point.midpoint(points[0], points[1]).x}
               cy={Point.midpoint(points[0], points[1]).y - 20}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'ew-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -191,7 +191,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[0].x}
               cy={points[0].y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'nw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -208,7 +208,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[1].x}
               cy={points[1].y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'ne-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -225,7 +225,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[2].x}
               cy={points[2].y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'se-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -242,7 +242,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={points[3].x}
               cy={points[3].y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'sw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -259,7 +259,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[0], points[1]).x}
               cy={Point.midpoint(points[0], points[1]).y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'n-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -276,7 +276,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[1], points[2]).x}
               cy={Point.midpoint(points[1], points[2]).y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'e-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -294,7 +294,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[2], points[3]).x}
               cy={Point.midpoint(points[2], points[3]).y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'s-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -311,7 +311,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cx={Point.midpoint(points[3], points[4]).x}
               cy={Point.midpoint(points[3], points[4]).y}
               r="4"
-              className="selection-handle"
+              className="svg-selection__handle"
               cursor={'w-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -333,7 +333,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 cx={e.startPosition.x}
                 cy={e.startPosition.y}
                 r="4"
-                className={$c('selection-edge-handle', { connected: e.isStartConnected() })}
+                className={$c('svg-selection__handle-edge', { connected: e.isStartConnected() })}
                 onMouseDown={ev => {
                   if (ev.button !== 0) return;
                   drag.initiateDrag(
@@ -346,7 +346,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 cx={e.endPosition.x}
                 cy={e.endPosition.y}
                 r="4"
-                className={$c('selection-edge-handle', { connected: e.isEndConnected() })}
+                className={$c('svg-selection__handle-edge', { connected: e.isEndConnected() })}
                 onMouseDown={ev => {
                   if (ev.button !== 0) return;
                   drag.initiateDrag(

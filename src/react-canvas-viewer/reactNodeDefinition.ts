@@ -25,7 +25,7 @@ export class ReactNodeDefinition implements NodeDefinition {
 
     // TODO: We probably need to scope the node ids by the diagram id
     const el = document.getElementById(`node-${node.id}`);
-    el?.querySelectorAll('.node-boundary')?.forEach(b => {
+    el?.querySelectorAll('.svg-node__boundary')?.forEach(b => {
       if (b instanceof SVGPathElement) {
         dest.push(b.getAttribute('d') ?? '');
       } else if (b instanceof SVGRectElement) {

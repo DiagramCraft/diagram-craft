@@ -123,7 +123,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
               cx={wp.point.x}
               cy={wp.point.y}
               r="4"
-              className="selection-edge-handle"
+              className="svg-waypoint-handle"
               cursor={'move'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
@@ -147,14 +147,14 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
                       y1={wp.point.y + cp.y}
                       x2={wp.point.x}
                       y2={wp.point.y}
-                      className="selection-bezier-handle-line"
+                      className="svg-bezier-handle-line"
                       cursor={'move'}
                     />
                     <circle
                       cx={wp.point.x + cp.x}
                       cy={wp.point.y + cp.y}
                       r="4"
-                      className="selection-bezier-handle"
+                      className="svg-bezier-handle"
                       cursor={'move'}
                       onMouseDown={e => {
                         if (e.button !== 0) return;

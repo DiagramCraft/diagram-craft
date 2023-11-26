@@ -46,7 +46,7 @@ export const Star = (props: Props) => {
         y={props.def.bounds.pos.y}
         width={props.def.bounds.size.w}
         height={props.def.bounds.size.h}
-        className={'node-boundary node'}
+        className={'svg-node__boundary svg-node'}
         {...propsUtils.except(props, 'def', 'isSelected', 'isSingleSelected')}
       />
 

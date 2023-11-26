@@ -6,16 +6,7 @@ import { round } from '../utils/math.ts';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
-
-type State = {
-  id?: string;
-  x?: number;
-  y?: number;
-  w?: number;
-  h?: number;
-  rotation?: number;
-  props?: string;
-};
+import { ObjectInfo, State } from './components/ObjectInfo.tsx';
 
 export const InfoToolWindow = (props: Props) => {
   const [state, setState] = useState<State>({});
@@ -65,30 +56,7 @@ export const InfoToolWindow = (props: Props) => {
       <Accordion.Item className="cmp-accordion__item" value="info">
         <AccordionTrigger>Info</AccordionTrigger>
         <AccordionContent>
-          <dl>
-            <dt>Id:</dt>
-            <dd>{state.id ?? '-'}</dd>
-
-            <dt>X:</dt>
-            <dd>{state.x ?? '-'}</dd>
-
-            <dt>Y:</dt>
-            <dd>{state.y ?? '-'}</dd>
-
-            <dt>W:</dt>
-            <dd>{state.w ?? '-'}</dd>
-
-            <dt>H:</dt>
-            <dd>{state.h ?? '-'}</dd>
-
-            <dt>Rotation:</dt>
-            <dd>{state.rotation ?? '-'}</dd>
-
-            <dt>Props:</dt>
-            <dd>
-              <pre>{state.props ?? '-'}</pre>
-            </dd>
-          </dl>
+          <ObjectInfo state={state} />
         </AccordionContent>
       </Accordion.Item>
     </Accordion.Root>

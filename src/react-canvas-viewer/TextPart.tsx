@@ -10,7 +10,7 @@ export const TextPart = (props: Props) => {
       width={props.bounds.size.w}
       height={props.bounds.size.h}
       onMouseDown={props.onMouseDown}
-      className={'node-fo'}
+      className={'svg-node__fo'}
     >
       <div
         style={{

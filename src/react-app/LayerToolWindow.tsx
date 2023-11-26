@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
-import { $c } from '../utils/classname.ts';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
+import { LayerList } from './components/LayerList.tsx';
 
 export const LayerToolWindow = (props: Props) => {
   const redraw = useRedraw();
@@ -26,16 +26,7 @@ export const LayerToolWindow = (props: Props) => {
       <Accordion.Item className="cmp-accordion__item" value="layers">
         <AccordionTrigger>Layers</AccordionTrigger>
         <AccordionContent>
-          {props.diagram.elements.map(e => (
-            <div
-              key={e.id}
-              className={$c('cmp-tool-window-layer__element', {
-                selected: props.diagram.selectionState.elements.includes(e)
-              })}
-            >
-              {e.type} {e.id}
-            </div>
-          ))}
+          <LayerList diagram={props.diagram} />
         </AccordionContent>
       </Accordion.Item>
     </Accordion.Root>
