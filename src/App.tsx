@@ -42,7 +42,7 @@ import {
   canvasDropHandler,
   PickerToolWindow
 } from './react-app/PickerToolWindow.tsx';
-import { ObjectProperties } from './react-app/ObjectProperties.tsx';
+import { ObjectProperties } from './react-app/ObjectProperties/ObjectProperties.tsx';
 import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 
 const diagrams = [

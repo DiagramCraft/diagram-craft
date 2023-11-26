@@ -30,7 +30,6 @@ export const ActionToggleGroup = (props: Props) => {
       }}
     >
       <ReactToolbar.ToggleGroup
-        className="ActionToggleGroup"
         type={'multiple'}
         value={Object.entries(values)
           .filter(([, k]) => k)

@@ -1,12 +1,12 @@
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useState } from 'react';
-import { useEventListener } from './hooks/useEventListener.ts';
-import { unique } from '../utils/array.ts';
-import { ColorPicker } from './ColorPicker.tsx';
-import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
+import { useEventListener } from '../hooks/useEventListener.ts';
+import { unique } from '../../utils/array.ts';
+import { ColorPicker } from '../ColorPicker.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from './AccordionTrigger.tsx';
-import { AccordionContent } from './AccordionContext.tsx';
+import { AccordionTrigger } from '../AccordionTrigger.tsx';
+import { AccordionContent } from '../AccordionContext.tsx';
+import { LineProperties } from './LineProperties.tsx';
 
 export const ObjectProperties = (props: Props) => {
   const [fill, setFill] = useState<string>('transparent');
@@ -113,51 +113,7 @@ export const ObjectProperties = (props: Props) => {
         <Accordion.Item className="cmp-accordion__item" value="line">
           <AccordionTrigger>Line</AccordionTrigger>
           <AccordionContent>
-            {props.diagram.selectionState.edges.length > 0 &&
-              props.diagram.selectionState.nodes.length === 0 && (
-                <>
-                  <button
-                    onClick={() =>
-                      props.diagram.selectionState.edges.forEach(e => {
-                        e.props.type = 'straight';
-                        props.diagram.updateElement(e);
-                      })
-                    }
-                  >
-                    <TbLine />
-                  </button>
-                  <button
-                    onClick={() =>
-                      props.diagram.selectionState.edges.forEach(e => {
-                        e.props.type = 'orthogonal';
-                        props.diagram.updateElement(e);
-                      })
-                    }
-                  >
-                    <TbShape3 />
-                  </button>
-                  <button
-                    onClick={() =>
-                      props.diagram.selectionState.edges.forEach(e => {
-                        e.props.type = 'curved';
-                        props.diagram.updateElement(e);
-                      })
-                    }
-                  >
-                    <TbVectorSpline />
-                  </button>
-                  <button
-                    onClick={() =>
-                      props.diagram.selectionState.edges.forEach(e => {
-                        e.props.type = 'bezier';
-                        props.diagram.updateElement(e);
-                      })
-                    }
-                  >
-                    <TbVectorBezier2 />
-                  </button>
-                </>
-              )}
+            <LineProperties diagram={props.diagram} />
           </AccordionContent>
         </Accordion.Item>
       </Accordion.Root>
