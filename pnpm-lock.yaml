@@ -15,6 +15,7 @@ specifiers:
   eslint: ^8.45.0
   eslint-plugin-react-hooks: ^4.6.0
   eslint-plugin-react-refresh: ^0.4.3
+  path-intersection: ^2.2.1
   prettier: ^3.0.3
   react: ^18.2.0
   react-dom: ^18.2.0
@@ -31,6 +32,7 @@ dependencies:
   '@radix-ui/react-popover': 1.0.7_niceheoxzop6u6jvjqp6k2hesq
   '@radix-ui/react-select': 2.0.0_niceheoxzop6u6jvjqp6k2hesq
   '@radix-ui/react-toolbar': 1.0.4_niceheoxzop6u6jvjqp6k2hesq
+  path-intersection: 2.2.1
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-icons: 4.12.0_react@18.2.0
@@ -2443,6 +2445,10 @@ packages:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
     engines: {node: '>=8'}
     dev: true
+
+  /path-intersection/2.2.1:
+    resolution: {integrity: sha512-9u8xvMcSfuOiStv9bPdnRJQhGQXLKurew94n4GPQCdH1nj9QKC9ObbNoIpiRq8skiOBxKkt277PgOoFgAt3/rA==}
+    dev: false
 
   /path-is-absolute/1.0.1:
     resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}

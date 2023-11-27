@@ -4,7 +4,6 @@ import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
 import { buildEdgePath } from '../edgePathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { svgPathProperties } from 'svg-path-properties';
 
 declare global {
   interface ActionMap {
@@ -27,8 +26,7 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
 
     const path = buildEdgePath(edge);
 
-    const props = new svgPathProperties(path.asSvgPath());
-    const totalLength = props.getTotalLength();
+    const totalLength = path.length();
 
     const waypointDistances = (edge.waypoints ?? []).map((_, idx) => ({
       d: Number.MAX_VALUE,
@@ -38,7 +36,7 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
 
     // TODO: We can probably extract this to a waypointHelper object
     for (let i = 0; i < steps; i++) {
-      const at = props.getPointAtLength((totalLength * i) / steps);
+      const at = path.pointAtLength((totalLength * i) / steps);
 
       for (let j = 0; j < waypointDistances.length; j++) {
         const distanceToWaypoint = Point.distance(at, edge.waypoints![j]!.point);

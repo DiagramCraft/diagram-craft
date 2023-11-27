@@ -24,16 +24,22 @@ export const Star = (props: Props) => {
   const theta = Math.PI / 2;
   const dTheta = (2 * Math.PI) / sides;
 
-  const path = new Path('UNIT', props.def.bounds);
-  path.moveTo(0, 1);
+  const path = new Path();
+  path.moveToPoint(path.toWorldCoordinate(props.def.bounds, 0, 1));
 
   for (let i = 0; i < sides; i++) {
     const angle = theta - (i + 1) * dTheta;
 
     const iAngle = angle + dTheta / 2;
-    path.lineTo(Math.cos(iAngle) * innerRadius, Math.sin(iAngle) * innerRadius);
+    path.lineToPoint(
+      path.toWorldCoordinate(
+        props.def.bounds,
+        Math.cos(iAngle) * innerRadius,
+        Math.sin(iAngle) * innerRadius
+      )
+    );
 
-    path.lineTo(Math.cos(angle), Math.sin(angle));
+    path.lineToPoint(path.toWorldCoordinate(props.def.bounds, Math.cos(angle), Math.sin(angle)));
   }
 
   const svgPath = path.asSvgPath();

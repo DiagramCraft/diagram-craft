@@ -95,6 +95,29 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   };
   return (
     <g>
+      <marker
+        id={`marker_s_${props.def.id}`}
+        viewBox="0 0 10 10"
+        refX="10"
+        refY="5"
+        markerWidth="6"
+        markerHeight="6"
+        orient="auto-start-reverse"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" stroke="black" fill="black" />
+      </marker>
+      <marker
+        id={`marker_e_${props.def.id}`}
+        viewBox="0 0 10 10"
+        refX="10"
+        refY="5"
+        markerWidth="6"
+        markerHeight="6"
+        orient="auto-start-reverse"
+      >
+        <path d="M 0 0 L 10 5 L 0 10 z" stroke="black" fill="black" />
+      </marker>
+
       <path
         d={path.asSvgPath()}
         stroke={'transparent'}
@@ -113,6 +136,8 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onContextMenu={onContextMenu}
         style={{ cursor: 'move', fill: 'none' }}
+        markerEnd={`url(#marker_e_${props.def.id})`}
+        markerStart={`url(#marker_s_${props.def.id})`}
       />
 
       {isSingleSelected && (

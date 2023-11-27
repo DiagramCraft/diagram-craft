@@ -4,7 +4,6 @@ import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
 import { buildEdgePath } from '../edgePathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { svgPathProperties } from 'svg-path-properties';
 
 declare global {
   interface ActionMap {
@@ -27,15 +26,14 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
 
     const path = buildEdgePath(edge);
 
-    const props = new svgPathProperties(path.asSvgPath());
-    const totalLength = props.getTotalLength();
+    const totalLength = path.length();
 
     const waypointDistances = (edge.waypoints ?? []).map(() => ({ d: Number.MAX_VALUE, l: -1 }));
 
     let bestLength = 0;
     let bestDistance = Number.MAX_VALUE;
     for (let i = 0; i < steps; i++) {
-      const at = props.getPointAtLength((totalLength * i) / steps);
+      const at = path.pointAtLength((totalLength * i) / steps);
 
       const distanceToClick = Point.distance(at, context.point!);
       if (distanceToClick < bestDistance) {

@@ -37,7 +37,7 @@ const addSegment = (
   );
 
   return dirInOrder.map(direction => {
-    const p = new Path('SCREEN_UNIT');
+    const p = new Path();
 
     const entry: Result = {
       startDirection: direction,
@@ -82,7 +82,7 @@ const buildOrthogonalEdgePath = (
   const sm = edge.startPosition;
   const em = edge.endPosition;
 
-  const path = new Path('SCREEN_UNIT');
+  const path = new Path();
   path.moveToPoint(sm);
 
   let availableDirections: Direction[] = Direction.all();
@@ -115,7 +115,7 @@ const buildOrthogonalEdgePath = (
 const buildCurvedEdgePath = (edge: DiagramEdge) => {
   const em = edge.endPosition;
 
-  const path = new Path('SCREEN_UNIT');
+  const path = new Path();
 
   path.moveToPoint(edge.startPosition);
   if (!edge.waypoints || edge.waypoints.length === 0) {
@@ -134,7 +134,7 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
 };
 
 const buildBezierEdgePath = (edge: DiagramEdge) => {
-  const path = new Path('SCREEN_UNIT');
+  const path = new Path();
 
   path.moveToPoint(edge.startPosition);
   if (!edge.waypoints || edge.waypoints.length === 0) {
@@ -173,7 +173,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
 };
 
 const buildStraightEdgePath = (edge: DiagramEdge) => {
-  const path = new Path('SCREEN_UNIT');
+  const path = new Path();
 
   path.moveToPoint(edge.startPosition);
   edge.waypoints?.forEach(wp => {
