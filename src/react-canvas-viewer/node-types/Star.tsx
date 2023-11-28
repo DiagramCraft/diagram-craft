@@ -1,6 +1,6 @@
 import { DiagramNode } from '../../model-viewer/diagram.ts';
 import React from 'react';
-import { Path } from '../../geometry/path.ts';
+import { PathBuilder } from '../../geometry/pathBuilder.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { Point } from '../../geometry/point.ts';
@@ -24,24 +24,27 @@ export const Star = (props: Props) => {
   const theta = Math.PI / 2;
   const dTheta = (2 * Math.PI) / sides;
 
-  const path = new Path();
-  path.moveToPoint(path.toWorldCoordinate(props.def.bounds, 0, 1));
+  const pathBuilder = new PathBuilder();
+  pathBuilder.moveToPoint(pathBuilder.toWorldCoordinate(props.def.bounds, 0, 1));
 
   for (let i = 0; i < sides; i++) {
     const angle = theta - (i + 1) * dTheta;
 
     const iAngle = angle + dTheta / 2;
-    path.lineToPoint(
-      path.toWorldCoordinate(
+    pathBuilder.lineToPoint(
+      pathBuilder.toWorldCoordinate(
         props.def.bounds,
         Math.cos(iAngle) * innerRadius,
         Math.sin(iAngle) * innerRadius
       )
     );
 
-    path.lineToPoint(path.toWorldCoordinate(props.def.bounds, Math.cos(angle), Math.sin(angle)));
+    pathBuilder.lineToPoint(
+      pathBuilder.toWorldCoordinate(props.def.bounds, Math.cos(angle), Math.sin(angle))
+    );
   }
 
+  const path = pathBuilder.getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -70,8 +73,8 @@ export const Star = (props: Props) => {
       {props.isSingleSelected && (
         <>
           <ShapeControlPoint
-            x={path.positionAt(1).x}
-            y={path.positionAt(1).y}
+            x={path.segments[1].start.x}
+            y={path.segments[1].start.y}
             def={props.def}
             onDrag={(x, y) => {
               const distance = Point.distance({ x, y }, Box.center(props.def.bounds));
@@ -80,8 +83,8 @@ export const Star = (props: Props) => {
             }}
           />
           <ShapeControlPoint
-            x={path.positionAt(2).x}
-            y={path.positionAt(2).y}
+            x={path.segments[2].start.x}
+            y={path.segments[2].start.y}
             def={props.def}
             onDrag={(x, y) => {
               const angle =

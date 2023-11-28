@@ -180,6 +180,14 @@ export const Box = {
   },
 
   intersects: (box: Box, otherBox: Box) => {
+    if (box.rotation === 0 && otherBox.rotation === 0) {
+      return (
+        box.pos.x <= otherBox.pos.x + otherBox.size.w &&
+        box.pos.y <= otherBox.pos.y + otherBox.size.h &&
+        box.pos.x + box.size.w >= otherBox.pos.x &&
+        box.pos.y + box.size.h >= otherBox.pos.y
+      );
+    }
     return Polygon.intersects(Box.asPolygon(box), Box.asPolygon(otherBox));
   },
 

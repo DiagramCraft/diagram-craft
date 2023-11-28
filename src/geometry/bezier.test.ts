@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { Bezier } from './bezier.ts';
+import { BezierUtils } from './bezier.ts';
 
-describe('Bezier', () => {
+describe('BezierUtils', () => {
   test('calculates center', () => {
-    expect(Bezier.fromArc(100, 100, 30, 50, 0, 0, 1, 162.55, 162.45)).toStrictEqual([
+    expect(BezierUtils.fromArc(100, 100, 30, 50, 0, 0, 1, 162.55, 162.45)).toStrictEqual([
       [
         'C',
         114.42221014085034,

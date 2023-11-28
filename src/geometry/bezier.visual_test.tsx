@@ -1,4 +1,4 @@
-import { Bezier } from './bezier.ts';
+import { BezierUtils } from './bezier.ts';
 
 export const BezierVisualTest = () => {
   //const curve = [100, 100, 30, 50, 0, 0, 1, 162.55, 162.45];
@@ -7,7 +7,7 @@ export const BezierVisualTest = () => {
   //const curve = [230, 80, 45, 45, 0, 1, 0, 275, 125];
   //const curve = [80, 230, 45, 45, 0, 0, 1, 125, 275];
   const curve = [230, 230, 45, 45, 0, 1, 1, 275, 275];
-  const beziers = Bezier.fromArc(
+  const beziers = BezierUtils.fromArc(
     curve[0],
     curve[1],
     curve[2],

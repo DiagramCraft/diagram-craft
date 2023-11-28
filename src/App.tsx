@@ -72,11 +72,11 @@ const App = () => {
   const contextMenuTarget = useRef<
     (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
   >(null);
-
-  //useEffect(() => {
-  //  perftest(new SnapManagerPerftest());
-  //}, []);
-
+  /*
+  useEffect(() => {
+    perftest(new BezierPerformanceTest());
+  }, []);
+*/
   const actionMap = makeActionMap(defaultCanvasActions)({ diagram: $d });
   const keyMap = defaultMacKeymap;
   return (

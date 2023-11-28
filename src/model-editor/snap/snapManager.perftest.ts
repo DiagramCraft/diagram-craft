@@ -39,14 +39,16 @@ export class SnapManagerPerftest implements PerformanceTest {
     };
   }
 
-  testCases(): { label: string; run: () => void }[] {
+  testCases(): { label: string; run: () => number }[] {
     return [
       {
         label: 'snapManager',
         run: () => {
-          for (let i = 0; i < 60; i++) {
+          const iter = 60;
+          for (let i = 0; i < iter; i++) {
             this.snapManager!.snapMove(this.randomBox());
           }
+          return iter;
         }
       }
     ];

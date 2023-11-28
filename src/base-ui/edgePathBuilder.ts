@@ -1,4 +1,4 @@
-import { Path } from '../geometry/path.ts';
+import { Path, PathBuilder } from '../geometry/pathBuilder.ts';
 import { DiagramEdge, Waypoint } from '../model-viewer/diagram.ts';
 import { unique } from '../utils/array.ts';
 import { Direction } from '../geometry/direction.ts';
@@ -7,7 +7,7 @@ import { Point } from '../geometry/point.ts';
 type Result = {
   startDirection: Direction;
   endDirection: Direction;
-  path: Path;
+  path: PathBuilder;
   availableDirections: Direction[];
   preferedDirection: Direction[];
 };
@@ -37,7 +37,7 @@ const addSegment = (
   );
 
   return dirInOrder.map(direction => {
-    const p = new Path();
+    const p = new PathBuilder();
 
     const entry: Result = {
       startDirection: direction,
@@ -82,7 +82,7 @@ const buildOrthogonalEdgePath = (
   const sm = edge.startPosition;
   const em = edge.endPosition;
 
-  const path = new Path();
+  const path = new PathBuilder();
   path.moveToPoint(sm);
 
   let availableDirections: Direction[] = Direction.all();
@@ -115,7 +115,7 @@ const buildOrthogonalEdgePath = (
 const buildCurvedEdgePath = (edge: DiagramEdge) => {
   const em = edge.endPosition;
 
-  const path = new Path();
+  const path = new PathBuilder();
 
   path.moveToPoint(edge.startPosition);
   if (!edge.waypoints || edge.waypoints.length === 0) {
@@ -134,7 +134,7 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
 };
 
 const buildBezierEdgePath = (edge: DiagramEdge) => {
-  const path = new Path();
+  const path = new PathBuilder();
 
   path.moveToPoint(edge.startPosition);
   if (!edge.waypoints || edge.waypoints.length === 0) {
@@ -173,7 +173,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
 };
 
 const buildStraightEdgePath = (edge: DiagramEdge) => {
-  const path = new Path();
+  const path = new PathBuilder();
 
   path.moveToPoint(edge.startPosition);
   edge.waypoints?.forEach(wp => {
@@ -190,13 +190,13 @@ export const buildEdgePath = (
 ): Path => {
   switch (edge.props.type) {
     case 'orthogonal':
-      return buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
+      return buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection).getPath();
     case 'curved':
-      return buildCurvedEdgePath(edge);
+      return buildCurvedEdgePath(edge).getPath();
     case 'bezier':
-      return buildBezierEdgePath(edge);
+      return buildBezierEdgePath(edge).getPath();
 
     default:
-      return buildStraightEdgePath(edge);
+      return buildStraightEdgePath(edge).getPath();
   }
 };

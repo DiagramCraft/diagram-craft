@@ -2,7 +2,7 @@ export interface PerformanceTest {
   setup(): void;
   testCases(): {
     label: string;
-    run: () => void;
+    run: () => number;
   }[];
 }
 
@@ -10,12 +10,15 @@ export const perftest = (test: PerformanceTest) => {
   test.setup();
 
   for (const testCase of test.testCases()) {
-    console.log(testCase.label);
     console.profile(testCase.label);
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 3; i++) {
       const s = new Date().getTime();
-      testCase.run();
-      console.log(new Date().getTime() - s);
+      const iter = testCase.run();
+      console.log(
+        `${testCase.label},${new Date().getTime() - s},${
+          (new Date().getTime() - s) / iter
+        },${Math.floor(iter / ((new Date().getTime() - s) / 1000))}`
+      );
     }
 
     console.profileEnd(testCase.label);
