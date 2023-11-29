@@ -6,7 +6,7 @@ import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
-  dest.register(new ReactNodeDefinition('star', Star));
+  dest.register(new ReactNodeDefinition('star', Star, Star.getBoundingPath));
   dest.register(new ReactNodeDefinition('rect', Rect));
   dest.register(new ReactNodeDefinition('rounded-rect', RoundedRect));
   return dest;

@@ -7,20 +7,20 @@ export const Rect = (props: Props) => {
   return (
     <>
       <rect
-        x={props.def.bounds.pos.x}
-        y={props.def.bounds.pos.y}
-        width={props.def.bounds.size.w}
-        height={props.def.bounds.size.h}
+        x={props.node.bounds.pos.x}
+        y={props.node.bounds.pos.y}
+        width={props.node.bounds.size.w}
+        height={props.node.bounds.size.h}
         className={'svg-node svg-node__boundary'}
-        {...propsUtils.except(props, 'def', 'isSelected', 'isSingleSelected')}
+        {...propsUtils.except(props, 'node', 'isSelected', 'isSingleSelected')}
       />
       <TextPart
-        text={props.def.props.text?.text}
-        bounds={props.def.bounds}
+        text={props.node.props.text?.text}
+        bounds={props.node.bounds}
         onChange={text => {
-          props.def.props.text ??= {};
-          props.def.props.text.text = text;
-          props.def.diagram!.updateElement(props.def);
+          props.node.props.text ??= {};
+          props.node.props.text.text = text;
+          props.node.diagram!.updateElement(props.node);
         }}
         onMouseDown={props.onMouseDown!}
       />
@@ -29,7 +29,7 @@ export const Rect = (props: Props) => {
 };
 
 type Props = {
-  def: DiagramNode;
+  node: DiagramNode;
   isSelected: boolean;
   isSingleSelected: boolean;
 } & React.SVGProps<SVGRectElement>;

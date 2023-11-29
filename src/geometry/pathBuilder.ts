@@ -1,8 +1,7 @@
 import { Point } from './point.ts';
 import { Box } from './box.ts';
-import { svgPathProperties } from 'svg-path-properties';
-import { NotImplementedYet, precondition, VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import { BezierUtils } from './bezier.ts';
+import { precondition, VERIFY_NOT_REACHED } from '../utils/assert.ts';
+import { BezierUtils, CubicBezier } from './bezier.ts';
 
 export type Cubic = ['C', number, number, number, number, number, number];
 export type Line = ['L', number, number];
@@ -10,10 +9,10 @@ export type Arc = ['A', number, number, number, 0 | 1, 0 | 1, number, number];
 export type Curve = ['T', number, number];
 export type Quad = ['Q', number, number, number, number];
 
-export type CubicArray = ['CA', Cubic[]];
-
 type Segment = Cubic | Line | Arc | Curve | Quad;
-type NormalizedSegment = CubicArray | Cubic | Quad | Line;
+type NormalizedSegment = Cubic | Quad | Line;
+
+type Mode = 'speed' | 'precision';
 
 export class PathBuilder {
   path: Segment[] = [];
@@ -94,7 +93,7 @@ export class PathBuilder {
 
 interface PathSegment {
   length(): number;
-  pointAt(t: number): Point;
+  point(t: number): Point;
   //tangentAt(t: number): Vector;
   //normalAt(t: number): Vector;
   //intersectionsWith(other: PathSegment): Point[] | undefined;
@@ -118,7 +117,7 @@ class LineSegment implements PathSegment {
     return Point.distance(this.start, this.end);
   }
 
-  pointAt(t: number) {
+  point(t: number) {
     return {
       x: this.start.x + (this.end.x - this.start.x) * t,
       y: this.start.y + (this.end.y - this.start.y) * t
@@ -130,28 +129,14 @@ class LineSegment implements PathSegment {
   }
 }
 
-class CubicSegment implements PathSegment {
+class CubicSegment extends CubicBezier implements PathSegment {
   constructor(
     public readonly start: Point,
     public readonly p1: Point,
     private readonly p2: Point,
     public readonly end: Point
-  ) {}
-
-  length(): number {
-    throw new NotImplementedYet();
-  }
-
-  pointAt(t: number): Point {
-    const t2 = t * t;
-    const t3 = t2 * t;
-    const mt = 1 - t;
-    const mt2 = mt * mt;
-    const mt3 = mt2 * mt;
-    return {
-      x: this.start.x * mt3 + 3 * this.p1.x * mt2 * t + 3 * this.p2.x * mt * t2 + this.end.x * t3,
-      y: this.start.y * mt3 + 3 * this.p1.y * mt2 * t + 3 * this.p2.y * mt * t2 + this.end.y * t3
-    };
+  ) {
+    super(start, p1, p2, end);
   }
 
   normalize(): NormalizedSegment[] {
@@ -185,6 +170,9 @@ class QuadSegment extends CubicSegment {
 }
 
 class ArcSegment implements PathSegment {
+  private _normalized: Cubic[] | undefined;
+  private _segmentList: SegmentList | undefined;
+
   constructor(
     public readonly start: Point,
     private readonly rx: number,
@@ -196,15 +184,17 @@ class ArcSegment implements PathSegment {
   ) {}
 
   length(): number {
-    throw new NotImplementedYet();
+    return this.segmentList.length();
   }
 
-  pointAt(t: number): Point {
-    throw new NotImplementedYet(t.toString());
+  point(t: number): Point {
+    return this.segmentList.point(t);
   }
 
-  normalize(): NormalizedSegment[] {
-    return BezierUtils.fromArc(
+  normalize(): Cubic[] {
+    if (this._normalized) return this._normalized;
+
+    this._normalized = BezierUtils.fromArc(
       this.start.x,
       this.start.y,
       this.rx,
@@ -215,6 +205,25 @@ class ArcSegment implements PathSegment {
       this.end.x,
       this.end.y
     );
+
+    return this._normalized;
+  }
+
+  private get segmentList() {
+    if (this._segmentList) return this._segmentList;
+
+    this._segmentList = new SegmentList(
+      this.normalize().map(
+        c =>
+          new CubicSegment(
+            this.start,
+            { x: c[1], y: c[2] },
+            { x: c[3], y: c[4] },
+            { x: c[5], y: c[6] }
+          )
+      )
+    );
+    return this._segmentList;
   }
 }
 
@@ -232,78 +241,118 @@ class CurveSegment extends QuadSegment {
   }
 }
 
+class SegmentList {
+  constructor(public readonly segments: PathSegment[]) {}
+
+  length() {
+    return this.segments.reduce((acc, cur) => acc + cur.length(), 0) ?? 0;
+  }
+
+  point(t: number, _mode: Mode = 'speed') {
+    const totalLength = this.length();
+    return this.pointAtLength(t * totalLength, _mode);
+  }
+
+  pointAtLength(t: number, _mode: Mode = 'speed') {
+    // Find the segment that contains the point
+    let currentT = t;
+    let segmentIndex = 0;
+    let segment = this.segments[segmentIndex];
+    while (currentT > segment.length()) {
+      currentT -= segment.length();
+      segment = this.segments[++segmentIndex];
+    }
+
+    // TODO: We can probably use tAtLength here
+    return segment.point(currentT / segment.length());
+  }
+}
+
 export class Path {
-  private path: Segment[] = [];
-  private pathProperties: ReturnType<typeof svgPathProperties> | undefined;
-  private start: Point;
-  private _pathSegments: PathSegment[] | undefined;
+  private readonly path: Segment[] = [];
+  private readonly start: Point;
+  private _segmentList: SegmentList | undefined;
 
   constructor(path: Segment[], start: Point) {
     this.path = path;
     this.start = start;
   }
 
-  get segments(): PathSegment[] {
-    if (this._pathSegments) return this._pathSegments;
+  private get segmentList() {
+    if (!this._segmentList) {
+      const dest: PathSegment[] = [];
 
-    const dest: PathSegment[] = [];
+      let lastEnd = this.start;
 
-    let lastEnd = this.start;
+      for (const segment of this.path) {
+        const command = segment[0];
 
-    for (const segment of this.path) {
-      const command = segment[0];
+        let s: PathSegment;
+        switch (command) {
+          case 'L':
+            s = new LineSegment(lastEnd, { x: segment[1], y: segment[2] });
+            break;
+          case 'C':
+            s = new CubicSegment(
+              lastEnd,
+              { x: segment[1], y: segment[2] },
+              { x: segment[3], y: segment[4] },
+              { x: segment[5], y: segment[6] }
+            );
+            break;
+          case 'Q':
+            s = new QuadSegment(
+              lastEnd,
+              { x: segment[1], y: segment[2] },
+              { x: segment[3], y: segment[4] }
+            );
+            break;
+          case 'T':
+            {
+              s = new CurveSegment(
+                lastEnd,
+                { x: segment[1], y: segment[2] },
+                dest.at(-1)! as QuadSegment | CurveSegment
+              );
+            }
+            break;
+          case 'A':
+            s = new ArcSegment(
+              lastEnd,
+              segment[1],
+              segment[2],
+              segment[3],
+              segment[4],
+              segment[5],
+              {
+                x: segment[6],
+                y: segment[7]
+              }
+            );
+            break;
 
-      let s: PathSegment;
-      switch (command) {
-        case 'L':
-          s = new LineSegment(lastEnd, { x: segment[1], y: segment[2] });
-          break;
-        case 'C':
-          s = new CubicSegment(
-            lastEnd,
-            { x: segment[1], y: segment[2] },
-            { x: segment[3], y: segment[4] },
-            { x: segment[5], y: segment[6] }
-          );
-          break;
-        case 'Q':
-          s = new QuadSegment(
-            lastEnd,
-            { x: segment[1], y: segment[2] },
-            { x: segment[3], y: segment[4] }
-          );
-          break;
-        case 'T':
-          s = new CurveSegment(
-            lastEnd,
-            { x: segment[1], y: segment[2] },
-            dest.at(-1)! as QuadSegment | CurveSegment
-          );
-          break;
-        case 'A':
-          s = new ArcSegment(lastEnd, segment[1], segment[2], segment[3], segment[4], segment[5], {
-            x: segment[6],
-            y: segment[7]
-          });
-          break;
-
-        default:
-          VERIFY_NOT_REACHED();
+          default:
+            VERIFY_NOT_REACHED();
+        }
+        dest.push(s!);
+        lastEnd = s!.end;
       }
-      dest.push(s!);
-      lastEnd = s!.end;
-    }
 
-    this._pathSegments = dest;
-    return dest;
+      this._segmentList = new SegmentList(dest);
+    }
+    return this._segmentList;
+  }
+
+  get segments(): PathSegment[] {
+    return this.segmentList.segments;
   }
 
   length() {
-    return this.getPathProperties().getTotalLength();
+    return this.segmentList.length();
   }
 
-  pointAtLength(t: number) {
-    return this.getPathProperties().getPointAtLength(t);
+  pointAtLength(t: number, _mode: Mode = 'speed') {
+    return this.segmentList.pointAtLength(t, _mode);
   }
 
   asSvgPath(normalized = false) {
@@ -318,12 +367,5 @@ export class Path {
     } else {
       return `M ${this.start.x} ${this.start.y} ` + this.path.map(e => e.join(' ')).join(' ');
     }
-  }
-
-  private getPathProperties() {
-    if (!this.pathProperties) {
-      this.pathProperties = new svgPathProperties(this.asSvgPath());
-    }
-    return this.pathProperties;
   }
 }

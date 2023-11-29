@@ -6,9 +6,9 @@ import { UndoManager } from '../model-editor/undoManager.ts';
 import { Viewbox } from './viewBox.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Point } from '../geometry/point.ts';
-import { svgPathProperties } from 'svg-path-properties';
 import { round } from '../utils/math.ts';
 import { assert } from '../utils/assert.ts';
+import { Path } from '../geometry/pathBuilder.ts';
 
 declare global {
   interface EdgeProps {
@@ -100,16 +100,14 @@ export class DiagramNode implements AbstractNode {
 
     const def = this.diagram!.nodDefinitions.get(this.nodeType);
 
-    const paths = def.getBoundingPaths(this);
+    const path = def.getBoundingPath(this);
 
-    for (const path of paths) {
-      for (const p of new svgPathProperties(path).getParts()) {
-        const { x, y } = p.getPointAtLength(p.length / 2);
-        const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
-        const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
+    for (const p of path.segments) {
+      const { x, y } = p.point(0.5);
+      const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
+      const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
 
-        this._anchors.push({ x: lx, y: ly });
-      }
+      this._anchors.push({ x: lx, y: ly });
     }
 
     this.diagram.updateElement(this);
@@ -458,7 +456,7 @@ export interface NodeDefinition {
 
   supports(capability: NodeCapability): boolean;
 
-  getBoundingPaths(node: DiagramNode): string[];
+  getBoundingPath(node: DiagramNode): Path;
 }
 
 export class NodeDefinitionRegistry {

@@ -1,4 +1,4 @@
-import { DiagramNode } from '../../model-viewer/diagram.ts';
+import { DiagramNode, NodeDefinition } from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { PathBuilder } from '../../geometry/pathBuilder.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
@@ -18,54 +18,28 @@ declare global {
 }
 
 export const Star = (props: Props) => {
-  const sides = props.def.props?.star?.numberOfSides ?? 5;
-  const innerRadius = props.def.props?.star?.innerRadius ?? 0.5;
-
-  const theta = Math.PI / 2;
-  const dTheta = (2 * Math.PI) / sides;
-
-  const pathBuilder = new PathBuilder();
-  pathBuilder.moveToPoint(pathBuilder.toWorldCoordinate(props.def.bounds, 0, 1));
-
-  for (let i = 0; i < sides; i++) {
-    const angle = theta - (i + 1) * dTheta;
-
-    const iAngle = angle + dTheta / 2;
-    pathBuilder.lineToPoint(
-      pathBuilder.toWorldCoordinate(
-        props.def.bounds,
-        Math.cos(iAngle) * innerRadius,
-        Math.sin(iAngle) * innerRadius
-      )
-    );
-
-    pathBuilder.lineToPoint(
-      pathBuilder.toWorldCoordinate(props.def.bounds, Math.cos(angle), Math.sin(angle))
-    );
-  }
-
-  const path = pathBuilder.getPath();
+  const path = props.def.getBoundingPath(props.node);
   const svgPath = path.asSvgPath();
 
   return (
     <>
       <path
         d={svgPath}
-        x={props.def.bounds.pos.x}
-        y={props.def.bounds.pos.y}
-        width={props.def.bounds.size.w}
-        height={props.def.bounds.size.h}
+        x={props.node.bounds.pos.x}
+        y={props.node.bounds.pos.y}
+        width={props.node.bounds.size.w}
+        height={props.node.bounds.size.h}
         className={'svg-node__boundary svg-node'}
-        {...propsUtils.except(props, 'def', 'isSelected', 'isSingleSelected')}
+        {...propsUtils.except(props, 'node', 'isSelected', 'isSingleSelected')}
       />
 
       <TextPart
-        text={props.def.props.text?.text}
-        bounds={props.def.bounds}
+        text={props.node.props.text?.text}
+        bounds={props.node.bounds}
         onChange={text => {
-          props.def.props.text ??= {};
-          props.def.props.text.text = text;
-          props.def.diagram!.updateElement(props.def);
+          props.node.props.text ??= {};
+          props.node.props.text.text = text;
+          props.node.diagram!.updateElement(props.node);
         }}
         onMouseDown={props.onMouseDown!}
       />
@@ -75,24 +49,24 @@ export const Star = (props: Props) => {
           <ShapeControlPoint
             x={path.segments[1].start.x}
             y={path.segments[1].start.y}
-            def={props.def}
+            def={props.node}
             onDrag={(x, y) => {
-              const distance = Point.distance({ x, y }, Box.center(props.def.bounds));
-              props.def.props.star ??= {};
-              props.def.props.star.innerRadius = distance / (props.def.bounds.size.w / 2);
+              const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
+              props.node.props.star ??= {};
+              props.node.props.star.innerRadius = distance / (props.node.bounds.size.w / 2);
             }}
           />
           <ShapeControlPoint
             x={path.segments[2].start.x}
             y={path.segments[2].start.y}
-            def={props.def}
+            def={props.node}
             onDrag={(x, y) => {
               const angle =
-                Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.def.bounds)));
+                Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
               const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-              props.def.props.star ??= {};
-              props.def.props.star.numberOfSides = numberOfSides;
+              props.node.props.star ??= {};
+              props.node.props.star.numberOfSides = numberOfSides;
             }}
           />
         </>
@@ -101,8 +75,39 @@ export const Star = (props: Props) => {
   );
 };
 
+Star.getBoundingPath = (def: DiagramNode) => {
+  const sides = def.props?.star?.numberOfSides ?? 5;
+  const innerRadius = def.props?.star?.innerRadius ?? 0.5;
+
+  const theta = Math.PI / 2;
+  const dTheta = (2 * Math.PI) / sides;
+
+  const pathBuilder = new PathBuilder();
+  pathBuilder.moveToPoint(pathBuilder.toWorldCoordinate(def.bounds, 0, 1));
+
+  for (let i = 0; i < sides; i++) {
+    const angle = theta - (i + 1) * dTheta;
+
+    const iAngle = angle + dTheta / 2;
+    pathBuilder.lineToPoint(
+      pathBuilder.toWorldCoordinate(
+        def.bounds,
+        Math.cos(iAngle) * innerRadius,
+        Math.sin(iAngle) * innerRadius
+      )
+    );
+
+    pathBuilder.lineToPoint(
+      pathBuilder.toWorldCoordinate(def.bounds, Math.cos(angle), Math.sin(angle))
+    );
+  }
+
+  return pathBuilder.getPath();
+};
+
 type Props = {
-  def: DiagramNode;
+  def: NodeDefinition;
+  node: DiagramNode;
   isSelected: boolean;
   isSingleSelected: boolean;
 } & React.SVGProps<SVGRectElement>;

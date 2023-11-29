@@ -103,7 +103,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
     // TODO: Better error handling here
     if (!nodeDef) VERIFY_NOT_REACHED();
-    if (!(nodeDef instanceof ReactNodeDefinition)) VERIFY_NOT_REACHED();
+    if (!('reactNode' in nodeDef)) VERIFY_NOT_REACHED();
 
     const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
 
@@ -117,7 +117,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
       >
         <ReactNodeImpl
-          def={props.def}
+          def={nodeDef}
+          node={props.def}
           onMouseDown={onMouseDown}
           isSelected={isSelected}
           isSingleSelected={isSingleSelected}
