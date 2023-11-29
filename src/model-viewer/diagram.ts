@@ -8,7 +8,7 @@ import { deepClone } from '../utils/clone.ts';
 import { Point } from '../geometry/point.ts';
 import { round } from '../utils/math.ts';
 import { assert } from '../utils/assert.ts';
-import { Path } from '../geometry/pathBuilder.ts';
+import { Path } from '../geometry/path.ts';
 
 declare global {
   interface EdgeProps {

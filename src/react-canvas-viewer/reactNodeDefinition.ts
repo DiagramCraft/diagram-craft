@@ -1,6 +1,7 @@
 import React from 'react';
 import { DiagramNode, NodeCapability, NodeDefinition } from '../model-viewer/diagram.ts';
-import { Path, PathBuilder } from '../geometry/pathBuilder.ts';
+import { PathBuilder } from '../geometry/pathBuilder.ts';
+import { Path } from '../geometry/path.ts';
 
 type Props = {
   node: DiagramNode;

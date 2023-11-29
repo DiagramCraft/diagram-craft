@@ -7,7 +7,7 @@ import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
-import { PathPosition } from '../geometry/pathBuilder.ts';
+import { PathPosition } from '../geometry/pathPosition.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(

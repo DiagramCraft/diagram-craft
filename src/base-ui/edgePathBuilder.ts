@@ -1,8 +1,9 @@
-import { Path, PathBuilder } from '../geometry/pathBuilder.ts';
+import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { DiagramEdge, Waypoint } from '../model-viewer/diagram.ts';
 import { unique } from '../utils/array.ts';
 import { Direction } from '../geometry/direction.ts';
 import { Point } from '../geometry/point.ts';
+import { Path } from '../geometry/path.ts';
 
 type Result = {
   startDirection: Direction;
