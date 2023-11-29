@@ -1,16 +1,23 @@
 import { Point } from './point.ts';
 import { Box } from './box.ts';
-import { precondition, VERIFY_NOT_REACHED } from '../utils/assert.ts';
+import { Line } from './line.ts';
+import {
+  postcondition,
+  precondition,
+  VERIFY_NOT_REACHED,
+  VerifyNotReached
+} from '../utils/assert.ts';
 import { BezierUtils, CubicBezier } from './bezier.ts';
+import { Vector } from './vector.ts';
 
-export type Cubic = ['C', number, number, number, number, number, number];
-export type Line = ['L', number, number];
-export type Arc = ['A', number, number, number, 0 | 1, 0 | 1, number, number];
-export type Curve = ['T', number, number];
-export type Quad = ['Q', number, number, number, number];
+export type RawCubicSegment = ['C', number, number, number, number, number, number];
+export type RawLineSegment = ['L', number, number];
+export type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, number];
+export type RawCurveSegment = ['T', number, number];
+export type RawQuadSegment = ['Q', number, number, number, number];
 
-type Segment = Cubic | Line | Arc | Curve | Quad;
-type NormalizedSegment = Cubic | Quad | Line;
+type Segment = RawCubicSegment | RawLineSegment | RawArcSegment | RawCurveSegment | RawQuadSegment;
+type NormalizedSegment = RawCubicSegment | RawQuadSegment | RawLineSegment;
 
 type Mode = 'speed' | 'precision';
 
@@ -91,12 +98,15 @@ export class PathBuilder {
   }
 }
 
+type Projection = { t: number; distance: number; point: Point };
+
 interface PathSegment {
   length(): number;
   point(t: number): Point;
+  intersectionsWith(other: PathSegment): Point[] | undefined;
+  projectPoint(point: Point): Projection;
   //tangentAt(t: number): Vector;
   //normalAt(t: number): Vector;
-  //intersectionsWith(other: PathSegment): Point[] | undefined;
   //boundingBox(): Box;
   //splitAt(t: number): [PathSegment, PathSegment];
   //project(p: Point): { t: number, distance: number };
@@ -112,6 +122,31 @@ class LineSegment implements PathSegment {
     public readonly start: Point,
     public readonly end: Point
   ) {}
+
+  projectPoint(point: Point): Projection {
+    const v = Vector.from(this.start, this.end);
+    const w = Vector.from(this.start, point);
+
+    const c1 = Vector.dot(w, v);
+    const c2 = Vector.dot(v, v);
+
+    const t = c1 / c2;
+
+    const projection = Point.add(this.start, Vector.scale(v, t));
+    const distance = Point.distance(point, projection);
+
+    return { t, distance, point: projection };
+  }
+
+  intersectionsWith(other: PathSegment): Point[] | undefined {
+    if (other instanceof LineSegment) {
+      const p = Line.intersection(Line.of(this.start, this.end), Line.of(other.start, other.end));
+      if (p) return [p];
+      return undefined;
+    } else {
+      return other.intersectionsWith(this);
+    }
+  }
 
   length() {
     return Point.distance(this.start, this.end);
@@ -137,6 +172,16 @@ class CubicSegment extends CubicBezier implements PathSegment {
     public readonly end: Point
   ) {
     super(start, p1, p2, end);
+  }
+
+  intersectionsWith(other: PathSegment): Point[] | undefined {
+    if (other instanceof LineSegment) {
+      return super.intersectsLine(Line.of(other.start, other.end));
+    } else if (other instanceof CubicSegment) {
+      return super.intersectsBezier(other);
+    } else {
+      return other.intersectionsWith(this);
+    }
   }
 
   normalize(): NormalizedSegment[] {
@@ -170,7 +215,7 @@ class QuadSegment extends CubicSegment {
 }
 
 class ArcSegment implements PathSegment {
-  private _normalized: Cubic[] | undefined;
+  private _normalized: RawCubicSegment[] | undefined;
   private _segmentList: SegmentList | undefined;
 
   constructor(
@@ -191,7 +236,20 @@ class ArcSegment implements PathSegment {
     return this.segmentList.point(t);
   }
 
-  normalize(): Cubic[] {
+  intersectionsWith(other: PathSegment): Point[] | undefined {
+    const dest: Point[] = [];
+
+    for (const segment of this.segmentList.segments) {
+      const intersections = segment.intersectionsWith(other);
+      if (intersections) {
+        dest.push(...intersections);
+      }
+    }
+
+    return dest;
+  }
+
+  normalize(): RawCubicSegment[] {
     if (this._normalized) return this._normalized;
 
     this._normalized = BezierUtils.fromArc(
@@ -207,6 +265,12 @@ class ArcSegment implements PathSegment {
     );
 
     return this._normalized;
+  }
+
+  projectPoint(point: Point): Projection {
+    const projection = this.segmentList.projectPoint(point);
+    projection.t = projection.globalT;
+    return projection;
   }
 
   private get segmentList() {
@@ -265,6 +329,31 @@ class SegmentList {
 
     // TODO: We can probably use tAtLength here
     return segment.point(currentT / segment.length());
+  }
+
+  projectPoint(point: Point): Projection & { segmentIndex: number; globalT: number } {
+    let bestSegment = -1;
+    let bestProject: Projection | undefined;
+    let bestDistance = Number.MAX_VALUE;
+    const segments = this.segments;
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i];
+      const projection = s.projectPoint(point);
+      if (projection.distance < bestDistance) {
+        bestProject = projection;
+        bestDistance = projection.distance;
+        bestSegment = i;
+      }
+    }
+
+    const l = this.segments.slice(0, bestSegment).reduce((acc, cur) => acc + cur.length(), 0);
+    return {
+      segmentIndex: bestSegment,
+      t: bestProject!.t,
+      globalT: l + bestProject!.t * this.segments[bestSegment].length(),
+      distance: bestProject!.distance,
+      point: bestProject!.point
+    };
   }
 }
 
@@ -351,8 +440,49 @@ export class Path {
     return this.segmentList.length();
   }
 
+  lengthTo(idx: number) {
+    return this.segments.slice(0, idx).reduce((acc, cur) => acc + cur.length(), 0);
+  }
+
+  // TODO: Change to PathPosition
   pointAtLength(t: number, _mode: Mode = 'speed') {
     return this.segmentList.pointAtLength(t, _mode);
+  }
+
+  projectPoint(point: Point): PathPosition {
+    const projection = this.segmentList.projectPoint(point);
+
+    const pathPosition = new PathPosition();
+    pathPosition.globalT = projection.globalT;
+    pathPosition.point = projection.point;
+    pathPosition.segmentIndex = projection.segmentIndex;
+    pathPosition.localT = projection.t;
+    pathPosition.path = this;
+    return pathPosition;
+  }
+
+  intersections(other: Path): PathPosition[] {
+    const dest: PathPosition[] = [];
+
+    for (let idx = 0; idx < this.segments.length; idx++) {
+      const segment = this.segments[idx];
+      for (const otherSegment of other.segments) {
+        const intersections = segment.intersectionsWith(otherSegment);
+        if (intersections) {
+          dest.push(
+            ...intersections.map(i => {
+              const pos = new PathPosition();
+              pos.point = i;
+              pos.segmentIndex = idx;
+              pos.path = this;
+              return pos;
+            })
+          );
+        }
+      }
+    }
+
+    return dest;
   }
 
   asSvgPath(normalized = false) {
@@ -367,5 +497,233 @@ export class Path {
     } else {
       return `M ${this.start.x} ${this.start.y} ` + this.path.map(e => e.join(' ')).join(' ');
     }
+  }
+}
+
+export class PathPosition {
+  private _globalT: number | undefined;
+  private _globalD: number | undefined;
+  private _point: Point | undefined;
+  private _segmentIndex: number | undefined;
+  private _localT: number | undefined;
+  private _localD: number | undefined;
+  private _path: Path | undefined;
+
+  set path(p: Path) {
+    this._path = p;
+
+    // Check we have all we need
+    postcondition.is.true(
+      this._point !== undefined ||
+        (this._segmentIndex !== undefined && this._localT !== undefined) ||
+        (this._segmentIndex !== undefined && this._localD !== undefined) ||
+        this._globalD !== undefined ||
+        this._globalT !== undefined
+    );
+  }
+
+  set globalT(t: number) {
+    this._globalT = t;
+  }
+
+  set globalD(d: number) {
+    this._globalD = d;
+  }
+
+  set point(p: Point) {
+    this._point = p;
+  }
+
+  set segmentIndex(i: number) {
+    this._segmentIndex = i;
+  }
+
+  set localT(t: number) {
+    this._localT = t;
+  }
+
+  set localD(d: number) {
+    this._localD = d;
+  }
+
+  get globalT() {
+    if (this._globalT !== undefined) return this._globalT;
+
+    if (this._globalD !== undefined) {
+      this.fetchGlobalTFromGlobalD(this._globalD);
+    } else if (this._localT !== undefined && this._segmentIndex !== undefined) {
+      this.fetchGlobalTFromLocalT(this._localT, this._segmentIndex);
+    } else if (this._localD !== undefined && this._segmentIndex !== undefined) {
+      this.fetchGlobalTFromLocalD(this._localD, this._segmentIndex);
+    } else if (this._point !== undefined) {
+      this.fetchFromPoint(this._point);
+    } else {
+      throw new VerifyNotReached();
+    }
+
+    return this._globalT!;
+  }
+
+  get globalD() {
+    if (this._globalD !== undefined) return this._globalD;
+
+    if (this._localD !== undefined && this._segmentIndex !== undefined) {
+      this.fetchGlobalDFromLocalD(this._localD, this._segmentIndex);
+    } else if (this._globalT !== undefined) {
+      this.fetchGlobalDFromGlobalT(this._globalT);
+    } else if (this._localT !== undefined && this._segmentIndex !== undefined) {
+      this.fetchLocalDFromLocalT(this._localT, this._segmentIndex);
+      this.fetchGlobalDFromLocalD(this._localD!, this._segmentIndex);
+    } else if (this._point !== undefined) {
+      this.fetchFromPoint(this._point);
+      this.fetchGlobalDFromGlobalT(this._globalT!);
+    } else {
+      throw new VerifyNotReached();
+    }
+
+    return this._globalD!;
+  }
+
+  get point() {
+    if (this._point !== undefined) return this._point;
+
+    if (this._localT !== undefined && this._segmentIndex !== undefined) {
+      this.fetchPointFromLocalT(this._localT, this._segmentIndex);
+    } else if (this._localD !== undefined && this._segmentIndex !== undefined) {
+      this.fetchLocalTFromLocalD(this._localD, this._segmentIndex);
+      this.fetchPointFromLocalT(this._localD!, this._segmentIndex);
+    } else if (this._globalD !== undefined) {
+      this.fetchPointFromGlobalD(this._globalD);
+    } else if (this._globalT !== undefined) {
+      this.fetchGlobalDFromGlobalT(this._globalT);
+      this.fetchPointFromGlobalD(this._globalD!);
+    } else {
+      throw new VerifyNotReached();
+    }
+
+    return this._point!;
+  }
+
+  get segmentIndex() {
+    if (this._segmentIndex !== undefined) return this._segmentIndex;
+
+    if (this._point !== undefined) {
+      this.fetchFromPoint(this._point);
+    } else if (this._globalD !== undefined) {
+      this.fetchLocalTFromGlobalD(this._globalD);
+    } else if (this._globalT !== undefined) {
+      this.fetchGlobalDFromGlobalT(this._globalT);
+      this.fetchLocalTFromGlobalD(this._globalD!);
+    } else {
+      throw new VerifyNotReached();
+    }
+
+    return this._segmentIndex!;
+  }
+
+  get localT() {
+    if (this._localT !== undefined) return this._localT;
+
+    if (this._localD !== undefined && this._segmentIndex !== undefined) {
+      this.fetchLocalTFromLocalD(this._localD, this._segmentIndex);
+    } else if (this._globalD !== undefined) {
+      this.fetchLocalTFromGlobalD(this._globalD);
+    } else if (this._globalT !== undefined) {
+      this.fetchGlobalDFromGlobalT(this._globalT);
+      this.fetchLocalTFromGlobalD(this._globalD!);
+    } else if (this._point !== undefined) {
+      this.fetchFromPoint(this._point);
+    } else {
+      throw new VerifyNotReached();
+    }
+    return this._localT!;
+  }
+
+  get localD() {
+    if (this._localD !== undefined) return this._localD;
+
+    if (this._localT !== undefined && this._segmentIndex !== undefined) {
+      this.fetchLocalDFromLocalT(this._localT, this._segmentIndex);
+    } else if (this._globalD !== undefined) {
+      this.fetchLocalTFromGlobalD(this._globalD);
+      this.fetchLocalDFromLocalT(this._localT!, this._segmentIndex!);
+    } else if (this._globalT !== undefined) {
+      this.fetchGlobalDFromGlobalT(this._globalT);
+      this.fetchLocalTFromGlobalD(this._globalD!);
+      this.fetchLocalDFromLocalT(this._localT!, this._segmentIndex!);
+    } else if (this._point !== undefined) {
+      this.fetchFromPoint(this._point);
+      this.fetchLocalDFromLocalT(this._localT!, this._segmentIndex!);
+    } else {
+      throw new VerifyNotReached();
+    }
+
+    return this._localD!;
+  }
+
+  private fetchGlobalDFromGlobalT(globalT: number) {
+    this._globalD ??= globalT * this._path!.length();
+  }
+
+  private fetchFromPoint(p: Point) {
+    const pp = this._path!.projectPoint(p);
+    this._segmentIndex ??= pp.segmentIndex;
+    this._localT ??= pp.localT;
+    this._globalT ??= pp.globalT;
+  }
+
+  private fetchPointFromLocalT(localT: number, segmentIndex: number) {
+    this._point ??= this._path!.segments[segmentIndex]!.point(localT);
+  }
+
+  private fetchLocalDFromLocalT(localT: number, segmentIndex: number) {
+    this.localD ??= localT * this._path!.segments.at(segmentIndex)!.length();
+  }
+
+  private fetchGlobalTFromLocalT(localT: number, segmentIndex: number) {
+    const lb = this._path!.lengthTo(segmentIndex);
+    const segment = this._path!.segments.at(segmentIndex);
+    const lengthOfCurrentSegment = segment!.length();
+
+    this._localD ??= localT * lengthOfCurrentSegment;
+    this._globalD ??= lb + this._localD;
+    this._globalT ??= this._globalD / this._path!.length();
+  }
+
+  private fetchLocalTFromLocalD(localD: number, segmentIndex: number) {
+    this._localT ??= localD / this._path!.segments[segmentIndex]!.length();
+  }
+
+  private fetchGlobalDFromLocalD(localD: number, segmentIndex: number) {
+    const lb = this._path!.lengthTo(segmentIndex);
+    this._globalD = lb + localD;
+  }
+
+  private fetchGlobalTFromLocalD(localD: number, segmentIndex: number) {
+    const lb = this._path!.lengthTo(segmentIndex);
+    this._globalD ??= lb + localD;
+    this._localT ??= localD / this._path!.segments.at(segmentIndex)!.length();
+    this._globalT ??= this._globalD / this._path!.length();
+  }
+
+  private fetchPointFromGlobalD(globalD: number) {
+    this.point ??= this._path!.pointAtLength(globalD);
+  }
+
+  private fetchGlobalTFromGlobalD(globalD: number) {
+    this._globalT ??= globalD / this._path!.length();
+  }
+
+  private fetchLocalTFromGlobalD(globalD: number) {
+    let idx = 0;
+    let len = 0;
+    while (len < globalD) {
+      len += this._path!.segments[idx]!.length();
+      idx++;
+    }
+
+    this._segmentIndex ??= idx;
+    this._localT ??= (len - globalD) / this._path!.segments[idx]!.length();
+    this._localD ??= len - globalD;
   }
 }

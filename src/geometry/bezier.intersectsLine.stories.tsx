@@ -25,8 +25,8 @@ const BezierTest = () => {
 
   return (
     <svg
-      width={300}
-      height={300}
+      width={500}
+      height={500}
       onMouseMove={e => {
         if (drag) drag.callback(e);
       }}

@@ -1,8 +1,9 @@
 import { Point } from './point.ts';
-import { Cubic } from './pathBuilder.ts';
+import { RawCubicSegment } from './pathBuilder.ts';
 import { Box } from './box.ts';
 import { smallestIndex } from '../utils/array.ts';
 import { Line } from './line.ts';
+import { round } from '../utils/math.ts';
 
 const PI = Math.PI;
 const _120 = (PI * 120) / 180;
@@ -48,7 +49,7 @@ export const BezierUtils = {
     x2: number,
     y2: number,
     recursive?: [number, number, number, number] | undefined
-  ): Cubic[] => {
+  ): RawCubicSegment[] => {
     const rad = (PI / 180) * (angle ?? 0);
 
     if (!rx || !ry) {
@@ -106,7 +107,7 @@ export const BezierUtils = {
       }
     }
 
-    const res: Cubic[] = [];
+    const res: RawCubicSegment[] = [];
 
     if (Math.abs(f2 - f1) > _120) {
       const f2old = f2;
@@ -139,7 +140,7 @@ export const BezierUtils = {
     } else {
       const flattened = [['C', m2[0], m2[1], m3[0], m3[1], m4[0], m4[1]], ...res].flat();
 
-      const dest: Cubic[] = [];
+      const dest: RawCubicSegment[] = [];
       for (let i = 0; i < flattened.length; i += 7) {
         dest.push([
           'C',
@@ -149,7 +150,7 @@ export const BezierUtils = {
           rotate(flattened[i + 3] as number, flattened[i + 4] as number, rad).y,
           rotate(flattened[i + 5] as number, flattened[i + 6] as number, rad).x,
           rotate(flattened[i + 5] as number, flattened[i + 6] as number, rad).y
-        ] as Cubic);
+        ] as RawCubicSegment);
       }
       return dest;
     }
@@ -168,6 +169,8 @@ const PI_2 = Math.PI * 2;
 const PI_4 = Math.PI * 4;
 
 const cubicRoots = (a: number, b: number, c: number, e: number) => {
+  if (round(a) === 0) return quadraticRoots(b, c, e);
+
   const aq = b / a;
   const bq = c / a;
   const cq = e / a;
@@ -189,7 +192,7 @@ const cubicRoots = (a: number, b: number, c: number, e: number) => {
     roots.push(-aq / 3 + (s + t));
 
     const Im = Math.abs((SQRT_3 * (s - t)) / 2);
-    if (Im === 0) {
+    if (round(Im) === 0) {
       roots.push(-aq / 3 - (s + t) / 2);
     }
   } else {
@@ -424,16 +427,18 @@ export class CubicBezier {
 
     const res = [];
     for (const t of roots) {
-      if (t < 0 || t > 1) continue;
+      if (t < 0 || t > 1 || isNaN(t)) continue;
 
       const p = {
         x: ((Ax * t + Bx) * t + Cx) * t + Dx,
         y: ((Ay * t + By) * t + Cy) * t + Dy
       };
-      if (p.x < min_x || p.x > max_x) continue;
-      if (p.y < min_y || p.y > max_y) continue;
+
+      if (round(p.x) < round(min_x) || round(p.x) > round(max_x)) continue;
+      if (round(p.y) < round(min_y) || round(p.y) > round(max_y)) continue;
       res.push(p);
     }
+
     return res;
   }
 

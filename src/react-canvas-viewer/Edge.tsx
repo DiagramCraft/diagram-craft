@@ -1,5 +1,5 @@
 import React, { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { DiagramEdge } from '../model-viewer/diagram.ts';
+import { ConnectedEndpoint, DiagramEdge } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
 import { Drag, Modifiers } from '../base-ui/drag.ts';
@@ -7,6 +7,7 @@ import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
+import { PathPosition } from '../geometry/pathBuilder.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(
@@ -84,6 +85,20 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram instanceof EditableDiagram &&
     props.diagram.selectionState.elements.length === 1;
 
+  const intersections: PathPosition[] = [];
+  if (props.def.isEndConnected()) {
+    const endNode = (props.def.end as ConnectedEndpoint).node;
+    const endNodeDefinition = props.diagram.nodDefinitions.get(endNode.nodeType);
+    intersections.push(...path.intersections(endNodeDefinition.getBoundingPath(endNode)));
+  }
+
+  /*
+  console.log('----------');
+  for (const i of intersections) {
+    console.log(i.localT, i.globalT);
+  }
+ */
+
   const onContextMenu = (event: React.MouseEvent<SVGPathElement, MouseEvent>) => {
     const e = event as ContextMenuEvent & React.MouseEvent<SVGPathElement, MouseEvent>;
     const point = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
@@ -139,6 +154,16 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         markerEnd={`url(#marker_e_${props.def.id})`}
         markerStart={`url(#marker_s_${props.def.id})`}
       />
+
+      {intersections.map((p, idx) => (
+        <circle
+          key={`int_${idx}`}
+          cx={p.point.x}
+          cy={p.point.y}
+          r="4"
+          className="svg-waypoint-handle"
+        />
+      ))}
 
       {isSingleSelected && (
         <>

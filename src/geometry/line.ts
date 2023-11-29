@@ -41,5 +41,27 @@ export const Line = {
 
   isHorizontal: (line: Line) => {
     return round(line.from.y) === round(line.to.y);
+  },
+
+  intersection: (line1: Line, line2: Line) => {
+    const x1 = line1.from.x;
+    const y1 = line1.from.y;
+    const x2 = line1.to.x;
+    const y2 = line1.to.y;
+    const x3 = line2.from.x;
+    const y3 = line2.from.y;
+    const x4 = line2.to.x;
+    const y4 = line2.to.y;
+
+    const t =
+      ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) /
+      ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+    const u =
+      ((x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)) /
+      ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+
+    if (t < 0 || t > 1 || u < 0 || u > 1) return undefined;
+
+    return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1) };
   }
 };
