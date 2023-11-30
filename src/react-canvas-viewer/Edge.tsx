@@ -7,7 +7,7 @@ import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
-import { PathPosition } from '../geometry/pathPosition.ts';
+import { PointOnPath, WithSegment } from '../geometry/pathPosition.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(
@@ -85,11 +85,16 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram instanceof EditableDiagram &&
     props.diagram.selectionState.elements.length === 1;
 
-  const intersections: PathPosition[] = [];
+  const intersections: WithSegment<PointOnPath>[] = [];
   if (props.def.isEndConnected()) {
     const endNode = (props.def.end as ConnectedEndpoint).node;
     const endNodeDefinition = props.diagram.nodDefinitions.get(endNode.nodeType);
     intersections.push(...path.intersections(endNodeDefinition.getBoundingPath(endNode)));
+  }
+  if (props.def.isStartConnected()) {
+    const startNode = (props.def.start as ConnectedEndpoint).node;
+    const startNodeDefinition = props.diagram.nodDefinitions.get(startNode.nodeType);
+    intersections.push(...path.intersections(startNodeDefinition.getBoundingPath(startNode)));
   }
 
   /*

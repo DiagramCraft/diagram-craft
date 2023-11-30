@@ -36,7 +36,7 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
 
     // TODO: We can probably extract this to a waypointHelper object
     for (let i = 0; i < steps; i++) {
-      const at = path.pointAtLength((totalLength * i) / steps);
+      const at = path.pointAt({ pathD: (totalLength * i) / steps });
 
       for (let j = 0; j < waypointDistances.length; j++) {
         const distanceToWaypoint = Point.distance(at, edge.waypoints![j]!.point);

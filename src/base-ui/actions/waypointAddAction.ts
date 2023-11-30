@@ -33,7 +33,7 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
     let bestLength = 0;
     let bestDistance = Number.MAX_VALUE;
     for (let i = 0; i < steps; i++) {
-      const at = path.pointAtLength((totalLength * i) / steps);
+      const at = path.pointAt({ pathD: (totalLength * i) / steps });
 
       const distanceToClick = Point.distance(at, context.point!);
       if (distanceToClick < bestDistance) {

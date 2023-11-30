@@ -4,6 +4,7 @@ import { Line } from './line.ts';
 import { BezierUtils, CubicBezier } from './bezier.ts';
 import { RawCubicSegment, RawLineSegment, RawQuadSegment } from './pathBuilder.ts';
 import { Accuracy, Projection } from './path.ts';
+import { LengthOffsetOnPath } from './pathPosition.ts';
 
 type NormalizedSegment = RawCubicSegment | RawQuadSegment | RawLineSegment;
 
@@ -215,21 +216,21 @@ export class SegmentList {
 
   point(t: number, _mode: Accuracy = 'speed') {
     const totalLength = this.length();
-    return this.pointAtLength(t * totalLength, _mode);
+    return this.pointAt({ pathD: t * totalLength }, _mode);
   }
 
-  pointAtLength(t: number, _mode: Accuracy = 'speed') {
+  pointAt(t: LengthOffsetOnPath, _mode: Accuracy = 'speed') {
     // Find the segment that contains the point
-    let currentT = t;
+    let currentD = t.pathD;
     let segmentIndex = 0;
     let segment = this.segments[segmentIndex];
-    while (currentT > segment.length()) {
-      currentT -= segment.length();
+    while (currentD > segment.length()) {
+      currentD -= segment.length();
       segment = this.segments[++segmentIndex];
     }
 
     // TODO: We can probably use tAtLength here
-    return segment.point(currentT / segment.length());
+    return segment.point(currentD / segment.length());
   }
 
   projectPoint(point: Point): Projection & { segmentIndex: number; globalT: number } {
