@@ -43,25 +43,21 @@ export const Line = {
     return round(line.from.y) === round(line.to.y);
   },
 
-  intersection: (line1: Line, line2: Line) => {
-    const x1 = line1.from.x;
-    const y1 = line1.from.y;
-    const x2 = line1.to.x;
-    const y2 = line1.to.y;
-    const x3 = line2.from.x;
-    const y3 = line2.from.y;
-    const x4 = line2.to.x;
-    const y4 = line2.to.y;
-
+  intersection: (l1: Line, l2: Line) => {
     const t =
-      ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) /
-      ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+      ((l1.from.x - l2.from.x) * (l2.from.y - l2.to.y) -
+        (l1.from.y - l2.from.y) * (l2.from.x - l2.to.x)) /
+      ((l1.from.x - l1.to.x) * (l2.from.y - l2.to.y) -
+        (l1.from.y - l1.to.y) * (l2.from.x - l2.to.x));
     const u =
-      ((x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)) /
-      ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+      ((l1.from.x - l2.from.x) * (l1.from.y - l1.to.y) -
+        (l1.from.y - l2.from.y) * (l1.from.x - l1.to.x)) /
+      ((l1.from.x - l1.to.x) * (l2.from.y - l2.to.y) -
+        (l1.from.y - l1.to.y) * (l2.from.x - l2.to.x));
 
+    if (isNaN(t) || isNaN(u)) return undefined;
     if (t < 0 || t > 1 || u < 0 || u > 1) return undefined;
 
-    return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1) };
+    return { x: l1.from.x + t * (l1.to.x - l1.from.x), y: l1.from.y + t * (l1.to.y - l1.from.y) };
   }
 };

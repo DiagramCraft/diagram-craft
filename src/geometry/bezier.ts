@@ -267,6 +267,8 @@ export class CubicBezier {
     return points;
   }
 
+  reduceToQuadratic() {}
+
   split(t: number): [CubicBezier, CubicBezier] {
     const t2 = t * t;
     const t3 = t2 * t;

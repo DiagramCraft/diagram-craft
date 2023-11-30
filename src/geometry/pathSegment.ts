@@ -55,7 +55,11 @@ export class LineSegment implements PathSegment {
     const projection = Point.add(this.start, Vector.scale(v, t));
     const distance = Point.distance(point, projection);
 
-    return { t, distance, point: projection };
+    return {
+      t,
+      distance,
+      point: projection
+    };
   }
 
   intersectionsWith(other: PathSegment): Point[] | undefined {
@@ -130,6 +134,8 @@ export const makeCurveSegment = (start: Point, end: Point, previous: QuadSegment
 };
 
 export class QuadSegment extends CubicSegment {
+  quadP1: Point;
+
   constructor(
     public readonly start: Point,
     public readonly p1: Point,
@@ -147,6 +153,7 @@ export class QuadSegment extends CubicSegment {
       },
       end
     );
+    this.quadP1 = p1;
   }
 
   normalize(): NormalizedSegment[] {

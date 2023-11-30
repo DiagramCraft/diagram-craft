@@ -108,6 +108,10 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     start = startIntersections?.[0] ?? { point: props.def.startPosition };
   }
 
+  const projections = intersections.map(i => {
+    return path.projectPoint(i.point);
+  });
+
   if (start) {
     if (end) {
       path = path.split(
@@ -174,6 +178,28 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         markerEnd={`url(#marker_e_${props.def.id})`}
         markerStart={`url(#marker_s_${props.def.id})`}
       />
+
+      {intersections.map((i, idx) => (
+        <circle
+          key={`i_${idx}`}
+          cx={i.point.x}
+          cy={i.point.y}
+          r="10"
+          fill={'none'}
+          stroke={'red'}
+        />
+      ))}
+
+      {projections.map((i, idx) => (
+        <circle
+          key={`i_${idx}`}
+          cx={i.point.x}
+          cy={i.point.y}
+          r="7"
+          fill={'none'}
+          stroke={'green'}
+        />
+      ))}
 
       {isSingleSelected && (
         <>

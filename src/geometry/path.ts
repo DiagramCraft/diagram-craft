@@ -137,6 +137,17 @@ export class Path {
 
   split(p1: TimeOffsetOnSegment, p2?: TimeOffsetOnSegment): Path[] {
     const dest: Path[] = [];
+
+    if (p2 && p1.segment === p2.segment) {
+      const d1 = p1.segmentT * this.segments[p1.segment].length();
+      const [prefix, end] = this.segments[p2.segment].split(p2.segmentT);
+      const [start, mid] = prefix.split(d1 / prefix.length());
+      dest.push(new Path(start.asRawSegments(), this.start));
+      dest.push(new Path(mid.asRawSegments(), mid.start));
+      dest.push(new Path(end.asRawSegments(), end.start));
+      return dest;
+    }
+
     const startSegments = this.segments[p1.segment].split(p1.segmentT);
 
     dest.push(
@@ -168,7 +179,6 @@ export class Path {
         )
       );
     }
-
     return dest;
   }
 
