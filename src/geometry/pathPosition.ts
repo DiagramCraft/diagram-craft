@@ -18,12 +18,12 @@ export const PointOnPath = {
   toTimeOffset: <T extends PointOnPath>(
     p: T,
     path: Path
-  ): TimeOffsetOnSegment & TimeOffsetOnPath & T => {
+  ): TimeOffsetOnSegment & LengthOffsetOnPath & T => {
     const projection = path.projectPoint(p.point);
     return {
       ...p,
       segment: projection.segment,
-      pathT: projection.pathT,
+      pathD: projection.pathD,
       segmentT: projection.segmentT
     };
   }

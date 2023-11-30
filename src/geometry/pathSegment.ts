@@ -219,7 +219,7 @@ export class ArcSegment implements PathSegment {
 
   projectPoint(point: Point): Projection {
     const projection = this.segmentList.projectPoint(point);
-    projection.t = projection.globalT;
+    projection.t = projection.globalL / this.length();
     return projection;
   }
 
@@ -267,7 +267,7 @@ export class SegmentList {
     return segment.point(currentD / segment.length());
   }
 
-  projectPoint(point: Point): Projection & { segmentIndex: number; globalT: number } {
+  projectPoint(point: Point): Projection & { segmentIndex: number; globalL: number } {
     let bestSegment = -1;
     let bestProject: Projection | undefined;
     let bestDistance = Number.MAX_VALUE;
@@ -286,7 +286,7 @@ export class SegmentList {
     return {
       segmentIndex: bestSegment,
       t: bestProject!.t,
-      globalT: l + bestProject!.t * this.segments[bestSegment].length(),
+      globalL: l + bestProject!.t * this.segments[bestSegment].length(),
       distance: bestProject!.distance,
       point: bestProject!.point
     };

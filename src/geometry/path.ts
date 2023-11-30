@@ -12,7 +12,6 @@ import { VerifyNotReached } from '../utils/assert.ts';
 import {
   LengthOffsetOnPath,
   PointOnPath,
-  TimeOffsetOnPath,
   TimeOffsetOnSegment,
   WithSegment
 } from './pathPosition.ts';
@@ -101,11 +100,11 @@ export class Path {
     return this.segmentList.pointAt(t, _mode);
   }
 
-  projectPoint(point: Point): PointOnPath & TimeOffsetOnPath & TimeOffsetOnSegment {
+  projectPoint(point: Point): PointOnPath & LengthOffsetOnPath & TimeOffsetOnSegment {
     const projection = this.segmentList.projectPoint(point);
 
     return {
-      pathT: projection.globalT,
+      pathD: projection.globalL,
       segmentT: projection.t,
       point: projection.point,
       segment: projection.segmentIndex
