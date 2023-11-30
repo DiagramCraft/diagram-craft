@@ -22,7 +22,7 @@ export const PointOnPath = {
     const projection = path.projectPoint(p.point);
     return {
       ...p,
-      segment: projection.segmentT,
+      segment: projection.segment,
       pathT: projection.pathT,
       segmentT: projection.segmentT
     };

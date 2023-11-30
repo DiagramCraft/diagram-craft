@@ -75,7 +75,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     [props]
   );
 
-  const path = buildEdgePath(props.def);
+  let path = buildEdgePath(props.def);
 
   const isSelected =
     props.diagram instanceof EditableDiagram &&
@@ -85,24 +85,39 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram instanceof EditableDiagram &&
     props.diagram.selectionState.elements.length === 1;
 
+  let start: PointOnPath | undefined;
+  let end: PointOnPath | undefined;
+
   const intersections: WithSegment<PointOnPath>[] = [];
   if (props.def.isEndConnected()) {
     const endNode = (props.def.end as ConnectedEndpoint).node;
     const endNodeDefinition = props.diagram.nodDefinitions.get(endNode.nodeType);
-    intersections.push(...path.intersections(endNodeDefinition.getBoundingPath(endNode)));
+    const endIntersections = path.intersections(endNodeDefinition.getBoundingPath(endNode));
+    intersections.push(...endIntersections);
+
+    // TODO: Handle multiple intersections
+    end = endIntersections?.[0] ?? { point: props.def.endPosition };
   }
   if (props.def.isStartConnected()) {
     const startNode = (props.def.start as ConnectedEndpoint).node;
     const startNodeDefinition = props.diagram.nodDefinitions.get(startNode.nodeType);
-    intersections.push(...path.intersections(startNodeDefinition.getBoundingPath(startNode)));
+    const startIntersections = path.intersections(startNodeDefinition.getBoundingPath(startNode));
+    intersections.push(...startIntersections);
+
+    // TODO: Handle multiple intersections
+    start = startIntersections?.[0] ?? { point: props.def.startPosition };
   }
 
-  /*
-  console.log('----------');
-  for (const i of intersections) {
-    console.log(i.localT, i.globalT);
+  if (start) {
+    if (end) {
+      path = path.split(
+        PointOnPath.toTimeOffset(start, path),
+        PointOnPath.toTimeOffset(end, path)
+      )[1];
+    } else {
+      path = path.split(PointOnPath.toTimeOffset(start, path))[1];
+    }
   }
- */
 
   const onContextMenu = (event: React.MouseEvent<SVGPathElement, MouseEvent>) => {
     const e = event as ContextMenuEvent & React.MouseEvent<SVGPathElement, MouseEvent>;
@@ -159,16 +174,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         markerEnd={`url(#marker_e_${props.def.id})`}
         markerStart={`url(#marker_s_${props.def.id})`}
       />
-
-      {intersections.map((p, idx) => (
-        <circle
-          key={`int_${idx}`}
-          cx={p.point.x}
-          cy={p.point.y}
-          r="4"
-          className="svg-waypoint-handle"
-        />
-      ))}
 
       {isSingleSelected && (
         <>

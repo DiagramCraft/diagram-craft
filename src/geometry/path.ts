@@ -50,6 +50,8 @@ const makeSegmentList = (start: Point, path: Segment[]) => {
         s = makeCurveSegment(end, { x: seg[1], y: seg[2] }, dest.at(-1)! as QuadSegment);
         break;
       case 'A':
+        // TODO: Remove this ts-ignore
+        // @ts-ignore
         s = new ArcSegment(end, seg[1], seg[2], seg[3], seg[4], seg[5], {
           x: seg[6],
           y: seg[7]
@@ -66,6 +68,7 @@ const makeSegmentList = (start: Point, path: Segment[]) => {
   return new SegmentList(dest);
 };
 
+// TODO: I wonder if we should create the segmentList immediately and not keep the path around
 export class Path {
   private readonly path: Segment[] = [];
   private readonly start: Point;
@@ -128,6 +131,43 @@ export class Path {
           );
         }
       }
+    }
+
+    return dest;
+  }
+
+  split(p1: TimeOffsetOnSegment, p2?: TimeOffsetOnSegment): Path[] {
+    const dest: Path[] = [];
+    const startSegments = this.segments[p1.segment].split(p1.segmentT);
+
+    dest.push(
+      new Path([...this.path.slice(0, p1.segment), ...startSegments[0].asRawSegments()], this.start)
+    );
+    if (p2) {
+      const endSegments = p2 ? this.segments[p2.segment].split(p2.segmentT) : [];
+      dest.push(
+        new Path(
+          [
+            ...startSegments[1].asRawSegments(),
+            ...this.path.slice(p1.segment + 1, p2.segment),
+            ...endSegments[0].asRawSegments()
+          ],
+          startSegments[1].start
+        )
+      );
+      dest.push(
+        new Path(
+          [...endSegments[1].asRawSegments(), ...this.path.slice(p2.segment)],
+          endSegments[1].start
+        )
+      );
+    } else {
+      dest.push(
+        new Path(
+          [...startSegments[1].asRawSegments(), ...this.path.slice(p1.segment)],
+          startSegments[1].start
+        )
+      );
     }
 
     return dest;

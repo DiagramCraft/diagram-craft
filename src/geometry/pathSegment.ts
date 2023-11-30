@@ -2,9 +2,10 @@ import { Point } from './point.ts';
 import { Vector } from './vector.ts';
 import { Line } from './line.ts';
 import { BezierUtils, CubicBezier } from './bezier.ts';
-import { RawCubicSegment, RawLineSegment, RawQuadSegment } from './pathBuilder.ts';
+import { RawCubicSegment, RawLineSegment, RawQuadSegment, Segment } from './pathBuilder.ts';
 import { Accuracy, Projection } from './path.ts';
 import { LengthOffsetOnPath } from './pathPosition.ts';
+import { NotImplementedYet } from '../utils/assert.ts';
 
 type NormalizedSegment = RawCubicSegment | RawQuadSegment | RawLineSegment;
 
@@ -13,6 +14,8 @@ export interface PathSegment {
   point(t: number): Point;
   intersectionsWith(other: PathSegment): Point[] | undefined;
   projectPoint(point: Point): Projection;
+  asRawSegments(): Segment[];
+  split(t: number): [PathSegment, PathSegment];
   //tangentAt(t: number): Vector;
   //normalAt(t: number): Vector;
   //boundingBox(): Box;
@@ -30,6 +33,15 @@ export class LineSegment implements PathSegment {
     public readonly start: Point,
     public readonly end: Point
   ) {}
+
+  asRawSegments(): Segment[] {
+    return [['L', this.end.x, this.end.y]];
+  }
+
+  split(t: number): [PathSegment, PathSegment] {
+    const p = this.point(t);
+    return [new LineSegment(this.start, p), new LineSegment(p, this.end)];
+  }
 
   projectPoint(point: Point): Projection {
     const v = Vector.from(this.start, this.end);
@@ -80,6 +92,18 @@ export class CubicSegment extends CubicBezier implements PathSegment {
     public readonly end: Point
   ) {
     super(start, p1, p2, end);
+  }
+
+  split(t: number): [CubicSegment, CubicSegment] {
+    const b = super.split(t);
+    return [
+      new CubicSegment(b[0].start, b[0].cp1, b[0].cp2, b[0].end),
+      new CubicSegment(b[1].start, b[1].cp1, b[1].cp2, b[1].end)
+    ];
+  }
+
+  asRawSegments(): Segment[] {
+    return [['C', this.p1.x, this.p1.y, this.p2.x, this.p2.y, this.end.x, this.end.y]];
   }
 
   intersectionsWith(other: PathSegment): Point[] | undefined {
@@ -144,12 +168,22 @@ export class ArcSegment implements PathSegment {
     public readonly end: Point
   ) {}
 
+  asRawSegments(): Segment[] {
+    return this._segmentList?.segments.flatMap(s => s.asRawSegments()) ?? [];
+  }
+
   length(): number {
     return this.segmentList.length();
   }
 
   point(t: number): Point {
     return this.segmentList.point(t);
+  }
+
+  // @ts-ignore
+  split(_t: number) {
+    // TODO: Implement this - maybe this can be implemented without looking at the bezier curves
+    throw new NotImplementedYet();
   }
 
   intersectionsWith(other: PathSegment): Point[] | undefined {
