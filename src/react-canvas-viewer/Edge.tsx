@@ -7,7 +7,13 @@ import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
-import { PointOnPath, WithSegment } from '../geometry/pathPosition.ts';
+import {
+  LengthOffsetOnSegment,
+  PointOnPath,
+  TimeOffsetOnSegment,
+  WithSegment
+} from '../geometry/pathPosition.ts';
+import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(
@@ -85,6 +91,8 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram instanceof EditableDiagram &&
     props.diagram.selectionState.elements.length === 1;
 
+  const arrow1 = ARROW_SHAPES['SOCKET'](1);
+
   let start: PointOnPath | undefined;
   let end: PointOnPath | undefined;
 
@@ -107,15 +115,27 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     // TODO: Handle multiple intersections
     start = startIntersections?.[0] ?? { point: props.def.startPosition };
   }
-
+  /*
   const projections = intersections.map(i => {
     return path.projectPoint(i.point);
-  });
+  });*/
 
   if (start) {
     if (end) {
-      path = path.split(
+      const l = TimeOffsetOnSegment.toLengthOffsetOnSegment(
         PointOnPath.toTimeOffset(start, path),
+        path
+      );
+      // TODO: This 1 is likely the stroke width of the edge
+      l.segmentD += (arrow1.shortenBy ?? 0) + 1;
+
+      const newStart = TimeOffsetOnSegment.toPointOnPath(
+        LengthOffsetOnSegment.toTimeOffsetOnSegment(l, path),
+        path
+      );
+
+      path = path.split(
+        PointOnPath.toTimeOffset(newStart, path),
         PointOnPath.toTimeOffset(end, path)
       )[1];
     } else {
@@ -132,18 +152,25 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       pos: props.diagram.viewBox.toDiagramPoint(point)
     };
   };
+
   return (
     <g>
       <marker
         id={`marker_s_${props.def.id}`}
-        viewBox="0 0 10 10"
-        refX="10"
-        refY="5"
-        markerWidth="6"
-        markerHeight="6"
+        viewBox={`-1 -1 ${arrow1.width + 2} ${arrow1.height + 2}`}
+        refX={arrow1.anchor.x}
+        refY={arrow1.anchor.y}
+        markerUnits={'userSpaceOnUse'}
+        markerWidth={arrow1.width + 2}
+        markerHeight={arrow1.height + 2}
         orient="auto-start-reverse"
       >
-        <path d="M 0 0 L 10 5 L 0 10 z" stroke="black" fill="black" />
+        <path
+          d={arrow1.path}
+          stroke="black"
+          strokeWidth={1}
+          fill={arrow1.fill === 'fg' ? 'black' : arrow1.fill === 'bg' ? 'white' : 'none'}
+        />
       </marker>
       <marker
         id={`marker_e_${props.def.id}`}
@@ -174,12 +201,13 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onContextMenu={onContextMenu}
+        strokeWidth={'1'}
         style={{ cursor: 'move', fill: 'none' }}
         markerEnd={`url(#marker_e_${props.def.id})`}
         markerStart={`url(#marker_s_${props.def.id})`}
       />
 
-      {intersections.map((i, idx) => (
+      {/*intersections.map((i, idx) => (
         <circle
           key={`i_${idx}`}
           cx={i.point.x}
@@ -199,7 +227,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
           fill={'none'}
           stroke={'green'}
         />
-      ))}
+      ))*/}
 
       {isSingleSelected && (
         <>
