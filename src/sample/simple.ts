@@ -7,7 +7,16 @@ export const simpleDiagram: SerializedDiagram = {
       id: 'e1',
       start: { anchor: 0, node: { id: '3' } },
       end: { anchor: 0, node: { id: '4' } },
-      props: {},
+      props: {
+        arrow: {
+          start: {
+            type: 'SQUARE_ARROW_OUTLINE'
+          },
+          end: {
+            type: 'CROWS_FEET_BAR'
+          }
+        }
+      },
       waypoints: [{ point: { x: 360, y: 200 } }]
     },
     {

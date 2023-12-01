@@ -14,6 +14,14 @@ declare global {
   interface EdgeProps {
     highlight?: string[];
     type?: 'straight' | 'bezier' | 'curved' | 'orthogonal';
+    arrow?: {
+      start?: {
+        type?: string;
+      };
+      end?: {
+        type?: string;
+      };
+    };
   }
   interface NodeProps {
     highlight?: string[];

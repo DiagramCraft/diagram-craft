@@ -1,6 +1,6 @@
 import { Point } from '../geometry/point.ts';
 
-type ArrowShape = (scale: number) => {
+export type ArrowShape = {
   width: number;
   height: number;
   anchor: Point;
@@ -9,7 +9,9 @@ type ArrowShape = (scale: number) => {
   shortenBy?: number;
 };
 
-export const ARROW_SHAPES: Record<string, ArrowShape> = {
+export type ArrowShapeFactory = (scale: number) => ArrowShape;
+
+export const ARROW_SHAPES: Record<string, ArrowShapeFactory> = {
   SQUARE_ARROW_FILLED: s => ({
     width: s * 10,
     height: s * 10,
@@ -216,7 +218,8 @@ export const ARROW_SHAPES: Record<string, ArrowShape> = {
       `M 0 ${s * 5}`,
       `L 0 ${s * 15}`
     ].join('\n'),
-    fill: 'transparent'
+    fill: 'transparent',
+    shortenBy: -1
   }),
   CROWS_FEET_BALL: s => ({
     width: s * 35,

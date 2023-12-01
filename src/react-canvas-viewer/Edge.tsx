@@ -13,7 +13,8 @@ import {
   TimeOffsetOnSegment,
   WithSegment
 } from '../geometry/pathPosition.ts';
-import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
+import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
+import { invariant } from '../utils/assert.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(
@@ -91,7 +92,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram instanceof EditableDiagram &&
     props.diagram.selectionState.elements.length === 1;
 
-  const arrow1 = ARROW_SHAPES['SOCKET'](1);
+  const arrow1: ArrowShape | undefined =
+    ARROW_SHAPES[props.def.props.arrow?.start?.type ?? '']?.(1);
+  const arrow2: ArrowShape | undefined = ARROW_SHAPES[props.def.props.arrow?.end?.type ?? '']?.(1);
 
   let start: PointOnPath | undefined;
   let end: PointOnPath | undefined;
@@ -115,29 +118,40 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     // TODO: Handle multiple intersections
     start = startIntersections?.[0] ?? { point: props.def.startPosition };
   }
-  /*
-  const projections = intersections.map(i => {
-    return path.projectPoint(i.point);
-  });*/
 
   if (start) {
     if (end) {
-      const l = TimeOffsetOnSegment.toLengthOffsetOnSegment(
-        PointOnPath.toTimeOffset(start, path),
-        path
-      );
-      // TODO: This 1 is likely the stroke width of the edge
-      l.segmentD += (arrow1.shortenBy ?? 0) + 1;
+      let startOffset: TimeOffsetOnSegment | undefined;
+      let endOffset: TimeOffsetOnSegment | undefined;
 
-      const newStart = TimeOffsetOnSegment.toPointOnPath(
-        LengthOffsetOnSegment.toTimeOffsetOnSegment(l, path),
-        path
-      );
+      if (arrow1) {
+        const baseTOS = PointOnPath.toTimeOffset(start, path);
+        const arrowL1 = TimeOffsetOnSegment.toLengthOffsetOnSegment(baseTOS, path);
+        // TODO: This 1 is likely the stroke width of the edge
+        arrowL1.segmentD += (arrow1.shortenBy ?? 0) + 1;
 
-      path = path.split(
-        PointOnPath.toTimeOffset(newStart, path),
-        PointOnPath.toTimeOffset(end, path)
-      )[1];
+        startOffset = LengthOffsetOnSegment.toTimeOffsetOnSegment(arrowL1, path);
+      } else {
+        startOffset = PointOnPath.toTimeOffset(start, path);
+      }
+
+      if (arrow2) {
+        const arrowL2 = TimeOffsetOnSegment.toLengthOffsetOnSegment(
+          PointOnPath.toTimeOffset(end, path),
+          path
+        );
+        // TODO: This 1 is likely the stroke width of the edge
+        arrowL2.segmentD -= (arrow2.shortenBy ?? 0) + 1;
+
+        endOffset = LengthOffsetOnSegment.toTimeOffsetOnSegment(arrowL2, path);
+      } else {
+        endOffset = PointOnPath.toTimeOffset(end, path);
+      }
+
+      invariant.is.present(startOffset);
+      invariant.is.present(endOffset);
+
+      path = path.split(startOffset, endOffset)[1];
     } else {
       path = path.split(PointOnPath.toTimeOffset(start, path))[1];
     }
@@ -155,34 +169,44 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
   return (
     <g>
-      <marker
-        id={`marker_s_${props.def.id}`}
-        viewBox={`-1 -1 ${arrow1.width + 2} ${arrow1.height + 2}`}
-        refX={arrow1.anchor.x}
-        refY={arrow1.anchor.y}
-        markerUnits={'userSpaceOnUse'}
-        markerWidth={arrow1.width + 2}
-        markerHeight={arrow1.height + 2}
-        orient="auto-start-reverse"
-      >
-        <path
-          d={arrow1.path}
-          stroke="black"
-          strokeWidth={1}
-          fill={arrow1.fill === 'fg' ? 'black' : arrow1.fill === 'bg' ? 'white' : 'none'}
-        />
-      </marker>
-      <marker
-        id={`marker_e_${props.def.id}`}
-        viewBox="0 0 10 10"
-        refX="10"
-        refY="5"
-        markerWidth="6"
-        markerHeight="6"
-        orient="auto-start-reverse"
-      >
-        <path d="M 0 0 L 10 5 L 0 10 z" stroke="black" fill="black" />
-      </marker>
+      {arrow1 && (
+        <marker
+          id={`marker_s_${props.def.id}`}
+          viewBox={`-1 -1 ${arrow1.width + 2} ${arrow1.height + 2}`}
+          refX={arrow1.anchor.x}
+          refY={arrow1.anchor.y}
+          markerUnits={'userSpaceOnUse'}
+          markerWidth={arrow1.width + 2}
+          markerHeight={arrow1.height + 2}
+          orient="auto-start-reverse"
+        >
+          <path
+            d={arrow1.path}
+            stroke="black"
+            strokeWidth={1}
+            fill={arrow1.fill === 'fg' ? 'black' : arrow1.fill === 'bg' ? 'white' : 'none'}
+          />
+        </marker>
+      )}
+      {arrow2 && (
+        <marker
+          id={`marker_e_${props.def.id}`}
+          viewBox={`-1 -1 ${arrow2.width + 2} ${arrow2.height + 2}`}
+          refX={arrow2.anchor.x}
+          refY={arrow2.anchor.y}
+          markerUnits={'userSpaceOnUse'}
+          markerWidth={arrow2.width + 2}
+          markerHeight={arrow2.height + 2}
+          orient="auto-start-reverse"
+        >
+          <path
+            d={arrow2.path}
+            stroke="black"
+            strokeWidth={1}
+            fill={arrow2.fill === 'fg' ? 'black' : arrow2.fill === 'bg' ? 'white' : 'none'}
+          />
+        </marker>
+      )}
 
       <path
         d={path.asSvgPath()}
@@ -203,31 +227,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onContextMenu={onContextMenu}
         strokeWidth={'1'}
         style={{ cursor: 'move', fill: 'none' }}
-        markerEnd={`url(#marker_e_${props.def.id})`}
-        markerStart={`url(#marker_s_${props.def.id})`}
+        markerStart={arrow1 ? `url(#marker_s_${props.def.id})` : undefined}
+        markerEnd={arrow2 ? `url(#marker_e_${props.def.id})` : undefined}
       />
-
-      {/*intersections.map((i, idx) => (
-        <circle
-          key={`i_${idx}`}
-          cx={i.point.x}
-          cy={i.point.y}
-          r="10"
-          fill={'none'}
-          stroke={'red'}
-        />
-      ))}
-
-      {projections.map((i, idx) => (
-        <circle
-          key={`i_${idx}`}
-          cx={i.point.x}
-          cy={i.point.y}
-          r="7"
-          fill={'none'}
-          stroke={'green'}
-        />
-      ))*/}
 
       {isSingleSelected && (
         <>

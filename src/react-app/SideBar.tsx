@@ -2,7 +2,7 @@ import { ToolWindowButton } from './ToolWindowButton.tsx';
 import React, { useEffect, useState } from 'react';
 
 export const SideBar = (props: Props) => {
-  const [selected, setSelected] = useState(-1);
+  const [selected, setSelected] = useState(props.defaultSelected ?? -1);
 
   // TODO: Can we do this with CSS?
   useEffect(() => {
@@ -54,4 +54,5 @@ export const SideBar = (props: Props) => {
 type Props = {
   side: 'left' | 'right';
   children: React.ReactNode[];
+  defaultSelected?: number;
 };

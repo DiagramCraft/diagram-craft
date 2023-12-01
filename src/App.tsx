@@ -145,7 +145,7 @@ const App = () => {
               <Toolbar actionMap={actionMap} keyMap={keyMap} diagram={$d} />
             </div>
 
-            <SideBar side={'left'}>
+            <SideBar side={'left'} defaultSelected={1}>
               <SideBarPage icon={TbCategoryPlus}>
                 <PickerToolWindow diagram={$d} />
               </SideBarPage>
@@ -157,7 +157,7 @@ const App = () => {
               <SideBarPage icon={TbHistory}>TbHistory</SideBarPage>
             </SideBar>
 
-            <SideBar side={'right'}>
+            <SideBar side={'right'} defaultSelected={1}>
               <SideBarPage icon={TbInfoCircle}>
                 <InfoToolWindow diagram={$d} />
               </SideBarPage>

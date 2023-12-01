@@ -33,7 +33,6 @@ button {
   border: 1px solid transparent;
 }
 button:hover {
-  border-color: #646cff;
 }
 /*button {
   border-radius: 8px;
