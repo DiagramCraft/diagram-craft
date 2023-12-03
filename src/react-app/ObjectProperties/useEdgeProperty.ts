@@ -32,8 +32,8 @@ const evaluatePropString = (props: Record<string, any | undefined>, s: string) =
   return current;
 };
 
-export const useNodeProperty = (
-  s: PropertyStringPath<NodeProps>,
+export const useEdgeProperty = (
+  s: PropertyStringPath<EdgeProps>,
   diagram: EditableDiagram,
   defaultValue: string | undefined = undefined
 ): [string | undefined, (value: string | undefined) => void] => {
@@ -42,7 +42,7 @@ export const useNodeProperty = (
     'change',
     () => {
       const arr = unique(
-        diagram.selectionState.nodes.map(n => evaluatePropString(n.props ?? {}, s) ?? defaultValue),
+        diagram.selectionState.edges.map(n => evaluatePropString(n.props ?? {}, s) ?? defaultValue),
         e => e
       ).filter(Boolean);
 
@@ -56,7 +56,7 @@ export const useNodeProperty = (
   return [
     value,
     v => {
-      diagram.selectionState.nodes.forEach(n => {
+      diagram.selectionState.edges.forEach(n => {
         let current = n.props ?? {};
         const parts = s.split('.');
         for (let i = 0; i < parts.length - 1; i++) {

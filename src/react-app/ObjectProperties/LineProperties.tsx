@@ -5,11 +5,30 @@ import { useEffect, useState } from 'react';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ArrowSelector } from './ArrowSelector.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { ColorPicker } from '../ColorPicker.tsx';
+import { additionalHues, primaryColors } from './palette.ts';
+import { DashSelector } from './DashSelector.tsx';
+import { useEdgeProperty } from './useEdgeProperty.ts';
 
 export const LineProperties = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
   const [type, setType] = useState('straight');
   const redraw = useRedraw();
+
+  const [strokeColor, setStrokeColor] = useEdgeProperty(
+    'stroke.color',
+    props.diagram,
+    'transparent'
+  );
+  const [pattern, setPattern] = useEdgeProperty('stroke.pattern', props.diagram, 'SOLID');
+
+  const [strokSize, setStrokeSize] = useEdgeProperty('stroke.patternSize', props.diagram, '100');
+  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty(
+    'stroke.patternSpacing',
+    props.diagram,
+    '100'
+  );
+  const [strokeWidth, setStrokeWidth] = useEdgeProperty('stroke.width', props.diagram, '1');
 
   // TODO: We should have a mixed state - in case the edges have different values
   const edge = props.diagram.selectionState.edges[0];
@@ -124,6 +143,61 @@ export const LineProperties = (props: Props) => {
                     e.props.arrow.end.size = ev.target.valueAsNumber;
                     props.diagram.updateElement(e);
                   });
+                }}
+              />
+            </div>
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Color:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <ColorPicker
+              primaryColors={primaryColors}
+              additionalHues={additionalHues}
+              color={strokeColor ?? 'transparent'}
+              onClick={setStrokeColor}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Width:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <input
+              type={'number'}
+              value={strokeWidth ?? 1}
+              min={1}
+              style={{ width: '45px' }}
+              onChange={ev => {
+                setStrokeWidth(ev.target.value);
+              }}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Dash:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <DashSelector
+                value={pattern}
+                onValueChange={value => {
+                  setPattern(value);
+                }}
+              />
+              &nbsp;
+              <input
+                type={'number'}
+                value={strokSize ?? 100}
+                min={1}
+                style={{ width: '45px' }}
+                onChange={ev => {
+                  setStrokeSize(ev.target.value);
+                }}
+              />
+              &nbsp;
+              <input
+                type={'number'}
+                value={strokeSpacing ?? 100}
+                min={1}
+                style={{ width: '45px' }}
+                onChange={ev => {
+                  setStrokeSpacing(ev.target.value);
                 }}
               />
             </div>

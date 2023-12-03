@@ -18,6 +18,7 @@ export const StrokeProperties = (props: Props) => {
     props.diagram,
     '100'
   );
+  const [strokeWidth, setStrokeWidth] = useNodeProperty('stroke.width', props.diagram, '1');
 
   return (
     <>
@@ -32,7 +33,21 @@ export const StrokeProperties = (props: Props) => {
           />
         </div>
 
-        <div className={'cmp-labeled-table__row'}>
+        <div className={'cmp-labeled-table__label'}>Width:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <input
+            type={'number'}
+            value={strokeWidth ?? 1}
+            min={1}
+            style={{ width: '45px' }}
+            onChange={ev => {
+              setStrokeWidth(ev.target.value);
+            }}
+          />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Dash:</div>
+        <div className={'cmp-labeled-table__value'}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <DashSelector
               value={pattern}

@@ -76,6 +76,10 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       ) ?? '';
   }
 
+  if (props.def.props?.stroke?.width) {
+    style.strokeWidth = props.def.props?.stroke?.width;
+  }
+
   //style.fill = 'transparent';
 
   if (props.def.nodeType === 'group') {
