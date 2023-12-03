@@ -20,8 +20,8 @@ export const ARROW_SHAPES: Record<string, ArrowShapeFactory> = {
     fill: 'fg'
   }),
   SQUARE_ARROW_OUTLINE: s => ({
-    width: s * 10,
-    height: s * 10,
+    width: s * 20,
+    height: s * 20,
     anchor: { x: 0, y: s * 5 },
     path: [`M 0 0`, `L ${s * 10} ${s * 5}`, `L 0 ${s * 10}`, `z`].join('\n'),
     fill: 'transparent',

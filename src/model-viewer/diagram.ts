@@ -24,6 +24,9 @@ declare global {
         size?: number;
       };
     };
+    fill?: {
+      color?: string;
+    };
     stroke?: {
       color?: string;
       width?: number;
@@ -37,6 +40,8 @@ declare global {
 
     fill?: {
       color?: string;
+      type?: 'solid' | 'gradient';
+      color2?: string;
     };
     stroke?: {
       color?: string;

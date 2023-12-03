@@ -94,12 +94,13 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram.selectionState.elements.length === 1;
 
   const color = props.def.props.stroke?.color ?? 'black';
+  const fillColor = props.def.props.fill?.color ?? color;
   const pattern =
     DASH_PATTERNS[props.def.props.stroke?.pattern ?? 'SOLID']?.(
       (props.def.props?.stroke?.patternSize ?? 100) / 100,
       (props.def.props?.stroke?.patternSpacing ?? 100) / 100
     ) ?? '';
-  const width = props.def.props.stroke?.width ?? 1;
+  const width = Number(props.def.props.stroke?.width ?? 1);
 
   const startArrowSize = (props.def.props.arrow?.start?.size ?? 100) / 100;
   const endArrowSize = (props.def.props.arrow?.end?.size ?? 100) / 100;
@@ -183,7 +184,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       {arrow1 && (
         <marker
           id={`marker_s_${props.def.id}`}
-          viewBox={`-1 -1 ${arrow1.width + 2} ${arrow1.height + 2}`}
+          viewBox={`${-1 * width} ${-1 * width} ${arrow1.width + 1 + width} ${
+            arrow1.height + 1 + width
+          }`}
           refX={arrow1.anchor.x}
           refY={arrow1.anchor.y}
           strokeLinejoin={'round'}
@@ -197,14 +200,16 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
             d={arrow1.path}
             stroke={color}
             strokeWidth={width}
-            fill={arrow1.fill === 'fg' ? color : arrow1.fill === 'bg' ? 'white' : 'none'}
+            fill={arrow1.fill === 'fg' ? fillColor : arrow1.fill === 'bg' ? 'white' : 'none'}
           />
         </marker>
       )}
       {arrow2 && (
         <marker
           id={`marker_e_${props.def.id}`}
-          viewBox={`-1 -1 ${arrow2.width + 2} ${arrow2.height + 2}`}
+          viewBox={`${-1 * width} ${-1 * width} ${arrow2.width + 1 + width} ${
+            arrow2.height + 1 + width
+          }`}
           refX={arrow2.anchor.x}
           refY={arrow2.anchor.y}
           markerUnits={'userSpaceOnUse'}
@@ -218,7 +223,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
             d={arrow2.path}
             stroke={color}
             strokeWidth={width}
-            fill={arrow2.fill === 'fg' ? color : arrow2.fill === 'bg' ? 'white' : 'none'}
+            fill={arrow2.fill === 'fg' ? fillColor : arrow2.fill === 'bg' ? 'white' : 'none'}
           />
         </marker>
       )}

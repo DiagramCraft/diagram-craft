@@ -64,6 +64,10 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     style.fill = props.def.props?.fill?.color;
   }
 
+  if (props.def.props?.fill?.type === 'gradient') {
+    style.fill = `url(#node-${props.def.id}-gradient)`;
+  }
+
   if (props.def.props?.stroke?.color) {
     style.stroke = props.def.props?.stroke?.color;
   }
@@ -131,6 +135,12 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
       >
+        {props.def.props.fill?.type === 'gradient' && (
+          <linearGradient id={`node-${props.def.id}-gradient`}>
+            <stop stopColor={props.def.props.fill.color} offset="0%" />
+            <stop stopColor={props.def.props.fill.color2} offset="100%" />
+          </linearGradient>
+        )}
         <ReactNodeImpl
           def={nodeDef}
           node={props.def}

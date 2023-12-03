@@ -1,5 +1,5 @@
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { unique } from '../../utils/array.ts';
 
@@ -38,20 +38,18 @@ export const useNodeProperty = (
   defaultValue: string | undefined = undefined
 ): [string | undefined, (value: string | undefined) => void] => {
   const [value, setValue] = useState<string | undefined>(defaultValue);
-  useEventListener(
-    'change',
-    () => {
-      const arr = unique(
-        diagram.selectionState.nodes.map(n => evaluatePropString(n.props ?? {}, s) ?? defaultValue),
-        e => e
-      ).filter(Boolean);
+  const handler = () => {
+    const arr = unique(
+      diagram.selectionState.nodes.map(n => evaluatePropString(n.props ?? {}, s) ?? defaultValue),
+      e => e
+    ).filter(Boolean);
 
-      if (arr.length === 0) setValue(defaultValue);
-      else if (arr.length === 1) setValue(arr[0]! as unknown as string);
-      else setValue(undefined);
-    },
-    diagram.selectionState
-  );
+    if (arr.length === 0) setValue(defaultValue);
+    else if (arr.length === 1) setValue(arr[0]! as unknown as string);
+    else setValue(undefined);
+  };
+  useEventListener('change', handler, diagram.selectionState);
+  useEffect(handler, []);
 
   return [
     value,
