@@ -94,7 +94,11 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram.selectionState.elements.length === 1;
 
   const color = props.def.props.stroke?.color ?? 'black';
-  const pattern = DASH_PATTERNS[props.def.props.stroke?.pattern ?? 'SOLID'] ?? '';
+  const pattern =
+    DASH_PATTERNS[props.def.props.stroke?.pattern ?? 'SOLID']?.(
+      (props.def.props?.stroke?.patternSize ?? 100) / 100,
+      (props.def.props?.stroke?.patternSpacing ?? 100) / 100
+    ) ?? '';
 
   const startArrowSize = (props.def.props.arrow?.start?.size ?? 100) / 100;
   const endArrowSize = (props.def.props.arrow?.end?.size ?? 100) / 100;
@@ -232,7 +236,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onContextMenu={onContextMenu}
         strokeWidth={'1'}
-        strokeDasharray={pattern.pattern}
+        strokeDasharray={pattern}
         style={{ cursor: 'move', fill: 'none' }}
         markerStart={arrow1 ? `url(#marker_s_${props.def.id})` : undefined}
         markerEnd={arrow2 ? `url(#marker_e_${props.def.id})` : undefined}

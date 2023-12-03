@@ -70,7 +70,10 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   if (props.def.props?.stroke?.pattern) {
     style.strokeDasharray =
-      DASH_PATTERNS[props.def.props?.stroke?.pattern ?? 'SOLID']?.pattern ?? '';
+      DASH_PATTERNS[props.def.props?.stroke?.pattern ?? 'SOLID']?.(
+        (props.def.props?.stroke?.patternSize ?? 100) / 100,
+        (props.def.props?.stroke?.patternSpacing ?? 100) / 100
+      ) ?? '';
   }
 
   //style.fill = 'transparent';

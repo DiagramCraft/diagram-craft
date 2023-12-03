@@ -1,14 +1,14 @@
 import * as Select from '@radix-ui/react-select';
 import { TbCheck, TbChevronDown } from 'react-icons/tb';
-import { DASH_PATTERNS, DashPattern } from '../../base-ui/dashPatterns.ts';
+import { DASH_PATTERNS } from '../../base-ui/dashPatterns.ts';
 
-const DashPatternPreview = (props: { type: string; pattern?: DashPattern }) => (
+const DashPatternPreview = (props: { type: string; pattern?: string }) => (
   <svg width={50} height={10}>
     <path
       d={`M 0 5 L 50 5`}
       stroke={'var(--secondary-fg)'}
       strokeWidth={'1'}
-      strokeDasharray={props.pattern?.pattern ?? undefined}
+      strokeDasharray={props.pattern ?? undefined}
       style={{ fill: 'none' }}
     />
   </svg>
@@ -22,7 +22,7 @@ export const DashSelector = (props: Props) => {
           placeholder={
             <DashPatternPreview
               type={props.value ?? 'SOLID'}
-              pattern={DASH_PATTERNS[props.value ?? 'SOLID']}
+              pattern={DASH_PATTERNS[props.value ?? 'SOLID'](1, 1)}
             />
           }
         />
@@ -39,7 +39,7 @@ export const DashSelector = (props: Props) => {
                 return (
                   <Select.Item key={type} className={'cmp-select-content__item'} value={type}>
                     <Select.ItemText>
-                      <DashPatternPreview type={type} pattern={pattern} />
+                      <DashPatternPreview type={type} pattern={pattern(1, 1)} />
                     </Select.ItemText>
                     <Select.ItemIndicator className="cmp-select-content__item-indicator">
                       <TbCheck />

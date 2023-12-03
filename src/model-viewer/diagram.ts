@@ -28,6 +28,8 @@ declare global {
       color?: string;
       width?: number;
       pattern?: string;
+      patternSpacing?: number;
+      patternSize?: number;
     };
   }
   interface NodeProps {
@@ -40,6 +42,8 @@ declare global {
       color?: string;
       width?: number;
       pattern?: string;
+      patternSpacing?: number;
+      patternSize?: number;
     };
     text?: {
       text?: string;

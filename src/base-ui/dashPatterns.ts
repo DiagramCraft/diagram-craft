@@ -2,20 +2,12 @@ export type DashPattern = {
   pattern: string;
 };
 
-export const DASH_PATTERNS: Record<string, DashPattern> = {
-  SOLID: {
-    pattern: ''
-  },
-  DASHED: {
-    pattern: '10, 10'
-  },
-  DOTTED: {
-    pattern: '1, 10'
-  },
-  DASH_DOT: {
-    pattern: '10, 10, 1, 10'
-  },
-  DASH_DOT_DOT: {
-    pattern: '10, 10, 1, 10, 1, 10'
-  }
+type DashPatternFactory = (w: number, s: number) => string;
+
+export const DASH_PATTERNS: Record<string, DashPatternFactory> = {
+  SOLID: (_w, _s) => '',
+  DASHED: (w, s) => `${w * 10}, ${s * 10}`,
+  DOTTED: (_w, s) => `1, ${s * 10}`,
+  DASH_DOT: (w, s) => `${w * 10}, ${s * 10}, 1, ${s * 10}`,
+  DASH_DOT_DOT: (w, s) => `${w * 10}, ${s * 10}, 1, ${s * 10}, 1, ${s * 10}`
 };
