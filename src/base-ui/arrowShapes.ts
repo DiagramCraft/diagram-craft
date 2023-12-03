@@ -195,9 +195,10 @@ export const ARROW_SHAPES: Record<string, ArrowShapeFactory> = {
   SHARP_ARROW_OUTLINE: s => ({
     width: s * 20,
     height: s * 10,
-    anchor: { x: s * 20, y: s * 5 },
+    anchor: { x: s * 7, y: s * 5 },
     path: [`M 0 0`, `L ${s * 20} ${s * 5}`, `L 0 ${s * 10}`, `L ${s * 7} ${s * 5}`, `Z`].join('\n'),
-    fill: 'bg'
+    fill: 'transparent',
+    shortenBy: s * 13
   }),
   CROWS_FEET: s => ({
     width: s * 20,
@@ -226,13 +227,13 @@ export const ARROW_SHAPES: Record<string, ArrowShapeFactory> = {
     height: s * 20,
     anchor: { x: s * 5, y: s * 10 },
     path: [
-      `M 15 ${s * 10}`,
+      `M ${s * 15} ${s * 10}`,
       `L ${s * 35} 0`,
-      `M 15 ${s * 10}`,
+      `M ${s * 15} ${s * 10}`,
       `L ${s * 35} ${s * 10}`,
-      `M 15 ${s * 10}`,
+      `M ${s * 15} ${s * 10}`,
       `L ${s * 35} ${s * 20}`,
-      `M 15 ${s * 10}`,
+      `M ${s * 15} ${s * 10}`,
       `L ${s * 13},${s * 10}`,
 
       /* M cx cy m r, 0 a r,r 0 1,1 -(r * 2),0 a r,r 0 1,1  (r * 2),0 */

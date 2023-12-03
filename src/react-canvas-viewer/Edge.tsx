@@ -15,6 +15,7 @@ import {
 } from '../geometry/pathPosition.ts';
 import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
 import { invariant } from '../utils/assert.ts';
+import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(
@@ -92,9 +93,16 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     props.diagram instanceof EditableDiagram &&
     props.diagram.selectionState.elements.length === 1;
 
+  const color = props.def.props.stroke?.color ?? 'black';
+  const pattern = DASH_PATTERNS[props.def.props.stroke?.pattern ?? 'SOLID'] ?? '';
+
+  const startArrowSize = (props.def.props.arrow?.start?.size ?? 100) / 100;
+  const endArrowSize = (props.def.props.arrow?.end?.size ?? 100) / 100;
+
   const arrow1: ArrowShape | undefined =
-    ARROW_SHAPES[props.def.props.arrow?.start?.type ?? '']?.(1);
-  const arrow2: ArrowShape | undefined = ARROW_SHAPES[props.def.props.arrow?.end?.type ?? '']?.(1);
+    ARROW_SHAPES[props.def.props.arrow?.start?.type ?? '']?.(startArrowSize);
+  const arrow2: ArrowShape | undefined =
+    ARROW_SHAPES[props.def.props.arrow?.end?.type ?? '']?.(endArrowSize);
 
   let start: PointOnPath | undefined;
   let end: PointOnPath | undefined;
@@ -180,9 +188,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         >
           <path
             d={arrow1.path}
-            stroke="black"
+            stroke={color}
             strokeWidth={1}
-            fill={arrow1.fill === 'fg' ? 'black' : arrow1.fill === 'bg' ? 'white' : 'none'}
+            fill={arrow1.fill === 'fg' ? color : arrow1.fill === 'bg' ? 'white' : 'none'}
           />
         </marker>
       )}
@@ -199,9 +207,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         >
           <path
             d={arrow2.path}
-            stroke="black"
+            stroke={color}
             strokeWidth={1}
-            fill={arrow2.fill === 'fg' ? 'black' : arrow2.fill === 'bg' ? 'white' : 'none'}
+            fill={arrow2.fill === 'fg' ? color : arrow2.fill === 'bg' ? 'white' : 'none'}
           />
         </marker>
       )}
@@ -218,12 +226,13 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       />
       <path
         d={path.asSvgPath()}
-        stroke={'black'}
+        stroke={color}
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onContextMenu={onContextMenu}
         strokeWidth={'1'}
+        strokeDasharray={pattern.pattern}
         style={{ cursor: 'move', fill: 'none' }}
         markerStart={arrow1 ? `url(#marker_s_${props.def.id})` : undefined}
         markerEnd={arrow2 ? `url(#marker_e_${props.def.id})` : undefined}

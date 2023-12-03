@@ -165,7 +165,7 @@
   }
 
   [contenteditable]:not(:focus) {
-    border: 1px dashed #ddd;
+    border: none; /*1px dashed #ddd;*/
   }
 
   [contenteditable]:focus {
@@ -367,7 +367,7 @@ input[type='number'] {
   border: 1px solid var(--blue-6);
   color: var(--primary-fg);
   height: 25px;
-  padding: 0 5px;
+  padding: 0 0 0 5px;
   line-height: 1;
   box-sizing: border-box;
   font-size: 90%;
@@ -702,6 +702,30 @@ input[type='number'] {
 
   .cmp-label__label {
     width: 4rem;
+  }
+}
+
+.cmp-labeled-table {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  row-gap: 0.5rem;
+  align-items: center;
+  .cmp-labeled-table__row {
+    grid-column: 1/3;
+  }
+
+  .cmp-labeled-table__value {
+  }
+  .cmp-labeled-table__label {
+  }
+
+  .cmp-toolbar {
+    padding: 0;
+    border: 1px solid var(--blue-6);
+    border-radius: 4px;
+    background-color: var(--secondary-bg);
+    width: fit-content !important;
+    min-width: 0;
   }
 }
 

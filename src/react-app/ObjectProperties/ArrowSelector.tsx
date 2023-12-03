@@ -3,7 +3,7 @@ import { TbCheck, TbChevronDown } from 'react-icons/tb';
 import { ARROW_SHAPES, ArrowShape } from '../../base-ui/arrowShapes.ts';
 
 const ArrowPreview = (props: { type: string; arrow?: ArrowShape }) => (
-  <svg width={50} height={10}>
+  <svg width={30} height={10}>
     {props.arrow && (
       <marker
         id={`arrow_${props.type}`}
@@ -29,7 +29,7 @@ const ArrowPreview = (props: { type: string; arrow?: ArrowShape }) => (
       </marker>
     )}
     <path
-      d={`M 0 5 L ${49 - (props.arrow?.shortenBy ?? 0)} 5`}
+      d={`M 0 5 L ${29 - (props.arrow?.shortenBy ?? 0)} 5`}
       stroke={'var(--secondary-fg)'}
       strokeWidth={'1'}
       style={{ cursor: 'move', fill: 'none' }}
@@ -63,7 +63,7 @@ export const ArrowSelector = (props: Props) => {
               {Object.keys(ARROW_SHAPES).map(type => {
                 const arrow = ARROW_SHAPES[type](PREVIEW_SCALE);
                 return (
-                  <Select.Item className={'cmp-select-content__item'} value={type}>
+                  <Select.Item key={type} className={'cmp-select-content__item'} value={type}>
                     <Select.ItemText>
                       <ArrowPreview type={type} arrow={arrow} />
                     </Select.ItemText>

@@ -15,6 +15,7 @@ import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { getPoint } from './eventHelper.ts';
+import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -65,6 +66,11 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   if (props.def.props?.stroke?.color) {
     style.stroke = props.def.props?.stroke?.color;
+  }
+
+  if (props.def.props?.stroke?.pattern) {
+    style.strokeDasharray =
+      DASH_PATTERNS[props.def.props?.stroke?.pattern ?? 'SOLID']?.pattern ?? '';
   }
 
   //style.fill = 'transparent';

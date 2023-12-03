@@ -17,10 +17,17 @@ declare global {
     arrow?: {
       start?: {
         type?: string;
+        size?: number;
       };
       end?: {
         type?: string;
+        size?: number;
       };
+    };
+    stroke?: {
+      color?: string;
+      width?: number;
+      pattern?: string;
     };
   }
   interface NodeProps {
@@ -32,6 +39,7 @@ declare global {
     stroke?: {
       color?: string;
       width?: number;
+      pattern?: string;
     };
     text?: {
       text?: string;
