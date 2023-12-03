@@ -20,26 +20,31 @@ export const TextPart = (props: Props) => {
           justifyItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          cursor: 'move'
+          cursor: 'move',
+          fontFamily: props.text?.font ?? 'sans-serif',
+          fontSize: (props.text?.fontSize ?? '10') + 'px'
         }}
         onDoubleClick={e => {
           const $t = e.target as HTMLDivElement;
+          // TODO: Maybe we can make this case use classes instead of looking at parent
           if ($t.parentNode?.nodeName === 'foreignObject') {
             ($t.firstChild as HTMLDivElement).contentEditable = 'true';
             ($t.firstChild as HTMLDivElement)?.focus();
+          } else if ($t.parentNode?.parentNode?.nodeName === 'foreignObject') {
+            ($t as HTMLDivElement).contentEditable = 'true';
+            ($t as HTMLDivElement)?.focus();
           }
         }}
       >
         <div
           style={{
             color: 'black',
-            fontSize: '11px',
             textAlign: 'center',
             cursor: 'text'
           }}
           onKeyDown={e => {
             if (e.key === 'Escape') {
-              (e.target as HTMLDivElement).innerText = props.text ?? '';
+              (e.target as HTMLDivElement).innerText = props.text?.text ?? '';
               (e.target as HTMLDivElement).blur();
             } else if (e.key === 'Enter' && e.metaKey) {
               (e.target as HTMLDivElement).blur();
@@ -49,7 +54,7 @@ export const TextPart = (props: Props) => {
             props.onChange(e.target.innerHTML);
             e.target.contentEditable = 'false';
           }}
-          dangerouslySetInnerHTML={{ __html: props.text ?? '' }}
+          dangerouslySetInnerHTML={{ __html: props.text?.text ?? '' }}
         />
       </div>
     </foreignObject>
@@ -57,7 +62,7 @@ export const TextPart = (props: Props) => {
 };
 
 type Props = {
-  text: string | undefined;
+  text: NodeProps['text'];
   bounds: Box;
   onMouseDown: MouseEventHandler;
   onChange: (text: string) => void;

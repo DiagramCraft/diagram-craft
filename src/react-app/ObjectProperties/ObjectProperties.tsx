@@ -7,6 +7,7 @@ import { AccordionContent } from '../AccordionContext.tsx';
 import { LineProperties } from './LineProperties.tsx';
 import { StrokeProperties } from './StrokeProperties.tsx';
 import { FillProperties } from './FillProperties.tsx';
+import { TextProperties } from './TextProperties.tsx';
 
 export const ObjectProperties = (props: Props) => {
   const [type, setType] = useState('none');
@@ -50,6 +51,12 @@ export const ObjectProperties = (props: Props) => {
               <AccordionTrigger>Stroke</AccordionTrigger>
               <AccordionContent>
                 <StrokeProperties diagram={props.diagram} />
+              </AccordionContent>
+            </Accordion.Item>
+            <Accordion.Item className="cmp-accordion__item" value="line">
+              <AccordionTrigger>Text</AccordionTrigger>
+              <AccordionContent>
+                <TextProperties diagram={props.diagram} />
               </AccordionContent>
             </Accordion.Item>
           </>

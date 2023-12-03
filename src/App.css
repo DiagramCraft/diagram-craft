@@ -162,6 +162,9 @@
     padding: 5px;
     outline: 0px solid transparent;
     border-radius: 3px;
+
+    &::selection      { background: rgba(175,210,255,0.5); }
+    &::-moz-selection { background: rgba(175,210,255,0.5); }
   }
 
   [contenteditable]:not(:focus) {
@@ -396,7 +399,7 @@ input[type='number'] {
   justify-content: center;
   border-radius: 4px;
   padding: 0 5px;
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1;
   height: 25px;
   gap: 5px;

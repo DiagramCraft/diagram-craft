@@ -11,7 +11,22 @@ import { assert } from '../utils/assert.ts';
 import { Path } from '../geometry/path.ts';
 
 declare global {
-  interface EdgeProps {
+  interface ElementProps {
+    stroke?: {
+      color?: string;
+      width?: number;
+      pattern?: string;
+      patternSpacing?: number;
+      patternSize?: number;
+    };
+    text?: {
+      text?: string;
+      font?: string;
+      fontSize?: number;
+    };
+  }
+
+  interface EdgeProps extends ElementProps {
     highlight?: string[];
     type?: 'straight' | 'bezier' | 'curved' | 'orthogonal';
     arrow?: {
@@ -27,31 +42,14 @@ declare global {
     fill?: {
       color?: string;
     };
-    stroke?: {
-      color?: string;
-      width?: number;
-      pattern?: string;
-      patternSpacing?: number;
-      patternSize?: number;
-    };
   }
-  interface NodeProps {
+  interface NodeProps extends ElementProps {
     highlight?: string[];
 
     fill?: {
       color?: string;
       type?: 'solid' | 'gradient';
       color2?: string;
-    };
-    stroke?: {
-      color?: string;
-      width?: number;
-      pattern?: string;
-      patternSpacing?: number;
-      patternSize?: number;
-    };
-    text?: {
-      text?: string;
     };
   }
 }

@@ -15,7 +15,7 @@ export const Rect = (props: Props) => {
         {...propsUtils.except(props, 'node', 'isSelected', 'isSingleSelected')}
       />
       <TextPart
-        text={props.node.props.text?.text}
+        text={props.node.props.text}
         bounds={props.node.bounds}
         onChange={text => {
           props.node.props.text ??= {};
