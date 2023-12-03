@@ -37,7 +37,7 @@ export const TimeOffsetOnSegment = {
     const segment = path.segments[p.segment];
     return {
       ...p,
-      segmentD: p.segmentT * segment.length()
+      segmentD: segment.lengthAtT(p.segmentT)
     };
   },
   toLengthOffsetOnPath: <T extends TimeOffsetOnSegment>(
@@ -45,6 +45,7 @@ export const TimeOffsetOnSegment = {
     path: Path
   ): LengthOffsetOnPath & T => {
     const segment = path.segments[p.segment];
+    // TODO: This is incorrect
     const pathD = path.lengthTo(p.segment) + p.segmentT * segment.length();
     return {
       ...p,
@@ -68,13 +69,14 @@ export const LengthOffsetOnSegment = {
     const segment = path.segments[p.segment];
     return {
       ...p,
-      segmentT: p.segmentD / segment.length()
+      segmentT: segment.tAtLength(p.segmentD)
     };
   }
 };
 
 export const TimeOffsetOnPath = {
   toLengthOffsetOnPath: <T extends TimeOffsetOnPath>(p: T, path: Path): LengthOffsetOnPath & T => {
+    // TODO: This is incorrect
     const pathD = p.pathT * path.length();
     return {
       ...p,
@@ -102,6 +104,7 @@ export const LengthOffsetOnPath = {
     };
   },
   toTimeOffsetOnPath: <T extends LengthOffsetOnPath>(p: T, path: Path): TimeOffsetOnPath & T => {
+    // TODO: This is incorrect
     const pathT = p.pathD / path.length();
     return {
       ...p,

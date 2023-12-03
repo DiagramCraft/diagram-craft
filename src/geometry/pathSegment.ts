@@ -16,6 +16,8 @@ export interface PathSegment {
   projectPoint(point: Point): Projection;
   asRawSegments(): Segment[];
   split(t: number): [PathSegment, PathSegment];
+  tAtLength(length: number): number;
+  lengthAtT(t: number): number;
   //tangentAt(t: number): Vector;
   //normalAt(t: number): Vector;
   //boundingBox(): Box;
@@ -41,6 +43,14 @@ export class LineSegment implements PathSegment {
   split(t: number): [PathSegment, PathSegment] {
     const p = this.point(t);
     return [new LineSegment(this.start, p), new LineSegment(p, this.end)];
+  }
+
+  tAtLength(length: number): number {
+    return length / this.length();
+  }
+
+  lengthAtT(t: number): number {
+    return this.length() * t;
   }
 
   projectPoint(point: Point): Projection {
@@ -190,6 +200,26 @@ export class ArcSegment implements PathSegment {
   // @ts-ignore
   split(_t: number) {
     // TODO: Implement this - maybe this can be implemented without looking at the bezier curves
+    //       essentially by creating a new arc with new bezier curves
+    throw new NotImplementedYet();
+  }
+
+  tAtLength(l: number): number {
+    // find segment that contains the point
+    let currentL = l;
+    let segmentIndex = 0;
+    let segment = this.segmentList.segments[segmentIndex];
+    while (currentL > segment.length()) {
+      currentL -= segment.length();
+      segment = this.segmentList.segments[++segmentIndex];
+    }
+
+    return segment.tAtLength(currentL);
+  }
+
+  lengthAtT(_t: number): number {
+    // TODO: Implement this - maybe this can be implemented without looking at the bezier curves
+    //       essentially by creating a new arc with new bezier curves
     throw new NotImplementedYet();
   }
 

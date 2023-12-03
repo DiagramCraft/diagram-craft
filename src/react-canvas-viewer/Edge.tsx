@@ -136,10 +136,8 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       }
 
       if (arrow2) {
-        const arrowL2 = TimeOffsetOnSegment.toLengthOffsetOnSegment(
-          PointOnPath.toTimeOffset(end, path),
-          path
-        );
+        const baseTOS = PointOnPath.toTimeOffset(end, path);
+        const arrowL2 = TimeOffsetOnSegment.toLengthOffsetOnSegment(baseTOS, path);
         // TODO: This 1 is likely the stroke width of the edge
         arrowL2.segmentD -= (arrow2.shortenBy ?? 0) + 1;
 

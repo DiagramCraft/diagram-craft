@@ -259,10 +259,11 @@ export class CubicBezier {
     };
   }
 
-  sample(n = 100) {
+  sample(n = 100, start = 0, end = 1) {
+    const d = end - start;
     const points = [];
     for (let i = 0; i <= n; i++) {
-      points.push(this.point(i / n));
+      points.push(this.point(start + (d * i) / n));
     }
     return points;
   }
@@ -379,18 +380,27 @@ export class CubicBezier {
 
   tAtLength(l: number) {
     let total = 0;
-    const samples = this.sample();
-    for (let i = 1; i < samples.length; i++) {
-      const d = Point.distance(samples[i - 1], samples[i]);
+    // TODO: Maybe we can estimate the number of samples needed
+    //       based on the extent of the bounding box
+    const len = 1000;
+    let prevSample = this.point(0);
+    for (let i = 1; i < len; i++) {
+      const sample = this.point(i / len);
+      const d = Point.distance(prevSample, sample);
+      prevSample = sample;
 
       total += d;
       if (total >= l) {
         // interpolate between the last sample and the current sample
         const t = (l - (total - d)) / d;
-        return (i - 1 + t) / samples.length;
+        return (i - 1 + t) / len;
       }
     }
     return 1;
+  }
+
+  lengthAtT(t: number) {
+    return this.split(t)[0].length();
   }
 
   intersectsBezier(other: CubicBezier, threshold = 0.5) {
