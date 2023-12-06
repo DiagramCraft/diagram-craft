@@ -1,4 +1,4 @@
-import { ActionEvents, ToggleAction } from '../keyMap.ts';
+import { ActionEvents, ToggleAction } from '../../base-ui/keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 
 declare global {
@@ -7,7 +7,6 @@ declare global {
   }
 }
 
-// TODO: This should probably move into the app/ folder
 export class ToggleDarkModeAction extends EventEmitter<ActionEvents> implements ToggleAction {
   enabled = true;
   state: boolean = false;

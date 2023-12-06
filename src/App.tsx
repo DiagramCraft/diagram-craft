@@ -33,7 +33,6 @@ import {
 import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu.tsx';
 import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher.tsx';
 import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu.tsx';
-import { defaultCanvasActions, defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
 import { DragDropManager } from './react-canvas-viewer/DragDropManager.tsx';
 import { defaultEdgeRegistry, defaultNodeRegistry } from './react-canvas-viewer/defaultRegistry.ts';
@@ -48,6 +47,8 @@ import { ObjectProperties } from './react-app/ObjectProperties/ObjectProperties.
 import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 import { useEventListener } from './react-app/hooks/useEventListener.ts';
 import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
+import { defaultAppActions } from './react-app/appActionMap.ts';
+import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 
 const diagrams = [
   {
@@ -98,7 +99,7 @@ const App = () => {
     perftest(new BezierPerformanceTest());
   }, []);
 */
-  const actionMap = makeActionMap(defaultCanvasActions)({ diagram: $d });
+  const actionMap = makeActionMap(defaultAppActions)({ diagram: $d });
   const keyMap = defaultMacKeymap;
   return (
     <div>

@@ -5,7 +5,6 @@ import { SelectAllAction } from './actions/selectAllAction.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { AlignAction } from './actions/alignAction.ts';
 import { ToggleMagnetTypeAction } from './actions/toggleMagnetTypeAction.ts';
-import { ToggleDarkModeAction } from './actions/toggleDarkMode.ts';
 import { DistributeAction } from './actions/distributeAction.ts';
 import { ZoomAction } from './actions/zoomAction.ts';
 import { Point } from '../geometry/point.ts';
@@ -31,7 +30,7 @@ export interface ToggleAction extends Action {
   state: boolean;
 }
 
-type State = {
+export type State = {
   diagram: EditableDiagram;
 };
 
@@ -60,7 +59,6 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction(state.diagram, 'canvas'),
   TOGGLE_MAGNET_TYPE_NODE: new ToggleMagnetTypeAction(state.diagram, 'node'),
   TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction(state.diagram, 'distance'),
-  TOGGLE_DARK_MODE: new ToggleDarkModeAction(),
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical'),
   ZOOM_IN: new ZoomAction(state.diagram, 'in'),
