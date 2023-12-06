@@ -3,6 +3,7 @@ import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { TextPart } from '../TextPart.tsx';
+import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 
 declare global {
   interface NodeProps {
@@ -44,6 +45,7 @@ export const RoundedRect = (props: Props) => {
         <ShapeControlPoint
           x={props.node.bounds.pos.x + radius}
           y={props.node.bounds.pos.y}
+          diagram={props.diagram}
           def={props.node}
           onDrag={x => {
             const distance = Math.max(0, x - props.node.bounds.pos.x);
@@ -58,6 +60,7 @@ export const RoundedRect = (props: Props) => {
 
 type Props = {
   node: DiagramNode;
+  diagram: EditableDiagram;
   isSelected: boolean;
   isSingleSelected: boolean;
 } & React.SVGProps<SVGRectElement>;

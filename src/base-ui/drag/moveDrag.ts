@@ -13,10 +13,13 @@ import { MoveAction, NodeAddAction } from '../../model-viewer/actions.ts';
 export class MoveDrag implements Drag {
   snapAngle?: 'h' | 'v';
 
-  constructor(private readonly offset: Point) {}
+  constructor(
+    private readonly diagram: EditableDiagram,
+    private readonly offset: Point
+  ) {}
 
-  onDrag(coord: Point, diagram: EditableDiagram, modifiers: Modifiers): void {
-    const selection = diagram.selectionState;
+  onDrag(coord: Point, modifiers: Modifiers): void {
+    const selection = this.diagram.selectionState;
     assert.false(selection.isEmpty());
 
     // Don't move connected edges
@@ -38,7 +41,7 @@ export class MoveDrag implements Drag {
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (modifiers.metaKey && !selection.state['metaKey']) {
       // Reset current selection back to original
-      diagram.transformElements(selection.nodes, [
+      this.diagram.transformElements(selection.nodes, [
         new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))
       ]);
 
@@ -46,10 +49,10 @@ export class MoveDrag implements Drag {
       selection.bounds = newBounds.getSnapshot();
       selection.guides = [];
 
-      const newElements = selection.source.elementIds.map(e => diagram.nodeLookup[e].clone());
+      const newElements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e].clone());
       newElements.forEach(e => {
-        e.id = diagram.newid();
-        diagram.addNode(e);
+        e.id = this.diagram.newid();
+        this.diagram.addNode(e);
       });
       selection.elements = newElements;
 
@@ -59,12 +62,12 @@ export class MoveDrag implements Drag {
 
       const elementsToRemove = selection.nodes;
 
-      selection.elements = selection.source.elementIds.map(e => diagram.nodeLookup[e]);
+      selection.elements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e]);
       selection.recalculateBoundingBox();
       selection.guides = [];
 
       elementsToRemove.forEach(e => {
-        diagram.removeNode(e);
+        this.diagram.removeNode(e);
       });
     }
 
@@ -97,7 +100,7 @@ export class MoveDrag implements Drag {
     if (modifiers.altKey) {
       selection.guides = [];
     } else {
-      const snapManager = diagram.createSnapManager();
+      const snapManager = this.diagram.createSnapManager();
 
       const result = snapManager.snapMove(newBounds.getSnapshot(), snapDirections);
       selection.guides = result.guides;
@@ -106,39 +109,39 @@ export class MoveDrag implements Drag {
       newBounds.set('pos', result.adjusted.pos);
     }
 
-    diagram.transformElements(selection.nodes, [
+    this.diagram.transformElements(selection.nodes, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
-    diagram.transformElements(selection.edges, [
+    this.diagram.transformElements(selection.edges, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
     selection.bounds = newBounds.getSnapshot();
   }
 
-  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
-    const selection = diagram.selectionState;
+  onDragEnd(_coord: Point): void {
+    const selection = this.diagram.selectionState;
     if (selection.isChanged()) {
       // TODO: Maybe add a compound action here
       const resizeCanvasAction = createResizeCanvasActionToFit(
-        diagram,
+        this.diagram,
         Box.boundingBox(
           selection.nodes.map(e => e.bounds),
           true
         )
       );
       if (resizeCanvasAction) {
-        diagram.undoManager.execute(resizeCanvasAction);
+        this.diagram.undoManager.execute(resizeCanvasAction);
       }
 
       if (selection.state['metaKey']) {
-        diagram.undoManager.add(new NodeAddAction(selection.nodes, diagram));
+        this.diagram.undoManager.add(new NodeAddAction(selection.nodes, this.diagram));
       } else {
-        diagram.undoManager.add(
+        this.diagram.undoManager.add(
           new MoveAction(
             selection.source.elementBoxes,
             selection.nodes.map(e => e.bounds),
             selection.nodes,
-            diagram
+            this.diagram
           )
         );
       }

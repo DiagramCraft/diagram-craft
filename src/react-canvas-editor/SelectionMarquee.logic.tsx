@@ -7,21 +7,24 @@ import { SelectionState } from '../model-editor/selectionState.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 export class MarqueeDrag implements Drag {
-  constructor(private readonly offset: Point) {}
+  constructor(
+    private readonly diagram: EditableDiagram,
+    private readonly offset: Point
+  ) {}
 
-  onDrag(coord: Point, diagram: EditableDiagram) {
-    diagram.selectionState.marquee = Box.normalize({
+  onDrag(coord: Point) {
+    this.diagram.selectionState.marquee = Box.normalize({
       pos: this.offset,
       size: { w: coord.x - this.offset.x, h: coord.y - this.offset.y },
       rotation: 0
     });
 
-    this.updatePendingElements(diagram.selectionState, diagram);
+    this.updatePendingElements(this.diagram.selectionState, this.diagram);
   }
 
-  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
-    if (diagram.selectionState.pendingElements) {
-      diagram.selectionState.convertMarqueeToSelection();
+  onDragEnd(_coord: Point): void {
+    if (this.diagram.selectionState.pendingElements) {
+      this.diagram.selectionState.convertMarqueeToSelection();
     }
   }
 

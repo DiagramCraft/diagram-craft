@@ -44,8 +44,8 @@ export class EdgeEndpointMoveDrag implements Drag {
     this.hoverElement = undefined;
   }
 
-  onDrag(coord: Point, diagram: EditableDiagram) {
-    const selection = diagram.selectionState;
+  onDrag(coord: Point) {
+    const selection = this.diagram.selectionState;
     precondition.is.true(this.type === 'start' || this.type === 'end');
 
     selection.guides = [];
@@ -59,7 +59,7 @@ export class EdgeEndpointMoveDrag implements Drag {
     this.coord = coord;
 
     // TODO: We should snap to the connection point
-    if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
+    if (this.hoverElement && this.diagram.nodeLookup[this.hoverElement]) {
       this.element.classList.add('selection-edge-handle--connected');
 
       this.attachToClosestAnchor(coord);
@@ -67,11 +67,11 @@ export class EdgeEndpointMoveDrag implements Drag {
       this.element.classList.remove('selection-edge-handle--connected');
     }
 
-    diagram.updateElement(this.edge);
+    this.diagram.updateElement(this.edge);
     selection.recalculateBoundingBox();
   }
 
-  onDragEnd(_coord: Point, _diagram: EditableDiagram): void {
+  onDragEnd(_coord: Point): void {
     this.element.setAttribute('pointer-events', this.originalPointerEvents);
     this.element.classList.remove('selection-edge-handle--active');
 

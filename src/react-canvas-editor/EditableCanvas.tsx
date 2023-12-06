@@ -156,7 +156,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           if (!modifiers.shiftKey) {
             selection.clear();
           }
-          drag.initiateDrag(new MarqueeDrag(diagram.viewBox.toDiagramPoint(point)));
+          drag.initiateDrag(new MarqueeDrag(diagram, diagram.viewBox.toDiagramPoint(point)));
           return;
         } else {
           if (!modifiers.shiftKey) {
@@ -168,6 +168,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         if (!selection.isEmpty()) {
           drag.initiateDrag(
             new MoveDrag(
+              diagram,
               Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.bounds.pos)
             )
           );
@@ -184,7 +185,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       const current = drag.currentDrag();
       try {
         if (current) {
-          current.onDragEnd(diagram.viewBox.toDiagramPoint(point), diagram);
+          current.onDragEnd(diagram.viewBox.toDiagramPoint(point));
         }
 
         if (deferedMouseAction.current) {
@@ -208,7 +209,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       if (!current) return;
 
       try {
-        current.onDrag(diagram.viewBox.toDiagramPoint(point), diagram, modifiers);
+        current.onDrag(diagram.viewBox.toDiagramPoint(point), modifiers);
       } finally {
         deferedMouseAction.current = undefined;
         updateCursor(point);

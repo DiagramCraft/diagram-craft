@@ -11,6 +11,7 @@ import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 
 export class ResizeDrag implements Drag {
   constructor(
+    private readonly diagram: EditableDiagram,
     private readonly type:
       | 'resize-nw'
       | 'resize-ne'
@@ -23,8 +24,8 @@ export class ResizeDrag implements Drag {
     private readonly offset: Point
   ) {}
 
-  onDrag(coord: Point, diagram: EditableDiagram, modifiers: Modifiers): void {
-    const selection = diagram.selectionState;
+  onDrag(coord: Point, modifiers: Modifiers): void {
+    const selection = this.diagram.selectionState;
     assert.false(selection.isEmpty());
 
     const before = selection.bounds;
@@ -100,7 +101,7 @@ export class ResizeDrag implements Drag {
         this.applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs);
       }
     } else {
-      const snapManager = diagram.createSnapManager();
+      const snapManager = this.diagram.createSnapManager();
 
       const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
       selection.guides = result.guides;
@@ -116,18 +117,21 @@ export class ResizeDrag implements Drag {
     }
 
     selection.bounds = newBounds.getSnapshot();
-    diagram.transformElements(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
+    this.diagram.transformElements(
+      selection.nodes,
+      TransformFactory.fromTo(before, selection.bounds)
+    );
   }
 
-  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
-    const selection = diagram.selectionState;
+  onDragEnd(_coord: Point): void {
+    const selection = this.diagram.selectionState;
     if (selection.isChanged()) {
-      diagram.undoManager.add(
+      this.diagram.undoManager.add(
         new ResizeAction(
           selection.source.elementBoxes,
           selection.nodes.map(e => e.bounds),
           selection.nodes,
-          diagram
+          this.diagram
         )
       );
       selection.rebaseline();

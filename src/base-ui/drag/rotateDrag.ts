@@ -8,8 +8,10 @@ import { TransformFactory } from '../../geometry/transform.ts';
 import { RotateAction } from '../../model-viewer/actions.ts';
 
 export class RotateDrag implements Drag {
-  onDrag(coord: Point, diagram: EditableDiagram) {
-    const selection = diagram.selectionState;
+  constructor(private readonly diagram: EditableDiagram) {}
+
+  onDrag(coord: Point) {
+    const selection = this.diagram.selectionState;
     assert.false(selection.isEmpty());
 
     const before = selection.bounds;
@@ -22,18 +24,21 @@ export class RotateDrag implements Drag {
     };
     selection.guides = [];
 
-    diagram.transformElements(selection.nodes, TransformFactory.fromTo(before, selection.bounds));
+    this.diagram.transformElements(
+      selection.nodes,
+      TransformFactory.fromTo(before, selection.bounds)
+    );
   }
 
-  onDragEnd(_coord: Point, diagram: EditableDiagram): void {
-    const selection = diagram.selectionState;
+  onDragEnd(_coord: Point): void {
+    const selection = this.diagram.selectionState;
     if (selection.isChanged()) {
-      diagram.undoManager.add(
+      this.diagram.undoManager.add(
         new RotateAction(
           selection.source.elementBoxes,
           selection.nodes.map(e => e.bounds),
           selection.nodes,
-          diagram
+          this.diagram
         )
       );
       selection.rebaseline();

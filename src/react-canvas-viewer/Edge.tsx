@@ -20,26 +20,28 @@ import { EventHelper } from '../base-ui/eventHelper.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(
+    private readonly diagram: EditableDiagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number
   ) {}
 
-  onDrag(coord: Point, _diagram: EditableDiagram, _modifiers: Modifiers) {
+  onDrag(coord: Point, _modifiers: Modifiers) {
     this.edge.waypoints![this.waypointIdx].point = coord;
-    _diagram.updateElement(this.edge);
+    this.diagram.updateElement(this.edge);
   }
 
-  onDragEnd(_coord: Point, _diagram: EditableDiagram): void {}
+  onDragEnd(_coord: Point): void {}
 }
 
 class BezierControlPointDrag implements Drag {
   constructor(
+    private readonly diagram: EditableDiagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
     private readonly controlPointIdx: number
   ) {}
 
-  onDrag(coord: Point, _diagram: EditableDiagram, _modifiers: Modifiers) {
+  onDrag(coord: Point, _modifiers: Modifiers) {
     const wp = this.edge.waypoints![this.waypointIdx];
 
     const cIdx = this.controlPointIdx;
@@ -51,10 +53,10 @@ class BezierControlPointDrag implements Drag {
       y: wp.controlPoints![cIdx].y * -1
     };
 
-    _diagram.updateElement(this.edge);
+    this.diagram.updateElement(this.edge);
   }
 
-  onDragEnd(_coord: Point, _diagram: EditableDiagram): void {}
+  onDragEnd(_coord: Point): void {}
 }
 
 export type EdgeApi = {
@@ -299,7 +301,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
               onMouseDown={e => {
                 if (e.button !== 0) return;
 
-                drag.initiateDrag(new EdgeWaypointDrag(props.def, idx));
+                drag.initiateDrag(new EdgeWaypointDrag(props.diagram, props.def, idx));
                 e.stopPropagation();
 
                 return false;
@@ -330,7 +332,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
                       onMouseDown={e => {
                         if (e.button !== 0) return;
 
-                        drag.initiateDrag(new BezierControlPointDrag(props.def, idx, cIdx));
+                        drag.initiateDrag(
+                          new BezierControlPointDrag(props.diagram, props.def, idx, cIdx)
+                        );
                         e.stopPropagation();
 
                         return false;

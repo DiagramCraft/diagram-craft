@@ -143,6 +143,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         )}
         <ReactNodeImpl
           def={nodeDef}
+          diagram={props.diagram as EditableDiagram}
           node={props.def}
           onMouseDown={onMouseDown}
           isSelected={isSelected}

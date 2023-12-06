@@ -9,10 +9,12 @@ import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Path } from '../geometry/path.ts';
 import { round } from '../utils/math.ts';
 import { Box } from '../geometry/box.ts';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 type Props = {
   node: DiagramNode;
   def: NodeDefinition;
+  diagram: EditableDiagram;
   isSelected: boolean;
   isSingleSelected: boolean;
 } & React.SVGProps<SVGRectElement>;
