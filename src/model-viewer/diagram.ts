@@ -23,6 +23,17 @@ declare global {
       text?: string;
       font?: string;
       fontSize?: number;
+      bold?: boolean;
+      italic?: boolean;
+      textDecoration?: 'underline' | 'line-through' | 'overline';
+      textTransform?: 'uppercase' | 'lowercase' | 'capitalize';
+      color?: string;
+      align?: 'left' | 'center' | 'right';
+      valign?: 'top' | 'middle' | 'bottom';
+      top?: number;
+      left?: number;
+      right?: number;
+      bottom?: number;
     };
   }
 

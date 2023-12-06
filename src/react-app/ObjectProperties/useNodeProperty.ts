@@ -32,12 +32,12 @@ const evaluatePropString = (props: Record<string, any | undefined>, s: string) =
   return current;
 };
 
-export const useNodeProperty = (
+export const useNodeProperty = <T>(
   s: PropertyStringPath<NodeProps>,
   diagram: EditableDiagram,
-  defaultValue: string | undefined = undefined
-): [string | undefined, (value: string | undefined) => void] => {
-  const [value, setValue] = useState<string | undefined>(defaultValue);
+  defaultValue: T | undefined = undefined
+): [T | undefined, (value: T | undefined) => void] => {
+  const [value, setValue] = useState<T | undefined>(defaultValue);
   const handler = () => {
     const arr = unique(
       diagram.selectionState.nodes.map(n => evaluatePropString(n.props ?? {}, s) ?? defaultValue),
@@ -45,7 +45,7 @@ export const useNodeProperty = (
     ).filter(Boolean);
 
     if (arr.length === 0) setValue(defaultValue);
-    else if (arr.length === 1) setValue(arr[0]! as unknown as string);
+    else if (arr.length === 1) setValue(arr[0]! as unknown as T);
     else setValue(undefined);
   };
   useEventListener('change', handler, diagram.selectionState);

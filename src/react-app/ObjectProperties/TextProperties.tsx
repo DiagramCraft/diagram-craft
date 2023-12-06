@@ -11,6 +11,7 @@ import {
   TbItalic,
   TbLetterCase,
   TbLetterCaseUpper,
+  TbStrikethrough,
   TbUnderline
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
@@ -35,6 +36,21 @@ export const TextProperties = (props: Props) => {
   // TODO: Should be useElementProperty
   const [font, setFont] = useNodeProperty('text.font', props.diagram, 'Arial');
   const [fontSize, setFontSize] = useNodeProperty('text.fontSize', props.diagram, '10');
+  const [isBold, setIsBold] = useNodeProperty('text.bold', props.diagram, false);
+  const [isItalic, setIsItalic] = useNodeProperty('text.italic', props.diagram, false);
+  const [textDecoration, setTextDecoration] = useNodeProperty<
+    NonNullable<NodeProps['text']>['textDecoration']
+  >('text.textDecoration', props.diagram, undefined);
+  const [textTransform, setTextTransform] = useNodeProperty<
+    NonNullable<NodeProps['text']>['textTransform']
+  >('text.textTransform', props.diagram, undefined);
+  const [color, setColor] = useNodeProperty<string>('text.color', props.diagram, undefined);
+  const [align, setAlign] = useNodeProperty<string>('text.align', props.diagram, 'center');
+  const [valign, setVAlign] = useNodeProperty<string>('text.valign', props.diagram, 'middle');
+  const [top, setTop] = useNodeProperty<string>('text.top', props.diagram, '0');
+  const [left, setLeft] = useNodeProperty<string>('text.left', props.diagram, '0');
+  const [bottom, setBottom] = useNodeProperty<string>('text.bottom', props.diagram, '0');
+  const [right, setRight] = useNodeProperty<string>('text.right', props.diagram, '0');
 
   return (
     <div className={'cmp-labeled-table'}>
@@ -90,19 +106,41 @@ export const TextProperties = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'multiple'}
-              value={[]}
+              value={Object.entries({
+                bold: isBold,
+                italic: isItalic,
+                underline: textDecoration === 'underline',
+                strikethrough: textDecoration === 'line-through'
+              })
+                .filter(([_, value]) => value)
+                .map(([key, _]) => key)}
               onValueChange={value => {
-                console.log(value);
+                setIsBold(value.includes('bold'));
+                setIsItalic(value.includes('italic'));
+
+                const isUnderlineChanged =
+                  value.includes('underline') !== (textDecoration === 'underline');
+                const isStrikethroughChanged =
+                  value.includes('strikethrough') !== (textDecoration === 'line-through');
+
+                if (isUnderlineChanged) {
+                  setTextDecoration(value.includes('underline') ? 'underline' : undefined);
+                } else if (isStrikethroughChanged) {
+                  setTextDecoration(value.includes('strikethrough') ? 'line-through' : undefined);
+                }
               }}
             >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'letter-case'}>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'bold'}>
                 <TbBold />
               </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'upper-case'}>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'italic'}>
                 <TbItalic />
               </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'upper-case'}>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'underline'}>
                 <TbUnderline />
+              </ReactToolbar.ToggleItem>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'strikethrough'}>
+                <TbStrikethrough />
               </ReactToolbar.ToggleItem>
             </ReactToolbar.ToggleGroup>
           </ReactToolbar.Root>
@@ -110,15 +148,17 @@ export const TextProperties = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={'letter-case'}
+              value={textTransform}
               onValueChange={value => {
-                console.log(value);
+                setTextTransform(
+                  value as unknown as NonNullable<NodeProps['text']>['textTransform']
+                );
               }}
             >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'letter-case'}>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'capitalize'}>
                 <TbLetterCase />
               </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'upper-case'}>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'uppercase'}>
                 <TbLetterCaseUpper />
               </ReactToolbar.ToggleItem>
             </ReactToolbar.ToggleGroup>
@@ -131,8 +171,8 @@ export const TextProperties = (props: Props) => {
         <ColorPicker
           primaryColors={primaryColors}
           additionalHues={additionalHues}
-          color={'a' ?? 'transparent'}
-          onClick={() => {}}
+          color={color ?? 'transparent'}
+          onClick={setColor}
         />
       </div>
 
@@ -140,13 +180,7 @@ export const TextProperties = (props: Props) => {
       <div className={'cmp-labeled-table__value'}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup
-              type={'single'}
-              value={'center'}
-              onValueChange={value => {
-                console.log(value);
-              }}
-            >
+            <ReactToolbar.ToggleGroup type={'single'} value={align} onValueChange={setAlign}>
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'left'}>
                 <TbAlignLeft />
               </ReactToolbar.ToggleItem>
@@ -160,13 +194,7 @@ export const TextProperties = (props: Props) => {
           </ReactToolbar.Root>
           &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup
-              type={'single'}
-              value={'middle'}
-              onValueChange={value => {
-                console.log(value);
-              }}
-            >
+            <ReactToolbar.ToggleGroup type={'single'} value={valign} onValueChange={setVAlign}>
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'top'}>
                 <RxTextAlignTop />
               </ReactToolbar.ToggleItem>
@@ -181,49 +209,61 @@ export const TextProperties = (props: Props) => {
         </div>
       </div>
 
-      <div className={'cmp-labeled-table__label'}>Spacing:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <input
-          type={'number'}
-          value={'a' ?? 1}
-          min={1}
-          style={{ width: '45px' }}
-          onChange={ev => {
-            console.log(ev);
-          }}
-        />
+      <div
+        className={'cmp-labeled-table__label'}
+        style={{ alignSelf: 'start', marginTop: '0.25rem' }}
+      >
+        Spacing:
       </div>
-      <div></div>
       <div className={'cmp-labeled-table__value'}>
-        <input
-          type={'number'}
-          value={'a' ?? 1}
-          min={1}
-          style={{ width: '45px' }}
-          onChange={ev => {
-            console.log(ev);
+        <div
+          style={{
+            display: 'grid',
+            gap: '0.25rem',
+            gridTemplateAreas: '"gap1 top gap2" "left bottom right"',
+            gridTemplateRows: 'repeat(2, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)'
           }}
-        />
-        &nbsp;
-        <input
-          type={'number'}
-          value={'a' ?? 1}
-          min={1}
-          style={{ width: '45px' }}
-          onChange={ev => {
-            console.log(ev);
-          }}
-        />
-        &nbsp;
-        <input
-          type={'number'}
-          value={'a' ?? 1}
-          min={1}
-          style={{ width: '45px' }}
-          onChange={ev => {
-            console.log(ev);
-          }}
-        />
+        >
+          <div style={{ gridArea: 'gap1' }}></div>
+          <div style={{ gridArea: 'gap2' }}></div>
+          <input
+            type={'number'}
+            value={top}
+            min={0}
+            style={{ gridArea: 'top', width: '100%' }}
+            onChange={ev => {
+              setTop(ev.target.value);
+            }}
+          />
+          <input
+            type={'number'}
+            value={left}
+            min={0}
+            style={{ gridArea: 'left', width: '100%' }}
+            onChange={ev => {
+              setLeft(ev.target.value);
+            }}
+          />
+          <input
+            type={'number'}
+            value={bottom}
+            min={0}
+            style={{ gridArea: 'bottom', width: '100%' }}
+            onChange={ev => {
+              setBottom(ev.target.value);
+            }}
+          />
+          <input
+            type={'number'}
+            value={right}
+            min={0}
+            style={{ gridArea: 'right', width: '100%' }}
+            onChange={ev => {
+              setRight(ev.target.value);
+            }}
+          />
+        </div>
       </div>
     </div>
   );

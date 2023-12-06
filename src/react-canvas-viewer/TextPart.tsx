@@ -1,8 +1,18 @@
 import { MouseEventHandler } from 'react';
 import { Box } from '../geometry/box.ts';
 
+const VALIGN_TO_FLEX_JUSTIFY = {
+  top: 'flex-start',
+  middle: 'center',
+  bottom: 'flex-end'
+};
+
+const withPx = (n?: number) => (n ? n + 'px' : undefined);
+
 // TODO: Maybe we can optimize to not have a foreignObject until a text node is created
 export const TextPart = (props: Props) => {
+  const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
+
   return (
     <foreignObject
       id={props.id}
@@ -17,13 +27,23 @@ export const TextPart = (props: Props) => {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyItems: 'center',
-          justifyContent: 'center',
+          justifyContent: valign,
           height: '100%',
           cursor: 'move',
+          color: props.text?.color ?? 'black',
           fontFamily: props.text?.font ?? 'sans-serif',
-          fontSize: (props.text?.fontSize ?? '10') + 'px'
+          fontSize: (props.text?.fontSize ?? '10') + 'px',
+          fontWeight: props.text?.bold ? 'bold' : 'normal',
+          fontStyle: props.text?.italic ? 'italic' : 'normal',
+          textDecoration: props.text?.textDecoration
+            ? `${props.text.textDecoration} ${props.text?.color ?? 'black'}`
+            : 'none',
+          textTransform: props.text?.textTransform ?? 'none',
+          textAlign: props.text?.align ?? 'center',
+          paddingLeft: withPx(props.text?.left) ?? '0px',
+          paddingRight: withPx(props.text?.right) ?? '0px',
+          paddingTop: withPx(props.text?.top) ?? '0px',
+          paddingBottom: withPx(props.text?.bottom) ?? '0px'
         }}
         onDoubleClick={e => {
           const $t = e.target as HTMLDivElement;
@@ -39,8 +59,6 @@ export const TextPart = (props: Props) => {
       >
         <div
           style={{
-            color: 'black',
-            textAlign: 'center',
             cursor: 'text'
           }}
           onKeyDown={e => {
