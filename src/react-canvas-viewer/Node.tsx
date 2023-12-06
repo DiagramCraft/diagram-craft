@@ -127,45 +127,51 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
 
     return (
-      <g
-        id={`node-${props.def.id}`}
-        transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${
-          wx + props.def.bounds.size.w / 2
-        } ${wy + props.def.bounds.size.h / 2})`}
-        onMouseEnter={() => props.onMouseEnter(props.def.id)}
-        onMouseLeave={() => props.onMouseLeave(props.def.id)}
-      >
-        {props.def.props.fill?.type === 'gradient' && (
-          <linearGradient id={`node-${props.def.id}-gradient`}>
-            <stop stopColor={props.def.props.fill.color} offset="0%" />
-            <stop stopColor={props.def.props.fill.color2} offset="100%" />
-          </linearGradient>
-        )}
-        <ReactNodeImpl
-          def={nodeDef}
-          diagram={props.diagram as EditableDiagram}
-          node={props.def}
-          onMouseDown={onMouseDown}
-          isSelected={isSelected}
-          isSingleSelected={isSingleSelected}
-          style={style}
-        />
+      <>
+        <g
+          id={`node-${props.def.id}`}
+          transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${
+            wx + props.def.bounds.size.w / 2
+          } ${wy + props.def.bounds.size.h / 2})`}
+          onMouseEnter={() => props.onMouseEnter(props.def.id)}
+          onMouseLeave={() => props.onMouseLeave(props.def.id)}
+        >
+          {props.def.props.fill?.type === 'gradient' && (
+            <linearGradient id={`node-${props.def.id}-gradient`}>
+              <stop stopColor={props.def.props.fill.color} offset="0%" />
+              <stop stopColor={props.def.props.fill.color2} offset="100%" />
+            </linearGradient>
+          )}
+          <ReactNodeImpl
+            def={nodeDef}
+            diagram={props.diagram as EditableDiagram}
+            node={props.def}
+            onMouseDown={onMouseDown}
+            isSelected={isSelected}
+            isSingleSelected={isSingleSelected}
+            style={style}
+          />
 
-        {props.def.props.highlight?.includes('edge-connect') && (
-          <>
-            {props.def.anchors.map(anchor => (
-              <circle
-                key={`${anchor.point.x}_${anchor.point.y}`}
-                cx={props.def.bounds.pos.x + anchor.point.x * props.def.bounds.size.w}
-                cy={props.def.bounds.pos.y + anchor.point.y * props.def.bounds.size.h}
-                r={5}
-                stroke="red"
-                fill={'transparent'}
-              />
-            ))}
-          </>
-        )}
-      </g>
+          {props.def.props.highlight?.includes('edge-connect') && (
+            <g
+              transform={`rotate(${-Angle.toDeg(props.def.bounds.rotation)} ${
+                wx + props.def.bounds.size.w / 2
+              } ${wy + props.def.bounds.size.h / 2})`}
+            >
+              {props.def.anchors.map(anchor => (
+                <circle
+                  key={`${anchor.point.x}_${anchor.point.y}`}
+                  cx={props.def.bounds.pos.x + anchor.point.x * props.def.bounds.size.w}
+                  cy={props.def.bounds.pos.y + anchor.point.y * props.def.bounds.size.h}
+                  r={5}
+                  stroke="red"
+                  fill={'transparent'}
+                />
+              ))}
+            </g>
+          )}
+        </g>
+      </>
     );
   }
 });

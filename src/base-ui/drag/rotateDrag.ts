@@ -25,7 +25,7 @@ export class RotateDrag implements Drag {
     selection.guides = [];
 
     this.diagram.transformElements(
-      selection.nodes,
+      selection.elements,
       TransformFactory.fromTo(before, selection.bounds)
     );
   }

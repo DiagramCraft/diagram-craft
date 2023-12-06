@@ -152,6 +152,17 @@ export class DiagramNode implements AbstractNode {
     this.diagram.updateElement(this);
   }
 
+  transform(transforms: Transform[]) {
+    this.bounds = Transform.box(this.bounds, ...transforms);
+    this.invalidateAnchors();
+
+    if (this.nodeType === 'group') {
+      for (const child of this.children) {
+        child.transform(transforms);
+      }
+    }
+  }
+
   get anchors(): Anchor[] {
     if (this._anchors === undefined) this.invalidateAnchors();
 
@@ -176,14 +187,10 @@ export class DiagramNode implements AbstractNode {
   }
 
   getAnchorPosition(anchor: number) {
-    return Point.rotateAround(
-      {
-        x: this.bounds.pos.x + this.bounds.size.w * this.anchors[anchor].point.x,
-        y: this.bounds.pos.y + this.bounds.size.h * this.anchors[anchor].point.y
-      },
-      this.bounds.rotation,
-      Box.center(this.bounds)
-    );
+    return {
+      x: this.bounds.pos.x + this.bounds.size.w * this.anchors[anchor].point.x,
+      y: this.bounds.pos.y + this.bounds.size.h * this.anchors[anchor].point.y
+    };
   }
 
   // TODO: This is a bit problematic since it has a relation to edge
@@ -264,6 +271,20 @@ export class DiagramEdge implements AbstractEdge {
     if (!isConnected(this.start)) this.start = { position: { x: b.pos.x, y: b.pos.y } };
     if (!isConnected(this.end))
       this.end = { position: { x: b.pos.x + b.size.w, y: b.pos.y + b.size.h } };
+  }
+
+  transform(transforms: Transform[]) {
+    this.bounds = Transform.box(this.bounds, ...transforms);
+
+    this.waypoints = this.waypoints?.map(w => ({
+      point: Transform.point(w.point, ...transforms),
+      controlPoints: w.controlPoints
+        ? [
+            Transform.point(w.controlPoints[0], ...transforms),
+            Transform.point(w.controlPoints[1], ...transforms)
+          ]
+        : undefined
+    }));
   }
 
   get startPosition() {
@@ -440,34 +461,13 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
 
   transformElements(elements: (DiagramNode | DiagramEdge)[], transforms: Transform[]) {
     for (const el of elements) {
-      el.bounds = Transform.box(el.bounds, ...transforms);
+      el.transform(transforms);
     }
 
-    // TODO: Maybe we should call a method on the element for things beyond the bounds
-
+    // We do this in a separate loop to as nodes might move which will
+    // affect the start and end location of connected edges
     for (const el of elements) {
-      if (el.type === 'edge') {
-        const edge = el as DiagramEdge;
-        edge.waypoints = edge.waypoints?.map(w => ({
-          point: Transform.point(w.point, ...transforms),
-          controlPoints: w.controlPoints
-            ? [
-                Transform.point(w.controlPoints[0], ...transforms),
-                Transform.point(w.controlPoints[1], ...transforms)
-              ]
-            : undefined
-        }));
-      }
-    }
-
-    for (const el of elements) {
-      if (el.type === 'node' && el.nodeType === 'group') {
-        this.transformElements(el.children, transforms);
-      }
-    }
-
-    for (let i = 0; i < elements.length; i++) {
-      this.updateElement(elements[i]);
+      this.updateElement(el);
     }
 
     // TODO: Automatically create undoable action?

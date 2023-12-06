@@ -338,32 +338,38 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         {props.selection.edges.map(e => {
           return (
             <Fragment key={e.id}>
-              <circle
-                cx={e.startPosition.x}
-                cy={e.startPosition.y}
-                r="4"
-                className={$c('svg-selection__handle-edge', { connected: e.isStartConnected() })}
-                onMouseDown={ev => {
-                  if (ev.button !== 0) return;
-                  drag.initiateDrag(
-                    new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'start')
-                  );
-                  ev.stopPropagation();
-                }}
-              />
-              <circle
-                cx={e.endPosition.x}
-                cy={e.endPosition.y}
-                r="4"
-                className={$c('svg-selection__handle-edge', { connected: e.isEndConnected() })}
-                onMouseDown={ev => {
-                  if (ev.button !== 0) return;
-                  drag.initiateDrag(
-                    new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'end')
-                  );
-                  ev.stopPropagation();
-                }}
-              />
+              <g
+                transform={`rotate(${-Angle.toDeg(bounds.rotation)} ${
+                  bounds.pos.x + bounds.size.w / 2
+                } ${bounds.pos.y + bounds.size.h / 2})`}
+              >
+                <circle
+                  cx={e.startPosition.x}
+                  cy={e.startPosition.y}
+                  r="4"
+                  className={$c('svg-selection__handle-edge', { connected: e.isStartConnected() })}
+                  onMouseDown={ev => {
+                    if (ev.button !== 0) return;
+                    drag.initiateDrag(
+                      new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'start')
+                    );
+                    ev.stopPropagation();
+                  }}
+                />
+                <circle
+                  cx={e.endPosition.x}
+                  cy={e.endPosition.y}
+                  r="4"
+                  className={$c('svg-selection__handle-edge', { connected: e.isEndConnected() })}
+                  onMouseDown={ev => {
+                    if (ev.button !== 0) return;
+                    drag.initiateDrag(
+                      new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'end')
+                    );
+                    ev.stopPropagation();
+                  }}
+                />
+              </g>
             </Fragment>
           );
         })}
