@@ -18,6 +18,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
+import { NumberInput } from '../NumberInput.tsx';
 
 const FONTS = {
   Times: 'Times',
@@ -57,13 +58,14 @@ export const TextProperties = (props: Props) => {
       <div className={'cmp-labeled-table__label'}>Font:</div>
       <div className={'cmp-labeled-table__value'}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <input
-            type={'number'}
+          <NumberInput
+            validUnits={['pt']}
+            defaultUnit={'pt'}
             value={fontSize ?? 10}
             min={1}
             style={{ width: '45px' }}
             onChange={ev => {
-              setFontSize(ev.target.value);
+              setFontSize(ev?.toString());
             }}
           />
           &nbsp;
@@ -227,40 +229,44 @@ export const TextProperties = (props: Props) => {
         >
           <div style={{ gridArea: 'gap1' }}></div>
           <div style={{ gridArea: 'gap2' }}></div>
-          <input
-            type={'number'}
-            value={top}
+          <NumberInput
+            validUnits={['px']}
+            defaultUnit={'px'}
+            value={top ?? ''}
             min={0}
             style={{ gridArea: 'top', width: '100%' }}
             onChange={ev => {
-              setTop(ev.target.value);
+              setTop(ev?.toString());
             }}
           />
-          <input
-            type={'number'}
-            value={left}
+          <NumberInput
+            validUnits={['px']}
+            defaultUnit={'px'}
+            value={left ?? ''}
             min={0}
             style={{ gridArea: 'left', width: '100%' }}
             onChange={ev => {
-              setLeft(ev.target.value);
+              setLeft(ev?.toString());
             }}
           />
-          <input
-            type={'number'}
-            value={bottom}
+          <NumberInput
+            validUnits={['px']}
+            defaultUnit={'px'}
+            value={bottom ?? ''}
             min={0}
             style={{ gridArea: 'bottom', width: '100%' }}
             onChange={ev => {
-              setBottom(ev.target.value);
+              setBottom(ev?.toString());
             }}
           />
-          <input
-            type={'number'}
-            value={right}
+          <NumberInput
+            validUnits={['px']}
+            defaultUnit={'px'}
+            value={right ?? ''}
             min={0}
             style={{ gridArea: 'right', width: '100%' }}
             onChange={ev => {
-              setRight(ev.target.value);
+              setRight(ev?.toString());
             }}
           />
         </div>

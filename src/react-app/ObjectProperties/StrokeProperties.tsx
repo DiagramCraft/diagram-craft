@@ -3,6 +3,7 @@ import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useNodeProperty } from './useNodeProperty.ts';
+import { NumberInput } from '../NumberInput.tsx';
 
 export const StrokeProperties = (props: Props) => {
   const [strokeColor, setStrokeColor] = useNodeProperty(
@@ -35,13 +36,14 @@ export const StrokeProperties = (props: Props) => {
 
         <div className={'cmp-labeled-table__label'}>Width:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'number'}
+          <NumberInput
+            validUnits={['px']}
+            defaultUnit={'px'}
             value={strokeWidth ?? 1}
             min={1}
             style={{ width: '45px' }}
             onChange={ev => {
-              setStrokeWidth(ev.target.value);
+              setStrokeWidth(ev?.toString());
             }}
           />
         </div>
@@ -56,23 +58,25 @@ export const StrokeProperties = (props: Props) => {
               }}
             />
             &nbsp;
-            <input
-              type={'number'}
+            <NumberInput
+              validUnits={['%']}
+              defaultUnit={'%'}
               value={strokSize ?? 100}
               min={1}
               style={{ width: '45px' }}
               onChange={ev => {
-                setStrokeSize(ev.target.value);
+                setStrokeSize(ev?.toString());
               }}
             />
             &nbsp;
-            <input
-              type={'number'}
+            <NumberInput
+              validUnits={['%']}
+              defaultUnit={'%'}
               value={strokeSpacing ?? 100}
               min={1}
               style={{ width: '45px' }}
               onChange={ev => {
-                setStrokeSpacing(ev.target.value);
+                setStrokeSpacing(ev?.toString());
               }}
             />
           </div>

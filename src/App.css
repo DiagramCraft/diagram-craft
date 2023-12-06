@@ -1,6 +1,8 @@
 @import '@radix-ui/colors/slate.css';
 @import '@radix-ui/colors/slate-dark.css';
 @import '@radix-ui/colors/blue.css';
+@import '@radix-ui/colors/red.css';
+@import '@radix-ui/colors/red-dark.css';
 @import '@radix-ui/colors/blue-dark.css';
 
 @import '@radix-ui/colors/black-alpha.css';
@@ -16,6 +18,7 @@
   --secondary-bg: var(--slate-3);
   --secondary-fg: var(--slate-11);
   --canvas-bg: var(--slate-1);
+  --error-fg: var(--red-9);
 }
 
 .dark-theme {
@@ -24,6 +27,7 @@
   --secondary-bg: var(--slate-4);
   --secondary-fg: var(--slate-11);
   --canvas-bg: var(--slate-12);
+  --error-fg: var(--red-9);
 }
 
 
@@ -45,7 +49,7 @@
   grid-template-areas:
             "left-buttons toolbar right-buttons"
             "left-buttons canvas-area right-buttons";
-  grid-template-rows: 40px 1fr;
+  grid-template-rows: 37.5px 1fr;
   grid-template-columns: 40px 5fr 40px;
 }
 
@@ -262,7 +266,7 @@
 
 .cmp-toolbar {
   display: flex;
-  padding: 6px 0;
+  padding: 4px 0;
   width: 100%;
   min-width: max-content;
 
@@ -377,6 +381,81 @@
     background-color: var(--secondary-bg);
     border: 1px solid var(--blue-6);
     color: var(--primary-fg);
+  }
+}
+
+.cmp-number-input {
+  border-radius: 4px;
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--blue-6);
+  color: var(--primary-fg);
+  height: 25px;
+  padding: 4px 0 0 3px;
+  line-height: 1;
+  box-sizing: border-box;
+  position: relative;
+
+  &.cmp-number-input--error {
+    color: var(--error-fg);
+    > input {
+      color: var(--error-fg);
+    }
+  }
+
+  > input {
+    color: var(--primary-fg);
+    border: none;
+    background: none;
+    font-size: 90%;
+    &:focus {
+      outline: none;
+    }
+  }
+
+  > input:focus + button,
+  > input:focus + button + button,
+  &:hover > button {
+    display: flex;
+  }
+
+  > button {
+    width: 13px;
+    display: none;
+    align-items: center;
+    background: none;
+    padding: 0;
+    border: none;
+    color: var(--primary-fg);
+    background: var(--primary-bg);;
+
+    &:hover {
+      color: var(--blue-11);
+    }
+  }
+
+  .cmp-number-input__btn-up {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 12px;
+    border-bottom: 1px solid var(--blue-6);
+    border-left: 1px solid var(--blue-6);
+  }
+  .cmp-number-input__btn-down {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    height: 11px;
+    border-left: 1px solid var(--blue-6);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 4px;
+    inset: -1px;
+    border: 1px solid var(--blue-6);
+    pointer-events: none;
   }
 }
 

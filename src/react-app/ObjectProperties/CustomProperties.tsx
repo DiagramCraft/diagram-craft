@@ -7,6 +7,7 @@ import { AccordionTrigger } from '../AccordionTrigger.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionContent } from '../AccordionContext.tsx';
 import React from 'react';
+import { NumberInput } from '../NumberInput.tsx';
 
 export const CustomProperties = (props: Props) => {
   const [node, setNode] = useState<DiagramNode | undefined>(undefined);
@@ -53,15 +54,16 @@ export const CustomProperties = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <input
-                    type={'number'}
+                  <NumberInput
+                    defaultUnit={value.unit ?? ''}
+                    validUnits={value.unit ? [value.unit] : []}
                     value={value.value}
                     min={value.minValue ?? 0}
                     max={value.maxValue ?? 100}
                     step={value.step ?? 1}
                     style={{ width: '50px' }}
                     onChange={ev => {
-                      value.onChange(Number(ev.target.value));
+                      value.onChange(ev ?? 0);
                       props.diagram.updateElement(node);
                     }}
                   />

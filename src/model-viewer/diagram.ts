@@ -502,6 +502,7 @@ export type CustomPropertyDefinition = {
   minValue?: number;
   maxValue?: number;
   step?: number;
+  unit?: string;
   onChange: (value: number) => void;
 };
 

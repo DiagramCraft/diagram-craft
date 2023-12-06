@@ -7,6 +7,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbAspectRatio } from 'react-icons/tb';
 import { Point } from '../../geometry/point.ts';
 import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
+import { NumberInput } from '../NumberInput.tsx';
 
 const origins: Record<string, Point> = {
   'top-left': { x: 0, y: 0 },
@@ -154,49 +155,53 @@ export const TransformProperties = (props: Props) => {
             gridTemplateRows: 'repeat(3, 1fr)',
             gridTemplateColumns: 'min-content 1fr min-content 1fr',
             alignItems: 'center',
-            gap: '0.5em'
+            rowGap: '0.5rem',
+            columnGap: '0.3em'
           }}
         >
-          <div style={{ gridArea: 'xLbl' }}>X:</div>
-          <div style={{ gridArea: 'yLbl' }}>Y:</div>
-          <div style={{ gridArea: 'wLbl' }}>W:</div>
-          <div style={{ gridArea: 'hLbl' }}>H:</div>
-          <div style={{ gridArea: 'rLbl' }}>R:</div>
+          <div style={{ fontSize: '11px', gridArea: 'xLbl' }}>X:</div>
+          <div style={{ fontSize: '11px', gridArea: 'yLbl' }}>Y:</div>
+          <div style={{ fontSize: '11px', gridArea: 'wLbl' }}>W:</div>
+          <div style={{ fontSize: '11px', gridArea: 'hLbl' }}>H:</div>
+          <div style={{ fontSize: '11px', gridArea: 'rLbl' }}>R:</div>
           <div style={{ gridArea: 'x' }}>
-            <input
-              type={'number'}
-              value={round(transformedBounds.pos.x)}
-              min={0}
+            <NumberInput
               style={{ width: '100%' }}
+              value={round(transformedBounds.pos.x)}
+              validUnits={['px']}
+              defaultUnit={'px'}
+              min={0}
               onChange={ev => {
                 const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                newBounds.get('pos').x = parseFloat(ev.target.value);
+                newBounds.get('pos').x = ev ?? 0;
                 updateBounds(newBounds);
               }}
             />
           </div>
           <div style={{ gridArea: 'y' }}>
-            <input
-              type={'number'}
-              value={round(transformedBounds.pos.y)}
-              min={0}
+            <NumberInput
               style={{ width: '100%' }}
+              value={round(transformedBounds.pos.y)}
+              validUnits={['px']}
+              defaultUnit={'px'}
+              min={0}
               onChange={ev => {
                 const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                newBounds.get('pos').y = parseFloat(ev.target.value);
+                newBounds.get('pos').y = ev ?? 0;
                 updateBounds(newBounds);
               }}
             />
           </div>
           <div style={{ gridArea: 'w' }}>
-            <input
-              type={'number'}
-              value={round(transformedBounds.size.w ?? 1)}
-              min={0}
+            <NumberInput
               style={{ width: '100%' }}
+              value={round(transformedBounds.size.w ?? 1)}
+              validUnits={['px']}
+              defaultUnit={'px'}
+              min={0}
               onChange={ev => {
                 const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                newBounds.get('size').w = parseFloat(ev.target.value);
+                newBounds.get('size').w = ev ?? 0;
                 if (lockAspectRatio) {
                   newBounds.get('size').h = newBounds.get('size').w / aspectRatio;
                 }
@@ -205,14 +210,15 @@ export const TransformProperties = (props: Props) => {
             />
           </div>
           <div style={{ gridArea: 'h' }}>
-            <input
-              type={'number'}
-              value={round(transformedBounds.size.h ?? 1)}
-              min={0}
+            <NumberInput
               style={{ width: '100%' }}
+              value={round(transformedBounds.size.h ?? 1)}
+              validUnits={['px']}
+              defaultUnit={'px'}
+              min={0}
               onChange={ev => {
                 const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                newBounds.get('size').h = parseFloat(ev.target.value);
+                newBounds.get('size').h = ev ?? 0;
                 if (lockAspectRatio) {
                   newBounds.get('size').w = newBounds.get('size').h * aspectRatio;
                 }
@@ -221,15 +227,16 @@ export const TransformProperties = (props: Props) => {
             />
           </div>
           <div style={{ gridArea: 'r' }}>
-            <input
-              type={'number'}
+            <NumberInput
+              style={{ width: '100%' }}
               value={round(Angle.toDeg(transformedBounds.rotation ?? 0))}
               min={-360}
               max={360}
-              style={{ width: '100%' }}
+              validUnits={['°']}
+              defaultUnit={'°'}
               onChange={ev => {
                 const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                const number = parseFloat(ev.target.value);
+                const number = ev ?? 0;
                 newBounds.set('rotation', Angle.toRad(isNaN(number) ? 0 : number ?? 0));
                 updateBounds(newBounds);
               }}

@@ -11,6 +11,7 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { TextPart } from '../TextPart.tsx';
+import { round } from '../../utils/math.ts';
 
 declare global {
   interface NodeProps {
@@ -124,12 +125,12 @@ Star.getCustomProperties = (def: DiagramNode): Record<string, CustomPropertyDefi
     innerRadius: {
       type: 'number',
       label: 'Radius',
-      value: def.props?.star?.innerRadius ?? 0.5,
-      step: 0.01,
-      maxValue: 1,
+      value: round((def.props?.star?.innerRadius ?? 0.5) * 100),
+      maxValue: 100,
+      unit: '%',
       onChange: (value: number) => {
         def.props.star ??= {};
-        def.props.star.innerRadius = value;
+        def.props.star.innerRadius = value / 100;
       }
     }
   };
