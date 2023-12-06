@@ -19,11 +19,13 @@ import {
   TbLayoutGridAdd,
   TbLine,
   TbMenu2,
+  TbMoon,
   TbPalette,
   TbPencil,
   TbPolygon,
   TbSelectAll,
   TbStack2,
+  TbSun,
   TbTextSize,
   TbZoomIn,
   TbZoomOut
@@ -44,6 +46,8 @@ import {
 } from './react-app/PickerToolWindow.tsx';
 import { ObjectProperties } from './react-app/ObjectProperties/ObjectProperties.tsx';
 import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
+import { useEventListener } from './react-app/hooks/useEventListener.ts';
+import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 
 const diagrams = [
   {
@@ -65,6 +69,23 @@ const diagrams = [
     )
   }
 ];
+
+const DarkModeToggleButton = (props: { actionMap: Partial<ActionMap> }) => {
+  const redraw = useRedraw();
+  useEventListener('actionchanged', redraw, props.actionMap['TOGGLE_DARK_MODE']!);
+  return (
+    <button
+      className={'cmp-toolbar__button'}
+      onClick={() => props.actionMap['TOGGLE_DARK_MODE']?.execute()}
+    >
+      {props.actionMap['TOGGLE_DARK_MODE']?.state ? (
+        <TbSun size={'1.1rem'} />
+      ) : (
+        <TbMoon size={'1.1rem'} />
+      )}
+    </button>
+  );
+};
 
 const App = () => {
   const defaultDiagram = 1;
@@ -137,6 +158,8 @@ const App = () => {
                 >
                   <TbZoomIn size={'1.1rem'} />
                 </button>
+
+                <DarkModeToggleButton actionMap={actionMap} />
               </div>
             </div>
           </div>
