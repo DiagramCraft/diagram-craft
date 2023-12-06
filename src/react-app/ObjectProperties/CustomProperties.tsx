@@ -64,7 +64,7 @@ export const CustomProperties = (props: Props) => {
                     style={{ width: '50px' }}
                     onChange={ev => {
                       value.onChange(ev ?? 0);
-                      props.diagram.updateElement(node);
+                      node?.commitChanges();
                     }}
                   />
                 </div>

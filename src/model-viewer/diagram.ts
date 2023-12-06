@@ -127,8 +127,12 @@ export class DiagramNode implements AbstractNode {
     this._anchors = anchors;
   }
 
+  commitChanges() {
+    this.invalidateAnchors();
+  }
+
   // TODO: Need to make sure this is called when e.g. props are changed
-  private invalidateAnchors() {
+  invalidateAnchors() {
     if (!this.diagram) {
       console.log(this);
     }
@@ -188,9 +192,13 @@ export class DiagramNode implements AbstractNode {
 
   getAnchorPosition(anchor: number) {
     return {
-      x: this.bounds.pos.x + this.bounds.size.w * this.anchors[anchor].point.x,
-      y: this.bounds.pos.y + this.bounds.size.h * this.anchors[anchor].point.y
+      x: this.bounds.pos.x + this.bounds.size.w * this.getAnchor(anchor).point.x,
+      y: this.bounds.pos.y + this.bounds.size.h * this.getAnchor(anchor).point.y
     };
+  }
+
+  getAnchor(anchor: number) {
+    return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
   }
 
   // TODO: This is a bit problematic since it has a relation to edge

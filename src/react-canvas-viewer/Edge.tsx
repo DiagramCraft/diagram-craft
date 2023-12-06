@@ -123,7 +123,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   if (props.def.isEndConnected()) {
     const endEndpoint = props.def.end as ConnectedEndpoint;
     const endNode = endEndpoint.node;
-    const anchor = endNode.anchors[endEndpoint.anchor];
+    const anchor = endNode.getAnchor(endEndpoint.anchor);
 
     // TODO: Need to handle this better - maybe look for the closest intersection
     //       to the point - and if longer than a few pixels skip the intersection
@@ -148,7 +148,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   if (props.def.isStartConnected()) {
     const startEndpoint = props.def.start as ConnectedEndpoint;
     const startNode = startEndpoint.node;
-    const anchor = startNode.anchors[startEndpoint.anchor];
+    const anchor = startNode.getAnchor(startEndpoint.anchor);
     const startNodeDefinition = props.diagram.nodeDefinitions.get(startNode.nodeType);
     const startIntersections = path.intersections(startNodeDefinition.getBoundingPath(startNode));
 
