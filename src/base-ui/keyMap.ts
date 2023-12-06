@@ -6,7 +6,6 @@ import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { AlignAction } from './actions/alignAction.ts';
 import { ToggleMagnetTypeAction } from './actions/toggleMagnetTypeAction.ts';
 import { DistributeAction } from './actions/distributeAction.ts';
-import { ZoomAction } from './actions/zoomAction.ts';
 import { Point } from '../geometry/point.ts';
 import { WaypointAddAction } from './actions/waypointAddAction.ts';
 import { WaypointDeleteAction } from './actions/waypointDeleteAction.ts';
@@ -61,8 +60,6 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction(state.diagram, 'distance'),
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical'),
-  ZOOM_IN: new ZoomAction(state.diagram, 'in'),
-  ZOOM_OUT: new ZoomAction(state.diagram, 'out'),
   WAYPOINT_ADD: new WaypointAddAction(state.diagram),
   WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
 });
