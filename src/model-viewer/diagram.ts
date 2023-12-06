@@ -137,7 +137,7 @@ export class DiagramNode implements AbstractNode {
     this._anchors = [];
     this._anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
 
-    const def = this.diagram!.nodDefinitions.get(this.nodeType);
+    const def = this.diagram!.nodeDefinitions.get(this.nodeType);
 
     const path = def.getBoundingPath(this);
 
@@ -371,7 +371,7 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   constructor(
     readonly id: string,
     elements: (DiagramEdge | DiagramNode)[],
-    readonly nodDefinitions: NodeDefinitionRegistry,
+    readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
@@ -494,12 +494,25 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
 
 export type NodeCapability = string;
 
+// TODO: Make make this into an interface in the global namespace we can extend
+export type CustomPropertyDefinition = {
+  type: 'number';
+  label: string;
+  value: number;
+  minValue?: number;
+  maxValue?: number;
+  step?: number;
+  onChange: (value: number) => void;
+};
+
 export interface NodeDefinition {
   type: string;
+  name: string;
 
   supports(capability: NodeCapability): boolean;
 
   getBoundingPath(node: DiagramNode): Path;
+  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
 }
 
 export class NodeDefinitionRegistry {

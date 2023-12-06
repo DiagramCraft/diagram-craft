@@ -118,7 +118,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       </g>
     );
   } else {
-    const nodeDef = props.diagram.nodDefinitions.get(props.def.nodeType);
+    const nodeDef = props.diagram.nodeDefinitions.get(props.def.nodeType);
 
     // TODO: Better error handling here
     if (!nodeDef) VERIFY_NOT_REACHED();

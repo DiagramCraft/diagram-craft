@@ -54,7 +54,7 @@ type PickerCanvasProps = {
 >;
 
 export const ObjectPicker = (props: Props) => {
-  const nodes = props.diagram.nodDefinitions.getAll();
+  const nodes = props.diagram.nodeDefinitions.getAll();
 
   const diagrams = nodes.map(n => {
     return new EditableDiagram(
@@ -71,7 +71,7 @@ export const ObjectPicker = (props: Props) => {
           undefined
         )
       ],
-      props.diagram.nodDefinitions,
+      props.diagram.nodeDefinitions,
       props.diagram.edgeDefinitions
     );
   });

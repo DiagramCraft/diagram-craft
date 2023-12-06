@@ -1,4 +1,8 @@
-import { DiagramNode, NodeDefinition } from '../../model-viewer/diagram.ts';
+import {
+  CustomPropertyDefinition,
+  DiagramNode,
+  NodeDefinition
+} from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { PathBuilder } from '../../geometry/pathBuilder.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
@@ -104,6 +108,31 @@ Star.getBoundingPath = (def: DiagramNode) => {
   }
 
   return pathBuilder;
+};
+
+Star.getCustomProperties = (def: DiagramNode): Record<string, CustomPropertyDefinition> => {
+  return {
+    numberOfSides: {
+      type: 'number',
+      label: 'Sides',
+      value: def.props?.star?.numberOfSides ?? 5,
+      onChange: (value: number) => {
+        def.props.star ??= {};
+        def.props.star.numberOfSides = value;
+      }
+    },
+    innerRadius: {
+      type: 'number',
+      label: 'Radius',
+      value: def.props?.star?.innerRadius ?? 0.5,
+      step: 0.01,
+      maxValue: 1,
+      onChange: (value: number) => {
+        def.props.star ??= {};
+        def.props.star.innerRadius = value;
+      }
+    }
+  };
 };
 
 type Props = {

@@ -40,10 +40,10 @@ export class EditableDiagram extends Diagram {
   constructor(
     id: string,
     elements: (DiagramEdge | DiagramNode)[],
-    readonly nodDefinitions: NodeDefinitionRegistry,
+    readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
-    super(id, elements, nodDefinitions, edgeDefinitions);
+    super(id, elements, nodeDefinitions, edgeDefinitions);
   }
 
   createSnapManager() {

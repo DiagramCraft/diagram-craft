@@ -6,9 +6,11 @@ import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
-  dest.register(new ReactNodeDefinition('star', Star, Star.getBoundingPath));
-  dest.register(new ReactNodeDefinition('rect', Rect));
-  dest.register(new ReactNodeDefinition('rounded-rect', RoundedRect));
+  dest.register(
+    new ReactNodeDefinition('star', 'Star', Star, Star.getBoundingPath, Star.getCustomProperties)
+  );
+  dest.register(new ReactNodeDefinition('rect', 'Rectangle', Rect));
+  dest.register(new ReactNodeDefinition('rounded-rect', 'Rounded rectangle', RoundedRect));
   return dest;
 };
 

@@ -1,5 +1,10 @@
 import React from 'react';
-import { DiagramNode, NodeCapability, NodeDefinition } from '../model-viewer/diagram.ts';
+import {
+  CustomPropertyDefinition,
+  DiagramNode,
+  NodeCapability,
+  NodeDefinition
+} from '../model-viewer/diagram.ts';
 import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Path } from '../geometry/path.ts';
 import { round } from '../utils/math.ts';
@@ -15,12 +20,15 @@ type Props = {
 type ReactNode = React.FunctionComponent<Props>;
 
 type BoundingPathFactory = (node: DiagramNode) => PathBuilder;
+type CustomPropertyFactory = (node: DiagramNode) => Record<string, CustomPropertyDefinition>;
 
 export class ReactNodeDefinition implements NodeDefinition {
   constructor(
     readonly type: string,
+    readonly name: string,
     readonly reactNode: ReactNode,
-    readonly bounds?: BoundingPathFactory
+    readonly bounds?: BoundingPathFactory,
+    readonly customProps?: CustomPropertyFactory
   ) {}
 
   supports(_capability: NodeCapability): boolean {
@@ -50,5 +58,12 @@ export class ReactNodeDefinition implements NodeDefinition {
       pb.setRotation(node.bounds.rotation, Box.center(node.bounds));
     }
     return pb.getPath();
+  }
+
+  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
+    if (this.customProps !== undefined) {
+      return this.customProps(node);
+    }
+    return {};
   }
 }

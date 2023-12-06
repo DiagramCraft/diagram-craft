@@ -9,6 +9,7 @@ import { StrokeProperties } from './StrokeProperties.tsx';
 import { FillProperties } from './FillProperties.tsx';
 import { TextProperties } from './TextProperties.tsx';
 import { TransformProperties } from './TransformProperties.tsx';
+import { CustomProperties } from './CustomProperties.tsx';
 
 export const ObjectProperties = (props: Props) => {
   const [type, setType] = useState('none');
@@ -66,6 +67,8 @@ export const ObjectProperties = (props: Props) => {
                 <TransformProperties diagram={props.diagram} />
               </AccordionContent>
             </Accordion.Item>
+
+            <CustomProperties diagram={props.diagram} />
           </>
         )}
 
