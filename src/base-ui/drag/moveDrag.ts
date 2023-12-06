@@ -9,9 +9,10 @@ import { Vector } from '../../geometry/vector.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { createResizeCanvasActionToFit } from '../../model-editor/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction } from '../../model-viewer/actions.ts';
+import { Axis } from '../../geometry/axis.ts';
 
 export class MoveDrag implements Drag {
-  snapAngle?: 'h' | 'v';
+  snapAngle?: Axis;
 
   constructor(
     private readonly diagram: EditableDiagram,
@@ -36,7 +37,7 @@ export class MoveDrag implements Drag {
 
     newBounds.set('pos', Point.add(selection.bounds.pos, d));
 
-    let snapDirections: Direction[] = ['n', 'w', 'e', 's'];
+    let snapDirections: Direction[] = Direction.all();
 
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (modifiers.metaKey && !selection.state['metaKey']) {
@@ -109,16 +110,13 @@ export class MoveDrag implements Drag {
       newBounds.set('pos', result.adjusted.pos);
     }
 
-    this.diagram.transformElements(selection.nodes, [
-      new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
-    ]);
-    this.diagram.transformElements(selection.edges, [
+    this.diagram.transformElements(selection.elements, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
     selection.bounds = newBounds.getSnapshot();
   }
 
-  onDragEnd(_coord: Point): void {
+  onDragEnd(): void {
     const selection = this.diagram.selectionState;
     if (selection.isChanged()) {
       // TODO: Maybe add a compound action here

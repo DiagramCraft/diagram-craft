@@ -123,7 +123,7 @@ export class ResizeDrag implements Drag {
     );
   }
 
-  onDragEnd(_coord: Point): void {
+  onDragEnd(): void {
     const selection = this.diagram.selectionState;
     if (selection.isChanged()) {
       this.diagram.undoManager.add(

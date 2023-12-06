@@ -71,7 +71,7 @@ export class EdgeEndpointMoveDrag implements Drag {
     selection.recalculateBoundingBox();
   }
 
-  onDragEnd(_coord: Point): void {
+  onDragEnd(): void {
     this.element.setAttribute('pointer-events', this.originalPointerEvents);
     this.element.classList.remove('selection-edge-handle--active');
 

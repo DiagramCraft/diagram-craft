@@ -30,7 +30,7 @@ class EdgeWaypointDrag implements Drag {
     this.diagram.updateElement(this.edge);
   }
 
-  onDragEnd(_coord: Point): void {}
+  onDragEnd(): void {}
 }
 
 class BezierControlPointDrag implements Drag {
@@ -56,7 +56,7 @@ class BezierControlPointDrag implements Drag {
     this.diagram.updateElement(this.edge);
   }
 
-  onDragEnd(_coord: Point): void {}
+  onDragEnd(): void {}
 }
 
 export type EdgeApi = {

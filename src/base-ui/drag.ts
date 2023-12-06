@@ -9,7 +9,7 @@ export type Modifiers = {
 
 export type Drag = {
   onDrag: (coord: Point, modifiers: Modifiers) => void;
-  onDragEnd: (coord: Point) => void;
+  onDragEnd: () => void;
 
   onDragEnter?: (id: string) => void;
   onDragLeave?: () => void;

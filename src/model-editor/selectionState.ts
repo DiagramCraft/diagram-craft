@@ -48,7 +48,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   };
 
   // For marquee selection
-  pendingElements?: DiagramNode[];
+  pendingElements?: (DiagramNode | DiagramEdge)[];
 
   state: Record<string, unknown> = {};
 
@@ -170,7 +170,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     this.recalculateBoundingBox();
   }
 
-  setPendingElements(pendingElemenets: DiagramNode[]) {
+  setPendingElements(pendingElemenets: (DiagramNode | DiagramEdge)[]) {
     this.pendingElements = pendingElemenets;
   }
 

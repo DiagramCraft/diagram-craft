@@ -261,8 +261,9 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   set bounds(b: Box) {
-    this.start = { position: { x: b.pos.x, y: b.pos.y } };
-    this.end = { position: { x: b.pos.x + b.size.w, y: b.pos.y + b.size.h } };
+    if (!isConnected(this.start)) this.start = { position: { x: b.pos.x, y: b.pos.y } };
+    if (!isConnected(this.end))
+      this.end = { position: { x: b.pos.x + b.size.w, y: b.pos.y + b.size.h } };
   }
 
   get startPosition() {
@@ -337,13 +338,13 @@ export class DiagramEdge implements AbstractEdge {
 export type Canvas = Omit<Box, 'rotation'>;
 
 export type DiagramEvents = {
-  nodechanged: { before: DiagramNode; after: DiagramNode };
+  nodechanged: { after: DiagramNode };
   nodeadded: { node: DiagramNode };
   noderemoved: { node: DiagramNode };
-  edgechanged: { before: DiagramEdge; after: DiagramEdge };
+  edgechanged: { after: DiagramEdge };
   edgeadded: { edge: DiagramEdge };
   edgeremoved: { edge: DiagramEdge };
-  canvaschanged: { before: Canvas; after: Canvas };
+  canvaschanged: { after: Canvas };
 };
 
 export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitter<T> {
@@ -409,9 +410,8 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   }
 
   set canvas(b: Canvas) {
-    const before = this.#canvas;
     this.#canvas = b;
-    this.emit('canvaschanged', { before, after: b });
+    this.emit('canvaschanged', { after: b });
 
     console.log('CANVAS CHANGED');
   }
@@ -443,6 +443,23 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
       el.bounds = Transform.box(el.bounds, ...transforms);
     }
 
+    // TODO: Maybe we should call a method on the element for things beyond the bounds
+
+    for (const el of elements) {
+      if (el.type === 'edge') {
+        const edge = el as DiagramEdge;
+        edge.waypoints = edge.waypoints?.map(w => ({
+          point: Transform.point(w.point, ...transforms),
+          controlPoints: w.controlPoints
+            ? [
+                Transform.point(w.controlPoints[0], ...transforms),
+                Transform.point(w.controlPoints[1], ...transforms)
+              ]
+            : undefined
+        }));
+      }
+    }
+
     for (const el of elements) {
       if (el.type === 'node' && el.nodeType === 'group') {
         this.transformElements(el.children, transforms);
@@ -468,13 +485,13 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     this.emit('edgeremoved', { edge });
   }
 
-  updateElement(element: DiagramEdge | DiagramNode, before?: DiagramEdge | DiagramNode) {
+  updateElement(element: DiagramEdge | DiagramNode) {
     // TODO: We don't have before here
     //       ... should we perhaps remove the before thing
     if (element.type === 'node') {
-      this.emit('nodechanged', { before: (before as DiagramNode) ?? element, after: element });
+      this.emit('nodechanged', { after: element });
     } else {
-      this.emit('edgechanged', { before: (before as DiagramEdge) ?? element, after: element });
+      this.emit('edgechanged', { after: element });
     }
   }
 

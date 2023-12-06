@@ -1,4 +1,4 @@
-import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
+import { Diagram, DiagramEdge, DiagramNode } from '../model-viewer/diagram.ts';
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
 import { Drag } from '../base-ui/drag.ts';
@@ -22,7 +22,7 @@ export class MarqueeDrag implements Drag {
     this.updatePendingElements(this.diagram.selectionState, this.diagram);
   }
 
-  onDragEnd(_coord: Point): void {
+  onDragEnd(): void {
     if (this.diagram.selectionState.pendingElements) {
       this.diagram.selectionState.convertMarqueeToSelection();
     }
@@ -31,9 +31,9 @@ export class MarqueeDrag implements Drag {
   private updatePendingElements(selection: SelectionState, diagram: Diagram) {
     precondition.is.present(selection.marquee);
 
-    const pending: DiagramNode[] = [];
+    const pending: (DiagramNode | DiagramEdge)[] = [];
     for (const e of diagram.elements) {
-      if (e.type !== 'node') continue;
+      //if (e.type !== 'node') continue;
 
       // if (Box.intersects(selection.marquee!, e)) {
       if (Box.contains(selection.marquee, e.bounds)) {

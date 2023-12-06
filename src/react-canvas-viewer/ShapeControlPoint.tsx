@@ -16,7 +16,7 @@ class ShapeControlPointDrag implements Drag {
     this.diagram.updateElement(this.node);
   }
 
-  onDragEnd(_coord: Point): void {}
+  onDragEnd(): void {}
 }
 
 export const ShapeControlPoint = (props: Props) => {

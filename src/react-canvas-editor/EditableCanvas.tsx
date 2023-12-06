@@ -38,7 +38,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   // State
   const selection = diagram.selectionState;
   const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
-  //const drag = useRef<Drag | undefined>(undefined);
 
   const drag = useDragDrop();
 
@@ -57,15 +56,11 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useDomEventListener(
     'keydown',
-    e => {
-      executeAction(e, {}, props.keyMap, props.actionMap);
-    },
+    e => executeAction(e, {}, props.keyMap, props.actionMap),
     document
   );
 
-  const clearSelection = debounce(() => {
-    selection.clear();
-  });
+  const clearSelection = debounce(() => selection.clear());
 
   useEventListener('execute', clearSelection, diagram.undoManager);
   useEventListener('undo', clearSelection, diagram.undoManager);
@@ -101,6 +96,8 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     }
   };
 
+  // TODO: This part we could move to Selection and SelectionMarquee without
+  //       loosing any performance
   useEventListener(
     'change',
     debounce(() => {
@@ -109,20 +106,18 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     }),
     selection
   );
+
+  // This needs to stay in heter for performance reasons
   useEventListener('add', redrawElement, selection);
   useEventListener('remove', redrawElement, selection);
 
-  const onMouseEnter = useCallback(
-    (id: string) => {
-      drag.currentDrag()?.onDragEnter?.(id);
-    },
-    [drag]
-  );
+  const onMouseEnter = useCallback((id: string) => drag.currentDrag()?.onDragEnter?.(id), [drag]);
 
   const onMouseLeave = useCallback(() => {
     drag.currentDrag()?.onDragLeave?.();
   }, [drag]);
 
+  // TODO: Updating the cursor is not really working
   const updateCursor = useCallback(
     (coord: Point) => {
       if (Box.contains(selection.bounds, coord)) {
@@ -177,15 +172,15 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         updateCursor(diagram.viewBox.toDiagramPoint(point));
       }
     },
-    [selection, diagram.viewBox, diagram.nodeLookup, diagram.edgeLookup, drag, updateCursor]
+    [selection, diagram, drag, updateCursor]
   );
 
   const onMouseUp = useCallback(
-    (_id: ObjectId, point: Point) => {
+    (point: Point) => {
       const current = drag.currentDrag();
       try {
         if (current) {
-          current.onDragEnd(diagram.viewBox.toDiagramPoint(point));
+          current.onDragEnd();
         }
 
         if (deferedMouseAction.current) {
@@ -205,14 +200,14 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     (point: Point, modifiers: Modifiers) => {
       const current = drag.currentDrag();
 
-      // Abort early in case there's no drag in progress
-      if (!current) return;
-
       try {
+        // Abort early in case there's no drag in progress
+        if (!current) return;
+
         current.onDrag(diagram.viewBox.toDiagramPoint(point), modifiers);
       } finally {
         deferedMouseAction.current = undefined;
-        updateCursor(point);
+        updateCursor(diagram.viewBox.toDiagramPoint(point));
       }
     },
     [diagram, drag, updateCursor]
@@ -228,7 +223,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         if (e.button !== 0) return;
         onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
       }}
-      onMouseUp={e => onMouseUp(BACKGROUND, EventHelper.point(e.nativeEvent))}
+      onMouseUp={e => onMouseUp(EventHelper.point(e.nativeEvent))}
       onMouseMove={e => {
         onMouseMove(getPoint(e, diagram), e.nativeEvent);
       }}
