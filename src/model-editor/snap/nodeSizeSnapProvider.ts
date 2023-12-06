@@ -8,7 +8,8 @@ import { Line } from '../../geometry/line.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
-import { MagnetOfType, Axis } from './magnet.ts';
+import { MagnetOfType } from './magnet.ts';
+import { Axis } from '../../geometry/axis.ts';
 
 const forward: Partial<Record<Direction, Direction>> = {
   n: 's',
@@ -140,7 +141,6 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
     return magnets;
   }
 
-  // TODO: Do we need _axis in this interface
   makeGuide(box: Box, match: MatchingMagnetPair<'size'>, _axis: Axis): Guide {
     if (match.matching.axis === 'h') {
       match.matching.distancePairs.push({

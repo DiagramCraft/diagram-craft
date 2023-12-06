@@ -4,7 +4,8 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram } from '../../model-viewer/diagram.ts';
-import { MagnetOfType, Axis } from './magnet.ts';
+import { MagnetOfType } from './magnet.ts';
+import { Axis } from '../../geometry/axis.ts';
 
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: Diagram) {}

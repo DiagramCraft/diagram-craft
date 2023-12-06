@@ -6,7 +6,8 @@ import { Range } from '../../geometry/range.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
-import { Magnet, MagnetOfType, Axis } from './magnet.ts';
+import { Magnet, MagnetOfType } from './magnet.ts';
+import { Axis } from '../../geometry/axis.ts';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.x, b.pos.x + b.size.w), N);

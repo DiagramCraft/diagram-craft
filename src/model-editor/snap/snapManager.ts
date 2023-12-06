@@ -12,7 +12,8 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
-import { Magnet, MagnetOfType, MagnetType, Axis } from './magnet.ts';
+import { Magnet, MagnetOfType, MagnetType } from './magnet.ts';
+import { Axis } from '../../geometry/axis.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

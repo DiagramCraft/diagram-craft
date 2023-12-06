@@ -4,15 +4,7 @@ import { Line } from '../../geometry/line.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { Point } from '../../geometry/point.ts';
 import { Range } from '../../geometry/range.ts';
-
-// TODO: Do we still want this? or want this here?
-export type Axis = 'h' | 'v';
-
-export const Axis = {
-  orthogonal: (axis: Axis): Axis => (axis === 'h' ? 'v' : 'h'),
-  axises: (): Axis[] => ['h', 'v'],
-  toXY: (axis: Axis): 'x' | 'y' => (axis === 'h' ? 'x' : 'y')
-};
+import { Axis } from '../../geometry/axis.ts';
 
 type BaseMagnet = {
   line: Line;

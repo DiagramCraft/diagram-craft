@@ -4,7 +4,8 @@ import { Line } from '../../geometry/line.ts';
 import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram } from '../../model-viewer/diagram.ts';
-import { MagnetOfType, Axis } from './magnet.ts';
+import { MagnetOfType } from './magnet.ts';
+import { Axis } from '../../geometry/axis.ts';
 
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: Diagram) {}

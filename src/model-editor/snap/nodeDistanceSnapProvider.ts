@@ -7,7 +7,8 @@ import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
-import { MagnetOfType, Axis, DistancePairWithRange } from './magnet.ts';
+import { MagnetOfType, DistancePairWithRange } from './magnet.ts';
+import { Axis } from '../../geometry/axis.ts';
 
 const directions: Record<
   Direction,
