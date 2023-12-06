@@ -19,6 +19,8 @@ export type Segment =
 export class PathBuilder {
   path: Segment[] = [];
   start: Point | undefined;
+  private rotation: number = 0;
+  private centerOfRotation: Point = Point.ORIGIN;
 
   moveTo(x: number, y: number) {
     precondition.is.notPresent(this.start);
@@ -88,7 +90,60 @@ export class PathBuilder {
     }
   }
 
+  setRotation(rotation: number, centerOfRotation: Point) {
+    this.rotation = rotation;
+    this.centerOfRotation = centerOfRotation;
+  }
+
   getPath() {
-    return new Path(this.path, this.start ?? Point.ORIGIN);
+    return new Path(
+      this.applyPathRotation(this.path),
+      this.applyPointRotation(this.start ?? Point.ORIGIN)
+    );
+  }
+
+  private applyPointRotation(point: Point) {
+    return Point.rotateAround(point, this.rotation, this.centerOfRotation);
+  }
+
+  private applyPointRotationArray(point: Point) {
+    const np = Point.rotateAround(point, this.rotation, this.centerOfRotation);
+    return [np.x, np.y];
+  }
+
+  private applyPathRotation(path: Segment[]) {
+    return path.map(s => {
+      switch (s[0]) {
+        case 'L':
+          return ['L', ...this.applyPointRotationArray({ x: s[1], y: s[2] })] as RawLineSegment;
+        case 'C':
+          return [
+            'C',
+            ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
+            ...this.applyPointRotationArray({ x: s[3], y: s[4] }),
+            ...this.applyPointRotationArray({ x: s[5], y: s[6] })
+          ] as RawCubicSegment;
+        case 'Q':
+          return [
+            'Q',
+            ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
+            ...this.applyPointRotationArray({ x: s[3], y: s[4] })
+          ] as RawQuadSegment;
+        case 'T':
+          return ['T', ...this.applyPointRotationArray({ x: s[1], y: s[2] })] as RawCurveSegment;
+        case 'A':
+          return [
+            'A',
+            s[1],
+            s[2],
+            s[3],
+            s[4],
+            s[5],
+            ...this.applyPointRotationArray({ x: s[6], y: s[7] })
+          ] as RawArcSegment;
+        default:
+          throw new Error('Unknown path segment');
+      }
+    });
   }
 }

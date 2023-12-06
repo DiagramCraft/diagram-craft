@@ -7,6 +7,7 @@ import { precondition } from '../../utils/assert.ts';
 export class EdgeEndpointMoveDrag implements Drag {
   private readonly originalPointerEvents: string;
   private hoverElement: string | undefined;
+  private coord: Point | undefined;
 
   constructor(
     private readonly diagram: EditableDiagram,
@@ -55,6 +56,8 @@ export class EdgeEndpointMoveDrag implements Drag {
       this.edge.end = { position: coord };
     }
 
+    this.coord = coord;
+
     // TODO: We should snap to the connection point
     if (this.hoverElement && diagram.nodeLookup[this.hoverElement]) {
       this.element.classList.add('selection-edge-handle--connected');
@@ -68,11 +71,12 @@ export class EdgeEndpointMoveDrag implements Drag {
     selection.recalculateBoundingBox();
   }
 
-  onDragEnd(coord: Point, _diagram: EditableDiagram): void {
+  onDragEnd(_coord: Point, _diagram: EditableDiagram): void {
     this.element.setAttribute('pointer-events', this.originalPointerEvents);
     this.element.classList.remove('selection-edge-handle--active');
 
-    this.attachToClosestAnchor(coord);
+    // Using the last known coordinate, attach to the closest anchor
+    this.attachToClosestAnchor(this.coord!);
 
     if (this.hoverElement) {
       this.diagram.removeHighlight(
@@ -105,8 +109,8 @@ export class EdgeEndpointMoveDrag implements Drag {
     const anchors = node.anchors.map((a, idx) => {
       return {
         idx,
-        x: node.bounds.pos.x + a.x * node.bounds.size.w,
-        y: node.bounds.pos.y + a.y * node.bounds.size.h
+        x: node.bounds.pos.x + a.point.x * node.bounds.size.w,
+        y: node.bounds.pos.y + a.point.y * node.bounds.size.h
       };
     });
 

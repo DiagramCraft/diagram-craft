@@ -154,9 +154,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           <>
             {props.def.anchors.map(anchor => (
               <circle
-                key={`${anchor.x}_${anchor.y}`}
-                cx={props.def.bounds.pos.x + anchor.x * props.def.bounds.size.w}
-                cy={props.def.bounds.pos.y + anchor.y * props.def.bounds.size.h}
+                key={`${anchor.point.x}_${anchor.point.y}`}
+                cx={props.def.bounds.pos.x + anchor.point.x * props.def.bounds.size.w}
+                cy={props.def.bounds.pos.y + anchor.point.y * props.def.bounds.size.h}
                 r={5}
                 stroke="red"
                 fill={'transparent'}

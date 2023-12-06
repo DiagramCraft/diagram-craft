@@ -2,6 +2,8 @@ import React from 'react';
 import { DiagramNode, NodeCapability, NodeDefinition } from '../model-viewer/diagram.ts';
 import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Path } from '../geometry/path.ts';
+import { round } from '../utils/math.ts';
+import { Box } from '../geometry/box.ts';
 
 type Props = {
   node: DiagramNode;
@@ -12,7 +14,7 @@ type Props = {
 
 type ReactNode = React.FunctionComponent<Props>;
 
-type BoundingPathFactory = (node: DiagramNode) => Path;
+type BoundingPathFactory = (node: DiagramNode) => PathBuilder;
 
 export class ReactNodeDefinition implements NodeDefinition {
   constructor(
@@ -36,8 +38,17 @@ export class ReactNodeDefinition implements NodeDefinition {
       );
       builder.lineTo(node.bounds.pos.x, node.bounds.pos.y + node.bounds.size.h);
       builder.lineTo(node.bounds.pos.x, node.bounds.pos.y);
+
+      if (round(node.bounds.rotation) !== 0) {
+        builder.setRotation(node.bounds.rotation, Box.center(node.bounds));
+      }
+
       return builder.getPath();
     }
-    return this.bounds?.(node);
+    const pb = this.bounds?.(node);
+    if (round(node.bounds.rotation) !== 0) {
+      pb.setRotation(node.bounds.rotation, Box.center(node.bounds));
+    }
+    return pb.getPath();
   }
 }

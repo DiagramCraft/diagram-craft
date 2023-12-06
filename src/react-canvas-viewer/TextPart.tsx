@@ -5,6 +5,7 @@ import { Box } from '../geometry/box.ts';
 export const TextPart = (props: Props) => {
   return (
     <foreignObject
+      id={props.id}
       x={props.bounds.pos.x}
       y={props.bounds.pos.y}
       width={props.bounds.size.w}
@@ -62,6 +63,7 @@ export const TextPart = (props: Props) => {
 };
 
 type Props = {
+  id: string;
   text: NodeProps['text'];
   bounds: Box;
   onMouseDown: MouseEventHandler;

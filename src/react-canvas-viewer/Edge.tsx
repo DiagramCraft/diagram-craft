@@ -113,24 +113,57 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   let start: PointOnPath | undefined;
   let end: PointOnPath | undefined;
 
+  // TODO: If we connect to any other than the anchor point, should we really clip?
+  //       maybe we should make this a setting on the edge? or on the anchor?
+  //       ... maybe there are three behaviors, clip, no-clip and attach to closest anchor
   const intersections: WithSegment<PointOnPath>[] = [];
   if (props.def.isEndConnected()) {
-    const endNode = (props.def.end as ConnectedEndpoint).node;
+    const endEndpoint = props.def.end as ConnectedEndpoint;
+    const endNode = endEndpoint.node;
+    const anchor = endNode.anchors[endEndpoint.anchor];
+
+    // TODO: Need to handle this better - maybe look for the closest intersection
+    //       to the point - and if longer than a few pixels skip the intersection
     const endNodeDefinition = props.diagram.nodDefinitions.get(endNode.nodeType);
     const endIntersections = path.intersections(endNodeDefinition.getBoundingPath(endNode));
-    intersections.push(...endIntersections);
 
-    // TODO: Handle multiple intersections
-    end = endIntersections?.[0] ?? { point: props.def.endPosition };
+    if (anchor.clip) {
+      intersections.push(...endIntersections);
+      // TODO: Handle multiple intersections
+      end = endIntersections?.[0] ?? { point: props.def.endPosition };
+    } else {
+      const closeIntersections = endIntersections.filter(
+        i =>
+          Point.distance(props.def.endPosition, i.point) < 1.5 * (endNode.props.stroke?.width ?? 1)
+      );
+      if (closeIntersections) {
+        intersections.push(...closeIntersections);
+      }
+      end = closeIntersections?.[0] ?? { point: props.def.endPosition };
+    }
   }
   if (props.def.isStartConnected()) {
-    const startNode = (props.def.start as ConnectedEndpoint).node;
+    const startEndpoint = props.def.start as ConnectedEndpoint;
+    const startNode = startEndpoint.node;
+    const anchor = startNode.anchors[startEndpoint.anchor];
     const startNodeDefinition = props.diagram.nodDefinitions.get(startNode.nodeType);
     const startIntersections = path.intersections(startNodeDefinition.getBoundingPath(startNode));
-    intersections.push(...startIntersections);
 
-    // TODO: Handle multiple intersections
-    start = startIntersections?.[0] ?? { point: props.def.startPosition };
+    if (anchor.clip) {
+      intersections.push(...startIntersections);
+      // TODO: Handle multiple intersections
+      start = startIntersections?.[0] ?? { point: props.def.startPosition };
+    } else {
+      const closeIntersections = startIntersections.filter(
+        i =>
+          Point.distance(props.def.startPosition, i.point) <
+          1.5 * (startNode.props.stroke?.width ?? 1)
+      );
+      if (closeIntersections) {
+        intersections.push(...closeIntersections);
+      }
+      start = closeIntersections?.[0] ?? { point: props.def.startPosition };
+    }
   }
 
   if (start) {

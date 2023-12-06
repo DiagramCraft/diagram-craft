@@ -29,6 +29,7 @@ export const RoundedRect = (props: Props) => {
       />
 
       <TextPart
+        id={`text_1_${props.node.id}`}
         text={props.node.props.text}
         bounds={props.node.bounds}
         onChange={text => {

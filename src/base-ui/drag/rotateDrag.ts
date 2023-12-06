@@ -15,6 +15,7 @@ export class RotateDrag implements Drag {
     const before = selection.bounds;
 
     const center = Box.center(selection.source.boundingBox);
+
     selection.bounds = {
       ...selection.bounds,
       rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2

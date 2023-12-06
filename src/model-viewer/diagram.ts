@@ -54,6 +54,11 @@ declare global {
   }
 }
 
+export type Anchor = {
+  point: Point;
+  clip?: boolean;
+};
+
 export interface DiagramElement {
   id: string;
   type: string;
@@ -67,7 +72,7 @@ export interface AbstractNode extends DiagramElement {
 
   // TODO: Maybe we should make this readonly (deep)?
   props: NodeProps;
-  anchors?: Point[];
+  anchors?: Anchor[];
 }
 
 export type Waypoint = {
@@ -97,11 +102,11 @@ export class DiagramNode implements AbstractNode {
 
   props: NodeProps = {};
 
-  _anchors?: Point[];
+  _anchors?: Anchor[];
 
   diagram?: Diagram;
 
-  constructor(id: string, nodeType: 'group' | string, bounds: Box, anchors: Point[] | undefined) {
+  constructor(id: string, nodeType: 'group' | string, bounds: Box, anchors: Anchor[] | undefined) {
     this.id = id;
     this.bounds = bounds;
     this.type = 'node';
@@ -119,7 +124,7 @@ export class DiagramNode implements AbstractNode {
     assert.present(this.diagram);
 
     this._anchors = [];
-    this._anchors.push({ x: 0.5, y: 0.5 });
+    this._anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
 
     const def = this.diagram!.nodDefinitions.get(this.nodeType);
 
@@ -130,13 +135,13 @@ export class DiagramNode implements AbstractNode {
       const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
       const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
 
-      this._anchors.push({ x: lx, y: ly });
+      this._anchors.push({ point: { x: lx, y: ly }, clip: false });
     }
 
     this.diagram.updateElement(this);
   }
 
-  get anchors(): Point[] {
+  get anchors(): Anchor[] {
     if (this._anchors === undefined) this.invalidateAnchors();
 
     return this._anchors ?? [];
@@ -160,10 +165,14 @@ export class DiagramNode implements AbstractNode {
   }
 
   getAnchorPosition(anchor: number) {
-    return {
-      x: this.bounds.pos.x + this.bounds.size.w * this.anchors[anchor].x,
-      y: this.bounds.pos.y + this.bounds.size.h * this.anchors[anchor].y
-    };
+    return Point.rotateAround(
+      {
+        x: this.bounds.pos.x + this.bounds.size.w * this.anchors[anchor].point.x,
+        y: this.bounds.pos.y + this.bounds.size.h * this.anchors[anchor].point.y
+      },
+      this.bounds.rotation,
+      Box.center(this.bounds)
+    );
   }
 
   // TODO: This is a bit problematic since it has a relation to edge

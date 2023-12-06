@@ -18,7 +18,7 @@ declare global {
 }
 
 export const Star = (props: Props) => {
-  const path = props.def.getBoundingPath(props.node);
+  const path = Star.getBoundingPath(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -34,6 +34,7 @@ export const Star = (props: Props) => {
       />
 
       <TextPart
+        id={`text_1_${props.node.id}`}
         text={props.node.props.text}
         bounds={props.node.bounds}
         onChange={text => {
@@ -102,7 +103,7 @@ Star.getBoundingPath = (def: DiagramNode) => {
     );
   }
 
-  return pathBuilder.getPath();
+  return pathBuilder;
 };
 
 type Props = {

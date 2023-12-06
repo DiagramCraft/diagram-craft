@@ -33,6 +33,7 @@ export const Point = {
   },
 
   rotateAround: (c: Point, r: number, centerOfRotation: Point) => {
+    if (round(r) === 0) return c;
     const newCoord = Point.subtract(c, centerOfRotation);
     const rotatedCoord = Point.rotate(newCoord, r);
     return Point.add(rotatedCoord, centerOfRotation);
