@@ -8,6 +8,7 @@ import { LineProperties } from './LineProperties.tsx';
 import { StrokeProperties } from './StrokeProperties.tsx';
 import { FillProperties } from './FillProperties.tsx';
 import { TextProperties } from './TextProperties.tsx';
+import { TransformProperties } from './TransformProperties.tsx';
 
 export const ObjectProperties = (props: Props) => {
   const [type, setType] = useState('none');
@@ -36,7 +37,7 @@ export const ObjectProperties = (props: Props) => {
       <Accordion.Root
         className="cmp-accordion"
         type="multiple"
-        defaultValue={['fill', 'stroke', 'line']}
+        defaultValue={['fill', 'stroke', 'line', 'text', 'transform']}
       >
         {(type === 'node' || type === 'mixed') && (
           <>
@@ -53,10 +54,16 @@ export const ObjectProperties = (props: Props) => {
                 <StrokeProperties diagram={props.diagram} />
               </AccordionContent>
             </Accordion.Item>
-            <Accordion.Item className="cmp-accordion__item" value="line">
+            <Accordion.Item className="cmp-accordion__item" value="text">
               <AccordionTrigger>Text</AccordionTrigger>
               <AccordionContent>
                 <TextProperties diagram={props.diagram} />
+              </AccordionContent>
+            </Accordion.Item>
+            <Accordion.Item className="cmp-accordion__item" value="transform">
+              <AccordionTrigger>Transform</AccordionTrigger>
+              <AccordionContent>
+                <TransformProperties diagram={props.diagram} />
               </AccordionContent>
             </Accordion.Item>
           </>
