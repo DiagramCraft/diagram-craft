@@ -1,8 +1,8 @@
 import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { ViewboxEvents } from '../model-viewer/viewBox.ts';
-import { Point } from '../geometry/point.ts';
 import { RefObject, useCallback, useEffect } from 'react';
 import { Diagram } from '../model-viewer/diagram.ts';
+import { EventHelper } from '../base-ui/eventHelper.ts';
 
 export const useCanvasZoomAndPan = (diagram: Diagram, svgRef: RefObject<SVGSVGElement>) => {
   useEventListener(
@@ -20,7 +20,7 @@ export const useCanvasZoomAndPan = (diagram: Diagram, svgRef: RefObject<SVGSVGEl
       if (e.ctrlKey) {
         const delta = e.deltaY ?? e.detail ?? 0;
         const normalized = -(delta % 3 ? delta * 10 : delta / 3);
-        diagram.viewBox.zoom(Point.fromEvent(e), normalized > 0 ? 1 / 1.008 : 1.008);
+        diagram.viewBox.zoom(EventHelper.point(e), normalized > 0 ? 1 / 1.008 : 1.008);
       } else {
         diagram.viewBox.pan({
           x: diagram.viewBox.offset.x + e.deltaX * 0.7,

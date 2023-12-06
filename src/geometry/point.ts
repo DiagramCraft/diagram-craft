@@ -15,12 +15,6 @@ export const Point = {
 
   midpoint: (c1: Point, c2: Point) => ({ x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 }),
 
-  // TODO: Better name for this
-  //       ... and move it elsewhere
-  fromEvent: (e: { offsetX: number; offsetY: number }) => {
-    return { x: e.offsetX, y: e.offsetY };
-  },
-
   round: (c: Point) => {
     return { x: round(c.x), y: round(c.y) };
   },

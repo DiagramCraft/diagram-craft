@@ -2,6 +2,7 @@ import { Point } from '../geometry/point.ts';
 import React from 'react';
 import { Diagram } from '../model-viewer/diagram.ts';
 import { invariant } from '../utils/assert.ts';
+import { EventHelper } from '../base-ui/eventHelper.ts';
 
 export const getPoint = (e: React.MouseEvent<Element, MouseEvent>, diagram: Diagram) => {
   if ((e.nativeEvent.target as HTMLDivElement)?.nodeName === 'DIV') {
@@ -20,10 +21,14 @@ export const getPoint = (e: React.MouseEvent<Element, MouseEvent>, diagram: Diag
     const id = $gel.id.substring('node-'.length);
     const node = diagram.nodeLookup[id];
 
-    const rotatedPoint = Point.rotateAround(Point.fromEvent(e.nativeEvent), node.bounds.rotation, {
-      x: node.bounds.size.w / 2,
-      y: node.bounds.size.h / 2
-    });
+    const rotatedPoint = Point.rotateAround(
+      EventHelper.point(e.nativeEvent),
+      node.bounds.rotation,
+      {
+        x: node.bounds.size.w / 2,
+        y: node.bounds.size.h / 2
+      }
+    );
 
     const diagramCenter = {
       x: node.bounds.pos.x,
@@ -32,6 +37,6 @@ export const getPoint = (e: React.MouseEvent<Element, MouseEvent>, diagram: Diag
 
     return diagram.viewBox.toScreenPoint(Point.add(diagramCenter, rotatedPoint));
   } else {
-    return Point.fromEvent(e.nativeEvent);
+    return EventHelper.point(e.nativeEvent);
   }
 };

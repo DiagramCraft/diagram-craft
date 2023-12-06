@@ -16,6 +16,7 @@ import {
 import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
 import { invariant } from '../utils/assert.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
+import { EventHelper } from '../base-ui/eventHelper.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(
@@ -75,7 +76,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
       if (e.button !== 0) return;
-      props.onMouseDown(props.def.id, Point.fromEvent(e.nativeEvent), e.nativeEvent);
+      props.onMouseDown(props.def.id, EventHelper.point(e.nativeEvent), e.nativeEvent);
       e.stopPropagation();
 
       return false;

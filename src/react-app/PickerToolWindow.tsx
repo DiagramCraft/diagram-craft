@@ -1,11 +1,11 @@
 import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import React from 'react';
-import { Point } from '../geometry/point.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import { ObjectPicker } from './components/ObjectPicker.tsx';
+import { EventHelper } from '../base-ui/eventHelper.ts';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {
@@ -14,7 +14,7 @@ export const canvasDropHandler = ($d: Diagram) => {
         $d.newid(),
         e.dataTransfer.getData('application/x-diagram-craft-node-type'),
         {
-          pos: $d.viewBox.toDiagramPoint(Point.fromEvent(e.nativeEvent)),
+          pos: $d.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent)),
           size: { w: 100, h: 100 },
           rotation: 0
         },
