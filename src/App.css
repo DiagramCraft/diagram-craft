@@ -17,6 +17,7 @@
   --primary-fg: var(--slate-11);
   --secondary-bg: var(--slate-3);
   --secondary-fg: var(--slate-11);
+  --canvas-fg: var(--slate-12);
   --canvas-bg: var(--slate-1);
   --error-fg: var(--red-9);
 }
@@ -26,6 +27,7 @@
   --primary-fg: var(--slate-11);
   --secondary-bg: var(--slate-4);
   --secondary-fg: var(--slate-11);
+  --canvas-fg: var(--slate-1);
   --canvas-bg: var(--slate-12);
   --error-fg: var(--red-9);
 }
@@ -48,8 +50,9 @@
   display: grid;
   grid-template-areas:
             "left-buttons toolbar right-buttons"
-            "left-buttons canvas-area right-buttons";
-  grid-template-rows: 37.5px 1fr;
+            "left-buttons canvas-area right-buttons"
+            "left-buttons tabs right-buttons";
+  grid-template-rows: 37.5px 1fr 20px;
   grid-template-columns: 40px 5fr 40px;
 }
 
@@ -101,6 +104,35 @@
   border-bottom: 2px solid var(--slate-1);
   padding-left: 0.5rem;
 }
+
+#tabs {
+  grid-area: tabs;
+  background: var(--secondary-bg);
+  border-top: 2px solid var(--slate-1);
+}
+
+/* TODO: Perhaps rename as document tabs */
+.cmp-tabs {
+  font-size: 11px;
+  display: flex;
+  flex-direction: rows;
+  .cmp-tabs__tab {
+    display: flex;
+    align-items: center;
+    margin-top: -2px;
+    padding: 2px 5px 2px 5px;
+    color: var(--primary-fg);
+    border-right: 2px solid var(--slate-1);
+
+    &.cmp-tabs__tab--selected {
+      padding-left: 8px;
+      padding-right: 8px;
+      background-color: var(--canvas-bg);
+      color: var(--canvas-fg);
+    }
+  }
+}
+
 
 #left-buttons {
   grid-area: left-buttons;

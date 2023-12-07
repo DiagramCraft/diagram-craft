@@ -59,6 +59,7 @@ export const ObjectPicker = (props: Props) => {
   const diagrams = nodes.map(n => {
     return new EditableDiagram(
       n.type,
+      n.type,
       [
         new DiagramNode(
           n.type,

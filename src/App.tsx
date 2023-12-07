@@ -10,6 +10,7 @@ import { DocumentSelector } from './react-app/DocumentSelector.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
   TbCategoryPlus,
+  TbChevronUp,
   TbClick,
   TbDatabaseEdit,
   TbFiles,
@@ -21,6 +22,7 @@ import {
   TbMoon,
   TbPalette,
   TbPencil,
+  TbPlus,
   TbPolygon,
   TbSelectAll,
   TbStack2,
@@ -49,25 +51,32 @@ import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
+import { DiagramDocument } from './model-viewer/diagramDocument.ts';
 
 const diagrams = [
   {
     name: 'Snap test',
-    diagram: new EditableDiagram(
-      'snapTest',
-      deserializeDiagramDocument(snapTestDiagram),
-      defaultNodeRegistry(),
-      defaultEdgeRegistry()
-    )
+    document: new DiagramDocument<EditableDiagram>([
+      new EditableDiagram(
+        'snapTest',
+        'Snap Test',
+        deserializeDiagramDocument(snapTestDiagram),
+        defaultNodeRegistry(),
+        defaultEdgeRegistry()
+      )
+    ])
   },
   {
     name: 'Simple',
-    diagram: new EditableDiagram(
-      'simple',
-      deserializeDiagramDocument(simpleDiagram),
-      defaultNodeRegistry(),
-      defaultEdgeRegistry()
-    )
+    document: new DiagramDocument<EditableDiagram>([
+      new EditableDiagram(
+        'simple',
+        'Simple',
+        deserializeDiagramDocument(simpleDiagram),
+        defaultNodeRegistry(),
+        defaultEdgeRegistry()
+      )
+    ])
   }
 ];
 
@@ -90,7 +99,8 @@ const DarkModeToggleButton = (props: { actionMap: Partial<ActionMap> }) => {
 
 const App = () => {
   const defaultDiagram = 1;
-  const [$d, setDiagram] = useState(diagrams[defaultDiagram].diagram);
+  const [doc, setDoc] = useState(diagrams[defaultDiagram].document);
+  const [$d, setDiagram] = useState(diagrams[defaultDiagram].document.diagrams[0]);
   const contextMenuTarget = useRef<
     (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
   >(null);
@@ -140,7 +150,8 @@ const App = () => {
                 diagrams={diagrams}
                 defaultValue={defaultDiagram}
                 onChange={d => {
-                  setDiagram(d);
+                  setDoc(d);
+                  setDiagram(d.diagrams[0]);
                 }}
               />
             </div>
@@ -230,6 +241,33 @@ const App = () => {
                   </ContextMenu.Content>
                 </ContextMenu.Portal>
               </ContextMenu.Root>
+            </div>
+
+            <div id="tabs">
+              <div className={'cmp-tabs'}>
+                {doc.diagrams.map(d => (
+                  <div key={d.id} className={'cmp-tabs__tab cmp-tabs__tab--selected'}>
+                    {d.name}
+                    &nbsp;
+                    <TbChevronUp />
+                  </div>
+                ))}
+                <div className={'cmp-tabs__tab'}>
+                  Page 2 &nbsp;
+                  <TbChevronUp />
+                </div>
+                <div className={'cmp-tabs__tab'}>
+                  Page 3 &nbsp;
+                  <TbChevronUp />
+                </div>
+                <div className={'cmp-tabs__tab'}>
+                  Page 4 &nbsp;
+                  <TbChevronUp />
+                </div>
+                <div className={'cmp-tabs__tab'}>
+                  <TbPlus />
+                </div>
+              </div>
             </div>
           </div>
         </div>

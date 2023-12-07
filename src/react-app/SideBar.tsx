@@ -9,14 +9,18 @@ export const SideBar = (props: Props) => {
     if (props.side === 'left') {
       if (selected === -1) {
         document.getElementById(`toolbar`)!.style.marginLeft = '0';
+        document.getElementById(`tabs`)!.style.marginLeft = '0';
       } else {
         document.getElementById(`toolbar`)!.style.marginLeft = '15rem';
+        document.getElementById(`tabs`)!.style.marginLeft = '15rem';
       }
     } else {
       if (selected === -1) {
         document.getElementById(`toolbar`)!.style.marginRight = '0';
+        document.getElementById(`tabs`)!.style.marginRight = '0';
       } else {
         document.getElementById(`toolbar`)!.style.marginRight = '15rem';
+        document.getElementById(`tabs`)!.style.marginRight = '15rem';
       }
     }
   }, [selected]);

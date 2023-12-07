@@ -34,13 +34,16 @@ export class EditableDiagram extends Diagram {
 
   snapManagerConfig = new SnapManagerConfig(['grid', 'node', 'canvas', 'distance', 'size']);
 
+  diagrams: EditableDiagram[] = [];
+
   constructor(
     id: string,
+    name: string,
     elements: (DiagramEdge | DiagramNode)[],
     readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
-    super(id, elements, nodeDefinitions, edgeDefinitions);
+    super(id, name, elements, nodeDefinitions, edgeDefinitions);
   }
 
   createSnapManager() {

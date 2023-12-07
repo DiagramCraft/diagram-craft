@@ -82,6 +82,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
           ]
         }
       ]
-    }
+    },
+    { id: 'doc2', diagrams: [], name: 'Sheet 2', layers: [] }
   ]
 };

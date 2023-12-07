@@ -111,8 +111,11 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     y: 20
   };
 
+  diagrams: Diagram[] = [];
+
   constructor(
     readonly id: string,
+    readonly name: string,
     elements: (DiagramEdge | DiagramNode)[],
     readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry

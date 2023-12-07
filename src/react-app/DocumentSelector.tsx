@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import * as Select from '@radix-ui/react-select';
 import { TbCheck, TbChevronDown } from 'react-icons/tb';
+import { DiagramDocument } from '../model-viewer/diagramDocument.ts';
 
 const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>((props, forwardedRef) => {
   return (
@@ -26,7 +27,7 @@ export const DocumentSelector = (props: Props) => {
     <Select.Root
       onValueChange={v => {
         setSelectedDiagram(Number(v));
-        props.onChange(props.diagrams[Number(v)].diagram);
+        props.onChange(props.diagrams[Number(v)].document);
       }}
       value={selectedDiagram.toString()}
     >
@@ -56,8 +57,8 @@ export const DocumentSelector = (props: Props) => {
 type Props = {
   diagrams: {
     name: string;
-    diagram: EditableDiagram;
+    document: DiagramDocument<EditableDiagram>;
   }[];
   defaultValue: number;
-  onChange: (diagram: EditableDiagram) => void;
+  onChange: (document: DiagramDocument<EditableDiagram>) => void;
 };

@@ -18,6 +18,7 @@ export class SnapManagerPerftest implements PerformanceTest {
 
     const d = new EditableDiagram(
       '1',
+      '1',
       defs,
       new NodeDefinitionRegistry(),
       new EdgeDefinitionRegistry()
