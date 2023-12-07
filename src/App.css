@@ -350,14 +350,17 @@
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    padding: 0 10px;
+    padding: 0 4px 0 6px;
     font-size: 13px;
     line-height: 1;
     height: 25px;
-    gap: 10px;
+    gap: 5px;
     background-color: var(--secondary-bg);
     border: 1px solid var(--blue-6);
     color: var(--primary-fg);
+    &:hover {
+      background-color: var(--slate-3);
+    }
   }
 
   .cmp-color-picker__well {
@@ -498,7 +501,7 @@ input[type='number'] {
   }
 
   .cmp-select-trigger__icon {
-    color: Var(--secondary-fg);
+    color: var(--secondary-fg);
   }
 }
 

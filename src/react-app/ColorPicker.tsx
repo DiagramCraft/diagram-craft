@@ -26,7 +26,7 @@ export const ColorPicker = (props: Props) => {
                 backgroundColor: props.color
               }}
             ></div>
-            <TbChevronDown size={'1rem'} />
+            <TbChevronDown size={'0.7rem'} />
           </button>
         </Popover.Trigger>
         <Popover.Portal>
