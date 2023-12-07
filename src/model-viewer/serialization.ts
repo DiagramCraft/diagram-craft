@@ -7,8 +7,23 @@ interface Reference {
   id: string;
 }
 
-export interface SerializedDiagram {
-  elements: (SerializedNode | SerializedEdge)[];
+type SerializedLayer = {
+  id: string;
+  name: string;
+  type: 'layer';
+  layerType: 'basic' | 'reference' | 'adjustment';
+  elements: (SerializedNode | SerializedEdge | SerializedLayer)[];
+};
+
+type SerializedDiagram = {
+  id: string;
+  name: string;
+  layers: SerializedLayer[];
+  diagrams: SerializedDiagram[];
+};
+
+export interface SerializedDiagramDocument {
+  diagrams: SerializedDiagram[];
 }
 
 export interface SerializedNode extends AbstractNode {
@@ -27,8 +42,12 @@ export interface SerializedEdge extends AbstractEdge {
   end: SerializedEndpoint;
 }
 
-const isNodeDef = (element: SerializedNode | SerializedEdge): element is SerializedNode =>
-  element.type === 'node';
+const isNodeDef = (
+  element: SerializedNode | SerializedEdge | SerializedLayer
+): element is SerializedNode => element.type === 'node';
+const isEdgeDef = (
+  element: SerializedNode | SerializedEdge | SerializedLayer
+): element is SerializedEdge => element.type === 'edge';
 
 const isConnected = (endpoint: SerializedEndpoint): endpoint is SerializedConnectedEndpoint =>
   'node' in endpoint;
@@ -48,11 +67,26 @@ const unfoldGroup = (node: SerializedNode) => {
   }
 };
 
-export const deserializeDiagram = (diagram: SerializedDiagram): (DiagramNode | DiagramEdge)[] => {
+export const deserializeDiagramDocument = (
+  diagram: SerializedDiagramDocument
+): (DiagramNode | DiagramEdge)[] => {
   const nodeLookup: Record<string, DiagramNode> = {};
   const edgeLookup: Record<string, DiagramEdge> = {};
 
-  const allNodes = diagram.elements.filter(isNodeDef);
+  const diagramElements: (SerializedNode | SerializedEdge)[] = [];
+  for (const d of diagram.diagrams) {
+    for (const l of d.layers) {
+      for (const e of l.elements) {
+        if (isNodeDef(e)) {
+          diagramElements.push(e);
+        } else if (isEdgeDef(e)) {
+          diagramElements.push(e);
+        }
+      }
+    }
+  }
+
+  const allNodes = diagramElements.filter(isNodeDef);
 
   // Index skeleton nodes
   for (const n of allNodes) {
@@ -84,7 +118,7 @@ export const deserializeDiagram = (diagram: SerializedDiagram): (DiagramNode | D
     }
   }
 
-  for (const e of diagram.elements) {
+  for (const e of diagramElements) {
     if (e.type !== 'edge') continue;
 
     const start = e.start;
@@ -122,7 +156,7 @@ export const deserializeDiagram = (diagram: SerializedDiagram): (DiagramNode | D
   }
 
   const elements: (DiagramEdge | DiagramNode)[] = [];
-  for (const n of diagram.elements) {
+  for (const n of diagramElements) {
     if (n.type === 'node') {
       elements.push(nodeLookup[n.id]);
     } else if (n.type === 'edge') {

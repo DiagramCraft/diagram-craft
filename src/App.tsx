@@ -1,5 +1,5 @@
 import './App.css';
-import { deserializeDiagram } from './model-viewer/serialization.ts';
+import { deserializeDiagramDocument } from './model-viewer/serialization.ts';
 import { ContextMenuEvent, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
 import React, { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
@@ -55,7 +55,7 @@ const diagrams = [
     name: 'Snap test',
     diagram: new EditableDiagram(
       'snapTest',
-      deserializeDiagram(snapTestDiagram),
+      deserializeDiagramDocument(snapTestDiagram),
       defaultNodeRegistry(),
       defaultEdgeRegistry()
     )
@@ -64,7 +64,7 @@ const diagrams = [
     name: 'Simple',
     diagram: new EditableDiagram(
       'simple',
-      deserializeDiagram(simpleDiagram),
+      deserializeDiagramDocument(simpleDiagram),
       defaultNodeRegistry(),
       defaultEdgeRegistry()
     )
