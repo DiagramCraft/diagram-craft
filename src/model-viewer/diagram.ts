@@ -13,6 +13,15 @@ declare global {
     background?: {
       color?: string;
     };
+    grid?: {
+      enabled?: boolean;
+      size?: number;
+      majorCount?: number;
+      color?: string;
+      majorColor?: string;
+      type?: 'lines' | 'dots';
+      majorType?: 'lines' | 'dots';
+    };
   }
 
   interface ElementProps {
@@ -112,12 +121,6 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   };
 
   viewBox = new Viewbox(this.#canvas.size);
-
-  // TODO: Add listener/event on grid change
-  readonly grid = {
-    x: 20,
-    y: 20
-  };
 
   diagrams: Diagram[] = [];
 

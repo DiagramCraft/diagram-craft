@@ -12,7 +12,11 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
 
   getMagnets(box: Box): MagnetOfType<'grid'>[] {
     const magnets: MagnetOfType<'grid'>[] = [];
-    const grid = this.diagram.grid;
+
+    const grid = {
+      x: this.diagram.props.grid?.size ?? 10,
+      y: this.diagram.props.grid?.size ?? 10
+    };
 
     const minX = Math.floor(box.pos.x / grid.x);
     const maxX = Math.ceil((box.pos.x + box.size.w) / grid.x);

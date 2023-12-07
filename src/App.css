@@ -239,9 +239,11 @@
     /* TODO: Use color variables for these */
     &.svg-grid--minor {
       stroke: #f5f5f4;
+      fill: #f5f5f4;
     }
     &.svg-grid--major {
       stroke: #e7e5e4;
+      fill: #e7e5e4;
     }
   }
 
@@ -940,7 +942,7 @@ input[type='number'] {
 
   .cmp-tree__node__label {
     display: flex;
-    alignItems: center;
+    align-items: center;
   }
 
   .cmp-tree__node__label__toggle {

@@ -23,7 +23,7 @@ export const CanvasSnapProperties = (props: Props) => {
   useEventListener('canvaschanged', redraw, props.diagram);
 
   return (
-    <Accordion.Item className="cmp-accordion__item" value="line">
+    <Accordion.Item className="cmp-accordion__item" value="snap">
       <AccordionTrigger>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <input
