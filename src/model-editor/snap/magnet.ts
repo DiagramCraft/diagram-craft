@@ -1,10 +1,10 @@
 import { Box } from '../../geometry/box.ts';
-import { DiagramNode } from '../../model-viewer/diagram.ts';
 import { Line } from '../../geometry/line.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { Point } from '../../geometry/point.ts';
 import { Range } from '../../geometry/range.ts';
 import { Axis } from '../../geometry/axis.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 type BaseMagnet = {
   line: Line;

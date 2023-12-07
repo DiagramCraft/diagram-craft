@@ -1,8 +1,8 @@
 import { ObjectTreeNode, Tree, TreeNode } from '../components/Tree.tsx';
-import { DiagramNode } from '../../model-viewer/diagram.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 export const NodeInfoDetails = (props: { obj: DiagramNode; diagram: EditableDiagram }) => {
   const redraw = useRedraw();

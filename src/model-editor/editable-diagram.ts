@@ -1,14 +1,11 @@
-import {
-  Diagram,
-  DiagramEdge,
-  DiagramNode,
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry
-} from '../model-viewer/diagram.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
 import { SelectionState } from './selectionState.ts';
 import { SnapManager } from './snap/snapManager.ts';
 import { MagnetType } from './snap/magnet.ts';
 import { EventEmitter } from '../utils/event.ts';
+import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
+import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
 
 type SnapManagerConfigEvents = {
   change: { config: SnapManagerConfig };

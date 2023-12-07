@@ -1,4 +1,3 @@
-import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
 import React from 'react';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import * as Accordion from '@radix-ui/react-accordion';
@@ -6,6 +5,8 @@ import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import { ObjectPicker } from './components/ObjectPicker.tsx';
 import { EventHelper } from '../base-ui/eventHelper.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
+import { DiagramNode } from '../model-viewer/diagramNode.ts';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {

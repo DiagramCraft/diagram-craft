@@ -1,5 +1,4 @@
 import React, { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
-import { ConnectedEndpoint, DiagramEdge } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
 import { Drag, Modifiers } from '../base-ui/drag.ts';
@@ -17,6 +16,7 @@ import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
 import { invariant } from '../utils/assert.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
+import { ConnectedEndpoint, DiagramEdge } from '../model-viewer/diagramEdge.ts';
 
 class EdgeWaypointDrag implements Drag {
   constructor(

@@ -1,10 +1,12 @@
-import { Diagram, DiagramEdge, DiagramNode } from '../model-viewer/diagram.ts';
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
 import { Drag } from '../base-ui/drag.ts';
 import { Point } from '../geometry/point.ts';
 import { SelectionState } from '../model-editor/selectionState.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
+import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 
 export class MarqueeDrag implements Drag {
   constructor(

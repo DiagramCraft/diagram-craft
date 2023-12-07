@@ -7,7 +7,7 @@ import {
   useCallback,
   useImperativeHandle
 } from 'react';
-import { Diagram, DiagramNode } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model-viewer/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from '../base-ui/drag.ts';
 import { Point } from '../geometry/point.ts';
@@ -17,6 +17,7 @@ import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { getPoint } from './eventHelper.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { round } from '../utils/math.ts';
+import { DiagramNode } from '../model-viewer/diagramNode.ts';
 
 export type NodeApi = {
   repaint: () => void;

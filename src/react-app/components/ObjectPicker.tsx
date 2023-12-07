@@ -1,9 +1,9 @@
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { DiagramNode } from '../../model-viewer/diagram.ts';
 import { SVGProps } from 'react';
 import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
 import { Edge } from '../../react-canvas-viewer/Edge.tsx';
 import { Node } from '../../react-canvas-viewer/Node.tsx';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;

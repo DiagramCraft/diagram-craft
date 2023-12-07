@@ -1,7 +1,8 @@
 import { UndoableAction } from '../model-editor/undoManager.ts';
 import { Box } from '../geometry/box.ts';
 import { TransformFactory } from '../geometry/transform.ts';
-import { Diagram, DiagramNode, DiagramNodeSnapshot } from './diagram.ts';
+import { Diagram } from './diagram.ts';
+import { DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
 
 class AbstractTransformAction implements UndoableAction {
   private nodes: DiagramNode[] = [];

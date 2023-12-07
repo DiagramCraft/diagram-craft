@@ -1,15 +1,15 @@
 import React from 'react';
-import {
-  CustomPropertyDefinition,
-  DiagramNode,
-  NodeCapability,
-  NodeDefinition
-} from '../model-viewer/diagram.ts';
 import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Path } from '../geometry/path.ts';
 import { round } from '../utils/math.ts';
 import { Box } from '../geometry/box.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import {
+  CustomPropertyDefinition,
+  NodeCapability,
+  NodeDefinition
+} from '../model-viewer/nodeDefinition.ts';
 
 type Props = {
   node: DiagramNode;

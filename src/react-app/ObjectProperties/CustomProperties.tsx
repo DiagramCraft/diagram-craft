@@ -1,6 +1,5 @@
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useEffect, useState } from 'react';
-import { DiagramNode } from '../../model-viewer/diagram.ts';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { AccordionTrigger } from '../AccordionTrigger.tsx';
@@ -8,6 +7,7 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionContent } from '../AccordionContext.tsx';
 import React from 'react';
 import { NumberInput } from '../NumberInput.tsx';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 export const CustomProperties = (props: Props) => {
   const [node, setNode] = useState<DiagramNode | undefined>(undefined);

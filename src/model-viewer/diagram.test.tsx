@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { Diagram, DiagramNode, EdgeDefinitionRegistry, NodeDefinitionRegistry } from './diagram.ts';
+import { Diagram } from './diagram.ts';
 import { TransformFactory } from '../geometry/transform.ts';
 import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.ts';
+import { DiagramNode } from './diagramNode.ts';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './nodeDefinition.ts';
 
 describe('Diagram', () => {
   test('transform rotate', () => {

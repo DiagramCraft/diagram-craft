@@ -2,8 +2,9 @@ import { Line } from '../geometry/line.ts';
 import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
-import { DiagramEdge, DiagramNode } from '../model-viewer/diagram.ts';
 import { Magnet } from './snap/magnet.ts';
+import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },

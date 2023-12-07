@@ -1,8 +1,3 @@
-import {
-  CustomPropertyDefinition,
-  DiagramNode,
-  NodeDefinition
-} from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { PathBuilder } from '../../geometry/pathBuilder.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
@@ -13,6 +8,8 @@ import { Vector } from '../../geometry/vector.ts';
 import { TextPart } from '../TextPart.tsx';
 import { round } from '../../utils/math.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { CustomPropertyDefinition, NodeDefinition } from '../../model-viewer/nodeDefinition.ts';
 
 declare global {
   interface NodeProps {

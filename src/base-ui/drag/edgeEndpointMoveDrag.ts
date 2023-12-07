@@ -1,8 +1,8 @@
 import { Drag } from '../drag.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { DiagramEdge } from '../../model-viewer/diagram.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
+import { DiagramEdge } from '../../model-viewer/diagramEdge.ts';
 
 export class EdgeEndpointMoveDrag implements Drag {
   private readonly originalPointerEvents: string;

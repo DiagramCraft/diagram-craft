@@ -3,7 +3,7 @@ import { EventEmitter } from '../../utils/event.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { Box } from '../../geometry/box.ts';
 import { NodeChangeAction } from '../../model-viewer/actions.ts';
-import { DiagramNode } from '../../model-viewer/diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 declare global {
   interface ActionMap {

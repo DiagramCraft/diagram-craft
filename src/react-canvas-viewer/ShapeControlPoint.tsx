@@ -1,8 +1,8 @@
-import { DiagramNode } from '../model-viewer/diagram.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { Drag, Modifiers } from '../base-ui/drag.ts';
 import { Point } from '../geometry/point.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { DiagramNode } from '../model-viewer/diagramNode.ts';
 
 class ShapeControlPointDrag implements Drag {
   constructor(

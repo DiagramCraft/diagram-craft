@@ -1,9 +1,10 @@
-import { CustomPropertyDefinition, DiagramNode } from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { TextPart } from '../TextPart.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { CustomPropertyDefinition } from '../../model-viewer/nodeDefinition.ts';
 
 declare global {
   interface NodeProps {

@@ -1,7 +1,7 @@
-import { DiagramNode } from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { TextPart } from '../TextPart.tsx';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 export const Rect = (props: Props) => {
   return (

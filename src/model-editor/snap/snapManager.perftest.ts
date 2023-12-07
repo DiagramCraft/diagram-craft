@@ -1,11 +1,11 @@
 import { PerformanceTest } from '../../utils/perftest.ts';
-import {
-  DiagramNode,
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry
-} from '../../model-viewer/diagram.ts';
 import { SnapManager } from './snapManager.ts';
 import { EditableDiagram } from '../editable-diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import {
+  EdgeDefinitionRegistry,
+  NodeDefinitionRegistry
+} from '../../model-viewer/nodeDefinition.ts';
 
 export class SnapManagerPerftest implements PerformanceTest {
   private snapManager: SnapManager | undefined;

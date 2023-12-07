@@ -1,6 +1,7 @@
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import { AbstractEdge, AbstractNode, DiagramEdge, DiagramNode } from './diagram.ts';
+import { AbstractNode, DiagramNode } from './diagramNode.ts';
+import { AbstractEdge, DiagramEdge } from './diagramEdge.ts';
 
 interface Reference {
   id: string;

@@ -2,7 +2,8 @@ import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { unique } from '../../utils/array.ts';
-import { DiagramEdge, DiagramNode } from '../../model-viewer/diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramEdge } from '../../model-viewer/diagramEdge.ts';
 
 type PropertyStringPath<T, P = ''> = NonNullable<
   {

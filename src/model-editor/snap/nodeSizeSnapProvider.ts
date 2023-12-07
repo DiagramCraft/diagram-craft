@@ -7,9 +7,10 @@ import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Guide } from '../selectionState.ts';
-import { Diagram, DiagramNode } from '../../model-viewer/diagram.ts';
 import { MagnetOfType } from './magnet.ts';
 import { Axis } from '../../geometry/axis.ts';
+import { Diagram } from '../../model-viewer/diagram.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 const forward: Partial<Record<Direction, Direction>> = {
   n: 's',
