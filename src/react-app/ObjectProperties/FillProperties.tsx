@@ -3,7 +3,7 @@ import { ColorPicker } from '../ColorPicker.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useNodeProperty } from './useNodeProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { TbDots, TbX } from 'react-icons/tb';
+import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import React from 'react';
 
@@ -55,7 +55,7 @@ export const FillProperties = (props: Props) => {
                 <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
                   <Popover.Trigger asChild>
                     <button>
-                      <TbDots />
+                      <TbAdjustmentsHorizontal />
                     </button>
                   </Popover.Trigger>
                   <Popover.Portal>

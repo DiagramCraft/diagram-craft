@@ -13,6 +13,8 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 export const TextPart = (props: Props) => {
   const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
 
+  console.log(props.text);
+
   return (
     <foreignObject
       id={props.id}
@@ -29,21 +31,7 @@ export const TextPart = (props: Props) => {
           flexDirection: 'column',
           justifyContent: valign,
           height: '100%',
-          cursor: 'move',
-          color: props.text?.color ?? 'black',
-          fontFamily: props.text?.font ?? 'sans-serif',
-          fontSize: (props.text?.fontSize ?? '10') + 'px',
-          fontWeight: props.text?.bold ? 'bold' : 'normal',
-          fontStyle: props.text?.italic ? 'italic' : 'normal',
-          textDecoration: props.text?.textDecoration
-            ? `${props.text.textDecoration} ${props.text?.color ?? 'black'}`
-            : 'none',
-          textTransform: props.text?.textTransform ?? 'none',
-          textAlign: props.text?.align ?? 'center',
-          paddingLeft: withPx(props.text?.left) ?? '0px',
-          paddingRight: withPx(props.text?.right) ?? '0px',
-          paddingTop: withPx(props.text?.top) ?? '0px',
-          paddingBottom: withPx(props.text?.bottom) ?? '0px'
+          cursor: 'move'
         }}
         onDoubleClick={e => {
           const $t = e.target as HTMLDivElement;
@@ -59,7 +47,21 @@ export const TextPart = (props: Props) => {
       >
         <div
           style={{
-            cursor: 'text'
+            cursor: 'text',
+            color: props.text?.color ?? 'black',
+            fontFamily: props.text?.font ?? 'sans-serif',
+            fontSize: (props.text?.fontSize ?? '10') + 'px',
+            fontWeight: props.text?.bold ? 'bold' : 'normal',
+            fontStyle: props.text?.italic ? 'italic' : 'normal',
+            textDecoration: props.text?.textDecoration
+              ? `${props.text.textDecoration} ${props.text?.color ?? 'black'}`
+              : 'none',
+            textTransform: props.text?.textTransform ?? 'none',
+            textAlign: props.text?.align ?? 'center',
+            paddingLeft: withPx(props.text?.left) ?? '0px',
+            paddingRight: withPx(props.text?.right) ?? '0px',
+            paddingTop: withPx(props.text?.top) ?? '0px',
+            paddingBottom: withPx(props.text?.bottom) ?? '0px'
           }}
           onKeyDown={e => {
             if (e.key === 'Escape') {
