@@ -10,7 +10,15 @@ export const defaultNodeRegistry = () => {
     new ReactNodeDefinition('star', 'Star', Star, Star.getBoundingPath, Star.getCustomProperties)
   );
   dest.register(new ReactNodeDefinition('rect', 'Rectangle', Rect));
-  dest.register(new ReactNodeDefinition('rounded-rect', 'Rounded rectangle', RoundedRect));
+  dest.register(
+    new ReactNodeDefinition(
+      'rounded-rect',
+      'Rounded Rectangle',
+      RoundedRect,
+      undefined,
+      RoundedRect.getCustomProperties
+    )
+  );
   return dest;
 };
 

@@ -1,4 +1,4 @@
-import { DiagramNode } from '../../model-viewer/diagram.ts';
+import { CustomPropertyDefinition, DiagramNode } from '../../model-viewer/diagram.ts';
 import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
@@ -56,6 +56,22 @@ export const RoundedRect = (props: Props) => {
       )}
     </>
   );
+};
+
+RoundedRect.getCustomProperties = (def: DiagramNode): Record<string, CustomPropertyDefinition> => {
+  return {
+    radius: {
+      type: 'number',
+      label: 'Radius',
+      value: def.props?.roundedRect?.radius ?? 10,
+      maxValue: 60,
+      unit: 'px',
+      onChange: (value: number) => {
+        def.props.roundedRect ??= {};
+        def.props.roundedRect.radius = value;
+      }
+    }
+  };
 };
 
 type Props = {
