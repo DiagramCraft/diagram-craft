@@ -2,6 +2,8 @@ import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { AbstractNode, DiagramNode } from './diagramNode.ts';
 import { AbstractEdge, DiagramEdge } from './diagramEdge.ts';
+import { Diagram } from './diagram.ts';
+import { DiagramDocument } from './diagramDocument.ts';
 
 interface Reference {
   id: string;
@@ -15,7 +17,7 @@ type SerializedLayer = {
   elements: (SerializedNode | SerializedEdge | SerializedLayer)[];
 };
 
-type SerializedDiagram = {
+export type SerializedDiagram = {
   id: string;
   name: string;
   layers: SerializedLayer[];
@@ -67,15 +69,17 @@ const unfoldGroup = (node: SerializedNode) => {
   }
 };
 
-export const deserializeDiagramDocument = (
-  diagram: SerializedDiagramDocument
-): (DiagramNode | DiagramEdge)[] => {
-  const nodeLookup: Record<string, DiagramNode> = {};
-  const edgeLookup: Record<string, DiagramEdge> = {};
+export const deserializeDiagramDocument = <T extends Diagram>(
+  document: SerializedDiagramDocument,
+  factory: (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => T
+): DiagramDocument<T> => {
+  const dest: T[] = [];
+  for (const $d of document.diagrams) {
+    const nodeLookup: Record<string, DiagramNode> = {};
+    const edgeLookup: Record<string, DiagramEdge> = {};
 
-  const diagramElements: (SerializedNode | SerializedEdge)[] = [];
-  for (const d of diagram.diagrams) {
-    for (const l of d.layers) {
+    const diagramElements: (SerializedNode | SerializedEdge)[] = [];
+    for (const l of $d.layers) {
       for (const e of l.elements) {
         if (isNodeDef(e)) {
           diagramElements.push(e);
@@ -84,87 +88,89 @@ export const deserializeDiagramDocument = (
         }
       }
     }
-  }
 
-  const allNodes = diagramElements.filter(isNodeDef);
+    const allNodes = diagramElements.filter(isNodeDef);
 
-  // Index skeleton nodes
-  for (const n of allNodes) {
-    for (const c of unfoldGroup(n)) {
-      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors);
-      nodeLookup[c.id].props = c.props;
-    }
-  }
-
-  // Resolve relative positions
-  for (const n of allNodes) {
-    for (const child of unfoldGroup(n)) {
-      if (child.parent) {
-        nodeLookup[child.id].bounds = {
-          ...nodeLookup[child.id].bounds,
-          pos: Point.add(nodeLookup[child.id].bounds.pos, nodeLookup[child.parent.id].bounds.pos)
-        };
+    // Index skeleton nodes
+    for (const n of allNodes) {
+      for (const c of unfoldGroup(n)) {
+        nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors);
+        nodeLookup[c.id].props = c.props;
       }
     }
-  }
 
-  // Resolve relations
-  for (const n of allNodes) {
-    for (const c of unfoldGroup(n)) {
-      nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
-      if (c.parent) {
-        nodeLookup[n.id].parent = nodeLookup[c.parent.id];
+    // Resolve relative positions
+    for (const n of allNodes) {
+      for (const child of unfoldGroup(n)) {
+        if (child.parent) {
+          nodeLookup[child.id].bounds = {
+            ...nodeLookup[child.id].bounds,
+            pos: Point.add(nodeLookup[child.id].bounds.pos, nodeLookup[child.parent.id].bounds.pos)
+          };
+        }
       }
     }
-  }
 
-  for (const e of diagramElements) {
-    if (e.type !== 'edge') continue;
-
-    const start = e.start;
-    const end = e.end;
-
-    const edge = new DiagramEdge(
-      e.id,
-      isConnected(start)
-        ? { anchor: start.anchor, node: nodeLookup[start.node.id] }
-        : { position: start.position },
-      isConnected(end)
-        ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
-        : { position: end.position },
-      e.props,
-      e.waypoints
-    );
-
-    if (isConnected(start)) {
-      const startNode = nodeLookup[start.node.id];
-
-      startNode.edges ??= {};
-      startNode.edges[start.anchor] ??= [];
-      startNode.edges[start.anchor].push(edge);
+    // Resolve relations
+    for (const n of allNodes) {
+      for (const c of unfoldGroup(n)) {
+        nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
+        if (c.parent) {
+          nodeLookup[n.id].parent = nodeLookup[c.parent.id];
+        }
+      }
     }
 
-    if (isConnected(end)) {
-      const endNode = nodeLookup[end.node.id];
+    for (const e of diagramElements) {
+      if (e.type !== 'edge') continue;
 
-      endNode.edges ??= {};
-      endNode.edges[end.anchor] ??= [];
-      endNode.edges[end.anchor].push(edge);
+      const start = e.start;
+      const end = e.end;
+
+      const edge = new DiagramEdge(
+        e.id,
+        isConnected(start)
+          ? { anchor: start.anchor, node: nodeLookup[start.node.id] }
+          : { position: start.position },
+        isConnected(end)
+          ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
+          : { position: end.position },
+        e.props,
+        e.waypoints
+      );
+
+      if (isConnected(start)) {
+        const startNode = nodeLookup[start.node.id];
+
+        startNode.edges ??= {};
+        startNode.edges[start.anchor] ??= [];
+        startNode.edges[start.anchor].push(edge);
+      }
+
+      if (isConnected(end)) {
+        const endNode = nodeLookup[end.node.id];
+
+        endNode.edges ??= {};
+        endNode.edges[end.anchor] ??= [];
+        endNode.edges[end.anchor].push(edge);
+      }
+
+      edgeLookup[e.id] = edge;
     }
 
-    edgeLookup[e.id] = edge;
-  }
-
-  const elements: (DiagramEdge | DiagramNode)[] = [];
-  for (const n of diagramElements) {
-    if (n.type === 'node') {
-      elements.push(nodeLookup[n.id]);
-    } else if (n.type === 'edge') {
-      elements.push(edgeLookup[n.id]);
-    } else {
-      VERIFY_NOT_REACHED();
+    const elements: (DiagramEdge | DiagramNode)[] = [];
+    for (const n of diagramElements) {
+      if (n.type === 'node') {
+        elements.push(nodeLookup[n.id]);
+      } else if (n.type === 'edge') {
+        elements.push(edgeLookup[n.id]);
+      } else {
+        VERIFY_NOT_REACHED();
+      }
     }
+
+    dest.push(factory($d, elements));
   }
 
-  return elements;
+  return new DiagramDocument<T>(dest);
 };

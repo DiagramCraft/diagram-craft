@@ -1,5 +1,5 @@
 import './App.css';
-import { deserializeDiagramDocument } from './model-viewer/serialization.ts';
+import { deserializeDiagramDocument, SerializedDiagram } from './model-viewer/serialization.ts';
 import { ContextMenuEvent, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
 import React, { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
@@ -10,7 +10,6 @@ import { DocumentSelector } from './react-app/DocumentSelector.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import {
   TbCategoryPlus,
-  TbChevronUp,
   TbClick,
   TbDatabaseEdit,
   TbFiles,
@@ -22,7 +21,6 @@ import {
   TbMoon,
   TbPalette,
   TbPencil,
-  TbPlus,
   TbPolygon,
   TbSelectAll,
   TbStack2,
@@ -51,32 +49,22 @@ import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
-import { DiagramDocument } from './model-viewer/diagramDocument.ts';
+import { DiagramEdge } from './model-viewer/diagramEdge.ts';
+import { DiagramNode } from './model-viewer/diagramNode.ts';
+import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
+
+const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
+  return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
+};
 
 const diagrams = [
   {
     name: 'Snap test',
-    document: new DiagramDocument<EditableDiagram>([
-      new EditableDiagram(
-        'snapTest',
-        'Snap Test',
-        deserializeDiagramDocument(snapTestDiagram),
-        defaultNodeRegistry(),
-        defaultEdgeRegistry()
-      )
-    ])
+    document: deserializeDiagramDocument(snapTestDiagram, factory)
   },
   {
     name: 'Simple',
-    document: new DiagramDocument<EditableDiagram>([
-      new EditableDiagram(
-        'simple',
-        'Simple',
-        deserializeDiagramDocument(simpleDiagram),
-        defaultNodeRegistry(),
-        defaultEdgeRegistry()
-      )
-    ])
+    document: deserializeDiagramDocument(simpleDiagram, factory)
   }
 ];
 
@@ -244,30 +232,13 @@ const App = () => {
             </div>
 
             <div id="tabs">
-              <div className={'cmp-tabs'}>
-                {doc.diagrams.map(d => (
-                  <div key={d.id} className={'cmp-tabs__tab cmp-tabs__tab--selected'}>
-                    {d.name}
-                    &nbsp;
-                    <TbChevronUp />
-                  </div>
-                ))}
-                <div className={'cmp-tabs__tab'}>
-                  Page 2 &nbsp;
-                  <TbChevronUp />
-                </div>
-                <div className={'cmp-tabs__tab'}>
-                  Page 3 &nbsp;
-                  <TbChevronUp />
-                </div>
-                <div className={'cmp-tabs__tab'}>
-                  Page 4 &nbsp;
-                  <TbChevronUp />
-                </div>
-                <div className={'cmp-tabs__tab'}>
-                  <TbPlus />
-                </div>
-              </div>
+              <DocumentTabs
+                value={$d.id}
+                onValueChange={v => {
+                  setDiagram(doc.getById(v)!);
+                }}
+                document={doc}
+              />
             </div>
           </div>
         </div>

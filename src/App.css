@@ -112,19 +112,22 @@
 }
 
 /* TODO: Perhaps rename as document tabs */
-.cmp-tabs {
-  font-size: 11px;
+.cmp-document-tabs {
+  padding-left: 2px;
   display: flex;
   flex-direction: rows;
-  .cmp-tabs__tab {
+  .cmp-document-tabs__tab-trigger {
+    font-size: 11px;
     display: flex;
     align-items: center;
     margin-top: -2px;
-    padding: 2px 5px 2px 5px;
+    padding: 4px 5px 2px 5px;
     color: var(--primary-fg);
+    background-color: transparent;
+    border: none;
     border-right: 2px solid var(--slate-1);
 
-    &.cmp-tabs__tab--selected {
+    &[data-state='active'] {
       padding-left: 8px;
       padding-right: 8px;
       background-color: var(--canvas-bg);
