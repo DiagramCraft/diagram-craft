@@ -9,6 +9,12 @@ import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './nodeDefinition.ts';
 
 declare global {
+  interface DiagramProps {
+    background?: {
+      color?: string;
+    };
+  }
+
   interface ElementProps {
     stroke?: {
       enabled?: boolean;
@@ -94,6 +100,8 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   readonly nodeLookup: Record<string, DiagramNode> = {};
   readonly edgeLookup: Record<string, DiagramEdge> = {};
   readonly undoManager = new UndoManager();
+
+  props: DiagramProps = {};
 
   #canvas: Canvas = {
     pos: { x: 0, y: 0 },
@@ -213,6 +221,10 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     } else {
       this.emit('edgechanged', { after: element });
     }
+  }
+
+  update() {
+    this.emit('canvaschanged', { after: this.canvas });
   }
 
   addHighlight(element: DiagramNode | DiagramEdge, highlight: string) {

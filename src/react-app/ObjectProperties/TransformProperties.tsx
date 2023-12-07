@@ -151,22 +151,18 @@ export const TransformProperties = (props: Props) => {
         <div
           style={{
             display: 'grid',
-            gridTemplateAreas: '"xLbl x wLbl w" "yLbl y hLbl h" "rLbl r gap aspect-ratio"',
+            gridTemplateAreas: '"x w" "y h" "r aspect-ratio"',
             gridTemplateRows: 'repeat(3, 1fr)',
-            gridTemplateColumns: 'min-content 1fr min-content 1fr',
+            gridTemplateColumns: '1fr 1fr',
             alignItems: 'center',
             rowGap: '0.5rem',
             columnGap: '0.3em'
           }}
         >
-          <div style={{ fontSize: '11px', gridArea: 'xLbl' }}>X:</div>
-          <div style={{ fontSize: '11px', gridArea: 'yLbl' }}>Y:</div>
-          <div style={{ fontSize: '11px', gridArea: 'wLbl' }}>W:</div>
-          <div style={{ fontSize: '11px', gridArea: 'hLbl' }}>H:</div>
-          <div style={{ fontSize: '11px', gridArea: 'rLbl' }}>R:</div>
           <div style={{ gridArea: 'x' }}>
             <NumberInput
               style={{ width: '100%' }}
+              label={'x'}
               value={round(transformedBounds.pos.x)}
               validUnits={['px']}
               defaultUnit={'px'}
@@ -181,6 +177,7 @@ export const TransformProperties = (props: Props) => {
           <div style={{ gridArea: 'y' }}>
             <NumberInput
               style={{ width: '100%' }}
+              label={'y'}
               value={round(transformedBounds.pos.y)}
               validUnits={['px']}
               defaultUnit={'px'}
@@ -196,6 +193,7 @@ export const TransformProperties = (props: Props) => {
             <NumberInput
               style={{ width: '100%' }}
               value={round(transformedBounds.size.w ?? 1)}
+              label={'w'}
               validUnits={['px']}
               defaultUnit={'px'}
               min={0}
@@ -213,6 +211,7 @@ export const TransformProperties = (props: Props) => {
             <NumberInput
               style={{ width: '100%' }}
               value={round(transformedBounds.size.h ?? 1)}
+              label={'h'}
               validUnits={['px']}
               defaultUnit={'px'}
               min={0}
@@ -230,6 +229,7 @@ export const TransformProperties = (props: Props) => {
             <NumberInput
               style={{ width: '100%' }}
               value={round(Angle.toDeg(transformedBounds.rotation ?? 0))}
+              label={'r'}
               min={-360}
               max={360}
               validUnits={['°']}

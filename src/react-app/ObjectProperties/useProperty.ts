@@ -66,6 +66,40 @@ const updateProperty = <T extends DiagramNode | DiagramEdge>(
   diagram.updateElement(n);
 };
 
+export const useDiagramProperty = <T>(
+  s: PropertyStringPath<DiagramProps>,
+  diagram: EditableDiagram,
+  defaultValue: T | undefined = undefined
+): [T | undefined, (value: T | undefined) => void] => {
+  const [value, setValue] = useState<T | undefined>(defaultValue);
+  const handler = () => {
+    const value = evaluatePropString(diagram.props, s) as unknown as T;
+
+    if (value === undefined || value === null) return setValue(defaultValue);
+    else return setValue(value);
+  };
+  useEventListener('change', handler, diagram);
+  useEffect(handler, []);
+
+  return [
+    value,
+    v => {
+      let current = diagram.props ?? {};
+      const parts = s.split('.');
+      for (let i = 0; i < parts.length - 1; i++) {
+        // @ts-ignore
+        current[parts[i]] ??= {};
+        // @ts-ignore
+        current = current[parts[i]];
+      }
+      // @ts-ignore
+      current[parts[parts.length - 1]] = v;
+      diagram.update();
+      setValue(v);
+    }
+  ];
+};
+
 export const useElementProperty = <T>(
   s: PropertyStringPath<ElementProps>,
   diagram: EditableDiagram,

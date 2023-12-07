@@ -102,6 +102,7 @@ export const NumberInput = (props: Props) => {
 
   return (
     <div className={$c('cmp-number-input', { error: error })} style={props.style ?? {}}>
+      {props.label && <div className={'cmp-number-input__label'}>{props.label}</div>}
       <input
         {...propsUtils.except(props, 'validUnits', 'defaultUnit', 'value', 'onChange')}
         type={'text'}
@@ -153,6 +154,7 @@ type Props = {
   validUnits?: string[];
   defaultUnit?: string;
   value: string | number;
+  label?: string;
   onChange: (value: number | undefined, unit?: string) => void;
 } & Omit<
   React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,

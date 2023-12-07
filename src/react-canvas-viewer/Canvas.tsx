@@ -1,4 +1,4 @@
-import { forwardRef, SVGProps, useImperativeHandle, useRef } from 'react';
+import { CSSProperties, forwardRef, SVGProps, useImperativeHandle, useRef } from 'react';
 import { propsUtils } from './utils/propsUtils.ts';
 import { Edge } from './Edge.tsx';
 import { Node } from './Node.tsx';
@@ -15,6 +15,12 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useCanvasZoomAndPan(diagram, svgRef);
 
+  const style: CSSProperties = {};
+
+  if (diagram.props.background?.color) {
+    style.backgroundColor = diagram.props.background.color;
+  }
+
   // TODO: Maybe we should support updating based on diagram changes?
   // TODO: If we do, we can share quite a bit of code with the EditabledCanvas
   return (
@@ -23,6 +29,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       {...propsUtils.except(props, 'diagram')}
       preserveAspectRatio="none"
       viewBox={diagram.viewBox.svgViewboxString}
+      style={style}
     >
       {diagram.elements.map(e => {
         const id = e.id;
