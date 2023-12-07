@@ -1,7 +1,7 @@
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { useNodeProperty } from './useNodeProperty.ts';
+import { useNodeProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { AccordionTrigger } from '../AccordionTrigger.tsx';
@@ -10,24 +10,14 @@ import { AccordionContent } from '../AccordionContext.tsx';
 import { useRef } from 'react';
 
 export const ShadowProperties = (props: Props) => {
-  const [color, setColor] = useNodeProperty<string | undefined>(
-    'shadow.color',
-    props.diagram,
-    'black'
-  );
-  const [opacity, setOpacity] = useNodeProperty<number | undefined>(
-    'shadow.opacity',
-    props.diagram,
-    0.5
-  );
-  const [x, setX] = useNodeProperty<number | undefined>('shadow.x', props.diagram, 5);
-  const [y, setY] = useNodeProperty<number | undefined>('shadow.y', props.diagram, 5);
-  const [blur, setBlur] = useNodeProperty<number | undefined>('shadow.blur', props.diagram, 5);
-  const [enabled, setEnabled] = useNodeProperty<boolean | undefined>(
-    'shadow.enabled',
-    props.diagram,
-    false
-  );
+  const $d = props.diagram;
+
+  const [color, setColor] = useNodeProperty<string | undefined>('shadow.color', $d, 'black');
+  const [opacity, setOpacity] = useNodeProperty<number | undefined>('shadow.opacity', $d, 0.5);
+  const [x, setX] = useNodeProperty<number | undefined>('shadow.x', $d, 5);
+  const [y, setY] = useNodeProperty<number | undefined>('shadow.y', $d, 5);
+  const [blur, setBlur] = useNodeProperty<number | undefined>('shadow.blur', $d, 5);
+  const [enabled, setEnabled] = useNodeProperty<boolean | undefined>('shadow.enabled', $d, false);
 
   const ref = useRef<HTMLButtonElement>(null);
 

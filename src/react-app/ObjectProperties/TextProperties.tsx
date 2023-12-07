@@ -1,5 +1,5 @@
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { useNodeProperty } from './useNodeProperty.ts';
+import { useNodeProperty } from './useProperty.ts';
 import * as Select from '@radix-ui/react-select';
 import {
   TbAlignCenter,
@@ -34,24 +34,26 @@ const FONTS = {
 };
 
 export const TextProperties = (props: Props) => {
+  const $d = props.diagram;
+
   // TODO: Should be useElementProperty
-  const [font, setFont] = useNodeProperty('text.font', props.diagram, 'Arial');
-  const [fontSize, setFontSize] = useNodeProperty('text.fontSize', props.diagram, '10');
-  const [isBold, setIsBold] = useNodeProperty('text.bold', props.diagram, false);
-  const [isItalic, setIsItalic] = useNodeProperty('text.italic', props.diagram, false);
+  const [font, setFont] = useNodeProperty('text.font', $d, 'Arial');
+  const [fontSize, setFontSize] = useNodeProperty('text.fontSize', $d, '10');
+  const [isBold, setIsBold] = useNodeProperty('text.bold', $d, false);
+  const [isItalic, setIsItalic] = useNodeProperty('text.italic', $d, false);
   const [textDecoration, setTextDecoration] = useNodeProperty<
     NonNullable<NodeProps['text']>['textDecoration']
-  >('text.textDecoration', props.diagram, undefined);
+  >('text.textDecoration', $d, undefined);
   const [textTransform, setTextTransform] = useNodeProperty<
     NonNullable<NodeProps['text']>['textTransform']
-  >('text.textTransform', props.diagram, undefined);
-  const [color, setColor] = useNodeProperty<string>('text.color', props.diagram, undefined);
-  const [align, setAlign] = useNodeProperty<string>('text.align', props.diagram, 'center');
-  const [valign, setVAlign] = useNodeProperty<string>('text.valign', props.diagram, 'middle');
-  const [top, setTop] = useNodeProperty<string>('text.top', props.diagram, '0');
-  const [left, setLeft] = useNodeProperty<string>('text.left', props.diagram, '0');
-  const [bottom, setBottom] = useNodeProperty<string>('text.bottom', props.diagram, '0');
-  const [right, setRight] = useNodeProperty<string>('text.right', props.diagram, '0');
+  >('text.textTransform', $d, undefined);
+  const [color, setColor] = useNodeProperty<string>('text.color', $d, undefined);
+  const [align, setAlign] = useNodeProperty<string>('text.align', $d, 'center');
+  const [valign, setVAlign] = useNodeProperty<string>('text.valign', $d, 'middle');
+  const [top, setTop] = useNodeProperty<string>('text.top', $d, '0');
+  const [left, setLeft] = useNodeProperty<string>('text.left', $d, '0');
+  const [bottom, setBottom] = useNodeProperty<string>('text.bottom', $d, '0');
+  const [right, setRight] = useNodeProperty<string>('text.right', $d, '0');
 
   return (
     <div className={'cmp-labeled-table'}>

@@ -2,7 +2,7 @@ import { ColorPicker } from '../ColorPicker.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
-import { useNodeProperty } from './useNodeProperty.ts';
+import { useNodeProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import * as Popover from '@radix-ui/react-popover';
 import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
@@ -14,25 +14,15 @@ import { AccordionContent } from '../AccordionContext.tsx';
 export const StrokeProperties = (props: Props) => {
   const [open, setOpen] = React.useState(false);
 
-  const [strokeColor, setStrokeColor] = useNodeProperty(
-    'stroke.color',
-    props.diagram,
-    'transparent'
-  );
-  const [pattern, setPattern] = useNodeProperty('stroke.pattern', props.diagram, 'SOLID');
+  const $d = props.diagram;
 
-  const [strokSize, setStrokeSize] = useNodeProperty('stroke.patternSize', props.diagram, '100');
-  const [strokeSpacing, setStrokeSpacing] = useNodeProperty(
-    'stroke.patternSpacing',
-    props.diagram,
-    '100'
-  );
-  const [strokeWidth, setStrokeWidth] = useNodeProperty('stroke.width', props.diagram, '1');
-  const [enabled, setEnabled] = useNodeProperty<boolean | undefined>(
-    'stroke.enabled',
-    props.diagram,
-    false
-  );
+  const [strokeColor, setStrokeColor] = useNodeProperty('stroke.color', $d, 'transparent');
+  const [pattern, setPattern] = useNodeProperty('stroke.pattern', $d, 'SOLID');
+
+  const [strokSize, setStrokeSize] = useNodeProperty('stroke.patternSize', $d, '100');
+  const [strokeSpacing, setStrokeSpacing] = useNodeProperty('stroke.patternSpacing', $d, '100');
+  const [strokeWidth, setStrokeWidth] = useNodeProperty('stroke.width', $d, '1');
+  const [enabled, setEnabled] = useNodeProperty<boolean>('stroke.enabled', $d, true);
 
   const ref = useRef<HTMLButtonElement>(null);
 

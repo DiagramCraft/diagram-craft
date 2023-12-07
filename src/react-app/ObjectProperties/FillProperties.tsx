@@ -1,7 +1,7 @@
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { useNodeProperty } from './useNodeProperty.ts';
+import { useNodeProperty } from './useProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';

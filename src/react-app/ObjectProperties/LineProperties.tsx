@@ -5,32 +5,26 @@ import { ArrowSelector } from './ArrowSelector.tsx';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
-import { useEdgeProperty } from './useEdgeProperty.ts';
+import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
 
 export const LineProperties = (props: Props) => {
-  const [strokeColor, setStrokeColor] = useEdgeProperty(
-    'stroke.color',
-    props.diagram,
-    'transparent'
-  );
-  const [fillColor, setFillColor] = useEdgeProperty('fill.color', props.diagram, undefined);
-  const [pattern, setPattern] = useEdgeProperty('stroke.pattern', props.diagram, 'SOLID');
+  const $d = props.diagram;
 
-  const [strokSize, setStrokeSize] = useEdgeProperty('stroke.patternSize', props.diagram, '100');
-  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty(
-    'stroke.patternSpacing',
-    props.diagram,
-    '100'
-  );
-  const [strokeWidth, setStrokeWidth] = useEdgeProperty('stroke.width', props.diagram, '1');
+  const [strokeColor, setStrokeColor] = useEdgeProperty('stroke.color', $d, 'transparent');
+  const [fillColor, setFillColor] = useEdgeProperty<string>('fill.color', $d, undefined);
+  const [pattern, setPattern] = useEdgeProperty('stroke.pattern', $d, 'SOLID');
 
-  const [type, setType] = useEdgeProperty('type', props.diagram, 'straight');
+  const [strokSize, setStrokeSize] = useEdgeProperty('stroke.patternSize', $d, '100');
+  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty('stroke.patternSpacing', $d, '100');
+  const [strokeWidth, setStrokeWidth] = useEdgeProperty('stroke.width', $d, '1');
 
-  const [startType, setStartType] = useEdgeProperty('arrow.start.type', props.diagram, undefined);
-  const [startSize, setStartSize] = useEdgeProperty('arrow.start.size', props.diagram, '100');
-  const [endType, setEndType] = useEdgeProperty('arrow.end.type', props.diagram, undefined);
-  const [endSize, setEndSize] = useEdgeProperty('arrow.end.size', props.diagram, '100');
+  const [type, setType] = useEdgeProperty('type', $d, 'straight');
+
+  const [startType, setStartType] = useEdgeProperty<string>('arrow.start.type', $d, undefined);
+  const [startSize, setStartSize] = useEdgeProperty('arrow.start.size', $d, '100');
+  const [endType, setEndType] = useEdgeProperty<string>('arrow.end.type', $d, undefined);
+  const [endSize, setEndSize] = useEdgeProperty('arrow.end.size', $d, '100');
 
   return (
     <div>
