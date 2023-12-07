@@ -5,7 +5,6 @@ import React, { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
 import { EditableDiagram } from './model-editor/editable-diagram.ts';
-import { InfoToolWindow } from './react-app/InfoToolWindow.tsx';
 import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
 import { DocumentSelector } from './react-app/DocumentSelector.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
@@ -49,6 +48,7 @@ import { useEventListener } from './react-app/hooks/useEventListener.ts';
 import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
+import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
 
 const diagrams = [
   {
@@ -183,7 +183,7 @@ const App = () => {
 
             <SideBar side={'right'} defaultSelected={1}>
               <SideBarPage icon={TbInfoCircle}>
-                <InfoToolWindow diagram={$d} />
+                <ObjectInfo diagram={$d} />
               </SideBarPage>
               <SideBarPage icon={TbPalette}>
                 <ObjectProperties diagram={$d} />

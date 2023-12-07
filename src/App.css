@@ -840,23 +840,60 @@ input[type='number'] {
   }
 }
 
-.cmp-object-info {
-  & dl {
+.cmp-tree {
+  display: grid;
+  grid-template-columns: 1fr 1fr min-content;
+  grid-template-rows: 1fr;
+
+  font-size: 11px;
+
+  .cmp-tree__node {
+    grid-column: 1/4;
     display: grid;
-    grid-template: auto / 1fr 2fr;
-    margin: 0;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
+    padding: 2px;
+    padding-left: 0.5rem;
+
+    border-bottom: 1px dashed var(--slate-5);
+  }
+  .cmp-tree__node:last-child {
+    border-bottom: none;
   }
 
-  & dt {
-    font-weight: bold;
-    text-align: right;
-    padding-right: .5em;
+  .cmp-tree__node__action {
+    justify-self: end;
   }
 
-  & dt, & dd {
-    margin: 0;
-    padding: .3em .5em;
-    border-top: 1px solid rgba(0,0,0,.1);
+  .cmp-tree__node[data-depth="1"] > .cmp-tree__node__label {
+    margin-left: 0.5rem;
+  }
+  .cmp-tree__node[data-depth="2"] > .cmp-tree__node__label {
+    margin-left: 1rem;
+  }
+  .cmp-tree__node[data-depth="3"] > .cmp-tree__node__label {
+    margin-left: 1.5rem;
+  }
+  .cmp-tree__node[data-depth="4"] > .cmp-tree__node__label {
+    margin-left: 2rem;
+  }
+
+  .cmp-tree__node__label {
+    display: flex;
+    alignItems: center;
+  }
+
+  .cmp-tree__node__label__toggle {
+    aspect-ratio: 1;
+    width: 10px;
+    margin-top: 2px;
+    margin-right: 0.25rem;
+
+    > button {
+      border: 0;
+      padding: 0;
+      background: none;
+    }
   }
 }
 
