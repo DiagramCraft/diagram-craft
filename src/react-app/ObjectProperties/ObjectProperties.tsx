@@ -1,5 +1,5 @@
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from '../AccordionTrigger.tsx';
@@ -20,24 +20,24 @@ import { CanvasSnapProperties } from './CanvasSnapProperties.tsx';
 export const ObjectProperties = (props: Props) => {
   const [type, setType] = useState('none');
 
-  useEventListener(
-    'change',
-    () => {
-      if (
-        props.diagram.selectionState.nodes.length > 0 &&
-        props.diagram.selectionState.edges.length > 0
-      ) {
-        setType('mixed');
-      } else if (props.diagram.selectionState.nodes.length > 0) {
-        setType('node');
-      } else if (props.diagram.selectionState.edges.length > 0) {
-        setType('edge');
-      } else {
-        setType('none');
-      }
-    },
-    props.diagram.selectionState
-  );
+  const callback = () => {
+    if (
+      props.diagram.selectionState.nodes.length > 0 &&
+      props.diagram.selectionState.edges.length > 0
+    ) {
+      setType('mixed');
+    } else if (props.diagram.selectionState.nodes.length > 0) {
+      setType('node');
+    } else if (props.diagram.selectionState.edges.length > 0) {
+      setType('edge');
+    } else {
+      setType('none');
+    }
+  };
+  useEventListener('change', callback, props.diagram.selectionState);
+  useEffect(() => {
+    callback();
+  }, []);
 
   return (
     <>
