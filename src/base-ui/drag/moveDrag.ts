@@ -10,6 +10,7 @@ import { Angle } from '../../geometry/angle.ts';
 import { createResizeCanvasActionToFit } from '../../model-editor/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction } from '../../model-viewer/actions.ts';
 import { Axis } from '../../geometry/axis.ts';
+import { newid } from '../../utils/id.ts';
 
 export class MoveDrag implements Drag {
   snapAngle?: Axis;
@@ -52,7 +53,7 @@ export class MoveDrag implements Drag {
 
       const newElements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e].clone());
       newElements.forEach(e => {
-        e.id = this.diagram.newid();
+        e.id = newid();
         this.diagram.addNode(e);
       });
       selection.elements = newElements;

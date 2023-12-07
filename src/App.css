@@ -116,20 +116,32 @@
   padding-left: 2px;
   display: flex;
   flex-direction: rows;
+  .cmp-document-tabs__add {
+    background-color: transparent;
+    border-right: 2px solid var(--slate-1);
+    color: var(--primary-fg);
+    &:hover {
+      background-color: var(--slate-3);
+      color: var(--blue-11);
+    }
+  }
   .cmp-document-tabs__tab-trigger {
     font-size: 11px;
     display: flex;
     align-items: center;
     margin-top: -2px;
-    padding: 4px 5px 2px 5px;
+    padding: 4px 8px 2px 8px;
     color: var(--primary-fg);
     background-color: transparent;
     border: none;
     border-right: 2px solid var(--slate-1);
 
+    &:hover {
+      background-color: var(--slate-3);
+      color: var(--blue-11);
+    }
+
     &[data-state='active'] {
-      padding-left: 8px;
-      padding-right: 8px;
       background-color: var(--canvas-bg);
       color: var(--canvas-fg);
     }

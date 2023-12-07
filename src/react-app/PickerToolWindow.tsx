@@ -7,12 +7,13 @@ import { ObjectPicker } from './components/ObjectPicker.tsx';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { Diagram } from '../model-viewer/diagram.ts';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { newid } from '../utils/id.ts';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {
     $d.addNode(
       new DiagramNode(
-        $d.newid(),
+        newid(),
         e.dataTransfer.getData('application/x-diagram-craft-node-type'),
         {
           pos: $d.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent)),

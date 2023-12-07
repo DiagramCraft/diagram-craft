@@ -161,10 +161,6 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     console.log('CANVAS CHANGED');
   }
 
-  newid() {
-    return Math.random().toString(36).substring(2, 9);
-  }
-
   addNode(node: DiagramNode) {
     this.linkNode(node);
     this.nodeLookup[node.id] = node;

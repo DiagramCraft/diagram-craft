@@ -2,6 +2,13 @@ import * as Tabs from '@radix-ui/react-tabs';
 import { DiagramDocument } from '../../model-viewer/diagramDocument.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
+import { TbPlus } from 'react-icons/tb';
+import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import {
+  defaultEdgeRegistry,
+  defaultNodeRegistry
+} from '../../react-canvas-viewer/defaultRegistry.ts';
+import { newid } from '../../utils/id.ts';
 
 export const DocumentTabs = (props: Props) => {
   const redraw = useRedraw();
@@ -15,6 +22,24 @@ export const DocumentTabs = (props: Props) => {
             {d.name}
           </Tabs.Trigger>
         ))}
+        <button
+          className={'cmp-document-tabs__add'}
+          onClick={() => {
+            const id = newid();
+            props.document.addDiagram(
+              new EditableDiagram(
+                id,
+                'Sheet ' + (props.document.diagrams.length + 1).toString(),
+                [],
+                defaultNodeRegistry(),
+                defaultEdgeRegistry()
+              )
+            );
+            props.onValueChange(id);
+          }}
+        >
+          <TbPlus />
+        </button>
       </Tabs.List>
     </Tabs.Root>
   );
