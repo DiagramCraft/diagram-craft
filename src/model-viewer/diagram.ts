@@ -13,6 +13,7 @@ import { Path } from '../geometry/path.ts';
 declare global {
   interface ElementProps {
     stroke?: {
+      enabled?: boolean;
       color?: string;
       width?: number;
       pattern?: string;

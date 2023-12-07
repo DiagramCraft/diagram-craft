@@ -49,18 +49,10 @@ export const ObjectProperties = (props: Props) => {
                 <FillProperties diagram={props.diagram} />
               </AccordionContent>
             </Accordion.Item>
-            <Accordion.Item className="cmp-accordion__item" value="stroke">
-              <AccordionTrigger>Stroke</AccordionTrigger>
-              <AccordionContent>
-                <StrokeProperties diagram={props.diagram} />
-              </AccordionContent>
-            </Accordion.Item>
-            <Accordion.Item className="cmp-accordion__item" value="shadow">
-              <AccordionTrigger>Shadow</AccordionTrigger>
-              <AccordionContent>
-                <ShadowProperties diagram={props.diagram} />
-              </AccordionContent>
-            </Accordion.Item>
+            <StrokeProperties diagram={props.diagram} />
+
+            <ShadowProperties diagram={props.diagram} />
+
             <Accordion.Item className="cmp-accordion__item" value="text">
               <AccordionTrigger>Text</AccordionTrigger>
               <AccordionContent>

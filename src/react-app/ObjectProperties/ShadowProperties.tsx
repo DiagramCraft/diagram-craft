@@ -2,10 +2,12 @@ import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useNodeProperty } from './useNodeProperty.ts';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { TbAspectRatio } from 'react-icons/tb';
 import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
+import { AccordionTrigger } from '../AccordionTrigger.tsx';
+import * as Accordion from '@radix-ui/react-accordion';
+import { AccordionContent } from '../AccordionContext.tsx';
+import { useRef } from 'react';
 
 export const ShadowProperties = (props: Props) => {
   const [color, setColor] = useNodeProperty<string | undefined>(
@@ -27,80 +29,83 @@ export const ShadowProperties = (props: Props) => {
     false
   );
 
-  console.log(blur);
+  const ref = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Enabled:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-          <ReactToolbar.ToggleGroup
-            type={'single'}
-            value={enabled ? 'enabled' : 'disabled'}
-            onValueChange={value => {
-              setEnabled(value === 'enabled');
+    <Accordion.Item className="cmp-accordion__item" value="shadow">
+      <AccordionTrigger ref={ref}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <input
+            className="cmp-accordion__enabled"
+            type={'checkbox'}
+            checked={enabled}
+            onChange={() => {
+              setEnabled(!enabled);
             }}
-          >
-            <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'enabled'}>
-              <TbAspectRatio />
-            </ReactToolbar.ToggleItem>
-          </ReactToolbar.ToggleGroup>
-        </ReactToolbar.Root>
-      </div>
-
-      <div className={'cmp-labeled-table__label'}>Color:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <ColorPicker
-            primaryColors={primaryColors}
-            additionalHues={additionalHues}
-            color={color ?? 'black'}
-            onClick={setColor}
+            onClick={e => {
+              if (enabled || ref.current?.dataset['state'] === 'open') {
+                e.stopPropagation();
+              }
+            }}
           />
-          &nbsp;
-          <NumberInput
-            value={round((1 - (opacity ?? 0)) * 100)?.toString() ?? ''}
-            onChange={v => setOpacity((100 - (v ?? 100)) / 100)}
-            style={{ width: '45px' }}
-            min={0}
-            max={100}
-            validUnits={['%']}
-            defaultUnit={'%'}
-          />
+          <span>Shadow</span>
         </div>
-      </div>
-      <div className={'cmp-labeled-table__label'}>Position:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <NumberInput
-            value={x?.toString() ?? ''}
-            onChange={setX}
-            min={1}
-            style={{ width: '45px' }}
-            validUnits={['px']}
-            defaultUnit={'px'}
-          />
-          &nbsp;
-          <NumberInput
-            value={y?.toString() ?? ''}
-            onChange={setY}
-            min={1}
-            style={{ width: '45px' }}
-            validUnits={['px']}
-            defaultUnit={'px'}
-          />
-          &nbsp;
-          <NumberInput
-            value={blur?.toString() ?? ''}
-            onChange={setBlur}
-            min={1}
-            style={{ width: '45px' }}
-            validUnits={['px']}
-            defaultUnit={'px'}
-          />
+      </AccordionTrigger>
+      <AccordionContent>
+        <div className={'cmp-labeled-table'}>
+          <div className={'cmp-labeled-table__label'}>Color:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <ColorPicker
+                primaryColors={primaryColors}
+                additionalHues={additionalHues}
+                color={color ?? 'black'}
+                onClick={setColor}
+              />
+              &nbsp;
+              <NumberInput
+                value={round((1 - (opacity ?? 0)) * 100)?.toString() ?? ''}
+                onChange={v => setOpacity((100 - (v ?? 100)) / 100)}
+                style={{ width: '45px' }}
+                min={0}
+                max={100}
+                validUnits={['%']}
+                defaultUnit={'%'}
+              />
+            </div>
+          </div>
+          <div className={'cmp-labeled-table__label'}>Position:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <NumberInput
+                value={x?.toString() ?? ''}
+                onChange={setX}
+                style={{ width: '45px' }}
+                validUnits={['px']}
+                defaultUnit={'px'}
+              />
+              &nbsp;
+              <NumberInput
+                value={y?.toString() ?? ''}
+                onChange={setY}
+                style={{ width: '45px' }}
+                validUnits={['px']}
+                defaultUnit={'px'}
+              />
+              &nbsp;
+              <NumberInput
+                value={blur?.toString() ?? ''}
+                onChange={setBlur}
+                min={0}
+                style={{ width: '45px' }}
+                validUnits={['px']}
+                defaultUnit={'px'}
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </AccordionContent>
+    </Accordion.Item>
   );
 };
 

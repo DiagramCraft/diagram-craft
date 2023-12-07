@@ -32,6 +32,7 @@ const evaluatePropString = (props: Record<string, any | undefined>, s: string) =
   return current;
 };
 
+// TODO: This incorrectly uses the default value in case the value is 0
 export const useNodeProperty = <T>(
   s: PropertyStringPath<NodeProps>,
   diagram: EditableDiagram,

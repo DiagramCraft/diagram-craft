@@ -93,6 +93,11 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     }, transparent ${round((props.def.props.shadow.opacity ?? 0.5) * 100)}%))`;
   }
 
+  if (props.def.props.stroke?.enabled === false) {
+    style.stroke = 'transparent';
+    style.strokeWidth = 0;
+  }
+
   //style.fill = 'transparent';
 
   if (props.def.nodeType === 'group') {
