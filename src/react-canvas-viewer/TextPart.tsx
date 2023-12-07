@@ -13,8 +13,6 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 export const TextPart = (props: Props) => {
   const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
 
-  console.log(props.text);
-
   return (
     <foreignObject
       id={props.id}

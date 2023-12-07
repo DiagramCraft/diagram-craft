@@ -35,6 +35,14 @@ declare global {
       right?: number;
       bottom?: number;
     };
+    shadow?: {
+      enabled?: boolean;
+      color?: string;
+      opacity?: number;
+      x?: number;
+      y?: number;
+      blur?: number;
+    };
   }
 
   interface EdgeProps extends ElementProps {

@@ -10,6 +10,7 @@ import { FillProperties } from './FillProperties.tsx';
 import { TextProperties } from './TextProperties.tsx';
 import { TransformProperties } from './TransformProperties.tsx';
 import { CustomProperties } from './CustomProperties.tsx';
+import { ShadowProperties } from './ShadowProperties.tsx';
 
 export const ObjectProperties = (props: Props) => {
   const [type, setType] = useState('none');
@@ -48,11 +49,16 @@ export const ObjectProperties = (props: Props) => {
                 <FillProperties diagram={props.diagram} />
               </AccordionContent>
             </Accordion.Item>
-
             <Accordion.Item className="cmp-accordion__item" value="stroke">
               <AccordionTrigger>Stroke</AccordionTrigger>
               <AccordionContent>
                 <StrokeProperties diagram={props.diagram} />
+              </AccordionContent>
+            </Accordion.Item>
+            <Accordion.Item className="cmp-accordion__item" value="shadow">
+              <AccordionTrigger>Shadow</AccordionTrigger>
+              <AccordionContent>
+                <ShadowProperties diagram={props.diagram} />
               </AccordionContent>
             </Accordion.Item>
             <Accordion.Item className="cmp-accordion__item" value="text">

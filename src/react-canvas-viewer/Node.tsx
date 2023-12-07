@@ -16,6 +16,7 @@ import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { getPoint } from './eventHelper.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
+import { round } from '../utils/math.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -82,6 +83,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   if (props.def.props?.stroke?.width) {
     style.strokeWidth = props.def.props?.stroke?.width;
+  }
+
+  if (props.def.props?.shadow?.enabled) {
+    style.filter = `drop-shadow(${props.def.props.shadow.x ?? 5}px ${
+      props.def.props.shadow.y ?? 5
+    }px ${props.def.props.shadow.blur ?? 5}px color-mix(in srgb, ${
+      props.def.props.shadow.color ?? 'black'
+    }, transparent ${round((props.def.props.shadow.opacity ?? 0.5) * 100)}%))`;
   }
 
   //style.fill = 'transparent';
