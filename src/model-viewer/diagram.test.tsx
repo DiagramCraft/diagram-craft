@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { Diagram, DiagramNode, EdgeDefinitionRegistry, NodeDefinitionRegistry } from './diagram.ts';
 import { TransformFactory } from '../geometry/transform.ts';
+import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.ts';
 
 describe('Diagram', () => {
   test('transform rotate', () => {
@@ -26,13 +27,11 @@ describe('Diagram', () => {
       undefined
     );
 
+    const nodeDefinitionRegistry = new NodeDefinitionRegistry();
+    nodeDefinitionRegistry.register(new ReactNodeDefinition('a', 'a', () => null));
+
     const nodes = [node1, node2];
-    const diagram = new Diagram(
-      '1',
-      nodes,
-      new NodeDefinitionRegistry(),
-      new EdgeDefinitionRegistry()
-    );
+    const diagram = new Diagram('1', nodes, nodeDefinitionRegistry, new EdgeDefinitionRegistry());
 
     const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
     const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: Math.PI / 2 };
