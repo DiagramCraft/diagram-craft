@@ -38,7 +38,8 @@ export class RotateDrag implements Drag {
           selection.source.elementBoxes,
           selection.nodes.map(e => e.bounds),
           selection.nodes,
-          this.diagram
+          this.diagram,
+          'Rotate'
         )
       );
       selection.rebaseline();

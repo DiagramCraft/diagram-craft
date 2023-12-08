@@ -9,6 +9,7 @@ describe('UndoManager', () => {
     manager.execute({
       canUndo: true,
       canRedo: true,
+      description: '',
 
       undo: () => {
         x--;
@@ -28,6 +29,7 @@ describe('UndoManager', () => {
     manager.execute({
       canUndo: true,
       canRedo: true,
+      description: '',
 
       undo: () => {
         x--;
@@ -49,6 +51,7 @@ describe('UndoManager', () => {
     manager.execute({
       canUndo: true,
       canRedo: true,
+      description: '',
 
       undo: () => {
         x--;

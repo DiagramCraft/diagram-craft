@@ -27,7 +27,11 @@ export class DistributeAction extends EventEmitter<ActionEvents> implements Acti
   }
 
   execute(): void {
-    const action = new NodeChangeAction(this.diagram.selectionState.nodes, this.diagram);
+    const action = new NodeChangeAction(
+      this.diagram.selectionState.nodes,
+      this.diagram,
+      `Distribute ${this.mode}`
+    );
     const boundsOrientation = this.mode === 'vertical' ? 'y' : 'x';
     const boundsSize = this.mode === 'vertical' ? 'h' : 'w';
 

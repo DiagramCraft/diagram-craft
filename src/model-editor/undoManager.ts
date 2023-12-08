@@ -5,6 +5,9 @@ export type UndoableAction = {
   undo: () => void;
   redo: () => void;
 
+  description: string;
+  timestamp?: Date;
+
   canUndo: boolean;
   canRedo: boolean;
 };
@@ -32,6 +35,8 @@ export class UndoManager extends EventEmitter<UndoEvents> {
 
     this.undoableActions.push(action);
     this.redoableActions = [];
+
+    action.timestamp = new Date();
 
     this.emit('add', { action });
     this.prune();

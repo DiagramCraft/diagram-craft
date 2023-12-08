@@ -38,7 +38,11 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
   }
 
   execute(): void {
-    const action = new NodeChangeAction(this.diagram.selectionState.nodes, this.diagram);
+    const action = new NodeChangeAction(
+      this.diagram.selectionState.nodes,
+      this.diagram,
+      `Align ${this.mode}`
+    );
 
     const first = this.diagram.selectionState.elements[0];
     if (this.mode === 'top') {

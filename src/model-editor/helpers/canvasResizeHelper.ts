@@ -75,6 +75,7 @@ export const createResizeCanvasActionToFit = (
 class ResizeCanvasAction implements UndoableAction {
   canUndo = true;
   canRedo = true;
+  description = 'Resize canvas';
 
   constructor(
     private readonly diagram: Diagram,

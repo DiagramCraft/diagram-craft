@@ -131,7 +131,8 @@ export class ResizeDrag implements Drag {
           selection.source.elementBoxes,
           selection.nodes.map(e => e.bounds),
           selection.nodes,
-          this.diagram
+          this.diagram,
+          'Resize'
         )
       );
       selection.rebaseline();

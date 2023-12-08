@@ -53,6 +53,7 @@ import { DiagramEdge } from './model-viewer/diagramEdge.ts';
 import { DiagramNode } from './model-viewer/diagramNode.ts';
 import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
 import { UserState } from './react-app/UserState.ts';
+import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
   return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -184,7 +185,9 @@ const App = () => {
               </SideBarPage>
               <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
               <SideBarPage icon={TbFiles}>TbFiles</SideBarPage>
-              <SideBarPage icon={TbHistory}>TbHistory</SideBarPage>
+              <SideBarPage icon={TbHistory}>
+                <HistoryToolWindow diagram={$d} />
+              </SideBarPage>
             </SideBar>
 
             <SideBar

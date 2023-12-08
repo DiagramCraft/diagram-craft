@@ -13,11 +13,20 @@ class AbstractTransformAction implements UndoableAction {
   canUndo = true;
   canRedo = true;
 
-  constructor(source: Box[], target: Box[], nodes: DiagramNode[], diagram: Diagram) {
+  description: string;
+
+  constructor(
+    source: Box[],
+    target: Box[],
+    nodes: DiagramNode[],
+    diagram: Diagram,
+    description: string
+  ) {
     this.diagram = diagram;
     this.nodes.push(...nodes);
     this.source.push(...source);
     this.target.push(...target);
+    this.description = description;
   }
 
   undo() {
@@ -48,6 +57,7 @@ export class ResizeAction extends AbstractTransformAction {}
 export class NodeAddAction implements UndoableAction {
   canUndo = true;
   canRedo = true;
+  description = 'Add node';
 
   constructor(
     private readonly nodes: DiagramNode[],
@@ -69,14 +79,17 @@ export class NodeChangeAction implements UndoableAction {
   private snapshots: DiagramNodeSnapshot[] = [];
   canUndo: boolean;
   canRedo: boolean;
+  description: string;
 
   constructor(
     private readonly nodes: DiagramNode[],
-    private readonly diagram: Diagram
+    private readonly diagram: Diagram,
+    description: string
   ) {
     this.snapshots = nodes.map(node => node.snapshot());
     this.canUndo = true;
     this.canRedo = true;
+    this.description = description;
   }
 
   undo() {
