@@ -56,58 +56,52 @@ export const LineProperties = (props: Props) => {
         </div>
 
         <div className={'cmp-labeled-table__label'}>Line start:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ArrowSelector value={startType} onValueChange={setStartType} />
-            &nbsp;
-            <NumberInput
-              validUnits={['%']}
-              defaultUnit={'%'}
-              value={startSize ?? ''}
-              min={1}
-              style={{ width: '50px' }}
-              onChange={ev => {
-                setStartSize(ev?.toString());
-              }}
-            />
-          </div>
+        <div className={'cmp-labeled-table__value util-vcenter'}>
+          <ArrowSelector value={startType} onValueChange={setStartType} />
+          &nbsp;
+          <NumberInput
+            validUnits={['%']}
+            defaultUnit={'%'}
+            value={startSize ?? ''}
+            min={1}
+            style={{ width: '50px' }}
+            onChange={ev => {
+              setStartSize(ev?.toString());
+            }}
+          />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Line end:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ArrowSelector value={endType} onValueChange={setEndType} />
-            &nbsp;
-            <NumberInput
-              validUnits={['%']}
-              defaultUnit={'%'}
-              value={endSize ?? ''}
-              min={1}
-              style={{ width: '50px' }}
-              onChange={ev => {
-                setEndSize(ev?.toString());
-              }}
-            />
-          </div>
+        <div className={'cmp-labeled-table__value util-vcenter'}>
+          <ArrowSelector value={endType} onValueChange={setEndType} />
+          &nbsp;
+          <NumberInput
+            validUnits={['%']}
+            defaultUnit={'%'}
+            value={endSize ?? ''}
+            min={1}
+            style={{ width: '50px' }}
+            onChange={ev => {
+              setEndSize(ev?.toString());
+            }}
+          />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Color:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ColorPicker
-              primaryColors={primaryColors}
-              additionalHues={additionalHues}
-              color={strokeColor ?? 'transparent'}
-              onClick={setStrokeColor}
-            />
-            &nbsp;
-            <ColorPicker
-              primaryColors={primaryColors}
-              additionalHues={additionalHues}
-              color={fillColor ?? 'transparent'}
-              onClick={setFillColor}
-            />
-          </div>
+        <div className={'cmp-labeled-table__value util-vcenter'}>
+          <ColorPicker
+            primaryColors={primaryColors}
+            additionalHues={additionalHues}
+            color={strokeColor ?? 'transparent'}
+            onClick={setStrokeColor}
+          />
+          &nbsp;
+          <ColorPicker
+            primaryColors={primaryColors}
+            additionalHues={additionalHues}
+            color={fillColor ?? 'transparent'}
+            onClick={setFillColor}
+          />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Width:</div>
@@ -125,37 +119,35 @@ export const LineProperties = (props: Props) => {
         </div>
 
         <div className={'cmp-labeled-table__label'}>Dash:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <DashSelector
-              value={pattern}
-              onValueChange={value => {
-                setPattern(value);
-              }}
-            />
-            &nbsp;
-            <NumberInput
-              validUnits={['%']}
-              defaultUnit={'%'}
-              value={strokSize ?? 100}
-              min={1}
-              style={{ width: '45px' }}
-              onChange={ev => {
-                setStrokeSize(ev?.toString());
-              }}
-            />
-            &nbsp;
-            <NumberInput
-              validUnits={['%']}
-              defaultUnit={'%'}
-              value={strokeSpacing ?? 100}
-              min={1}
-              style={{ width: '45px' }}
-              onChange={ev => {
-                setStrokeSpacing(ev?.toString());
-              }}
-            />
-          </div>
+        <div className={'cmp-labeled-table__value util-vcenter'}>
+          <DashSelector
+            value={pattern}
+            onValueChange={value => {
+              setPattern(value);
+            }}
+          />
+          &nbsp;
+          <NumberInput
+            validUnits={['%']}
+            defaultUnit={'%'}
+            value={strokSize ?? 100}
+            min={1}
+            style={{ width: '45px' }}
+            onChange={ev => {
+              setStrokeSize(ev?.toString());
+            }}
+          />
+          &nbsp;
+          <NumberInput
+            validUnits={['%']}
+            defaultUnit={'%'}
+            value={strokeSpacing ?? 100}
+            min={1}
+            style={{ width: '45px' }}
+            onChange={ev => {
+              setStrokeSpacing(ev?.toString());
+            }}
+          />
         </div>
       </div>
     </div>

@@ -158,7 +158,7 @@ export const useEdgeProperty = <T>(
 ): [T | undefined, (value: T | undefined) => void] => {
   const [value, setValue] = useState<T | undefined>(defaultValue);
   const handler = () => {
-    const arr = getValues<EdgeProps, T>(diagram.selectionState.nodes, s, defaultValue);
+    const arr = getValues<EdgeProps, T>(diagram.selectionState.edges, s, defaultValue);
 
     if (arr.length === 0) setValue(defaultValue);
     else if (arr.length === 1) setValue(arr[0]!);
