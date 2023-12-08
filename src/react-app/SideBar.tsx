@@ -43,6 +43,7 @@ export const SideBar = (props: Props) => {
                   return;
                 }
                 setSelected(idx);
+                props.onChange?.(idx);
               }}
             />
           );
@@ -59,4 +60,5 @@ type Props = {
   side: 'left' | 'right';
   children: React.ReactNode[];
   defaultSelected?: number;
+  onChange?: (idx: number) => void;
 };

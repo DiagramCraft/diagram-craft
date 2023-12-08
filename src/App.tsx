@@ -52,6 +52,7 @@ import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
 import { DiagramEdge } from './model-viewer/diagramEdge.ts';
 import { DiagramNode } from './model-viewer/diagramNode.ts';
 import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
+import { UserState } from './react-app/UserState.ts';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
   return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -168,7 +169,13 @@ const App = () => {
               <Toolbar actionMap={actionMap} keyMap={keyMap} diagram={$d} />
             </div>
 
-            <SideBar side={'left'} defaultSelected={0}>
+            <SideBar
+              side={'left'}
+              defaultSelected={UserState.getState()['panel.left'] ?? 0}
+              onChange={idx => {
+                UserState.set('panel.left', idx);
+              }}
+            >
               <SideBarPage icon={TbCategoryPlus}>
                 <PickerToolWindow diagram={$d} />
               </SideBarPage>
@@ -180,7 +187,13 @@ const App = () => {
               <SideBarPage icon={TbHistory}>TbHistory</SideBarPage>
             </SideBar>
 
-            <SideBar side={'right'} defaultSelected={0}>
+            <SideBar
+              side={'right'}
+              defaultSelected={UserState.getState()['panel.right'] ?? 0}
+              onChange={idx => {
+                UserState.set('panel.right', idx);
+              }}
+            >
               <SideBarPage icon={TbPalette}>
                 <ObjectProperties diagram={$d} actionMap={actionMap} keyMap={keyMap} />
               </SideBarPage>
