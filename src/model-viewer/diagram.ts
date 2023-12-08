@@ -137,6 +137,8 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     this.elements.forEach(e => {
       if (e.type === 'node') {
         this.linkNode(e);
+      } else if (e.type === 'edge') {
+        this.linkEdge(e);
       }
     });
 
@@ -159,6 +161,10 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
         this.linkNode(child);
       }
     }
+  }
+
+  private linkEdge(edge: DiagramEdge) {
+    edge.diagram = this;
   }
 
   get canvas() {

@@ -41,6 +41,8 @@ export type ChangeEvents<T> = {
   change: { after: T };
 };
 
-export interface Observable<T> extends Emitter<ChangeEvents<T>> {
+export interface Commitable {
   commit(): void;
 }
+
+export interface Observable<T> extends Emitter<ChangeEvents<T>>, Commitable {}

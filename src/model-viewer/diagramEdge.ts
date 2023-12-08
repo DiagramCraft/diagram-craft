@@ -1,8 +1,9 @@
 import { Box } from '../geometry/box.ts';
 import { Transform } from '../geometry/transform.ts';
-import { DiagramElement } from './diagram.ts';
+import { Diagram, DiagramElement } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode } from './diagramNode.ts';
+import { Commitable } from '../utils/event.ts';
 
 export type Waypoint = {
   point: Point;
@@ -24,7 +25,7 @@ export type Endpoint = ConnectedEndpoint | { position: Point };
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   'node' in endpoint;
 
-export class DiagramEdge implements AbstractEdge {
+export class DiagramEdge implements AbstractEdge, Commitable {
   id: string;
   type: 'edge';
 
@@ -33,6 +34,8 @@ export class DiagramEdge implements AbstractEdge {
 
   props: EdgeProps = {};
   waypoints: Waypoint[] | undefined;
+
+  diagram?: Diagram;
 
   constructor(
     id: string,
@@ -47,6 +50,10 @@ export class DiagramEdge implements AbstractEdge {
     this.#end = end;
     this.props = props;
     this.waypoints = midpoints;
+  }
+
+  commit() {
+    this.diagram?.updateElement(this);
   }
 
   // TODO: This is probably not a sufficient way to calculate the bounding box

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { unique } from '../../utils/array.ts';
 import {
+  Commitable,
   EventEmitter,
   EventKey,
   EventMap,
@@ -13,7 +14,7 @@ type DeepKeyOf<T> = (
     ? ''
     : T extends object
     ? {
-        [K in Exclude<keyof T, symbol>]: `${K}${undefined extends T[K] ? '?' : ''}${DotPrefix<
+        [K in Exclude<keyof T, symbol>]: `${K}${undefined extends T[K] ? '' : ''}${DotPrefix<
           DeepKeyOf<T[K]>
         >}`;
       }[Exclude<keyof T, symbol>]
@@ -86,11 +87,11 @@ export const useProperty = <
 };
 
 export const useArrayProperty = <
-  EV extends EventMap,
-  EN extends EventKey<WithWildcardEvent<EV>>,
-  E extends Observable<any> = never,
-  T extends E = E,
-  K extends DeepKeyOf<T> = DeepKeyOf<T>
+  I,
+  T extends Commitable = Commitable,
+  EV extends EventMap = EventMap,
+  EN extends EventKey<WithWildcardEvent<EV>> = EventKey<WithWildcardEvent<EV>>,
+  K extends DeepKeyOf<I> = DeepKeyOf<I>
 >(
   target: EventEmitter<EV>,
   eventName: EN,
@@ -128,5 +129,44 @@ export const useArrayProperty = <
       });
     },
     multiple
+  ];
+};
+
+export const useFlyweightProperty = <
+  EV extends EventMap,
+  EN extends EventKey<WithWildcardEvent<EV>>,
+  T extends Commitable,
+  K extends DeepKeyOf<T> = DeepKeyOf<T>
+>(
+  target: EventEmitter<EV>,
+  eventName: EN,
+  obj: T,
+  propertyString: K,
+  defaultValue: T[K]
+): [T[K], (value: T[K]) => void] => {
+  const [value, setValue] = useState<T[K]>(defaultValue);
+  const handler = () => {
+    const value = accessor.get(obj, propertyString);
+
+    if (value === undefined || value === null) return setValue(defaultValue);
+    else return setValue(value);
+  };
+  useEffect(handler, [obj, propertyString]);
+
+  useEffect(() => {
+    target.on(eventName, handler);
+    return () => {
+      target.off(eventName, handler);
+    };
+  });
+
+  const accessor = new DynamicAccessor<T>();
+
+  return [
+    value,
+    v => {
+      accessor.set(obj, propertyString, v);
+      obj.commit();
+    }
   ];
 };

@@ -24,6 +24,7 @@ export const LineProperties = (props: Props) => {
   const [startType, setStartType] = useEdgeProperty<string>('arrow.start.type', $d, undefined);
   const [startSize, setStartSize] = useEdgeProperty('arrow.start.size', $d, '100');
   const [endType, setEndType] = useEdgeProperty<string>('arrow.end.type', $d, undefined);
+
   const [endSize, setEndSize] = useEdgeProperty('arrow.end.size', $d, '100');
 
   return (
