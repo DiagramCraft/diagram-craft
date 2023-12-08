@@ -78,14 +78,14 @@ const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: 'h' | 'v') =>
   line1.from[Axis.toXY(oAxis)] - line2.from[Axis.toXY(oAxis)];
 
 export class SnapManager {
-  private threshold = 5;
-
   // TODO: Ideally we should find a better way to exclude the currently selected node
   //       maybe we can pass in the current selection instead of just the box (bounds)
   constructor(
     private readonly diagram: Diagram,
     private readonly excludeNodeIds: string[] = [],
-    private readonly magnetTypes: Readonly<MagnetType[]> = []
+    private readonly magnetTypes: Readonly<MagnetType[]> = [],
+    private readonly threshold: number,
+    private readonly enabled: boolean
   ) {}
 
   private rangeOverlap(a1: Magnet, a2: Magnet) {
@@ -122,6 +122,8 @@ export class SnapManager {
 
   // TODO: We should be able to merge snapResize and snapMove
   snapResize(b: Box, directions: Direction[]): SnapResult {
+    if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
+
     const enabledSnapProviders: MagnetType[] = [...this.magnetTypes];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
@@ -177,6 +179,8 @@ export class SnapManager {
   }
 
   snapMove(b: Box, directions: Direction[] = ['n', 'w', 'e', 's']): SnapResult {
+    if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
+
     const enabledSnapProviders: MagnetType[] = this.magnetTypes.filter(a => a !== 'size');
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 

@@ -41,6 +41,7 @@ declare global {
 
 export type ActionMapFactory = (state: State) => Partial<ActionMap>;
 
+// TODO: Maybe we can move this entry by entry into each action file?
 export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   UNDO: new UndoAction(state.diagram),
   REDO: new RedoAction(state.diagram),

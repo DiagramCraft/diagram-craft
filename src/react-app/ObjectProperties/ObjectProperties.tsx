@@ -44,7 +44,17 @@ export const ObjectProperties = (props: Props) => {
       <Accordion.Root
         className="cmp-accordion"
         type="multiple"
-        defaultValue={['fill', 'stroke', 'line', 'text', 'transform', 'snap', 'grid', 'canvas']}
+        defaultValue={[
+          'fill',
+          'stroke',
+          'line',
+          'text',
+          'transform',
+          'snap',
+          'grid',
+          'canvas',
+          'snap'
+        ]}
       >
         {(type === 'node' || type === 'mixed') && (
           <>

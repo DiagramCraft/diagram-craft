@@ -16,11 +16,15 @@ import { NumberInput } from '../NumberInput.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from '../AccordionTrigger.tsx';
 import { AccordionContent } from '../AccordionContext.tsx';
+import { useRef } from 'react';
 
 export const CanvasSnapProperties = (props: Props) => {
   const redraw = useRedraw();
 
   useEventListener('canvaschanged', redraw, props.diagram);
+  useEventListener('change', redraw, props.diagram.snapManagerConfig);
+
+  const ref = useRef<HTMLButtonElement>(null);
 
   return (
     <Accordion.Item className="cmp-accordion__item" value="snap">
@@ -29,10 +33,15 @@ export const CanvasSnapProperties = (props: Props) => {
           <input
             className="cmp-accordion__enabled"
             type={'checkbox'}
-            checked={true}
-            onChange={() => {}}
+            checked={props.diagram.snapManagerConfig.enabled}
+            onChange={() => {
+              props.diagram.snapManagerConfig.enabled = !props.diagram.snapManagerConfig.enabled;
+            }}
             onClick={e => {
-              console.log(e);
+              const enabled = props.diagram.snapManagerConfig.enabled;
+              if (enabled || ref.current?.dataset['state'] === 'open') {
+                e.stopPropagation();
+              }
             }}
           />
           <span>Snap</span>
@@ -71,8 +80,10 @@ export const CanvasSnapProperties = (props: Props) => {
             <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.25rem' }}>
               <NumberInput
                 style={{ width: '45px' }}
-                value={5}
-                onChange={() => {}}
+                value={props.diagram.snapManagerConfig.threshold}
+                onChange={v => {
+                  props.diagram.snapManagerConfig.threshold = v ?? 0;
+                }}
                 validUnits={['px']}
                 defaultUnit={'px'}
               />

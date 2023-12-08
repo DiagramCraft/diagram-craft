@@ -13,10 +13,14 @@ type SnapManagerConfigEvents = {
 
 class SnapManagerConfig extends EventEmitter<SnapManagerConfigEvents> {
   #magnetTypes: MagnetType[] = [];
+  #threshold: number = 5;
+  #enabled: boolean = true;
 
   constructor(magnetTypes: MagnetType[]) {
     super();
     this.#magnetTypes = magnetTypes;
+    this.#enabled = true;
+    this.#threshold = 5;
   }
 
   set magnetTypes(types: MagnetType[]) {
@@ -26,6 +30,24 @@ class SnapManagerConfig extends EventEmitter<SnapManagerConfigEvents> {
 
   get magnetTypes(): Readonly<MagnetType[]> {
     return this.#magnetTypes;
+  }
+
+  set threshold(threshold: number) {
+    this.#threshold = threshold;
+    this.emit('change', { config: this });
+  }
+
+  get threshold(): number {
+    return this.#threshold;
+  }
+
+  set enabled(enabled: boolean) {
+    this.#enabled = enabled;
+    this.emit('change', { config: this });
+  }
+
+  get enabled(): boolean {
+    return this.#enabled;
   }
 }
 
@@ -50,7 +72,9 @@ export class EditableDiagram extends Diagram {
     return new SnapManager(
       this,
       this.selectionState.elements.map(e => e.id),
-      this.snapManagerConfig.magnetTypes
+      this.snapManagerConfig.magnetTypes,
+      this.snapManagerConfig.threshold,
+      this.snapManagerConfig.enabled
     );
   }
 }
