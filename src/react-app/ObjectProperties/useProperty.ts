@@ -2,78 +2,60 @@ import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { unique } from '../../utils/array.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
-import { DiagramEdge } from '../../model-viewer/diagramEdge.ts';
 
-type PropertyStringPath<T, P = ''> = NonNullable<
-  {
-    [K in keyof T]: T[K] extends
-      | string
-      | number
-      | boolean
-      | undefined
-      // eslint-disable-next-line
-      | Array<any>
-      ? `${string & P}${string & K}`
-      :
-          | `${string & P}${string & K}`
-          | PropertyStringPath<NonNullable<T[K]>, `${string & P}${string & K}.`>;
-  }[keyof T]
->;
+type DeepKeyOf<T> = (
+  [T] extends [never]
+    ? ''
+    : T extends object
+    ? {
+        [K in Exclude<keyof T, symbol>]: `${K}${undefined extends T[K] ? '' : ''}${DotPrefix<
+          DeepKeyOf<T[K]>
+        >}`;
+      }[Exclude<keyof T, symbol>]
+    : ''
+) extends infer D
+  ? Extract<D, string>
+  : never;
 
-// eslint-disable-next-line
-const evaluatePropString = (props: Record<string, any | undefined>, s: string) => {
-  const parts = s.split('.');
-  let current = props;
-  for (const part of parts) {
-    if (current === undefined) return undefined;
-    current = current[part] as Record<string, unknown>;
+type DotPrefix<T extends string> = T extends '' ? '' : `.${T}`;
+
+class DynamicAccessor<T> {
+  constructor() {}
+
+  get<K extends DeepKeyOf<T> = DeepKeyOf<T>>(obj: T, key: K): T[K] {
+    const parts = (key as string).split('.');
+    let current: any = obj;
+    for (const part of parts) {
+      if (current === undefined) return undefined as T[K];
+      current = current[part] as T[K];
+    }
+    return current;
   }
-  return current;
-};
 
-const getValues = <T, K>(
-  arr: { props: T }[],
-  s: PropertyStringPath<T>,
-  defaultValue: K | undefined
-): K[] =>
-  unique(
-    arr.map(n => {
-      // @ts-ignore
-      const value = evaluatePropString(n.props ?? {}, s);
-      return value === undefined || value === null ? defaultValue : value;
-    }),
-    e => e
-  ).filter(v => v !== undefined && v !== null) as K[];
-
-const updateProperty = <T extends DiagramNode | DiagramEdge>(
-  n: T,
-  diagram: EditableDiagram,
-  s: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  v: any
-) => {
-  let current = n.props ?? {};
-  const parts = s.split('.');
-  for (let i = 0; i < parts.length - 1; i++) {
-    // @ts-ignore
-    current[parts[i]] ??= {};
-    // @ts-ignore
-    current = current[parts[i]];
+  set<K extends DeepKeyOf<T> = DeepKeyOf<T>>(obj: T, key: K, value: T[K]): void {
+    const parts = (key as string).split('.');
+    let current: any = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      current[parts[i]] ??= {};
+      current = current[parts[i]];
+    }
+    current[parts[parts.length - 1]] = value;
   }
-  // @ts-ignore
-  current[parts[parts.length - 1]] = v;
-  diagram.updateElement(n);
-};
+}
 
-export const useDiagramProperty = <T>(
-  s: PropertyStringPath<DiagramProps>,
+export const useDiagramProperty = <
+  R extends T[K],
+  T extends DiagramProps,
+  K extends DeepKeyOf<T> = DeepKeyOf<T>
+>(
+  s: K,
   diagram: EditableDiagram,
-  defaultValue: T | undefined = undefined
-): [T | undefined, (value: T | undefined) => void] => {
-  const [value, setValue] = useState<T | undefined>(defaultValue);
+  defaultValue: R
+): [R, (value: R) => void] => {
+  const accessor = new DynamicAccessor<DiagramProps>();
+  const [value, setValue] = useState<T[K]>(defaultValue);
   const handler = () => {
-    const value = evaluatePropString(diagram.props, s) as unknown as T;
+    const value = accessor.get(diagram.props, s);
 
     if (value === undefined || value === null) return setValue(defaultValue);
     else return setValue(value);
@@ -84,16 +66,7 @@ export const useDiagramProperty = <T>(
   return [
     value,
     v => {
-      let current = diagram.props ?? {};
-      const parts = s.split('.');
-      for (let i = 0; i < parts.length - 1; i++) {
-        // @ts-ignore
-        current[parts[i]] ??= {};
-        // @ts-ignore
-        current = current[parts[i]];
-      }
-      // @ts-ignore
-      current[parts[parts.length - 1]] = v;
+      accessor.set(diagram.props, s, v);
       diagram.update();
       setValue(v);
     }
@@ -101,16 +74,17 @@ export const useDiagramProperty = <T>(
 };
 
 export const useElementProperty = <T>(
-  s: PropertyStringPath<ElementProps>,
+  s: DeepKeyOf<ElementProps>,
   diagram: EditableDiagram,
   defaultValue: T | undefined = undefined
 ): [T | undefined, (value: T | undefined) => void] => {
+  const accessor = new DynamicAccessor<ElementProps>();
   const [value, setValue] = useState<T | undefined>(defaultValue);
   const handler = () => {
-    const arr = getValues<ElementProps, T>(diagram.selectionState.elements, s, defaultValue);
+    const arr = unique(diagram.selectionState.elements.map(obj => accessor.get(obj.props, s)));
 
     if (arr.length === 0) setValue(defaultValue);
-    else if (arr.length === 1) setValue(arr[0]!);
+    else if (arr.length === 1) setValue((arr[0]! as T) ?? defaultValue);
     else setValue(undefined);
   };
   useEventListener('change', handler, diagram.selectionState);
@@ -119,23 +93,27 @@ export const useElementProperty = <T>(
   return [
     value,
     v => {
-      diagram.selectionState.elements.forEach(n => updateProperty(n, diagram, s, v));
+      diagram.selectionState.elements.forEach(n => {
+        accessor.set(n.props, s, v);
+        diagram.updateElement(n);
+      });
       setValue(v);
     }
   ];
 };
 
 export const useNodeProperty = <T>(
-  s: PropertyStringPath<NodeProps>,
+  s: DeepKeyOf<NodeProps>,
   diagram: EditableDiagram,
   defaultValue: T | undefined = undefined
 ): [T | undefined, (value: T | undefined) => void] => {
+  const accessor = new DynamicAccessor<NodeProps>();
   const [value, setValue] = useState<T | undefined>(defaultValue);
   const handler = () => {
-    const arr = getValues<NodeProps, T>(diagram.selectionState.nodes, s, defaultValue);
+    const arr = unique(diagram.selectionState.nodes.map(obj => accessor.get(obj.props, s)));
 
     if (arr.length === 0) setValue(defaultValue);
-    else if (arr.length === 1) setValue(arr[0]!);
+    else if (arr.length === 1) setValue((arr[0]! as T) ?? defaultValue);
     else setValue(undefined);
   };
   useEventListener('change', handler, diagram.selectionState);
@@ -145,23 +123,27 @@ export const useNodeProperty = <T>(
   return [
     value,
     v => {
-      diagram.selectionState.nodes.forEach(n => updateProperty(n, diagram, s, v));
+      diagram.selectionState.nodes.forEach(n => {
+        accessor.set(n.props, s, v);
+        diagram.updateElement(n);
+      });
       setValue(v);
     }
   ];
 };
 
 export const useEdgeProperty = <T>(
-  s: PropertyStringPath<EdgeProps>,
+  s: DeepKeyOf<EdgeProps>,
   diagram: EditableDiagram,
   defaultValue: T | undefined = undefined
 ): [T | undefined, (value: T | undefined) => void] => {
+  const accessor = new DynamicAccessor<EdgeProps>();
   const [value, setValue] = useState<T | undefined>(defaultValue);
   const handler = () => {
-    const arr = getValues<EdgeProps, T>(diagram.selectionState.edges, s, defaultValue);
+    const arr = unique(diagram.selectionState.edges.map(obj => accessor.get(obj.props, s)));
 
     if (arr.length === 0) setValue(defaultValue);
-    else if (arr.length === 1) setValue(arr[0]!);
+    else if (arr.length === 1) setValue((arr[0]! as T) ?? defaultValue);
     else setValue(undefined);
   };
   useEventListener('change', handler, diagram.selectionState);
@@ -170,7 +152,10 @@ export const useEdgeProperty = <T>(
   return [
     value,
     v => {
-      diagram.selectionState.edges.forEach(n => updateProperty(n, diagram, s, v));
+      diagram.selectionState.edges.forEach(n => {
+        accessor.set(n.props, s, v);
+        diagram.updateElement(n);
+      });
       setValue(v);
     }
   ];

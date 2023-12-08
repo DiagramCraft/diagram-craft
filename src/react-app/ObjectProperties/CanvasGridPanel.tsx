@@ -49,7 +49,7 @@ export const CanvasGridPanel = (props: Props) => {
           <NumberInput
             style={{ width: '45px' }}
             value={size ?? 10}
-            onChange={setSize}
+            onChange={n => setSize(n ?? 0)}
             validUnits={['px']}
             defaultUnit={'px'}
           />
@@ -75,7 +75,11 @@ export const CanvasGridPanel = (props: Props) => {
             onClick={setMajorColor}
           />
           &nbsp;
-          <NumberInput style={{ width: '45px' }} value={majorCount ?? 5} onChange={setMajorCount} />
+          <NumberInput
+            style={{ width: '45px' }}
+            value={majorCount ?? 5}
+            onChange={n => setMajorCount(n ?? 0)}
+          />
           &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
             <ReactToolbar.ToggleGroup
