@@ -2,52 +2,34 @@ import { Diagram } from '../model-viewer/diagram.ts';
 import { SelectionState } from './selectionState.ts';
 import { SnapManager } from './snap/snapManager.ts';
 import { MagnetType } from './snap/magnet.ts';
-import { EventEmitter } from '../utils/event.ts';
+import { ChangeEvents, EventEmitter, Observable } from '../utils/event.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
 
-type SnapManagerConfigEvents = {
-  change: { config: SnapManagerConfig };
-};
+export interface SnapManagerConfigProps extends Observable<SnapManagerConfigProps> {
+  threshold: number;
+  enabled: boolean;
+  magnetTypes: MagnetType[];
+}
 
-class SnapManagerConfig extends EventEmitter<SnapManagerConfigEvents> {
-  #magnetTypes: MagnetType[] = [];
-  #threshold: number = 5;
-  #enabled: boolean = true;
+class SnapManagerConfig
+  extends EventEmitter<ChangeEvents<SnapManagerConfigProps>>
+  implements SnapManagerConfigProps
+{
+  magnetTypes: MagnetType[] = [];
+  enabled: boolean = true;
+  threshold: number = 5;
 
   constructor(magnetTypes: MagnetType[]) {
     super();
-    this.#magnetTypes = magnetTypes;
-    this.#enabled = true;
-    this.#threshold = 5;
+
+    this.magnetTypes = magnetTypes;
+    this.threshold = 5;
   }
 
-  set magnetTypes(types: MagnetType[]) {
-    this.#magnetTypes = types;
-    this.emit('change', { config: this });
-  }
-
-  get magnetTypes(): Readonly<MagnetType[]> {
-    return this.#magnetTypes;
-  }
-
-  set threshold(threshold: number) {
-    this.#threshold = threshold;
-    this.emit('change', { config: this });
-  }
-
-  get threshold(): number {
-    return this.#threshold;
-  }
-
-  set enabled(enabled: boolean) {
-    this.#enabled = enabled;
-    this.emit('change', { config: this });
-  }
-
-  get enabled(): boolean {
-    return this.#enabled;
+  commit(): void {
+    this.emit('change', { after: this });
   }
 }
 

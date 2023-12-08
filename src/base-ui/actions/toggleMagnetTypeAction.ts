@@ -40,5 +40,6 @@ export class ToggleMagnetTypeAction extends EventEmitter<ActionEvents> implement
         this.magnetType
       ];
     }
+    this.diagram.snapManagerConfig.commit();
   }
 }

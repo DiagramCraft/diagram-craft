@@ -1,25 +1,19 @@
 import { TbMagnet } from 'react-icons/tb';
 import { ToolbarToggleItemWithPopover } from '../components/ToolbarToggleItemWithPopover.tsx';
 import { KeyMap } from '../../base-ui/keyMap.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { EditableDiagram, SnapManagerConfigProps } from '../../model-editor/editable-diagram.ts';
 import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useProperty } from './useProperty2.ts';
 
 export const CanvasSnapToolbarButton = (props: Props) => {
-  const redraw = useRedraw();
+  const [enabled, setEnabled] = useProperty<SnapManagerConfigProps>(
+    props.diagram.snapManagerConfig,
+    'enabled',
+    true
+  );
 
-  useEventListener('change', redraw, props.diagram.snapManagerConfig);
-
-  const snapEnabled = props.diagram.snapManagerConfig.enabled;
   return (
-    <ToolbarToggleItemWithPopover
-      value={snapEnabled}
-      onChange={v => {
-        props.diagram.snapManagerConfig.enabled = v;
-      }}
-      icon={TbMagnet}
-    >
+    <ToolbarToggleItemWithPopover value={!!enabled} onChange={setEnabled} icon={TbMagnet}>
       <CanvasSnapPanel
         diagram={props.diagram}
         keyMap={props.keyMap}

@@ -1,18 +1,15 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { EditableDiagram, SnapManagerConfigProps } from '../../model-editor/editable-diagram.ts';
 import { KeyMap } from '../../base-ui/keyMap.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { ActionCheckbox } from '../components/ActionCheckbox.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { useProperty } from './useProperty2.ts';
 
 export const CanvasSnapPanel = (props: Props) => {
-  const redraw = useRedraw();
+  const snapMgr = props.diagram.snapManagerConfig;
 
-  useEventListener('canvaschanged', redraw, props.diagram);
-  useEventListener('change', redraw, props.diagram.snapManagerConfig);
-
-  const enabled = props.diagram.snapManagerConfig.enabled;
+  const [enabled, setEnabled] = useProperty<SnapManagerConfigProps>(snapMgr, 'enabled', true);
+  const [threshold, setThreshold] = useProperty<SnapManagerConfigProps>(snapMgr, 'threshold', 5);
 
   return (
     <ToolWindowPanel
@@ -20,10 +17,8 @@ export const CanvasSnapPanel = (props: Props) => {
       title={'Snap'}
       id={'snap'}
       hasCheckbox={true}
-      value={enabled}
-      onChange={() => {
-        props.diagram.snapManagerConfig.enabled = !props.diagram.snapManagerConfig.enabled;
-      }}
+      value={!!enabled}
+      onChange={setEnabled}
     >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label util-a-top'}>Snap:</div>
@@ -59,10 +54,8 @@ export const CanvasSnapPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value'}>
           <NumberInput
             style={{ width: '45px' }}
-            value={props.diagram.snapManagerConfig.threshold}
-            onChange={v => {
-              props.diagram.snapManagerConfig.threshold = v ?? 0;
-            }}
+            value={(threshold ?? 0)?.toString()}
+            onChange={setThreshold}
             validUnits={['px']}
             defaultUnit={'px'}
           />
