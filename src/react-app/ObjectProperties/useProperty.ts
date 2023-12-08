@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { unique } from '../../utils/array.ts';
 
-type DeepKeyOf<T> = (
+export type DeepKeyOf<T> = (
   [T] extends [never]
     ? ''
     : T extends object
@@ -19,11 +19,12 @@ type DeepKeyOf<T> = (
 
 type DotPrefix<T extends string> = T extends '' ? '' : `.${T}`;
 
-class DynamicAccessor<T> {
+export class DynamicAccessor<T> {
   constructor() {}
 
   get<K extends DeepKeyOf<T> = DeepKeyOf<T>>(obj: T, key: K): T[K] {
     const parts = (key as string).split('.');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = obj;
     for (const part of parts) {
       if (current === undefined) return undefined as T[K];
@@ -34,6 +35,7 @@ class DynamicAccessor<T> {
 
   set<K extends DeepKeyOf<T> = DeepKeyOf<T>>(obj: T, key: K, value: T[K]): void {
     const parts = (key as string).split('.');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = obj;
     for (let i = 0; i < parts.length - 1; i++) {
       current[parts[i]] ??= {};
@@ -43,35 +45,49 @@ class DynamicAccessor<T> {
   }
 }
 
-export const useDiagramProperty = <
+type PropertyHook<H> = <T extends H, R extends T[K], K extends DeepKeyOf<T> = DeepKeyOf<T>>(
+  propertyPath: K,
+  diagram: EditableDiagram,
+  defaultValue: R
+) => [R, (value: R) => void];
+
+const makePropertyHook = <
   R extends T[K],
   T extends DiagramProps,
   K extends DeepKeyOf<T> = DeepKeyOf<T>
 >(
-  s: K,
-  diagram: EditableDiagram,
-  defaultValue: R
-): [R, (value: R) => void] => {
-  const accessor = new DynamicAccessor<DiagramProps>();
-  const [value, setValue] = useState<T[K]>(defaultValue);
-  const handler = () => {
-    const value = accessor.get(diagram.props, s);
+  base: (diagram: EditableDiagram) => T,
+  subscribe: (diagram: EditableDiagram, handler: () => void) => void
+) => {
+  return (s: K, diagram: EditableDiagram, defaultValue: R): [R, (value: R) => void] => {
+    const accessor = new DynamicAccessor<T>();
+    const [value, setValue] = useState<R>(defaultValue);
+    const handler = () => {
+      const value = accessor.get(base(diagram), s);
 
-    if (value === undefined || value === null) return setValue(defaultValue);
-    else return setValue(value);
+      if (value === undefined || value === null) return setValue(defaultValue);
+      else return setValue(value as unknown as R);
+    };
+    subscribe(diagram, handler);
+    useEffect(handler, []);
+
+    return [
+      value,
+      v => {
+        accessor.set(base(diagram), s, v);
+        diagram.update();
+        setValue(v);
+      }
+    ];
   };
-  useEventListener('change', handler, diagram);
-  useEffect(handler, []);
-
-  return [
-    value,
-    v => {
-      accessor.set(diagram.props, s, v);
-      diagram.update();
-      setValue(v);
-    }
-  ];
 };
+
+export const useDiagramProperty: PropertyHook<DiagramProps> = makePropertyHook(
+  diagram => diagram.props,
+  (diagram, handler) => {
+    useEventListener('change', handler, diagram);
+  }
+);
 
 export const useElementProperty = <T>(
   s: DeepKeyOf<ElementProps>,

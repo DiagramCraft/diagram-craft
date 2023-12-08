@@ -11,21 +11,18 @@ import { NumberInput } from '../NumberInput.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 
 export const CanvasGridPanel = (props: Props) => {
+  const $d = props.diagram;
+
   const redraw = useRedraw();
+  useEventListener('canvaschanged', redraw, $d);
 
-  useEventListener('canvaschanged', redraw, props.diagram);
-
-  const [size, setSize] = useDiagramProperty('grid.size', props.diagram, 10);
-  const [majorCount, setMajorCount] = useDiagramProperty('grid.majorCount', props.diagram, 5);
-  const [color, setColor] = useDiagramProperty('grid.color', props.diagram, '#f5f5f4');
-  const [majorColor, setMajorColor] = useDiagramProperty(
-    'grid.majorColor',
-    props.diagram,
-    '#e7e5e4'
-  );
-  const [type, setType] = useDiagramProperty('grid.type', props.diagram, 'lines');
-  const [majorType, setMajorType] = useDiagramProperty('grid.majorType', props.diagram, 'lines');
-  const [enabled, setEnabled] = useDiagramProperty('grid.enabled', props.diagram, true);
+  const [size, setSize] = useDiagramProperty('grid.size', $d, 10);
+  const [majorCount, setMajorCount] = useDiagramProperty('grid.majorCount', $d, 5);
+  const [color, setColor] = useDiagramProperty('grid.color', $d, '#f5f5f4');
+  const [majorColor, setMajorColor] = useDiagramProperty('grid.majorColor', $d, '#e7e5e4');
+  const [type, setType] = useDiagramProperty('grid.type', $d, 'lines');
+  const [majorType, setMajorType] = useDiagramProperty('grid.majorType', $d, 'lines');
+  const [enabled, setEnabled] = useDiagramProperty('grid.enabled', $d, true);
 
   return (
     <ToolWindowPanel
