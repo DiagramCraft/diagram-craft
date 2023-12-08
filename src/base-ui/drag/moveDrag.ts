@@ -138,8 +138,8 @@ export class MoveDrag implements Drag {
         this.diagram.undoManager.add(
           new MoveAction(
             selection.source.elementBoxes,
-            selection.nodes.map(e => e.bounds),
-            selection.nodes,
+            selection.elements.map(e => e.bounds),
+            selection.elements,
             this.diagram,
             'Move'
           )

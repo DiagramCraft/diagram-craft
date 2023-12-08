@@ -3,9 +3,10 @@ import { Box } from '../geometry/box.ts';
 import { TransformFactory } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
+import { DiagramEdge } from './diagramEdge.ts';
 
 class AbstractTransformAction implements UndoableAction {
-  private nodes: DiagramNode[] = [];
+  private nodes: (DiagramNode | DiagramEdge)[] = [];
   private source: Box[] = [];
   private target: Box[] = [];
   private diagram: Diagram;
@@ -18,7 +19,7 @@ class AbstractTransformAction implements UndoableAction {
   constructor(
     source: Box[],
     target: Box[],
-    nodes: DiagramNode[],
+    nodes: (DiagramNode | DiagramEdge)[],
     diagram: Diagram,
     description: string
   ) {
