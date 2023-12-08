@@ -11,7 +11,8 @@ import {
   TbLayoutAlignTop,
   TbLayoutDistributeHorizontal,
   TbLayoutDistributeVertical,
-  TbPlus
+  TbPlus,
+  TbX
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { KeyMap } from '../../base-ui/keyMap.ts';
@@ -21,6 +22,9 @@ import { ActionToggleItem } from './ActionToggleItem.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useState } from 'react';
+import * as Popover from '@radix-ui/react-popover';
+import { CanvasGridProperties } from '../ObjectProperties/CanvasGridProperties.tsx';
+import * as Accordion from '@radix-ui/react-accordion';
 
 export const Toolbar = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
@@ -65,7 +69,37 @@ export const Toolbar = (props: Props) => {
             <TbLayoutDistributeVertical />
           </ActionToolbarButton>
 
-          <ReactToolbar.Separator className="cmp-toolbar_cmp-toolbar__separator" />
+          <ReactToolbar.Separator className="cmp-toolbar__separator" />
+
+          <Popover.Root>
+            <Popover.Trigger asChild>
+              <ReactToolbar.Button
+                className="cmp-toolbar__button"
+                onClick={() => {
+                  console.log('click');
+                }}
+              >
+                <TbGrid3X3 />
+              </ReactToolbar.Button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
+                <Accordion.Root className="cmp-accordion" type="single" defaultValue={'grid'}>
+                  <CanvasGridProperties
+                    diagram={props.diagram}
+                    keyMap={props.keyMap}
+                    actionMap={props.actionMap}
+                  />
+                </Accordion.Root>
+                <Popover.Close className="cmp-popover__close" aria-label="Close">
+                  <TbX />
+                </Popover.Close>
+                <Popover.Arrow className="cmp-popover__arrow" />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+
+          <ReactToolbar.Separator className="cmp-toolbar__separator" />
 
           <ActionToggleGroup {...props}>
             <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_GRID'} {...props}>
