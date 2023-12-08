@@ -72,8 +72,7 @@ input[type="checkbox"]:checked::before {
 }
 
 input[type="checkbox"]:focus {
-  --form-border-color: var(--blue-10);
-  outline: 2px solid var(--form-border-color);
+  outline: 2px solid var(--blue-10);
   outline-offset: -1px;
 }
 
@@ -389,6 +388,22 @@ input[type="checkbox"]:disabled {
     margin-left: 2px;
   }
 
+  .cmp-toolbar__button[data-state='on'] {
+    color: var(--blue-11);
+  }
+
+  .cmp-toolbar__button--more {
+    width: 10px;
+    margin-left: -2px;
+    margin-right: 2px;
+    border: none;
+    padding: 0;
+    & > svg {
+      width: 80%;
+      width: 80%;
+    }
+  }
+
   .cmp-toolbar__toggle-item:hover,
   .cmp-toolbar__button:hover {
     background-color: var(--blue-3);
@@ -663,6 +678,8 @@ input[type="checkbox"]:disabled {
   will-change: transform, opacity;
   z-index: 100;
   color: var(--secondary-fg);
+  font-size: 12px;
+
 
   &:focus {
     box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px,
@@ -1015,7 +1032,12 @@ input[type="checkbox"]:disabled {
   }
 }
 
-
+.cmp-panel__children {
+  background-color: var(--primary-bg);
+  padding: 1rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+}
 
 
 /* Adjustments of general components for specific use-cases */
@@ -1034,7 +1056,10 @@ input[type="checkbox"]:disabled {
 }
 
 .cmp-popover--toolbar {
-
+  .cmp-panel__enabled:focus {
+    box-shadow: none;
+    outline: none;
+  }
 }
 
 
@@ -1057,6 +1082,11 @@ input[type="checkbox"]:disabled {
 .util-vstack {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+.util-hstack {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 .util-a-top {

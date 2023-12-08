@@ -139,6 +139,7 @@ export const useNodeProperty = <T>(
     else setValue(undefined);
   };
   useEventListener('change', handler, diagram.selectionState);
+  useEventListener('nodechanged', handler, diagram);
   useEffect(handler, []);
 
   return [

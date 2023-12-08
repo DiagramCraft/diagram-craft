@@ -5,17 +5,17 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from '../AccordionTrigger.tsx';
 import { AccordionContent } from '../AccordionContext.tsx';
 import { LineProperties } from './LineProperties.tsx';
-import { StrokeProperties } from './StrokeProperties.tsx';
-import { FillProperties } from './FillProperties.tsx';
+import { NodeFillPanel } from './NodeFillPanel.tsx';
 import { TextProperties } from './TextProperties.tsx';
 import { TransformProperties } from './TransformProperties.tsx';
 import { CustomProperties } from './CustomProperties.tsx';
-import { ShadowProperties } from './ShadowProperties.tsx';
+import { ShadowPanel } from './ShadowPanel.tsx';
 import { CanvasProperties } from './CanvasProperties.tsx';
 import { CanvasGuidesProperties } from './CanvasGuidesProperties.tsx';
 import { KeyMap } from '../../base-ui/keyMap.ts';
-import { CanvasGridProperties } from './CanvasGridProperties.tsx';
-import { CanvasSnapProperties } from './CanvasSnapProperties.tsx';
+import { CanvasGridPanel } from './CanvasGridPanel.tsx';
+import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
+import { NodeStrokePanel } from './NodeStrokePanel.tsx';
 
 export const ObjectProperties = (props: Props) => {
   const [type, setType] = useState('none');
@@ -35,9 +35,7 @@ export const ObjectProperties = (props: Props) => {
     }
   };
   useEventListener('change', callback, props.diagram.selectionState);
-  useEffect(() => {
-    callback();
-  }, []);
+  useEffect(callback, []);
 
   return (
     <>
@@ -58,15 +56,11 @@ export const ObjectProperties = (props: Props) => {
       >
         {(type === 'node' || type === 'mixed') && (
           <>
-            <Accordion.Item className="cmp-accordion__item" value="fill">
-              <AccordionTrigger>Fill</AccordionTrigger>
-              <AccordionContent>
-                <FillProperties diagram={props.diagram} />
-              </AccordionContent>
-            </Accordion.Item>
-            <StrokeProperties diagram={props.diagram} />
+            <NodeFillPanel diagram={props.diagram} />
 
-            <ShadowProperties diagram={props.diagram} />
+            <ShadowPanel diagram={props.diagram} />
+
+            <NodeStrokePanel diagram={props.diagram} />
 
             <Accordion.Item className="cmp-accordion__item" value="text">
               <AccordionTrigger>Text</AccordionTrigger>
@@ -103,7 +97,7 @@ export const ObjectProperties = (props: Props) => {
               </AccordionContent>
             </Accordion.Item>
 
-            <CanvasGridProperties
+            <CanvasGridPanel
               diagram={props.diagram}
               actionMap={props.actionMap}
               keyMap={props.keyMap}
@@ -115,7 +109,7 @@ export const ObjectProperties = (props: Props) => {
               keyMap={props.keyMap}
             />
 
-            <CanvasSnapProperties
+            <CanvasSnapPanel
               diagram={props.diagram}
               actionMap={props.actionMap}
               keyMap={props.keyMap}

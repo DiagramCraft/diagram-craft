@@ -1,8 +1,4 @@
 import {
-  TbArrowAutofitWidth,
-  TbArrowsMoveHorizontal,
-  TbGrid3X3,
-  TbLayout,
   TbLayoutAlignBottom,
   TbLayoutAlignCenter,
   TbLayoutAlignLeft,
@@ -10,21 +6,19 @@ import {
   TbLayoutAlignRight,
   TbLayoutAlignTop,
   TbLayoutDistributeHorizontal,
-  TbLayoutDistributeVertical,
-  TbPlus,
-  TbX
+  TbLayoutDistributeVertical
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { KeyMap } from '../../base-ui/keyMap.ts';
 import { ActionToolbarButton } from './ActionToolbarButton.tsx';
-import { ActionToggleGroup } from './ActionToggleGroup.tsx';
-import { ActionToggleItem } from './ActionToggleItem.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useState } from 'react';
-import * as Popover from '@radix-ui/react-popover';
-import { CanvasGridProperties } from '../ObjectProperties/CanvasGridProperties.tsx';
-import * as Accordion from '@radix-ui/react-accordion';
+import { CanvasGridToolbarButton } from '../ObjectProperties/CanvasGridToolbarButton.tsx';
+import { CanvasSnapToolbarButton } from '../ObjectProperties/CanvasSnapToolbarButton.tsx';
+import { NodeFillToolbarButton } from '../ObjectProperties/NodeFillToolbarButton.tsx';
+import { ShadowToolbarButton } from '../ObjectProperties/ShadowToolbarButton.tsx';
+import { NodeStrokeToolbarButton } from '../ObjectProperties/NodeStrokeToolbarButton.tsx';
 
 export const Toolbar = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
@@ -44,6 +38,12 @@ export const Toolbar = (props: Props) => {
     <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
       {enabled && (
         <>
+          <NodeFillToolbarButton diagram={props.diagram} />
+          <NodeStrokeToolbarButton diagram={props.diagram} />
+          <ShadowToolbarButton diagram={props.diagram} />
+
+          <ReactToolbar.Separator className="cmp-toolbar__separator" />
+
           <ActionToolbarButton action={'ALIGN_TOP'} {...props}>
             <TbLayoutAlignTop />
           </ActionToolbarButton>
@@ -71,55 +71,32 @@ export const Toolbar = (props: Props) => {
 
           <ReactToolbar.Separator className="cmp-toolbar__separator" />
 
-          <Popover.Root>
-            <Popover.Trigger asChild>
-              <ReactToolbar.Button
-                className="cmp-toolbar__button"
-                onClick={() => {
-                  console.log('click');
-                }}
-              >
-                <TbGrid3X3 />
-              </ReactToolbar.Button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-                <Accordion.Root className="cmp-accordion" type="single" defaultValue={'grid'}>
-                  <CanvasGridProperties
-                    diagram={props.diagram}
-                    keyMap={props.keyMap}
-                    actionMap={props.actionMap}
-                  />
-                </Accordion.Root>
-                <Popover.Close className="cmp-popover__close" aria-label="Close">
-                  <TbX />
-                </Popover.Close>
-                <Popover.Arrow className="cmp-popover__arrow" />
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
+          <CanvasGridToolbarButton
+            actionMap={props.actionMap}
+            keyMap={props.keyMap}
+            diagram={props.diagram}
+          />
 
-          <ReactToolbar.Separator className="cmp-toolbar__separator" />
+          <CanvasSnapToolbarButton
+            actionMap={props.actionMap}
+            keyMap={props.keyMap}
+            diagram={props.diagram}
+          />
+        </>
+      )}
+      {!enabled && (
+        <>
+          <CanvasGridToolbarButton
+            actionMap={props.actionMap}
+            keyMap={props.keyMap}
+            diagram={props.diagram}
+          />
 
-          <ActionToggleGroup {...props}>
-            <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_GRID'} {...props}>
-              <TbGrid3X3 />
-            </ActionToggleItem>
-            <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_NODE'} {...props}>
-              <TbLayout />
-            </ActionToggleItem>
-            <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_CANVAS'} {...props}>
-              <TbPlus />
-            </ActionToggleItem>
-            <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_DISTANCE'} {...props}>
-              <TbArrowsMoveHorizontal />
-            </ActionToggleItem>
-            <ActionToggleItem action={'TOGGLE_MAGNET_TYPE_SIZE'} {...props}>
-              <TbArrowAutofitWidth />
-            </ActionToggleItem>
-          </ActionToggleGroup>
-
-          <ReactToolbar.Separator className="cmp-toolbar__separator" />
+          <CanvasSnapToolbarButton
+            actionMap={props.actionMap}
+            keyMap={props.keyMap}
+            diagram={props.diagram}
+          />
         </>
       )}
     </ReactToolbar.Root>
