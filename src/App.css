@@ -522,16 +522,8 @@
   }
 }
 
-input[type='number'] {
-  border-radius: 4px;
-  background-color: var(--secondary-bg);
-  border: 1px solid var(--blue-6);
-  color: var(--primary-fg);
-  height: 25px;
-  padding: 0 0 0 5px;
-  line-height: 1;
-  box-sizing: border-box;
-  font-size: 90%;
+input[type='checkbox'] {
+  margin: 0;
 }
 
 .cmp-select-trigger {
@@ -994,6 +986,35 @@ input[type='number'] {
   }
 }
 
+
+
+/* Util */
+
+.util-vcenter {
+  display: flex;
+  align-items: center;
+}
+.util-hgap {
+  gap: 0.25rem;
+}
+.util-vgap {
+  gap: 0.25rem;
+}
+.util-font-body {
+  font-size: 11px;
+}
+.util-vstack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.util-a-top {
+  align-self: flex-start;
+}
+.util-a-top-center {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
 
 
 /* Animations */
