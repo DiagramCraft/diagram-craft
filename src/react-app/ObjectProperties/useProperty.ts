@@ -1,4 +1,4 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { EditableDiagram, SnapManagerConfigProps } from '../../model-editor/editable-diagram.ts';
 import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { unique } from '../../utils/array.ts';
@@ -176,6 +176,15 @@ export const useDiagramProperty: PropertyHook<EditableDiagram, DiagramProps> = m
   diagram => diagram.update()
 );
 
+export const useSnapManagerProperty: PropertyHook<EditableDiagram, SnapManagerConfigProps> =
+  makePropertyHook<EditableDiagram, SnapManagerConfigProps>(
+    diagram => diagram.snapManagerConfig,
+    (diagram, handler) => {
+      useEventListener('change', handler, diagram.snapManagerConfig);
+    },
+    diagram => diagram.snapManagerConfig.commit()
+  );
+
 export const useEdgeProperty: PropertyArrayHook<EditableDiagram, EdgeProps> = makePropertyArrayHook<
   EditableDiagram,
   DiagramEdge,
@@ -211,3 +220,7 @@ export const useElementProperty: PropertyArrayHook<EditableDiagram, ElementProps
     },
     (diagram, element) => diagram.updateElement(element)
   );
+
+// TODO: Return obj instead of array
+// TODO: Make parameters to factories an object instead of a list
+// TODO: Add undo

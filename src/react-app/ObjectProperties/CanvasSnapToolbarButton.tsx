@@ -1,16 +1,12 @@
 import { TbMagnet } from 'react-icons/tb';
 import { ToolbarToggleItemWithPopover } from '../components/ToolbarToggleItemWithPopover.tsx';
 import { KeyMap } from '../../base-ui/keyMap.ts';
-import { EditableDiagram, SnapManagerConfigProps } from '../../model-editor/editable-diagram.ts';
+import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
-import { useProperty } from './useProperty2.ts';
+import { useSnapManagerProperty } from './useProperty.ts';
 
 export const CanvasSnapToolbarButton = (props: Props) => {
-  const [enabled, setEnabled] = useProperty<SnapManagerConfigProps>(
-    props.diagram.snapManagerConfig,
-    'enabled',
-    true
-  );
+  const [enabled, setEnabled] = useSnapManagerProperty(props.diagram, 'enabled', true);
 
   return (
     <ToolbarToggleItemWithPopover value={!!enabled} onChange={setEnabled} icon={TbMagnet}>

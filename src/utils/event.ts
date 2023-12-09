@@ -36,13 +36,3 @@ export class EventEmitter<T extends EventMap, Q = WithWildcardEvent<T>> implemen
     });
   }
 }
-
-export type ChangeEvents<T> = {
-  change: { after: T };
-};
-
-export interface Commitable {
-  commit(): void;
-}
-
-export interface Observable<T> extends Emitter<ChangeEvents<T>>, Commitable {}

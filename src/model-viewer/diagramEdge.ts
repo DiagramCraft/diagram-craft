@@ -3,7 +3,6 @@ import { Transform } from '../geometry/transform.ts';
 import { Diagram, DiagramElement } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode } from './diagramNode.ts';
-import { Commitable } from '../utils/event.ts';
 
 export type Waypoint = {
   point: Point;
@@ -25,7 +24,7 @@ export type Endpoint = ConnectedEndpoint | { position: Point };
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   'node' in endpoint;
 
-export class DiagramEdge implements AbstractEdge, Commitable {
+export class DiagramEdge implements AbstractEdge {
   id: string;
   type: 'edge';
 

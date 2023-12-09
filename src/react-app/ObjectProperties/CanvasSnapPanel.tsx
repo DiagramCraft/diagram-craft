@@ -1,15 +1,13 @@
-import { EditableDiagram, SnapManagerConfigProps } from '../../model-editor/editable-diagram.ts';
+import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { KeyMap } from '../../base-ui/keyMap.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { ActionCheckbox } from '../components/ActionCheckbox.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
-import { useProperty } from './useProperty2.ts';
+import { useSnapManagerProperty } from './useProperty.ts';
 
 export const CanvasSnapPanel = (props: Props) => {
-  const snapMgr = props.diagram.snapManagerConfig;
-
-  const [enabled, setEnabled] = useProperty<SnapManagerConfigProps>(snapMgr, 'enabled', true);
-  const [threshold, setThreshold] = useProperty<SnapManagerConfigProps>(snapMgr, 'threshold', 5);
+  const [enabled, setEnabled] = useSnapManagerProperty(props.diagram, 'enabled', true);
+  const [threshold, setThreshold] = useSnapManagerProperty(props.diagram, 'threshold', 5);
 
   return (
     <ToolWindowPanel

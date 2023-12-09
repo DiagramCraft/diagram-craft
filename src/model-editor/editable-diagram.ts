@@ -2,19 +2,21 @@ import { Diagram } from '../model-viewer/diagram.ts';
 import { SelectionState } from './selectionState.ts';
 import { SnapManager } from './snap/snapManager.ts';
 import { MagnetType } from './snap/magnet.ts';
-import { ChangeEvents, EventEmitter, Observable } from '../utils/event.ts';
+import { EventEmitter } from '../utils/event.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
 
-export interface SnapManagerConfigProps extends Observable<SnapManagerConfigProps> {
+export interface SnapManagerConfigProps {
   threshold: number;
   enabled: boolean;
   magnetTypes: MagnetType[];
 }
 
 class SnapManagerConfig
-  extends EventEmitter<ChangeEvents<SnapManagerConfigProps>>
+  extends EventEmitter<{
+    change: { after: SnapManagerConfigProps };
+  }>
   implements SnapManagerConfigProps
 {
   magnetTypes: MagnetType[] = [];
