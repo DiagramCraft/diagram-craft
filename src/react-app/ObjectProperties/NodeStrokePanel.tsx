@@ -39,6 +39,7 @@ export const NodeStrokePanel = (props: Props) => {
             additionalHues={additionalHues}
             color={strokeColor.val ?? 'transparent'}
             onClick={strokeColor.set}
+            hasMultipleValues={strokeColor.hasMultipleValues}
           />
         </div>
 
@@ -52,6 +53,7 @@ export const NodeStrokePanel = (props: Props) => {
               min={1}
               style={{ width: '35px' }}
               onChange={strokeWidth.set}
+              hasMultipleValues={strokeWidth.hasMultipleValues}
             />
             &nbsp;
             <DashSelector
@@ -59,6 +61,7 @@ export const NodeStrokePanel = (props: Props) => {
               onValueChange={value => {
                 pattern.set(value);
               }}
+              hasMultipleValues={pattern.hasMultipleValues}
             />
             &nbsp;
             <div className={'cmp-more'}>

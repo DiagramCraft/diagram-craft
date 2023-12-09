@@ -115,6 +115,7 @@ export const makePropertyArrayHook = <
         });
         callbacks?.onAfterSet?.(obj, getArr(obj), path, oldValues as TValue[], v);
         setValue(v);
+        setMultiple(false);
       },
       hasMultipleValues: multiple
     };

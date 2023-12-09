@@ -50,6 +50,7 @@ export const NodeFillPanel = (props: Props) => {
               additionalHues={additionalHues}
               color={fill.val ?? 'transparent'}
               onClick={fill.set}
+              hasMultipleValues={fill.hasMultipleValues}
             />
             {type.val === 'gradient' && (
               <>
@@ -59,6 +60,7 @@ export const NodeFillPanel = (props: Props) => {
                   additionalHues={additionalHues}
                   color={color2.val ?? 'transparent'}
                   onClick={color2.set}
+                  hasMultipleValues={color2.hasMultipleValues}
                 />
                 &nbsp;
                 <div className={'cmp-more'}>

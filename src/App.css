@@ -84,6 +84,9 @@ input[type="checkbox"]:disabled {
   cursor: not-allowed;
 }
 
+input::-webkit-input-placeholder {
+  color: var(--primary-fg);
+}
 
 
 /* App layout */
@@ -484,7 +487,9 @@ input[type="checkbox"]:disabled {
   .cmp-color-picker__well {
     width: 12px;
     height: 12px;
-    border: 1px solid var(--primary-fg)
+    border: 1px solid var(--primary-fg);
+    display: flex;
+    align-items: center;
   }
 }
 

@@ -95,7 +95,7 @@ export const NumberInput = (props: Props) => {
     [currentValue, setCurrentValue, props.onChange, props.defaultUnit]
   );
 
-  if (origValue !== props.value.toString() && !hasFocus.current) {
+  if (origValue !== props.value.toString() && !hasFocus.current && !props.hasMultipleValues) {
     setOrigValue(props.value.toString());
     updateCurrentValue();
   }
@@ -104,9 +104,17 @@ export const NumberInput = (props: Props) => {
     <div className={$c('cmp-number-input', { error: error })} style={props.style ?? {}}>
       {props.label && <div className={'cmp-number-input__label'}>{props.label}</div>}
       <input
-        {...propsUtils.except(props, 'validUnits', 'defaultUnit', 'value', 'onChange')}
+        {...propsUtils.except(
+          props,
+          'validUnits',
+          'defaultUnit',
+          'value',
+          'onChange',
+          'hasMultipleValues'
+        )}
+        placeholder={props.hasMultipleValues ? '···' : undefined}
         type={'text'}
-        value={currentValue}
+        value={props.hasMultipleValues ? '' : currentValue}
         onFocus={() => {
           hasFocus.current = true;
         }}
@@ -155,6 +163,7 @@ type Props = {
   defaultUnit?: string;
   value: string | number;
   label?: string;
+  hasMultipleValues?: boolean;
   onChange: (value: number | undefined, unit?: string) => void;
 } & Omit<
   React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,

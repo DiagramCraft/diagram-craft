@@ -16,14 +16,21 @@ const DashPatternPreview = (props: { type: string; pattern?: string; width?: num
 
 export const DashSelector = (props: Props) => {
   return (
-    <Select.Root value={props.value} onValueChange={props.onValueChange}>
+    <Select.Root
+      value={props.hasMultipleValues ? undefined : props.value}
+      onValueChange={props.onValueChange}
+    >
       <Select.Trigger className="cmp-select-trigger">
         <Select.Value
           placeholder={
-            <DashPatternPreview
-              type={props.value ?? 'SOLID'}
-              pattern={DASH_PATTERNS[props.value ?? 'SOLID'](0.25, 0.25)}
-            />
+            props.hasMultipleValues ? (
+              <div style={{ width: '30px', color: 'var(--primary-fg)' }}>···</div>
+            ) : (
+              <DashPatternPreview
+                type={props.value ?? 'SOLID'}
+                pattern={DASH_PATTERNS[props.value ?? 'SOLID'](0.25, 0.25)}
+              />
+            )
           }
         />
         <Select.Icon className="cmp-select-trigger__icon">
@@ -57,5 +64,6 @@ export const DashSelector = (props: Props) => {
 
 interface Props {
   value?: string;
+  hasMultipleValues?: boolean;
   onValueChange: (value: string | undefined) => void;
 }

@@ -1,5 +1,5 @@
 import * as Popover from '@radix-ui/react-popover';
-import { TbChevronDown, TbX } from 'react-icons/tb';
+import { TbChevronDown, TbDots, TbX } from 'react-icons/tb';
 import React, { useRef } from 'react';
 
 const transpose = (matrix: string[][]) =>
@@ -23,9 +23,12 @@ export const ColorPicker = (props: Props) => {
             <div
               className={'cmp-color-picker__well'}
               style={{
-                backgroundColor: props.color
+                backgroundColor: props.color,
+                border: props.hasMultipleValues ? '1px dotted var(--slate-8)' : undefined
               }}
-            ></div>
+            >
+              {props.hasMultipleValues && <TbDots style={{ margin: '0px' }} />}
+            </div>
             <TbChevronDown size={'0.7rem'} />
           </button>
         </Popover.Trigger>
@@ -111,6 +114,7 @@ export const ColorPicker = (props: Props) => {
 type Props = {
   primaryColors: string[];
   additionalHues?: string[][];
+  hasMultipleValues?: boolean;
   color: string;
   onClick: (s: string) => void;
 };

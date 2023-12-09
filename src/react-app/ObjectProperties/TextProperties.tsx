@@ -64,11 +64,23 @@ export const TextProperties = (props: Props) => {
             min={1}
             style={{ width: '45px' }}
             onChange={fontSize.set}
+            hasMultipleValues={fontSize.hasMultipleValues}
           />
           &nbsp;
-          <Select.Root value={font.val} onValueChange={font.set}>
+          <Select.Root
+            value={font.hasMultipleValues ? undefined : font.val}
+            onValueChange={font.set}
+          >
             <Select.Trigger className="cmp-select-trigger">
-              <Select.Value placeholder={font.val} />
+              <Select.Value
+                placeholder={
+                  font.hasMultipleValues ? (
+                    <div style={{ color: 'var(--primary-fg)' }}>···</div>
+                  ) : (
+                    font.val
+                  )
+                }
+              />
               <Select.Icon className="cmp-select-trigger__icon">
                 <TbChevronDown />
               </Select.Icon>
@@ -172,6 +184,7 @@ export const TextProperties = (props: Props) => {
           additionalHues={additionalHues}
           color={color.val ?? 'transparent'}
           onClick={color.set}
+          hasMultipleValues={color.hasMultipleValues}
         />
       </div>
 
@@ -247,6 +260,7 @@ export const TextProperties = (props: Props) => {
             min={0}
             style={{ gridArea: 'top', width: '100%' }}
             onChange={top.set}
+            hasMultipleValues={top.hasMultipleValues}
           />
           <NumberInput
             validUnits={['px']}
@@ -255,6 +269,7 @@ export const TextProperties = (props: Props) => {
             min={0}
             style={{ gridArea: 'left', width: '100%' }}
             onChange={left.set}
+            hasMultipleValues={left.hasMultipleValues}
           />
           <NumberInput
             validUnits={['px']}
@@ -263,6 +278,7 @@ export const TextProperties = (props: Props) => {
             min={0}
             style={{ gridArea: 'bottom', width: '100%' }}
             onChange={bottom.set}
+            hasMultipleValues={bottom.hasMultipleValues}
           />
           <NumberInput
             validUnits={['px']}
@@ -271,6 +287,7 @@ export const TextProperties = (props: Props) => {
             min={0}
             style={{ gridArea: 'right', width: '100%' }}
             onChange={right.set}
+            hasMultipleValues={right.hasMultipleValues}
           />
         </div>
       </div>
