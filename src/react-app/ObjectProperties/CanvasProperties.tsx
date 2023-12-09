@@ -13,7 +13,7 @@ export const CanvasProperties = (props: Props) => {
   const redraw = useRedraw();
 
   useEventListener('canvaschanged', redraw, props.diagram);
-  const bg = useDiagramProperty(props.diagram, 'background.color', 'none');
+  const bg = useDiagramProperty(props.diagram, 'background.color', 'white');
 
   const bounds = { ...props.diagram.canvas, rotation: 0 };
 
