@@ -17,21 +17,21 @@ export const CanvasGridPanel = (props: Props) => {
   const redraw = useRedraw();
   useEventListener('canvaschanged', redraw, $d);
 
-  const [size, setSize] = useDiagramProperty($d, 'grid.size', 10);
-  const [majorCount, setMajorCount] = useDiagramProperty($d, 'grid.majorCount', 5);
-  const [color, setColor] = useDiagramProperty($d, 'grid.color', '#f5f5f4');
-  const [majorColor, setMajorColor] = useDiagramProperty($d, 'grid.majorColor', '#e7e5e4');
-  const [type, setType] = useDiagramProperty($d, 'grid.type', 'lines');
-  const [majorType, setMajorType] = useDiagramProperty($d, 'grid.majorType', 'lines');
-  const [enabled, setEnabled] = useDiagramProperty($d, 'grid.enabled', true);
+  const size = useDiagramProperty($d, 'grid.size', 10);
+  const majorCount = useDiagramProperty($d, 'grid.majorCount', 5);
+  const color = useDiagramProperty($d, 'grid.color', '#f5f5f4');
+  const majorColor = useDiagramProperty($d, 'grid.majorColor', '#e7e5e4');
+  const type = useDiagramProperty($d, 'grid.type', 'lines');
+  const majorType = useDiagramProperty($d, 'grid.majorType', 'lines');
+  const enabled = useDiagramProperty($d, 'grid.enabled', true);
 
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
       title={'Grid'}
       hasCheckbox={true}
-      value={enabled}
-      onChange={setEnabled}
+      value={enabled.val}
+      onChange={enabled.set}
       id={'grid'}
     >
       <div className={'cmp-labeled-table'}>
@@ -40,14 +40,14 @@ export const CanvasGridPanel = (props: Props) => {
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
-            color={color ?? 'transparent'}
-            onClick={setColor}
+            color={color.val ?? 'transparent'}
+            onClick={color.set}
           />
           &nbsp;
           <NumberInput
             style={{ width: '45px' }}
-            value={size ?? 10}
-            onChange={n => setSize(n ?? 0)}
+            value={size.val ?? 10}
+            onChange={n => size.set(n ?? 0)}
             validUnits={['px']}
             defaultUnit={'px'}
           />
@@ -55,10 +55,10 @@ export const CanvasGridPanel = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={type}
+              value={type.val}
               onValueChange={v => {
                 assertGridType(v);
-                setType(v);
+                type.set(v);
               }}
             >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'lines'}>
@@ -76,23 +76,23 @@ export const CanvasGridPanel = (props: Props) => {
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
-            color={majorColor ?? 'transparent'}
-            onClick={setMajorColor}
+            color={majorColor.val ?? 'transparent'}
+            onClick={majorColor.set}
           />
           &nbsp;
           <NumberInput
             style={{ width: '45px' }}
-            value={majorCount ?? 5}
-            onChange={n => setMajorCount(n ?? 0)}
+            value={majorCount.val ?? 5}
+            onChange={n => majorCount.set(n ?? 0)}
           />
           &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={majorType}
+              value={majorType.val}
               onValueChange={v => {
                 assertGridType(v);
-                setMajorType(v);
+                majorType.set(v);
               }}
             >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'lines'}>

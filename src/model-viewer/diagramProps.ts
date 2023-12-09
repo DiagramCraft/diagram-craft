@@ -1,7 +1,8 @@
 type GridType = 'lines' | 'dots';
 
 export function assertGridType(s: string | undefined): asserts s is GridType | undefined {
-  if (!(s === 'lines' || s === 'dots' || s === undefined)) throw new Error();
+  if (!(s === 'lines' || s === 'dots' || s === '' || s === undefined))
+    throw new Error(`invalid grid type: ${s}`);
 }
 
 type EdgeType = 'straight' | 'bezier' | 'curved' | 'orthogonal';

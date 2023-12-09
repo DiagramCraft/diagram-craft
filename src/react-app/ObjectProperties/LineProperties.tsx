@@ -12,21 +12,21 @@ import { assertEdgeType } from '../../model-viewer/diagramProps.ts';
 export const LineProperties = (props: Props) => {
   const $d = props.diagram;
 
-  const [strokeColor, setStrokeColor] = useEdgeProperty($d, 'stroke.color', 'transparent');
-  const [fillColor, setFillColor] = useEdgeProperty($d, 'fill.color', undefined);
-  const [pattern, setPattern] = useEdgeProperty($d, 'stroke.pattern', 'SOLID');
+  const strokeColor = useEdgeProperty($d, 'stroke.color', 'transparent');
+  const fillColor = useEdgeProperty($d, 'fill.color', undefined);
+  const pattern = useEdgeProperty($d, 'stroke.pattern', 'SOLID');
 
-  const [strokSize, setStrokeSize] = useEdgeProperty($d, 'stroke.patternSize', 100);
-  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty($d, 'stroke.patternSpacing', 100);
-  const [strokeWidth, setStrokeWidth] = useEdgeProperty($d, 'stroke.width', 1);
+  const strokSize = useEdgeProperty($d, 'stroke.patternSize', 100);
+  const strokeSpacing = useEdgeProperty($d, 'stroke.patternSpacing', 100);
+  const strokeWidth = useEdgeProperty($d, 'stroke.width', 1);
 
-  const [type, setType] = useEdgeProperty($d, 'type', 'straight');
+  const type = useEdgeProperty($d, 'type', 'straight');
 
-  const [startType, setStartType] = useEdgeProperty($d, 'arrow.start.type', undefined);
-  const [startSize, setStartSize] = useEdgeProperty($d, 'arrow.start.size', 100);
-  const [endType, setEndType] = useEdgeProperty($d, 'arrow.end.type', undefined);
+  const startType = useEdgeProperty($d, 'arrow.start.type', undefined);
+  const startSize = useEdgeProperty($d, 'arrow.start.size', 100);
+  const endType = useEdgeProperty($d, 'arrow.end.type', undefined);
 
-  const [endSize, setEndSize] = useEdgeProperty($d, 'arrow.end.size', 100);
+  const endSize = useEdgeProperty($d, 'arrow.end.size', 100);
 
   return (
     <div>
@@ -36,10 +36,10 @@ export const LineProperties = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={type}
+              value={type.val}
               onValueChange={value => {
                 assertEdgeType(value);
-                setType(value);
+                type.set(value);
               }}
             >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'straight'}>
@@ -60,29 +60,29 @@ export const LineProperties = (props: Props) => {
 
         <div className={'cmp-labeled-table__label'}>Line start:</div>
         <div className={'cmp-labeled-table__value util-vcenter'}>
-          <ArrowSelector value={startType} onValueChange={setStartType} />
+          <ArrowSelector value={startType.val} onValueChange={startType.set} />
           &nbsp;
           <NumberInput
             validUnits={['%']}
             defaultUnit={'%'}
-            value={startSize ?? ''}
+            value={startSize.val ?? ''}
             min={1}
             style={{ width: '50px' }}
-            onChange={setStartSize}
+            onChange={startSize.set}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Line end:</div>
         <div className={'cmp-labeled-table__value util-vcenter'}>
-          <ArrowSelector value={endType} onValueChange={setEndType} />
+          <ArrowSelector value={endType.val} onValueChange={endType.set} />
           &nbsp;
           <NumberInput
             validUnits={['%']}
             defaultUnit={'%'}
-            value={endSize ?? ''}
+            value={endSize.val ?? ''}
             min={1}
             style={{ width: '50px' }}
-            onChange={setEndSize}
+            onChange={endSize.set}
           />
         </div>
 
@@ -91,15 +91,15 @@ export const LineProperties = (props: Props) => {
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
-            color={strokeColor ?? 'transparent'}
-            onClick={setStrokeColor}
+            color={strokeColor.val ?? 'transparent'}
+            onClick={strokeColor.set}
           />
           &nbsp;
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
-            color={fillColor ?? 'transparent'}
-            onClick={setFillColor}
+            color={fillColor.val ?? 'transparent'}
+            onClick={fillColor.set}
           />
         </div>
 
@@ -108,38 +108,38 @@ export const LineProperties = (props: Props) => {
           <NumberInput
             validUnits={['px']}
             defaultUnit={'px'}
-            value={strokeWidth ?? 1}
+            value={strokeWidth.val ?? 1}
             min={1}
             style={{ width: '45px' }}
-            onChange={setStrokeWidth}
+            onChange={strokeWidth.set}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Dash:</div>
         <div className={'cmp-labeled-table__value util-vcenter'}>
           <DashSelector
-            value={pattern}
+            value={pattern.val}
             onValueChange={value => {
-              setPattern(value ?? 'SOLID');
+              pattern.set(value ?? 'SOLID');
             }}
           />
           &nbsp;
           <NumberInput
             validUnits={['%']}
             defaultUnit={'%'}
-            value={strokSize ?? 100}
+            value={strokSize.val ?? 100}
             min={1}
             style={{ width: '45px' }}
-            onChange={setStrokeSize}
+            onChange={strokSize.set}
           />
           &nbsp;
           <NumberInput
             validUnits={['%']}
             defaultUnit={'%'}
-            value={strokeSpacing ?? 100}
+            value={strokeSpacing.val ?? 100}
             min={1}
             style={{ width: '45px' }}
-            onChange={setStrokeSpacing}
+            onChange={strokeSpacing.set}
           />
         </div>
       </div>

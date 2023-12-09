@@ -6,7 +6,7 @@ import { useNodeProperty } from './useProperty.ts';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
 
 export const NodeStrokeToolbarButton = (props: Props) => {
-  const [fill] = useNodeProperty(props.diagram, 'stroke.color', 'transparent');
+  const fill = useNodeProperty(props.diagram, 'stroke.color', 'transparent');
 
   return (
     <Popover.Root>
@@ -18,7 +18,7 @@ export const NodeStrokeToolbarButton = (props: Props) => {
               marginLeft: '5px',
               width: '30px',
               height: '12px',
-              backgroundColor: fill ?? 'transparent',
+              backgroundColor: fill.val ?? 'transparent',
               marginRight: '3px',
               border: '1px solid var(--primary-fg)',
               borderRadius: '3px'

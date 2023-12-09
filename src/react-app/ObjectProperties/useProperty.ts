@@ -75,7 +75,10 @@ type PropertyHook<TBase, TObj> = <
   obj: TBase,
   propertyPath: K,
   defaultValue: DV
-) => [V, (value: V) => void];
+) => {
+  val: V;
+  set: (value: V) => void;
+};
 
 type PropertyArrayHook<TBase, TObj> = <
   K extends PropPath<TObj>,
@@ -85,7 +88,11 @@ type PropertyArrayHook<TBase, TObj> = <
   obj: TBase,
   propertyPath: K,
   defaultValue: DV
-) => [V, (value: V) => void, boolean];
+) => {
+  val: V;
+  set: (value: V) => void;
+  hasMultipleValues: boolean;
+};
 
 const makePropertyHook = <
   TBase,
@@ -97,7 +104,7 @@ const makePropertyHook = <
   subscribe: (obj: TBase, handler: () => void) => void,
   commit: (obj: TBase) => void = () => {}
 ): PropertyHook<TBase, TObj> => {
-  return ((obj: TBase, path: TPath, defaultValue: TValue): [TValue, (value: TValue) => void] => {
+  return ((obj: TBase, path: TPath, defaultValue: TValue) => {
     const accessor = new DynamicAccessor<TObj>();
     const [value, setValue] = useState<TValue>(defaultValue);
     const handler = () => {
@@ -109,14 +116,14 @@ const makePropertyHook = <
     subscribe(obj, handler);
     useEffect(handler, []);
 
-    return [
-      value,
-      v => {
+    return {
+      val: value,
+      set: (v: TValue) => {
         accessor.set(getObj(obj), path, v);
         commit(obj);
         setValue(v);
       }
-    ];
+    };
   }) as PropertyHook<TBase, TObj>;
 };
 
@@ -132,11 +139,7 @@ const makePropertyArrayHook = <
   subscribe: (obj: TBase, handler: () => void) => void,
   commit: (obj: TBase, item: TItem) => void
 ): PropertyArrayHook<TBase, TObj> => {
-  return ((
-    obj: TBase,
-    path: TPath,
-    defaultValue: TValue
-  ): [TValue, (value: TValue) => void, boolean] => {
+  return ((obj: TBase, path: TPath, defaultValue: TValue) => {
     const accessor = new DynamicAccessor<TObj>();
     const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
@@ -151,17 +154,17 @@ const makePropertyArrayHook = <
     subscribe(obj, handler);
     useEffect(handler, []);
 
-    return [
-      value,
-      v => {
+    return {
+      val: value,
+      set: (v: TValue) => {
         getArr(obj).forEach(n => {
           accessor.set(getObj(n), path, v);
           commit(obj, n);
         });
         setValue(v);
       },
-      multiple
-    ];
+      hasMultipleValues: multiple
+    };
   }) as PropertyArrayHook<TBase, TObj>;
 };
 
@@ -221,6 +224,7 @@ export const useElementProperty: PropertyArrayHook<EditableDiagram, ElementProps
     (diagram, element) => diagram.updateElement(element)
   );
 
-// TODO: Return obj instead of array
-// TODO: Make parameters to factories an object instead of a list
 // TODO: Add undo
+
+// TODO: Threshold for grid
+// TODO: Bug: toggle font bold/italic

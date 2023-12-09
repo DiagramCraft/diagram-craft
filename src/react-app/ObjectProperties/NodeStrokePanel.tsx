@@ -14,13 +14,13 @@ export const NodeStrokePanel = (props: Props) => {
 
   const $d = props.diagram;
 
-  const [strokeColor, setStrokeColor] = useNodeProperty($d, 'stroke.color', 'transparent');
-  const [pattern, setPattern] = useNodeProperty($d, 'stroke.pattern', 'SOLID');
+  const strokeColor = useNodeProperty($d, 'stroke.color', 'transparent');
+  const pattern = useNodeProperty($d, 'stroke.pattern', 'SOLID');
 
-  const [strokSize, setStrokeSize] = useNodeProperty($d, 'stroke.patternSize', 100);
-  const [strokeSpacing, setStrokeSpacing] = useNodeProperty($d, 'stroke.patternSpacing', 100);
-  const [strokeWidth, setStrokeWidth] = useNodeProperty($d, 'stroke.width', 1);
-  const [enabled, setEnabled] = useNodeProperty($d, 'stroke.enabled', true);
+  const strokeSize = useNodeProperty($d, 'stroke.patternSize', 100);
+  const strokeSpacing = useNodeProperty($d, 'stroke.patternSpacing', 100);
+  const strokeWidth = useNodeProperty($d, 'stroke.width', 1);
+  const enabled = useNodeProperty($d, 'stroke.enabled', true);
 
   return (
     <ToolWindowPanel
@@ -28,8 +28,8 @@ export const NodeStrokePanel = (props: Props) => {
       id="stroke"
       title={'Stroke'}
       hasCheckbox={true}
-      value={enabled}
-      onChange={setEnabled}
+      value={enabled.val}
+      onChange={enabled.set}
     >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Color:</div>
@@ -37,8 +37,8 @@ export const NodeStrokePanel = (props: Props) => {
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
-            color={strokeColor ?? 'transparent'}
-            onClick={setStrokeColor}
+            color={strokeColor.val ?? 'transparent'}
+            onClick={strokeColor.set}
           />
         </div>
 
@@ -48,16 +48,16 @@ export const NodeStrokePanel = (props: Props) => {
             <NumberInput
               validUnits={['px']}
               defaultUnit={'px'}
-              value={strokeWidth ?? 1}
+              value={strokeWidth.val ?? 1}
               min={1}
               style={{ width: '35px' }}
-              onChange={setStrokeWidth}
+              onChange={strokeWidth.set}
             />
             &nbsp;
             <DashSelector
-              value={pattern}
+              value={pattern.val}
               onValueChange={value => {
-                setPattern(value);
+                pattern.set(value);
               }}
             />
             &nbsp;
@@ -75,19 +75,19 @@ export const NodeStrokePanel = (props: Props) => {
                     <NumberInput
                       validUnits={['%']}
                       defaultUnit={'%'}
-                      value={strokSize ?? 100}
+                      value={strokeSize.val ?? 100}
                       min={1}
                       style={{ width: '45px' }}
-                      onChange={setStrokeSize}
+                      onChange={strokeSize.set}
                     />
                     &nbsp;
                     <NumberInput
                       validUnits={['%']}
                       defaultUnit={'%'}
-                      value={strokeSpacing ?? 100}
+                      value={strokeSpacing.val ?? 100}
                       min={1}
                       style={{ width: '45px' }}
-                      onChange={setStrokeSpacing}
+                      onChange={strokeSpacing.set}
                     />
                     <Popover.Close className="cmp-popover__close" aria-label="Close">
                       <TbX />

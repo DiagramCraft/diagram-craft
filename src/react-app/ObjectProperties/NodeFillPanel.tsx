@@ -10,9 +10,9 @@ import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { assertFillType } from '../../model-viewer/diagramProps.ts';
 
 export const NodeFillPanel = (props: Props) => {
-  const [fill, setFill] = useNodeProperty(props.diagram, 'fill.color', 'transparent');
-  const [color2, setColor2] = useNodeProperty(props.diagram, 'fill.color2', 'transparent');
-  const [type, setType] = useNodeProperty(props.diagram, 'fill.type', 'solid');
+  const fill = useNodeProperty(props.diagram, 'fill.color', 'transparent');
+  const color2 = useNodeProperty(props.diagram, 'fill.color2', 'transparent');
+  const type = useNodeProperty(props.diagram, 'fill.type', 'solid');
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -23,10 +23,10 @@ export const NodeFillPanel = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={type}
+              value={type.val}
               onValueChange={v => {
                 assertFillType(v);
-                setType(v);
+                type.set(v);
               }}
             >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'solid'}>
@@ -48,17 +48,17 @@ export const NodeFillPanel = (props: Props) => {
             <ColorPicker
               primaryColors={primaryColors}
               additionalHues={additionalHues}
-              color={fill ?? 'transparent'}
-              onClick={setFill}
+              color={fill.val ?? 'transparent'}
+              onClick={fill.set}
             />
-            {type === 'gradient' && (
+            {type.val === 'gradient' && (
               <>
                 &nbsp;
                 <ColorPicker
                   primaryColors={primaryColors}
                   additionalHues={additionalHues}
-                  color={color2 ?? 'transparent'}
-                  onClick={setColor2}
+                  color={color2.val ?? 'transparent'}
+                  onClick={color2.set}
                 />
                 &nbsp;
                 <div className={'cmp-more'}>

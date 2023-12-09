@@ -6,8 +6,8 @@ import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useSnapManagerProperty } from './useProperty.ts';
 
 export const CanvasSnapPanel = (props: Props) => {
-  const [enabled, setEnabled] = useSnapManagerProperty(props.diagram, 'enabled', true);
-  const [threshold, setThreshold] = useSnapManagerProperty(props.diagram, 'threshold', 5);
+  const enabled = useSnapManagerProperty(props.diagram, 'enabled', true);
+  const threshold = useSnapManagerProperty(props.diagram, 'threshold', 5);
 
   return (
     <ToolWindowPanel
@@ -15,8 +15,8 @@ export const CanvasSnapPanel = (props: Props) => {
       title={'Snap'}
       id={'snap'}
       hasCheckbox={true}
-      value={!!enabled}
-      onChange={setEnabled}
+      value={!!enabled.val}
+      onChange={enabled.set}
     >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label util-a-top'}>Snap:</div>
@@ -54,7 +54,7 @@ export const CanvasSnapPanel = (props: Props) => {
             style={{ width: '45px' }}
             value={(threshold ?? 0)?.toString()}
             /* @ts-ignore */
-            onChange={setThreshold}
+            onChange={threshold.set}
             validUnits={['px']}
             defaultUnit={'px'}
           />

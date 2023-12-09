@@ -6,10 +6,14 @@ import { useNodeProperty } from './useProperty.ts';
 
 export const ShadowToolbarButton = (props: Props) => {
   const $d = props.diagram;
-  const [enabled, setEnabled] = useNodeProperty($d, 'shadow.enabled', false);
+  const enabled = useNodeProperty($d, 'shadow.enabled', false);
 
   return (
-    <ToolbarToggleItemWithPopover value={!!enabled} onChange={setEnabled} icon={TbStackBackward}>
+    <ToolbarToggleItemWithPopover
+      value={!!enabled.val}
+      onChange={enabled.set}
+      icon={TbStackBackward}
+    >
       <ShadowPanel diagram={props.diagram} mode={'panel'} />
     </ToolbarToggleItemWithPopover>
   );

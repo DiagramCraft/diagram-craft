@@ -13,7 +13,7 @@ export const CanvasProperties = (props: Props) => {
   const redraw = useRedraw();
 
   useEventListener('canvaschanged', redraw, props.diagram);
-  const [bg, setBg] = useDiagramProperty(props.diagram, 'background.color', 'none');
+  const bg = useDiagramProperty(props.diagram, 'background.color', 'none');
 
   const bounds = { ...props.diagram.canvas, rotation: 0 };
 
@@ -29,9 +29,9 @@ export const CanvasProperties = (props: Props) => {
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
-            color={bg ?? 'transparent'}
+            color={bg.val ?? 'transparent'}
             onClick={v => {
-              setBg(v);
+              bg.set(v);
             }}
           />
         </div>

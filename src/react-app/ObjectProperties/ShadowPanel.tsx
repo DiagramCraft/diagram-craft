@@ -9,12 +9,12 @@ import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 export const ShadowPanel = (props: Props) => {
   const $d = props.diagram;
 
-  const [color, setColor] = useNodeProperty($d, 'shadow.color', 'black');
-  const [opacity, setOpacity] = useNodeProperty($d, 'shadow.opacity', 0.5);
-  const [x, setX] = useNodeProperty($d, 'shadow.x', 5);
-  const [y, setY] = useNodeProperty($d, 'shadow.y', 5);
-  const [blur, setBlur] = useNodeProperty($d, 'shadow.blur', 5);
-  const [enabled, setEnabled] = useNodeProperty($d, 'shadow.enabled', false);
+  const color = useNodeProperty($d, 'shadow.color', 'black');
+  const opacity = useNodeProperty($d, 'shadow.opacity', 0.5);
+  const x = useNodeProperty($d, 'shadow.x', 5);
+  const y = useNodeProperty($d, 'shadow.y', 5);
+  const blur = useNodeProperty($d, 'shadow.blur', 5);
+  const enabled = useNodeProperty($d, 'shadow.enabled', false);
 
   return (
     <ToolWindowPanel
@@ -22,8 +22,8 @@ export const ShadowPanel = (props: Props) => {
       title={'Shadow'}
       id={'shadow'}
       hasCheckbox={true}
-      value={enabled}
-      onChange={setEnabled}
+      value={enabled.val}
+      onChange={enabled.set}
     >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Color:</div>
@@ -32,13 +32,13 @@ export const ShadowPanel = (props: Props) => {
             <ColorPicker
               primaryColors={primaryColors}
               additionalHues={additionalHues}
-              color={color ?? 'black'}
-              onClick={setColor}
+              color={color.val ?? 'black'}
+              onClick={color.set}
             />
             &nbsp;
             <NumberInput
-              value={round((1 - (opacity ?? 0)) * 100)?.toString() ?? ''}
-              onChange={v => setOpacity((100 - (v ?? 100)) / 100)}
+              value={round((1 - (opacity.val ?? 0)) * 100)?.toString() ?? ''}
+              onChange={v => opacity.set((100 - (v ?? 100)) / 100)}
               style={{ width: '45px' }}
               min={0}
               max={100}
@@ -51,24 +51,24 @@ export const ShadowPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value'}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <NumberInput
-              value={x?.toString() ?? ''}
-              onChange={setX}
+              value={x.val?.toString() ?? ''}
+              onChange={x.set}
               style={{ width: '45px' }}
               validUnits={['px']}
               defaultUnit={'px'}
             />
             &nbsp;
             <NumberInput
-              value={y?.toString() ?? ''}
-              onChange={setY}
+              value={y.val?.toString() ?? ''}
+              onChange={y.set}
               style={{ width: '45px' }}
               validUnits={['px']}
               defaultUnit={'px'}
             />
             &nbsp;
             <NumberInput
-              value={blur?.toString() ?? ''}
-              onChange={setBlur}
+              value={blur.val?.toString() ?? ''}
+              onChange={blur.set}
               min={0}
               style={{ width: '45px' }}
               validUnits={['px']}

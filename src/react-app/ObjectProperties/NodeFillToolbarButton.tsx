@@ -6,7 +6,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useNodeProperty } from './useProperty.ts';
 
 export const NodeFillToolbarButton = (props: Props) => {
-  const [fill] = useNodeProperty(props.diagram, 'fill.color', 'transparent');
+  const fill = useNodeProperty(props.diagram, 'fill.color', 'transparent');
 
   return (
     <Popover.Root>
@@ -18,7 +18,7 @@ export const NodeFillToolbarButton = (props: Props) => {
               marginLeft: '5px',
               width: '30px',
               height: '12px',
-              backgroundColor: fill ?? 'transparent',
+              backgroundColor: fill.val ?? 'transparent',
               marginRight: '3px',
               border: '1px solid var(--primary-fg)',
               borderRadius: '3px'

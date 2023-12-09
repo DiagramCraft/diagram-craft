@@ -6,10 +6,10 @@ import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
 import { useSnapManagerProperty } from './useProperty.ts';
 
 export const CanvasSnapToolbarButton = (props: Props) => {
-  const [enabled, setEnabled] = useSnapManagerProperty(props.diagram, 'enabled', true);
+  const enabled = useSnapManagerProperty(props.diagram, 'enabled', true);
 
   return (
-    <ToolbarToggleItemWithPopover value={!!enabled} onChange={setEnabled} icon={TbMagnet}>
+    <ToolbarToggleItemWithPopover value={!!enabled.val} onChange={enabled.set} icon={TbMagnet}>
       <CanvasSnapPanel
         diagram={props.diagram}
         keyMap={props.keyMap}

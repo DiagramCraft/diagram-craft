@@ -38,19 +38,19 @@ export const TextProperties = (props: Props) => {
   const $d = props.diagram;
 
   // TODO: Should be useElementProperty
-  const [font, setFont] = useNodeProperty($d, 'text.font', 'Arial');
-  const [fontSize, setFontSize] = useNodeProperty($d, 'text.fontSize', 10);
-  const [isBold, setIsBold] = useNodeProperty($d, 'text.bold', false);
-  const [isItalic, setIsItalic] = useNodeProperty($d, 'text.italic', false);
-  const [textDecoration, setTextDecoration] = useNodeProperty($d, 'text.textDecoration', undefined);
-  const [textTransform, setTextTransform] = useNodeProperty($d, 'text.textTransform', undefined);
-  const [color, setColor] = useNodeProperty($d, 'text.color', undefined);
-  const [align, setAlign] = useNodeProperty($d, 'text.align', 'center');
-  const [valign, setVAlign] = useNodeProperty($d, 'text.valign', 'middle');
-  const [top, setTop] = useNodeProperty($d, 'text.top', 0);
-  const [left, setLeft] = useNodeProperty($d, 'text.left', 0);
-  const [bottom, setBottom] = useNodeProperty($d, 'text.bottom', 0);
-  const [right, setRight] = useNodeProperty($d, 'text.right', 0);
+  const font = useNodeProperty($d, 'text.font', 'Arial');
+  const fontSize = useNodeProperty($d, 'text.fontSize', 10);
+  const isBold = useNodeProperty($d, 'text.bold', false);
+  const isItalic = useNodeProperty($d, 'text.italic', false);
+  const textDecoration = useNodeProperty($d, 'text.textDecoration', undefined);
+  const textTransform = useNodeProperty($d, 'text.textTransform', undefined);
+  const color = useNodeProperty($d, 'text.color', undefined);
+  const align = useNodeProperty($d, 'text.align', 'center');
+  const valign = useNodeProperty($d, 'text.valign', 'middle');
+  const top = useNodeProperty($d, 'text.top', 0);
+  const left = useNodeProperty($d, 'text.left', 0);
+  const bottom = useNodeProperty($d, 'text.bottom', 0);
+  const right = useNodeProperty($d, 'text.right', 0);
 
   return (
     <div className={'cmp-labeled-table'}>
@@ -60,15 +60,15 @@ export const TextProperties = (props: Props) => {
           <NumberInput
             validUnits={['pt']}
             defaultUnit={'pt'}
-            value={fontSize ?? 10}
+            value={fontSize.val ?? 10}
             min={1}
             style={{ width: '45px' }}
-            onChange={setFontSize}
+            onChange={fontSize.set}
           />
           &nbsp;
-          <Select.Root value={font} onValueChange={setFont}>
+          <Select.Root value={font.val} onValueChange={font.set}>
             <Select.Trigger className="cmp-select-trigger">
-              <Select.Value placeholder={font} />
+              <Select.Value placeholder={font.val} />
               <Select.Icon className="cmp-select-trigger__icon">
                 <TbChevronDown />
               </Select.Icon>
@@ -108,24 +108,24 @@ export const TextProperties = (props: Props) => {
               value={Object.entries({
                 bold: isBold,
                 italic: isItalic,
-                underline: textDecoration === 'underline',
-                strikethrough: textDecoration === 'line-through'
+                underline: textDecoration.val === 'underline',
+                strikethrough: textDecoration.val === 'line-through'
               })
                 .filter(([_, value]) => value)
                 .map(([key, _]) => key)}
               onValueChange={value => {
-                setIsBold(value.includes('bold'));
-                setIsItalic(value.includes('italic'));
+                isBold.set(value.includes('bold'));
+                isItalic.set(value.includes('italic'));
 
                 const isUnderlineChanged =
-                  value.includes('underline') !== (textDecoration === 'underline');
+                  value.includes('underline') !== (textDecoration.val === 'underline');
                 const isStrikethroughChanged =
-                  value.includes('strikethrough') !== (textDecoration === 'line-through');
+                  value.includes('strikethrough') !== (textDecoration.val === 'line-through');
 
                 if (isUnderlineChanged) {
-                  setTextDecoration(value.includes('underline') ? 'underline' : undefined);
+                  textDecoration.set(value.includes('underline') ? 'underline' : undefined);
                 } else if (isStrikethroughChanged) {
-                  setTextDecoration(value.includes('strikethrough') ? 'line-through' : undefined);
+                  textDecoration.set(value.includes('strikethrough') ? 'line-through' : undefined);
                 }
               }}
             >
@@ -147,9 +147,9 @@ export const TextProperties = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={textTransform}
+              value={textTransform.val}
               onValueChange={value => {
-                setTextTransform(
+                textTransform.set(
                   value as unknown as NonNullable<NodeProps['text']>['textTransform']
                 );
               }}
@@ -170,8 +170,8 @@ export const TextProperties = (props: Props) => {
         <ColorPicker
           primaryColors={primaryColors}
           additionalHues={additionalHues}
-          color={color ?? 'transparent'}
-          onClick={setColor}
+          color={color.val ?? 'transparent'}
+          onClick={color.set}
         />
       </div>
 
@@ -181,10 +181,10 @@ export const TextProperties = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={align}
+              value={align.val}
               onValueChange={v => {
                 assertHAlign(v);
-                setAlign(v);
+                align.set(v);
               }}
             >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'left'}>
@@ -202,10 +202,10 @@ export const TextProperties = (props: Props) => {
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
-              value={valign}
+              value={valign.val}
               onValueChange={v => {
                 assertVAlign(v);
-                setVAlign(v);
+                valign.set(v);
               }}
             >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'top'}>
@@ -243,34 +243,34 @@ export const TextProperties = (props: Props) => {
           <NumberInput
             validUnits={['px']}
             defaultUnit={'px'}
-            value={top ?? ''}
+            value={top.val ?? ''}
             min={0}
             style={{ gridArea: 'top', width: '100%' }}
-            onChange={setTop}
+            onChange={top.set}
           />
           <NumberInput
             validUnits={['px']}
             defaultUnit={'px'}
-            value={left ?? ''}
+            value={left.val ?? ''}
             min={0}
             style={{ gridArea: 'left', width: '100%' }}
-            onChange={setLeft}
+            onChange={left.set}
           />
           <NumberInput
             validUnits={['px']}
             defaultUnit={'px'}
-            value={bottom ?? ''}
+            value={bottom.val ?? ''}
             min={0}
             style={{ gridArea: 'bottom', width: '100%' }}
-            onChange={setBottom}
+            onChange={bottom.set}
           />
           <NumberInput
             validUnits={['px']}
             defaultUnit={'px'}
-            value={right ?? ''}
+            value={right.val ?? ''}
             min={0}
             style={{ gridArea: 'right', width: '100%' }}
-            onChange={setRight}
+            onChange={right.set}
           />
         </div>
       </div>
