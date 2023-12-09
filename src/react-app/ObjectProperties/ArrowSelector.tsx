@@ -60,6 +60,14 @@ export const ArrowSelector = (props: Props) => {
         <Select.Content className="cmp-select-content">
           <Select.Viewport className="cmp-select-content__viewpoint">
             <Select.Group>
+              <Select.Item key={'NONE'} className={'cmp-select-content__item'} value={'NONE'}>
+                <Select.ItemText>
+                  <ArrowPreview type={'NONE'} arrow={undefined} />
+                </Select.ItemText>
+                <Select.ItemIndicator className="cmp-select-content__item-indicator">
+                  <TbCheck />
+                </Select.ItemIndicator>
+              </Select.Item>
               {Object.keys(ARROW_SHAPES).map(type => {
                 const arrow = ARROW_SHAPES[type](PREVIEW_SCALE);
                 return (
