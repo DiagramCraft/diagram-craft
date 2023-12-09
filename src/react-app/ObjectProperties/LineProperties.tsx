@@ -7,25 +7,26 @@ import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
+import { assertEdgeType } from '../../model-viewer/diagramProps.ts';
 
 export const LineProperties = (props: Props) => {
   const $d = props.diagram;
 
   const [strokeColor, setStrokeColor] = useEdgeProperty('stroke.color', $d, 'transparent');
-  const [fillColor, setFillColor] = useEdgeProperty<string>('fill.color', $d, undefined);
+  const [fillColor, setFillColor] = useEdgeProperty('fill.color', $d, undefined);
   const [pattern, setPattern] = useEdgeProperty('stroke.pattern', $d, 'SOLID');
 
-  const [strokSize, setStrokeSize] = useEdgeProperty('stroke.patternSize', $d, '100');
-  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty('stroke.patternSpacing', $d, '100');
-  const [strokeWidth, setStrokeWidth] = useEdgeProperty('stroke.width', $d, '1');
+  const [strokSize, setStrokeSize] = useEdgeProperty('stroke.patternSize', $d, 100);
+  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty('stroke.patternSpacing', $d, 100);
+  const [strokeWidth, setStrokeWidth] = useEdgeProperty('stroke.width', $d, 1);
 
   const [type, setType] = useEdgeProperty('type', $d, 'straight');
 
-  const [startType, setStartType] = useEdgeProperty<string>('arrow.start.type', $d, undefined);
-  const [startSize, setStartSize] = useEdgeProperty('arrow.start.size', $d, '100');
-  const [endType, setEndType] = useEdgeProperty<string>('arrow.end.type', $d, undefined);
+  const [startType, setStartType] = useEdgeProperty('arrow.start.type', $d, undefined);
+  const [startSize, setStartSize] = useEdgeProperty('arrow.start.size', $d, 100);
+  const [endType, setEndType] = useEdgeProperty('arrow.end.type', $d, undefined);
 
-  const [endSize, setEndSize] = useEdgeProperty('arrow.end.size', $d, '100');
+  const [endSize, setEndSize] = useEdgeProperty('arrow.end.size', $d, 100);
 
   return (
     <div>
@@ -37,6 +38,7 @@ export const LineProperties = (props: Props) => {
               type={'single'}
               value={type}
               onValueChange={value => {
+                assertEdgeType(value);
                 setType(value);
               }}
             >
@@ -66,9 +68,7 @@ export const LineProperties = (props: Props) => {
             value={startSize ?? ''}
             min={1}
             style={{ width: '50px' }}
-            onChange={ev => {
-              setStartSize(ev?.toString());
-            }}
+            onChange={setStartSize}
           />
         </div>
 
@@ -82,9 +82,7 @@ export const LineProperties = (props: Props) => {
             value={endSize ?? ''}
             min={1}
             style={{ width: '50px' }}
-            onChange={ev => {
-              setEndSize(ev?.toString());
-            }}
+            onChange={setEndSize}
           />
         </div>
 
@@ -113,9 +111,7 @@ export const LineProperties = (props: Props) => {
             value={strokeWidth ?? 1}
             min={1}
             style={{ width: '45px' }}
-            onChange={ev => {
-              setStrokeWidth(ev?.toString());
-            }}
+            onChange={setStrokeWidth}
           />
         </div>
 
@@ -124,7 +120,7 @@ export const LineProperties = (props: Props) => {
           <DashSelector
             value={pattern}
             onValueChange={value => {
-              setPattern(value);
+              setPattern(value ?? 'SOLID');
             }}
           />
           &nbsp;
@@ -134,9 +130,7 @@ export const LineProperties = (props: Props) => {
             value={strokSize ?? 100}
             min={1}
             style={{ width: '45px' }}
-            onChange={ev => {
-              setStrokeSize(ev?.toString());
-            }}
+            onChange={setStrokeSize}
           />
           &nbsp;
           <NumberInput
@@ -145,9 +139,7 @@ export const LineProperties = (props: Props) => {
             value={strokeSpacing ?? 100}
             min={1}
             style={{ width: '45px' }}
-            onChange={ev => {
-              setStrokeSpacing(ev?.toString());
-            }}
+            onChange={setStrokeSpacing}
           />
         </div>
       </div>

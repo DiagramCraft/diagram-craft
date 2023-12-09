@@ -7,6 +7,7 @@ import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import React from 'react';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { assertFillType } from '../../model-viewer/diagramProps.ts';
 
 export const NodeFillPanel = (props: Props) => {
   const [fill, setFill] = useNodeProperty('fill.color', props.diagram, 'transparent');
@@ -20,7 +21,14 @@ export const NodeFillPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Type:</div>
         <div className={'cmp-labeled-table__value'}>
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup type={'single'} value={type} onValueChange={setType}>
+            <ReactToolbar.ToggleGroup
+              type={'single'}
+              value={type}
+              onValueChange={v => {
+                assertFillType(v);
+                setType(v);
+              }}
+            >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'solid'}>
                 Solid
               </ReactToolbar.ToggleItem>

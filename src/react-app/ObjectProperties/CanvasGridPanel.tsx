@@ -9,6 +9,7 @@ import { TbGrid3X3, TbGridDots } from 'react-icons/tb';
 import { KeyMap } from '../../base-ui/keyMap.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { assertGridType } from '../../model-viewer/diagramProps.ts';
 
 export const CanvasGridPanel = (props: Props) => {
   const $d = props.diagram;
@@ -52,7 +53,14 @@ export const CanvasGridPanel = (props: Props) => {
           />
           &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
-            <ReactToolbar.ToggleGroup type={'single'} value={type} onValueChange={setType}>
+            <ReactToolbar.ToggleGroup
+              type={'single'}
+              value={type}
+              onValueChange={v => {
+                assertGridType(v);
+                setType(v);
+              }}
+            >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'lines'}>
                 <TbGrid3X3 />
               </ReactToolbar.ToggleItem>
@@ -82,7 +90,10 @@ export const CanvasGridPanel = (props: Props) => {
             <ReactToolbar.ToggleGroup
               type={'single'}
               value={majorType}
-              onValueChange={setMajorType}
+              onValueChange={v => {
+                assertGridType(v);
+                setMajorType(v);
+              }}
             >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'lines'}>
                 <TbGrid3X3 />

@@ -17,10 +17,10 @@ export const NodeStrokePanel = (props: Props) => {
   const [strokeColor, setStrokeColor] = useNodeProperty('stroke.color', $d, 'transparent');
   const [pattern, setPattern] = useNodeProperty('stroke.pattern', $d, 'SOLID');
 
-  const [strokSize, setStrokeSize] = useNodeProperty('stroke.patternSize', $d, '100');
-  const [strokeSpacing, setStrokeSpacing] = useNodeProperty('stroke.patternSpacing', $d, '100');
-  const [strokeWidth, setStrokeWidth] = useNodeProperty('stroke.width', $d, '1');
-  const [enabled, setEnabled] = useNodeProperty<boolean>('stroke.enabled', $d, true);
+  const [strokSize, setStrokeSize] = useNodeProperty('stroke.patternSize', $d, 100);
+  const [strokeSpacing, setStrokeSpacing] = useNodeProperty('stroke.patternSpacing', $d, 100);
+  const [strokeWidth, setStrokeWidth] = useNodeProperty('stroke.width', $d, 1);
+  const [enabled, setEnabled] = useNodeProperty('stroke.enabled', $d, true);
 
   return (
     <ToolWindowPanel
@@ -51,9 +51,7 @@ export const NodeStrokePanel = (props: Props) => {
               value={strokeWidth ?? 1}
               min={1}
               style={{ width: '35px' }}
-              onChange={ev => {
-                setStrokeWidth(ev?.toString());
-              }}
+              onChange={setStrokeWidth}
             />
             &nbsp;
             <DashSelector
@@ -80,9 +78,7 @@ export const NodeStrokePanel = (props: Props) => {
                       value={strokSize ?? 100}
                       min={1}
                       style={{ width: '45px' }}
-                      onChange={ev => {
-                        setStrokeSize(ev?.toString());
-                      }}
+                      onChange={setStrokeSize}
                     />
                     &nbsp;
                     <NumberInput
@@ -91,9 +87,7 @@ export const NodeStrokePanel = (props: Props) => {
                       value={strokeSpacing ?? 100}
                       min={1}
                       style={{ width: '45px' }}
-                      onChange={ev => {
-                        setStrokeSpacing(ev?.toString());
-                      }}
+                      onChange={setStrokeSpacing}
                     />
                     <Popover.Close className="cmp-popover__close" aria-label="Close">
                       <TbX />

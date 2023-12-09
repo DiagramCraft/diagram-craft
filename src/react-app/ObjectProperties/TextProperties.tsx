@@ -19,6 +19,7 @@ import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icon
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { NumberInput } from '../NumberInput.tsx';
+import { assertHAlign, assertVAlign } from '../../model-viewer/diagramProps.ts';
 
 const FONTS = {
   Times: 'Times',
@@ -38,22 +39,18 @@ export const TextProperties = (props: Props) => {
 
   // TODO: Should be useElementProperty
   const [font, setFont] = useNodeProperty('text.font', $d, 'Arial');
-  const [fontSize, setFontSize] = useNodeProperty('text.fontSize', $d, '10');
+  const [fontSize, setFontSize] = useNodeProperty('text.fontSize', $d, 10);
   const [isBold, setIsBold] = useNodeProperty('text.bold', $d, false);
   const [isItalic, setIsItalic] = useNodeProperty('text.italic', $d, false);
-  const [textDecoration, setTextDecoration] = useNodeProperty<
-    NonNullable<NodeProps['text']>['textDecoration']
-  >('text.textDecoration', $d, undefined);
-  const [textTransform, setTextTransform] = useNodeProperty<
-    NonNullable<NodeProps['text']>['textTransform']
-  >('text.textTransform', $d, undefined);
-  const [color, setColor] = useNodeProperty<string>('text.color', $d, undefined);
-  const [align, setAlign] = useNodeProperty<string>('text.align', $d, 'center');
-  const [valign, setVAlign] = useNodeProperty<string>('text.valign', $d, 'middle');
-  const [top, setTop] = useNodeProperty<string>('text.top', $d, '0');
-  const [left, setLeft] = useNodeProperty<string>('text.left', $d, '0');
-  const [bottom, setBottom] = useNodeProperty<string>('text.bottom', $d, '0');
-  const [right, setRight] = useNodeProperty<string>('text.right', $d, '0');
+  const [textDecoration, setTextDecoration] = useNodeProperty('text.textDecoration', $d, undefined);
+  const [textTransform, setTextTransform] = useNodeProperty('text.textTransform', $d, undefined);
+  const [color, setColor] = useNodeProperty('text.color', $d, undefined);
+  const [align, setAlign] = useNodeProperty('text.align', $d, 'center');
+  const [valign, setVAlign] = useNodeProperty('text.valign', $d, 'middle');
+  const [top, setTop] = useNodeProperty('text.top', $d, 0);
+  const [left, setLeft] = useNodeProperty('text.left', $d, 0);
+  const [bottom, setBottom] = useNodeProperty('text.bottom', $d, 0);
+  const [right, setRight] = useNodeProperty('text.right', $d, 0);
 
   return (
     <div className={'cmp-labeled-table'}>
@@ -66,9 +63,7 @@ export const TextProperties = (props: Props) => {
             value={fontSize ?? 10}
             min={1}
             style={{ width: '45px' }}
-            onChange={ev => {
-              setFontSize(ev?.toString());
-            }}
+            onChange={setFontSize}
           />
           &nbsp;
           <Select.Root value={font} onValueChange={setFont}>
@@ -184,7 +179,14 @@ export const TextProperties = (props: Props) => {
       <div className={'cmp-labeled-table__value'}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup type={'single'} value={align} onValueChange={setAlign}>
+            <ReactToolbar.ToggleGroup
+              type={'single'}
+              value={align}
+              onValueChange={v => {
+                assertHAlign(v);
+                setAlign(v);
+              }}
+            >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'left'}>
                 <TbAlignLeft />
               </ReactToolbar.ToggleItem>
@@ -198,7 +200,14 @@ export const TextProperties = (props: Props) => {
           </ReactToolbar.Root>
           &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup type={'single'} value={valign} onValueChange={setVAlign}>
+            <ReactToolbar.ToggleGroup
+              type={'single'}
+              value={valign}
+              onValueChange={v => {
+                assertVAlign(v);
+                setVAlign(v);
+              }}
+            >
               <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'top'}>
                 <RxTextAlignTop />
               </ReactToolbar.ToggleItem>
@@ -237,9 +246,7 @@ export const TextProperties = (props: Props) => {
             value={top ?? ''}
             min={0}
             style={{ gridArea: 'top', width: '100%' }}
-            onChange={ev => {
-              setTop(ev?.toString());
-            }}
+            onChange={setTop}
           />
           <NumberInput
             validUnits={['px']}
@@ -247,9 +254,7 @@ export const TextProperties = (props: Props) => {
             value={left ?? ''}
             min={0}
             style={{ gridArea: 'left', width: '100%' }}
-            onChange={ev => {
-              setLeft(ev?.toString());
-            }}
+            onChange={setLeft}
           />
           <NumberInput
             validUnits={['px']}
@@ -257,9 +262,7 @@ export const TextProperties = (props: Props) => {
             value={bottom ?? ''}
             min={0}
             style={{ gridArea: 'bottom', width: '100%' }}
-            onChange={ev => {
-              setBottom(ev?.toString());
-            }}
+            onChange={setBottom}
           />
           <NumberInput
             validUnits={['px']}
@@ -267,9 +270,7 @@ export const TextProperties = (props: Props) => {
             value={right ?? ''}
             min={0}
             style={{ gridArea: 'right', width: '100%' }}
-            onChange={ev => {
-              setRight(ev?.toString());
-            }}
+            onChange={setRight}
           />
         </div>
       </div>

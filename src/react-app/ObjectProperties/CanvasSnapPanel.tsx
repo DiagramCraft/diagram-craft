@@ -55,6 +55,7 @@ export const CanvasSnapPanel = (props: Props) => {
           <NumberInput
             style={{ width: '45px' }}
             value={(threshold ?? 0)?.toString()}
+            /* @ts-ignore */
             onChange={setThreshold}
             validUnits={['px']}
             defaultUnit={'px'}

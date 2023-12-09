@@ -9,12 +9,12 @@ import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 export const ShadowPanel = (props: Props) => {
   const $d = props.diagram;
 
-  const [color, setColor] = useNodeProperty<string | undefined>('shadow.color', $d, 'black');
-  const [opacity, setOpacity] = useNodeProperty<number | undefined>('shadow.opacity', $d, 0.5);
-  const [x, setX] = useNodeProperty<number | undefined>('shadow.x', $d, 5);
-  const [y, setY] = useNodeProperty<number | undefined>('shadow.y', $d, 5);
-  const [blur, setBlur] = useNodeProperty<number | undefined>('shadow.blur', $d, 5);
-  const [enabled, setEnabled] = useNodeProperty<boolean | undefined>('shadow.enabled', $d, false);
+  const [color, setColor] = useNodeProperty('shadow.color', $d, 'black');
+  const [opacity, setOpacity] = useNodeProperty('shadow.opacity', $d, 0.5);
+  const [x, setX] = useNodeProperty('shadow.x', $d, 5);
+  const [y, setY] = useNodeProperty('shadow.y', $d, 5);
+  const [blur, setBlur] = useNodeProperty('shadow.blur', $d, 5);
+  const [enabled, setEnabled] = useNodeProperty('shadow.enabled', $d, false);
 
   return (
     <ToolWindowPanel
