@@ -10,6 +10,8 @@ export type UndoableAction = {
 
   canUndo: boolean;
   canRedo: boolean;
+
+  merge?: (other: UndoableAction) => boolean;
 };
 
 export type UndoEvents = {
@@ -32,6 +34,13 @@ export class UndoManager extends EventEmitter<UndoEvents> {
 
   add(action: UndoableAction) {
     this.clearPending();
+
+    if (this.undoableActions.length > 0) {
+      const lastAction = this.undoableActions.at(-1)!;
+      if (lastAction.merge?.(action)) {
+        return;
+      }
+    }
 
     this.undoableActions.push(action);
     this.redoableActions = [];
