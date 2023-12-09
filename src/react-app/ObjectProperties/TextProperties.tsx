@@ -38,19 +38,19 @@ export const TextProperties = (props: Props) => {
   const $d = props.diagram;
 
   // TODO: Should be useElementProperty
-  const [font, setFont] = useNodeProperty('text.font', $d, 'Arial');
-  const [fontSize, setFontSize] = useNodeProperty('text.fontSize', $d, 10);
-  const [isBold, setIsBold] = useNodeProperty('text.bold', $d, false);
-  const [isItalic, setIsItalic] = useNodeProperty('text.italic', $d, false);
-  const [textDecoration, setTextDecoration] = useNodeProperty('text.textDecoration', $d, undefined);
-  const [textTransform, setTextTransform] = useNodeProperty('text.textTransform', $d, undefined);
-  const [color, setColor] = useNodeProperty('text.color', $d, undefined);
-  const [align, setAlign] = useNodeProperty('text.align', $d, 'center');
-  const [valign, setVAlign] = useNodeProperty('text.valign', $d, 'middle');
-  const [top, setTop] = useNodeProperty('text.top', $d, 0);
-  const [left, setLeft] = useNodeProperty('text.left', $d, 0);
-  const [bottom, setBottom] = useNodeProperty('text.bottom', $d, 0);
-  const [right, setRight] = useNodeProperty('text.right', $d, 0);
+  const [font, setFont] = useNodeProperty($d, 'text.font', 'Arial');
+  const [fontSize, setFontSize] = useNodeProperty($d, 'text.fontSize', 10);
+  const [isBold, setIsBold] = useNodeProperty($d, 'text.bold', false);
+  const [isItalic, setIsItalic] = useNodeProperty($d, 'text.italic', false);
+  const [textDecoration, setTextDecoration] = useNodeProperty($d, 'text.textDecoration', undefined);
+  const [textTransform, setTextTransform] = useNodeProperty($d, 'text.textTransform', undefined);
+  const [color, setColor] = useNodeProperty($d, 'text.color', undefined);
+  const [align, setAlign] = useNodeProperty($d, 'text.align', 'center');
+  const [valign, setVAlign] = useNodeProperty($d, 'text.valign', 'middle');
+  const [top, setTop] = useNodeProperty($d, 'text.top', 0);
+  const [left, setLeft] = useNodeProperty($d, 'text.left', 0);
+  const [bottom, setBottom] = useNodeProperty($d, 'text.bottom', 0);
+  const [right, setRight] = useNodeProperty($d, 'text.right', 0);
 
   return (
     <div className={'cmp-labeled-table'}>

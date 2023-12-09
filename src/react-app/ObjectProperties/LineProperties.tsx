@@ -12,21 +12,21 @@ import { assertEdgeType } from '../../model-viewer/diagramProps.ts';
 export const LineProperties = (props: Props) => {
   const $d = props.diagram;
 
-  const [strokeColor, setStrokeColor] = useEdgeProperty('stroke.color', $d, 'transparent');
-  const [fillColor, setFillColor] = useEdgeProperty('fill.color', $d, undefined);
-  const [pattern, setPattern] = useEdgeProperty('stroke.pattern', $d, 'SOLID');
+  const [strokeColor, setStrokeColor] = useEdgeProperty($d, 'stroke.color', 'transparent');
+  const [fillColor, setFillColor] = useEdgeProperty($d, 'fill.color', undefined);
+  const [pattern, setPattern] = useEdgeProperty($d, 'stroke.pattern', 'SOLID');
 
-  const [strokSize, setStrokeSize] = useEdgeProperty('stroke.patternSize', $d, 100);
-  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty('stroke.patternSpacing', $d, 100);
-  const [strokeWidth, setStrokeWidth] = useEdgeProperty('stroke.width', $d, 1);
+  const [strokSize, setStrokeSize] = useEdgeProperty($d, 'stroke.patternSize', 100);
+  const [strokeSpacing, setStrokeSpacing] = useEdgeProperty($d, 'stroke.patternSpacing', 100);
+  const [strokeWidth, setStrokeWidth] = useEdgeProperty($d, 'stroke.width', 1);
 
-  const [type, setType] = useEdgeProperty('type', $d, 'straight');
+  const [type, setType] = useEdgeProperty($d, 'type', 'straight');
 
-  const [startType, setStartType] = useEdgeProperty('arrow.start.type', $d, undefined);
-  const [startSize, setStartSize] = useEdgeProperty('arrow.start.size', $d, 100);
-  const [endType, setEndType] = useEdgeProperty('arrow.end.type', $d, undefined);
+  const [startType, setStartType] = useEdgeProperty($d, 'arrow.start.type', undefined);
+  const [startSize, setStartSize] = useEdgeProperty($d, 'arrow.start.size', 100);
+  const [endType, setEndType] = useEdgeProperty($d, 'arrow.end.type', undefined);
 
-  const [endSize, setEndSize] = useEdgeProperty('arrow.end.size', $d, 100);
+  const [endSize, setEndSize] = useEdgeProperty($d, 'arrow.end.size', 100);
 
   return (
     <div>

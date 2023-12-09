@@ -68,14 +68,14 @@ export class DynamicAccessor<T> {
 }
 
 type PropertyHook<T> = <K extends PropPath<T>, V extends PropPathValue<T, K>, DV extends V>(
-  propertyPath: K,
   diagram: EditableDiagram,
+  propertyPath: K,
   defaultValue: DV
 ) => [V, (value: V) => void];
 
 type PropertyArrayHook<T> = <K extends PropPath<T>, V extends PropPathValue<T, K>, DV extends V>(
-  propertyPath: K,
   diagram: EditableDiagram,
+  propertyPath: K,
   defaultValue: DV
 ) => [V, (value: V) => void, boolean];
 
@@ -87,7 +87,7 @@ const makePropertyHook = <
   base: (diagram: EditableDiagram) => T,
   subscribe: (diagram: EditableDiagram, handler: () => void) => void
 ): PropertyHook<T> => {
-  return ((path: K, diagram: EditableDiagram, defaultValue: V): [V, (value: V) => void] => {
+  return ((diagram: EditableDiagram, path: K, defaultValue: V): [V, (value: V) => void] => {
     const accessor = new DynamicAccessor<T>();
     const [value, setValue] = useState<V>(defaultValue);
     const handler = () => {
@@ -121,8 +121,8 @@ const makePropertyArrayHook = <
   subscribe: (diagram: EditableDiagram, handler: () => void) => void
 ): PropertyArrayHook<T> => {
   return ((
-    path: K,
     diagram: EditableDiagram,
+    path: K,
     defaultValue: V
   ): [V, (value: V) => void, boolean] => {
     const accessor = new DynamicAccessor<T>();

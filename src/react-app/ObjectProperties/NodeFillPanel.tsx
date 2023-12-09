@@ -10,9 +10,9 @@ import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { assertFillType } from '../../model-viewer/diagramProps.ts';
 
 export const NodeFillPanel = (props: Props) => {
-  const [fill, setFill] = useNodeProperty('fill.color', props.diagram, 'transparent');
-  const [color2, setColor2] = useNodeProperty('fill.color2', props.diagram, 'transparent');
-  const [type, setType] = useNodeProperty('fill.type', props.diagram, 'solid');
+  const [fill, setFill] = useNodeProperty(props.diagram, 'fill.color', 'transparent');
+  const [color2, setColor2] = useNodeProperty(props.diagram, 'fill.color2', 'transparent');
+  const [type, setType] = useNodeProperty(props.diagram, 'fill.type', 'solid');
   const [open, setOpen] = React.useState(false);
 
   return (

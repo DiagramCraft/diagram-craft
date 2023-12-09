@@ -14,13 +14,13 @@ export const NodeStrokePanel = (props: Props) => {
 
   const $d = props.diagram;
 
-  const [strokeColor, setStrokeColor] = useNodeProperty('stroke.color', $d, 'transparent');
-  const [pattern, setPattern] = useNodeProperty('stroke.pattern', $d, 'SOLID');
+  const [strokeColor, setStrokeColor] = useNodeProperty($d, 'stroke.color', 'transparent');
+  const [pattern, setPattern] = useNodeProperty($d, 'stroke.pattern', 'SOLID');
 
-  const [strokSize, setStrokeSize] = useNodeProperty('stroke.patternSize', $d, 100);
-  const [strokeSpacing, setStrokeSpacing] = useNodeProperty('stroke.patternSpacing', $d, 100);
-  const [strokeWidth, setStrokeWidth] = useNodeProperty('stroke.width', $d, 1);
-  const [enabled, setEnabled] = useNodeProperty('stroke.enabled', $d, true);
+  const [strokSize, setStrokeSize] = useNodeProperty($d, 'stroke.patternSize', 100);
+  const [strokeSpacing, setStrokeSpacing] = useNodeProperty($d, 'stroke.patternSpacing', 100);
+  const [strokeWidth, setStrokeWidth] = useNodeProperty($d, 'stroke.width', 1);
+  const [enabled, setEnabled] = useNodeProperty($d, 'stroke.enabled', true);
 
   return (
     <ToolWindowPanel

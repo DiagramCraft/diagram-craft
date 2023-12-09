@@ -17,13 +17,13 @@ export const CanvasGridPanel = (props: Props) => {
   const redraw = useRedraw();
   useEventListener('canvaschanged', redraw, $d);
 
-  const [size, setSize] = useDiagramProperty('grid.size', $d, 10);
-  const [majorCount, setMajorCount] = useDiagramProperty('grid.majorCount', $d, 5);
-  const [color, setColor] = useDiagramProperty('grid.color', $d, '#f5f5f4');
-  const [majorColor, setMajorColor] = useDiagramProperty('grid.majorColor', $d, '#e7e5e4');
-  const [type, setType] = useDiagramProperty('grid.type', $d, 'lines');
-  const [majorType, setMajorType] = useDiagramProperty('grid.majorType', $d, 'lines');
-  const [enabled, setEnabled] = useDiagramProperty('grid.enabled', $d, true);
+  const [size, setSize] = useDiagramProperty($d, 'grid.size', 10);
+  const [majorCount, setMajorCount] = useDiagramProperty($d, 'grid.majorCount', 5);
+  const [color, setColor] = useDiagramProperty($d, 'grid.color', '#f5f5f4');
+  const [majorColor, setMajorColor] = useDiagramProperty($d, 'grid.majorColor', '#e7e5e4');
+  const [type, setType] = useDiagramProperty($d, 'grid.type', 'lines');
+  const [majorType, setMajorType] = useDiagramProperty($d, 'grid.majorType', 'lines');
+  const [enabled, setEnabled] = useDiagramProperty($d, 'grid.enabled', true);
 
   return (
     <ToolWindowPanel
