@@ -106,8 +106,8 @@ export const TextProperties = (props: Props) => {
             <ReactToolbar.ToggleGroup
               type={'multiple'}
               value={Object.entries({
-                bold: isBold,
-                italic: isItalic,
+                bold: isBold.val,
+                italic: isItalic.val,
                 underline: textDecoration.val === 'underline',
                 strikethrough: textDecoration.val === 'line-through'
               })

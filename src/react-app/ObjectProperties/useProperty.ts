@@ -225,6 +225,3 @@ export const useElementProperty: PropertyArrayHook<EditableDiagram, ElementProps
   );
 
 // TODO: Add undo
-
-// TODO: Threshold for grid
-// TODO: Bug: toggle font bold/italic

@@ -52,7 +52,7 @@ export const CanvasSnapPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value'}>
           <NumberInput
             style={{ width: '45px' }}
-            value={(threshold ?? 0)?.toString()}
+            value={(threshold.val ?? 0)?.toString()}
             /* @ts-ignore */
             onChange={threshold.set}
             validUnits={['px']}
