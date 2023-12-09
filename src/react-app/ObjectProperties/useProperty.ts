@@ -67,128 +67,147 @@ export class DynamicAccessor<T> {
   }
 }
 
-type PropertyHook<T> = <K extends PropPath<T>, V extends PropPathValue<T, K>, DV extends V>(
-  diagram: EditableDiagram,
+type PropertyHook<TBase, TObj> = <
+  K extends PropPath<TObj>,
+  V extends PropPathValue<TObj, K>,
+  DV extends V
+>(
+  obj: TBase,
   propertyPath: K,
   defaultValue: DV
 ) => [V, (value: V) => void];
 
-type PropertyArrayHook<T> = <K extends PropPath<T>, V extends PropPathValue<T, K>, DV extends V>(
-  diagram: EditableDiagram,
+type PropertyArrayHook<TBase, TObj> = <
+  K extends PropPath<TObj>,
+  V extends PropPathValue<TObj, K>,
+  DV extends V
+>(
+  obj: TBase,
   propertyPath: K,
   defaultValue: DV
 ) => [V, (value: V) => void, boolean];
 
 const makePropertyHook = <
-  T,
-  K extends PropPath<T> = PropPath<T>,
-  V extends PropPathValue<T, K> = PropPathValue<T, K>
+  TBase,
+  TObj,
+  TPath extends PropPath<TObj> = PropPath<TObj>,
+  TValue extends PropPathValue<TObj, TPath> = PropPathValue<TObj, TPath>
 >(
-  base: (diagram: EditableDiagram) => T,
-  subscribe: (diagram: EditableDiagram, handler: () => void) => void
-): PropertyHook<T> => {
-  return ((diagram: EditableDiagram, path: K, defaultValue: V): [V, (value: V) => void] => {
-    const accessor = new DynamicAccessor<T>();
-    const [value, setValue] = useState<V>(defaultValue);
+  getObj: (obj: TBase) => TObj,
+  subscribe: (obj: TBase, handler: () => void) => void,
+  commit: (obj: TBase) => void = () => {}
+): PropertyHook<TBase, TObj> => {
+  return ((obj: TBase, path: TPath, defaultValue: TValue): [TValue, (value: TValue) => void] => {
+    const accessor = new DynamicAccessor<TObj>();
+    const [value, setValue] = useState<TValue>(defaultValue);
     const handler = () => {
-      const value = accessor.get(base(diagram), path);
+      const value = accessor.get(getObj(obj), path);
 
       if (value === undefined || value === null) return setValue(defaultValue);
-      else return setValue(value as unknown as V);
+      else return setValue(value as unknown as TValue);
     };
-    subscribe(diagram, handler);
+    subscribe(obj, handler);
     useEffect(handler, []);
 
     return [
       value,
       v => {
-        accessor.set(base(diagram), path, v);
-        diagram.update();
+        accessor.set(getObj(obj), path, v);
+        commit(obj);
         setValue(v);
       }
     ];
-  }) as PropertyHook<T>;
+  }) as PropertyHook<TBase, TObj>;
 };
 
 const makePropertyArrayHook = <
-  T,
-  I,
-  K extends PropPath<T> = PropPath<T>,
-  V extends PropPathValue<T, K> = PropPathValue<T, K>
+  TBase,
+  TItem,
+  TObj,
+  TPath extends PropPath<TObj> = PropPath<TObj>,
+  TValue extends PropPathValue<TObj, TPath> = PropPathValue<TObj, TPath>
 >(
-  getArr: (diagram: EditableDiagram) => I[],
-  base: (e: I) => T,
-  subscribe: (diagram: EditableDiagram, handler: () => void) => void
-): PropertyArrayHook<T> => {
+  getArr: (obj: TBase) => TItem[],
+  getObj: (e: TItem) => TObj,
+  subscribe: (obj: TBase, handler: () => void) => void,
+  commit: (obj: TBase, item: TItem) => void
+): PropertyArrayHook<TBase, TObj> => {
   return ((
-    diagram: EditableDiagram,
-    path: K,
-    defaultValue: V
-  ): [V, (value: V) => void, boolean] => {
-    const accessor = new DynamicAccessor<T>();
-    const [value, setValue] = useState<V>(defaultValue);
+    obj: TBase,
+    path: TPath,
+    defaultValue: TValue
+  ): [TValue, (value: TValue) => void, boolean] => {
+    const accessor = new DynamicAccessor<TObj>();
+    const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
     const handler = () => {
-      const arr = unique(getArr(diagram).map(obj => accessor.get(base(obj), path)));
+      const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj), path)));
 
-      if (arr.length === 1) setValue((arr[0]! as V) ?? defaultValue);
+      if (arr.length === 1) setValue((arr[0]! as TValue) ?? defaultValue);
       else setValue(defaultValue);
 
       setMultiple(arr.length > 1);
     };
-    subscribe(diagram, handler);
+    subscribe(obj, handler);
     useEffect(handler, []);
 
     return [
       value,
       v => {
-        getArr(diagram).forEach(n => {
-          accessor.set(base(n), path, v);
-          diagram.updateElement(n as DiagramEdge | DiagramNode);
+        getArr(obj).forEach(n => {
+          accessor.set(getObj(n), path, v);
+          commit(obj, n);
         });
         setValue(v);
       },
       multiple
     ];
-  }) as PropertyArrayHook<T>;
+  }) as PropertyArrayHook<TBase, TObj>;
 };
 
-export const useDiagramProperty: PropertyHook<DiagramProps> = makePropertyHook<DiagramProps>(
+export const useDiagramProperty: PropertyHook<EditableDiagram, DiagramProps> = makePropertyHook<
+  EditableDiagram,
+  DiagramProps
+>(
   diagram => diagram.props,
   (diagram, handler) => {
     useEventListener('change', handler, diagram);
-  }
+  },
+  diagram => diagram.update()
 );
 
-export const useEdgeProperty: PropertyArrayHook<EdgeProps> = makePropertyArrayHook<
-  EdgeProps,
-  DiagramEdge
+export const useEdgeProperty: PropertyArrayHook<EditableDiagram, EdgeProps> = makePropertyArrayHook<
+  EditableDiagram,
+  DiagramEdge,
+  EdgeProps
 >(
   diagram => diagram.selectionState.edges,
   edge => edge.props,
   (diagram, handler) => {
     useEventListener('change', handler, diagram.selectionState);
-  }
+  },
+  (diagram, edge) => diagram.updateElement(edge)
 );
 
-export const useNodeProperty: PropertyArrayHook<NodeProps> = makePropertyArrayHook<
-  NodeProps,
-  DiagramNode
+export const useNodeProperty: PropertyArrayHook<EditableDiagram, NodeProps> = makePropertyArrayHook<
+  EditableDiagram,
+  DiagramNode,
+  NodeProps
 >(
   diagram => diagram.selectionState.nodes,
   node => node.props,
   (diagram, handler) => {
     useEventListener('change', handler, diagram.selectionState);
-  }
+  },
+  (diagram, node) => diagram.updateElement(node)
 );
 
-export const useElementProperty: PropertyArrayHook<ElementProps> = makePropertyArrayHook<
-  ElementProps,
-  DiagramEdge | DiagramNode
->(
-  diagram => diagram.selectionState.elements,
-  element => element.props,
-  (diagram, handler) => {
-    useEventListener('change', handler, diagram.selectionState);
-  }
-);
+export const useElementProperty: PropertyArrayHook<EditableDiagram, ElementProps> =
+  makePropertyArrayHook<EditableDiagram, DiagramEdge | DiagramNode, ElementProps>(
+    diagram => diagram.selectionState.elements,
+    element => element.props,
+    (diagram, handler) => {
+      useEventListener('change', handler, diagram.selectionState);
+    },
+    (diagram, element) => diagram.updateElement(element)
+  );
