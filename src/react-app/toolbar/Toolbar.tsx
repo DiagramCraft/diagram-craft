@@ -21,6 +21,8 @@ import { NodeFillToolbarButton } from '../ObjectProperties/NodeFillToolbarButton
 import { ShadowToolbarButton } from '../ObjectProperties/ShadowToolbarButton.tsx';
 import { NodeStrokeToolbarButton } from '../ObjectProperties/NodeStrokeToolbarButton.tsx';
 import { ActionToggleButton } from './ActionToggleButton.tsx';
+import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton.tsx';
+import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton.tsx';
 
 export const Toolbar = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
@@ -38,7 +40,10 @@ export const Toolbar = (props: Props) => {
         <>
           <NodeFillToolbarButton diagram={props.diagram} />
           <NodeStrokeToolbarButton diagram={props.diagram} />
+          <TextToolbarButton diagram={props.diagram} />
           <ShadowToolbarButton diagram={props.diagram} />
+
+          <CustomPropertiesToolbarButton diagram={props.diagram} />
 
           <ReactToolbar.Separator className="cmp-toolbar__separator" />
 

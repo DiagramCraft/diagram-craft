@@ -6,9 +6,9 @@ import { AccordionTrigger } from '../AccordionTrigger.tsx';
 import { AccordionContent } from '../AccordionContext.tsx';
 import { LineProperties } from './LineProperties.tsx';
 import { NodeFillPanel } from './NodeFillPanel.tsx';
-import { TextProperties } from './TextProperties.tsx';
+import { TextPanel } from './TextPanel.tsx';
 import { TransformProperties } from './TransformProperties.tsx';
-import { CustomProperties } from './CustomProperties.tsx';
+import { CustomPropertiesPanel } from './CustomPropertiesPanel.tsx';
 import { ShadowPanel } from './ShadowPanel.tsx';
 import { CanvasProperties } from './CanvasProperties.tsx';
 import { CanvasGuidesProperties } from './CanvasGuidesProperties.tsx';
@@ -51,7 +51,8 @@ export const ObjectProperties = (props: Props) => {
           'snap',
           'grid',
           'canvas',
-          'snap'
+          'snap',
+          'custom'
         ]}
       >
         {(type === 'node' || type === 'mixed') && (
@@ -62,12 +63,8 @@ export const ObjectProperties = (props: Props) => {
 
             <NodeStrokePanel diagram={props.diagram} />
 
-            <Accordion.Item className="cmp-accordion__item" value="text">
-              <AccordionTrigger>Text</AccordionTrigger>
-              <AccordionContent>
-                <TextProperties diagram={props.diagram} />
-              </AccordionContent>
-            </Accordion.Item>
+            <TextPanel diagram={props.diagram} />
+
             <Accordion.Item className="cmp-accordion__item" value="transform">
               <AccordionTrigger>Transform</AccordionTrigger>
               <AccordionContent>
@@ -75,7 +72,7 @@ export const ObjectProperties = (props: Props) => {
               </AccordionContent>
             </Accordion.Item>
 
-            <CustomProperties diagram={props.diagram} />
+            <CustomPropertiesPanel diagram={props.diagram} />
           </>
         )}
 

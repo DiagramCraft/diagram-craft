@@ -9,7 +9,7 @@ export const ToolbarButtonWithPopover = (props: Props) => {
     <>
       <Popover.Root>
         <Popover.Trigger asChild>
-          <ReactToolbar.Button className="cmp-toolbar__button">
+          <ReactToolbar.Button className="cmp-toolbar__button" disabled={props.disabled}>
             <props.icon />
           </ReactToolbar.Button>
         </Popover.Trigger>
@@ -30,4 +30,5 @@ export const ToolbarButtonWithPopover = (props: Props) => {
 type Props = {
   children: React.ReactNode;
   icon: IconType;
+  disabled?: boolean;
 };

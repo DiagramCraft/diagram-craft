@@ -1,18 +1,18 @@
-import { TbBorderStyle2, TbX } from 'react-icons/tb';
+import { TbTextSize, TbX } from 'react-icons/tb';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { useNodeProperty } from './useProperty.ts';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { useNodeProperty } from './useProperty.ts';
-import { NodeStrokePanel } from './NodeStrokePanel.tsx';
+import { TextPanel } from './TextPanel.tsx';
 
-export const NodeStrokeToolbarButton = (props: Props) => {
-  const fill = useNodeProperty(props.diagram, 'stroke.color', 'transparent');
+export const TextToolbarButton = (props: Props) => {
+  const fill = useNodeProperty(props.diagram, 'text.color', 'transparent');
 
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
         <ReactToolbar.Button className="cmp-toolbar__button">
-          <TbBorderStyle2 />
+          <TbTextSize />
           <div
             style={{
               marginLeft: '5px',
@@ -28,7 +28,7 @@ export const NodeStrokeToolbarButton = (props: Props) => {
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <NodeStrokePanel diagram={props.diagram} mode={'panel'} />
+          <TextPanel diagram={props.diagram} mode={'panel'} />
           <Popover.Close className="cmp-popover__close" aria-label="Close">
             <TbX />
           </Popover.Close>
