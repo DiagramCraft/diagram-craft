@@ -95,10 +95,12 @@ const App = () => {
   const contextMenuTarget = useRef<
     (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
   >(null);
+
+  const svgRef = useRef<SVGSVGElement>(null);
   /*
-  useEffect(() => {
-    perftest(new BezierPerformanceTest());
-  }, []);
+useEffect(() => {
+  perftest(new BezierPerformanceTest());
+}, []);
 */
   const actionMap = makeActionMap(defaultAppActions)({ diagram: $d });
   const keyMap = defaultMacKeymap;
@@ -208,12 +210,13 @@ const App = () => {
             </SideBar>
 
             <div id="canvas-area" className={'light-theme'}>
-              <Ruler orientation={'horizontal'} diagram={$d} />
-              <Ruler orientation={'vertical'} diagram={$d} />
+              <Ruler orientation={'horizontal'} diagram={$d} svgRef={svgRef} />
+              <Ruler orientation={'vertical'} diagram={$d} svgRef={svgRef} />
 
               <ContextMenu.Root>
                 <ContextMenu.Trigger asChild={true}>
                   <EditableCanvas
+                    ref={svgRef}
                     key={$d.id}
                     className={'canvas'}
                     diagram={$d}

@@ -1,7 +1,8 @@
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
-import { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { EventHelper } from '../base-ui/eventHelper.ts';
 
 type Tick = {
   coord: number;
@@ -13,9 +14,23 @@ export const Ruler = (props: Props) => {
   const viewbox = props.diagram.viewBox;
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const [cursor, setCursor] = useState(0);
+
   useEventListener('viewbox', redraw, props.diagram.viewBox);
   useEventListener('canvaschanged', redraw, props.diagram);
   useEventListener('change', redraw, props.diagram.selectionState);
+
+  useEffect(() => {
+    const handler = (e: SVGSVGElementEventMap['mousemove']) => {
+      setCursor(EventHelper.point(e)[props.orientation === 'horizontal' ? 'x' : 'y']);
+    };
+    if (props.diagram.props.ruler?.enabled !== false) {
+      props.svgRef.current?.addEventListener('mousemove', handler);
+    }
+    return () => {
+      props.svgRef.current?.removeEventListener('mousemove', handler);
+    };
+  }, [props.diagram.props.ruler?.enabled, props.orientation, props.svgRef, viewbox]);
 
   if (props.diagram.props.ruler?.enabled === false) {
     return null;
@@ -53,7 +68,7 @@ export const Ruler = (props: Props) => {
           {ticks
             .filter((_, idx) => idx % 10 === 0)
             .map(tick => (
-              <text className={'svg-lbl'} x={tick.coord} y={9}>
+              <text key={tick.label} className={'svg-lbl'} x={tick.coord} y={9}>
                 {tick.label}
               </text>
             ))}
@@ -75,6 +90,15 @@ export const Ruler = (props: Props) => {
               />
             </>
           )}
+
+          <line
+            x1={cursor}
+            y1={-1}
+            x2={cursor}
+            y2={8}
+            style={{ stroke: 'var(--blue-11)' }}
+            strokeWidth="1"
+          />
         </svg>
       </div>
     );
@@ -110,6 +134,7 @@ export const Ruler = (props: Props) => {
             .map(tick => (
               <text
                 className={'svg-lbl'}
+                key={tick.label}
                 x={9}
                 y={tick.coord}
                 transform={`rotate(-90,9,${tick.coord})`}
@@ -135,6 +160,15 @@ export const Ruler = (props: Props) => {
               />
             </>
           )}
+
+          <line
+            x1={-1}
+            y1={cursor}
+            x2={8}
+            y2={cursor}
+            style={{ stroke: 'var(--blue-11)' }}
+            strokeWidth="1"
+          />
         </svg>
       </div>
     );
@@ -142,6 +176,7 @@ export const Ruler = (props: Props) => {
 };
 
 type Props = {
+  svgRef: React.RefObject<SVGSVGElement>;
   diagram: EditableDiagram;
   orientation: 'horizontal' | 'vertical';
 };
