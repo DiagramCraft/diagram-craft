@@ -81,9 +81,9 @@ export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
           {diagram.selectionState.elements.length > 0 && (
             <rect
               className={'svg-selection'}
-              x={toScreenX(diagram.selectionState.elements[0].bounds.pos.x)}
+              x={toScreenX(diagram.selectionState.bounds.pos.x)}
               y={-1}
-              width={diagram.selectionState.elements[0].bounds.size.w / viewbox.zoomLevel}
+              width={diagram.selectionState.bounds.size.w / viewbox.zoomLevel}
               height={16}
             />
           )}
@@ -132,8 +132,8 @@ export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
             <rect
               className={'svg-selection'}
               x={-1}
-              y={toScreenY(diagram.selectionState.elements[0].bounds.pos.y)}
-              height={diagram.selectionState.elements[0].bounds.size.h / viewbox.zoomLevel}
+              y={toScreenY(diagram.selectionState.bounds.pos.y)}
+              height={diagram.selectionState.bounds.size.h / viewbox.zoomLevel}
               width={16}
             />
           )}
