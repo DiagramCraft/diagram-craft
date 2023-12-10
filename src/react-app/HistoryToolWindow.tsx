@@ -15,7 +15,7 @@ const formatTimestamp = (ts: Date | undefined) => {
 
 export const HistoryToolWindow = (props: Props) => {
   const redraw = useRedraw();
-  useEventListener('*', redraw, props.diagram.undoManager);
+  useEventListener(props.diagram.undoManager, '*', redraw);
 
   const redoActions = props.diagram.undoManager.redoableActions;
   const undoActions = props.diagram.undoManager.undoableActions.toReversed();

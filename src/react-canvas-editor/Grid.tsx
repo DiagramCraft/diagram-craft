@@ -59,7 +59,7 @@ function vline(
 
 export const Grid = (props: Props) => {
   const redraw = useRedraw();
-  useEventListener('canvaschanged', redraw, props.diagram);
+  useEventListener(props.diagram, 'canvaschanged', redraw);
 
   const { diagram } = props;
   const { w, h } = diagram.canvas.size;

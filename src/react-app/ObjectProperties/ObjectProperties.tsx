@@ -34,7 +34,7 @@ export const ObjectProperties = (props: Props) => {
       setType('none');
     }
   };
-  useEventListener('change', callback, props.diagram.selectionState);
+  useEventListener(props.diagram.selectionState, 'change', callback);
   useEffect(callback, []);
 
   return (

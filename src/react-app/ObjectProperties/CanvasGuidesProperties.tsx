@@ -9,7 +9,7 @@ import { AccordionContent } from '../AccordionContext.tsx';
 export const CanvasGuidesProperties = (props: Props) => {
   const redraw = useRedraw();
 
-  useEventListener('canvaschanged', redraw, props.diagram);
+  useEventListener(props.diagram, 'canvaschanged', redraw);
 
   return (
     <Accordion.Item className="cmp-accordion__item" value="guides">

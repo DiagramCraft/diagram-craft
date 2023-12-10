@@ -6,7 +6,7 @@ import { DiagramEdge } from '../../model-viewer/diagramEdge.ts';
 
 export const EdgeInfoDetails = (props: { obj: DiagramEdge; diagram: EditableDiagram }) => {
   const redraw = useRedraw();
-  useEventListener('edgechanged', redraw, props.diagram);
+  useEventListener(props.diagram, 'edgechanged', redraw);
   return (
     <div style={{ margin: '-0.5rem' }}>
       <Tree>

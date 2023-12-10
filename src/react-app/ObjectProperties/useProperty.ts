@@ -17,7 +17,7 @@ export const useDiagramProperty: PropertyHook<EditableDiagram, DiagramProps> = m
 >(
   diagram => diagram.props,
   (diagram, handler) => {
-    useEventListener('canvaschanged', handler, diagram);
+    useEventListener(diagram, 'canvaschanged', handler);
   },
   diagram => diagram.update(),
   {
@@ -40,7 +40,7 @@ export const useSnapManagerProperty: PropertyHook<EditableDiagram, SnapManagerCo
   makePropertyHook<EditableDiagram, SnapManagerConfigProps>(
     diagram => diagram.snapManagerConfig,
     (diagram, handler) => {
-      useEventListener('change', handler, diagram.snapManagerConfig);
+      useEventListener(diagram.snapManagerConfig, 'change', handler);
     },
     diagram => diagram.snapManagerConfig.commit()
   );
@@ -53,7 +53,7 @@ export const useEdgeProperty: PropertyArrayHook<EditableDiagram, EdgeProps> = ma
   diagram => diagram.selectionState.edges,
   edge => edge.props,
   (diagram, handler) => {
-    useEventListener('change', handler, diagram.selectionState);
+    useEventListener(diagram.selectionState, 'change', handler);
   },
   (diagram, edge) => diagram.updateElement(edge),
   {
@@ -81,7 +81,7 @@ export const useNodeProperty: PropertyArrayHook<EditableDiagram, NodeProps> = ma
   diagram => diagram.selectionState.nodes,
   node => node.props,
   (diagram, handler) => {
-    useEventListener('change', handler, diagram.selectionState);
+    useEventListener(diagram.selectionState, 'change', handler);
   },
   (diagram, node) => diagram.updateElement(node),
   {
@@ -106,7 +106,7 @@ export const useElementProperty: PropertyArrayHook<EditableDiagram, ElementProps
     diagram => diagram.selectionState.elements,
     element => element.props,
     (diagram, handler) => {
-      useEventListener('change', handler, diagram.selectionState);
+      useEventListener(diagram.selectionState, 'change', handler);
     },
     (diagram, element) => diagram.updateElement(element),
     {

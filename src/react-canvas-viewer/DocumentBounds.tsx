@@ -9,7 +9,7 @@ export const DocumentBounds = (props: Props) => {
   const { x, y } = diagram.canvas.pos;
 
   const redraw = useRedraw();
-  useEventListener('canvaschange', redraw, props.diagram);
+  useEventListener(props.diagram, 'canvaschanged', redraw);
 
   const style: CSSProperties = {};
 

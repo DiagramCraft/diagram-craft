@@ -5,7 +5,7 @@ import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 
 export const ActionToggleButton = (props: Props) => {
   const redraw = useRedraw();
-  useEventListener('actionchanged', redraw, props.actionMap[props.action]!);
+  useEventListener(props.actionMap[props.action]!, 'actionchanged', redraw);
 
   return (
     <ReactToolbar.Button

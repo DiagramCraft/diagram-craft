@@ -15,7 +15,7 @@ export const CanvasGridPanel = (props: Props) => {
   const $d = props.diagram;
 
   const redraw = useRedraw();
-  useEventListener('canvaschanged', redraw, $d);
+  useEventListener($d, 'canvaschanged', redraw);
 
   const size = useDiagramProperty($d, 'grid.size', 10);
   const majorCount = useDiagramProperty($d, 'grid.majorCount', 5);

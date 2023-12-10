@@ -16,9 +16,9 @@ export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
 
   const [cursor, setCursor] = useState(0);
 
-  useEventListener('viewbox', redraw, diagram.viewBox);
-  useEventListener('canvaschanged', redraw, diagram);
-  useEventListener('change', redraw, diagram.selectionState);
+  useEventListener(diagram, 'canvaschanged', redraw);
+  useEventListener(diagram.viewBox, 'viewbox', redraw);
+  useEventListener(diagram.selectionState, 'change', redraw);
 
   useEffect(() => {
     const handler = (e: SVGSVGElementEventMap['mousemove']) => {

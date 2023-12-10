@@ -11,13 +11,9 @@ export const ActionToggleItem = (props: Props) => {
     actions!.setActionState(props.action, (props.actionMap[props.action] as ToggleAction)?.state);
   }, [props.action, props.actionMap, actions]);
 
-  useEventListener(
-    'actionchanged',
-    ({ action }) => {
-      actions!.setActionState(props.action, (action as ToggleAction)?.state);
-    },
-    props.actionMap[props.action]!
-  );
+  useEventListener(props.actionMap[props.action]!, 'actionchanged', ({ action }) => {
+    actions!.setActionState(props.action, (action as ToggleAction)?.state);
+  });
 
   return (
     <ReactToolbar.ToggleItem

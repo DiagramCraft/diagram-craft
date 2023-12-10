@@ -7,10 +7,13 @@ import {
 } from '../../utils/event.ts';
 import { RefObject, useEffect } from 'react';
 
-export const useEventListener = <T extends EventMap, K extends EventKey<WithWildcardEvent<T>>>(
+export const useEventListener = <
+  T extends EventMap,
+  K extends EventKey<WithWildcardEvent<T>> = EventKey<T>
+>(
+  target: EventEmitter<T>,
   eventName: K,
-  handler: EventReceiver<T[K]>,
-  target: EventEmitter<T>
+  handler: EventReceiver<WithWildcardEvent<T[K]>>
 ) => {
   useEffect(() => {
     target.on(eventName, handler);

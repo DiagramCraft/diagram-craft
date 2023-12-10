@@ -6,7 +6,7 @@ import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 export const NodeInfoDetails = (props: { obj: DiagramNode; diagram: EditableDiagram }) => {
   const redraw = useRedraw();
-  useEventListener('nodechanged', redraw, props.diagram);
+  useEventListener(props.diagram, 'nodechanged', redraw);
   return (
     <div style={{ margin: '-0.5rem' }}>
       <Tree>

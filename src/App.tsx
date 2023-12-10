@@ -73,7 +73,7 @@ const diagrams = [
 
 const DarkModeToggleButton = (props: { actionMap: Partial<ActionMap> }) => {
   const redraw = useRedraw();
-  useEventListener('actionchanged', redraw, props.actionMap['TOGGLE_DARK_MODE']!);
+  useEventListener(props.actionMap['TOGGLE_DARK_MODE']!, 'actionchanged', redraw);
   return (
     <button
       className={'cmp-toolbar__button'}

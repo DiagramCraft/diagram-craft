@@ -18,7 +18,7 @@ export interface Emitter<T extends EventMap, Q = WithWildcardEvent<T>> {
 
 export class EventEmitter<T extends EventMap, Q = WithWildcardEvent<T>> implements Emitter<T, Q> {
   private listeners: {
-    [K in keyof EventMap]?: Array<(p: EventMap[K]) => void>;
+    [K in keyof T]?: Array<(p: T[K]) => void>;
   } = {};
 
   on<K extends EventKey<Q>>(eventName: K, fn: EventReceiver<Q[K]>) {
@@ -32,6 +32,7 @@ export class EventEmitter<T extends EventMap, Q = WithWildcardEvent<T>> implemen
   // TODO: Add debounce here somehow
   emit<K extends EventKey<Q>>(eventName: K, params?: Q[K]) {
     [...(this.listeners[eventName] ?? []), ...(this.listeners['*'] ?? [])].forEach(function (fn) {
+      // @ts-ignore
       fn({ ...(params ?? {}), name: eventName });
     });
   }

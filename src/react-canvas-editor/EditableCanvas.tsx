@@ -62,31 +62,23 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   const clearSelection = debounce(() => selection.clear());
 
-  useEventListener('execute', clearSelection, diagram.undoManager);
-  useEventListener('undo', clearSelection, diagram.undoManager);
-  useEventListener('redo', clearSelection, diagram.undoManager);
+  useEventListener(diagram.undoManager, 'execute', clearSelection);
+  useEventListener(diagram.undoManager, 'undo', clearSelection);
+  useEventListener(diagram.undoManager, 'redo', clearSelection);
 
-  useEventListener(
-    'nodechanged',
-    e => {
-      nodeRefs.current[e.after.id]?.repaint();
+  useEventListener(diagram, 'nodechanged', e => {
+    nodeRefs.current[e.after.id]?.repaint();
 
-      for (const edge of e.after.listEdges(true)) {
-        edgeRefs.current[edge.id]?.repaint();
-      }
-    },
-    diagram
-  );
-  useEventListener(
-    'edgechanged',
-    e => {
-      edgeRefs.current[e.after.id]?.repaint();
-    },
-    diagram
-  );
-  useEventListener('nodeadded', redraw, diagram);
-  useEventListener('noderemoved', redraw, diagram);
-  useEventListener('canvaschanged', redraw, diagram);
+    for (const edge of e.after.listEdges(true)) {
+      edgeRefs.current[edge.id]?.repaint();
+    }
+  });
+  useEventListener(diagram, 'edgechanged', e => {
+    edgeRefs.current[e.after.id]?.repaint();
+  });
+  useEventListener(diagram, 'nodeadded', redraw);
+  useEventListener(diagram, 'noderemoved', redraw);
+  useEventListener(diagram, 'canvaschanged', redraw);
 
   const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
     if (e.element.type === 'node') {
@@ -99,17 +91,17 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   // TODO: This part we could move to Selection and SelectionMarquee without
   //       loosing any performance
   useEventListener(
+    selection,
     'change',
     debounce(() => {
       selectionRef.current?.repaint();
       selectionMarqueeRef.current?.repaint();
-    }),
-    selection
+    })
   );
 
   // This needs to stay in heter for performance reasons
-  useEventListener('add', redrawElement, selection);
-  useEventListener('remove', redrawElement, selection);
+  useEventListener(selection, 'add', redrawElement);
+  useEventListener(selection, 'remove', redrawElement);
 
   const onMouseEnter = useCallback((id: string) => drag.currentDrag()?.onDragEnter?.(id), [drag]);
 

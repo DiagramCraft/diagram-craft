@@ -24,17 +24,13 @@ import { ActionToggleButton } from './ActionToggleButton.tsx';
 
 export const Toolbar = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
-  useEventListener(
-    'change',
-    () => {
-      if (props.diagram.selectionState.elements.length > 0) {
-        setEnabled(true);
-      } else {
-        setEnabled(false);
-      }
-    },
-    props.diagram.selectionState
-  );
+  useEventListener(props.diagram.selectionState, 'change', () => {
+    if (props.diagram.selectionState.elements.length > 0) {
+      setEnabled(true);
+    } else {
+      setEnabled(false);
+    }
+  });
 
   return (
     <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">

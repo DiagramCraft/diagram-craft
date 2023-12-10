@@ -5,13 +5,9 @@ import { Diagram } from '../model-viewer/diagram.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 
 export const useCanvasZoomAndPan = (diagram: Diagram, svgRef: RefObject<SVGSVGElement>) => {
-  useEventListener(
-    'viewbox',
-    ({ viewbox }: ViewboxEvents['viewbox']) => {
-      svgRef.current!.setAttribute('viewBox', viewbox.svgViewboxString);
-    },
-    diagram.viewBox
-  );
+  useEventListener(diagram.viewBox, 'viewbox', ({ viewbox }: ViewboxEvents['viewbox']) => {
+    svgRef.current!.setAttribute('viewBox', viewbox.svgViewboxString);
+  });
 
   useDomEventListener(
     'wheel',

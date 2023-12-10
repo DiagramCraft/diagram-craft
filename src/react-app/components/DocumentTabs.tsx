@@ -12,7 +12,7 @@ import { newid } from '../../utils/id.ts';
 
 export const DocumentTabs = (props: Props) => {
   const redraw = useRedraw();
-  useEventListener('*', redraw, props.document);
+  useEventListener(props.document, '*', redraw);
 
   return (
     <Tabs.Root value={props.value} onValueChange={props.onValueChange}>
