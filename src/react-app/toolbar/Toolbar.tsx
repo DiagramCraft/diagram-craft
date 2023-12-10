@@ -6,7 +6,8 @@ import {
   TbLayoutAlignRight,
   TbLayoutAlignTop,
   TbLayoutDistributeHorizontal,
-  TbLayoutDistributeVertical
+  TbLayoutDistributeVertical,
+  TbRuler
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { KeyMap } from '../../base-ui/keyMap.ts';
@@ -19,6 +20,7 @@ import { CanvasSnapToolbarButton } from '../ObjectProperties/CanvasSnapToolbarBu
 import { NodeFillToolbarButton } from '../ObjectProperties/NodeFillToolbarButton.tsx';
 import { ShadowToolbarButton } from '../ObjectProperties/ShadowToolbarButton.tsx';
 import { NodeStrokeToolbarButton } from '../ObjectProperties/NodeStrokeToolbarButton.tsx';
+import { ActionToggleButton } from './ActionToggleButton.tsx';
 
 export const Toolbar = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
@@ -82,6 +84,10 @@ export const Toolbar = (props: Props) => {
             keyMap={props.keyMap}
             diagram={props.diagram}
           />
+
+          <ActionToggleButton actionMap={props.actionMap} action={'TOGGLE_RULER'}>
+            <TbRuler />
+          </ActionToggleButton>
         </>
       )}
       {!enabled && (
@@ -97,6 +103,10 @@ export const Toolbar = (props: Props) => {
             keyMap={props.keyMap}
             diagram={props.diagram}
           />
+
+          <ActionToggleButton actionMap={props.actionMap} action={'TOGGLE_RULER'}>
+            <TbRuler />
+          </ActionToggleButton>
         </>
       )}
     </ReactToolbar.Root>

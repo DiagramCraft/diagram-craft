@@ -208,12 +208,8 @@ const App = () => {
             </SideBar>
 
             <div id="canvas-area" className={'light-theme'}>
-              <div id={'ruler-h'} className={'cmp-ruler'}>
-                <Ruler orientation={'horizontal'} diagram={$d} />
-              </div>
-              <div id={'ruler-v'} className={'cmp-ruler'}>
-                <Ruler orientation={'vertical'} diagram={$d} />
-              </div>
+              <Ruler orientation={'horizontal'} diagram={$d} />
+              <Ruler orientation={'vertical'} diagram={$d} />
 
               <ContextMenu.Root>
                 <ContextMenu.Trigger asChild={true}>

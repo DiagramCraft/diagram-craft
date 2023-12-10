@@ -34,6 +34,11 @@
   --error-fg: var(--red-9);
 }
 
+body {
+  --right-indent: 0;
+  --left-indent: 0;
+}
+
 
 /* Base HTML element styling */
 input[type="checkbox"] {
@@ -275,7 +280,7 @@ input::-webkit-input-placeholder {
   width: 15px;
   position: absolute;
   top: 0px;
-  left: 0px;
+  left: var(--left-indent);
   bottom: 0;
   z-index: 100;
   &:after {

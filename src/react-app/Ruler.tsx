@@ -15,8 +15,11 @@ export const Ruler = (props: Props) => {
 
   useEventListener('viewbox', redraw, props.diagram.viewBox);
   useEventListener('canvaschanged', redraw, props.diagram);
-
   useEventListener('change', redraw, props.diagram.selectionState);
+
+  if (props.diagram.props.ruler?.enabled === false) {
+    return null;
+  }
 
   const ticks: Tick[] = [];
 
@@ -33,45 +36,47 @@ export const Ruler = (props: Props) => {
     }
 
     return (
-      <svg preserveAspectRatio={'none'} ref={svgRef}>
-        {ticks.map((tick, idx) => (
-          <line
-            key={tick.label}
-            x1={tick.coord}
-            y1={-1}
-            x2={tick.coord}
-            y2={idx % 5 === 0 ? 6 : 3}
-            style={{ stroke: 'var(--tertiary-fg)' }}
-            strokeWidth="1"
-          />
-        ))}
-
-        {ticks
-          .filter((_, idx) => idx % 10 === 0)
-          .map(tick => (
-            <text className={'svg-lbl'} x={tick.coord} y={9}>
-              {tick.label}
-            </text>
-          ))}
-
-        {props.diagram.selectionState.elements.length > 0 && (
-          <>
-            <rect
-              x={
-                viewbox.toScreenPoint({
-                  x: props.diagram.selectionState.elements[0].bounds.pos.x,
-                  y: 0
-                }).x
-              }
-              y={-1}
-              width={props.diagram.selectionState.elements[0].bounds.size.w / viewbox.zoomLevel}
-              height={16}
-              style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
+      <div id={'ruler-h'} className={'cmp-ruler'}>
+        <svg preserveAspectRatio={'none'} ref={svgRef}>
+          {ticks.map((tick, idx) => (
+            <line
+              key={tick.label}
+              x1={tick.coord}
+              y1={-1}
+              x2={tick.coord}
+              y2={idx % 5 === 0 ? 6 : 3}
+              style={{ stroke: 'var(--tertiary-fg)' }}
               strokeWidth="1"
             />
-          </>
-        )}
-      </svg>
+          ))}
+
+          {ticks
+            .filter((_, idx) => idx % 10 === 0)
+            .map(tick => (
+              <text className={'svg-lbl'} x={tick.coord} y={9}>
+                {tick.label}
+              </text>
+            ))}
+
+          {props.diagram.selectionState.elements.length > 0 && (
+            <>
+              <rect
+                x={
+                  viewbox.toScreenPoint({
+                    x: props.diagram.selectionState.elements[0].bounds.pos.x,
+                    y: 0
+                  }).x
+                }
+                y={-1}
+                width={props.diagram.selectionState.elements[0].bounds.size.w / viewbox.zoomLevel}
+                height={16}
+                style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
+                strokeWidth="1"
+              />
+            </>
+          )}
+        </svg>
+      </div>
     );
   } else {
     for (
@@ -86,50 +91,52 @@ export const Ruler = (props: Props) => {
     }
 
     return (
-      <svg preserveAspectRatio={'none'} ref={svgRef}>
-        {ticks.map((tick, idx) => (
-          <line
-            key={tick.label}
-            x1={-1}
-            y1={tick.coord}
-            x2={idx % 5 === 0 ? 6 : 3}
-            y2={tick.coord}
-            style={{ stroke: 'var(--tertiary-fg)' }}
-            strokeWidth="1"
-          />
-        ))}
-
-        {ticks
-          .filter((_, idx) => idx % 10 === 0)
-          .map(tick => (
-            <text
-              className={'svg-lbl'}
-              x={9}
-              y={tick.coord}
-              transform={`rotate(-90,9,${tick.coord})`}
-            >
-              {tick.label}
-            </text>
-          ))}
-
-        {props.diagram.selectionState.elements.length > 0 && (
-          <>
-            <rect
-              x={-1}
-              y={
-                viewbox.toScreenPoint({
-                  x: 0,
-                  y: props.diagram.selectionState.elements[0].bounds.pos.y
-                }).y
-              }
-              height={props.diagram.selectionState.elements[0].bounds.size.h / viewbox.zoomLevel}
-              width={16}
-              style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
+      <div id={'ruler-v'} className={'cmp-ruler'}>
+        <svg preserveAspectRatio={'none'} ref={svgRef}>
+          {ticks.map((tick, idx) => (
+            <line
+              key={tick.label}
+              x1={-1}
+              y1={tick.coord}
+              x2={idx % 5 === 0 ? 6 : 3}
+              y2={tick.coord}
+              style={{ stroke: 'var(--tertiary-fg)' }}
               strokeWidth="1"
             />
-          </>
-        )}
-      </svg>
+          ))}
+
+          {ticks
+            .filter((_, idx) => idx % 10 === 0)
+            .map(tick => (
+              <text
+                className={'svg-lbl'}
+                x={9}
+                y={tick.coord}
+                transform={`rotate(-90,9,${tick.coord})`}
+              >
+                {tick.label}
+              </text>
+            ))}
+
+          {props.diagram.selectionState.elements.length > 0 && (
+            <>
+              <rect
+                x={-1}
+                y={
+                  viewbox.toScreenPoint({
+                    x: 0,
+                    y: props.diagram.selectionState.elements[0].bounds.pos.y
+                  }).y
+                }
+                height={props.diagram.selectionState.elements[0].bounds.size.h / viewbox.zoomLevel}
+                width={16}
+                style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
+                strokeWidth="1"
+              />
+            </>
+          )}
+        </svg>
+      </div>
     );
   }
 };

@@ -9,6 +9,7 @@ import { DistributeAction } from './actions/distributeAction.ts';
 import { Point } from '../geometry/point.ts';
 import { WaypointAddAction } from './actions/waypointAddAction.ts';
 import { WaypointDeleteAction } from './actions/waypointDeleteAction.ts';
+import { ToggleRulerAction } from './actions/toggleRulerAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -62,7 +63,8 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical'),
   WAYPOINT_ADD: new WaypointAddAction(state.diagram),
-  WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
+  WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram),
+  TOGGLE_RULER: new ToggleRulerAction(state.diagram)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
