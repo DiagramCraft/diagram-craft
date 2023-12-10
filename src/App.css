@@ -172,9 +172,9 @@ input::-webkit-input-placeholder {
 
 /* TODO: Perhaps rename as document tabs */
 .cmp-document-tabs {
-  padding-left: 2px;
   display: flex;
   flex-direction: rows;
+  background-color: var(--primary-bg);
   .cmp-document-tabs__add {
     background-color: transparent;
     border-right: 2px solid var(--slate-1);
@@ -188,8 +188,7 @@ input::-webkit-input-placeholder {
     font-size: 11px;
     display: flex;
     align-items: center;
-    margin-top: -2px;
-    padding: 4px 8px 2px 8px;
+    padding: 1px 8px 2px 8px;
     color: var(--primary-fg);
     background-color: transparent;
     border: none;
@@ -201,8 +200,8 @@ input::-webkit-input-placeholder {
     }
 
     &[data-state='active'] {
-      background-color: var(--canvas-bg);
-      color: var(--canvas-fg);
+      background-color: var(--secondary-bg);
+      color: var(--blue-11);
     }
   }
 }

@@ -16,6 +16,8 @@ export const Ruler = (props: Props) => {
   useEventListener('viewbox', redraw, props.diagram.viewBox);
   useEventListener('canvaschanged', redraw, props.diagram);
 
+  useEventListener('change', redraw, props.diagram.selectionState);
+
   const ticks: Tick[] = [];
 
   if (props.orientation === 'horizontal') {
@@ -51,6 +53,24 @@ export const Ruler = (props: Props) => {
               {tick.label}
             </text>
           ))}
+
+        {props.diagram.selectionState.elements.length > 0 && (
+          <>
+            <rect
+              x={
+                viewbox.toScreenPoint({
+                  x: props.diagram.selectionState.elements[0].bounds.pos.x,
+                  y: 0
+                }).x
+              }
+              y={-1}
+              width={props.diagram.selectionState.elements[0].bounds.size.w / viewbox.zoomLevel}
+              height={16}
+              style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
+              strokeWidth="1"
+            />
+          </>
+        )}
       </svg>
     );
   } else {
@@ -91,6 +111,24 @@ export const Ruler = (props: Props) => {
               {tick.label}
             </text>
           ))}
+
+        {props.diagram.selectionState.elements.length > 0 && (
+          <>
+            <rect
+              x={-1}
+              y={
+                viewbox.toScreenPoint({
+                  x: 0,
+                  y: props.diagram.selectionState.elements[0].bounds.pos.y
+                }).y
+              }
+              height={props.diagram.selectionState.elements[0].bounds.size.h / viewbox.zoomLevel}
+              width={16}
+              style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
+              strokeWidth="1"
+            />
+          </>
+        )}
       </svg>
     );
   }
