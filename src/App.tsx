@@ -210,8 +210,8 @@ useEffect(() => {
             </SideBar>
 
             <div id="canvas-area" className={'light-theme'}>
-              <Ruler orientation={'horizontal'} diagram={$d} svgRef={svgRef} />
-              <Ruler orientation={'vertical'} diagram={$d} svgRef={svgRef} />
+              <Ruler orientation={'horizontal'} diagram={$d} canvasRef={svgRef} />
+              <Ruler orientation={'vertical'} diagram={$d} canvasRef={svgRef} />
 
               <ContextMenu.Root>
                 <ContextMenu.Trigger asChild={true}>

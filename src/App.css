@@ -294,28 +294,6 @@ input::-webkit-input-placeholder {
   }
 }
 
-.cmp-ruler {
-  background-color: var(--secondary-bg);
-  z-index: 1;
-  & > svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-
-    image-rendering: -moz-crisp-edges;
-    image-rendering: -webkit-crisp-edges;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-
-    .svg-lbl {
-      fill: var(--secondary-fg);
-      font-size: 6px;
-      text-anchor: middle;
-      dominant-baseline: mathematical;
-    }
-  }
-}
 
 
 /* Canvas stuff */
@@ -1009,6 +987,42 @@ input::-webkit-input-placeholder {
 
 
 /* Specific / one-use components */
+
+.cmp-ruler {
+  background-color: var(--secondary-bg);
+  z-index: 1;
+  & > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+
+    .svg-lbl {
+      fill: var(--secondary-fg);
+      font-size: 6px;
+      text-anchor: middle;
+      dominant-baseline: mathematical;
+    }
+    .svg-tick {
+      stroke: var(--tertiary-fg);
+      stroke-width: 1;
+    }
+    .svg-selection {
+      stroke: var(--tertiary-fg);
+      fill: rgba(0, 0, 0, 0.25);
+      stroke-width: 1,
+    }
+    .svg-cursor {
+        stroke: var(--blue-11);
+        stroke-width: 1;
+    }
+  }
+}
 
 .cmp-layer-list {
   .cmp-layer-list__element {

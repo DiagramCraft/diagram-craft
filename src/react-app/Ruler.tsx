@@ -9,43 +9,49 @@ type Tick = {
   label: string;
 };
 
-export const Ruler = (props: Props) => {
+export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
   const redraw = useRedraw();
-  const viewbox = props.diagram.viewBox;
+  const viewbox = diagram.viewBox;
   const svgRef = useRef<SVGSVGElement>(null);
 
   const [cursor, setCursor] = useState(0);
 
-  useEventListener('viewbox', redraw, props.diagram.viewBox);
-  useEventListener('canvaschanged', redraw, props.diagram);
-  useEventListener('change', redraw, props.diagram.selectionState);
+  useEventListener('viewbox', redraw, diagram.viewBox);
+  useEventListener('canvaschanged', redraw, diagram);
+  useEventListener('change', redraw, diagram.selectionState);
 
   useEffect(() => {
     const handler = (e: SVGSVGElementEventMap['mousemove']) => {
-      setCursor(EventHelper.point(e)[props.orientation === 'horizontal' ? 'x' : 'y']);
+      setCursor(
+        EventHelper.pointWithRespectTo(e, svgRef.current!)[orientation === 'horizontal' ? 'x' : 'y']
+      );
     };
-    if (props.diagram.props.ruler?.enabled !== false) {
-      props.svgRef.current?.addEventListener('mousemove', handler);
-    }
-    return () => {
-      props.svgRef.current?.removeEventListener('mousemove', handler);
-    };
-  }, [props.diagram.props.ruler?.enabled, props.orientation, props.svgRef, viewbox]);
 
-  if (props.diagram.props.ruler?.enabled === false) {
+    const currentCanvas = canvasRef.current;
+
+    if (!currentCanvas) return;
+    if (diagram.props.ruler?.enabled === false) return;
+
+    currentCanvas.addEventListener('mousemove', handler);
+    return () => {
+      currentCanvas.removeEventListener('mousemove', handler);
+    };
+  }, [diagram.props.ruler?.enabled, orientation, canvasRef, viewbox]);
+
+  if (diagram.props.ruler?.enabled === false) {
     return null;
   }
 
   const ticks: Tick[] = [];
 
-  if (props.orientation === 'horizontal') {
-    for (
-      let x = props.diagram.canvas.pos.x;
-      x <= props.diagram.canvas.pos.x + props.diagram.canvas.size.w;
-      x += 10
-    ) {
+  const toScreenX = (x: number) => viewbox.toScreenPoint({ x, y: 0 }).x;
+
+  const toScreenY = (y: number) => viewbox.toScreenPoint({ x: 0, y }).y;
+
+  if (orientation === 'horizontal') {
+    for (let x = diagram.canvas.pos.x; x <= diagram.canvas.pos.x + diagram.canvas.size.w; x += 10) {
       ticks.push({
-        coord: viewbox.toScreenPoint({ x, y: 0 }).x,
+        coord: toScreenX(x),
         label: x.toString()
       });
     }
@@ -56,12 +62,11 @@ export const Ruler = (props: Props) => {
           {ticks.map((tick, idx) => (
             <line
               key={tick.label}
+              className={'svg-tick'}
               x1={tick.coord}
               y1={-1}
               x2={tick.coord}
               y2={idx % 5 === 0 ? 6 : 3}
-              style={{ stroke: 'var(--tertiary-fg)' }}
-              strokeWidth="1"
             />
           ))}
 
@@ -73,43 +78,24 @@ export const Ruler = (props: Props) => {
               </text>
             ))}
 
-          {props.diagram.selectionState.elements.length > 0 && (
-            <>
-              <rect
-                x={
-                  viewbox.toScreenPoint({
-                    x: props.diagram.selectionState.elements[0].bounds.pos.x,
-                    y: 0
-                  }).x
-                }
-                y={-1}
-                width={props.diagram.selectionState.elements[0].bounds.size.w / viewbox.zoomLevel}
-                height={16}
-                style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
-                strokeWidth="1"
-              />
-            </>
+          {diagram.selectionState.elements.length > 0 && (
+            <rect
+              className={'svg-selection'}
+              x={toScreenX(diagram.selectionState.elements[0].bounds.pos.x)}
+              y={-1}
+              width={diagram.selectionState.elements[0].bounds.size.w / viewbox.zoomLevel}
+              height={16}
+            />
           )}
 
-          <line
-            x1={cursor}
-            y1={-1}
-            x2={cursor}
-            y2={8}
-            style={{ stroke: 'var(--blue-11)' }}
-            strokeWidth="1"
-          />
+          <line className={'svg-cursor'} x1={cursor} y1={-1} x2={cursor} y2={8} />
         </svg>
       </div>
     );
   } else {
-    for (
-      let y = props.diagram.canvas.pos.y;
-      y <= props.diagram.canvas.pos.y + props.diagram.canvas.size.h;
-      y += 10
-    ) {
+    for (let y = diagram.canvas.pos.y; y <= diagram.canvas.pos.y + diagram.canvas.size.h; y += 10) {
       ticks.push({
-        coord: viewbox.toScreenPoint({ x: 0, y }).y,
+        coord: toScreenY(y),
         label: y.toString()
       });
     }
@@ -120,12 +106,11 @@ export const Ruler = (props: Props) => {
           {ticks.map((tick, idx) => (
             <line
               key={tick.label}
+              className={'svg-tick'}
               x1={-1}
               y1={tick.coord}
               x2={idx % 5 === 0 ? 6 : 3}
               y2={tick.coord}
-              style={{ stroke: 'var(--tertiary-fg)' }}
-              strokeWidth="1"
             />
           ))}
 
@@ -133,8 +118,8 @@ export const Ruler = (props: Props) => {
             .filter((_, idx) => idx % 10 === 0)
             .map(tick => (
               <text
-                className={'svg-lbl'}
                 key={tick.label}
+                className={'svg-lbl'}
                 x={9}
                 y={tick.coord}
                 transform={`rotate(-90,9,${tick.coord})`}
@@ -143,32 +128,17 @@ export const Ruler = (props: Props) => {
               </text>
             ))}
 
-          {props.diagram.selectionState.elements.length > 0 && (
-            <>
-              <rect
-                x={-1}
-                y={
-                  viewbox.toScreenPoint({
-                    x: 0,
-                    y: props.diagram.selectionState.elements[0].bounds.pos.y
-                  }).y
-                }
-                height={props.diagram.selectionState.elements[0].bounds.size.h / viewbox.zoomLevel}
-                width={16}
-                style={{ stroke: 'var(--tertiary-fg)', fill: 'rgba(0, 0, 0, 0.25)' }}
-                strokeWidth="1"
-              />
-            </>
+          {diagram.selectionState.elements.length > 0 && (
+            <rect
+              className={'svg-selection'}
+              x={-1}
+              y={toScreenY(diagram.selectionState.elements[0].bounds.pos.y)}
+              height={diagram.selectionState.elements[0].bounds.size.h / viewbox.zoomLevel}
+              width={16}
+            />
           )}
 
-          <line
-            x1={-1}
-            y1={cursor}
-            x2={8}
-            y2={cursor}
-            style={{ stroke: 'var(--blue-11)' }}
-            strokeWidth="1"
-          />
+          <line className={'svg-cursor'} x1={-1} y1={cursor} x2={8} y2={cursor} />
         </svg>
       </div>
     );
@@ -176,7 +146,7 @@ export const Ruler = (props: Props) => {
 };
 
 type Props = {
-  svgRef: React.RefObject<SVGSVGElement>;
+  canvasRef: React.RefObject<SVGSVGElement>;
   diagram: EditableDiagram;
   orientation: 'horizontal' | 'vertical';
 };
