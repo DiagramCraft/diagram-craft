@@ -5,22 +5,28 @@ export const SideBar = (props: Props) => {
   const [selected, setSelected] = useState(props.defaultSelected ?? -1);
 
   // TODO: Can we do this with CSS?
+  //       potentially setting a variable
+  const d = '15.5rem';
   useEffect(() => {
     if (props.side === 'left') {
       if (selected === -1) {
         document.getElementById(`toolbar`)!.style.marginLeft = '0';
         document.getElementById(`tabs`)!.style.marginLeft = '0';
+        document.getElementById(`ruler-v`)!.style.marginLeft = '0';
       } else {
-        document.getElementById(`toolbar`)!.style.marginLeft = '15rem';
-        document.getElementById(`tabs`)!.style.marginLeft = '15rem';
+        document.getElementById(`toolbar`)!.style.marginLeft = d;
+        document.getElementById(`tabs`)!.style.marginLeft = d;
+        document.getElementById(`ruler-v`)!.style.marginLeft = d;
       }
     } else {
       if (selected === -1) {
         document.getElementById(`toolbar`)!.style.marginRight = '0';
         document.getElementById(`tabs`)!.style.marginRight = '0';
+        document.getElementById(`ruler-v`)!.style.marginRight = '0';
       } else {
-        document.getElementById(`toolbar`)!.style.marginRight = '15rem';
-        document.getElementById(`tabs`)!.style.marginRight = '15rem';
+        document.getElementById(`toolbar`)!.style.marginRight = d;
+        document.getElementById(`tabs`)!.style.marginRight = d;
+        document.getElementById(`ruler-v`)!.style.marginRight = d;
       }
     }
   }, [selected]);

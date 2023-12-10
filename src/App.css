@@ -17,6 +17,7 @@
   --primary-fg: var(--slate-11);
   --secondary-bg: var(--slate-3);
   --secondary-fg: var(--slate-11);
+  --tertiary-fg: var(--slate-9);
   --canvas-fg: var(--slate-12);
   --canvas-bg: var(--slate-1);
   --error-fg: var(--red-9);
@@ -27,6 +28,7 @@
   --primary-fg: var(--slate-11);
   --secondary-bg: var(--slate-4);
   --secondary-fg: var(--slate-11);
+  --tertiary-fg: var(--slate-9);
   --canvas-fg: var(--slate-1);
   --canvas-bg: var(--slate-12);
   --error-fg: var(--red-9);
@@ -111,6 +113,7 @@ input::-webkit-input-placeholder {
   grid-template-rows: 37.5px 1fr 20px;
   grid-template-columns: 40px 5fr 40px;
 }
+
 
 #menu {
   display: flex;
@@ -221,7 +224,7 @@ input::-webkit-input-placeholder {
   left: 40px;
   top: 0;
   bottom: 0;
-  width: 15rem;
+  width: calc(15.5rem - 2px);
   z-index: 10;
   display: none;
 }
@@ -242,7 +245,7 @@ input::-webkit-input-placeholder {
   right: 40px;
   top: 0;
   bottom: 0;
-  width: 15rem;
+  width: calc(15.5rem - 2px);
   z-index: 10;
   display: none;
 }
@@ -256,6 +259,57 @@ input::-webkit-input-placeholder {
     inset: 0;
     height: 100%;
     width: 100%;
+  }
+}
+
+
+#ruler-h {
+  height: 15px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0px;
+
+}
+
+#ruler-v {
+  width: 15px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  bottom: 0;
+  z-index: 100;
+  &:after {
+    content: '';
+    position: absolute;
+    background-color: var(--secondary-bg);
+    left: 0;
+    top: 0;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.cmp-ruler {
+  background-color: var(--secondary-bg);
+  z-index: 1;
+  & > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+
+    .svg-lbl {
+      fill: var(--secondary-fg);
+      font-size: 6px;
+      text-anchor: middle;
+      dominant-baseline: mathematical;
+    }
   }
 }
 

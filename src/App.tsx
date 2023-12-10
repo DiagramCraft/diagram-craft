@@ -54,6 +54,7 @@ import { DiagramNode } from './model-viewer/diagramNode.ts';
 import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
 import { UserState } from './react-app/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
+import { Ruler } from './react-app/Ruler.tsx';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
   return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -207,6 +208,13 @@ const App = () => {
             </SideBar>
 
             <div id="canvas-area" className={'light-theme'}>
+              <div id={'ruler-h'} className={'cmp-ruler'}>
+                <Ruler orientation={'horizontal'} diagram={$d} />
+              </div>
+              <div id={'ruler-v'} className={'cmp-ruler'}>
+                <Ruler orientation={'vertical'} diagram={$d} />
+              </div>
+
               <ContextMenu.Root>
                 <ContextMenu.Trigger asChild={true}>
                   <EditableCanvas
