@@ -31,10 +31,14 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
       | 'center-horizontal'
   ) {
     super();
-    this.diagram.selectionState.on('*', () => {
+
+    const cb = () => {
       this.enabled = this.diagram.selectionState.elements.length > 1;
       this.emit('actionchanged', { action: this });
-    });
+    };
+    this.diagram.selectionState.on('add', cb);
+    this.diagram.selectionState.on('remove', cb);
+    this.diagram.selectionState.on('change', cb);
   }
 
   execute(): void {

@@ -14,10 +14,22 @@ export const LayerToolWindow = (props: Props) => {
       redraw();
     };
     props.diagram.selectionState.on('change', onChange);
-    props.diagram.on('*', onChange);
+    props.diagram.on('canvaschanged', onChange);
+    props.diagram.on('nodechanged', onChange);
+    props.diagram.on('noderemoved', onChange);
+    props.diagram.on('nodeadded', onChange);
+    props.diagram.on('edgechanged', onChange);
+    props.diagram.on('edgeadded', onChange);
+    props.diagram.on('edgeremoved', onChange);
     return () => {
       props.diagram.selectionState.off('change', onChange);
-      props.diagram.off('*', onChange);
+      props.diagram.off('canvaschanged', onChange);
+      props.diagram.off('nodechanged', onChange);
+      props.diagram.off('noderemoved', onChange);
+      props.diagram.off('nodeadded', onChange);
+      props.diagram.off('edgechanged', onChange);
+      props.diagram.off('edgeadded', onChange);
+      props.diagram.off('edgeremoved', onChange);
     };
   }, [props.diagram, redraw]);
 
