@@ -115,7 +115,7 @@ input::-webkit-input-placeholder {
             "left-buttons toolbar right-buttons"
             "left-buttons canvas-area right-buttons"
             "left-buttons tabs right-buttons";
-  grid-template-rows: 37.5px 1fr 20px;
+  grid-template-rows: 37.5px 1fr 24px;
   grid-template-columns: 40px 5fr 40px;
 }
 
@@ -929,7 +929,7 @@ input::-webkit-input-placeholder {
   }
 
   .cmp-accordion__content_text {
-    font-size: 12px;
+    font-size: 11px;
     padding: 10px;
   }
 
