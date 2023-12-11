@@ -226,7 +226,9 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       }}
       onContextMenu={event => {
         const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
-        const point = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
+
+        const bounds = svgRef.current!.getBoundingClientRect();
+        const point = { x: e.nativeEvent.clientX - bounds.x, y: e.nativeEvent.clientY - bounds.y };
 
         const isClickOnSelection = Box.contains(
           selection.bounds,

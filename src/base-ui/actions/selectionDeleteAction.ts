@@ -45,6 +45,7 @@ class SelectionDeleteUndoableAction implements UndoableAction {
 }
 
 export class SelectionDeleteAction extends EventEmitter<ActionEvents> implements Action {
+  // TODO: Only enable if there is a selection
   enabled = true;
 
   constructor(private readonly diagram: EditableDiagram) {

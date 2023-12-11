@@ -7,7 +7,11 @@ import {
   TbLayoutAlignTop,
   TbLayoutDistributeHorizontal,
   TbLayoutDistributeVertical,
-  TbRuler
+  TbRuler,
+  TbStackBack,
+  TbStackFront,
+  TbStackPop,
+  TbStackPush
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ActionToolbarButton } from './ActionToolbarButton.tsx';
@@ -67,6 +71,21 @@ export const Toolbar = () => {
           </ActionToolbarButton>
           <ActionToolbarButton action={'DISTRIBUTE_HORIZONTAL'}>
             <TbLayoutDistributeVertical />
+          </ActionToolbarButton>
+
+          <ReactToolbar.Separator className="cmp-toolbar__separator" />
+
+          <ActionToolbarButton action={'SELECTION_RESTACK_BOTTOM'}>
+            <TbStackBack />
+          </ActionToolbarButton>
+          <ActionToolbarButton action={'SELECTION_RESTACK_TOP'}>
+            <TbStackFront />
+          </ActionToolbarButton>
+          <ActionToolbarButton action={'SELECTION_RESTACK_UP'}>
+            <TbStackPop />
+          </ActionToolbarButton>
+          <ActionToolbarButton action={'SELECTION_RESTACK_DOWN'}>
+            <TbStackPush />
           </ActionToolbarButton>
 
           <ReactToolbar.Separator className="cmp-toolbar__separator" />

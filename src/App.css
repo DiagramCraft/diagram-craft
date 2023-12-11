@@ -810,9 +810,9 @@ input::-webkit-input-placeholder {
   .cmp-context-menu__checkbox-item,
   .cmp-context-menu__radio-item,
   .cmp-context-menu__sub-trigger {
-    font-size: 13px;
+    font-size: 11px;
     line-height: 1;
-    color: var(--blue-12);
+    color: var(--primary-fg);
     border-radius: 3px;
     display: flex;
     align-items: center;
@@ -828,17 +828,17 @@ input::-webkit-input-placeholder {
       pointer-events: 'none';
     }
     &[data-highlighted] {
-      background-color: var(--blue-9);
-      color: var(--blue-1);
+      background-color: var(--secondary-bg);
+      color: var(--primary-fg);
     }
 
     .cmp-context-menu__right-slot {
       margin-left: auto;
       padding-left: 20px;
-      color: var(--slate-11);
+      color: var(--blue-11);
     }
     &[data-highlighted] > .cmp-context-menu__right-slot {
-      color: white;
+      color: var(--blue-11);
     }
     &[data-disabled] .cmp-context-menu__right-slot {
       color: var(--slate-8);
@@ -846,8 +846,8 @@ input::-webkit-input-placeholder {
   }
 
   .cmp-context-menu__sub-trigger[data-state='open'] {
-    background-color: var(--blue-4);
-    color: var(--blue-12);
+    background-color: var(--secondary-bg);
+    color: var(--primary-fg);
   }
 
   .cmp-context-menu__label {
@@ -859,7 +859,7 @@ input::-webkit-input-placeholder {
 
   .cmp-context-menu__separator {
     height: 1px;
-    background-color: var(--blue-6);
+    background-color: var(--slate-8);
     margin: 5px;
   }
 

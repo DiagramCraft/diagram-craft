@@ -4,7 +4,7 @@ import { Transform } from '../geometry/transform.ts';
 import { Box } from '../geometry/box.ts';
 import { UndoManager } from '../model-editor/undoManager.ts';
 import { Viewbox } from './viewBox.ts';
-import { DiagramNode } from './diagramNode.ts';
+import { DiagramElement, DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './nodeDefinition.ts';
 
@@ -42,8 +42,6 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   };
 
   viewBox = new Viewbox(this.#canvas.size);
-
-  diagrams: Diagram[] = [];
 
   constructor(
     readonly id: string,
@@ -115,6 +113,19 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   // TODO: Implement this part
   queryNodes() {
     return Object.values(this.nodeLookup);
+  }
+
+  restack(elements: DiagramElement[], newPosition: number) {
+    const withPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
+
+    for (const el of elements) {
+      const idx = withPositions.findIndex(e => e.element === el);
+      withPositions[idx].idx += newPosition;
+    }
+
+    withPositions.sort((a, b) => a.idx - b.idx);
+    this.elements = withPositions.map(e => e.element);
+    this.emit('canvaschanged', { after: this.canvas });
   }
 
   transformElements(elements: (DiagramNode | DiagramEdge)[], transforms: Transform[]) {

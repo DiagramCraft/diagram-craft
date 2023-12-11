@@ -11,6 +11,7 @@ import { WaypointAddAction } from './actions/waypointAddAction.ts';
 import { WaypointDeleteAction } from './actions/waypointDeleteAction.ts';
 import { ToggleRulerAction } from './actions/toggleRulerAction.ts';
 import { SelectionDeleteAction } from './actions/selectionDeleteAction.ts';
+import { SelectionRestackAction } from './actions/selectionRestackAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -51,6 +52,10 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
   SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges'),
   SELECTION_DELETE: new SelectionDeleteAction(state.diagram),
+  SELECTION_RESTACK_BOTTOM: new SelectionRestackAction(state.diagram, 'bottom'),
+  SELECTION_RESTACK_DOWN: new SelectionRestackAction(state.diagram, 'down'),
+  SELECTION_RESTACK_TOP: new SelectionRestackAction(state.diagram, 'top'),
+  SELECTION_RESTACK_UP: new SelectionRestackAction(state.diagram, 'up'),
   ALIGN_TOP: new AlignAction(state.diagram, 'top'),
   ALIGN_BOTTOM: new AlignAction(state.diagram, 'bottom'),
   ALIGN_CENTER_HORIZONTAL: new AlignAction(state.diagram, 'center-horizontal'),

@@ -1,16 +1,16 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
+import { TbChevronRight } from 'react-icons/tb';
 
 export const SelectionContextMenu = () => {
   return (
     <>
-      <ContextMenu.Item className="cmp-context-menu__item">
-        Selection <div className="cmp-context-menu__right-slot">⌘+[</div>
-      </ContextMenu.Item>
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
           Align
-          <div className="cmp-context-menu__right-slot">...</div>
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
           <ContextMenu.SubContent
@@ -35,7 +35,34 @@ export const SelectionContextMenu = () => {
         </ContextMenu.Portal>
       </ContextMenu.Sub>
 
-      <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <ContextMenu.Sub>
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+          Arrange
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </ContextMenu.SubTrigger>
+        <ContextMenu.Portal>
+          <ContextMenu.SubContent
+            className="cmp-context-menu dark-theme"
+            sideOffset={2}
+            alignOffset={-5}
+          >
+            <ActionContextMenuItem action={'SELECTION_RESTACK_TOP'}>
+              Move to front
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_RESTACK_UP'}>
+              Move forward
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_RESTACK_BOTTOM'}>
+              Move to back
+            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_RESTACK_DOWN'}>
+              Move backward
+            </ActionContextMenuItem>
+          </ContextMenu.SubContent>
+        </ContextMenu.Portal>
+      </ContextMenu.Sub>
     </>
   );
 };
