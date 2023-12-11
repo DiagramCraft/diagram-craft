@@ -1,4 +1,3 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { NumberInput } from '../NumberInput.tsx';
@@ -8,17 +7,19 @@ import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const CanvasProperties = (props: Props) => {
+export const CanvasProperties = () => {
   const redraw = useRedraw();
+  const diagram = useDiagram();
 
-  useEventListener(props.diagram, 'canvaschanged', redraw);
-  const bg = useDiagramProperty(props.diagram, 'background.color', 'white');
+  useEventListener(diagram, 'canvaschanged', redraw);
+  const bg = useDiagramProperty(diagram, 'background.color', 'white');
 
-  const bounds = { ...props.diagram.canvas, rotation: 0 };
+  const bounds = { ...diagram.canvas, rotation: 0 };
 
   const updateBounds = (newBounds: MutableSnapshot<Box>) => {
-    props.diagram.canvas = newBounds.getSnapshot();
+    diagram.canvas = newBounds.getSnapshot();
   };
 
   return (
@@ -117,8 +118,4 @@ export const CanvasProperties = (props: Props) => {
       </div>
     </>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

@@ -1,13 +1,15 @@
-import { ActionEvents, KeyMap } from '../../base-ui/keyMap.ts';
+import { ActionEvents } from '../../base-ui/keyMap.ts';
 import React, { useEffect, useState } from 'react';
 import * as Toolbar from '@radix-ui/react-toolbar';
 import { useEventListener } from '../hooks/useEventListener.ts';
+import { useActions } from '../context/ActionsContext.tsx';
 
 export const ActionToolbarButton = (props: Props) => {
+  const { actionMap } = useActions();
   const [enabled, setEnabled] = useState(false);
 
   useEventListener(
-    props.actionMap[props.action]!,
+    actionMap[props.action]!,
     'actionchanged',
     ({ action }: ActionEvents['actionchanged']) => {
       setEnabled(action.enabled);
@@ -15,18 +17,18 @@ export const ActionToolbarButton = (props: Props) => {
   );
 
   useEffect(() => {
-    const v = props.actionMap[props.action]?.enabled;
+    const v = actionMap[props.action]?.enabled;
     if (v !== enabled) {
       setEnabled(!!v);
     }
-  }, [enabled, props.action, props.actionMap]);
+  }, [enabled, props.action, actionMap]);
 
   return (
     <Toolbar.Button
       className="cmp-toolbar__button"
       disabled={!enabled}
       onClick={() => {
-        props.actionMap[props.action]!.execute({});
+        actionMap[props.action]!.execute({});
       }}
     >
       {props.children}
@@ -35,8 +37,6 @@ export const ActionToolbarButton = (props: Props) => {
 };
 
 type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
   action: keyof ActionMap;
   children: React.ReactNode;
 };

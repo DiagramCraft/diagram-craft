@@ -1,6 +1,5 @@
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useNodeProperty } from './useProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
@@ -8,11 +7,13 @@ import * as Popover from '@radix-ui/react-popover';
 import React from 'react';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { assertFillType } from '../../model-viewer/diagramProps.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const NodeFillPanel = (props: Props) => {
-  const fill = useNodeProperty(props.diagram, 'fill.color', 'transparent');
-  const color2 = useNodeProperty(props.diagram, 'fill.color2', 'transparent');
-  const type = useNodeProperty(props.diagram, 'fill.type', 'solid');
+  const diagram = useDiagram();
+  const fill = useNodeProperty(diagram, 'fill.color', 'transparent');
+  const color2 = useNodeProperty(diagram, 'fill.color2', 'transparent');
+  const type = useNodeProperty(diagram, 'fill.type', 'solid');
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -92,6 +93,5 @@ export const NodeFillPanel = (props: Props) => {
 };
 
 type Props = {
-  diagram: EditableDiagram;
   mode?: 'accordion' | 'panel';
 };

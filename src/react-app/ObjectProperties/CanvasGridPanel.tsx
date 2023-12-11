@@ -1,4 +1,3 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { additionalHues, primaryColors } from './palette.ts';
@@ -6,13 +5,13 @@ import { ColorPicker } from '../ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbGrid3X3, TbGridDots } from 'react-icons/tb';
-import { KeyMap } from '../../base-ui/keyMap.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { assertGridType } from '../../model-viewer/diagramProps.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const CanvasGridPanel = (props: Props) => {
-  const $d = props.diagram;
+  const $d = useDiagram();
 
   const redraw = useRedraw();
   useEventListener($d, 'canvaschanged', redraw);
@@ -110,8 +109,5 @@ export const CanvasGridPanel = (props: Props) => {
 };
 
 type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
-  diagram: EditableDiagram;
   mode?: 'accordion' | 'panel';
 };

@@ -1,5 +1,4 @@
 import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ArrowSelector } from './ArrowSelector.tsx';
 import { ColorPicker } from '../ColorPicker.tsx';
@@ -8,9 +7,10 @@ import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { assertEdgeType } from '../../model-viewer/diagramProps.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const LineProperties = (props: Props) => {
-  const $d = props.diagram;
+export const LineProperties = () => {
+  const $d = useDiagram();
 
   const strokeColor = useEdgeProperty($d, 'stroke.color', 'transparent');
   const fillColor = useEdgeProperty($d, 'fill.color', undefined);
@@ -145,8 +145,4 @@ export const LineProperties = (props: Props) => {
       </div>
     </div>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

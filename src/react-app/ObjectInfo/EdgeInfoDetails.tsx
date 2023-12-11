@@ -1,12 +1,13 @@
 import { ObjectTreeNode, Tree, TreeNode } from '../components/Tree.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { DiagramEdge } from '../../model-viewer/diagramEdge.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const EdgeInfoDetails = (props: { obj: DiagramEdge; diagram: EditableDiagram }) => {
+export const EdgeInfoDetails = (props: Props) => {
+  const diagram = useDiagram();
   const redraw = useRedraw();
-  useEventListener(props.diagram, 'edgechanged', redraw);
+  useEventListener(diagram, 'edgechanged', redraw);
   return (
     <div style={{ margin: '-0.5rem' }}>
       <Tree>
@@ -27,3 +28,5 @@ export const EdgeInfoDetails = (props: { obj: DiagramEdge; diagram: EditableDiag
     </div>
   );
 };
+
+type Props = { obj: DiagramEdge };

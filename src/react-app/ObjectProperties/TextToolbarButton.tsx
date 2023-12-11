@@ -1,12 +1,13 @@
 import { TbTextSize, TbX } from 'react-icons/tb';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useNodeProperty } from './useProperty.ts';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TextPanel } from './TextPanel.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const TextToolbarButton = (props: Props) => {
-  const fill = useNodeProperty(props.diagram, 'text.color', 'transparent');
+export const TextToolbarButton = () => {
+  const diagram = useDiagram();
+  const fill = useNodeProperty(diagram, 'text.color', 'transparent');
 
   return (
     <Popover.Root>
@@ -28,7 +29,7 @@ export const TextToolbarButton = (props: Props) => {
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <TextPanel diagram={props.diagram} mode={'panel'} />
+          <TextPanel mode={'panel'} />
           <Popover.Close className="cmp-popover__close" aria-label="Close">
             <TbX />
           </Popover.Close>
@@ -37,8 +38,4 @@ export const TextToolbarButton = (props: Props) => {
       </Popover.Portal>
     </Popover.Root>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

@@ -2,11 +2,11 @@ import { TbGrid3X3 } from 'react-icons/tb';
 import { CanvasGridPanel } from './CanvasGridPanel.tsx';
 import { ToolbarToggleItemWithPopover } from '../components/ToolbarToggleItemWithPopover.tsx';
 import { useDiagramProperty } from './useProperty.ts';
-import { KeyMap } from '../../base-ui/keyMap.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const CanvasGridToolbarButton = (props: Props) => {
-  const gridEnabled = useDiagramProperty(props.diagram, 'grid.enabled', true);
+export const CanvasGridToolbarButton = () => {
+  const diagram = useDiagram();
+  const gridEnabled = useDiagramProperty(diagram, 'grid.enabled', true);
 
   return (
     <ToolbarToggleItemWithPopover
@@ -14,18 +14,7 @@ export const CanvasGridToolbarButton = (props: Props) => {
       onChange={gridEnabled.set}
       icon={TbGrid3X3}
     >
-      <CanvasGridPanel
-        diagram={props.diagram}
-        keyMap={props.keyMap}
-        actionMap={props.actionMap}
-        mode={'panel'}
-      />
+      <CanvasGridPanel mode={'panel'} />
     </ToolbarToggleItemWithPopover>
   );
-};
-
-type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
-  diagram: EditableDiagram;
 };

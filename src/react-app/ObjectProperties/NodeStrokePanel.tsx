@@ -1,5 +1,4 @@
 import { ColorPicker } from '../ColorPicker.tsx';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useNodeProperty } from './useProperty.ts';
@@ -8,11 +7,12 @@ import * as Popover from '@radix-ui/react-popover';
 import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import React from 'react';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const NodeStrokePanel = (props: Props) => {
   const [open, setOpen] = React.useState(false);
 
-  const $d = props.diagram;
+  const $d = useDiagram();
 
   const strokeColor = useNodeProperty($d, 'stroke.color', 'transparent');
   const pattern = useNodeProperty($d, 'stroke.pattern', 'SOLID');
@@ -108,6 +108,5 @@ export const NodeStrokePanel = (props: Props) => {
 };
 
 type Props = {
-  diagram: EditableDiagram;
   mode?: 'accordion' | 'panel';
 };

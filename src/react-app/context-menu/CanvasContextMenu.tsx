@@ -1,31 +1,15 @@
-import { KeyMap } from '../../base-ui/keyMap.ts';
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 
-export const CanvasContextMenu = (props: Props) => {
+export const CanvasContextMenu = () => {
   return (
     <>
-      <ActionContextMenuItem action={'UNDO'} {...props}>
-        Undo
-      </ActionContextMenuItem>
-      <ActionContextMenuItem action={'REDO'} {...props}>
-        Redo
-      </ActionContextMenuItem>
+      <ActionContextMenuItem action={'UNDO'}>Undo</ActionContextMenuItem>
+      <ActionContextMenuItem action={'REDO'}>Redo</ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
-      <ActionContextMenuItem action={'SELECT_ALL'} {...props}>
-        Select All
-      </ActionContextMenuItem>
-      <ActionContextMenuItem action={'SELECT_ALL_NODES'} {...props}>
-        Select Nodes
-      </ActionContextMenuItem>
-      <ActionContextMenuItem action={'SELECT_ALL_EDGES'} {...props}>
-        Select Edges
-      </ActionContextMenuItem>
+      <ActionContextMenuItem action={'SELECT_ALL'}>Select All</ActionContextMenuItem>
+      <ActionContextMenuItem action={'SELECT_ALL_NODES'}>Select Nodes</ActionContextMenuItem>
+      <ActionContextMenuItem action={'SELECT_ALL_EDGES'}>Select Edges</ActionContextMenuItem>
     </>
   );
-};
-
-type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
 };

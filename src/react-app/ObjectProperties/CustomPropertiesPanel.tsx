@@ -1,38 +1,39 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { NumberInput } from '../NumberInput.tsx';
 import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const CustomPropertiesPanel = (props: Props) => {
+  const diagram = useDiagram();
   const [node, setNode] = useState<DiagramNode | undefined>(undefined);
   const redraw = useRedraw();
 
   useEffect(() => {
     const callback = () => {
-      if (props.diagram.selectionState.getSelectionType() !== 'single-node') {
+      if (diagram.selectionState.getSelectionType() !== 'single-node') {
         setNode(undefined);
       } else {
-        setNode(props.diagram.selectionState.nodes[0]);
+        setNode(diagram.selectionState.nodes[0]);
       }
     };
     callback();
 
-    props.diagram.selectionState.on('change', callback);
+    diagram.selectionState.on('change', callback);
     return () => {
-      props.diagram.selectionState.off('change', callback);
+      diagram.selectionState.off('change', callback);
     };
-  }, [props.diagram.selectionState]);
+  }, [diagram.selectionState]);
 
-  useEventListener(props.diagram, 'nodechanged', redraw);
+  useEventListener(diagram, 'nodechanged', redraw);
 
   if (!node) {
     return <div></div>;
   }
 
-  const def = props.diagram.nodeDefinitions.get(node.nodeType)!;
+  const def = diagram.nodeDefinitions.get(node.nodeType)!;
   const customProperties = def.getCustomProperties(node);
   if (Object.keys(customProperties).length === 0) {
     return <div></div>;
@@ -69,6 +70,5 @@ export const CustomPropertiesPanel = (props: Props) => {
 };
 
 type Props = {
-  diagram: EditableDiagram;
   mode?: 'accordion' | 'panel';
 };

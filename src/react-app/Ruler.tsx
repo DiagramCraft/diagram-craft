@@ -1,15 +1,16 @@
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { EventHelper } from '../base-ui/eventHelper.ts';
+import { useDiagram } from './context/DiagramContext.tsx';
 
 type Tick = {
   coord: number;
   label: string;
 };
 
-export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
+export const Ruler = ({ canvasRef, orientation }: Props) => {
+  const diagram = useDiagram();
   const redraw = useRedraw();
   const viewbox = diagram.viewBox;
   const svgRef = useRef<SVGSVGElement>(null);
@@ -147,6 +148,5 @@ export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
 
 type Props = {
   canvasRef: React.RefObject<SVGSVGElement>;
-  diagram: EditableDiagram;
   orientation: 'horizontal' | 'vertical';
 };

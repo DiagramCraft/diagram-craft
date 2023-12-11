@@ -8,10 +8,9 @@ import { debounce } from '../utils/debounce.ts';
 import { Modifiers } from '../base-ui/drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
-import { executeAction, KeyMap } from '../base-ui/keyMap.ts';
+import { executeAction } from '../base-ui/keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from '../react-canvas-viewer/DocumentBounds.tsx';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
 import { SelectionStateEvents } from '../model-editor/selectionState.ts';
 import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
@@ -21,6 +20,8 @@ import { MoveDrag } from '../base-ui/drag/moveDrag.ts';
 import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';
 import { getPoint } from '../react-canvas-viewer/eventHelper.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
+import { useDiagram } from '../react-app/context/DiagramContext.tsx';
+import { useActions } from '../react-app/context/ActionsContext.tsx';
 
 const BACKGROUND = 'background';
 
@@ -33,7 +34,8 @@ type DeferedMouseAction = {
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const redraw = useRedraw();
 
-  const diagram = props.diagram;
+  const diagram = useDiagram();
+  const { actionMap, keyMap } = useActions();
 
   // State
   const selection = diagram.selectionState;
@@ -54,11 +56,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useCanvasZoomAndPan(diagram, svgRef);
 
-  useDomEventListener(
-    'keydown',
-    e => executeAction(e, {}, props.keyMap, props.actionMap),
-    document
-  );
+  useDomEventListener('keydown', e => executeAction(e, {}, keyMap, actionMap), document);
 
   const clearSelection = debounce(() => selection.clear());
 
@@ -212,7 +210,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   return (
     <svg
       ref={svgRef}
-      {...propsUtils.except(props, 'actionMap', 'keyMap', 'diagram')}
+      {...propsUtils.except(props)}
       preserveAspectRatio="none"
       viewBox={diagram.viewBox.svgViewboxString}
       onMouseDown={e => {
@@ -281,13 +279,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 });
 
 type Props = {
-  // TODO: We should split Canvas and EditableCanvas somehow
-  diagram: EditableDiagram;
-
   onContextMenu: (event: ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
-
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'

@@ -1,13 +1,13 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { KeyMap } from '../../base-ui/keyMap.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { ActionCheckbox } from '../components/ActionCheckbox.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useSnapManagerProperty } from './useProperty.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const CanvasSnapPanel = (props: Props) => {
-  const enabled = useSnapManagerProperty(props.diagram, 'enabled', true);
-  const threshold = useSnapManagerProperty(props.diagram, 'threshold', 5);
+  const diagram = useDiagram();
+  const enabled = useSnapManagerProperty(diagram, 'enabled', true);
+  const threshold = useSnapManagerProperty(diagram, 'threshold', 5);
 
   return (
     <ToolWindowPanel
@@ -22,27 +22,25 @@ export const CanvasSnapPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label util-a-top'}>Snap:</div>
         <div className={'cmp-labeled-table__value util-vstack'}>
           <div className={'util-vcenter util-vgap util-font-body'}>
-            <ActionCheckbox actionMap={props.actionMap} action={'TOGGLE_MAGNET_TYPE_GRID'}>
-              Snap to grid
-            </ActionCheckbox>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GRID'}>Snap to grid</ActionCheckbox>
           </div>
           <div className={'util-vcenter util-vgap util-font-body'}>
-            <ActionCheckbox actionMap={props.actionMap} action={'TOGGLE_MAGNET_TYPE_NODE'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_NODE'}>
               Snap to object bounds
             </ActionCheckbox>
           </div>
           <div className={'util-vcenter util-vgap util-font-body'}>
-            <ActionCheckbox actionMap={props.actionMap} action={'TOGGLE_MAGNET_TYPE_CANVAS'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_CANVAS'}>
               Snap to canvas midpoint
             </ActionCheckbox>
           </div>
           <div className={'util-vcenter util-vgap util-font-body'}>
-            <ActionCheckbox actionMap={props.actionMap} action={'TOGGLE_MAGNET_TYPE_DISTANCE'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_DISTANCE'}>
               Snap to object size
             </ActionCheckbox>
           </div>
           <div className={'util-vcenter util-vgap util-font-body'}>
-            <ActionCheckbox actionMap={props.actionMap} action={'TOGGLE_MAGNET_TYPE_SIZE'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_SIZE'}>
               Snap to object distance
             </ActionCheckbox>
           </div>
@@ -65,8 +63,5 @@ export const CanvasSnapPanel = (props: Props) => {
 };
 
 type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
-  diagram: EditableDiagram;
   mode?: 'accordion' | 'panel';
 };

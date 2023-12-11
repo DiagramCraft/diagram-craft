@@ -1,11 +1,11 @@
 import { TbStackBackward } from 'react-icons/tb';
 import { ToolbarToggleItemWithPopover } from '../components/ToolbarToggleItemWithPopover.tsx';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { ShadowPanel } from './ShadowPanel.tsx';
 import { useNodeProperty } from './useProperty.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const ShadowToolbarButton = (props: Props) => {
-  const $d = props.diagram;
+export const ShadowToolbarButton = () => {
+  const $d = useDiagram();
   const enabled = useNodeProperty($d, 'shadow.enabled', false);
 
   return (
@@ -14,11 +14,7 @@ export const ShadowToolbarButton = (props: Props) => {
       onChange={enabled.set}
       icon={TbStackBackward}
     >
-      <ShadowPanel diagram={props.diagram} mode={'panel'} />
+      <ShadowPanel mode={'panel'} />
     </ToolbarToggleItemWithPopover>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

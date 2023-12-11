@@ -2,13 +2,15 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { ToggleAction } from '../../base-ui/keyMap.ts';
 import React, { useId } from 'react';
+import { useActions } from '../context/ActionsContext.tsx';
 
 export const ActionCheckbox = (props: Props) => {
+  const { actionMap } = useActions();
   const id = useId();
   const redraw = useRedraw();
 
-  useEventListener(props.actionMap[props.action]!, 'actionchanged', ({ action }) => {
-    if (action === props.actionMap[props.action]) redraw();
+  useEventListener(actionMap[props.action]!, 'actionchanged', ({ action }) => {
+    if (action === actionMap[props.action]) redraw();
   });
 
   return (
@@ -16,9 +18,9 @@ export const ActionCheckbox = (props: Props) => {
       <input
         id={id}
         type={'checkbox'}
-        checked={(props.actionMap[props.action] as ToggleAction).state}
+        checked={(actionMap[props.action] as ToggleAction).state}
         onChange={() => {
-          (props.actionMap[props.action] as ToggleAction).execute({});
+          (actionMap[props.action] as ToggleAction).execute({});
         }}
       />
       <label htmlFor={id}>{props.children}</label>
@@ -27,7 +29,6 @@ export const ActionCheckbox = (props: Props) => {
 };
 
 type Props = {
-  actionMap: Partial<ActionMap>;
   action: keyof ActionMap;
   children: React.ReactNode;
 };

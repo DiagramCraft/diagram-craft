@@ -1,5 +1,4 @@
 import React from 'react';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
@@ -33,19 +32,15 @@ export const canvasDragOverHandler = () => {
   };
 };
 
-export const PickerToolWindow = (props: Props) => {
+export const PickerToolWindow = () => {
   return (
     <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['basic-shapes']}>
       <Accordion.Item className="cmp-accordion__item" value="basic-shapes">
         <AccordionTrigger>Basic shapes</AccordionTrigger>
         <AccordionContent>
-          <ObjectPicker diagram={props.diagram} size={30} />
+          <ObjectPicker size={30} />
         </AccordionContent>
       </Accordion.Item>
     </Accordion.Root>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

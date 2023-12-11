@@ -1,10 +1,10 @@
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
+import { useDiagram } from './context/DiagramContext.tsx';
 
 const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {
@@ -13,15 +13,16 @@ const formatTimestamp = (ts: Date | undefined) => {
   return '[' + ts.toLocaleTimeString() + ']';
 };
 
-export const HistoryToolWindow = (props: Props) => {
+export const HistoryToolWindow = () => {
+  const diagram = useDiagram();
   const redraw = useRedraw();
-  useEventListener(props.diagram.undoManager, 'undo', redraw);
-  useEventListener(props.diagram.undoManager, 'add', redraw);
-  useEventListener(props.diagram.undoManager, 'redo', redraw);
-  useEventListener(props.diagram.undoManager, 'execute', redraw);
+  useEventListener(diagram.undoManager, 'undo', redraw);
+  useEventListener(diagram.undoManager, 'add', redraw);
+  useEventListener(diagram.undoManager, 'redo', redraw);
+  useEventListener(diagram.undoManager, 'execute', redraw);
 
-  const redoActions = props.diagram.undoManager.redoableActions;
-  const undoActions = props.diagram.undoManager.undoableActions.toReversed();
+  const redoActions = diagram.undoManager.redoableActions;
+  const undoActions = diagram.undoManager.undoableActions.toReversed();
 
   return (
     <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['history']}>
@@ -51,8 +52,4 @@ export const HistoryToolWindow = (props: Props) => {
       </Accordion.Item>
     </Accordion.Root>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

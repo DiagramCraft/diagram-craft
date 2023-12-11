@@ -1,19 +1,20 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { $c } from '../../utils/classname.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const LayerList = (props: Props) => (
-  <div className={'cmp-layer-list'}>
-    {props.diagram.elements.map(e => (
-      <div
-        key={e.id}
-        className={$c('cmp-layer-list__element', {
-          selected: props.diagram.selectionState.elements.includes(e)
-        })}
-      >
-        {e.type} {e.id}
-      </div>
-    ))}
-  </div>
-);
-
-type Props = { diagram: EditableDiagram };
+export const LayerList = () => {
+  const diagram = useDiagram();
+  return (
+    <div className={'cmp-layer-list'}>
+      {diagram.elements.map(e => (
+        <div
+          key={e.id}
+          className={$c('cmp-layer-list__element', {
+            selected: diagram.selectionState.elements.includes(e)
+          })}
+        >
+          {e.type} {e.id}
+        </div>
+      ))}
+    </div>
+  );
+};

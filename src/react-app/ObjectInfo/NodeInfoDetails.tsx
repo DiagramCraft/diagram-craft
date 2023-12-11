@@ -1,12 +1,13 @@
 import { ObjectTreeNode, Tree, TreeNode } from '../components/Tree.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const NodeInfoDetails = (props: { obj: DiagramNode; diagram: EditableDiagram }) => {
+export const NodeInfoDetails = (props: Props) => {
+  const diagram = useDiagram();
   const redraw = useRedraw();
-  useEventListener(props.diagram, 'nodechanged', redraw);
+  useEventListener(diagram, 'nodechanged', redraw);
   return (
     <div style={{ margin: '-0.5rem' }}>
       <Tree>
@@ -22,3 +23,5 @@ export const NodeInfoDetails = (props: { obj: DiagramNode; diagram: EditableDiag
     </div>
   );
 };
+
+type Props = { obj: DiagramNode };

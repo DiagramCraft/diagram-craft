@@ -1,15 +1,15 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { KeyMap } from '../../base-ui/keyMap.ts';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from '../AccordionTrigger.tsx';
 import { AccordionContent } from '../AccordionContext.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const CanvasGuidesProperties = (props: Props) => {
+export const CanvasGuidesProperties = () => {
+  const diagram = useDiagram();
   const redraw = useRedraw();
 
-  useEventListener(props.diagram, 'canvaschanged', redraw);
+  useEventListener(diagram, 'canvaschanged', redraw);
 
   return (
     <Accordion.Item className="cmp-accordion__item" value="guides">
@@ -35,10 +35,4 @@ export const CanvasGuidesProperties = (props: Props) => {
       </AccordionContent>
     </Accordion.Item>
   );
-};
-
-type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
-  diagram: EditableDiagram;
 };

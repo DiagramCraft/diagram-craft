@@ -55,6 +55,10 @@ import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
 import { UserState } from './react-app/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
 import { Ruler } from './react-app/Ruler.tsx';
+import { ActionsContext, useActions } from './react-app/context/ActionsContext.tsx';
+import { DiagramContext } from './react-app/context/DiagramContext.tsx';
+import { ConfigurationContext } from './react-app/context/ConfigurationContext.tsx';
+import { additionalHues, primaryColors } from './react-app/ObjectProperties/palette.ts';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
   return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -71,15 +75,16 @@ const diagrams = [
   }
 ];
 
-const DarkModeToggleButton = (props: { actionMap: Partial<ActionMap> }) => {
+const DarkModeToggleButton = () => {
   const redraw = useRedraw();
-  useEventListener(props.actionMap['TOGGLE_DARK_MODE']!, 'actionchanged', redraw);
+  const { actionMap } = useActions();
+  useEventListener(actionMap['TOGGLE_DARK_MODE']!, 'actionchanged', redraw);
   return (
     <button
       className={'cmp-toolbar__button'}
-      onClick={() => props.actionMap['TOGGLE_DARK_MODE']?.execute()}
+      onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}
     >
-      {props.actionMap['TOGGLE_DARK_MODE']?.state ? (
+      {actionMap['TOGGLE_DARK_MODE']?.state ? (
         <TbSun size={'1.1rem'} />
       ) : (
         <TbMoon size={'1.1rem'} />
@@ -105,168 +110,170 @@ useEffect(() => {
   const actionMap = makeActionMap(defaultAppActions)({ diagram: $d });
   const keyMap = defaultMacKeymap;
   return (
-    <div>
-      <DragDropManager>
-        <div id="app" className={'dark-theme'}>
-          <div id="menu">
-            <div className={'_menu-button'}>
-              <div>
-                <TbMenu2 size={'1.5rem'} />
-              </div>
-            </div>
+    <DiagramContext.Provider value={$d}>
+      <ActionsContext.Provider value={{ actionMap, keyMap }}>
+        <ConfigurationContext.Provider
+          value={{
+            palette: {
+              primary: primaryColors,
+              secondary: additionalHues
+            }
+          }}
+        >
+          <DragDropManager>
+            <div id="app" className={'dark-theme'}>
+              <div id="menu">
+                <div className={'_menu-button'}>
+                  <div>
+                    <TbMenu2 size={'1.5rem'} />
+                  </div>
+                </div>
 
-            <div className={'_tools'}>
-              <div className={'cmp-toolbar'} data-size={'large'}>
-                <button className={'cmp-toolbar__toggle-item'} data-state={'on'}>
-                  <TbClick size={'1.1rem'} />
-                </button>
-                <button className={'cmp-toolbar__toggle-item'}>
-                  <TbLayoutGridAdd size={'1.1rem'} />
-                </button>
-                <button className={'cmp-toolbar__toggle-item'}>
-                  <TbLine size={'1.1rem'} />
-                </button>
-                <button className={'cmp-toolbar__toggle-item'}>
-                  <TbTextSize size={'1.1rem'} />
-                </button>
-                <button className={'cmp-toolbar__toggle-item'}>
-                  <TbPencil size={'1.1rem'} />
-                </button>
-                <button className={'cmp-toolbar__toggle-item'}>
-                  <TbPolygon size={'1.1rem'} />
-                </button>
-              </div>
-            </div>
+                <div className={'_tools'}>
+                  <div className={'cmp-toolbar'} data-size={'large'}>
+                    <button className={'cmp-toolbar__toggle-item'} data-state={'on'}>
+                      <TbClick size={'1.1rem'} />
+                    </button>
+                    <button className={'cmp-toolbar__toggle-item'}>
+                      <TbLayoutGridAdd size={'1.1rem'} />
+                    </button>
+                    <button className={'cmp-toolbar__toggle-item'}>
+                      <TbLine size={'1.1rem'} />
+                    </button>
+                    <button className={'cmp-toolbar__toggle-item'}>
+                      <TbTextSize size={'1.1rem'} />
+                    </button>
+                    <button className={'cmp-toolbar__toggle-item'}>
+                      <TbPencil size={'1.1rem'} />
+                    </button>
+                    <button className={'cmp-toolbar__toggle-item'}>
+                      <TbPolygon size={'1.1rem'} />
+                    </button>
+                  </div>
+                </div>
 
-            <div className={'_document'}>
-              <DocumentSelector
-                diagrams={diagrams}
-                defaultValue={defaultDiagram}
-                onChange={d => {
-                  setDoc(d);
-                  setDiagram(d.diagrams[0]);
-                }}
-              />
-            </div>
-
-            <div className={'_extra-tools'}>
-              <div className={'cmp-toolbar'}>
-                <button
-                  className={'cmp-toolbar__button'}
-                  onClick={() => actionMap['ZOOM_IN']?.execute()}
-                >
-                  <TbZoomOut size={'1.1rem'} />
-                </button>
-                <button
-                  className={'cmp-toolbar__button'}
-                  onClick={() => actionMap['ZOOM_OUT']?.execute()}
-                >
-                  <TbZoomIn size={'1.1rem'} />
-                </button>
-
-                <DarkModeToggleButton actionMap={actionMap} />
-              </div>
-            </div>
-          </div>
-          <div id="window-area">
-            <div id="toolbar">
-              <Toolbar actionMap={actionMap} keyMap={keyMap} diagram={$d} />
-            </div>
-
-            <SideBar
-              side={'left'}
-              defaultSelected={UserState.getState()['panel.left'] ?? 0}
-              onChange={idx => {
-                UserState.set('panel.left', idx);
-              }}
-            >
-              <SideBarPage icon={TbCategoryPlus}>
-                <PickerToolWindow diagram={$d} />
-              </SideBarPage>
-              <SideBarPage icon={TbStack2}>
-                <LayerToolWindow diagram={$d} />
-              </SideBarPage>
-              <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
-              <SideBarPage icon={TbFiles}>TbFiles</SideBarPage>
-              <SideBarPage icon={TbHistory}>
-                <HistoryToolWindow diagram={$d} />
-              </SideBarPage>
-            </SideBar>
-
-            <SideBar
-              side={'right'}
-              defaultSelected={UserState.getState()['panel.right'] ?? 0}
-              onChange={idx => {
-                UserState.set('panel.right', idx);
-              }}
-            >
-              <SideBarPage icon={TbPalette}>
-                <ObjectProperties diagram={$d} actionMap={actionMap} keyMap={keyMap} />
-              </SideBarPage>
-              <SideBarPage icon={TbInfoCircle}>
-                <ObjectInfo diagram={$d} />
-              </SideBarPage>
-              <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
-            </SideBar>
-
-            <div id="canvas-area" className={'light-theme'}>
-              <Ruler orientation={'horizontal'} diagram={$d} canvasRef={svgRef} />
-              <Ruler orientation={'vertical'} diagram={$d} canvasRef={svgRef} />
-
-              <ContextMenu.Root>
-                <ContextMenu.Trigger asChild={true}>
-                  <EditableCanvas
-                    ref={svgRef}
-                    key={$d.id}
-                    className={'canvas'}
-                    diagram={$d}
-                    onContextMenu={e => {
-                      contextMenuTarget.current = e;
+                <div className={'_document'}>
+                  <DocumentSelector
+                    diagrams={diagrams}
+                    defaultValue={defaultDiagram}
+                    onChange={d => {
+                      setDoc(d);
+                      setDiagram(d.diagrams[0]);
                     }}
-                    actionMap={actionMap}
-                    keyMap={keyMap}
-                    onDrop={canvasDropHandler($d)}
-                    onDragOver={canvasDragOverHandler()}
                   />
-                </ContextMenu.Trigger>
-                <ContextMenu.Portal>
-                  <ContextMenu.Content className="cmp-context-menu dark-theme">
-                    <ContextMenuDispatcher
-                      state={contextMenuTarget}
-                      createContextMenu={state => {
-                        if (state.contextMenuTarget.type === 'canvas') {
-                          return <CanvasContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                        } else if (state.contextMenuTarget.type === 'selection') {
-                          return <SelectionContextMenu actionMap={actionMap} keyMap={keyMap} />;
-                        } else {
-                          return (
-                            <EdgeContextMenu
-                              actionMap={actionMap}
-                              keyMap={keyMap}
-                              target={state.contextMenuTarget}
-                            />
-                          );
-                        }
-                      }}
-                    />
-                  </ContextMenu.Content>
-                </ContextMenu.Portal>
-              </ContextMenu.Root>
-            </div>
+                </div>
 
-            <div id="tabs">
-              <DocumentTabs
-                value={$d.id}
-                onValueChange={v => {
-                  setDiagram(doc.getById(v)!);
-                }}
-                document={doc}
-              />
+                <div className={'_extra-tools'}>
+                  <div className={'cmp-toolbar'}>
+                    <button
+                      className={'cmp-toolbar__button'}
+                      onClick={() => actionMap['ZOOM_IN']?.execute()}
+                    >
+                      <TbZoomOut size={'1.1rem'} />
+                    </button>
+                    <button
+                      className={'cmp-toolbar__button'}
+                      onClick={() => actionMap['ZOOM_OUT']?.execute()}
+                    >
+                      <TbZoomIn size={'1.1rem'} />
+                    </button>
+
+                    <DarkModeToggleButton />
+                  </div>
+                </div>
+              </div>
+              <div id="window-area">
+                <div id="toolbar">
+                  <Toolbar />
+                </div>
+
+                <SideBar
+                  side={'left'}
+                  defaultSelected={UserState.getState()['panel.left'] ?? 0}
+                  onChange={idx => {
+                    UserState.set('panel.left', idx);
+                  }}
+                >
+                  <SideBarPage icon={TbCategoryPlus}>
+                    <PickerToolWindow />
+                  </SideBarPage>
+                  <SideBarPage icon={TbStack2}>
+                    <LayerToolWindow />
+                  </SideBarPage>
+                  <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
+                  <SideBarPage icon={TbFiles}>TbFiles</SideBarPage>
+                  <SideBarPage icon={TbHistory}>
+                    <HistoryToolWindow />
+                  </SideBarPage>
+                </SideBar>
+
+                <SideBar
+                  side={'right'}
+                  defaultSelected={UserState.getState()['panel.right'] ?? 0}
+                  onChange={idx => {
+                    UserState.set('panel.right', idx);
+                  }}
+                >
+                  <SideBarPage icon={TbPalette}>
+                    <ObjectProperties />
+                  </SideBarPage>
+                  <SideBarPage icon={TbInfoCircle}>
+                    <ObjectInfo />
+                  </SideBarPage>
+                  <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
+                </SideBar>
+
+                <div id="canvas-area" className={'light-theme'}>
+                  <Ruler orientation={'horizontal'} canvasRef={svgRef} />
+                  <Ruler orientation={'vertical'} canvasRef={svgRef} />
+
+                  <ContextMenu.Root>
+                    <ContextMenu.Trigger asChild={true}>
+                      <EditableCanvas
+                        ref={svgRef}
+                        key={$d.id}
+                        className={'canvas'}
+                        onContextMenu={e => {
+                          contextMenuTarget.current = e;
+                        }}
+                        onDrop={canvasDropHandler($d)}
+                        onDragOver={canvasDragOverHandler()}
+                      />
+                    </ContextMenu.Trigger>
+                    <ContextMenu.Portal>
+                      <ContextMenu.Content className="cmp-context-menu dark-theme">
+                        <ContextMenuDispatcher
+                          state={contextMenuTarget}
+                          createContextMenu={state => {
+                            if (state.contextMenuTarget.type === 'canvas') {
+                              return <CanvasContextMenu />;
+                            } else if (state.contextMenuTarget.type === 'selection') {
+                              return <SelectionContextMenu />;
+                            } else {
+                              return <EdgeContextMenu target={state.contextMenuTarget} />;
+                            }
+                          }}
+                        />
+                      </ContextMenu.Content>
+                    </ContextMenu.Portal>
+                  </ContextMenu.Root>
+                </div>
+
+                <div id="tabs">
+                  <DocumentTabs
+                    value={$d.id}
+                    onValueChange={v => {
+                      setDiagram(doc.getById(v)!);
+                    }}
+                    document={doc}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </DragDropManager>
-    </div>
+          </DragDropManager>
+        </ConfigurationContext.Provider>
+      </ActionsContext.Provider>
+    </DiagramContext.Provider>
   );
 };
 

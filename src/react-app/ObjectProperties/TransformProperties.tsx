@@ -1,4 +1,3 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useEffect, useState } from 'react';
 import { Box } from '../../geometry/box.ts';
 import { Angle } from '../../geometry/angle.ts';
@@ -8,6 +7,7 @@ import { TbAspectRatio } from 'react-icons/tb';
 import { Point } from '../../geometry/point.ts';
 import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { NumberInput } from '../NumberInput.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 const origins: Record<string, Point> = {
   'top-left': { x: 0, y: 0 },
@@ -22,7 +22,8 @@ const origins: Record<string, Point> = {
 };
 
 // TODO: Implement transform origin
-export const TransformProperties = (props: Props) => {
+export const TransformProperties = () => {
+  const diagram = useDiagram();
   const [bounds, setBounds] = useState<Box | undefined>(undefined);
   const [lockAspectRatio, setLockAspectRatio] = useState(false);
   const [origin, setOrigin] = useState('top-left');
@@ -43,7 +44,7 @@ export const TransformProperties = (props: Props) => {
 
   useEffect(() => {
     const callback = () => {
-      const selection = props.diagram.selectionState;
+      const selection = diagram.selectionState;
       if (selection.getSelectionType() === 'single-node') {
         setBounds(selection.nodes[0].bounds);
       } else {
@@ -52,9 +53,9 @@ export const TransformProperties = (props: Props) => {
     };
     callback();
 
-    props.diagram.selectionState.on('change', callback);
+    diagram.selectionState.on('change', callback);
     return () => {
-      props.diagram.selectionState.off('change', callback);
+      diagram.selectionState.off('change', callback);
     };
   }, []);
 
@@ -109,9 +110,9 @@ export const TransformProperties = (props: Props) => {
       });
     }
 
-    props.diagram.selectionState.elements[0].bounds = newBounds.getSnapshot();
-    props.diagram.selectionState.guides = [];
-    props.diagram.updateElement(props.diagram.selectionState.elements[0]);
+    diagram.selectionState.elements[0].bounds = newBounds.getSnapshot();
+    diagram.selectionState.guides = [];
+    diagram.updateElement(diagram.selectionState.elements[0]);
   };
 
   return (
@@ -261,8 +262,4 @@ export const TransformProperties = (props: Props) => {
       </div>
     </div>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

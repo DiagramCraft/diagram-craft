@@ -1,4 +1,3 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useNodeProperty } from './useProperty.ts';
 import * as Select from '@radix-ui/react-select';
 import {
@@ -21,6 +20,7 @@ import { ColorPicker } from '../ColorPicker.tsx';
 import { NumberInput } from '../NumberInput.tsx';
 import { assertHAlign, assertVAlign } from '../../model-viewer/diagramProps.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 const FONTS = {
   Times: 'Times',
@@ -36,7 +36,7 @@ const FONTS = {
 };
 
 export const TextPanel = (props: Props) => {
-  const $d = props.diagram;
+  const $d = useDiagram();
 
   // TODO: Should be useElementProperty
   const font = useNodeProperty($d, 'text.font', 'Arial');
@@ -304,6 +304,5 @@ export const TextPanel = (props: Props) => {
 };
 
 type Props = {
-  diagram: EditableDiagram;
   mode?: 'accordion' | 'panel';
 };

@@ -1,12 +1,13 @@
 import { TbPaint, TbX } from 'react-icons/tb';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { NodeFillPanel } from './NodeFillPanel.tsx';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useNodeProperty } from './useProperty.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const NodeFillToolbarButton = (props: Props) => {
-  const fill = useNodeProperty(props.diagram, 'fill.color', 'transparent');
+export const NodeFillToolbarButton = () => {
+  const diagram = useDiagram();
+  const fill = useNodeProperty(diagram, 'fill.color', 'transparent');
 
   return (
     <Popover.Root>
@@ -28,7 +29,7 @@ export const NodeFillToolbarButton = (props: Props) => {
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <NodeFillPanel diagram={props.diagram} mode={'panel'} />
+          <NodeFillPanel mode={'panel'} />
           <Popover.Close className="cmp-popover__close" aria-label="Close">
             <TbX />
           </Popover.Close>
@@ -37,8 +38,4 @@ export const NodeFillToolbarButton = (props: Props) => {
       </Popover.Portal>
     </Popover.Root>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };

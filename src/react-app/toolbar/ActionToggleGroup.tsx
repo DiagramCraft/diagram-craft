@@ -1,6 +1,7 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { KeyMap, ToggleAction } from '../../base-ui/keyMap.ts';
+import { ToggleAction } from '../../base-ui/keyMap.ts';
 import React, { useState } from 'react';
+import { useActions } from '../context/ActionsContext.tsx';
 
 type ActionToggleGroupContextType = {
   setActionState(action: keyof ActionMap, state: boolean): void;
@@ -11,6 +12,7 @@ export const ActionToggleGroupContext = React.createContext<
 >(undefined);
 
 export const ActionToggleGroup = (props: Props) => {
+  const { actionMap } = useActions();
   const [values, setValues] = useState<Record<string, boolean>>({});
 
   return (
@@ -37,9 +39,9 @@ export const ActionToggleGroup = (props: Props) => {
         onValueChange={value => {
           for (const action of Object.keys(values)) {
             if (value.includes(action) && !values[action]) {
-              (props.actionMap[action as keyof ActionMap] as ToggleAction)?.execute({});
+              (actionMap[action as keyof ActionMap] as ToggleAction)?.execute({});
             } else if (!value.includes(action) && values[action]) {
-              (props.actionMap[action as keyof ActionMap] as ToggleAction)?.execute({});
+              (actionMap[action as keyof ActionMap] as ToggleAction)?.execute({});
             }
           }
         }}
@@ -51,7 +53,5 @@ export const ActionToggleGroup = (props: Props) => {
 };
 
 type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
   children: React.ReactNode;
 };

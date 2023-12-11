@@ -1,4 +1,3 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as Accordion from '@radix-ui/react-accordion';
@@ -12,26 +11,28 @@ import { CustomPropertiesPanel } from './CustomPropertiesPanel.tsx';
 import { ShadowPanel } from './ShadowPanel.tsx';
 import { CanvasProperties } from './CanvasProperties.tsx';
 import { CanvasGuidesProperties } from './CanvasGuidesProperties.tsx';
-import { KeyMap } from '../../base-ui/keyMap.ts';
 import { CanvasGridPanel } from './CanvasGridPanel.tsx';
 import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const ObjectProperties = (props: Props) => {
+export const ObjectProperties = () => {
+  const diagram = useDiagram();
+
   const [type, setType] = useState('none');
 
   const callback = () => {
-    if (props.diagram.selectionState.getSelectionType() === 'mixed') {
+    if (diagram.selectionState.getSelectionType() === 'mixed') {
       setType('mixed');
-    } else if (props.diagram.selectionState.isNodesOnly()) {
+    } else if (diagram.selectionState.isNodesOnly()) {
       setType('node');
-    } else if (props.diagram.selectionState.isEdgesOnly()) {
+    } else if (diagram.selectionState.isEdgesOnly()) {
       setType('edge');
     } else {
       setType('none');
     }
   };
-  useEventListener(props.diagram.selectionState, 'change', callback);
+  useEventListener(diagram.selectionState, 'change', callback);
   useEffect(callback, []);
 
   return (
@@ -54,22 +55,22 @@ export const ObjectProperties = (props: Props) => {
       >
         {(type === 'node' || type === 'mixed') && (
           <>
-            <NodeFillPanel diagram={props.diagram} />
+            <NodeFillPanel />
 
-            <ShadowPanel diagram={props.diagram} />
+            <ShadowPanel />
 
-            <NodeStrokePanel diagram={props.diagram} />
+            <NodeStrokePanel />
 
-            <TextPanel diagram={props.diagram} />
+            <TextPanel />
 
             <Accordion.Item className="cmp-accordion__item" value="transform">
               <AccordionTrigger>Transform</AccordionTrigger>
               <AccordionContent>
-                <TransformProperties diagram={props.diagram} />
+                <TransformProperties />
               </AccordionContent>
             </Accordion.Item>
 
-            <CustomPropertiesPanel diagram={props.diagram} />
+            <CustomPropertiesPanel />
           </>
         )}
 
@@ -77,7 +78,7 @@ export const ObjectProperties = (props: Props) => {
           <Accordion.Item className="cmp-accordion__item" value="line">
             <AccordionTrigger>Line</AccordionTrigger>
             <AccordionContent>
-              <LineProperties diagram={props.diagram} />
+              <LineProperties />
             </AccordionContent>
           </Accordion.Item>
         )}
@@ -87,36 +88,18 @@ export const ObjectProperties = (props: Props) => {
             <Accordion.Item className="cmp-accordion__item" value="line">
               <AccordionTrigger>Canvas</AccordionTrigger>
               <AccordionContent>
-                <CanvasProperties diagram={props.diagram} />
+                <CanvasProperties />
               </AccordionContent>
             </Accordion.Item>
 
-            <CanvasGridPanel
-              diagram={props.diagram}
-              actionMap={props.actionMap}
-              keyMap={props.keyMap}
-            />
+            <CanvasGridPanel />
 
-            <CanvasGuidesProperties
-              diagram={props.diagram}
-              actionMap={props.actionMap}
-              keyMap={props.keyMap}
-            />
+            <CanvasGuidesProperties />
 
-            <CanvasSnapPanel
-              diagram={props.diagram}
-              actionMap={props.actionMap}
-              keyMap={props.keyMap}
-            />
+            <CanvasSnapPanel />
           </>
         )}
       </Accordion.Root>
     </>
   );
-};
-
-type Props = {
-  actionMap: Partial<ActionMap>;
-  keyMap: KeyMap;
-  diagram: EditableDiagram;
 };

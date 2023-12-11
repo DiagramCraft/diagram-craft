@@ -4,12 +4,13 @@ import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
 import { Edge } from '../../react-canvas-viewer/Edge.tsx';
 import { Node } from '../../react-canvas-viewer/Node.tsx';
 import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 const PickerCanvas = (props: PickerCanvasProps) => {
-  const diagram = props.diagram;
+  const diagram = useDiagram();
 
   return (
-    <svg {...propsUtils.except(props, 'diagram')} preserveAspectRatio="none">
+    <svg {...propsUtils.except(props)} preserveAspectRatio="none">
       {diagram.elements.map(e => {
         const id = e.id;
         if (e.type === 'edge') {
@@ -45,16 +46,14 @@ const PickerCanvas = (props: PickerCanvasProps) => {
   );
 };
 
-type PickerCanvasProps = {
-  // TODO: This should really by Diagram and not EditableDiagram
-  diagram: EditableDiagram;
-} & Omit<
+type PickerCanvasProps = Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
 >;
 
 export const ObjectPicker = (props: Props) => {
-  const nodes = props.diagram.nodeDefinitions.getAll();
+  const diagram = useDiagram();
+  const nodes = diagram.nodeDefinitions.getAll();
 
   const diagrams = nodes.map(n => {
     return new EditableDiagram(
@@ -72,13 +71,13 @@ export const ObjectPicker = (props: Props) => {
           undefined
         )
       ],
-      props.diagram.nodeDefinitions,
-      props.diagram.edgeDefinitions
+      diagram.nodeDefinitions,
+      diagram.edgeDefinitions
     );
   });
   return (
     <div className={'cmp-object-picker'}>
-      {diagrams.map((d, idx) => (
+      {diagrams.map((_d, idx) => (
         <div
           key={idx}
           draggable={true}
@@ -88,7 +87,7 @@ export const ObjectPicker = (props: Props) => {
           }}
           style={{ background: 'transparent' }}
         >
-          <PickerCanvas diagram={d} width={props.size} height={props.size} />
+          <PickerCanvas width={props.size} height={props.size} />
         </div>
       ))}
     </div>
@@ -96,6 +95,5 @@ export const ObjectPicker = (props: Props) => {
 };
 
 type Props = {
-  diagram: EditableDiagram;
   size: number;
 };

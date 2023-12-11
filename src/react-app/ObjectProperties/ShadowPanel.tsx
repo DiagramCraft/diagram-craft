@@ -1,13 +1,13 @@
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { useNodeProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const ShadowPanel = (props: Props) => {
-  const $d = props.diagram;
+  const $d = useDiagram();
 
   const color = useNodeProperty($d, 'shadow.color', 'black');
   const opacity = useNodeProperty($d, 'shadow.opacity', 0.5);
@@ -82,6 +82,5 @@ export const ShadowPanel = (props: Props) => {
 };
 
 type Props = {
-  diagram: EditableDiagram;
   mode?: 'accordion' | 'panel';
 };

@@ -1,12 +1,13 @@
 import { TbBorderStyle2, TbX } from 'react-icons/tb';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useNodeProperty } from './useProperty.ts';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const NodeStrokeToolbarButton = (props: Props) => {
-  const fill = useNodeProperty(props.diagram, 'stroke.color', 'transparent');
+export const NodeStrokeToolbarButton = () => {
+  const diagram = useDiagram();
+  const fill = useNodeProperty(diagram, 'stroke.color', 'transparent');
 
   return (
     <Popover.Root>
@@ -28,7 +29,7 @@ export const NodeStrokeToolbarButton = (props: Props) => {
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <NodeStrokePanel diagram={props.diagram} mode={'panel'} />
+          <NodeStrokePanel mode={'panel'} />
           <Popover.Close className="cmp-popover__close" aria-label="Close">
             <TbX />
           </Popover.Close>
@@ -37,8 +38,4 @@ export const NodeStrokeToolbarButton = (props: Props) => {
       </Popover.Portal>
     </Popover.Root>
   );
-};
-
-type Props = {
-  diagram: EditableDiagram;
 };
