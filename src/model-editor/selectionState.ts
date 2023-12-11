@@ -37,9 +37,6 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   private _marquee?: Box;
   private _guides: Guide[] = [];
 
-  // TODO: This is mostly here for debugging purposes
-  private _magnets: Magnet[] = [];
-
   elements: (DiagramEdge | DiagramNode)[] = [];
 
   source: SelectionSource = {
@@ -73,15 +70,6 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   set guides(guides: Guide[]) {
     this._guides = guides;
-    this.emit('change', { selection: this });
-  }
-
-  get magnets(): Magnet[] {
-    return this._magnets;
-  }
-
-  set magnets(magnets: Magnet[]) {
-    this._magnets = magnets;
     this.emit('change', { selection: this });
   }
 

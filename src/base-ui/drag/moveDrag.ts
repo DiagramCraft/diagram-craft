@@ -106,7 +106,6 @@ export class MoveDrag implements Drag {
 
       const result = snapManager.snapMove(newBounds.getSnapshot(), snapDirections);
       selection.guides = result.guides;
-      selection.magnets = result.magnets;
 
       newBounds.set('pos', result.adjusted.pos);
     }

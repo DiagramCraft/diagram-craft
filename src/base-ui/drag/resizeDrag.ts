@@ -105,7 +105,6 @@ export class ResizeDrag implements Drag {
 
       const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
       selection.guides = result.guides;
-      selection.magnets = result.magnets;
 
       newBounds.set('pos', result.adjusted.pos);
       newBounds.set('size', result.adjusted.size);
