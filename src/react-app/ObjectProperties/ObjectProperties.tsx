@@ -21,14 +21,11 @@ export const ObjectProperties = (props: Props) => {
   const [type, setType] = useState('none');
 
   const callback = () => {
-    if (
-      props.diagram.selectionState.nodes.length > 0 &&
-      props.diagram.selectionState.edges.length > 0
-    ) {
+    if (props.diagram.selectionState.getSelectionType() === 'mixed') {
       setType('mixed');
-    } else if (props.diagram.selectionState.nodes.length > 0) {
+    } else if (props.diagram.selectionState.isNodesOnly()) {
       setType('node');
-    } else if (props.diagram.selectionState.edges.length > 0) {
+    } else if (props.diagram.selectionState.isEdgesOnly()) {
       setType('edge');
     } else {
       setType('none');

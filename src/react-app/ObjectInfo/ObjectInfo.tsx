@@ -13,28 +13,19 @@ export const ObjectInfo = (props: Props) => {
   const [edgeId, setEdgeId] = useState<string | undefined>(undefined);
 
   const callback = useCallback(() => {
-    if (
-      props.diagram.selectionState.nodes.length === 1 &&
-      props.diagram.selectionState.edges.length === 0
-    ) {
+    const selectionType = props.diagram.selectionState.getSelectionType();
+    if (selectionType === 'single-node') {
       setState('node');
       setNodeId(props.diagram.selectionState.nodes[0].id);
-    } else if (
-      props.diagram.selectionState.edges.length === 1 &&
-      props.diagram.selectionState.nodes.length === 0
-    ) {
+    } else if (selectionType === 'single-edge') {
       setState('edge');
       setEdgeId(props.diagram.selectionState.edges[0].id);
-    } else if (props.diagram.selectionState.elements.length > 0) {
+    } else if (!props.diagram.selectionState.isEmpty()) {
       setState('selection');
     } else {
       setState(undefined);
     }
-  }, [
-    props.diagram.selectionState.edges.length,
-    props.diagram.selectionState.elements.length,
-    props.diagram.selectionState.nodes.length
-  ]);
+  }, [props.diagram.selectionState]);
   useEffect(() => {
     callback();
 

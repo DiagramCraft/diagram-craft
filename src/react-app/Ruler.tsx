@@ -78,7 +78,7 @@ export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
               </text>
             ))}
 
-          {diagram.selectionState.elements.length > 0 && (
+          {!diagram.selectionState.isEmpty() && (
             <rect
               className={'svg-selection'}
               x={toScreenX(diagram.selectionState.bounds.pos.x)}
@@ -128,7 +128,7 @@ export const Ruler = ({ diagram, canvasRef, orientation }: Props) => {
               </text>
             ))}
 
-          {diagram.selectionState.elements.length > 0 && (
+          {!diagram.selectionState.isEmpty() && (
             <rect
               className={'svg-selection'}
               x={-1}

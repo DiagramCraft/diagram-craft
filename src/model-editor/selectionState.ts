@@ -3,7 +3,7 @@ import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
 import { Magnet } from './snap/magnet.ts';
-import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { DiagramElement, DiagramNode } from '../model-viewer/diagramNode.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 
 const EMPTY_BOX = {
@@ -18,7 +18,6 @@ type SelectionSource = {
   boundingBox: Box;
 };
 
-// TODO: Should probably include the magnets as well
 export type Guide = {
   line: Line;
   label?: string;
@@ -27,33 +26,44 @@ export type Guide = {
 };
 
 export type SelectionStateEvents = {
+  /* The selection has changed, this includes adding, removing elements, but also
+   * recalculating bounding box */
   change: { selection: SelectionState };
-  add: { element: DiagramNode | DiagramEdge };
-  remove: { element: DiagramNode | DiagramEdge };
+
+  /* Elements have been added to the selection */
+  add: { element: DiagramElement };
+
+  /* Elements have been removed from the selection */
+  remove: { element: DiagramElement };
 };
 
+type SelectionType = 'empty' | 'single-node' | 'single-edge' | 'edges' | 'nodes' | 'mixed';
+
 export class SelectionState extends EventEmitter<SelectionStateEvents> {
-  private _bounds: Box;
-  private _marquee?: Box;
-  private _guides: Guide[] = [];
+  #bounds: Box;
+  #marquee?: Box;
+  #guides: Guide[] = [];
 
-  elements: (DiagramEdge | DiagramNode)[] = [];
+  // TODO: Maybe make this a property to prevent setting it directly?
+  elements: DiagramElement[] = [];
 
-  source: SelectionSource = {
+  #source: SelectionSource = {
     elementBoxes: [],
     elementIds: [],
     boundingBox: EMPTY_BOX
   };
 
   // For marquee selection
-  pendingElements?: (DiagramNode | DiagramEdge)[];
-
-  state: Record<string, unknown> = {};
+  pendingElements?: DiagramElement[];
 
   constructor() {
     super();
-    this._bounds = EMPTY_BOX;
+    this.#bounds = EMPTY_BOX;
     this.elements = [];
+  }
+
+  get source() {
+    return this.#source;
   }
 
   get nodes(): DiagramNode[] {
@@ -65,36 +75,64 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   get guides(): Guide[] {
-    return this._guides;
+    return this.#guides;
   }
 
   set guides(guides: Guide[]) {
-    this._guides = guides;
-    this.emit('change', { selection: this });
+    this.#guides = guides;
+    this.emitAsync('change', { selection: this });
   }
 
   get bounds(): Box {
-    return this._bounds;
+    return this.#bounds;
   }
 
   // TODO: Why do we need set bounds - can't we just recalculate the bounding box?
   set bounds(bounds: Box) {
-    this._bounds = bounds;
-    this.emit('change', { selection: this });
+    this.#bounds = bounds;
+    this.emitAsync('change', { selection: this });
   }
 
   get marquee(): Box | undefined {
-    return this._marquee;
+    return this.#marquee;
   }
 
   set marquee(marquee: Box | undefined) {
-    this._marquee = marquee;
-    this.emit('change', { selection: this });
+    this.#marquee = marquee;
+    this.emitAsync('change', { selection: this });
+  }
+
+  getSelectionType(): SelectionType {
+    if (this.elements.length === 0) {
+      return 'empty';
+    }
+
+    if (this.elements.length === 1) {
+      return this.elements[0].type === 'node' ? 'single-node' : 'single-edge';
+    }
+
+    if (this.elements.every(e => e.type === 'node')) {
+      return 'nodes';
+    }
+
+    if (this.elements.every(e => e.type === 'edge')) {
+      return 'edges';
+    }
+
+    return 'mixed';
+  }
+
+  isNodesOnly(): boolean {
+    return ['nodes', 'single-node'].includes(this.getSelectionType());
+  }
+
+  isEdgesOnly(): boolean {
+    return ['edges', 'single-edge'].includes(this.getSelectionType());
   }
 
   isChanged(): boolean {
     return this.elements.some((node, i) => {
-      const original = this.source.elementBoxes[i];
+      const original = this.#source.elementBoxes[i];
       return !Box.isEqual(node.bounds, original);
     });
   }
@@ -104,85 +142,65 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   recalculateBoundingBox() {
-    this._bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
-    this.emit('change', { selection: this });
+    this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
+    this.emitAsync('change', { selection: this });
   }
 
-  recalculateSourceBoundingBox() {
-    this.source.boundingBox =
-      this.source.elementBoxes.length === 0
+  private recalculateSourceBoundingBox() {
+    this.#source.boundingBox =
+      this.#source.elementBoxes.length === 0
         ? EMPTY_BOX
-        : Box.boundingBox(this.source.elementBoxes.map(e => e));
+        : Box.boundingBox(this.#source.elementBoxes.map(e => e));
   }
 
-  toggle(element: DiagramNode | DiagramEdge) {
+  toggle(element: DiagramElement) {
     const shouldRemove = this.elements.includes(element);
-    this.elements = shouldRemove
-      ? this.elements.filter(e => e !== element)
-      : [...this.elements, element];
 
-    this.source.elementBoxes = this.elements.map(e => e.bounds);
-    this.source.elementIds = this.elements.map(e => e.id);
-
-    this.recalculateSourceBoundingBox();
-    this.recalculateBoundingBox();
-
-    if (shouldRemove) {
-      this.emit('remove', { element });
-    } else {
-      this.emit('add', { element });
-    }
+    this.setElements(
+      shouldRemove ? this.elements.filter(e => e !== element) : [...this.elements, element]
+    );
   }
 
-  setElements(element: (DiagramNode | DiagramEdge)[]) {
-    this.elements = element;
-    this.source.elementBoxes = this.elements.map(e => e.bounds);
-    this.source.elementIds = this.elements.map(e => e.id);
-
-    this.recalculateSourceBoundingBox();
-    this.recalculateBoundingBox();
-  }
-
-  clear() {
+  setElements(element: DiagramElement[]) {
+    element.forEach(e => {
+      if (this.elements.includes(e)) return;
+      this.emit('add', { element: e });
+    });
     this.elements.forEach(e => {
+      if (element.includes(e)) return;
       this.emit('remove', { element: e });
     });
 
-    this.elements = [];
-    this.source.elementBoxes = [];
-    this.source.elementIds = [];
-    this._marquee = undefined;
-    this._guides = [];
-    this.pendingElements = undefined;
-
-    this.recalculateSourceBoundingBox();
+    this.elements = element;
     this.recalculateBoundingBox();
+
+    this.rebaseline();
   }
 
-  setPendingElements(pendingElemenets: (DiagramNode | DiagramEdge)[]) {
-    this.pendingElements = pendingElemenets;
+  clear() {
+    this.#marquee = undefined;
+    this.#guides = [];
+    this.pendingElements = undefined;
+
+    this.setElements([]);
   }
 
   convertMarqueeToSelection() {
     precondition.is.present(this.pendingElements);
 
-    for (const e of this.pendingElements) {
-      if (!this.elements.includes(e)) this.toggle(e);
-    }
+    this.marquee = undefined;
 
-    this.recalculateSourceBoundingBox();
-    this.recalculateBoundingBox();
+    this.setElements([
+      ...this.pendingElements.filter(e => !this.elements.includes(e)),
+      ...this.elements
+    ]);
 
     this.pendingElements = undefined;
-
-    this.marquee = undefined;
   }
 
   rebaseline() {
-    this.source.elementBoxes = this.elements.map(e => e.bounds);
-    this.source.elementIds = this.elements.map(e => e.id);
+    this.#source.elementBoxes = this.elements.map(e => e.bounds);
+    this.#source.elementIds = this.elements.map(e => e.id);
     this.recalculateSourceBoundingBox();
-
-    this.emit('change', { selection: this });
   }
 }

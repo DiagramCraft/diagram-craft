@@ -33,12 +33,11 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
     super();
 
     const cb = () => {
-      this.enabled = this.diagram.selectionState.elements.length > 1;
+      this.enabled = !this.diagram.selectionState.isEmpty();
       this.emit('actionchanged', { action: this });
     };
     this.diagram.selectionState.on('add', cb);
     this.diagram.selectionState.on('remove', cb);
-    this.diagram.selectionState.on('change', cb);
   }
 
   execute(): void {

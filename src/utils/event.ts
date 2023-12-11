@@ -1,3 +1,5 @@
+import { debounce } from './debounce.ts';
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventMap = Record<string, any>;
 
@@ -12,21 +14,26 @@ export interface Emitter<T extends EventMap> {
 
 export class EventEmitter<T extends EventMap> implements Emitter<T> {
   private listeners: {
-    [K in keyof T]?: Array<EventReceiver<T[K]>>;
+    [K in keyof T]?: Array<[EventReceiver<T[K]>, EventReceiver<T[K]>]>;
   } = {};
 
   on<K extends EventKey<T>>(eventName: K, fn: EventReceiver<T[K]>) {
-    this.listeners[eventName] = (this.listeners[eventName] ?? []).concat(fn);
+    this.listeners[eventName] = (this.listeners[eventName] ?? []).concat([[fn, debounce(fn)]]);
   }
 
   off<K extends EventKey<T>>(eventName: K, fn: EventReceiver<T[K]>) {
-    this.listeners[eventName] = (this.listeners[eventName] ?? []).filter(f => f !== fn);
+    this.listeners[eventName] = (this.listeners[eventName] ?? []).filter(f => f[0] !== fn);
   }
 
-  // TODO: Add debounce here somehow
+  emitAsync<K extends EventKey<T>>(eventName: K, params?: T[K]) {
+    (this.listeners[eventName] ?? []).forEach(function (fn) {
+      fn[1]({ ...(params ?? {}) } as T[K]);
+    });
+  }
+
   emit<K extends EventKey<T>>(eventName: K, params?: T[K]) {
-    [...(this.listeners[eventName] ?? []), ...(this.listeners['*'] ?? [])].forEach(function (fn) {
-      fn({ ...(params ?? {}) } as T[K]);
+    (this.listeners[eventName] ?? []).forEach(function (fn) {
+      fn[0]({ ...(params ?? {}) } as T[K]);
     });
   }
 }

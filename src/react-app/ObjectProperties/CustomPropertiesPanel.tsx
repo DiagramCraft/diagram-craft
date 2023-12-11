@@ -12,10 +12,7 @@ export const CustomPropertiesPanel = (props: Props) => {
 
   useEffect(() => {
     const callback = () => {
-      if (
-        props.diagram.selectionState.nodes.length !== 1 ||
-        props.diagram.selectionState.edges.length !== 0
-      ) {
+      if (props.diagram.selectionState.getSelectionType() !== 'single-node') {
         setNode(undefined);
       } else {
         setNode(props.diagram.selectionState.nodes[0]);

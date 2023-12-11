@@ -26,7 +26,6 @@ export class DistributeAction extends EventEmitter<ActionEvents> implements Acti
     };
     this.diagram.selectionState.on('add', cb);
     this.diagram.selectionState.on('remove', cb);
-    this.diagram.selectionState.on('change', cb);
   }
 
   execute(): void {

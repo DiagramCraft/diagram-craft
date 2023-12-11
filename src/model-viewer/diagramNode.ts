@@ -3,7 +3,7 @@ import { assert } from '../utils/assert.ts';
 import { round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
-import { Diagram, DiagramElement } from './diagram.ts';
+import { Diagram, AbstractElement } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 
@@ -12,7 +12,7 @@ type Anchor = {
   clip?: boolean;
 };
 
-export interface AbstractNode extends DiagramElement {
+export interface AbstractNode extends AbstractElement {
   type: 'node';
   nodeType: 'group' | string;
   id: string;
@@ -24,6 +24,8 @@ export interface AbstractNode extends DiagramElement {
 }
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
+
+export type DiagramElement = DiagramNode | DiagramEdge;
 
 export class DiagramNode implements AbstractNode {
   id: string;

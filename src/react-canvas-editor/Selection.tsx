@@ -42,7 +42,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   if (props.selection.isEmpty()) return null;
 
-  const isOnlyEdges = props.selection.nodes.length === 0 && props.selection.edges.length > 0;
+  const isOnlyEdges = props.selection.isEdgesOnly();
 
   const bounds = props.selection.bounds;
 

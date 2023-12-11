@@ -27,11 +27,7 @@ import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropert
 export const Toolbar = (props: Props) => {
   const [enabled, setEnabled] = useState(false);
   useEventListener(props.diagram.selectionState, 'change', () => {
-    if (props.diagram.selectionState.elements.length > 0) {
-      setEnabled(true);
-    } else {
-      setEnabled(false);
-    }
+    setEnabled(!props.diagram.selectionState.isEmpty());
   });
 
   return (

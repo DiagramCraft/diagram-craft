@@ -42,6 +42,6 @@ export class MarqueeDrag implements Drag {
         pending.push(e);
       }
     }
-    selection.setPendingElements(pending);
+    selection.pendingElements = pending;
   }
 }

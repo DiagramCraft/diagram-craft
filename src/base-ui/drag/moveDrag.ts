@@ -14,6 +14,7 @@ import { newid } from '../../utils/id.ts';
 
 export class MoveDrag implements Drag {
   snapAngle?: Axis;
+  metaKey?: boolean = false;
 
   constructor(
     private readonly diagram: EditableDiagram,
@@ -41,7 +42,7 @@ export class MoveDrag implements Drag {
     let snapDirections: Direction[] = Direction.all();
 
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
-    if (modifiers.metaKey && !selection.state['metaKey']) {
+    if (modifiers.metaKey && !this.metaKey) {
       // Reset current selection back to original
       this.diagram.transformElements(selection.nodes, [
         new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))
@@ -56,14 +57,16 @@ export class MoveDrag implements Drag {
         e.id = newid();
         this.diagram.addNode(e);
       });
+      // TODO: shouldn't we use setElements instead
       selection.elements = newElements;
 
-      selection.state['metaKey'] = true;
-    } else if (!modifiers.metaKey && selection.state['metaKey']) {
-      selection.state['metaKey'] = false;
+      this.metaKey = true;
+    } else if (!modifiers.metaKey && this.metaKey) {
+      this.metaKey = false;
 
       const elementsToRemove = selection.nodes;
 
+      // TODO: shouldn't we use setElements instead - and then not need recalculateBoundingBox
       selection.elements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e]);
       selection.recalculateBoundingBox();
       selection.guides = [];
@@ -131,7 +134,7 @@ export class MoveDrag implements Drag {
         this.diagram.undoManager.execute(resizeCanvasAction);
       }
 
-      if (selection.state['metaKey']) {
+      if (this.metaKey) {
         this.diagram.undoManager.add(new NodeAddAction(selection.nodes, this.diagram));
       } else {
         this.diagram.undoManager.add(
@@ -147,6 +150,6 @@ export class MoveDrag implements Drag {
       selection.rebaseline();
     }
 
-    selection.state['metaKey'] = false;
+    this.metaKey = false;
   }
 }

@@ -44,7 +44,7 @@ export const TransformProperties = (props: Props) => {
   useEffect(() => {
     const callback = () => {
       const selection = props.diagram.selectionState;
-      if (selection.nodes.length === 1) {
+      if (selection.getSelectionType() === 'single-node') {
         setBounds(selection.nodes[0].bounds);
       } else {
         setBounds(undefined);

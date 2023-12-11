@@ -8,7 +8,7 @@ import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './nodeDefinition.ts';
 
-export interface DiagramElement {
+export interface AbstractElement {
   id: string;
   type: string;
 }

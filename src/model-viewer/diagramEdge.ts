@@ -1,6 +1,6 @@
 import { Box } from '../geometry/box.ts';
 import { Transform } from '../geometry/transform.ts';
-import { Diagram, DiagramElement } from './diagram.ts';
+import { Diagram, AbstractElement } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode } from './diagramNode.ts';
 
@@ -9,7 +9,7 @@ export type Waypoint = {
   controlPoints?: [Point, Point];
 };
 
-export interface AbstractEdge extends DiagramElement {
+export interface AbstractEdge extends AbstractElement {
   type: 'edge';
   id: string;
   waypoints?: Waypoint[];
