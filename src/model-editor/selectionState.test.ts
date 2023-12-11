@@ -2,7 +2,6 @@ import { Guide, SelectionState } from './selectionState.ts';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
-import { Box } from '../geometry/box.ts';
 import { EditableDiagram } from './editable-diagram.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
 
@@ -158,20 +157,6 @@ describe('SelectionState', () => {
     const guides: Guide[] = [{} as unknown as Guide];
     selectionState.guides = guides;
     expect(selectionState.guides).toBe(guides);
-
-    vi.advanceTimersByTime(1);
-    expect(changeCb).toHaveBeenCalledTimes(1);
-  });
-
-  test('set marquee', () => {
-    const selectionState = new SelectionState(createDiagram());
-
-    const changeCb = vi.fn();
-    selectionState.on('change', changeCb);
-
-    const marquee: Box = { pos: { x: 0, y: 0 }, size: { w: 10, h: 10 }, rotation: 0 };
-    selectionState.marquee = marquee;
-    expect(selectionState.marquee).toBe(marquee);
 
     vi.advanceTimersByTime(1);
     expect(changeCb).toHaveBeenCalledTimes(1);

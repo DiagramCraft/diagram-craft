@@ -18,20 +18,20 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
     };
   });
 
-  if (!props.selection.marquee) return null;
+  if (!props.selection.marquee.bounds) return null;
 
   return (
     <>
       <rect
-        x={props.selection.marquee.pos.x}
-        y={props.selection.marquee.pos.y}
-        width={props.selection.marquee.size.w}
-        height={props.selection.marquee.size.h}
+        x={props.selection.marquee.bounds.pos.x}
+        y={props.selection.marquee.bounds.pos.y}
+        width={props.selection.marquee.bounds.size.w}
+        height={props.selection.marquee.bounds.size.h}
         fill="rgba(43, 117, 221, 0.2)"
         style={{ stroke: '#2673dd' }}
       />
 
-      {props.selection.pendingElements?.map(e => (
+      {props.selection.marquee.pendingElements?.map(e => (
         <rect
           key={e.id}
           x={e.bounds.pos.x}

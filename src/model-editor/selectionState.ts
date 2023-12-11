@@ -1,5 +1,4 @@
 import { Line } from '../geometry/line.ts';
-import { precondition } from '../utils/assert.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
 import { Magnet } from './snap/magnet.ts';
@@ -7,6 +6,7 @@ import { DiagramElement, DiagramNode } from '../model-viewer/diagramNode.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 import { EditableDiagram } from './editable-diagram.ts';
 import { debounce } from '../utils/debounce.ts';
+import { Marquee } from './marquee.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
@@ -39,12 +39,12 @@ export type SelectionStateEvents = {
   remove: { element: DiagramElement };
 };
 
-type SelectionType = 'empty' | 'single-node' | 'single-edge' | 'edges' | 'nodes' | 'mixed';
+export type SelectionType = 'empty' | 'single-node' | 'single-edge' | 'edges' | 'nodes' | 'mixed';
 
-// TODO: Maybe create a marquee class
 export class SelectionState extends EventEmitter<SelectionStateEvents> {
+  readonly #marquee: Marquee;
+
   #bounds: Box;
-  #marquee?: Box;
   #guides: Guide[] = [];
   #elements: DiagramElement[] = [];
   #source: SelectionSource = {
@@ -53,13 +53,11 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     boundingBox: EMPTY_BOX
   };
 
-  // For marquee selection
-  pendingElements?: DiagramElement[];
-
   constructor(diagram: EditableDiagram) {
     super();
     this.#bounds = EMPTY_BOX;
     this.#elements = [];
+    this.#marquee = new Marquee(this);
 
     const recalculateSourceBoundingBox = debounce(() => {
       this.recalculateBoundingBox();
@@ -97,13 +95,8 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.#bounds;
   }
 
-  get marquee(): Box | undefined {
+  get marquee() {
     return this.#marquee;
-  }
-
-  set marquee(marquee: Box | undefined) {
-    this.#marquee = marquee;
-    this.emitAsync('change', { selection: this });
   }
 
   getSelectionType(): SelectionType {
@@ -170,41 +163,31 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   clear() {
-    this.#marquee = undefined;
+    this.#marquee.clear();
     this.#guides = [];
-    this.pendingElements = undefined;
 
     this.setElements([]);
   }
 
-  convertMarqueeToSelection() {
-    precondition.is.present(this.pendingElements);
-
-    this.marquee = undefined;
-
-    this.setElements([
-      ...this.pendingElements.filter(e => !this.#elements.includes(e)),
-      ...this.#elements
-    ]);
-
-    this.pendingElements = undefined;
-  }
-
+  /* To be used once a transform operation on the selection has been completed.
+   * It resets the source elements that are used for tracking changes.
+   */
   rebaseline() {
     this.#source.elementBoxes = this.#elements.map(e => e.bounds);
     this.#source.elementIds = this.#elements.map(e => e.id);
-    this.recalculateSourceBoundingBox();
-  }
-
-  recalculateBoundingBox() {
-    this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.#elements.map(e => e.bounds));
-    this.emitAsync('change', { selection: this });
-  }
-
-  private recalculateSourceBoundingBox() {
     this.#source.boundingBox =
       this.#source.elementBoxes.length === 0
         ? EMPTY_BOX
         : Box.boundingBox(this.#source.elementBoxes.map(e => e));
+  }
+
+  /* Note, calling this externally should not be needed from a functional point of view,
+   * as the selection state will automatically recalculate the bounding box when needed.
+   * However, it can be useful from a performance point of view - hence it's used when
+   * moving and resizing elements
+   */
+  recalculateBoundingBox() {
+    this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.#elements.map(e => e.bounds));
+    this.emitAsync('change', { selection: this });
   }
 }

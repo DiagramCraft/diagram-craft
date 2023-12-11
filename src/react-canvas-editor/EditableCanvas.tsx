@@ -95,8 +95,12 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     'change',
     debounce(() => {
       selectionRef.current?.repaint();
-      selectionMarqueeRef.current?.repaint();
     })
+  );
+  useEventListener(
+    selection.marquee,
+    'change',
+    debounce(() => selectionMarqueeRef.current?.repaint())
   );
 
   // This needs to stay in heter for performance reasons

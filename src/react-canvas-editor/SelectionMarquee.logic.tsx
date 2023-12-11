@@ -15,7 +15,7 @@ export class MarqueeDrag implements Drag {
   ) {}
 
   onDrag(coord: Point) {
-    this.diagram.selectionState.marquee = Box.normalize({
+    this.diagram.selectionState.marquee.bounds = Box.normalize({
       pos: this.offset,
       size: { w: coord.x - this.offset.x, h: coord.y - this.offset.y },
       rotation: 0
@@ -25,8 +25,8 @@ export class MarqueeDrag implements Drag {
   }
 
   onDragEnd(): void {
-    if (this.diagram.selectionState.pendingElements) {
-      this.diagram.selectionState.convertMarqueeToSelection();
+    if (this.diagram.selectionState.marquee.pendingElements) {
+      this.diagram.selectionState.marquee.commitSelection();
     }
   }
 
@@ -35,10 +35,10 @@ export class MarqueeDrag implements Drag {
 
     const pending: (DiagramNode | DiagramEdge)[] = [];
     for (const e of diagram.elements) {
-      if (Box.contains(selection.marquee, e.bounds)) {
+      if (Box.contains(selection.marquee.bounds, e.bounds)) {
         pending.push(e);
       }
     }
-    selection.pendingElements = pending;
+    selection.marquee.pendingElements = pending;
   }
 }
