@@ -10,6 +10,7 @@ import { Point } from '../geometry/point.ts';
 import { WaypointAddAction } from './actions/waypointAddAction.ts';
 import { WaypointDeleteAction } from './actions/waypointDeleteAction.ts';
 import { ToggleRulerAction } from './actions/toggleRulerAction.ts';
+import { SelectionDeleteAction } from './actions/selectionDeleteAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -49,6 +50,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
   SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
   SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges'),
+  SELECTION_DELETE: new SelectionDeleteAction(state.diagram),
   ALIGN_TOP: new AlignAction(state.diagram, 'top'),
   ALIGN_BOTTOM: new AlignAction(state.diagram, 'bottom'),
   ALIGN_CENTER_HORIZONTAL: new AlignAction(state.diagram, 'center-horizontal'),
@@ -79,7 +81,8 @@ export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactor
 
 export const defaultMacKeymap: KeyMap = {
   'M-KeyZ': 'UNDO',
-  'MS-KeyZ': 'REDO'
+  'MS-KeyZ': 'REDO',
+  Backspace: 'SELECTION_DELETE'
 };
 
 export const findAction = (

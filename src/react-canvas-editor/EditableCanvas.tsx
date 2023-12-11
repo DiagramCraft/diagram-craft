@@ -76,6 +76,8 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   });
   useEventListener(diagram, 'nodeadded', redraw);
   useEventListener(diagram, 'noderemoved', redraw);
+  useEventListener(diagram, 'edgeadded', redraw);
+  useEventListener(diagram, 'edgeremoved', redraw);
   useEventListener(diagram, 'canvaschanged', redraw);
 
   const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
