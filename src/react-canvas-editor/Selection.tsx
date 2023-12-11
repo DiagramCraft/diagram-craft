@@ -374,7 +374,6 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           );
         })}
       </g>
-      {/*<SelectionDebug selection={props.selection} />*/}
     </>
   );
 });

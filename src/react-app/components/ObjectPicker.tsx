@@ -35,9 +35,6 @@ const PickerCanvas = (props: PickerCanvasProps) => {
               onMouseLeave={() => {}}
               def={node}
               diagram={diagram}
-              onDragStart={() => {
-                console.log('start');
-              }}
             />
           );
         }

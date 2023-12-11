@@ -217,6 +217,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         if (e.button !== 0) return;
         onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
       }}
+      style={{ userSelect: 'none' }}
       onMouseUp={e => onMouseUp(EventHelper.point(e.nativeEvent))}
       onMouseMove={e => {
         onMouseMove(getPoint(e, diagram), e.nativeEvent);

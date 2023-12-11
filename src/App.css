@@ -393,11 +393,6 @@ input::-webkit-input-placeholder {
     stroke: #64748b;
     stroke-width: 1;
     cursor: move;
-
-    &:hover,
-    &:has(+ .svg-node__fo:hover) {
-      filter: drop-shadow(2px 2px 4px rgba(103, 116, 137, 0.25));
-    }
   }
 }
 
