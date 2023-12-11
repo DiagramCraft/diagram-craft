@@ -49,7 +49,6 @@ export class MoveDrag implements Drag {
       ]);
 
       newBounds.set('pos', selection.source.boundingBox.pos);
-      selection.bounds = newBounds.getSnapshot();
       selection.guides = [];
 
       const newElements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e].clone());
@@ -68,7 +67,6 @@ export class MoveDrag implements Drag {
 
       // TODO: shouldn't we use setElements instead - and then not need recalculateBoundingBox
       selection.elements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e]);
-      selection.recalculateBoundingBox();
       selection.guides = [];
 
       elementsToRemove.forEach(e => {
@@ -116,7 +114,6 @@ export class MoveDrag implements Drag {
     this.diagram.transformElements(selection.elements, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
-    selection.bounds = newBounds.getSnapshot();
   }
 
   onDragEnd(): void {

@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 import { Box } from '../geometry/box.ts';
+import { EditableDiagram } from './editable-diagram.ts';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
 
 const createNode = () =>
   new DiagramNode(
@@ -28,6 +30,16 @@ const createEdge = () =>
     {}
   );
 
+function createDiagram() {
+  return new EditableDiagram(
+    '1',
+    'test',
+    [],
+    new NodeDefinitionRegistry(),
+    new EdgeDefinitionRegistry()
+  );
+}
+
 describe('SelectionState', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -37,7 +49,7 @@ describe('SelectionState', () => {
   });
 
   test('isEmpty()', () => {
-    const emptySelection = new SelectionState();
+    const emptySelection = new SelectionState(createDiagram());
     expect(emptySelection.isEmpty()).toBe(true);
     expect(emptySelection.bounds.size.w).toBe(0);
     expect(emptySelection.bounds.size.h).toBe(0);
@@ -46,7 +58,7 @@ describe('SelectionState', () => {
   test('toggle()', () => {
     const element: DiagramNode = createNode();
 
-    const selectionState = new SelectionState();
+    const selectionState = new SelectionState(createDiagram());
 
     const changeCb = vi.fn();
     const addCb = vi.fn();
@@ -83,38 +95,38 @@ describe('SelectionState', () => {
 
   describe('getSelectionType()', () => {
     test('empty selection', () => {
-      const selectionState = new SelectionState();
+      const selectionState = new SelectionState(createDiagram());
       expect(selectionState.getSelectionType()).toBe('empty');
     });
 
     test('single node', () => {
-      const selectionState = new SelectionState();
+      const selectionState = new SelectionState(createDiagram());
       selectionState.toggle(createNode());
       expect(selectionState.getSelectionType()).toBe('single-node');
     });
 
     test('single edge', () => {
-      const selectionState = new SelectionState();
+      const selectionState = new SelectionState(createDiagram());
       selectionState.toggle(createEdge());
       expect(selectionState.getSelectionType()).toBe('single-edge');
     });
 
     test('multiple nodes', () => {
-      const selectionState = new SelectionState();
+      const selectionState = new SelectionState(createDiagram());
       selectionState.toggle(createNode());
       selectionState.toggle(createNode());
       expect(selectionState.getSelectionType()).toBe('nodes');
     });
 
     test('multiple edges', () => {
-      const selectionState = new SelectionState();
+      const selectionState = new SelectionState(createDiagram());
       selectionState.toggle(createEdge());
       selectionState.toggle(createEdge());
       expect(selectionState.getSelectionType()).toBe('edges');
     });
 
     test('mixed', () => {
-      const selectionState = new SelectionState();
+      const selectionState = new SelectionState(createDiagram());
       selectionState.toggle(createNode());
       selectionState.toggle(createEdge());
       expect(selectionState.getSelectionType()).toBe('mixed');
@@ -122,7 +134,7 @@ describe('SelectionState', () => {
   });
 
   test('isNodesOnly()', () => {
-    const selectionState = new SelectionState();
+    const selectionState = new SelectionState(createDiagram());
     selectionState.toggle(createNode());
     expect(selectionState.isNodesOnly()).toBe(true);
     selectionState.toggle(createEdge());
@@ -130,7 +142,7 @@ describe('SelectionState', () => {
   });
 
   test('isEdgesOnly()', () => {
-    const selectionState = new SelectionState();
+    const selectionState = new SelectionState(createDiagram());
     selectionState.toggle(createEdge());
     expect(selectionState.isEdgesOnly()).toBe(true);
     selectionState.toggle(createNode());
@@ -138,7 +150,7 @@ describe('SelectionState', () => {
   });
 
   test('set guides', () => {
-    const selectionState = new SelectionState();
+    const selectionState = new SelectionState(createDiagram());
 
     const changeCb = vi.fn();
     selectionState.on('change', changeCb);
@@ -152,7 +164,7 @@ describe('SelectionState', () => {
   });
 
   test('set marquee', () => {
-    const selectionState = new SelectionState();
+    const selectionState = new SelectionState(createDiagram());
 
     const changeCb = vi.fn();
     selectionState.on('change', changeCb);

@@ -111,7 +111,6 @@ export const TransformProperties = (props: Props) => {
 
     props.diagram.selectionState.elements[0].bounds = newBounds.getSnapshot();
     props.diagram.selectionState.guides = [];
-    props.diagram.selectionState.recalculateBoundingBox();
     props.diagram.updateElement(props.diagram.selectionState.elements[0]);
   };
 

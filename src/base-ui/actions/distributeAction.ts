@@ -39,7 +39,6 @@ export class DistributeAction extends EventEmitter<ActionEvents> implements Acti
 
     this.calculateAndUpdateBounds(boundsOrientation, boundsSize);
 
-    this.diagram.selectionState.recalculateBoundingBox();
     this.diagram.undoManager.add(action);
     this.emit('actiontriggered', { action: this });
   }

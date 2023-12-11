@@ -5,6 +5,8 @@ import { Box } from '../geometry/box.ts';
 import { Magnet } from './snap/magnet.ts';
 import { DiagramElement, DiagramNode } from '../model-viewer/diagramNode.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
+import { EditableDiagram } from './editable-diagram.ts';
+import { debounce } from '../utils/debounce.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
@@ -39,6 +41,7 @@ export type SelectionStateEvents = {
 
 type SelectionType = 'empty' | 'single-node' | 'single-edge' | 'edges' | 'nodes' | 'mixed';
 
+// TODO: Maybe create a marquee class
 export class SelectionState extends EventEmitter<SelectionStateEvents> {
   #bounds: Box;
   #marquee?: Box;
@@ -56,10 +59,16 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   // For marquee selection
   pendingElements?: DiagramElement[];
 
-  constructor() {
+  constructor(diagram: EditableDiagram) {
     super();
     this.#bounds = EMPTY_BOX;
     this.elements = [];
+
+    const recalculateSourceBoundingBox = debounce(() => {
+      this.recalculateBoundingBox();
+    });
+    diagram.on('nodechanged', recalculateSourceBoundingBox);
+    diagram.on('edgechanged', recalculateSourceBoundingBox);
   }
 
   get source() {
@@ -85,12 +94,6 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   get bounds(): Box {
     return this.#bounds;
-  }
-
-  // TODO: Why do we need set bounds - can't we just recalculate the bounding box?
-  set bounds(bounds: Box) {
-    this.#bounds = bounds;
-    this.emitAsync('change', { selection: this });
   }
 
   get marquee(): Box | undefined {
@@ -141,7 +144,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.elements.length === 0;
   }
 
-  recalculateBoundingBox() {
+  private recalculateBoundingBox() {
     this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
     this.emitAsync('change', { selection: this });
   }

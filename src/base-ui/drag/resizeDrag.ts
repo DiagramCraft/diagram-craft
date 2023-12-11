@@ -115,10 +115,9 @@ export class ResizeDrag implements Drag {
       }
     }
 
-    selection.bounds = newBounds.getSnapshot();
     this.diagram.transformElements(
       selection.nodes,
-      TransformFactory.fromTo(before, selection.bounds)
+      TransformFactory.fromTo(before, newBounds.getSnapshot())
     );
   }
 

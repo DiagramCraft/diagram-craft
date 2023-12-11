@@ -144,8 +144,6 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
   }
 
   updateElement(element: DiagramEdge | DiagramNode) {
-    // TODO: We don't have before here
-    //       ... should we perhaps remove the before thing
     if (element.type === 'node') {
       this.emit('nodechanged', { after: element });
     } else {

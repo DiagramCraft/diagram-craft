@@ -18,15 +18,14 @@ export class RotateDrag implements Drag {
 
     const center = Box.center(selection.source.boundingBox);
 
-    selection.bounds = {
-      ...selection.bounds,
-      rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
-    };
     selection.guides = [];
 
     this.diagram.transformElements(
       selection.elements,
-      TransformFactory.fromTo(before, selection.bounds)
+      TransformFactory.fromTo(before, {
+        ...selection.bounds,
+        rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
+      })
     );
   }
 

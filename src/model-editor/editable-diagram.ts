@@ -36,7 +36,7 @@ class SnapManagerConfig
 }
 
 export class EditableDiagram extends Diagram {
-  selectionState: SelectionState = new SelectionState();
+  selectionState: SelectionState = new SelectionState(this);
 
   snapManagerConfig = new SnapManagerConfig(['grid', 'node', 'canvas', 'distance', 'size']);
 

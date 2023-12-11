@@ -72,13 +72,9 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
   // y + h / 2 === Y   => y = Y - h / 2   => y = Y - h * offset (offset = 0.5)
   // y === Y           => y = Y           => y = Y - h * offset (offset = 0)
   private alignY(y: number, offset: number) {
-    // TODO: Need to implement undo/redo
     this.diagram.selectionState.elements.forEach(e => {
       e.bounds = Box.withY(e.bounds, y - e.bounds.size.h * offset);
       this.diagram.updateElement(e as DiagramNode);
-
-      // TODO: Can we change so that selectionState uses a listener on diagram instead
-      this.diagram.selectionState.recalculateBoundingBox();
     });
   }
 
@@ -86,13 +82,9 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
   // x + w / 2 === X   => x = X - w / 2   => x = X - w * offset (offset = 0.5)
   // x === X           => x = X           => x = X - w * offset (offset = 0)
   private alignX(x: number, offset: number) {
-    // TODO: Need to implement undo/redo
     this.diagram.selectionState.elements.forEach(e => {
       e.bounds = Box.withX(e.bounds, x - e.bounds.size.w * offset);
       this.diagram.updateElement(e as DiagramNode);
-
-      // TODO: Can we change so that selectionState uses a listener on diagram instead
-      this.diagram.selectionState.recalculateBoundingBox();
     });
   }
 }

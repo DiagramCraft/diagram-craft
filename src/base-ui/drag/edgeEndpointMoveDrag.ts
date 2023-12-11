@@ -68,7 +68,6 @@ export class EdgeEndpointMoveDrag implements Drag {
     }
 
     this.diagram.updateElement(this.edge);
-    selection.recalculateBoundingBox();
   }
 
   onDragEnd(): void {
