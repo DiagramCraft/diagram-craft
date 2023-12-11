@@ -1,7 +1,7 @@
 import React, { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
-import { Drag, Modifiers } from '../base-ui/drag.ts';
+import { Modifiers } from '../base-ui/drag.ts';
 import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useDragDrop } from './DragDropManager.tsx';
@@ -17,47 +17,8 @@ import { invariant } from '../utils/assert.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { ConnectedEndpoint, DiagramEdge } from '../model-viewer/diagramEdge.ts';
-
-class EdgeWaypointDrag implements Drag {
-  constructor(
-    private readonly diagram: EditableDiagram,
-    private readonly edge: DiagramEdge,
-    private readonly waypointIdx: number
-  ) {}
-
-  onDrag(coord: Point, _modifiers: Modifiers) {
-    this.edge.waypoints![this.waypointIdx].point = coord;
-    this.diagram.updateElement(this.edge);
-  }
-
-  onDragEnd(): void {}
-}
-
-class BezierControlPointDrag implements Drag {
-  constructor(
-    private readonly diagram: EditableDiagram,
-    private readonly edge: DiagramEdge,
-    private readonly waypointIdx: number,
-    private readonly controlPointIdx: number
-  ) {}
-
-  onDrag(coord: Point, _modifiers: Modifiers) {
-    const wp = this.edge.waypoints![this.waypointIdx];
-
-    const cIdx = this.controlPointIdx;
-    const ocIdx = cIdx === 0 ? 1 : 0;
-
-    wp.controlPoints![cIdx] = Point.subtract(coord, wp!.point);
-    wp.controlPoints![ocIdx] = {
-      x: wp.controlPoints![cIdx].x * -1,
-      y: wp.controlPoints![cIdx].y * -1
-    };
-
-    this.diagram.updateElement(this.edge);
-  }
-
-  onDragEnd(): void {}
-}
+import { EdgeWaypointDrag } from '../react-canvas-editor/edgeWaypoint.ts';
+import { BezierControlPointDrag } from '../react-canvas-editor/edgeBezierControlPoint.ts';
 
 export type EdgeApi = {
   repaint: () => void;
