@@ -46,10 +46,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   #bounds: Box;
   #marquee?: Box;
   #guides: Guide[] = [];
-
-  // TODO: Maybe make this a property to prevent setting it directly?
-  elements: DiagramElement[] = [];
-
+  #elements: DiagramElement[] = [];
   #source: SelectionSource = {
     elementBoxes: [],
     elementIds: [],
@@ -62,7 +59,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   constructor(diagram: EditableDiagram) {
     super();
     this.#bounds = EMPTY_BOX;
-    this.elements = [];
+    this.#elements = [];
 
     const recalculateSourceBoundingBox = debounce(() => {
       this.recalculateBoundingBox();
@@ -75,12 +72,16 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.#source;
   }
 
+  get elements(): DiagramElement[] {
+    return this.#elements;
+  }
+
   get nodes(): DiagramNode[] {
-    return this.elements.filter(e => e.type === 'node') as DiagramNode[];
+    return this.#elements.filter(e => e.type === 'node') as DiagramNode[];
   }
 
   get edges(): DiagramEdge[] {
-    return this.elements.filter(e => e.type === 'edge') as DiagramEdge[];
+    return this.#elements.filter(e => e.type === 'edge') as DiagramEdge[];
   }
 
   get guides(): Guide[] {
@@ -106,19 +107,19 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   getSelectionType(): SelectionType {
-    if (this.elements.length === 0) {
+    if (this.#elements.length === 0) {
       return 'empty';
     }
 
-    if (this.elements.length === 1) {
-      return this.elements[0].type === 'node' ? 'single-node' : 'single-edge';
+    if (this.#elements.length === 1) {
+      return this.#elements[0].type === 'node' ? 'single-node' : 'single-edge';
     }
 
-    if (this.elements.every(e => e.type === 'node')) {
+    if (this.#elements.every(e => e.type === 'node')) {
       return 'nodes';
     }
 
-    if (this.elements.every(e => e.type === 'edge')) {
+    if (this.#elements.every(e => e.type === 'edge')) {
       return 'edges';
     }
 
@@ -134,50 +135,38 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   isChanged(): boolean {
-    return this.elements.some((node, i) => {
+    return this.#elements.some((node, i) => {
       const original = this.#source.elementBoxes[i];
       return !Box.isEqual(node.bounds, original);
     });
   }
 
   isEmpty() {
-    return this.elements.length === 0;
-  }
-
-  private recalculateBoundingBox() {
-    this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.elements.map(e => e.bounds));
-    this.emitAsync('change', { selection: this });
-  }
-
-  private recalculateSourceBoundingBox() {
-    this.#source.boundingBox =
-      this.#source.elementBoxes.length === 0
-        ? EMPTY_BOX
-        : Box.boundingBox(this.#source.elementBoxes.map(e => e));
+    return this.#elements.length === 0;
   }
 
   toggle(element: DiagramElement) {
-    const shouldRemove = this.elements.includes(element);
+    const shouldRemove = this.#elements.includes(element);
 
     this.setElements(
-      shouldRemove ? this.elements.filter(e => e !== element) : [...this.elements, element]
+      shouldRemove ? this.#elements.filter(e => e !== element) : [...this.#elements, element]
     );
   }
 
-  setElements(element: DiagramElement[]) {
+  setElements(element: DiagramElement[], rebaseline = true) {
     element.forEach(e => {
-      if (this.elements.includes(e)) return;
+      if (this.#elements.includes(e)) return;
       this.emit('add', { element: e });
     });
-    this.elements.forEach(e => {
+    this.#elements.forEach(e => {
       if (element.includes(e)) return;
       this.emit('remove', { element: e });
     });
 
-    this.elements = element;
+    this.#elements = element;
     this.recalculateBoundingBox();
 
-    this.rebaseline();
+    if (rebaseline) this.rebaseline();
   }
 
   clear() {
@@ -194,16 +183,28 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     this.marquee = undefined;
 
     this.setElements([
-      ...this.pendingElements.filter(e => !this.elements.includes(e)),
-      ...this.elements
+      ...this.pendingElements.filter(e => !this.#elements.includes(e)),
+      ...this.#elements
     ]);
 
     this.pendingElements = undefined;
   }
 
   rebaseline() {
-    this.#source.elementBoxes = this.elements.map(e => e.bounds);
-    this.#source.elementIds = this.elements.map(e => e.id);
+    this.#source.elementBoxes = this.#elements.map(e => e.bounds);
+    this.#source.elementIds = this.#elements.map(e => e.id);
     this.recalculateSourceBoundingBox();
+  }
+
+  recalculateBoundingBox() {
+    this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.#elements.map(e => e.bounds));
+    this.emitAsync('change', { selection: this });
+  }
+
+  private recalculateSourceBoundingBox() {
+    this.#source.boundingBox =
+      this.#source.elementBoxes.length === 0
+        ? EMPTY_BOX
+        : Box.boundingBox(this.#source.elementBoxes.map(e => e));
   }
 }

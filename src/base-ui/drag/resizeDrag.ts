@@ -119,6 +119,9 @@ export class ResizeDrag implements Drag {
       selection.nodes,
       TransformFactory.fromTo(before, newBounds.getSnapshot())
     );
+
+    // This is mainly a performance optimization and not strictly necessary
+    this.diagram.selectionState.recalculateBoundingBox();
   }
 
   onDragEnd(): void {

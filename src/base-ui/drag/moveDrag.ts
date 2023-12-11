@@ -56,8 +56,7 @@ export class MoveDrag implements Drag {
         e.id = newid();
         this.diagram.addNode(e);
       });
-      // TODO: shouldn't we use setElements instead
-      selection.elements = newElements;
+      selection.setElements(newElements, false);
 
       this.metaKey = true;
     } else if (!modifiers.metaKey && this.metaKey) {
@@ -65,8 +64,7 @@ export class MoveDrag implements Drag {
 
       const elementsToRemove = selection.nodes;
 
-      // TODO: shouldn't we use setElements instead - and then not need recalculateBoundingBox
-      selection.elements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e]);
+      selection.setElements(selection.source.elementIds.map(e => this.diagram.nodeLookup[e]));
       selection.guides = [];
 
       elementsToRemove.forEach(e => {
@@ -114,6 +112,9 @@ export class MoveDrag implements Drag {
     this.diagram.transformElements(selection.elements, [
       new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
     ]);
+
+    // This is mainly a performance optimization and not strictly necessary
+    this.diagram.selectionState.recalculateBoundingBox();
   }
 
   onDragEnd(): void {
