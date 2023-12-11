@@ -7,10 +7,10 @@ import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 
 const PickerCanvas = (props: PickerCanvasProps) => {
-  const diagram = useDiagram();
+  const diagram = props.diagram;
 
   return (
-    <svg {...propsUtils.except(props)} preserveAspectRatio="none">
+    <svg {...propsUtils.except(props, 'diagram')} preserveAspectRatio="none">
       {diagram.elements.map(e => {
         const id = e.id;
         if (e.type === 'edge') {
@@ -46,7 +46,9 @@ const PickerCanvas = (props: PickerCanvasProps) => {
   );
 };
 
-type PickerCanvasProps = Omit<
+type PickerCanvasProps = {
+  diagram: EditableDiagram;
+} & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
 >;
@@ -77,7 +79,7 @@ export const ObjectPicker = (props: Props) => {
   });
   return (
     <div className={'cmp-object-picker'}>
-      {diagrams.map((_d, idx) => (
+      {diagrams.map((d, idx) => (
         <div
           key={idx}
           draggable={true}
@@ -87,7 +89,7 @@ export const ObjectPicker = (props: Props) => {
           }}
           style={{ background: 'transparent' }}
         >
-          <PickerCanvas width={props.size} height={props.size} />
+          <PickerCanvas width={props.size} height={props.size} diagram={d} />
         </div>
       ))}
     </div>
