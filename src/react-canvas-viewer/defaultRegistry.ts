@@ -8,20 +8,22 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
   dest.register(
-    new ReactNodeDefinition('star', 'Star', Star, Star.getBoundingPath, Star.getCustomProperties)
+    new ReactNodeDefinition('star', 'Star', Star, {
+      getBoundingPath: Star.getBoundingPath,
+      getCustomProperties: Star.getCustomProperties
+    })
   );
   dest.register(new ReactNodeDefinition('rect', 'Rectangle', Rect));
   dest.register(
-    new ReactNodeDefinition(
-      'rounded-rect',
-      'Rounded Rectangle',
-      RoundedRect,
-      undefined,
-      RoundedRect.getCustomProperties
-    )
+    new ReactNodeDefinition('rounded-rect', 'Rounded Rectangle', RoundedRect, {
+      getCustomProperties: RoundedRect.getCustomProperties
+    })
   );
   dest.register(
-    new ReactNodeDefinition('text', 'Text', Text, undefined, undefined, Text.defaultPropsFactory)
+    new ReactNodeDefinition('text', 'Text', Text, {
+      defaultPropsFactory: Text.defaultPropsFactory,
+      initialConfig: Text.initialConfig
+    })
   );
   return dest;
 };

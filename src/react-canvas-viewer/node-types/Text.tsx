@@ -3,13 +3,12 @@ import { TextPart } from '../TextPart.tsx';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
+import { Box } from '../../geometry/box.ts';
 
 export const Text = (props: Props) => {
-  if (!props.node.props.text) {
-    props.node.props.text = {
-      text: 'Text'
-    };
-  }
+  props.node.props.text ??= {
+    text: 'Text'
+  };
   return (
     <>
       <rect
@@ -24,9 +23,16 @@ export const Text = (props: Props) => {
         id={`text_1_${props.node.id}`}
         text={props.node.props.text}
         bounds={props.node.bounds}
-        onChange={text => {
+        onChange={(text, height) => {
           props.node.props.text ??= {};
           props.node.props.text.text = text;
+
+          if (height > props.node.bounds.size.h) {
+            const b = Box.asMutableSnapshot(props.node.bounds);
+            b.get('size')!.h = height;
+            props.node.bounds = b.getSnapshot();
+          }
+
           props.node.diagram!.updateElement(props.node);
         }}
         onMouseDown={props.onMouseDown!}
@@ -47,6 +53,8 @@ Text.defaultPropsFactory = (_node: DiagramNode, _mode: 'picker' | 'canvas') => {
     }
   };
 };
+
+Text.initialConfig = { size: { w: 100, h: 10 } };
 
 type Props = {
   node: DiagramNode;

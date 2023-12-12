@@ -1,5 +1,6 @@
 import { DiagramNode } from './diagramNode.ts';
 import { Path } from '../geometry/path.ts';
+import { Extent } from '../geometry/extent.ts';
 
 export type NodeCapability = string;
 
@@ -24,6 +25,7 @@ export interface NodeDefinition {
   getBoundingPath(node: DiagramNode): Path;
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
   getDefaultProps(node: DiagramNode, mode: 'picker' | 'canvas'): NodeProps;
+  getInitialConfig(): { size: Extent };
 }
 
 export class NodeDefinitionRegistry {

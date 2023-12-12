@@ -10,13 +10,15 @@ import { newid } from '../utils/id.ts';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {
+    const nodeType = e.dataTransfer.getData('application/x-diagram-craft-node-type');
+    const nodeDef = $d.nodeDefinitions.get(nodeType);
     $d.addNode(
       new DiagramNode(
         newid(),
-        e.dataTransfer.getData('application/x-diagram-craft-node-type'),
+        nodeType,
         {
           pos: $d.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent)),
-          size: { w: 100, h: 100 },
+          size: nodeDef.getInitialConfig().size,
           rotation: 0
         },
         undefined

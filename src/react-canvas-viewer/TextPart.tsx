@@ -1,4 +1,4 @@
-import { MouseEventHandler } from 'react';
+import { MouseEventHandler, useEffect, useRef } from 'react';
 import { Box } from '../geometry/box.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 
@@ -14,6 +14,16 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 export const TextPart = (props: Props) => {
   const { defaults } = useConfiguration();
   const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
+  const ref = useRef<HTMLDivElement>(null);
+
+  // TODO: We need to add props.onChange as a dependency here as well as props.text.text
+  //       but that causes an infinite loop. We need to figure out how to fix that.
+  useEffect(() => {
+    if (ref.current) {
+      console.log('updating height');
+      props.onChange(props.text?.text ?? '', ref.current.getBoundingClientRect().height);
+    }
+  }, [ref]);
 
   // TODO: We must get the correct props defaults here
 
@@ -51,8 +61,9 @@ export const TextPart = (props: Props) => {
       >
         <div
           className={'svg-node__text'}
+          ref={ref}
           style={{
-            cursor: 'text',
+            cursor: 'move',
             color: textColor,
             fontFamily: props.text?.font ?? 'sans-serif',
             fontSize: (props.text?.fontSize ?? '10') + 'px',
@@ -77,7 +88,10 @@ export const TextPart = (props: Props) => {
             }
           }}
           onBlur={e => {
-            props.onChange(e.target.innerHTML);
+            props.onChange(
+              e.target.innerHTML,
+              (e.target as HTMLElement).getBoundingClientRect().height
+            );
             e.target.contentEditable = 'false';
           }}
           dangerouslySetInnerHTML={{ __html: props.text?.text ?? '' }}
@@ -92,5 +106,5 @@ type Props = {
   text: NodeProps['text'];
   bounds: Box;
   onMouseDown: MouseEventHandler;
-  onChange: (text: string) => void;
+  onChange: (text: string, height: number) => void;
 };

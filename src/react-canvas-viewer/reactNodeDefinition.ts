@@ -10,6 +10,7 @@ import {
   NodeCapability,
   NodeDefinition
 } from '../model-viewer/nodeDefinition.ts';
+import { Extent } from '../geometry/extent.ts';
 
 type Props = {
   node: DiagramNode;
@@ -24,15 +25,19 @@ type ReactNode = React.FunctionComponent<Props>;
 type BoundingPathFactory = (node: DiagramNode) => PathBuilder;
 type CustomPropertyFactory = (node: DiagramNode) => Record<string, CustomPropertyDefinition>;
 type DefaultPropsFactory = (node: DiagramNode, mode: 'picker' | 'canvas') => NodeProps;
+type InitialConfig = { size: Extent };
 
 export class ReactNodeDefinition implements NodeDefinition {
   constructor(
     readonly type: string,
     readonly name: string,
     readonly reactNode: ReactNode,
-    readonly bounds?: BoundingPathFactory,
-    readonly customProps?: CustomPropertyFactory,
-    readonly defaultPropsFactory?: DefaultPropsFactory
+    readonly config?: {
+      getBoundingPath?: BoundingPathFactory;
+      getCustomProperties?: CustomPropertyFactory;
+      defaultPropsFactory?: DefaultPropsFactory;
+      initialConfig?: InitialConfig;
+    }
   ) {}
 
   supports(_capability: NodeCapability): boolean {
@@ -40,7 +45,7 @@ export class ReactNodeDefinition implements NodeDefinition {
   }
 
   getBoundingPath(node: DiagramNode): Path {
-    if (this.bounds === undefined) {
+    if (this.config?.getBoundingPath === undefined) {
       const builder = new PathBuilder();
       builder.moveTo(node.bounds.pos.x, node.bounds.pos.y);
       builder.lineTo(node.bounds.pos.x + node.bounds.size.w, node.bounds.pos.y);
@@ -57,7 +62,7 @@ export class ReactNodeDefinition implements NodeDefinition {
 
       return builder.getPath();
     }
-    const pb = this.bounds?.(node);
+    const pb = this.config.getBoundingPath?.(node);
     if (round(node.bounds.rotation) !== 0) {
       pb.setRotation(node.bounds.rotation, Box.center(node.bounds));
     }
@@ -65,16 +70,23 @@ export class ReactNodeDefinition implements NodeDefinition {
   }
 
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
-    if (this.customProps !== undefined) {
-      return this.customProps(node);
+    if (this.config?.getCustomProperties !== undefined) {
+      return this.config.getCustomProperties(node);
     }
     return {};
   }
 
   getDefaultProps(node: DiagramNode, mode: 'picker' | 'canvas'): NodeProps {
-    if (this.defaultPropsFactory !== undefined) {
-      return this.defaultPropsFactory(node, mode);
+    if (this.config?.defaultPropsFactory !== undefined) {
+      return this.config.defaultPropsFactory(node, mode);
     }
     return {};
+  }
+
+  getInitialConfig(): { size: Extent } {
+    if (this.config?.initialConfig !== undefined) {
+      return this.config.initialConfig;
+    }
+    return { size: { w: 100, h: 100 } };
   }
 }
