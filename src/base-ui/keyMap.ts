@@ -115,6 +115,11 @@ export const executeAction = (
   keyMap: KeyMap,
   actionMap: Partial<ActionMap>
 ): boolean => {
+  const target: HTMLElement = e.target as HTMLElement;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return false;
+
+  if (target.classList?.contains('svg-node__text')) return false;
+
   const action = findAction(e, keyMap, actionMap);
   if (!action || !action.enabled) return false;
 

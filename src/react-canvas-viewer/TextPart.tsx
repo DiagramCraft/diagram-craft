@@ -50,6 +50,7 @@ export const TextPart = (props: Props) => {
         }}
       >
         <div
+          className={'svg-node__text'}
           style={{
             cursor: 'text',
             color: textColor,
