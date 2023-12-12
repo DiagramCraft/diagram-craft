@@ -19,22 +19,14 @@ class SelectionDeleteUndoableAction implements UndoableAction {
 
   undo(): void {
     for (const element of this.elements) {
-      if (element.type === 'node') {
-        this.diagram.addNode(element);
-      } else if (element.type === 'edge') {
-        this.diagram.addEdge(element);
-      }
+      this.diagram.addElement(element);
     }
     this.diagram.selectionState.setElements(this.elements);
   }
 
   redo(): void {
     for (const element of this.elements) {
-      if (element.type === 'node') {
-        this.diagram.removeNode(element);
-      } else if (element.type === 'edge') {
-        this.diagram.removeEdge(element);
-      }
+      this.diagram.removeElement(element);
     }
     this.diagram.selectionState.clear();
   }

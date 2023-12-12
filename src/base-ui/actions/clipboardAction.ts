@@ -9,13 +9,37 @@ import {
 } from '../../model-viewer/serialization.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramElement, DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { Point } from '../../geometry/point.ts';
+import { UndoableAction } from '../../model-editor/undoManager.ts';
+import { Diagram } from '../../model-viewer/diagram.ts';
 
 declare global {
   interface ActionMap {
     CLIPBOARD_COPY: ClipboardCopyAction;
     CLIPBOARD_PASTE: ClipboardPasteAction;
     CLIPBOARD_CUT: ClipboardCopyAction;
+  }
+}
+
+export class PasteUndoableAction implements UndoableAction {
+  description = 'Paste';
+
+  constructor(
+    private readonly elements: DiagramElement[],
+    private readonly diagram: Diagram
+  ) {}
+
+  undo() {
+    this.elements.forEach(e => {
+      this.diagram.removeElement(e);
+    });
+  }
+
+  redo() {
+    this.elements.forEach(e => {
+      this.diagram.addElement(e);
+    });
   }
 }
 
@@ -28,18 +52,17 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
 
   abstract execute(context: ActionContext): void;
 
-  protected pasteElements(
-    elements: SerializedElement[],
-    context: ActionContext,
-    pasteCount: number
-  ) {
+  protected pasteElements(elements: SerializedElement[], context: ActionContext): Point {
     const nodeIdMapping = new Map<string, string>();
 
-    // TODO: Perhaps retain selection when pasting
     // TODO: This is not correct if pasting a free edge
     const bb = Box.boundingBox(
       elements.filter(e => e.type === 'node').map(e => (e as DiagramNode).bounds)
     );
+
+    if (!context.point) {
+      context.point = { x: bb.pos.x + 10, y: bb.pos.y + 10 };
+    }
 
     for (const e of elements) {
       if (e.type === 'node') {
@@ -47,23 +70,14 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
         nodeIdMapping.set(e.id, newId);
         e.id = newId;
 
-        if (context.point) {
-          const dx = context.point.x - bb.pos.x;
-          const dy = context.point.y - bb.pos.y;
-          const s = Box.asMutableSnapshot(e.bounds);
-          s.set('pos', {
-            x: s.get('pos')!.x + dx,
-            y: s.get('pos')!.y + dy
-          });
-          e.bounds = s.getSnapshot();
-        } else {
-          const s = Box.asMutableSnapshot(e.bounds);
-          s.set('pos', {
-            x: s.get('pos')!.x + (pasteCount + 1) * 10,
-            y: s.get('pos')!.y + (pasteCount + 1) * 10
-          });
-          e.bounds = s.getSnapshot();
-        }
+        const dx = context.point.x - bb.pos.x;
+        const dy = context.point.y - bb.pos.y;
+        const s = Box.asMutableSnapshot(e.bounds);
+        s.set('pos', {
+          x: s.get('pos')!.x + dx,
+          y: s.get('pos')!.y + dy
+        });
+        e.bounds = s.getSnapshot();
       }
     }
 
@@ -78,24 +92,23 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
       }
     }
 
-    // TODO: Need undo support here
     const newElements = deserializeDiagramElements(elements, {}, {});
-    for (const e of newElements) {
-      if (e.type === 'node') {
-        this.diagram.addNode(e);
-      } else if (e.type === 'edge') {
-        this.diagram.addEdge(e);
-      }
-    }
+
+    this.diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, this.diagram));
+    this.diagram.selectionState.setElements(newElements, true);
+
+    return context.point;
   }
 
-  protected pasteText(content: string, context: ActionContext, pasteCount: number) {
-    console.log('paste text not implemented yet "', content, '"', context, pasteCount);
+  protected pasteText(content: string, context: ActionContext): Point {
+    console.log('paste text not implemented yet "', content, '"', context);
 
     const $clipboard: HTMLTextAreaElement = document.getElementById(
       'clipboard'
     )! as HTMLTextAreaElement;
     console.log($clipboard.value);
+
+    return context.point!;
   }
 }
 
@@ -103,7 +116,7 @@ const PREFIX = 'application/x-diagram-craft-selection;';
 
 export class ClipboardPasteAction extends AbstractClipboardPasteAction {
   #lastPasteHash?: string;
-  #lastPasteCount = 0;
+  #lastPastePoint: Point | undefined = undefined;
 
   constructor(protected readonly diagram: EditableDiagram) {
     super(diagram);
@@ -127,17 +140,23 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
       }
 
       if (content === this.#lastPasteHash) {
-        this.#lastPasteCount++;
+        this.#lastPastePoint = {
+          x: this.#lastPastePoint!.x + 10,
+          y: this.#lastPastePoint!.y + 10
+        };
       } else {
         this.#lastPasteHash = content;
-        this.#lastPasteCount = 0;
+        this.#lastPastePoint = undefined;
       }
 
       if (content.startsWith(PREFIX)) {
         const elements = JSON.parse(content.substring(PREFIX.length));
-        this.pasteElements(elements, context, this.#lastPasteCount);
+        this.#lastPastePoint = this.pasteElements(elements, {
+          point: this.#lastPastePoint,
+          ...context
+        });
       } else {
-        this.pasteText(content, context, this.#lastPasteCount);
+        this.#lastPastePoint = this.pasteText(content, { point: this.#lastPastePoint, ...context });
       }
     }, 10);
 
@@ -179,11 +198,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
 
   private deleteSelection() {
     for (const element of this.diagram.selectionState.elements) {
-      if (element.type === 'node') {
-        this.diagram.removeNode(element);
-      } else if (element.type === 'edge') {
-        this.diagram.removeEdge(element);
-      }
+      this.diagram.removeElement(element);
     }
     this.diagram.selectionState.clear();
   }

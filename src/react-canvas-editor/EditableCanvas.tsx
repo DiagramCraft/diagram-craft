@@ -60,7 +60,9 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   const clearSelection = debounce(() => selection.clear());
 
-  useEventListener(diagram.undoManager, 'execute', clearSelection);
+  useEventListener(diagram.undoManager, 'execute', e => {
+    if (e.type === 'undo') clearSelection();
+  });
 
   useEventListener(diagram, 'nodechanged', e => {
     nodeRefs.current[e.after.id]?.repaint();

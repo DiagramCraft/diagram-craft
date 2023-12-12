@@ -99,6 +99,22 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     console.log('CANVAS CHANGED');
   }
 
+  addElement(element: DiagramElement) {
+    if (element.type === 'node') {
+      this.addNode(element);
+    } else if (element.type === 'edge') {
+      this.addEdge(element);
+    }
+  }
+
+  removeElement(element: DiagramElement) {
+    if (element.type === 'node') {
+      this.removeNode(element);
+    } else if (element.type === 'edge') {
+      this.removeEdge(element);
+    }
+  }
+
   addNode(node: DiagramNode) {
     this.linkNode(node);
     this.nodeLookup[node.id] = node;
