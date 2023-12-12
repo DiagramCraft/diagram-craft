@@ -1,5 +1,6 @@
 import { Star } from './node-types/Star.tsx';
 import { Rect } from './node-types/Rect.tsx';
+import { Text } from './node-types/Text.tsx';
 import { RoundedRect } from './node-types/RoundedRect.tsx';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
@@ -19,6 +20,7 @@ export const defaultNodeRegistry = () => {
       RoundedRect.getCustomProperties
     )
   );
+  dest.register(new ReactNodeDefinition('text', 'Text', Text));
   return dest;
 };
 
