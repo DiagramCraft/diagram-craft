@@ -16,10 +16,7 @@ const formatTimestamp = (ts: Date | undefined) => {
 export const HistoryToolWindow = () => {
   const diagram = useDiagram();
   const redraw = useRedraw();
-  useEventListener(diagram.undoManager, 'undo', redraw);
-  useEventListener(diagram.undoManager, 'add', redraw);
-  useEventListener(diagram.undoManager, 'redo', redraw);
-  useEventListener(diagram.undoManager, 'execute', redraw);
+  useEventListener(diagram.undoManager, 'change', redraw);
 
   const redoActions = diagram.undoManager.redoableActions;
   const undoActions = diagram.undoManager.undoableActions.toReversed();

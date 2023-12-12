@@ -11,9 +11,6 @@ class AbstractTransformAction implements UndoableAction {
   private target: Box[] = [];
   private diagram: Diagram;
 
-  canUndo = true;
-  canRedo = true;
-
   description: string;
 
   constructor(
@@ -45,7 +42,6 @@ class AbstractTransformAction implements UndoableAction {
         TransformFactory.fromTo(source[i], target[i])
       );
     }
-    this.diagram.undoManager.clearPending();
   }
 }
 
@@ -56,8 +52,6 @@ export class RotateAction extends AbstractTransformAction {}
 export class ResizeAction extends AbstractTransformAction {}
 
 export class NodeAddAction implements UndoableAction {
-  canUndo = true;
-  canRedo = true;
   description = 'Add node';
 
   constructor(
@@ -67,19 +61,15 @@ export class NodeAddAction implements UndoableAction {
 
   undo() {
     this.nodes.forEach(node => this.diagram.removeNode(node));
-    this.diagram.undoManager.clearPending();
   }
 
   redo() {
     this.nodes.forEach(node => this.diagram.addNode(node));
-    this.diagram.undoManager.clearPending();
   }
 }
 
 export class NodeChangeAction implements UndoableAction {
   private snapshots: DiagramNodeSnapshot[] = [];
-  canUndo: boolean;
-  canRedo: boolean;
   description: string;
 
   constructor(
@@ -88,8 +78,6 @@ export class NodeChangeAction implements UndoableAction {
     description: string
   ) {
     this.snapshots = nodes.map(node => node.snapshot());
-    this.canUndo = true;
-    this.canRedo = true;
     this.description = description;
   }
 
@@ -100,12 +88,8 @@ export class NodeChangeAction implements UndoableAction {
       node.restore(this.snapshots.find(n => n.id === node.id)!);
       this.diagram.updateElement(node);
     });
-    this.diagram.undoManager.clearPending();
 
     this.snapshots = newSnapshots;
-
-    this.canUndo = false;
-    this.canRedo = true;
   }
 
   redo() {
@@ -115,11 +99,7 @@ export class NodeChangeAction implements UndoableAction {
       node.restore(this.snapshots.find(n => n.id === node.id)!);
       this.diagram.updateElement(node);
     });
-    this.diagram.undoManager.clearPending();
 
     this.snapshots = newSnapshots;
-
-    this.canUndo = true;
-    this.canRedo = false;
   }
 }

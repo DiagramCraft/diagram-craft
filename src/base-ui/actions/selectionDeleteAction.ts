@@ -1,7 +1,7 @@
-import { SelectionAction } from '../keyMap.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { UndoableAction } from '../../model-editor/undoManager.ts';
 import { DiagramElement } from '../../model-viewer/diagramNode.ts';
+import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 
 declare global {
   interface ActionMap {
@@ -11,9 +11,6 @@ declare global {
 
 class SelectionDeleteUndoableAction implements UndoableAction {
   description = 'Delete elements';
-
-  canUndo = true;
-  canRedo = true;
 
   constructor(
     private readonly diagram: EditableDiagram,
@@ -43,7 +40,7 @@ class SelectionDeleteUndoableAction implements UndoableAction {
   }
 }
 
-export class SelectionDeleteAction extends SelectionAction {
+export class SelectionDeleteAction extends AbstractSelectionAction {
   constructor(protected readonly diagram: EditableDiagram) {
     super(diagram);
   }
@@ -51,7 +48,7 @@ export class SelectionDeleteAction extends SelectionAction {
   execute(): void {
     if (this.diagram.selectionState.isEmpty()) return;
 
-    this.diagram.undoManager.execute(
+    this.diagram.undoManager.addAndExecute(
       new SelectionDeleteUndoableAction(this.diagram, this.diagram.selectionState.elements)
     );
 

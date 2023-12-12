@@ -127,9 +127,6 @@ export const makePropertyArrayHook = <
 export class PropertyArrayUndoableAction<T> implements UndoableAction {
   #accessor = new DynamicAccessor<T>();
 
-  canUndo = true;
-  canRedo = true;
-
   constructor(
     private readonly items: any[],
     private readonly path: any,
@@ -159,9 +156,6 @@ export class PropertyArrayUndoableAction<T> implements UndoableAction {
 // TODO: Add better typing
 export class PropertyUndoableAction<T> implements UndoableAction {
   #accessor = new DynamicAccessor<T>();
-
-  canUndo = true;
-  canRedo = true;
 
   constructor(
     private readonly obj: any,

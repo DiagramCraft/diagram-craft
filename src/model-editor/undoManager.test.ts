@@ -2,13 +2,30 @@ import { expect, test, describe } from 'vitest';
 import { UndoManager } from './undoManager.ts';
 
 describe('UndoManager', () => {
-  test('executes action', () => {
+  test('add()', () => {
     const manager = new UndoManager();
     let x = 0;
 
-    manager.execute({
-      canUndo: true,
-      canRedo: true,
+    manager.add({
+      description: '',
+
+      undo: () => {
+        x--;
+      },
+      redo: () => {
+        x++;
+      }
+    });
+
+    expect(x).toBe(0);
+    expect(manager.undoableActions.length).toBe(1);
+  });
+
+  test('addAndExecute()', () => {
+    const manager = new UndoManager();
+    let x = 0;
+
+    manager.addAndExecute({
       description: '',
 
       undo: () => {
@@ -22,13 +39,11 @@ describe('UndoManager', () => {
     expect(x).toBe(1);
   });
 
-  test('undo action', () => {
+  test('undo()', () => {
     const manager = new UndoManager();
     let x = 0;
 
-    manager.execute({
-      canUndo: true,
-      canRedo: true,
+    manager.addAndExecute({
       description: '',
 
       undo: () => {
@@ -44,13 +59,11 @@ describe('UndoManager', () => {
     expect(x).toBe(0);
   });
 
-  test('redo action', () => {
+  test('redo()', () => {
     const manager = new UndoManager();
     let x = 0;
 
-    manager.execute({
-      canUndo: true,
-      canRedo: true,
+    manager.addAndExecute({
       description: '',
 
       undo: () => {

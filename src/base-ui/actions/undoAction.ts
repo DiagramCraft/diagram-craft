@@ -17,10 +17,7 @@ export class UndoAction extends EventEmitter<ActionEvents> implements Action {
       this.enabled = this.diagram.undoManager.undoableActions.length > 0;
       this.emit('actionchanged', { action: this });
     };
-    this.diagram.undoManager.on('undo', cb);
-    this.diagram.undoManager.on('execute', cb);
-    this.diagram.undoManager.on('add', cb);
-    this.diagram.undoManager.on('redo', cb);
+    this.diagram.undoManager.on('change', cb);
   }
 
   execute(): void {

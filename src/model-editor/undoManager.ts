@@ -8,19 +8,18 @@ export type UndoableAction = {
   description: string;
   timestamp?: Date;
 
-  // TODO: We should change this into one property
-  canUndo: boolean;
-  canRedo: boolean;
-
   merge?: (other: UndoableAction) => boolean;
 };
 
 export type UndoEvents = {
-  undo: { action: UndoableAction };
-  redo: { action: UndoableAction };
-  execute: { action: UndoableAction };
-  add: { action: UndoableAction };
+  /* Triggered when an action is either executed when added, undone or redone */
+  execute: { action: UndoableAction; type: 'undo' | 'redo' };
+
+  /* Triggered when any of the undo or redo stacks change */
+  change: Record<string, never>;
 };
+
+const MAX_HISTORY = 100;
 
 export class UndoManager extends EventEmitter<UndoEvents> {
   undoableActions: UndoableAction[];
@@ -34,68 +33,53 @@ export class UndoManager extends EventEmitter<UndoEvents> {
   }
 
   add(action: UndoableAction) {
-    this.clearPending();
-
-    if (this.undoableActions.length > 0) {
-      const lastAction = this.undoableActions.at(-1)!;
-      if (lastAction.merge?.(action)) {
-        return;
-      }
+    if (this.undoableActions.at(-1)?.merge?.(action)) {
+      return;
     }
-
-    this.undoableActions.push(action);
-    this.redoableActions = [];
 
     action.timestamp = new Date();
 
-    this.emit('add', { action });
+    this.undoableActions.push(action);
+    this.redoableActions = [];
     this.prune();
   }
 
-  execute(action: UndoableAction) {
+  addAndExecute(action: UndoableAction) {
     this.add(action);
 
     action.redo();
-
-    this.emit('execute', { action });
+    this.emit('execute', { action, type: 'redo' });
   }
 
   undo() {
     if (this.undoableActions.length === 0) return;
 
     const action = this.undoableActions.pop();
-
     assert.present(action);
-    assert.true(action.canUndo);
+
+    this.redoableActions.push(action);
+    this.prune();
 
     action.undo();
-    this.redoableActions.push(action);
-
-    this.emit('undo', { action: action });
-    this.prune();
+    this.emit('execute', { action: action, type: 'undo' });
   }
 
   redo() {
     if (this.redoableActions.length === 0) return;
 
     const action = this.redoableActions.pop();
-
     assert.present(action);
-    assert.true(action.canRedo);
+
+    this.undoableActions.push(action);
+    this.prune();
 
     action.redo();
-    this.undoableActions.push(action);
-
-    this.emit('redo', { action: action });
-    this.prune();
+    this.emit('execute', { action: action, type: 'undo' });
   }
 
   private prune() {
-    this.undoableActions = this.undoableActions.slice(-100);
-    this.redoableActions = this.redoableActions.slice(-100);
-  }
-
-  clearPending() {
-    // TODO: To be implemented
+    this.undoableActions = this.undoableActions.slice(-MAX_HISTORY);
+    this.redoableActions = this.redoableActions.slice(-MAX_HISTORY);
+    this.emit('change');
   }
 }

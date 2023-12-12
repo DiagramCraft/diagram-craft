@@ -7,9 +7,6 @@ import { UndoableAction } from '../model-editor/undoManager.ts';
 class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';
 
-  canUndo = true;
-  canRedo = true;
-
   constructor(
     private readonly diagram: EditableDiagram,
     private readonly edge: DiagramEdge,

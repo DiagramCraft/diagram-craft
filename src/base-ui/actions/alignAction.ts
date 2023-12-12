@@ -1,9 +1,9 @@
-import { SelectionAction } from '../keyMap.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { NodeChangeAction } from '../../model-viewer/actions.ts';
 import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 
 declare global {
   interface ActionMap {
@@ -16,7 +16,7 @@ declare global {
   }
 }
 
-export class AlignAction extends SelectionAction {
+export class AlignAction extends AbstractSelectionAction {
   enabled = false;
 
   constructor(

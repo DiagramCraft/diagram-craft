@@ -129,7 +129,7 @@ export class MoveDrag implements Drag {
         )
       );
       if (resizeCanvasAction) {
-        this.diagram.undoManager.execute(resizeCanvasAction);
+        this.diagram.undoManager.addAndExecute(resizeCanvasAction);
       }
 
       if (this.metaKey) {

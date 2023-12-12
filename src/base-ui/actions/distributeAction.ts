@@ -1,8 +1,8 @@
-import { SelectionAction } from '../keyMap.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { Box } from '../../geometry/box.ts';
 import { NodeChangeAction } from '../../model-viewer/actions.ts';
 import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 
 declare global {
   interface ActionMap {
@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-export class DistributeAction extends SelectionAction {
+export class DistributeAction extends AbstractSelectionAction {
   constructor(
     protected readonly diagram: EditableDiagram,
     private readonly mode: 'vertical' | 'horizontal'

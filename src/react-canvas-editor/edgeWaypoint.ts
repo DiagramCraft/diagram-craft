@@ -7,9 +7,6 @@ import { Drag, Modifiers } from '../base-ui/drag.ts';
 class WaypointUndoAction implements UndoableAction {
   description = 'Move Waypoint';
 
-  canUndo = true;
-  canRedo = true;
-
   constructor(
     private readonly diagram: EditableDiagram,
     private readonly edge: DiagramEdge,
