@@ -1,5 +1,4 @@
-import { Action, ActionEvents } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { SelectionAction } from '../keyMap.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { Box } from '../../geometry/box.ts';
 import { NodeChangeAction } from '../../model-viewer/actions.ts';
@@ -12,20 +11,12 @@ declare global {
   }
 }
 
-export class DistributeAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = false;
-
+export class DistributeAction extends SelectionAction {
   constructor(
-    private readonly diagram: EditableDiagram,
+    protected readonly diagram: EditableDiagram,
     private readonly mode: 'vertical' | 'horizontal'
   ) {
-    super();
-    const cb = () => {
-      this.enabled = this.diagram.selectionState.elements.length > 1;
-      this.emit('actionchanged', { action: this });
-    };
-    this.diagram.selectionState.on('add', cb);
-    this.diagram.selectionState.on('remove', cb);
+    super(diagram);
   }
 
   execute(): void {

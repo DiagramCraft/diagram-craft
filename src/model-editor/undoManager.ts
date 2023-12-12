@@ -8,6 +8,7 @@ export type UndoableAction = {
   description: string;
   timestamp?: Date;
 
+  // TODO: We should change this into one property
   canUndo: boolean;
   canRedo: boolean;
 

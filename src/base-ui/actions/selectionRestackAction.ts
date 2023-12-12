@@ -1,6 +1,8 @@
-import { Action, ActionEvents } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { SelectionAction } from '../keyMap.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { UndoableAction } from '../../model-editor/undoManager.ts';
+import { precondition } from '../../utils/assert.ts';
+import { StackElement } from '../../model-viewer/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -11,28 +13,60 @@ declare global {
   }
 }
 
-export class SelectionRestackAction extends EventEmitter<ActionEvents> implements Action {
-  // TODO: Only enable if there is a selection
-  enabled = true;
+type RestackMode = 'up' | 'down' | 'top' | 'bottom';
+
+class SelectionRestackUndoableAction implements UndoableAction {
+  description = 'Restack selection';
+  canUndo = true;
+  canRedo = true;
+
+  private oldPositions: StackElement[] | undefined;
 
   constructor(
     private readonly diagram: EditableDiagram,
-    private readonly mode: 'up' | 'down' | 'top' | 'bottom' = 'up'
-  ) {
-    super();
+    private readonly mode: RestackMode
+  ) {}
+
+  undo(): void {
+    precondition.is.present(this.oldPositions);
+    this.diagram.stackSet(this.oldPositions);
+
+    this.canUndo = false;
+    this.canRedo = true;
   }
 
-  // TODO: Add undo
-  execute(): void {
-    if (this.mode === 'up') {
-      this.diagram.restack(this.diagram.selectionState.elements, 2);
-    } else if (this.mode === 'down') {
-      this.diagram.restack(this.diagram.selectionState.elements, -2);
-    } else if (this.mode === 'top') {
-      this.diagram.restack(this.diagram.selectionState.elements, this.diagram.elements.length);
-    } else if (this.mode === 'bottom') {
-      this.diagram.restack(this.diagram.selectionState.elements, -this.diagram.elements.length);
+  redo(): void {
+    const elements = this.diagram.selectionState.elements;
+    switch (this.mode) {
+      case 'up':
+        this.oldPositions = this.diagram.stackModify(elements, 2);
+        break;
+      case 'down':
+        this.oldPositions = this.diagram.stackModify(elements, -2);
+        break;
+      case 'top':
+        this.oldPositions = this.diagram.stackModify(elements, this.diagram.elements.length);
+        break;
+      case 'bottom':
+        this.oldPositions = this.diagram.stackModify(elements, -this.diagram.elements.length);
+        break;
     }
+
+    this.canUndo = true;
+    this.canRedo = false;
+  }
+}
+
+export class SelectionRestackAction extends SelectionAction {
+  constructor(
+    protected readonly diagram: EditableDiagram,
+    private readonly mode: RestackMode = 'up'
+  ) {
+    super(diagram);
+  }
+
+  execute(): void {
+    this.diagram.undoManager.execute(new SelectionRestackUndoableAction(this.diagram, this.mode));
     this.emit('actiontriggered', { action: this });
   }
 }

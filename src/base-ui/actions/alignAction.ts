@@ -1,5 +1,4 @@
-import { Action, ActionEvents } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { SelectionAction } from '../keyMap.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
@@ -17,11 +16,11 @@ declare global {
   }
 }
 
-export class AlignAction extends EventEmitter<ActionEvents> implements Action {
+export class AlignAction extends SelectionAction {
   enabled = false;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    protected readonly diagram: EditableDiagram,
     private readonly mode:
       | 'top'
       | 'bottom'
@@ -30,14 +29,7 @@ export class AlignAction extends EventEmitter<ActionEvents> implements Action {
       | 'center-vertical'
       | 'center-horizontal'
   ) {
-    super();
-
-    const cb = () => {
-      this.enabled = !this.diagram.selectionState.isEmpty();
-      this.emit('actionchanged', { action: this });
-    };
-    this.diagram.selectionState.on('add', cb);
-    this.diagram.selectionState.on('remove', cb);
+    super(diagram);
   }
 
   execute(): void {

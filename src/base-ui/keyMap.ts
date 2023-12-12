@@ -1,6 +1,6 @@
 import { UndoAction } from './actions/undoAction.ts';
 import { RedoAction } from './actions/redoAction.ts';
-import { Emitter } from '../utils/event.ts';
+import { Emitter, EventEmitter } from '../utils/event.ts';
 import { SelectAllAction } from './actions/selectAllAction.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { AlignAction } from './actions/alignAction.ts';
@@ -26,6 +26,22 @@ export type ActionContext = {
 export interface Action extends Emitter<ActionEvents> {
   execute: (context: ActionContext) => void;
   enabled: boolean;
+}
+
+export abstract class SelectionAction extends EventEmitter<ActionEvents> implements Action {
+  enabled = true;
+
+  protected constructor(protected readonly diagram: EditableDiagram) {
+    super();
+    const cb = () => {
+      this.enabled = !this.diagram.selectionState.isEmpty();
+      this.emit('actionchanged', { action: this });
+    };
+    this.diagram.selectionState.on('add', cb);
+    this.diagram.selectionState.on('remove', cb);
+  }
+
+  abstract execute(): void;
 }
 
 export interface ToggleAction extends Action {

@@ -25,6 +25,8 @@ export type DiagramEvents = {
   canvaschanged: { after: Canvas };
 };
 
+export type StackElement = { element: DiagramElement; idx: number };
+
 export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitter<T> {
   elements: (DiagramEdge | DiagramNode)[];
   readonly nodeLookup: Record<string, DiagramNode> = {};
@@ -115,8 +117,9 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     return Object.values(this.nodeLookup);
   }
 
-  restack(elements: DiagramElement[], newPosition: number) {
+  stackModify(elements: DiagramElement[], newPosition: number): StackElement[] {
     const withPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
+    const oldPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
 
     for (const el of elements) {
       const idx = withPositions.findIndex(e => e.element === el);
@@ -125,6 +128,14 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
 
     withPositions.sort((a, b) => a.idx - b.idx);
     this.elements = withPositions.map(e => e.element);
+    this.emit('canvaschanged', { after: this.canvas });
+
+    return oldPositions;
+  }
+
+  stackSet(positions: StackElement[]) {
+    positions.sort((a, b) => a.idx - b.idx);
+    this.elements = positions.map(e => e.element);
     this.emit('canvaschanged', { after: this.canvas });
   }
 

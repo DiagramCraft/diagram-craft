@@ -1,5 +1,4 @@
-import { Action, ActionEvents } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { SelectionAction } from '../keyMap.ts';
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { UndoableAction } from '../../model-editor/undoManager.ts';
 import { DiagramElement } from '../../model-viewer/diagramNode.ts';
@@ -44,12 +43,9 @@ class SelectionDeleteUndoableAction implements UndoableAction {
   }
 }
 
-export class SelectionDeleteAction extends EventEmitter<ActionEvents> implements Action {
-  // TODO: Only enable if there is a selection
-  enabled = true;
-
-  constructor(private readonly diagram: EditableDiagram) {
-    super();
+export class SelectionDeleteAction extends SelectionAction {
+  constructor(protected readonly diagram: EditableDiagram) {
+    super(diagram);
   }
 
   execute(): void {
