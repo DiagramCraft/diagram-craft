@@ -9,6 +9,7 @@ import {
 } from '../../model-viewer/serialization.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
+import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 
 declare global {
   interface ActionMap {
@@ -33,6 +34,13 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
     pasteCount: number
   ) {
     const nodeIdMapping = new Map<string, string>();
+
+    // TODO: Perhaps retain selection when pasting
+    // TODO: This is not correct if pasting a free edge
+    const bb = Box.boundingBox(
+      elements.filter(e => e.type === 'node').map(e => (e as DiagramNode).bounds)
+    );
+
     for (const e of elements) {
       if (e.type === 'node') {
         const newId = newid();
@@ -40,7 +48,14 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
         e.id = newId;
 
         if (context.point) {
-          console.log('moving at cursor not implemented yet');
+          const dx = context.point.x - bb.pos.x;
+          const dy = context.point.y - bb.pos.y;
+          const s = Box.asMutableSnapshot(e.bounds);
+          s.set('pos', {
+            x: s.get('pos')!.x + dx,
+            y: s.get('pos')!.y + dy
+          });
+          e.bounds = s.getSnapshot();
         } else {
           const s = Box.asMutableSnapshot(e.bounds);
           s.set('pos', {
@@ -63,6 +78,7 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
       }
     }
 
+    // TODO: Need undo support here
     const newElements = deserializeDiagramElements(elements, {}, {});
     for (const e of newElements) {
       if (e.type === 'node') {
@@ -74,9 +90,16 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
   }
 
   protected pasteText(content: string, context: ActionContext, pasteCount: number) {
-    console.log('paste text not implemented yet', content, context, pasteCount);
+    console.log('paste text not implemented yet "', content, '"', context, pasteCount);
+
+    const $clipboard: HTMLTextAreaElement = document.getElementById(
+      'clipboard'
+    )! as HTMLTextAreaElement;
+    console.log($clipboard.value);
   }
 }
+
+const PREFIX = 'application/x-diagram-craft-selection;';
 
 export class ClipboardPasteAction extends AbstractClipboardPasteAction {
   #lastPasteHash?: string;
@@ -91,12 +114,17 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
       'clipboard'
     )! as HTMLTextAreaElement;
     $clipboard.value = '';
-    $clipboard?.focus();
 
+    $clipboard?.focus();
     document.execCommand('paste');
 
     window.setTimeout(() => {
-      const content = $clipboard.value;
+      let content = $clipboard.value;
+
+      if (content.trim() === '') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        content = (document.body as any)._diagramCraftClipboard;
+      }
 
       if (content === this.#lastPasteHash) {
         this.#lastPasteCount++;
@@ -105,10 +133,8 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
         this.#lastPasteCount = 0;
       }
 
-      if (content.startsWith('application/x-diagram-craft-selection;')) {
-        const elements = JSON.parse(
-          content.substring('application/x-diagram-craft-selection;'.length)
-        );
+      if (content.startsWith(PREFIX)) {
+        const elements = JSON.parse(content.substring(PREFIX.length));
         this.pasteElements(elements, context, this.#lastPasteCount);
       } else {
         this.pasteText(content, context, this.#lastPasteCount);
@@ -140,6 +166,9 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
     $clipboard?.select();
 
     document.execCommand(this.mode);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (document.body as any)._diagramCraftClipboard = $clipboard.value;
 
     if (this.mode === 'cut') {
       this.deleteSelection();

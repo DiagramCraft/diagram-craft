@@ -5,6 +5,10 @@ import { TbChevronRight } from 'react-icons/tb';
 export const SelectionContextMenu = () => {
   return (
     <>
+      <ActionContextMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionContextMenuItem>
+      <ActionContextMenuItem action={'CLIPBOARD_COPY'}>Copy</ActionContextMenuItem>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
           Align

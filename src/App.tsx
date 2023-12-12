@@ -246,7 +246,7 @@ useEffect(() => {
                           state={contextMenuTarget}
                           createContextMenu={state => {
                             if (state.contextMenuTarget.type === 'canvas') {
-                              return <CanvasContextMenu />;
+                              return <CanvasContextMenu target={state.contextMenuTarget} />;
                             } else if (state.contextMenuTarget.type === 'selection') {
                               return <SelectionContextMenu />;
                             } else {

@@ -209,7 +209,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   return (
     <>
-      <textarea id={'clipboard'} style={{ position: 'absolute', left: '-2000px' }}></textarea>
+      <textarea id={'clipboard'} style={{ position: 'absolute', left: '-4000px' }}></textarea>
       <svg
         ref={svgRef}
         {...propsUtils.except(props)}
