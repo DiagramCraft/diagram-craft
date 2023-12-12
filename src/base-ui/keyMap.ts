@@ -12,6 +12,7 @@ import { WaypointDeleteAction } from './actions/waypointDeleteAction.ts';
 import { ToggleRulerAction } from './actions/toggleRulerAction.ts';
 import { SelectionDeleteAction } from './actions/selectionDeleteAction.ts';
 import { SelectionRestackAction } from './actions/selectionRestackAction.ts';
+import { ClipboardCopyAction, ClipboardPasteAction } from './actions/clipboardAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -46,6 +47,9 @@ export type ActionMapFactory = (state: State) => Partial<ActionMap>;
 
 // TODO: Maybe we can move this entry by entry into each action file?
 export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
+  CLIPBOARD_COPY: new ClipboardCopyAction(state.diagram, 'copy'),
+  CLIPBOARD_CUT: new ClipboardCopyAction(state.diagram, 'cut'),
+  CLIPBOARD_PASTE: new ClipboardPasteAction(state.diagram),
   UNDO: new UndoAction(state.diagram),
   REDO: new RedoAction(state.diagram),
   SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
@@ -87,6 +91,9 @@ export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactor
 export const defaultMacKeymap: KeyMap = {
   'M-KeyZ': 'UNDO',
   'MS-KeyZ': 'REDO',
+  'M-KeyC': 'CLIPBOARD_COPY',
+  'M-KeyX': 'CLIPBOARD_CUT',
+  'M-KeyV': 'CLIPBOARD_PASTE',
   Backspace: 'SELECTION_DELETE'
 };
 

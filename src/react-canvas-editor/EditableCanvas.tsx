@@ -208,76 +208,82 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   );
 
   return (
-    <svg
-      ref={svgRef}
-      {...propsUtils.except(props)}
-      preserveAspectRatio="none"
-      viewBox={diagram.viewBox.svgViewboxString}
-      onMouseDown={e => {
-        if (e.button !== 0) return;
-        onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
-      }}
-      style={{ userSelect: 'none' }}
-      onMouseUp={e => onMouseUp(EventHelper.point(e.nativeEvent))}
-      onMouseMove={e => {
-        onMouseMove(getPoint(e, diagram), e.nativeEvent);
-      }}
-      onContextMenu={event => {
-        const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
+    <>
+      <textarea id={'clipboard'} style={{ position: 'absolute', left: '-2000px' }}></textarea>
+      <svg
+        ref={svgRef}
+        {...propsUtils.except(props)}
+        preserveAspectRatio="none"
+        viewBox={diagram.viewBox.svgViewboxString}
+        onMouseDown={e => {
+          if (e.button !== 0) return;
+          onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
+        }}
+        style={{ userSelect: 'none' }}
+        onMouseUp={e => onMouseUp(EventHelper.point(e.nativeEvent))}
+        onMouseMove={e => {
+          onMouseMove(getPoint(e, diagram), e.nativeEvent);
+        }}
+        onContextMenu={event => {
+          const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
 
-        const bounds = svgRef.current!.getBoundingClientRect();
-        const point = { x: e.nativeEvent.clientX - bounds.x, y: e.nativeEvent.clientY - bounds.y };
+          const bounds = svgRef.current!.getBoundingClientRect();
+          const point = {
+            x: e.nativeEvent.clientX - bounds.x,
+            y: e.nativeEvent.clientY - bounds.y
+          };
 
-        const isClickOnSelection = Box.contains(
-          selection.bounds,
-          diagram.viewBox.toDiagramPoint(point)
-        );
-
-        e.contextMenuTarget ??= {
-          type: isClickOnSelection ? 'selection' : 'canvas',
-          pos: diagram.viewBox.toDiagramPoint(point)
-        };
-
-        props.onContextMenu?.(e);
-      }}
-    >
-      <DocumentBounds diagram={diagram} />
-      <Grid diagram={diagram} />
-
-      {diagram.elements.map(e => {
-        const id = e.id;
-        if (e.type === 'edge') {
-          const edge = diagram.edgeLookup[id]!;
-          return (
-            <Edge
-              key={id}
-              ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
-              onMouseDown={onMouseDown}
-              onMouseEnter={onMouseEnter}
-              onMouseLeave={onMouseLeave}
-              def={edge}
-              diagram={diagram}
-            />
+          const isClickOnSelection = Box.contains(
+            selection.bounds,
+            diagram.viewBox.toDiagramPoint(point)
           );
-        } else {
-          const node = diagram.nodeLookup[id]!;
-          return (
-            <Node
-              key={id}
-              ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-              onMouseDown={onMouseDown}
-              onMouseEnter={onMouseEnter}
-              onMouseLeave={onMouseLeave}
-              def={node}
-              diagram={diagram}
-            />
-          );
-        }
-      })}
 
-      <Selection ref={selectionRef} selection={selection} diagram={diagram} />
-      <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
-    </svg>
+          e.contextMenuTarget ??= {
+            type: isClickOnSelection ? 'selection' : 'canvas',
+            pos: diagram.viewBox.toDiagramPoint(point)
+          };
+
+          props.onContextMenu?.(e);
+        }}
+      >
+        <DocumentBounds diagram={diagram} />
+        <Grid diagram={diagram} />
+
+        {diagram.elements.map(e => {
+          const id = e.id;
+          if (e.type === 'edge') {
+            const edge = diagram.edgeLookup[id]!;
+            return (
+              <Edge
+                key={id}
+                ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
+                onMouseDown={onMouseDown}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
+                def={edge}
+                diagram={diagram}
+              />
+            );
+          } else {
+            const node = diagram.nodeLookup[id]!;
+            return (
+              <Node
+                key={id}
+                ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
+                onMouseDown={onMouseDown}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
+                def={node}
+                diagram={diagram}
+              />
+            );
+          }
+        })}
+
+        <Selection ref={selectionRef} selection={selection} diagram={diagram} />
+        <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
+      </svg>
+    </>
   );
 });
 

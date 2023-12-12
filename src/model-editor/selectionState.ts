@@ -147,16 +147,18 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   setElements(element: DiagramElement[], rebaseline = true) {
+    const oldElements = [...this.#elements];
+    this.#elements = element;
+
     element.forEach(e => {
-      if (this.#elements.includes(e)) return;
+      if (oldElements.includes(e)) return;
       this.emit('add', { element: e });
     });
-    this.#elements.forEach(e => {
+    oldElements.forEach(e => {
       if (element.includes(e)) return;
       this.emit('remove', { element: e });
     });
 
-    this.#elements = element;
     this.recalculateBoundingBox();
 
     if (rebaseline) this.rebaseline();

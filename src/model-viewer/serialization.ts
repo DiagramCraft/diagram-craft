@@ -1,6 +1,6 @@
 import { Point } from '../geometry/point.ts';
-import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import { AbstractNode, DiagramNode } from './diagramNode.ts';
+import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
+import { AbstractNode, DiagramElement, DiagramNode } from './diagramNode.ts';
 import { AbstractEdge, DiagramEdge } from './diagramEdge.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramDocument } from './diagramDocument.ts';
@@ -14,7 +14,7 @@ type SerializedLayer = {
   name: string;
   type: 'layer';
   layerType: 'basic' | 'reference' | 'adjustment';
-  elements: (SerializedNode | SerializedEdge | SerializedLayer)[];
+  elements: (SerializedElement | SerializedLayer)[];
 };
 
 export type SerializedDiagram = {
@@ -44,12 +44,12 @@ export interface SerializedEdge extends AbstractEdge {
   end: SerializedEndpoint;
 }
 
-const isNodeDef = (
-  element: SerializedNode | SerializedEdge | SerializedLayer
-): element is SerializedNode => element.type === 'node';
-const isEdgeDef = (
-  element: SerializedNode | SerializedEdge | SerializedLayer
-): element is SerializedEdge => element.type === 'edge';
+export type SerializedElement = SerializedNode | SerializedEdge;
+
+const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
+  element.type === 'node';
+const isEdgeDef = (element: SerializedElement | SerializedLayer): element is SerializedEdge =>
+  element.type === 'edge';
 
 const isConnected = (endpoint: SerializedEndpoint): endpoint is SerializedConnectedEndpoint =>
   'node' in endpoint;
@@ -69,16 +69,103 @@ const unfoldGroup = (node: SerializedNode) => {
   }
 };
 
+export const deserializeDiagramElements = (
+  diagramElements: SerializedElement[],
+  nodeLookup: Record<string, DiagramNode>,
+  edgeLookup: Record<string, DiagramEdge>
+) => {
+  const allNodes = diagramElements.filter(isNodeDef);
+
+  // Index skeleton nodes
+  for (const n of allNodes) {
+    for (const c of unfoldGroup(n)) {
+      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors);
+      nodeLookup[c.id].props = c.props;
+    }
+  }
+
+  // Resolve relative positions
+  for (const n of allNodes) {
+    for (const child of unfoldGroup(n)) {
+      if (child.parent) {
+        nodeLookup[child.id].bounds = {
+          ...nodeLookup[child.id].bounds,
+          pos: Point.add(nodeLookup[child.id].bounds.pos, nodeLookup[child.parent.id].bounds.pos)
+        };
+      }
+    }
+  }
+
+  // Resolve relations
+  for (const n of allNodes) {
+    for (const c of unfoldGroup(n)) {
+      nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
+      if (c.parent) {
+        nodeLookup[n.id].parent = nodeLookup[c.parent.id];
+      }
+    }
+  }
+
+  for (const e of diagramElements) {
+    if (e.type !== 'edge') continue;
+
+    const start = e.start;
+    const end = e.end;
+
+    const edge = new DiagramEdge(
+      e.id,
+      isConnected(start)
+        ? { anchor: start.anchor, node: nodeLookup[start.node.id] }
+        : { position: start.position },
+      isConnected(end)
+        ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
+        : { position: end.position },
+      e.props,
+      e.waypoints
+    );
+
+    if (isConnected(start)) {
+      const startNode = nodeLookup[start.node.id];
+
+      startNode.edges ??= {};
+      startNode.edges[start.anchor] ??= [];
+      startNode.edges[start.anchor].push(edge);
+    }
+
+    if (isConnected(end)) {
+      const endNode = nodeLookup[end.node.id];
+
+      endNode.edges ??= {};
+      endNode.edges[end.anchor] ??= [];
+      endNode.edges[end.anchor].push(edge);
+    }
+
+    edgeLookup[e.id] = edge;
+  }
+
+  const elements: (DiagramEdge | DiagramNode)[] = [];
+  for (const n of diagramElements) {
+    if (n.type === 'node') {
+      elements.push(nodeLookup[n.id]);
+    } else if (n.type === 'edge') {
+      elements.push(edgeLookup[n.id]);
+    } else {
+      VERIFY_NOT_REACHED();
+    }
+  }
+  return elements;
+};
+
 export const deserializeDiagramDocument = <T extends Diagram>(
   document: SerializedDiagramDocument,
-  factory: (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => T
+  factory: (d: SerializedDiagram, elements: DiagramElement[]) => T
 ): DiagramDocument<T> => {
   const dest: T[] = [];
   for (const $d of document.diagrams) {
     const nodeLookup: Record<string, DiagramNode> = {};
     const edgeLookup: Record<string, DiagramEdge> = {};
 
-    const diagramElements: (SerializedNode | SerializedEdge)[] = [];
+    const diagramElements: SerializedElement[] = [];
     for (const l of $d.layers) {
       for (const e of l.elements) {
         if (isNodeDef(e)) {
@@ -88,89 +175,38 @@ export const deserializeDiagramDocument = <T extends Diagram>(
         }
       }
     }
-
-    const allNodes = diagramElements.filter(isNodeDef);
-
-    // Index skeleton nodes
-    for (const n of allNodes) {
-      for (const c of unfoldGroup(n)) {
-        nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors);
-        nodeLookup[c.id].props = c.props;
-      }
-    }
-
-    // Resolve relative positions
-    for (const n of allNodes) {
-      for (const child of unfoldGroup(n)) {
-        if (child.parent) {
-          nodeLookup[child.id].bounds = {
-            ...nodeLookup[child.id].bounds,
-            pos: Point.add(nodeLookup[child.id].bounds.pos, nodeLookup[child.parent.id].bounds.pos)
-          };
-        }
-      }
-    }
-
-    // Resolve relations
-    for (const n of allNodes) {
-      for (const c of unfoldGroup(n)) {
-        nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
-        if (c.parent) {
-          nodeLookup[n.id].parent = nodeLookup[c.parent.id];
-        }
-      }
-    }
-
-    for (const e of diagramElements) {
-      if (e.type !== 'edge') continue;
-
-      const start = e.start;
-      const end = e.end;
-
-      const edge = new DiagramEdge(
-        e.id,
-        isConnected(start)
-          ? { anchor: start.anchor, node: nodeLookup[start.node.id] }
-          : { position: start.position },
-        isConnected(end)
-          ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
-          : { position: end.position },
-        e.props,
-        e.waypoints
-      );
-
-      if (isConnected(start)) {
-        const startNode = nodeLookup[start.node.id];
-
-        startNode.edges ??= {};
-        startNode.edges[start.anchor] ??= [];
-        startNode.edges[start.anchor].push(edge);
-      }
-
-      if (isConnected(end)) {
-        const endNode = nodeLookup[end.node.id];
-
-        endNode.edges ??= {};
-        endNode.edges[end.anchor] ??= [];
-        endNode.edges[end.anchor].push(edge);
-      }
-
-      edgeLookup[e.id] = edge;
-    }
-
-    const elements: (DiagramEdge | DiagramNode)[] = [];
-    for (const n of diagramElements) {
-      if (n.type === 'node') {
-        elements.push(nodeLookup[n.id]);
-      } else if (n.type === 'edge') {
-        elements.push(edgeLookup[n.id]);
-      } else {
-        VERIFY_NOT_REACHED();
-      }
-    }
+    const elements = deserializeDiagramElements(diagramElements, nodeLookup, edgeLookup);
 
     dest.push(factory($d, elements));
   }
 
   return new DiagramDocument<T>(dest);
+};
+
+export const serializeDiagramElement = (element: DiagramElement): SerializedElement => {
+  if (element.type === 'node') {
+    const node = element as DiagramNode;
+    return {
+      id: node.id,
+      type: 'node',
+      nodeType: node.nodeType,
+      bounds: node.bounds,
+      anchors: node.anchors,
+      children: node.children.map(serializeDiagramElement) as SerializedNode[],
+      props: node.props
+    };
+  } else if (element.type === 'edge') {
+    const edge = element as DiagramEdge;
+    return {
+      id: edge.id,
+      type: 'edge',
+      // TODO: We need to fix these
+      start: edge.start,
+      end: edge.end,
+      waypoints: edge.waypoints,
+      props: edge.props
+    };
+  } else {
+    throw new VerifyNotReached();
+  }
 };
