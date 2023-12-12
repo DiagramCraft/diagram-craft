@@ -23,6 +23,7 @@ type ReactNode = React.FunctionComponent<Props>;
 
 type BoundingPathFactory = (node: DiagramNode) => PathBuilder;
 type CustomPropertyFactory = (node: DiagramNode) => Record<string, CustomPropertyDefinition>;
+type DefaultPropsFactory = (node: DiagramNode, mode: 'picker' | 'canvas') => NodeProps;
 
 export class ReactNodeDefinition implements NodeDefinition {
   constructor(
@@ -30,7 +31,8 @@ export class ReactNodeDefinition implements NodeDefinition {
     readonly name: string,
     readonly reactNode: ReactNode,
     readonly bounds?: BoundingPathFactory,
-    readonly customProps?: CustomPropertyFactory
+    readonly customProps?: CustomPropertyFactory,
+    readonly defaultPropsFactory?: DefaultPropsFactory
   ) {}
 
   supports(_capability: NodeCapability): boolean {
@@ -65,6 +67,13 @@ export class ReactNodeDefinition implements NodeDefinition {
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
     if (this.customProps !== undefined) {
       return this.customProps(node);
+    }
+    return {};
+  }
+
+  getDefaultProps(node: DiagramNode, mode: 'picker' | 'canvas'): NodeProps {
+    if (this.defaultPropsFactory !== undefined) {
+      return this.defaultPropsFactory(node, mode);
     }
     return {};
   }

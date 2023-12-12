@@ -34,6 +34,15 @@
   --error-fg: var(--red-9);
 }
 
+.dark-theme .cmp-sidebar {
+  --canvas-fg: var(--blue-11);
+  --canvas-bg: var(--slate-5);
+}
+.light-theme .cmp-sidebar {
+  --canvas-fg: var(--blue-11);
+  --canvas-bg: var(--slate-5);
+}
+
 body {
   --right-indent: 0;
   --left-indent: 0;
@@ -389,9 +398,6 @@ input::-webkit-input-placeholder {
   }
 
   .svg-node {
-    fill: #e2e8f0;
-    stroke: #64748b;
-    stroke-width: 1;
     cursor: move;
   }
 }
@@ -1096,9 +1102,6 @@ input::-webkit-input-placeholder {
     display: block;
   }
   .svg-node {
-    fill: var(--slate-5);
-    stroke: var(--blue-11);
-    stroke-width: 1;
     shape-rendering: geometricprecision;
     stroke-linecap: round;
     stroke-linejoin: round;

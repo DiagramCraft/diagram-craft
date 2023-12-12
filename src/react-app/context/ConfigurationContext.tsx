@@ -7,6 +7,11 @@ type ConfigurationContextType = {
     secondary: string[][];
   };
 
+  defaults?: {
+    node?: NodeProps;
+    edge?: EdgeProps;
+  };
+
   // TODO: Add styles, patterns, fonts etc
 };
 

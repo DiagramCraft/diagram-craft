@@ -18,6 +18,8 @@ import { getPoint } from './eventHelper.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { round } from '../utils/math.ts';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
+import { deepMerge } from '../utils/deepmerge.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -25,6 +27,8 @@ export type NodeApi = {
 
 export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   const redraw = useRedraw();
+
+  const { defaults } = useConfiguration();
 
   useImperativeHandle(ref, () => {
     return {
@@ -62,44 +66,47 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     style.stroke = 'red';
   }
 
-  if (props.def.props?.fill?.color) {
-    style.fill = props.def.props?.fill?.color;
-  }
+  const nodeDef = props.diagram.nodeDefinitions.get(props.def.nodeType);
 
-  if (props.def.props?.fill?.type === 'gradient') {
+  const nodeProps: NodeProps = deepMerge(
+    {},
+    defaults?.node ?? {},
+    nodeDef.getDefaultProps(props.def, props.mode ?? 'canvas'),
+    props.def.props
+  );
+
+  style.fill = nodeProps?.fill?.color ?? 'none';
+  style.stroke = nodeProps?.stroke?.color ?? 'none';
+  style.strokeWidth = nodeProps?.stroke?.width ?? 1;
+
+  if (nodeProps?.fill?.type === 'gradient') {
     style.fill = `url(#node-${props.def.id}-gradient)`;
   }
 
-  if (props.def.props?.stroke?.color) {
-    style.stroke = props.def.props?.stroke?.color;
-  }
-
-  if (props.def.props?.stroke?.pattern) {
+  if (nodeProps.stroke?.pattern) {
     style.strokeDasharray =
-      DASH_PATTERNS[props.def.props?.stroke?.pattern ?? 'SOLID']?.(
-        (props.def.props?.stroke?.patternSize ?? 100) / 100,
-        (props.def.props?.stroke?.patternSpacing ?? 100) / 100
+      DASH_PATTERNS[nodeProps.stroke?.pattern ?? 'SOLID']?.(
+        (nodeProps.stroke?.patternSize ?? 100) / 100,
+        (nodeProps.stroke?.patternSpacing ?? 100) / 100
       ) ?? '';
   }
 
-  if (props.def.props?.stroke?.width) {
-    style.strokeWidth = props.def.props?.stroke?.width;
+  if (nodeProps.shadow?.enabled) {
+    style.filter = `drop-shadow(${nodeProps.shadow.x ?? 5}px ${nodeProps.shadow.y ?? 5}px ${
+      nodeProps.shadow.blur ?? 5
+    }px color-mix(in srgb, ${nodeProps.shadow.color ?? 'black'}, transparent ${round(
+      (nodeProps.shadow.opacity ?? 0.5) * 100
+    )}%))`;
   }
 
-  if (props.def.props?.shadow?.enabled) {
-    style.filter = `drop-shadow(${props.def.props.shadow.x ?? 5}px ${
-      props.def.props.shadow.y ?? 5
-    }px ${props.def.props.shadow.blur ?? 5}px color-mix(in srgb, ${
-      props.def.props.shadow.color ?? 'black'
-    }, transparent ${round((props.def.props.shadow.opacity ?? 0.5) * 100)}%))`;
-  }
-
-  if (props.def.props.stroke?.enabled === false) {
+  if (nodeProps.stroke?.enabled === false) {
     style.stroke = 'transparent';
     style.strokeWidth = 0;
   }
 
-  //style.fill = 'transparent';
+  if (nodeProps.fill?.enabled === false) {
+    style.fill = 'transparent';
+  }
 
   if (props.def.nodeType === 'group') {
     return (
@@ -133,8 +140,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       </g>
     );
   } else {
-    const nodeDef = props.diagram.nodeDefinitions.get(props.def.nodeType);
-
     // TODO: Better error handling here
     if (!nodeDef) VERIFY_NOT_REACHED();
     if (!('reactNode' in nodeDef)) VERIFY_NOT_REACHED();
@@ -151,10 +156,10 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           onMouseEnter={() => props.onMouseEnter(props.def.id)}
           onMouseLeave={() => props.onMouseLeave(props.def.id)}
         >
-          {props.def.props.fill?.type === 'gradient' && (
+          {nodeProps.fill?.type === 'gradient' && (
             <linearGradient id={`node-${props.def.id}-gradient`}>
-              <stop stopColor={props.def.props.fill.color} offset="0%" />
-              <stop stopColor={props.def.props.fill.color2} offset="100%" />
+              <stop stopColor={nodeProps.fill.color} offset="0%" />
+              <stop stopColor={nodeProps.fill.color2} offset="100%" />
             </linearGradient>
           )}
           <ReactNodeImpl
@@ -167,7 +172,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             style={style}
           />
 
-          {props.def.props.highlight?.includes('edge-connect') && (
+          {nodeProps.highlight?.includes('edge-connect') && (
             <g
               transform={`rotate(${-Angle.toDeg(props.def.bounds.rotation)} ${
                 wx + props.def.bounds.size.w / 2
@@ -197,6 +202,7 @@ type Props = {
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
+  mode?: 'picker' | 'canvas';
 } & Omit<
   SVGProps<SVGGElement>,
   'id' | 'transform' | 'onMouseEnter' | 'onMouseMove' | 'onMouseDown'

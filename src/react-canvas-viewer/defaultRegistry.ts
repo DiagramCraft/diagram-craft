@@ -20,7 +20,9 @@ export const defaultNodeRegistry = () => {
       RoundedRect.getCustomProperties
     )
   );
-  dest.register(new ReactNodeDefinition('text', 'Text', Text));
+  dest.register(
+    new ReactNodeDefinition('text', 'Text', Text, undefined, undefined, Text.defaultPropsFactory)
+  );
   return dest;
 };
 

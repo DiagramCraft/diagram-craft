@@ -108,9 +108,25 @@ declare global {
     highlight?: string[];
 
     fill?: {
+      enabled?: boolean;
       color?: string;
       type?: FillType;
       color2?: string;
     };
   }
 }
+
+export const nodeDefaults: NodeProps = {
+  fill: {
+    color: 'var(--canvas-bg)'
+  },
+  stroke: {
+    color: 'var(--canvas-fg)',
+    width: 1
+  },
+  text: {
+    color: 'var(--canvas-fg)'
+  }
+};
+
+export const edgeDefaults: EdgeProps = {};

@@ -23,6 +23,7 @@ export interface NodeDefinition {
 
   getBoundingPath(node: DiagramNode): Path;
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
+  getDefaultProps(node: DiagramNode, mode: 'picker' | 'canvas'): NodeProps;
 }
 
 export class NodeDefinitionRegistry {

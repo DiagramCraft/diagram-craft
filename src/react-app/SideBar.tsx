@@ -55,7 +55,11 @@ export const SideBar = (props: Props) => {
           );
         })}
       </div>
-      <div id={`${props.side}`} style={{ display: selected === -1 ? 'none' : 'block' }}>
+      <div
+        id={`${props.side}`}
+        className={'cmp-sidebar'}
+        style={{ display: selected === -1 ? 'none' : 'block' }}
+      >
         {props.children[selected]}
       </div>
     </>

@@ -35,6 +35,19 @@ export const Text = (props: Props) => {
   );
 };
 
+Text.defaultPropsFactory = (_node: DiagramNode, _mode: 'picker' | 'canvas') => {
+  return {
+    stroke: {
+      enabled: false,
+      color: 'red'
+    },
+    fill: {
+      enabled: false,
+      color: 'red'
+    }
+  };
+};
+
 type Props = {
   node: DiagramNode;
   diagram: EditableDiagram;

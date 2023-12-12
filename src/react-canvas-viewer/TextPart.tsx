@@ -1,5 +1,6 @@
 import { MouseEventHandler } from 'react';
 import { Box } from '../geometry/box.ts';
+import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -11,7 +12,12 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 
 // TODO: Maybe we can optimize to not have a foreignObject until a text node is created
 export const TextPart = (props: Props) => {
+  const { defaults } = useConfiguration();
   const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
+
+  // TODO: We must get the correct props defaults here
+
+  const textColor = props.text?.color ?? defaults?.node?.text?.color ?? 'unset';
 
   return (
     <foreignObject
@@ -46,7 +52,7 @@ export const TextPart = (props: Props) => {
         <div
           style={{
             cursor: 'text',
-            color: props.text?.color ?? 'black',
+            color: textColor,
             fontFamily: props.text?.font ?? 'sans-serif',
             fontSize: (props.text?.fontSize ?? '10') + 'px',
             fontWeight: props.text?.bold ? 'bold' : 'normal',
