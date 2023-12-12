@@ -1,7 +1,7 @@
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
 import { AbstractNode, DiagramElement, DiagramNode } from './diagramNode.ts';
-import { AbstractEdge, DiagramEdge } from './diagramEdge.ts';
+import { AbstractEdge, ConnectedEndpoint, DiagramEdge } from './diagramEdge.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 
@@ -35,7 +35,7 @@ export interface SerializedNode extends AbstractNode {
   children: SerializedNode[];
 }
 
-type SerializedConnectedEndpoint = { anchor: number; node: Reference };
+type SerializedConnectedEndpoint = { anchor: number; node: Reference; position?: Point };
 
 type SerializedEndpoint = SerializedConnectedEndpoint | { position: Point };
 
@@ -51,8 +51,9 @@ const isNodeDef = (element: SerializedElement | SerializedLayer): element is Ser
 const isEdgeDef = (element: SerializedElement | SerializedLayer): element is SerializedEdge =>
   element.type === 'edge';
 
-const isConnected = (endpoint: SerializedEndpoint): endpoint is SerializedConnectedEndpoint =>
-  'node' in endpoint;
+export const isConnected = (
+  endpoint: SerializedEndpoint
+): endpoint is SerializedConnectedEndpoint => 'node' in endpoint;
 
 const unfoldGroup = (node: SerializedNode) => {
   const recurse = (
@@ -200,9 +201,24 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
     return {
       id: edge.id,
       type: 'edge',
-      // TODO: We need to fix these
-      start: edge.start,
-      end: edge.end,
+      start: edge.isStartConnected()
+        ? {
+            anchor: (edge.start as ConnectedEndpoint).anchor,
+            node: { id: (edge.start as ConnectedEndpoint).node.id },
+            position: edge.startPosition
+          }
+        : {
+            position: edge.startPosition
+          },
+      end: edge.isEndConnected()
+        ? {
+            anchor: (edge.end as ConnectedEndpoint).anchor,
+            node: { id: (edge.end as ConnectedEndpoint).node.id },
+            position: edge.endPosition
+          }
+        : {
+            position: edge.endPosition
+          },
       waypoints: edge.waypoints,
       props: edge.props
     };

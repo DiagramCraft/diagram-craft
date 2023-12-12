@@ -4,15 +4,17 @@ import { EventEmitter } from '../../utils/event.ts';
 import { Action, ActionContext, ActionEvents } from '../keyMap.ts';
 import {
   deserializeDiagramElements,
+  isConnected,
   SerializedElement,
   serializeDiagramElement
 } from '../../model-viewer/serialization.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
-import { DiagramElement, DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramElement } from '../../model-viewer/diagramNode.ts';
 import { Point } from '../../geometry/point.ts';
 import { UndoableAction } from '../../model-editor/undoManager.ts';
 import { Diagram } from '../../model-viewer/diagram.ts';
+import { precondition } from '../../utils/assert.ts';
 
 declare global {
   interface ActionMap {
@@ -21,6 +23,9 @@ declare global {
     CLIPBOARD_CUT: ClipboardCopyAction;
   }
 }
+
+const OFFSET = 10;
+const PREFIX = 'application/x-diagram-craft-selection;';
 
 export class PasteUndoableAction implements UndoableAction {
   description = 'Paste';
@@ -55,13 +60,19 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
   protected pasteElements(elements: SerializedElement[], context: ActionContext): Point {
     const nodeIdMapping = new Map<string, string>();
 
-    // TODO: This is not correct if pasting a free edge
     const bb = Box.boundingBox(
-      elements.filter(e => e.type === 'node').map(e => (e as DiagramNode).bounds)
+      elements.map(e => {
+        if (e.type === 'node') return e.bounds;
+        else {
+          precondition.is.present(e.start.position);
+          precondition.is.present(e.end.position);
+          return Box.fromCorners(e.start.position, e.end.position);
+        }
+      })
     );
 
     if (!context.point) {
-      context.point = { x: bb.pos.x + 10, y: bb.pos.y + 10 };
+      context.point = { x: bb.pos.x + OFFSET, y: bb.pos.y + OFFSET };
     }
 
     for (const e of elements) {
@@ -70,24 +81,37 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
         nodeIdMapping.set(e.id, newId);
         e.id = newId;
 
-        const dx = context.point.x - bb.pos.x;
-        const dy = context.point.y - bb.pos.y;
         const s = Box.asMutableSnapshot(e.bounds);
-        s.set('pos', {
-          x: s.get('pos')!.x + dx,
-          y: s.get('pos')!.y + dy
-        });
+        s.set('pos', this.adjustPosition(s.get('pos'), context, bb));
         e.bounds = s.getSnapshot();
+      } else {
+        e.id = newid();
+        if (!isConnected(e.start)) {
+          e.start.position = this.adjustPosition(e.start.position, context, bb);
+        }
+        if (!isConnected(e.end)) {
+          e.end.position = this.adjustPosition(e.end.position, context, bb);
+        }
       }
     }
 
     for (const e of elements) {
       if (e.type === 'edge') {
         if ('node' in e.start) {
-          e.start.node = { id: nodeIdMapping.get(e.start.node.id)! };
+          const newId = nodeIdMapping.get(e.start.node.id);
+          if (newId) {
+            e.start.node = { id: newId };
+          } else {
+            e.start = { position: e.start.position! };
+          }
         }
         if ('node' in e.end) {
-          e.end.node = { id: nodeIdMapping.get(e.end.node.id)! };
+          const newId = nodeIdMapping.get(e.end.node.id);
+          if (newId) {
+            e.end.node = { id: newId };
+          } else {
+            e.end = { position: e.end.position! };
+          }
         }
       }
     }
@@ -100,19 +124,19 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
     return context.point;
   }
 
+  private adjustPosition(s: Point, context: ActionContext, bb: Box) {
+    return {
+      x: s.x + (context.point!.x - bb.pos.x),
+      y: s.y + (context.point!.y - bb.pos.y)
+    };
+  }
+
   protected pasteText(content: string, context: ActionContext): Point {
     console.log('paste text not implemented yet "', content, '"', context);
-
-    const $clipboard: HTMLTextAreaElement = document.getElementById(
-      'clipboard'
-    )! as HTMLTextAreaElement;
-    console.log($clipboard.value);
 
     return context.point!;
   }
 }
-
-const PREFIX = 'application/x-diagram-craft-selection;';
 
 export class ClipboardPasteAction extends AbstractClipboardPasteAction {
   #lastPasteHash?: string;
@@ -141,8 +165,8 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
 
       if (content === this.#lastPasteHash) {
         this.#lastPastePoint = {
-          x: this.#lastPastePoint!.x + 10,
-          y: this.#lastPastePoint!.y + 10
+          x: this.#lastPastePoint!.x + OFFSET,
+          y: this.#lastPastePoint!.y + OFFSET
         };
       } else {
         this.#lastPasteHash = content;
