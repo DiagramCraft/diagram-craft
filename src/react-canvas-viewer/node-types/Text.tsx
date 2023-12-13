@@ -10,11 +10,16 @@ export const Text = (props: Props) => {
   const sizeChangeCallback = useCallback(
     (size: Extent) => {
       const height = size.h;
+      const width = size.w;
+
+      const b = Box.asMutableSnapshot(props.node.bounds);
       if (height !== props.node.bounds.size.h) {
-        const b = Box.asMutableSnapshot(props.node.bounds);
         b.get('size')!.h = height;
-        props.node.bounds = b.getSnapshot();
       }
+      if (width !== props.node.bounds.size.w) {
+        b.get('size')!.w = width;
+      }
+      props.node.bounds = b.getSnapshot();
 
       props.node.diagram!.updateElement(props.node);
     },

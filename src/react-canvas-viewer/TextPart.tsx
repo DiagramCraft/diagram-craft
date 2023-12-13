@@ -80,6 +80,7 @@ export const TextPart = (props: Props) => {
             fontSize: withPx(props.text?.fontSize) ?? 'unset',
             fontWeight: props.text?.bold ? 'bold' : 'normal',
             fontStyle: props.text?.italic ? 'italic' : 'normal',
+            minWidth: 'min-content',
             textDecoration: props.text?.textDecoration
               ? `${props.text.textDecoration} ${props.text?.color ?? 'black'}`
               : 'none',
