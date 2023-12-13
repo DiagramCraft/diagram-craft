@@ -29,14 +29,7 @@ export const Text = (props: Props) => {
         width={props.node.bounds.size.w}
         height={props.node.bounds.size.h}
         className={'svg-node svg-node__boundary'}
-        {...propsUtils.except(
-          props,
-          'nodeProps',
-          'diagram',
-          'node',
-          'isSelected',
-          'isSingleSelected'
-        )}
+        {...propsUtils.filterSvgProperties(props)}
       />
       <TextPart
         id={`text_1_${props.node.id}`}

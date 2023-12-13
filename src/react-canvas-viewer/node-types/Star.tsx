@@ -33,7 +33,7 @@ export const Star = (props: Props) => {
         width={props.node.bounds.size.w}
         height={props.node.bounds.size.h}
         className={'svg-node__boundary svg-node'}
-        {...propsUtils.except(props, 'node', 'isSelected', 'isSingleSelected')}
+        {...propsUtils.filterSvgProperties(props)}
       />
 
       <TextPart

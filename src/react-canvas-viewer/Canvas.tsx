@@ -26,7 +26,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   return (
     <svg
       ref={svgRef}
-      {...propsUtils.except(props, 'diagram')}
+      {...propsUtils.filterDomProperties(props)}
       preserveAspectRatio="none"
       viewBox={diagram.viewBox.svgViewboxString}
       style={style}

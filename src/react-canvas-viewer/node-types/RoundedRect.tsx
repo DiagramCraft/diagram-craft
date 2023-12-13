@@ -27,7 +27,7 @@ export const RoundedRect = (props: Props) => {
         className={'svg-node svg-node__boundary'}
         rx={radius}
         ry={radius}
-        {...propsUtils.except(props, 'node', 'isSelected', 'isSingleSelected')}
+        {...propsUtils.filterSvgProperties(props)}
       />
 
       <TextPart

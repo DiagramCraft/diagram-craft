@@ -214,7 +214,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       <textarea id={'clipboard'} style={{ position: 'absolute', left: '-4000px' }}></textarea>
       <svg
         ref={svgRef}
-        {...propsUtils.except(props)}
+        {...propsUtils.filterDomProperties(props)}
         preserveAspectRatio="none"
         viewBox={diagram.viewBox.svgViewboxString}
         onMouseDown={e => {

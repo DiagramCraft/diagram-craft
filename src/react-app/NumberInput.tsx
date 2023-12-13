@@ -104,14 +104,7 @@ export const NumberInput = (props: Props) => {
     <div className={$c('cmp-number-input', { error: error })} style={props.style ?? {}}>
       {props.label && <div className={'cmp-number-input__label'}>{props.label}</div>}
       <input
-        {...propsUtils.except(
-          props,
-          'validUnits',
-          'defaultUnit',
-          'value',
-          'onChange',
-          'hasMultipleValues'
-        )}
+        {...propsUtils.filterDomProperties(props)}
         placeholder={props.hasMultipleValues ? '···' : undefined}
         type={'text'}
         value={props.hasMultipleValues ? '' : currentValue}
