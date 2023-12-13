@@ -29,7 +29,7 @@ export class AlignAction extends AbstractSelectionAction {
       | 'center-vertical'
       | 'center-horizontal'
   ) {
-    super(diagram);
+    super(diagram, true);
   }
 
   execute(): void {
