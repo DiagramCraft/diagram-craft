@@ -125,7 +125,9 @@ export const nodeDefaults: NodeProps = {
     width: 1
   },
   text: {
-    color: 'var(--canvas-fg)'
+    color: 'var(--canvas-fg)',
+    fontSize: 10,
+    font: 'sans-serif'
   }
 };
 

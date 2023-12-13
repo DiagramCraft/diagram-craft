@@ -32,7 +32,7 @@ export const RoundedRect = (props: Props) => {
 
       <TextPart
         id={`text_1_${props.node.id}`}
-        text={props.node.props.text}
+        text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
           props.node.props.text ??= {};
@@ -78,6 +78,7 @@ RoundedRect.getCustomProperties = (def: DiagramNode): Record<string, CustomPrope
 type Props = {
   node: DiagramNode;
   diagram: EditableDiagram;
+  nodeProps: NodeProps;
   isSelected: boolean;
   isSingleSelected: boolean;
 } & React.SVGProps<SVGRectElement>;

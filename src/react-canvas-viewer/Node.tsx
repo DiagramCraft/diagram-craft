@@ -166,6 +166,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             def={nodeDef}
             diagram={props.diagram as EditableDiagram}
             node={props.def}
+            nodeProps={nodeProps}
             onMouseDown={onMouseDown}
             isSelected={isSelected}
             isSingleSelected={isSingleSelected}

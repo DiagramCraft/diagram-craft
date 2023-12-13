@@ -38,7 +38,7 @@ export const Star = (props: Props) => {
 
       <TextPart
         id={`text_1_${props.node.id}`}
-        text={props.node.props.text}
+        text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
           props.node.props.text ??= {};
@@ -142,4 +142,5 @@ type Props = {
   diagram: EditableDiagram;
   isSelected: boolean;
   isSingleSelected: boolean;
+  nodeProps: NodeProps;
 } & React.SVGProps<SVGRectElement>;

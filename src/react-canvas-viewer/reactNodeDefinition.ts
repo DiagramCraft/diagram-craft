@@ -14,6 +14,7 @@ import { Extent } from '../geometry/extent.ts';
 
 type Props = {
   node: DiagramNode;
+  nodeProps: NodeProps;
   def: NodeDefinition;
   diagram: EditableDiagram;
   isSelected: boolean;

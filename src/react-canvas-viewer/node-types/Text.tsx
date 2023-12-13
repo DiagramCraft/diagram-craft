@@ -7,10 +7,6 @@ import { Box } from '../../geometry/box.ts';
 import { Extent } from '../../geometry/extent.ts';
 
 export const Text = (props: Props) => {
-  props.node.props.text ??= {
-    text: 'Text'
-  };
-
   const sizeChangeCallback = useCallback(
     (size: Extent) => {
       const height = size.h;
@@ -33,11 +29,18 @@ export const Text = (props: Props) => {
         width={props.node.bounds.size.w}
         height={props.node.bounds.size.h}
         className={'svg-node svg-node__boundary'}
-        {...propsUtils.except(props, 'node', 'isSelected', 'isSingleSelected')}
+        {...propsUtils.except(
+          props,
+          'nodeProps',
+          'diagram',
+          'node',
+          'isSelected',
+          'isSingleSelected'
+        )}
       />
       <TextPart
         id={`text_1_${props.node.id}`}
-        text={props.node.props.text}
+        text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
           props.node.props.text ??= {};
@@ -51,7 +54,7 @@ export const Text = (props: Props) => {
   );
 };
 
-Text.defaultPropsFactory = (_node: DiagramNode, _mode: 'picker' | 'canvas') => {
+Text.defaultPropsFactory = (_node: DiagramNode, _mode: 'picker' | 'canvas'): NodeProps => {
   return {
     stroke: {
       enabled: false,
@@ -60,6 +63,10 @@ Text.defaultPropsFactory = (_node: DiagramNode, _mode: 'picker' | 'canvas') => {
     fill: {
       enabled: false,
       color: 'red'
+    },
+    text: {
+      align: 'left',
+      text: 'Text'
     }
   };
 };
@@ -71,4 +78,5 @@ type Props = {
   diagram: EditableDiagram;
   isSelected: boolean;
   isSingleSelected: boolean;
+  nodeProps: NodeProps;
 } & React.SVGProps<SVGRectElement>;

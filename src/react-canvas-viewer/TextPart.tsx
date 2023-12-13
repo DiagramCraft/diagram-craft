@@ -1,6 +1,5 @@
 import { MouseEventHandler, useEffect, useRef } from 'react';
 import { Box } from '../geometry/box.ts';
-import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { Extent } from '../geometry/extent.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
@@ -13,11 +12,24 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 
 // TODO: Maybe we can optimize to not have a foreignObject until a text node is created
 export const TextPart = (props: Props) => {
-  const { defaults } = useConfiguration();
   const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
   const ref = useRef<HTMLDivElement>(null);
   const widthRef = useRef<number>(0);
   const heightRef = useRef<number>(0);
+
+  const sizeAffectingProps = [
+    props.text?.font,
+    props.text?.fontSize,
+    props.text?.bold,
+    props.text?.italic,
+    props.text?.textDecoration,
+    props.text?.textTransform,
+    props.text?.align,
+    props.text?.left,
+    props.text?.right,
+    props.text?.top,
+    props.text?.bottom
+  ];
 
   useEffect(() => {
     if (ref.current) {
@@ -26,11 +38,7 @@ export const TextPart = (props: Props) => {
         h: ref.current.getBoundingClientRect().height
       });
     }
-  }, [props.onSizeChange, ref]);
-
-  // TODO: We must get the correct props defaults here
-
-  const textColor = props.text?.color ?? defaults?.node?.text?.color ?? 'unset';
+  }, [props.onSizeChange, ref, ...sizeAffectingProps]);
 
   return (
     <foreignObject
@@ -67,20 +75,20 @@ export const TextPart = (props: Props) => {
           ref={ref}
           style={{
             cursor: 'move',
-            color: textColor,
-            fontFamily: props.text?.font ?? 'sans-serif',
-            fontSize: (props.text?.fontSize ?? '10') + 'px',
+            color: props.text?.color ?? 'unset',
+            fontFamily: props.text?.font ?? 'unset',
+            fontSize: withPx(props.text?.fontSize) ?? 'unset',
             fontWeight: props.text?.bold ? 'bold' : 'normal',
             fontStyle: props.text?.italic ? 'italic' : 'normal',
             textDecoration: props.text?.textDecoration
               ? `${props.text.textDecoration} ${props.text?.color ?? 'black'}`
               : 'none',
             textTransform: props.text?.textTransform ?? 'none',
-            textAlign: props.text?.align ?? 'center',
-            paddingLeft: withPx(props.text?.left) ?? '0px',
-            paddingRight: withPx(props.text?.right) ?? '0px',
-            paddingTop: withPx(props.text?.top) ?? '0px',
-            paddingBottom: withPx(props.text?.bottom) ?? '0px'
+            textAlign: props.text?.align ?? 'unset',
+            paddingLeft: withPx(props.text?.left) ?? '0',
+            paddingRight: withPx(props.text?.right) ?? '0',
+            paddingTop: withPx(props.text?.top) ?? '0',
+            paddingBottom: withPx(props.text?.bottom) ?? '0'
           }}
           onKeyDown={e => {
             if (e.key === 'Escape') {
