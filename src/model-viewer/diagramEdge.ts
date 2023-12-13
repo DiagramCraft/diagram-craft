@@ -149,8 +149,25 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   flip() {
-    const start = this.start;
-    this.start = this.end;
-    this.end = start;
+    const start = this.#start;
+    const end = this.#end;
+
+    if (isConnected(this.#start)) {
+      this.#start.node.removeEdge(this);
+    }
+
+    if (isConnected(this.#end)) {
+      this.#end.node.removeEdge(this);
+    }
+
+    this.#start = end;
+    this.#end = start;
+
+    if (isConnected(this.#start)) {
+      this.#start.node.addEdge(this.#start.anchor, this);
+    }
+    if (isConnected(this.#end)) {
+      this.#end.node.addEdge(this.#end.anchor, this);
+    }
   }
 }
