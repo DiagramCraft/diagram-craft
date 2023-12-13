@@ -54,7 +54,7 @@ export const ArrowPreview = (props: Props) => {
         </marker>
       )}
       <path
-        d={`M ${0 + (props.start?.shortenBy ?? 0)} 5 L ${
+        d={`M ${2 + (props.start?.shortenBy ?? 0)} 5 L ${
           props.width - 1 - (props.end?.shortenBy ?? 0)
         } 5`}
         stroke={props.color ?? 'var(--secondary-fg)'}

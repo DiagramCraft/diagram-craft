@@ -11,8 +11,8 @@ import { ARROW_SHAPES } from '../../base-ui/arrowShapes.ts';
 export const LineToolbarButton = () => {
   const diagram = useDiagram();
   const defaults = useEdgeDefaults();
-  const fill = useEdgeProperty(diagram, 'stroke.color', defaults.stroke.color);
-  const bg = useEdgeProperty(diagram, 'fill.color', defaults.fill.color);
+  const strokeColor = useEdgeProperty(diagram, 'stroke.color', defaults.stroke.color);
+  const fillColor = useEdgeProperty(diagram, 'fill.color', strokeColor.val);
   const arrowStart = useEdgeProperty(diagram, 'arrow.start.type', defaults.arrow.start.type);
   const arrowEnd = useEdgeProperty(diagram, 'arrow.end.type', defaults.arrow.end.type);
 
@@ -33,8 +33,8 @@ export const LineToolbarButton = () => {
             }}
           >
             <ArrowPreview
-              bg={bg.val}
-              color={fill.val}
+              bg={fillColor.val}
+              color={strokeColor.val}
               width={65}
               type={arrowStart.val}
               start={ARROW_SHAPES[arrowStart.val]?.(0.75)}
