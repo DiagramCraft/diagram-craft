@@ -8,8 +8,9 @@ import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 
-export const CanvasProperties = () => {
+export const CanvasPanel = (props: Props) => {
   const redraw = useRedraw();
   const diagram = useDiagram();
 
@@ -23,7 +24,13 @@ export const CanvasProperties = () => {
   };
 
   return (
-    <>
+    <ToolWindowPanel
+      mode={props.mode ?? 'accordion'}
+      id="canvas"
+      title={'Canvas'}
+      hasCheckbox={false}
+    >
+      {' '}
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
@@ -116,6 +123,10 @@ export const CanvasProperties = () => {
           </div>
         </div>
       </div>
-    </>
+    </ToolWindowPanel>
   );
+};
+
+type Props = {
+  mode?: 'accordion' | 'panel';
 };
