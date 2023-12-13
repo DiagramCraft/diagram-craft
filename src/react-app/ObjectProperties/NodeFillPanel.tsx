@@ -4,7 +4,7 @@ import { useNodeProperty } from './useProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
-import React from 'react';
+import { useState } from 'react';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { assertFillType } from '../../model-viewer/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
@@ -14,10 +14,19 @@ export const NodeFillPanel = (props: Props) => {
   const fill = useNodeProperty(diagram, 'fill.color', 'transparent');
   const color2 = useNodeProperty(diagram, 'fill.color2', 'transparent');
   const type = useNodeProperty(diagram, 'fill.type', 'solid');
-  const [open, setOpen] = React.useState(false);
+  const enabled = useNodeProperty(diagram, 'fill.enabled', true);
+
+  const [open, setOpen] = useState(false);
 
   return (
-    <ToolWindowPanel mode={props.mode ?? 'accordion'} id="fill" title={'Fill'} hasCheckbox={false}>
+    <ToolWindowPanel
+      mode={props.mode ?? 'accordion'}
+      id="fill"
+      title={'Fill'}
+      hasCheckbox={true}
+      value={enabled.val}
+      onChange={enabled.set}
+    >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Type:</div>
         <div className={'cmp-labeled-table__value'}>
