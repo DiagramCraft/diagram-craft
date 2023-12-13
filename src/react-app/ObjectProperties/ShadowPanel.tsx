@@ -5,16 +5,18 @@ import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { useNodeDefaults } from '../useDefaults.tsx';
 
 export const ShadowPanel = (props: Props) => {
   const $d = useDiagram();
+  const defaults = useNodeDefaults();
 
-  const color = useNodeProperty($d, 'shadow.color', 'black');
-  const opacity = useNodeProperty($d, 'shadow.opacity', 0.5);
-  const x = useNodeProperty($d, 'shadow.x', 5);
-  const y = useNodeProperty($d, 'shadow.y', 5);
-  const blur = useNodeProperty($d, 'shadow.blur', 5);
-  const enabled = useNodeProperty($d, 'shadow.enabled', false);
+  const color = useNodeProperty($d, 'shadow.color', defaults.shadow.color);
+  const opacity = useNodeProperty($d, 'shadow.opacity', defaults.shadow.opacity);
+  const x = useNodeProperty($d, 'shadow.x', defaults.shadow.x);
+  const y = useNodeProperty($d, 'shadow.y', defaults.shadow.y);
+  const blur = useNodeProperty($d, 'shadow.blur', defaults.shadow.blur);
+  const enabled = useNodeProperty($d, 'shadow.enabled', defaults.shadow.enabled);
 
   return (
     <ToolWindowPanel
@@ -27,54 +29,46 @@ export const ShadowPanel = (props: Props) => {
     >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Color:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ColorPicker
-              primaryColors={primaryColors}
-              additionalHues={additionalHues}
-              color={color.val ?? 'black'}
-              onClick={color.set}
-            />
-            &nbsp;
-            <NumberInput
-              value={round((1 - (opacity.val ?? 0)) * 100)?.toString() ?? ''}
-              onChange={v => opacity.set((100 - (v ?? 100)) / 100)}
-              style={{ width: '45px' }}
-              min={0}
-              max={100}
-              validUnits={['%']}
-              defaultUnit={'%'}
-            />
-          </div>
+        <div className={'cmp-labeled-table__value util-vcenter'}>
+          <ColorPicker
+            primaryColors={primaryColors}
+            additionalHues={additionalHues}
+            color={color.val}
+            onClick={color.set}
+          />
+          &nbsp;
+          <NumberInput
+            value={round((1 - (opacity.val ?? 0)) * 100)?.toString()}
+            onChange={v => opacity.set((100 - (v ?? 100)) / 100)}
+            style={{ width: '45px' }}
+            min={0}
+            max={100}
+            defaultUnit={'%'}
+          />
         </div>
         <div className={'cmp-labeled-table__label'}>Position:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <NumberInput
-              value={x.val?.toString() ?? ''}
-              onChange={x.set}
-              style={{ width: '45px' }}
-              validUnits={['px']}
-              defaultUnit={'px'}
-            />
-            &nbsp;
-            <NumberInput
-              value={y.val?.toString() ?? ''}
-              onChange={y.set}
-              style={{ width: '45px' }}
-              validUnits={['px']}
-              defaultUnit={'px'}
-            />
-            &nbsp;
-            <NumberInput
-              value={blur.val?.toString() ?? ''}
-              onChange={blur.set}
-              min={0}
-              style={{ width: '45px' }}
-              validUnits={['px']}
-              defaultUnit={'px'}
-            />
-          </div>
+        <div className={'cmp-labeled-table__value util-vcenter'}>
+          <NumberInput
+            value={x.val}
+            onChange={x.set}
+            style={{ width: '45px' }}
+            defaultUnit={'px'}
+          />
+          &nbsp;
+          <NumberInput
+            value={y.val}
+            onChange={y.set}
+            style={{ width: '45px' }}
+            defaultUnit={'px'}
+          />
+          &nbsp;
+          <NumberInput
+            value={blur.val}
+            onChange={blur.set}
+            min={0}
+            style={{ width: '45px' }}
+            defaultUnit={'px'}
+          />
         </div>
       </div>
     </ToolWindowPanel>

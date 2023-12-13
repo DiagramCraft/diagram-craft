@@ -9,25 +9,27 @@ import { NumberInput } from '../NumberInput.tsx';
 import { assertEdgeType } from '../../model-viewer/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { useEdgeDefaults } from '../useDefaults.tsx';
 
 export const LinePanel = (props: Props) => {
   const $d = useDiagram();
 
-  const strokeColor = useEdgeProperty($d, 'stroke.color', 'transparent');
-  const fillColor = useEdgeProperty($d, 'fill.color', undefined);
-  const pattern = useEdgeProperty($d, 'stroke.pattern', 'SOLID');
+  const defaults = useEdgeDefaults();
 
-  const strokSize = useEdgeProperty($d, 'stroke.patternSize', 100);
-  const strokeSpacing = useEdgeProperty($d, 'stroke.patternSpacing', 100);
-  const strokeWidth = useEdgeProperty($d, 'stroke.width', 1);
+  const strokeColor = useEdgeProperty($d, 'stroke.color', defaults.stroke.color);
+  const fillColor = useEdgeProperty($d, 'fill.color', defaults.fill.color);
+  const pattern = useEdgeProperty($d, 'stroke.pattern', defaults.stroke.pattern);
+
+  const strokSize = useEdgeProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
+  const strokeSpacing = useEdgeProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);
+  const strokeWidth = useEdgeProperty($d, 'stroke.width', defaults.stroke.width);
 
   const type = useEdgeProperty($d, 'type', 'straight');
 
-  const startType = useEdgeProperty($d, 'arrow.start.type', undefined);
-  const startSize = useEdgeProperty($d, 'arrow.start.size', 100);
-  const endType = useEdgeProperty($d, 'arrow.end.type', undefined);
-
-  const endSize = useEdgeProperty($d, 'arrow.end.size', 100);
+  const startType = useEdgeProperty($d, 'arrow.start.type', defaults.arrow.start.type);
+  const startSize = useEdgeProperty($d, 'arrow.start.size', defaults.arrow.start.size);
+  const endType = useEdgeProperty($d, 'arrow.end.type', defaults.arrow.end.type);
+  const endSize = useEdgeProperty($d, 'arrow.end.size', defaults.arrow.end.size);
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} id="line" title={'Line'} hasCheckbox={false}>
@@ -65,9 +67,8 @@ export const LinePanel = (props: Props) => {
             <ArrowSelector value={startType.val} onValueChange={startType.set} />
             &nbsp;
             <NumberInput
-              validUnits={['%']}
               defaultUnit={'%'}
-              value={startSize.val ?? ''}
+              value={startSize.val}
               min={1}
               style={{ width: '50px' }}
               onChange={startSize.set}
@@ -79,9 +80,8 @@ export const LinePanel = (props: Props) => {
             <ArrowSelector value={endType.val} onValueChange={endType.set} />
             &nbsp;
             <NumberInput
-              validUnits={['%']}
               defaultUnit={'%'}
-              value={endSize.val ?? ''}
+              value={endSize.val}
               min={1}
               style={{ width: '50px' }}
               onChange={endSize.set}
@@ -93,14 +93,14 @@ export const LinePanel = (props: Props) => {
             <ColorPicker
               primaryColors={primaryColors}
               additionalHues={additionalHues}
-              color={strokeColor.val ?? 'transparent'}
+              color={strokeColor.val}
               onClick={strokeColor.set}
             />
             &nbsp;
             <ColorPicker
               primaryColors={primaryColors}
               additionalHues={additionalHues}
-              color={fillColor.val ?? 'transparent'}
+              color={fillColor.val}
               onClick={fillColor.set}
             />
           </div>
@@ -108,9 +108,8 @@ export const LinePanel = (props: Props) => {
           <div className={'cmp-labeled-table__label'}>Width:</div>
           <div className={'cmp-labeled-table__value'}>
             <NumberInput
-              validUnits={['px']}
               defaultUnit={'px'}
-              value={strokeWidth.val ?? 1}
+              value={strokeWidth.val}
               min={1}
               style={{ width: '45px' }}
               onChange={strokeWidth.set}
@@ -119,26 +118,19 @@ export const LinePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Dash:</div>
           <div className={'cmp-labeled-table__value util-vcenter'}>
-            <DashSelector
-              value={pattern.val}
-              onValueChange={value => {
-                pattern.set(value ?? 'SOLID');
-              }}
-            />
+            <DashSelector value={pattern.val} onValueChange={pattern.set} />
             &nbsp;
             <NumberInput
-              validUnits={['%']}
               defaultUnit={'%'}
-              value={strokSize.val ?? 100}
+              value={strokSize.val}
               min={1}
               style={{ width: '45px' }}
               onChange={strokSize.set}
             />
             &nbsp;
             <NumberInput
-              validUnits={['%']}
               defaultUnit={'%'}
-              value={strokeSpacing.val ?? 100}
+              value={strokeSpacing.val}
               min={1}
               style={{ width: '45px' }}
               onChange={strokeSpacing.set}

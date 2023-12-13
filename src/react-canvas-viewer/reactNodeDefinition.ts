@@ -25,7 +25,7 @@ type ReactNode = React.FunctionComponent<Props>;
 
 type BoundingPathFactory = (node: DiagramNode) => PathBuilder;
 type CustomPropertyFactory = (node: DiagramNode) => Record<string, CustomPropertyDefinition>;
-type DefaultPropsFactory = (node: DiagramNode, mode: 'picker' | 'canvas') => NodeProps;
+type DefaultPropsFactory = (mode: 'picker' | 'canvas') => NodeProps;
 type InitialConfig = { size: Extent };
 
 export class ReactNodeDefinition implements NodeDefinition {
@@ -77,9 +77,9 @@ export class ReactNodeDefinition implements NodeDefinition {
     return {};
   }
 
-  getDefaultProps(node: DiagramNode, mode: 'picker' | 'canvas'): NodeProps {
+  getDefaultProps(mode: 'picker' | 'canvas'): NodeProps {
     if (this.config?.defaultPropsFactory !== undefined) {
-      return this.config.defaultPropsFactory(node, mode);
+      return this.config.defaultPropsFactory(mode);
     }
     return {};
   }

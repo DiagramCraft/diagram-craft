@@ -8,13 +8,16 @@ import { useState } from 'react';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { assertFillType } from '../../model-viewer/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { useNodeDefaults } from '../useDefaults.tsx';
 
 export const NodeFillPanel = (props: Props) => {
   const diagram = useDiagram();
-  const fill = useNodeProperty(diagram, 'fill.color', 'transparent');
-  const color2 = useNodeProperty(diagram, 'fill.color2', 'transparent');
-  const type = useNodeProperty(diagram, 'fill.type', 'solid');
-  const enabled = useNodeProperty(diagram, 'fill.enabled', true);
+  const defaults = useNodeDefaults();
+
+  const fill = useNodeProperty(diagram, 'fill.color', defaults.fill?.color);
+  const color2 = useNodeProperty(diagram, 'fill.color2', defaults.fill?.color2);
+  const type = useNodeProperty(diagram, 'fill.type', defaults.fill?.type);
+  const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill?.enabled);
 
   const [open, setOpen] = useState(false);
 
@@ -58,7 +61,7 @@ export const NodeFillPanel = (props: Props) => {
             <ColorPicker
               primaryColors={primaryColors}
               additionalHues={additionalHues}
-              color={fill.val ?? 'transparent'}
+              color={fill.val}
               onClick={fill.set}
               hasMultipleValues={fill.hasMultipleValues}
             />
@@ -68,7 +71,7 @@ export const NodeFillPanel = (props: Props) => {
                 <ColorPicker
                   primaryColors={primaryColors}
                   additionalHues={additionalHues}
-                  color={color2.val ?? 'transparent'}
+                  color={color2.val}
                   onClick={color2.set}
                   hasMultipleValues={color2.hasMultipleValues}
                 />

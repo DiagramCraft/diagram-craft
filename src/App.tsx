@@ -59,7 +59,7 @@ import { ActionsContext, useActions } from './react-app/context/ActionsContext.t
 import { DiagramContext } from './react-app/context/DiagramContext.tsx';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext.tsx';
 import { additionalHues, primaryColors } from './react-app/ObjectProperties/palette.ts';
-import { edgeDefaults, nodeDefaults } from './model-viewer/diagramProps.ts';
+import { edgeDefaults, nodeDefaults } from './model-viewer/diagramDefaults.ts';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
   return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());

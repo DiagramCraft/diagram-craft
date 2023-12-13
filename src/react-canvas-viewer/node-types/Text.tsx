@@ -47,15 +47,13 @@ export const Text = (props: Props) => {
   );
 };
 
-Text.defaultPropsFactory = (_node: DiagramNode, _mode: 'picker' | 'canvas'): NodeProps => {
+Text.defaultPropsFactory = (_mode: 'picker' | 'canvas'): NodeProps => {
   return {
     stroke: {
-      enabled: false,
-      color: 'red'
+      enabled: false
     },
     fill: {
-      enabled: false,
-      color: 'red'
+      enabled: false
     },
     text: {
       align: 'left',

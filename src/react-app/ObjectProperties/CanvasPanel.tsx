@@ -30,7 +30,6 @@ export const CanvasPanel = (props: Props) => {
       title={'Canvas'}
       hasCheckbox={false}
     >
-      {' '}
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>

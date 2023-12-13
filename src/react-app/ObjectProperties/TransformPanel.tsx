@@ -171,7 +171,6 @@ export const TransformPanel = (props: Props) => {
                 style={{ width: '100%' }}
                 label={'x'}
                 value={round(transformedBounds.pos.x)}
-                validUnits={['px']}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
@@ -186,7 +185,6 @@ export const TransformPanel = (props: Props) => {
                 style={{ width: '100%' }}
                 label={'y'}
                 value={round(transformedBounds.pos.y)}
-                validUnits={['px']}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
@@ -201,7 +199,6 @@ export const TransformPanel = (props: Props) => {
                 style={{ width: '100%' }}
                 value={round(transformedBounds.size.w ?? 1)}
                 label={'w'}
-                validUnits={['px']}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
@@ -219,7 +216,6 @@ export const TransformPanel = (props: Props) => {
                 style={{ width: '100%' }}
                 value={round(transformedBounds.size.h ?? 1)}
                 label={'h'}
-                validUnits={['px']}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
@@ -239,7 +235,6 @@ export const TransformPanel = (props: Props) => {
                 label={'r'}
                 min={-360}
                 max={360}
-                validUnits={['°']}
                 defaultUnit={'°'}
                 onChange={ev => {
                   const newBounds = Box.asMutableSnapshot(transformedBounds!);

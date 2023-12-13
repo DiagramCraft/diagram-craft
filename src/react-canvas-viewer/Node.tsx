@@ -71,7 +71,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   const nodeProps: NodeProps = deepMerge(
     {},
     defaults?.node ?? {},
-    nodeDef.getDefaultProps(props.def, props.mode ?? 'canvas'),
+    nodeDef.getDefaultProps(props.mode ?? 'canvas'),
     props.def.props
   );
 

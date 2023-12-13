@@ -24,7 +24,7 @@ export interface NodeDefinition {
 
   getBoundingPath(node: DiagramNode): Path;
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
-  getDefaultProps(node: DiagramNode, mode: 'picker' | 'canvas'): NodeProps;
+  getDefaultProps(mode: 'picker' | 'canvas'): NodeProps;
   getInitialConfig(): { size: Extent };
 }
 

@@ -34,11 +34,11 @@
   --error-fg: var(--red-9);
 }
 
-.dark-theme .cmp-sidebar {
+.dark-theme #left {
   --canvas-fg: var(--blue-11);
   --canvas-bg: var(--slate-5);
 }
-.light-theme .cmp-sidebar {
+.light-theme #left {
   --canvas-fg: var(--blue-11);
   --canvas-bg: var(--slate-5);
 }

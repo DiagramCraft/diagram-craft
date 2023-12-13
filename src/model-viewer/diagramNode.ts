@@ -44,7 +44,13 @@ export class DiagramNode implements AbstractNode {
 
   diagram?: Diagram;
 
-  constructor(id: string, nodeType: 'group' | string, bounds: Box, anchors: Anchor[] | undefined) {
+  constructor(
+    id: string,
+    nodeType: 'group' | string,
+    bounds: Box,
+    anchors: Anchor[] | undefined,
+    props?: NodeProps
+  ) {
     this.id = id;
     this.bounds = bounds;
     this.type = 'node';
@@ -52,6 +58,7 @@ export class DiagramNode implements AbstractNode {
     this.children = [];
     this.edges = {};
     this._anchors = anchors;
+    this.props = props ?? {};
   }
 
   commitChanges() {

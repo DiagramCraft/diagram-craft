@@ -4,10 +4,12 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useNodeProperty } from './useProperty.ts';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { useNodeDefaults } from '../useDefaults.tsx';
 
 export const NodeStrokeToolbarButton = () => {
   const diagram = useDiagram();
-  const fill = useNodeProperty(diagram, 'stroke.color', 'transparent');
+  const defaults = useNodeDefaults();
+  const fill = useNodeProperty(diagram, 'stroke.color', defaults.stroke.color);
 
   return (
     <Popover.Root>
@@ -19,7 +21,7 @@ export const NodeStrokeToolbarButton = () => {
               marginLeft: '5px',
               width: '15px',
               height: '12px',
-              backgroundColor: fill.val ?? 'transparent',
+              backgroundColor: fill.val,
               marginRight: '3px',
               border: '1px solid var(--primary-fg)',
               borderRadius: '3px'

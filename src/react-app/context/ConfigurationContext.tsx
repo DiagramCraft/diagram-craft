@@ -1,5 +1,6 @@
 import React from 'react';
 import { assert } from '../../utils/assert.ts';
+import { DeepRequired } from 'ts-essentials';
 
 type ConfigurationContextType = {
   palette: {
@@ -7,9 +8,9 @@ type ConfigurationContextType = {
     secondary: string[][];
   };
 
-  defaults?: {
-    node?: NodeProps;
-    edge?: EdgeProps;
+  defaults: {
+    node: DeepRequired<NodeProps>;
+    edge: DeepRequired<EdgeProps>;
   };
 
   // TODO: Add styles, patterns, fonts etc

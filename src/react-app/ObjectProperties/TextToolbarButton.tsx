@@ -4,10 +4,12 @@ import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TextPanel } from './TextPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { useNodeDefaults } from '../useDefaults.tsx';
 
 export const TextToolbarButton = () => {
   const diagram = useDiagram();
-  const fill = useNodeProperty(diagram, 'text.color', 'transparent');
+  const defaults = useNodeDefaults();
+  const color = useNodeProperty(diagram, 'text.color', defaults.text.color);
 
   return (
     <Popover.Root>
@@ -19,7 +21,7 @@ export const TextToolbarButton = () => {
               marginLeft: '5px',
               width: '15px',
               height: '12px',
-              backgroundColor: fill.val ?? 'transparent',
+              backgroundColor: color.val,
               marginRight: '3px',
               border: '1px solid var(--primary-fg)',
               borderRadius: '3px'

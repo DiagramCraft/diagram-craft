@@ -66,8 +66,8 @@ declare global {
       fontSize?: number;
       bold?: boolean;
       italic?: boolean;
-      textDecoration?: 'underline' | 'line-through' | 'overline';
-      textTransform?: 'uppercase' | 'lowercase' | 'capitalize';
+      textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
+      textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
       color?: string;
       align?: HAlign;
       valign?: Valign;
@@ -115,20 +115,3 @@ declare global {
     };
   }
 }
-
-export const nodeDefaults: NodeProps = {
-  fill: {
-    color: 'var(--canvas-bg)'
-  },
-  stroke: {
-    color: 'var(--canvas-fg)',
-    width: 1
-  },
-  text: {
-    color: 'var(--canvas-fg)',
-    fontSize: 10,
-    font: 'sans-serif'
-  }
-};
-
-export const edgeDefaults: EdgeProps = {};

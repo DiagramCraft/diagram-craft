@@ -25,9 +25,9 @@ export type PropertyArrayHook<TBase, TObj> = <
 >(
   obj: TBase,
   propertyPath: K,
-  defaultValue: DV
+  defaultValue: NonNullable<DV>
 ) => {
-  val: V;
+  val: NonNullable<V>;
   set: (value: V) => void;
   hasMultipleValues: boolean;
 };
@@ -103,7 +103,7 @@ export const makePropertyArrayHook = <
       setMultiple(arr.length > 1);
     };
     subscribe(obj, handler);
-    useEffect(handler, []);
+    useEffect(handler, [defaultValue]);
 
     return {
       val: value,

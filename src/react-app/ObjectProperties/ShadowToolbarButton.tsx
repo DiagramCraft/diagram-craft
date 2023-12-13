@@ -3,10 +3,12 @@ import { ToolbarToggleItemWithPopover } from '../components/ToolbarToggleItemWit
 import { ShadowPanel } from './ShadowPanel.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { useNodeDefaults } from '../useDefaults.tsx';
 
 export const ShadowToolbarButton = () => {
   const $d = useDiagram();
-  const enabled = useNodeProperty($d, 'shadow.enabled', false);
+  const defaults = useNodeDefaults();
+  const enabled = useNodeProperty($d, 'shadow.enabled', defaults.shadow.enabled);
 
   return (
     <ToolbarToggleItemWithPopover
