@@ -13,6 +13,8 @@ import { ToggleRulerAction } from './actions/toggleRulerAction.ts';
 import { SelectionDeleteAction } from './actions/selectionDeleteAction.ts';
 import { SelectionRestackAction } from './actions/selectionRestackAction.ts';
 import { ClipboardCopyAction, ClipboardPasteAction } from './actions/clipboardAction.ts';
+import { TextAction } from './actions/textActions.ts';
+import { EdgeFlipAction } from './actions/edgeFlipAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -75,7 +77,11 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical'),
   WAYPOINT_ADD: new WaypointAddAction(state.diagram),
   WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram),
-  TOGGLE_RULER: new ToggleRulerAction(state.diagram)
+  TOGGLE_RULER: new ToggleRulerAction(state.diagram),
+  TEXT_BOLD: new TextAction(state.diagram, 'bold'),
+  TEXT_ITALIC: new TextAction(state.diagram, 'italic'),
+  TEXT_UNDERLINE: new TextAction(state.diagram, 'underline'),
+  EDGE_FLIP: new EdgeFlipAction(state.diagram)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {

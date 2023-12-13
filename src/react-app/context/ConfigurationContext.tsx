@@ -8,6 +8,8 @@ type ConfigurationContextType = {
     secondary: string[][];
   };
 
+  fonts: Record<string, string>;
+
   defaults: {
     node: DeepRequired<NodeProps>;
     edge: DeepRequired<EdgeProps>;

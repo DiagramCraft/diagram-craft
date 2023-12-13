@@ -147,4 +147,10 @@ export class DiagramEdge implements AbstractEdge {
   get end() {
     return this.#end;
   }
+
+  flip() {
+    const start = this.start;
+    this.start = this.end;
+    this.end = start;
+  }
 }

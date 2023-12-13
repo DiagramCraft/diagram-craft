@@ -3,6 +3,7 @@ import React from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useActions } from '../context/ActionsContext.tsx';
+import { ToggleAction } from '../../base-ui/keyMap.ts';
 
 export const ActionToggleButton = (props: Props) => {
   const { actionMap } = useActions();
@@ -12,7 +13,7 @@ export const ActionToggleButton = (props: Props) => {
   return (
     <ReactToolbar.Button
       className="cmp-toolbar__button"
-      data-state={actionMap['TOGGLE_RULER']!.state ? 'on' : 'off'}
+      data-state={(actionMap[props.action]! as ToggleAction).state ? 'on' : 'off'}
       value={props.action}
       aria-label={props.action}
       onClick={() => {

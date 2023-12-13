@@ -6,6 +6,7 @@ import { useNodeProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
 
+// TODO: Make this disable if selection includes edges
 export const NodeFillToolbarButton = () => {
   const diagram = useDiagram();
   const defaults = useNodeDefaults();

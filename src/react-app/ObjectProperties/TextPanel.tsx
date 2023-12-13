@@ -22,25 +22,13 @@ import { assertHAlign, assertVAlign } from '../../model-viewer/diagramProps.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
-
-const FONTS = {
-  Times: 'Times',
-  Arial: 'Arial',
-  'Sans Serif': 'sans-serif',
-  Helvetica: 'Helvetica',
-  Verdana: 'Verdana',
-  Courier: 'Courier',
-  'Comic Sans': 'Comic Sans MS',
-  Impact: 'Impact',
-  Tahoma: 'Tahoma',
-  Trebuchet: 'Trebuchet MS',
-  Georgia: 'Georgia'
-};
+import { useConfiguration } from '../context/ConfigurationContext.tsx';
 
 export const TextPanel = (props: Props) => {
   const $d = useDiagram();
 
   const defaults = useNodeDefaults();
+  const { fonts } = useConfiguration();
 
   // TODO: Should be useElementProperty
   const font = useNodeProperty($d, 'text.font', defaults.text.font);
@@ -93,7 +81,7 @@ export const TextPanel = (props: Props) => {
               <Select.Content className="cmp-select-content">
                 <Select.Viewport className="cmp-select-content__viewpoint">
                   <Select.Group>
-                    {Object.entries(FONTS).map(([label, value]) => {
+                    {Object.entries(fonts).map(([label, value]) => {
                       return (
                         <Select.Item
                           key={value}

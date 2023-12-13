@@ -122,6 +122,19 @@ useEffect(() => {
             defaults: {
               node: nodeDefaults,
               edge: edgeDefaults
+            },
+            fonts: {
+              Times: 'Times',
+              Arial: 'Arial',
+              'Sans Serif': 'sans-serif',
+              Helvetica: 'Helvetica',
+              Verdana: 'Verdana',
+              Courier: 'Courier',
+              'Comic Sans': 'Comic Sans MS',
+              Impact: 'Impact',
+              Tahoma: 'Tahoma',
+              Trebuchet: 'Trebuchet MS',
+              Georgia: 'Georgia'
             }
           }}
         >
