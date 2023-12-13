@@ -1,70 +1,25 @@
-// See https://gist.github.com/mir4ef/c172583bdb968951d9e57fb50d44c3f7
+// based on https://gist.github.com/mir4ef/c172583bdb968951d9e57fb50d44c3f7
 
-interface IIsObject {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (item: any): boolean;
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-interface IObject {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
-}
+type Props = Record<string, any>;
 
-interface IDeepMerge {
-  (target: IObject, ...sources: Array<IObject>): IObject;
-}
+const isObject = (item: any) => typeof item === 'object' && !Array.isArray(item);
 
-/**
- * @description Method to check if an item is an object. Date and Function are considered
- * an object, so if you need to exclude those, please update the method accordingly.
- * @param item - The item that needs to be checked
- * @return {Boolean} Whether or not @item is an object
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isObject: IIsObject = (item: any): boolean => {
-  return item === Object(item) && !Array.isArray(item);
-};
+export const deepMerge = <T extends Props>(target: Partial<T>, ...sources: Partial<T>[]): T => {
+  const result: any = target;
 
-/**
- * @description Method to perform a deep merge of objects
- * @param {Object} target - The targeted object that needs to be merged with the supplied @sources
- * @param {Array<Object>} sources - The source(s) that will be used to update the @target object
- * @return {Object} The final merged object
- */
-export const deepMerge: IDeepMerge = (target: IObject, ...sources: Array<IObject>): IObject => {
-  // return the target if no sources passed
-  if (!sources.length) {
-    return target;
-  }
+  if (!isObject(result)) return target as T;
 
-  const result: IObject = target;
+  for (const elm of sources) {
+    if (!isObject(elm)) continue;
 
-  if (isObject(result)) {
-    const len: number = sources.length;
-
-    for (let i = 0; i < len; i += 1) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const elm: any = sources[i];
-
-      if (isObject(elm)) {
-        for (const key in elm) {
-          // eslint-disable-next-line no-prototype-builtins
-          if (elm.hasOwnProperty(key)) {
-            if (isObject(elm[key])) {
-              if (!result[key] || !isObject(result[key])) {
-                result[key] = {};
-              }
-              deepMerge(result[key], elm[key]);
-            } else {
-              if (Array.isArray(result[key]) && Array.isArray(elm[key])) {
-                // concatenate the two arrays and remove any duplicate primitive values
-                result[key] = Array.from(new Set(result[key].concat(elm[key])));
-              } else {
-                result[key] = elm[key];
-              }
-            }
-          }
-        }
+    for (const key of Object.keys(elm)) {
+      if (isObject(elm[key])) {
+        result[key] ??= {};
+        deepMerge(result[key], elm[key] as any);
+      } else {
+        result[key] = elm[key];
       }
     }
   }

@@ -57,7 +57,11 @@ Text.defaultPropsFactory = (_mode: 'picker' | 'canvas'): NodeProps => {
     },
     text: {
       align: 'left',
-      text: 'Text'
+      text: 'Text',
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0
     }
   };
 };
