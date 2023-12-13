@@ -1,6 +1,7 @@
 import { MouseEventHandler, useEffect, useRef } from 'react';
 import { Box } from '../geometry/box.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
+import { Extent } from '../geometry/extent.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -15,15 +16,17 @@ export const TextPart = (props: Props) => {
   const { defaults } = useConfiguration();
   const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
   const ref = useRef<HTMLDivElement>(null);
+  const widthRef = useRef<number>(0);
+  const heightRef = useRef<number>(0);
 
-  // TODO: We need to add props.onChange as a dependency here as well as props.text.text
-  //       but that causes an infinite loop. We need to figure out how to fix that.
   useEffect(() => {
     if (ref.current) {
-      console.log('updating height');
-      props.onChange(props.text?.text ?? '', ref.current.getBoundingClientRect().height);
+      props.onSizeChange?.({
+        w: ref.current.getBoundingClientRect().width,
+        h: ref.current.getBoundingClientRect().height
+      });
     }
-  }, [ref]);
+  }, [props.onSizeChange, ref]);
 
   // TODO: We must get the correct props defaults here
 
@@ -86,12 +89,26 @@ export const TextPart = (props: Props) => {
             } else if (e.key === 'Enter' && e.metaKey) {
               (e.target as HTMLDivElement).blur();
             }
+
+            setTimeout(() => {
+              const newWidth = (e.target as HTMLElement).getBoundingClientRect().width;
+              const newHeight = (e.target as HTMLElement).getBoundingClientRect().height;
+              if (newWidth !== widthRef.current || newHeight !== heightRef.current) {
+                props.onSizeChange?.({
+                  w: newWidth,
+                  h: newHeight
+                });
+                widthRef.current = newWidth;
+                heightRef.current = newHeight;
+              }
+            }, 0);
           }}
           onBlur={e => {
-            props.onChange(
-              e.target.innerHTML,
-              (e.target as HTMLElement).getBoundingClientRect().height
-            );
+            props.onChange(e.target.innerHTML);
+            props.onSizeChange?.({
+              w: (e.target as HTMLElement).getBoundingClientRect().width,
+              h: (e.target as HTMLElement).getBoundingClientRect().height
+            });
             e.target.contentEditable = 'false';
           }}
           dangerouslySetInnerHTML={{ __html: props.text?.text ?? '' }}
@@ -106,5 +123,6 @@ type Props = {
   text: NodeProps['text'];
   bounds: Box;
   onMouseDown: MouseEventHandler;
-  onChange: (text: string, height: number) => void;
+  onChange: (text: string) => void;
+  onSizeChange?: (size: Extent) => void;
 };
