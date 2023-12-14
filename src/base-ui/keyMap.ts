@@ -15,6 +15,7 @@ import { SelectionRestackAction } from './actions/selectionRestackAction.ts';
 import { ClipboardCopyAction, ClipboardPasteAction } from './actions/clipboardAction.ts';
 import { TextAction } from './actions/textActions.ts';
 import { EdgeFlipAction } from './actions/edgeFlipAction.ts';
+import { DuplicateAction } from './actions/duplicateAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -81,7 +82,8 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   TEXT_BOLD: new TextAction(state.diagram, 'bold'),
   TEXT_ITALIC: new TextAction(state.diagram, 'italic'),
   TEXT_UNDERLINE: new TextAction(state.diagram, 'underline'),
-  EDGE_FLIP: new EdgeFlipAction(state.diagram)
+  EDGE_FLIP: new EdgeFlipAction(state.diagram),
+  DUPLICATE: new DuplicateAction(state.diagram)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
@@ -100,6 +102,7 @@ export const defaultMacKeymap: KeyMap = {
   'M-KeyC': 'CLIPBOARD_COPY',
   'M-KeyX': 'CLIPBOARD_CUT',
   'M-KeyV': 'CLIPBOARD_PASTE',
+  'M-KeyD': 'DUPLICATE',
   Backspace: 'SELECTION_DELETE'
 };
 
@@ -130,6 +133,9 @@ export const executeAction = (
   if (!action || !action.enabled) return false;
 
   action.execute(actionContext);
+
+  e.preventDefault();
+
   return true;
 };
 

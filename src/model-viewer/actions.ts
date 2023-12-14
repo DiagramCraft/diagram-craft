@@ -52,11 +52,10 @@ export class RotateAction extends AbstractTransformAction {}
 export class ResizeAction extends AbstractTransformAction {}
 
 export class NodeAddAction implements UndoableAction {
-  description = 'Add node';
-
   constructor(
     private readonly nodes: DiagramNode[],
-    private readonly diagram: Diagram
+    private readonly diagram: Diagram,
+    public readonly description: string = 'Add node'
   ) {}
 
   undo() {
