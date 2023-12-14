@@ -64,7 +64,7 @@ import { ToolType } from './react-canvas-editor/tools/types.ts';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
-  return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
+  return new EditableDiagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry(), elements);
 };
 
 const diagrams = [

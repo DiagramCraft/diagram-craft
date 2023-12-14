@@ -55,24 +55,18 @@ export const ObjectPicker = (props: Props) => {
   const nodes = diagram.nodeDefinitions.getAll();
 
   const diagrams = nodes.map(n => {
-    return new EditableDiagram(
-      n.type,
-      n.type,
-      [
-        new DiagramNode(
-          n.type,
-          n.type,
-          {
-            pos: { x: 1, y: 1 },
-            size: { w: props.size - 2, h: props.size - 2 },
-            rotation: 0
-          },
-          undefined
-        )
-      ],
-      diagram.nodeDefinitions,
-      diagram.edgeDefinitions
-    );
+    return new EditableDiagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions, [
+      new DiagramNode(
+        n.type,
+        n.type,
+        {
+          pos: { x: 1, y: 1 },
+          size: { w: props.size - 2, h: props.size - 2 },
+          rotation: 0
+        },
+        undefined
+      )
+    ]);
   });
   return (
     <div className={'cmp-object-picker'}>

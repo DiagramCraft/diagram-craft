@@ -36,9 +36,9 @@ describe('Diagram', () => {
     const diagram = new Diagram(
       '1',
       '1',
-      nodes,
       nodeDefinitionRegistry,
-      new EdgeDefinitionRegistry()
+      new EdgeDefinitionRegistry(),
+      nodes
     );
 
     const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
@@ -81,9 +81,9 @@ describe('Diagram', () => {
     const diagram = new Diagram(
       '1',
       '1',
-      nodes,
       new NodeDefinitionRegistry(),
-      new EdgeDefinitionRegistry()
+      new EdgeDefinitionRegistry(),
+      nodes
     );
 
     const before = { pos: { x: 10, y: 10 }, size: { w: 200, h: 300 }, rotation: 0 };

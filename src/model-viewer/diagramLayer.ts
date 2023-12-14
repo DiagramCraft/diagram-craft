@@ -14,7 +14,7 @@ export type LayerEvents = {
 export class Layer extends EventEmitter<LayerEvents> {
   id: string;
   name: string;
-  elements: DiagramElement[];
+  elements: DiagramElement[] = [];
 
   private diagram: Diagram;
 
@@ -22,8 +22,9 @@ export class Layer extends EventEmitter<LayerEvents> {
     super();
     this.id = id;
     this.name = name;
-    this.elements = elements;
     this.diagram = diagram;
+
+    elements.forEach(e => this.addElement(e, false));
   }
 
   stackModify(elements: DiagramElement[], newPosition: number): StackPosition[] {

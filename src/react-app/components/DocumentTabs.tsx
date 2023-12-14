@@ -55,9 +55,9 @@ export const DocumentTabs = (props: Props) => {
               new EditableDiagram(
                 id,
                 'Sheet ' + (props.document.diagrams.length + 1).toString(),
-                [],
                 defaultNodeRegistry(),
-                defaultEdgeRegistry()
+                defaultEdgeRegistry(),
+                []
               )
             );
             props.onValueChange(id);

@@ -33,9 +33,9 @@ function createDiagram() {
   return new EditableDiagram(
     '1',
     'test',
-    [],
     new NodeDefinitionRegistry(),
-    new EdgeDefinitionRegistry()
+    new EdgeDefinitionRegistry(),
+    []
   );
 }
 

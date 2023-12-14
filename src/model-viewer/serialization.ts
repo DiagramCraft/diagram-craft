@@ -5,6 +5,7 @@ import { ConnectedEndpoint, DiagramEdge } from './diagramEdge.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 import { AbstractEdge, AbstractNode } from './types.ts';
+import { Layer } from './diagramLayer.ts';
 
 interface Reference {
   id: string;
@@ -15,7 +16,7 @@ type SerializedLayer = {
   name: string;
   type: 'layer';
   layerType: 'basic' | 'reference' | 'adjustment';
-  elements: (SerializedElement | SerializedLayer)[];
+  elements: SerializedElement[];
 };
 
 export type SerializedDiagram = {
@@ -160,7 +161,7 @@ export const deserializeDiagramElements = (
 
 const deserializeDiagrams = <T extends Diagram>(
   diagrams: SerializedDiagram[],
-  factory: (d: SerializedDiagram, elements: DiagramElement[]) => T
+  factory: (d: SerializedDiagram, elements?: DiagramElement[]) => T
 ) => {
   const dest: T[] = [];
   for (const $d of diagrams) {
@@ -177,9 +178,12 @@ const deserializeDiagrams = <T extends Diagram>(
         }
       }
     }
-    const elements = deserializeDiagramElements(diagramElements, nodeLookup, edgeLookup);
 
-    const newDiagram = factory($d, elements);
+    const newDiagram = factory($d, undefined);
+    for (const l of $d.layers) {
+      const elements = deserializeDiagramElements(l.elements, nodeLookup, edgeLookup);
+      newDiagram.layers.add(new Layer(l.id, l.name, elements, newDiagram));
+    }
     dest.push(newDiagram);
 
     newDiagram.diagrams = deserializeDiagrams($d.diagrams, factory);
@@ -190,7 +194,7 @@ const deserializeDiagrams = <T extends Diagram>(
 
 export const deserializeDiagramDocument = <T extends Diagram>(
   document: SerializedDiagramDocument,
-  factory: (d: SerializedDiagram, elements: DiagramElement[]) => T
+  factory: (d: SerializedDiagram, elements?: DiagramElement[]) => T
 ): DiagramDocument<T> => {
   const diagrams = document.diagrams;
   const dest = deserializeDiagrams(diagrams, factory);

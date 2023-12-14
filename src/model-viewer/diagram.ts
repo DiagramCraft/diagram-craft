@@ -48,15 +48,16 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   constructor(
     readonly id: string,
     readonly name: string,
-    elements: DiagramElement[],
     readonly nodeDefinitions: NodeDefinitionRegistry,
-    readonly edgeDefinitions: EdgeDefinitionRegistry
+    readonly edgeDefinitions: EdgeDefinitionRegistry,
+    elements?: DiagramElement[]
   ) {
     super();
 
-    this.layers.add(new Layer('default', 'Default', [], this));
-
-    elements.forEach(e => this.layers.active.addElement(e, true));
+    if (elements) {
+      this.layers.add(new Layer('default', 'Default', [], this));
+      elements.forEach(e => this.layers.active.addElement(e, true));
+    }
   }
 
   visibleElements() {
