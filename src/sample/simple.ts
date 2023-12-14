@@ -5,7 +5,35 @@ export const simpleDiagram: SerializedDiagramDocument = {
     {
       id: 'doc1',
       name: 'Sheet 1',
-      diagrams: [],
+      diagrams: [
+        {
+          id: 'doc1.1',
+          name: 'Sheet 1.1',
+          diagrams: [],
+          layers: [
+            {
+              type: 'layer',
+              id: 'layer1',
+              name: 'Layer 1',
+              layerType: 'basic',
+              elements: [
+                {
+                  type: 'node',
+                  nodeType: 'star',
+                  id: '2',
+                  bounds: {
+                    pos: { x: 400, y: 270 },
+                    size: { w: 150, h: 150 },
+                    rotation: 0
+                  },
+                  children: [],
+                  props: {}
+                }
+              ]
+            }
+          ]
+        }
+      ],
       layers: [
         {
           type: 'layer',

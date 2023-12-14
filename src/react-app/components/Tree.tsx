@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import { round } from '../../utils/math.ts';
 
@@ -47,7 +47,7 @@ export const TreeNode = (props: TreeNodeProps) => {
 };
 
 type TreeNodeProps = {
-  label: string;
+  label: string | ReactNode;
   value?: string;
   action?: string;
   isOpen?: boolean;

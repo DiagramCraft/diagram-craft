@@ -202,11 +202,19 @@ input::-webkit-input-placeholder {
     font-size: 11px;
     display: flex;
     align-items: center;
-    padding: 1px 8px 2px 8px;
     color: var(--primary-fg);
     background-color: transparent;
     border: none;
     border-right: 2px solid var(--slate-1);
+    min-width: max-content;
+    padding: 0;
+
+    & > div {
+      padding: 1px 8px 2px 8px;
+      min-width: max-content;
+      display: flex;
+      align-items: center;
+    }
 
     &:hover {
       background-color: var(--slate-3);
@@ -1183,6 +1191,12 @@ input::-webkit-input-placeholder {
 .util-a-top-center {
   align-self: flex-start;
   margin-top: 0.25rem;
+}
+.util-action {
+  &:hover {
+    color: var(--blue-11);
+    cursor: pointer;
+  }
 }
 
 

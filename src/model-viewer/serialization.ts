@@ -157,12 +157,12 @@ export const deserializeDiagramElements = (
   return elements;
 };
 
-export const deserializeDiagramDocument = <T extends Diagram>(
-  document: SerializedDiagramDocument,
+const deserializeDiagrams = <T extends Diagram>(
+  diagrams: SerializedDiagram[],
   factory: (d: SerializedDiagram, elements: DiagramElement[]) => T
-): DiagramDocument<T> => {
+) => {
   const dest: T[] = [];
-  for (const $d of document.diagrams) {
+  for (const $d of diagrams) {
     const nodeLookup: Record<string, DiagramNode> = {};
     const edgeLookup: Record<string, DiagramEdge> = {};
 
@@ -178,8 +178,21 @@ export const deserializeDiagramDocument = <T extends Diagram>(
     }
     const elements = deserializeDiagramElements(diagramElements, nodeLookup, edgeLookup);
 
-    dest.push(factory($d, elements));
+    const newDiagram = factory($d, elements);
+    dest.push(newDiagram);
+
+    newDiagram.diagrams = deserializeDiagrams($d.diagrams, factory);
   }
+
+  return dest;
+};
+
+export const deserializeDiagramDocument = <T extends Diagram>(
+  document: SerializedDiagramDocument,
+  factory: (d: SerializedDiagram, elements: DiagramElement[]) => T
+): DiagramDocument<T> => {
+  const diagrams = document.diagrams;
+  const dest = deserializeDiagrams(diagrams, factory);
 
   return new DiagramDocument<T>(dest);
 };

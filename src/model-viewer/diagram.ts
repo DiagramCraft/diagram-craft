@@ -45,6 +45,8 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
 
   viewBox = new Viewbox(this.#canvas.size);
 
+  diagrams: Diagram[] = [];
+
   constructor(
     readonly id: string,
     readonly name: string,
@@ -97,6 +99,11 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     this.emit('canvaschanged', { after: b });
 
     console.log('CANVAS CHANGED');
+  }
+
+  getDiagramById(id: string): this | undefined {
+    return (this.diagrams.find(d => d.id === id) ??
+      this.diagrams.map(d => d.getDiagramById(id)).find(d => d !== undefined)) as this | undefined;
   }
 
   addElement(element: DiagramElement) {

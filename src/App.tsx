@@ -61,6 +61,7 @@ import { ConfigurationContext } from './react-app/context/ConfigurationContext.t
 import { additionalHues, primaryColors } from './react-app/ObjectProperties/palette.ts';
 import { edgeDefaults, nodeDefaults } from './model-viewer/diagramDefaults.ts';
 import { ToolType } from './react-canvas-editor/tools/types.ts';
+import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
   return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -229,7 +230,15 @@ useEffect(() => {
                     <LayerToolWindow />
                   </SideBarPage>
                   <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
-                  <SideBarPage icon={TbFiles}>TbFiles</SideBarPage>
+                  <SideBarPage icon={TbFiles}>
+                    <DocumentToolWindow
+                      document={doc}
+                      value={$d.id}
+                      onValueChange={v => {
+                        setDiagram(doc.getById(v)!);
+                      }}
+                    />
+                  </SideBarPage>
                   <SideBarPage icon={TbHistory}>
                     <HistoryToolWindow />
                   </SideBarPage>
