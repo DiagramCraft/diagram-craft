@@ -11,7 +11,7 @@ const PickerCanvas = (props: PickerCanvasProps) => {
 
   return (
     <svg {...propsUtils.filterDomProperties(props)} preserveAspectRatio="none">
-      {diagram.elements.map(e => {
+      {diagram.layers.active.elements.map(e => {
         const id = e.id;
         if (e.type === 'edge') {
           const edge = diagram.edgeLookup[id]!;

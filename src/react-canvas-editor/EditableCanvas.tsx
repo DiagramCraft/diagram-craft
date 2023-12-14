@@ -166,35 +166,37 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         <DocumentBounds diagram={diagram} />
         <Grid diagram={diagram} />
 
-        {diagram.elements.map(e => {
-          const id = e.id;
-          if (e.type === 'edge') {
-            const edge = diagram.edgeLookup[id]!;
-            return (
-              <Edge
-                key={id}
-                ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
-                onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
-                def={edge}
-                diagram={diagram}
-              />
-            );
-          } else {
-            const node = diagram.nodeLookup[id]!;
-            return (
-              <Node
-                key={id}
-                ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-                onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
-                def={node}
-                diagram={diagram}
-              />
-            );
-          }
+        {diagram.layers.visible.flatMap(layer => {
+          return layer.elements.map(e => {
+            const id = e.id;
+            if (e.type === 'edge') {
+              const edge = diagram.edgeLookup[id]!;
+              return (
+                <Edge
+                  key={id}
+                  ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
+                  onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
+                  def={edge}
+                  diagram={diagram}
+                />
+              );
+            } else {
+              const node = diagram.nodeLookup[id]!;
+              return (
+                <Node
+                  key={id}
+                  ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
+                  onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
+                  onMouseEnter={onMouseEnter}
+                  onMouseLeave={onMouseLeave}
+                  def={node}
+                  diagram={diagram}
+                />
+              );
+            }
+          });
         })}
 
         <Selection ref={selectionRef} selection={selection} diagram={diagram} />

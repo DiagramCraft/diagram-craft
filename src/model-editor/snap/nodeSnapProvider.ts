@@ -40,7 +40,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     const boxHRange = this.getRange(box, 'h');
     const boxVRange = this.getRange(box, 'v');
 
-    for (const node of this.diagram.elements) {
+    for (const node of this.diagram.visibleElements()) {
       if (node.type !== 'node') continue;
       if (this.excludedNodeIds.includes(node.id)) continue;
       for (const other of Magnet.forNode(node.bounds)) {

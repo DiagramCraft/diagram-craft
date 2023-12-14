@@ -15,6 +15,7 @@ import { Point } from '../../geometry/point.ts';
 import { UndoableAction } from '../../model-editor/undoManager.ts';
 import { Diagram } from '../../model-viewer/diagram.ts';
 import { precondition } from '../../utils/assert.ts';
+import { Layer } from '../../model-viewer/diagramLayer.ts';
 
 declare global {
   interface ActionMap {
@@ -29,21 +30,24 @@ const PREFIX = 'application/x-diagram-craft-selection;';
 
 export class PasteUndoableAction implements UndoableAction {
   description = 'Paste';
+  private layer: Layer;
 
   constructor(
     private readonly elements: DiagramElement[],
     private readonly diagram: Diagram
-  ) {}
+  ) {
+    this.layer = this.diagram.layers.active;
+  }
 
   undo() {
     this.elements.forEach(e => {
-      this.diagram.removeElement(e);
+      e.layer!.removeElement(e);
     });
   }
 
   redo() {
     this.elements.forEach(e => {
-      this.diagram.addElement(e);
+      this.layer.addElement(e);
     });
   }
 }
@@ -222,7 +226,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
 
   private deleteSelection() {
     for (const element of this.diagram.selectionState.elements) {
-      this.diagram.removeElement(element);
+      element.layer!.removeElement(element);
     }
     this.diagram.selectionState.clear();
   }

@@ -18,7 +18,7 @@ export const DocumentTabs = (props: Props) => {
   useEventListener(props.document, 'diagramadded', redraw);
 
   const selection = props.document.diagrams.find(
-    d => d.id === props.value || d.getDiagramById(props.value) !== undefined
+    d => d.id === props.value || d.findChildDiagramById(props.value) !== undefined
   )?.id;
 
   return (

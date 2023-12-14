@@ -4,6 +4,7 @@ import { Diagram } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { AbstractEdge, Waypoint } from './types.ts';
+import { Layer } from './diagramLayer.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -23,7 +24,9 @@ export class DiagramEdge implements AbstractEdge {
   props: EdgeProps = {};
   waypoints: Waypoint[] | undefined;
 
+  // TODO: Maybe we can remove the diagram and use the layer reference instead?
   diagram?: Diagram;
+  layer?: Layer;
 
   constructor(
     id: string,

@@ -4,6 +4,7 @@ import { TransformFactory } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
+import { Layer } from './diagramLayer.ts';
 
 class AbstractTransformAction implements UndoableAction {
   private nodes: (DiagramNode | DiagramEdge)[] = [];
@@ -53,18 +54,22 @@ export class ResizeAction extends AbstractTransformAction {}
 
 // TODO: Do we want to reset the selection here?
 export class NodeAddAction implements UndoableAction {
+  private layer: Layer;
+
   constructor(
     private readonly nodes: DiagramNode[],
     private readonly diagram: Diagram,
     public readonly description: string = 'Add node'
-  ) {}
+  ) {
+    this.layer = this.diagram.layers.active;
+  }
 
   undo() {
-    this.nodes.forEach(node => this.diagram.removeElement(node));
+    this.nodes.forEach(node => node.layer!.removeElement(node));
   }
 
   redo() {
-    this.nodes.forEach(node => this.diagram.addElement(node));
+    this.nodes.forEach(node => this.layer.addElement(node));
   }
 }
 

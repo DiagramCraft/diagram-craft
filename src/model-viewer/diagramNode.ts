@@ -6,6 +6,7 @@ import { deepClone } from '../utils/clone.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
+import { Layer } from './diagramLayer.ts';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 
@@ -26,7 +27,9 @@ export class DiagramNode implements AbstractNode {
 
   _anchors?: Anchor[];
 
+  // TODO: Maybe we can remove the diagram and use the layer reference instead?
   diagram?: Diagram;
+  layer?: Layer;
 
   constructor(
     id: string,

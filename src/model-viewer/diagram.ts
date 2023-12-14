@@ -5,6 +5,7 @@ import { Viewbox } from './viewBox.ts';
 import { DiagramElement, DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './nodeDefinition.ts';
+import { Layer, LayerManager } from './diagramLayer.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
@@ -35,13 +36,14 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     }
   };
 
-  elements: DiagramElement[] = [];
   props: DiagramProps = {};
   diagrams: this[] = [];
 
   readonly viewBox = new Viewbox(this.#canvas.size);
   readonly nodeLookup: Record<string, DiagramNode> = {};
   readonly edgeLookup: Record<string, DiagramEdge> = {};
+
+  readonly layers = new LayerManager(this, []);
 
   constructor(
     readonly id: string,
@@ -52,7 +54,13 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   ) {
     super();
 
-    elements.forEach(e => this.addElement(e, true));
+    this.layers.add(new Layer('default', 'Default', [], this));
+
+    elements.forEach(e => this.layers.active.addElement(e, true));
+  }
+
+  visibleElements() {
+    return this.layers.visible.flatMap(l => l.elements);
   }
 
   get canvas() {
@@ -71,64 +79,24 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     );
   }
 
-  addElement(element: DiagramElement, omitEvents = false) {
-    this.elements.push(element);
-    this.processElementForAdd(element);
-
-    if (element.type === 'node') {
-      this.nodeLookup[element.id] = element;
-    } else if (element.type === 'edge') {
-      this.edgeLookup[element.id] = element;
+  moveElement(element: DiagramElement, layer: Layer, idx?: number) {
+    const currentLayer = element.layer!;
+    if (idx !== undefined) {
+      layer.elements.splice(idx, 0, element);
+      element.layer = layer;
+    } else if (layer.isAbove(currentLayer)) {
+      layer.elements.unshift(element);
+      element.layer = layer;
+    } else {
+      layer.elements.push(element);
+      element.layer = layer;
     }
-    if (!omitEvents) this.emit('elementAdd', { element });
-  }
-
-  removeElement(element: DiagramElement) {
-    this.elements = this.elements.filter(e => e !== element);
-
-    if (element.type === 'node') {
-      delete this.nodeLookup[element.id];
-    } else if (element.type === 'edge') {
-      delete this.edgeLookup[element.id];
-    }
-
-    this.emit('elementRemove', { element });
+    currentLayer.elements = currentLayer.elements.filter(e => e !== element);
+    this.update();
   }
 
   updateElement(element: DiagramElement) {
     this.emit('elementChange', { element });
-  }
-
-  private processElementForAdd(e: DiagramElement) {
-    e.diagram = this;
-    if (e.type === 'node' && e.nodeType === 'group') {
-      for (const child of e.children) {
-        child.parent = e;
-        this.processElementForAdd(child);
-      }
-    }
-  }
-
-  stackModify(elements: DiagramElement[], newPosition: number): StackPosition[] {
-    const withPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
-    const oldPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
-
-    for (const el of elements) {
-      const idx = withPositions.findIndex(e => e.element === el);
-      withPositions[idx].idx += newPosition;
-    }
-
-    withPositions.sort((a, b) => a.idx - b.idx);
-    this.elements = withPositions.map(e => e.element);
-    this.emit('change', { diagram: this });
-
-    return oldPositions;
-  }
-
-  stackSet(positions: StackPosition[]) {
-    positions.sort((a, b) => a.idx - b.idx);
-    this.elements = positions.map(e => e.element);
-    this.emit('change', { diagram: this });
   }
 
   transformElements(elements: DiagramElement[], transforms: Transform[]) {

@@ -27,23 +27,29 @@ class SelectionRestackUndoableAction implements UndoableAction {
 
   undo(): void {
     precondition.is.present(this.oldPositions);
-    this.diagram.stackSet(this.oldPositions);
+    this.diagram.layers.active.stackSet(this.oldPositions);
   }
 
   redo(): void {
     const elements = this.diagram.selectionState.elements;
     switch (this.mode) {
       case 'up':
-        this.oldPositions = this.diagram.stackModify(elements, 2);
+        this.oldPositions = this.diagram.layers.active.stackModify(elements, 2);
         break;
       case 'down':
-        this.oldPositions = this.diagram.stackModify(elements, -2);
+        this.oldPositions = this.diagram.layers.active.stackModify(elements, -2);
         break;
       case 'top':
-        this.oldPositions = this.diagram.stackModify(elements, this.diagram.elements.length);
+        this.oldPositions = this.diagram.layers.active.stackModify(
+          elements,
+          this.diagram.layers.active.elements.length
+        );
         break;
       case 'bottom':
-        this.oldPositions = this.diagram.stackModify(elements, -this.diagram.elements.length);
+        this.oldPositions = this.diagram.layers.active.stackModify(
+          elements,
+          this.diagram.layers.active.elements.length
+        );
         break;
     }
   }

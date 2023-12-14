@@ -22,7 +22,7 @@ export class SelectAllAction extends EventEmitter<ActionEvents> implements Actio
 
   execute(): void {
     if (this.mode === 'all') {
-      this.diagram.selectionState.setElements(this.diagram.elements);
+      this.diagram.selectionState.setElements(this.diagram.visibleElements());
     } else if (this.mode === 'nodes') {
       this.diagram.selectionState.setElements(Object.values(this.diagram.nodeLookup));
     } else if (this.mode === 'edges') {

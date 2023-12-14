@@ -62,7 +62,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
 
     // TODO: This part is done very similarly in other providers - maybe introduce some
     //       sort of context object to do this only once
-    for (const node of this.diagram.elements) {
+    for (const node of this.diagram.visibleElements()) {
       if (node.type !== 'node') continue;
       if (this.excludedNodeIds.includes(node.id)) continue;
       if (Box.intersects(node.bounds, box)) continue;

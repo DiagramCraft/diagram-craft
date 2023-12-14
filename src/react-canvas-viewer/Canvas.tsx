@@ -31,33 +31,35 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       viewBox={diagram.viewBox.svgViewboxString}
       style={style}
     >
-      {diagram.elements.map(e => {
-        const id = e.id;
-        if (e.type === 'edge') {
-          const edge = diagram.edgeLookup[id]!;
-          return (
-            <Edge
-              key={id}
-              onMouseDown={() => {}}
-              onMouseEnter={() => {}}
-              onMouseLeave={() => {}}
-              def={edge}
-              diagram={diagram}
-            />
-          );
-        } else {
-          const node = diagram.nodeLookup[id]!;
-          return (
-            <Node
-              key={id}
-              onMouseDown={() => {}}
-              onMouseEnter={() => {}}
-              onMouseLeave={() => {}}
-              def={node}
-              diagram={diagram}
-            />
-          );
-        }
+      {diagram.layers.visible.flatMap(layer => {
+        return layer.elements.map(e => {
+          const id = e.id;
+          if (e.type === 'edge') {
+            const edge = diagram.edgeLookup[id]!;
+            return (
+              <Edge
+                key={id}
+                onMouseDown={() => {}}
+                onMouseEnter={() => {}}
+                onMouseLeave={() => {}}
+                def={edge}
+                diagram={diagram}
+              />
+            );
+          } else {
+            const node = diagram.nodeLookup[id]!;
+            return (
+              <Node
+                key={id}
+                onMouseDown={() => {}}
+                onMouseEnter={() => {}}
+                onMouseLeave={() => {}}
+                def={node}
+                diagram={diagram}
+              />
+            );
+          }
+        });
       })}
     </svg>
   );
