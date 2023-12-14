@@ -135,6 +135,7 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
       ? this.#visibleLayers.delete(layer.id)
       : this.#visibleLayers.add(layer.id);
     this.emit('change', { layers: this });
+    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   setVisibility(layers: Layer, isVisible: boolean) {
@@ -144,11 +145,13 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
       this.#visibleLayers.delete(layers.id);
     }
     this.emit('change', { layers: this });
+    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   set active(layer: Layer) {
     this.#activeLayer = layer;
     this.emit('change', { layers: this });
+    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   get active() {

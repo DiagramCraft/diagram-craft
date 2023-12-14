@@ -53,7 +53,7 @@ export class EditableDiagram extends Diagram {
     name: string,
     readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry,
-    elements: DiagramElement[]
+    elements?: DiagramElement[]
   ) {
     super(id, name, nodeDefinitions, edgeDefinitions, elements);
   }

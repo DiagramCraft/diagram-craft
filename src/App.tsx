@@ -49,8 +49,7 @@ import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
-import { DiagramEdge } from './model-viewer/diagramEdge.ts';
-import { DiagramNode } from './model-viewer/diagramNode.ts';
+import { DiagramElement } from './model-viewer/diagramNode.ts';
 import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
 import { UserState } from './react-app/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
@@ -63,7 +62,7 @@ import { edgeDefaults, nodeDefaults } from './model-viewer/diagramDefaults.ts';
 import { ToolType } from './react-canvas-editor/tools/types.ts';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
 
-const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
+const factory = (d: SerializedDiagram, elements?: DiagramElement[]) => {
   return new EditableDiagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry(), elements);
 };
 

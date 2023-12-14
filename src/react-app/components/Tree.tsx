@@ -1,12 +1,13 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import { round } from '../../utils/math.ts';
+import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
 
 const TreeContext = createContext<{ depth: number } | undefined>(undefined);
 
 export const Tree = (props: TreeProps) => {
   return (
-    <TreeContext.Provider value={{ depth: 0 }}>
+    <TreeContext.Provider {...propsUtils.filterDomProperties(props)} value={{ depth: 0 }}>
       <div className={'cmp-tree'}>{props.children}</div>
     </TreeContext.Provider>
   );
@@ -14,14 +15,18 @@ export const Tree = (props: TreeProps) => {
 
 type TreeProps = {
   children: React.ReactNode;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
 export const TreeNode = (props: TreeNodeProps) => {
   const [open, setOpen] = useState(props.isOpen);
   const ctx = useContext(TreeContext);
   return (
     <TreeContext.Provider value={{ depth: ctx!.depth + 1 }}>
-      <div className={'cmp-tree__node'} data-depth={ctx!.depth}>
+      <div
+        {...propsUtils.filterDomProperties(props)}
+        className={`cmp-tree__node ${props.className ?? ''}`}
+        data-depth={ctx!.depth}
+      >
         <div className={'cmp-tree__node__label'}>
           <div className={'cmp-tree__node__label__toggle'}>
             {props.children && !open && (
@@ -49,10 +54,10 @@ export const TreeNode = (props: TreeNodeProps) => {
 type TreeNodeProps = {
   label: string | ReactNode;
   value?: string;
-  action?: string;
+  action?: string | ReactNode;
   isOpen?: boolean;
   children?: React.ReactNode;
-};
+} & React.HTMLAttributes<HTMLDivElement>;
 
 // eslint-disable-next-line
 export const ObjectTreeNode = (props: { obj: any }) => {

@@ -1039,18 +1039,6 @@ input::-webkit-input-placeholder {
   }
 }
 
-.cmp-layer-list {
-  .cmp-layer-list__element {
-    padding: 0.25rem 0.5rem;
-    margin: 0.25rem 0;
-  }
-
-  .cmp-layer-list__element--selected {
-    background: var(--secondary-bg);
-    border-radius: 0.25rem;
-  }
-}
-
 .cmp-tree {
   display: grid;
   grid-template-columns: 1fr 1fr min-content;
@@ -1063,6 +1051,7 @@ input::-webkit-input-placeholder {
     display: grid;
     grid-template-columns: subgrid;
     grid-template-rows: subgrid;
+    align-items: center;
     padding: 2px;
     padding-left: 0.5rem;
 
@@ -1071,9 +1060,16 @@ input::-webkit-input-placeholder {
   .cmp-tree__node:last-child {
     border-bottom: none;
   }
+  .cmp-tree__node[data-state='on'] {
+    background-color: var(--blue-3);
+    border-radius: 4px;
+  }
 
   .cmp-tree__node__action {
+    display: flex;
     justify-self: end;
+    padding-right: 0.25rem;
+    margin-top: 0.2rem;
   }
 
   .cmp-tree__node[data-depth="1"] > .cmp-tree__node__label {
@@ -1098,7 +1094,7 @@ input::-webkit-input-placeholder {
     aspect-ratio: 1;
     width: 10px;
     margin-top: 2px;
-    margin-right: 0.25rem;
+    margin-right: 0.35rem;
 
     > button {
       border: 0;
@@ -1129,6 +1125,16 @@ input::-webkit-input-placeholder {
   border-radius: 4px;
 }
 
+.cmp-layer-list {
+  .cmp-tree__node {
+    position: relative;
+  }
+
+  .cmp-layer-list__layer--selected {
+    background-color: var(--secondary-bg);
+    border-radius: 4px;
+  }
+}
 
 /* Adjustments of general components for specific use-cases */
 
