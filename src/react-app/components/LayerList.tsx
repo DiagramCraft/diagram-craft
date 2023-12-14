@@ -14,9 +14,10 @@ const VisibilityToggle = (props: { layer: Layer; diagram: Diagram }) => {
   return (
     <span
       style={{ cursor: 'pointer' }}
-      onClick={() => {
-        console.log('.,sldlsd');
+      onClick={e => {
         props.diagram.layers.toggleVisibility(props.layer);
+        e.preventDefault();
+        e.stopPropagation();
       }}
     >
       {props.diagram.layers.visible.includes(props.layer) ? <TbEye /> : <TbEyeOff />}
@@ -32,7 +33,7 @@ export const LayerList = () => {
   useEventListener(diagram, 'change', redraw);
 
   return (
-    <div style={{ margin: '-0.5rem' }} className={'cmp-layer-list'}>
+    <div style={{ margin: '-10px' }} className={'cmp-layer-list'}>
       <Tree>
         {layers.map(l => (
           <TreeNode
@@ -42,14 +43,19 @@ export const LayerList = () => {
             action={<VisibilityToggle layer={l} diagram={diagram} />}
             isOpen={true}
             className={diagram.layers.active === l ? 'cmp-layer-list__layer--selected' : ''}
+            onClick={() => {
+              diagram.layers.active = l;
+            }}
           >
-            {reversed(l.elements).map(e => (
-              <TreeNode
-                key={e.id}
-                label={e.type === 'node' ? e.nodeType : e.type}
-                data-state={diagram.selectionState.elements.includes(e) ? 'on' : 'off'}
-              />
-            ))}
+            <div style={{ display: 'contents' }}>
+              {reversed(l.elements).map(e => (
+                <TreeNode
+                  key={e.id}
+                  label={e.type === 'node' ? e.nodeType : e.type}
+                  data-state={diagram.selectionState.elements.includes(e) ? 'on' : 'off'}
+                />
+              ))}
+            </div>
           </TreeNode>
         ))}
       </Tree>

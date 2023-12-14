@@ -26,6 +26,8 @@ export const TreeNode = (props: TreeNodeProps) => {
         {...propsUtils.filterDomProperties(props)}
         className={`cmp-tree__node ${props.className ?? ''}`}
         data-depth={ctx!.depth}
+        onClick={props.onClick}
+        style={{ cursor: props.onClick ? 'pointer' : 'default' }}
       >
         <div className={'cmp-tree__node__label'}>
           <div className={'cmp-tree__node__label__toggle'}>
@@ -57,6 +59,7 @@ type TreeNodeProps = {
   action?: string | ReactNode;
   isOpen?: boolean;
   children?: React.ReactNode;
+  onClick?: () => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 // eslint-disable-next-line

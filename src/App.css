@@ -1061,8 +1061,7 @@ input::-webkit-input-placeholder {
     border-bottom: none;
   }
   .cmp-tree__node[data-state='on'] {
-    background-color: var(--blue-3);
-    border-radius: 4px;
+    color: var(--blue-11);
   }
 
   .cmp-tree__node__action {
@@ -1100,6 +1099,7 @@ input::-webkit-input-placeholder {
       border: 0;
       padding: 0;
       background: none;
+      color: var(--primary-fg);
     }
   }
 }
@@ -1131,8 +1131,21 @@ input::-webkit-input-placeholder {
   }
 
   .cmp-layer-list__layer--selected {
-    background-color: var(--secondary-bg);
-    border-radius: 4px;
+    & .cmp-tree__node__label, .cmp-tree__node__value {
+      color: var(--blue-11);
+      font-weight: bold;
+    }
+  }
+  .cmp-layer-list__layer--selected, .cmp-layer-list__layer--selected + div > * {
+    &:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: -1px;
+      left: 0;
+      width: 2px;
+      background-color: var(--blue-11);
+    }
   }
 }
 
