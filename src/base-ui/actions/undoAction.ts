@@ -9,7 +9,7 @@ declare global {
 }
 
 export class UndoAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = false;
+  enabled = true;
 
   constructor(private readonly diagram: Diagram) {
     super();

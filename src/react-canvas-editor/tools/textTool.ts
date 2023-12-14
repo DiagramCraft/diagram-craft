@@ -7,6 +7,7 @@ import { Modifiers } from '../../base-ui/drag.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { DiagramNode } from '../../model-viewer/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
+import { NodeAddAction } from '../../model-viewer/actions.ts';
 
 export class TextTool extends AbstractTool {
   constructor(
@@ -40,7 +41,7 @@ export class TextTool extends AbstractTool {
       nodeDef.getDefaultProps('canvas')
     );
 
-    this.diagram.addNode(nd);
+    this.diagram.undoManager.addAndExecute(new NodeAddAction([nd], this.diagram, 'Add text'));
 
     this.diagram.selectionState.clear();
     this.diagram.selectionState.toggle(nd);
