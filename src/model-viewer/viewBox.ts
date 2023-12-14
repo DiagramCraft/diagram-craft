@@ -9,14 +9,12 @@ export type ViewboxEvents = {
 
 export class Viewbox extends EventEmitter<ViewboxEvents> {
   #dimensions: Extent;
-
   #offset: Point = {
     x: 0,
     y: 0
   };
 
   zoomLevel = 1;
-
   windowSize: Extent;
 
   constructor(size: Extent) {

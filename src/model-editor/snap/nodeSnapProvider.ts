@@ -40,7 +40,8 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     const boxHRange = this.getRange(box, 'h');
     const boxVRange = this.getRange(box, 'v');
 
-    for (const node of this.diagram.queryNodes()) {
+    for (const node of this.diagram.elements) {
+      if (node.type !== 'node') continue;
       if (this.excludedNodeIds.includes(node.id)) continue;
       for (const other of Magnet.forNode(node.bounds)) {
         // TODO: We should be able to filter out even more here

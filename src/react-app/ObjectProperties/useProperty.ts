@@ -17,7 +17,7 @@ export const useDiagramProperty: PropertyHook<EditableDiagram, DiagramProps> = m
 >(
   diagram => diagram.props,
   (diagram, handler) => {
-    useEventListener(diagram, 'canvaschanged', handler);
+    useEventListener(diagram, 'change', handler);
   },
   diagram => diagram.update(),
   {

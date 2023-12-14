@@ -27,7 +27,7 @@ export const CustomPropertiesPanel = (props: Props) => {
     };
   }, [diagram.selectionState]);
 
-  useEventListener(diagram, 'nodechanged', redraw);
+  useEventListener(diagram, 'elementChange', redraw);
 
   if (!node) {
     return <div></div>;

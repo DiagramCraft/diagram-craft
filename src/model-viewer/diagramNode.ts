@@ -3,25 +3,9 @@ import { assert } from '../utils/assert.ts';
 import { round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
-import { Diagram, AbstractElement } from './diagram.ts';
-import { Point } from '../geometry/point.ts';
+import { Diagram } from './diagram.ts';
 import { DiagramEdge } from './diagramEdge.ts';
-
-type Anchor = {
-  point: Point;
-  clip?: boolean;
-};
-
-export interface AbstractNode extends AbstractElement {
-  type: 'node';
-  nodeType: 'group' | string;
-  id: string;
-  bounds: Box;
-
-  // TODO: Maybe we should make this readonly (deep)?
-  props: NodeProps;
-  anchors?: Anchor[];
-}
+import { AbstractNode, Anchor } from './types.ts';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 

@@ -1,7 +1,7 @@
 import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { UndoableAction } from '../../model-editor/undoManager.ts';
 import { precondition } from '../../utils/assert.ts';
-import { StackElement } from '../../model-viewer/diagram.ts';
+import { StackPosition } from '../../model-viewer/diagram.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 
 declare global {
@@ -18,7 +18,7 @@ type RestackMode = 'up' | 'down' | 'top' | 'bottom';
 class SelectionRestackUndoableAction implements UndoableAction {
   description = 'Restack selection';
 
-  private oldPositions: StackElement[] | undefined;
+  private oldPositions: StackPosition[] | undefined;
 
   constructor(
     private readonly diagram: EditableDiagram,

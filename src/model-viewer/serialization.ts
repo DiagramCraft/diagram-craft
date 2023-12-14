@@ -1,9 +1,10 @@
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
-import { AbstractNode, DiagramElement, DiagramNode } from './diagramNode.ts';
-import { AbstractEdge, ConnectedEndpoint, DiagramEdge } from './diagramEdge.ts';
+import { DiagramElement, DiagramNode } from './diagramNode.ts';
+import { ConnectedEndpoint, DiagramEdge } from './diagramEdge.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramDocument } from './diagramDocument.ts';
+import { AbstractEdge, AbstractNode } from './types.ts';
 
 interface Reference {
   id: string;

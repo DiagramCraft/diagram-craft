@@ -3,7 +3,8 @@ import { unique } from '../utils/array.ts';
 import { Direction } from '../geometry/direction.ts';
 import { Point } from '../geometry/point.ts';
 import { Path } from '../geometry/path.ts';
-import { DiagramEdge, Waypoint } from '../model-viewer/diagramEdge.ts';
+import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
+import { Waypoint } from '../model-viewer/types.ts';
 
 type Result = {
   startDirection: Direction;

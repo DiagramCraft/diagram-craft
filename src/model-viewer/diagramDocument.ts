@@ -15,7 +15,7 @@ export class DiagramDocument<T extends Diagram> extends EventEmitter<DocumentEve
   getById(id: string) {
     return (
       this.diagrams.find(d => d.id === id) ??
-      this.diagrams.map(d => d.getDiagramById(id)).find(d => d !== undefined)
+      this.diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
     );
   }
 

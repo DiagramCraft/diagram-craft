@@ -1,6 +1,6 @@
 import { Action, ActionEvents } from '../keyMap.ts';
-import { Diagram } from '../../model-viewer/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
+import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -11,7 +11,7 @@ declare global {
 export class RedoAction extends EventEmitter<ActionEvents> implements Action {
   enabled = false;
 
-  constructor(private readonly diagram: Diagram) {
+  constructor(private readonly diagram: EditableDiagram) {
     super();
     const cb = () => {
       this.enabled = this.diagram.undoManager.redoableActions.length > 0;

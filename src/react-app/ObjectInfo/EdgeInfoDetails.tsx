@@ -7,7 +7,7 @@ import { useDiagram } from '../context/DiagramContext.tsx';
 export const EdgeInfoDetails = (props: Props) => {
   const diagram = useDiagram();
   const redraw = useRedraw();
-  useEventListener(diagram, 'edgechanged', redraw);
+  useEventListener(diagram, 'elementChange', redraw);
   return (
     <div style={{ margin: '-0.5rem' }}>
       <Tree>

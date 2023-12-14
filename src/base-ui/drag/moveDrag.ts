@@ -54,7 +54,7 @@ export class MoveDrag implements Drag {
       const newElements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e].clone());
       newElements.forEach(e => {
         e.id = newid();
-        this.diagram.addNode(e);
+        this.diagram.addElement(e);
       });
       selection.setElements(newElements, false);
 
@@ -68,7 +68,7 @@ export class MoveDrag implements Drag {
       selection.guides = [];
 
       elementsToRemove.forEach(e => {
-        this.diagram.removeNode(e);
+        this.diagram.removeElement(e);
       });
     }
 

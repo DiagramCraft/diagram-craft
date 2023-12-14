@@ -111,6 +111,56 @@ export const simpleDiagram: SerializedDiagramDocument = {
         }
       ]
     },
-    { id: 'doc2', diagrams: [], name: 'Sheet 2', layers: [] }
+    {
+      id: 'doc2',
+      diagrams: [],
+      name: 'Sheet 2',
+      layers: [
+        {
+          type: 'layer',
+          id: 'layer1',
+          name: 'Layer 1',
+          layerType: 'basic',
+          elements: [
+            {
+              type: 'node',
+              nodeType: 'star',
+              id: '2',
+              bounds: {
+                pos: { x: 400, y: 270 },
+                size: { w: 150, h: 150 },
+                rotation: 0
+              },
+              children: [],
+              props: {}
+            }
+          ]
+        },
+        {
+          type: 'layer',
+          id: 'layer2',
+          name: 'Layer 2',
+          layerType: 'basic',
+          elements: [
+            {
+              type: 'node',
+              nodeType: 'rounded-rect',
+              id: '3',
+              bounds: {
+                pos: { x: 370, y: 20 },
+                size: { w: 100, h: 100 },
+                rotation: 0
+              },
+              children: [],
+              props: {
+                text: {
+                  text: ''
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
   ]
 };

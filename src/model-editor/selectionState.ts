@@ -28,8 +28,10 @@ export type Guide = {
 };
 
 export type SelectionStateEvents = {
-  /* The selection has changed, this includes adding, removing elements, but also
-   * recalculating bounding box */
+  /* The selection has changed, e.g. recalculating bounding box
+   * This is implicitly triggered by adding/removing elements, as the bounding box
+   * is changed - but this should not be relied upon
+   */
   change: { selection: SelectionState };
 
   /* Elements have been added to the selection */
@@ -62,8 +64,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     const recalculateSourceBoundingBox = debounce(() => {
       this.recalculateBoundingBox();
     });
-    diagram.on('nodechanged', recalculateSourceBoundingBox);
-    diagram.on('edgechanged', recalculateSourceBoundingBox);
+    diagram.on('elementChange', recalculateSourceBoundingBox);
   }
 
   get source() {

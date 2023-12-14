@@ -76,21 +76,20 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     if (e.type === 'undo') clearSelection();
   });
 
-  useEventListener(diagram, 'nodechanged', e => {
-    nodeRefs.current[e.after.id]?.repaint();
+  useEventListener(diagram, 'elementChange', e => {
+    if (e.element.type === 'node') {
+      nodeRefs.current[e.element.id]?.repaint();
 
-    for (const edge of e.after.listEdges(true)) {
-      edgeRefs.current[edge.id]?.repaint();
+      for (const edge of e.element.listEdges(true)) {
+        edgeRefs.current[edge.id]?.repaint();
+      }
+    } else {
+      edgeRefs.current[e.element.id]?.repaint();
     }
   });
-  useEventListener(diagram, 'edgechanged', e => {
-    edgeRefs.current[e.after.id]?.repaint();
-  });
-  useEventListener(diagram, 'nodeadded', redraw);
-  useEventListener(diagram, 'noderemoved', redraw);
-  useEventListener(diagram, 'edgeadded', redraw);
-  useEventListener(diagram, 'edgeremoved', redraw);
-  useEventListener(diagram, 'canvaschanged', redraw);
+  useEventListener(diagram, 'elementAdd', redraw);
+  useEventListener(diagram, 'elementRemove', redraw);
+  useEventListener(diagram, 'change', redraw);
 
   const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
     if (e.element.type === 'node') {

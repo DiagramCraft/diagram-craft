@@ -1,40 +1,32 @@
 import { EventEmitter } from '../utils/event.ts';
-import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { Transform } from '../geometry/transform.ts';
 import { Box } from '../geometry/box.ts';
-import { UndoManager } from '../model-editor/undoManager.ts';
 import { Viewbox } from './viewBox.ts';
 import { DiagramElement, DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './nodeDefinition.ts';
 
-export interface AbstractElement {
-  id: string;
-  type: string;
-}
-
 export type Canvas = Omit<Box, 'rotation'>;
 
 export type DiagramEvents = {
-  nodechanged: { after: DiagramNode };
-  nodeadded: { node: DiagramNode };
-  noderemoved: { node: DiagramNode };
-  edgechanged: { after: DiagramEdge };
-  edgeadded: { edge: DiagramEdge };
-  edgeremoved: { edge: DiagramEdge };
-  canvaschanged: { after: Canvas };
+  /* Diagram props, canvas have changed, or a large restructure of
+   * elements have occured (e.g. change of stacking order)
+   */
+  change: { diagram: Diagram };
+
+  /* A single element has changed (e.g. moved, resized, etc) */
+  elementChange: { element: DiagramElement };
+
+  /* A new element has been added to the diagram */
+  elementAdd: { element: DiagramElement };
+
+  /* An element has been removed from the diagram */
+  elementRemove: { element: DiagramElement };
 };
 
-export type StackElement = { element: DiagramElement; idx: number };
+export type StackPosition = { element: DiagramElement; idx: number };
 
-export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitter<T> {
-  elements: (DiagramEdge | DiagramNode)[];
-  readonly nodeLookup: Record<string, DiagramNode> = {};
-  readonly edgeLookup: Record<string, DiagramEdge> = {};
-  readonly undoManager = new UndoManager();
-
-  props: DiagramProps = {};
-
+export class Diagram extends EventEmitter<DiagramEvents> {
   #canvas: Canvas = {
     pos: { x: 0, y: 0 },
     size: {
@@ -43,51 +35,24 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     }
   };
 
-  viewBox = new Viewbox(this.#canvas.size);
+  elements: DiagramElement[] = [];
+  props: DiagramProps = {};
+  diagrams: this[] = [];
 
-  diagrams: Diagram[] = [];
+  readonly viewBox = new Viewbox(this.#canvas.size);
+  readonly nodeLookup: Record<string, DiagramNode> = {};
+  readonly edgeLookup: Record<string, DiagramEdge> = {};
 
   constructor(
     readonly id: string,
     readonly name: string,
-    elements: (DiagramEdge | DiagramNode)[],
+    elements: DiagramElement[],
     readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
-    this.elements = elements;
 
-    this.elements.forEach(e => {
-      if (e.type === 'node') {
-        this.linkNode(e);
-      } else if (e.type === 'edge') {
-        this.linkEdge(e);
-      }
-    });
-
-    for (const e of this.elements) {
-      if (e.type === 'edge') {
-        this.edgeLookup[e.id] = e;
-      } else if (e.type === 'node') {
-        this.nodeLookup[e.id] = e;
-      } else {
-        VERIFY_NOT_REACHED();
-      }
-    }
-  }
-
-  private linkNode(node: DiagramNode) {
-    node.diagram = this;
-    if (node.nodeType === 'group') {
-      for (const child of node.children) {
-        child.parent = node;
-        this.linkNode(child);
-      }
-    }
-  }
-
-  private linkEdge(edge: DiagramEdge) {
-    edge.diagram = this;
+    elements.forEach(e => this.addElement(e, true));
   }
 
   get canvas() {
@@ -96,51 +61,55 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
 
   set canvas(b: Canvas) {
     this.#canvas = b;
-    this.emit('canvaschanged', { after: b });
-
-    console.log('CANVAS CHANGED');
+    this.emit('change', { diagram: this });
   }
 
-  getDiagramById(id: string): this | undefined {
-    return (this.diagrams.find(d => d.id === id) ??
-      this.diagrams.map(d => d.getDiagramById(id)).find(d => d !== undefined)) as this | undefined;
+  findChildDiagramById(id: string): this | undefined {
+    return (
+      this.diagrams.find(d => d.id === id) ??
+      this.diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
+    );
   }
 
-  addElement(element: DiagramElement) {
+  addElement(element: DiagramElement, omitEvents = false) {
+    this.elements.push(element);
+    this.processElementForAdd(element);
+
     if (element.type === 'node') {
-      this.addNode(element);
+      this.nodeLookup[element.id] = element;
     } else if (element.type === 'edge') {
-      this.addEdge(element);
+      this.edgeLookup[element.id] = element;
     }
+    if (!omitEvents) this.emit('elementAdd', { element });
   }
 
   removeElement(element: DiagramElement) {
+    this.elements = this.elements.filter(e => e !== element);
+
     if (element.type === 'node') {
-      this.removeNode(element);
+      delete this.nodeLookup[element.id];
     } else if (element.type === 'edge') {
-      this.removeEdge(element);
+      delete this.edgeLookup[element.id];
+    }
+
+    this.emit('elementRemove', { element });
+  }
+
+  updateElement(element: DiagramElement) {
+    this.emit('elementChange', { element });
+  }
+
+  private processElementForAdd(e: DiagramElement) {
+    e.diagram = this;
+    if (e.type === 'node' && e.nodeType === 'group') {
+      for (const child of e.children) {
+        child.parent = e;
+        this.processElementForAdd(child);
+      }
     }
   }
 
-  addNode(node: DiagramNode) {
-    this.linkNode(node);
-    this.nodeLookup[node.id] = node;
-    this.elements.push(node);
-    this.emit('nodeadded', { node });
-  }
-
-  removeNode(node: DiagramNode) {
-    delete this.nodeLookup[node.id];
-    this.elements = this.elements.filter(e => e !== node);
-    this.emit('noderemoved', { node });
-  }
-
-  // TODO: Implement this part
-  queryNodes() {
-    return Object.values(this.nodeLookup);
-  }
-
-  stackModify(elements: DiagramElement[], newPosition: number): StackElement[] {
+  stackModify(elements: DiagramElement[], newPosition: number): StackPosition[] {
     const withPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
     const oldPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
 
@@ -151,18 +120,18 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
 
     withPositions.sort((a, b) => a.idx - b.idx);
     this.elements = withPositions.map(e => e.element);
-    this.emit('canvaschanged', { after: this.canvas });
+    this.emit('change', { diagram: this });
 
     return oldPositions;
   }
 
-  stackSet(positions: StackElement[]) {
+  stackSet(positions: StackPosition[]) {
     positions.sort((a, b) => a.idx - b.idx);
     this.elements = positions.map(e => e.element);
-    this.emit('canvaschanged', { after: this.canvas });
+    this.emit('change', { diagram: this });
   }
 
-  transformElements(elements: (DiagramNode | DiagramEdge)[], transforms: Transform[]) {
+  transformElements(elements: DiagramElement[], transforms: Transform[]) {
     for (const el of elements) {
       el.transform(transforms);
     }
@@ -172,42 +141,20 @@ export class Diagram<T extends DiagramEvents = DiagramEvents> extends EventEmitt
     for (const el of elements) {
       this.updateElement(el);
     }
-
-    // TODO: Automatically create undoable action?
-  }
-
-  addEdge(edge: DiagramEdge) {
-    this.edgeLookup[edge.id] = edge;
-    this.elements.push(edge);
-    this.emit('edgeadded', { edge });
-  }
-
-  removeEdge(edge: DiagramEdge) {
-    delete this.edgeLookup[edge.id];
-    this.elements = this.elements.filter(e => e !== edge);
-    this.emit('edgeremoved', { edge });
-  }
-
-  updateElement(element: DiagramEdge | DiagramNode) {
-    if (element.type === 'node') {
-      this.emit('nodechanged', { after: element });
-    } else {
-      this.emit('edgechanged', { after: element });
-    }
   }
 
   update() {
-    this.emit('canvaschanged', { after: this.canvas });
+    this.emit('change', { diagram: this });
   }
 
-  addHighlight(element: DiagramNode | DiagramEdge, highlight: string) {
+  addHighlight(element: DiagramElement, highlight: string) {
     element.props ??= {};
     element.props.highlight ??= [];
     element.props.highlight.push(highlight);
     this.updateElement(element);
   }
 
-  removeHighlight(element: DiagramNode | DiagramEdge, highlight: string) {
+  removeHighlight(element: DiagramElement, highlight: string) {
     if (!element.props?.highlight) return;
     element.props.highlight = element.props.highlight.filter(h => h !== highlight);
     this.updateElement(element);

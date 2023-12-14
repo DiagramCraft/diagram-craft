@@ -14,7 +14,7 @@ export const CanvasPanel = (props: Props) => {
   const redraw = useRedraw();
   const diagram = useDiagram();
 
-  useEventListener(diagram, 'canvaschanged', redraw);
+  useEventListener(diagram, 'change', redraw);
   const bg = useDiagramProperty(diagram, 'background.color', 'white');
 
   const bounds = { ...diagram.canvas, rotation: 0 };

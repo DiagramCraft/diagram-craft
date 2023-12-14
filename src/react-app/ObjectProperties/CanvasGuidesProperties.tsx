@@ -9,7 +9,7 @@ export const CanvasGuidesProperties = () => {
   const diagram = useDiagram();
   const redraw = useRedraw();
 
-  useEventListener(diagram, 'canvaschanged', redraw);
+  useEventListener(diagram, 'change', redraw);
 
   return (
     <Accordion.Item className="cmp-accordion__item" value="guides">

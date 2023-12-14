@@ -60,11 +60,11 @@ export class NodeAddAction implements UndoableAction {
   ) {}
 
   undo() {
-    this.nodes.forEach(node => this.diagram.removeNode(node));
+    this.nodes.forEach(node => this.diagram.removeElement(node));
   }
 
   redo() {
-    this.nodes.forEach(node => this.diagram.addNode(node));
+    this.nodes.forEach(node => this.diagram.addElement(node));
   }
 }
 

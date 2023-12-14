@@ -16,7 +16,7 @@ export class ToggleRulerAction extends EventEmitter<ActionEvents> implements Tog
     super();
     this.state = diagram.props.ruler?.enabled ?? true;
 
-    this.diagram.on('canvaschanged', () => {
+    this.diagram.on('change', () => {
       this.state = diagram.props.ruler?.enabled ?? true;
       this.emit('actionchanged', { action: this });
     });

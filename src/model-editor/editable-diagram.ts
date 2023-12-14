@@ -6,6 +6,7 @@ import { EventEmitter } from '../utils/event.ts';
 import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
+import { UndoManager } from './undoManager.ts';
 
 export interface SnapManagerConfigProps {
   threshold: number;
@@ -35,12 +36,18 @@ class SnapManagerConfig
   }
 }
 
+// TODO: Is it really worth separating editable and not editable diagrams?
+//       Maybe it's only the SnapManager that is significant in terms of size etc
 export class EditableDiagram extends Diagram {
-  selectionState: SelectionState = new SelectionState(this);
-
-  snapManagerConfig = new SnapManagerConfig(['grid', 'node', 'canvas', 'distance', 'size']);
-
-  diagrams: EditableDiagram[] = [];
+  readonly selectionState: SelectionState = new SelectionState(this);
+  readonly snapManagerConfig = new SnapManagerConfig([
+    'grid',
+    'node',
+    'canvas',
+    'distance',
+    'size'
+  ]);
+  readonly undoManager = new UndoManager();
 
   constructor(
     id: string,

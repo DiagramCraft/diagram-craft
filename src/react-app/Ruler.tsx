@@ -17,7 +17,7 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
 
   const [cursor, setCursor] = useState(0);
 
-  useEventListener(diagram, 'canvaschanged', redraw);
+  useEventListener(diagram, 'change', redraw);
   useEventListener(diagram.viewBox, 'viewbox', redraw);
   useEventListener(diagram.selectionState, 'change', redraw);
 

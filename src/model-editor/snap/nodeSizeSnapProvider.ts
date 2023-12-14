@@ -58,7 +58,8 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
       s: []
     };
 
-    for (const node of this.diagram.queryNodes()) {
+    for (const node of this.diagram.elements) {
+      if (node.type !== 'node') continue;
       if (this.excludedNodeIds.includes(node.id)) continue;
       if (Box.intersects(node.bounds, box)) continue;
       if (node.bounds.rotation !== 0) continue;

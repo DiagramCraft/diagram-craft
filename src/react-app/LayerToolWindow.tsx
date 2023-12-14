@@ -15,22 +15,16 @@ export const LayerToolWindow = () => {
       redraw();
     };
     diagram.selectionState.on('change', onChange);
-    diagram.on('canvaschanged', onChange);
-    diagram.on('nodechanged', onChange);
-    diagram.on('noderemoved', onChange);
-    diagram.on('nodeadded', onChange);
-    diagram.on('edgechanged', onChange);
-    diagram.on('edgeadded', onChange);
-    diagram.on('edgeremoved', onChange);
+    diagram.on('change', onChange);
+    diagram.on('elementRemove', onChange);
+    diagram.on('elementChange', onChange);
+    diagram.on('elementAdd', onChange);
     return () => {
       diagram.selectionState.off('change', onChange);
-      diagram.off('canvaschanged', onChange);
-      diagram.off('nodechanged', onChange);
-      diagram.off('noderemoved', onChange);
-      diagram.off('nodeadded', onChange);
-      diagram.off('edgechanged', onChange);
-      diagram.off('edgeadded', onChange);
-      diagram.off('edgeremoved', onChange);
+      diagram.off('change', onChange);
+      diagram.off('elementRemove', onChange);
+      diagram.off('elementChange', onChange);
+      diagram.off('elementAdd', onChange);
     };
   }, [diagram, redraw]);
 
