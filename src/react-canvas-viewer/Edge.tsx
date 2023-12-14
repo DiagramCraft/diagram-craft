@@ -1,4 +1,10 @@
-import React, { forwardRef, MouseEventHandler, useCallback, useImperativeHandle } from 'react';
+import React, {
+  CSSProperties,
+  forwardRef,
+  MouseEventHandler,
+  useCallback,
+  useImperativeHandle
+} from 'react';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag.ts';
@@ -19,6 +25,9 @@ import { EventHelper } from '../base-ui/eventHelper.ts';
 import { ConnectedEndpoint, DiagramEdge } from '../model-viewer/diagramEdge.ts';
 import { EdgeWaypointDrag } from '../react-canvas-editor/edgeWaypoint.ts';
 import { BezierControlPointDrag } from '../react-canvas-editor/edgeBezierControlPoint.ts';
+import { round } from '../utils/math.ts';
+import { deepMerge } from '../utils/deepmerge.ts';
+import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -27,6 +36,8 @@ export type EdgeApi = {
 export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const redraw = useRedraw();
   const drag = useDragDrop();
+
+  const { defaults } = useConfiguration();
 
   useImperativeHandle(ref, () => {
     return {
@@ -46,6 +57,18 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     },
     [props]
   );
+
+  const edgeProps = deepMerge({}, defaults.edge, props.def.props);
+
+  // TODO: Same logic in Node.tsx
+  const style: CSSProperties = {};
+  if (edgeProps.shadow?.enabled) {
+    style.filter = `drop-shadow(${edgeProps.shadow.x ?? 5}px ${edgeProps.shadow.y ?? 5}px ${
+      edgeProps.shadow.blur ?? 5
+    }px color-mix(in srgb, ${edgeProps.shadow.color ?? 'black'}, transparent ${round(
+      (edgeProps.shadow.opacity ?? 0.5) * 100
+    )}%))`;
+  }
 
   let path = buildEdgePath(props.def);
 
@@ -244,7 +267,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onContextMenu={onContextMenu}
         strokeWidth={width}
         strokeDasharray={pattern}
-        style={{ cursor: 'move', fill: 'none' }}
+        style={{ ...style, cursor: 'move', fill: 'none' }}
         markerStart={arrow1 ? `url(#marker_s_${props.def.id})` : undefined}
         markerEnd={arrow2 ? `url(#marker_e_${props.def.id})` : undefined}
       />

@@ -42,7 +42,7 @@ import {
   canvasDropHandler,
   PickerToolWindow
 } from './react-app/PickerToolWindow.tsx';
-import { ObjectProperties } from './react-app/ObjectProperties/ObjectProperties.tsx';
+import { ObjectToolWindow } from './react-app/ObjectProperties/ObjectToolWindow.tsx';
 import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 import { useEventListener } from './react-app/hooks/useEventListener.ts';
 import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
@@ -243,7 +243,7 @@ useEffect(() => {
                   }}
                 >
                   <SideBarPage icon={TbPalette}>
-                    <ObjectProperties />
+                    <ObjectToolWindow />
                   </SideBarPage>
                   <SideBarPage icon={TbInfoCircle}>
                     <ObjectInfo />

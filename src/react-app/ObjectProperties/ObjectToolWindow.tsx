@@ -14,7 +14,7 @@ import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 
-export const ObjectProperties = () => {
+export const ObjectToolWindow = () => {
   const diagram = useDiagram();
 
   const [type, setType] = useState('none');
@@ -62,7 +62,12 @@ export const ObjectProperties = () => {
           </>
         )}
 
-        {type === 'edge' && <LinePanel />}
+        {type === 'edge' && (
+          <>
+            <LinePanel />
+            <ShadowPanel />
+          </>
+        )}
 
         {type === 'none' && (
           <>

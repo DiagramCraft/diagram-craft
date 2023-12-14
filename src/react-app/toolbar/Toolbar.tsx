@@ -92,6 +92,7 @@ export const Toolbar = () => {
           <ActionToolbarButton action={'EDGE_FLIP'}>
             <TbArrowsExchange2 />
           </ActionToolbarButton>
+          <ShadowToolbarButton />
         </>
       )}
 

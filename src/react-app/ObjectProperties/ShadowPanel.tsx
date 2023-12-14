@@ -1,6 +1,6 @@
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
-import { useNodeProperty } from './useProperty.ts';
+import { useElementProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
@@ -11,12 +11,12 @@ export const ShadowPanel = (props: Props) => {
   const $d = useDiagram();
   const defaults = useNodeDefaults();
 
-  const color = useNodeProperty($d, 'shadow.color', defaults.shadow.color);
-  const opacity = useNodeProperty($d, 'shadow.opacity', defaults.shadow.opacity);
-  const x = useNodeProperty($d, 'shadow.x', defaults.shadow.x);
-  const y = useNodeProperty($d, 'shadow.y', defaults.shadow.y);
-  const blur = useNodeProperty($d, 'shadow.blur', defaults.shadow.blur);
-  const enabled = useNodeProperty($d, 'shadow.enabled', defaults.shadow.enabled);
+  const color = useElementProperty($d, 'shadow.color', defaults.shadow.color);
+  const opacity = useElementProperty($d, 'shadow.opacity', defaults.shadow.opacity);
+  const x = useElementProperty($d, 'shadow.x', defaults.shadow.x);
+  const y = useElementProperty($d, 'shadow.y', defaults.shadow.y);
+  const blur = useElementProperty($d, 'shadow.blur', defaults.shadow.blur);
+  const enabled = useElementProperty($d, 'shadow.enabled', defaults.shadow.enabled);
 
   return (
     <ToolWindowPanel
