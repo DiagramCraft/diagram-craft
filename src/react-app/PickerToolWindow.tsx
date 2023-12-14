@@ -7,6 +7,7 @@ import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DiagramNode } from '../model-viewer/diagramNode.ts';
 import { newid } from '../utils/id.ts';
 import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { NodeAddAction } from '../model-viewer/actions.ts';
 
 export const canvasDropHandler = ($d: EditableDiagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {
@@ -25,7 +26,7 @@ export const canvasDropHandler = ($d: EditableDiagram) => {
       nodeDef.getDefaultProps('canvas')
     );
 
-    $d.addNode(nd);
+    $d.undoManager.addAndExecute(new NodeAddAction([nd], $d));
 
     $d.selectionState.clear();
     $d.selectionState.toggle(nd);

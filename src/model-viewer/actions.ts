@@ -51,6 +51,7 @@ export class RotateAction extends AbstractTransformAction {}
 
 export class ResizeAction extends AbstractTransformAction {}
 
+// TODO: Do we want to reset the selection here?
 export class NodeAddAction implements UndoableAction {
   constructor(
     private readonly nodes: DiagramNode[],
