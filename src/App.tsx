@@ -60,6 +60,7 @@ import { DiagramContext } from './react-app/context/DiagramContext.tsx';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext.tsx';
 import { additionalHues, primaryColors } from './react-app/ObjectProperties/palette.ts';
 import { edgeDefaults, nodeDefaults } from './model-viewer/diagramDefaults.ts';
+import { ToolType } from './react-canvas-editor/tools/types.ts';
 
 const factory = (d: SerializedDiagram, elements: (DiagramNode | DiagramEdge)[]) => {
   return new EditableDiagram(d.id, d.name, elements, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -101,6 +102,7 @@ const App = () => {
   const contextMenuTarget = useRef<
     (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
   >(null);
+  const [tool, setTool] = useState<ToolType>('move');
 
   const svgRef = useRef<SVGSVGElement>(null);
   /*
@@ -149,7 +151,11 @@ useEffect(() => {
 
                 <div className={'_tools'}>
                   <div className={'cmp-toolbar'} data-size={'large'}>
-                    <button className={'cmp-toolbar__toggle-item'} data-state={'on'}>
+                    <button
+                      className={'cmp-toolbar__toggle-item'}
+                      data-state={tool === 'move' ? 'on' : 'off'}
+                      onClick={() => setTool('move')}
+                    >
                       <TbClick size={'1.1rem'} />
                     </button>
                     <button className={'cmp-toolbar__toggle-item'}>
@@ -158,7 +164,11 @@ useEffect(() => {
                     <button className={'cmp-toolbar__toggle-item'}>
                       <TbLine size={'1.1rem'} />
                     </button>
-                    <button className={'cmp-toolbar__toggle-item'}>
+                    <button
+                      className={'cmp-toolbar__toggle-item'}
+                      data-state={tool === 'text' ? 'on' : 'off'}
+                      onClick={() => setTool('text')}
+                    >
                       <TbTextSize size={'1.1rem'} />
                     </button>
                     <button className={'cmp-toolbar__toggle-item'}>
@@ -250,12 +260,14 @@ useEffect(() => {
                       <EditableCanvas
                         ref={svgRef}
                         key={$d.id}
+                        tool={tool}
                         className={'canvas'}
                         onContextMenu={e => {
                           contextMenuTarget.current = e;
                         }}
                         onDrop={canvasDropHandler($d)}
                         onDragOver={canvasDragOverHandler()}
+                        onResetTool={() => setTool('move')}
                       />
                     </ContextMenu.Trigger>
                     <ContextMenu.Portal>

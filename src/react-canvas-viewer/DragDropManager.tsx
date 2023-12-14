@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useRef } from 'react';
 import { Drag } from '../base-ui/drag.ts';
 
-type DragDropContextType = {
+export type DragDropContextType = {
   initiateDrag(drag: Drag): void;
   currentDrag(): Drag | undefined;
   clearDrag(): void;

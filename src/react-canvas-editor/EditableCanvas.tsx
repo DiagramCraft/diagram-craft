@@ -1,11 +1,18 @@
-import React, { forwardRef, SVGProps, useCallback, useImperativeHandle, useRef } from 'react';
+import React, {
+  forwardRef,
+  SVGProps,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState
+} from 'react';
 import { Node, NodeApi } from '../react-canvas-viewer/Node.tsx';
 import { Edge, EdgeApi } from '../react-canvas-viewer/Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
 import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
-import { Modifiers } from '../base-ui/drag.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { executeAction } from '../base-ui/keyMap.ts';
@@ -15,20 +22,18 @@ import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
 import { SelectionStateEvents } from '../model-editor/selectionState.ts';
 import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
-import { MarqueeDrag } from './SelectionMarquee.logic.tsx';
-import { MoveDrag } from '../base-ui/drag/moveDrag.ts';
 import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';
 import { getPoint } from '../react-canvas-viewer/eventHelper.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { useDiagram } from '../react-app/context/DiagramContext.tsx';
 import { useActions } from '../react-app/context/ActionsContext.tsx';
+import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor, ToolType } from './tools/types.ts';
+import { MoveTool } from './tools/moveTool.ts';
+import { TextTool } from './tools/textTool.ts';
 
-const BACKGROUND = 'background';
-
-type ObjectId = typeof BACKGROUND | string;
-
-type DeferedMouseAction = {
-  callback: () => void;
+const TOOLS: Record<ToolType, ToolContructor> = {
+  move: MoveTool,
+  text: TextTool
 };
 
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
@@ -49,6 +54,13 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
+
+  const [tool, setTool] = useState<Tool>(
+    new MoveTool(diagram, drag, svgRef, deferedMouseAction, props.onResetTool)
+  );
+  useEffect(() => {
+    setTool(new TOOLS[props.tool](diagram, drag, svgRef, deferedMouseAction, props.onResetTool));
+  }, [props.tool, props.onResetTool, diagram, drag, svgRef, deferedMouseAction]);
 
   useImperativeHandle(ref, () => {
     return svgRef.current!;
@@ -113,102 +125,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     drag.currentDrag()?.onDragLeave?.();
   }, [drag]);
 
-  // TODO: Updating the cursor is not really working
-  const updateCursor = useCallback(
-    (coord: Point) => {
-      if (Box.contains(selection.bounds, coord)) {
-        svgRef.current!.style.cursor = 'move';
-      } else {
-        svgRef.current!.style.cursor = 'default';
-      }
-    },
-    [selection.bounds]
-  );
-
-  const onMouseDown = useCallback(
-    (id: ObjectId, point: Point, modifiers: Modifiers) => {
-      const isClickOnBackground = id === BACKGROUND;
-      const isClickOnSelection = Box.contains(
-        selection.bounds,
-        diagram.viewBox.toDiagramPoint(point)
-      );
-
-      try {
-        if (isClickOnSelection) {
-          deferedMouseAction.current = {
-            callback: () => {
-              selection.clear();
-              if (!isClickOnBackground) {
-                selection.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
-              }
-            }
-          };
-        } else if (isClickOnBackground) {
-          if (!modifiers.shiftKey) {
-            selection.clear();
-          }
-          drag.initiateDrag(new MarqueeDrag(diagram, diagram.viewBox.toDiagramPoint(point)));
-          return;
-        } else {
-          if (!modifiers.shiftKey) {
-            selection.clear();
-          }
-          selection.toggle(diagram.nodeLookup[id] ?? diagram.edgeLookup[id]);
-        }
-
-        if (!selection.isEmpty()) {
-          drag.initiateDrag(
-            new MoveDrag(
-              diagram,
-              Point.subtract(diagram.viewBox.toDiagramPoint(point), selection.bounds.pos)
-            )
-          );
-        }
-      } finally {
-        updateCursor(diagram.viewBox.toDiagramPoint(point));
-      }
-    },
-    [selection, diagram, drag, updateCursor]
-  );
-
-  const onMouseUp = useCallback(
-    (point: Point) => {
-      const current = drag.currentDrag();
-      try {
-        if (current) {
-          current.onDragEnd();
-        }
-
-        if (deferedMouseAction.current) {
-          deferedMouseAction.current?.callback();
-        }
-      } finally {
-        drag.clearDrag();
-        deferedMouseAction.current = undefined;
-
-        updateCursor(point);
-      }
-    },
-    [diagram, drag, updateCursor]
-  );
-
-  const onMouseMove = useCallback(
-    (point: Point, modifiers: Modifiers) => {
-      const current = drag.currentDrag();
-
-      try {
-        // Abort early in case there's no drag in progress
-        if (!current) return;
-
-        current.onDrag(diagram.viewBox.toDiagramPoint(point), modifiers);
-      } finally {
-        deferedMouseAction.current = undefined;
-        updateCursor(diagram.viewBox.toDiagramPoint(point));
-      }
-    },
-    [diagram, drag, updateCursor]
-  );
-
   return (
     <>
       <textarea id={'clipboard'} style={{ position: 'absolute', left: '-4000px' }}></textarea>
@@ -219,12 +135,12 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         viewBox={diagram.viewBox.svgViewboxString}
         onMouseDown={e => {
           if (e.button !== 0) return;
-          onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
+          tool.onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
         }}
         style={{ userSelect: 'none' }}
-        onMouseUp={e => onMouseUp(EventHelper.point(e.nativeEvent))}
+        onMouseUp={e => tool.onMouseUp(EventHelper.point(e.nativeEvent))}
         onMouseMove={e => {
-          onMouseMove(getPoint(e, diagram), e.nativeEvent);
+          tool.onMouseMove(getPoint(e, diagram), e.nativeEvent);
         }}
         onContextMenu={event => {
           const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
@@ -259,7 +175,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
               <Edge
                 key={id}
                 ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
-                onMouseDown={onMouseDown}
+                onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
                 def={edge}
@@ -272,7 +188,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
               <Node
                 key={id}
                 ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-                onMouseDown={onMouseDown}
+                onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
                 onMouseEnter={onMouseEnter}
                 onMouseLeave={onMouseLeave}
                 def={node}
@@ -290,7 +206,9 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 });
 
 type Props = {
+  tool: ToolType;
   onContextMenu: (event: ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
+  onResetTool: () => void;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
