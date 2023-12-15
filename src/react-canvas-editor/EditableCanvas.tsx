@@ -118,10 +118,10 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   useEventListener(selection, 'add', redrawElement);
   useEventListener(selection, 'remove', redrawElement);
 
-  const onMouseEnter = useCallback((id: string) => drag.currentDrag()?.onDragEnter?.(id), [drag]);
+  const onMouseEnter = useCallback((id: string) => drag.current()?.onDragEnter?.(id), [drag]);
 
   const onMouseLeave = useCallback(() => {
-    drag.currentDrag()?.onDragLeave?.();
+    drag.current()?.onDragLeave?.();
   }, [drag]);
 
   return (

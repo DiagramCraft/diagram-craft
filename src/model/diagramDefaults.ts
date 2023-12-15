@@ -64,6 +64,9 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
 
 export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepRequired<EdgeProps>>(
   deepMerge<DeepRequired<EdgeProps>>({}, nodeDefaults, {
+    fill: {
+      color: 'var(--canvas-fg)'
+    },
     arrow: {
       start: {
         type: 'NONE',

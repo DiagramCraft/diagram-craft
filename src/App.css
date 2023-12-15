@@ -397,10 +397,12 @@ input::-webkit-input-placeholder {
     stroke-width: 1;
     stroke: orange;
     stroke-dasharray: 5 5;
+    cursor: move;
   }
 
   .svg-waypoint-handle {
     fill: white;
+    cursor: move;
     stroke-width: 1;
     stroke: #1d4ed8;
   }

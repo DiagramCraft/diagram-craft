@@ -54,7 +54,7 @@ export class MoveTool extends AbstractTool {
         if (!modifiers.shiftKey) {
           selection.clear();
         }
-        this.drag.initiateDrag(
+        this.drag.initiate(
           new MarqueeDrag(this.diagram, this.diagram.viewBox.toDiagramPoint(point))
         );
         return;
@@ -66,7 +66,7 @@ export class MoveTool extends AbstractTool {
       }
 
       if (!selection.isEmpty()) {
-        this.drag.initiateDrag(
+        this.drag.initiate(
           new MoveDrag(
             this.diagram,
             Point.subtract(this.diagram.viewBox.toDiagramPoint(point), selection.bounds.pos)
@@ -79,7 +79,7 @@ export class MoveTool extends AbstractTool {
   }
 
   onMouseUp(point: Point) {
-    const current = this.drag.currentDrag();
+    const current = this.drag.current();
     try {
       if (current) {
         current.onDragEnd();
@@ -89,7 +89,7 @@ export class MoveTool extends AbstractTool {
         this.deferedMouseAction.current?.callback();
       }
     } finally {
-      this.drag.clearDrag();
+      this.drag.clear();
       this.deferedMouseAction.current = undefined;
 
       this.updateCursor(point);
@@ -97,7 +97,7 @@ export class MoveTool extends AbstractTool {
   }
 
   onMouseMove(point: Point, modifiers: Modifiers) {
-    const current = this.drag.currentDrag();
+    const current = this.drag.current();
 
     try {
       // Abort early in case there's no drag in progress

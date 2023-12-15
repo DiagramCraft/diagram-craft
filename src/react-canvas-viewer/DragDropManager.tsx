@@ -2,9 +2,9 @@ import React, { createContext, useContext, useMemo, useRef } from 'react';
 import { Drag } from '../base-ui/drag.ts';
 
 export type DragDropContextType = {
-  initiateDrag(drag: Drag): void;
-  currentDrag(): Drag | undefined;
-  clearDrag(): void;
+  initiate(drag: Drag): void;
+  current(): Drag | undefined;
+  clear(): void;
 };
 
 export const DragDropContext = createContext<DragDropContextType | undefined>(undefined);
@@ -18,13 +18,13 @@ export const DragDropManager = (props: Props) => {
 
   const ctx = useMemo(() => {
     return {
-      initiateDrag(drag: Drag) {
+      initiate(drag: Drag) {
         dragRef.current = drag;
       },
-      currentDrag() {
+      current() {
         return dragRef.current;
       },
-      clearDrag() {
+      clear() {
         dragRef.current = undefined;
       }
     };

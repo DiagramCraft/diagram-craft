@@ -31,7 +31,7 @@ export const ShapeControlPoint = (props: Props) => {
       cursor={'crosshair'}
       onMouseDown={e => {
         if (e.button !== 0) return;
-        drag.initiateDrag(new ShapeControlPointDrag(props.def, props.onDrag));
+        drag.initiate(new ShapeControlPointDrag(props.def, props.onDrag));
         e.stopPropagation();
       }}
     />

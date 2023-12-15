@@ -15,10 +15,10 @@ import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { getPoint } from './eventHelper.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
-import { round } from '../utils/math.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { deepMerge } from '../utils/deepmerge.ts';
+import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -86,11 +86,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   }
 
   if (nodeProps.shadow?.enabled) {
-    style.filter = `drop-shadow(${nodeProps.shadow.x ?? 5}px ${nodeProps.shadow.y ?? 5}px ${
-      nodeProps.shadow.blur ?? 5
-    }px color-mix(in srgb, ${nodeProps.shadow.color ?? 'black'}, transparent ${round(
-      (nodeProps.shadow.opacity ?? 0.5) * 100
-    )}%))`;
+    style.filter = makeShadowFilter(nodeProps.shadow);
   }
 
   if (nodeProps.stroke?.enabled === false) {

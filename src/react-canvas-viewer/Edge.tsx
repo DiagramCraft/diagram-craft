@@ -11,23 +11,18 @@ import { Modifiers } from '../base-ui/drag.ts';
 import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
-import {
-  LengthOffsetOnSegment,
-  PointOnPath,
-  TimeOffsetOnSegment,
-  WithSegment
-} from '../geometry/pathPosition.ts';
-import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
-import { invariant } from '../utils/assert.ts';
+import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { ConnectedEndpoint, DiagramEdge } from '../model/diagramEdge.ts';
+import { DiagramEdge } from '../model/diagramEdge.ts';
 import { EdgeWaypointDrag } from '../react-canvas-editor/edgeWaypoint.ts';
 import { BezierControlPointDrag } from '../react-canvas-editor/edgeBezierControlPoint.ts';
-import { round } from '../utils/math.ts';
 import { deepMerge } from '../utils/deepmerge.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { Diagram } from '../model/diagram.ts';
+import { makeShadowFilter } from '../base-ui/styleUtils.ts';
+import { DeepRequired } from 'ts-essentials';
+import { clipPath } from '../base-ui/edgeUtils.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -58,132 +53,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     [props]
   );
 
-  const edgeProps = deepMerge({}, defaults.edge, props.def.props);
-
-  // TODO: Same logic in Node.tsx
-  const style: CSSProperties = {};
-  if (edgeProps.shadow?.enabled) {
-    style.filter = `drop-shadow(${edgeProps.shadow.x ?? 5}px ${edgeProps.shadow.y ?? 5}px ${
-      edgeProps.shadow.blur ?? 5
-    }px color-mix(in srgb, ${edgeProps.shadow.color ?? 'black'}, transparent ${round(
-      (edgeProps.shadow.opacity ?? 0.5) * 100
-    )}%))`;
-  }
-
-  let path = buildEdgePath(props.def);
-
-  const isSelected = props.diagram.selectionState.elements.includes(props.def);
-  const isSingleSelected = isSelected && props.diagram.selectionState.elements.length === 1;
-
-  const color = props.def.props.stroke?.color ?? 'black';
-  const fillColor = props.def.props.fill?.color ?? color;
-  const pattern =
-    DASH_PATTERNS[props.def.props.stroke?.pattern ?? 'SOLID']?.(
-      (props.def.props?.stroke?.patternSize ?? 100) / 100,
-      (props.def.props?.stroke?.patternSpacing ?? 100) / 100
-    ) ?? '';
-  const width = Number(props.def.props.stroke?.width ?? 1);
-
-  const startArrowSize = (props.def.props.arrow?.start?.size ?? 100) / 100;
-  const endArrowSize = (props.def.props.arrow?.end?.size ?? 100) / 100;
-
-  const arrow1: ArrowShape | undefined =
-    ARROW_SHAPES[props.def.props.arrow?.start?.type ?? '']?.(startArrowSize);
-  const arrow2: ArrowShape | undefined =
-    ARROW_SHAPES[props.def.props.arrow?.end?.type ?? '']?.(endArrowSize);
-
-  let start: PointOnPath | undefined;
-  let end: PointOnPath | undefined;
-
-  // TODO: If we connect to any other than the anchor point, should we really clip?
-  //       maybe we should make this a setting on the edge? or on the anchor?
-  //       ... maybe there are three behaviors, clip, no-clip and attach to closest anchor
-  const intersections: WithSegment<PointOnPath>[] = [];
-  if (props.def.isEndConnected()) {
-    const endEndpoint = props.def.end as ConnectedEndpoint;
-    const endNode = endEndpoint.node;
-    const anchor = endNode.getAnchor(endEndpoint.anchor);
-
-    // TODO: Need to handle this better - maybe look for the closest intersection
-    //       to the point - and if longer than a few pixels skip the intersection
-    const endNodeDefinition = props.diagram.nodeDefinitions.get(endNode.nodeType);
-    const endIntersections = path.intersections(endNodeDefinition.getBoundingPath(endNode));
-
-    if (anchor.clip) {
-      intersections.push(...endIntersections);
-      // TODO: Handle multiple intersections
-      end = endIntersections?.[0] ?? { point: props.def.endPosition };
-    } else {
-      const closeIntersections = endIntersections.filter(
-        i =>
-          Point.distance(props.def.endPosition, i.point) < 1.5 * (endNode.props.stroke?.width ?? 1)
-      );
-      if (closeIntersections) {
-        intersections.push(...closeIntersections);
-      }
-      end = closeIntersections?.[0] ?? { point: props.def.endPosition };
-    }
-  }
-  if (props.def.isStartConnected()) {
-    const startEndpoint = props.def.start as ConnectedEndpoint;
-    const startNode = startEndpoint.node;
-    const anchor = startNode.getAnchor(startEndpoint.anchor);
-    const startNodeDefinition = props.diagram.nodeDefinitions.get(startNode.nodeType);
-    const startIntersections = path.intersections(startNodeDefinition.getBoundingPath(startNode));
-
-    if (anchor.clip) {
-      intersections.push(...startIntersections);
-      // TODO: Handle multiple intersections
-      start = startIntersections?.[0] ?? { point: props.def.startPosition };
-    } else {
-      const closeIntersections = startIntersections.filter(
-        i =>
-          Point.distance(props.def.startPosition, i.point) <
-          1.5 * (startNode.props.stroke?.width ?? 1)
-      );
-      if (closeIntersections) {
-        intersections.push(...closeIntersections);
-      }
-      start = closeIntersections?.[0] ?? { point: props.def.startPosition };
-    }
-  }
-
-  if (start) {
-    if (end) {
-      let startOffset: TimeOffsetOnSegment | undefined;
-      let endOffset: TimeOffsetOnSegment | undefined;
-
-      if (arrow1) {
-        const baseTOS = PointOnPath.toTimeOffset(start, path);
-        const arrowL1 = TimeOffsetOnSegment.toLengthOffsetOnSegment(baseTOS, path);
-        // TODO: This 1 is likely the stroke width of the edge
-        arrowL1.segmentD += (arrow1.shortenBy ?? 0) + 1;
-
-        startOffset = LengthOffsetOnSegment.toTimeOffsetOnSegment(arrowL1, path);
-      } else {
-        startOffset = PointOnPath.toTimeOffset(start, path);
-      }
-
-      if (arrow2) {
-        const baseTOS = PointOnPath.toTimeOffset(end, path);
-        const arrowL2 = TimeOffsetOnSegment.toLengthOffsetOnSegment(baseTOS, path);
-        // TODO: This 1 is likely the stroke width of the edge
-        arrowL2.segmentD -= (arrow2.shortenBy ?? 0) + 1;
-
-        endOffset = LengthOffsetOnSegment.toTimeOffsetOnSegment(arrowL2, path);
-      } else {
-        endOffset = PointOnPath.toTimeOffset(end, path);
-      }
-
-      invariant.is.present(startOffset);
-      invariant.is.present(endOffset);
-
-      path = path.split(startOffset, endOffset)[1];
-    } else {
-      path = path.split(PointOnPath.toTimeOffset(start, path))[1];
-    }
-  }
-
   const onContextMenu = (event: React.MouseEvent<SVGPathElement, MouseEvent>) => {
     const e = event as ContextMenuEvent & React.MouseEvent<SVGPathElement, MouseEvent>;
     const point = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
@@ -193,6 +62,36 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       pos: props.diagram.viewBox.toDiagramPoint(point)
     };
   };
+
+  const isSelected = props.diagram.selectionState.elements.includes(props.def);
+  const isSingleSelected = isSelected && props.diagram.selectionState.elements.length === 1;
+  const firstEdge = props.diagram.selectionState.edges[0];
+
+  const edgeProps = deepMerge({}, defaults.edge, props.def.props) as DeepRequired<EdgeProps>;
+
+  const color = edgeProps.stroke?.color;
+  const fillColor = edgeProps.fill?.color;
+  const width = edgeProps.stroke?.width;
+
+  const style: CSSProperties = {};
+  style.cursor = 'move';
+  style.fill = 'none';
+  style.strokeDasharray =
+    DASH_PATTERNS[edgeProps.stroke.pattern]?.(
+      edgeProps.stroke.patternSize / 100,
+      edgeProps.stroke.patternSpacing / 100
+    ) ?? '';
+  style.strokeWidth = width;
+  style.stroke = color;
+  if (edgeProps.shadow?.enabled) {
+    style.filter = makeShadowFilter(edgeProps.shadow);
+  }
+
+  const startArrowSize = edgeProps.arrow.start.size / 100;
+  const endArrowSize = edgeProps.arrow.end.size / 100;
+  const arrow1 = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
+  const arrow2 = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
+  const path = clipPath(buildEdgePath(props.def), props.def, arrow1, arrow2);
 
   return (
     <g>
@@ -255,41 +154,34 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       />
       <path
         d={path.asSvgPath()}
-        stroke={color}
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onContextMenu={onContextMenu}
-        strokeWidth={width}
-        strokeDasharray={pattern}
-        style={{ ...style, cursor: 'move', fill: 'none' }}
+        style={style}
         markerStart={arrow1 ? `url(#marker_s_${props.def.id})` : undefined}
         markerEnd={arrow2 ? `url(#marker_e_${props.def.id})` : undefined}
       />
 
       {isSingleSelected && (
         <>
-          {props.diagram.selectionState.edges[0].waypoints?.map((wp, idx) => (
+          {firstEdge.waypoints?.map((wp, idx) => (
             <circle
               key={`wp_${wp.point.x}_${wp.point.y}`}
               cx={wp.point.x}
               cy={wp.point.y}
               r="4"
               className="svg-waypoint-handle"
-              cursor={'move'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-
-                drag.initiateDrag(new EdgeWaypointDrag(props.diagram, props.def, idx));
+                drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));
                 e.stopPropagation();
-
-                return false;
               }}
               onContextMenu={onContextMenu}
             />
           ))}
-          {props.diagram.selectionState.edges[0].props.type === 'bezier' &&
-            props.diagram.selectionState.edges[0].waypoints?.map((wp, idx) => {
+          {firstEdge.props.type === 'bezier' &&
+            firstEdge.waypoints?.map((wp, idx) => {
               const controlPoints = wp.controlPoints ?? [];
               return controlPoints.map((cp, cIdx) => {
                 return (
@@ -300,23 +192,18 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
                       x2={wp.point.x}
                       y2={wp.point.y}
                       className="svg-bezier-handle-line"
-                      cursor={'move'}
                     />
                     <circle
                       cx={wp.point.x + cp.x}
                       cy={wp.point.y + cp.y}
                       r="4"
                       className="svg-bezier-handle"
-                      cursor={'move'}
                       onMouseDown={e => {
                         if (e.button !== 0) return;
-
-                        drag.initiateDrag(
+                        drag.initiate(
                           new BezierControlPointDrag(props.diagram, props.def, idx, cIdx)
                         );
                         e.stopPropagation();
-
-                        return false;
                       }}
                     />
                   </React.Fragment>

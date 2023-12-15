@@ -184,7 +184,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'ew-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(new RotateDrag(props.diagram));
+                drag.initiate(new RotateDrag(props.diagram));
                 e.stopPropagation();
               }}
             />
@@ -196,7 +196,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'nw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-nw',
@@ -214,7 +214,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'ne-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-ne',
@@ -232,7 +232,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'se-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-se',
@@ -250,7 +250,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'sw-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-sw',
@@ -268,7 +268,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'n-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-n',
@@ -286,7 +286,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'e-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-e',
@@ -305,7 +305,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'s-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-s',
@@ -323,7 +323,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               cursor={'w-resize'}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiateDrag(
+                drag.initiate(
                   new ResizeDrag(
                     props.diagram,
                     'resize-w',
@@ -350,7 +350,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                   className={$c('svg-selection__handle-edge', { connected: e.isStartConnected() })}
                   onMouseDown={ev => {
                     if (ev.button !== 0) return;
-                    drag.initiateDrag(
+                    drag.initiate(
                       new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'start')
                     );
                     ev.stopPropagation();
@@ -363,7 +363,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                   className={$c('svg-selection__handle-edge', { connected: e.isEndConnected() })}
                   onMouseDown={ev => {
                     if (ev.button !== 0) return;
-                    drag.initiateDrag(
+                    drag.initiate(
                       new EdgeEndpointMoveDrag(props.diagram, e, ev.currentTarget, 'end')
                     );
                     ev.stopPropagation();
