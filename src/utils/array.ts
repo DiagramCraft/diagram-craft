@@ -27,3 +27,5 @@ export const unique = <T>(arr: T[], respectTo: (e: T) => unknown = a => a): T[] 
   }
   return result;
 };
+
+export const reversed = <T>(l: T[]): T[] => [...l].reverse();

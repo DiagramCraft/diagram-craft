@@ -10,6 +10,8 @@ import { SelectionState } from './selectionState.ts';
 import { UndoManager } from './undoManager.ts';
 import { SnapManager } from './snap/snapManager.ts';
 import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
+import { unique } from '../utils/array.ts';
+import { assert } from '../utils/assert.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
@@ -102,19 +104,50 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     );
   }
 
-  moveElement(element: DiagramElement, layer: Layer, idx?: number) {
-    const currentLayer = element.layer!;
-    if (idx !== undefined) {
-      layer.elements.splice(idx, 0, element);
-      element.layer = layer;
-    } else if (layer.isAbove(currentLayer)) {
-      layer.elements.unshift(element);
-      element.layer = layer;
-    } else {
-      layer.elements.push(element);
-      element.layer = layer;
+  moveElement(
+    elements: DiagramElement[],
+    layer: Layer,
+    ref?: { relation: 'above' | 'below'; element: DiagramElement }
+  ) {
+    const layers = elements.map(e => e.layer);
+    const topMostLayer = this.layers.all.findLast(l => layers.includes(l));
+    assert.present(topMostLayer);
+
+    if (elements.some(e => e === ref?.element)) return;
+
+    // Remove from existing layers
+    const sourceLayers = unique(elements.map(e => e.layer!));
+    for (const l of sourceLayers) {
+      l.elements = l.elements.filter(e => !elements.includes(e));
     }
-    currentLayer.elements = currentLayer.elements.filter(e => e !== element);
+
+    // Move into the new layer
+    if (ref === undefined) {
+      if (layer.isAbove(topMostLayer)) {
+        layer.elements.push(...elements);
+      } else {
+        layer.elements.unshift(...elements);
+      }
+    } else {
+      assert.true(ref.element.layer === layer);
+
+      for (const e of layer.elements) {
+        if (e === ref.element) {
+          if (ref.relation === 'above') {
+            layer.elements.splice(layer.elements.indexOf(e) + 1, 0, ...elements);
+          } else {
+            layer.elements.splice(layer.elements.indexOf(e), 0, ...elements);
+          }
+          break;
+        }
+      }
+    }
+
+    // Assign new layer
+    elements.forEach(e => {
+      e.layer = layer;
+    });
+
     this.update();
   }
 

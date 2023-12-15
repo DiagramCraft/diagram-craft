@@ -1137,6 +1137,9 @@ input::-webkit-input-placeholder {
       background-color: var(--blue-4);
     }
   }
+  .cmp-tree__node[data-depth="0"]:not(:first-child) {
+    border-top: 1px dashed var(--slate-5);
+  }
 
   .cmp-layer-list__layer--selected {
     & .cmp-tree__node__label, .cmp-tree__node__value {
@@ -1154,6 +1157,15 @@ input::-webkit-input-placeholder {
       width: 2px;
       background-color: var(--blue-11);
     }
+  }
+
+  .cmp-layer-list__drag-indicator {
+    position: fixed;
+    height: 4px;
+    background: var(--blue-11);
+    visibility: hidden;
+    z-index: 1000;
+    pointer-events: none;
   }
 }
 
