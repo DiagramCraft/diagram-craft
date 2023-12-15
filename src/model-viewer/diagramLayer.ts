@@ -1,6 +1,7 @@
 import { DiagramElement } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
+import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 
 export type LayerEvents = {
   change: { layer: Layer };
@@ -120,6 +121,19 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
     this.#layers.forEach(layer => {
       this.#visibleLayers.add(layer.id);
     });
+
+    // TODO: Only needed since we separate Diagram and EditableDiagram
+    setTimeout(() => {
+      if (this.diagram.constructor.name === 'EditableDiagram') {
+        const ed = this.diagram as EditableDiagram;
+        ed.selectionState.on('add', () => {
+          if (!ed.selectionState.isEmpty()) this.active = ed.selectionState.elements[0].layer!;
+        });
+        ed.selectionState.on('remove', () => {
+          if (!ed.selectionState.isEmpty()) this.active = ed.selectionState.elements[0].layer!;
+        });
+      }
+    }, 0);
   }
 
   get all() {

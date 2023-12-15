@@ -43,7 +43,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   readonly nodeLookup: Record<string, DiagramNode> = {};
   readonly edgeLookup: Record<string, DiagramEdge> = {};
 
-  readonly layers = new LayerManager(this, []);
+  readonly layers;
 
   constructor(
     readonly id: string,
@@ -54,6 +54,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   ) {
     super();
 
+    this.layers = new LayerManager(this, []);
     if (elements) {
       this.layers.add(new Layer('default', 'Default', [], this));
       elements.forEach(e => this.layers.active.addElement(e, true));
