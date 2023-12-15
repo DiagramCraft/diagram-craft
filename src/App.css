@@ -1098,6 +1098,7 @@ input::-webkit-input-placeholder {
     margin-right: 0.35rem;
 
     > button {
+      cursor: pointer;
       border: 0;
       padding: 0;
       background: none;
@@ -1130,6 +1131,11 @@ input::-webkit-input-placeholder {
 .cmp-layer-list {
   .cmp-tree__node {
     position: relative;
+
+    &:hover {
+      color: var(--blue-11);
+      background-color: var(--blue-4);
+    }
   }
 
   .cmp-layer-list__layer--selected {

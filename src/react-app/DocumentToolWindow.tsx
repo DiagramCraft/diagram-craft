@@ -2,7 +2,7 @@ import { DiagramDocument } from '../model/diagramDocument.ts';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
-import { Tree, TreeNode } from './components/Tree.tsx';
+import * as Tree from './components/Tree.tsx';
 import { Diagram } from '../model/diagram.ts';
 
 const DiagramLabel = (props: { diagram: Diagram } & Pick<Props, 'onValueChange'>) => {
@@ -22,11 +22,11 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
   return (
     <>
       {props.diagram.diagrams.map(node => (
-        <TreeNode
-          key={node.id}
-          label={<DiagramLabel diagram={node} onValueChange={props.onValueChange} />}
-          value={props.value === node.id ? 'Active' : ''}
-        >
+        <Tree.Node key={node.id}>
+          <Tree.NodeLabel>
+            <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+          </Tree.NodeLabel>
+          <Tree.NodeValue>{props.value === node.id ? 'Active' : ''}</Tree.NodeValue>
           {node.diagrams.length > 0 && (
             <DiagramTreeNode
               diagram={node}
@@ -34,7 +34,7 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
               value={props.value}
             />
           )}
-        </TreeNode>
+        </Tree.Node>
       ))}
     </>
   );
@@ -46,25 +46,26 @@ export const DocumentToolWindow = (props: Props) => {
       <Accordion.Item className="cmp-accordion__item" value="document">
         <AccordionTrigger>Document structure</AccordionTrigger>
         <AccordionContent>
-          <div style={{ margin: '-0.5rem' }}>
-            <Tree>
+          <div style={{ margin: '-10px' }}>
+            <Tree.Root>
               {props.document.diagrams.map(node => (
-                <TreeNode
-                  key={node.id}
-                  label={<DiagramLabel diagram={node} onValueChange={props.onValueChange} />}
-                  isOpen={true}
-                  value={props.value === node.id ? 'Active' : ''}
-                >
+                <Tree.Node key={node.id} isOpen={true}>
+                  <Tree.NodeLabel>
+                    <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+                  </Tree.NodeLabel>
+                  <Tree.NodeValue>{props.value === node.id ? 'Active' : ''}</Tree.NodeValue>
                   {node.diagrams.length > 0 && (
-                    <DiagramTreeNode
-                      diagram={node}
-                      onValueChange={props.onValueChange}
-                      value={props.value}
-                    />
+                    <Tree.Children>
+                      <DiagramTreeNode
+                        diagram={node}
+                        onValueChange={props.onValueChange}
+                        value={props.value}
+                      />
+                    </Tree.Children>
                   )}
-                </TreeNode>
+                </Tree.Node>
               ))}
-            </Tree>
+            </Tree.Root>
           </div>
         </AccordionContent>
       </Accordion.Item>

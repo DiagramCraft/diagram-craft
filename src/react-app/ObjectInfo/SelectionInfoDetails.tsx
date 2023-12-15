@@ -1,14 +1,18 @@
 import { SelectionState } from '../../model/selectionState.ts';
-import { ObjectTreeNode, Tree, TreeNode } from '../components/Tree.tsx';
+import * as Tree from '../components/Tree.tsx';
+import { ObjectTreeNode } from '../components/ObjectTreeNode.tsx';
 
 export const SelectionInfoDetails = (props: { obj: SelectionState }) => {
   return (
-    <div style={{ margin: '-0.5rem' }}>
-      <Tree>
-        <TreeNode label={'bounds'}>
-          <ObjectTreeNode obj={props.obj.bounds} />
-        </TreeNode>
-      </Tree>
+    <div style={{ margin: '-10px' }}>
+      <Tree.Root>
+        <Tree.Node>
+          <Tree.NodeLabel>bounds</Tree.NodeLabel>
+          <Tree.Children>
+            <ObjectTreeNode obj={props.obj.bounds} />
+          </Tree.Children>
+        </Tree.Node>
+      </Tree.Root>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useDiagram } from '../context/DiagramContext.tsx';
-import { Tree, TreeNode } from './Tree.tsx';
+import * as Tree from './Tree.tsx';
 import { TbEyeOff, TbEye } from 'react-icons/tb';
 import { Diagram } from '../../model/diagram.ts';
 import { Layer } from '../../model/diagramLayer.ts';
@@ -34,31 +34,40 @@ export const LayerList = () => {
 
   return (
     <div style={{ margin: '-10px' }} className={'cmp-layer-list'}>
-      <Tree>
+      <Tree.Root>
         {layers.map(l => (
-          <TreeNode
+          <Tree.Node
             key={l.id}
-            label={l.name}
-            value={diagram.layers.active === l ? 'Active' : ''}
-            action={<VisibilityToggle layer={l} diagram={diagram} />}
             isOpen={true}
             className={diagram.layers.active === l ? 'cmp-layer-list__layer--selected' : ''}
             onClick={() => {
               diagram.layers.active = l;
             }}
           >
-            <div style={{ display: 'contents' }}>
-              {reversed(l.elements).map(e => (
-                <TreeNode
-                  key={e.id}
-                  label={e.type === 'node' ? e.nodeType : e.type}
-                  data-state={diagram.selectionState.elements.includes(e) ? 'on' : 'off'}
-                />
-              ))}
-            </div>
-          </TreeNode>
+            <Tree.NodeLabel>{l.name}</Tree.NodeLabel>
+            <Tree.NodeValue>{diagram.layers.active === l ? 'Active' : ''}</Tree.NodeValue>
+            <Tree.NodeAction>
+              <VisibilityToggle layer={l} diagram={diagram} />
+            </Tree.NodeAction>
+            <Tree.Children>
+              <div style={{ display: 'contents' }}>
+                {reversed(l.elements).map(e => (
+                  <Tree.Node
+                    key={e.id}
+                    data-state={diagram.selectionState.elements.includes(e) ? 'on' : 'off'}
+                    onClick={() => {
+                      diagram.selectionState.clear();
+                      diagram.selectionState.toggle(e);
+                    }}
+                  >
+                    <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
+                  </Tree.Node>
+                ))}
+              </div>
+            </Tree.Children>
+          </Tree.Node>
         ))}
-      </Tree>
+      </Tree.Root>
     </div>
   );
 };

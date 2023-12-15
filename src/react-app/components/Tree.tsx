@@ -1,27 +1,56 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, {
+  createContext,
+  JSXElementConstructor,
+  ReactElement,
+  ReactNode,
+  useContext,
+  useState
+} from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
-import { round } from '../../utils/math.ts';
 import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
 
-const TreeContext = createContext<{ depth: number } | undefined>(undefined);
+const isReactElement = (
+  element: ReactNode
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): element is ReactElement<any, JSXElementConstructor<any>> =>
+  element !== null && typeof element === 'object' && 'props' in element;
 
-export const Tree = (props: TreeProps) => {
+type TreeContextType = {
+  depth: number;
+  open?: boolean;
+  setOpen?: (b: boolean) => void;
+  hasChildren?: boolean;
+};
+
+const TreeContext = createContext<TreeContextType | undefined>(undefined);
+
+export const Root = (props: RootProps) => {
   return (
-    <TreeContext.Provider {...propsUtils.filterDomProperties(props)} value={{ depth: 0 }}>
-      <div className={'cmp-tree'}>{props.children}</div>
+    <TreeContext.Provider value={{ depth: 0 }}>
+      <div
+        {...propsUtils.filterDomProperties(props)}
+        className={`cmp-tree ${props.className ?? ''}`}
+      >
+        {props.children}
+      </div>
     </TreeContext.Provider>
   );
 };
 
-type TreeProps = {
+type RootProps = {
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const TreeNode = (props: TreeNodeProps) => {
+export const Node = (props: NodeProps) => {
   const [open, setOpen] = useState(props.isOpen);
   const ctx = useContext(TreeContext);
+
+  const hasChildren = React.Children.toArray(props.children).some(
+    child => isReactElement(child) && child.type.name === 'Children'
+  );
+
   return (
-    <TreeContext.Provider value={{ depth: ctx!.depth + 1 }}>
+    <TreeContext.Provider value={{ depth: ctx!.depth + 1, open, setOpen, hasChildren }}>
       <div
         {...propsUtils.filterDomProperties(props)}
         className={`cmp-tree__node ${props.className ?? ''}`}
@@ -29,53 +58,78 @@ export const TreeNode = (props: TreeNodeProps) => {
         onClick={props.onClick}
         style={{ cursor: props.onClick ? 'pointer' : 'default' }}
       >
-        <div className={'cmp-tree__node__label'}>
-          <div className={'cmp-tree__node__label__toggle'}>
-            {props.children && !open && (
-              <button onClick={() => setOpen(true)}>
-                <TbChevronRight />
-              </button>
-            )}
-            {props.children && open && (
-              <button onClick={() => setOpen(false)}>
-                <TbChevronDown />
-              </button>
-            )}
-          </div>
-
-          {props.label}
-        </div>
-        <div className={'cmp-tree__node__value'}>{props.value}</div>
-        <div className={'cmp-tree__node__action'}>{props.action}</div>
+        {React.Children.map(props.children, child => {
+          return isReactElement(child) && child.type.name === 'Children' ? null : child;
+        })}
       </div>
-      {open && props.children}
+      {open &&
+        React.Children.map(props.children, child => {
+          return isReactElement(child) && child.type.name === 'Children'
+            ? child?.props.children
+            : null;
+        })}
     </TreeContext.Provider>
   );
 };
 
-type TreeNodeProps = {
-  label: string | ReactNode;
-  value?: string;
-  action?: string | ReactNode;
+type NodeProps = {
   isOpen?: boolean;
   children?: React.ReactNode;
-  onClick?: () => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-// eslint-disable-next-line
-export const ObjectTreeNode = (props: { obj: any }) => {
-  return Object.keys(props.obj).map(key => {
-    const v = props.obj[key];
-    if (typeof v === 'number') {
-      return <TreeNode key={key} label={key} value={round(v).toString()} />;
-    }
-    if (typeof v === 'string' || typeof v === 'boolean') {
-      return <TreeNode key={key} label={key} value={v.toString()} />;
-    }
-    return (
-      <TreeNode key={key} label={key} isOpen={true}>
-        <ObjectTreeNode obj={v} />
-      </TreeNode>
-    );
-  });
+export const NodeLabel = (
+  props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
+) => {
+  const ctx = useContext(TreeContext)!;
+  return (
+    <div
+      {...propsUtils.filterDomProperties(props)}
+      className={`cmp-tree__node__label ${props.className ?? ''}`}
+    >
+      <div className={'cmp-tree__node__label__toggle'}>
+        {ctx.hasChildren && !ctx.open && (
+          <button onClick={() => ctx.setOpen!(true)}>
+            <TbChevronRight />
+          </button>
+        )}
+        {ctx.hasChildren && ctx.open && (
+          <button onClick={() => ctx.setOpen!(false)}>
+            <TbChevronDown />
+          </button>
+        )}
+      </div>
+      {props.children}
+    </div>
+  );
+};
+
+export const NodeValue = (
+  props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
+) => {
+  return (
+    <div
+      {...propsUtils.filterDomProperties(props)}
+      {...propsUtils.filterDomProperties(props)}
+      className={`cmp-tree__node__value ${props.className ?? ''}`}
+    >
+      {props.children}
+    </div>
+  );
+};
+
+export const NodeAction = (
+  props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
+) => {
+  return (
+    <div
+      {...propsUtils.filterDomProperties(props)}
+      className={`cmp-tree__node__action ${props.className ?? ''}`}
+    >
+      {props.children}
+    </div>
+  );
+};
+
+export const Children = (props: { children: React.ReactNode }) => {
+  return props.children;
 };
