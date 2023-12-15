@@ -46,21 +46,21 @@ export const makePropertyHook = <
   }
 ): PropertyHook<TBase, TObj> => {
   return ((obj: TBase, path: TPath, defaultValue: TValue) => {
-    const accessor = new DynamicAccessor<TObj>();
     const [value, setValue] = useState<TValue>(defaultValue);
     const handler = () => {
+      const accessor = new DynamicAccessor<TObj>();
       const value = accessor.get(getObj(obj), path);
 
       if (value === undefined || value === null) return setValue(defaultValue);
       else return setValue(value as unknown as TValue);
     };
     subscribe(obj, handler);
-    useEffect(handler, []);
+    useEffect(handler, [defaultValue, obj, path]);
 
     return {
       val: value,
       set: (v: TValue) => {
-        accessor.set(getObj(obj), path, v);
+        new DynamicAccessor<TObj>().set(getObj(obj), path, v);
         callbacks?.onAfterSet?.(obj, path, value, v);
         commit(obj);
         setValue(v);
@@ -91,10 +91,10 @@ export const makePropertyArrayHook = <
   }
 ): PropertyArrayHook<TBase, TObj> => {
   return ((obj: TBase, path: TPath, defaultValue: TValue) => {
-    const accessor = new DynamicAccessor<TObj>();
     const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
     const handler = () => {
+      const accessor = new DynamicAccessor<TObj>();
       const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj), path)));
 
       if (arr.length === 1) setValue((arr[0]! as TValue) ?? defaultValue);
@@ -103,8 +103,9 @@ export const makePropertyArrayHook = <
       setMultiple(arr.length > 1);
     };
     subscribe(obj, handler);
-    useEffect(handler, [defaultValue]);
+    useEffect(handler, [defaultValue, obj, path]);
 
+    const accessor = new DynamicAccessor<TObj>();
     return {
       val: value,
       set: (v: TValue) => {

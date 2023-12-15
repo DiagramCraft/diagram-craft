@@ -37,15 +37,17 @@ const AdjustButton = (props: {
     const mouseUp = () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-    btnRef.current?.addEventListener('mousedown', mouseDown);
-    btnRef.current?.addEventListener('mouseup', mouseUp);
-    btnRef.current?.addEventListener('mouseleave', mouseUp);
+
+    const btn = btnRef.current!;
+    btn.addEventListener('mousedown', mouseDown);
+    btn.addEventListener('mouseup', mouseUp);
+    btn.addEventListener('mouseleave', mouseUp);
     return () => {
-      btnRef.current?.removeEventListener('mousedown', mouseDown);
-      btnRef.current?.removeEventListener('mouseup', mouseUp);
-      btnRef.current?.removeEventListener('mouseleave', mouseUp);
+      btn.removeEventListener('mousedown', mouseDown);
+      btn.removeEventListener('mouseup', mouseUp);
+      btn.removeEventListener('mouseleave', mouseUp);
     };
-  }, [btnRef, props.onClick]);
+  }, [btnRef, props, props.onClick]);
 
   return (
     <button ref={btnRef} className={props.className}>
@@ -92,7 +94,7 @@ export const NumberInput = (props: Props) => {
         return newValue.toString() + ' ' + (newUnit ?? '');
       });
     },
-    [currentValue, setCurrentValue, props.onChange, props.defaultUnit]
+    [props]
   );
 
   if (origValue !== props.value.toString() && !hasFocus.current && !props.hasMultipleValues) {

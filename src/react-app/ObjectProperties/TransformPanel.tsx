@@ -58,7 +58,7 @@ export const TransformPanel = (props: Props) => {
     return () => {
       diagram.selectionState.off('change', callback);
     };
-  }, []);
+  }, [diagram.selectionState]);
 
   // TODO: This seems a bit complicated just to move an element
   //       ... especially all of the updating of the selection state

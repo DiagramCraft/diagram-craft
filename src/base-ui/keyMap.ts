@@ -12,7 +12,7 @@ import { ToggleRulerAction } from './actions/toggleRulerAction.ts';
 import { SelectionDeleteAction } from './actions/selectionDeleteAction.ts';
 import { SelectionRestackAction } from './actions/selectionRestackAction.ts';
 import { ClipboardCopyAction, ClipboardPasteAction } from './actions/clipboardAction.ts';
-import { TextAction } from './actions/textActions.ts';
+import { TextAction, TextDecorationAction } from './actions/textActions.ts';
 import { EdgeFlipAction } from './actions/edgeFlipAction.ts';
 import { DuplicateAction } from './actions/duplicateAction.ts';
 import { Diagram } from '../model/diagram.ts';
@@ -81,7 +81,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   TOGGLE_RULER: new ToggleRulerAction(state.diagram),
   TEXT_BOLD: new TextAction(state.diagram, 'bold'),
   TEXT_ITALIC: new TextAction(state.diagram, 'italic'),
-  TEXT_UNDERLINE: new TextAction(state.diagram, 'underline'),
+  TEXT_UNDERLINE: new TextDecorationAction(state.diagram, 'underline'),
   EDGE_FLIP: new EdgeFlipAction(state.diagram),
   DUPLICATE: new DuplicateAction(state.diagram)
 });

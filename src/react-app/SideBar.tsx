@@ -29,7 +29,7 @@ export const SideBar = (props: Props) => {
         document.body.style.setProperty('--right-indent', d);
       }
     }
-  }, [selected]);
+  }, [props.side, selected]);
 
   // TODO: Replace the buttons part with the Toolbar component
   return (

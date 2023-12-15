@@ -31,7 +31,7 @@ export const ObjectToolWindow = () => {
     }
   };
   useEventListener(diagram.selectionState, 'change', callback);
-  useEffect(callback, []);
+  useEffect(callback, [diagram.selectionState]);
 
   return (
     <>
