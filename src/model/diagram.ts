@@ -104,6 +104,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     );
   }
 
+  // TODO: Change this to an undoable action?
+  // TODO: Check layer level events are emitted
   moveElement(
     elements: DiagramElement[],
     layer: Layer,

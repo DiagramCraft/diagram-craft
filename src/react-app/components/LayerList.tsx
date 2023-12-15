@@ -7,6 +7,7 @@ import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { reversed } from '../../utils/array.ts';
 import React, { useRef } from 'react';
+import { Box } from '../../geometry/box.ts';
 
 const isAbove = (clientY: number, rect: DOMRect) => clientY < rect.top + rect.height / 2;
 
@@ -39,7 +40,7 @@ class Indicator {
   hide() {
     this.ref.current!.style.visibility = 'hidden';
   }
-  move(rect: DOMRect, at: 'top' | 'bottom') {
+  move(rect: { width: number; left: number; top: number; height: number }, at: 'top' | 'bottom') {
     const indicator = this.ref.current!;
     indicator.style.visibility = 'visible';
     indicator.style.width = `${rect.width}px`;
@@ -76,32 +77,56 @@ export const LayerList = () => {
               diagram.layers.active = l;
             }}
             onDragOver={ev => {
-              if (ev.dataTransfer.types.includes(ELEMENT_INSTANCES)) {
-                ev.dataTransfer.dropEffect = 'move';
+              const drag = ev.dataTransfer;
+              if (drag.types.includes(ELEMENT_INSTANCES) || drag.types.includes(LAYER_INSTANCES)) {
+                drag.dropEffect = 'move';
 
                 const he = findTreeNode(ev);
                 he.style.background = 'var(--secondary-bg)';
 
-                indicator.move(he.getBoundingClientRect(), 'bottom');
-                ev.preventDefault();
+                if (drag.types.includes(ELEMENT_INSTANCES)) {
+                  indicator.move(he.getBoundingClientRect(), 'bottom');
+                  ev.preventDefault();
+                } else if (drag.types.includes(LAYER_INSTANCES)) {
+                  const rects = [
+                    Box.fromElement(he),
+                    ...[...(he.nextSibling as HTMLElement).children].map(e => Box.fromElement(e))
+                  ];
+
+                  const rect = Box.asDomRect(Box.boundingBox(rects));
+
+                  indicator.move(
+                    rect,
+                    isAbove(ev.clientY, he.getBoundingClientRect()) ? 'top' : 'bottom'
+                  );
+                  ev.preventDefault();
+                }
               }
             }}
             onDragLeave={e => {
               findTreeNode(e).style.background = 'unset';
             }}
             onDrop={ev => {
-              console.log('drop on layer');
+              const he = findTreeNode(ev);
+              he.style.background = 'unset';
+              indicator.hide();
+
               if (ev.dataTransfer.types.includes(ELEMENT_INSTANCES)) {
-                const he = findTreeNode(ev);
-                he.style.background = 'unset';
-
-                indicator.hide();
-
                 diagram.moveElement(
                   JSON.parse(ev.dataTransfer.getData(ELEMENT_INSTANCES)!).map(
                     (id: string) => diagram.nodeLookup[id] ?? diagram.edgeLookup[id]
                   ),
                   l
+                );
+              } else {
+                diagram.layers.move(
+                  JSON.parse(ev.dataTransfer.getData(LAYER_INSTANCES)!).map((id: string) =>
+                    diagram.layers.byId(id)
+                  ),
+                  {
+                    relation: isAbove(ev.clientY, he.getBoundingClientRect()) ? 'above' : 'below',
+                    layer: l
+                  }
                 );
               }
             }}

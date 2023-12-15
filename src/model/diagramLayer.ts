@@ -139,6 +139,21 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
     return this.#layers.filter(layer => this.#visibleLayers.has(layer.id));
   }
 
+  // TODO: Need undo/redo for this - perhaps change into an UndoableAction
+  move(layers: Layer[], ref: { layer: Layer; relation: 'above' | 'below' }) {
+    const idx = this.#layers.indexOf(ref.layer);
+    const newIdx = ref.relation === 'below' ? idx : idx + 1;
+
+    for (const layer of layers) {
+      const oldIdx = this.#layers.indexOf(layer);
+      this.#layers.splice(oldIdx, 1);
+      this.#layers.splice(newIdx, 0, layer);
+    }
+
+    this.emit('change', { layers: this });
+    this.diagram.emit('change', { diagram: this.diagram });
+  }
+
   toggleVisibility(layer: Layer) {
     this.#visibleLayers.has(layer.id)
       ? this.#visibleLayers.delete(layer.id)

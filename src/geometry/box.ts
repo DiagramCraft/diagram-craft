@@ -39,6 +39,27 @@ export const Box = {
     };
   },
 
+  fromDomRect: (rect: DOMRect): Box => {
+    return {
+      pos: { x: rect.x, y: rect.y },
+      size: { w: rect.width, h: rect.height },
+      rotation: 0
+    };
+  },
+
+  fromElement: (el: Element): Box => {
+    const rect = el.getBoundingClientRect();
+    return {
+      pos: { x: rect.x, y: rect.y },
+      size: { w: rect.width, h: rect.height },
+      rotation: 0
+    };
+  },
+
+  asDomRect: (b: Box): DOMRect => {
+    return new DOMRect(b.pos.x, b.pos.y, b.size.w, b.size.h);
+  },
+
   center: (b: Box) => {
     return {
       x: b.pos.x + b.size.w / 2,
