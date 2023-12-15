@@ -1,4 +1,4 @@
-import { SelectionState } from '../../model-editor/selectionState.ts';
+import { SelectionState } from '../../model/selectionState.ts';
 import { ObjectTreeNode, Tree, TreeNode } from '../components/Tree.tsx';
 
 export const SelectionInfoDetails = (props: { obj: SelectionState }) => {

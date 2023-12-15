@@ -1,9 +1,9 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
-import { NodeChangeAction } from '../../model-viewer/actions.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { NodeChangeAction } from '../../model/diagramUndoActions.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -20,7 +20,7 @@ export class AlignAction extends AbstractSelectionAction {
   enabled = false;
 
   constructor(
-    protected readonly diagram: EditableDiagram,
+    protected readonly diagram: Diagram,
     private readonly mode:
       | 'top'
       | 'bottom'

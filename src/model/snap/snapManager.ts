@@ -1,5 +1,5 @@
 import { Direction } from '../../geometry/direction.ts';
-import { Diagram } from '../../model-viewer/diagram.ts';
+import { Diagram } from '../diagram.ts';
 import { largest, smallest } from '../../utils/array.ts';
 import { CanvasSnapProvider } from './canvasSnapProvider.ts';
 import { NodeSnapProvider } from './nodeSnapProvider.ts';

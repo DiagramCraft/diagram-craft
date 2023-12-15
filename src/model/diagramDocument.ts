@@ -7,8 +7,8 @@ export type DocumentEvents = {
   diagramremoved: { node: Diagram };
 };
 
-export class DiagramDocument<T extends Diagram> extends EventEmitter<DocumentEvents> {
-  constructor(public readonly diagrams: T[]) {
+export class DiagramDocument extends EventEmitter<DocumentEvents> {
+  constructor(public readonly diagrams: Diagram[]) {
     super();
   }
 
@@ -19,12 +19,12 @@ export class DiagramDocument<T extends Diagram> extends EventEmitter<DocumentEve
     );
   }
 
-  addDiagram(diagram: T) {
+  addDiagram(diagram: Diagram) {
     this.diagrams.push(diagram);
     this.emit('diagramadded', { node: diagram });
   }
 
-  removeDiagram(diagram: T) {
+  removeDiagram(diagram: Diagram) {
     const idx = this.diagrams.indexOf(diagram);
     if (idx !== -1) {
       this.diagrams.splice(idx, 1);
@@ -32,7 +32,7 @@ export class DiagramDocument<T extends Diagram> extends EventEmitter<DocumentEve
     }
   }
 
-  changeDiagram(diagram: T) {
+  changeDiagram(diagram: Diagram) {
     this.emit('diagramchanged', { after: diagram });
   }
 }

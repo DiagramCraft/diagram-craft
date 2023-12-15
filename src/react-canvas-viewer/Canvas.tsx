@@ -3,7 +3,7 @@ import { propsUtils } from './utils/propsUtils.ts';
 import { Edge } from './Edge.tsx';
 import { Node } from './Node.tsx';
 import { useCanvasZoomAndPan } from './useCanvasZoomAndPan.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { Diagram } from '../model/diagram.ts';
 
 export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -67,7 +67,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
 type Props = {
   // TODO: This should really by Diagram and not EditableDiagram
-  diagram: EditableDiagram;
+  diagram: Diagram;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'

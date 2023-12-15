@@ -1,6 +1,6 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { ActionEvents, ToggleAction } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -15,7 +15,7 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
   state = false;
 
   constructor(
-    protected readonly diagram: EditableDiagram,
+    protected readonly diagram: Diagram,
     private readonly prop: 'bold' | 'italic' | 'underline'
   ) {
     super();

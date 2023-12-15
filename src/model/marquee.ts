@@ -1,6 +1,6 @@
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
-import { DiagramElement } from '../model-viewer/diagramNode.ts';
+import { DiagramElement } from './diagramNode.ts';
 import { precondition } from '../utils/assert.ts';
 import { SelectionState } from './selectionState.ts';
 

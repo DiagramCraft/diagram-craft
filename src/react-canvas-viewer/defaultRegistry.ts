@@ -3,7 +3,10 @@ import { Rect } from './node-types/Rect.tsx';
 import { Text } from './node-types/Text.tsx';
 import { RoundedRect } from './node-types/RoundedRect.tsx';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
+import {
+  EdgeDefinitionRegistry,
+  NodeDefinitionRegistry
+} from '../model/elementDefinitionRegistry.ts';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();

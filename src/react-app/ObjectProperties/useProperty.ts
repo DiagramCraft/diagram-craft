@@ -1,7 +1,6 @@
-import { EditableDiagram, SnapManagerConfigProps } from '../../model-editor/editable-diagram.ts';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { DiagramEdge } from '../../model-viewer/diagramEdge.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import {
   makePropertyArrayHook,
   makePropertyHook,
@@ -10,9 +9,11 @@ import {
   PropertyHook,
   PropertyUndoableAction
 } from './usePropertyFactory.ts';
+import { Diagram } from '../../model/diagram.ts';
+import { SnapManagerConfigProps } from '../../model/snap/snapManagerConfig.ts';
 
-export const useDiagramProperty: PropertyHook<EditableDiagram, DiagramProps> = makePropertyHook<
-  EditableDiagram,
+export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePropertyHook<
+  Diagram,
   DiagramProps
 >(
   diagram => diagram.props,
@@ -23,7 +24,7 @@ export const useDiagramProperty: PropertyHook<EditableDiagram, DiagramProps> = m
   {
     onAfterSet: (diagram, path, oldValue, newValue) => {
       diagram.undoManager.add(
-        new PropertyUndoableAction<EditableDiagram>(
+        new PropertyUndoableAction<Diagram>(
           diagram.props,
           path,
           oldValue,
@@ -36,8 +37,8 @@ export const useDiagramProperty: PropertyHook<EditableDiagram, DiagramProps> = m
   }
 );
 
-export const useSnapManagerProperty: PropertyHook<EditableDiagram, SnapManagerConfigProps> =
-  makePropertyHook<EditableDiagram, SnapManagerConfigProps>(
+export const useSnapManagerProperty: PropertyHook<Diagram, SnapManagerConfigProps> =
+  makePropertyHook<Diagram, SnapManagerConfigProps>(
     diagram => diagram.snapManagerConfig,
     (diagram, handler) => {
       useEventListener(diagram.snapManagerConfig, 'change', handler);
@@ -45,8 +46,8 @@ export const useSnapManagerProperty: PropertyHook<EditableDiagram, SnapManagerCo
     diagram => diagram.snapManagerConfig.commit()
   );
 
-export const useEdgeProperty: PropertyArrayHook<EditableDiagram, EdgeProps> = makePropertyArrayHook<
-  EditableDiagram,
+export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makePropertyArrayHook<
+  Diagram,
   DiagramEdge,
   EdgeProps
 >(
@@ -73,8 +74,8 @@ export const useEdgeProperty: PropertyArrayHook<EditableDiagram, EdgeProps> = ma
   }
 );
 
-export const useNodeProperty: PropertyArrayHook<EditableDiagram, NodeProps> = makePropertyArrayHook<
-  EditableDiagram,
+export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makePropertyArrayHook<
+  Diagram,
   DiagramNode,
   NodeProps
 >(
@@ -101,27 +102,30 @@ export const useNodeProperty: PropertyArrayHook<EditableDiagram, NodeProps> = ma
   }
 );
 
-export const useElementProperty: PropertyArrayHook<EditableDiagram, ElementProps> =
-  makePropertyArrayHook<EditableDiagram, DiagramEdge | DiagramNode, ElementProps>(
-    diagram => diagram.selectionState.elements,
-    element => element.props,
-    (diagram, handler) => {
-      useEventListener(diagram.selectionState, 'change', handler);
-    },
-    (diagram, element) => diagram.updateElement(element),
-    {
-      onAfterSet: (diagram, elements, path, oldValue, newValue) => {
-        diagram.undoManager.add(
-          new PropertyArrayUndoableAction<DiagramEdge | DiagramNode>(
-            elements,
-            path,
-            oldValue,
-            newValue,
-            `Change element ${path}`,
-            element => element.props,
-            element => diagram.updateElement(element)
-          )
-        );
-      }
+export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = makePropertyArrayHook<
+  Diagram,
+  DiagramEdge | DiagramNode,
+  ElementProps
+>(
+  diagram => diagram.selectionState.elements,
+  element => element.props,
+  (diagram, handler) => {
+    useEventListener(diagram.selectionState, 'change', handler);
+  },
+  (diagram, element) => diagram.updateElement(element),
+  {
+    onAfterSet: (diagram, elements, path, oldValue, newValue) => {
+      diagram.undoManager.add(
+        new PropertyArrayUndoableAction<DiagramEdge | DiagramNode>(
+          elements,
+          path,
+          oldValue,
+          newValue,
+          `Change element ${path}`,
+          element => element.props,
+          element => diagram.updateElement(element)
+        )
+      );
     }
-  );
+  }
+);

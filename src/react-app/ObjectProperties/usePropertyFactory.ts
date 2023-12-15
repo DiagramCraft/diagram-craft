@@ -1,7 +1,7 @@
 import { DynamicAccessor, PropPath, PropPathValue } from '../../utils/propertyPath.ts';
 import { useEffect, useState } from 'react';
 import { unique } from '../../utils/array.ts';
-import { UndoableAction } from '../../model-editor/undoManager.ts';
+import { UndoableAction } from '../../model/undoManager.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

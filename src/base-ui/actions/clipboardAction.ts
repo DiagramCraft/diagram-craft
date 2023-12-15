@@ -1,4 +1,3 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Action, ActionContext, ActionEvents } from '../keyMap.ts';
@@ -7,15 +6,15 @@ import {
   isConnected,
   SerializedElement,
   serializeDiagramElement
-} from '../../model-viewer/serialization.ts';
+} from '../../model/serialization.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
-import { DiagramElement } from '../../model-viewer/diagramNode.ts';
+import { DiagramElement } from '../../model/diagramNode.ts';
 import { Point } from '../../geometry/point.ts';
-import { UndoableAction } from '../../model-editor/undoManager.ts';
-import { Diagram } from '../../model-viewer/diagram.ts';
+import { UndoableAction } from '../../model/undoManager.ts';
+import { Diagram } from '../../model/diagram.ts';
 import { precondition } from '../../utils/assert.ts';
-import { Layer } from '../../model-viewer/diagramLayer.ts';
+import { Layer } from '../../model/diagramLayer.ts';
 
 declare global {
   interface ActionMap {
@@ -55,7 +54,7 @@ export class PasteUndoableAction implements UndoableAction {
 abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> implements Action {
   enabled = true;
 
-  protected constructor(protected readonly diagram: EditableDiagram) {
+  protected constructor(protected readonly diagram: Diagram) {
     super();
   }
 
@@ -146,7 +145,7 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
   #lastPasteHash?: string;
   #lastPastePoint: Point | undefined = undefined;
 
-  constructor(protected readonly diagram: EditableDiagram) {
+  constructor(protected readonly diagram: Diagram) {
     super(diagram);
   }
 
@@ -196,7 +195,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   enabled = true;
 
   constructor(
-    protected readonly diagram: EditableDiagram,
+    protected readonly diagram: Diagram,
     private readonly mode: 'copy' | 'cut'
   ) {
     super(diagram);

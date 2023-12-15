@@ -1,15 +1,15 @@
 import * as Tabs from '@radix-ui/react-tabs';
-import { DiagramDocument } from '../../model-viewer/diagramDocument.ts';
+import { DiagramDocument } from '../../model/diagramDocument.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { TbFiles, TbPlus } from 'react-icons/tb';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
 } from '../../react-canvas-viewer/defaultRegistry.ts';
 import { newid } from '../../utils/id.ts';
 import { DocumentsContextMenu } from './DocumentsContextMenu.tsx';
+import { Diagram } from '../../model/diagram.ts';
 
 export const DocumentTabs = (props: Props) => {
   const redraw = useRedraw();
@@ -35,7 +35,7 @@ export const DocumentTabs = (props: Props) => {
                 {d.name}
 
                 {selection === d.id && selection !== props.value && (
-                  <span>&nbsp;&gt;&nbsp;{props.document.getById(props.value).name}</span>
+                  <span>&nbsp;&gt;&nbsp;{props.document.getById(props.value)!.name}</span>
                 )}
 
                 {d.diagrams.length > 0 && (
@@ -52,7 +52,7 @@ export const DocumentTabs = (props: Props) => {
           onClick={() => {
             const id = newid();
             props.document.addDiagram(
-              new EditableDiagram(
+              new Diagram(
                 id,
                 'Sheet ' + (props.document.diagrams.length + 1).toString(),
                 defaultNodeRegistry(),
@@ -73,7 +73,5 @@ export const DocumentTabs = (props: Props) => {
 type Props = {
   value: string;
   onValueChange: (v: string) => void;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  document: DiagramDocument<any>;
+  document: DiagramDocument;
 };

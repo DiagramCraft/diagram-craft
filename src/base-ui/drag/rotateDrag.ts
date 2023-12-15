@@ -1,14 +1,14 @@
 import { Drag } from '../drag.ts';
 import { Point } from '../../geometry/point.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { assert } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
-import { RotateAction } from '../../model-viewer/actions.ts';
+import { RotateAction } from '../../model/diagramUndoActions.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export class RotateDrag implements Drag {
-  constructor(private readonly diagram: EditableDiagram) {}
+  constructor(private readonly diagram: Diagram) {}
 
   onDrag(coord: Point) {
     const selection = this.diagram.selectionState;

@@ -4,8 +4,12 @@ import { Box } from '../geometry/box.ts';
 import { Viewbox } from './viewBox.ts';
 import { DiagramElement, DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './nodeDefinition.ts';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { Layer, LayerManager } from './diagramLayer.ts';
+import { SelectionState } from './selectionState.ts';
+import { UndoManager } from './undoManager.ts';
+import { SnapManager } from './snap/snapManager.ts';
+import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
@@ -42,8 +46,16 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   readonly viewBox = new Viewbox(this.#canvas.size);
   readonly nodeLookup: Record<string, DiagramNode> = {};
   readonly edgeLookup: Record<string, DiagramEdge> = {};
-
-  readonly layers;
+  readonly selectionState: SelectionState = new SelectionState(this);
+  readonly layers = new LayerManager(this, []);
+  readonly snapManagerConfig = new SnapManagerConfig([
+    'grid',
+    'node',
+    'canvas',
+    'distance',
+    'size'
+  ]);
+  readonly undoManager = new UndoManager();
 
   constructor(
     readonly id: string,
@@ -54,11 +66,20 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   ) {
     super();
 
-    this.layers = new LayerManager(this, []);
     if (elements) {
       this.layers.add(new Layer('default', 'Default', [], this));
       elements.forEach(e => this.layers.active.addElement(e, true));
     }
+  }
+
+  createSnapManager() {
+    return new SnapManager(
+      this,
+      this.selectionState.elements.map(e => e.id),
+      this.snapManagerConfig.magnetTypes,
+      this.snapManagerConfig.threshold,
+      this.snapManagerConfig.enabled
+    );
   }
 
   visibleElements() {

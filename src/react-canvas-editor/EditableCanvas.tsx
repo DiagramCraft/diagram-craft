@@ -19,7 +19,7 @@ import { executeAction } from '../base-ui/keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBounds } from '../react-canvas-viewer/DocumentBounds.tsx';
 import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
-import { SelectionStateEvents } from '../model-editor/selectionState.ts';
+import { SelectionStateEvents } from '../model/selectionState.ts';
 import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
 import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';

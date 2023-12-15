@@ -18,7 +18,7 @@ import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icon
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { NumberInput } from '../NumberInput.tsx';
-import { assertHAlign, assertVAlign } from '../../model-viewer/diagramProps.ts';
+import { assertHAlign, assertVAlign } from '../../model/diagramProps.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';

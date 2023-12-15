@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { TextPart } from '../TextPart.tsx';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { Box } from '../../geometry/box.ts';
 import { Extent } from '../../geometry/extent.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export const Text = (props: Props) => {
   const sizeChangeCallback = useCallback(
@@ -75,7 +75,7 @@ Text.initialConfig = { size: { w: 100, h: 10 } };
 
 type Props = {
   node: DiagramNode;
-  diagram: EditableDiagram;
+  diagram: Diagram;
   isSelected: boolean;
   isSingleSelected: boolean;
   nodeProps: NodeProps;

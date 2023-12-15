@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { NumberInput } from '../NumberInput.tsx';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 

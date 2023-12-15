@@ -1,9 +1,9 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Box } from '../../geometry/box.ts';
 import { newid } from '../../utils/id.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
-import { NodeAddAction } from '../../model-viewer/actions.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
+import { NodeAddAction } from '../../model/diagramUndoActions.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -14,7 +14,7 @@ declare global {
 const OFFSET = 10;
 
 export class DuplicateAction extends AbstractSelectionAction {
-  constructor(protected readonly diagram: EditableDiagram) {
+  constructor(protected readonly diagram: Diagram) {
     super(diagram);
   }
 

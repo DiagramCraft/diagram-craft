@@ -1,9 +1,9 @@
 import { Guide, SelectionState } from './selectionState.ts';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { DiagramNode } from '../model-viewer/diagramNode.ts';
-import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
-import { EditableDiagram } from './editable-diagram.ts';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../model-viewer/nodeDefinition.ts';
+import { DiagramNode } from './diagramNode.ts';
+import { DiagramEdge } from './diagramEdge.ts';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
+import { Diagram } from './diagram.ts';
 
 const createNode = () =>
   new DiagramNode(
@@ -30,13 +30,7 @@ const createEdge = () =>
   );
 
 function createDiagram() {
-  return new EditableDiagram(
-    '1',
-    'test',
-    new NodeDefinitionRegistry(),
-    new EdgeDefinitionRegistry(),
-    []
-  );
+  return new Diagram('1', 'test', new NodeDefinitionRegistry(), new EdgeDefinitionRegistry(), []);
 }
 
 describe('SelectionState', () => {

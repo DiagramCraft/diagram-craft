@@ -1,23 +1,23 @@
 import { Drag, Modifiers } from '../drag.ts';
 import { Point } from '../../geometry/point.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { assert } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { Translation } from '../../geometry/transform.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { Angle } from '../../geometry/angle.ts';
-import { createResizeCanvasActionToFit } from '../../model-editor/helpers/canvasResizeHelper.ts';
-import { MoveAction, NodeAddAction } from '../../model-viewer/actions.ts';
+import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeHelper.ts';
+import { MoveAction, NodeAddAction } from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
 import { newid } from '../../utils/id.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export class MoveDrag implements Drag {
   snapAngle?: Axis;
   metaKey?: boolean = false;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly offset: Point
   ) {}
 

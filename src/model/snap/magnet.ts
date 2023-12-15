@@ -4,7 +4,7 @@ import { Direction } from '../../geometry/direction.ts';
 import { Point } from '../../geometry/point.ts';
 import { Range } from '../../geometry/range.ts';
 import { Axis } from '../../geometry/axis.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../diagramNode.ts';
 
 type BaseMagnet = {
   line: Line;

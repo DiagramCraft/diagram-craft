@@ -1,6 +1,6 @@
 import { ActionEvents, ToggleAction } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -12,7 +12,7 @@ export class ToggleRulerAction extends EventEmitter<ActionEvents> implements Tog
   enabled = false;
   state: boolean;
 
-  constructor(private readonly diagram: EditableDiagram) {
+  constructor(private readonly diagram: Diagram) {
     super();
     this.state = diagram.props.ruler?.enabled ?? true;
 

@@ -1,4 +1,4 @@
-import { Diagram } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model/diagram.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 import React, { CSSProperties } from 'react';

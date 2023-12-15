@@ -5,15 +5,15 @@ import { Point } from '../geometry/point.ts';
 import { Line } from '../geometry/line.ts';
 import { Angle } from '../geometry/angle.ts';
 import { round } from '../utils/math.ts';
-import { SelectionState } from '../model-editor/selectionState.ts';
-import { MagnetType } from '../model-editor/snap/magnet.ts';
+import { SelectionState } from '../model/selectionState.ts';
+import { MagnetType } from '../model/snap/magnet.ts';
 import { $c } from '../utils/classname.ts';
 import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { RotateDrag } from '../base-ui/drag/rotateDrag.ts';
 import { ResizeDrag } from '../base-ui/drag/resizeDrag.ts';
 import { EdgeEndpointMoveDrag } from '../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
+import { Diagram } from '../model/diagram.ts';
 
 export type SelectionApi = {
   repaint: () => void;
@@ -380,5 +380,5 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
 type Props = {
   selection: SelectionState;
-  diagram: EditableDiagram;
+  diagram: Diagram;
 };

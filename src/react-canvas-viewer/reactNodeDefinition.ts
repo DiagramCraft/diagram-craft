@@ -3,20 +3,20 @@ import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Path } from '../geometry/path.ts';
 import { round } from '../utils/math.ts';
 import { Box } from '../geometry/box.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
-import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../model/diagramNode.ts';
 import {
   CustomPropertyDefinition,
   NodeCapability,
   NodeDefinition
-} from '../model-viewer/nodeDefinition.ts';
+} from '../model/elementDefinitionRegistry.ts';
 import { Extent } from '../geometry/extent.ts';
+import { Diagram } from '../model/diagram.ts';
 
 type Props = {
   node: DiagramNode;
   nodeProps: NodeProps;
   def: NodeDefinition;
-  diagram: EditableDiagram;
+  diagram: Diagram;
   isSelected: boolean;
   isSingleSelected: boolean;
 } & React.SVGProps<SVGRectElement>;

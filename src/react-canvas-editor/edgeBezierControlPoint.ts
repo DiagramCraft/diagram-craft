@@ -1,14 +1,14 @@
 import { Drag, Modifiers } from '../base-ui/drag.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
-import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
+import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
-import { UndoableAction } from '../model-editor/undoManager.ts';
+import { UndoableAction } from '../model/undoManager.ts';
+import { Diagram } from '../model/diagram.ts';
 
 class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
     private readonly controlPointIdx: number,
@@ -46,7 +46,7 @@ export class BezierControlPointDrag implements Drag {
   private originalOCPoint: Point;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
     private readonly controlPointIdx: number

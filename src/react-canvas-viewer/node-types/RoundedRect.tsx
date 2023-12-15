@@ -2,9 +2,9 @@ import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { TextPart } from '../TextPart.tsx';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
-import { CustomPropertyDefinition } from '../../model-viewer/nodeDefinition.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
+import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface NodeProps {
@@ -77,7 +77,7 @@ RoundedRect.getCustomProperties = (def: DiagramNode): Record<string, CustomPrope
 
 type Props = {
   node: DiagramNode;
-  diagram: EditableDiagram;
+  diagram: Diagram;
   nodeProps: NodeProps;
   isSelected: boolean;
   isSingleSelected: boolean;

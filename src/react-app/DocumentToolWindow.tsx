@@ -1,11 +1,11 @@
-import { DiagramDocument } from '../model-viewer/diagramDocument.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
+import { DiagramDocument } from '../model/diagramDocument.ts';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { Tree, TreeNode } from './components/Tree.tsx';
+import { Diagram } from '../model/diagram.ts';
 
-const DiagramLabel = (props: { diagram: EditableDiagram } & Pick<Props, 'onValueChange'>) => {
+const DiagramLabel = (props: { diagram: Diagram } & Pick<Props, 'onValueChange'>) => {
   return (
     <div
       className={'util-action'}
@@ -18,9 +18,7 @@ const DiagramLabel = (props: { diagram: EditableDiagram } & Pick<Props, 'onValue
   );
 };
 
-const DiagramTreeNode = (
-  props: { diagram: EditableDiagram } & Pick<Props, 'value' | 'onValueChange'>
-) => {
+const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'onValueChange'>) => {
   return (
     <>
       {props.diagram.diagrams.map(node => (
@@ -77,5 +75,5 @@ export const DocumentToolWindow = (props: Props) => {
 type Props = {
   value: string;
   onValueChange: (v: string) => void;
-  document: DiagramDocument<EditableDiagram>;
+  document: DiagramDocument;
 };

@@ -1,4 +1,4 @@
-import { UndoableAction } from '../model-editor/undoManager.ts';
+import { UndoableAction } from './undoManager.ts';
 import { Box } from '../geometry/box.ts';
 import { TransformFactory } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';

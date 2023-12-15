@@ -1,8 +1,8 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { UndoableAction } from '../../model-editor/undoManager.ts';
-import { DiagramElement } from '../../model-viewer/diagramNode.ts';
+import { UndoableAction } from '../../model/undoManager.ts';
+import { DiagramElement } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { Layer } from '../../model-viewer/diagramLayer.ts';
+import { Layer } from '../../model/diagramLayer.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -15,7 +15,7 @@ class SelectionDeleteUndoableAction implements UndoableAction {
   private layer: Layer;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly elements: DiagramElement[]
   ) {
     this.layer = this.diagram.layers.active;
@@ -37,7 +37,7 @@ class SelectionDeleteUndoableAction implements UndoableAction {
 }
 
 export class SelectionDeleteAction extends AbstractSelectionAction {
-  constructor(protected readonly diagram: EditableDiagram) {
+  constructor(protected readonly diagram: Diagram) {
     super(diagram);
   }
 

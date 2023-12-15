@@ -1,4 +1,4 @@
-import { Diagram } from '../../model-viewer/diagram.ts';
+import { Diagram } from '../diagram.ts';
 import { Line } from '../../geometry/line.ts';
 import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
 import { unique } from '../../utils/array.ts';

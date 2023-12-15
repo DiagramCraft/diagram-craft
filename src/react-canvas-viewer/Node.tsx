@@ -7,17 +7,16 @@ import {
   useCallback,
   useImperativeHandle
 } from 'react';
-import { Diagram } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from '../base-ui/drag.ts';
 import { Point } from '../geometry/point.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { getPoint } from './eventHelper.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { round } from '../utils/math.ts';
-import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../model/diagramNode.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { deepMerge } from '../utils/deepmerge.ts';
 
@@ -41,13 +40,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   const wx = props.def.bounds.pos.x;
   const wy = props.def.bounds.pos.y;
 
-  const isSelected =
-    props.diagram instanceof EditableDiagram &&
-    props.diagram.selectionState.elements.includes(props.def);
-  const isSingleSelected =
-    isSelected &&
-    props.diagram instanceof EditableDiagram &&
-    props.diagram.selectionState.elements.length === 1;
+  const isSelected = props.diagram.selectionState.elements.includes(props.def);
+  const isSingleSelected = isSelected && props.diagram.selectionState.elements.length === 1;
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
@@ -164,7 +158,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           )}
           <ReactNodeImpl
             def={nodeDef}
-            diagram={props.diagram as EditableDiagram}
+            diagram={props.diagram}
             node={props.def}
             nodeProps={nodeProps}
             onMouseDown={onMouseDown}

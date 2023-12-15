@@ -1,6 +1,6 @@
 import { Action, ActionEvents } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -14,7 +14,7 @@ export class SelectAllAction extends EventEmitter<ActionEvents> implements Actio
   enabled = true;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly mode: 'all' | 'nodes' | 'edges' = 'all'
   ) {
     super();

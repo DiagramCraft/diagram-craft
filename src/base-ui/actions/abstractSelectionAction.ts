@@ -1,12 +1,12 @@
 import { EventEmitter } from '../../utils/event.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { Action, ActionEvents } from '../keyMap.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export abstract class AbstractSelectionAction extends EventEmitter<ActionEvents> implements Action {
   enabled = true;
 
   protected constructor(
-    protected readonly diagram: EditableDiagram,
+    protected readonly diagram: Diagram,
     protected readonly multiple = false
   ) {
     super();

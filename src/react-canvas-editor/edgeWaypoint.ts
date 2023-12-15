@@ -1,14 +1,14 @@
-import { UndoableAction } from '../model-editor/undoManager.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
-import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
+import { UndoableAction } from '../model/undoManager.ts';
+import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
 import { Drag, Modifiers } from '../base-ui/drag.ts';
+import { Diagram } from '../model/diagram.ts';
 
 class WaypointUndoAction implements UndoableAction {
   description = 'Move Waypoint';
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
     private readonly newPoint: Point,
@@ -30,7 +30,7 @@ export class EdgeWaypointDrag implements Drag {
   private startPoint: Point;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number
   ) {

@@ -1,17 +1,17 @@
 import { Drag, Modifiers } from '../drag.ts';
 import { Point } from '../../geometry/point.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { assert, VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { LocalCoordinateSystem } from '../../geometry/lcs.ts';
 import { Box } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
-import { ResizeAction } from '../../model-viewer/actions.ts';
+import { ResizeAction } from '../../model/diagramUndoActions.ts';
 import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export class ResizeDrag implements Drag {
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly type:
       | 'resize-nw'
       | 'resize-ne'

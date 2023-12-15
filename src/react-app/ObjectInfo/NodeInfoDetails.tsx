@@ -1,7 +1,7 @@
 import { ObjectTreeNode, Tree, TreeNode } from '../components/Tree.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const NodeInfoDetails = (props: Props) => {

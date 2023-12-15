@@ -7,7 +7,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbGrid3X3, TbGridDots } from 'react-icons/tb';
 import { NumberInput } from '../NumberInput.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
-import { assertGridType } from '../../model-viewer/diagramProps.ts';
+import { assertGridType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 
 export const CanvasGridPanel = (props: Props) => {

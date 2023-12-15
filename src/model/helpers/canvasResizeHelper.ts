@@ -1,4 +1,4 @@
-import { Canvas, Diagram } from '../../model-viewer/diagram.ts';
+import { Canvas, Diagram } from '../diagram.ts';
 import { Box } from '../../geometry/box.ts';
 import { UndoableAction } from '../undoManager.ts';
 import { Point } from '../../geometry/point.ts';

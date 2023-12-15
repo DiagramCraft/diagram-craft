@@ -1,7 +1,6 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { UndoableAction } from '../../model-editor/undoManager.ts';
+import { UndoableAction } from '../../model/undoManager.ts';
 import { precondition } from '../../utils/assert.ts';
-import { StackPosition } from '../../model-viewer/diagram.ts';
+import { Diagram, StackPosition } from '../../model/diagram.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 
 declare global {
@@ -21,7 +20,7 @@ class SelectionRestackUndoableAction implements UndoableAction {
   private oldPositions: StackPosition[] | undefined;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly mode: RestackMode
   ) {}
 
@@ -57,7 +56,7 @@ class SelectionRestackUndoableAction implements UndoableAction {
 
 export class SelectionRestackAction extends AbstractSelectionAction {
   constructor(
-    protected readonly diagram: EditableDiagram,
+    protected readonly diagram: Diagram,
     private readonly mode: RestackMode = 'up'
   ) {
     super(diagram);

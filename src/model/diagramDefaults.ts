@@ -10,11 +10,10 @@ export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, pa
       }
 
       if (item && typeof item === 'object') {
-        const proxy = createDefaultsProxy(
+        return createDefaultsProxy(
           item as unknown as object,
           (path ?? '') + '.' + String(property)
         );
-        return proxy;
       }
       return item;
     },

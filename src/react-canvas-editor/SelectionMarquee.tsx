@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { Angle } from '../geometry/angle.ts';
-import { SelectionState } from '../model-editor/selectionState.ts';
+import { SelectionState } from '../model/selectionState.ts';
 
 export type SelectionMarqueeApi = {
   repaint: () => void;

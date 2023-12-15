@@ -7,9 +7,9 @@ import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { TextPart } from '../TextPart.tsx';
 import { round } from '../../utils/math.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
-import { CustomPropertyDefinition, NodeDefinition } from '../../model-viewer/nodeDefinition.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
+import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface NodeProps {
@@ -139,7 +139,7 @@ Star.getCustomProperties = (def: DiagramNode): Record<string, CustomPropertyDefi
 type Props = {
   def: NodeDefinition;
   node: DiagramNode;
-  diagram: EditableDiagram;
+  diagram: Diagram;
   isSelected: boolean;
   isSingleSelected: boolean;
   nodeProps: NodeProps;

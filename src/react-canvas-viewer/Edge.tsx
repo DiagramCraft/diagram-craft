@@ -9,7 +9,6 @@ import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag.ts';
 import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
 import {
@@ -22,12 +21,13 @@ import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
 import { invariant } from '../utils/assert.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { ConnectedEndpoint, DiagramEdge } from '../model-viewer/diagramEdge.ts';
+import { ConnectedEndpoint, DiagramEdge } from '../model/diagramEdge.ts';
 import { EdgeWaypointDrag } from '../react-canvas-editor/edgeWaypoint.ts';
 import { BezierControlPointDrag } from '../react-canvas-editor/edgeBezierControlPoint.ts';
 import { round } from '../utils/math.ts';
 import { deepMerge } from '../utils/deepmerge.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
+import { Diagram } from '../model/diagram.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -72,13 +72,8 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
   let path = buildEdgePath(props.def);
 
-  const isSelected =
-    props.diagram instanceof EditableDiagram &&
-    props.diagram.selectionState.elements.includes(props.def);
-  const isSingleSelected =
-    isSelected &&
-    props.diagram instanceof EditableDiagram &&
-    props.diagram.selectionState.elements.length === 1;
+  const isSelected = props.diagram.selectionState.elements.includes(props.def);
+  const isSingleSelected = isSelected && props.diagram.selectionState.elements.length === 1;
 
   const color = props.def.props.stroke?.color ?? 'black';
   const fillColor = props.def.props.fill?.color ?? color;
@@ -336,7 +331,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
 type Props = {
   def: DiagramEdge;
-  diagram: EditableDiagram;
+  diagram: Diagram;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;

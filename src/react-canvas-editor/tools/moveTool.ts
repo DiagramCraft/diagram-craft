@@ -1,4 +1,3 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { DragDropContextType } from '../../react-canvas-viewer/DragDropManager.tsx';
 import { MutableRefObject, RefObject } from 'react';
 import { Point } from '../../geometry/point.ts';
@@ -8,10 +7,11 @@ import { MarqueeDrag } from '../SelectionMarquee.logic.tsx';
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
 import { BACKGROUND, DeferedMouseAction, ObjectId } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export class MoveTool extends AbstractTool {
   constructor(
-    protected readonly diagram: EditableDiagram,
+    protected readonly diagram: Diagram,
     protected readonly drag: DragDropContextType,
     protected readonly svgRef: RefObject<SVGSVGElement>,
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,

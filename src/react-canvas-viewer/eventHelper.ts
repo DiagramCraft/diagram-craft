@@ -1,6 +1,6 @@
 import { Point } from '../geometry/point.ts';
 import React from 'react';
-import { Diagram } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model/diagram.ts';
 import { invariant } from '../utils/assert.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 

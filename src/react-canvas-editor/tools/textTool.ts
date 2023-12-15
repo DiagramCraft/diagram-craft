@@ -1,17 +1,17 @@
 import { DeferedMouseAction } from './types.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { DragDropContextType } from '../../react-canvas-viewer/DragDropManager.tsx';
 import { MutableRefObject, RefObject } from 'react';
 import { Point } from '../../geometry/point.ts';
 import { Modifiers } from '../../base-ui/drag.ts';
 import { AbstractTool } from './abstractTool.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
-import { NodeAddAction } from '../../model-viewer/actions.ts';
+import { NodeAddAction } from '../../model/diagramUndoActions.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export class TextTool extends AbstractTool {
   constructor(
-    protected readonly diagram: EditableDiagram,
+    protected readonly diagram: Diagram,
     protected readonly drag: DragDropContextType,
     protected readonly svgRef: RefObject<SVGSVGElement>,
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,

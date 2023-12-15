@@ -195,11 +195,11 @@ const deserializeDiagrams = <T extends Diagram>(
 export const deserializeDiagramDocument = <T extends Diagram>(
   document: SerializedDiagramDocument,
   factory: (d: SerializedDiagram, elements?: DiagramElement[]) => T
-): DiagramDocument<T> => {
+): DiagramDocument => {
   const diagrams = document.diagrams;
   const dest = deserializeDiagrams(diagrams, factory);
 
-  return new DiagramDocument<T>(dest);
+  return new DiagramDocument(dest);
 };
 
 export const serializeDiagramElement = (element: DiagramElement): SerializedElement => {

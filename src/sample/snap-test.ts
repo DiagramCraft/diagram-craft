@@ -1,4 +1,4 @@
-import { SerializedDiagramDocument } from '../model-viewer/serialization.ts';
+import { SerializedDiagramDocument } from '../model/serialization.ts';
 
 export const snapTestDiagram: SerializedDiagramDocument = {
   diagrams: [

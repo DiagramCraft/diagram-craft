@@ -30,7 +30,7 @@ import { ActionToggleButton } from './ActionToggleButton.tsx';
 import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton.tsx';
 import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
-import { SelectionType } from '../../model-editor/selectionState.ts';
+import { SelectionType } from '../../model/selectionState.ts';
 import { TextFontToolbarButton } from '../ObjectProperties/TextFontToolbarButton.tsx';
 import { TextFontSizeToolbarButton } from '../ObjectProperties/TextFontSizeToolbarButton.tsx';
 import { LineToolbarButton } from '../ObjectProperties/LineToolbarButton.tsx';

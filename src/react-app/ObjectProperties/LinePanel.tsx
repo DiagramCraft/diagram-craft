@@ -6,7 +6,7 @@ import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../NumberInput.tsx';
-import { assertEdgeType } from '../../model-viewer/diagramProps.ts';
+import { assertEdgeType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useEdgeDefaults } from '../useDefaults.tsx';

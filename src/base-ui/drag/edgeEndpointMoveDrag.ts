@@ -1,8 +1,8 @@
 import { Drag } from '../drag.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
-import { DiagramEdge } from '../../model-viewer/diagramEdge.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 export class EdgeEndpointMoveDrag implements Drag {
   private readonly originalPointerEvents: string;
@@ -10,7 +10,7 @@ export class EdgeEndpointMoveDrag implements Drag {
   private coord: Point | undefined;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly element: SVGElement,
     private readonly type: 'start' | 'end'

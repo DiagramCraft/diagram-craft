@@ -4,12 +4,12 @@ import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import { ObjectPicker } from './components/ObjectPicker.tsx';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { DiagramNode } from '../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
-import { NodeAddAction } from '../model-viewer/actions.ts';
+import { NodeAddAction } from '../model/diagramUndoActions.ts';
+import { Diagram } from '../model/diagram.ts';
 
-export const canvasDropHandler = ($d: EditableDiagram) => {
+export const canvasDropHandler = ($d: Diagram) => {
   return (e: React.DragEvent<SVGSVGElement>) => {
     const nodeType = e.dataTransfer.getData('application/x-diagram-craft-node-type');
     const nodeDef = $d.nodeDefinitions.get(nodeType);

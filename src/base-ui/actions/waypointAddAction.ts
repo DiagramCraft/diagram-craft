@@ -1,5 +1,5 @@
 import { Action, ActionContext, ActionEvents } from '../keyMap.ts';
-import { Diagram } from '../../model-viewer/diagram.ts';
+import { Diagram } from '../../model/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
 import { buildEdgePath } from '../edgePathBuilder.ts';

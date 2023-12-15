@@ -1,10 +1,10 @@
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
 import { SVGProps } from 'react';
 import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
 import { Edge } from '../../react-canvas-viewer/Edge.tsx';
 import { Node } from '../../react-canvas-viewer/Node.tsx';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { Diagram } from '../../model/diagram.ts';
 
 const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;
@@ -44,7 +44,7 @@ const PickerCanvas = (props: PickerCanvasProps) => {
 };
 
 type PickerCanvasProps = {
-  diagram: EditableDiagram;
+  diagram: Diagram;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
@@ -55,7 +55,7 @@ export const ObjectPicker = (props: Props) => {
   const nodes = diagram.nodeDefinitions.getAll();
 
   const diagrams = nodes.map(n => {
-    return new EditableDiagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions, [
+    return new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions, [
       new DiagramNode(
         n.type,
         n.type,

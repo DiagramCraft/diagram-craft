@@ -1,10 +1,9 @@
 import './App.css';
-import { deserializeDiagramDocument, SerializedDiagram } from './model-viewer/serialization.ts';
+import { deserializeDiagramDocument, SerializedDiagram } from './model/serialization.ts';
 import { ContextMenuEvent, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
 import React, { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
-import { EditableDiagram } from './model-editor/editable-diagram.ts';
 import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
 import { DocumentSelector } from './react-app/DocumentSelector.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
@@ -49,7 +48,7 @@ import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
-import { DiagramElement } from './model-viewer/diagramNode.ts';
+import { DiagramElement } from './model/diagramNode.ts';
 import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
 import { UserState } from './react-app/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
@@ -58,12 +57,13 @@ import { ActionsContext, useActions } from './react-app/context/ActionsContext.t
 import { DiagramContext } from './react-app/context/DiagramContext.tsx';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext.tsx';
 import { additionalHues, primaryColors } from './react-app/ObjectProperties/palette.ts';
-import { edgeDefaults, nodeDefaults } from './model-viewer/diagramDefaults.ts';
+import { edgeDefaults, nodeDefaults } from './model/diagramDefaults.ts';
 import { ToolType } from './react-canvas-editor/tools/types.ts';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
+import { Diagram } from './model/diagram.ts';
 
 const factory = (d: SerializedDiagram, elements?: DiagramElement[]) => {
-  return new EditableDiagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry(), elements);
+  return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry(), elements);
 };
 
 const diagrams = [

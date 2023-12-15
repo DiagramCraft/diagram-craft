@@ -2,11 +2,11 @@ import { Line } from '../geometry/line.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
 import { Magnet } from './snap/magnet.ts';
-import { DiagramElement, DiagramNode } from '../model-viewer/diagramNode.ts';
-import { DiagramEdge } from '../model-viewer/diagramEdge.ts';
-import { EditableDiagram } from './editable-diagram.ts';
+import { DiagramElement, DiagramNode } from './diagramNode.ts';
+import { DiagramEdge } from './diagramEdge.ts';
 import { debounce } from '../utils/debounce.ts';
 import { Marquee } from './marquee.ts';
+import { Diagram } from './diagram.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
@@ -55,7 +55,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     boundingBox: EMPTY_BOX
   };
 
-  constructor(diagram: EditableDiagram) {
+  constructor(diagram: Diagram) {
     super();
     this.#bounds = EMPTY_BOX;
     this.#elements = [];

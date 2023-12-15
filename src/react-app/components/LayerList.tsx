@@ -1,8 +1,8 @@
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { Tree, TreeNode } from './Tree.tsx';
 import { TbEyeOff, TbEye } from 'react-icons/tb';
-import { Diagram } from '../../model-viewer/diagram.ts';
-import { Layer } from '../../model-viewer/diagramLayer.ts';
+import { Diagram } from '../../model/diagram.ts';
+import { Layer } from '../../model/diagramLayer.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 

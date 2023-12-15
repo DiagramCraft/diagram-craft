@@ -2,7 +2,6 @@ import { UndoAction } from './actions/undoAction.ts';
 import { RedoAction } from './actions/redoAction.ts';
 import { Emitter } from '../utils/event.ts';
 import { SelectAllAction } from './actions/selectAllAction.ts';
-import { EditableDiagram } from '../model-editor/editable-diagram.ts';
 import { AlignAction } from './actions/alignAction.ts';
 import { ToggleMagnetTypeAction } from './actions/toggleMagnetTypeAction.ts';
 import { DistributeAction } from './actions/distributeAction.ts';
@@ -16,6 +15,7 @@ import { ClipboardCopyAction, ClipboardPasteAction } from './actions/clipboardAc
 import { TextAction } from './actions/textActions.ts';
 import { EdgeFlipAction } from './actions/edgeFlipAction.ts';
 import { DuplicateAction } from './actions/duplicateAction.ts';
+import { Diagram } from '../model/diagram.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -37,7 +37,7 @@ export interface ToggleAction extends Action {
 }
 
 export type State = {
-  diagram: EditableDiagram;
+  diagram: Diagram;
 };
 
 export type KeyMap = Record<string, keyof ActionMap>;

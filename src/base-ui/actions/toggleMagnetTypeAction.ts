@@ -1,7 +1,7 @@
 import { ActionEvents, ToggleAction } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
-import { MagnetType } from '../../model-editor/snap/magnet.ts';
-import { EditableDiagram } from '../../model-editor/editable-diagram.ts';
+import { MagnetType } from '../../model/snap/magnet.ts';
+import { Diagram } from '../../model/diagram.ts';
 
 declare global {
   interface ActionMap {
@@ -18,7 +18,7 @@ export class ToggleMagnetTypeAction extends EventEmitter<ActionEvents> implement
   state: boolean;
 
   constructor(
-    private readonly diagram: EditableDiagram,
+    private readonly diagram: Diagram,
     private readonly magnetType: MagnetType
   ) {
     super();

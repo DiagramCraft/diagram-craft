@@ -6,7 +6,7 @@ import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
-import { assertFillType } from '../../model-viewer/diagramProps.ts';
+import { assertFillType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
 

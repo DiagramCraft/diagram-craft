@@ -1,7 +1,7 @@
 import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
-import { ViewboxEvents } from '../model-viewer/viewBox.ts';
+import { ViewboxEvents } from '../model/viewBox.ts';
 import { RefObject, useCallback, useEffect } from 'react';
-import { Diagram } from '../model-viewer/diagram.ts';
+import { Diagram } from '../model/diagram.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 
 export const useCanvasZoomAndPan = (diagram: Diagram, svgRef: RefObject<SVGSVGElement>) => {

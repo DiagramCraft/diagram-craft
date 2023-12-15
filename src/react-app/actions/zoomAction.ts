@@ -1,5 +1,5 @@
 import { EventEmitter } from '../../utils/event.ts';
-import { Diagram } from '../../model-viewer/diagram.ts';
+import { Diagram } from '../../model/diagram.ts';
 import { ActionEvents, ToggleAction } from '../../base-ui/keyMap.ts';
 
 declare global {

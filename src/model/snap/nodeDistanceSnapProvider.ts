@@ -6,10 +6,10 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
-import { Diagram } from '../../model-viewer/diagram.ts';
+import { Diagram } from '../diagram.ts';
 import { MagnetOfType, DistancePairWithRange } from './magnet.ts';
 import { Axis } from '../../geometry/axis.ts';
-import { DiagramNode } from '../../model-viewer/diagramNode.ts';
+import { DiagramNode } from '../diagramNode.ts';
 
 const directions: Record<
   Direction,
