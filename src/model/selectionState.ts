@@ -140,6 +140,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   toggle(element: DiagramElement) {
+    if (element.isLocked()) return;
     const shouldRemove = this.#elements.includes(element);
 
     this.setElements(

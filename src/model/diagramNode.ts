@@ -48,6 +48,10 @@ export class DiagramNode implements AbstractNode {
     this.props = props ?? {};
   }
 
+  isLocked() {
+    return this.layer?.isLocked() ?? false;
+  }
+
   commitChanges() {
     this.invalidateAnchors();
   }

@@ -34,6 +34,7 @@ export class MarqueeDrag implements Drag {
 
     const pending: (DiagramNode | DiagramEdge)[] = [];
     for (const e of diagram.visibleElements()) {
+      if (e.isLocked()) continue;
       if (Box.contains(selection.marquee.bounds, e.bounds)) {
         pending.push(e);
       }

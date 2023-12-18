@@ -15,8 +15,9 @@ export class Layer extends EventEmitter<LayerEvents> {
   id: string;
   name: string;
   elements: DiagramElement[] = [];
-
   private diagram: Diagram;
+
+  #locked = false;
 
   constructor(id: string, name: string, elements: DiagramElement[], diagram: Diagram) {
     super();
@@ -25,6 +26,16 @@ export class Layer extends EventEmitter<LayerEvents> {
     this.diagram = diagram;
 
     elements.forEach(e => this.addElement(e, false));
+  }
+
+  isLocked() {
+    return this.#locked;
+  }
+
+  set locked(value: boolean) {
+    this.#locked = value;
+    this.emit('change', { layer: this });
+    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   stackModify(elements: DiagramElement[], newPosition: number): StackPosition[] {

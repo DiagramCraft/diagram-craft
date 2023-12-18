@@ -1,6 +1,6 @@
 import { useDiagram } from '../context/DiagramContext.tsx';
 import * as Tree from './Tree.tsx';
-import { TbEye, TbEyeOff } from 'react-icons/tb';
+import { TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
 import { Diagram } from '../../model/diagram.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
@@ -24,6 +24,21 @@ const VisibilityToggle = (props: { layer: Layer; diagram: Diagram }) => {
       }}
     >
       {props.diagram.layers.visible.includes(props.layer) ? <TbEye /> : <TbEyeOff />}
+    </span>
+  );
+};
+
+const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
+  return (
+    <span
+      style={{ cursor: 'pointer' }}
+      onClick={e => {
+        props.layer.locked = !props.layer.isLocked();
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      {props.layer.isLocked() ? <TbLock /> : <TbLockOff />}
     </span>
   );
 };
@@ -81,7 +96,8 @@ const LayerEntry = (props: LayerEntryProps) => {
     >
       <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
       <Tree.NodeValue>{diagram.layers.active === layer ? 'Active' : ''}</Tree.NodeValue>
-      <Tree.NodeAction>
+      <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
+        <LockToggle layer={layer} diagram={diagram} />
         <VisibilityToggle layer={layer} diagram={diagram} />
       </Tree.NodeAction>
       <Tree.Children>

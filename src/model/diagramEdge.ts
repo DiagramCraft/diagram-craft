@@ -43,6 +43,10 @@ export class DiagramEdge implements AbstractEdge {
     this.waypoints = midpoints;
   }
 
+  isLocked() {
+    return this.layer?.isLocked() ?? false;
+  }
+
   commit() {
     this.diagram?.updateElement(this);
   }
