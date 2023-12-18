@@ -1141,6 +1141,37 @@ input::-webkit-input-placeholder {
     border-top: 1px dashed var(--slate-5);
   }
 
+  .cmp-tree__node[data-pendingdrop="before"] {
+    &:before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: var(--blue-11);
+      width: 100%;
+      z-index: 100;
+    }
+  }
+  .cmp-tree__node[data-pendingdrop="after"] {
+    &:before {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: var(--blue-11);
+      width: 100%;
+      z-index: 100;
+    }
+  }
+  .cmp-tree__node[data-pendingdrop="on"] {
+    background-color: var(--secondary-bg);
+  }
+
+
   .cmp-layer-list__layer--selected {
     & .cmp-tree__node__label, .cmp-tree__node__value {
       color: var(--blue-11);
@@ -1157,15 +1188,6 @@ input::-webkit-input-placeholder {
       width: 2px;
       background-color: var(--blue-11);
     }
-  }
-
-  .cmp-layer-list__drag-indicator {
-    position: fixed;
-    height: 4px;
-    background: var(--blue-11);
-    visibility: hidden;
-    z-index: 1000;
-    pointer-events: none;
   }
 }
 
@@ -1198,6 +1220,16 @@ input::-webkit-input-placeholder {
     font-size: 10px;
   }
 }
+
+/*
+body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-dragmimetype='application/x-diagram-craft-element-instances'] {
+  outline: 3px solid var(--blue-11) !important;
+  outline-offset: -3px;
+  z-index: 10000;
+  position: relative;
+}
+ */
+
 
 /* Util */
 

@@ -1,4 +1,3 @@
-// eslint-disable-next-line
 import * as Tree from './Tree.tsx';
 import { round } from '../../utils/math.ts';
 

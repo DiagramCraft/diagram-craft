@@ -6,10 +6,9 @@ import { Layer } from '../../model/diagramLayer.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { reversed } from '../../utils/array.ts';
-import React, { useRef } from 'react';
-import { Box } from '../../geometry/box.ts';
-
-const isAbove = (clientY: number, rect: DOMRect) => clientY < rect.top + rect.height / 2;
+import { DiagramElement } from '../../model/diagramNode.ts';
+import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
+import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -29,174 +28,136 @@ const VisibilityToggle = (props: { layer: Layer; diagram: Diagram }) => {
   );
 };
 
-class Indicator {
-  constructor(private readonly ref: React.RefObject<HTMLDivElement>) {}
-  hide() {
-    this.ref.current!.style.visibility = 'hidden';
-  }
-  move(rect: { width: number; left: number; top: number; height: number }, at: 'top' | 'bottom') {
-    const indicator = this.ref.current!;
-    indicator.style.visibility = 'visible';
-    indicator.style.width = `${rect.width}px`;
-    indicator.style.left = `${rect.left}px`;
-    indicator.style.top = `${rect.top + (at === 'top' ? 0 : rect.height)}px`;
-  }
-}
+type LayerEntryProps = { layer: Layer };
+const LayerEntry = (props: LayerEntryProps) => {
+  const diagram = useDiagram();
+  const layer = props.layer;
+
+  const drag = useDraggable(JSON.stringify([layer.id]), LAYER_INSTANCES);
+  const dropTarget = useDropTarget(
+    [LAYER_INSTANCES, ELEMENT_INSTANCES],
+    ev => {
+      if (ev[ELEMENT_INSTANCES]) {
+        diagram.moveElement(
+          JSON.parse(ev[ELEMENT_INSTANCES].on!).map(
+            (id: string) => diagram.nodeLookup[id] ?? diagram.edgeLookup[id]
+          ),
+          layer
+        );
+      } else {
+        let relation: 'above' | 'below' = 'below';
+        const instances: string[] = [];
+        if (ev[LAYER_INSTANCES].before) {
+          instances.push(...JSON.parse(ev[LAYER_INSTANCES].before));
+          relation = 'above';
+        } else if (ev[LAYER_INSTANCES].after) {
+          instances.push(...JSON.parse(ev[LAYER_INSTANCES].after));
+          relation = 'below';
+        } else {
+          VERIFY_NOT_REACHED();
+        }
+
+        diagram.layers.move(
+          instances.map((id: string) => diagram.layers.byId(id)!),
+          { relation, layer: layer }
+        );
+      }
+    },
+    {
+      split: m => (m === LAYER_INSTANCES ? [0.5, 0, 0.5] : [0, 1, 0])
+    }
+  );
+
+  return (
+    <Tree.Node
+      key={layer.id}
+      isOpen={true}
+      className={diagram.layers.active === layer ? 'cmp-layer-list__layer--selected' : ''}
+      {...drag.eventHandlers}
+      {...dropTarget.eventHandlers}
+      onClick={() => {
+        diagram.layers.active = layer;
+      }}
+    >
+      <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
+      <Tree.NodeValue>{diagram.layers.active === layer ? 'Active' : ''}</Tree.NodeValue>
+      <Tree.NodeAction>
+        <VisibilityToggle layer={layer} diagram={diagram} />
+      </Tree.NodeAction>
+      <Tree.Children>
+        <div style={{ display: 'contents' }}>
+          {reversed(layer.elements).map(e => (
+            <ElementEntry key={e.id} element={e} />
+          ))}
+        </div>
+      </Tree.Children>
+    </Tree.Node>
+  );
+};
+
+type ElementEntryProps = { element: DiagramElement };
+const ElementEntry = (props: ElementEntryProps) => {
+  const diagram = useDiagram();
+  const e = props.element;
+
+  const drag = useDraggable(JSON.stringify([e.id]), ELEMENT_INSTANCES);
+  const dropTarget = useDropTarget(
+    [ELEMENT_INSTANCES],
+    ev => {
+      let relation: 'above' | 'below' = 'below';
+      const instances: string[] = [];
+      if (ev[ELEMENT_INSTANCES].before) {
+        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].before));
+        relation = 'above';
+      } else if (ev[ELEMENT_INSTANCES].after) {
+        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].after));
+        relation = 'below';
+      } else {
+        VERIFY_NOT_REACHED();
+      }
+
+      diagram.moveElement(
+        instances.map((id: string) => diagram.nodeLookup[id] ?? diagram.edgeLookup[id]),
+        e.layer!,
+        {
+          relation,
+          element: e
+        }
+      );
+    },
+    {
+      split: () => [0.5, 0, 0.5]
+    }
+  );
+
+  return (
+    <Tree.Node
+      key={e.id}
+      data-state={diagram.selectionState.elements.includes(e) ? 'on' : 'off'}
+      {...drag.eventHandlers}
+      {...dropTarget.eventHandlers}
+      onClick={() => {
+        diagram.selectionState.clear();
+        diagram.selectionState.toggle(e);
+      }}
+    >
+      <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
+    </Tree.Node>
+  );
+};
 
 export const LayerList = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const layers = reversed(diagram.layers.all);
-  const indicatorRef = useRef<HTMLDivElement>(null);
 
   useEventListener(diagram, 'change', redraw);
 
-  const indicator = new Indicator(indicatorRef);
-
   return (
     <div style={{ margin: '-10px' }} className={'cmp-layer-list'}>
-      <div ref={indicatorRef} className={'cmp-layer-list__drag-indicator'}></div>
-      <Tree.Root onDragLeave={() => indicator.hide()}>
+      <Tree.Root data-dragmimetype={'application/x-diagram-craft-element-instances'}>
         {layers.map(l => (
-          <Tree.Node
-            key={l.id}
-            isOpen={true}
-            className={diagram.layers.active === l ? 'cmp-layer-list__layer--selected' : ''}
-            draggable
-            onDragStart={ev => {
-              ev.dataTransfer.setData(LAYER_INSTANCES, JSON.stringify([l.id]));
-              ev.dataTransfer.dropEffect = 'move';
-            }}
-            onClick={() => {
-              diagram.layers.active = l;
-            }}
-            onDragOver={ev => {
-              const drag = ev.dataTransfer;
-              if (drag.types.includes(ELEMENT_INSTANCES) || drag.types.includes(LAYER_INSTANCES)) {
-                drag.dropEffect = 'move';
-
-                const he = ev.currentTarget;
-
-                if (drag.types.includes(ELEMENT_INSTANCES)) {
-                  indicator.move(he.getBoundingClientRect(), 'bottom');
-                  ev.preventDefault();
-                } else if (drag.types.includes(LAYER_INSTANCES)) {
-                  const rects = [
-                    Box.fromElement(he),
-                    ...[...(he.nextSibling as HTMLElement).children].map(e => Box.fromElement(e))
-                  ];
-
-                  const rect = Box.asDomRect(Box.boundingBox(rects));
-
-                  indicator.move(
-                    rect,
-                    isAbove(ev.clientY, he.getBoundingClientRect()) ? 'top' : 'bottom'
-                  );
-                  ev.preventDefault();
-                }
-              }
-            }}
-            onDragEnter={e => {
-              e.currentTarget.style.background = 'var(--secondary-bg)';
-              e.currentTarget.classList.add('util-disable-nested-pointer-events');
-            }}
-            onDragLeave={e => {
-              e.currentTarget.style.background = 'unset';
-              e.currentTarget.classList.remove('util-disable-nested-pointer-events');
-            }}
-            onDragEnd={() => {
-              indicator.hide();
-            }}
-            onDrop={ev => {
-              const he = ev.currentTarget;
-              he.style.background = 'unset';
-
-              if (ev.dataTransfer.types.includes(ELEMENT_INSTANCES)) {
-                diagram.moveElement(
-                  JSON.parse(ev.dataTransfer.getData(ELEMENT_INSTANCES)!).map(
-                    (id: string) => diagram.nodeLookup[id] ?? diagram.edgeLookup[id]
-                  ),
-                  l
-                );
-              } else {
-                diagram.layers.move(
-                  JSON.parse(ev.dataTransfer.getData(LAYER_INSTANCES)!).map((id: string) =>
-                    diagram.layers.byId(id)
-                  ),
-                  {
-                    relation: isAbove(ev.clientY, he.getBoundingClientRect()) ? 'above' : 'below',
-                    layer: l
-                  }
-                );
-              }
-            }}
-          >
-            <Tree.NodeLabel>{l.name}</Tree.NodeLabel>
-            <Tree.NodeValue>{diagram.layers.active === l ? 'Active' : ''}</Tree.NodeValue>
-            <Tree.NodeAction>
-              <VisibilityToggle layer={l} diagram={diagram} />
-            </Tree.NodeAction>
-            <Tree.Children>
-              <div style={{ display: 'contents' }}>
-                {reversed(l.elements).map(e => (
-                  <Tree.Node
-                    key={e.id}
-                    data-state={diagram.selectionState.elements.includes(e) ? 'on' : 'off'}
-                    draggable
-                    onDragStart={ev => {
-                      ev.dataTransfer.setData(ELEMENT_INSTANCES, JSON.stringify([e.id]));
-                      ev.dataTransfer.dropEffect = 'move';
-                    }}
-                    onDragOver={e => {
-                      if (!e.dataTransfer.types.includes(ELEMENT_INSTANCES)) return;
-
-                      e.dataTransfer.dropEffect = 'move';
-
-                      const he = e.currentTarget;
-
-                      const rect = he.getBoundingClientRect();
-                      indicator.move(rect, isAbove(e.clientY, rect) ? 'top' : 'bottom');
-
-                      e.preventDefault();
-                    }}
-                    onDragEnter={e => {
-                      e.currentTarget.style.background = 'var(--secondary-bg)';
-                      e.currentTarget.classList.add('util-disable-nested-pointer-events');
-                    }}
-                    onDragLeave={e => {
-                      e.currentTarget.style.background = 'unset';
-                      e.currentTarget.classList.remove('util-disable-nested-pointer-events');
-                    }}
-                    onDragEnd={() => {
-                      indicator.hide();
-                    }}
-                    onDrop={ev => {
-                      const he = ev.currentTarget;
-                      he.style.background = 'unset';
-
-                      const brect = he.getBoundingClientRect();
-                      diagram.moveElement(
-                        JSON.parse(ev.dataTransfer.getData(ELEMENT_INSTANCES)!).map(
-                          (id: string) => diagram.nodeLookup[id] ?? diagram.edgeLookup[id]
-                        ),
-                        e.layer!,
-                        {
-                          relation: isAbove(ev.clientY, brect) ? 'above' : 'below',
-                          element: e
-                        }
-                      );
-                    }}
-                    onClick={() => {
-                      diagram.selectionState.clear();
-                      diagram.selectionState.toggle(e);
-                    }}
-                  >
-                    <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
-                  </Tree.Node>
-                ))}
-              </div>
-            </Tree.Children>
-          </Tree.Node>
+          <LayerEntry key={l.id} layer={l} />
         ))}
       </Tree.Root>
     </div>
