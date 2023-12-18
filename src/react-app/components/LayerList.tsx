@@ -14,12 +14,6 @@ const isAbove = (clientY: number, rect: DOMRect) => clientY < rect.top + rect.he
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
 
-const findTreeNode = (e: React.DragEvent<HTMLDivElement>) => {
-  let he = e.target as HTMLElement;
-  while (!he.classList.contains('cmp-tree__node')) he = he.parentElement as HTMLElement;
-  return he;
-};
-
 const VisibilityToggle = (props: { layer: Layer; diagram: Diagram }) => {
   return (
     <span
@@ -81,8 +75,7 @@ export const LayerList = () => {
               if (drag.types.includes(ELEMENT_INSTANCES) || drag.types.includes(LAYER_INSTANCES)) {
                 drag.dropEffect = 'move';
 
-                const he = findTreeNode(ev);
-                he.style.background = 'var(--secondary-bg)';
+                const he = ev.currentTarget;
 
                 if (drag.types.includes(ELEMENT_INSTANCES)) {
                   indicator.move(he.getBoundingClientRect(), 'bottom');
@@ -103,13 +96,20 @@ export const LayerList = () => {
                 }
               }
             }}
+            onDragEnter={e => {
+              e.currentTarget.style.background = 'var(--secondary-bg)';
+              e.currentTarget.classList.add('util-disable-nested-pointer-events');
+            }}
             onDragLeave={e => {
-              findTreeNode(e).style.background = 'unset';
+              e.currentTarget.style.background = 'unset';
+              e.currentTarget.classList.remove('util-disable-nested-pointer-events');
+            }}
+            onDragEnd={() => {
+              indicator.hide();
             }}
             onDrop={ev => {
-              const he = findTreeNode(ev);
+              const he = ev.currentTarget;
               he.style.background = 'unset';
-              indicator.hide();
 
               if (ev.dataTransfer.types.includes(ELEMENT_INSTANCES)) {
                 diagram.moveElement(
@@ -152,22 +152,27 @@ export const LayerList = () => {
 
                       e.dataTransfer.dropEffect = 'move';
 
-                      const he = findTreeNode(e);
-                      he.style.background = 'var(--secondary-bg)';
+                      const he = e.currentTarget;
 
                       const rect = he.getBoundingClientRect();
                       indicator.move(rect, isAbove(e.clientY, rect) ? 'top' : 'bottom');
 
                       e.preventDefault();
                     }}
+                    onDragEnter={e => {
+                      e.currentTarget.style.background = 'var(--secondary-bg)';
+                      e.currentTarget.classList.add('util-disable-nested-pointer-events');
+                    }}
                     onDragLeave={e => {
-                      findTreeNode(e).style.background = 'unset';
+                      e.currentTarget.style.background = 'unset';
+                      e.currentTarget.classList.remove('util-disable-nested-pointer-events');
+                    }}
+                    onDragEnd={() => {
+                      indicator.hide();
                     }}
                     onDrop={ev => {
-                      const he = findTreeNode(ev);
+                      const he = ev.currentTarget;
                       he.style.background = 'unset';
-
-                      indicator.hide();
 
                       const brect = he.getBoundingClientRect();
                       diagram.moveElement(

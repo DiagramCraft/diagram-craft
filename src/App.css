@@ -1237,6 +1237,9 @@ input::-webkit-input-placeholder {
     cursor: pointer;
   }
 }
+.util-disable-nested-pointer-events * {
+  pointer-events: none;
+}
 
 
 /* Animations */
