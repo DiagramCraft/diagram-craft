@@ -1210,6 +1210,7 @@ input::-webkit-input-placeholder {
   .cmp-toolbar {
     overflow: auto;
     flex-wrap: nowrap;
+    padding: 2px 2px;
   }
 }
 
