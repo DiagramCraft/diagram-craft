@@ -65,15 +65,21 @@ export class DiagramEdge implements AbstractEdge {
   transform(transforms: Transform[]) {
     this.bounds = Transform.box(this.bounds, ...transforms);
 
-    this.waypoints = this.waypoints?.map(w => ({
-      point: Transform.point(w.point, ...transforms),
-      controlPoints: w.controlPoints
-        ? [
-            Transform.point(w.controlPoints[0], ...transforms),
-            Transform.point(w.controlPoints[1], ...transforms)
-          ]
-        : undefined
-    }));
+    this.waypoints = this.waypoints?.map(w => {
+      const absoluteControlPoints = (w.controlPoints ?? []).map(cp => Point.add(w.point, cp));
+      const transformedControlPoints = absoluteControlPoints.map(cp =>
+        Transform.point(cp, ...transforms)
+      );
+      const transformedPoint = Transform.point(w.point, ...transforms);
+      const relativeControlPoints = transformedControlPoints.map(cp =>
+        Point.subtract(cp, transformedPoint)
+      );
+
+      return {
+        point: transformedPoint,
+        controlPoints: w.controlPoints ? (relativeControlPoints as [Point, Point]) : undefined
+      };
+    });
   }
 
   get startPosition() {

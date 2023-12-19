@@ -116,7 +116,7 @@ export class ResizeDrag implements Drag {
     }
 
     this.diagram.transformElements(
-      selection.nodes,
+      selection.elements,
       TransformFactory.fromTo(before, newBounds.getSnapshot())
     );
 
@@ -130,8 +130,8 @@ export class ResizeDrag implements Drag {
       this.diagram.undoManager.add(
         new ResizeAction(
           selection.source.elementBoxes,
-          selection.nodes.map(e => e.bounds),
-          selection.nodes,
+          selection.elements.map(e => e.bounds),
+          selection.elements,
           this.diagram,
           'Resize'
         )
