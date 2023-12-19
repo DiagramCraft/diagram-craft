@@ -44,7 +44,7 @@ export class PasteUndoableAction implements UndoableAction {
     });
   }
 
-  redo() {
+  execute() {
     this.elements.forEach(e => {
       this.layer.addElement(e);
     });

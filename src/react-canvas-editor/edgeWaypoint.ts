@@ -20,7 +20,7 @@ class WaypointUndoAction implements UndoableAction {
     this.diagram.updateElement(this.edge);
   }
 
-  redo(): void {
+  execute(): void {
     this.edge.waypoints![this.waypointIdx].point = this.newPoint;
     this.diagram.updateElement(this.edge);
   }

@@ -145,7 +145,7 @@ export class PropertyArrayUndoableAction<T> implements UndoableAction {
     });
   }
 
-  redo(): void {
+  execute(): void {
     this.items.forEach(e => {
       this.#accessor.set(this.getObj(e), this.path, this.after);
       this.commit(e);
@@ -172,7 +172,7 @@ export class PropertyUndoableAction<T> implements UndoableAction {
     this.commit(this.obj);
   }
 
-  redo(): void {
+  execute(): void {
     this.#accessor.set(this.obj, this.path, this.after);
     this.commit(this.obj);
   }

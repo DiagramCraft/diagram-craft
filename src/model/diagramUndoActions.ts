@@ -32,7 +32,7 @@ class AbstractTransformAction implements UndoableAction {
     this.transformElementsAction(this.target, this.source);
   }
 
-  redo() {
+  execute() {
     this.transformElementsAction(this.source, this.target);
   }
 
@@ -68,7 +68,7 @@ export class NodeAddAction implements UndoableAction {
     this.nodes.forEach(node => node.layer!.removeElement(node));
   }
 
-  redo() {
+  execute() {
     this.nodes.forEach(node => this.layer.addElement(node));
   }
 }
@@ -97,7 +97,7 @@ export class NodeChangeAction implements UndoableAction {
     this.snapshots = newSnapshots;
   }
 
-  redo() {
+  execute() {
     const newSnapshots = this.nodes.map(node => node.snapshot());
 
     this.nodes.forEach(node => {

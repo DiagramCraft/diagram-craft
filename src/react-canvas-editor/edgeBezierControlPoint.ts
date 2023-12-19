@@ -29,7 +29,7 @@ class BezierControlUndoAction implements UndoableAction {
     this.diagram.updateElement(this.edge);
   }
 
-  redo(): void {
+  execute(): void {
     const wp = this.edge.waypoints![this.waypointIdx];
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;

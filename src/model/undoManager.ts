@@ -3,7 +3,7 @@ import { assert } from '../utils/assert.ts';
 
 export type UndoableAction = {
   undo: () => void;
-  redo: () => void;
+  execute: () => void;
 
   description: string;
   timestamp?: Date;
@@ -47,7 +47,7 @@ export class UndoManager extends EventEmitter<UndoEvents> {
   addAndExecute(action: UndoableAction) {
     this.add(action);
 
-    action.redo();
+    action.execute();
     this.emit('execute', { action, type: 'redo' });
   }
 
@@ -73,7 +73,7 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     this.undoableActions.push(action);
     this.prune();
 
-    action.redo();
+    action.execute();
     this.emit('execute', { action: action, type: 'undo' });
   }
 
