@@ -4,6 +4,16 @@ import { Diagram } from '../model/diagram.ts';
 import { invariant } from '../utils/assert.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 
+// TODO: We should be able to remove this, and just use something like
+//
+//           const r = e.currentTarget.getBoundingClientRect();
+//           tool.onMouseMove(
+//             {
+//               x: e.nativeEvent.clientX - r.x,
+//               y: e.nativeEvent.clientY - r.y
+//             },
+//             e.nativeEvent
+//           );
 export const getPoint = (e: React.MouseEvent<Element, MouseEvent>, diagram: Diagram) => {
   if ((e.nativeEvent.target as HTMLDivElement)?.nodeName === 'DIV') {
     let $el = e.nativeEvent.target as HTMLDivElement;

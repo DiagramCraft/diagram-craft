@@ -23,7 +23,6 @@ import { SelectionStateEvents } from '../model/selectionState.ts';
 import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
 import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';
-import { getPoint } from '../react-canvas-viewer/eventHelper.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { useDiagram } from '../react-app/context/DiagramContext.tsx';
 import { useActions } from '../react-app/context/ActionsContext.tsx';
@@ -139,7 +138,14 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         style={{ userSelect: 'none' }}
         onMouseUp={e => tool.onMouseUp(EventHelper.point(e.nativeEvent))}
         onMouseMove={e => {
-          tool.onMouseMove(getPoint(e, diagram), e.nativeEvent);
+          const r = e.currentTarget.getBoundingClientRect();
+          tool.onMouseMove(
+            {
+              x: e.nativeEvent.clientX - r.x,
+              y: e.nativeEvent.clientY - r.y
+            },
+            e.nativeEvent
+          );
         }}
         onContextMenu={event => {
           const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;

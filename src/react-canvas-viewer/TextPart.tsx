@@ -63,9 +63,11 @@ export const TextPart = (props: Props) => {
           // TODO: Maybe we can make this case use classes instead of looking at parent
           if ($t.parentNode?.nodeName === 'foreignObject') {
             ($t.firstChild as HTMLDivElement).contentEditable = 'true';
+            ($t.firstChild as HTMLDivElement).style.pointerEvents = 'auto';
             ($t.firstChild as HTMLDivElement)?.focus();
           } else if ($t.parentNode?.parentNode?.nodeName === 'foreignObject') {
             ($t as HTMLDivElement).contentEditable = 'true';
+            ($t as HTMLDivElement).style.pointerEvents = 'auto';
             ($t as HTMLDivElement)?.focus();
           }
         }}
@@ -89,7 +91,8 @@ export const TextPart = (props: Props) => {
             paddingLeft: withPx(props.text?.left) ?? '0',
             paddingRight: withPx(props.text?.right) ?? '0',
             paddingTop: withPx(props.text?.top) ?? '0',
-            paddingBottom: withPx(props.text?.bottom) ?? '0'
+            paddingBottom: withPx(props.text?.bottom) ?? '0',
+            pointerEvents: 'none'
           }}
           onKeyDown={e => {
             if (e.key === 'Escape') {
@@ -119,6 +122,7 @@ export const TextPart = (props: Props) => {
               h: (e.target as HTMLElement).getBoundingClientRect().height
             });
             e.target.contentEditable = 'false';
+            e.target.style.pointerEvents = 'none';
           }}
           dangerouslySetInnerHTML={{ __html: props.text?.text ?? '' }}
         />
