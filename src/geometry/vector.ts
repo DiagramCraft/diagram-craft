@@ -13,6 +13,9 @@ export const Vector = {
   angle: (v: Vector) => {
     return Math.atan2(v.y, v.x);
   },
+  angle2: (v1: Vector, v2: Vector) => {
+    return Vector.angle(v2) - Vector.angle(v1);
+  },
   length: (v: Vector) => {
     return Math.sqrt(v.x * v.x + v.y * v.y);
   },

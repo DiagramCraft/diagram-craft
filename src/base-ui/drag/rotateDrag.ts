@@ -27,6 +27,7 @@ export class RotateDrag implements Drag {
         rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
       })
     );
+    selection.forceRotation(Vector.angle(Vector.from(center, coord)) + Math.PI / 2);
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selectionState.recalculateBoundingBox();

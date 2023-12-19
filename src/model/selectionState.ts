@@ -54,6 +54,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     elementIds: [],
     boundingBox: EMPTY_BOX
   };
+  #forcedRotation: boolean = false;
 
   constructor(diagram: Diagram) {
     super();
@@ -100,6 +101,14 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.#marquee;
   }
 
+  forceRotation(r: number) {
+    this.#bounds = {
+      ...this.#bounds,
+      rotation: r
+    };
+    this.#forcedRotation = true;
+  }
+
   getSelectionType(): SelectionType {
     if (this.#elements.length === 0) {
       return 'empty';
@@ -141,6 +150,8 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   toggle(element: DiagramElement) {
     if (element.isLocked()) return;
+
+    this.#forcedRotation = false;
     const shouldRemove = this.#elements.includes(element);
 
     this.setElements(
@@ -149,6 +160,9 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   setElements(element: DiagramElement[], rebaseline = true) {
+    if (element.some(e => e.isLocked())) return;
+    this.#forcedRotation = false;
+
     const oldElements = [...this.#elements];
     this.#elements = element;
 
@@ -191,6 +205,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
    * moving and resizing elements
    */
   recalculateBoundingBox() {
+    if (this.#forcedRotation) return;
     this.#bounds = this.isEmpty() ? EMPTY_BOX : Box.boundingBox(this.#elements.map(e => e.bounds));
     this.emitAsync('change', { selection: this });
   }
