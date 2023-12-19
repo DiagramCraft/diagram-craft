@@ -1,4 +1,4 @@
-import { Action, ActionEvents } from '../keyMap.ts';
+import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 
@@ -9,6 +9,12 @@ declare global {
     SELECT_ALL_EDGES: SelectAllAction;
   }
 }
+
+export const selectAllActions: ActionMapFactory = (state: State) => ({
+  SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
+  SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
+  SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges')
+});
 
 export class SelectAllAction extends EventEmitter<ActionEvents> implements Action {
   enabled = true;

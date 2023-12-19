@@ -4,6 +4,7 @@ import { NodeChangeAction } from '../../model/diagramUndoActions.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 
 declare global {
   interface ActionMap {
@@ -15,6 +16,15 @@ declare global {
     ALIGN_CENTER_VERTICAL: AlignAction;
   }
 }
+
+export const alignActions: ActionMapFactory = (state: State) => ({
+  ALIGN_TOP: new AlignAction(state.diagram, 'top'),
+  ALIGN_BOTTOM: new AlignAction(state.diagram, 'bottom'),
+  ALIGN_CENTER_HORIZONTAL: new AlignAction(state.diagram, 'center-horizontal'),
+  ALIGN_LEFT: new AlignAction(state.diagram, 'left'),
+  ALIGN_RIGHT: new AlignAction(state.diagram, 'right'),
+  ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical')
+});
 
 export class AlignAction extends AbstractSelectionAction {
   enabled = false;

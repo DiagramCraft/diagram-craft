@@ -4,12 +4,17 @@ import { newid } from '../../utils/id.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { NodeAddAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 
 declare global {
   interface ActionMap {
     DUPLICATE: DuplicateAction;
   }
 }
+
+export const duplicateActions: ActionMapFactory = (state: State) => ({
+  DUPLICATE: new DuplicateAction(state.diagram)
+});
 
 const OFFSET = 10;
 

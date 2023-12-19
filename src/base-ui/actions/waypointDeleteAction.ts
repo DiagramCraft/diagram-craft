@@ -1,4 +1,4 @@
-import { Action, ActionContext, ActionEvents } from '../keyMap.ts';
+import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
@@ -11,6 +11,10 @@ declare global {
     WAYPOINT_DELETE: WaypointDeleteAction;
   }
 }
+
+export const waypointDeleteActions: ActionMapFactory = (state: State) => ({
+  WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
+});
 
 export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements Action {
   enabled = true;

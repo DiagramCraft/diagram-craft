@@ -1,4 +1,4 @@
-import { ActionEvents, ToggleAction } from '../keyMap.ts';
+import { ActionEvents, ActionMapFactory, State, ToggleAction } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { MagnetType } from '../../model/snap/magnet.ts';
 import { Diagram } from '../../model/diagram.ts';
@@ -12,6 +12,14 @@ declare global {
     TOGGLE_MAGNET_TYPE_DISTANCE: ToggleMagnetTypeAction;
   }
 }
+
+export const toggleMagnetTypeActions: ActionMapFactory = (state: State) => ({
+  TOGGLE_MAGNET_TYPE_SIZE: new ToggleMagnetTypeAction(state.diagram, 'size'),
+  TOGGLE_MAGNET_TYPE_GRID: new ToggleMagnetTypeAction(state.diagram, 'grid'),
+  TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction(state.diagram, 'canvas'),
+  TOGGLE_MAGNET_TYPE_NODE: new ToggleMagnetTypeAction(state.diagram, 'node'),
+  TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction(state.diagram, 'distance')
+});
 
 export class ToggleMagnetTypeAction extends EventEmitter<ActionEvents> implements ToggleAction {
   enabled = false;

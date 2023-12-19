@@ -3,12 +3,17 @@ import { DiagramElement } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 
 declare global {
   interface ActionMap {
     SELECTION_DELETE: SelectionDeleteAction;
   }
 }
+
+export const selectionDeleteActions: ActionMapFactory = (state: State) => ({
+  SELECTION_DELETE: new SelectionDeleteAction(state.diagram)
+});
 
 class SelectionDeleteUndoableAction implements UndoableAction {
   description = 'Delete elements';

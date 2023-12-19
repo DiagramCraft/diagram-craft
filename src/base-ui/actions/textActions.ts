@@ -1,4 +1,4 @@
-import { ActionEvents, ToggleAction } from '../keyMap.ts';
+import { ActionEvents, ActionMapFactory, State, ToggleAction } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 
@@ -9,6 +9,12 @@ declare global {
     TEXT_UNDERLINE: TextDecorationAction;
   }
 }
+
+export const textActions: ActionMapFactory = (state: State) => ({
+  TEXT_BOLD: new TextAction(state.diagram, 'bold'),
+  TEXT_ITALIC: new TextAction(state.diagram, 'italic'),
+  TEXT_UNDERLINE: new TextDecorationAction(state.diagram, 'underline')
+});
 
 // TODO: Both of these actions must listen for node changes and update state
 export class TextAction extends EventEmitter<ActionEvents> implements ToggleAction {

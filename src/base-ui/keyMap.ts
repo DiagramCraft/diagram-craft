@@ -1,20 +1,20 @@
-import { UndoAction } from './actions/undoAction.ts';
-import { RedoAction } from './actions/redoAction.ts';
+import { undoActions } from './actions/undoAction.ts';
+import { redoActions } from './actions/redoAction.ts';
 import { Emitter } from '../utils/event.ts';
-import { SelectAllAction } from './actions/selectAllAction.ts';
-import { AlignAction } from './actions/alignAction.ts';
-import { ToggleMagnetTypeAction } from './actions/toggleMagnetTypeAction.ts';
-import { DistributeAction } from './actions/distributeAction.ts';
+import { selectAllActions } from './actions/selectAllAction.ts';
+import { alignActions } from './actions/alignAction.ts';
+import { toggleMagnetTypeActions } from './actions/toggleMagnetTypeAction.ts';
+import { distributeActions } from './actions/distributeAction.ts';
 import { Point } from '../geometry/point.ts';
-import { WaypointAddAction } from './actions/waypointAddAction.ts';
-import { WaypointDeleteAction } from './actions/waypointDeleteAction.ts';
-import { ToggleRulerAction } from './actions/toggleRulerAction.ts';
-import { SelectionDeleteAction } from './actions/selectionDeleteAction.ts';
-import { SelectionRestackAction } from './actions/selectionRestackAction.ts';
-import { ClipboardCopyAction, ClipboardPasteAction } from './actions/clipboardAction.ts';
-import { TextAction, TextDecorationAction } from './actions/textActions.ts';
-import { EdgeFlipAction } from './actions/edgeFlipAction.ts';
-import { DuplicateAction } from './actions/duplicateAction.ts';
+import { waypointAddActions } from './actions/waypointAddAction.ts';
+import { waypointDeleteActions } from './actions/waypointDeleteAction.ts';
+import { toggleRulerActions } from './actions/toggleRulerAction.ts';
+import { selectionDeleteActions } from './actions/selectionDeleteAction.ts';
+import { selectionRestackActions } from './actions/selectionRestackAction.ts';
+import { clipboardActions } from './actions/clipboardAction.ts';
+import { textActions } from './actions/textActions.ts';
+import { edgeFlipActions } from './actions/edgeFlipAction.ts';
+import { duplicateActions } from './actions/duplicateAction.ts';
 import { Diagram } from '../model/diagram.ts';
 
 export type ActionEvents = {
@@ -48,42 +48,22 @@ declare global {
 
 export type ActionMapFactory = (state: State) => Partial<ActionMap>;
 
-// TODO: Maybe we can move this entry by entry into each action file?
 export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
-  CLIPBOARD_COPY: new ClipboardCopyAction(state.diagram, 'copy'),
-  CLIPBOARD_CUT: new ClipboardCopyAction(state.diagram, 'cut'),
-  CLIPBOARD_PASTE: new ClipboardPasteAction(state.diagram),
-  UNDO: new UndoAction(state.diagram),
-  REDO: new RedoAction(state.diagram),
-  SELECT_ALL: new SelectAllAction(state.diagram, 'all'),
-  SELECT_ALL_NODES: new SelectAllAction(state.diagram, 'nodes'),
-  SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges'),
-  SELECTION_DELETE: new SelectionDeleteAction(state.diagram),
-  SELECTION_RESTACK_BOTTOM: new SelectionRestackAction(state.diagram, 'bottom'),
-  SELECTION_RESTACK_DOWN: new SelectionRestackAction(state.diagram, 'down'),
-  SELECTION_RESTACK_TOP: new SelectionRestackAction(state.diagram, 'top'),
-  SELECTION_RESTACK_UP: new SelectionRestackAction(state.diagram, 'up'),
-  ALIGN_TOP: new AlignAction(state.diagram, 'top'),
-  ALIGN_BOTTOM: new AlignAction(state.diagram, 'bottom'),
-  ALIGN_CENTER_HORIZONTAL: new AlignAction(state.diagram, 'center-horizontal'),
-  ALIGN_LEFT: new AlignAction(state.diagram, 'left'),
-  ALIGN_RIGHT: new AlignAction(state.diagram, 'right'),
-  ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical'),
-  TOGGLE_MAGNET_TYPE_SIZE: new ToggleMagnetTypeAction(state.diagram, 'size'),
-  TOGGLE_MAGNET_TYPE_GRID: new ToggleMagnetTypeAction(state.diagram, 'grid'),
-  TOGGLE_MAGNET_TYPE_CANVAS: new ToggleMagnetTypeAction(state.diagram, 'canvas'),
-  TOGGLE_MAGNET_TYPE_NODE: new ToggleMagnetTypeAction(state.diagram, 'node'),
-  TOGGLE_MAGNET_TYPE_DISTANCE: new ToggleMagnetTypeAction(state.diagram, 'distance'),
-  DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
-  DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical'),
-  WAYPOINT_ADD: new WaypointAddAction(state.diagram),
-  WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram),
-  TOGGLE_RULER: new ToggleRulerAction(state.diagram),
-  TEXT_BOLD: new TextAction(state.diagram, 'bold'),
-  TEXT_ITALIC: new TextAction(state.diagram, 'italic'),
-  TEXT_UNDERLINE: new TextDecorationAction(state.diagram, 'underline'),
-  EDGE_FLIP: new EdgeFlipAction(state.diagram),
-  DUPLICATE: new DuplicateAction(state.diagram)
+  ...clipboardActions(state),
+  ...undoActions(state),
+  ...redoActions(state),
+  ...selectAllActions(state),
+  ...selectionDeleteActions(state),
+  ...selectionRestackActions(state),
+  ...alignActions(state),
+  ...toggleMagnetTypeActions(state),
+  ...distributeActions(state),
+  ...waypointAddActions(state),
+  ...waypointDeleteActions(state),
+  ...toggleRulerActions(state),
+  ...textActions(state),
+  ...edgeFlipActions(state),
+  ...duplicateActions(state)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {

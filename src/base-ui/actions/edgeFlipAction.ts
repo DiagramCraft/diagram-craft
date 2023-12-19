@@ -1,4 +1,4 @@
-import { Action, ActionEvents } from '../keyMap.ts';
+import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 
@@ -7,6 +7,10 @@ declare global {
     EDGE_FLIP: EdgeFlipAction;
   }
 }
+
+export const edgeFlipActions: ActionMapFactory = (state: State) => ({
+  EDGE_FLIP: new EdgeFlipAction(state.diagram)
+});
 
 export class EdgeFlipAction extends EventEmitter<ActionEvents> implements Action {
   enabled = false;

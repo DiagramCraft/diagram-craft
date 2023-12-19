@@ -1,4 +1,4 @@
-import { Action, ActionEvents } from '../keyMap.ts';
+import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 
@@ -7,6 +7,10 @@ declare global {
     UNDO: UndoAction;
   }
 }
+
+export const undoActions: ActionMapFactory = (state: State) => ({
+  UNDO: new UndoAction(state.diagram)
+});
 
 export class UndoAction extends EventEmitter<ActionEvents> implements Action {
   enabled = true;

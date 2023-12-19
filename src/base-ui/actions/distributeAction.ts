@@ -3,6 +3,7 @@ import { NodeChangeAction } from '../../model/diagramUndoActions.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 
 declare global {
   interface ActionMap {
@@ -10,6 +11,11 @@ declare global {
     DISTRIBUTE_HORIZONTAL: DistributeAction;
   }
 }
+
+export const distributeActions: ActionMapFactory = (state: State) => ({
+  DISTRIBUTE_HORIZONTAL: new DistributeAction(state.diagram, 'horizontal'),
+  DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical')
+});
 
 export class DistributeAction extends AbstractSelectionAction {
   constructor(

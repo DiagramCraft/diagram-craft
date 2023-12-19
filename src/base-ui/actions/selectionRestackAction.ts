@@ -2,6 +2,7 @@ import { UndoableAction } from '../../model/undoManager.ts';
 import { precondition } from '../../utils/assert.ts';
 import { Diagram, StackPosition } from '../../model/diagram.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 
 declare global {
   interface ActionMap {
@@ -11,6 +12,13 @@ declare global {
     SELECTION_RESTACK_TOP: SelectionRestackAction;
   }
 }
+
+export const selectionRestackActions: ActionMapFactory = (state: State) => ({
+  SELECTION_RESTACK_BOTTOM: new SelectionRestackAction(state.diagram, 'bottom'),
+  SELECTION_RESTACK_DOWN: new SelectionRestackAction(state.diagram, 'down'),
+  SELECTION_RESTACK_TOP: new SelectionRestackAction(state.diagram, 'top'),
+  SELECTION_RESTACK_UP: new SelectionRestackAction(state.diagram, 'up')
+});
 
 type RestackMode = 'up' | 'down' | 'top' | 'bottom';
 

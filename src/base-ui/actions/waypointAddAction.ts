@@ -1,4 +1,4 @@
-import { Action, ActionContext, ActionEvents } from '../keyMap.ts';
+import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
@@ -10,6 +10,10 @@ declare global {
     WAYPOINT_ADD: WaypointAddAction;
   }
 }
+
+export const waypointAddActions: ActionMapFactory = (state: State) => ({
+  WAYPOINT_ADD: new WaypointAddAction(state.diagram)
+});
 
 export class WaypointAddAction extends EventEmitter<ActionEvents> implements Action {
   enabled = true;

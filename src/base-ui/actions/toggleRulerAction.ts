@@ -1,4 +1,4 @@
-import { ActionEvents, ToggleAction } from '../keyMap.ts';
+import { ActionEvents, ActionMapFactory, State, ToggleAction } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 
@@ -7,6 +7,10 @@ declare global {
     TOGGLE_RULER: ToggleRulerAction;
   }
 }
+
+export const toggleRulerActions: ActionMapFactory = (state: State) => ({
+  TOGGLE_RULER: new ToggleRulerAction(state.diagram)
+});
 
 export class ToggleRulerAction extends EventEmitter<ActionEvents> implements ToggleAction {
   enabled = false;

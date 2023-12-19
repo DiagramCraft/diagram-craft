@@ -1,6 +1,6 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { EventEmitter } from '../../utils/event.ts';
-import { Action, ActionContext, ActionEvents } from '../keyMap.ts';
+import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import {
   deserializeDiagramElements,
   isConnected,
@@ -23,6 +23,12 @@ declare global {
     CLIPBOARD_CUT: ClipboardCopyAction;
   }
 }
+
+export const clipboardActions: ActionMapFactory = (state: State) => ({
+  CLIPBOARD_COPY: new ClipboardCopyAction(state.diagram, 'copy'),
+  CLIPBOARD_CUT: new ClipboardCopyAction(state.diagram, 'cut'),
+  CLIPBOARD_PASTE: new ClipboardPasteAction(state.diagram)
+});
 
 const OFFSET = 10;
 const PREFIX = 'application/x-diagram-craft-selection;';
