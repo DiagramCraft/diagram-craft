@@ -7,6 +7,7 @@ import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry
 } from '../model/elementDefinitionRegistry.ts';
+import { Circle } from './node-types/Circle.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -20,6 +21,11 @@ export const defaultNodeRegistry = () => {
   dest.register(
     new ReactNodeDefinition('rounded-rect', 'Rounded Rectangle', RoundedRect, {
       getCustomProperties: RoundedRect.getCustomProperties
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('circle', 'Circle', Circle, {
+      getBoundingPath: Circle.getBoundingPath
     })
   );
   dest.register(

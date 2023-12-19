@@ -77,6 +77,7 @@ export class PathBuilder {
   }
 
   // TODO: This should move into LocalCoordinateSystem
+  /* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
   toWorldCoordinate(b: Box, x: number, y: number) {
     const xPart = (x * b.size.w) / 2 + b.size.w / 2;
     const yPart = (-y * b.size.h) / 2 + b.size.h / 2;
