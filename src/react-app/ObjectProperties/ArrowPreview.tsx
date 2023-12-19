@@ -21,9 +21,9 @@ export const ArrowPreview = (props: Props) => {
             strokeWidth={1}
             fill={
               props.start.fill === 'fg'
-                ? props.bg ?? 'var(--secondary-fg)'
+                ? props.fg ?? 'var(--secondary-fg)'
                 : props.start.fill === 'bg'
-                ? 'white'
+                ? props.bg
                 : 'none'
             }
           />
@@ -45,9 +45,9 @@ export const ArrowPreview = (props: Props) => {
             strokeWidth={1}
             fill={
               props.end.fill === 'fg'
-                ? props.bg ?? 'var(--secondary-fg)'
+                ? props.fg ?? 'var(--secondary-fg)'
                 : props.end.fill === 'bg'
-                ? 'white'
+                ? props.bg
                 : 'none'
             }
           />
@@ -70,6 +70,7 @@ export const ArrowPreview = (props: Props) => {
 type Props = {
   color?: string;
   bg?: string;
+  fg?: string;
   type: string;
   width: number;
   start?: ArrowShape;

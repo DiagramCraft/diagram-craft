@@ -12,6 +12,7 @@ export const ArrowSelector = (props: Props) => {
         <Select.Value
           placeholder={
             <ArrowPreview
+              bg={'var(--secondary-bg)'}
               width={30}
               type={props.value ?? 'NONE'}
               end={ARROW_SHAPES[props.value ?? 'NONE']?.(PREVIEW_SCALE)}
@@ -28,7 +29,12 @@ export const ArrowSelector = (props: Props) => {
             <Select.Group>
               <Select.Item key={'NONE'} className={'cmp-select-content__item'} value={'NONE'}>
                 <Select.ItemText>
-                  <ArrowPreview width={30} type={'NONE'} end={undefined} />
+                  <ArrowPreview
+                    width={30}
+                    type={'NONE'}
+                    end={undefined}
+                    bg={'var(--secondary-bg)'}
+                  />
                 </Select.ItemText>
                 <Select.ItemIndicator className="cmp-select-content__item-indicator">
                   <TbCheck />
@@ -39,7 +45,7 @@ export const ArrowSelector = (props: Props) => {
                 return (
                   <Select.Item key={type} className={'cmp-select-content__item'} value={type}>
                     <Select.ItemText>
-                      <ArrowPreview width={30} type={type} end={arrow} />
+                      <ArrowPreview width={30} type={type} end={arrow} bg={'var(--secondary-bg)'} />
                     </Select.ItemText>
                     <Select.ItemIndicator className="cmp-select-content__item-indicator">
                       <TbCheck />

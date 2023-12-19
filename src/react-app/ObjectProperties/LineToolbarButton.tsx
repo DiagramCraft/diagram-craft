@@ -33,7 +33,8 @@ export const LineToolbarButton = () => {
             }}
           >
             <ArrowPreview
-              bg={fillColor.val}
+              fg={fillColor.val}
+              bg={'var(--canvas-bg)'}
               color={strokeColor.val}
               width={65}
               type={arrowStart.val}
