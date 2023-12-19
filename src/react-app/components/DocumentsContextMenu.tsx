@@ -7,7 +7,7 @@ export const DocumentsContextMenu = (props: Props) => {
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className="cmp-context-menu dark-theme">
+        <ContextMenu.Content className="cmp-context-menu">
           <ActionContextMenuItem action={'EDGE_FLIP'}>Rename...</ActionContextMenuItem>
           <ActionContextMenuItem action={'EDGE_FLIP'}>Add</ActionContextMenuItem>
           <ActionContextMenuItem action={'EDGE_FLIP'}>Add subpage</ActionContextMenuItem>

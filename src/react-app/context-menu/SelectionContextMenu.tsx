@@ -18,11 +18,7 @@ export const SelectionContextMenu = () => {
           </div>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
-          <ContextMenu.SubContent
-            className="cmp-context-menu dark-theme"
-            sideOffset={2}
-            alignOffset={-5}
-          >
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
             <ActionContextMenuItem action={'ALIGN_TOP'}>Align Top Edges</ActionContextMenuItem>
             <ActionContextMenuItem action={'ALIGN_BOTTOM'}>
               Align Bottom Edges
@@ -48,11 +44,7 @@ export const SelectionContextMenu = () => {
           </div>
         </ContextMenu.SubTrigger>
         <ContextMenu.Portal>
-          <ContextMenu.SubContent
-            className="cmp-context-menu dark-theme"
-            sideOffset={2}
-            alignOffset={-5}
-          >
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
             <ActionContextMenuItem action={'SELECTION_RESTACK_TOP'}>
               Move to front
             </ActionContextMenuItem>

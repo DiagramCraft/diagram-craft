@@ -279,7 +279,7 @@ useEffect(() => {
                       />
                     </ContextMenu.Trigger>
                     <ContextMenu.Portal>
-                      <ContextMenu.Content className="cmp-context-menu dark-theme">
+                      <ContextMenu.Content className="cmp-context-menu">
                         <ContextMenuDispatcher
                           state={contextMenuTarget}
                           createContextMenu={state => {
