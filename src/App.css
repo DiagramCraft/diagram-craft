@@ -424,8 +424,8 @@ input::-webkit-input-placeholder {
   min-width: min-content;
 
   &:not([data-size='large']) {
-    overflow: auto;
-    flex-wrap: nowrap;
+    overflow: hidden;
+    flex-wrap: wrap;
   }
 
   .cmp-toolbar__toggle-item,
@@ -511,6 +511,8 @@ input::-webkit-input-placeholder {
   }
 
   &[data-size='large'] {
+    overflow: auto;
+    flex-wrap: nowrap;
     .cmp-toolbar__toggle-item,
     .cmp-toolbar__button {
       padding: 15px 10px;
@@ -1203,6 +1205,11 @@ input::-webkit-input-placeholder {
   .cmp-select-trigger__icon {
     color: var(--primary-fg);
     margin-top: 0.2rem;
+  }
+
+  .cmp-toolbar {
+    overflow: auto;
+    flex-wrap: nowrap;
   }
 }
 
