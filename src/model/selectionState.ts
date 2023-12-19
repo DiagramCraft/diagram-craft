@@ -61,10 +61,10 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     this.#elements = [];
     this.#marquee = new Marquee(this);
 
-    const recalculateSourceBoundingBox = debounce(() => {
+    const recalculateBoundingBox = debounce(() => {
       this.recalculateBoundingBox();
     });
-    diagram.on('elementChange', recalculateSourceBoundingBox);
+    diagram.on('elementChange', recalculateBoundingBox);
   }
 
   get source() {

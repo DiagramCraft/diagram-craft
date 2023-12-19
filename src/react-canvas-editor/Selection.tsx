@@ -62,6 +62,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
     },
     bounds.pos
   ];
+
   const pointsString = points.map(c => `${c.x},${c.y}`).join(' ');
 
   return (

@@ -22,6 +22,7 @@ export const Text = (props: Props) => {
       props.node.bounds = b.getSnapshot();
 
       props.node.diagram!.updateElement(props.node);
+      props.node.diagram!.selectionState.rebaseline();
     },
     [props.node]
   );
