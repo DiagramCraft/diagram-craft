@@ -50,20 +50,20 @@ const addSegment = (
     };
 
     if (direction === 's') {
-      p.lineTo(px, y);
-      p.lineTo(x, y);
+      p.lineTo({ x: px, y });
+      p.lineTo({ x, y });
       entry.endDirection = x < px ? 'w' : 'e';
     } else if (direction === 'n') {
-      p.lineTo(px, y);
-      p.lineTo(x, y);
+      p.lineTo({ x: px, y });
+      p.lineTo({ x, y });
       entry.endDirection = x < px ? 'w' : 'e';
     } else if (direction === 'e') {
-      p.lineTo(x, py);
-      p.lineTo(x, y);
+      p.lineTo({ x, y: py });
+      p.lineTo({ x, y });
       entry.endDirection = y < py ? 'n' : 's';
     } else if (direction === 'w') {
-      p.lineTo(x, py);
-      p.lineTo(x, y);
+      p.lineTo({ x, y: py });
+      p.lineTo({ x, y });
       entry.endDirection = y < py ? 'n' : 's';
     }
 
@@ -85,7 +85,7 @@ const buildOrthogonalEdgePath = (
   const em = edge.endPosition;
 
   const path = new PathBuilder();
-  path.moveToPoint(sm);
+  path.moveTo(sm);
 
   let availableDirections: Direction[] = Direction.all();
   let preferedDirections: Direction[] = preferedStartDirection ? [preferedStartDirection] : [];
@@ -119,17 +119,17 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
 
   const path = new PathBuilder();
 
-  path.moveToPoint(edge.startPosition);
+  path.moveTo(edge.startPosition);
   if (!edge.waypoints || edge.waypoints.length === 0) {
-    path.lineToPoint(em);
+    path.lineTo(em);
   } else if (edge.waypoints.length === 1) {
-    path.quadToPoint(em, edge.waypoints[0].point);
+    path.quadTo(em, edge.waypoints[0].point);
   } else {
-    path.quadToPoint(edge.waypoints[1].point, edge.waypoints[0].point);
+    path.quadTo(edge.waypoints[1].point, edge.waypoints[0].point);
     for (let i = 2; i < edge.waypoints.length; i++) {
-      path.curveToPoint(edge.waypoints[i].point);
+      path.curveTo(edge.waypoints[i].point);
     }
-    path.curveToPoint(em);
+    path.curveTo(em);
   }
 
   return path;
@@ -138,9 +138,9 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
 const buildBezierEdgePath = (edge: DiagramEdge) => {
   const path = new PathBuilder();
 
-  path.moveToPoint(edge.startPosition);
+  path.moveTo(edge.startPosition);
   if (!edge.waypoints || edge.waypoints.length === 0) {
-    path.lineToPoint(edge.endPosition);
+    path.lineTo(edge.endPosition);
   } else {
     // TODO: We should improve the way this works when adding new waypoints
     //       e.g. using the tangent line
@@ -156,11 +156,11 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
     }
 
     const fp = edge.waypoints[0];
-    path.quadToPoint(fp.point, Point.add(fp.controlPoints![0], fp.point));
+    path.quadTo(fp.point, Point.add(fp.controlPoints![0], fp.point));
     for (let i = 1; i < edge.waypoints.length; i++) {
       const wp = edge.waypoints[i];
       const pwp = edge.waypoints[i - 1];
-      path.cubicToPoint(
+      path.cubicTo(
         wp.point,
         Point.add(pwp.controlPoints![1], pwp.point),
         Point.add(wp.controlPoints![0], wp.point)
@@ -168,7 +168,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
     }
 
     const last = edge.waypoints.at(-1)!;
-    path.quadToPoint(edge.endPosition, Point.add(last.controlPoints![1], last.point));
+    path.quadTo(edge.endPosition, Point.add(last.controlPoints![1], last.point));
   }
 
   return path;
@@ -177,11 +177,11 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
 const buildStraightEdgePath = (edge: DiagramEdge) => {
   const path = new PathBuilder();
 
-  path.moveToPoint(edge.startPosition);
+  path.moveTo(edge.startPosition);
   edge.waypoints?.forEach(wp => {
-    path.lineToPoint(wp.point);
+    path.lineTo(wp.point);
   });
-  path.lineToPoint(edge.endPosition);
+  path.lineTo(edge.endPosition);
   return path;
 };
 

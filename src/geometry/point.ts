@@ -9,6 +9,9 @@ export type Point = Readonly<{
 export const Point = {
   ORIGIN: { x: 0, y: 0 },
 
+  of: (x: number, y: number) => ({ x, y }),
+  ofTuple: (p: [number, number]) => ({ x: p[0], y: p[1] }),
+
   add: (c1: Point, c2: Vector) => ({ x: c1.x + c2.x, y: c1.y + c2.y }),
 
   subtract: (c1: Point, c2: Vector) => ({ x: c1.x - c2.x, y: c1.y - c2.y }),

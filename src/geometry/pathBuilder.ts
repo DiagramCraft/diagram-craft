@@ -16,28 +16,36 @@ export type Segment =
   | RawCurveSegment
   | RawQuadSegment;
 
+/* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
+export const unitCoordinateSystem = (b: Box) => {
+  return (p: Point, type?: 'point' | 'distance') => {
+    if (type === 'distance') return { x: p.x * b.size.w, y: p.y * b.size.h };
+
+    const xPart = (p.x * b.size.w) / 2 + b.size.w / 2;
+    const yPart = (-p.y * b.size.h) / 2 + b.size.h / 2;
+
+    return { x: xPart + b.pos.x, y: yPart + b.pos.y };
+  };
+};
+
 export class PathBuilder {
-  path: Segment[] = [];
-  start: Point | undefined;
+  private start: Point | undefined;
+  private path: Segment[] = [];
   private rotation: number = 0;
   private centerOfRotation: Point = Point.ORIGIN;
 
-  moveTo(x: number, y: number) {
+  constructor(
+    private readonly transform: (p: Point, type?: 'point' | 'distance') => Point = p => p
+  ) {}
+
+  moveTo(p: Point) {
     precondition.is.notPresent(this.start);
-    this.start = { x, y };
+    this.start = this.transform(p);
   }
 
-  moveToPoint(p: Point) {
-    precondition.is.notPresent(this.start);
-    this.start = p;
-  }
-
-  lineTo(x: number, y: number) {
-    this.path.push(['L', x, y]);
-  }
-
-  lineToPoint(p: Point) {
-    this.path.push(['L', p.x, p.y]);
+  lineTo(p: Point) {
+    const tp = this.transform(p);
+    this.path.push(['L', tp.x, tp.y]);
   }
 
   arcTo(
@@ -48,40 +56,27 @@ export class PathBuilder {
     large_arc_flag: 0 | 1 = 0,
     sweep_flag: 0 | 1 = 0
   ) {
-    this.path.push(['A', rx, ry, angle, large_arc_flag, sweep_flag, p.x, p.y]);
+    const tp = this.transform(p);
+    const tr = this.transform({ x: rx, y: ry }, 'distance');
+    this.path.push(['A', tr.x, tr.y, angle, large_arc_flag, sweep_flag, tp.x, tp.y]);
   }
 
-  curveTo(x: number, y: number) {
-    this.path.push(['T', x, y]);
+  curveTo(p: Point) {
+    const tp = this.transform(p);
+    this.path.push(['T', tp.x, tp.y]);
   }
 
-  curveToPoint(p: Point) {
-    this.path.push(['T', p.x, p.y]);
+  quadTo(p: Point, p1: Point) {
+    const tp = this.transform(p);
+    const tp1 = this.transform(p1);
+    this.path.push(['Q', tp1.x, tp1.y, tp.x, tp.y]);
   }
 
-  quadTo(x: number, y: number, x1: number, y1: number) {
-    this.path.push(['Q', x1, y1, x, y]);
-  }
-
-  quadToPoint(p: Point, p1: Point) {
-    this.path.push(['Q', p1.x, p1.y, p.x, p.y]);
-  }
-
-  cubicTo(x: number, y: number, x1: number, y1: number, x2: number, y2: number) {
-    this.path.push(['C', x1, y1, x2, y2, x, y]);
-  }
-
-  cubicToPoint(p: Point, p1: Point, p2: Point) {
-    this.path.push(['C', p1.x, p1.y, p2.x, p2.y, p.x, p.y]);
-  }
-
-  // TODO: This should move into LocalCoordinateSystem
-  /* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
-  toWorldCoordinate(b: Box, x: number, y: number) {
-    const xPart = (x * b.size.w) / 2 + b.size.w / 2;
-    const yPart = (-y * b.size.h) / 2 + b.size.h / 2;
-
-    return { x: xPart + b.pos.x, y: yPart + b.pos.y };
+  cubicTo(p: Point, p1: Point, p2: Point) {
+    const tp = this.transform(p);
+    const tp1 = this.transform(p1);
+    const tp2 = this.transform(p2);
+    this.path.push(['C', tp1.x, tp1.y, tp2.x, tp2.y, tp.x, tp.y]);
   }
 
   append(path: PathBuilder) {
@@ -98,15 +93,11 @@ export class PathBuilder {
   getPath() {
     return new Path(
       this.applyPathRotation(this.path),
-      this.applyPointRotation(this.start ?? Point.ORIGIN)
+      Point.ofTuple(this.applyPointRotationArray(this.start ?? Point.ORIGIN))
     );
   }
 
-  private applyPointRotation(point: Point) {
-    return Point.rotateAround(point, this.rotation, this.centerOfRotation);
-  }
-
-  private applyPointRotationArray(point: Point) {
+  private applyPointRotationArray(point: Point): [number, number] {
     const np = Point.rotateAround(point, this.rotation, this.centerOfRotation);
     return [np.x, np.y];
   }
@@ -132,6 +123,7 @@ export class PathBuilder {
         case 'T':
           return ['T', ...this.applyPointRotationArray({ x: s[1], y: s[2] })] as RawCurveSegment;
         case 'A':
+          // TODO: Probably need to change the rotation parameter as well
           return [
             'A',
             s[1],

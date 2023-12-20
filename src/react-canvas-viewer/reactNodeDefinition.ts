@@ -33,8 +33,8 @@ export class ReactNodeDefinition implements NodeDefinition {
     readonly type: string,
     readonly name: string,
     readonly reactNode: ReactNode,
-    readonly config?: {
-      getBoundingPath?: BoundingPathFactory;
+    readonly config: {
+      getBoundingPath: BoundingPathFactory;
       getCustomProperties?: CustomPropertyFactory;
       defaultPropsFactory?: DefaultPropsFactory;
       initialConfig?: InitialConfig;
@@ -46,26 +46,11 @@ export class ReactNodeDefinition implements NodeDefinition {
   }
 
   getBoundingPath(node: DiagramNode): Path {
-    if (this.config?.getBoundingPath === undefined) {
-      const builder = new PathBuilder();
-      builder.moveTo(node.bounds.pos.x, node.bounds.pos.y);
-      builder.lineTo(node.bounds.pos.x + node.bounds.size.w, node.bounds.pos.y);
-      builder.lineTo(
-        node.bounds.pos.x + node.bounds.size.w,
-        node.bounds.pos.y + node.bounds.size.h
-      );
-      builder.lineTo(node.bounds.pos.x, node.bounds.pos.y + node.bounds.size.h);
-      builder.lineTo(node.bounds.pos.x, node.bounds.pos.y);
+    const bnd = node.bounds;
 
-      if (round(node.bounds.rotation) !== 0) {
-        builder.setRotation(node.bounds.rotation, Box.center(node.bounds));
-      }
-
-      return builder.getPath();
-    }
     const pb = this.config.getBoundingPath?.(node);
-    if (round(node.bounds.rotation) !== 0) {
-      pb.setRotation(node.bounds.rotation, Box.center(node.bounds));
+    if (round(bnd.rotation) !== 0) {
+      pb.setRotation(bnd.rotation, Box.center(bnd));
     }
     return pb.getPath();
   }

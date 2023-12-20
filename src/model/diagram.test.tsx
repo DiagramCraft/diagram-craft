@@ -4,6 +4,7 @@ import { TransformFactory } from '../geometry/transform.ts';
 import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
+import { PathBuilder } from '../geometry/pathBuilder.ts';
 
 describe('Diagram', () => {
   test('transform rotate', () => {
@@ -30,7 +31,11 @@ describe('Diagram', () => {
     );
 
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
-    nodeDefinitionRegistry.register(new ReactNodeDefinition('a', 'a', () => null));
+    nodeDefinitionRegistry.register(
+      new ReactNodeDefinition('a', 'a', () => null, {
+        getBoundingPath: () => new PathBuilder()
+      })
+    );
 
     const nodes = [node1, node2];
     const diagram = new Diagram(

@@ -35,6 +35,7 @@ export const defaultNodeRegistry = () => {
   );
   dest.register(
     new ReactNodeDefinition('text', 'Text', Text, {
+      getBoundingPath: Rect.getBoundingPath,
       defaultPropsFactory: Text.defaultPropsFactory,
       initialConfig: Text.initialConfig
     })

@@ -5,7 +5,8 @@ import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { PathBuilder } from '../../geometry/pathBuilder.ts';
+import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
+import { Point } from '../../geometry/point.ts';
 
 declare global {
   interface NodeProps {
@@ -83,33 +84,25 @@ RoundedRect.getCustomProperties = (def: DiagramNode): Record<string, CustomPrope
 };
 
 RoundedRect.getBoundingPath = (def: DiagramNode) => {
-  const pathBuilder = new PathBuilder();
-
   const radius = def.props?.roundedRect?.radius ?? 10;
-
   const bnd = def.bounds;
 
-  const cdx = 1 - (2 * radius) / bnd.size.w;
-  const cdy = 1 - (2 * radius) / bnd.size.h;
+  const xr = radius / bnd.size.w;
+  const yr = radius / bnd.size.h;
+  const cdx = 1 - 2 * xr;
+  const cdy = 1 - 2 * yr;
 
-  const bn0 = pathBuilder.toWorldCoordinate(bnd, -cdx, 1);
-  const bn1 = pathBuilder.toWorldCoordinate(bnd, cdx, 1);
-  const be0 = pathBuilder.toWorldCoordinate(bnd, 1, cdy);
-  const be1 = pathBuilder.toWorldCoordinate(bnd, 1, -cdy);
-  const bs0 = pathBuilder.toWorldCoordinate(bnd, cdx, -1);
-  const bs1 = pathBuilder.toWorldCoordinate(bnd, -cdx, -1);
-  const bw0 = pathBuilder.toWorldCoordinate(bnd, -1, -cdy);
-  const bw1 = pathBuilder.toWorldCoordinate(bnd, -1, cdy);
+  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 
-  pathBuilder.moveToPoint(bn0);
-  pathBuilder.lineToPoint(bn1);
-  pathBuilder.arcTo(be0, radius, radius, 0, 0, 1);
-  pathBuilder.lineToPoint(be1);
-  pathBuilder.arcTo(bs0, radius, radius, 0, 0, 1);
-  pathBuilder.lineToPoint(bs1);
-  pathBuilder.arcTo(bw0, radius, radius, 0, 0, 1);
-  pathBuilder.lineToPoint(bw1);
-  pathBuilder.arcTo(bn0, radius, radius, 0, 0, 1);
+  pathBuilder.moveTo(Point.of(-cdx, 1));
+  pathBuilder.lineTo(Point.of(cdx, 1));
+  pathBuilder.arcTo(Point.of(1, cdy), xr, yr, 0, 0, 1);
+  pathBuilder.lineTo(Point.of(1, -cdy));
+  pathBuilder.arcTo(Point.of(cdx, -1), xr, yr, 0, 0, 1);
+  pathBuilder.lineTo(Point.of(-cdx, -1));
+  pathBuilder.arcTo(Point.of(-1, -cdy), xr, yr, 0, 0, 1);
+  pathBuilder.lineTo(Point.of(-1, cdy));
+  pathBuilder.arcTo(Point.of(-cdx, 1), xr, yr, 0, 0, 1);
 
   return pathBuilder;
 };

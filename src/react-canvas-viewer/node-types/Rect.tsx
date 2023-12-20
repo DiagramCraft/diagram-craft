@@ -2,7 +2,8 @@ import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { PathBuilder } from '../../geometry/pathBuilder.ts';
+import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
+import { Point } from '../../geometry/point.ts';
 
 export const Rect = (props: Props) => {
   const path = Rect.getBoundingPath(props.node).getPath();
@@ -34,19 +35,12 @@ export const Rect = (props: Props) => {
 };
 
 Rect.getBoundingPath = (def: DiagramNode) => {
-  const pathBuilder = new PathBuilder();
-  const bnd = def.bounds;
-
-  const bnw = pathBuilder.toWorldCoordinate(bnd, -1, 1);
-  const bne = pathBuilder.toWorldCoordinate(bnd, 1, 1);
-  const bse = pathBuilder.toWorldCoordinate(bnd, 1, -1);
-  const bs1 = pathBuilder.toWorldCoordinate(bnd, -1, -1);
-
-  pathBuilder.moveToPoint(bnw);
-  pathBuilder.lineToPoint(bne);
-  pathBuilder.lineToPoint(bse);
-  pathBuilder.lineToPoint(bs1);
-  pathBuilder.lineToPoint(bnw);
+  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+  pathBuilder.moveTo(Point.of(-1, 1));
+  pathBuilder.lineTo(Point.of(1, 1));
+  pathBuilder.lineTo(Point.of(1, -1));
+  pathBuilder.lineTo(Point.of(-1, -1));
+  pathBuilder.lineTo(Point.of(-1, 1));
 
   return pathBuilder;
 };

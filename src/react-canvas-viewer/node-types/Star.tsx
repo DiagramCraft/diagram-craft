@@ -1,5 +1,5 @@
 import React from 'react';
-import { PathBuilder } from '../../geometry/pathBuilder.ts';
+import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { Point } from '../../geometry/point.ts';
@@ -88,24 +88,16 @@ Star.getBoundingPath = (def: DiagramNode) => {
   const theta = Math.PI / 2;
   const dTheta = (2 * Math.PI) / sides;
 
-  const pathBuilder = new PathBuilder();
-  pathBuilder.moveToPoint(pathBuilder.toWorldCoordinate(def.bounds, 0, 1));
+  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+  pathBuilder.moveTo(Point.of(0, 1));
 
   for (let i = 0; i < sides; i++) {
     const angle = theta - (i + 1) * dTheta;
 
     const iAngle = angle + dTheta / 2;
-    pathBuilder.lineToPoint(
-      pathBuilder.toWorldCoordinate(
-        def.bounds,
-        Math.cos(iAngle) * innerRadius,
-        Math.sin(iAngle) * innerRadius
-      )
-    );
+    pathBuilder.lineTo(Point.of(Math.cos(iAngle) * innerRadius, Math.sin(iAngle) * innerRadius));
 
-    pathBuilder.lineToPoint(
-      pathBuilder.toWorldCoordinate(def.bounds, Math.cos(angle), Math.sin(angle))
-    );
+    pathBuilder.lineTo(Point.of(Math.cos(angle), Math.sin(angle)));
   }
 
   return pathBuilder;
