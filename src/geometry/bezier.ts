@@ -151,12 +151,12 @@ export const BezierUtils = {
       for (let i = 0; i < flattened.length; i += 7) {
         dest.push([
           'C',
-          rotate(flattened[i + 1] as number, flattened[i + 2] as number, rad).x,
-          rotate(flattened[i + 1] as number, flattened[i + 2] as number, rad).y,
-          rotate(flattened[i + 3] as number, flattened[i + 4] as number, rad).x,
-          rotate(flattened[i + 3] as number, flattened[i + 4] as number, rad).y,
-          rotate(flattened[i + 5] as number, flattened[i + 6] as number, rad).x,
-          rotate(flattened[i + 5] as number, flattened[i + 6] as number, rad).y
+          round(rotate(flattened[i + 1] as number, flattened[i + 2] as number, rad).x),
+          round(rotate(flattened[i + 1] as number, flattened[i + 2] as number, rad).y),
+          round(rotate(flattened[i + 3] as number, flattened[i + 4] as number, rad).x),
+          round(rotate(flattened[i + 3] as number, flattened[i + 4] as number, rad).y),
+          round(rotate(flattened[i + 5] as number, flattened[i + 6] as number, rad).x),
+          round(rotate(flattened[i + 5] as number, flattened[i + 6] as number, rad).y)
         ] as RawCubicSegment);
       }
       return dest;

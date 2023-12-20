@@ -189,6 +189,7 @@ export class Path {
         this.segments
           .map(e => e.normalize())
           .flat()
+          .map(e => e.join(' '))
           .join(' ')
       );
     } else {
