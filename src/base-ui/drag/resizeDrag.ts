@@ -115,6 +115,7 @@ export class ResizeDrag implements Drag {
       }
     }
 
+    selection.forceRotation(undefined);
     this.diagram.transformElements(
       selection.elements,
       TransformFactory.fromTo(before, newBounds.getSnapshot())

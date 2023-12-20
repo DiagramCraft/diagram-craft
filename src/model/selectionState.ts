@@ -101,7 +101,11 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.#marquee;
   }
 
-  forceRotation(r: number) {
+  forceRotation(r: number | undefined) {
+    if (r === undefined) {
+      this.#forcedRotation = false;
+      return;
+    }
     this.#bounds = {
       ...this.#bounds,
       rotation: r
