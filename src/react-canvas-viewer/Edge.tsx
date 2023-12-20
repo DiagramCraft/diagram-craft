@@ -91,7 +91,12 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const endArrowSize = edgeProps.arrow.end.size / 100;
   const arrow1 = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
   const arrow2 = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
-  const path = clipPath(buildEdgePath(props.def), props.def, arrow1, arrow2);
+  const path = clipPath(
+    buildEdgePath(props.def, edgeProps.routing.rounding),
+    props.def,
+    arrow1,
+    arrow2
+  );
 
   return (
     <g>

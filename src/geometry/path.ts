@@ -69,7 +69,7 @@ const makeSegmentList = (start: Point, path: Segment[]) => {
 
 // TODO: I wonder if we should create the segmentList immediately and not keep the path around
 export class Path {
-  private readonly path: Segment[] = [];
+  private path: Segment[] = [];
   private readonly start: Point;
   private _segmentList: SegmentList | undefined;
 
@@ -86,6 +86,11 @@ export class Path {
 
   get segments(): PathSegment[] {
     return this.segmentList.segments;
+  }
+
+  processSegments(fn: (segments: PathSegment[]) => PathSegment[]) {
+    this._segmentList = new SegmentList(fn(this.segmentList.segments));
+    this.path = this._segmentList.segments.flatMap(e => e.asRawSegments());
   }
 
   length() {

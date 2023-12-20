@@ -28,7 +28,7 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
     const edge = this.diagram.edgeLookup[context.id!];
     precondition.is.present(edge);
 
-    const path = buildEdgePath(edge);
+    const path = buildEdgePath(edge, 0);
     const projection = path.projectPoint(context.point);
 
     const wpDistances =

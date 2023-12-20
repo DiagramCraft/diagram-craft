@@ -31,6 +31,8 @@ export const LinePanel = (props: Props) => {
   const endType = useEdgeProperty($d, 'arrow.end.type', defaults.arrow.end.type);
   const endSize = useEdgeProperty($d, 'arrow.end.size', defaults.arrow.end.size);
 
+  const rounding = useEdgeProperty($d, 'routing.rounding', defaults.routing.rounding);
+
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} id="line" title={'Line'} hasCheckbox={false}>
       <div>
@@ -134,6 +136,17 @@ export const LinePanel = (props: Props) => {
               min={1}
               style={{ width: '45px' }}
               onChange={strokeSpacing.set}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Rounding:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <NumberInput
+              defaultUnit={'px'}
+              value={rounding.val}
+              min={0}
+              style={{ width: '50px' }}
+              onChange={rounding.set}
             />
           </div>
         </div>

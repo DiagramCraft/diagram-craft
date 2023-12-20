@@ -1,9 +1,13 @@
 import { Point } from './point.ts';
 import { round } from '../utils/math.ts';
+import { Line } from './line.ts';
 
 export type Vector = Point;
 
 export const Vector = {
+  fromLine: (l: Line) => {
+    return { x: l.to.x - l.from.x, y: l.to.y - l.from.y };
+  },
   from: (c1: Point, c2: Point) => {
     return { x: c2.x - c1.x, y: c2.y - c1.y };
   },

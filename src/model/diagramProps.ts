@@ -102,6 +102,9 @@ declare global {
     fill?: {
       color?: string;
     };
+    routing?: {
+      rounding?: number;
+    };
   }
 
   interface NodeProps extends ElementProps {

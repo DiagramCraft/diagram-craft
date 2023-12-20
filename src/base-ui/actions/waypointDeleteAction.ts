@@ -29,7 +29,7 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
     const edge = this.diagram.edgeLookup[context.id!];
     precondition.is.present(edge);
 
-    const path = buildEdgePath(edge);
+    const path = buildEdgePath(edge, 0);
 
     const wpDistances =
       edge.waypoints?.map((p, idx) => {

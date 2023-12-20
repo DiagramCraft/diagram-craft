@@ -186,7 +186,7 @@ export class ArcSegment implements PathSegment {
   ) {}
 
   asRawSegments(): Segment[] {
-    return this._segmentList?.segments.flatMap(s => s.asRawSegments()) ?? [];
+    return this.segmentList.segments.flatMap(s => s.asRawSegments()) ?? [];
   }
 
   length(): number {
@@ -197,8 +197,7 @@ export class ArcSegment implements PathSegment {
     return this.segmentList.point(t);
   }
 
-  // @ts-ignore
-  split(_t: number) {
+  split(_t: number): [PathSegment, PathSegment] {
     // TODO: Implement this - maybe this can be implemented without looking at the bezier curves
     //       essentially by creating a new arc with new bezier curves
     throw new NotImplementedYet();

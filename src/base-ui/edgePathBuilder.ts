@@ -5,6 +5,8 @@ import { Point } from '../geometry/point.ts';
 import { Path } from '../geometry/path.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Waypoint } from '../model/types.ts';
+import { Line } from '../geometry/line.ts';
+import { CubicSegment, LineSegment, PathSegment } from '../geometry/pathSegment.ts';
 
 type Result = {
   startDirection: Direction;
@@ -187,18 +189,66 @@ const buildStraightEdgePath = (edge: DiagramEdge) => {
 
 export const buildEdgePath = (
   edge: DiagramEdge,
+  rounding: number,
   preferedStartDirection?: Direction,
   preferedEndDirection?: Direction
 ): Path => {
   switch (edge.props.type) {
-    case 'orthogonal':
-      return buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection).getPath();
+    case 'orthogonal': {
+      const r = buildOrthogonalEdgePath(
+        edge,
+        preferedStartDirection,
+        preferedEndDirection
+      ).getPath();
+      if (rounding > 0) r.processSegments(applyRounding(rounding));
+      return r;
+    }
     case 'curved':
       return buildCurvedEdgePath(edge).getPath();
     case 'bezier':
       return buildBezierEdgePath(edge).getPath();
 
-    default:
-      return buildStraightEdgePath(edge).getPath();
+    default: {
+      const r = buildStraightEdgePath(edge).getPath();
+      if (rounding > 0) r.processSegments(applyRounding(rounding));
+      return r;
+    }
   }
+};
+
+const applyRounding = (rounding: number) => (segments: PathSegment[]) => {
+  const dest: PathSegment[] = [];
+  for (let i = 0; i < segments.length; i++) {
+    const previous = i === 0 ? undefined : segments.at(i - 1);
+    const segment = segments[i];
+    const next = segments.at(i + 1);
+
+    const previousIsLine = previous instanceof LineSegment;
+    const nextIsLine = next instanceof LineSegment;
+    const isLine = segment instanceof LineSegment;
+
+    if (!isLine) {
+      dest.push(segment);
+    } else {
+      const line = Line.of(segment.start, segment.end);
+      if (previousIsLine && nextIsLine) {
+        const s = Line.extend(line, 0, -rounding);
+        const n = Line.extend(Line.of(next.start, next.end), -rounding, 0);
+
+        dest.push(new LineSegment(s.from, s.to));
+        dest.push(new CubicSegment(s.to, segment.end, segment.end, n.from));
+      } else if (previousIsLine) {
+        const s = Line.extend(line, -rounding, 0);
+        dest.push(new LineSegment(s.from, s.to));
+      } else if (nextIsLine) {
+        const s = Line.extend(line, 0, -rounding);
+        const n = Line.extend(Line.of(next.start, next.end), -rounding, 0);
+
+        dest.push(new LineSegment(s.from, s.to));
+        dest.push(new CubicSegment(s.to, segment.end, segment.end, n.from));
+      }
+    }
+  }
+
+  return dest;
 };
