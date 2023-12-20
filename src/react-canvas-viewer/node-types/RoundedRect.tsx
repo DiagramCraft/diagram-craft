@@ -5,6 +5,7 @@ import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { PathBuilder } from '../../geometry/pathBuilder.ts';
 
 declare global {
   interface NodeProps {
@@ -16,17 +17,17 @@ declare global {
 
 export const RoundedRect = (props: Props) => {
   const radius = props.node.props?.roundedRect?.radius ?? 10;
+  const path = RoundedRect.getBoundingPath(props.node).getPath();
+  const svgPath = path.asSvgPath();
 
   return (
     <>
-      <rect
+      <path
+        d={svgPath}
         x={props.node.bounds.pos.x}
         y={props.node.bounds.pos.y}
         width={props.node.bounds.size.w}
         height={props.node.bounds.size.h}
-        className={'svg-node svg-node__boundary'}
-        rx={radius}
-        ry={radius}
         {...propsUtils.filterSvgProperties(props)}
       />
 
@@ -51,6 +52,11 @@ export const RoundedRect = (props: Props) => {
           onDrag={x => {
             const distance = Math.max(0, x - props.node.bounds.pos.x);
             props.node.props.roundedRect ??= {};
+            if (
+              distance >= props.node.bounds.size.w / 2 ||
+              distance >= props.node.bounds.size.h / 2
+            )
+              return;
             props.node.props.roundedRect.radius = distance;
           }}
         />
@@ -69,10 +75,43 @@ RoundedRect.getCustomProperties = (def: DiagramNode): Record<string, CustomPrope
       unit: 'px',
       onChange: (value: number) => {
         def.props.roundedRect ??= {};
+        if (value >= def.bounds.size.w / 2 || value >= def.bounds.size.h / 2) return;
         def.props.roundedRect.radius = value;
       }
     }
   };
+};
+
+RoundedRect.getBoundingPath = (def: DiagramNode) => {
+  const pathBuilder = new PathBuilder();
+
+  const radius = def.props?.roundedRect?.radius ?? 10;
+
+  const bnd = def.bounds;
+
+  const cdx = 1 - (2 * radius) / bnd.size.w;
+  const cdy = 1 - (2 * radius) / bnd.size.h;
+
+  const bn0 = pathBuilder.toWorldCoordinate(bnd, -cdx, 1);
+  const bn1 = pathBuilder.toWorldCoordinate(bnd, cdx, 1);
+  const be0 = pathBuilder.toWorldCoordinate(bnd, 1, cdy);
+  const be1 = pathBuilder.toWorldCoordinate(bnd, 1, -cdy);
+  const bs0 = pathBuilder.toWorldCoordinate(bnd, cdx, -1);
+  const bs1 = pathBuilder.toWorldCoordinate(bnd, -cdx, -1);
+  const bw0 = pathBuilder.toWorldCoordinate(bnd, -1, -cdy);
+  const bw1 = pathBuilder.toWorldCoordinate(bnd, -1, cdy);
+
+  pathBuilder.moveToPoint(bn0);
+  pathBuilder.lineToPoint(bn1);
+  pathBuilder.arcTo(be0, radius, radius, 0, 0, 1);
+  pathBuilder.lineToPoint(be1);
+  pathBuilder.arcTo(bs0, radius, radius, 0, 0, 1);
+  pathBuilder.lineToPoint(bs1);
+  pathBuilder.arcTo(bw0, radius, radius, 0, 0, 1);
+  pathBuilder.lineToPoint(bw1);
+  pathBuilder.arcTo(bn0, radius, radius, 0, 0, 1);
+
+  return pathBuilder;
 };
 
 type Props = {

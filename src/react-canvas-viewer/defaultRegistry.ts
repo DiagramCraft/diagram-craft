@@ -17,9 +17,14 @@ export const defaultNodeRegistry = () => {
       getCustomProperties: Star.getCustomProperties
     })
   );
-  dest.register(new ReactNodeDefinition('rect', 'Rectangle', Rect));
+  dest.register(
+    new ReactNodeDefinition('rect', 'Rectangle', Rect, {
+      getBoundingPath: Rect.getBoundingPath
+    })
+  );
   dest.register(
     new ReactNodeDefinition('rounded-rect', 'Rounded Rectangle', RoundedRect, {
+      getBoundingPath: RoundedRect.getBoundingPath,
       getCustomProperties: RoundedRect.getCustomProperties
     })
   );

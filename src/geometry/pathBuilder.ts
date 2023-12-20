@@ -41,15 +41,14 @@ export class PathBuilder {
   }
 
   arcTo(
+    p: Point,
     rx: number,
     ry: number,
-    angle: number,
-    large_arc_flag: 0 | 1,
-    sweep_flag: 0 | 1,
-    x2: number,
-    y2: number
+    angle: number = 0,
+    large_arc_flag: 0 | 1 = 0,
+    sweep_flag: 0 | 1 = 0
   ) {
-    this.path.push(['A', rx, ry, angle, large_arc_flag, sweep_flag, x2, y2]);
+    this.path.push(['A', rx, ry, angle, large_arc_flag, sweep_flag, p.x, p.y]);
   }
 
   curveTo(x: number, y: number) {

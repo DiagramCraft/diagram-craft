@@ -49,15 +49,15 @@ Circle.getBoundingPath = (def: DiagramNode) => {
   pathBuilder.moveToPoint(c0);
 
   const c1 = pathBuilder.toWorldCoordinate(def.bounds, 1, 0);
-  pathBuilder.arcTo(0.5 * w, 0.5 * h, Math.PI / 2, 0, 0, c1.x, c1.y);
+  pathBuilder.arcTo(c1, 0.5 * w, 0.5 * h);
 
   const c2 = pathBuilder.toWorldCoordinate(def.bounds, 0, 1);
-  pathBuilder.arcTo(0.5 * w, 0.5 * h, Math.PI / 2, 0, 0, c2.x, c2.y);
+  pathBuilder.arcTo(c2, 0.5 * w, 0.5 * h);
 
   const c3 = pathBuilder.toWorldCoordinate(def.bounds, -1, 0);
-  pathBuilder.arcTo(0.5 * w, 0.5 * h, Math.PI / 2, 0, 0, c3.x, c3.y);
+  pathBuilder.arcTo(c3, 0.5 * w, 0.5 * h);
 
-  pathBuilder.arcTo(0.5 * w, 0.5 * h, Math.PI / 2, 0, 0, c0.x, c0.y);
+  pathBuilder.arcTo(c0, 0.5 * w, 0.5 * h);
   return pathBuilder;
 };
 
