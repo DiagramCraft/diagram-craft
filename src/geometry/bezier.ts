@@ -4,12 +4,17 @@ import { Box } from './box.ts';
 import { smallestIndex } from '../utils/array.ts';
 import { Line } from './line.ts';
 import { round } from '../utils/math.ts';
+import { Angle } from './angle.ts';
 
 const PI = Math.PI;
-const _120 = (PI * 120) / 180;
+const PI_2 = Math.PI * 2;
+const PI_4 = Math.PI * 4;
+const RADIANS_120 = (PI * 120) / 180;
 
 const rotate = (x: number, y: number, rad: number): Point => {
-  return { x: x * Math.cos(rad) - y * Math.sin(rad), y: x * Math.sin(rad) + y * Math.cos(rad) };
+  const cosr = Math.cos(rad);
+  const sinr = Math.sin(rad);
+  return { x: x * cosr - y * sinr, y: x * sinr + y * cosr };
 };
 
 // See https://pomax.github.io/bezierinfo/legendre-gauss.html
@@ -38,6 +43,8 @@ const roundToThreshold = (value: number, threshold: number) => {
 };
 
 export const BezierUtils = {
+  // For more information of where this Math came from visit:
+  // http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
   fromArc: (
     x1: number,
     y1: number,
@@ -50,7 +57,7 @@ export const BezierUtils = {
     y2: number,
     recursive?: [number, number, number, number] | undefined
   ): RawCubicSegment[] => {
-    const rad = (PI / 180) * (angle ?? 0);
+    const rad = Angle.toRad(angle);
 
     if (!rx || !ry) {
       return [['C', x1, y1, x2, y2, x2, y2]];
@@ -109,12 +116,12 @@ export const BezierUtils = {
 
     const res: RawCubicSegment[] = [];
 
-    if (Math.abs(f2 - f1) > _120) {
+    if (Math.abs(f2 - f1) > RADIANS_120) {
       const f2old = f2;
       const x2old = x2;
       const y2old = y2;
 
-      f2 = f1 + _120 * (sweep_flag && f2 > f1 ? 1 : -1);
+      f2 = f1 + RADIANS_120 * (sweep_flag && f2 > f1 ? 1 : -1);
       x2 = cx + rx * Math.cos(f2);
       y2 = cy + ry * Math.sin(f2);
       res.push(
@@ -157,56 +164,51 @@ export const BezierUtils = {
   }
 };
 
-const SQRT_3 = Math.sqrt(3);
-
 const VALID_EXTREMES = (e: number) => e >= 0 && e <= 1;
 
 const sgn = (a: number) => {
   return a >= 0 ? 1 : -1;
 };
 
-const PI_2 = Math.PI * 2;
-const PI_4 = Math.PI * 4;
+// Based on https://gist.github.com/weepy/6009631
+const cubicRoots = (a: number, b: number, c: number, d: number) => {
+  if (round(a) === 0) return quadraticRoots(b, c, d);
 
-const cubicRoots = (a: number, b: number, c: number, e: number) => {
-  if (round(a) === 0) return quadraticRoots(b, c, e);
+  const bq = b / a;
+  const cq = c / a;
+  const dq = d / a;
 
-  const aq = b / a;
-  const bq = c / a;
-  const cq = e / a;
+  const bq_2 = bq * bq;
+  const q = (3 * cq - bq_2) / 9;
+  const r = (9 * bq * cq - 27 * dq - 2 * bq * bq_2) / 54;
 
-  const aq2 = aq * aq;
-  const q = (3 * bq - aq2) / 9;
-  const r = (9 * aq * bq - 27 * cq - 2 * aq * aq2) / 54;
-
-  const q3 = q * q * q;
-  const d = q3 + r * r;
+  const q_3 = q * q * q;
+  const discriminator = q_3 + r * r;
 
   const roots: number[] = [];
+  const bq_d3 = bq / 3;
 
-  if (d >= 0) {
-    const dsqrt = Math.sqrt(d);
-    const s = sgn(r + dsqrt) * Math.pow(Math.abs(r + dsqrt), 1 / 3);
-    const t = sgn(r - dsqrt) * Math.pow(Math.abs(r - dsqrt), 1 / 3);
+  if (discriminator >= 0) {
+    // One real root and three imaginary roots
+    const dsqrt = Math.sqrt(discriminator);
+    const s = sgn(r + dsqrt) * Math.cbrt(Math.abs(r + dsqrt));
+    const t = sgn(r - dsqrt) * Math.cbrt(Math.abs(r - dsqrt));
 
-    roots.push(-aq / 3 + (s + t));
-
-    const Im = Math.abs((SQRT_3 * (s - t)) / 2);
-    if (round(Im) === 0) {
-      roots.push(-aq / 3 - (s + t) / 2);
-    }
+    roots.push(-bq_d3 + (s + t));
   } else {
-    const th = Math.acos(r / Math.sqrt(-q3));
+    // Three real roots
+    const th = Math.acos(r / Math.sqrt(-q_3));
 
     const qs = 2 * Math.sqrt(-q);
-    roots.push(qs * Math.cos(th / 3) - aq / 3);
-    roots.push(qs * Math.cos((th + PI_2) / 3) - aq / 3);
-    roots.push(qs * Math.cos((th + PI_4) / 3) - aq / 3);
+    roots.push(qs * Math.cos(th / 3) - bq_d3);
+    roots.push(qs * Math.cos((th + PI_2) / 3) - bq_d3);
+    roots.push(qs * Math.cos((th + PI_4) / 3) - bq_d3);
   }
 
   return roots;
 };
 
+// Basically an implementation of https://en.wikipedia.org/wiki/Quadratic_formula
 const quadraticRoots = (a: number, b: number, c: number) => {
   const d = b * b - 4 * a * c;
   if (d < 0) {
