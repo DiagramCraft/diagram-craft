@@ -2,6 +2,7 @@ import { Point } from './point.ts';
 import { Box } from './box.ts';
 import { precondition } from '../utils/assert.ts';
 import { Path } from './path.ts';
+import { Angle } from './angle.ts';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];
@@ -128,7 +129,7 @@ export class PathBuilder {
             'A',
             s[1],
             s[2],
-            s[3],
+            s[3] + Angle.toDeg(this.rotation),
             s[4],
             s[5],
             ...this.applyPointRotationArray({ x: s[6], y: s[7] })
