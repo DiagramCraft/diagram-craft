@@ -2,9 +2,30 @@ import { PerformanceTest, perftest } from '../utils/perftest.ts';
 import { CubicBezier } from './bezier.ts';
 import { Line } from './line.ts';
 
+class Random {
+  #seed: number;
+
+  constructor(seed: number) {
+    this.#seed = seed % 2147483647;
+    if (this.#seed <= 0) this.#seed += 2147483646;
+  }
+
+  next() {
+    return (this.#seed = (this.#seed * 16807) % 2147483647);
+  }
+
+  nextFloat() {
+    return (this.next() - 1) / 2147483646;
+  }
+}
+
+const r = new Random(123456);
+
 const randomPoint = (d: number) => {
-  return { x: Math.random() * d, y: Math.random() * d };
+  return { x: r.nextFloat() * d, y: r.nextFloat() * d };
 };
+
+const dimension = 100;
 
 export class BezierPerformanceTest implements PerformanceTest {
   setup() {}
@@ -16,12 +37,12 @@ export class BezierPerformanceTest implements PerformanceTest {
           const iter = 10000000;
           for (let i = 0; i < iter; i++) {
             const b = new CubicBezier(
-              randomPoint(100),
-              randomPoint(100),
-              randomPoint(100),
-              randomPoint(100)
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension)
             );
-            const l = Line.of(randomPoint(100), randomPoint(100));
+            const l = Line.of(randomPoint(dimension), randomPoint(dimension));
 
             b.intersectsLine(l);
           }
@@ -34,16 +55,16 @@ export class BezierPerformanceTest implements PerformanceTest {
           const iter = 150000;
           for (let i = 0; i < iter; i++) {
             const b = new CubicBezier(
-              randomPoint(100),
-              randomPoint(100),
-              randomPoint(100),
-              randomPoint(100)
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension)
             );
             const b2 = new CubicBezier(
-              randomPoint(100),
-              randomPoint(100),
-              randomPoint(100),
-              randomPoint(100)
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension)
             );
 
             b.intersectsBezier(b2);

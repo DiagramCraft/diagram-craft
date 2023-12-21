@@ -11,11 +11,11 @@ export const perftest = (test: PerformanceTest) => {
 
   for (const testCase of test.testCases()) {
     console.profile(testCase.label);
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 10; i++) {
       const s = new Date().getTime();
       const iter = testCase.run();
       console.log(
-        `${testCase.label},${new Date().getTime() - s},${
+        `${testCase.label},${iter},${new Date().getTime() - s},${
           (new Date().getTime() - s) / iter
         },${Math.floor(iter / ((new Date().getTime() - s) / 1000))}`
       );

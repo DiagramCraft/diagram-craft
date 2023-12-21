@@ -31,6 +31,14 @@ export const Box = {
     });
   },
 
+  fromLine: (l: Line): Box => {
+    return {
+      pos: l.from,
+      size: { w: l.to.x - l.from.x, h: l.to.y - l.from.y },
+      rotation: 0
+    };
+  },
+
   fromCorners: (a: Point, b: Point): Box => {
     return {
       pos: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) },

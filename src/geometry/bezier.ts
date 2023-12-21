@@ -185,7 +185,6 @@ const cubicRoots = (a: number, b: number, c: number, d: number) => {
   const q_3 = q * q * q;
   const discriminator = q_3 + r * r;
 
-  const roots: number[] = [];
   const bq_d3 = bq / 3;
 
   if (discriminator >= 0) {
@@ -194,18 +193,18 @@ const cubicRoots = (a: number, b: number, c: number, d: number) => {
     const s = sgn(r + dsqrt) * Math.cbrt(Math.abs(r + dsqrt));
     const t = sgn(r - dsqrt) * Math.cbrt(Math.abs(r - dsqrt));
 
-    roots.push(-bq_d3 + (s + t));
+    return [-bq_d3 + (s + t)];
   } else {
     // Three real roots
     const th = Math.acos(r / Math.sqrt(-q_3));
 
     const qs = 2 * Math.sqrt(-q);
-    roots.push(qs * Math.cos(th / 3) - bq_d3);
-    roots.push(qs * Math.cos((th + PI_2) / 3) - bq_d3);
-    roots.push(qs * Math.cos((th + PI_4) / 3) - bq_d3);
+    return [
+      qs * Math.cos(th / 3) - bq_d3,
+      qs * Math.cos((th + PI_2) / 3) - bq_d3,
+      qs * Math.cos((th + PI_4) / 3) - bq_d3
+    ];
   }
-
-  return roots;
 };
 
 // Basically an implementation of https://en.wikipedia.org/wiki/Quadratic_formula
@@ -406,6 +405,8 @@ export class CubicBezier {
   }
 
   intersectsBezier(other: CubicBezier, threshold = 0.5) {
+    if (!Box.intersects(this.bbox(), other.bbox())) return [];
+
     return this.recurseIntersection(this, other, threshold);
   }
 
@@ -484,7 +485,7 @@ export class CubicBezier {
     return { distance: Point.distance(pp, p), t: t1, point: pp };
   }
 
-  private recurseIntersection(c1: CubicBezier, c2: CubicBezier, threshold = 0.5): Point[] {
+  private recurseIntersection(c1: CubicBezier, c2: CubicBezier, threshold: number): Point[] {
     const c1b = c1.bbox();
     if (Math.max(c1b.size.w, c1b.size.h) < threshold) return [c1b.pos];
 
@@ -514,7 +515,7 @@ export class CubicBezier {
     const result: Point[] = [];
     for (let i = 0; i < results.length; i++) {
       const e = results[i];
-      const key = `${roundToThreshold(e.x, threshold)},${roundToThreshold(e.y, threshold)}`;
+      const key = roundToThreshold(e.x, threshold) + ',' + roundToThreshold(e.y, threshold);
       if (seen.has(key)) continue;
       seen.add(key);
       result.push(e);
