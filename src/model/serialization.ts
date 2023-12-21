@@ -143,10 +143,17 @@ export const deserializeDiagramElements = (
       endNode.edges[end.anchor].push(edge);
     }
 
+    if (e.labelNode) {
+      edge.labelNode = {
+        ...e.labelNode,
+        node: nodeLookup[e.labelNode.id]
+      };
+    }
+
     edgeLookup[e.id] = edge;
   }
 
-  const elements: (DiagramEdge | DiagramNode)[] = [];
+  const elements: DiagramElement[] = [];
   for (const n of diagramElements) {
     if (n.type === 'node') {
       elements.push(nodeLookup[n.id]);

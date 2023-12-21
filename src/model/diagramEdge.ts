@@ -3,7 +3,7 @@ import { Transform } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode } from './diagramNode.ts';
-import { AbstractEdge, Waypoint } from './types.ts';
+import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
@@ -27,6 +27,10 @@ export class DiagramEdge implements AbstractEdge {
   // TODO: Maybe we can remove the diagram and use the layer reference instead?
   diagram?: Diagram;
   layer?: Layer;
+
+  labelNode?: LabelNode & {
+    node: DiagramNode;
+  };
 
   constructor(
     id: string,

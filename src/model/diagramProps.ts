@@ -108,6 +108,7 @@ declare global {
   }
 
   interface NodeProps extends ElementProps {
+    labelForEgdeId?: string;
     highlight?: string[];
 
     fill?: {

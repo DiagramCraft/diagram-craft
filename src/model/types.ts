@@ -22,11 +22,19 @@ export type Anchor = {
   clip?: boolean;
 };
 
+export type LabelNode = {
+  id: string;
+  offset: Point;
+  timeOffset: number;
+};
+
 export interface AbstractEdge extends AbstractElement {
   type: 'edge';
   id: string;
   waypoints?: Waypoint[];
   props: EdgeProps;
+
+  labelNode?: LabelNode;
 }
 
 export type Waypoint = {

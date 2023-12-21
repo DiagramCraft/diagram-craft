@@ -42,6 +42,23 @@ export const simpleDiagram: SerializedDiagramDocument = {
           layerType: 'basic',
           elements: [
             {
+              type: 'node',
+              nodeType: 'text',
+              bounds: {
+                pos: { x: 300, y: 170 },
+                size: { w: 100, h: 20 },
+                rotation: 0
+              },
+              id: 't2',
+              props: {
+                labelForEgdeId: 'e1',
+                text: {
+                  text: 'Hello world'
+                }
+              },
+              children: []
+            },
+            {
               type: 'edge',
               id: 'e1',
               start: { anchor: 0, node: { id: '3' } },
@@ -55,6 +72,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     type: 'CROWS_FEET_BAR'
                   }
                 }
+              },
+              labelNode: {
+                id: 't2',
+                timeOffset: 0.4,
+                offset: { x: -20, y: 0 }
               },
               waypoints: [{ point: { x: 360, y: 200 } }]
             },
