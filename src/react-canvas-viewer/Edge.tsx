@@ -3,6 +3,7 @@ import React, {
   forwardRef,
   MouseEventHandler,
   useCallback,
+  useEffect,
   useImperativeHandle
 } from 'react';
 import { useRedraw } from './useRedraw.tsx';
@@ -23,6 +24,7 @@ import { Diagram } from '../model/diagram.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { DeepRequired } from 'ts-essentials';
 import { clipPath } from '../base-ui/edgeUtils.ts';
+import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -97,6 +99,30 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     arrow1,
     arrow2
   );
+
+  // TODO: Do we really want to this while painting?
+  useEffect(() => {
+    if (props.def.labelNode) {
+      const refPoint = path.pointAt(
+        TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: props.def.labelNode.timeOffset }, path)
+      );
+      const centerPoint = Point.add(refPoint, props.def.labelNode.offset);
+      const currentCenterPoint = {
+        x: props.def.labelNode.node.bounds.pos.x + props.def.labelNode.node.bounds.size.w / 2,
+        y: props.def.labelNode.node.bounds.pos.y
+      };
+      if (!Point.isEqual(centerPoint, currentCenterPoint)) {
+        props.def.labelNode.node.bounds = {
+          ...props.def.labelNode.node.bounds,
+          pos: {
+            x: centerPoint.x - props.def.labelNode.node.bounds.size.w / 2,
+            y: centerPoint.y
+          }
+        };
+        props.def.diagram?.updateElement(props.def.labelNode.node);
+      }
+    }
+  }, [path, props.def.diagram, props.def.labelNode]);
 
   return (
     <g>

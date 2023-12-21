@@ -53,7 +53,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
               props: {
                 labelForEgdeId: 'e1',
                 text: {
-                  text: 'Hello world'
+                  text: 'Hello world',
+                  align: 'center'
                 }
               },
               children: []
@@ -76,7 +77,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
               labelNode: {
                 id: 't2',
                 timeOffset: 0.4,
-                offset: { x: -20, y: 0 }
+                offset: { x: -50, y: 0 }
               },
               waypoints: [{ point: { x: 360, y: 200 } }]
             },
