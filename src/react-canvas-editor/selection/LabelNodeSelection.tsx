@@ -10,35 +10,13 @@ import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Path } from '../../geometry/path.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 
-class AttachmentPointDragUndoableAction implements UndoableAction {
+class AttachmentPointDrag implements Drag, UndoableAction {
   description = 'Move label node';
 
-  private newTimeOffset: number;
-  private newOffset: Point;
-
-  constructor(
-    private edge: DiagramEdge,
-    private oldTimeOffset: number,
-    private oldOffset: Point
-  ) {
-    this.newTimeOffset = edge.labelNode!.timeOffset!;
-    this.newOffset = edge.labelNode!.offset!;
-  }
-
-  execute(): void {
-    this.edge.labelNode!.timeOffset = this.newTimeOffset;
-    this.edge.labelNode!.offset = this.newOffset;
-  }
-
-  undo(): void {
-    this.edge.labelNode!.timeOffset = this.oldTimeOffset;
-    this.edge.labelNode!.offset = this.oldOffset;
-  }
-}
-
-class AttachmentPointDrag implements Drag {
-  private oldTimeOffset: number;
-  private oldOffset: Point;
+  private readonly oldTimeOffset: number;
+  private readonly oldOffset: Point;
+  private newTimeOffset: number | undefined;
+  private newOffset: Point | undefined;
 
   constructor(
     private edge: DiagramEdge,
@@ -70,9 +48,19 @@ class AttachmentPointDrag implements Drag {
   }
 
   onDragEnd(): void {
-    this.edge.diagram?.undoManager.add(
-      new AttachmentPointDragUndoableAction(this.edge, this.oldTimeOffset, this.oldOffset)
-    );
+    this.newTimeOffset = this.edge.labelNode!.timeOffset!;
+    this.newOffset = this.edge.labelNode!.offset!;
+    this.edge.diagram?.undoManager.add(this);
+  }
+
+  execute(): void {
+    this.edge.labelNode!.timeOffset = this.newTimeOffset!;
+    this.edge.labelNode!.offset = this.newOffset!;
+  }
+
+  undo(): void {
+    this.edge.labelNode!.timeOffset = this.oldTimeOffset;
+    this.edge.labelNode!.offset = this.oldOffset;
   }
 }
 
@@ -82,7 +70,6 @@ export const LabelNodeSelection = (props: Props) => {
   const drag = useDragDrop();
 
   const center = Box.center(props.node.bounds);
-
   const edge = props.node.diagram!.edgeLookup[props.node.props.labelForEgdeId]!;
 
   // TODO: Fix the second rounding parameter
@@ -101,7 +88,6 @@ export const LabelNodeSelection = (props: Props) => {
         className={'svg-selection__label-node'}
         onMouseDown={e => {
           if (e.button !== 0) return;
-
           drag.initiate(new AttachmentPointDrag(edge, path));
           e.stopPropagation();
         }}
