@@ -93,30 +93,27 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const endArrowSize = edgeProps.arrow.end.size / 100;
   const arrow1 = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
   const arrow2 = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
-  const path = clipPath(
-    buildEdgePath(props.def, edgeProps.routing.rounding),
-    props.def,
-    arrow1,
-    arrow2
-  );
+  const fullPath = buildEdgePath(props.def, edgeProps.routing.rounding);
+  const path = clipPath(fullPath, props.def, arrow1, arrow2);
 
   // TODO: Do we really want to this while painting?
   useEffect(() => {
     if (props.def.labelNode) {
-      const refPoint = path.pointAt(
-        TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: props.def.labelNode.timeOffset }, path)
+      const refPoint = fullPath.pointAt(
+        TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: props.def.labelNode.timeOffset }, fullPath)
       );
+
       const centerPoint = Point.add(refPoint, props.def.labelNode.offset);
       const currentCenterPoint = {
         x: props.def.labelNode.node.bounds.pos.x + props.def.labelNode.node.bounds.size.w / 2,
-        y: props.def.labelNode.node.bounds.pos.y
+        y: props.def.labelNode.node.bounds.pos.y + props.def.labelNode.node.bounds.size.h / 2
       };
       if (!Point.isEqual(centerPoint, currentCenterPoint)) {
         props.def.labelNode.node.bounds = {
           ...props.def.labelNode.node.bounds,
           pos: {
             x: centerPoint.x - props.def.labelNode.node.bounds.size.w / 2,
-            y: centerPoint.y
+            y: centerPoint.y - props.def.labelNode.node.bounds.size.h / 2
           }
         };
         props.def.diagram?.updateElement(props.def.labelNode.node);

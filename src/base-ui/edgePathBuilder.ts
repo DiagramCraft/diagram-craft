@@ -187,6 +187,7 @@ const buildStraightEdgePath = (edge: DiagramEdge) => {
   return path;
 };
 
+// TODO: Perhaps move into DiagramEdge and cache
 export const buildEdgePath = (
   edge: DiagramEdge,
   rounding: number,

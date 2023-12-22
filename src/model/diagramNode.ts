@@ -82,6 +82,7 @@ export class DiagramNode implements AbstractNode {
   }
 
   transform(transforms: Transform[]) {
+    const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
     this.invalidateAnchors();
 
@@ -89,6 +90,23 @@ export class DiagramNode implements AbstractNode {
       for (const child of this.children) {
         child.transform(transforms);
       }
+    }
+
+    if (this.props.labelForEgdeId) {
+      assert.present(this.diagram);
+
+      const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
+      assert.present(edge);
+
+      const dx = this.bounds.pos.x - previousBounds.pos.x;
+      const dy = this.bounds.pos.y - previousBounds.pos.y;
+
+      assert.present(edge.labelNode);
+      edge.labelNode.offset = {
+        x: edge.labelNode.offset.x + dx,
+        y: edge.labelNode.offset.y + dy
+      };
+      this.diagram.updateElement(edge);
     }
   }
 

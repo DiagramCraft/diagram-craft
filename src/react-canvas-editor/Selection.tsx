@@ -14,6 +14,7 @@ import { ResizeDrag } from '../base-ui/drag/resizeDrag.ts';
 import { EdgeEndpointMoveDrag } from '../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { Diagram } from '../model/diagram.ts';
+import { LabelNodeSelection } from './selection/LabelNodeSelection.tsx';
 
 export type SelectionApi = {
   repaint: () => void;
@@ -43,6 +44,11 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
   if (props.selection.isEmpty()) return null;
 
   const isOnlyEdges = props.selection.isEdgesOnly();
+  const isOnlyNodes = props.selection.isNodesOnly();
+  const isSingleLabelNode =
+    isOnlyNodes &&
+    props.selection.nodes[0].props.labelForEgdeId !== undefined &&
+    props.selection.nodes.length === 1;
 
   const bounds = props.selection.bounds;
 
@@ -162,7 +168,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           bounds.pos.y + bounds.size.h / 2
         })`}
       >
-        {!isOnlyEdges && (
+        {!isOnlyEdges && !isSingleLabelNode && (
           <>
             <polyline
               points={pointsString}
@@ -374,6 +380,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
             </Fragment>
           );
         })}
+
+        {props.selection.nodes
+          .filter(n => !!n.props.labelForEgdeId)
+          .map(n => (
+            <LabelNodeSelection key={n.id} node={n} />
+          ))}
       </g>
     </>
   );
