@@ -44,11 +44,6 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
   if (props.selection.isEmpty()) return null;
 
   const isOnlyEdges = props.selection.isEdgesOnly();
-  const isOnlyNodes = props.selection.isNodesOnly();
-  const isSingleLabelNode =
-    isOnlyNodes &&
-    props.selection.nodes[0].props.labelForEgdeId !== undefined &&
-    props.selection.nodes.length === 1;
 
   const bounds = props.selection.bounds;
 
@@ -168,7 +163,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
           bounds.pos.y + bounds.size.h / 2
         })`}
       >
-        {!isOnlyEdges && !isSingleLabelNode && (
+        {!isOnlyEdges && (
           <>
             <polyline
               points={pointsString}

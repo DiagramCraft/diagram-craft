@@ -76,8 +76,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
               },
               labelNode: {
                 id: 't2',
-                timeOffset: 0.4,
-                offset: { x: -50, y: 0 }
+                timeOffset: 0.5,
+                offset: { x: 0, y: 0 }
               },
               waypoints: [{ point: { x: 360, y: 200 } }]
             },
