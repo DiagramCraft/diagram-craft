@@ -9,7 +9,7 @@ import React, {
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag.ts';
-import { buildEdgePath } from '../base-ui/edgePathBuilder.ts';
+import { buildEdgePath } from '../model/edgePathBuilder.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
 import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
@@ -23,7 +23,7 @@ import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx'
 import { Diagram } from '../model/diagram.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { DeepRequired } from 'ts-essentials';
-import { clipPath } from '../base-ui/edgeUtils.ts';
+import { clipPath } from '../model/edgeUtils.ts';
 import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 
 export type EdgeApi = {
@@ -119,7 +119,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         props.def.diagram?.updateElement(props.def.labelNode.node);
       }
     }
-  }, [path, props.def.diagram, props.def.labelNode]);
+  }, [fullPath, path, props.def.diagram, props.def.labelNode]);
 
   return (
     <g>

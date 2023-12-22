@@ -4,11 +4,11 @@ import {
   PointOnPath,
   TimeOffsetOnSegment
 } from '../geometry/pathPosition.ts';
-import { ConnectedEndpoint, DiagramEdge, isConnected } from '../model/diagramEdge.ts';
+import { ConnectedEndpoint, DiagramEdge, isConnected } from './diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
 import { VerifyNotReached } from '../utils/assert.ts';
-import { ArrowShape } from './arrowShapes.ts';
-import { Diagram } from '../model/diagram.ts';
+import { ArrowShape } from '../base-ui/arrowShapes.ts';
+import { Diagram } from './diagram.ts';
 
 const adjustForArrow = (
   pointOnPath: PointOnPath | undefined,

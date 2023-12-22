@@ -2,7 +2,7 @@ import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '..
 import { Diagram } from '../../model/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
-import { buildEdgePath } from '../edgePathBuilder.ts';
+import { buildEdgePath } from '../../model/edgePathBuilder.ts';
 import { PointOnPath } from '../../geometry/pathPosition.ts';
 import { smallest } from '../../utils/array.ts';
 

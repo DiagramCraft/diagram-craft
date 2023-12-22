@@ -1,7 +1,7 @@
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { precondition } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
-import { buildEdgePath } from '../../base-ui/edgePathBuilder.ts';
+import { buildEdgePath } from '../../model/edgePathBuilder.ts';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
 import { Drag, Modifiers } from '../../base-ui/drag.ts';
