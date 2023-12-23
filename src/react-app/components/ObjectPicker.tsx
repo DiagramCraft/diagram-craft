@@ -19,6 +19,7 @@ const PickerCanvas = (props: PickerCanvasProps) => {
             <Edge
               key={id}
               onMouseDown={() => {}}
+              onDoubleClick={() => {}}
               onMouseEnter={() => {}}
               onMouseLeave={() => {}}
               def={edge}

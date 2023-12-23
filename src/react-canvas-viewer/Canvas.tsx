@@ -40,6 +40,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
               <Edge
                 key={id}
                 onMouseDown={() => {}}
+                onDoubleClick={() => {}}
                 onMouseEnter={() => {}}
                 onMouseLeave={() => {}}
                 def={edge}

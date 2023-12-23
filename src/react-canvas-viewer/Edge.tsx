@@ -149,6 +149,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
+        onDoubleClick={e => props.onDoubleClick(props.def.id, EventHelper.point(e.nativeEvent))}
         onContextMenu={onContextMenu}
         style={{ cursor: 'move', fill: 'none' }}
       />
@@ -157,6 +158,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
+        onDoubleClick={e => props.onDoubleClick(props.def.id, EventHelper.point(e.nativeEvent))}
         onContextMenu={onContextMenu}
         style={style}
         markerStart={arrow1 ? `url(#marker_s_${props.def.id})` : undefined}
@@ -220,6 +222,7 @@ type Props = {
   def: DiagramEdge;
   diagram: Diagram;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
+  onDoubleClick: (id: string, coord: Point) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 };

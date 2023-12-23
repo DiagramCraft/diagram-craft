@@ -16,6 +16,7 @@ import { textActions } from './actions/textActions.ts';
 import { edgeFlipActions } from './actions/edgeFlipAction.ts';
 import { duplicateActions } from './actions/duplicateAction.ts';
 import { Diagram } from '../model/diagram.ts';
+import { edgeTextAddActions } from './actions/edgeTextAddAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -49,6 +50,7 @@ declare global {
 export type ActionMapFactory = (state: State) => Partial<ActionMap>;
 
 export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
+  ...edgeTextAddActions(state),
   ...clipboardActions(state),
   ...undoActions(state),
   ...redoActions(state),

@@ -181,6 +181,12 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                 <Edge
                   key={id}
                   ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
+                  onDoubleClick={(id, coord) => {
+                    actionMap['EDGE_TEXT_ADD']?.execute({
+                      point: diagram.viewBox.toDiagramPoint(coord),
+                      id
+                    });
+                  }}
                   onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
                   onMouseEnter={onMouseEnter}
                   onMouseLeave={onMouseLeave}

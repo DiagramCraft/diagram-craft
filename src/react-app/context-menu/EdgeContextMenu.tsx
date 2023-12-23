@@ -4,6 +4,14 @@ import { ContextMenuTarget } from '../../react-canvas-editor/EditableCanvas.tsx'
 export const EdgeContextMenu = (props: Props) => {
   return (
     <>
+      {/* TODO: Disable this when there's alreay a label */}
+      <ActionContextMenuItem
+        action={'EDGE_TEXT_ADD'}
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        context={{ point: props.target.pos, id: (props.target as any)['id'] }}
+      >
+        Add text
+      </ActionContextMenuItem>
       <ActionContextMenuItem
         action={'WAYPOINT_ADD'}
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
