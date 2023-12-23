@@ -2,7 +2,6 @@ import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '..
 import { Diagram } from '../../model/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
-import { buildEdgePath } from '../../model/edgePathBuilder.ts';
 import { PointOnPath } from '../../geometry/pathPosition.ts';
 import { smallest } from '../../utils/array.ts';
 
@@ -29,7 +28,7 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
     const edge = this.diagram.edgeLookup[context.id!];
     precondition.is.present(edge);
 
-    const path = buildEdgePath(edge, 0);
+    const path = edge.path();
 
     const wpDistances =
       edge.waypoints?.map((p, idx) => {

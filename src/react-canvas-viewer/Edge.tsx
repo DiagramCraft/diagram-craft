@@ -9,7 +9,6 @@ import React, {
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag.ts';
-import { buildEdgePath } from '../model/edgePathBuilder.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
 import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
@@ -93,7 +92,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const endArrowSize = edgeProps.arrow.end.size / 100;
   const arrow1 = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
   const arrow2 = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
-  const fullPath = buildEdgePath(props.def, edgeProps.routing.rounding);
+  const fullPath = props.def.path();
   const path = clipPath(fullPath, props.def, arrow1, arrow2);
 
   // TODO: Do we really want to this while painting?

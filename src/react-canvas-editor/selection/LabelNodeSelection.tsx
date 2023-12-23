@@ -1,7 +1,6 @@
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { precondition } from '../../utils/assert.ts';
+import { assert, precondition } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
-import { buildEdgePath } from '../../model/edgePathBuilder.ts';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
 import { Drag, Modifiers } from '../../base-ui/drag.ts';
@@ -71,11 +70,12 @@ export const LabelNodeSelection = (props: Props) => {
 
   const center = Box.center(props.node.bounds);
   const edge = props.node.diagram!.edgeLookup[props.node.props.labelForEgdeId]!;
+  assert.present(edge);
+  assert.present(edge.labelNode);
 
-  // TODO: Fix the second rounding parameter
-  const path = buildEdgePath(edge!, 0);
+  const path = edge.path();
   const attachmentPoint = path.pointAt(
-    TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: edge.labelNode!.timeOffset! }, path)
+    TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: edge.labelNode.timeOffset! }, path)
   );
 
   return (

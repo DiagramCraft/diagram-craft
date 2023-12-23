@@ -2,7 +2,6 @@ import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '..
 import { Diagram } from '../../model/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
-import { buildEdgePath } from '../../model/edgePathBuilder.ts';
 import { PointOnPath } from '../../geometry/pathPosition.ts';
 
 declare global {
@@ -28,7 +27,7 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
     const edge = this.diagram.edgeLookup[context.id!];
     precondition.is.present(edge);
 
-    const path = buildEdgePath(edge, 0);
+    const path = edge.path();
     const projection = path.projectPoint(context.point);
 
     const wpDistances =

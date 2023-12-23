@@ -5,6 +5,7 @@ import { Point } from '../geometry/point.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
+import { buildEdgePath } from './edgePathBuilder.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -64,6 +65,10 @@ export class DiagramEdge implements AbstractEdge {
     if (!isConnected(this.start)) this.start = { position: { x: b.pos.x, y: b.pos.y } };
     if (!isConnected(this.end))
       this.end = { position: { x: b.pos.x + b.size.w, y: b.pos.y + b.size.h } };
+  }
+
+  path() {
+    return buildEdgePath(this, this.props.routing?.rounding ?? 0);
   }
 
   transform(transforms: Transform[]) {
