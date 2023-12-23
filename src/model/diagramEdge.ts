@@ -6,6 +6,7 @@ import { DiagramNode } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
+import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -46,6 +47,8 @@ export class DiagramEdge implements AbstractEdge {
     this.#end = end;
     this.props = props;
     this.waypoints = midpoints;
+
+    this.adjustLabelNodePosition();
   }
 
   isLocked() {
@@ -179,6 +182,31 @@ export class DiagramEdge implements AbstractEdge {
     }
     if (isConnected(this.#end)) {
       this.#end.node.addEdge(this.#end.anchor, this);
+    }
+  }
+
+  private adjustLabelNodePosition() {
+    if (!this.labelNode) return;
+
+    const path = this.path();
+    const refPoint = path.pointAt(
+      TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: this.labelNode.timeOffset }, path)
+    );
+
+    const centerPoint = Point.add(refPoint, this.labelNode.offset);
+    const currentCenterPoint = {
+      x: this.labelNode.node.bounds.pos.x + this.labelNode.node.bounds.size.w / 2,
+      y: this.labelNode.node.bounds.pos.y + this.labelNode.node.bounds.size.h / 2
+    };
+    if (!Point.isEqual(centerPoint, currentCenterPoint)) {
+      this.labelNode.node.bounds = {
+        ...this.labelNode.node.bounds,
+        pos: {
+          x: centerPoint.x - this.labelNode.node.bounds.size.w / 2,
+          y: centerPoint.y - this.labelNode.node.bounds.size.h / 2
+        }
+      };
+      this.diagram?.updateElement(this.labelNode.node);
     }
   }
 }
