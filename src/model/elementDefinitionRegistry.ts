@@ -26,6 +26,7 @@ export interface NodeDefinition {
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
   getDefaultProps(mode: 'picker' | 'canvas'): NodeProps;
   getInitialConfig(): { size: Extent };
+  requestFocus(node: DiagramNode): void;
 }
 
 export class NodeDefinitionRegistry {

@@ -38,6 +38,7 @@ export class ReactNodeDefinition implements NodeDefinition {
       getCustomProperties?: CustomPropertyFactory;
       defaultPropsFactory?: DefaultPropsFactory;
       initialConfig?: InitialConfig;
+      requestFocus?: () => void;
     }
   ) {}
 
@@ -74,5 +75,24 @@ export class ReactNodeDefinition implements NodeDefinition {
       return this.config.initialConfig;
     }
     return { size: { w: 100, h: 100 } };
+  }
+
+  requestFocus(node: DiagramNode): void {
+    if (this.config?.requestFocus !== undefined) {
+      return this.config?.requestFocus();
+    }
+
+    const editable = document
+      .getElementById(`text_1_${node.id}`)
+      ?.getElementsByClassName('svg-node__text')
+      .item(0) as HTMLDivElement | undefined | null;
+
+    if (!editable) {
+      return;
+    }
+
+    editable.contentEditable = 'true';
+    editable.style.pointerEvents = 'auto';
+    editable.focus();
   }
 }

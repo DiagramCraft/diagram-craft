@@ -28,8 +28,15 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
 
     const edge = this.diagram.edgeLookup[context.id!];
 
-    // TODO: Focus the label node
-    if (edge.labelNode) return;
+    if (edge.labelNode) {
+      console.log('****');
+      setTimeout(() => {
+        this.diagram.nodeDefinitions
+          .get(edge.labelNode!.node.nodeType)
+          ?.requestFocus(edge.labelNode!.node);
+      }, 10);
+      return;
+    }
 
     precondition.is.present(edge);
 
@@ -43,12 +50,12 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
         pos: projection.point,
         rotation: 0,
         size: {
-          w: 20,
+          w: 200,
           h: 10
         }
       },
       [],
-      { text: { text: 'Label' }, labelForEgdeId: edge.id },
+      { text: { text: 'Label', align: 'center' }, labelForEgdeId: edge.id },
       this.diagram,
       this.diagram.layers.active
     );
@@ -63,6 +70,8 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
 
     this.diagram.updateElement(edge);
 
-    /* TODO: Focus the label node */
+    setTimeout(() => {
+      this.diagram.nodeDefinitions.get('text')?.requestFocus(textNode);
+    }, 10);
   }
 }
