@@ -16,6 +16,10 @@ export type Endpoint = ConnectedEndpoint | { position: Point };
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   'node' in endpoint;
 
+type ResolvedLabelNode = LabelNode & {
+  node: DiagramNode;
+};
+
 export class DiagramEdge implements AbstractEdge {
   id: string;
   type: 'edge';
@@ -29,9 +33,7 @@ export class DiagramEdge implements AbstractEdge {
   diagram: Diagram;
   layer: Layer;
 
-  labelNode?: LabelNode & {
-    node: DiagramNode;
-  };
+  #labelNode?: ResolvedLabelNode;
 
   constructor(
     id: string,
@@ -51,7 +53,26 @@ export class DiagramEdge implements AbstractEdge {
     this.diagram = diagram;
     this.layer = layer;
 
-    this.adjustLabelNodePosition();
+    this.diagram.on('change', this.invalidate.bind(this));
+    this.diagram.on('elementChange', ({ element }) => {
+      if (
+        (isConnected(this.#start) && element === this.#start.node) ||
+        (isConnected(this.#end) && element === this.#end.node)
+      ) {
+        this.invalidate();
+      } else if (element === this) {
+        this.invalidate();
+      }
+    });
+  }
+
+  get labelNode() {
+    return this.#labelNode;
+  }
+
+  set labelNode(labelNode: ResolvedLabelNode | undefined) {
+    this.#labelNode = labelNode;
+    this.invalidate();
   }
 
   isLocked() {
@@ -74,6 +95,7 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   path() {
+    // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
     return buildEdgePath(this, this.props.routing?.rounding ?? 0);
   }
 
@@ -186,6 +208,10 @@ export class DiagramEdge implements AbstractEdge {
     if (isConnected(this.#end)) {
       this.#end.node.addEdge(this.#end.anchor, this);
     }
+  }
+
+  private invalidate() {
+    this.adjustLabelNodePosition();
   }
 
   private adjustLabelNodePosition() {
