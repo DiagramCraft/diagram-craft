@@ -26,9 +26,8 @@ export class DiagramEdge implements AbstractEdge {
   props: EdgeProps = {};
   waypoints: Waypoint[] | undefined;
 
-  // TODO: Maybe we can remove the diagram and use the layer reference instead?
-  diagram?: Diagram;
-  layer?: Layer;
+  diagram: Diagram;
+  layer: Layer;
 
   labelNode?: LabelNode & {
     node: DiagramNode;
@@ -39,7 +38,9 @@ export class DiagramEdge implements AbstractEdge {
     start: Endpoint,
     end: Endpoint,
     props: EdgeProps,
-    midpoints?: Waypoint[]
+    midpoints: Waypoint[],
+    diagram: Diagram,
+    layer: Layer
   ) {
     this.id = id;
     this.type = 'edge';
@@ -47,16 +48,18 @@ export class DiagramEdge implements AbstractEdge {
     this.#end = end;
     this.props = props;
     this.waypoints = midpoints;
+    this.diagram = diagram;
+    this.layer = layer;
 
     this.adjustLabelNodePosition();
   }
 
   isLocked() {
-    return this.layer?.isLocked() ?? false;
+    return this.layer.isLocked() ?? false;
   }
 
   commit() {
-    this.diagram?.updateElement(this);
+    this.diagram.updateElement(this);
   }
 
   // TODO: This is probably not a sufficient way to calculate the bounding box
@@ -206,7 +209,7 @@ export class DiagramEdge implements AbstractEdge {
           y: centerPoint.y - this.labelNode.node.bounds.size.h / 2
         }
       };
-      this.diagram?.updateElement(this.labelNode.node);
+      this.diagram.updateElement(this.labelNode.node);
     }
   }
 }

@@ -125,7 +125,13 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
       }
     }
 
-    const newElements = deserializeDiagramElements(elements, {}, {});
+    const newElements = deserializeDiagramElements(
+      elements,
+      this.diagram,
+      this.diagram.layers.active,
+      {},
+      {}
+    );
 
     this.diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, this.diagram));
     this.diagram.selectionState.setElements(newElements, true);

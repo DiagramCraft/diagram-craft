@@ -8,18 +8,14 @@ export class SnapManagerPerftest implements PerformanceTest {
   private snapManager: SnapManager | undefined;
 
   setup(): void {
-    const defs: DiagramNode[] = [];
+    const d = new Diagram('1', '1', new NodeDefinitionRegistry(), new EdgeDefinitionRegistry(), []);
+
     for (let i = 0; i < 1000; i++) {
-      defs.push(new DiagramNode(i.toString(), 'box', this.randomBox(), undefined));
+      d.layers.active.addElement(
+        new DiagramNode(i.toString(), 'box', this.randomBox(), undefined, {}, d, d.layers.active)
+      );
     }
 
-    const d = new Diagram(
-      '1',
-      '1',
-      new NodeDefinitionRegistry(),
-      new EdgeDefinitionRegistry(),
-      defs
-    );
     this.snapManager = d.createSnapManager();
   }
 

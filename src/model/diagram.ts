@@ -64,6 +64,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     readonly name: string,
     readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry,
+
+    // TODO: Remove elements from here
+    //       ... but then the logic to create the default layer needs to be moved
     elements?: DiagramElement[]
   ) {
     super();

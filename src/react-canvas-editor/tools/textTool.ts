@@ -38,7 +38,9 @@ export class TextTool extends AbstractTool {
         rotation: 0
       },
       undefined,
-      nodeDef.getDefaultProps('canvas')
+      nodeDef.getDefaultProps('canvas'),
+      this.diagram,
+      this.diagram.layers.active
     );
 
     this.diagram.undoManager.addAndExecute(new NodeAddAction([nd], this.diagram, 'Add text'));

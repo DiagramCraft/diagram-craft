@@ -55,7 +55,8 @@ export const ObjectPicker = (props: Props) => {
   const nodes = diagram.nodeDefinitions.getAll();
 
   const diagrams = nodes.map(n => {
-    return new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions, [
+    const dest = new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions, []);
+    dest.layers.active.addElement(
       new DiagramNode(
         n.type,
         n.type,
@@ -64,9 +65,13 @@ export const ObjectPicker = (props: Props) => {
           size: { w: props.size - 2, h: props.size - 2 },
           rotation: 0
         },
-        undefined
+        undefined,
+        {},
+        dest,
+        dest.layers.active
       )
-    ]);
+    );
+    return dest;
   });
   return (
     <div className={'cmp-object-picker'}>

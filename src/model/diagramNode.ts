@@ -27,16 +27,17 @@ export class DiagramNode implements AbstractNode {
 
   _anchors?: Anchor[];
 
-  // TODO: Maybe we can remove the diagram and use the layer reference instead?
-  diagram?: Diagram;
-  layer?: Layer;
+  diagram: Diagram;
+  layer: Layer;
 
   constructor(
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
     anchors: Anchor[] | undefined,
-    props?: NodeProps
+    props: NodeProps,
+    diagram: Diagram,
+    layer: Layer
   ) {
     this.id = id;
     this.bounds = bounds;
@@ -46,10 +47,12 @@ export class DiagramNode implements AbstractNode {
     this.edges = {};
     this._anchors = anchors;
     this.props = props ?? {};
+    this.diagram = diagram;
+    this.layer = layer;
   }
 
   isLocked() {
-    return this.layer?.isLocked() ?? false;
+    return this.layer.isLocked() ?? false;
   }
 
   commitChanges() {
@@ -61,12 +64,11 @@ export class DiagramNode implements AbstractNode {
     if (!this.diagram) {
       console.log(this);
     }
-    assert.present(this.diagram);
 
     this._anchors = [];
     this._anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
 
-    const def = this.diagram!.nodeDefinitions.get(this.nodeType);
+    const def = this.diagram.nodeDefinitions.get(this.nodeType);
 
     const path = def.getBoundingPath(this);
 
@@ -93,8 +95,6 @@ export class DiagramNode implements AbstractNode {
     }
 
     if (this.props.labelForEgdeId) {
-      assert.present(this.diagram);
-
       const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
       assert.present(edge);
 
@@ -151,7 +151,10 @@ export class DiagramNode implements AbstractNode {
       this.id,
       this.nodeType,
       deepClone(this.bounds),
-      this._anchors ? [...this._anchors] : undefined
+      this._anchors ? [...this._anchors] : undefined,
+      {},
+      this.diagram,
+      this.layer
     );
     node.props = deepClone(this.props);
     node.children = this.children.map(c => c.clone());

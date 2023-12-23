@@ -5,7 +5,7 @@ import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { Diagram } from './diagram.ts';
 
-const createNode = () =>
+const createNode = (diagram: Diagram) =>
   new DiagramNode(
     '1',
     'test',
@@ -14,10 +14,13 @@ const createNode = () =>
       size: { w: 10, h: 10 },
       rotation: 0
     },
-    undefined
+    undefined,
+    {},
+    diagram,
+    diagram.layers.active
   );
 
-const createEdge = () =>
+const createEdge = (diagram: Diagram) =>
   new DiagramEdge(
     '1',
     {
@@ -26,7 +29,10 @@ const createEdge = () =>
     {
       position: { x: 10, y: 10 }
     },
-    {}
+    {},
+    [],
+    diagram,
+    diagram.layers.active
   );
 
 function createDiagram() {
@@ -49,9 +55,10 @@ describe('SelectionState', () => {
   });
 
   test('toggle()', () => {
-    const element: DiagramNode = createNode();
+    const diagram = createDiagram();
+    const element: DiagramNode = createNode(diagram);
 
-    const selectionState = new SelectionState(createDiagram());
+    const selectionState = new SelectionState(diagram);
 
     const changeCb = vi.fn();
     const addCb = vi.fn();
@@ -93,52 +100,59 @@ describe('SelectionState', () => {
     });
 
     test('single node', () => {
-      const selectionState = new SelectionState(createDiagram());
-      selectionState.toggle(createNode());
+      const d = createDiagram();
+      const selectionState = new SelectionState(d);
+      selectionState.toggle(createNode(d));
       expect(selectionState.getSelectionType()).toBe('single-node');
     });
 
     test('single edge', () => {
-      const selectionState = new SelectionState(createDiagram());
-      selectionState.toggle(createEdge());
+      const d = createDiagram();
+      const selectionState = new SelectionState(d);
+      selectionState.toggle(createEdge(d));
       expect(selectionState.getSelectionType()).toBe('single-edge');
     });
 
     test('multiple nodes', () => {
-      const selectionState = new SelectionState(createDiagram());
-      selectionState.toggle(createNode());
-      selectionState.toggle(createNode());
+      const d = createDiagram();
+      const selectionState = new SelectionState(d);
+      selectionState.toggle(createNode(d));
+      selectionState.toggle(createNode(d));
       expect(selectionState.getSelectionType()).toBe('nodes');
     });
 
     test('multiple edges', () => {
-      const selectionState = new SelectionState(createDiagram());
-      selectionState.toggle(createEdge());
-      selectionState.toggle(createEdge());
+      const d = createDiagram();
+      const selectionState = new SelectionState(d);
+      selectionState.toggle(createEdge(d));
+      selectionState.toggle(createEdge(d));
       expect(selectionState.getSelectionType()).toBe('edges');
     });
 
     test('mixed', () => {
-      const selectionState = new SelectionState(createDiagram());
-      selectionState.toggle(createNode());
-      selectionState.toggle(createEdge());
+      const d = createDiagram();
+      const selectionState = new SelectionState(d);
+      selectionState.toggle(createNode(d));
+      selectionState.toggle(createEdge(d));
       expect(selectionState.getSelectionType()).toBe('mixed');
     });
   });
 
   test('isNodesOnly()', () => {
-    const selectionState = new SelectionState(createDiagram());
-    selectionState.toggle(createNode());
+    const d = createDiagram();
+    const selectionState = new SelectionState(d);
+    selectionState.toggle(createNode(d));
     expect(selectionState.isNodesOnly()).toBe(true);
-    selectionState.toggle(createEdge());
+    selectionState.toggle(createEdge(d));
     expect(selectionState.isNodesOnly()).toBe(false);
   });
 
   test('isEdgesOnly()', () => {
-    const selectionState = new SelectionState(createDiagram());
-    selectionState.toggle(createEdge());
+    const d = createDiagram();
+    const selectionState = new SelectionState(d);
+    selectionState.toggle(createEdge(d));
     expect(selectionState.isEdgesOnly()).toBe(true);
-    selectionState.toggle(createNode());
+    selectionState.toggle(createNode(d));
     expect(selectionState.isEdgesOnly()).toBe(false);
   });
 

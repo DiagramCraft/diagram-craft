@@ -8,6 +8,16 @@ import { PathBuilder } from '../geometry/pathBuilder.ts';
 
 describe('Diagram', () => {
   test('transform rotate', () => {
+    const nodeDefinitionRegistry = new NodeDefinitionRegistry();
+    nodeDefinitionRegistry.register(
+      new ReactNodeDefinition('a', 'a', () => null, {
+        getBoundingPath: () => new PathBuilder()
+      })
+    );
+
+    const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry(), []);
+    const layer = diagram.layers.active;
+
     const node1 = new DiagramNode(
       '1',
       'a',
@@ -16,8 +26,12 @@ describe('Diagram', () => {
         size: { w: 100, h: 100 },
         rotation: 0
       },
-      undefined
+      undefined,
+      {},
+      diagram,
+      layer
     );
+    diagram.layers.active.addElement(node1);
 
     const node2 = new DiagramNode(
       '2',
@@ -27,24 +41,14 @@ describe('Diagram', () => {
         size: { w: 100, h: 100 },
         rotation: 0
       },
-      undefined
+      undefined,
+      {},
+      diagram,
+      layer
     );
-
-    const nodeDefinitionRegistry = new NodeDefinitionRegistry();
-    nodeDefinitionRegistry.register(
-      new ReactNodeDefinition('a', 'a', () => null, {
-        getBoundingPath: () => new PathBuilder()
-      })
-    );
+    diagram.layers.active.addElement(node2);
 
     const nodes = [node1, node2];
-    const diagram = new Diagram(
-      '1',
-      '1',
-      nodeDefinitionRegistry,
-      new EdgeDefinitionRegistry(),
-      nodes
-    );
 
     const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
     const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: Math.PI / 2 };

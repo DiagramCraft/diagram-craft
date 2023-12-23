@@ -74,6 +74,8 @@ const unfoldGroup = (node: SerializedNode) => {
 
 export const deserializeDiagramElements = (
   diagramElements: SerializedElement[],
+  diagram: Diagram,
+  layer: Layer,
   nodeLookup: Record<string, DiagramNode>,
   edgeLookup: Record<string, DiagramEdge>
 ) => {
@@ -82,7 +84,7 @@ export const deserializeDiagramElements = (
   // Index skeleton nodes
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
-      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors);
+      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors, {}, diagram, layer);
       nodeLookup[c.id].props = c.props;
     }
   }
@@ -124,7 +126,9 @@ export const deserializeDiagramElements = (
         ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
         : { position: end.position },
       e.props,
-      e.waypoints
+      e.waypoints ?? [],
+      diagram,
+      layer
     );
 
     if (isConnected(start)) {
@@ -188,8 +192,19 @@ const deserializeDiagrams = <T extends Diagram>(
 
     const newDiagram = factory($d, undefined);
     for (const l of $d.layers) {
-      const elements = deserializeDiagramElements(l.elements, nodeLookup, edgeLookup);
-      newDiagram.layers.add(new Layer(l.id, l.name, elements, newDiagram));
+      const layer = new Layer(l.id, l.name, [], newDiagram);
+      newDiagram.layers.add(layer);
+
+      const elements = deserializeDiagramElements(
+        l.elements,
+        newDiagram,
+        layer,
+        nodeLookup,
+        edgeLookup
+      );
+      elements.forEach(e => {
+        layer.addElement(e);
+      });
     }
     dest.push(newDiagram);
 
