@@ -94,5 +94,9 @@ export class ReactNodeDefinition implements NodeDefinition {
     editable.contentEditable = 'true';
     editable.style.pointerEvents = 'auto';
     editable.focus();
+
+    setTimeout(() => {
+      document.execCommand('selectAll', false, undefined);
+    }, 0);
   }
 }
