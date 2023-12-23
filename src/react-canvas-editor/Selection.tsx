@@ -379,7 +379,14 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         {props.selection.nodes
           .filter(n => !!n.props.labelForEgdeId)
           .map(n => (
-            <LabelNodeSelection key={n.id} node={n} />
+            <g
+              key={n.id}
+              transform={`rotate(${-Angle.toDeg(bounds.rotation)} ${
+                bounds.pos.x + bounds.size.w / 2
+              } ${bounds.pos.y + bounds.size.h / 2})`}
+            >
+              <LabelNodeSelection node={n} />
+            </g>
           ))}
       </g>
     </>
