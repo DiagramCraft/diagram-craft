@@ -1,5 +1,4 @@
 import { Box } from '../geometry/box.ts';
-import { assert } from '../utils/assert.ts';
 import { round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
@@ -7,6 +6,7 @@ import { Diagram } from './diagram.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
+import { assert } from '../utils/assert.ts';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 

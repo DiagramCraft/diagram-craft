@@ -5,7 +5,7 @@ import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { RotateAction } from '../../model/diagramUndoActions.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 
 export class RotateDrag implements Drag {
   constructor(private readonly diagram: Diagram) {}
@@ -25,7 +25,8 @@ export class RotateDrag implements Drag {
       TransformFactory.fromTo(before, {
         ...selection.bounds,
         rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
-      })
+      }),
+      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
     selection.forceRotation(Vector.angle(Vector.from(center, coord)) + Math.PI / 2);
 

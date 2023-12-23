@@ -41,7 +41,14 @@ export type SelectionStateEvents = {
   remove: { element: DiagramElement };
 };
 
-export type SelectionType = 'empty' | 'single-node' | 'single-edge' | 'edges' | 'nodes' | 'mixed';
+export type SelectionType =
+  | 'empty'
+  | 'single-node'
+  | 'single-edge'
+  | 'edges'
+  | 'nodes'
+  | 'mixed'
+  | 'single-label-node';
 
 export class SelectionState extends EventEmitter<SelectionStateEvents> {
   readonly #marquee: Marquee;
@@ -119,6 +126,9 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     }
 
     if (this.#elements.length === 1) {
+      if (this.#elements[0].type === 'node' && this.#elements[0].props.labelForEgdeId) {
+        return 'single-label-node';
+      }
       return this.#elements[0].type === 'node' ? 'single-node' : 'single-edge';
     }
 

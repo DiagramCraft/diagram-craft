@@ -7,7 +7,7 @@ import { Direction } from '../../geometry/direction.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { ResizeAction } from '../../model/diagramUndoActions.ts';
 import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 
 export class ResizeDrag implements Drag {
   constructor(
@@ -118,7 +118,8 @@ export class ResizeDrag implements Drag {
     selection.forceRotation(undefined);
     this.diagram.transformElements(
       selection.elements,
-      TransformFactory.fromTo(before, newBounds.getSnapshot())
+      TransformFactory.fromTo(before, newBounds.getSnapshot()),
+      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
 
     // This is mainly a performance optimization and not strictly necessary

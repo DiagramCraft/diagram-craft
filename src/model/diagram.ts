@@ -33,6 +33,13 @@ export type DiagramEvents = {
 
 export type StackPosition = { element: DiagramElement; idx: number };
 
+export const excludeLabelNodes = (n: DiagramElement) => {
+  if (n.type === 'node' && n.props.labelForEgdeId) return false;
+  return true;
+};
+
+export const includeAll = () => true;
+
 export class Diagram extends EventEmitter<DiagramEvents> {
   #canvas: Canvas = {
     pos: { x: 0, y: 0 },
@@ -160,15 +167,19 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     this.emit('elementChange', { element });
   }
 
-  transformElements(elements: DiagramElement[], transforms: Transform[]) {
+  transformElements(
+    elements: DiagramElement[],
+    transforms: Transform[],
+    filter: (e: DiagramElement) => boolean = () => true
+  ) {
     for (const el of elements) {
-      el.transform(transforms);
+      if (filter(el)) el.transform(transforms);
     }
 
     // We do this in a separate loop to as nodes might move which will
     // affect the start and end location of connected edges
     for (const el of elements) {
-      this.updateElement(el);
+      if (filter(el)) this.updateElement(el);
     }
   }
 

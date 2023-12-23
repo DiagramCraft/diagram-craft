@@ -10,7 +10,7 @@ import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeH
 import { MoveAction, NodeAddAction } from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
 import { newid } from '../../utils/id.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 
 export class MoveDrag implements Drag {
   snapAngle?: Axis;
@@ -44,9 +44,11 @@ export class MoveDrag implements Drag {
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (modifiers.metaKey && !this.metaKey) {
       // Reset current selection back to original
-      this.diagram.transformElements(selection.nodes, [
-        new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))
-      ]);
+      this.diagram.transformElements(
+        selection.nodes,
+        [new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))],
+        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      );
 
       newBounds.set('pos', selection.source.boundingBox.pos);
       selection.guides = [];
@@ -109,9 +111,11 @@ export class MoveDrag implements Drag {
       newBounds.set('pos', result.adjusted.pos);
     }
 
-    this.diagram.transformElements(selection.elements, [
-      new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))
-    ]);
+    this.diagram.transformElements(
+      selection.elements,
+      [new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))],
+      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+    );
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selectionState.recalculateBoundingBox();
