@@ -11,19 +11,41 @@ import { MoveAction, NodeAddAction } from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
 import { newid } from '../../utils/id.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
+import { DiagramElement } from '../../model/diagramNode.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 
 export class MoveDrag implements Drag {
   snapAngle?: Axis;
   metaKey?: boolean = false;
 
+  oldPointerEventsValues: Record<string, string> = {};
+
+  // @ts-ignore
+  private currentEdge: DiagramEdge | undefined = undefined;
+
   constructor(
     private readonly diagram: Diagram,
     private readonly offset: Point
-  ) {}
+  ) {
+    const selection = this.diagram.selectionState;
+    assert.false(selection.isEmpty());
+
+    this.disablePointerEvents(selection.elements);
+  }
+
+  onDragEnter(id: string): void {
+    const el = this.diagram.edgeLookup[id];
+    if (el) {
+      this.currentEdge = el;
+    }
+  }
+
+  onDragLeave(): void {
+    this.currentEdge = undefined;
+  }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
     const selection = this.diagram.selectionState;
-    assert.false(selection.isEmpty());
 
     // Don't move connected edges
     if (
@@ -52,6 +74,8 @@ export class MoveDrag implements Drag {
 
       newBounds.set('pos', selection.source.boundingBox.pos);
       selection.guides = [];
+
+      this.enablePointerEvents(selection.elements);
 
       const newElements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e].clone());
       newElements.forEach(e => {
@@ -123,6 +147,9 @@ export class MoveDrag implements Drag {
 
   onDragEnd(): void {
     const selection = this.diagram.selectionState;
+
+    this.enablePointerEvents(selection.elements);
+
     if (selection.isChanged()) {
       // TODO: Maybe add a compound action here
       const resizeCanvasAction = createResizeCanvasActionToFit(
@@ -153,5 +180,35 @@ export class MoveDrag implements Drag {
     }
 
     this.metaKey = false;
+  }
+
+  private enablePointerEvents(elements: DiagramElement[]) {
+    for (const e of elements) {
+      if (e.type === 'node') {
+        const n = document.getElementById(`node-${e.id}`)!;
+        n.style.pointerEvents = this.oldPointerEventsValues[n.id];
+
+        if (e.nodeType === 'group') this.enablePointerEvents(e.children);
+      } else if (e.type === 'edge') {
+        const n = document.getElementById(`edge-${e.id}`)!;
+        n.style.pointerEvents = this.oldPointerEventsValues[n.id];
+      }
+    }
+  }
+
+  private disablePointerEvents(elements: DiagramElement[]) {
+    for (const e of elements) {
+      if (e.type === 'node') {
+        const n = document.getElementById(`node-${e.id}`)!;
+        this.oldPointerEventsValues[n.id] = n.style.pointerEvents;
+        n.style.pointerEvents = 'none';
+
+        if (e.nodeType === 'group') this.enablePointerEvents(e.children);
+      } else if (e.type === 'edge') {
+        const n = document.getElementById(`edge-${e.id}`)!;
+        this.oldPointerEventsValues[n.id] = n.style.pointerEvents;
+        n.style.pointerEvents = 'none';
+      }
+    }
   }
 }

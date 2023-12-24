@@ -94,7 +94,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const path = clipPath(fullPath, props.def, arrow1, arrow2);
 
   return (
-    <g>
+    <g id={`edge-${props.def.id}`}>
       {arrow1 && (
         <marker
           id={`marker_s_${props.def.id}`}
