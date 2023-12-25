@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
-import { Modifiers } from '../base-ui/drag.ts';
 import { useDragDrop } from './DragDropManager.tsx';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
 import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
@@ -22,6 +21,7 @@ import { Diagram } from '../model/diagram.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { DeepRequired } from 'ts-essentials';
 import { clipPath } from '../model/edgeUtils.ts';
+import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 
 export type EdgeApi = {
   repaint: () => void;

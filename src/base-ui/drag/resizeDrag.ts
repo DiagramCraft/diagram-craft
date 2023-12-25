@@ -1,4 +1,4 @@
-import { Drag, Modifiers } from '../drag.ts';
+import { Drag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { assert, VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { LocalCoordinateSystem } from '../../geometry/lcs.ts';

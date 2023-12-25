@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { Diagram } from '../model/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
-import { Modifiers } from '../base-ui/drag.ts';
+import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';

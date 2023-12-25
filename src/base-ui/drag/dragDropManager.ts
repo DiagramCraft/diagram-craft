@@ -1,4 +1,4 @@
-import { Point } from '../geometry/point.ts';
+import { Point } from '../../geometry/point.ts';
 
 export type Modifiers = {
   shiftKey: boolean;
@@ -14,3 +14,19 @@ export type Drag = {
   onDragEnter?: (id: string) => void;
   onDragLeave?: () => void;
 };
+
+export class DragDopManager {
+  private drag?: Drag;
+
+  initiate(drag: Drag) {
+    this.drag = drag;
+  }
+
+  current() {
+    return this.drag;
+  }
+
+  clear() {
+    this.drag = undefined;
+  }
+}

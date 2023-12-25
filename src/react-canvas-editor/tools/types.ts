@@ -1,6 +1,5 @@
 import { Point } from '../../geometry/point.ts';
-import { Modifiers } from '../../base-ui/drag.ts';
-import { DragDropContextType } from '../../react-canvas-viewer/DragDropManager.tsx';
+import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { MutableRefObject, RefObject } from 'react';
 import { Diagram } from '../../model/diagram.ts';
 
@@ -17,7 +16,7 @@ export interface Tool {
 export type ToolContructor = {
   new (
     diagram: Diagram,
-    drag: DragDropContextType,
+    drag: DragDopManager,
     svgRef: RefObject<SVGSVGElement>,
     deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
     resetTool: () => void

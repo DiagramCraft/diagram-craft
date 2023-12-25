@@ -1,6 +1,6 @@
 import { precondition } from '../utils/assert.ts';
 import { Box } from '../geometry/box.ts';
-import { Drag } from '../base-ui/drag.ts';
+import { Drag } from '../base-ui/drag/dragDropManager.ts';
 import { Point } from '../geometry/point.ts';
 import { SelectionState } from '../model/selectionState.ts';
 import { Diagram } from '../model/diagram.ts';

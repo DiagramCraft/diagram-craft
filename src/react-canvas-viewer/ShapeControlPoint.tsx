@@ -1,5 +1,5 @@
 import { useDragDrop } from './DragDropManager.tsx';
-import { Drag, Modifiers } from '../base-ui/drag.ts';
+import { Drag, Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { Diagram } from '../model/diagram.ts';

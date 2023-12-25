@@ -1,8 +1,8 @@
 import { UndoableAction } from '../model/undoManager.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
-import { Drag, Modifiers } from '../base-ui/drag.ts';
 import { Diagram } from '../model/diagram.ts';
+import { Drag, Modifiers } from '../base-ui/drag/dragDropManager.ts';
 
 class WaypointUndoAction implements UndoableAction {
   description = 'Move Waypoint';

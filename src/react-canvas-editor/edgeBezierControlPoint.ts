@@ -1,8 +1,8 @@
-import { Drag, Modifiers } from '../base-ui/drag.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
 import { UndoableAction } from '../model/undoManager.ts';
 import { Diagram } from '../model/diagram.ts';
+import { Drag, Modifiers } from '../base-ui/drag/dragDropManager.ts';
 
 class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';

@@ -32,7 +32,6 @@ import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu.ts
 import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher.tsx';
 import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu.tsx';
 import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
-import { DragDropManager } from './react-canvas-viewer/DragDropManager.tsx';
 import { defaultEdgeRegistry, defaultNodeRegistry } from './react-canvas-viewer/defaultRegistry.ts';
 import { SideBar } from './react-app/SideBar.tsx';
 import { SideBarPage } from './react-app/SideBarPage.tsx';
@@ -140,175 +139,173 @@ useEffect(() => {
             }
           }}
         >
-          <DragDropManager>
-            <div id="app" className={'dark-theme'}>
-              <div id="menu">
-                <div className={'_menu-button'}>
-                  <div>
-                    <TbMenu2 size={'1.5rem'} />
-                  </div>
-                </div>
-
-                <div className={'_tools'}>
-                  <div className={'cmp-toolbar'} data-size={'large'}>
-                    <button
-                      className={'cmp-toolbar__toggle-item'}
-                      data-state={tool === 'move' ? 'on' : 'off'}
-                      onClick={() => setTool('move')}
-                    >
-                      <TbClick size={'1.1rem'} />
-                    </button>
-                    <button className={'cmp-toolbar__toggle-item'}>
-                      <TbLayoutGridAdd size={'1.1rem'} />
-                    </button>
-                    <button className={'cmp-toolbar__toggle-item'}>
-                      <TbLine size={'1.1rem'} />
-                    </button>
-                    <button
-                      className={'cmp-toolbar__toggle-item'}
-                      data-state={tool === 'text' ? 'on' : 'off'}
-                      onClick={() => setTool('text')}
-                    >
-                      <TbTextSize size={'1.1rem'} />
-                    </button>
-                    <button className={'cmp-toolbar__toggle-item'}>
-                      <TbPencil size={'1.1rem'} />
-                    </button>
-                    <button className={'cmp-toolbar__toggle-item'}>
-                      <TbPolygon size={'1.1rem'} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className={'_document'}>
-                  <DocumentSelector
-                    diagrams={diagrams}
-                    defaultValue={defaultDiagram}
-                    onChange={d => {
-                      setDoc(d);
-                      setDiagram(d.diagrams[0]);
-                    }}
-                  />
-                </div>
-
-                <div className={'_extra-tools'}>
-                  <div className={'cmp-toolbar'}>
-                    <button
-                      className={'cmp-toolbar__button'}
-                      onClick={() => actionMap['ZOOM_IN']?.execute()}
-                    >
-                      <TbZoomOut size={'1.1rem'} />
-                    </button>
-                    <button
-                      className={'cmp-toolbar__button'}
-                      onClick={() => actionMap['ZOOM_OUT']?.execute()}
-                    >
-                      <TbZoomIn size={'1.1rem'} />
-                    </button>
-
-                    <DarkModeToggleButton />
-                  </div>
+          <div id="app" className={'dark-theme'}>
+            <div id="menu">
+              <div className={'_menu-button'}>
+                <div>
+                  <TbMenu2 size={'1.5rem'} />
                 </div>
               </div>
-              <div id="window-area">
-                <div id="toolbar">
-                  <Toolbar />
+
+              <div className={'_tools'}>
+                <div className={'cmp-toolbar'} data-size={'large'}>
+                  <button
+                    className={'cmp-toolbar__toggle-item'}
+                    data-state={tool === 'move' ? 'on' : 'off'}
+                    onClick={() => setTool('move')}
+                  >
+                    <TbClick size={'1.1rem'} />
+                  </button>
+                  <button className={'cmp-toolbar__toggle-item'}>
+                    <TbLayoutGridAdd size={'1.1rem'} />
+                  </button>
+                  <button className={'cmp-toolbar__toggle-item'}>
+                    <TbLine size={'1.1rem'} />
+                  </button>
+                  <button
+                    className={'cmp-toolbar__toggle-item'}
+                    data-state={tool === 'text' ? 'on' : 'off'}
+                    onClick={() => setTool('text')}
+                  >
+                    <TbTextSize size={'1.1rem'} />
+                  </button>
+                  <button className={'cmp-toolbar__toggle-item'}>
+                    <TbPencil size={'1.1rem'} />
+                  </button>
+                  <button className={'cmp-toolbar__toggle-item'}>
+                    <TbPolygon size={'1.1rem'} />
+                  </button>
                 </div>
+              </div>
 
-                <SideBar
-                  side={'left'}
-                  defaultSelected={UserState.getState()['panel.left'] ?? 0}
-                  onChange={idx => {
-                    UserState.set('panel.left', idx);
+              <div className={'_document'}>
+                <DocumentSelector
+                  diagrams={diagrams}
+                  defaultValue={defaultDiagram}
+                  onChange={d => {
+                    setDoc(d);
+                    setDiagram(d.diagrams[0]);
                   }}
-                >
-                  <SideBarPage icon={TbCategoryPlus}>
-                    <PickerToolWindow />
-                  </SideBarPage>
-                  <SideBarPage icon={TbStack2}>
-                    <LayerToolWindow />
-                  </SideBarPage>
-                  <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
-                  <SideBarPage icon={TbFiles}>
-                    <DocumentToolWindow
-                      document={doc}
-                      value={$d.id}
-                      onValueChange={v => {
-                        setDiagram(doc.getById(v)!);
-                      }}
-                    />
-                  </SideBarPage>
-                  <SideBarPage icon={TbHistory}>
-                    <HistoryToolWindow />
-                  </SideBarPage>
-                </SideBar>
+                />
+              </div>
 
-                <SideBar
-                  side={'right'}
-                  defaultSelected={UserState.getState()['panel.right'] ?? 0}
-                  onChange={idx => {
-                    UserState.set('panel.right', idx);
-                  }}
-                >
-                  <SideBarPage icon={TbPalette}>
-                    <ObjectToolWindow />
-                  </SideBarPage>
-                  <SideBarPage icon={TbInfoCircle}>
-                    <ObjectInfo />
-                  </SideBarPage>
-                  <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
-                </SideBar>
+              <div className={'_extra-tools'}>
+                <div className={'cmp-toolbar'}>
+                  <button
+                    className={'cmp-toolbar__button'}
+                    onClick={() => actionMap['ZOOM_IN']?.execute()}
+                  >
+                    <TbZoomOut size={'1.1rem'} />
+                  </button>
+                  <button
+                    className={'cmp-toolbar__button'}
+                    onClick={() => actionMap['ZOOM_OUT']?.execute()}
+                  >
+                    <TbZoomIn size={'1.1rem'} />
+                  </button>
 
-                <div id="canvas-area" className={'light-theme'}>
-                  <Ruler orientation={'horizontal'} canvasRef={svgRef} />
-                  <Ruler orientation={'vertical'} canvasRef={svgRef} />
-
-                  <ContextMenu.Root>
-                    <ContextMenu.Trigger asChild={true}>
-                      <EditableCanvas
-                        ref={svgRef}
-                        key={$d.id}
-                        tool={tool}
-                        className={'canvas'}
-                        onContextMenu={e => {
-                          contextMenuTarget.current = e;
-                        }}
-                        onDrop={canvasDropHandler($d)}
-                        onDragOver={canvasDragOverHandler()}
-                        onResetTool={() => setTool('move')}
-                      />
-                    </ContextMenu.Trigger>
-                    <ContextMenu.Portal>
-                      <ContextMenu.Content className="cmp-context-menu">
-                        <ContextMenuDispatcher
-                          state={contextMenuTarget}
-                          createContextMenu={state => {
-                            if (state.contextMenuTarget.type === 'canvas') {
-                              return <CanvasContextMenu target={state.contextMenuTarget} />;
-                            } else if (state.contextMenuTarget.type === 'selection') {
-                              return <SelectionContextMenu />;
-                            } else {
-                              return <EdgeContextMenu target={state.contextMenuTarget} />;
-                            }
-                          }}
-                        />
-                      </ContextMenu.Content>
-                    </ContextMenu.Portal>
-                  </ContextMenu.Root>
+                  <DarkModeToggleButton />
                 </div>
+              </div>
+            </div>
+            <div id="window-area">
+              <div id="toolbar">
+                <Toolbar />
+              </div>
 
-                <div id="tabs">
-                  <DocumentTabs
+              <SideBar
+                side={'left'}
+                defaultSelected={UserState.getState()['panel.left'] ?? 0}
+                onChange={idx => {
+                  UserState.set('panel.left', idx);
+                }}
+              >
+                <SideBarPage icon={TbCategoryPlus}>
+                  <PickerToolWindow />
+                </SideBarPage>
+                <SideBarPage icon={TbStack2}>
+                  <LayerToolWindow />
+                </SideBarPage>
+                <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
+                <SideBarPage icon={TbFiles}>
+                  <DocumentToolWindow
+                    document={doc}
                     value={$d.id}
                     onValueChange={v => {
                       setDiagram(doc.getById(v)!);
                     }}
-                    document={doc}
                   />
-                </div>
+                </SideBarPage>
+                <SideBarPage icon={TbHistory}>
+                  <HistoryToolWindow />
+                </SideBarPage>
+              </SideBar>
+
+              <SideBar
+                side={'right'}
+                defaultSelected={UserState.getState()['panel.right'] ?? 0}
+                onChange={idx => {
+                  UserState.set('panel.right', idx);
+                }}
+              >
+                <SideBarPage icon={TbPalette}>
+                  <ObjectToolWindow />
+                </SideBarPage>
+                <SideBarPage icon={TbInfoCircle}>
+                  <ObjectInfo />
+                </SideBarPage>
+                <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
+              </SideBar>
+
+              <div id="canvas-area" className={'light-theme'}>
+                <Ruler orientation={'horizontal'} canvasRef={svgRef} />
+                <Ruler orientation={'vertical'} canvasRef={svgRef} />
+
+                <ContextMenu.Root>
+                  <ContextMenu.Trigger asChild={true}>
+                    <EditableCanvas
+                      ref={svgRef}
+                      key={$d.id}
+                      tool={tool}
+                      className={'canvas'}
+                      onContextMenu={e => {
+                        contextMenuTarget.current = e;
+                      }}
+                      onDrop={canvasDropHandler($d)}
+                      onDragOver={canvasDragOverHandler()}
+                      onResetTool={() => setTool('move')}
+                    />
+                  </ContextMenu.Trigger>
+                  <ContextMenu.Portal>
+                    <ContextMenu.Content className="cmp-context-menu">
+                      <ContextMenuDispatcher
+                        state={contextMenuTarget}
+                        createContextMenu={state => {
+                          if (state.contextMenuTarget.type === 'canvas') {
+                            return <CanvasContextMenu target={state.contextMenuTarget} />;
+                          } else if (state.contextMenuTarget.type === 'selection') {
+                            return <SelectionContextMenu />;
+                          } else {
+                            return <EdgeContextMenu target={state.contextMenuTarget} />;
+                          }
+                        }}
+                      />
+                    </ContextMenu.Content>
+                  </ContextMenu.Portal>
+                </ContextMenu.Root>
+              </div>
+
+              <div id="tabs">
+                <DocumentTabs
+                  value={$d.id}
+                  onValueChange={v => {
+                    setDiagram(doc.getById(v)!);
+                  }}
+                  document={doc}
+                />
               </div>
             </div>
-          </DragDropManager>
+          </div>
         </ConfigurationContext.Provider>
       </ActionsContext.Provider>
     </DiagramContext.Provider>

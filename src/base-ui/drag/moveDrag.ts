@@ -1,4 +1,4 @@
-import { Drag, Modifiers } from '../drag.ts';
+import { Drag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { assert } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';

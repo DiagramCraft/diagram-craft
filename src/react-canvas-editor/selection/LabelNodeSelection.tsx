@@ -3,7 +3,7 @@ import { assert, precondition } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
-import { Drag, Modifiers } from '../../base-ui/drag.ts';
+import { Drag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Path } from '../../geometry/path.ts';

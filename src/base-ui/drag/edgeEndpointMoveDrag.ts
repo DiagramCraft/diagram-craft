@@ -1,4 +1,4 @@
-import { Drag } from '../drag.ts';
+import { Drag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
