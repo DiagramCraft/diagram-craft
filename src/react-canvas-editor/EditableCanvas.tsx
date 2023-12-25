@@ -29,6 +29,7 @@ import { useActions } from '../react-app/context/ActionsContext.tsx';
 import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor, ToolType } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
+import { DragLabel } from './DragLabel.tsx';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -126,6 +127,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   return (
     <>
       <textarea id={'clipboard'} style={{ position: 'absolute', left: '-4000px' }}></textarea>
+      <DragLabel />
       <svg
         ref={svgRef}
         {...propsUtils.filterDomProperties(props)}

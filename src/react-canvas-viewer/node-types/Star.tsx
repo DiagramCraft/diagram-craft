@@ -59,6 +59,7 @@ export const Star = (props: Props) => {
               const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
               props.node.props.star ??= {};
               props.node.props.star.innerRadius = distance / (props.node.bounds.size.w / 2);
+              return `Inner radius: ${round(props.node.props.star.innerRadius * 100)}%`;
             }}
           />
           <ShapeControlPoint
@@ -73,6 +74,7 @@ export const Star = (props: Props) => {
 
               props.node.props.star ??= {};
               props.node.props.star.numberOfSides = numberOfSides;
+              return `Sides: ${numberOfSides}`;
             }}
           />
         </>

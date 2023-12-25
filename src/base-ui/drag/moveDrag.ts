@@ -60,7 +60,11 @@ export class MoveDrag extends AbstractDrag {
 
     const newBounds = Box.asMutableSnapshot(selection.bounds);
 
-    newBounds.set('pos', Point.add(selection.bounds.pos, d));
+    const newPos = Point.add(selection.bounds.pos, d);
+    this.setState({
+      label: `x: ${newPos.x.toFixed(0)}, y: ${newPos.y.toFixed(0)}`
+    });
+    newBounds.set('pos', newPos);
 
     let snapDirections: Direction[] = Direction.all();
 

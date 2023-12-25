@@ -46,6 +46,10 @@ export class ResizeDrag extends AbstractDrag {
     const targetSize = localTarget.get('size');
     const targetPos = localTarget.get('pos');
 
+    this.setState({
+      label: `w: ${targetSize.w.toFixed(0)}, h: ${targetSize.h.toFixed(0)}`
+    });
+
     const snapDirection: Direction[] = [];
     switch (this.type) {
       case 'resize-e':

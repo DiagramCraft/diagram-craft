@@ -1023,6 +1023,37 @@ input::-webkit-input-placeholder {
 
 /* Specific / one-use components */
 
+.cmp-drag-label {
+  position: fixed;
+  background-color: var(--primary-bg);
+  color: var(--primary-fg);
+  padding: 0.5rem 0.5rem;
+  font-size: 11px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  .cmp-drag-label__props {
+    margin-top: 0.25rem;
+    color: var(--secondary-fg);
+  }
+  .cmp-drag-label__prop {
+    font-size: 10px;
+  }
+  .cmp-drag-label__modifiers {
+    margin: 0.25rem -0.5rem 0 -0.5rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0.5rem 0 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid var(--secondary-bg);
+
+    & div[data-state='active'] {
+      color: var(--blue-8);
+    }
+  }
+}
+
 .cmp-ruler {
   background-color: var(--secondary-bg);
   z-index: 1;

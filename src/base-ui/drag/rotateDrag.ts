@@ -32,6 +32,10 @@ export class RotateDrag extends AbstractDrag {
     );
     selection.forceRotation(Vector.angle(Vector.from(center, coord)) + Math.PI / 2);
 
+    this.setState({
+      label: `angle: ${(Vector.angle(Vector.from(center, coord)) * (180 / Math.PI)).toFixed(0)}°`
+    });
+
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selectionState.recalculateBoundingBox();
   }

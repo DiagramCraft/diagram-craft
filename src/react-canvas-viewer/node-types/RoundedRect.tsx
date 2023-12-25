@@ -54,11 +54,12 @@ export const RoundedRect = (props: Props) => {
             const distance = Math.max(0, x - props.node.bounds.pos.x);
             props.node.props.roundedRect ??= {};
             if (
-              distance >= props.node.bounds.size.w / 2 ||
-              distance >= props.node.bounds.size.h / 2
-            )
-              return;
-            props.node.props.roundedRect.radius = distance;
+              distance < props.node.bounds.size.w / 2 &&
+              distance < props.node.bounds.size.h / 2
+            ) {
+              props.node.props.roundedRect.radius = distance;
+            }
+            return `Radius: ${props.node.props.roundedRect.radius}px`;
           }}
         />
       )}

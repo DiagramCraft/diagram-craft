@@ -8,7 +8,15 @@ export type Modifiers = {
   ctrlKey: boolean;
 };
 
-type State = Record<string, string>;
+export type State = {
+  label?: string;
+  props?: Record<string, string>;
+  modifiers?: {
+    key: string;
+    label: string;
+    isActive: boolean;
+  }[];
+};
 
 type DragEvents = {
   drag: { coord: Point; modifiers: Modifiers };
@@ -24,14 +32,16 @@ export interface Drag extends EventEmitter<DragEvents> {
   onKeyUp?: (event: KeyboardEvent) => void;
   onDragEnter?: (id: string) => void;
   onDragLeave?: () => void;
+
+  state: State;
 }
 
 export abstract class AbstractDrag extends EventEmitter<DragEvents> implements Drag {
-  protected state: State;
+  #state: State;
 
   constructor() {
     super();
-    this.state = {};
+    this.#state = {};
   }
 
   abstract onDrag(coord: Point, modifiers: Modifiers): void;
@@ -53,9 +63,13 @@ export abstract class AbstractDrag extends EventEmitter<DragEvents> implements D
     // Do nothing
   }
 
-  setState(key: string, value: string) {
-    this.state[key] = value;
-    this.emit('stateChange', { state: this.state });
+  setState(state: State) {
+    this.#state = state;
+    this.emit('stateChange', { state: this.#state });
+  }
+
+  get state() {
+    return this.#state;
   }
 }
 

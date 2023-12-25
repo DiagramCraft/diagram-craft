@@ -26,7 +26,7 @@ export const ShapeControlPoint = (props: Props) => {
 type Props = {
   x: number;
   y: number;
-  onDrag: (x: number, y: number) => void;
+  onDrag: (x: number, y: number) => string;
   def: DiagramNode;
   diagram: Diagram;
 };
