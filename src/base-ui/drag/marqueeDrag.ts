@@ -1,17 +1,19 @@
-import { precondition } from '../utils/assert.ts';
-import { Box } from '../geometry/box.ts';
-import { Drag } from '../base-ui/drag/dragDropManager.ts';
-import { Point } from '../geometry/point.ts';
-import { SelectionState } from '../model/selectionState.ts';
-import { Diagram } from '../model/diagram.ts';
-import { DiagramNode } from '../model/diagramNode.ts';
-import { DiagramEdge } from '../model/diagramEdge.ts';
+import { AbstractDrag } from './dragDropManager.ts';
+import { Diagram } from '../../model/diagram.ts';
+import { Point } from '../../geometry/point.ts';
+import { Box } from '../../geometry/box.ts';
+import { SelectionState } from '../../model/selectionState.ts';
+import { precondition } from '../../utils/assert.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 
-export class MarqueeDrag implements Drag {
+export class MarqueeDrag extends AbstractDrag {
   constructor(
     private readonly diagram: Diagram,
     private readonly offset: Point
-  ) {}
+  ) {
+    super();
+  }
 
   onDrag(coord: Point) {
     this.diagram.selectionState.marquee.bounds = Box.normalize({

@@ -1,4 +1,4 @@
-import { Drag } from './dragDropManager.ts';
+import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { assert } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
@@ -7,8 +7,10 @@ import { TransformFactory } from '../../geometry/transform.ts';
 import { RotateAction } from '../../model/diagramUndoActions.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 
-export class RotateDrag implements Drag {
-  constructor(private readonly diagram: Diagram) {}
+export class RotateDrag extends AbstractDrag {
+  constructor(private readonly diagram: Diagram) {
+    super();
+  }
 
   onDrag(coord: Point) {
     const selection = this.diagram.selectionState;

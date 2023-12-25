@@ -1,4 +1,4 @@
-import { Drag, Modifiers } from './dragDropManager.ts';
+import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { assert, VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { LocalCoordinateSystem } from '../../geometry/lcs.ts';
@@ -9,7 +9,7 @@ import { ResizeAction } from '../../model/diagramUndoActions.ts';
 import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 
-export class ResizeDrag implements Drag {
+export class ResizeDrag extends AbstractDrag {
   constructor(
     private readonly diagram: Diagram,
     private readonly type:
@@ -22,7 +22,9 @@ export class ResizeDrag implements Drag {
       | 'resize-w'
       | 'resize-e',
     private readonly offset: Point
-  ) {}
+  ) {
+    super();
+  }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
     const selection = this.diagram.selectionState;

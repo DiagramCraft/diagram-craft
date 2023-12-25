@@ -1,8 +1,8 @@
-import { DiagramEdge } from '../model/diagramEdge.ts';
-import { Point } from '../geometry/point.ts';
-import { UndoableAction } from '../model/undoManager.ts';
-import { Diagram } from '../model/diagram.ts';
-import { Drag, Modifiers } from '../base-ui/drag/dragDropManager.ts';
+import { AbstractDrag, Modifiers } from './dragDropManager.ts';
+import { Point } from '../../geometry/point.ts';
+import { Diagram } from '../../model/diagram.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { UndoableAction } from '../../model/undoManager.ts';
 
 class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';
@@ -41,7 +41,7 @@ class BezierControlUndoAction implements UndoableAction {
   }
 }
 
-export class BezierControlPointDrag implements Drag {
+export class BezierControlPointDrag extends AbstractDrag {
   private originalCPoint: Point;
   private originalOCPoint: Point;
 
@@ -51,6 +51,7 @@ export class BezierControlPointDrag implements Drag {
     private readonly waypointIdx: number,
     private readonly controlPointIdx: number
   ) {
+    super();
     this.originalCPoint = edge.waypoints![waypointIdx].controlPoints![controlPointIdx];
     this.originalOCPoint =
       edge.waypoints![waypointIdx].controlPoints![controlPointIdx === 0 ? 1 : 0];

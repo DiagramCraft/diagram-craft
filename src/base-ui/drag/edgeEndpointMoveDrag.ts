@@ -1,10 +1,10 @@
-import { Drag } from './dragDropManager.ts';
+import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 
-export class EdgeEndpointMoveDrag implements Drag {
+export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly originalPointerEvents: string;
   private hoverElement: string | undefined;
   private coord: Point | undefined;
@@ -15,6 +15,7 @@ export class EdgeEndpointMoveDrag implements Drag {
     private readonly element: SVGElement,
     private readonly type: 'start' | 'end'
   ) {
+    super();
     this.originalPointerEvents = element.getAttribute('pointer-events') ?? 'all';
     element.classList.add('selection-edge-handle--active');
 

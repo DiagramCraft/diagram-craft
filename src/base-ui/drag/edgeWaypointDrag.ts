@@ -1,8 +1,8 @@
-import { UndoableAction } from '../model/undoManager.ts';
-import { DiagramEdge } from '../model/diagramEdge.ts';
-import { Point } from '../geometry/point.ts';
-import { Diagram } from '../model/diagram.ts';
-import { Drag, Modifiers } from '../base-ui/drag/dragDropManager.ts';
+import { AbstractDrag, Modifiers } from './dragDropManager.ts';
+import { Point } from '../../geometry/point.ts';
+import { Diagram } from '../../model/diagram.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { UndoableAction } from '../../model/undoManager.ts';
 
 class WaypointUndoAction implements UndoableAction {
   description = 'Move Waypoint';
@@ -26,7 +26,7 @@ class WaypointUndoAction implements UndoableAction {
   }
 }
 
-export class EdgeWaypointDrag implements Drag {
+export class EdgeWaypointDrag extends AbstractDrag {
   private startPoint: Point;
 
   constructor(
@@ -34,6 +34,7 @@ export class EdgeWaypointDrag implements Drag {
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number
   ) {
+    super();
     this.startPoint = edge.waypoints![waypointIdx].point;
   }
 

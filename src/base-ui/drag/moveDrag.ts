@@ -1,4 +1,4 @@
-import { Drag, Modifiers } from './dragDropManager.ts';
+import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { assert } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
@@ -14,7 +14,7 @@ import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramNode.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 
-export class MoveDrag implements Drag {
+export class MoveDrag extends AbstractDrag {
   snapAngle?: Axis;
   metaKey?: boolean = false;
 
@@ -27,6 +27,7 @@ export class MoveDrag implements Drag {
     private readonly diagram: Diagram,
     private readonly offset: Point
   ) {
+    super();
     const selection = this.diagram.selectionState;
     assert.false(selection.isEmpty());
 

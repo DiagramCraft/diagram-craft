@@ -1,22 +1,7 @@
 import { useDragDrop } from './DragDropManager.tsx';
-import { Drag, Modifiers } from '../base-ui/drag/dragDropManager.ts';
-import { Point } from '../geometry/point.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { Diagram } from '../model/diagram.ts';
-
-class ShapeControlPointDrag implements Drag {
-  constructor(
-    private readonly node: DiagramNode,
-    private readonly callback: (x: number, y: number) => void
-  ) {}
-
-  onDrag(coord: Point, _modifiers: Modifiers) {
-    this.callback(coord.x, coord.y);
-    this.node.commitChanges();
-  }
-
-  onDragEnd(): void {}
-}
+import { ShapeControlPointDrag } from '../base-ui/drag/shapeControlDrag.ts';
 
 export const ShapeControlPoint = (props: Props) => {
   const drag = useDragDrop();

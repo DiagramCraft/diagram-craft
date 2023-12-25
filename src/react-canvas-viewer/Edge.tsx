@@ -13,8 +13,6 @@ import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
-import { EdgeWaypointDrag } from '../react-canvas-editor/edgeWaypoint.ts';
-import { BezierControlPointDrag } from '../react-canvas-editor/edgeBezierControlPoint.ts';
 import { deepMerge } from '../utils/deepmerge.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { Diagram } from '../model/diagram.ts';
@@ -22,6 +20,8 @@ import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { DeepRequired } from 'ts-essentials';
 import { clipPath } from '../model/edgeUtils.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
+import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
+import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 
 export type EdgeApi = {
   repaint: () => void;
