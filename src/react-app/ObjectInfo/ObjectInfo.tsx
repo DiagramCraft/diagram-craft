@@ -15,7 +15,7 @@ export const ObjectInfo = () => {
 
   const callback = useCallback(() => {
     const selectionType = diagram.selectionState.getSelectionType();
-    if (selectionType === 'single-node') {
+    if (selectionType === 'single-node' || selectionType === 'single-label-node') {
       setState('node');
       setNodeId(diagram.selectionState.nodes[0].id);
     } else if (selectionType === 'single-edge') {

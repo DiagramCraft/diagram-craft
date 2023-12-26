@@ -144,7 +144,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   isNodesOnly(): boolean {
-    return ['nodes', 'single-node'].includes(this.getSelectionType());
+    return ['nodes', 'single-node', 'single-label-node'].includes(this.getSelectionType());
   }
 
   isEdgesOnly(): boolean {

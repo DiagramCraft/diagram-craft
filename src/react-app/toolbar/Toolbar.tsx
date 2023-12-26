@@ -54,7 +54,10 @@ export const Toolbar = () => {
   useEventListener(diagram.selectionState, 'remove', callback);
   useEffect(callback, [callback]);
 
-  const isNodeSelection = selectionType === 'nodes' || selectionType === 'single-node';
+  const isNodeSelection =
+    selectionType === 'nodes' ||
+    selectionType === 'single-node' ||
+    selectionType === 'single-label-node';
   const isMixedSelection = selectionType === 'mixed';
   const isEdgeSelection = selectionType === 'edges' || selectionType === 'single-edge';
   const isTextSelection = nodeType === 'text';

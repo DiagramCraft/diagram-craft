@@ -13,7 +13,8 @@ export const CustomPropertiesPanel = (props: Props) => {
 
   useEffect(() => {
     const callback = () => {
-      if (diagram.selectionState.getSelectionType() !== 'single-node') {
+      const selectionType = diagram.selectionState.getSelectionType();
+      if (selectionType !== 'single-node' && selectionType !== 'single-label-node') {
         setNode(undefined);
       } else {
         setNode(diagram.selectionState.nodes[0]);
