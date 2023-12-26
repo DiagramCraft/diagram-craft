@@ -13,11 +13,14 @@ export const LabelNodeSelection = (props: Props) => {
   const center = Box.center(props.node.bounds);
   const edge = props.node.diagram!.edgeLookup[props.node.props.labelForEgdeId]!;
   assert.present(edge);
-  assert.present(edge.labelNode);
+  assert.present(edge.labelNodes);
+
+  const labelNode = edge.labelNodes.find(ln => ln.node === props.node);
+  assert.present(labelNode);
 
   const path = edge.path();
   const attachmentPoint = path.pointAt(
-    TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: edge.labelNode.timeOffset! }, path)
+    TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset! }, path)
   );
 
   return (
@@ -30,7 +33,7 @@ export const LabelNodeSelection = (props: Props) => {
         className={'svg-selection__label-node'}
         onMouseDown={e => {
           if (e.button !== 0) return;
-          drag.initiate(new AttachmentPointDrag(edge, path));
+          drag.initiate(new AttachmentPointDrag(labelNode, edge, path));
           e.stopPropagation();
         }}
       />

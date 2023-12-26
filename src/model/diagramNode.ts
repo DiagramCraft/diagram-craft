@@ -101,10 +101,13 @@ export class DiagramNode implements AbstractNode {
       const dx = this.bounds.pos.x - previousBounds.pos.x;
       const dy = this.bounds.pos.y - previousBounds.pos.y;
 
-      assert.present(edge.labelNode);
-      edge.labelNode.offset = {
-        x: edge.labelNode.offset.x + dx,
-        y: edge.labelNode.offset.y + dy
+      assert.present(edge.labelNodes);
+      const labelNode = edge.labelNodes.find(ln => ln.node === this);
+      assert.present(labelNode);
+
+      labelNode.offset = {
+        x: labelNode.offset.x + dx,
+        y: labelNode.offset.y + dy
       };
       this.diagram.updateElement(edge);
     }

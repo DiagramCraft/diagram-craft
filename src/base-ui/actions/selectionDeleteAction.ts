@@ -35,8 +35,8 @@ class SelectionDeleteUndoableAction implements UndoableAction {
 
   execute(): void {
     for (const element of this.elements) {
-      if (element.type === 'edge' && element.labelNode) {
-        this.elements.push(element.labelNode.node);
+      if (element.type === 'edge' && element.labelNodes) {
+        this.elements.push(...element.labelNodes.map(ln => ln.node));
       }
       element.layer!.removeElement(element);
     }

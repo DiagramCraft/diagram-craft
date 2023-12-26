@@ -16,7 +16,7 @@ export type Endpoint = ConnectedEndpoint | { position: Point };
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   'node' in endpoint;
 
-type ResolvedLabelNode = LabelNode & {
+export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
 };
 
@@ -33,7 +33,7 @@ export class DiagramEdge implements AbstractEdge {
   diagram: Diagram;
   layer: Layer;
 
-  #labelNode?: ResolvedLabelNode;
+  #labelNodes?: ResolvedLabelNode[];
 
   constructor(
     id: string,
@@ -62,18 +62,18 @@ export class DiagramEdge implements AbstractEdge {
         this.invalidate();
       } else if (element === this) {
         this.invalidate();
-      } else if (element === this.#labelNode?.node) {
+      } else if (this.#labelNodes?.find(ln => ln.node === element)) {
         this.adjustLabelNodePosition();
       }
     });
   }
 
-  get labelNode() {
-    return this.#labelNode;
+  get labelNodes() {
+    return this.#labelNodes;
   }
 
-  set labelNode(labelNode: ResolvedLabelNode | undefined) {
-    this.#labelNode = labelNode;
+  set labelNodes(labelNodes: ResolvedLabelNode[] | undefined) {
+    this.#labelNodes = labelNodes;
     this.invalidate();
   }
 
@@ -217,27 +217,29 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   private adjustLabelNodePosition() {
-    if (!this.labelNode) return;
+    if (!this.labelNodes) return;
 
-    const path = this.path();
-    const refPoint = path.pointAt(
-      TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: this.labelNode.timeOffset }, path)
-    );
+    for (const labelNode of this.labelNodes) {
+      const path = this.path();
+      const refPoint = path.pointAt(
+        TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset }, path)
+      );
 
-    const centerPoint = Point.add(refPoint, this.labelNode.offset);
-    const currentCenterPoint = {
-      x: this.labelNode.node.bounds.pos.x + this.labelNode.node.bounds.size.w / 2,
-      y: this.labelNode.node.bounds.pos.y + this.labelNode.node.bounds.size.h / 2
-    };
-    if (!Point.isEqual(centerPoint, currentCenterPoint)) {
-      this.labelNode.node.bounds = {
-        ...this.labelNode.node.bounds,
-        pos: {
-          x: centerPoint.x - this.labelNode.node.bounds.size.w / 2,
-          y: centerPoint.y - this.labelNode.node.bounds.size.h / 2
-        }
+      const centerPoint = Point.add(refPoint, labelNode.offset);
+      const currentCenterPoint = {
+        x: labelNode.node.bounds.pos.x + labelNode.node.bounds.size.w / 2,
+        y: labelNode.node.bounds.pos.y + labelNode.node.bounds.size.h / 2
       };
-      this.diagram.updateElement(this.labelNode.node);
+      if (!Point.isEqual(centerPoint, currentCenterPoint)) {
+        labelNode.node.bounds = {
+          ...labelNode.node.bounds,
+          pos: {
+            x: centerPoint.x - labelNode.node.bounds.size.w / 2,
+            y: centerPoint.y - labelNode.node.bounds.size.h / 2
+          }
+        };
+        this.diagram.updateElement(labelNode.node);
+      }
     }
   }
 }

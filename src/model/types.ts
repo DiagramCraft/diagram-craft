@@ -34,7 +34,7 @@ export interface AbstractEdge extends AbstractElement {
   waypoints?: Waypoint[];
   props: EdgeProps;
 
-  labelNode?: LabelNode;
+  labelNodes?: LabelNode[];
 }
 
 export type Waypoint = {

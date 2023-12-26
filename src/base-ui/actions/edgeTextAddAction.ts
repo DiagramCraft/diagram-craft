@@ -28,15 +28,6 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
 
     const edge = this.diagram.edgeLookup[context.id!];
 
-    if (edge.labelNode) {
-      setTimeout(() => {
-        this.diagram.nodeDefinitions
-          .get(edge.labelNode!.node.nodeType)
-          ?.requestFocus(edge.labelNode!.node);
-      }, 10);
-      return;
-    }
-
     precondition.is.present(edge);
 
     const path = edge.path();
@@ -60,12 +51,13 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     );
     edge.layer.addElement(textNode);
 
-    edge.labelNode = {
+    edge.labelNodes ??= [];
+    edge.labelNodes.push({
       timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
       offset: { x: 0, y: 0 },
       id: textNode.id,
       node: textNode
-    };
+    });
 
     this.diagram.updateElement(edge);
 
