@@ -15,6 +15,7 @@ import { EdgeEndpointMoveDrag } from '../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { Diagram } from '../model/diagram.ts';
 import { LabelNodeSelection } from './selection/LabelNodeSelection.tsx';
+import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 
 export type SelectionApi = {
   repaint: () => void;
@@ -40,6 +41,8 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
       }
     };
   });
+
+  useEventListener(props.selection, 'change', redraw);
 
   if (props.selection.isEmpty()) return null;
 

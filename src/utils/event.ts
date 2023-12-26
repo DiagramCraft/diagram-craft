@@ -1,4 +1,4 @@
-import { debounce } from './debounce.ts';
+import { debounceMicrotask } from './debounce.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventMap = Record<string, any>;
@@ -18,7 +18,9 @@ export class EventEmitter<T extends EventMap> implements Emitter<T> {
   } = {};
 
   on<K extends EventKey<T>>(eventName: K, fn: EventReceiver<T[K]>) {
-    this.listeners[eventName] = (this.listeners[eventName] ?? []).concat([[fn, debounce(fn)]]);
+    this.listeners[eventName] = (this.listeners[eventName] ?? []).concat([
+      [fn, debounceMicrotask(fn)]
+    ]);
   }
 
   off<K extends EventKey<T>>(eventName: K, fn: EventReceiver<T[K]>) {

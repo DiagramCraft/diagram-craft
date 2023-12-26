@@ -52,6 +52,7 @@ export class RotateDrag extends AbstractDrag {
           'Rotate'
         )
       );
+      selection.forceRotation(undefined);
       selection.rebaseline();
     }
   }

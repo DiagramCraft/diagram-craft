@@ -2,6 +2,7 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { Angle } from '../geometry/angle.ts';
 import { SelectionState } from '../model/selectionState.ts';
+import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 
 export type SelectionMarqueeApi = {
   repaint: () => void;
@@ -17,6 +18,8 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
       }
     };
   });
+
+  useEventListener(props.selection.marquee, 'change', redraw);
 
   if (!props.selection.marquee.bounds) return null;
 
