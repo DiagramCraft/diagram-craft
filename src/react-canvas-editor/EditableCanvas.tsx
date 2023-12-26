@@ -2,7 +2,6 @@ import React, {
   forwardRef,
   SVGProps,
   useCallback,
-  useEffect,
   useImperativeHandle,
   useRef,
   useState
@@ -26,10 +25,11 @@ import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { useDiagram } from '../react-app/context/DiagramContext.tsx';
 import { useActions } from '../react-app/context/ActionsContext.tsx';
-import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor, ToolType } from './tools/types.ts';
+import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
 import { DragLabel } from './DragLabel.tsx';
+import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -58,9 +58,10 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const [tool, setTool] = useState<Tool>(
     new MoveTool(diagram, drag, svgRef, deferedMouseAction, props.onResetTool)
   );
-  useEffect(() => {
-    setTool(new TOOLS[props.tool](diagram, drag, svgRef, deferedMouseAction, props.onResetTool));
-  }, [props.tool, props.onResetTool, diagram, drag, svgRef, deferedMouseAction]);
+
+  useEventListener(props.applicationState, 'toolChange', s => {
+    setTool(new TOOLS[s.tool](diagram, drag, svgRef, deferedMouseAction, props.onResetTool));
+  });
 
   useImperativeHandle(ref, () => {
     return svgRef.current!;
@@ -206,7 +207,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 });
 
 type Props = {
-  tool: ToolType;
+  applicationState: ApplicationState;
   onContextMenu: (event: ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
   onResetTool: () => void;
 } & Omit<

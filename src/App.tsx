@@ -7,6 +7,7 @@ import { simpleDiagram } from './sample/simple.ts';
 import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
 import { DocumentSelector } from './react-app/DocumentSelector.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import * as ReactToolbar from '@radix-ui/react-toolbar';
 import {
   TbCategoryPlus,
   TbClick,
@@ -57,9 +58,10 @@ import { DiagramContext } from './react-app/context/DiagramContext.tsx';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext.tsx';
 import { additionalHues, primaryColors } from './react-app/ObjectProperties/palette.ts';
 import { edgeDefaults, nodeDefaults } from './model/diagramDefaults.ts';
-import { ToolType } from './react-canvas-editor/tools/types.ts';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
 import { Diagram } from './model/diagram.ts';
+import { ApplicationState } from './base-ui/ApplicationState.ts';
+import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
 
 const factory = (d: SerializedDiagram, elements?: DiagramElement[]) => {
   return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry(), elements);
@@ -101,7 +103,7 @@ const App = () => {
   const contextMenuTarget = useRef<
     (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
   >(null);
-  const [tool, setTool] = useState<ToolType>('move');
+  const applicationState = useRef(new ApplicationState());
 
   const svgRef = useRef<SVGSVGElement>(null);
   /*
@@ -109,7 +111,11 @@ useEffect(() => {
   perftest(new BezierPerformanceTest());
 }, []);
 */
-  const actionMap = makeActionMap(defaultAppActions)({ diagram: $d });
+  const actionMap = makeActionMap(defaultAppActions)({
+    diagram: $d,
+    applicationState: applicationState.current
+  });
+
   const keyMap = defaultMacKeymap;
   return (
     <DiagramContext.Provider value={$d}>
@@ -148,34 +154,26 @@ useEffect(() => {
               </div>
 
               <div className={'_tools'}>
-                <div className={'cmp-toolbar'} data-size={'large'}>
-                  <button
-                    className={'cmp-toolbar__toggle-item'}
-                    data-state={tool === 'move' ? 'on' : 'off'}
-                    onClick={() => setTool('move')}
-                  >
+                <ReactToolbar.Root className="cmp-toolbar" data-size={'large'}>
+                  <ActionToggleButton action={'TOOL_MOVE'}>
                     <TbClick size={'1.1rem'} />
-                  </button>
+                  </ActionToggleButton>
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbLayoutGridAdd size={'1.1rem'} />
                   </button>
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbLine size={'1.1rem'} />
                   </button>
-                  <button
-                    className={'cmp-toolbar__toggle-item'}
-                    data-state={tool === 'text' ? 'on' : 'off'}
-                    onClick={() => setTool('text')}
-                  >
+                  <ActionToggleButton action={'TOOL_TEXT'}>
                     <TbTextSize size={'1.1rem'} />
-                  </button>
+                  </ActionToggleButton>
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbPencil size={'1.1rem'} />
                   </button>
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbPolygon size={'1.1rem'} />
                   </button>
-                </div>
+                </ReactToolbar.Root>
               </div>
 
               <div className={'_document'}>
@@ -266,14 +264,14 @@ useEffect(() => {
                     <EditableCanvas
                       ref={svgRef}
                       key={$d.id}
-                      tool={tool}
+                      applicationState={applicationState.current}
                       className={'canvas'}
                       onContextMenu={e => {
                         contextMenuTarget.current = e;
                       }}
                       onDrop={canvasDropHandler($d)}
                       onDragOver={canvasDragOverHandler()}
-                      onResetTool={() => setTool('move')}
+                      onResetTool={() => (applicationState.current.tool = 'move')}
                     />
                   </ContextMenu.Trigger>
                   <ContextMenu.Portal>

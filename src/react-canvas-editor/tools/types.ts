@@ -3,8 +3,6 @@ import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts
 import { MutableRefObject, RefObject } from 'react';
 import { Diagram } from '../../model/diagram.ts';
 
-export type ToolType = 'move' | 'text';
-
 export interface Tool {
   onMouseDown(id: ObjectId, point: Point, modifiers: Modifiers): void;
 

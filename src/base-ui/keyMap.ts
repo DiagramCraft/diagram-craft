@@ -17,6 +17,8 @@ import { edgeFlipActions } from './actions/edgeFlipAction.ts';
 import { duplicateActions } from './actions/duplicateAction.ts';
 import { Diagram } from '../model/diagram.ts';
 import { edgeTextAddActions } from './actions/edgeTextAddAction.ts';
+import { toolActions } from '../react-canvas-editor/actions/ToolAction.tsx';
+import { ApplicationState } from './ApplicationState.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -41,15 +43,19 @@ export type State = {
   diagram: Diagram;
 };
 
+export type AppState = State & {
+  applicationState: ApplicationState;
+};
+
 export type KeyMap = Record<string, keyof ActionMap>;
 
 declare global {
   interface ActionMap {}
 }
 
-export type ActionMapFactory = (state: State) => Partial<ActionMap>;
+export type ActionMapFactory = (state: AppState) => Partial<ActionMap>;
 
-export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
+export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
   ...clipboardActions(state),
   ...undoActions(state),
@@ -65,11 +71,12 @@ export const defaultCanvasActions: ActionMapFactory = (state: State) => ({
   ...toggleRulerActions(state),
   ...textActions(state),
   ...edgeFlipActions(state),
-  ...duplicateActions(state)
+  ...duplicateActions(state),
+  ...toolActions(state)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
-  return (state: State) => {
+  return (state: AppState) => {
     const actions: Partial<ActionMap> = {};
     for (const factory of factories) {
       Object.assign(actions, factory(state));
@@ -85,7 +92,9 @@ export const defaultMacKeymap: KeyMap = {
   'M-KeyX': 'CLIPBOARD_CUT',
   'M-KeyV': 'CLIPBOARD_PASTE',
   'M-KeyD': 'DUPLICATE',
-  Backspace: 'SELECTION_DELETE'
+  Backspace: 'SELECTION_DELETE',
+  'M-Digit1': 'TOOL_MOVE',
+  'M-Digit4': 'TOOL_TEXT'
 };
 
 export const findAction = (
