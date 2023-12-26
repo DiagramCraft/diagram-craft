@@ -46,7 +46,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
               nodeType: 'text',
               bounds: {
                 pos: { x: 300, y: 170 },
-                size: { w: 100, h: 20 },
+                size: { w: 64, h: 17 },
                 rotation: 0
               },
               id: 't2',
@@ -78,7 +78,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 {
                   id: 't2',
                   timeOffset: 0.5,
-                  offset: { x: 0, y: 0 }
+                  offset: { x: 0, y: 0 },
+                  type: 'perpendicular-readable'
                 }
               ],
               waypoints: [{ point: { x: 360, y: 200 } }]

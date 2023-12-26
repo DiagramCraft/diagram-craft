@@ -7,6 +7,7 @@ import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
 import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
+import { Vector } from '../geometry/vector.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -212,7 +213,7 @@ export class DiagramEdge implements AbstractEdge {
     }
   }
 
-  private invalidate() {
+  invalidate() {
     this.adjustLabelNodePosition();
   }
 
@@ -221,18 +222,40 @@ export class DiagramEdge implements AbstractEdge {
 
     for (const labelNode of this.labelNodes) {
       const path = this.path();
-      const refPoint = path.pointAt(
-        TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset }, path)
+      const lengthOffsetOnPath = TimeOffsetOnPath.toLengthOffsetOnPath(
+        { pathT: labelNode.timeOffset },
+        path
       );
+      const refPoint = path.pointAt(lengthOffsetOnPath);
 
       const centerPoint = Point.add(refPoint, labelNode.offset);
       const currentCenterPoint = {
         x: labelNode.node.bounds.pos.x + labelNode.node.bounds.size.w / 2,
         y: labelNode.node.bounds.pos.y + labelNode.node.bounds.size.h / 2
       };
-      if (!Point.isEqual(centerPoint, currentCenterPoint)) {
+
+      let newRotation = labelNode.node.bounds.rotation;
+      if (labelNode.type.startsWith('parallel') || labelNode.type.startsWith('perpendicular')) {
+        const tangent = path.tangentAt(lengthOffsetOnPath);
+        newRotation = Vector.angle(tangent);
+
+        if (labelNode.type.startsWith('perpendicular')) {
+          newRotation += Math.PI / 2;
+        }
+
+        if (labelNode.type.endsWith('-readable')) {
+          if (newRotation > Math.PI / 2) newRotation -= Math.PI;
+          if (newRotation < -Math.PI / 2) newRotation += Math.PI;
+        }
+      }
+
+      if (
+        !Point.isEqual(centerPoint, currentCenterPoint) ||
+        newRotation !== labelNode.node.bounds.rotation
+      ) {
         labelNode.node.bounds = {
           ...labelNode.node.bounds,
+          rotation: newRotation,
           pos: {
             x: centerPoint.x - labelNode.node.bounds.size.w / 2,
             y: centerPoint.y - labelNode.node.bounds.size.h / 2

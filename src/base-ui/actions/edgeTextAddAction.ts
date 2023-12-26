@@ -56,7 +56,8 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
       timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
       offset: { x: 0, y: 0 },
       id: textNode.id,
-      node: textNode
+      node: textNode,
+      type: 'perpendicular-readable'
     });
 
     this.diagram.updateElement(edge);

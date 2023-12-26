@@ -26,6 +26,14 @@ export type LabelNode = {
   id: string;
   offset: Point;
   timeOffset: number;
+  type:
+    | 'parallel'
+    | 'perpendicular'
+    | 'perpendicular-readable'
+    | 'parallel-readable'
+    | 'horizontal'
+    | 'vertical'
+    | 'independent';
 };
 
 export interface AbstractEdge extends AbstractElement {

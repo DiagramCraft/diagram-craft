@@ -18,6 +18,7 @@ export interface PathSegment {
   split(t: number): [PathSegment, PathSegment];
   tAtLength(length: number): number;
   lengthAtT(t: number): number;
+  tangent(t: number): Vector;
   //tangentAt(t: number): Vector;
   //normalAt(t: number): Vector;
   //boundingBox(): Box;
@@ -91,6 +92,10 @@ export class LineSegment implements PathSegment {
       x: this.start.x + (this.end.x - this.start.x) * t,
       y: this.start.y + (this.end.y - this.start.y) * t
     };
+  }
+
+  tangent(_t: number) {
+    return Vector.normalize(Vector.from(this.start, this.end));
   }
 
   normalize(): NormalizedSegment[] {
@@ -235,6 +240,10 @@ export class ArcSegment implements PathSegment {
     return dest;
   }
 
+  tangent(_t: number): Vector {
+    throw new NotImplementedYet();
+  }
+
   normalize(): RawCubicSegment[] {
     if (this._normalized) return this._normalized;
 
@@ -301,6 +310,19 @@ export class SegmentList {
 
     // TODO: We can probably use tAtLength here
     return segment.point(currentD / segment.length());
+  }
+
+  tangentAt(t: LengthOffsetOnPath) {
+    // Find the segment that contains the point
+    let currentD = t.pathD;
+    let segmentIndex = 0;
+    let segment = this.segments[segmentIndex];
+    while (currentD > segment.length()) {
+      currentD -= segment.length();
+      segment = this.segments[++segmentIndex];
+    }
+
+    return segment.tangent(currentD / segment.length());
   }
 
   projectPoint(point: Point): Projection & { segmentIndex: number; globalL: number } {

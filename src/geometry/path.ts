@@ -105,6 +105,10 @@ export class Path {
     return this.segmentList.pointAt(t, _mode);
   }
 
+  tangentAt(t: LengthOffsetOnPath) {
+    return this.segmentList.tangentAt(t);
+  }
+
   projectPoint(point: Point): PointOnPath & LengthOffsetOnPath & TimeOffsetOnSegment {
     const projection = this.segmentList.projectPoint(point);
 

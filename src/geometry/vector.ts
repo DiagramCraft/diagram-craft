@@ -11,6 +11,10 @@ export const Vector = {
   from: (c1: Point, c2: Point) => {
     return { x: c2.x - c1.x, y: c2.y - c1.y };
   },
+  normalize: (v: Vector) => {
+    const l = Vector.length(v);
+    return { x: v.x / l, y: v.y / l };
+  },
   crossProduct: (v1: Vector, v2: Vector) => {
     return v1.x * v2.y - v1.y * v2.x;
   },

@@ -13,6 +13,7 @@ import { CanvasGridPanel } from './CanvasGridPanel.tsx';
 import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { LabelNodePanel } from './LabelNodePanel.tsx';
 
 export const ObjectToolWindow = () => {
   const diagram = useDiagram();
@@ -48,7 +49,8 @@ export const ObjectToolWindow = () => {
           'grid',
           'canvas',
           'snap',
-          'custom'
+          'custom',
+          'label-node'
         ]}
       >
         {(type === 'node' || type === 'mixed') && (
@@ -57,7 +59,12 @@ export const ObjectToolWindow = () => {
             <ShadowPanel />
             <NodeStrokePanel />
             <TextPanel />
-            <TransformPanel />
+            {diagram.selectionState.getSelectionType() !== 'single-label-node' && (
+              <TransformPanel />
+            )}
+            {diagram.selectionState.getSelectionType() === 'single-label-node' && (
+              <LabelNodePanel />
+            )}
             <CustomPropertiesPanel />
           </>
         )}

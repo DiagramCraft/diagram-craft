@@ -667,12 +667,10 @@ input::-webkit-input-placeholder {
   }
 }
 
-
-
 .cmp-select-trigger {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
   border-radius: 4px;
   padding: 0 5px;
   font-size: 11px;
@@ -691,12 +689,13 @@ input::-webkit-input-placeholder {
     box-shadow: 0 0 0 2px black;
   }
 
-  &[data-placeholder] {
+/*  &[data-placeholder] {
     color: var(--blue-9);
-  }
+  }*/
 
   .cmp-select-trigger__icon {
     color: var(--secondary-fg);
+    margin-left: auto;
   }
 }
 
