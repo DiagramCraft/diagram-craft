@@ -96,7 +96,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     };
   }
 
-  Magnet(magnet: MagnetOfType<'node'>, delta: Point): void {
+  moveMagnet(magnet: MagnetOfType<'node'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
 }

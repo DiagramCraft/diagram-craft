@@ -214,7 +214,7 @@ export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
     };
   }
 
-  Magnet(magnet: MagnetOfType<'distance'>, delta: Point): void {
+  moveMagnet(magnet: MagnetOfType<'distance'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
     magnet.distancePairs.forEach(dp => {
       dp.pointA = Point.add(dp.pointA, delta);

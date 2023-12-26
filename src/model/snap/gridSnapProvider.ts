@@ -26,7 +26,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     for (let x = minX; x <= maxX; x++) {
       magnets.push({
         line: Line.of({ x: x * grid.x, y: minY * grid.y }, { x: x * grid.x, y: maxY * grid.y }),
-        axis: 'v',
+        axis: Axis.v,
         type: 'grid'
       });
     }
@@ -34,7 +34,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     for (let y = minY; y <= maxY; y++) {
       magnets.push({
         line: Line.of({ x: minX * grid.x, y: y * grid.y }, { x: maxX * grid.x, y: y * grid.y }),
-        axis: 'h',
+        axis: Axis.h,
         type: 'grid'
       });
     }
@@ -58,7 +58,7 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     };
   }
 
-  Magnet(magnet: MagnetOfType<'grid'>, delta: Point): void {
+  moveMagnet(magnet: MagnetOfType<'grid'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
 }

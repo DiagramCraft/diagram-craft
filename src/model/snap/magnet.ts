@@ -56,12 +56,12 @@ export const Magnet = {
     const center: Magnet[] = [
       {
         line: Line.horizontal(node.pos.y + node.size.h / 2, [node.pos.x, node.pos.x + node.size.w]),
-        axis: 'h',
+        axis: Axis.h,
         type
       },
       {
         line: Line.vertical(node.pos.x + node.size.w / 2, [node.pos.y, node.pos.y + node.size.h]),
-        axis: 'v',
+        axis: Axis.v,
         type
       }
     ];
@@ -73,7 +73,7 @@ export const Magnet = {
         { x: node.pos.x, y: node.pos.y },
         { x: node.pos.x + node.size.w, y: node.pos.y }
       ),
-      axis: 'h',
+      axis: Axis.h,
       type,
       matchDirection: 'n'
     });
@@ -82,7 +82,7 @@ export const Magnet = {
         { x: node.pos.x, y: node.pos.y + node.size.h },
         { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
       ),
-      axis: 'h',
+      axis: Axis.h,
       type,
       matchDirection: 's'
     });
@@ -91,7 +91,7 @@ export const Magnet = {
         { x: node.pos.x, y: node.pos.y },
         { x: node.pos.x, y: node.pos.y + node.size.h }
       ),
-      axis: 'v',
+      axis: Axis.v,
       type,
       matchDirection: 'w'
     });
@@ -100,7 +100,7 @@ export const Magnet = {
         { x: node.pos.x + node.size.w, y: node.pos.y },
         { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
       ),
-      axis: 'v',
+      axis: Axis.v,
       type,
       matchDirection: 'e'
     });

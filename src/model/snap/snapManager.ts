@@ -32,7 +32,7 @@ export type MatchingMagnetPair<T extends MagnetType> = {
 export interface SnapProvider<T extends MagnetType> {
   getMagnets(box: Box): MagnetOfType<T>[];
   makeGuide(box: Box, match: MatchingMagnetPair<T>, axis: Axis): Guide | undefined;
-  Magnet(magnet: MagnetOfType<T>, delta: Point): void;
+  moveMagnet(magnet: MagnetOfType<T>, delta: Point): void;
 }
 
 class SourceSnapProvider implements SnapProvider<'source'> {
@@ -44,7 +44,7 @@ class SourceSnapProvider implements SnapProvider<'source'> {
     throw new VerifyNotReached();
   }
 
-  Magnet(magnet: MagnetOfType<'source'>, delta: Point): void {
+  moveMagnet(magnet: MagnetOfType<'source'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
 }
@@ -77,6 +77,19 @@ class SnapProviders {
 const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: 'h' | 'v') =>
   line1.from[Axis.toXY(oAxis)] - line2.from[Axis.toXY(oAxis)];
 
+const rangeOverlap = (a1: Magnet, a2: Magnet) => {
+  const axis = Axis.toXY(a1.axis);
+  return Range.intersection(
+    [a1.line.from[axis], a1.line.to[axis]],
+    [a2.line.from[axis], a2.line.to[axis]]
+  );
+};
+
+const orhogonalDistance = (a1: Magnet, a2: Magnet) => {
+  const axis = Axis.toXY(Axis.orthogonal(a1.axis));
+  return a1.line.from[axis] - a2.line.from[axis];
+};
+
 export class SnapManager {
   // TODO: Ideally we should find a better way to exclude the currently selected node
   //       maybe we can pass in the current selection instead of just the box (bounds)
@@ -88,19 +101,6 @@ export class SnapManager {
     private readonly enabled: boolean
   ) {}
 
-  private rangeOverlap(a1: Magnet, a2: Magnet) {
-    const axis = Axis.toXY(a1.axis);
-    return Range.intersection(
-      [a1.line.from[axis], a1.line.to[axis]],
-      [a2.line.from[axis], a2.line.to[axis]]
-    );
-  }
-
-  private orhogonalDistance(a1: Magnet, a2: Magnet) {
-    const axis = Axis.toXY(Axis.orthogonal(a1.axis));
-    return a1.line.from[axis] - a2.line.from[axis];
-  }
-
   private matchMagnets(selfMagnets: Magnet[], otherMagnets: Magnet[]): MatchingMagnetPair<any>[] {
     const dest: MatchingMagnetPair<any>[] = [];
 
@@ -108,9 +108,9 @@ export class SnapManager {
       for (const self of selfMagnets) {
         if (other.axis !== self.axis) continue;
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
-        if (!this.rangeOverlap(self, other)) continue;
+        if (!rangeOverlap(self, other)) continue;
 
-        const distance = this.orhogonalDistance(self, other);
+        const distance = orhogonalDistance(self, other);
         if (Math.abs(distance) > this.threshold) continue;
 
         dest.push({ self, matching: other, distance });
@@ -147,7 +147,7 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      const distance = this.orhogonalDistance(closest.self, closest.matching);
+      const distance = orhogonalDistance(closest.self, closest.matching);
 
       if (closest.self.matchDirection === 'n' || closest.self.matchDirection === 'w') {
         newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= distance;
@@ -203,7 +203,7 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= this.orhogonalDistance(
+      newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= orhogonalDistance(
         closest.self,
         closest.matching
       );
@@ -211,7 +211,7 @@ export class SnapManager {
 
     // Readjust self magnets to the new position - post snapping
     for (const a of magnets) {
-      snapProviders.get(a.type).Magnet(a, Point.subtract(newBounds.get('pos'), b.pos));
+      snapProviders.get(a.type).moveMagnet(a, Point.subtract(newBounds.get('pos'), b.pos));
     }
 
     const newB = newBounds.getSnapshot();
@@ -230,7 +230,7 @@ export class SnapManager {
   }
 
   private generateGuides(
-    b: Box,
+    bounds: Box,
     selfMagnets: Magnet[],
     matchingMagnets: MatchingMagnetPair<any>[],
     snapProviders: SnapProviders,
@@ -248,7 +248,7 @@ export class SnapManager {
 
       // Recalculate distance after snapping
       otherMagnetsForMagnet.forEach(e => {
-        e.distance = this.orhogonalDistance(self, e.matching);
+        e.distance = orhogonalDistance(self, e.matching);
       });
 
       const match = largest(
@@ -265,7 +265,7 @@ export class SnapManager {
 
       if (!match) continue;
 
-      const guide = snapProviders.get(match.matching.type).makeGuide(b, match, axis);
+      const guide = snapProviders.get(match.matching.type).makeGuide(bounds, match, axis);
       if (guide) guides.push(guide);
     }
 

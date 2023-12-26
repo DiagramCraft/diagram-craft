@@ -15,12 +15,12 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     return [
       {
         line: Line.of({ x: w / 2, y: 0 }, { x: w / 2, y: h }),
-        axis: 'v',
+        axis: Axis.v,
         type: 'canvas'
       },
       {
         line: Line.of({ x: 0, y: h / 2 }, { x: w, y: h / 2 }),
-        axis: 'h',
+        axis: Axis.h,
         type: 'canvas'
       }
     ];
@@ -34,7 +34,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
     };
   }
 
-  Magnet(magnet: MagnetOfType<'canvas'>, delta: Point): void {
+  moveMagnet(magnet: MagnetOfType<'canvas'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
 }

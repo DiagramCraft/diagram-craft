@@ -178,7 +178,7 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
     };
   }
 
-  Magnet(magnet: MagnetOfType<'size'>, delta: Point): void {
+  moveMagnet(magnet: MagnetOfType<'size'>, delta: Point): void {
     magnet.line = Line.move(magnet.line, delta);
   }
 }
