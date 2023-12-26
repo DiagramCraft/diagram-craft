@@ -1,5 +1,5 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { ActionContext, findKeyBindings } from '../../base-ui/keyMap.ts';
+import { ActionContext, findKeyBindings, formatKeyBinding } from '../../base-ui/keyMap.ts';
 import React from 'react';
 import { useActions } from '../context/ActionsContext.tsx';
 
@@ -15,7 +15,9 @@ export const ActionContextMenuItem = (props: Props) => {
       }}
     >
       {props.children}{' '}
-      <div className="cmp-context-menu__right-slot">{findKeyBindings(props.action, keyMap)}</div>
+      <div className="cmp-context-menu__right-slot">
+        {formatKeyBinding(findKeyBindings(props.action, keyMap)[0])}
+      </div>
     </ContextMenu.Item>
   );
 };

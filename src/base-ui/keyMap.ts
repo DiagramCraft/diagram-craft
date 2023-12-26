@@ -151,3 +151,27 @@ export const findKeyBindings = (action: keyof ActionMap, keyMap: KeyMap): string
     .filter(([, a]) => a === action)
     .map(([k]) => k);
 };
+
+export const formatKeyBinding = (s: string | undefined) => {
+  if (!s) return '';
+  const [m, k] = s.split('-');
+
+  if (window.navigator.platform.indexOf('Mac') != -1) {
+    return (
+      m.replace('M', '⌘').replace('A', '⌥').replace('C', '⌃').replace('S', '⇧') +
+      k.replace('Key', '').replace('Digit', '')
+    );
+  } else if (window.navigator.platform.indexOf('Linux') != -1) {
+    return (
+      m.replace('M', 'Ctrl').replace('A', 'Alt').replace('C', 'Ctrl').replace('S', 'Shift') +
+      '+' +
+      k.replace('Key', '').replace('Digit', '')
+    );
+  } else {
+    return (
+      m.replace('M', 'Ctrl').replace('A', 'Alt').replace('C', 'Ctrl').replace('S', 'Shift') +
+      '+' +
+      k.replace('Key', '').replace('Digit', '')
+    );
+  }
+};
