@@ -86,7 +86,6 @@ export class DiagramNode implements AbstractNode {
   transform(transforms: Transform[]) {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
-    this.invalidateAnchors();
 
     if (this.nodeType === 'group') {
       for (const child of this.children) {
@@ -109,8 +108,11 @@ export class DiagramNode implements AbstractNode {
         x: labelNode.offset.x + dx,
         y: labelNode.offset.y + dy
       };
+
       this.diagram.updateElement(edge);
     }
+
+    this.invalidateAnchors();
   }
 
   get anchors(): Anchor[] {
