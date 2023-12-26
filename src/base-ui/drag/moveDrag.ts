@@ -20,6 +20,8 @@ export class MoveDrag extends AbstractDrag {
 
   oldPointerEventsValues: Record<string, string> = {};
 
+  #dragStarted = false;
+
   // @ts-ignore
   private currentEdge: DiagramEdge | undefined = undefined;
 
@@ -30,8 +32,6 @@ export class MoveDrag extends AbstractDrag {
     super();
     const selection = this.diagram.selectionState;
     assert.false(selection.isEmpty());
-
-    this.disablePointerEvents(selection.elements);
   }
 
   onDragEnter(id: string): void {
@@ -47,6 +47,11 @@ export class MoveDrag extends AbstractDrag {
 
   onDrag(coord: Point, modifiers: Modifiers): void {
     const selection = this.diagram.selectionState;
+
+    if (!this.#dragStarted) {
+      this.#dragStarted = true;
+      this.disablePointerEvents(selection.elements);
+    }
 
     // Don't move connected edges
     if (

@@ -29,7 +29,6 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     const edge = this.diagram.edgeLookup[context.id!];
 
     if (edge.labelNode) {
-      console.log('****');
       setTimeout(() => {
         this.diagram.nodeDefinitions
           .get(edge.labelNode!.node.nodeType)

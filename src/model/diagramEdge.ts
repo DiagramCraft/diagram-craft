@@ -62,6 +62,8 @@ export class DiagramEdge implements AbstractEdge {
         this.invalidate();
       } else if (element === this) {
         this.invalidate();
+      } else if (element === this.#labelNode?.node) {
+        this.adjustLabelNodePosition();
       }
     });
   }
