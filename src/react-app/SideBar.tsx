@@ -1,8 +1,16 @@
 import { ToolWindowButton } from './ToolWindowButton.tsx';
 import React, { useEffect, useState } from 'react';
+import { UserState } from '../base-ui/UserState.ts';
+import { useEventListener } from './hooks/useEventListener.ts';
 
 export const SideBar = (props: Props) => {
-  const [selected, setSelected] = useState(props.defaultSelected ?? -1);
+  const propName = props.side === 'left' ? 'panelLeft' : 'panelRight';
+
+  const [selected, setSelected] = useState(props.userState[propName] ?? -1);
+
+  useEventListener(props.userState, 'change', () => {
+    setSelected(props.userState[propName] ?? 0);
+  });
 
   // TODO: Can we do this with CSS?
   //       potentially setting a variable
@@ -49,7 +57,7 @@ export const SideBar = (props: Props) => {
                   return;
                 }
                 setSelected(idx);
-                props.onChange?.(idx);
+                props.userState[propName] = idx;
               }}
             />
           );
@@ -68,7 +76,6 @@ export const SideBar = (props: Props) => {
 
 type Props = {
   side: 'left' | 'right';
+  userState: UserState;
   children: React.ReactNode[];
-  defaultSelected?: number;
-  onChange?: (idx: number) => void;
 };

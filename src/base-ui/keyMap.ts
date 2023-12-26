@@ -19,6 +19,8 @@ import { Diagram } from '../model/diagram.ts';
 import { edgeTextAddActions } from './actions/edgeTextAddAction.ts';
 import { toolActions } from '../react-canvas-editor/actions/ToolAction.tsx';
 import { ApplicationState } from './ApplicationState.ts';
+import { UserState } from './UserState.ts';
+import { sidebarActions } from '../react-canvas-editor/actions/SidebarAction.tsx';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -45,6 +47,7 @@ export type State = {
 
 export type AppState = State & {
   applicationState: ApplicationState;
+  userState: UserState;
 };
 
 export type KeyMap = Record<string, keyof ActionMap>;
@@ -72,7 +75,10 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...textActions(state),
   ...edgeFlipActions(state),
   ...duplicateActions(state),
-  ...toolActions(state)
+
+  // TODO: These should move to defaultAppActions
+  ...toolActions(state),
+  ...sidebarActions(state)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
@@ -94,7 +100,17 @@ export const defaultMacKeymap: KeyMap = {
   'M-KeyD': 'DUPLICATE',
   Backspace: 'SELECTION_DELETE',
   'M-Digit1': 'TOOL_MOVE',
-  'M-Digit4': 'TOOL_TEXT'
+  'M-Digit4': 'TOOL_TEXT',
+
+  // TODO: These should move to something like defaultAppKeymap
+  'A-Digit1': 'SIDEBAR_SHAPES',
+  'A-Digit2': 'SIDEBAR_LAYERS',
+  'A-Digit3': 'SIDEBAR_SELECT',
+  'A-Digit4': 'SIDEBAR_DOCUMENT',
+  'A-Digit5': 'SIDEBAR_HISTORY',
+  'A-Digit6': 'SIDEBAR_STYLE',
+  'A-Digit7': 'SIDEBAR_INFO',
+  'A-Digit8': 'SIDEBAR_DATA'
 };
 
 export const findAction = (

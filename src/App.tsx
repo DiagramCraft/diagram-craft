@@ -50,7 +50,7 @@ import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
 import { DiagramElement } from './model/diagramNode.ts';
 import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
-import { UserState } from './react-app/UserState.ts';
+import { UserState } from './base-ui/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
 import { Ruler } from './react-app/Ruler.tsx';
 import { ActionsContext, useActions } from './react-app/context/ActionsContext.tsx';
@@ -104,6 +104,7 @@ const App = () => {
     (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
   >(null);
   const applicationState = useRef(new ApplicationState());
+  const userState = useRef(new UserState());
 
   const svgRef = useRef<SVGSVGElement>(null);
   /*
@@ -113,7 +114,8 @@ useEffect(() => {
 */
   const actionMap = makeActionMap(defaultAppActions)({
     diagram: $d,
-    applicationState: applicationState.current
+    applicationState: applicationState.current,
+    userState: userState.current
   });
 
   const keyMap = defaultMacKeymap;
@@ -211,13 +213,7 @@ useEffect(() => {
                 <Toolbar />
               </div>
 
-              <SideBar
-                side={'left'}
-                defaultSelected={UserState.getState()['panel.left'] ?? 0}
-                onChange={idx => {
-                  UserState.set('panel.left', idx);
-                }}
-              >
+              <SideBar side={'left'} userState={userState.current}>
                 <SideBarPage icon={TbCategoryPlus}>
                   <PickerToolWindow />
                 </SideBarPage>
@@ -239,13 +235,7 @@ useEffect(() => {
                 </SideBarPage>
               </SideBar>
 
-              <SideBar
-                side={'right'}
-                defaultSelected={UserState.getState()['panel.right'] ?? 0}
-                onChange={idx => {
-                  UserState.set('panel.right', idx);
-                }}
-              >
+              <SideBar side={'right'} userState={userState.current}>
                 <SideBarPage icon={TbPalette}>
                   <ObjectToolWindow />
                 </SideBarPage>
