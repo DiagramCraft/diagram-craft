@@ -23,6 +23,8 @@ export const ObjectToolWindow = () => {
   const callback = () => {
     if (diagram.selectionState.getSelectionType() === 'mixed') {
       setType('mixed');
+    } else if (diagram.selectionState.getSelectionType() === 'single-label-node') {
+      setType('single-label-node');
     } else if (diagram.selectionState.isNodesOnly()) {
       setType('node');
     } else if (diagram.selectionState.isEdgesOnly()) {
@@ -53,18 +55,14 @@ export const ObjectToolWindow = () => {
           'label-node'
         ]}
       >
-        {(type === 'node' || type === 'mixed') && (
+        {(type === 'node' || type === 'mixed' || type === 'single-label-node') && (
           <>
             <NodeFillPanel />
             <ShadowPanel />
             <NodeStrokePanel />
             <TextPanel />
-            {diagram.selectionState.getSelectionType() !== 'single-label-node' && (
-              <TransformPanel />
-            )}
-            {diagram.selectionState.getSelectionType() === 'single-label-node' && (
-              <LabelNodePanel />
-            )}
+            {type !== 'single-label-node' && <TransformPanel />}
+            {type === 'single-label-node' && <LabelNodePanel />}
             <CustomPropertiesPanel />
           </>
         )}
