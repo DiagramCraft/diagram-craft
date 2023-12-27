@@ -106,7 +106,7 @@ export const deserializeDiagramElements = (
     for (const c of unfoldGroup(n)) {
       nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
       if (c.parent) {
-        nodeLookup[n.id].parent = nodeLookup[c.parent.id];
+        nodeLookup[c.id].parent = nodeLookup[c.parent.id];
       }
     }
   }

@@ -41,11 +41,25 @@ export class MoveTool extends AbstractTool {
 
     try {
       if (isClickOnSelection) {
+        // TODO: Group handling must be improved here
+        let element = this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id];
+        if (
+          selection.isNodesOnly() &&
+          selection.nodes.length === 1 &&
+          selection.nodes[0].nodeType === 'group'
+        ) {
+          // Do nothing
+        } else {
+          if (element.type === 'node') {
+            element = element.getTopmostParent();
+          }
+        }
+
         this.deferedMouseAction.current = {
           callback: () => {
-            selection.clear();
+            if (!modifiers.shiftKey) selection.clear();
             if (!isClickOnBackground) {
-              selection.toggle(this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id]);
+              selection.toggle(element);
             }
           }
         };
@@ -61,7 +75,17 @@ export class MoveTool extends AbstractTool {
         if (!modifiers.shiftKey) {
           selection.clear();
         }
-        selection.toggle(this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id]);
+        let element = this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id];
+        if (element.type === 'node') {
+          // TODO: ... and here
+          const parent = element.getTopmostParent();
+          if (selection.nodes.includes(parent)) {
+            selection.toggle(parent);
+          } else {
+            element = parent;
+          }
+        }
+        selection.toggle(element);
       }
 
       if (!selection.isEmpty()) {

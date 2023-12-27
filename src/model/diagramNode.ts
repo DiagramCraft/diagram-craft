@@ -51,6 +51,13 @@ export class DiagramNode implements AbstractNode {
     this.layer = layer;
   }
 
+  getTopmostParent(): DiagramNode {
+    if (this.parent === undefined) return this;
+
+    // TODO: Eliminate recursion
+    return this.parent.getTopmostParent();
+  }
+
   isLocked() {
     return this.layer.isLocked() ?? false;
   }

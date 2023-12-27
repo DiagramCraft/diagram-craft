@@ -114,7 +114,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             key={c.id}
             def={c}
             diagram={props.diagram}
-            onMouseDown={(_id, coord, add) => props.onMouseDown(props.def.id, coord, add)}
+            onMouseDown={props.onMouseDown}
             onMouseLeave={props.onMouseLeave}
             onMouseEnter={props.onMouseEnter}
           />

@@ -35,8 +35,8 @@ export const snapTestDiagram: SerializedDiagramDocument = {
                   nodeType: 'rect',
                   id: '1_1',
                   bounds: {
-                    pos: { x: 10, y: 10 },
-                    size: { w: 20, h: 20 },
+                    pos: { x: 0, y: 0 },
+                    size: { w: 70, h: 80 },
                     rotation: 0
                   },
                   children: [],
@@ -47,7 +47,7 @@ export const snapTestDiagram: SerializedDiagramDocument = {
                   nodeType: 'rect',
                   id: '1_2',
                   bounds: {
-                    pos: { x: 50, y: 50 },
+                    pos: { x: 60, y: 60 },
                     size: { w: 40, h: 40 },
                     rotation: 0
                   },

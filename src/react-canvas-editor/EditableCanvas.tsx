@@ -79,9 +79,12 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useEventListener(diagram, 'elementChange', e => {
     if (e.element.type === 'node') {
-      nodeRefs.current[e.element.id]?.repaint();
+      // TODO: Ideally we should be able to repaint only the nodes within a group that
+      //       has changed, but we don't have the nodeRefs to anything but level 1 nodes
+      const parent = e.element.getTopmostParent();
+      nodeRefs.current[parent.id]?.repaint();
 
-      for (const edge of e.element.listEdges(true)) {
+      for (const edge of parent.listEdges(true)) {
         edgeRefs.current[edge.id]?.repaint();
       }
     } else {
