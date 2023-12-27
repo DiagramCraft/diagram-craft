@@ -62,6 +62,7 @@ import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
 import { Diagram } from './model/diagram.ts';
 import { ApplicationState } from './base-ui/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
+import { LayerIndicator } from './react-app/components/LayerIndicator.tsx';
 
 const factory = (d: SerializedDiagram, elements?: DiagramElement[]) => {
   return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry(), elements);
@@ -291,6 +292,8 @@ useEffect(() => {
                   }}
                   document={doc}
                 />
+
+                <LayerIndicator />
               </div>
             </div>
           </div>
