@@ -55,25 +55,33 @@ export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
   const nodes = diagram.nodeDefinitions.getAll();
 
-  const diagrams = nodes.map(n => {
-    const dest = new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions, []);
-    dest.layers.active.addElement(
-      new DiagramNode(
+  const diagrams = nodes
+    .filter(n => n.type !== 'group')
+    .map(n => {
+      const dest = new Diagram(
         n.type,
         n.type,
-        {
-          pos: { x: 1, y: 1 },
-          size: { w: props.size - 2, h: props.size - 2 },
-          rotation: 0
-        },
-        undefined,
-        {},
-        dest,
-        dest.layers.active
-      )
-    );
-    return dest;
-  });
+        diagram.nodeDefinitions,
+        diagram.edgeDefinitions,
+        []
+      );
+      dest.layers.active.addElement(
+        new DiagramNode(
+          n.type,
+          n.type,
+          {
+            pos: { x: 1, y: 1 },
+            size: { w: props.size - 2, h: props.size - 2 },
+            rotation: 0
+          },
+          undefined,
+          {},
+          dest,
+          dest.layers.active
+        )
+      );
+      return dest;
+    });
   return (
     <div className={'cmp-object-picker'}>
       {diagrams.map((d, idx) => (

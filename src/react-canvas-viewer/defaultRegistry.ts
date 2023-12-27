@@ -12,6 +12,7 @@ import { Diamond } from './node-types/Diamond.tsx';
 import { RegularPolygon } from './node-types/RegularPolygon.tsx';
 import { Parallelogram } from './node-types/Parallelogram.tsx';
 import { Trapetzoid } from './node-types/Trapetzoid.tsx';
+import { Group } from './node-types/Group.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -65,6 +66,11 @@ export const defaultNodeRegistry = () => {
   dest.register(
     new ReactNodeDefinition('diamond', 'Diamond', Diamond, {
       getBoundingPath: Diamond.getBoundingPath
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('group', 'Group', Group, {
+      getBoundingPath: Group.getBoundingPath
     })
   );
   return dest;
