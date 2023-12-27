@@ -2,7 +2,23 @@ import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram, UnitOfWork } from '../../model/diagram.ts';
+import { DiagramElement } from '../../model/diagramNode.ts';
+
+const addHighlight = (element: DiagramElement, highlight: string) => {
+  element.props ??= {};
+  element.props.highlight ??= [];
+  element.props.highlight.push(highlight);
+
+  UnitOfWork.updateElement(element);
+};
+
+const removeHighlight = (element: DiagramElement, highlight: string) => {
+  if (!element.props?.highlight) return;
+  element.props.highlight = element.props.highlight.filter(h => h !== highlight);
+
+  UnitOfWork.updateElement(element);
+};
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly originalPointerEvents: string;
@@ -32,12 +48,12 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     }
 
     const el = this.diagram.nodeLookup[id] || this.diagram.edgeLookup[id];
-    this.diagram.addHighlight(el, 'edge-connect');
+    addHighlight(el, 'edge-connect');
   }
 
   onDragLeave(): void {
     if (this.hoverElement) {
-      this.diagram.removeHighlight(
+      removeHighlight(
         this.diagram.nodeLookup[this.hoverElement] || this.diagram.edgeLookup[this.hoverElement],
         'edge-connect'
       );
@@ -68,7 +84,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
       this.element.classList.remove('selection-edge-handle--connected');
     }
 
-    this.diagram.updateElement(this.edge);
+    UnitOfWork.updateElement(this.edge);
   }
 
   onDragEnd(): void {
@@ -79,7 +95,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.attachToClosestAnchor(this.coord!);
 
     if (this.hoverElement) {
-      this.diagram.removeHighlight(
+      removeHighlight(
         this.diagram.nodeLookup[this.hoverElement] || this.diagram.edgeLookup[this.hoverElement],
         'edge-connect'
       );

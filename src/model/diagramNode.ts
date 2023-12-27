@@ -2,7 +2,7 @@ import { Box } from '../geometry/box.ts';
 import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
-import { Diagram } from './diagram.ts';
+import { Diagram, UnitOfWork } from './diagram.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
@@ -62,49 +62,26 @@ export class DiagramNode implements AbstractNode {
     return this.layer.isLocked() ?? false;
   }
 
-  commitChanges() {
+  updateCustomProps() {
     this.invalidateAnchors();
-  }
-
-  // TODO: Need to make sure this is called when e.g. props are changed
-  invalidateAnchors() {
-    if (!this.diagram) {
-      console.log(this);
-    }
-
-    this._anchors = [];
-    this._anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
-
-    const def = this.diagram.nodeDefinitions.get(this.nodeType);
-
-    const path = def.getBoundingPath(this);
-
-    for (const p of path.segments) {
-      const { x, y } = p.point(0.5);
-      const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
-      const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
-
-      this._anchors.push({ point: { x: lx, y: ly }, clip: false });
-    }
-
     this.diagram.updateElement(this);
   }
 
-  transform(transforms: Transform[]) {
+  transform(transforms: Transform[], uow: UnitOfWork) {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
 
     if (this.nodeType === 'group') {
       for (const child of this.children) {
-        child.transform(transforms);
+        child.transform(transforms, uow);
       }
     }
 
     if (this.parent) {
-      // TODO: Need to optimize this somehow
-      //       this way we recalculate for each entry in a group if the top-level group
-      //       is transformed
-      this.parent.recalculateBounds();
+      const parent = this.parent;
+      uow.pushAction('recalculateBounds', parent, () => {
+        parent.recalculateBounds();
+      });
     }
 
     if (this.isLabelNode()) {
@@ -120,14 +97,20 @@ export class DiagramNode implements AbstractNode {
         y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
       };
 
-      this.diagram.updateElement(this.labelEdge()!);
+      uow.updateElement(this.labelEdge()!);
     }
 
-    this.invalidateAnchors();
+    uow.pushAction('updateAnchors', this, () => {
+      this.invalidateAnchors();
+    });
+    uow.updateElement(this);
   }
 
   get anchors(): Anchor[] {
-    if (this._anchors === undefined) this.invalidateAnchors();
+    if (this._anchors === undefined) {
+      this.invalidateAnchors();
+      this.diagram.updateElement(this);
+    }
 
     return this._anchors ?? [];
   }
@@ -220,5 +203,23 @@ export class DiagramNode implements AbstractNode {
   private recalculateBounds() {
     const childrenBounds = this.children.map(c => c.bounds);
     this.bounds = Box.boundingBox(childrenBounds);
+  }
+
+  // TODO: Need to make sure this is called when e.g. props are changed
+  private invalidateAnchors() {
+    this._anchors = [];
+    this._anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
+
+    const def = this.diagram.nodeDefinitions.get(this.nodeType);
+
+    const path = def.getBoundingPath(this);
+
+    for (const p of path.segments) {
+      const { x, y } = p.point(0.5);
+      const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
+      const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
+
+      this._anchors.push({ point: { x: lx, y: ly }, clip: false });
+    }
   }
 }

@@ -58,7 +58,7 @@ export const CustomPropertiesPanel = (props: Props) => {
                   style={{ width: '50px' }}
                   onChange={ev => {
                     value.onChange(ev ?? 0);
-                    node?.commitChanges();
+                    node?.updateCustomProps();
                   }}
                 />
               </div>

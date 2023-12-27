@@ -13,7 +13,7 @@ export class ShapeControlPointDrag extends AbstractDrag {
   onDrag(coord: Point, _modifiers: Modifiers) {
     const label = this.callback(coord.x, coord.y);
     this.setState({ label });
-    this.node.commitChanges();
+    this.node.updateCustomProps();
   }
 
   onDragEnd(): void {}
