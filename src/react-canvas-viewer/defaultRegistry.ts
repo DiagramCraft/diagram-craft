@@ -9,6 +9,7 @@ import {
 } from '../model/elementDefinitionRegistry.ts';
 import { Circle } from './node-types/Circle.tsx';
 import { Diamond } from './node-types/Diamond.tsx';
+import { RegularPolygon } from './node-types/RegularPolygon.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -16,6 +17,12 @@ export const defaultNodeRegistry = () => {
     new ReactNodeDefinition('star', 'Star', Star, {
       getBoundingPath: Star.getBoundingPath,
       getCustomProperties: Star.getCustomProperties
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('regular-polygon', 'Regular Polygon', RegularPolygon, {
+      getBoundingPath: RegularPolygon.getBoundingPath,
+      getCustomProperties: RegularPolygon.getCustomProperties
     })
   );
   dest.register(
