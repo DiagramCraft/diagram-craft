@@ -33,9 +33,11 @@ export const canvasDropHandler = ($d: Diagram) => {
     $d.selectionState.clear();
     $d.selectionState.toggle(nd);
 
-    setTimeout(() => {
-      $d.nodeDefinitions.get(nodeType)?.requestFocus(nd);
-    }, 10);
+    if (nodeType === 'text') {
+      setTimeout(() => {
+        $d.nodeDefinitions.get(nodeType)?.requestFocus(nd);
+      }, 10);
+    }
   };
 };
 

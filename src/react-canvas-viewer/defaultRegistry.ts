@@ -8,6 +8,7 @@ import {
   NodeDefinitionRegistry
 } from '../model/elementDefinitionRegistry.ts';
 import { Circle } from './node-types/Circle.tsx';
+import { Diamond } from './node-types/Diamond.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -20,6 +21,11 @@ export const defaultNodeRegistry = () => {
   dest.register(
     new ReactNodeDefinition('rect', 'Rectangle', Rect, {
       getBoundingPath: Rect.getBoundingPath
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('diamond', 'Diamond', Diamond, {
+      getBoundingPath: Diamond.getBoundingPath
     })
   );
   dest.register(
