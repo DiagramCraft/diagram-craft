@@ -1019,6 +1019,34 @@ input::-webkit-input-placeholder {
   }
 }
 
+.cmp-button {
+  flex: 0 0 auto;
+  color: var(--slate-11);
+  height: 25px;
+  padding: 0 5px;
+  border-radius: 4px;
+  display: inline-flex;
+  font-size: 11px;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--blue-6);
+  border-radius: 4px;
+  background-color: var(--secondary-bg);
+  width: fit-content !important;
+  aspect-ratio: 1/1;
+  margin: 0;
+
+  &:hover {
+    background-color: var(--blue-3);
+    color: var(--blue-11);
+  }
+  &:focus {
+    position: relative;
+    box-shadow: 0 0 0 2px var(--blue-7);
+  }
+}
+
 
 /* Specific / one-use components */
 

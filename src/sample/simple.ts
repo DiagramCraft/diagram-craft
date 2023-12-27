@@ -42,24 +42,6 @@ export const simpleDiagram: SerializedDiagramDocument = {
           layerType: 'basic',
           elements: [
             {
-              type: 'node',
-              nodeType: 'text',
-              bounds: {
-                pos: { x: 300, y: 170 },
-                size: { w: 64, h: 17 },
-                rotation: 0
-              },
-              id: 't2',
-              props: {
-                labelForEgdeId: 'e1',
-                text: {
-                  text: 'Hello world',
-                  align: 'center'
-                }
-              },
-              children: []
-            },
-            {
               type: 'edge',
               id: 'e1',
               start: { anchor: 0, node: { id: '3' } },
@@ -132,6 +114,29 @@ export const simpleDiagram: SerializedDiagramDocument = {
               },
               children: [],
               props: {}
+            },
+
+            {
+              type: 'node',
+              nodeType: 'text',
+              bounds: {
+                pos: { x: 300, y: 170 },
+                size: { w: 64, h: 17 },
+                rotation: 0
+              },
+              id: 't2',
+              props: {
+                labelForEgdeId: 'e1',
+                text: {
+                  text: 'Hello world',
+                  align: 'center'
+                },
+                fill: {
+                  enabled: true,
+                  color: '#ffffff'
+                }
+              },
+              children: []
             }
           ]
         }

@@ -1,4 +1,4 @@
-import { TbChevronDown } from 'react-icons/tb';
+import { TbChevronDown, TbRestore } from 'react-icons/tb';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import * as Select from '@radix-ui/react-select';
@@ -131,16 +131,29 @@ export const LabelNodePanel = (props: Props) => {
             />
             &nbsp;
             {(type === 'independent' || type === 'horizontal' || type === 'vertical') && (
-              <NumberInput
-                defaultUnit={'px'}
-                value={round(offset.y)}
-                style={{ width: '50px' }}
-                onChange={v => {
-                  labelNode.offset = { x: offset.x, y: Number(v) };
-                  edge.invalidate();
-                  $d.updateElement(edge);
-                }}
-              />
+              <>
+                <NumberInput
+                  defaultUnit={'px'}
+                  value={round(offset.y)}
+                  style={{ width: '50px' }}
+                  onChange={v => {
+                    labelNode.offset = { x: offset.x, y: Number(v) };
+                    edge.invalidate();
+                    $d.updateElement(edge);
+                  }}
+                />
+                &nbsp;
+                <button
+                  className={'cmp-button'}
+                  onClick={() => {
+                    labelNode.offset = { x: 0, y: 0 };
+                    edge.invalidate();
+                    $d.updateElement(edge);
+                  }}
+                >
+                  <TbRestore />
+                </button>
+              </>
             )}
           </div>
         </div>

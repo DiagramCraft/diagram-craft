@@ -40,12 +40,19 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
         pos: projection.point,
         rotation: 0,
         size: {
-          w: 200,
+          w: 100,
           h: 10
         }
       },
       [],
-      { text: { text: 'Label', align: 'center' }, labelForEgdeId: edge.id },
+      {
+        text: { text: 'Label', align: 'center' },
+        labelForEgdeId: edge.id,
+        fill: {
+          enabled: true,
+          color: '#ffffff'
+        }
+      },
       this.diagram,
       this.diagram.layers.active
     );
