@@ -13,7 +13,6 @@ import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
-import { getPoint } from './eventHelper.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
@@ -47,7 +46,13 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     e => {
       if (e.button !== 0) return;
 
-      props.onMouseDown(props.def.id, getPoint(e, props.diagram), e.nativeEvent);
+      const target = document.getElementById(`diagram-${props.diagram.id}`) as HTMLElement;
+      const point = {
+        x: e.nativeEvent.clientX - target.getBoundingClientRect().x,
+        y: e.nativeEvent.clientY - target.getBoundingClientRect().y
+      };
+
+      props.onMouseDown(props.def.id, point, e.nativeEvent);
       e.stopPropagation();
 
       return false;

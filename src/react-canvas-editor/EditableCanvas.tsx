@@ -115,6 +115,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
       <textarea id={'clipboard'} style={{ position: 'absolute', left: '-4000px' }}></textarea>
       <DragLabel />
       <svg
+        id={`diagram-${diagram.id}`}
         ref={svgRef}
         {...propsUtils.filterDomProperties(props)}
         preserveAspectRatio="none"
