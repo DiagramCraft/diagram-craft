@@ -109,19 +109,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
       >
-        {/* TODO: Probably remove the rect here? */}
-        <rect
-          x={wx}
-          y={wy}
-          width={props.def.bounds.size.w}
-          height={props.def.bounds.size.h}
-          fill="transparent"
-          style={{ stroke: 'green' }}
-          onMouseDown={onMouseDown}
-          transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${
-            wx + props.def.bounds.size.w / 2
-          } ${wy + props.def.bounds.size.h / 2})`}
-        />
         {props.def.children.map(c => (
           <Node
             key={c.id}
