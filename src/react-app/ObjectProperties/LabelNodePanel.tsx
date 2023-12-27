@@ -131,30 +131,28 @@ export const LabelNodePanel = (props: Props) => {
             />
             &nbsp;
             {(type === 'independent' || type === 'horizontal' || type === 'vertical') && (
-              <>
-                <NumberInput
-                  defaultUnit={'px'}
-                  value={round(offset.y)}
-                  style={{ width: '50px' }}
-                  onChange={v => {
-                    labelNode.offset = { x: offset.x, y: Number(v) };
-                    edge.invalidate();
-                    $d.updateElement(edge);
-                  }}
-                />
-                &nbsp;
-                <button
-                  className={'cmp-button'}
-                  onClick={() => {
-                    labelNode.offset = { x: 0, y: 0 };
-                    edge.invalidate();
-                    $d.updateElement(edge);
-                  }}
-                >
-                  <TbRestore />
-                </button>
-              </>
+              <NumberInput
+                defaultUnit={'px'}
+                value={round(offset.y)}
+                style={{ width: '50px' }}
+                onChange={v => {
+                  labelNode.offset = { x: offset.x, y: Number(v) };
+                  edge.invalidate();
+                  $d.updateElement(edge);
+                }}
+              />
             )}
+            &nbsp;
+            <button
+              className={'cmp-button'}
+              onClick={() => {
+                labelNode.offset = { x: 0, y: 0 };
+                edge.invalidate();
+                $d.updateElement(edge);
+              }}
+            >
+              <TbRestore />
+            </button>
           </div>
         </div>
       </div>
