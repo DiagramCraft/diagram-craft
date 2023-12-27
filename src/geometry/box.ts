@@ -30,7 +30,7 @@ export const Box = {
       rotation: b.rotation
     });
   },
-
+  /*
   fromLine: (l: Line): Box => {
     return {
       pos: l.from,
@@ -38,7 +38,7 @@ export const Box = {
       rotation: 0
     };
   },
-
+*/
   fromCorners: (a: Point, b: Point): Box => {
     return {
       pos: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) },
@@ -46,7 +46,7 @@ export const Box = {
       rotation: 0
     };
   },
-
+  /*
   fromDomRect: (rect: DOMRect): Box => {
     return {
       pos: { x: rect.x, y: rect.y },
@@ -66,7 +66,7 @@ export const Box = {
 
   asDomRect: (b: Box): DOMRect => {
     return new DOMRect(b.pos.x, b.pos.y, b.size.w, b.size.h);
-  },
+  },*/
 
   center: (b: Box) => {
     return {
@@ -246,8 +246,11 @@ export const Box = {
     size: { ...b.size },
     pos: { ...b.pos, y },
     rotation: b.rotation
-  }),
+  })
+  /*
   withW: (b: Box, w: number) => ({ ...b, size: { ...b.size, w }, rotation: b.rotation }),
   withH: (b: Box, h: number) => ({ ...b, size: { ...b.size, h }, rotation: b.rotation }),
   withRotation: (b: Box, r: number) => ({ ...b, size: { ...b.size }, rotation: r })
+
+   */
 };
