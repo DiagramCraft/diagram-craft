@@ -10,6 +10,7 @@ import {
 import { Circle } from './node-types/Circle.tsx';
 import { Diamond } from './node-types/Diamond.tsx';
 import { RegularPolygon } from './node-types/RegularPolygon.tsx';
+import { Parallelogram } from './node-types/Parallelogram.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -28,6 +29,12 @@ export const defaultNodeRegistry = () => {
   dest.register(
     new ReactNodeDefinition('rect', 'Rectangle', Rect, {
       getBoundingPath: Rect.getBoundingPath
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('parallelogram', 'Parallelogram', Parallelogram, {
+      getBoundingPath: Parallelogram.getBoundingPath,
+      getCustomProperties: Parallelogram.getCustomProperties
     })
   );
   dest.register(

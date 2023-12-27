@@ -14,7 +14,6 @@ declare global {
   interface NodeProps {
     regularPolygon?: {
       numberOfSides?: number;
-      innerRadius?: number;
     };
   }
 }
@@ -58,8 +57,8 @@ export const RegularPolygon = (props: Props) => {
               Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
             const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-            props.node.props.star ??= {};
-            props.node.props.star.numberOfSides = numberOfSides;
+            props.node.props.regularPolygon ??= {};
+            props.node.props.regularPolygon.numberOfSides = numberOfSides;
             return `Sides: ${numberOfSides}`;
           }}
         />
@@ -69,7 +68,7 @@ export const RegularPolygon = (props: Props) => {
 };
 
 RegularPolygon.getBoundingPath = (def: DiagramNode) => {
-  const sides = def.props?.star?.numberOfSides ?? 5;
+  const sides = def.props?.regularPolygon?.numberOfSides ?? 5;
 
   const theta = Math.PI / 2;
   const dTheta = (2 * Math.PI) / sides;
@@ -93,10 +92,10 @@ RegularPolygon.getCustomProperties = (
     numberOfSides: {
       type: 'number',
       label: 'Sides',
-      value: def.props?.star?.numberOfSides ?? 5,
+      value: def.props?.regularPolygon?.numberOfSides ?? 5,
       onChange: (value: number) => {
-        def.props.star ??= {};
-        def.props.star.numberOfSides = value;
+        def.props.regularPolygon ??= {};
+        def.props.regularPolygon.numberOfSides = value;
       }
     }
   };
