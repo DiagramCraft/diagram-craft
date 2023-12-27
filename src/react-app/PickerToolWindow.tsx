@@ -54,7 +54,7 @@ export const PickerToolWindow = () => {
       <Accordion.Item className="cmp-accordion__item" value="basic-shapes">
         <AccordionTrigger>Basic shapes</AccordionTrigger>
         <AccordionContent>
-          <ObjectPicker size={30} />
+          <ObjectPicker size={35} />
         </AccordionContent>
       </Accordion.Item>
     </Accordion.Root>
