@@ -12,7 +12,7 @@ describe('UndoManager', () => {
       undo: () => {
         x--;
       },
-      execute: () => {
+      redo: () => {
         x++;
       }
     });
@@ -31,7 +31,7 @@ describe('UndoManager', () => {
       undo: () => {
         x--;
       },
-      execute: () => {
+      redo: () => {
         x++;
       }
     });
@@ -49,7 +49,7 @@ describe('UndoManager', () => {
       undo: () => {
         x--;
       },
-      execute: () => {
+      redo: () => {
         x++;
       }
     });
@@ -69,7 +69,7 @@ describe('UndoManager', () => {
       undo: () => {
         x--;
       },
-      execute: () => {
+      redo: () => {
         x++;
       }
     });

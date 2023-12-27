@@ -37,7 +37,7 @@ class SelectionRestackUndoableAction implements UndoableAction {
     this.diagram.layers.active.stackSet(this.oldPositions);
   }
 
-  execute(): void {
+  redo(): void {
     const elements = this.diagram.selectionState.elements;
     switch (this.mode) {
       case 'up':

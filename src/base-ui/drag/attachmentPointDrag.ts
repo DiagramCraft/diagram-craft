@@ -52,7 +52,7 @@ export class AttachmentPointDrag extends AbstractDrag implements UndoableAction 
     this.edge.diagram?.undoManager.add(this);
   }
 
-  execute(): void {
+  redo(): void {
     this.labelNode!.timeOffset = this.newTimeOffset!;
     this.labelNode!.offset = this.newOffset!;
   }

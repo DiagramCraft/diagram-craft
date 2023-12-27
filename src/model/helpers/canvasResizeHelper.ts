@@ -85,7 +85,7 @@ class ResizeCanvasAction implements UndoableAction {
     this.diagram.canvas = this.before;
   }
 
-  execute() {
+  redo() {
     this.diagram.canvas = this.after;
   }
 }

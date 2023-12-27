@@ -21,6 +21,7 @@ import { toolActions } from '../react-canvas-editor/actions/ToolAction.tsx';
 import { ApplicationState } from './ApplicationState.ts';
 import { UserState } from './UserState.ts';
 import { sidebarActions } from '../react-canvas-editor/actions/SidebarAction.tsx';
+import { groupActions } from './actions/groupAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -75,6 +76,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...textActions(state),
   ...edgeFlipActions(state),
   ...duplicateActions(state),
+  ...groupActions(state),
 
   // TODO: These should move to defaultAppActions
   ...toolActions(state),

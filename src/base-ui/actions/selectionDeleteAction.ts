@@ -33,7 +33,7 @@ class SelectionDeleteUndoableAction implements UndoableAction {
     this.diagram.selectionState.setElements(this.elements);
   }
 
-  execute(): void {
+  redo(): void {
     for (const element of this.elements) {
       if (element.type === 'edge' && element.labelNodes) {
         this.elements.push(...element.labelNodes.map(ln => ln.node));
