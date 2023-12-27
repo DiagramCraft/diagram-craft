@@ -71,7 +71,7 @@ Parallelogram.getCustomProperties = (
   def: DiagramNode
 ): Record<string, CustomPropertyDefinition> => {
   return {
-    radius: {
+    slant: {
       type: 'number',
       label: 'Slant',
       value: def.props?.parallelogram?.slant ?? 5,

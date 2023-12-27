@@ -11,35 +11,13 @@ import { Circle } from './node-types/Circle.tsx';
 import { Diamond } from './node-types/Diamond.tsx';
 import { RegularPolygon } from './node-types/RegularPolygon.tsx';
 import { Parallelogram } from './node-types/Parallelogram.tsx';
+import { Trapetzoid } from './node-types/Trapetzoid.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
   dest.register(
-    new ReactNodeDefinition('star', 'Star', Star, {
-      getBoundingPath: Star.getBoundingPath,
-      getCustomProperties: Star.getCustomProperties
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('regular-polygon', 'Regular Polygon', RegularPolygon, {
-      getBoundingPath: RegularPolygon.getBoundingPath,
-      getCustomProperties: RegularPolygon.getCustomProperties
-    })
-  );
-  dest.register(
     new ReactNodeDefinition('rect', 'Rectangle', Rect, {
       getBoundingPath: Rect.getBoundingPath
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('parallelogram', 'Parallelogram', Parallelogram, {
-      getBoundingPath: Parallelogram.getBoundingPath,
-      getCustomProperties: Parallelogram.getCustomProperties
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('diamond', 'Diamond', Diamond, {
-      getBoundingPath: Diamond.getBoundingPath
     })
   );
   dest.register(
@@ -58,6 +36,35 @@ export const defaultNodeRegistry = () => {
       getBoundingPath: Rect.getBoundingPath,
       defaultPropsFactory: Text.defaultPropsFactory,
       initialConfig: Text.initialConfig
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('star', 'Star', Star, {
+      getBoundingPath: Star.getBoundingPath,
+      getCustomProperties: Star.getCustomProperties
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('regular-polygon', 'Regular Polygon', RegularPolygon, {
+      getBoundingPath: RegularPolygon.getBoundingPath,
+      getCustomProperties: RegularPolygon.getCustomProperties
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('parallelogram', 'Parallelogram', Parallelogram, {
+      getBoundingPath: Parallelogram.getBoundingPath,
+      getCustomProperties: Parallelogram.getCustomProperties
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('trapetzoid', 'Trapetzoid', Trapetzoid, {
+      getBoundingPath: Trapetzoid.getBoundingPath,
+      getCustomProperties: Trapetzoid.getCustomProperties
+    })
+  );
+  dest.register(
+    new ReactNodeDefinition('diamond', 'Diamond', Diamond, {
+      getBoundingPath: Diamond.getBoundingPath
     })
   );
   return dest;
