@@ -33,9 +33,10 @@ export const TextPart = (props: Props) => {
 
   useEffect(() => {
     if (ref.current) {
+      if (!props.text?.text) return;
       props.onSizeChange?.({
-        w: ref.current.getBoundingClientRect().width,
-        h: ref.current.getBoundingClientRect().height
+        w: ref.current.offsetWidth,
+        h: ref.current.offsetHeight
       });
     }
   }, [props.onSizeChange, ref, ...sizeAffectingProps]);
@@ -103,8 +104,8 @@ export const TextPart = (props: Props) => {
             }
 
             setTimeout(() => {
-              const newWidth = (e.target as HTMLElement).getBoundingClientRect().width;
-              const newHeight = (e.target as HTMLElement).getBoundingClientRect().height;
+              const newWidth = (e.target as HTMLElement).offsetWidth;
+              const newHeight = (e.target as HTMLElement).offsetHeight;
               if (newWidth !== widthRef.current || newHeight !== heightRef.current) {
                 props.onSizeChange?.({
                   w: newWidth,
@@ -118,8 +119,8 @@ export const TextPart = (props: Props) => {
           onBlur={e => {
             props.onChange(e.target.innerHTML);
             props.onSizeChange?.({
-              w: (e.target as HTMLElement).getBoundingClientRect().width,
-              h: (e.target as HTMLElement).getBoundingClientRect().height
+              w: (e.target as HTMLElement).offsetWidth,
+              h: (e.target as HTMLElement).offsetHeight
             });
             e.target.contentEditable = 'false';
             e.target.style.pointerEvents = 'none';
