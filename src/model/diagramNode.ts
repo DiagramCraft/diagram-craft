@@ -100,6 +100,13 @@ export class DiagramNode implements AbstractNode {
       }
     }
 
+    if (this.parent) {
+      // TODO: Need to optimize this somehow
+      //       this way we recalculate for each entry in a group if the top-level group
+      //       is transformed
+      this.parent.recalculateBounds();
+    }
+
     if (this.isLabelNode()) {
       const dx = this.bounds.pos.x - previousBounds.pos.x;
       const dy = this.bounds.pos.y - previousBounds.pos.y;
@@ -208,5 +215,10 @@ export class DiagramNode implements AbstractNode {
     const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
     assert.present(edge);
     return edge;
+  }
+
+  private recalculateBounds() {
+    const childrenBounds = this.children.map(c => c.bounds);
+    this.bounds = Box.boundingBox(childrenBounds);
   }
 }
