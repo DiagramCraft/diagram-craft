@@ -4,3 +4,7 @@ export const round = (n: number) => {
   if (res === 0) return 0;
   return res;
 };
+
+export const clamp = (n: number, min: number, max: number) => {
+  return Math.max(min, Math.min(max, n));
+};

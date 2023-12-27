@@ -57,7 +57,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
       offset: { x: 0, y: 0 },
       id: textNode.id,
       node: textNode,
-      type: 'perpendicular-readable'
+      type: 'horizontal'
     });
 
     this.diagram.updateElement(edge);

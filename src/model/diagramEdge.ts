@@ -228,12 +228,12 @@ export class DiagramEdge implements AbstractEdge {
       );
       const refPoint = path.pointAt(lengthOffsetOnPath);
 
-      const centerPoint = Point.add(refPoint, labelNode.offset);
       const currentCenterPoint = {
         x: labelNode.node.bounds.pos.x + labelNode.node.bounds.size.w / 2,
         y: labelNode.node.bounds.pos.y + labelNode.node.bounds.size.h / 2
       };
 
+      let newCenterPoint = Point.add(refPoint, labelNode.offset);
       let newRotation = labelNode.node.bounds.rotation;
       if (labelNode.type.startsWith('parallel') || labelNode.type.startsWith('perpendicular')) {
         const tangent = path.tangentAt(lengthOffsetOnPath);
@@ -247,18 +247,27 @@ export class DiagramEdge implements AbstractEdge {
           if (newRotation > Math.PI / 2) newRotation -= Math.PI;
           if (newRotation < -Math.PI / 2) newRotation += Math.PI;
         }
+
+        newCenterPoint = Point.add(
+          refPoint,
+          Point.rotate({ x: -labelNode.offset.x, y: 0 }, Vector.angle(tangent) + Math.PI / 2)
+        );
+      } else if (labelNode.type === 'horizontal') {
+        newRotation = 0;
+      } else if (labelNode.type === 'vertical') {
+        newRotation = Math.PI / 2;
       }
 
       if (
-        !Point.isEqual(centerPoint, currentCenterPoint) ||
+        !Point.isEqual(newCenterPoint, currentCenterPoint) ||
         newRotation !== labelNode.node.bounds.rotation
       ) {
         labelNode.node.bounds = {
           ...labelNode.node.bounds,
           rotation: newRotation,
           pos: {
-            x: centerPoint.x - labelNode.node.bounds.size.w / 2,
-            y: centerPoint.y - labelNode.node.bounds.size.h / 2
+            x: newCenterPoint.x - labelNode.node.bounds.size.w / 2,
+            y: newCenterPoint.y - labelNode.node.bounds.size.h / 2
           }
         };
         this.diagram.updateElement(labelNode.node);

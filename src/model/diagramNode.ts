@@ -1,5 +1,5 @@
 import { Box } from '../geometry/box.ts';
-import { round } from '../utils/math.ts';
+import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Diagram } from './diagram.ts';
@@ -93,23 +93,20 @@ export class DiagramNode implements AbstractNode {
       }
     }
 
-    if (this.props.labelForEgdeId) {
-      const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
-      assert.present(edge);
-
+    if (this.isLabelNode()) {
       const dx = this.bounds.pos.x - previousBounds.pos.x;
       const dy = this.bounds.pos.y - previousBounds.pos.y;
 
-      assert.present(edge.labelNodes);
-      const labelNode = edge.labelNodes.find(ln => ln.node === this);
+      const labelNode = this.labelNode();
       assert.present(labelNode);
 
+      const clampAmount = 100;
       labelNode.offset = {
-        x: labelNode.offset.x + dx,
-        y: labelNode.offset.y + dy
+        x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+        y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
       };
 
-      this.diagram.updateElement(edge);
+      this.diagram.updateElement(this.labelEdge()!);
     }
 
     this.invalidateAnchors();
@@ -185,5 +182,24 @@ export class DiagramNode implements AbstractNode {
       ...Object.values(this.edges ?? {}).flatMap(e => e),
       ...(includeChildren ? this.children.flatMap(c => c.listEdges(includeChildren)) : [])
     ];
+  }
+
+  isLabelNode() {
+    return !!this.props.labelForEgdeId;
+  }
+
+  labelNode() {
+    if (!this.props.labelForEgdeId) return undefined;
+    const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
+    assert.present(edge);
+    assert.present(edge.labelNodes);
+    return edge.labelNodes.find(n => n.node === this);
+  }
+
+  labelEdge() {
+    if (!this.props.labelForEgdeId) return undefined;
+    const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
+    assert.present(edge);
+    return edge;
   }
 }

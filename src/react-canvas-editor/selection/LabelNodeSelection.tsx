@@ -11,11 +11,10 @@ export const LabelNodeSelection = (props: Props) => {
   const drag = useDragDrop();
 
   const center = Box.center(props.node.bounds);
-  const edge = props.node.diagram!.edgeLookup[props.node.props.labelForEgdeId]!;
+  const edge = props.node.labelEdge();
   assert.present(edge);
-  assert.present(edge.labelNodes);
 
-  const labelNode = edge.labelNodes.find(ln => ln.node === props.node);
+  const labelNode = props.node.labelNode();
   assert.present(labelNode);
 
   const path = edge.path();

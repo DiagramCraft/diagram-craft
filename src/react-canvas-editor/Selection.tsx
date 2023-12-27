@@ -69,6 +69,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   const pointsString = points.map(c => `${c.x},${c.y}`).join(' ');
 
+  let labelNode = undefined;
+  if (props.selection.getSelectionType() === 'single-label-node') {
+    labelNode = props.selection.nodes[0].labelNode()!;
+  }
+  const shouldHaveRotation = !(labelNode && labelNode.type !== 'independent');
+
   return (
     <>
       {!isOnlyEdges &&
@@ -174,25 +180,29 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
               fill="none"
               pointerEvents={'none'}
             />
-            <line
-              x1={Point.midpoint(points[0], points[1]).x}
-              y1={Point.midpoint(points[0], points[1]).y}
-              x2={Point.midpoint(points[0], points[1]).x}
-              y2={Point.midpoint(points[0], points[1]).y - 20}
-              className="svg-selection__handle"
-            />
-            <circle
-              cx={Point.midpoint(points[0], points[1]).x}
-              cy={Point.midpoint(points[0], points[1]).y - 20}
-              r="4"
-              className="svg-selection__handle"
-              cursor={'ew-resize'}
-              onMouseDown={e => {
-                if (e.button !== 0) return;
-                drag.initiate(new RotateDrag(props.diagram));
-                e.stopPropagation();
-              }}
-            />
+            {shouldHaveRotation && (
+              <>
+                <line
+                  x1={Point.midpoint(points[0], points[1]).x}
+                  y1={Point.midpoint(points[0], points[1]).y}
+                  x2={Point.midpoint(points[0], points[1]).x}
+                  y2={Point.midpoint(points[0], points[1]).y - 20}
+                  className="svg-selection__handle"
+                />
+                <circle
+                  cx={Point.midpoint(points[0], points[1]).x}
+                  cy={Point.midpoint(points[0], points[1]).y - 20}
+                  r="4"
+                  className="svg-selection__handle"
+                  cursor={'ew-resize'}
+                  onMouseDown={e => {
+                    if (e.button !== 0) return;
+                    drag.initiate(new RotateDrag(props.diagram));
+                    e.stopPropagation();
+                  }}
+                />
+              </>
+            )}
             <circle
               cx={points[0].x}
               cy={points[0].y}

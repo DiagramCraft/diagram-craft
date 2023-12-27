@@ -37,10 +37,12 @@ export class AttachmentPointDrag extends AbstractDrag implements UndoableAction 
     const dy = p.y - prevOffset.y;
 
     this.labelNode!.timeOffset = offset.pathT;
-    this.labelNode!.offset = {
-      x: this.labelNode!.offset.x - dx,
-      y: this.labelNode!.offset.y - dy
-    };
+    if (this.labelNode.type === 'independent') {
+      this.labelNode!.offset = {
+        x: this.labelNode!.offset.x - dx,
+        y: this.labelNode!.offset.y - dy
+      };
+    }
     this.edge.diagram?.updateElement(this.edge);
   }
 

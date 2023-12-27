@@ -27,10 +27,10 @@ export const LabelNodePanel = (props: Props) => {
   if ($d.selectionState.getSelectionType() !== 'single-label-node') return null;
 
   const node = $d.selectionState.nodes[0];
-  const edge = $d.edgeLookup[node.props.labelForEgdeId!];
+  const edge = node.labelEdge();
   assert.present(edge);
 
-  const labelNode = edge.labelNodes!.find(n => n.node === node);
+  const labelNode = node.labelNode();
   assert.present(labelNode);
 
   const type = labelNode.type;
