@@ -196,6 +196,7 @@ export class MoveDrag extends AbstractDrag {
     for (const e of elements) {
       if (e.type === 'node') {
         const n = document.getElementById(`node-${e.id}`)!;
+        if (!n) continue; // TODO: This seems to be for groups - but why?:
         n.style.pointerEvents = this.oldPointerEventsValues[n.id];
 
         if (e.nodeType === 'group') this.enablePointerEvents(e.children);
@@ -210,6 +211,7 @@ export class MoveDrag extends AbstractDrag {
     for (const e of elements) {
       if (e.type === 'node') {
         const n = document.getElementById(`node-${e.id}`)!;
+        if (!n) continue; // TODO: This seems to be for groups - but why?:
         this.oldPointerEventsValues[n.id] = n.style.pointerEvents;
         n.style.pointerEvents = 'none';
 

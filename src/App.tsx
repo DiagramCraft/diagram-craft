@@ -108,11 +108,7 @@ const App = () => {
   const userState = useRef(new UserState());
 
   const svgRef = useRef<SVGSVGElement>(null);
-  /*
-useEffect(() => {
-  perftest(new BezierPerformanceTest());
-}, []);
-*/
+
   const actionMap = makeActionMap(defaultAppActions)({
     diagram: $d,
     applicationState: applicationState.current,

@@ -3,7 +3,7 @@ import { SerializedDiagramDocument } from '../model/serialization.ts';
 export const snapTestDiagram: SerializedDiagramDocument = {
   diagrams: [
     {
-      id: 'doc1',
+      id: 'snaptest-doc1',
       name: 'Sheet 1',
       diagrams: [],
       layers: [
