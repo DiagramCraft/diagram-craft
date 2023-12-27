@@ -158,6 +158,13 @@ const ElementEntry = (props: ElementEntryProps) => {
       }}
     >
       <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
+      {e.type === 'node' && e.nodeType === 'group' && (
+        <Tree.Children>
+          {reversed(e.children).map(c => (
+            <ElementEntry key={c.id} element={c} />
+          ))}
+        </Tree.Children>
+      )}
     </Tree.Node>
   );
 };
