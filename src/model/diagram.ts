@@ -163,6 +163,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     this.update();
   }
 
+  // TODO: Maybe we should remove this in favour for UnitOfWork
+  /** @deprecated */
   updateElement(element: DiagramElement) {
     this.emit('elementChange', { element });
   }
@@ -172,15 +174,19 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     transforms: Transform[],
     filter: (e: DiagramElement) => boolean = () => true
   ) {
+    const uow = new UnitOfWork(this);
+
     for (const el of elements) {
-      if (filter(el)) el.transform(transforms);
+      if (filter(el)) el.transform(transforms, uow);
     }
 
     // We do this in a separate loop to as nodes might move which will
     // affect the start and end location of connected edges
     for (const el of elements) {
-      if (filter(el)) this.updateElement(el);
+      if (filter(el)) uow.updateElement(el);
     }
+
+    uow.commit();
   }
 
   update() {
@@ -198,5 +204,29 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     if (!element.props?.highlight) return;
     element.props.highlight = element.props.highlight.filter(h => h !== highlight);
     this.updateElement(element);
+  }
+}
+
+export class UnitOfWork {
+  #elementsToUpdate: Record<string, DiagramElement> = {};
+  #actions: [string, () => void][] = [];
+
+  constructor(readonly diagram: Diagram) {}
+
+  updateElement(element: DiagramElement) {
+    this.#elementsToUpdate[element.id] = element;
+  }
+
+  pushAction(name: string, element: DiagramElement, cb: () => void) {
+    const id = name + element.id;
+    if (this.#actions.some(a => a[0] === id)) return;
+    this.#actions.push([id, cb]);
+  }
+
+  commit() {
+    this.#actions.forEach(a => a[1]());
+    Object.values(this.#elementsToUpdate).forEach(e =>
+      this.diagram.emit('elementChange', { element: e })
+    );
   }
 }
