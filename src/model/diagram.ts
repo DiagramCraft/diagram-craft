@@ -116,11 +116,14 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
   // TODO: Change this to an undoable action?
   // TODO: Check layer level events are emitted
+  // TODO: Need to support groups
   moveElement(
     elements: DiagramElement[],
     layer: Layer,
     ref?: { relation: 'above' | 'below'; element: DiagramElement }
   ) {
+    console.log('move', elements, layer, ref);
+
     const layers = elements.map(e => e.layer);
     const topMostLayer = this.layers.all.findLast(l => layers.includes(l));
     assert.present(topMostLayer);
@@ -133,6 +136,16 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       l.elements = l.elements.filter(e => !elements.includes(e));
     }
 
+    // Remove from groups
+    // TODO: Can optimize by grouping by parent
+    for (const el of elements) {
+      if (el.type === 'node' && el.parent) {
+        el.parent.children = el.parent.children.filter(e => e !== el);
+        el.parent.recalculateBounds();
+        el.parent = undefined;
+      }
+    }
+
     // Move into the new layer
     if (ref === undefined) {
       if (layer.isAbove(topMostLayer)) {
@@ -140,18 +153,25 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       } else {
         layer.elements.unshift(...elements);
       }
+    } else if (ref.element.type === 'node' && ref.element.parent) {
+      const parent = ref.element.parent;
+      const idx = parent.children.indexOf(ref.element);
+
+      if (ref.relation === 'above') {
+        parent.children.splice(idx + 1, 0, ...(elements as DiagramNode[]));
+      } else {
+        parent.children.splice(idx, 0, ...(elements as DiagramNode[]));
+      }
+      (elements as DiagramNode[]).forEach(e => (e.parent = parent));
+      parent.recalculateBounds();
     } else {
       assert.true(ref.element.layer === layer);
 
-      for (const e of layer.elements) {
-        if (e === ref.element) {
-          if (ref.relation === 'above') {
-            layer.elements.splice(layer.elements.indexOf(e) + 1, 0, ...elements);
-          } else {
-            layer.elements.splice(layer.elements.indexOf(e), 0, ...elements);
-          }
-          break;
-        }
+      const idx = layer.elements.indexOf(ref.element);
+      if (ref.relation === 'above') {
+        layer.elements.splice(idx + 1, 0, ...elements);
+      } else {
+        layer.elements.splice(idx, 0, ...elements);
       }
     }
 

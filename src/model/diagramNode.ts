@@ -200,7 +200,9 @@ export class DiagramNode implements AbstractNode {
     return edge;
   }
 
-  private recalculateBounds() {
+  // TODO: We should make this private, and trigger from assigning to children
+  //       ... also need to make children readonly
+  recalculateBounds() {
     const childrenBounds = this.children.map(c => c.bounds);
     this.bounds = Box.boundingBox(childrenBounds);
   }

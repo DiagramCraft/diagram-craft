@@ -43,8 +43,7 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
   );
 };
 
-type LayerEntryProps = { layer: Layer };
-const LayerEntry = (props: LayerEntryProps) => {
+const LayerEntry = (props: { layer: Layer }) => {
   const diagram = useDiagram();
   const layer = props.layer;
 
@@ -111,8 +110,7 @@ const LayerEntry = (props: LayerEntryProps) => {
   );
 };
 
-type ElementEntryProps = { element: DiagramElement };
-const ElementEntry = (props: ElementEntryProps) => {
+const ElementEntry = (props: { element: DiagramElement }) => {
   const diagram = useDiagram();
   const e = props.element;
 
