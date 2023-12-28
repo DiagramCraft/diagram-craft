@@ -102,7 +102,11 @@ export class Layer extends EventEmitter<LayerEvents> {
       this.diagram.nodeLookup[element.id] = element;
       if (element.nodeType === 'group') {
         for (const child of element.children) {
-          this.diagram.nodeLookup[child.id] = child;
+          if (child.type === 'node') {
+            this.diagram.nodeLookup[child.id] = child;
+          } else {
+            this.diagram.edgeLookup[child.id] = child;
+          }
         }
       }
     } else if (element.type === 'edge') {

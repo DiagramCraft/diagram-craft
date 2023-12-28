@@ -32,9 +32,7 @@ export interface SerializedDiagramDocument {
 
 export interface SerializedNode extends AbstractNode {
   edges?: Record<string, Reference[]>;
-
-  // TODO: Should allow edges as part of group
-  children: SerializedNode[];
+  children: SerializedElement[];
 }
 
 type SerializedConnectedEndpoint = { anchor: number; node: Reference; position?: Point };
@@ -59,10 +57,13 @@ export const isConnected = (
 
 const unfoldGroup = (node: SerializedNode) => {
   const recurse = (
-    nodes: SerializedNode[],
+    nodes: SerializedElement[],
     parent?: SerializedNode | undefined
-  ): (SerializedNode & { parent?: SerializedNode | undefined })[] => {
-    return [...nodes.map(n => ({ ...n, parent })), ...nodes.flatMap(n => recurse(n.children, n))];
+  ): (SerializedElement & { parent?: SerializedNode | undefined })[] => {
+    return [
+      ...nodes.map(n => ({ ...n, parent })),
+      ...nodes.flatMap(n => (n.type === 'node' ? recurse(n.children, n) : []))
+    ];
   };
 
   if (node.nodeType === 'group') {
@@ -84,6 +85,7 @@ export const deserializeDiagramElements = (
   // Index skeleton nodes
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
+      if (c.type === 'edge') continue;
       nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors, {}, diagram, layer);
       nodeLookup[c.id].props = c.props;
     }
@@ -104,6 +106,7 @@ export const deserializeDiagramElements = (
   // Resolve relations
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
+      if (c.type === 'edge') continue;
       nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
       if (c.parent) {
         nodeLookup[c.id].parent = nodeLookup[c.parent.id];

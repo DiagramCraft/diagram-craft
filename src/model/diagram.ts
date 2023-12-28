@@ -158,9 +158,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       const idx = parent.children.indexOf(ref.element);
 
       if (ref.relation === 'above') {
-        parent.children.splice(idx + 1, 0, ...(elements as DiagramNode[]));
+        parent.children.splice(idx + 1, 0, ...elements);
       } else {
-        parent.children.splice(idx, 0, ...(elements as DiagramNode[]));
+        parent.children.splice(idx, 0, ...elements);
       }
       (elements as DiagramNode[]).forEach(e => (e.parent = parent));
       parent.recalculateBounds();

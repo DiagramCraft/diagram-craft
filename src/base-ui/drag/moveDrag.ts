@@ -87,7 +87,9 @@ export class MoveDrag extends AbstractDrag {
 
       this.enablePointerEvents(selection.elements);
 
-      const newElements = selection.source.elementIds.map(e => this.diagram.nodeLookup[e].clone());
+      const newElements = selection.source.elementIds.map(e =>
+        this.diagram.nodeLookup[e].duplicate()
+      );
       newElements.forEach(e => {
         e.id = newid();
         this.diagram.layers.active.addElement(e);

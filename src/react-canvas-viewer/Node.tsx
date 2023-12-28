@@ -18,6 +18,7 @@ import { DiagramNode } from '../model/diagramNode.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { deepMerge } from '../utils/deepmerge.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
+import { Edge } from './Edge.tsx';
 
 export type NodeApi = {
   repaint: () => void;
@@ -109,16 +110,34 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
       >
-        {props.def.children.map(c => (
-          <Node
-            key={c.id}
-            def={c}
-            diagram={props.diagram}
-            onMouseDown={props.onMouseDown}
-            onMouseLeave={props.onMouseLeave}
-            onMouseEnter={props.onMouseEnter}
-          />
-        ))}
+        {props.def.children.map(c => {
+          if (c.type === 'node') {
+            return (
+              <Node
+                key={c.id}
+                def={c}
+                diagram={props.diagram}
+                onMouseDown={props.onMouseDown}
+                onMouseLeave={props.onMouseLeave}
+                onMouseEnter={props.onMouseEnter}
+              />
+            );
+          } else {
+            return (
+              <Edge
+                key={c.id}
+                def={c}
+                diagram={props.diagram}
+                onDoubleClick={() => {
+                  // TODO: Fix this
+                }}
+                onMouseDown={props.onMouseDown}
+                onMouseLeave={props.onMouseLeave}
+                onMouseEnter={props.onMouseEnter}
+              />
+            );
+          }
+        })}
       </g>
     );
   } else {

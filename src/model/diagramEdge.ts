@@ -36,6 +36,8 @@ export class DiagramEdge implements AbstractEdge {
 
   #labelNodes?: ResolvedLabelNode[];
 
+  parent?: DiagramNode;
+
   constructor(
     id: string,
     start: Endpoint,

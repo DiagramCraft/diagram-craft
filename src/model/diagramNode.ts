@@ -19,7 +19,7 @@ export class DiagramNode implements AbstractNode {
   nodeType: 'group' | string;
 
   parent?: DiagramNode;
-  children: DiagramNode[];
+  children: DiagramElement[];
 
   edges: Record<number, DiagramEdge[]>;
 
@@ -34,6 +34,7 @@ export class DiagramNode implements AbstractNode {
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
+    // TODO: Why do we need to initialize anchors here?
     anchors: Anchor[] | undefined,
     props: NodeProps,
     diagram: Diagram,
@@ -143,9 +144,7 @@ export class DiagramNode implements AbstractNode {
     return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
   }
 
-  // TODO: This is a bit problematic since it has a relation to edge
-  //       should probably rename this to something else - e.g. copyNode
-  clone() {
+  duplicate() {
     const node = new DiagramNode(
       this.id,
       this.nodeType,
@@ -156,7 +155,17 @@ export class DiagramNode implements AbstractNode {
       this.layer
     );
     node.props = deepClone(this.props);
-    node.children = this.children.map(c => c.clone());
+
+    const newChildren: DiagramElement[] = [];
+    for (const c of this.children) {
+      if (c.type === 'node') {
+        newChildren.push(c.duplicate());
+      } else {
+        // TODO: Implement this part
+      }
+    }
+    node.children = newChildren;
+
     return node;
   }
 
@@ -174,10 +183,13 @@ export class DiagramNode implements AbstractNode {
     this.props = snapshot.props;
   }
 
+  // TODO: Refactor this to be a bit more readable
   listEdges(includeChildren = true): DiagramEdge[] {
     return [
       ...Object.values(this.edges ?? {}).flatMap(e => e),
-      ...(includeChildren ? this.children.flatMap(c => c.listEdges(includeChildren)) : [])
+      ...(includeChildren
+        ? this.children.flatMap(c => (c.type === 'node' ? c.listEdges(includeChildren) : []))
+        : [])
     ];
   }
 
