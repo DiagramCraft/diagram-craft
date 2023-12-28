@@ -3,6 +3,7 @@ import { precondition } from '../../utils/assert.ts';
 import { Diagram, StackPosition } from '../../model/diagram.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 
 declare global {
   interface ActionMap {
@@ -25,7 +26,7 @@ type RestackMode = 'up' | 'down' | 'top' | 'bottom';
 class SelectionRestackUndoableAction implements UndoableAction {
   description = 'Restack selection';
 
-  private oldPositions: StackPosition[] | undefined;
+  private oldPositions: Map<DiagramNode | undefined, StackPosition[]> | undefined;
 
   constructor(
     private readonly diagram: Diagram,
@@ -49,13 +50,13 @@ class SelectionRestackUndoableAction implements UndoableAction {
       case 'top':
         this.oldPositions = this.diagram.layers.active.stackModify(
           elements,
-          this.diagram.layers.active.elements.length
+          Number.MAX_SAFE_INTEGER / 4
         );
         break;
       case 'bottom':
         this.oldPositions = this.diagram.layers.active.stackModify(
           elements,
-          this.diagram.layers.active.elements.length
+          -(Number.MAX_SAFE_INTEGER / 4)
         );
         break;
     }

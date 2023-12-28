@@ -1,4 +1,4 @@
-import { DiagramElement } from './diagramNode.ts';
+import { DiagramElement, DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 
@@ -38,26 +38,58 @@ export class Layer extends EventEmitter<LayerEvents> {
     this.diagram.emit('change', { diagram: this.diagram });
   }
 
-  stackModify(elements: DiagramElement[], newPosition: number): StackPosition[] {
-    const withPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
-    const oldPositions = this.elements.map((e, i) => ({ element: e, idx: i }));
-
+  // TODO: Add some tests for the stack operations
+  stackModify(
+    elements: DiagramElement[],
+    newPosition: number
+  ): Map<DiagramNode | undefined, StackPosition[]> {
+    // Group by parent
+    const byParent = new Map<DiagramNode | undefined, DiagramElement[]>();
     for (const el of elements) {
-      const idx = withPositions.findIndex(e => e.element === el);
-      withPositions[idx].idx += newPosition;
+      const parent = el.type === 'node' ? el.parent : undefined;
+      const arr = byParent.get(parent) ?? [];
+      arr.push(el);
+      byParent.set(parent, arr);
     }
 
-    withPositions.sort((a, b) => a.idx - b.idx);
-    this.elements = withPositions.map(e => e.element);
+    const dest = new Map<DiagramNode | undefined, StackPosition[]>();
+
+    for (const [parent, elements] of byParent) {
+      const existing = parent?.children ?? this.elements;
+
+      const withPositions = existing.map((e, i) => ({ element: e, idx: i }));
+      const oldPositions = existing.map((e, i) => ({ element: e, idx: i }));
+
+      for (const el of elements) {
+        const idx = withPositions.findIndex(e => e.element === el);
+        withPositions[idx].idx += newPosition;
+      }
+
+      // TODO: Maybe we can add UnitOfWork and avoid emitting diagram level
+      //       change events if only the stack changes
+      withPositions.sort((a, b) => a.idx - b.idx);
+      if (parent) {
+        parent.children = withPositions.map(e => e.element as DiagramNode);
+      } else {
+        this.elements = withPositions.map(e => e.element);
+      }
+      dest.set(parent, oldPositions);
+    }
+
     this.diagram.emit('change', { diagram: this.diagram });
 
-    return oldPositions;
+    return dest;
   }
 
-  stackSet(positions: StackPosition[]) {
-    positions.sort((a, b) => a.idx - b.idx);
-    this.elements = positions.map(e => e.element);
-
+  stackSet(newPositions: Map<DiagramNode | undefined, StackPosition[]>) {
+    for (const [parent, positions] of newPositions) {
+      positions.sort((a, b) => a.idx - b.idx);
+      if (parent) {
+        parent.children = positions.map(e => e.element as DiagramNode);
+      } else {
+        this.elements = positions.map(e => e.element);
+      }
+    }
     this.emit('change', { layer: this });
     this.diagram.emit('change', { diagram: this.diagram });
   }

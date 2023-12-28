@@ -32,7 +32,6 @@ export const useDraggable = <E extends HTMLElement>(
 
     opts?.onDragStart?.(ev);
 
-    console.log(mimeType);
     document.body.dataset['dragmimetype'] = mimeType;
   };
   const onDragEnd: DragEventHandler<E> = ev => {
