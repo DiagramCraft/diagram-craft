@@ -14,8 +14,6 @@ const createNode = (diagram: Diagram) =>
       size: { w: 10, h: 10 },
       rotation: 0
     },
-    undefined,
-    {},
     diagram,
     diagram.layers.active
   );

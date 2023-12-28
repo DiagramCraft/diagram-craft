@@ -12,7 +12,7 @@ export class SnapManagerPerftest implements PerformanceTest {
 
     for (let i = 0; i < 1000; i++) {
       d.layers.active.addElement(
-        new DiagramNode(i.toString(), 'box', this.randomBox(), undefined, {}, d, d.layers.active)
+        new DiagramNode(i.toString(), 'box', this.randomBox(), d, d.layers.active)
       );
     }
 

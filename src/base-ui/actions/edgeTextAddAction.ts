@@ -44,7 +44,8 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
           h: 10
         }
       },
-      [],
+      this.diagram,
+      this.diagram.layers.active,
       {
         text: { text: 'Label', align: 'center' },
         labelForEgdeId: edge.id,
@@ -52,9 +53,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
           enabled: true,
           color: '#ffffff'
         }
-      },
-      this.diagram,
-      this.diagram.layers.active
+      }
     );
     edge.layer.addElement(textNode);
 

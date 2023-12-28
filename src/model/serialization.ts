@@ -86,8 +86,15 @@ export const deserializeDiagramElements = (
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
       if (c.type === 'edge') continue;
-      nodeLookup[c.id] = new DiagramNode(c.id, c.nodeType, c.bounds, c.anchors, {}, diagram, layer);
-      nodeLookup[c.id].props = c.props;
+      nodeLookup[c.id] = new DiagramNode(
+        c.id,
+        c.nodeType,
+        c.bounds,
+        diagram,
+        layer,
+        c.props,
+        c.anchors
+      );
     }
   }
 

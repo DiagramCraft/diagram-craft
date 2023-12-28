@@ -22,10 +22,9 @@ export const canvasDropHandler = ($d: Diagram) => {
         size: nodeDef.getInitialConfig().size,
         rotation: 0
       },
-      undefined,
-      nodeDef.getDefaultProps('canvas'),
       $d,
-      $d.layers.active
+      $d.layers.active,
+      nodeDef.getDefaultProps('canvas')
     );
 
     $d.undoManager.addAndExecute(new NodeAddAction([nd], $d));

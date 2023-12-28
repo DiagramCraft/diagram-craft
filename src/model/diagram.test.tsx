@@ -26,8 +26,6 @@ describe('Diagram', () => {
         size: { w: 100, h: 100 },
         rotation: 0
       },
-      undefined,
-      {},
       diagram,
       layer
     );
@@ -41,8 +39,6 @@ describe('Diagram', () => {
         size: { w: 100, h: 100 },
         rotation: 0
       },
-      undefined,
-      {},
       diagram,
       layer
     );

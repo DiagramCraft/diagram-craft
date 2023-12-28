@@ -17,28 +17,23 @@ export class DiagramNode implements AbstractNode {
   bounds: Box;
   type: 'node';
   nodeType: 'group' | string;
-
   parent?: DiagramNode;
   children: DiagramElement[];
-
   edges: Record<number, DiagramEdge[]>;
-
   props: NodeProps = {};
-
-  _anchors?: Anchor[];
-
   diagram: Diagram;
   layer: Layer;
+
+  #anchors?: Anchor[];
 
   constructor(
     id: string,
     nodeType: 'group' | string,
     bounds: Box,
-    // TODO: Why do we need to initialize anchors here?
-    anchors: Anchor[] | undefined,
-    props: NodeProps,
     diagram: Diagram,
-    layer: Layer
+    layer: Layer,
+    props?: NodeProps,
+    anchorCache?: Anchor[]
   ) {
     this.id = id;
     this.bounds = bounds;
@@ -46,10 +41,11 @@ export class DiagramNode implements AbstractNode {
     this.nodeType = nodeType;
     this.children = [];
     this.edges = {};
-    this._anchors = anchors;
-    this.props = props ?? {};
     this.diagram = diagram;
     this.layer = layer;
+
+    this.props = props ?? {};
+    this.#anchors = anchorCache;
   }
 
   getTopmostParent(): DiagramNode {
@@ -108,12 +104,16 @@ export class DiagramNode implements AbstractNode {
   }
 
   get anchors(): Anchor[] {
-    if (this._anchors === undefined) {
+    if (this.#anchors === undefined) {
       this.invalidateAnchors();
       this.diagram.updateElement(this);
     }
 
-    return this._anchors ?? [];
+    return this.#anchors ?? [];
+  }
+
+  getAnchor(anchor: number) {
+    return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
   }
 
   removeEdge(edge: DiagramEdge) {
@@ -140,21 +140,16 @@ export class DiagramNode implements AbstractNode {
     };
   }
 
-  getAnchor(anchor: number) {
-    return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
-  }
-
   duplicate() {
     const node = new DiagramNode(
       this.id,
       this.nodeType,
       deepClone(this.bounds),
-      this._anchors ? [...this._anchors] : undefined,
-      {},
       this.diagram,
-      this.layer
+      this.layer,
+      deepClone(this.props),
+      this.#anchors
     );
-    node.props = deepClone(this.props);
 
     const newChildren: DiagramElement[] = [];
     for (const c of this.children) {
@@ -221,8 +216,8 @@ export class DiagramNode implements AbstractNode {
 
   // TODO: Need to make sure this is called when e.g. props are changed
   private invalidateAnchors() {
-    this._anchors = [];
-    this._anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
+    this.#anchors = [];
+    this.#anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
 
     const def = this.diagram.nodeDefinitions.get(this.nodeType);
 
@@ -233,7 +228,7 @@ export class DiagramNode implements AbstractNode {
       const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
       const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
 
-      this._anchors.push({ point: { x: lx, y: ly }, clip: false });
+      this.#anchors.push({ point: { x: lx, y: ly }, clip: false });
     }
   }
 }
