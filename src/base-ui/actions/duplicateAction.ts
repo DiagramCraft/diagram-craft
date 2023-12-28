@@ -1,10 +1,9 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { Box } from '../../geometry/box.ts';
-import { newid } from '../../utils/id.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { NodeAddAction } from '../../model/diagramUndoActions.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram, UnitOfWork } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
+import { Translation } from '../../geometry/transform.ts';
 
 declare global {
   interface ActionMap {
@@ -26,21 +25,20 @@ export class DuplicateAction extends AbstractSelectionAction {
   execute() {
     // TODO: Support cloning of edges
     const newElements: DiagramNode[] = [];
+    const uow = new UnitOfWork(this.diagram);
     for (const el of this.diagram.selectionState.nodes) {
       const newEl = el.duplicate();
-      newEl.id = newid();
-
-      const newBounds = Box.asMutableSnapshot(newEl.bounds);
-      newBounds.get('pos').x += OFFSET;
-      newBounds.get('pos').y += OFFSET;
-      newEl.bounds = newBounds.getSnapshot();
-
+      newEl.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
       newElements.push(newEl);
     }
 
     this.diagram.undoManager.addAndExecute(
-      new NodeAddAction(newElements, this.diagram, 'Clone nodes')
+      new NodeAddAction(newElements, this.diagram, 'Duplicate nodes')
     );
+
+    // We commit after adding to the layer so that any change events
+    // are fired after
+    uow.commit();
 
     this.diagram.selectionState.clear();
     this.diagram.selectionState.setElements(newElements, true);

@@ -7,6 +7,7 @@ import { DiagramEdge } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
+import { newid } from '../utils/id.ts';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 
@@ -142,7 +143,7 @@ export class DiagramNode implements AbstractNode {
 
   duplicate() {
     const node = new DiagramNode(
-      this.id,
+      newid(),
       this.nodeType,
       deepClone(this.bounds),
       this.diagram,
