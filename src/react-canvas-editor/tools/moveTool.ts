@@ -46,14 +46,16 @@ export class MoveTool extends AbstractTool {
 
         // If we click on an element that is part of a group, select the group instead
         // ... except, when the group is already selected, in which case we allow for "drill-down"
-        const path = getDiagramElementPath(element);
-        if (path.length > 0) {
-          for (let i = 0; i < path.length; i++) {
-            const parent = path[i];
-            if (selection.nodes.includes(parent)) {
-              break;
-            } else {
-              element = parent;
+        if (element) {
+          const path = getDiagramElementPath(element);
+          if (path.length > 0) {
+            for (let i = 0; i < path.length; i++) {
+              const parent = path[i];
+              if (selection.nodes.includes(parent)) {
+                break;
+              } else {
+                element = parent;
+              }
             }
           }
         }
