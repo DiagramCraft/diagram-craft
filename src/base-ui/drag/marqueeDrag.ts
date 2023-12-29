@@ -4,8 +4,7 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { SelectionState } from '../../model/selectionState.ts';
 import { precondition } from '../../utils/assert.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { DiagramElement } from '../../model/diagramNode.ts';
 
 export class MarqueeDrag extends AbstractDrag {
   constructor(
@@ -34,7 +33,7 @@ export class MarqueeDrag extends AbstractDrag {
   private updatePendingElements(selection: SelectionState, diagram: Diagram) {
     precondition.is.present(selection.marquee);
 
-    const pending: (DiagramNode | DiagramEdge)[] = [];
+    const pending: DiagramElement[] = [];
     for (const e of diagram.visibleElements()) {
       if (e.isLocked()) continue;
       if (Box.contains(selection.marquee.bounds, e.bounds)) {
