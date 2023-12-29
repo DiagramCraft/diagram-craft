@@ -1,7 +1,8 @@
-import { DiagramElement, DiagramNode } from './diagramNode.ts';
+import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { assert } from '../utils/assert.ts';
+import { DiagramElement } from './diagramElement.ts';
 
 export type LayerEvents = {
   change: { layer: Layer };

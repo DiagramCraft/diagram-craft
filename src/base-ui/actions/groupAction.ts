@@ -2,9 +2,10 @@ import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
-import { DiagramElement, DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
 
 declare global {
   interface ActionMap {

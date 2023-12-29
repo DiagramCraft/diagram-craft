@@ -48,7 +48,6 @@ import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
-import { DiagramElement } from './model/diagramNode.ts';
 import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
 import { UserState } from './base-ui/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
@@ -64,8 +63,8 @@ import { ApplicationState } from './base-ui/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
 import { LayerIndicator } from './react-app/components/LayerIndicator.tsx';
 
-const factory = (d: SerializedDiagram, elements?: DiagramElement[]) => {
-  return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry(), elements);
+const factory = (d: SerializedDiagram) => {
+  return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry());
 };
 
 const diagrams = [

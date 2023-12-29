@@ -4,7 +4,7 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { SelectionState } from '../../model/selectionState.ts';
 import { precondition } from '../../utils/assert.ts';
-import { DiagramElement } from '../../model/diagramNode.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
 
 export class MarqueeDrag extends AbstractDrag {
   constructor(

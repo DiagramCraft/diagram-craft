@@ -42,7 +42,7 @@ export class DuplicateAction extends AbstractSelectionAction {
     uow.commit();
 
     this.diagram.selectionState.clear();
-    this.diagram.selectionState.setElements(newElements, true);
+    this.diagram.selectionState.setElements(newElements);
 
     this.emit('actiontriggered', { action: this });
   }

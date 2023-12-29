@@ -2,9 +2,10 @@ import { UndoableAction } from './undoManager.ts';
 import { Box } from '../geometry/box.ts';
 import { TransformFactory } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
-import { DiagramElement, DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
+import { DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
+import { DiagramElement } from './diagramElement.ts';
 
 class AbstractTransformAction implements UndoableAction {
   readonly #elements: ReadonlyArray<DiagramElement>;
@@ -15,8 +16,8 @@ class AbstractTransformAction implements UndoableAction {
   description: string;
 
   constructor(
-    source: Box[],
-    target: Box[],
+    source: ReadonlyArray<Box>,
+    target: ReadonlyArray<Box>,
     nodes: ReadonlyArray<DiagramElement>,
     diagram: Diagram,
     description: string

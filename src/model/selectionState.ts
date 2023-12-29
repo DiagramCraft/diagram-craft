@@ -2,11 +2,12 @@ import { Line } from '../geometry/line.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
 import { Magnet } from './snap/magnet.ts';
-import { DiagramElement, DiagramNode } from './diagramNode.ts';
+import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
-import { debounce } from '../utils/debounce.ts';
+import { debounceMicrotask } from '../utils/debounce.ts';
 import { Marquee } from './marquee.ts';
 import { Diagram } from './diagram.ts';
+import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 
 const EMPTY_BOX = {
   pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
@@ -15,8 +16,8 @@ const EMPTY_BOX = {
 };
 
 type SelectionSource = {
-  elementBoxes: Box[];
-  elementIds: string[];
+  elementBoxes: ReadonlyArray<Box>;
+  elementIds: ReadonlyArray<string>;
   boundingBox: Box;
 };
 
@@ -54,7 +55,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   readonly #marquee: Marquee;
 
   #bounds: Box;
-  #guides: Guide[] = [];
+  #guides: ReadonlyArray<Guide> = [];
   #elements: ReadonlyArray<DiagramElement> = [];
   #source: SelectionSource = {
     elementBoxes: [],
@@ -69,7 +70,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     this.#elements = [];
     this.#marquee = new Marquee(this);
 
-    const recalculateBoundingBox = debounce(() => {
+    const recalculateBoundingBox = debounceMicrotask(() => {
       this.recalculateBoundingBox();
     });
     diagram.on('elementChange', recalculateBoundingBox);
@@ -84,18 +85,18 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   get nodes(): DiagramNode[] {
-    return this.#elements.filter(e => e.type === 'node') as DiagramNode[];
+    return this.#elements.filter(isNode);
   }
 
   get edges(): DiagramEdge[] {
-    return this.#elements.filter(e => e.type === 'edge') as DiagramEdge[];
+    return this.#elements.filter(isEdge);
   }
 
-  get guides(): Guide[] {
+  get guides() {
     return this.#guides;
   }
 
-  set guides(guides: Guide[]) {
+  set guides(guides: ReadonlyArray<Guide>) {
     this.#guides = guides;
     this.emitAsync('change', { selection: this });
   }
@@ -121,40 +122,33 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   getSelectionType(): SelectionType {
-    if (this.#elements.length === 0) {
+    if (this.isEmpty()) {
       return 'empty';
-    }
-
-    if (this.#elements.length === 1) {
-      if (this.#elements[0].type === 'node' && this.#elements[0].props.labelForEdgeId) {
+    } else if (this.#elements.length === 1) {
+      if (isNode(this.#elements[0]) && this.#elements[0].props.labelForEdgeId) {
         return 'single-label-node';
       }
-      return this.#elements[0].type === 'node' ? 'single-node' : 'single-edge';
-    }
-
-    if (this.#elements.every(e => e.type === 'node')) {
+      return isNode(this.#elements[0]) ? 'single-node' : 'single-edge';
+    } else if (this.isNodesOnly()) {
       return 'nodes';
-    }
-
-    if (this.#elements.every(e => e.type === 'edge')) {
+    } else if (this.isEdgesOnly()) {
       return 'edges';
+    } else {
+      return 'mixed';
     }
-
-    return 'mixed';
   }
 
   isNodesOnly(): boolean {
-    return ['nodes', 'single-node', 'single-label-node'].includes(this.getSelectionType());
+    return this.#elements.every(isNode);
   }
 
   isEdgesOnly(): boolean {
-    return ['edges', 'single-edge'].includes(this.getSelectionType());
+    return this.#elements.every(isEdge);
   }
 
   isChanged(): boolean {
     return this.#elements.some((node, i) => {
-      const original = this.#source.elementBoxes[i];
-      return !Box.isEqual(node.bounds, original);
+      return !Box.isEqual(node.bounds, this.#source.elementBoxes[i]);
     });
   }
 
@@ -173,19 +167,19 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     );
   }
 
-  setElements(element: ReadonlyArray<DiagramElement>, rebaseline = true) {
-    if (element.some(e => e.isLocked())) return;
+  setElements(elements: ReadonlyArray<DiagramElement>, rebaseline = true) {
+    if (elements.some(e => e.isLocked())) return;
     this.#forcedRotation = false;
 
     const oldElements = [...this.#elements];
-    this.#elements = element;
+    this.#elements = elements;
 
-    element.forEach(e => {
+    elements.forEach(e => {
       if (oldElements.includes(e)) return;
       this.emit('add', { element: e });
     });
     oldElements.forEach(e => {
-      if (element.includes(e)) return;
+      if (elements.includes(e)) return;
       this.emit('remove', { element: e });
     });
 

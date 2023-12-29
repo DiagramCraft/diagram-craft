@@ -2,7 +2,7 @@ import { EventEmitter } from '../utils/event.ts';
 import { Transform } from '../geometry/transform.ts';
 import { Box } from '../geometry/box.ts';
 import { Viewbox } from './viewBox.ts';
-import { DiagramElement, DiagramNode } from './diagramNode.ts';
+import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { Layer, LayerManager } from './diagramLayer.ts';
@@ -12,6 +12,7 @@ import { SnapManager } from './snap/snapManager.ts';
 import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
 import { assert } from '../utils/assert.ts';
 import { UnitOfWork } from './unitOfWork.ts';
+import { DiagramElement } from './diagramElement.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
@@ -72,7 +73,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
     // TODO: Remove elements from here
     //       ... but then the logic to create the default layer needs to be moved
-    elements?: DiagramElement[]
+    elements?: ReadonlyArray<DiagramElement>
   ) {
     super();
 

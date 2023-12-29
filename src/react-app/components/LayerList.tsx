@@ -5,7 +5,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { DiagramElement } from '../../model/diagramNode.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 

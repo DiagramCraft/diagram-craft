@@ -7,7 +7,7 @@ import { BACKGROUND, DeferedMouseAction, ObjectId } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { MarqueeDrag } from '../../base-ui/drag/marqueeDrag.ts';
-import { getDiagramElementPath } from '../../model/diagramNode.ts';
+import { getDiagramElementPath } from '../../model/diagramElement.ts';
 
 export class MoveTool extends AbstractTool {
   constructor(

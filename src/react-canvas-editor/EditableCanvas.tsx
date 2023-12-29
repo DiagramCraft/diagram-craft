@@ -30,7 +30,7 @@ import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
 import { DragLabel } from './DragLabel.tsx';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
-import { getDiagramElementPath } from '../model/diagramNode.ts';
+import { getDiagramElementPath } from '../model/diagramElement.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,

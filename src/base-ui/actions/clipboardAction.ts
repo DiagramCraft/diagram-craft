@@ -9,7 +9,7 @@ import {
 } from '../../model/serialization.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
-import { DiagramElement } from '../../model/diagramNode.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
 import { Point } from '../../geometry/point.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { Diagram } from '../../model/diagram.ts';
@@ -134,7 +134,7 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
     );
 
     this.diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, this.diagram));
-    this.diagram.selectionState.setElements(newElements, true);
+    this.diagram.selectionState.setElements(newElements);
 
     return context.point;
   }

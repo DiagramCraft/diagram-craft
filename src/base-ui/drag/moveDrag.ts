@@ -10,7 +10,7 @@ import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeH
 import { MoveAction, NodeAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
-import { DiagramElement } from '../../model/diagramNode.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 

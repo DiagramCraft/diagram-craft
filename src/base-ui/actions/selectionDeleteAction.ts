@@ -1,5 +1,5 @@
 import { UndoableAction } from '../../model/undoManager.ts';
-import { DiagramElement } from '../../model/diagramNode.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { Diagram } from '../../model/diagram.ts';

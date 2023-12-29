@@ -1,11 +1,12 @@
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
-import { DiagramElement, DiagramNode } from './diagramNode.ts';
+import { DiagramNode } from './diagramNode.ts';
 import { ConnectedEndpoint, DiagramEdge } from './diagramEdge.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 import { AbstractEdge, AbstractNode } from './types.ts';
 import { Layer } from './diagramLayer.ts';
+import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 
 interface Reference {
   id: string;
@@ -16,23 +17,23 @@ type SerializedLayer = {
   name: string;
   type: 'layer';
   layerType: 'basic' | 'reference' | 'adjustment';
-  elements: SerializedElement[];
+  elements: ReadonlyArray<SerializedElement>;
 };
 
 export type SerializedDiagram = {
   id: string;
   name: string;
-  layers: SerializedLayer[];
-  diagrams: SerializedDiagram[];
+  layers: ReadonlyArray<SerializedLayer>;
+  diagrams: ReadonlyArray<SerializedDiagram>;
 };
 
 export interface SerializedDiagramDocument {
-  diagrams: SerializedDiagram[];
+  diagrams: ReadonlyArray<SerializedDiagram>;
 }
 
 export interface SerializedNode extends AbstractNode {
-  edges?: Record<string, Reference[]>;
-  children: SerializedElement[];
+  edges?: Record<string, ReadonlyArray<Reference>>;
+  children: ReadonlyArray<SerializedElement>;
 }
 
 type SerializedConnectedEndpoint = { anchor: number; node: Reference; position?: Point };
@@ -57,7 +58,7 @@ export const isConnected = (
 
 const unfoldGroup = (node: SerializedNode) => {
   const recurse = (
-    nodes: SerializedElement[],
+    nodes: ReadonlyArray<SerializedElement>,
     parent?: SerializedNode | undefined
   ): (SerializedElement & { parent?: SerializedNode | undefined })[] => {
     return [
@@ -74,7 +75,7 @@ const unfoldGroup = (node: SerializedNode) => {
 };
 
 export const deserializeDiagramElements = (
-  diagramElements: SerializedElement[],
+  diagramElements: ReadonlyArray<SerializedElement>,
   diagram: Diagram,
   layer: Layer,
   nodeLookup: Record<string, DiagramNode>,
@@ -179,8 +180,8 @@ export const deserializeDiagramElements = (
 };
 
 const deserializeDiagrams = <T extends Diagram>(
-  diagrams: SerializedDiagram[],
-  factory: (d: SerializedDiagram, elements?: DiagramElement[]) => T
+  diagrams: ReadonlyArray<SerializedDiagram>,
+  factory: (d: SerializedDiagram) => T
 ) => {
   const dest: T[] = [];
   for (const $d of diagrams) {
@@ -198,7 +199,7 @@ const deserializeDiagrams = <T extends Diagram>(
       }
     }
 
-    const newDiagram = factory($d, undefined);
+    const newDiagram = factory($d);
     for (const l of $d.layers) {
       const layer = new Layer(l.id, l.name, [], newDiagram);
       newDiagram.layers.add(layer);
@@ -224,7 +225,7 @@ const deserializeDiagrams = <T extends Diagram>(
 
 export const deserializeDiagramDocument = <T extends Diagram>(
   document: SerializedDiagramDocument,
-  factory: (d: SerializedDiagram, elements?: DiagramElement[]) => T
+  factory: (d: SerializedDiagram) => T
 ): DiagramDocument => {
   const diagrams = document.diagrams;
   const dest = deserializeDiagrams(diagrams, factory);
@@ -233,8 +234,8 @@ export const deserializeDiagramDocument = <T extends Diagram>(
 };
 
 export const serializeDiagramElement = (element: DiagramElement): SerializedElement => {
-  if (element.type === 'node') {
-    const node = element as DiagramNode;
+  if (isNode(element)) {
+    const node = element;
     return {
       id: node.id,
       type: 'node',
@@ -244,8 +245,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
       props: node.props
     };
-  } else if (element.type === 'edge') {
-    const edge = element as DiagramEdge;
+  } else if (isEdge(element)) {
+    const edge = element;
     return {
       id: edge.id,
       type: 'edge',

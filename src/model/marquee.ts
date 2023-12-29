@@ -1,6 +1,6 @@
 import { EventEmitter } from '../utils/event.ts';
 import { Box } from '../geometry/box.ts';
-import { DiagramElement } from './diagramNode.ts';
+import { DiagramElement } from './diagramElement.ts';
 import { precondition } from '../utils/assert.ts';
 import { SelectionState } from './selectionState.ts';
 
@@ -11,7 +11,7 @@ export type MarqueeEvents = {
 export class Marquee extends EventEmitter<MarqueeEvents> {
   #bounds?: Box;
 
-  pendingElements?: DiagramElement[];
+  pendingElements?: ReadonlyArray<DiagramElement>;
 
   constructor(private readonly selectionState: SelectionState) {
     super();

@@ -1,6 +1,6 @@
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { DiagramElement, DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
 import {
   makePropertyArrayHook,
   makePropertyHook,
@@ -11,6 +11,7 @@ import {
 } from './usePropertyFactory.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { SnapManagerConfigProps } from '../../model/snap/snapManagerConfig.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
 
 export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePropertyHook<
   Diagram,

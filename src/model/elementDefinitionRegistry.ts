@@ -1,6 +1,7 @@
 import { DiagramNode } from './diagramNode.ts';
 import { Path } from '../geometry/path.ts';
 import { Extent } from '../geometry/extent.ts';
+import { assert } from '../utils/assert.ts';
 
 export type NodeCapability = string;
 
@@ -30,14 +31,16 @@ export interface NodeDefinition {
 }
 
 export class NodeDefinitionRegistry {
-  private nodes: Record<string, NodeDefinition> = {};
+  private nodes = new Map<string, NodeDefinition>();
 
   register(node: NodeDefinition) {
-    this.nodes[node.type] = node;
+    this.nodes.set(node.type, node);
   }
 
   get(type: string): NodeDefinition {
-    return this.nodes[type];
+    const r = this.nodes.get(type);
+    assert.present(r);
+    return r;
   }
 
   getAll() {
@@ -54,13 +57,15 @@ export interface EdgeDefinition {
 }
 
 export class EdgeDefinitionRegistry {
-  private edges: Record<string, EdgeDefinition> = {};
+  private edges = new Map<string, EdgeDefinition>();
 
   register(edge: EdgeDefinition) {
-    this.edges[edge.type] = edge;
+    this.edges.set(edge.type, edge);
   }
 
   get(type: string): EdgeDefinition {
-    return this.edges[type];
+    const r = this.edges.get(type);
+    assert.present(r);
+    return r;
   }
 }

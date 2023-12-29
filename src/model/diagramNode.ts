@@ -9,23 +9,12 @@ import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
 import { UnitOfWork } from './unitOfWork.ts';
+import { DiagramElement } from './diagramElement.ts';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 
-export type DiagramElement = DiagramNode | DiagramEdge;
-
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
-};
-
-export const getDiagramElementPath = (element: DiagramElement): DiagramNode[] => {
-  const dest: DiagramNode[] = [];
-  let current: DiagramNode | undefined = element.parent;
-  while (current !== undefined) {
-    dest.push(current);
-    current = current.parent;
-  }
-  return dest;
 };
 
 export class DiagramNode implements AbstractNode {

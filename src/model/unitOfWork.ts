@@ -1,4 +1,4 @@
-import { DiagramElement } from './diagramNode.ts';
+import { DiagramElement } from './diagramElement.ts';
 import { Diagram } from './diagram.ts';
 
 type Callback = () => void;
