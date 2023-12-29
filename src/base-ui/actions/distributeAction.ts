@@ -41,7 +41,7 @@ export class DistributeAction extends AbstractSelectionAction {
   }
 
   private calculateAndUpdateBounds(orientation: 'x' | 'y', size: 'w' | 'h'): void {
-    const elementsInOrder = this.diagram.selectionState.elements.sort(
+    const elementsInOrder = this.diagram.selectionState.elements.toSorted(
       (a, b) => Box.minBounds(a.bounds)[orientation] - Box.minBounds(b.bounds)[orientation]
     );
 

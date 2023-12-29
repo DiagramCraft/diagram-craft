@@ -139,7 +139,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     for (const el of elements) {
       if (el.type === 'node' && el.parent) {
         el.parent.children = el.parent.children.filter(e => e !== el);
-        el.parent.recalculateBounds();
         el.parent = undefined;
       }
     }
@@ -155,13 +154,12 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       const parent = ref.element.parent;
       const idx = parent.children.indexOf(ref.element);
 
+      elements.forEach(e => (e.parent = parent));
       if (ref.relation === 'above') {
-        parent.children.splice(idx + 1, 0, ...elements);
+        parent.children = parent.children.toSpliced(idx + 1, 0, ...elements);
       } else {
-        parent.children.splice(idx, 0, ...elements);
+        parent.children = parent.children.toSpliced(idx, 0, ...elements);
       }
-      (elements as DiagramNode[]).forEach(e => (e.parent = parent));
-      parent.recalculateBounds();
     } else {
       assert.true(ref.element.layer === layer);
 
@@ -188,7 +186,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   }
 
   transformElements(
-    elements: DiagramElement[],
+    elements: Readonly<DiagramElement[]>,
     transforms: Transform[],
     filter: (e: DiagramElement) => boolean = () => true
   ) {

@@ -40,7 +40,7 @@ export class Layer extends EventEmitter<LayerEvents> {
 
   // TODO: Add some tests for the stack operations
   stackModify(
-    elements: DiagramElement[],
+    elements: Readonly<DiagramElement[]>,
     newPosition: number
   ): Map<DiagramNode | undefined, StackPosition[]> {
     // Group by parent

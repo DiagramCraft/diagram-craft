@@ -29,3 +29,6 @@ export const unique = <T>(arr: T[], respectTo: (e: T) => unknown = a => a): T[] 
 };
 
 export const reversed = <T>(l: T[]): T[] => [...l].reverse();
+
+// TODO: Can we fold these two functions into one?
+export const reversedRO = <T>(l: Readonly<T[]>): Readonly<T[]> => [...l].reverse();

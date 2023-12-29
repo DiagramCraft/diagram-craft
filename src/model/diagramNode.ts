@@ -33,7 +33,7 @@ export class DiagramNode implements AbstractNode {
   type: 'node';
   nodeType: 'group' | string;
   parent?: DiagramNode;
-  children: DiagramElement[];
+  #children: Readonly<DiagramElement[]>;
   edges: Record<number, DiagramEdge[]>;
   props: NodeProps = {};
   diagram: Diagram;
@@ -54,13 +54,22 @@ export class DiagramNode implements AbstractNode {
     this.bounds = bounds;
     this.type = 'node';
     this.nodeType = nodeType;
-    this.children = [];
+    this.#children = [];
     this.edges = {};
     this.diagram = diagram;
     this.layer = layer;
 
     this.props = props ?? {};
     this.#anchors = anchorCache;
+  }
+
+  set children(value: Readonly<DiagramElement[]>) {
+    this.#children = value;
+    this.recalculateBounds();
+  }
+
+  get children(): Readonly<DiagramElement[]> {
+    return this.#children;
   }
 
   isLocked() {
@@ -266,11 +275,14 @@ export class DiagramNode implements AbstractNode {
     return edge;
   }
 
-  // TODO: We should make this private, and trigger from assigning to children
-  //       ... also need to make children readonly
-  recalculateBounds() {
+  private recalculateBounds() {
     const childrenBounds = this.children.map(c => c.bounds);
-    this.bounds = Box.boundingBox(childrenBounds);
+    if (childrenBounds.length === 0) return;
+    const newBounds = Box.boundingBox(childrenBounds);
+    this.bounds = newBounds;
+    if (!Box.isEqual(newBounds, this.bounds)) {
+      this.diagram.updateElement(this);
+    }
     this.parent?.recalculateBounds();
   }
 

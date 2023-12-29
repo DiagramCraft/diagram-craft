@@ -18,12 +18,14 @@ export const selectionDeleteActions: ActionMapFactory = (state: State) => ({
 class SelectionDeleteUndoableAction implements UndoableAction {
   description = 'Delete elements';
   private layer: Layer;
+  private readonly elements: DiagramElement[];
 
   constructor(
     private readonly diagram: Diagram,
-    private readonly elements: DiagramElement[]
+    elements: Readonly<DiagramElement[]>
   ) {
     this.layer = this.diagram.layers.active;
+    this.elements = [...elements];
   }
 
   undo(): void {

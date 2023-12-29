@@ -1,6 +1,6 @@
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramElement, DiagramNode } from '../../model/diagramNode.ts';
 import {
   makePropertyArrayHook,
   makePropertyHook,
@@ -104,10 +104,12 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
 
 export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = makePropertyArrayHook<
   Diagram,
-  DiagramEdge | DiagramNode,
+  DiagramElement,
   ElementProps
 >(
-  diagram => diagram.selectionState.elements,
+  // TODO: This is to avoid issue with Readonly, but it's not ideal
+  //       maybe change makePropertyArrayHook
+  diagram => [...diagram.selectionState.elements],
   element => element.props,
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);

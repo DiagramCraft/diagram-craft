@@ -55,7 +55,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   #bounds: Box;
   #guides: Guide[] = [];
-  #elements: DiagramElement[] = [];
+  #elements: Readonly<DiagramElement[]> = [];
   #source: SelectionSource = {
     elementBoxes: [],
     elementIds: [],
@@ -79,7 +79,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.#source;
   }
 
-  get elements(): DiagramElement[] {
+  get elements(): Readonly<DiagramElement[]> {
     return this.#elements;
   }
 
@@ -173,7 +173,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     );
   }
 
-  setElements(element: DiagramElement[], rebaseline = true) {
+  setElements(element: DiagramElement[] | Readonly<DiagramElement[]>, rebaseline = true) {
     if (element.some(e => e.isLocked())) return;
     this.#forcedRotation = false;
 

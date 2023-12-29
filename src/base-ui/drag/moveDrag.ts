@@ -194,7 +194,7 @@ export class MoveDrag extends AbstractDrag {
     this.metaKey = false;
   }
 
-  private enablePointerEvents(elements: DiagramElement[]) {
+  private enablePointerEvents(elements: DiagramElement[] | Readonly<DiagramElement[]>) {
     for (const e of elements) {
       if (e.type === 'node') {
         const n = document.getElementById(`node-${e.id}`)!;
@@ -209,7 +209,7 @@ export class MoveDrag extends AbstractDrag {
     }
   }
 
-  private disablePointerEvents(elements: DiagramElement[]) {
+  private disablePointerEvents(elements: DiagramElement[] | Readonly<DiagramElement[]>) {
     for (const e of elements) {
       if (e.type === 'node') {
         const n = document.getElementById(`node-${e.id}`)!;

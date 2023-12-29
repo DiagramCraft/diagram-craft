@@ -5,7 +5,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { reversed } from '../../utils/array.ts';
+import { reversed, reversedRO } from '../../utils/array.ts';
 import { DiagramElement } from '../../model/diagramNode.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
@@ -164,7 +164,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
       {e.type === 'node' && e.nodeType === 'group' && (
         <Tree.Children>
-          {reversed(e.children).map(c => (
+          {reversedRO(e.children).map(c => (
             <ElementEntry key={c.id} element={c} />
           ))}
         </Tree.Children>
