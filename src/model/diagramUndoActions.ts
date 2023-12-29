@@ -6,7 +6,7 @@ import { DiagramElement, DiagramNode, DiagramNodeSnapshot } from './diagramNode.
 import { Layer } from './diagramLayer.ts';
 
 class AbstractTransformAction implements UndoableAction {
-  private nodes: DiagramElement[] = [];
+  private elements: DiagramElement[] = [];
   private source: Box[] = [];
   private target: Box[] = [];
   private diagram: Diagram;
@@ -21,7 +21,7 @@ class AbstractTransformAction implements UndoableAction {
     description: string
   ) {
     this.diagram = diagram;
-    this.nodes.push(...nodes);
+    this.elements.push(...nodes);
     this.source.push(...source);
     this.target.push(...target);
     this.description = description;
@@ -36,9 +36,9 @@ class AbstractTransformAction implements UndoableAction {
   }
 
   private transformElementsAction(source: Box[], target: Box[]): void {
-    for (let i = 0; i < this.nodes.length; i++) {
+    for (let i = 0; i < this.elements.length; i++) {
       this.diagram.transformElements(
-        [this.nodes[i]],
+        [this.elements[i]],
         TransformFactory.fromTo(source[i], target[i])
       );
     }

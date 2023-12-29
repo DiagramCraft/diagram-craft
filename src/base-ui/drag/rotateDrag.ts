@@ -46,8 +46,8 @@ export class RotateDrag extends AbstractDrag {
       this.diagram.undoManager.add(
         new RotateAction(
           selection.source.elementBoxes,
-          selection.nodes.map(e => e.bounds),
-          selection.nodes,
+          selection.elements.map(e => e.bounds),
+          selection.elements,
           this.diagram,
           'Rotate'
         )
