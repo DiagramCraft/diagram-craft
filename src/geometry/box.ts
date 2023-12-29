@@ -176,7 +176,7 @@ export const Box = {
 
   // TODO: This can be used in a large number of situations
   //       ... and it can be optimized to not use the corners method
-  //       ... except whem rotating
+  //       ... except when rotating
   line: (box: Box, dir: Direction) => {
     const corners = Box.corners(box);
     if (dir === 'n') return Line.of(corners[0], corners[1]);

@@ -3,7 +3,7 @@ import { Vector } from './vector.ts';
 import { Line } from './line.ts';
 import { BezierUtils, CubicBezier } from './bezier.ts';
 import { RawCubicSegment, RawLineSegment, RawQuadSegment, Segment } from './pathBuilder.ts';
-import { Accuracy, Projection } from './path.ts';
+import { Projection } from './path.ts';
 import { LengthOffsetOnPath } from './pathPosition.ts';
 import { NotImplementedYet } from '../utils/assert.ts';
 
@@ -293,12 +293,12 @@ export class SegmentList {
     return this.segments.reduce((acc, cur) => acc + cur.length(), 0) ?? 0;
   }
 
-  point(t: number, _mode: Accuracy = 'speed') {
+  point(t: number) {
     const totalLength = this.length();
-    return this.pointAt({ pathD: t * totalLength }, _mode);
+    return this.pointAt({ pathD: t * totalLength });
   }
 
-  pointAt(t: LengthOffsetOnPath, _mode: Accuracy = 'speed') {
+  pointAt(t: LengthOffsetOnPath) {
     // Find the segment that contains the point
     let currentD = t.pathD;
     let segmentIndex = 0;

@@ -26,7 +26,7 @@ const W = [
   0.080140700335001, 0.0680383338123569, 0.0680383338123569, 0.0549046959758352, 0.0549046959758352,
   0.0409391567013063, 0.0409391567013063, 0.0263549866150321, 0.0263549866150321,
   0.0113937985010263, 0.0113937985010263
-];
+] as const;
 
 const X = [
   0.0, -0.1228646926107104, 0.1228646926107104, -0.2438668837209884, 0.2438668837209884,
@@ -35,7 +35,7 @@ const X = [
   -0.7592592630373576, 0.7592592630373576, -0.833442628760834, 0.833442628760834,
   -0.8949919978782753, 0.8949919978782753, -0.9429745712289743, 0.9429745712289743,
   -0.9766639214595175, 0.9766639214595175, -0.9955569697904981, 0.9955569697904981
-];
+] as const;
 
 const roundToThreshold = (value: number, threshold: number) => {
   const inv = 1.0 / threshold;
@@ -166,9 +166,7 @@ export const BezierUtils = {
 
 const VALID_EXTREMES = (e: number) => e >= 0 && e <= 1;
 
-const sgn = (a: number) => {
-  return a >= 0 ? 1 : -1;
-};
+const sgn = (a: number) => (a >= 0 ? 1 : -1);
 
 // Based on https://gist.github.com/weepy/6009631
 const cubicRoots = (a: number, b: number, c: number, d: number) => {
@@ -511,16 +509,13 @@ export class CubicBezier {
 
     if (results.length <= 1) return results;
 
-    const seen = new Set();
-    const result: Point[] = [];
+    const dest = new Map<string, Point>();
     for (let i = 0; i < results.length; i++) {
       const e = results[i];
       const key = roundToThreshold(e.x, threshold) + ',' + roundToThreshold(e.y, threshold);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      result.push(e);
+      dest.set(key, e);
     }
-    return result;
+    return [...dest.values()];
   }
 
   private darclen(t: number) {

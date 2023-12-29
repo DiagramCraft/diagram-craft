@@ -19,9 +19,7 @@ import { Segment } from './pathBuilder.ts';
 
 export type Projection = { t: number; distance: number; point: Point };
 
-export type Accuracy = 'speed' | 'precision';
-
-const makeSegmentList = (start: Point, path: Segment[]) => {
+const makeSegmentList = (start: Point, path: ReadonlyArray<Segment>) => {
   const dest: PathSegment[] = [];
 
   let end = start;
@@ -71,7 +69,8 @@ const makeSegmentList = (start: Point, path: Segment[]) => {
 export class Path {
   private path: Segment[] = [];
   private readonly start: Point;
-  private _segmentList: SegmentList | undefined;
+
+  #segmentList: SegmentList | undefined;
 
   constructor(path: Segment[], start: Point) {
     this.path = path;
@@ -79,18 +78,18 @@ export class Path {
   }
 
   private get segmentList() {
-    if (this._segmentList) return this._segmentList;
-    this._segmentList = makeSegmentList(this.start, this.path);
-    return this._segmentList;
+    if (this.#segmentList) return this.#segmentList;
+    this.#segmentList = makeSegmentList(this.start, this.path);
+    return this.#segmentList;
   }
 
-  get segments(): PathSegment[] {
+  get segments(): ReadonlyArray<PathSegment> {
     return this.segmentList.segments;
   }
 
-  processSegments(fn: (segments: PathSegment[]) => PathSegment[]) {
-    this._segmentList = new SegmentList(fn(this.segmentList.segments));
-    this.path = this._segmentList.segments.flatMap(e => e.asRawSegments());
+  processSegments(fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {
+    this.#segmentList = new SegmentList(fn(this.segmentList.segments));
+    this.path = this.#segmentList.segments.flatMap(e => e.asRawSegments());
   }
 
   length() {
@@ -101,8 +100,8 @@ export class Path {
     return this.segments.slice(0, idx).reduce((acc, cur) => acc + cur.length(), 0);
   }
 
-  pointAt(t: LengthOffsetOnPath, _mode: Accuracy = 'speed') {
-    return this.segmentList.pointAt(t, _mode);
+  pointAt(t: LengthOffsetOnPath) {
+    return this.segmentList.pointAt(t);
   }
 
   tangentAt(t: LengthOffsetOnPath) {
@@ -120,7 +119,7 @@ export class Path {
     };
   }
 
-  intersections(other: Path): WithSegment<PointOnPath>[] {
+  intersections(other: Path): ReadonlyArray<WithSegment<PointOnPath>> {
     const dest: WithSegment<PointOnPath>[] = [];
 
     const segments = this.segments;
@@ -144,7 +143,7 @@ export class Path {
     return dest;
   }
 
-  split(p1: TimeOffsetOnSegment, p2?: TimeOffsetOnSegment): Path[] {
+  split(p1: TimeOffsetOnSegment, p2?: TimeOffsetOnSegment): ReadonlyArray<Path> {
     const dest: Path[] = [];
 
     if (p2 && p1.segment === p2.segment) {
