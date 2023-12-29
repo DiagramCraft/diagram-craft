@@ -6,7 +6,7 @@ import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
 import { AttachmentPointDrag } from '../../base-ui/drag/attachmentPointDrag.ts';
 
 export const LabelNodeSelection = (props: Props) => {
-  precondition.is.present(props.node.props.labelForEgdeId);
+  precondition.is.present(props.node.props.labelForEdgeId);
 
   const drag = useDragDrop();
 

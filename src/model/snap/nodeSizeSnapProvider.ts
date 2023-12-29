@@ -60,7 +60,7 @@ export class NodeSizeSnapProvider implements SnapProvider<'size'> {
 
     for (const node of this.diagram.visibleElements()) {
       if (node.type !== 'node') continue;
-      if (node.props.labelForEgdeId) continue;
+      if (node.props.labelForEdgeId) continue;
       if (this.excludedNodeIds.includes(node.id)) continue;
       if (Box.intersects(node.bounds, box)) continue;
       if (node.bounds.rotation !== 0) continue;

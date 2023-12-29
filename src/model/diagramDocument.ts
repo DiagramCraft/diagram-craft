@@ -8,7 +8,7 @@ export type DocumentEvents = {
 };
 
 export class DiagramDocument extends EventEmitter<DocumentEvents> {
-  constructor(public readonly diagrams: Diagram[]) {
+  constructor(public readonly diagrams: Array<Diagram>) {
     super();
   }
 

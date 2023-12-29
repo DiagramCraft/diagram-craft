@@ -34,7 +34,7 @@ export type DiagramEvents = {
 export type StackPosition = { element: DiagramElement; idx: number };
 
 export const excludeLabelNodes = (n: DiagramElement) =>
-  !(n.type === 'node' && n.props.labelForEgdeId);
+  !(n.type === 'node' && n.props.labelForEdgeId);
 
 export const includeAll = () => true;
 

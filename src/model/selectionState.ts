@@ -126,7 +126,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     }
 
     if (this.#elements.length === 1) {
-      if (this.#elements[0].type === 'node' && this.#elements[0].props.labelForEgdeId) {
+      if (this.#elements[0].type === 'node' && this.#elements[0].props.labelForEdgeId) {
         return 'single-label-node';
       }
       return this.#elements[0].type === 'node' ? 'single-node' : 'single-edge';

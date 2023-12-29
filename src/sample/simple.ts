@@ -126,7 +126,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
               },
               id: 't2',
               props: {
-                labelForEgdeId: 'e1',
+                labelForEdgeId: 'e1',
                 text: {
                   text: 'Hello world',
                   align: 'center'

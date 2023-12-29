@@ -48,7 +48,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
       this.diagram.layers.active,
       {
         text: { text: 'Label', align: 'center' },
-        labelForEgdeId: edge.id,
+        labelForEdgeId: edge.id,
         fill: {
           enabled: true,
           color: '#ffffff'

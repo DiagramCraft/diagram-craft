@@ -148,7 +148,7 @@ export class DiagramEdge implements AbstractEdge {
         ...l,
         node: newNode
       });
-      newNode.props.labelForEgdeId = edge.id;
+      newNode.props.labelForEdgeId = edge.id;
     }
     edge.labelNodes = newLabelNodes;
 

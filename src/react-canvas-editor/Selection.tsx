@@ -392,7 +392,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         })}
 
         {props.selection.nodes
-          .filter(n => !!n.props.labelForEgdeId)
+          .filter(n => !!n.props.labelForEdgeId)
           .map(n => (
             <g
               key={n.id}

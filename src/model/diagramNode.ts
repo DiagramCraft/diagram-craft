@@ -262,20 +262,20 @@ export class DiagramNode implements AbstractNode {
   }
 
   isLabelNode() {
-    return !!this.props.labelForEgdeId;
+    return !!this.props.labelForEdgeId;
   }
 
   labelNode() {
-    if (!this.props.labelForEgdeId) return undefined;
-    const edge = this.diagram.edgeLookup.get(this.props.labelForEgdeId);
+    if (!this.props.labelForEdgeId) return undefined;
+    const edge = this.diagram.edgeLookup.get(this.props.labelForEdgeId);
     assert.present(edge);
     assert.present(edge.labelNodes);
     return edge.labelNodes.find(n => n.node === this);
   }
 
   labelEdge() {
-    if (!this.props.labelForEgdeId) return undefined;
-    const edge = this.diagram.edgeLookup.get(this.props.labelForEgdeId);
+    if (!this.props.labelForEdgeId) return undefined;
+    const edge = this.diagram.edgeLookup.get(this.props.labelForEdgeId);
     assert.present(edge);
     return edge;
   }
