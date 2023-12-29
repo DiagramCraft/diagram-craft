@@ -69,24 +69,24 @@ export class DiagramNode implements AbstractNode {
     this.diagram.updateElement(this);
   }
 
-  transform(transforms: Transform[], uow: UnitOfWork) {
+  transform(transforms: Transform[], uow: UnitOfWork, isChild = false) {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
 
     if (this.nodeType === 'group') {
       for (const child of this.children) {
-        child.transform(transforms, uow);
+        child.transform(transforms, uow, true);
       }
     }
 
-    if (this.parent) {
+    if (this.parent && !isChild) {
       const parent = this.parent;
       uow.pushAction('recalculateBounds', parent, () => {
         parent.recalculateBounds();
       });
     }
 
-    if (this.isLabelNode()) {
+    if (this.isLabelNode() && !isChild) {
       const dx = this.bounds.pos.x - previousBounds.pos.x;
       const dy = this.bounds.pos.y - previousBounds.pos.y;
 
