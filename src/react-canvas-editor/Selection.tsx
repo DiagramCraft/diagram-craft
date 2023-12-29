@@ -16,6 +16,7 @@ import { EventHelper } from '../base-ui/eventHelper.ts';
 import { Diagram } from '../model/diagram.ts';
 import { LabelNodeSelection } from './selection/LabelNodeSelection.tsx';
 import { useEventListener } from '../react-app/hooks/useEventListener.ts';
+import { GroupBounds } from './selection/GroupBounds.tsx';
 
 export type SelectionApi = {
   repaint: () => void;
@@ -77,6 +78,7 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
+      <GroupBounds selection={props.selection} />
       {!isOnlyEdges &&
         [
           ...props.selection.guides.filter(s => s.matchingMagnet.type !== 'distance'),
