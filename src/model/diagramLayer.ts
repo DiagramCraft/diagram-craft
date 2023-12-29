@@ -97,26 +97,6 @@ export class Layer extends EventEmitter<LayerEvents> {
   addElement(element: DiagramElement, omitEvents = false) {
     this.elements.push(element);
     this.processElementForAdd(element);
-
-    if (element.type === 'node') {
-      this.diagram.nodeLookup[element.id] = element;
-      if (element.nodeType === 'group') {
-        // TODO: This needs to be recursive
-        for (const child of element.children) {
-          if (child.type === 'node') {
-            this.diagram.nodeLookup[child.id] = child;
-          } else {
-            this.diagram.edgeLookup[child.id] = child;
-          }
-          /*if (!omitEvents) {
-            this.emit('elementAdd', { element: child });
-            this.diagram.emit('elementAdd', { element: child });
-          }*/
-        }
-      }
-    } else if (element.type === 'edge') {
-      this.diagram.edgeLookup[element.id] = element;
-    }
     if (!omitEvents) {
       this.emit('elementAdd', { element });
       this.diagram.emit('elementAdd', { element });
@@ -148,11 +128,15 @@ export class Layer extends EventEmitter<LayerEvents> {
   private processElementForAdd(e: DiagramElement) {
     e.diagram = this.diagram;
     e.layer = this;
-    if (e.type === 'node' && e.nodeType === 'group') {
+    if (e.type === 'node') {
+      this.diagram.nodeLookup[e.id] = e;
       for (const child of e.children) {
+        // TODO: Do we need to set the parent here, maybe change to an assert
         child.parent = e;
         this.processElementForAdd(child);
       }
+    } else {
+      this.diagram.edgeLookup[e.id] = e;
     }
   }
 }
