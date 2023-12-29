@@ -1,22 +1,7 @@
 import { SelectionState } from '../../model/selectionState.ts';
-import { DiagramElement, DiagramNode } from '../../model/diagramNode.ts';
-
-const getParents = (node: DiagramElement): DiagramNode[] => {
-  const parents: DiagramNode[] = [];
-  let parent = node.parent;
-  while (parent) {
-    parents.push(parent);
-    parent = parent.parent;
-  }
-  return parents;
-};
 
 export const GroupBounds = (props: Props) => {
-  const groups = new Set<DiagramNode>();
-
-  for (const e of props.selection.elements) {
-    if (e.parent) getParents(e).forEach(p => groups.add(p));
-  }
+  const groups = props.selection.getParents();
 
   if (groups.size === 0) return null;
 

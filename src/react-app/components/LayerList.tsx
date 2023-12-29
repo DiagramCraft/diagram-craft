@@ -147,7 +147,13 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   return (
     <Tree.Node
       key={e.id}
-      data-state={diagram.selectionState.elements.includes(e) ? 'on' : 'off'}
+      data-state={
+        diagram.selectionState.elements.includes(e)
+          ? 'on'
+          : diagram.selectionState.getParents().has(e)
+          ? 'child'
+          : 'off'
+      }
       {...drag.eventHandlers}
       {...dropTarget.eventHandlers}
       onClick={() => {

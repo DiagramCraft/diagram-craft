@@ -201,6 +201,18 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     this.setElements([]);
   }
 
+  getParents() {
+    const parents = new Set<DiagramElement>();
+    for (const el of this.elements) {
+      let parent = el.parent;
+      while (parent) {
+        parents.add(parent);
+        parent = parent.parent;
+      }
+    }
+    return parents;
+  }
+
   /* To be used once a transform operation on the selection has been completed.
    * It resets the source elements that are used for tracking changes.
    */
