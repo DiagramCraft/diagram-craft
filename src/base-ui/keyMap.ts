@@ -112,7 +112,10 @@ export const defaultMacKeymap: KeyMap = {
   'A-Digit5': 'SIDEBAR_HISTORY',
   'A-Digit6': 'SIDEBAR_STYLE',
   'A-Digit7': 'SIDEBAR_INFO',
-  'A-Digit8': 'SIDEBAR_DATA'
+  'A-Digit8': 'SIDEBAR_DATA',
+
+  'M-KeyG': 'GROUP_GROUP',
+  'MS-KeyG': 'GROUP_UNGROUP'
 };
 
 export const findAction = (
