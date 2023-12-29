@@ -5,8 +5,42 @@ import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.
 import { DiagramNode } from './diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { PathBuilder } from '../geometry/pathBuilder.ts';
+import { newid } from '../utils/id.ts';
+import { Layer } from './diagramLayer.ts';
+import { UnitOfWork } from './unitOfWork.ts';
+
+const bounds = {
+  pos: { x: 0, y: 0 },
+  size: { w: 100, h: 100 },
+  rotation: 0
+};
 
 describe('Diagram', () => {
+  test('visibleElements()', () => {
+    const diagram = new Diagram(
+      newid(),
+      'Name',
+      new NodeDefinitionRegistry(),
+      new EdgeDefinitionRegistry()
+    );
+    const layer1 = new Layer(newid(), 'Layer 1', [], diagram);
+    diagram.layers.add(layer1);
+
+    const layer2 = new Layer(newid(), 'Layer 2', [], diagram);
+    diagram.layers.add(layer2);
+
+    const node1 = new DiagramNode('1', 'a', bounds, diagram, layer1);
+    const node2 = new DiagramNode('2', 'b', bounds, diagram, layer2);
+    layer1.addElement(node1);
+    layer2.addElement(node2);
+
+    expect(diagram.visibleElements()).toStrictEqual([node1, node2]);
+    diagram.layers.toggleVisibility(layer1);
+    expect(diagram.visibleElements()).toStrictEqual([node2]);
+    diagram.layers.toggleVisibility(layer2);
+    expect(diagram.visibleElements()).toStrictEqual([]);
+  });
+
   test('transform rotate', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
     nodeDefinitionRegistry.register(
@@ -18,17 +52,7 @@ describe('Diagram', () => {
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry(), []);
     const layer = diagram.layers.active;
 
-    const node1 = new DiagramNode(
-      '1',
-      'a',
-      {
-        pos: { x: 0, y: 0 },
-        size: { w: 100, h: 100 },
-        rotation: 0
-      },
-      diagram,
-      layer
-    );
+    const node1 = new DiagramNode('1', 'a', bounds, diagram, layer);
     diagram.layers.active.addElement(node1);
 
     const node2 = new DiagramNode(
@@ -48,7 +72,9 @@ describe('Diagram', () => {
 
     const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
     const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: Math.PI / 2 };
-    diagram.transformElements(nodes, TransformFactory.fromTo(before, after));
+    const uow = new UnitOfWork(diagram);
+    diagram.transformElements(nodes, TransformFactory.fromTo(before, after), uow);
+    uow.commit();
 
     expect(node1.bounds.rotation).toStrictEqual(Math.PI / 2);
     expect(node1.bounds.pos).toStrictEqual({ x: 100, y: 0 });

@@ -1,6 +1,6 @@
 import { Box } from '../geometry/box.ts';
 import { Transform } from '../geometry/transform.ts';
-import { Diagram, UnitOfWork } from './diagram.ts';
+import { Diagram } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
@@ -10,6 +10,7 @@ import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -106,7 +107,7 @@ export class DiagramEdge implements AbstractEdge {
     return buildEdgePath(this, this.props.routing?.rounding ?? 0);
   }
 
-  transform(transforms: Transform[], _uow: UnitOfWork) {
+  transform(transforms: ReadonlyArray<Transform>, _uow: UnitOfWork) {
     this.bounds = Transform.box(this.bounds, ...transforms);
 
     this.waypoints = this.waypoints?.map(w => {

@@ -26,7 +26,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
   execute(context: ActionContext): void {
     precondition.is.present(context.point);
 
-    const edge = this.diagram.edgeLookup[context.id!];
+    const edge = this.diagram.edgeLookup.get(context.id!);
 
     precondition.is.present(edge);
 

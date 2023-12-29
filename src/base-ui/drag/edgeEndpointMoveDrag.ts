@@ -2,8 +2,9 @@ import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { Diagram, UnitOfWork } from '../../model/diagram.ts';
+import { Diagram } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramNode.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 const addHighlight = (element: DiagramElement, highlight: string) => {
   element.props ??= {};
@@ -42,21 +43,18 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   onDragEnter(id: string): void {
     this.hoverElement = id;
 
-    if (id && this.diagram.nodeLookup[id]) {
-      const el = this.diagram.nodeLookup[id];
+    if (id && this.diagram.nodeLookup.has(id)) {
+      const el = this.diagram.nodeLookup.get(id)!;
       el.anchors;
     }
 
-    const el = this.diagram.nodeLookup[id] || this.diagram.edgeLookup[id];
+    const el = this.diagram.lookup(id)!;
     addHighlight(el, 'edge-connect');
   }
 
   onDragLeave(): void {
     if (this.hoverElement) {
-      removeHighlight(
-        this.diagram.nodeLookup[this.hoverElement] || this.diagram.edgeLookup[this.hoverElement],
-        'edge-connect'
-      );
+      removeHighlight(this.diagram.lookup(this.hoverElement)!, 'edge-connect');
     }
     this.hoverElement = undefined;
   }
@@ -76,7 +74,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.coord = coord;
 
     // TODO: We should snap to the connection point
-    if (this.hoverElement && this.diagram.nodeLookup[this.hoverElement]) {
+    if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
       this.element.classList.add('selection-edge-handle--connected');
 
       this.attachToClosestAnchor(coord);
@@ -95,25 +93,22 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.attachToClosestAnchor(this.coord!);
 
     if (this.hoverElement) {
-      removeHighlight(
-        this.diagram.nodeLookup[this.hoverElement] || this.diagram.edgeLookup[this.hoverElement],
-        'edge-connect'
-      );
+      removeHighlight(this.diagram.lookup(this.hoverElement)!, 'edge-connect');
     }
 
     // TODO: Create undoable action
   }
 
   private attachToClosestAnchor(coord: Point) {
-    if (this.hoverElement && this.diagram.nodeLookup[this.hoverElement]) {
+    if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
       if (this.type === 'start') {
         this.edge.start = {
-          node: this.diagram.nodeLookup[this.hoverElement],
+          node: this.diagram.nodeLookup.get(this.hoverElement)!,
           anchor: this.getClosestAnchor(coord)
         };
       } else {
         this.edge.end = {
-          node: this.diagram.nodeLookup[this.hoverElement],
+          node: this.diagram.nodeLookup.get(this.hoverElement)!,
           anchor: this.getClosestAnchor(coord)
         };
       }
@@ -121,7 +116,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   }
 
   private getClosestAnchor(coord: Point): number {
-    const node = this.diagram.nodeLookup[this.hoverElement!];
+    const node = this.diagram.nodeLookup.get(this.hoverElement!)!;
     const anchors = node.anchors.map((a, idx) => {
       return {
         idx,

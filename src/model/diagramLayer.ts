@@ -15,6 +15,8 @@ export type LayerEvents = {
 export class Layer extends EventEmitter<LayerEvents> {
   id: string;
   name: string;
+
+  // TODO: We should make this a ReadonlyArray
   elements: DiagramElement[] = [];
   private diagram: Diagram;
 
@@ -108,9 +110,9 @@ export class Layer extends EventEmitter<LayerEvents> {
     this.elements = this.elements.filter(e => e !== element);
 
     if (element.type === 'node') {
-      delete this.diagram.nodeLookup[element.id];
+      this.diagram.nodeLookup.delete(element.id);
     } else if (element.type === 'edge') {
-      delete this.diagram.edgeLookup[element.id];
+      this.diagram.edgeLookup.delete(element.id);
     }
 
     this.diagram.emit('elementRemove', { element });
@@ -130,14 +132,14 @@ export class Layer extends EventEmitter<LayerEvents> {
     e.diagram = this.diagram;
     e.layer = this;
     if (e.type === 'node') {
-      this.diagram.nodeLookup[e.id] = e;
+      this.diagram.nodeLookup.set(e.id, e);
       for (const child of e.children) {
         // TODO: Eventually remove this assertion
         assert.true(child.parent === e);
         this.processElementForAdd(child);
       }
     } else {
-      this.diagram.edgeLookup[e.id] = e;
+      this.diagram.edgeLookup.set(e.id, e);
     }
   }
 }

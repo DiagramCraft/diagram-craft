@@ -10,8 +10,8 @@ import { SelectionState } from './selectionState.ts';
 import { UndoManager } from './undoManager.ts';
 import { SnapManager } from './snap/snapManager.ts';
 import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
-import { unique } from '../utils/array.ts';
 import { assert } from '../utils/assert.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
@@ -33,10 +33,8 @@ export type DiagramEvents = {
 
 export type StackPosition = { element: DiagramElement; idx: number };
 
-export const excludeLabelNodes = (n: DiagramElement) => {
-  if (n.type === 'node' && n.props.labelForEgdeId) return false;
-  return true;
-};
+export const excludeLabelNodes = (n: DiagramElement) =>
+  !(n.type === 'node' && n.props.labelForEgdeId);
 
 export const includeAll = () => true;
 
@@ -49,12 +47,12 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     }
   };
 
-  props: DiagramProps = {};
-  diagrams: this[] = [];
+  diagrams: ReadonlyArray<this> = [];
 
+  readonly props: DiagramProps = {};
   readonly viewBox = new Viewbox(this.#canvas.size);
-  readonly nodeLookup: Record<string, DiagramNode> = {};
-  readonly edgeLookup: Record<string, DiagramEdge> = {};
+  readonly nodeLookup = new Map<string, DiagramNode>();
+  readonly edgeLookup = new Map<string, DiagramEdge>();
   readonly selectionState: SelectionState = new SelectionState(this);
   readonly layers = new LayerManager(this, []);
   readonly snapManagerConfig = new SnapManagerConfig([
@@ -82,6 +80,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       this.layers.add(new Layer('default', 'Default', [], this));
       elements.forEach(e => this.layers.active.addElement(e, true));
     }
+  }
+
+  lookup(id: string): DiagramElement | undefined {
+    return this.nodeLookup.get(id) ?? this.edgeLookup.get(id);
   }
 
   createSnapManager() {
@@ -116,28 +118,28 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
   // TODO: Change this to an undoable action?
   // TODO: Check layer level events are emitted
-  // TODO: Need to support groups
   moveElement(
     elements: DiagramElement[],
     layer: Layer,
     ref?: { relation: 'above' | 'below'; element: DiagramElement }
   ) {
-    const layers = elements.map(e => e.layer);
-    const topMostLayer = this.layers.all.findLast(l => layers.includes(l));
+    const elementLayers = elements.map(e => e.layer);
+    const topMostLayer = this.layers.all.findLast(layer => elementLayers.includes(layer));
     assert.present(topMostLayer);
 
+    // Cannot move an element into itself, so abort if this is the case
     if (elements.some(e => e === ref?.element)) return;
 
     // Remove from existing layers
-    const sourceLayers = unique(elements.map(e => e.layer!));
+    const sourceLayers = new Set(elementLayers);
     for (const l of sourceLayers) {
       l.elements = l.elements.filter(e => !elements.includes(e));
     }
 
     // Remove from groups
-    // TODO: Can optimize by grouping by parent
+    // TODO: Can optimize by grouping by parent - probably not worth it
     for (const el of elements) {
-      if (el.type === 'node' && el.parent) {
+      if (el.parent) {
         el.parent.children = el.parent.children.filter(e => e !== el);
         el.parent = undefined;
       }
@@ -152,8 +154,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       }
     } else if (ref.element.type === 'node' && ref.element.parent) {
       const parent = ref.element.parent;
-      const idx = parent.children.indexOf(ref.element);
 
+      const idx = parent.children.indexOf(ref.element);
       if (ref.relation === 'above') {
         parent.children = parent.children.toSpliced(idx + 1, 0, ...elements);
       } else {
@@ -171,9 +173,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     }
 
     // Assign new layer
-    elements.forEach(e => {
-      e.layer = layer;
-    });
+    elements.forEach(e => (e.layer = layer));
 
     this.update();
   }
@@ -186,12 +186,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
   transformElements(
     elements: ReadonlyArray<DiagramElement>,
-    transforms: Transform[],
-    filter: (e: DiagramElement) => boolean = () => true,
-    providedUow?: UnitOfWork
+    transforms: ReadonlyArray<Transform>,
+    uow: UnitOfWork,
+    filter: (e: DiagramElement) => boolean = () => true
   ) {
-    const uow = providedUow ?? new UnitOfWork(this);
-
     for (const el of elements) {
       if (filter(el)) el.transform(transforms, uow);
     }
@@ -201,43 +199,11 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     for (const el of elements) {
       if (filter(el)) uow.updateElement(el);
     }
-
-    if (!providedUow) uow.commit();
   }
 
+  // TODO: Remove this
+  /** @deprecated */
   update() {
     this.emit('change', { diagram: this });
-  }
-}
-
-export class UnitOfWork {
-  #elementsToUpdate: Record<string, DiagramElement> = {};
-  #actions: [string, () => void][] = [];
-
-  constructor(readonly diagram: Diagram) {}
-
-  static updateElement(element: DiagramElement) {
-    element.diagram.emit('elementChange', { element: element });
-  }
-
-  contains(element: DiagramElement) {
-    return !!this.#elementsToUpdate[element.id];
-  }
-
-  updateElement(element: DiagramElement) {
-    this.#elementsToUpdate[element.id] = element;
-  }
-
-  pushAction(name: string, element: DiagramElement, cb: () => void) {
-    const id = name + element.id;
-    if (this.#actions.some(a => a[0] === id)) return;
-    this.#actions.push([id, cb]);
-  }
-
-  commit() {
-    this.#actions.forEach(a => a[1]());
-    Object.values(this.#elementsToUpdate).forEach(e =>
-      this.diagram.emit('elementChange', { element: e })
-    );
   }
 }

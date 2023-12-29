@@ -42,7 +42,7 @@ export class MoveTool extends AbstractTool {
 
     try {
       if (isClickOnSelection) {
-        let element = this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id];
+        let element = this.diagram.lookup(id)!;
 
         // If we click on an element that is part of a group, select the group instead
         // ... except, when the group is already selected, in which case we allow for "drill-down"
@@ -81,7 +81,7 @@ export class MoveTool extends AbstractTool {
           selection.clear();
         }
 
-        let element = this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id];
+        let element = this.diagram.lookup(id)!;
 
         // Ensure you cannot select an additional node if you already have a group selected
         const parents = selection.nodes.map(n => n.parent);

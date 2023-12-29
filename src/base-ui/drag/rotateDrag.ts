@@ -6,6 +6,7 @@ import { Vector } from '../../geometry/vector.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { RotateAction } from '../../model/diagramUndoActions.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export class RotateDrag extends AbstractDrag {
   constructor(private readonly diagram: Diagram) {
@@ -22,14 +23,18 @@ export class RotateDrag extends AbstractDrag {
 
     selection.guides = [];
 
+    const uow = new UnitOfWork(this.diagram);
     this.diagram.transformElements(
       selection.elements,
       TransformFactory.fromTo(before, {
         ...selection.bounds,
         rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
       }),
+      uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
+    uow.commit();
+
     selection.forceRotation(Vector.angle(Vector.from(center, coord)) + Math.PI / 2);
 
     this.setState({

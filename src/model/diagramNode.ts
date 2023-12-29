@@ -2,12 +2,13 @@ import { Box } from '../geometry/box.ts';
 import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
-import { Diagram, UnitOfWork } from './diagram.ts';
+import { Diagram } from './diagram.ts';
 import { DiagramEdge, Endpoint, isConnected } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 
@@ -82,7 +83,7 @@ export class DiagramNode implements AbstractNode {
     this.diagram.updateElement(this);
   }
 
-  transform(transforms: Transform[], uow: UnitOfWork, isChild = false) {
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
 
@@ -266,7 +267,7 @@ export class DiagramNode implements AbstractNode {
 
   labelNode() {
     if (!this.props.labelForEgdeId) return undefined;
-    const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
+    const edge = this.diagram.edgeLookup.get(this.props.labelForEgdeId);
     assert.present(edge);
     assert.present(edge.labelNodes);
     return edge.labelNodes.find(n => n.node === this);
@@ -274,7 +275,7 @@ export class DiagramNode implements AbstractNode {
 
   labelEdge() {
     if (!this.props.labelForEgdeId) return undefined;
-    const edge = this.diagram.edgeLookup[this.props.labelForEgdeId];
+    const edge = this.diagram.edgeLookup.get(this.props.labelForEgdeId);
     assert.present(edge);
     return edge;
   }

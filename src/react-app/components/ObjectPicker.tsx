@@ -14,7 +14,7 @@ const PickerCanvas = (props: PickerCanvasProps) => {
       {diagram.layers.active.elements.map(e => {
         const id = e.id;
         if (e.type === 'edge') {
-          const edge = diagram.edgeLookup[id]!;
+          const edge = diagram.edgeLookup.get(id)!;
           return (
             <Edge
               key={id}
@@ -27,7 +27,7 @@ const PickerCanvas = (props: PickerCanvasProps) => {
             />
           );
         } else {
-          const node = diagram.nodeLookup[id]!;
+          const node = diagram.nodeLookup.get(id)!;
           return (
             <Node
               key={id}

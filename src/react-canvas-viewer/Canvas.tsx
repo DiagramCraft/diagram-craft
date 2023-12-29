@@ -35,7 +35,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         return layer.elements.map(e => {
           const id = e.id;
           if (e.type === 'edge') {
-            const edge = diagram.edgeLookup[id]!;
+            const edge = diagram.edgeLookup.get(id)!;
             return (
               <Edge
                 key={id}
@@ -48,7 +48,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
               />
             );
           } else {
-            const node = diagram.nodeLookup[id]!;
+            const node = diagram.nodeLookup.get(id)!;
             return (
               <Node
                 key={id}

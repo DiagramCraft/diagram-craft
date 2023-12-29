@@ -42,8 +42,8 @@ export const ObjectInfo = () => {
         <AccordionTrigger>Info</AccordionTrigger>
         <AccordionContent>
           {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
-          {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup[nodeId!]} />}
-          {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup[edgeId!]} />}
+          {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
+          {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
         </AccordionContent>
       </Accordion.Item>
     </Accordion.Root>

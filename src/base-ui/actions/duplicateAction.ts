@@ -1,9 +1,10 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { NodeAddAction } from '../../model/diagramUndoActions.ts';
-import { Diagram, UnitOfWork } from '../../model/diagram.ts';
+import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { Translation } from '../../geometry/transform.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {

@@ -52,9 +52,7 @@ const LayerEntry = (props: { layer: Layer }) => {
     ev => {
       if (ev[ELEMENT_INSTANCES]) {
         diagram.moveElement(
-          JSON.parse(ev[ELEMENT_INSTANCES].on!).map(
-            (id: string) => diagram.nodeLookup[id] ?? diagram.edgeLookup[id]
-          ),
+          JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
           layer
         );
       } else {
@@ -130,7 +128,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       }
 
       diagram.moveElement(
-        instances.map((id: string) => diagram.nodeLookup[id] ?? diagram.edgeLookup[id]),
+        instances.map((id: string) => diagram.lookup(id)!),
         e.layer!,
         {
           relation,

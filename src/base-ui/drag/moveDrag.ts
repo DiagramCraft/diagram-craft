@@ -13,6 +13,7 @@ import { newid } from '../../utils/id.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramNode.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export class MoveDrag extends AbstractDrag {
   snapAngle?: Axis;
@@ -35,7 +36,7 @@ export class MoveDrag extends AbstractDrag {
   }
 
   onDragEnter(id: string): void {
-    const el = this.diagram.edgeLookup[id];
+    const el = this.diagram.edgeLookup.get(id);
     if (el) {
       this.currentEdge = el;
     }
@@ -76,20 +77,21 @@ export class MoveDrag extends AbstractDrag {
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (modifiers.metaKey && !this.metaKey) {
       // Reset current selection back to original
+      const uow = new UnitOfWork(this.diagram);
       this.diagram.transformElements(
         selection.nodes,
         [new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))],
+        uow,
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
       );
+      uow.commit();
 
       newBounds.set('pos', selection.source.boundingBox.pos);
       selection.guides = [];
 
       this.enablePointerEvents(selection.elements);
 
-      const newElements = selection.source.elementIds.map(e =>
-        (this.diagram.nodeLookup[e] ?? this.diagram.edgeLookup[e]).duplicate()
-      );
+      const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
       newElements.forEach(e => {
         e.id = newid();
         this.diagram.layers.active.addElement(e);
@@ -102,11 +104,7 @@ export class MoveDrag extends AbstractDrag {
 
       const elementsToRemove = selection.elements;
 
-      selection.setElements(
-        selection.source.elementIds.map(
-          e => this.diagram.nodeLookup[e] ?? this.diagram.edgeLookup[e]
-        )
-      );
+      selection.setElements(selection.source.elementIds.map(e => this.diagram.lookup(e)!));
       selection.guides = [];
 
       elementsToRemove.forEach(e => {
@@ -151,11 +149,14 @@ export class MoveDrag extends AbstractDrag {
       newBounds.set('pos', result.adjusted.pos);
     }
 
+    const uow = new UnitOfWork(this.diagram);
     this.diagram.transformElements(
       selection.elements,
       [new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))],
+      uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
+    uow.commit();
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selectionState.recalculateBoundingBox();

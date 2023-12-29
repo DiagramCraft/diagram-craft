@@ -1,9 +1,10 @@
 import { UndoableAction } from './undoManager.ts';
 import { Box } from '../geometry/box.ts';
 import { TransformFactory } from '../geometry/transform.ts';
-import { Diagram, UnitOfWork } from './diagram.ts';
+import { Diagram } from './diagram.ts';
 import { DiagramElement, DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
 import { Layer } from './diagramLayer.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
 class AbstractTransformAction implements UndoableAction {
   private elements: DiagramElement[] = [];
@@ -41,7 +42,6 @@ class AbstractTransformAction implements UndoableAction {
       this.diagram.transformElements(
         [this.elements[i]],
         TransformFactory.fromTo(source[i], target[i]),
-        () => true,
         uow
       );
     }

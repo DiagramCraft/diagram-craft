@@ -8,6 +8,7 @@ import { TransformFactory } from '../../geometry/transform.ts';
 import { ResizeAction } from '../../model/diagramUndoActions.ts';
 import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export class ResizeDrag extends AbstractDrag {
   constructor(
@@ -122,11 +123,15 @@ export class ResizeDrag extends AbstractDrag {
     }
 
     selection.forceRotation(undefined);
+
+    const uow = new UnitOfWork(this.diagram);
     this.diagram.transformElements(
       selection.elements,
       TransformFactory.fromTo(before, newBounds.getSnapshot()),
+      uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
+    uow.commit();
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selectionState.recalculateBoundingBox();
