@@ -75,7 +75,15 @@ export class MoveTool extends AbstractTool {
         if (!modifiers.shiftKey) {
           selection.clear();
         }
+
         let element = this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id];
+
+        // Ensure you cannot select an additional node if you already have a group selected
+        const parents = selection.nodes.map(n => n.parent);
+        if (parents.length > 0 && parents[0] !== element.parent) {
+          selection.clear();
+        }
+
         if (element.type === 'node') {
           // TODO: ... and here
           const parent = element.getTopmostParent();
