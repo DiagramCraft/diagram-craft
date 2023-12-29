@@ -7,10 +7,10 @@ import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 
 class AbstractTransformAction implements UndoableAction {
-  private elements: DiagramElement[] = [];
-  private source: Box[] = [];
-  private target: Box[] = [];
-  private diagram: Diagram;
+  readonly #elements: ReadonlyArray<DiagramElement>;
+  readonly #source: ReadonlyArray<Box>;
+  readonly #target: ReadonlyArray<Box>;
+  readonly #diagram: Diagram;
 
   description: string;
 
@@ -21,26 +21,26 @@ class AbstractTransformAction implements UndoableAction {
     diagram: Diagram,
     description: string
   ) {
-    this.diagram = diagram;
-    this.elements.push(...nodes);
-    this.source.push(...source);
-    this.target.push(...target);
+    this.#diagram = diagram;
+    this.#elements = [...nodes];
+    this.#source = [...source];
+    this.#target = [...target];
     this.description = description;
   }
 
   undo() {
-    this.transformElementsAction(this.target, this.source);
+    this.transformElementsAction(this.#target, this.#source);
   }
 
   redo() {
-    this.transformElementsAction(this.source, this.target);
+    this.transformElementsAction(this.#source, this.#target);
   }
 
-  private transformElementsAction(source: Box[], target: Box[]): void {
-    const uow = new UnitOfWork(this.diagram);
-    for (let i = 0; i < this.elements.length; i++) {
-      this.diagram.transformElements(
-        [this.elements[i]],
+  private transformElementsAction(source: ReadonlyArray<Box>, target: ReadonlyArray<Box>): void {
+    const uow = new UnitOfWork(this.#diagram);
+    for (let i = 0; i < this.#elements.length; i++) {
+      this.#diagram.transformElements(
+        [this.#elements[i]],
         TransformFactory.fromTo(source[i], target[i]),
         uow
       );
@@ -55,16 +55,15 @@ export class RotateAction extends AbstractTransformAction {}
 
 export class ResizeAction extends AbstractTransformAction {}
 
-// TODO: Do we want to reset the selection here?
-export class NodeAddAction implements UndoableAction {
-  private layer: Layer;
+export class NodeAddUndoableAction implements UndoableAction {
+  readonly #layer: Layer;
 
   constructor(
-    private readonly nodes: DiagramNode[],
+    private readonly nodes: ReadonlyArray<DiagramNode>,
     private readonly diagram: Diagram,
     public readonly description: string = 'Add node'
   ) {
-    this.layer = this.diagram.layers.active;
+    this.#layer = this.diagram.layers.active;
   }
 
   undo() {
@@ -72,42 +71,42 @@ export class NodeAddAction implements UndoableAction {
   }
 
   redo() {
-    this.nodes.forEach(node => this.layer.addElement(node));
+    this.nodes.forEach(node => this.#layer.addElement(node));
   }
 }
 
-export class NodeChangeAction implements UndoableAction {
-  private snapshots: DiagramNodeSnapshot[] = [];
-  description: string;
+export class NodeChangeUndoableAction implements UndoableAction {
+  #snapshots: ReadonlyArray<DiagramNodeSnapshot> = [];
 
   constructor(
-    private readonly nodes: DiagramNode[],
+    private readonly nodes: ReadonlyArray<DiagramNode>,
     private readonly diagram: Diagram,
-    description: string
+    public readonly description: string
   ) {
-    this.snapshots = nodes.map(node => node.snapshot());
-    this.description = description;
+    this.#snapshots = nodes.map(node => node.snapshot());
   }
 
   undo() {
     const newSnapshots = this.nodes.map(node => node.snapshot());
 
-    this.nodes.forEach(node => {
-      node.restore(this.snapshots.find(n => n.id === node.id)!);
-      this.diagram.updateElement(node);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.nodes.forEach(node => {
+        node.restore(this.#snapshots.find(n => n.id === node.id)!, uow);
+      });
     });
 
-    this.snapshots = newSnapshots;
+    this.#snapshots = newSnapshots;
   }
 
   redo() {
     const newSnapshots = this.nodes.map(node => node.snapshot());
 
-    this.nodes.forEach(node => {
-      node.restore(this.snapshots.find(n => n.id === node.id)!);
-      this.diagram.updateElement(node);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.nodes.forEach(node => {
+        node.restore(this.#snapshots.find(n => n.id === node.id)!, uow);
+      });
     });
 
-    this.snapshots = newSnapshots;
+    this.#snapshots = newSnapshots;
   }
 }

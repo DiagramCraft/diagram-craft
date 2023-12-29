@@ -7,7 +7,7 @@ import { Translation } from '../../geometry/transform.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeHelper.ts';
-import { MoveAction, NodeAddAction } from '../../model/diagramUndoActions.ts';
+import { MoveAction, NodeAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramNode.ts';
@@ -179,7 +179,7 @@ export class MoveDrag extends AbstractDrag {
       }
 
       if (this.metaKey) {
-        this.diagram.undoManager.add(new NodeAddAction(selection.nodes, this.diagram));
+        this.diagram.undoManager.add(new NodeAddUndoableAction(selection.nodes, this.diagram));
       } else {
         this.diagram.undoManager.add(
           new MoveAction(

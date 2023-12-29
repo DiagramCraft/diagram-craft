@@ -5,7 +5,7 @@ import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts
 import { AbstractTool } from './abstractTool.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
-import { NodeAddAction } from '../../model/diagramUndoActions.ts';
+import { NodeAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
 
 export class TextTool extends AbstractTool {
@@ -41,7 +41,9 @@ export class TextTool extends AbstractTool {
       nodeDef.getDefaultProps('canvas')
     );
 
-    this.diagram.undoManager.addAndExecute(new NodeAddAction([nd], this.diagram, 'Add text'));
+    this.diagram.undoManager.addAndExecute(
+      new NodeAddUndoableAction([nd], this.diagram, 'Add text')
+    );
 
     this.diagram.selectionState.clear();
     this.diagram.selectionState.toggle(nd);

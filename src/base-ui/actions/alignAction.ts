@@ -1,6 +1,6 @@
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
-import { NodeChangeAction } from '../../model/diagramUndoActions.ts';
+import { NodeChangeUndoableAction } from '../../model/diagramUndoActions.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
@@ -43,7 +43,7 @@ export class AlignAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const action = new NodeChangeAction(
+    const action = new NodeChangeUndoableAction(
       this.diagram.selectionState.nodes,
       this.diagram,
       `Align ${this.mode}`

@@ -248,9 +248,10 @@ export class DiagramNode implements AbstractNode {
     };
   }
 
-  restore(snapshot: DiagramNodeSnapshot) {
+  restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.bounds = snapshot.bounds;
     this.props = snapshot.props;
+    uow.updateElement(this);
   }
 
   listEdges(): DiagramEdge[] {

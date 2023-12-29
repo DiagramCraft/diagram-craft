@@ -1,6 +1,6 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { NodeAddAction } from '../../model/diagramUndoActions.ts';
+import { NodeAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { Translation } from '../../geometry/transform.ts';
@@ -34,7 +34,7 @@ export class DuplicateAction extends AbstractSelectionAction {
     }
 
     this.diagram.undoManager.addAndExecute(
-      new NodeAddAction(newElements, this.diagram, 'Duplicate nodes')
+      new NodeAddUndoableAction(newElements, this.diagram, 'Duplicate nodes')
     );
 
     // We commit after adding to the layer so that any change events

@@ -6,7 +6,7 @@ import { ObjectPicker } from './components/ObjectPicker.tsx';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';
-import { NodeAddAction } from '../model/diagramUndoActions.ts';
+import { NodeAddUndoableAction } from '../model/diagramUndoActions.ts';
 import { Diagram } from '../model/diagram.ts';
 
 export const canvasDropHandler = ($d: Diagram) => {
@@ -27,7 +27,7 @@ export const canvasDropHandler = ($d: Diagram) => {
       nodeDef.getDefaultProps('canvas')
     );
 
-    $d.undoManager.addAndExecute(new NodeAddAction([nd], $d));
+    $d.undoManager.addAndExecute(new NodeAddUndoableAction([nd], $d));
 
     $d.selectionState.clear();
     $d.selectionState.toggle(nd);
