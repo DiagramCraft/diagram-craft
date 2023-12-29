@@ -5,7 +5,7 @@ import { UndoableAction } from '../../model/undoManager.ts';
 import { DiagramElement, DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
-import { reversedRO } from '../../utils/array.ts';
+import { reversed } from '../../utils/array.ts';
 
 declare global {
   interface ActionMap {
@@ -88,7 +88,7 @@ class UndoableGroupAction implements UndoableAction {
     this.#group?.layer.removeElement(this.#group);
     this.#elements = this.#group.children;
 
-    reversedRO(children).forEach(e => {
+    reversed(children).forEach(e => {
       e.parent = undefined;
       this.diagram.layers.active.addElement(e);
     });
