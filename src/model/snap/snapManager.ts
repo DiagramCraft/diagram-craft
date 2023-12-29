@@ -178,7 +178,7 @@ export class SnapManager {
     };
   }
 
-  snapMove(b: Box, directions: Direction[] = ['n', 'w', 'e', 's']): SnapResult {
+  snapMove(b: Box, directions: ReadonlyArray<Direction> = ['n', 'w', 'e', 's']): SnapResult {
     if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
 
     const enabledSnapProviders: MagnetType[] = this.magnetTypes.filter(a => a !== 'size');

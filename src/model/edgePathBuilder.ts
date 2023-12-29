@@ -12,15 +12,15 @@ type Result = {
   startDirection: Direction;
   endDirection: Direction;
   path: PathBuilder;
-  availableDirections: Direction[];
-  preferedDirection: Direction[];
+  availableDirections: ReadonlyArray<Direction>;
+  preferedDirection: ReadonlyArray<Direction>;
 };
 
 const addSegment = (
   prevWP: Waypoint,
   thisWP: Waypoint,
-  availableDirections: Direction[],
-  preferedDirection: Direction[]
+  availableDirections: ReadonlyArray<Direction>,
+  preferedDirection: ReadonlyArray<Direction>
 ): Result[] => {
   const { x: px, y: py } = prevWP.point;
   const { x: x, y: y } = thisWP.point;
@@ -31,14 +31,11 @@ const addSegment = (
     if (d === 'e' && x > px) return true;
     return d === 'w' && x < px;
   };
-  const dirInOrder = unique(
-    [
-      ...preferedDirection.filter(isAvailable),
-      ...availableDirections.filter(isAvailable),
-      ...availableDirections
-    ],
-    a => a
-  );
+  const dirInOrder = unique([
+    ...preferedDirection.filter(isAvailable),
+    ...availableDirections.filter(isAvailable),
+    ...availableDirections
+  ]);
 
   return dirInOrder.map(direction => {
     const p = new PathBuilder();
@@ -89,8 +86,10 @@ const buildOrthogonalEdgePath = (
   const path = new PathBuilder();
   path.moveTo(sm);
 
-  let availableDirections: Direction[] = Direction.all();
-  let preferedDirections: Direction[] = preferedStartDirection ? [preferedStartDirection] : [];
+  let availableDirections = Direction.all();
+  let preferedDirections: ReadonlyArray<Direction> = preferedStartDirection
+    ? [preferedStartDirection]
+    : [];
   let prevPosition: Waypoint = { point: sm };
   edge.waypoints?.forEach(mp => {
     const result = addSegment(prevPosition, mp, availableDirections, preferedDirections);
@@ -144,17 +143,12 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
   if (!edge.waypoints || edge.waypoints.length === 0) {
     path.lineTo(edge.endPosition);
   } else {
-    // TODO: We should improve the way this works when adding new waypoints
-    //       e.g. using the tangent line
-    // Ensure all control points exists
+    // Ensure all control points exists, as they may not in case the edge type has been changed
     for (let i = 0; i < edge.waypoints.length; i++) {
-      const wp = edge.waypoints[i];
-      if (!wp.controlPoints) {
-        wp.controlPoints = [
-          { x: 20, y: 20 },
-          { x: -20, y: -20 }
-        ];
-      }
+      edge.waypoints[i].controlPoints ??= [
+        { x: 20, y: 20 },
+        { x: -20, y: -20 }
+      ];
     }
 
     const fp = edge.waypoints[0];
@@ -187,7 +181,6 @@ const buildStraightEdgePath = (edge: DiagramEdge) => {
   return path;
 };
 
-// TODO: Perhaps move into DiagramEdge and cache
 export const buildEdgePath = (
   edge: DiagramEdge,
   rounding: number,
@@ -217,7 +210,7 @@ export const buildEdgePath = (
   }
 };
 
-const applyRounding = (rounding: number) => (segments: PathSegment[]) => {
+const applyRounding = (rounding: number) => (segments: ReadonlyArray<PathSegment>) => {
   const dest: PathSegment[] = [];
   for (let i = 0; i < segments.length; i++) {
     const previous = i === 0 ? undefined : segments.at(i - 1);
@@ -228,9 +221,7 @@ const applyRounding = (rounding: number) => (segments: PathSegment[]) => {
     const nextIsLine = next instanceof LineSegment;
     const isLine = segment instanceof LineSegment;
 
-    if (!isLine) {
-      dest.push(segment);
-    } else {
+    if (isLine) {
       const line = Line.of(segment.start, segment.end);
       if (previousIsLine && nextIsLine) {
         const s = Line.extend(line, 0, -rounding);
@@ -248,6 +239,8 @@ const applyRounding = (rounding: number) => (segments: PathSegment[]) => {
         dest.push(new LineSegment(s.from, s.to));
         dest.push(new CubicSegment(s.to, segment.end, segment.end, n.from));
       }
+    } else {
+      dest.push(segment);
     }
   }
 

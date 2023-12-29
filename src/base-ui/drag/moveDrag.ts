@@ -71,7 +71,7 @@ export class MoveDrag extends AbstractDrag {
     });
     newBounds.set('pos', newPos);
 
-    let snapDirections: Direction[] = Direction.all();
+    let snapDirections = Direction.all();
 
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (modifiers.metaKey && !this.metaKey) {

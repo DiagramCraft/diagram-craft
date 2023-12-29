@@ -13,7 +13,7 @@ export const Direction = {
         return 'w';
     }
   },
-  all: (): Direction[] => {
+  all: (): ReadonlyArray<Direction> => {
     return ['n', 's', 'w', 'e'];
   }
 };
