@@ -88,7 +88,7 @@ export class MoveDrag extends AbstractDrag {
       this.enablePointerEvents(selection.elements);
 
       const newElements = selection.source.elementIds.map(e =>
-        this.diagram.nodeLookup[e].duplicate()
+        (this.diagram.nodeLookup[e] ?? this.diagram.edgeLookup[e]).duplicate()
       );
       newElements.forEach(e => {
         e.id = newid();
@@ -100,9 +100,13 @@ export class MoveDrag extends AbstractDrag {
     } else if (!modifiers.metaKey && this.metaKey) {
       this.metaKey = false;
 
-      const elementsToRemove = selection.nodes;
+      const elementsToRemove = selection.elements;
 
-      selection.setElements(selection.source.elementIds.map(e => this.diagram.nodeLookup[e]));
+      selection.setElements(
+        selection.source.elementIds.map(
+          e => this.diagram.nodeLookup[e] ?? this.diagram.edgeLookup[e]
+        )
+      );
       selection.guides = [];
 
       elementsToRemove.forEach(e => {
