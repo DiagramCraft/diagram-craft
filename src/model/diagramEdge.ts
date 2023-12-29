@@ -2,12 +2,14 @@ import { Box } from '../geometry/box.ts';
 import { Transform } from '../geometry/transform.ts';
 import { Diagram, UnitOfWork } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
-import { DiagramNode } from './diagramNode.ts';
+import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
 import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
+import { newid } from '../utils/id.ts';
+import { deepClone } from '../utils/clone.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -122,6 +124,34 @@ export class DiagramEdge implements AbstractEdge {
         controlPoints: w.controlPoints ? (relativeControlPoints as [Point, Point]) : undefined
       };
     });
+  }
+
+  duplicate(ctx?: DuplicationContext) {
+    const edge = new DiagramEdge(
+      newid(),
+      this.start,
+      this.end,
+      deepClone(this.props),
+      deepClone(this.waypoints ?? []),
+      this.diagram,
+      this.layer
+    );
+
+    ctx?.targetElementsInGroup.set(this.id, edge);
+
+    // Clone any label nodes
+    const newLabelNodes: ResolvedLabelNode[] = [];
+    for (const l of edge.labelNodes ?? []) {
+      const newNode = l.node.duplicate(ctx);
+      newLabelNodes.push({
+        ...l,
+        node: newNode
+      });
+      newNode.props.labelForEgdeId = edge.id;
+    }
+    edge.labelNodes = newLabelNodes;
+
+    return edge;
   }
 
   get startPosition() {

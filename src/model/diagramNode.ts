@@ -3,7 +3,7 @@ import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Diagram, UnitOfWork } from './diagram.ts';
-import { DiagramEdge } from './diagramEdge.ts';
+import { DiagramEdge, Endpoint, isConnected } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
@@ -12,6 +12,10 @@ import { newid } from '../utils/id.ts';
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 
 export type DiagramElement = DiagramNode | DiagramEdge;
+
+export type DuplicationContext = {
+  targetElementsInGroup: Map<string, DiagramElement>;
+};
 
 export class DiagramNode implements AbstractNode {
   id: string;
@@ -141,7 +145,17 @@ export class DiagramNode implements AbstractNode {
     };
   }
 
-  duplicate() {
+  duplicate(ctx?: DuplicationContext): DiagramNode {
+    const isTopLevel = ctx === undefined;
+    const context = ctx ?? {
+      targetElementsInGroup: new Map()
+    };
+
+    // The node might already have been duplicated being a label node of one of the edges
+    if (context.targetElementsInGroup.has(this.id)) {
+      return context.targetElementsInGroup.get(this.id) as DiagramNode;
+    }
+
     const node = new DiagramNode(
       newid(),
       this.nodeType,
@@ -152,17 +166,58 @@ export class DiagramNode implements AbstractNode {
       this.#anchors
     );
 
+    context.targetElementsInGroup.set(this.id, node);
+
+    // Phase 1 - duplicate all elements in the group
     const newChildren: DiagramElement[] = [];
     for (const c of this.children) {
-      if (c.type === 'node') {
-        newChildren.push(c.duplicate());
-      } else {
-        // TODO: Implement this part
-      }
+      const newElement = c.duplicate(context);
+      newChildren.push(newElement);
+      newElement.parent = node;
     }
     node.children = newChildren;
+    context.targetElementsInGroup.set(this.id, node);
+
+    if (!isTopLevel) return node;
+
+    // Phase 2 - update all edges to point to the new elements
+    for (const e of node.getNestedElements()) {
+      if (e.type === 'edge') {
+        let newStart: Endpoint;
+        let newEnd: Endpoint;
+
+        if (isConnected(e.start)) {
+          const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
+          if (newStartNode) {
+            newStart = { anchor: e.start.anchor, node: newStartNode as DiagramNode };
+          } else {
+            newStart = { position: e.startPosition };
+          }
+        } else {
+          newStart = { position: e.startPosition };
+        }
+
+        if (isConnected(e.end)) {
+          const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
+          if (newEndNode) {
+            newEnd = { anchor: e.end.anchor, node: newEndNode as DiagramNode };
+          } else {
+            newEnd = { position: e.endPosition };
+          }
+        } else {
+          newEnd = { position: e.endPosition };
+        }
+
+        e.start = newStart;
+        e.end = newEnd;
+      }
+    }
 
     return node;
+  }
+
+  getNestedElements(): DiagramElement[] {
+    return [this, ...this.children.flatMap(c => (c.type === 'node' ? c.getNestedElements() : c))];
   }
 
   snapshot() {
