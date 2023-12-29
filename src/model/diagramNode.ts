@@ -33,7 +33,7 @@ export class DiagramNode implements AbstractNode {
   type: 'node';
   nodeType: 'group' | string;
   parent?: DiagramNode;
-  #children: Readonly<DiagramElement[]>;
+  #children: ReadonlyArray<DiagramElement>;
   edges: Record<number, DiagramEdge[]>;
   props: NodeProps = {};
   diagram: Diagram;
@@ -63,12 +63,12 @@ export class DiagramNode implements AbstractNode {
     this.#anchors = anchorCache;
   }
 
-  set children(value: Readonly<DiagramElement[]>) {
+  set children(value: ReadonlyArray<DiagramElement>) {
     this.#children = value;
     this.recalculateBounds();
   }
 
-  get children(): Readonly<DiagramElement[]> {
+  get children(): ReadonlyArray<DiagramElement> {
     return this.#children;
   }
 

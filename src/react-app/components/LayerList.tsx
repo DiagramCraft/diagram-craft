@@ -5,7 +5,6 @@ import { Diagram } from '../../model/diagram.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { reversed } from '../../utils/array.ts';
 import { DiagramElement } from '../../model/diagramNode.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
@@ -101,7 +100,7 @@ const LayerEntry = (props: { layer: Layer }) => {
       </Tree.NodeAction>
       <Tree.Children>
         <div style={{ display: 'contents' }}>
-          {reversed(layer.elements).map(e => (
+          {layer.elements.toReversed().map(e => (
             <ElementEntry key={e.id} element={e} />
           ))}
         </div>
@@ -164,7 +163,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
       {e.type === 'node' && e.nodeType === 'group' && (
         <Tree.Children>
-          {reversed(e.children).map(c => (
+          {e.children.toReversed().map(c => (
             <ElementEntry key={c.id} element={c} />
           ))}
         </Tree.Children>
@@ -176,7 +175,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
 export const LayerList = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
-  const layers = reversed(diagram.layers.all);
+  const layers = diagram.layers.all.toReversed();
 
   useEventListener(diagram, 'change', redraw);
 

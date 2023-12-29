@@ -186,7 +186,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   }
 
   transformElements(
-    elements: Readonly<DiagramElement[]>,
+    elements: ReadonlyArray<DiagramElement>,
     transforms: Transform[],
     filter: (e: DiagramElement) => boolean = () => true
   ) {

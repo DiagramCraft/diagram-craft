@@ -16,7 +16,7 @@ class AbstractTransformAction implements UndoableAction {
   constructor(
     source: Box[],
     target: Box[],
-    nodes: Readonly<DiagramElement[]>,
+    nodes: ReadonlyArray<DiagramElement>,
     diagram: Diagram,
     description: string
   ) {

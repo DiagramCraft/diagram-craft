@@ -96,7 +96,7 @@ export class SnapManager {
   constructor(
     private readonly diagram: Diagram,
     private readonly excludeNodeIds: string[] = [],
-    private readonly magnetTypes: Readonly<MagnetType[]> = [],
+    private readonly magnetTypes: ReadonlyArray<MagnetType> = [],
     private readonly threshold: number,
     private readonly enabled: boolean
   ) {}

@@ -27,9 +27,3 @@ export const unique = <T>(arr: T[], respectTo: (e: T) => unknown = a => a): T[] 
   }
   return result;
 };
-
-export function reversed<T>(l: T[]): T[];
-export function reversed<T>(l: Readonly<T[]>): Readonly<T[]>;
-export function reversed<T>(l: T[] | Readonly<T[]>): T[] | Readonly<T[]> {
-  return [...l].reverse();
-}

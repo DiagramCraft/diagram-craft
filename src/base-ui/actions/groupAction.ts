@@ -5,7 +5,6 @@ import { UndoableAction } from '../../model/undoManager.ts';
 import { DiagramElement, DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
-import { reversed } from '../../utils/array.ts';
 
 declare global {
   interface ActionMap {
@@ -20,7 +19,7 @@ export const groupActions: ActionMapFactory = (state: State) => ({
 });
 
 class UndoableGroupAction implements UndoableAction {
-  #elements: Readonly<DiagramElement[]> | undefined = undefined;
+  #elements: ReadonlyArray<DiagramElement> | undefined = undefined;
   #group: DiagramNode | undefined = undefined;
 
   constructor(
@@ -88,7 +87,7 @@ class UndoableGroupAction implements UndoableAction {
     this.#group?.layer.removeElement(this.#group);
     this.#elements = this.#group.children;
 
-    reversed(children).forEach(e => {
+    children.toReversed().forEach(e => {
       e.parent = undefined;
       this.diagram.layers.active.addElement(e);
     });

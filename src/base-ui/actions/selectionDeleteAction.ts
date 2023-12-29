@@ -22,7 +22,7 @@ class SelectionDeleteUndoableAction implements UndoableAction {
 
   constructor(
     private readonly diagram: Diagram,
-    elements: Readonly<DiagramElement[]>
+    elements: ReadonlyArray<DiagramElement>
   ) {
     this.layer = this.diagram.layers.active;
     this.elements = [...elements];

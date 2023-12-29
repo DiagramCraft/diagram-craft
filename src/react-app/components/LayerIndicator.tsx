@@ -3,12 +3,12 @@ import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { reversed } from '../../utils/array.ts';
 import { useActions } from '../context/ActionsContext.tsx';
+
 export const LayerIndicator = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
-  const layers = reversed(diagram.layers.all);
+  const layers = diagram.layers.all.toReversed();
   const actions = useActions();
 
   useEventListener(diagram, 'change', redraw);
