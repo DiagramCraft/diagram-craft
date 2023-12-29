@@ -1,6 +1,7 @@
 import { DiagramElement, DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
+import { assert } from '../utils/assert.ts';
 
 export type LayerEvents = {
   change: { layer: Layer };
@@ -131,8 +132,8 @@ export class Layer extends EventEmitter<LayerEvents> {
     if (e.type === 'node') {
       this.diagram.nodeLookup[e.id] = e;
       for (const child of e.children) {
-        // TODO: Do we need to set the parent here, maybe change to an assert
-        child.parent = e;
+        // TODO: Eventually remove this assertion
+        assert.true(child.parent === e);
         this.processElementForAdd(child);
       }
     } else {

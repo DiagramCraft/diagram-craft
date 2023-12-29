@@ -65,6 +65,7 @@ export class DiagramNode implements AbstractNode {
 
   set children(value: ReadonlyArray<DiagramElement>) {
     this.#children = value;
+    this.#children.forEach(c => (c.parent = this));
     this.recalculateBounds();
   }
 
@@ -189,7 +190,6 @@ export class DiagramNode implements AbstractNode {
     for (const c of this.children) {
       const newElement = c.duplicate(context);
       newChildren.push(newElement);
-      newElement.parent = node;
     }
     node.children = newChildren;
     context.targetElementsInGroup.set(this.id, node);
@@ -283,8 +283,8 @@ export class DiagramNode implements AbstractNode {
     const childrenBounds = this.children.map(c => c.bounds);
     if (childrenBounds.length === 0) return;
     const newBounds = Box.boundingBox(childrenBounds);
-    this.bounds = newBounds;
     if (!Box.isEqual(newBounds, this.bounds)) {
+      this.bounds = newBounds;
       this.diagram.updateElement(this);
     }
     this.parent?.recalculateBounds();

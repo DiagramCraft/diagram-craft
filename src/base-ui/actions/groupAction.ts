@@ -64,9 +64,6 @@ class UndoableGroupAction implements UndoableAction {
       this.diagram.layers.active
     );
     this.#group.children = [...this.#elements];
-    this.#group.children.forEach(e => {
-      e.parent = this.#group;
-    });
 
     this.diagram.layers.active.addElement(this.#group);
 

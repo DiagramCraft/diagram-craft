@@ -154,7 +154,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       const parent = ref.element.parent;
       const idx = parent.children.indexOf(ref.element);
 
-      elements.forEach(e => (e.parent = parent));
       if (ref.relation === 'above') {
         parent.children = parent.children.toSpliced(idx + 1, 0, ...elements);
       } else {
