@@ -7,7 +7,6 @@ import { DiagramElement } from '../../model/diagramNode.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 const addHighlight = (element: DiagramElement, highlight: string) => {
-  element.props ??= {};
   element.props.highlight ??= [];
   element.props.highlight.push(highlight);
 

@@ -61,14 +61,16 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     }
     edge.layer.addElement(textNode);
 
-    edge.labelNodes ??= [];
-    edge.labelNodes.push({
-      timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
-      offset: { x: 0, y: 0 },
-      id: textNode.id,
-      node: textNode,
-      type: 'horizontal'
-    });
+    edge.labelNodes = [
+      ...(edge.labelNodes ?? []),
+      {
+        timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
+        offset: { x: 0, y: 0 },
+        id: textNode.id,
+        node: textNode,
+        type: 'horizontal'
+      }
+    ];
 
     this.diagram.updateElement(edge);
 

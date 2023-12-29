@@ -29,18 +29,21 @@ export const getDiagramElementPath = (element: DiagramElement): DiagramNode[] =>
 };
 
 export class DiagramNode implements AbstractNode {
-  id: string;
+  readonly id: string;
+  readonly type = 'node';
+  readonly nodeType: 'group' | string;
+
+  // TODO: Replace with Map
+  readonly edges: Record<number, DiagramEdge[]> = {};
+
   bounds: Box;
-  type: 'node';
-  nodeType: 'group' | string;
   parent?: DiagramNode;
-  #children: ReadonlyArray<DiagramElement>;
-  edges: Record<number, DiagramEdge[]>;
   props: NodeProps = {};
   diagram: Diagram;
   layer: Layer;
 
-  #anchors?: Anchor[];
+  #anchors?: ReadonlyArray<Anchor>;
+  #children: ReadonlyArray<DiagramElement>;
 
   constructor(
     id: string,
@@ -49,14 +52,12 @@ export class DiagramNode implements AbstractNode {
     diagram: Diagram,
     layer: Layer,
     props?: NodeProps,
-    anchorCache?: Anchor[]
+    anchorCache?: ReadonlyArray<Anchor>
   ) {
     this.id = id;
     this.bounds = bounds;
-    this.type = 'node';
     this.nodeType = nodeType;
     this.#children = [];
-    this.edges = {};
     this.diagram = diagram;
     this.layer = layer;
 
@@ -67,10 +68,12 @@ export class DiagramNode implements AbstractNode {
   set children(value: ReadonlyArray<DiagramElement>) {
     this.#children = value;
     this.#children.forEach(c => (c.parent = this));
-    this.recalculateBounds();
+    UnitOfWork.execute(this.diagram, uow => {
+      this.recalculateBounds(uow);
+    });
   }
 
-  get children(): ReadonlyArray<DiagramElement> {
+  get children() {
     return this.#children;
   }
 
@@ -79,24 +82,23 @@ export class DiagramNode implements AbstractNode {
   }
 
   updateCustomProps() {
-    this.invalidateAnchors();
-    this.diagram.updateElement(this);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.invalidateAnchors(uow);
+    });
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
 
-    if (this.nodeType === 'group') {
-      for (const child of this.children) {
-        child.transform(transforms, uow, true);
-      }
+    for (const child of this.children) {
+      child.transform(transforms, uow, true);
     }
 
     if (this.parent && !isChild) {
       const parent = this.parent;
       uow.pushAction('recalculateBounds', parent, () => {
-        parent.recalculateBounds();
+        parent.recalculateBounds(uow);
       });
     }
 
@@ -121,15 +123,16 @@ export class DiagramNode implements AbstractNode {
     }
 
     uow.pushAction('updateAnchors', this, () => {
-      this.invalidateAnchors();
+      this.invalidateAnchors(uow);
     });
     uow.updateElement(this);
   }
 
-  get anchors(): Anchor[] {
+  get anchors(): ReadonlyArray<Anchor> {
     if (this.#anchors === undefined) {
-      this.invalidateAnchors();
-      this.diagram.updateElement(this);
+      UnitOfWork.execute(this.diagram, uow => {
+        this.invalidateAnchors(uow);
+      });
     }
 
     return this.#anchors ?? [];
@@ -246,18 +249,14 @@ export class DiagramNode implements AbstractNode {
   }
 
   restore(snapshot: DiagramNodeSnapshot) {
-    this.id = snapshot.id;
     this.bounds = snapshot.bounds;
     this.props = snapshot.props;
   }
 
-  // TODO: Refactor this to be a bit more readable
-  listEdges(includeChildren = true): DiagramEdge[] {
+  listEdges(): DiagramEdge[] {
     return [
       ...Object.values(this.edges ?? {}).flatMap(e => e),
-      ...(includeChildren
-        ? this.children.flatMap(c => (c.type === 'node' ? c.listEdges(includeChildren) : []))
-        : [])
+      ...this.children.flatMap(c => (c.type === 'node' ? c.listEdges() : []))
     ];
   }
 
@@ -280,21 +279,21 @@ export class DiagramNode implements AbstractNode {
     return edge;
   }
 
-  private recalculateBounds() {
+  private recalculateBounds(uow: UnitOfWork) {
     const childrenBounds = this.children.map(c => c.bounds);
     if (childrenBounds.length === 0) return;
     const newBounds = Box.boundingBox(childrenBounds);
     if (!Box.isEqual(newBounds, this.bounds)) {
       this.bounds = newBounds;
-      this.diagram.updateElement(this);
+      uow.updateElement(this);
     }
-    this.parent?.recalculateBounds();
+    this.parent?.recalculateBounds(uow);
   }
 
   // TODO: Need to make sure this is called when e.g. props are changed
-  private invalidateAnchors() {
-    this.#anchors = [];
-    this.#anchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
+  private invalidateAnchors(uow: UnitOfWork) {
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
 
     const def = this.diagram.nodeDefinitions.get(this.nodeType);
 
@@ -305,7 +304,10 @@ export class DiagramNode implements AbstractNode {
       const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
       const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
 
-      this.#anchors.push({ point: { x: lx, y: ly }, clip: false });
+      newAnchors.push({ point: { x: lx, y: ly }, clip: false });
     }
+
+    this.#anchors = newAnchors;
+    uow.updateElement(this);
   }
 }

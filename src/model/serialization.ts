@@ -144,7 +144,6 @@ export const deserializeDiagramElements = (
     if (isConnected(start)) {
       const startNode = nodeLookup[start.node.id];
 
-      startNode.edges ??= {};
       startNode.edges[start.anchor] ??= [];
       startNode.edges[start.anchor].push(edge);
     }
@@ -152,7 +151,6 @@ export const deserializeDiagramElements = (
     if (isConnected(end)) {
       const endNode = nodeLookup[end.node.id];
 
-      endNode.edges ??= {};
       endNode.edges[end.anchor] ??= [];
       endNode.edges[end.anchor].push(edge);
     }

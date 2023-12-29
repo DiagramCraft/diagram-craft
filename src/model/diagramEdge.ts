@@ -15,8 +15,6 @@ import { UnitOfWork } from './unitOfWork.ts';
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
 
-// TODO: Maybe make endpoint a class with this as a method?
-//       ...or perhaps a property as discriminator
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   'node' in endpoint;
 
@@ -25,33 +23,30 @@ export type ResolvedLabelNode = LabelNode & {
 };
 
 export class DiagramEdge implements AbstractEdge {
-  id: string;
-  type: 'edge';
+  readonly id: string;
+  readonly type = 'edge';
+  readonly props: EdgeProps = {};
 
-  #start: Endpoint;
-  #end: Endpoint;
-
-  props: EdgeProps = {};
-  waypoints: Waypoint[] | undefined;
+  waypoints: ReadonlyArray<Waypoint> | undefined;
 
   diagram: Diagram;
   layer: Layer;
-
-  #labelNodes?: ResolvedLabelNode[];
-
   parent?: DiagramNode;
+
+  #start: Endpoint;
+  #end: Endpoint;
+  #labelNodes?: ReadonlyArray<ResolvedLabelNode>;
 
   constructor(
     id: string,
     start: Endpoint,
     end: Endpoint,
     props: EdgeProps,
-    midpoints: Waypoint[],
+    midpoints: ReadonlyArray<Waypoint>,
     diagram: Diagram,
     layer: Layer
   ) {
     this.id = id;
-    this.type = 'edge';
     this.#start = start;
     this.#end = end;
     this.props = props;
@@ -63,10 +58,9 @@ export class DiagramEdge implements AbstractEdge {
     this.diagram.on('elementChange', ({ element }) => {
       if (
         (isConnected(this.#start) && element === this.#start.node) ||
-        (isConnected(this.#end) && element === this.#end.node)
+        (isConnected(this.#end) && element === this.#end.node) ||
+        element === this
       ) {
-        this.invalidate();
-      } else if (element === this) {
         this.invalidate();
       } else if (this.#labelNodes?.find(ln => ln.node === element)) {
         this.adjustLabelNodePosition();
@@ -78,17 +72,13 @@ export class DiagramEdge implements AbstractEdge {
     return this.#labelNodes;
   }
 
-  set labelNodes(labelNodes: ResolvedLabelNode[] | undefined) {
+  set labelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined) {
     this.#labelNodes = labelNodes;
     this.invalidate();
   }
 
   isLocked() {
     return this.layer.isLocked() ?? false;
-  }
-
-  commit() {
-    this.diagram.updateElement(this);
   }
 
   // TODO: This is probably not a sufficient way to calculate the bounding box
@@ -253,18 +243,16 @@ export class DiagramEdge implements AbstractEdge {
   private adjustLabelNodePosition() {
     if (!this.labelNodes) return;
 
+    const path = this.path();
+
     for (const labelNode of this.labelNodes) {
-      const path = this.path();
       const lengthOffsetOnPath = TimeOffsetOnPath.toLengthOffsetOnPath(
         { pathT: labelNode.timeOffset },
         path
       );
       const refPoint = path.pointAt(lengthOffsetOnPath);
 
-      const currentCenterPoint = {
-        x: labelNode.node.bounds.pos.x + labelNode.node.bounds.size.w / 2,
-        y: labelNode.node.bounds.pos.y + labelNode.node.bounds.size.h / 2
-      };
+      const currentCenterPoint = Box.center(labelNode.node.bounds);
 
       let newCenterPoint = Point.add(refPoint, labelNode.offset);
       let newRotation = labelNode.node.bounds.rotation;

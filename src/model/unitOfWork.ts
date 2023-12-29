@@ -13,6 +13,13 @@ export class UnitOfWork {
     element.diagram.emit('elementChange', { element: element });
   }
 
+  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
+    const uow = new UnitOfWork(diagram);
+    const result = cb(uow);
+    uow.commit();
+    return result;
+  }
+
   contains(element: DiagramElement) {
     return this.#elementsToUpdate.has(element.id);
   }

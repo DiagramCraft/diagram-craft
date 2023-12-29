@@ -85,7 +85,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
       nodeRefs.current[nodeToRepaint.id]?.repaint();
 
-      for (const edge of nodeToRepaint.listEdges(true)) {
+      for (const edge of nodeToRepaint.listEdges()) {
         edgeRefs.current[edge.id]?.repaint();
       }
     } else {

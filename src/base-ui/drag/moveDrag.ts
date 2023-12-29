@@ -9,7 +9,6 @@ import { Angle } from '../../geometry/angle.ts';
 import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeHelper.ts';
 import { MoveAction, NodeAddAction } from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
-import { newid } from '../../utils/id.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramNode.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
@@ -93,7 +92,6 @@ export class MoveDrag extends AbstractDrag {
 
       const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
       newElements.forEach(e => {
-        e.id = newid();
         this.diagram.layers.active.addElement(e);
       });
       selection.setElements(newElements, false);

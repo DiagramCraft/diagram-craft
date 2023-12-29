@@ -14,7 +14,7 @@ export interface AbstractNode extends AbstractElement {
 
   // TODO: Maybe we should make this readonly (deep)?
   props: NodeProps;
-  anchors?: Anchor[];
+  anchors?: ReadonlyArray<Anchor>;
 }
 
 export type Anchor = {
@@ -39,10 +39,10 @@ export type LabelNode = {
 export interface AbstractEdge extends AbstractElement {
   type: 'edge';
   id: string;
-  waypoints?: Waypoint[];
+  waypoints?: ReadonlyArray<Waypoint>;
   props: EdgeProps;
 
-  labelNodes?: LabelNode[];
+  labelNodes?: ReadonlyArray<LabelNode>;
 }
 
 export type Waypoint = {
