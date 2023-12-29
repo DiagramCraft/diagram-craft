@@ -113,6 +113,16 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     drag.current()?.onDragLeave?.();
   }, [drag]);
 
+  const onDoubleClick = useCallback(
+    (id: string, coord: Point) => {
+      actionMap['EDGE_TEXT_ADD']?.execute({
+        point: diagram.viewBox.toDiagramPoint(coord),
+        id
+      });
+    },
+    [actionMap, diagram.viewBox]
+  );
+
   return (
     <>
       <textarea id={'clipboard'} style={{ position: 'absolute', left: '-4000px' }}></textarea>
@@ -173,12 +183,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                 <Edge
                   key={id}
                   ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
-                  onDoubleClick={(id, coord) => {
-                    actionMap['EDGE_TEXT_ADD']?.execute({
-                      point: diagram.viewBox.toDiagramPoint(coord),
-                      id
-                    });
-                  }}
+                  onDoubleClick={onDoubleClick}
                   onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
                   onMouseEnter={onMouseEnter}
                   onMouseLeave={onMouseLeave}
@@ -195,6 +200,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                   onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
                   onMouseEnter={onMouseEnter}
                   onMouseLeave={onMouseLeave}
+                  onDoubleClick={onDoubleClick}
                   def={node}
                   diagram={diagram}
                 />

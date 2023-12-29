@@ -95,7 +95,7 @@ export class Layer extends EventEmitter<LayerEvents> {
   }
 
   addElement(element: DiagramElement, omitEvents = false) {
-    this.elements.push(element);
+    if (!element.parent) this.elements.push(element);
     this.processElementForAdd(element);
     if (!omitEvents) {
       this.emit('elementAdd', { element });

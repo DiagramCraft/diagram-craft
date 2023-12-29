@@ -222,7 +222,7 @@ type Props = {
   def: DiagramEdge;
   diagram: Diagram;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-  onDoubleClick: (id: string, coord: Point) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
+  onDoubleClick: (id: string, coord: Point) => void;
 };

@@ -117,6 +117,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
                 key={c.id}
                 def={c}
                 diagram={props.diagram}
+                onDoubleClick={props.onDoubleClick}
                 onMouseDown={props.onMouseDown}
                 onMouseLeave={props.onMouseLeave}
                 onMouseEnter={props.onMouseEnter}
@@ -128,9 +129,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
                 key={c.id}
                 def={c}
                 diagram={props.diagram}
-                onDoubleClick={() => {
-                  // TODO: Fix this
-                }}
+                onDoubleClick={props.onDoubleClick ?? (() => {})}
                 onMouseDown={props.onMouseDown}
                 onMouseLeave={props.onMouseLeave}
                 onMouseEnter={props.onMouseEnter}
@@ -204,8 +203,9 @@ type Props = {
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
+  onDoubleClick?: (id: string, coord: Point) => void;
   mode?: 'picker' | 'canvas';
 } & Omit<
   SVGProps<SVGGElement>,
-  'id' | 'transform' | 'onMouseEnter' | 'onMouseMove' | 'onMouseDown'
+  'id' | 'transform' | 'onMouseEnter' | 'onMouseMove' | 'onMouseDown' | 'onDoubleClick'
 >;
