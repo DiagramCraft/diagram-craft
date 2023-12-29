@@ -17,6 +17,16 @@ export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
 };
 
+export const getDiagramElementPath = (element: DiagramElement): DiagramNode[] => {
+  const dest: DiagramNode[] = [];
+  let current: DiagramNode | undefined = element.parent;
+  while (current !== undefined) {
+    dest.push(current);
+    current = current.parent;
+  }
+  return dest;
+};
+
 export class DiagramNode implements AbstractNode {
   id: string;
   bounds: Box;
@@ -51,13 +61,6 @@ export class DiagramNode implements AbstractNode {
 
     this.props = props ?? {};
     this.#anchors = anchorCache;
-  }
-
-  getTopmostParent(): DiagramNode {
-    if (this.parent === undefined) return this;
-
-    // TODO: Eliminate recursion
-    return this.parent.getTopmostParent();
   }
 
   isLocked() {

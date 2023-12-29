@@ -7,6 +7,7 @@ import { BACKGROUND, DeferedMouseAction, ObjectId } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { MarqueeDrag } from '../../base-ui/drag/marqueeDrag.ts';
+import { getDiagramElementPath } from '../../model/diagramNode.ts';
 
 export class MoveTool extends AbstractTool {
   constructor(
@@ -41,17 +42,19 @@ export class MoveTool extends AbstractTool {
 
     try {
       if (isClickOnSelection) {
-        // TODO: Group handling must be improved here
         let element = this.diagram.nodeLookup[id] ?? this.diagram.edgeLookup[id];
-        if (
-          selection.isNodesOnly() &&
-          selection.nodes.length === 1 &&
-          selection.nodes[0].nodeType === 'group'
-        ) {
-          // Do nothing
-        } else {
-          if (element.type === 'node') {
-            element = element.getTopmostParent();
+
+        // If we click on an element that is part of a group, select the group instead
+        // ... except, when the group is already selected, in which case we allow for "drill-down"
+        const path = getDiagramElementPath(element);
+        if (path.length > 0) {
+          for (let i = 0; i < path.length; i++) {
+            const parent = path[i];
+            if (selection.nodes.includes(parent)) {
+              break;
+            } else {
+              element = parent;
+            }
           }
         }
 
@@ -84,15 +87,21 @@ export class MoveTool extends AbstractTool {
           selection.clear();
         }
 
-        if (element.type === 'node') {
-          // TODO: ... and here
-          const parent = element.getTopmostParent();
-          if (selection.nodes.includes(parent)) {
-            selection.toggle(parent);
-          } else {
-            element = parent;
+        // If we click on an element that is part of a group, select the group instead
+        // ... except, when the group is already selected, in which case we allow for "drill-down"
+        const path = getDiagramElementPath(element);
+        if (path.length > 0) {
+          for (let i = 0; i < path.length; i++) {
+            const parent = path[i];
+            if (selection.nodes.includes(parent)) {
+              selection.toggle(parent);
+              break;
+            } else {
+              element = parent;
+            }
           }
         }
+
         selection.toggle(element);
       }
 

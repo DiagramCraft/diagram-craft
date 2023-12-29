@@ -30,6 +30,7 @@ import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
 import { DragLabel } from './DragLabel.tsx';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
+import { getDiagramElementPath } from '../model/diagramNode.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -79,12 +80,12 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useEventListener(diagram, 'elementChange', e => {
     if (e.element.type === 'node') {
-      // TODO: Ideally we should be able to repaint only the nodes within a group that
-      //       has changed, but we don't have the nodeRefs to anything but level 1 nodes
-      const parent = e.element.getTopmostParent();
-      nodeRefs.current[parent.id]?.repaint();
+      const path = getDiagramElementPath(e.element);
+      const nodeToRepaint = path.length > 0 ? path[path.length - 1] : e.element;
 
-      for (const edge of parent.listEdges(true)) {
+      nodeRefs.current[nodeToRepaint.id]?.repaint();
+
+      for (const edge of nodeToRepaint.listEdges(true)) {
         edgeRefs.current[edge.id]?.repaint();
       }
     } else {
