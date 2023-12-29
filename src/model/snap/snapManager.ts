@@ -18,9 +18,9 @@ import { Axis } from '../../geometry/axis.ts';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type SnapResult = {
-  guides: Guide[];
+  guides: ReadonlyArray<Guide>;
   adjusted: Box;
-  magnets: Magnet[];
+  magnets: ReadonlyArray<Magnet>;
 };
 
 export type MatchingMagnetPair<T extends MagnetType> = {
@@ -30,13 +30,13 @@ export type MatchingMagnetPair<T extends MagnetType> = {
 };
 
 export interface SnapProvider<T extends MagnetType> {
-  getMagnets(box: Box): MagnetOfType<T>[];
+  getMagnets(box: Box): ReadonlyArray<MagnetOfType<T>>;
   makeGuide(box: Box, match: MatchingMagnetPair<T>, axis: Axis): Guide | undefined;
   moveMagnet(magnet: MagnetOfType<T>, delta: Point): void;
 }
 
 class SourceSnapProvider implements SnapProvider<'source'> {
-  getMagnets(_box: Box): MagnetOfType<'source'>[] {
+  getMagnets(_box: Box): ReadonlyArray<MagnetOfType<'source'>> {
     throw new VerifyNotReached();
   }
 
@@ -50,12 +50,12 @@ class SourceSnapProvider implements SnapProvider<'source'> {
 }
 
 class SnapProviders {
-  private readonly providers: {
+  readonly #providers: {
     [T in MagnetType]: SnapProvider<T>;
   };
 
-  constructor(diagram: Diagram, excludeNodeIds: string[]) {
-    this.providers = {
+  constructor(diagram: Diagram, excludeNodeIds: ReadonlyArray<string>) {
+    this.#providers = {
       grid: new GridSnapProvider(diagram),
       source: new SourceSnapProvider(),
       node: new NodeSnapProvider(diagram, excludeNodeIds),
@@ -66,15 +66,15 @@ class SnapProviders {
   }
 
   get<T extends MagnetType>(type: T): SnapProvider<T> {
-    return this.providers[type];
+    return this.#providers[type];
   }
 
-  getMagnets(types: MagnetType[], b: Box) {
+  getMagnets(types: ReadonlyArray<MagnetType>, b: Box) {
     return types.flatMap(t => this.get(t).getMagnets(b));
   }
 }
 
-const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: 'h' | 'v') =>
+const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: Axis) =>
   line1.from[Axis.toXY(oAxis)] - line2.from[Axis.toXY(oAxis)];
 
 const rangeOverlap = (a1: Magnet, a2: Magnet) => {
@@ -95,13 +95,16 @@ export class SnapManager {
   //       maybe we can pass in the current selection instead of just the box (bounds)
   constructor(
     private readonly diagram: Diagram,
-    private readonly excludeNodeIds: string[] = [],
+    private readonly excludeNodeIds: ReadonlyArray<string> = [],
     private readonly magnetTypes: ReadonlyArray<MagnetType> = [],
     private readonly threshold: number,
     private readonly enabled: boolean
   ) {}
 
-  private matchMagnets(selfMagnets: Magnet[], otherMagnets: Magnet[]): MatchingMagnetPair<any>[] {
+  private matchMagnets(
+    selfMagnets: ReadonlyArray<Magnet>,
+    otherMagnets: ReadonlyArray<Magnet>
+  ): ReadonlyArray<MatchingMagnetPair<any>> {
     const dest: MatchingMagnetPair<any>[] = [];
 
     for (const other of otherMagnets) {
@@ -121,10 +124,10 @@ export class SnapManager {
   }
 
   // TODO: We should be able to merge snapResize and snapMove
-  snapResize(b: Box, directions: Direction[]): SnapResult {
+  snapResize(b: Box, directions: ReadonlyArray<Direction>): SnapResult {
     if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
 
-    const enabledSnapProviders: MagnetType[] = [...this.magnetTypes];
+    const enabledSnapProviders: ReadonlyArray<MagnetType> = [...this.magnetTypes];
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const selfMagnets = Magnet.forNode(b, 'source').filter(s =>
@@ -151,9 +154,9 @@ export class SnapManager {
 
       if (closest.self.matchDirection === 'n' || closest.self.matchDirection === 'w') {
         newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= distance;
-        newBounds.get('size')[axis === 'h' ? 'h' : 'w'] += distance;
+        newBounds.get('size')[axis === Axis.h ? 'h' : 'w'] += distance;
       } else {
-        newBounds.get('size')[axis === 'h' ? 'h' : 'w'] -= distance;
+        newBounds.get('size')[axis === Axis.h ? 'h' : 'w'] -= distance;
       }
     }
 
@@ -181,7 +184,9 @@ export class SnapManager {
   snapMove(b: Box, directions: ReadonlyArray<Direction> = ['n', 'w', 'e', 's']): SnapResult {
     if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
 
-    const enabledSnapProviders: MagnetType[] = this.magnetTypes.filter(a => a !== 'size');
+    const enabledSnapProviders: ReadonlyArray<MagnetType> = this.magnetTypes.filter(
+      a => a !== 'size'
+    );
     const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
 
     const magnets = Magnet.forNode(b, 'source').filter(s => directions.includes(s.matchDirection!));
@@ -231,10 +236,10 @@ export class SnapManager {
 
   private generateGuides(
     bounds: Box,
-    selfMagnets: Magnet[],
-    matchingMagnets: MatchingMagnetPair<any>[],
+    selfMagnets: ReadonlyArray<Magnet>,
+    matchingMagnets: ReadonlyArray<MatchingMagnetPair<any>>,
     snapProviders: SnapProviders,
-    enabledSnapProviders: MagnetType[]
+    enabledSnapProviders: ReadonlyArray<MagnetType>
   ) {
     // Check for guides in all four directions for each matching magnet
     // ... also draw the guide to the matching magnet that is furthest away
@@ -274,7 +279,7 @@ export class SnapManager {
     return guides;
   }
 
-  reviseGuides(guides: Guide[], b: Box): Guide[] {
+  reviseGuides(guides: ReadonlyArray<Guide>, b: Box): ReadonlyArray<Guide> {
     return guides.filter(g => {
       if (Line.isHorizontal(g.line)) {
         return g.line.from.y === b.pos.y || g.line.from.y === b.pos.y + b.size.h;

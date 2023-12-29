@@ -10,7 +10,7 @@ import { Axis } from '../../geometry/axis.ts';
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: Diagram) {}
 
-  getMagnets(_box: Box): MagnetOfType<'canvas'>[] {
+  getMagnets(_box: Box): ReadonlyArray<MagnetOfType<'canvas'>> {
     const { w, h } = this.diagram.canvas.size;
     return [
       {

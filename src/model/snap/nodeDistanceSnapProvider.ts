@@ -1,15 +1,14 @@
 import { Direction } from '../../geometry/direction.ts';
 import { Range } from '../../geometry/range.ts';
-import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
 import { Diagram } from '../diagram.ts';
-import { MagnetOfType, DistancePairWithRange } from './magnet.ts';
+import { DistancePairWithRange, MagnetOfType } from './magnet.ts';
 import { Axis } from '../../geometry/axis.ts';
-import { DiagramNode } from '../diagramNode.ts';
+import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider.ts';
 
 const directions: Record<
   Direction,
@@ -27,65 +26,16 @@ const directions: Record<
   e: { dir: 'e', oDir: 'w', axis: 'v', oAxis: 'h', sign: 1 }
 };
 
-export class NodeDistanceSnapProvider implements SnapProvider<'distance'> {
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly excludedNodeIds: string[]
-  ) {}
-
-  private get(b: Box, dir: Direction) {
-    if (dir === 'e' || dir === 'w') {
-      return dir === 'e' ? b.pos.x + b.size.w : b.pos.x;
-    } else {
-      return dir === 'n' ? b.pos.y : b.pos.y + b.size.h;
-    }
-  }
-
-  private getRange(b: Box, axis: Axis) {
-    if (axis === 'h') {
-      return Range.of(b.pos.x, b.pos.x + b.size.w);
-    } else {
-      return Range.of(b.pos.y, b.pos.y + b.size.h);
-    }
+export class NodeDistanceSnapProvider
+  extends AbstractNodeSnapProvider
+  implements SnapProvider<'distance'>
+{
+  constructor(diagram: Diagram, excludedNodeIds: ReadonlyArray<string>) {
+    super(diagram, excludedNodeIds);
   }
 
   getMagnets(box: Box): MagnetOfType<'distance'>[] {
-    const boxHRange = this.getRange(box, 'h');
-    const boxVRange = this.getRange(box, 'v');
-
-    const result: Record<Direction, DiagramNode[]> = {
-      n: [],
-      w: [],
-      e: [],
-      s: []
-    };
-
-    // TODO: This part is done very similarly in other providers - maybe introduce some
-    //       sort of context object to do this only once
-    for (const node of this.diagram.visibleElements()) {
-      if (node.type !== 'node') continue;
-      if (node.props.labelForEdgeId) continue;
-      if (this.excludedNodeIds.includes(node.id)) continue;
-      if (Box.intersects(node.bounds, box)) continue;
-      if (node.bounds.rotation !== 0) continue;
-
-      if (
-        Range.overlaps(this.getRange(node.bounds, 'h'), boxHRange) ||
-        Range.overlaps(this.getRange(node.bounds, 'v'), boxVRange)
-      ) {
-        if (this.get(node.bounds, 's') < box.pos.y) {
-          result.n.push(node);
-        } else if (this.get(node.bounds, 'e') < box.pos.x) {
-          result.w.push(node);
-        } else if (node.bounds.pos.x > this.get(box, 'e')) {
-          result.e.push(node);
-        } else if (node.bounds.pos.y > this.get(box, 's')) {
-          result.s.push(node);
-        } else {
-          VERIFY_NOT_REACHED();
-        }
-      }
-    }
+    const result = this.getViableNodes(box);
 
     const magnetPositions = {
       h: new Set<number>(),

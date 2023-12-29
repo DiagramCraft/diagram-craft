@@ -4,7 +4,7 @@ import { EventEmitter } from '../../utils/event.ts';
 export interface SnapManagerConfigProps {
   threshold: number;
   enabled: boolean;
-  magnetTypes: MagnetType[];
+  magnetTypes: ReadonlyArray<MagnetType>;
 }
 
 export class SnapManagerConfig
@@ -13,11 +13,11 @@ export class SnapManagerConfig
   }>
   implements SnapManagerConfigProps
 {
-  magnetTypes: MagnetType[] = [];
+  magnetTypes: ReadonlyArray<MagnetType> = [];
   enabled: boolean = true;
   threshold: number = 5;
 
-  constructor(magnetTypes: MagnetType[]) {
+  constructor(magnetTypes: ReadonlyArray<MagnetType>) {
     super();
 
     this.magnetTypes = magnetTypes;

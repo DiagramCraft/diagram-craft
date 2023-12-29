@@ -35,7 +35,8 @@ export type Magnet = BaseMagnet &
         type: 'size';
         size: number;
         node: DiagramNode;
-        distancePairs: DistancePair[];
+        // TODO: We should make these ReadonlyArray<>
+        distancePairs: Array<DistancePair>;
       }
     | {
         type: 'node';
@@ -43,7 +44,8 @@ export type Magnet = BaseMagnet &
       }
     | {
         type: 'distance';
-        distancePairs: DistancePairWithRange[];
+        // TODO: We should make these ReadonlyArray<>
+        distancePairs: Array<DistancePairWithRange>;
       }
   );
 
@@ -52,7 +54,7 @@ export type MagnetType = Magnet['type'];
 export type MagnetOfType<T extends MagnetType> = Magnet & { type: T };
 
 export const Magnet = {
-  forNode: (node: Box, type: 'source' = 'source'): Magnet[] => {
+  forNode: (node: Box, type: 'source' = 'source'): ReadonlyArray<Magnet> => {
     const center: Magnet[] = [
       {
         line: Line.horizontal(node.pos.y + node.size.h / 2, [node.pos.x, node.pos.x + node.size.w]),

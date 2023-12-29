@@ -44,7 +44,7 @@ export class NodeDefinitionRegistry {
   }
 
   getAll() {
-    return Object.values(this.nodes);
+    return [...this.nodes.values()];
   }
 }
 

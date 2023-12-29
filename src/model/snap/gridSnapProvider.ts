@@ -10,7 +10,7 @@ import { Axis } from '../../geometry/axis.ts';
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: Diagram) {}
 
-  getMagnets(box: Box): MagnetOfType<'grid'>[] {
+  getMagnets(box: Box): ReadonlyArray<MagnetOfType<'grid'>> {
     const magnets: MagnetOfType<'grid'>[] = [];
 
     const grid = {

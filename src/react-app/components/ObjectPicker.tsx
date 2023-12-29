@@ -80,6 +80,7 @@ export const ObjectPicker = (props: Props) => {
       );
       return dest;
     });
+
   return (
     <div className={'cmp-object-picker'}>
       {diagrams.map((d, idx) => (

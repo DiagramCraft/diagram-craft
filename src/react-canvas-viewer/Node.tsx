@@ -48,6 +48,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       if (e.button !== 0) return;
 
       const target = document.getElementById(`diagram-${props.diagram.id}`) as HTMLElement;
+      if (!target) return;
       const point = {
         x: e.nativeEvent.clientX - target.getBoundingClientRect().x,
         y: e.nativeEvent.clientY - target.getBoundingClientRect().y

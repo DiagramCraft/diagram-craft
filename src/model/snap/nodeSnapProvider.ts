@@ -8,6 +8,7 @@ import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
 import { Magnet, MagnetOfType } from './magnet.ts';
 import { Axis } from '../../geometry/axis.ts';
+import { isNode } from '../diagramElement.ts';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.x, b.pos.x + b.size.w), N);
@@ -22,7 +23,7 @@ const compareFn = (a: AnchorWithDistance, b: AnchorWithDistance) => b[1] - a[1];
 export class NodeSnapProvider implements SnapProvider<'node'> {
   constructor(
     private readonly diagram: Diagram,
-    private readonly excludedNodeIds: string[]
+    private readonly excludedNodeIds: ReadonlyArray<string>
   ) {}
 
   private getRange(b: Box, axis: Axis) {
@@ -41,7 +42,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     const boxVRange = this.getRange(box, 'v');
 
     for (const node of this.diagram.visibleElements()) {
-      if (node.type !== 'node') continue;
+      if (!isNode(node)) continue;
       if (node.props.labelForEdgeId) continue;
       if (this.excludedNodeIds.includes(node.id)) continue;
       for (const other of Magnet.forNode(node.bounds)) {
