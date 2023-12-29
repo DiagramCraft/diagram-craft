@@ -122,8 +122,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     layer: Layer,
     ref?: { relation: 'above' | 'below'; element: DiagramElement }
   ) {
-    console.log('move', elements, layer, ref);
-
     const layers = elements.map(e => e.layer);
     const topMostLayer = this.layers.all.findLast(l => layers.includes(l));
     assert.present(topMostLayer);

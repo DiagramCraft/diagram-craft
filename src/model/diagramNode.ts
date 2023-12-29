@@ -271,6 +271,7 @@ export class DiagramNode implements AbstractNode {
   recalculateBounds() {
     const childrenBounds = this.children.map(c => c.bounds);
     this.bounds = Box.boundingBox(childrenBounds);
+    this.parent?.recalculateBounds();
   }
 
   // TODO: Need to make sure this is called when e.g. props are changed
