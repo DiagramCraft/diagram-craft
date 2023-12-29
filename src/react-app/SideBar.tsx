@@ -8,6 +8,11 @@ export const SideBar = (props: Props) => {
 
   const [selected, setSelected] = useState(props.userState[propName] ?? -1);
 
+  const updateSelected = (idx: number) => {
+    setSelected(idx);
+    props.userState[propName] = idx;
+  };
+
   useEventListener(props.userState, 'change', () => {
     setSelected(props.userState[propName] ?? 0);
   });
@@ -53,10 +58,10 @@ export const SideBar = (props: Props) => {
               isSelected={selected === idx}
               onClick={() => {
                 if (selected === idx) {
-                  setSelected(-1);
+                  updateSelected(-1);
                   return;
                 }
-                setSelected(idx);
+                updateSelected(idx);
                 props.userState[propName] = idx;
               }}
             />
