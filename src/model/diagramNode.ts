@@ -99,19 +99,23 @@ export class DiagramNode implements AbstractNode {
     }
 
     if (this.isLabelNode() && !isChild) {
-      const dx = this.bounds.pos.x - previousBounds.pos.x;
-      const dy = this.bounds.pos.y - previousBounds.pos.y;
+      uow.pushAction('updateLabelNode', this, () => {
+        if (uow.contains(this.labelEdge()!)) return;
 
-      const labelNode = this.labelNode();
-      assert.present(labelNode);
+        const labelNode = this.labelNode();
+        assert.present(labelNode);
 
-      const clampAmount = 100;
-      labelNode.offset = {
-        x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-        y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-      };
+        const dx = this.bounds.pos.x - previousBounds.pos.x;
+        const dy = this.bounds.pos.y - previousBounds.pos.y;
 
-      uow.updateElement(this.labelEdge()!);
+        const clampAmount = 100;
+        labelNode.offset = {
+          x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+          y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+        };
+
+        uow.updateElement(this.labelEdge()!);
+      });
     }
 
     uow.pushAction('updateAnchors', this, () => {

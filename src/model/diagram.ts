@@ -188,9 +188,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   transformElements(
     elements: ReadonlyArray<DiagramElement>,
     transforms: Transform[],
-    filter: (e: DiagramElement) => boolean = () => true
+    filter: (e: DiagramElement) => boolean = () => true,
+    providedUow?: UnitOfWork
   ) {
-    const uow = new UnitOfWork(this);
+    const uow = providedUow ?? new UnitOfWork(this);
 
     for (const el of elements) {
       if (filter(el)) el.transform(transforms, uow);
@@ -202,7 +203,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       if (filter(el)) uow.updateElement(el);
     }
 
-    uow.commit();
+    if (!providedUow) uow.commit();
   }
 
   update() {
@@ -218,6 +219,10 @@ export class UnitOfWork {
 
   static updateElement(element: DiagramElement) {
     element.diagram.emit('elementChange', { element: element });
+  }
+
+  contains(element: DiagramElement) {
+    return !!this.#elementsToUpdate[element.id];
   }
 
   updateElement(element: DiagramElement) {
