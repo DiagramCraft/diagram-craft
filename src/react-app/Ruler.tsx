@@ -9,10 +9,12 @@ type Tick = {
   label: string;
 };
 
+// TODO: Can we draw in only one direction, and then simply rotate the SVG?
 export const Ruler = ({ canvasRef, orientation }: Props) => {
   const diagram = useDiagram();
-  const redraw = useRedraw();
   const viewbox = diagram.viewBox;
+
+  const redraw = useRedraw();
   const svgRef = useRef<SVGSVGElement>(null);
 
   const [cursor, setCursor] = useState(0);
@@ -21,7 +23,10 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
   useEventListener(diagram.viewBox, 'viewbox', redraw);
   useEventListener(diagram.selectionState, 'change', redraw);
 
+  // TODO: It's a bit silly to repaint the whole ruler on every mouse move.
   useEffect(() => {
+    if (diagram.props.ruler?.enabled === false) return;
+
     const handler = (e: SVGSVGElementEventMap['mousemove']) => {
       setCursor(
         EventHelper.pointWithRespectTo(e, svgRef.current!)[orientation === 'horizontal' ? 'x' : 'y']
@@ -29,9 +34,7 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
     };
 
     const currentCanvas = canvasRef.current;
-
     if (!currentCanvas) return;
-    if (diagram.props.ruler?.enabled === false) return;
 
     currentCanvas.addEventListener('mousemove', handler);
     return () => {
@@ -39,22 +42,15 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
     };
   }, [diagram.props.ruler?.enabled, orientation, canvasRef, viewbox]);
 
-  if (diagram.props.ruler?.enabled === false) {
-    return null;
-  }
+  if (diagram.props.ruler?.enabled === false) return null;
 
   const ticks: Tick[] = [];
 
-  const toScreenX = (x: number) => viewbox.toScreenPoint({ x, y: 0 }).x;
-
-  const toScreenY = (y: number) => viewbox.toScreenPoint({ x: 0, y }).y;
-
   if (orientation === 'horizontal') {
+    const toScreenX = (x: number) => viewbox.toScreenPoint({ x, y: 0 }).x;
+
     for (let x = diagram.canvas.pos.x; x <= diagram.canvas.pos.x + diagram.canvas.size.w; x += 10) {
-      ticks.push({
-        coord: toScreenX(x),
-        label: x.toString()
-      });
+      ticks.push({ coord: toScreenX(x), label: x.toString() });
     }
 
     return (
@@ -94,11 +90,10 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
       </div>
     );
   } else {
+    const toScreenY = (y: number) => viewbox.toScreenPoint({ x: 0, y }).y;
+
     for (let y = diagram.canvas.pos.y; y <= diagram.canvas.pos.y + diagram.canvas.size.h; y += 10) {
-      ticks.push({
-        coord: toScreenY(y),
-        label: y.toString()
-      });
+      ticks.push({ coord: toScreenY(y), label: y.toString() });
     }
 
     return (
