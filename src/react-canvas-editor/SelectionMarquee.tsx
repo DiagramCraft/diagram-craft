@@ -21,22 +21,23 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
 
   useEventListener(props.selection.marquee, 'change', redraw);
 
-  if (!props.selection.marquee.bounds) return null;
+  const bounds = props.selection.marquee.bounds;
+  if (!bounds) return null;
 
   return (
     <>
       <rect
-        x={props.selection.marquee.bounds.pos.x}
-        y={props.selection.marquee.bounds.pos.y}
-        width={props.selection.marquee.bounds.size.w}
-        height={props.selection.marquee.bounds.size.h}
-        fill="rgba(43, 117, 221, 0.2)"
-        style={{ stroke: '#2673dd' }}
+        className={'svg-marquee'}
+        x={bounds.pos.x}
+        y={bounds.pos.y}
+        width={bounds.size.w}
+        height={bounds.size.h}
       />
 
       {props.selection.marquee.pendingElements?.map(e => (
         <rect
           key={e.id}
+          className={'svg-marquee__element'}
           x={e.bounds.pos.x}
           y={e.bounds.pos.y}
           width={e.bounds.size.w}
@@ -44,8 +45,6 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
           transform={`rotate(${Angle.toDeg(e.bounds.rotation)} ${
             e.bounds.pos.x + e.bounds.size.w / 2
           } ${e.bounds.pos.y + e.bounds.size.h / 2})`}
-          fill="transparent"
-          stroke={'#2673dd'}
         />
       ))}
     </>

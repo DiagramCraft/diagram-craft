@@ -23,7 +23,7 @@ type SelectionSource = {
 
 export type Guide = {
   line: Line;
-  label?: string;
+  //label?: string;
   selfMagnet: Magnet;
   matchingMagnet: Magnet;
 };

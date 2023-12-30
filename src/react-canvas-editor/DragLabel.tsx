@@ -13,9 +13,7 @@ export const DragLabel = () => {
   drag.on('dragStateChange', () => {
     setState(JSON.stringify(drag.current()?.state));
   });
-  drag.on('dragEnd', () => {
-    redraw();
-  });
+  drag.on('dragEnd', redraw);
 
   useDomEventListener(
     'mousemove',

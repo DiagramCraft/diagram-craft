@@ -3,19 +3,16 @@ import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 import React, { CSSProperties } from 'react';
 
-const circleAt = (
-  xCoord: number,
-  yCoord: number,
-  type: 'major' | 'minor',
-  style: React.CSSProperties
-) => (
+type Type = 'major' | 'minor';
+
+const circleAt = (xCoord: number, yCoord: number, type: Type, style: React.CSSProperties) => (
   <circle
     key={`${type}-${xCoord}-${yCoord}`}
+    className={`svg-grid svg-grid--${type}`}
     cx={xCoord}
     cy={yCoord}
     r={1}
     style={style}
-    className={`svg-grid svg-grid--${type}`}
   />
 );
 
@@ -23,39 +20,37 @@ const hline = (
   xCoord: number,
   yCoord: number,
   w: number,
-  type: 'major' | 'minor',
+  type: Type,
   style: React.CSSProperties
 ) => (
   <line
     key={`${type}-h-${yCoord}`}
+    className={`svg-grid svg-grid--${type}`}
     x1={xCoord + 1}
     y1={yCoord}
     x2={xCoord + w - 1}
     y2={yCoord}
     style={style}
-    className={`svg-grid svg-grid--${type}`}
   />
 );
 
-function vline(
+const vline = (
   xCoord: number,
   yCoord: number,
   h: number,
-  type: 'major' | 'minor',
+  type: Type,
   style: React.CSSProperties
-) {
-  return (
-    <line
-      key={`${type}-v-${xCoord}`}
-      x1={xCoord}
-      y1={yCoord + 1}
-      x2={xCoord}
-      y2={yCoord + h - 1}
-      style={style}
-      className={`svg-grid svg-grid--${type}`}
-    />
-  );
-}
+) => (
+  <line
+    key={`${type}-v-${xCoord}`}
+    className={`svg-grid svg-grid--${type}`}
+    x1={xCoord}
+    y1={yCoord + 1}
+    x2={xCoord}
+    y2={yCoord + h - 1}
+    style={style}
+  />
+);
 
 export const Grid = (props: Props) => {
   const redraw = useRedraw();

@@ -1,13 +1,13 @@
 import { Point } from './point.ts';
 import { round } from '../utils/math.ts';
-import { Line } from './line.ts';
 
 export type Vector = Point;
 
 export const Vector = {
+  /*
   fromLine: (l: Line) => {
     return { x: l.to.x - l.from.x, y: l.to.y - l.from.y };
-  },
+  },*/
   from: (c1: Point, c2: Point) => {
     return { x: c2.x - c1.x, y: c2.y - c1.y };
   },
@@ -21,9 +21,10 @@ export const Vector = {
   angle: (v: Vector) => {
     return Math.atan2(v.y, v.x);
   },
+  /*
   angle2: (v1: Vector, v2: Vector) => {
     return Vector.angle(v2) - Vector.angle(v1);
-  },
+  },*/
   length: (v: Vector) => {
     return Math.sqrt(v.x * v.x + v.y * v.y);
   },

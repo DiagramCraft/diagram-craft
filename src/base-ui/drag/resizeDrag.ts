@@ -10,18 +10,20 @@ import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 
+export type ResizeType =
+  | 'resize-nw'
+  | 'resize-ne'
+  | 'resize-sw'
+  | 'resize-se'
+  | 'resize-n'
+  | 'resize-s'
+  | 'resize-w'
+  | 'resize-e';
+
 export class ResizeDrag extends AbstractDrag {
   constructor(
     private readonly diagram: Diagram,
-    private readonly type:
-      | 'resize-nw'
-      | 'resize-ne'
-      | 'resize-sw'
-      | 'resize-se'
-      | 'resize-n'
-      | 'resize-s'
-      | 'resize-w'
-      | 'resize-e',
+    private readonly type: ResizeType,
     private readonly offset: Point
   ) {
     super();
