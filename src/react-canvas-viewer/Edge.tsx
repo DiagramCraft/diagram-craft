@@ -1,6 +1,7 @@
 import React, {
   CSSProperties,
   forwardRef,
+  Fragment,
   MouseEventHandler,
   useCallback,
   useImperativeHandle
@@ -22,6 +23,7 @@ import { clipPath } from '../model/edgeUtils.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
+import { ArrowMarker } from './ArrowMarker.tsx';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -33,32 +35,23 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
   const { defaults } = useConfiguration();
 
-  useImperativeHandle(ref, () => {
-    return {
-      repaint: () => {
-        redraw();
-      }
-    };
-  });
+  useImperativeHandle(ref, () => ({ repaint: redraw }));
 
   const onMouseDown = useCallback<MouseEventHandler>(
     e => {
       if (e.button !== 0) return;
       props.onMouseDown(props.def.id, EventHelper.point(e.nativeEvent), e.nativeEvent);
       e.stopPropagation();
-
-      return false;
     },
     [props]
   );
 
   const onContextMenu = (event: React.MouseEvent<SVGPathElement, MouseEvent>) => {
     const e = event as ContextMenuEvent & React.MouseEvent<SVGPathElement, MouseEvent>;
-    const point = { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
     e.contextMenuTarget = {
       type: 'edge',
       id: props.def.id,
-      pos: props.diagram.viewBox.toDiagramPoint(point)
+      pos: props.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
     };
   };
 
@@ -72,88 +65,57 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const fillColor = edgeProps.fill?.color;
   const width = edgeProps.stroke?.width;
 
-  const style: CSSProperties = {};
-  style.cursor = 'move';
-  style.fill = 'none';
-  style.strokeDasharray =
-    DASH_PATTERNS[edgeProps.stroke.pattern]?.(
-      edgeProps.stroke.patternSize / 100,
-      edgeProps.stroke.patternSpacing / 100
-    ) ?? '';
-  style.strokeWidth = width;
-  style.stroke = color;
+  const style: CSSProperties = {
+    strokeDasharray:
+      DASH_PATTERNS[edgeProps.stroke.pattern]?.(
+        edgeProps.stroke.patternSize / 100,
+        edgeProps.stroke.patternSpacing / 100
+      ) ?? '',
+    strokeWidth: width,
+    stroke: color
+  };
   if (edgeProps.shadow?.enabled) {
     style.filter = makeShadowFilter(edgeProps.shadow);
   }
 
   const startArrowSize = edgeProps.arrow.start.size / 100;
+  const startArrow = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
+
   const endArrowSize = edgeProps.arrow.end.size / 100;
-  const arrow1 = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
-  const arrow2 = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
-  const fullPath = props.def.path();
-  const path = clipPath(fullPath, props.def, arrow1, arrow2);
+  const endArrow = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
+
+  const path = clipPath(props.def.path(), props.def, startArrow, endArrow);
 
   return (
     <g id={`edge-${props.def.id}`}>
-      {arrow1 && (
-        <marker
-          id={`marker_s_${props.def.id}`}
-          viewBox={`${-1 * width} ${-1 * width} ${arrow1.width + 1 + width} ${
-            arrow1.height + 1 + width
-          }`}
-          refX={arrow1.anchor.x}
-          refY={arrow1.anchor.y}
-          strokeLinejoin={'round'}
-          strokeLinecap={'round'}
-          markerUnits={'userSpaceOnUse'}
-          markerWidth={arrow1.width + 2}
-          markerHeight={arrow1.height + 2}
-          orient="auto-start-reverse"
-        >
-          <path
-            d={arrow1.path}
-            stroke={color}
-            strokeWidth={width}
-            fill={arrow1.fill === 'fg' ? fillColor : arrow1.fill === 'bg' ? 'white' : 'none'}
-          />
-        </marker>
-      )}
-      {arrow2 && (
-        <marker
-          id={`marker_e_${props.def.id}`}
-          viewBox={`${-1 * width} ${-1 * width} ${arrow2.width + 1 + width} ${
-            arrow2.height + 1 + width
-          }`}
-          refX={arrow2.anchor.x}
-          refY={arrow2.anchor.y}
-          markerUnits={'userSpaceOnUse'}
-          strokeLinejoin={'round'}
-          strokeLinecap={'round'}
-          markerWidth={arrow2.width + 2}
-          markerHeight={arrow2.height + 2}
-          orient="auto-start-reverse"
-        >
-          <path
-            d={arrow2.path}
-            stroke={color}
-            strokeWidth={width}
-            fill={arrow2.fill === 'fg' ? fillColor : arrow2.fill === 'bg' ? 'white' : 'none'}
-          />
-        </marker>
-      )}
+      <ArrowMarker
+        id={`s_${props.def.id}`}
+        arrow={startArrow}
+        width={width}
+        color={color}
+        fillColor={fillColor}
+      />
+      <ArrowMarker
+        id={`e_${props.def.id}`}
+        arrow={endArrow}
+        width={width}
+        color={color}
+        fillColor={fillColor}
+      />
 
       <path
+        className={'svg-edge'}
         d={path.asSvgPath()}
-        stroke={'transparent'}
-        strokeWidth={15}
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onDoubleClick={e => props.onDoubleClick(props.def.id, EventHelper.point(e.nativeEvent))}
         onContextMenu={onContextMenu}
-        style={{ cursor: 'move', fill: 'none' }}
+        stroke={'transparent'}
+        strokeWidth={15}
       />
       <path
+        className={'svg-edge'}
         d={path.asSvgPath()}
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
@@ -161,19 +123,18 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         onDoubleClick={e => props.onDoubleClick(props.def.id, EventHelper.point(e.nativeEvent))}
         onContextMenu={onContextMenu}
         style={style}
-        markerStart={arrow1 ? `url(#marker_s_${props.def.id})` : undefined}
-        markerEnd={arrow2 ? `url(#marker_e_${props.def.id})` : undefined}
+        markerStart={startArrow ? `url(#s_${props.def.id})` : undefined}
+        markerEnd={endArrow ? `url(#e_${props.def.id})` : undefined}
       />
 
-      {isSingleSelected && (
-        <>
-          {firstEdge.waypoints?.map((wp, idx) => (
+      {isSingleSelected &&
+        firstEdge.waypoints?.map((wp, idx) => (
+          <Fragment key={`${wp.point.x}_${wp.point.y}`}>
             <circle
-              key={`wp_${wp.point.x}_${wp.point.y}`}
+              className="svg-waypoint-handle"
               cx={wp.point.x}
               cy={wp.point.y}
               r="4"
-              className="svg-waypoint-handle"
               onMouseDown={e => {
                 if (e.button !== 0) return;
                 drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));
@@ -181,39 +142,30 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
               }}
               onContextMenu={onContextMenu}
             />
-          ))}
-          {firstEdge.props.type === 'bezier' &&
-            firstEdge.waypoints?.map((wp, idx) => {
-              const controlPoints = wp.controlPoints ?? [];
-              return controlPoints.map((cp, cIdx) => {
-                return (
-                  <React.Fragment key={`cp_bz_${idx}_${cp.x}_${cp.y}`}>
-                    <line
-                      x1={wp.point.x + cp.x}
-                      y1={wp.point.y + cp.y}
-                      x2={wp.point.x}
-                      y2={wp.point.y}
-                      className="svg-bezier-handle-line"
-                    />
-                    <circle
-                      cx={wp.point.x + cp.x}
-                      cy={wp.point.y + cp.y}
-                      r="4"
-                      className="svg-bezier-handle"
-                      onMouseDown={e => {
-                        if (e.button !== 0) return;
-                        drag.initiate(
-                          new BezierControlPointDrag(props.diagram, props.def, idx, cIdx)
-                        );
-                        e.stopPropagation();
-                      }}
-                    />
-                  </React.Fragment>
-                );
-              });
-            })}
-        </>
-      )}
+            {wp.controlPoints?.map((cp, cIdx) => (
+              <Fragment key={`${idx}_${cp.x}_${cp.y}`}>
+                <line
+                  className="svg-bezier-handle-line"
+                  x1={wp.point.x + cp.x}
+                  y1={wp.point.y + cp.y}
+                  x2={wp.point.x}
+                  y2={wp.point.y}
+                />
+                <circle
+                  className="svg-bezier-handle"
+                  cx={wp.point.x + cp.x}
+                  cy={wp.point.y + cp.y}
+                  r="4"
+                  onMouseDown={e => {
+                    if (e.button !== 0) return;
+                    drag.initiate(new BezierControlPointDrag(props.diagram, props.def, idx, cIdx));
+                    e.stopPropagation();
+                  }}
+                />
+              </Fragment>
+            ))}
+          </Fragment>
+        ))}
     </g>
   );
 });

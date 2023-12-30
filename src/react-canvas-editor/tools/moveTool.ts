@@ -46,6 +46,7 @@ export class MoveTool extends AbstractTool {
 
         // If we click on an element that is part of a group, select the group instead
         // ... except, when the group is already selected, in which case we allow for "drill-down"
+        // TODO: Is this if-statement really needed - it seems it is better to check isClickOnBackground
         if (element) {
           const path = getDiagramElementPath(element);
           if (path.length > 0) {

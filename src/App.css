@@ -442,6 +442,10 @@ input::-webkit-input-placeholder {
   .svg-node {
     cursor: move;
   }
+  .svg-edge {
+    cursor: move;
+    fill: none;
+  }
 }
 
 
