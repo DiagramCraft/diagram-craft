@@ -17,10 +17,10 @@ import { edgeFlipActions } from './actions/edgeFlipAction.ts';
 import { duplicateActions } from './actions/duplicateAction.ts';
 import { Diagram } from '../model/diagram.ts';
 import { edgeTextAddActions } from './actions/edgeTextAddAction.ts';
-import { toolActions } from '../react-canvas-editor/actions/ToolAction.tsx';
+import { toolActions } from '../react-app/actions/ToolAction.tsx';
 import { ApplicationState } from './ApplicationState.ts';
 import { UserState } from './UserState.ts';
-import { sidebarActions } from '../react-canvas-editor/actions/SidebarAction.tsx';
+import { sidebarActions } from '../react-app/actions/SidebarAction.tsx';
 import { groupActions } from './actions/groupAction.ts';
 
 export type ActionEvents = {

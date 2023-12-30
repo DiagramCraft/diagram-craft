@@ -69,17 +69,13 @@ export class MoveTool extends AbstractTool {
           }
         };
       } else if (isClickOnBackground) {
-        if (!modifiers.shiftKey) {
-          selection.clear();
-        }
+        if (!modifiers.shiftKey) selection.clear();
         this.drag.initiate(
           new MarqueeDrag(this.diagram, this.diagram.viewBox.toDiagramPoint(point))
         );
         return;
       } else {
-        if (!modifiers.shiftKey) {
-          selection.clear();
-        }
+        if (!modifiers.shiftKey) selection.clear();
 
         let element = this.diagram.lookup(id)!;
 
@@ -123,13 +119,8 @@ export class MoveTool extends AbstractTool {
   onMouseUp(point: Point) {
     const current = this.drag.current();
     try {
-      if (current) {
-        current.onDragEnd();
-      }
-
-      if (this.deferedMouseAction.current) {
-        this.deferedMouseAction.current?.callback();
-      }
+      current?.onDragEnd();
+      this.deferedMouseAction.current?.callback();
     } finally {
       this.drag.clear();
       this.deferedMouseAction.current = undefined;
@@ -140,14 +131,11 @@ export class MoveTool extends AbstractTool {
 
   onMouseMove(point: Point, modifiers: Modifiers) {
     const current = this.drag.current();
-
     try {
-      // Abort early in case there's no drag in progress
-      if (!current) return;
-
-      current.onDrag(this.diagram.viewBox.toDiagramPoint(point), modifiers);
+      current?.onDrag(this.diagram.viewBox.toDiagramPoint(point), modifiers);
     } finally {
       this.deferedMouseAction.current = undefined;
+
       this.updateCursor(this.diagram.viewBox.toDiagramPoint(point));
     }
   }

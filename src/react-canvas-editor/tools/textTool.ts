@@ -20,11 +20,7 @@ export class TextTool extends AbstractTool {
     this.svgRef.current!.style.cursor = 'text';
   }
 
-  onMouseDown(_id: string, _point: Point, _modifiers: Modifiers) {
-    // Do nothing
-  }
-
-  onMouseUp(_point: Point) {
+  onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
     const nodeType = 'text';
     const nodeDef = this.diagram.nodeDefinitions.get(nodeType);
 
@@ -32,7 +28,7 @@ export class TextTool extends AbstractTool {
       newid(),
       nodeType,
       {
-        pos: this.diagram.viewBox.toDiagramPoint(_point),
+        pos: this.diagram.viewBox.toDiagramPoint(point),
         size: nodeDef.getInitialConfig().size,
         rotation: 0
       },
@@ -53,6 +49,10 @@ export class TextTool extends AbstractTool {
     }, 10);
 
     this.resetTool();
+  }
+
+  onMouseUp(_point: Point) {
+    // Do nothing
   }
 
   onMouseMove(_point: Point, _modifiers: Modifiers) {

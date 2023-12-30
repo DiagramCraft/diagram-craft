@@ -24,7 +24,7 @@ export type ToolContructor = {
 // TODO: Move this constant somewhere else
 export const BACKGROUND = 'background';
 
-export type ObjectId = typeof BACKGROUND | string;
+export type ObjectId = string;
 
 // TODO: Potentially move this to a more general place
 export type DeferedMouseAction = {
