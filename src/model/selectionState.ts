@@ -139,11 +139,11 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   isNodesOnly(): boolean {
-    return this.#elements.every(isNode);
+    return this.#elements.length > 0 && this.#elements.every(isNode);
   }
 
   isEdgesOnly(): boolean {
-    return this.#elements.every(isEdge);
+    return this.#elements.length > 0 && this.#elements.every(isEdge);
   }
 
   isChanged(): boolean {
