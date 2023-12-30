@@ -1,4 +1,4 @@
-import { DeferedMouseAction, ObjectId } from './types.ts';
+import { DeferedMouseAction } from './types.ts';
 import { MutableRefObject, RefObject } from 'react';
 import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
@@ -13,7 +13,7 @@ export abstract class AbstractTool {
     protected readonly resetTool: () => void
   ) {}
 
-  abstract onMouseDown(id: ObjectId, point: Point, modifiers: Modifiers): void;
+  abstract onMouseDown(id: string, point: Point, modifiers: Modifiers): void;
 
   abstract onMouseUp(point: Point): void;
 

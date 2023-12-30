@@ -3,7 +3,7 @@ import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
-import { BACKGROUND, DeferedMouseAction, ObjectId } from './types.ts';
+import { BACKGROUND, DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { MarqueeDrag } from '../../base-ui/drag/marqueeDrag.ts';
@@ -30,7 +30,7 @@ export class MoveTool extends AbstractTool {
     }
   }
 
-  onMouseDown(id: ObjectId, point: Point, modifiers: Modifiers) {
+  onMouseDown(id: string, point: Point, modifiers: Modifiers) {
     const selection = this.diagram.selectionState;
 
     const isClickOnBackground = id === BACKGROUND;

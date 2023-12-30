@@ -4,7 +4,7 @@ import { MutableRefObject, RefObject } from 'react';
 import { Diagram } from '../../model/diagram.ts';
 
 export interface Tool {
-  onMouseDown(id: ObjectId, point: Point, modifiers: Modifiers): void;
+  onMouseDown(id: string, point: Point, modifiers: Modifiers): void;
 
   onMouseUp(point: Point): void;
 
@@ -23,8 +23,6 @@ export type ToolContructor = {
 
 // TODO: Move this constant somewhere else
 export const BACKGROUND = 'background';
-
-export type ObjectId = string;
 
 // TODO: Potentially move this to a more general place
 export type DeferedMouseAction = {
