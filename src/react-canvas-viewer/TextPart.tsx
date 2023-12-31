@@ -12,7 +12,6 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 
 // TODO: Maybe we can optimize to not have a foreignObject until a text node is created
 export const TextPart = (props: Props) => {
-  const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
   const ref = useRef<HTMLDivElement>(null);
   const widthRef = useRef<number>(0);
   const heightRef = useRef<number>(0);
@@ -41,43 +40,32 @@ export const TextPart = (props: Props) => {
     }
   }, [props.onSizeChange, ref, ...sizeAffectingProps]);
 
+  const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
+
   return (
     <foreignObject
       id={props.id}
+      className={'svg-node__fo'}
       x={props.bounds.pos.x}
       y={props.bounds.pos.y}
       width={props.bounds.size.w}
       height={props.bounds.size.h}
       onMouseDown={props.onMouseDown}
-      className={'svg-node__fo'}
     >
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: valign,
-          height: '100%',
-          cursor: 'move'
-        }}
+        className={'svg-node__fo__inner'}
+        style={{ justifyContent: valign }}
         onDoubleClick={e => {
-          const $t = e.target as HTMLDivElement;
-          // TODO: Maybe we can make this case use classes instead of looking at parent
-          if ($t.parentNode?.nodeName === 'foreignObject') {
-            ($t.firstChild as HTMLDivElement).contentEditable = 'true';
-            ($t.firstChild as HTMLDivElement).style.pointerEvents = 'auto';
-            ($t.firstChild as HTMLDivElement)?.focus();
-          } else if ($t.parentNode?.parentNode?.nodeName === 'foreignObject') {
-            ($t as HTMLDivElement).contentEditable = 'true';
-            ($t as HTMLDivElement).style.pointerEvents = 'auto';
-            ($t as HTMLDivElement)?.focus();
-          }
+          const $textNode = e.currentTarget.firstChild as HTMLElement;
+          $textNode.contentEditable = 'true';
+          $textNode.style.pointerEvents = 'auto';
+          $textNode.focus();
         }}
       >
         <div
           className={'svg-node__text'}
           ref={ref}
           style={{
-            cursor: 'move',
             color: props.text?.color ?? 'unset',
             fontFamily: props.text?.font ?? 'unset',
             fontSize: withPx(props.text?.fontSize) ?? 'unset',
@@ -92,27 +80,24 @@ export const TextPart = (props: Props) => {
             paddingLeft: withPx(props.text?.left) ?? '0',
             paddingRight: withPx(props.text?.right) ?? '0',
             paddingTop: withPx(props.text?.top) ?? '0',
-            paddingBottom: withPx(props.text?.bottom) ?? '0',
-            pointerEvents: 'none'
+            paddingBottom: withPx(props.text?.bottom) ?? '0'
           }}
           onKeyDown={e => {
+            const target = e.target as HTMLElement;
             if (e.key === 'Escape') {
-              (e.target as HTMLDivElement).innerText = props.text?.text ?? '';
-              (e.target as HTMLDivElement).blur();
+              target.innerText = props.text?.text ?? '';
+              target.blur();
             } else if (e.key === 'Enter' && e.metaKey) {
-              (e.target as HTMLDivElement).blur();
+              target.blur();
             }
 
             setTimeout(() => {
-              const newWidth = (e.target as HTMLElement).offsetWidth;
-              const newHeight = (e.target as HTMLElement).offsetHeight;
-              if (newWidth !== widthRef.current || newHeight !== heightRef.current) {
-                props.onSizeChange?.({
-                  w: newWidth,
-                  h: newHeight
-                });
-                widthRef.current = newWidth;
-                heightRef.current = newHeight;
+              const w = target.offsetWidth;
+              const h = target.offsetHeight;
+              if (w !== widthRef.current || h !== heightRef.current) {
+                props.onSizeChange?.({ w, h });
+                widthRef.current = w;
+                heightRef.current = h;
               }
             }, 0);
           }}

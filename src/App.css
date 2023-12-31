@@ -441,10 +441,31 @@ input::-webkit-input-placeholder {
 
   .svg-node {
     cursor: move;
+    .svg-node__anchor {
+      stroke: red;
+      fill: transparent;
+    }
+    .svg-node__fo {
+      & > div {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        cursor: move;
+      }
+      .svg-node__text {
+        cursor: move;
+        pointer-events: none;
+      }
+    }
   }
   .svg-edge {
     cursor: move;
     fill: none;
+  }
+  .svg-shape-control-point {
+    cursor: crosshair;
+    fill: transparent;
+    stroke: red;
   }
 }
 

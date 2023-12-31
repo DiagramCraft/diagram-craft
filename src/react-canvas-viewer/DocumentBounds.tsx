@@ -17,11 +17,7 @@ export const DocumentBounds = (props: Props) => {
     style.fill = props.diagram.props.background?.color;
   }
 
-  return (
-    <>
-      <rect className="svg-doc-bounds" x={x} y={y} width={w} height={h} style={style} />
-    </>
-  );
+  return <rect className="svg-doc-bounds" x={x} y={y} width={w} height={h} style={style} />;
 };
 
 type Props = {

@@ -61,9 +61,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
   const edgeProps = deepMerge({}, defaults.edge, props.def.props) as DeepRequired<EdgeProps>;
 
-  const color = edgeProps.stroke?.color;
-  const fillColor = edgeProps.fill?.color;
-  const width = edgeProps.stroke?.width;
+  const color = edgeProps.stroke.color;
+  const fillColor = edgeProps.fill.color;
+  const width = edgeProps.stroke.width;
 
   const style: CSSProperties = {
     strokeDasharray:
