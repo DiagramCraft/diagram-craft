@@ -17,7 +17,7 @@ export const deepMerge = <T extends Props>(target: Partial<T>, ...sources: Parti
     for (const key of Object.keys(elm)) {
       if (isObject(elm[key])) {
         result[key] ??= {};
-        deepMerge(result[key], elm[key] as any);
+        deepMerge(result[key], elm[key] as Props);
       } else {
         result[key] = elm[key];
       }

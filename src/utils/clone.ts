@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const deepClone = <T>(target: T): T => {
   if (target === null) {
     return target;
   }
 
   if (target instanceof Date) {
-    return new Date(target.getTime()) as unknown as T;
+    return new Date(target.getTime()) as T;
   }
 
-  // T extends any[] specifies that T should be an array and would return T type
+  // T extends unknown[] specifies that T should be an array and would return T type
   if (Array.isArray(target)) {
-    return (target as T extends any[] ? T : never).map(item => deepClone(item)) as unknown as T;
+    return (target as T extends unknown[] ? T : never).map(item => deepClone(item)) as T;
   }
 
   if (typeof target === 'object') {

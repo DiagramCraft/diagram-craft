@@ -1,8 +1,6 @@
 import { debounceMicrotask } from './debounce.ts';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type EventMap = Record<string, any>;
-
+export type EventMap = Record<string, unknown>;
 export type EventKey<T> = string & keyof T;
 export type EventReceiver<T> = (params: T) => void;
 
