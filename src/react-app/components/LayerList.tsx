@@ -111,11 +111,15 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   const diagram = useDiagram();
   const e = props.element;
 
+  /* TODO: Need something to NodeDefinition to determine if children are allowed */
+  const childrenAllowed =
+    e.type === 'node' && (e.nodeType === 'group' || e.nodeType === 'container');
+
   const drag = useDraggable(JSON.stringify([e.id]), ELEMENT_INSTANCES);
   const dropTarget = useDropTarget(
     [ELEMENT_INSTANCES],
     ev => {
-      let relation: 'above' | 'below' = 'below';
+      let relation: 'above' | 'below' | 'on' = 'below';
       const instances: string[] = [];
       if (ev[ELEMENT_INSTANCES].before) {
         instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].before));
@@ -123,6 +127,9 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       } else if (ev[ELEMENT_INSTANCES].after) {
         instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].after));
         relation = 'below';
+      } else if (ev[ELEMENT_INSTANCES].on) {
+        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].on));
+        relation = 'on';
       } else {
         VERIFY_NOT_REACHED();
       }
@@ -137,7 +144,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       );
     },
     {
-      split: () => [0.5, 0, 0.5]
+      split: () => (childrenAllowed ? [0.25, 0.5, 0.25] : [0.5, 0, 0.5])
     }
   );
 
@@ -159,7 +166,8 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       }}
     >
       <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
-      {e.type === 'node' && e.nodeType === 'group' && (
+
+      {childrenAllowed && (
         <Tree.Children>
           {e.children.toReversed().map(c => (
             <ElementEntry key={c.id} element={c} />

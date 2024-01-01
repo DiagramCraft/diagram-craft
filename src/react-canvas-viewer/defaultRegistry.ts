@@ -13,6 +13,7 @@ import { RegularPolygon } from './node-types/RegularPolygon.tsx';
 import { Parallelogram } from './node-types/Parallelogram.tsx';
 import { Trapetzoid } from './node-types/Trapetzoid.tsx';
 import { Group } from './node-types/Group.tsx';
+import { Container } from './node-types/Container.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -69,10 +70,18 @@ export const defaultNodeRegistry = () => {
     })
   );
   dest.register(
+    new ReactNodeDefinition('container', 'Container', Container, {
+      getBoundingPath: Container.getBoundingPath
+    })
+  );
+
+  // Note: group must be the last element
+  dest.register(
     new ReactNodeDefinition('group', 'Group', Group, {
       getBoundingPath: Group.getBoundingPath
     })
   );
+
   return dest;
 };
 

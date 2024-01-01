@@ -122,7 +122,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   moveElement(
     elements: DiagramElement[],
     layer: Layer,
-    ref?: { relation: 'above' | 'below'; element: DiagramElement }
+    ref?: { relation: 'above' | 'below' | 'on'; element: DiagramElement }
   ) {
     const elementLayers = elements.map(e => e.layer);
     const topMostLayer = this.layers.all.findLast(layer => elementLayers.includes(layer));
@@ -159,8 +159,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       const idx = parent.children.indexOf(ref.element);
       if (ref.relation === 'above') {
         parent.children = parent.children.toSpliced(idx + 1, 0, ...elements);
-      } else {
+      } else if (ref.relation === 'below') {
         parent.children = parent.children.toSpliced(idx, 0, ...elements);
+      } else {
+        ref.element.children = [...ref.element.children, ...elements];
       }
     } else {
       assert.true(ref.element.layer === layer);
@@ -168,8 +170,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       const idx = layer.elements.indexOf(ref.element);
       if (ref.relation === 'above') {
         layer.elements.splice(idx + 1, 0, ...elements);
-      } else {
+      } else if (ref.relation === 'below') {
         layer.elements.splice(idx, 0, ...elements);
+      } else if (ref.element.type === 'node') {
+        ref.element.children = [...ref.element.children, ...elements];
       }
     }
 
