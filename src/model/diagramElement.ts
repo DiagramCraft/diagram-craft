@@ -13,5 +13,10 @@ export const getDiagramElementPath = (element: DiagramElement): DiagramNode[] =>
   return dest;
 };
 
+export const getTopMostNode = (element: DiagramNode): DiagramNode => {
+  const path = getDiagramElementPath(element);
+  return path.length > 0 ? path[path.length - 1] : element;
+};
+
 export const isNode = (e: DiagramElement): e is DiagramNode => e.type === 'node';
 export const isEdge = (e: DiagramElement): e is DiagramEdge => e.type === 'edge';

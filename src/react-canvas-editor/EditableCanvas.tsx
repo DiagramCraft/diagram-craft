@@ -30,7 +30,7 @@ import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
 import { DragLabel } from './DragLabel.tsx';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
-import { getDiagramElementPath } from '../model/diagramElement.ts';
+import { getTopMostNode } from '../model/diagramElement.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -80,9 +80,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useEventListener(diagram, 'elementChange', e => {
     if (e.element.type === 'node') {
-      const path = getDiagramElementPath(e.element);
-      const nodeToRepaint = path.length > 0 ? path[path.length - 1] : e.element;
-
+      const nodeToRepaint = getTopMostNode(e.element);
       nodeRefs.current[nodeToRepaint.id]?.repaint();
 
       for (const edge of nodeToRepaint.listEdges()) {
@@ -98,13 +96,14 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
     if (e.element.type === 'node') {
-      nodeRefs.current[e.element.id]?.repaint();
+      const nodeToRepaint = getTopMostNode(e.element);
+      nodeRefs.current[nodeToRepaint.id]?.repaint();
     } else {
       edgeRefs.current[e.element.id]?.repaint();
     }
   };
 
-  // This needs to stay in heter for performance reasons
+  // This needs to stay in here for performance reasons
   useEventListener(selection, 'add', redrawElement);
   useEventListener(selection, 'remove', redrawElement);
 
