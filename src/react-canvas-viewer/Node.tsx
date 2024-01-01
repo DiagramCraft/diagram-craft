@@ -18,7 +18,6 @@ import { DiagramNode } from '../model/diagramNode.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { deepMerge } from '../utils/deepmerge.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
-import { Edge } from './Edge.tsx';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DeepRequired } from 'ts-essentials';
 import { Box } from '../geometry/box.ts';
@@ -95,92 +94,57 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     style.fill = 'transparent';
   }
 
-  if (props.def.nodeType === 'group') {
-    return (
-      <g
-        onMouseEnter={() => props.onMouseEnter(props.def.id)}
-        onMouseLeave={() => props.onMouseLeave(props.def.id)}
-      >
-        {props.def.children.map(c =>
-          c.type === 'node' ? (
-            <Node
-              key={c.id}
-              def={c}
-              diagram={props.diagram}
-              onDoubleClick={props.onDoubleClick}
-              onMouseDown={props.onMouseDown}
-              onMouseLeave={props.onMouseLeave}
-              onMouseEnter={props.onMouseEnter}
+  // TODO: Better error handling here
+  precondition.is.true(nodeDef && 'reactNode' in nodeDef);
+
+  const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
+
+  return (
+    <g
+      id={`node-${props.def.id}`}
+      className={'svg-node'}
+      transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${center.x} ${center.y})`}
+      onMouseEnter={() => props.onMouseEnter(props.def.id)}
+      onMouseLeave={() => props.onMouseLeave(props.def.id)}
+    >
+      {nodeProps.fill?.type === 'gradient' && (
+        <linearGradient id={`node-${props.def.id}-gradient`}>
+          <stop stopColor={nodeProps.fill.color} offset="0%" />
+          <stop stopColor={nodeProps.fill.color2} offset="100%" />
+        </linearGradient>
+      )}
+      <ReactNodeImpl
+        def={nodeDef}
+        diagram={props.diagram}
+        node={props.def}
+        nodeProps={nodeProps}
+        onMouseDown={onMouseDown}
+        isSelected={isSelected}
+        isSingleSelected={isSingleSelected}
+        style={style}
+        childProps={{
+          onMouseDown: props.onMouseDown,
+          onMouseEnter: props.onMouseEnter,
+          onMouseLeave: props.onMouseLeave,
+          onDoubleClick: props.onDoubleClick
+        }}
+      />
+
+      {isEdgeConnect && (
+        <g transform={`rotate(${-Angle.toDeg(props.def.bounds.rotation)} ${center.x} ${center.y})`}>
+          {props.def.anchors.map(anchor => (
+            <circle
+              key={`${anchor.point.x}_${anchor.point.y}`}
+              className={'svg-node__anchor'}
+              cx={props.def.bounds.pos.x + anchor.point.x * props.def.bounds.size.w}
+              cy={props.def.bounds.pos.y + anchor.point.y * props.def.bounds.size.h}
+              r={5}
             />
-          ) : (
-            <Edge
-              key={c.id}
-              def={c}
-              diagram={props.diagram}
-              onDoubleClick={props.onDoubleClick ?? (() => {})}
-              onMouseDown={props.onMouseDown}
-              onMouseLeave={props.onMouseLeave}
-              onMouseEnter={props.onMouseEnter}
-            />
-          )
-        )}
-      </g>
-    );
-  } else {
-    // TODO: Better error handling here
-    precondition.is.true(nodeDef && 'reactNode' in nodeDef);
-
-    const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
-
-    return (
-      <g
-        id={`node-${props.def.id}`}
-        className={'svg-node'}
-        transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${center.x} ${center.y})`}
-        onMouseEnter={() => props.onMouseEnter(props.def.id)}
-        onMouseLeave={() => props.onMouseLeave(props.def.id)}
-      >
-        {nodeProps.fill?.type === 'gradient' && (
-          <linearGradient id={`node-${props.def.id}-gradient`}>
-            <stop stopColor={nodeProps.fill.color} offset="0%" />
-            <stop stopColor={nodeProps.fill.color2} offset="100%" />
-          </linearGradient>
-        )}
-        <ReactNodeImpl
-          def={nodeDef}
-          diagram={props.diagram}
-          node={props.def}
-          nodeProps={nodeProps}
-          onMouseDown={onMouseDown}
-          isSelected={isSelected}
-          isSingleSelected={isSingleSelected}
-          style={style}
-          childProps={{
-            onMouseDown: props.onMouseDown,
-            onMouseEnter: props.onMouseEnter,
-            onMouseLeave: props.onMouseLeave,
-            onDoubleClick: props.onDoubleClick
-          }}
-        />
-
-        {isEdgeConnect && (
-          <g
-            transform={`rotate(${-Angle.toDeg(props.def.bounds.rotation)} ${center.x} ${center.y})`}
-          >
-            {props.def.anchors.map(anchor => (
-              <circle
-                key={`${anchor.point.x}_${anchor.point.y}`}
-                className={'svg-node__anchor'}
-                cx={props.def.bounds.pos.x + anchor.point.x * props.def.bounds.size.w}
-                cy={props.def.bounds.pos.y + anchor.point.y * props.def.bounds.size.h}
-                r={5}
-              />
-            ))}
-          </g>
-        )}
-      </g>
-    );
-  }
+          ))}
+        </g>
+      )}
+    </g>
+  );
 });
 
 type Props = {
