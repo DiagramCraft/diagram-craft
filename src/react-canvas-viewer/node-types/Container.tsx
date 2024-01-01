@@ -7,6 +7,7 @@ import { Edge } from '../Edge.tsx';
 import { Node } from '../Node.tsx';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 
 export const Container = (props: Props) => {
   const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -55,6 +56,10 @@ export const Container = (props: Props) => {
 export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
   constructor() {
     super('container', 'Container');
+  }
+
+  supports(capability: NodeCapability): boolean {
+    return ['children'].includes(capability);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

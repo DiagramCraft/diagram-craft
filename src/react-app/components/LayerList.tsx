@@ -111,9 +111,8 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   const diagram = useDiagram();
   const e = props.element;
 
-  /* TODO: Need something to NodeDefinition to determine if children are allowed */
   const childrenAllowed =
-    e.type === 'node' && (e.nodeType === 'group' || e.nodeType === 'container');
+    e.type === 'node' && diagram.nodeDefinitions.get(e.nodeType).supports('children');
 
   const drag = useDraggable(JSON.stringify([e.id]), ELEMENT_INSTANCES);
   const dropTarget = useDropTarget(

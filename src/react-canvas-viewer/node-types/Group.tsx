@@ -6,6 +6,7 @@ import { Node } from '../Node.tsx';
 import { Edge } from '../Edge.tsx';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 
 export const Group = (props: Props) => {
   return props.node.children.map(child =>
@@ -36,6 +37,10 @@ export const Group = (props: Props) => {
 export class GroupNodeDefinition extends AbstractReactNodeDefinition {
   constructor() {
     super('group', 'Group');
+  }
+
+  supports(capability: NodeCapability): boolean {
+    return ['children'].includes(capability);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

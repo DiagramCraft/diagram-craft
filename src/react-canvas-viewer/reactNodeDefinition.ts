@@ -32,13 +32,13 @@ type Props = {
 type ReactNode = React.FunctionComponent<Props>;
 
 export abstract class AbstractReactNodeDefinition implements NodeDefinition {
-  constructor(
+  protected constructor(
     readonly type: string,
     readonly name: string
   ) {}
 
   supports(_capability: NodeCapability): boolean {
-    return true;
+    return false;
   }
 
   abstract getBoundingPathBuilder(node: DiagramNode): PathBuilder;

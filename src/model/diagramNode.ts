@@ -269,6 +269,8 @@ export class DiagramNode implements AbstractNode {
     return edge;
   }
 
+  // TODO: Delegate to NodeDefinition
+  //       ... also this is really only for groups
   private recalculateBounds(uow: UnitOfWork) {
     const childrenBounds = this.children.map(c => c.bounds);
     if (childrenBounds.length === 0) return;
@@ -281,6 +283,7 @@ export class DiagramNode implements AbstractNode {
   }
 
   // TODO: Need to make sure this is called when e.g. props are changed
+  // TODO: Delegate to NodeDefinition
   private invalidateAnchors(uow: UnitOfWork) {
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
