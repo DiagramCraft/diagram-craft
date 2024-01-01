@@ -5,6 +5,7 @@ import { Point } from '../../geometry/point.ts';
 import { Node } from '../Node.tsx';
 import { Edge } from '../Edge.tsx';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 export const Group = (props: Props) => {
   return props.node.children.map(child =>
@@ -32,16 +33,22 @@ export const Group = (props: Props) => {
   );
 };
 
-Group.getBoundingPath = (def: DiagramNode) => {
-  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-  pathBuilder.moveTo(Point.of(-1, 1));
-  pathBuilder.lineTo(Point.of(1, 1));
-  pathBuilder.lineTo(Point.of(1, -1));
-  pathBuilder.lineTo(Point.of(-1, -1));
-  pathBuilder.lineTo(Point.of(-1, 1));
+export class GroupNodeDefinition extends AbstractReactNodeDefinition {
+  constructor() {
+    super('group', 'Group');
+  }
 
-  return pathBuilder;
-};
+  getBoundingPathBuilder(def: DiagramNode) {
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(Point.of(-1, 1));
+    pathBuilder.lineTo(Point.of(1, 1));
+    pathBuilder.lineTo(Point.of(1, -1));
+    pathBuilder.lineTo(Point.of(-1, -1));
+    pathBuilder.lineTo(Point.of(-1, 1));
+
+    return pathBuilder;
+  }
+}
 
 type Props = {
   node: DiagramNode;

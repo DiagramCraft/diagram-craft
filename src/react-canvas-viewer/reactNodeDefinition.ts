@@ -31,65 +31,41 @@ type Props = {
 
 type ReactNode = React.FunctionComponent<Props>;
 
-type BoundingPathFactory = (node: DiagramNode) => PathBuilder;
-type CustomPropertyFactory = (node: DiagramNode) => Record<string, CustomPropertyDefinition>;
-type DefaultPropsFactory = (mode: 'picker' | 'canvas') => NodeProps;
-type InitialConfig = { size: Extent };
-
-export class ReactNodeDefinition implements NodeDefinition {
+export abstract class AbstractReactNodeDefinition implements NodeDefinition {
   constructor(
     readonly type: string,
-    readonly name: string,
-    readonly reactNode: ReactNode,
-    readonly config: {
-      getBoundingPath: BoundingPathFactory;
-      getCustomProperties?: CustomPropertyFactory;
-      defaultPropsFactory?: DefaultPropsFactory;
-      initialConfig?: InitialConfig;
-      requestFocus?: () => void;
-    }
+    readonly name: string
   ) {}
 
   supports(_capability: NodeCapability): boolean {
     return true;
   }
 
+  abstract getBoundingPathBuilder(node: DiagramNode): PathBuilder;
+
   getBoundingPath(node: DiagramNode): Path {
     const bnd = node.bounds;
 
-    const pb = this.config.getBoundingPath?.(node);
+    const pb = this.getBoundingPathBuilder(node);
     if (round(bnd.rotation) !== 0) {
       pb.setRotation(bnd.rotation, Box.center(bnd));
     }
     return pb.getPath();
   }
 
-  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
-    if (this.config?.getCustomProperties !== undefined) {
-      return this.config.getCustomProperties(node);
-    }
+  getCustomProperties(_node: DiagramNode): Record<string, CustomPropertyDefinition> {
     return {};
   }
 
-  getDefaultProps(mode: 'picker' | 'canvas'): NodeProps {
-    if (this.config?.defaultPropsFactory !== undefined) {
-      return this.config.defaultPropsFactory(mode);
-    }
+  getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
     return {};
   }
 
   getInitialConfig(): { size: Extent } {
-    if (this.config?.initialConfig !== undefined) {
-      return this.config.initialConfig;
-    }
     return { size: { w: 100, h: 100 } };
   }
 
   requestFocus(node: DiagramNode): void {
-    if (this.config?.requestFocus !== undefined) {
-      return this.config?.requestFocus();
-    }
-
     const editable = document
       .getElementById(`text_1_${node.id}`)
       ?.getElementsByClassName('svg-node__text')
@@ -106,5 +82,42 @@ export class ReactNodeDefinition implements NodeDefinition {
     setTimeout(() => {
       document.execCommand('selectAll', false, undefined);
     }, 0);
+  }
+}
+
+export class ReactNodeDefinition implements NodeDefinition {
+  type: string;
+  name: string;
+
+  constructor(
+    readonly reactNode: ReactNode,
+    private readonly delegate: NodeDefinition
+  ) {
+    this.type = delegate.type;
+    this.name = delegate.name;
+  }
+
+  supports(_capability: NodeCapability): boolean {
+    return this.delegate.supports(_capability);
+  }
+
+  getBoundingPath(node: DiagramNode): Path {
+    return this.delegate.getBoundingPath(node);
+  }
+
+  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
+    return this.delegate.getCustomProperties(node);
+  }
+
+  getDefaultProps(mode: 'picker' | 'canvas'): NodeProps {
+    return this.delegate.getDefaultProps(mode);
+  }
+
+  getInitialConfig(): { size: Extent } {
+    return this.delegate.getInitialConfig();
+  }
+
+  requestFocus(node: DiagramNode): void {
+    return this.delegate.requestFocus(node);
   }
 }

@@ -4,10 +4,10 @@ import { TransformFactory } from '../geometry/transform.ts';
 import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
-import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { newid } from '../utils/id.ts';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
+import { Rect, RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.tsx';
 
 const bounds = {
   pos: { x: 0, y: 0 },
@@ -44,20 +44,18 @@ describe('Diagram', () => {
   test('transform rotate', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
     nodeDefinitionRegistry.register(
-      new ReactNodeDefinition('a', 'a', () => null, {
-        getBoundingPath: () => new PathBuilder()
-      })
+      new ReactNodeDefinition(Rect, new RectNodeDefinition('rect', 'Rectangle'))
     );
 
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry(), []);
     const layer = diagram.layers.active;
 
-    const node1 = new DiagramNode('1', 'a', bounds, diagram, layer);
+    const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer);
     diagram.layers.active.addElement(node1);
 
     const node2 = new DiagramNode(
       '2',
-      'a',
+      'rect',
       {
         pos: { x: 100, y: 100 },
         size: { w: 100, h: 100 },

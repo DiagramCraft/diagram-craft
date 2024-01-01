@@ -1,86 +1,35 @@
-import { Star } from './node-types/Star.tsx';
-import { Rect } from './node-types/Rect.tsx';
-import { Text } from './node-types/Text.tsx';
-import { RoundedRect } from './node-types/RoundedRect.tsx';
+import { Star, StarNodeDefinition } from './node-types/Star.tsx';
+import { Rect, RectNodeDefinition } from './node-types/Rect.tsx';
+import { Text, TextNodeDefinition } from './node-types/Text.tsx';
+import { RoundedRect, RoundedRectNodeDefinition } from './node-types/RoundedRect.tsx';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry
 } from '../model/elementDefinitionRegistry.ts';
-import { Circle } from './node-types/Circle.tsx';
-import { Diamond } from './node-types/Diamond.tsx';
-import { RegularPolygon } from './node-types/RegularPolygon.tsx';
-import { Parallelogram } from './node-types/Parallelogram.tsx';
-import { Trapetzoid } from './node-types/Trapetzoid.tsx';
-import { Group } from './node-types/Group.tsx';
-import { Container } from './node-types/Container.tsx';
+import { Circle, CircleNodeDefinition } from './node-types/Circle.tsx';
+import { Diamond, DiamondNodeDefinition } from './node-types/Diamond.tsx';
+import { RegularPolygon, RegularPolygonNodeDefinition } from './node-types/RegularPolygon.tsx';
+import { Parallelogram, ParallelogramNodeDefinition } from './node-types/Parallelogram.tsx';
+import { Trapetzoid, TrapetzoidNodeDefinition } from './node-types/Trapetzoid.tsx';
+import { Group, GroupNodeDefinition } from './node-types/Group.tsx';
+import { Container, ContainerNodeDefinition } from './node-types/Container.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
-  dest.register(
-    new ReactNodeDefinition('rect', 'Rectangle', Rect, {
-      getBoundingPath: Rect.getBoundingPath
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('rounded-rect', 'Rounded Rectangle', RoundedRect, {
-      getBoundingPath: RoundedRect.getBoundingPath,
-      getCustomProperties: RoundedRect.getCustomProperties
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('circle', 'Circle', Circle, {
-      getBoundingPath: Circle.getBoundingPath
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('text', 'Text', Text, {
-      getBoundingPath: Rect.getBoundingPath,
-      defaultPropsFactory: Text.defaultPropsFactory,
-      initialConfig: Text.initialConfig
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('star', 'Star', Star, {
-      getBoundingPath: Star.getBoundingPath,
-      getCustomProperties: Star.getCustomProperties
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('regular-polygon', 'Regular Polygon', RegularPolygon, {
-      getBoundingPath: RegularPolygon.getBoundingPath,
-      getCustomProperties: RegularPolygon.getCustomProperties
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('parallelogram', 'Parallelogram', Parallelogram, {
-      getBoundingPath: Parallelogram.getBoundingPath,
-      getCustomProperties: Parallelogram.getCustomProperties
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('trapetzoid', 'Trapetzoid', Trapetzoid, {
-      getBoundingPath: Trapetzoid.getBoundingPath,
-      getCustomProperties: Trapetzoid.getCustomProperties
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('diamond', 'Diamond', Diamond, {
-      getBoundingPath: Diamond.getBoundingPath
-    })
-  );
-  dest.register(
-    new ReactNodeDefinition('container', 'Container', Container, {
-      getBoundingPath: Container.getBoundingPath
-    })
-  );
+  dest.register(new ReactNodeDefinition(Rect, new RectNodeDefinition()));
+  dest.register(new ReactNodeDefinition(RoundedRect, new RoundedRectNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Circle, new CircleNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Text, new TextNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Star, new StarNodeDefinition()));
+  dest.register(new ReactNodeDefinition(RegularPolygon, new RegularPolygonNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Parallelogram, new ParallelogramNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Trapetzoid, new TrapetzoidNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Diamond, new DiamondNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Container, new ContainerNodeDefinition()));
 
   // Note: group must be the last element
-  dest.register(
-    new ReactNodeDefinition('group', 'Group', Group, {
-      getBoundingPath: Group.getBoundingPath
-    })
-  );
+  dest.register(new ReactNodeDefinition(Group, new GroupNodeDefinition()));
 
   return dest;
 };

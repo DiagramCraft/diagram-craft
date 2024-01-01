@@ -5,6 +5,7 @@ import { propsUtils } from '../utils/propsUtils.ts';
 import { Box } from '../../geometry/box.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { RectNodeDefinition } from './Rect.tsx';
 
 export const Text = (props: Props) => {
   const sizeChangeCallback = useCallback(
@@ -53,26 +54,34 @@ export const Text = (props: Props) => {
   );
 };
 
-Text.defaultPropsFactory = (_mode: 'picker' | 'canvas'): NodeProps => {
-  return {
-    stroke: {
-      enabled: false
-    },
-    fill: {
-      enabled: false
-    },
-    text: {
-      align: 'left',
-      text: 'Text',
-      left: 0,
-      top: 0,
-      right: 0,
-      bottom: 0
-    }
-  };
-};
+export class TextNodeDefinition extends RectNodeDefinition {
+  constructor() {
+    super('text', 'Test');
+  }
 
-Text.initialConfig = { size: { w: 100, h: 10 } };
+  getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
+    return {
+      stroke: {
+        enabled: false
+      },
+      fill: {
+        enabled: false
+      },
+      text: {
+        align: 'left',
+        text: 'Text',
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0
+      }
+    };
+  }
+
+  getInitialConfig(): { size: Extent } {
+    return { size: { w: 100, h: 10 } };
+  }
+}
 
 type Props = {
   node: DiagramNode;

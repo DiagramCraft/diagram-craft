@@ -9,6 +9,7 @@ import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 declare global {
   interface NodeProps {
@@ -19,7 +20,7 @@ declare global {
 }
 
 export const RegularPolygon = (props: Props) => {
-  const path = RegularPolygon.getBoundingPath(props.node).getPath();
+  const path = new RegularPolygonNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -67,39 +68,43 @@ export const RegularPolygon = (props: Props) => {
   );
 };
 
-RegularPolygon.getBoundingPath = (def: DiagramNode) => {
-  const sides = def.props?.regularPolygon?.numberOfSides ?? 5;
-
-  const theta = Math.PI / 2;
-  const dTheta = (2 * Math.PI) / sides;
-
-  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-  pathBuilder.moveTo(Point.of(0, 1));
-
-  for (let i = 0; i < sides; i++) {
-    const angle = theta - (i + 1) * dTheta;
-
-    pathBuilder.lineTo(Point.of(Math.cos(angle), Math.sin(angle)));
+export class RegularPolygonNodeDefinition extends AbstractReactNodeDefinition {
+  constructor() {
+    super('regular-polygon', 'Regular Polygon');
   }
 
-  return pathBuilder;
-};
+  getBoundingPathBuilder(def: DiagramNode) {
+    const sides = def.props?.regularPolygon?.numberOfSides ?? 5;
 
-RegularPolygon.getCustomProperties = (
-  def: DiagramNode
-): Record<string, CustomPropertyDefinition> => {
-  return {
-    numberOfSides: {
-      type: 'number',
-      label: 'Sides',
-      value: def.props?.regularPolygon?.numberOfSides ?? 5,
-      onChange: (value: number) => {
-        def.props.regularPolygon ??= {};
-        def.props.regularPolygon.numberOfSides = value;
-      }
+    const theta = Math.PI / 2;
+    const dTheta = (2 * Math.PI) / sides;
+
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(Point.of(0, 1));
+
+    for (let i = 0; i < sides; i++) {
+      const angle = theta - (i + 1) * dTheta;
+
+      pathBuilder.lineTo(Point.of(Math.cos(angle), Math.sin(angle)));
     }
-  };
-};
+
+    return pathBuilder;
+  }
+
+  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
+    return {
+      numberOfSides: {
+        type: 'number',
+        label: 'Sides',
+        value: def.props?.regularPolygon?.numberOfSides ?? 5,
+        onChange: (value: number) => {
+          def.props.regularPolygon ??= {};
+          def.props.regularPolygon.numberOfSides = value;
+        }
+      }
+    };
+  }
+}
 
 type Props = {
   def: NodeDefinition;

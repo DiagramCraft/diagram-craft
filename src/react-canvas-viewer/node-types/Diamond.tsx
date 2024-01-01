@@ -4,9 +4,10 @@ import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 export const Diamond = (props: Props) => {
-  const path = Diamond.getBoundingPath(props.node).getPath();
+  const path = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -34,16 +35,22 @@ export const Diamond = (props: Props) => {
   );
 };
 
-Diamond.getBoundingPath = (def: DiagramNode) => {
-  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-  pathBuilder.moveTo(Point.of(0, 1));
-  pathBuilder.lineTo(Point.of(1, 0));
-  pathBuilder.lineTo(Point.of(0, -1));
-  pathBuilder.lineTo(Point.of(-1, 0));
-  pathBuilder.lineTo(Point.of(0, 1));
+export class DiamondNodeDefinition extends AbstractReactNodeDefinition {
+  constructor() {
+    super('diamond', 'Diamond');
+  }
 
-  return pathBuilder;
-};
+  getBoundingPathBuilder(def: DiagramNode) {
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(Point.of(0, 1));
+    pathBuilder.lineTo(Point.of(1, 0));
+    pathBuilder.lineTo(Point.of(0, -1));
+    pathBuilder.lineTo(Point.of(-1, 0));
+    pathBuilder.lineTo(Point.of(0, 1));
+
+    return pathBuilder;
+  }
+}
 
 type Props = {
   node: DiagramNode;

@@ -4,9 +4,10 @@ import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 export const Rect = (props: Props) => {
-  const path = Rect.getBoundingPath(props.node).getPath();
+  const path = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -34,16 +35,22 @@ export const Rect = (props: Props) => {
   );
 };
 
-Rect.getBoundingPath = (def: DiagramNode) => {
-  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-  pathBuilder.moveTo(Point.of(-1, 1));
-  pathBuilder.lineTo(Point.of(1, 1));
-  pathBuilder.lineTo(Point.of(1, -1));
-  pathBuilder.lineTo(Point.of(-1, -1));
-  pathBuilder.lineTo(Point.of(-1, 1));
+export class RectNodeDefinition extends AbstractReactNodeDefinition {
+  constructor(name = 'rect', displayName = 'Rectangle') {
+    super(name, displayName);
+  }
 
-  return pathBuilder;
-};
+  getBoundingPathBuilder(def: DiagramNode) {
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(Point.of(-1, 1));
+    pathBuilder.lineTo(Point.of(1, 1));
+    pathBuilder.lineTo(Point.of(1, -1));
+    pathBuilder.lineTo(Point.of(-1, -1));
+    pathBuilder.lineTo(Point.of(-1, 1));
+
+    return pathBuilder;
+  }
+}
 
 type Props = {
   node: DiagramNode;

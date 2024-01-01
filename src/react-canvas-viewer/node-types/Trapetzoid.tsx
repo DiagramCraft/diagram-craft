@@ -7,6 +7,7 @@ import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.
 import { Diagram } from '../../model/diagram.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 declare global {
   interface NodeProps {
@@ -20,7 +21,7 @@ declare global {
 export const Trapetzoid = (props: Props) => {
   const slantLeft = props.node.props?.trapetzoid?.slantLeft ?? 5;
   const slantRight = props.node.props?.trapetzoid?.slantRight ?? 5;
-  const path = Trapetzoid.getBoundingPath(props.node).getPath();
+  const path = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -88,53 +89,59 @@ export const Trapetzoid = (props: Props) => {
   );
 };
 
-Trapetzoid.getCustomProperties = (def: DiagramNode): Record<string, CustomPropertyDefinition> => {
-  return {
-    slantLeft: {
-      type: 'number',
-      label: 'Slant (left)',
-      value: def.props?.trapetzoid?.slantLeft ?? 5,
-      maxValue: 60,
-      unit: 'px',
-      onChange: (value: number) => {
-        def.props.trapetzoid ??= {};
-        if (value >= def.bounds.size.w / 2 || value >= def.bounds.size.h / 2) return;
-        def.props.trapetzoid.slantLeft = value;
+export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
+  constructor() {
+    super('trapetzoid', 'Trapetzoid');
+  }
+
+  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
+    return {
+      slantLeft: {
+        type: 'number',
+        label: 'Slant (left)',
+        value: def.props?.trapetzoid?.slantLeft ?? 5,
+        maxValue: 60,
+        unit: 'px',
+        onChange: (value: number) => {
+          def.props.trapetzoid ??= {};
+          if (value >= def.bounds.size.w / 2 || value >= def.bounds.size.h / 2) return;
+          def.props.trapetzoid.slantLeft = value;
+        }
+      },
+      slantRight: {
+        type: 'number',
+        label: 'Slant (right)',
+        value: def.props?.trapetzoid?.slantRight ?? 5,
+        maxValue: 60,
+        unit: 'px',
+        onChange: (value: number) => {
+          def.props.trapetzoid ??= {};
+          if (value >= def.bounds.size.w / 2 || value >= def.bounds.size.h / 2) return;
+          def.props.trapetzoid.slantRight = value;
+        }
       }
-    },
-    slantRight: {
-      type: 'number',
-      label: 'Slant (right)',
-      value: def.props?.trapetzoid?.slantRight ?? 5,
-      maxValue: 60,
-      unit: 'px',
-      onChange: (value: number) => {
-        def.props.trapetzoid ??= {};
-        if (value >= def.bounds.size.w / 2 || value >= def.bounds.size.h / 2) return;
-        def.props.trapetzoid.slantRight = value;
-      }
-    }
-  };
-};
+    };
+  }
 
-Trapetzoid.getBoundingPath = (def: DiagramNode) => {
-  const slantLeft = def.props?.trapetzoid?.slantLeft ?? 5;
-  const slantRight = def.props?.trapetzoid?.slantRight ?? 5;
-  const bnd = def.bounds;
+  getBoundingPathBuilder(def: DiagramNode) {
+    const slantLeft = def.props?.trapetzoid?.slantLeft ?? 5;
+    const slantRight = def.props?.trapetzoid?.slantRight ?? 5;
+    const bnd = def.bounds;
 
-  const cdSl = (slantLeft / bnd.size.w) * 2;
-  const cdSR = (slantRight / bnd.size.w) * 2;
+    const cdSl = (slantLeft / bnd.size.w) * 2;
+    const cdSR = (slantRight / bnd.size.w) * 2;
 
-  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 
-  pathBuilder.moveTo(Point.of(-1 + cdSl, 1));
-  pathBuilder.lineTo(Point.of(1 - cdSR, 1));
-  pathBuilder.lineTo(Point.of(1, -1));
-  pathBuilder.lineTo(Point.of(-1, -1));
-  pathBuilder.lineTo(Point.of(-1 + cdSl, 1));
+    pathBuilder.moveTo(Point.of(-1 + cdSl, 1));
+    pathBuilder.lineTo(Point.of(1 - cdSR, 1));
+    pathBuilder.lineTo(Point.of(1, -1));
+    pathBuilder.lineTo(Point.of(-1, -1));
+    pathBuilder.lineTo(Point.of(-1 + cdSl, 1));
 
-  return pathBuilder;
-};
+    return pathBuilder;
+  }
+}
 
 type Props = {
   node: DiagramNode;

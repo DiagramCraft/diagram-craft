@@ -10,6 +10,7 @@ import { round } from '../../utils/math.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 declare global {
   interface NodeProps {
@@ -21,7 +22,7 @@ declare global {
 }
 
 export const Star = (props: Props) => {
-  const path = Star.getBoundingPath(props.node).getPath();
+  const path = new StarNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -83,52 +84,58 @@ export const Star = (props: Props) => {
   );
 };
 
-Star.getBoundingPath = (def: DiagramNode) => {
-  const sides = def.props?.star?.numberOfSides ?? 5;
-  const innerRadius = def.props?.star?.innerRadius ?? 0.5;
-
-  const theta = Math.PI / 2;
-  const dTheta = (2 * Math.PI) / sides;
-
-  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-  pathBuilder.moveTo(Point.of(0, 1));
-
-  for (let i = 0; i < sides; i++) {
-    const angle = theta - (i + 1) * dTheta;
-
-    const iAngle = angle + dTheta / 2;
-    pathBuilder.lineTo(Point.of(Math.cos(iAngle) * innerRadius, Math.sin(iAngle) * innerRadius));
-
-    pathBuilder.lineTo(Point.of(Math.cos(angle), Math.sin(angle)));
+export class StarNodeDefinition extends AbstractReactNodeDefinition {
+  constructor() {
+    super('star', 'Star');
   }
 
-  return pathBuilder;
-};
+  getBoundingPathBuilder(def: DiagramNode) {
+    const sides = def.props?.star?.numberOfSides ?? 5;
+    const innerRadius = def.props?.star?.innerRadius ?? 0.5;
 
-Star.getCustomProperties = (def: DiagramNode): Record<string, CustomPropertyDefinition> => {
-  return {
-    numberOfSides: {
-      type: 'number',
-      label: 'Sides',
-      value: def.props?.star?.numberOfSides ?? 5,
-      onChange: (value: number) => {
-        def.props.star ??= {};
-        def.props.star.numberOfSides = value;
-      }
-    },
-    innerRadius: {
-      type: 'number',
-      label: 'Radius',
-      value: round((def.props?.star?.innerRadius ?? 0.5) * 100),
-      maxValue: 100,
-      unit: '%',
-      onChange: (value: number) => {
-        def.props.star ??= {};
-        def.props.star.innerRadius = value / 100;
-      }
+    const theta = Math.PI / 2;
+    const dTheta = (2 * Math.PI) / sides;
+
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(Point.of(0, 1));
+
+    for (let i = 0; i < sides; i++) {
+      const angle = theta - (i + 1) * dTheta;
+
+      const iAngle = angle + dTheta / 2;
+      pathBuilder.lineTo(Point.of(Math.cos(iAngle) * innerRadius, Math.sin(iAngle) * innerRadius));
+
+      pathBuilder.lineTo(Point.of(Math.cos(angle), Math.sin(angle)));
     }
-  };
-};
+
+    return pathBuilder;
+  }
+
+  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
+    return {
+      numberOfSides: {
+        type: 'number',
+        label: 'Sides',
+        value: def.props?.star?.numberOfSides ?? 5,
+        onChange: (value: number) => {
+          def.props.star ??= {};
+          def.props.star.numberOfSides = value;
+        }
+      },
+      innerRadius: {
+        type: 'number',
+        label: 'Radius',
+        value: round((def.props?.star?.innerRadius ?? 0.5) * 100),
+        maxValue: 100,
+        unit: '%',
+        onChange: (value: number) => {
+          def.props.star ??= {};
+          def.props.star.innerRadius = value / 100;
+        }
+      }
+    };
+  }
+}
 
 type Props = {
   def: NodeDefinition;

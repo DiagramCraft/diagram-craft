@@ -5,13 +5,14 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 declare global {
   interface NodeProps {}
 }
 
 export const Circle = (props: Props) => {
-  const path = Circle.getBoundingPath(props.node).getPath();
+  const path = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -41,15 +42,21 @@ export const Circle = (props: Props) => {
   );
 };
 
-Circle.getBoundingPath = (def: DiagramNode) => {
-  const b = new PathBuilder(unitCoordinateSystem(def.bounds));
-  b.moveTo(Point.of(0, -1));
-  b.arcTo(Point.of(1, 0), 0.5, 0.5);
-  b.arcTo(Point.of(0, 1), 0.5, 0.5);
-  b.arcTo(Point.of(-1, 0), 0.5, 0.5);
-  b.arcTo(Point.of(0, -1), 0.5, 0.5);
-  return b;
-};
+export class CircleNodeDefinition extends AbstractReactNodeDefinition {
+  constructor() {
+    super('circle', 'Circle');
+  }
+
+  getBoundingPathBuilder(def: DiagramNode) {
+    const b = new PathBuilder(unitCoordinateSystem(def.bounds));
+    b.moveTo(Point.of(0, -1));
+    b.arcTo(Point.of(1, 0), 0.5, 0.5);
+    b.arcTo(Point.of(0, 1), 0.5, 0.5);
+    b.arcTo(Point.of(-1, 0), 0.5, 0.5);
+    b.arcTo(Point.of(0, -1), 0.5, 0.5);
+    return b;
+  }
+}
 
 type Props = {
   node: DiagramNode;

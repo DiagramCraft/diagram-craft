@@ -6,9 +6,10 @@ import { propsUtils } from '../utils/propsUtils.ts';
 import { Edge } from '../Edge.tsx';
 import { Node } from '../Node.tsx';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
+import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 export const Container = (props: Props) => {
-  const path = Container.getBoundingPath(props.node).getPath();
+  const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
   return (
@@ -51,16 +52,22 @@ export const Container = (props: Props) => {
   );
 };
 
-Container.getBoundingPath = (def: DiagramNode) => {
-  const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-  pathBuilder.moveTo(Point.of(-1, 1));
-  pathBuilder.lineTo(Point.of(1, 1));
-  pathBuilder.lineTo(Point.of(1, -1));
-  pathBuilder.lineTo(Point.of(-1, -1));
-  pathBuilder.lineTo(Point.of(-1, 1));
+export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
+  constructor() {
+    super('container', 'Container');
+  }
 
-  return pathBuilder;
-};
+  getBoundingPathBuilder(def: DiagramNode) {
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(Point.of(-1, 1));
+    pathBuilder.lineTo(Point.of(1, 1));
+    pathBuilder.lineTo(Point.of(1, -1));
+    pathBuilder.lineTo(Point.of(-1, -1));
+    pathBuilder.lineTo(Point.of(-1, 1));
+
+    return pathBuilder;
+  }
+}
 
 type Props = {
   node: DiagramNode;
