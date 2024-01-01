@@ -46,21 +46,23 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
       <g className={'svg-selection'}>
         {!isOnlyEdges && (
-          <g transform={`rotate(${Angle.toDeg(bounds.rotation)} ${center.x} ${center.y})`}>
+          <>
             <GroupBounds selection={props.selection} />
-            <rect
-              x={bounds.pos.x}
-              y={bounds.pos.y}
-              width={bounds.size.w}
-              height={bounds.size.h}
-              className={$c('svg-selection__bb', { 'only-edges': isOnlyEdges })}
-              pointerEvents={'none'}
-            />
-            {shouldHaveRotation && (
-              <RotationHandle diagram={props.diagram} selection={props.selection} />
-            )}
-            <ResizeHandles diagram={props.diagram} selection={props.selection} />
-          </g>
+            <g transform={`rotate(${Angle.toDeg(bounds.rotation)} ${center.x} ${center.y})`}>
+              <rect
+                x={bounds.pos.x}
+                y={bounds.pos.y}
+                width={bounds.size.w}
+                height={bounds.size.h}
+                className={$c('svg-selection__bb', { 'only-edges': isOnlyEdges })}
+                pointerEvents={'none'}
+              />
+              {shouldHaveRotation && (
+                <RotationHandle diagram={props.diagram} selection={props.selection} />
+              )}
+              <ResizeHandles diagram={props.diagram} selection={props.selection} />
+            </g>
+          </>
         )}
 
         {props.selection.edges.map(e => (
