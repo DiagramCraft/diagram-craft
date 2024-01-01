@@ -5,6 +5,7 @@ import { Point } from '../../geometry/point.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { Edge } from '../Edge.tsx';
 import { Node } from '../Node.tsx';
+import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 
 export const Container = (props: Props) => {
   const path = Container.getBoundingPath(props.node).getPath();
@@ -29,20 +30,20 @@ export const Container = (props: Props) => {
             key={child.id}
             def={child}
             diagram={props.node.diagram}
-            onDoubleClick={() => {}}
-            onMouseDown={() => {}}
-            onMouseLeave={() => {}}
-            onMouseEnter={() => {}}
+            onDoubleClick={props.childProps.onDoubleClick}
+            onMouseDown={props.childProps.onMouseDown}
+            onMouseLeave={props.childProps.onMouseLeave}
+            onMouseEnter={props.childProps.onMouseEnter}
           />
         ) : (
           <Edge
             key={child.id}
             def={child}
             diagram={props.node.diagram}
-            onDoubleClick={() => {}}
-            onMouseDown={() => {}}
-            onMouseLeave={() => {}}
-            onMouseEnter={() => {}}
+            onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
+            onMouseDown={props.childProps.onMouseDown}
+            onMouseLeave={props.childProps.onMouseLeave}
+            onMouseEnter={props.childProps.onMouseEnter}
           />
         )
       )}
@@ -66,4 +67,13 @@ type Props = {
   isSelected: boolean;
   isSingleSelected: boolean;
   nodeProps: NodeProps;
-} & React.SVGProps<SVGRectElement>;
+  childProps: {
+    onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
+    onMouseEnter: (id: string) => void;
+    onMouseLeave: (id: string) => void;
+    onDoubleClick?: (id: string, coord: Point) => void;
+  };
+} & Omit<
+  React.SVGProps<SVGRectElement>,
+  'onMouseEnter' | 'onMouseDown' | 'onMouseLeave' | 'onDoubleClick'
+>;

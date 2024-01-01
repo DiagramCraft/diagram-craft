@@ -11,6 +11,8 @@ import {
 } from '../model/elementDefinitionRegistry.ts';
 import { Extent } from '../geometry/extent.ts';
 import { Diagram } from '../model/diagram.ts';
+import { Point } from '../geometry/point.ts';
+import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 
 type Props = {
   node: DiagramNode;
@@ -19,6 +21,12 @@ type Props = {
   diagram: Diagram;
   isSelected: boolean;
   isSingleSelected: boolean;
+  childProps: {
+    onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
+    onMouseEnter: (id: string) => void;
+    onMouseLeave: (id: string) => void;
+    onDoubleClick?: (id: string, coord: Point) => void;
+  };
 } & React.SVGProps<SVGRectElement>;
 
 type ReactNode = React.FunctionComponent<Props>;

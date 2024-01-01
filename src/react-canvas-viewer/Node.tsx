@@ -155,6 +155,12 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           isSelected={isSelected}
           isSingleSelected={isSingleSelected}
           style={style}
+          childProps={{
+            onMouseDown: props.onMouseDown,
+            onMouseEnter: props.onMouseEnter,
+            onMouseLeave: props.onMouseLeave,
+            onDoubleClick: props.onDoubleClick
+          }}
         />
 
         {isEdgeConnect && (
@@ -187,5 +193,11 @@ type Props = {
   mode?: 'picker' | 'canvas';
 } & Omit<
   SVGProps<SVGGElement>,
-  'id' | 'transform' | 'onMouseEnter' | 'onMouseMove' | 'onMouseDown' | 'onDoubleClick'
+  | 'id'
+  | 'transform'
+  | 'onMouseMove'
+  | 'onMouseEnter'
+  | 'onMouseDown'
+  | 'onMouseLeave'
+  | 'onDoubleClick'
 >;
