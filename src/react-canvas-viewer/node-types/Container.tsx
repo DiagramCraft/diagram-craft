@@ -39,9 +39,8 @@ export const Container = (props: Props) => {
         y={props.node.bounds.pos.y}
         width={props.node.bounds.size.w}
         height={props.node.bounds.size.h}
-        stroke={props.nodeProps.highlight?.includes('drop-target') ? 'red' : 'orange'}
+        stroke={props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : '#d5d5d4'}
         strokeWidth={props.nodeProps.highlight?.includes('drop-target') ? 3 : 1}
-        strokeDasharray={'5,5'}
         fill={'transparent'}
         {...propsUtils.filterSvgProperties(props, 'fill', 'stroke', 'strokeWidth', 'style')}
       />

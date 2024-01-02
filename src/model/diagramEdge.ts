@@ -11,6 +11,8 @@ import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
 import { UnitOfWork } from './unitOfWork.ts';
+import { DiagramElement } from './diagramElement.ts';
+import { UndoableAction } from './undoManager.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -238,6 +240,33 @@ export class DiagramEdge implements AbstractEdge {
 
   invalidate() {
     this.adjustLabelNodePosition();
+  }
+
+  onDrop(
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    _changeType: ChangeType
+  ): UndoableAction | undefined {
+    if (elements.length === 1 && elements[0].type === 'node') {
+      // Split the edge into two edges
+      const element = elements[0] as DiagramNode;
+
+      const newEdge = new DiagramEdge(
+        newid(),
+        { anchor: 0, node: element },
+        this.end,
+        deepClone(this.props),
+        [],
+        this.diagram,
+        this.layer
+      );
+      element.addEdge(0, newEdge);
+      this.layer.addElement(newEdge);
+
+      this.end = { anchor: 0, node: element };
+      uow.updateElement(this);
+    }
+    return undefined;
   }
 
   private adjustLabelNodePosition() {

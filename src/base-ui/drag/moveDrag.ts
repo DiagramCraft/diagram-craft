@@ -236,7 +236,7 @@ export class MoveDrag extends AbstractDrag {
 
       if (this.#currentElement) {
         const el = this.diagram.lookup(this.#currentElement);
-        if (el?.type === 'node') {
+        if (el) {
           // TODO: Handle the same for edges
           if (el.type === 'node') {
             this.clearHighlight();
@@ -246,6 +246,9 @@ export class MoveDrag extends AbstractDrag {
               new UnitOfWork(this.diagram),
               'non-interactive'
             );
+          } else {
+            this.clearHighlight();
+            el.onDrop(selection.elements, new UnitOfWork(this.diagram), 'non-interactive');
           }
         }
       } else if (this.diagram.selectionState.elements.some(e => !!e.parent)) {

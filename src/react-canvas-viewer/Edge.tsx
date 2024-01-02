@@ -78,6 +78,12 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
     style.filter = makeShadowFilter(edgeProps.shadow);
   }
 
+  if (edgeProps.highlight?.includes('drop-target')) {
+    style.stroke = '#30A46C';
+    style.strokeWidth = 3;
+    style.strokeDasharray = '';
+  }
+
   const startArrowSize = edgeProps.arrow.start.size / 100;
   const startArrow = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
 
