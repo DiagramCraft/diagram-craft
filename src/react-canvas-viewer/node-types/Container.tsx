@@ -163,6 +163,14 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
   onChildChanged(node: DiagramNode, uow: UnitOfWork, changeType: ChangeType) {
     if (changeType === 'interactive') return;
 
+    this.applyLayout(node, uow, changeType);
+  }
+
+  onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
+    this.applyLayout(node, uow, 'non-interactive');
+  }
+
+  private applyLayout(node: DiagramNode, uow: UnitOfWork, changeType: 'non-interactive') {
     let newBounds: Box;
     if (node.props.container?.layout === 'horizontal') {
       // Sort children by x position

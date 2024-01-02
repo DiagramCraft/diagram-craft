@@ -107,6 +107,8 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
   ): UndoableAction | undefined {
     return undefined;
   }
+
+  onPropUpdate(_node: DiagramNode, _uow: UnitOfWork): void {}
 }
 
 export class ReactNodeDefinition implements NodeDefinition {
@@ -165,5 +167,9 @@ export class ReactNodeDefinition implements NodeDefinition {
     changeType: ChangeType
   ): UndoableAction | undefined {
     return this.delegate.onDrop(node, elements, uow, changeType);
+  }
+
+  onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
+    return this.delegate.onPropUpdate(node, uow);
   }
 }

@@ -63,6 +63,7 @@ export interface NodeDefinition {
     uow: UnitOfWork,
     changeType: ChangeType
   ): UndoableAction | undefined;
+  onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode): void;
 }

@@ -72,6 +72,7 @@ export class DiagramNode implements AbstractNode {
 
   updateCustomProps() {
     UnitOfWork.execute(this.diagram, uow => {
+      this.getNodeDefinition().onPropUpdate(this, uow);
       this.invalidateAnchors(uow);
     });
   }
