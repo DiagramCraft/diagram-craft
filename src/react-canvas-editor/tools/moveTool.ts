@@ -140,4 +140,9 @@ export class MoveTool extends AbstractTool {
       this.updateCursor(this.diagram.viewBox.toDiagramPoint(point));
     }
   }
+
+  onKeyDown(e: KeyboardEvent) {
+    const current = this.drag.current();
+    current?.onKeyDown?.(e);
+  }
 }

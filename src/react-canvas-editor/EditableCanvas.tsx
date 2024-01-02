@@ -70,7 +70,14 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   useCanvasZoomAndPan(diagram, svgRef);
 
-  useDomEventListener('keydown', e => executeAction(e, {}, keyMap, actionMap), document);
+  useDomEventListener(
+    'keydown',
+    e => {
+      if (executeAction(e, {}, keyMap, actionMap)) return;
+      tool.onKeyDown(e);
+    },
+    document
+  );
 
   const clearSelection = debounce(() => selection.clear());
 

@@ -18,4 +18,8 @@ export abstract class AbstractTool {
   abstract onMouseUp(point: Point): void;
 
   abstract onMouseMove(point: Point, modifiers: Modifiers): void;
+
+  onKeyDown(_e: KeyboardEvent): void {
+    // Do nothing
+  }
 }

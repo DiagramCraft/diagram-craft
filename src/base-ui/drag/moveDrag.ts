@@ -1,6 +1,5 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
-import { assert } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { Translation } from '../../geometry/transform.ts';
@@ -16,105 +15,66 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 
 export class MoveDrag extends AbstractDrag {
-  snapAngle?: Axis;
-  isDuplicateDrag?: boolean = false;
-
-  oldPointerEventsValues: Record<string, string> = {};
-
+  #snapAngle?: Axis;
+  #hasDuplicatedSelection?: boolean = false;
+  #oldPEvents: Record<string, string> = {};
   #dragStarted = false;
-
-  #currentElement: string | undefined = undefined;
+  #currentElement: DiagramElement | undefined = undefined;
+  #keys: string[] = [];
 
   constructor(
     private readonly diagram: Diagram,
     private readonly offset: Point
   ) {
     super();
-    const selection = this.diagram.selectionState;
-    assert.false(selection.isEmpty());
   }
 
-  private clearHighlight() {
-    if (!this.#currentElement) return;
-    const el = this.diagram.lookup(this.#currentElement);
-    if (!el) return;
-    el.props.highlight = el.props.highlight?.filter(h => h !== 'drop-target');
-    UnitOfWork.updateElement(el);
-  }
-
-  private setHighlight() {
-    if (!this.#currentElement) return;
-    const el = this.diagram.lookup(this.#currentElement);
-    if (!el) return;
-    el.props.highlight ??= [];
-    el.props.highlight.push('drop-target');
-    UnitOfWork.updateElement(el);
+  onKeyDown(event: KeyboardEvent) {
+    this.#keys.push(event.key);
+    this.updateState(this.diagram.selectionState.bounds.pos);
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
     const selection = this.diagram.selectionState;
 
-    if (!this.#dragStarted) {
-      this.#dragStarted = true;
-      this.disablePointerEvents(selection.elements);
-    }
-
     // Don't move connected edges
     if (
-      selection.nodes.length === 0 &&
+      selection.isEdgesOnly() &&
       selection.edges.every(e => e.isStartConnected() || e.isEndConnected())
     ) {
       return;
     }
 
-    const hover = this.diagram.layers.active
-      .findElementsByPoint(coord)
-      .filter(e => !this.diagram.selectionState.elements.includes(e));
-    if (hover.length === 0) {
-      this.clearHighlight();
-      this.#currentElement = undefined;
-    } else {
-      // Find the deepest element we are currently hovering above
-      let best: DiagramElement | undefined = hover[0];
-      while (best.type === 'node' && best.children.length > 0) {
-        const bestEl: DiagramNode = best;
-        const bestChildren = hover.find(e => bestEl.children.includes(e));
-        if (bestChildren) {
-          best = bestChildren;
-        } else {
-          break;
-        }
-      }
+    // Disable pointer events on the first onDrag event
+    if (!this.#dragStarted) {
+      this.#dragStarted = true;
+      this.disablePointerEvents(selection.elements);
+    }
 
-      // Need to filter any edges that are connected to the current selection
-      if (
-        best.type === 'edge' &&
-        this.diagram.selectionState.elements.some(
-          e => e.type === 'node' && e.listEdges().includes(best as DiagramEdge)
-        )
-      ) {
-        best = undefined;
-      }
-
+    const hover = this.getHoverElement(coord);
+    if (hover !== this.#currentElement) {
       this.clearHighlight();
-      this.#currentElement = best?.id;
+      this.#currentElement = hover;
       this.setHighlight();
     }
 
-    const d = Point.subtract(coord, Point.add(selection.bounds.pos, this.offset));
+    // Determine the delta between the current mouse position and the original mouse position
+    const delta = Point.subtract(coord, Point.add(selection.bounds.pos, this.offset));
 
     const newBounds = Box.asMutableSnapshot(selection.bounds);
 
-    const newPos = Point.add(selection.bounds.pos, d);
-    this.setState({
-      label: `x: ${newPos.x.toFixed(0)}, y: ${newPos.y.toFixed(0)}`
-    });
+    const newPos = Point.add(selection.bounds.pos, delta);
+    this.updateState(newPos);
     newBounds.set('pos', newPos);
 
     let snapDirections = Direction.all();
 
+    const isDuplicateDrag = modifiers.metaKey;
+    const isConstraintDrag = modifiers.shiftKey;
+    const isFreeDrag = modifiers.altKey;
+
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
-    if (modifiers.metaKey && !this.isDuplicateDrag) {
+    if (isDuplicateDrag && !this.#hasDuplicatedSelection) {
       // Reset current selection back to original
       const uow = new UnitOfWork(this.diagram);
       this.diagram.transformElements(
@@ -137,9 +97,9 @@ export class MoveDrag extends AbstractDrag {
       });
       selection.setElements(newElements, false);
 
-      this.isDuplicateDrag = true;
-    } else if (!modifiers.metaKey && this.isDuplicateDrag) {
-      this.isDuplicateDrag = false;
+      this.#hasDuplicatedSelection = true;
+    } else if (!isDuplicateDrag && this.#hasDuplicatedSelection) {
+      this.#hasDuplicatedSelection = false;
 
       const elementsToRemove = selection.elements;
 
@@ -152,7 +112,7 @@ export class MoveDrag extends AbstractDrag {
     }
 
     // TODO: Perhaps support 45 degree angles
-    if (modifiers.shiftKey) {
+    if (isConstraintDrag) {
       const source = Point.add(selection.source.boundingBox.pos, this.offset);
 
       const v = Vector.from(source, coord);
@@ -161,13 +121,13 @@ export class MoveDrag extends AbstractDrag {
 
       let snapAngle = Math.round(angle / (Math.PI / 2)) * (Math.PI / 2);
 
-      if (this.snapAngle === 'h') {
+      if (this.#snapAngle === 'h') {
         snapAngle = Math.round(angle / Math.PI) * Math.PI;
-      } else if (this.snapAngle === 'v') {
+      } else if (this.#snapAngle === 'v') {
         snapAngle = Math.round((angle + Math.PI / 2) / Math.PI) * Math.PI - Math.PI / 2;
         snapDirections = ['n', 's'];
       } else if (length > 20) {
-        this.snapAngle = Angle.isHorizontal(snapAngle) ? 'h' : 'v';
+        this.#snapAngle = Angle.isHorizontal(snapAngle) ? 'h' : 'v';
         snapDirections = ['e', 'w'];
       }
 
@@ -177,7 +137,7 @@ export class MoveDrag extends AbstractDrag {
       );
     }
 
-    if (modifiers.altKey) {
+    if (isFreeDrag) {
       selection.guides = [];
     } else {
       const snapManager = this.diagram.createSnapManager();
@@ -220,7 +180,7 @@ export class MoveDrag extends AbstractDrag {
         this.diagram.undoManager.addAndExecute(resizeCanvasAction);
       }
 
-      if (this.isDuplicateDrag) {
+      if (this.#hasDuplicatedSelection) {
         this.diagram.undoManager.add(new NodeAddUndoableAction(selection.nodes, this.diagram));
       } else {
         this.diagram.undoManager.add(
@@ -235,21 +195,19 @@ export class MoveDrag extends AbstractDrag {
       }
 
       if (this.#currentElement) {
-        const el = this.diagram.lookup(this.#currentElement);
-        if (el) {
-          // TODO: Handle the same for edges
-          if (el.type === 'node') {
-            this.clearHighlight();
-            el.getNodeDefinition().onDrop(
-              el,
-              selection.elements,
-              new UnitOfWork(this.diagram),
-              'non-interactive'
-            );
-          } else {
-            this.clearHighlight();
-            el.onDrop(selection.elements, new UnitOfWork(this.diagram), 'non-interactive');
-          }
+        const el = this.#currentElement;
+        // TODO: Handle the same for edges
+        if (el.type === 'node') {
+          this.clearHighlight();
+          el.getNodeDefinition().onDrop(
+            el,
+            selection.elements,
+            new UnitOfWork(this.diagram),
+            'non-interactive'
+          );
+        } else {
+          this.clearHighlight();
+          el.onDrop(selection.elements, new UnitOfWork(this.diagram), 'non-interactive');
         }
       } else if (this.diagram.selectionState.elements.some(e => !!e.parent)) {
         const activeLayer = this.diagram.layers.active;
@@ -273,20 +231,84 @@ export class MoveDrag extends AbstractDrag {
       selection.rebaseline();
     }
 
-    this.isDuplicateDrag = false;
+    this.#hasDuplicatedSelection = false;
+  }
+
+  private getHoverElement(coord: Point): DiagramElement | undefined {
+    const hover = this.diagram.layers.active
+      .findElementsByPoint(coord)
+      .filter(e => !this.diagram.selectionState.elements.includes(e));
+    if (hover.length === 0) {
+      return undefined;
+    } else {
+      // Find the deepest element we are currently hovering above
+      let best: DiagramElement | undefined = hover[0];
+      while (best.type === 'node' && best.children.length > 0) {
+        const bestEl: DiagramNode = best;
+        const bestChildren = hover.find(e => bestEl.children.includes(e));
+        if (bestChildren) {
+          best = bestChildren;
+        } else {
+          break;
+        }
+      }
+
+      // Need to filter any edges that are connected to the current selection
+      if (
+        best.type === 'edge' &&
+        this.diagram.selectionState.elements.some(
+          e => e.type === 'node' && e.listEdges().includes(best as DiagramEdge)
+        )
+      ) {
+        best = undefined;
+      }
+
+      return best;
+    }
+  }
+
+  private clearHighlight() {
+    if (!this.#currentElement) return;
+    this.#currentElement.props.highlight = this.#currentElement.props.highlight?.filter(
+      h => h !== 'drop-target'
+    );
+    UnitOfWork.updateElement(this.#currentElement);
+  }
+
+  private setHighlight() {
+    if (!this.#currentElement) return;
+    this.#currentElement.props.highlight ??= [];
+    this.#currentElement.props.highlight.push('drop-target');
+    UnitOfWork.updateElement(this.#currentElement);
+  }
+
+  private updateState(newPos: { x: number; y: number }) {
+    const last: number[] = [];
+    for (let i = 1; i < 9; i++) {
+      last[i] = this.#keys.lastIndexOf(i.toString());
+    }
+
+    this.setState({
+      label: `x: ${newPos.x.toFixed(0)}, y: ${newPos.y.toFixed(0)}`,
+      modifiers:
+        this.#currentElement?.type === 'edge'
+          ? [
+              { key: '1', label: 'Split', isActive: last[1] >= last[2] },
+              { key: '2', label: 'Attach as label', isActive: last[2] > last[1] }
+            ]
+          : []
+    });
   }
 
   private enablePointerEvents(elements: ReadonlyArray<DiagramElement>) {
     for (const e of elements) {
       if (e.type === 'node') {
         const n = document.getElementById(`node-${e.id}`)!;
-        if (!n) continue; // TODO: This seems to be for groups - but why?:
-        n.style.pointerEvents = this.oldPointerEventsValues[n.id];
-
-        if (e.nodeType === 'group') this.enablePointerEvents(e.children);
+        n.style.pointerEvents = this.#oldPEvents[n.id];
+        this.enablePointerEvents(e.children);
       } else if (e.type === 'edge') {
         const n = document.getElementById(`edge-${e.id}`)!;
-        n.style.pointerEvents = this.oldPointerEventsValues[n.id];
+        n.style.pointerEvents = this.#oldPEvents[n.id];
       }
     }
   }
@@ -295,14 +317,12 @@ export class MoveDrag extends AbstractDrag {
     for (const e of elements) {
       if (e.type === 'node') {
         const n = document.getElementById(`node-${e.id}`)!;
-        if (!n) continue; // TODO: This seems to be for groups - but why?:
-        this.oldPointerEventsValues[n.id] = n.style.pointerEvents;
+        this.#oldPEvents[n.id] = n.style.pointerEvents;
         n.style.pointerEvents = 'none';
-
-        if (e.nodeType === 'group') this.enablePointerEvents(e.children);
+        this.enablePointerEvents(e.children);
       } else if (e.type === 'edge') {
         const n = document.getElementById(`edge-${e.id}`)!;
-        this.oldPointerEventsValues[n.id] = n.style.pointerEvents;
+        this.#oldPEvents[n.id] = n.style.pointerEvents;
         n.style.pointerEvents = 'none';
       }
     }
