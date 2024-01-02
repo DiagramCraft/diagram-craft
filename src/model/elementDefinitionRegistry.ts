@@ -2,6 +2,7 @@ import { DiagramNode } from './diagramNode.ts';
 import { Path } from '../geometry/path.ts';
 import { Extent } from '../geometry/extent.ts';
 import { assert } from '../utils/assert.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
 export type NodeCapability = 'children';
 
@@ -30,6 +31,8 @@ export interface NodeDefinition {
 
   // TODO: This should support adding children and more than just the size
   getInitialConfig(): { size: Extent };
+
+  onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode): void;
 }

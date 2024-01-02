@@ -31,11 +31,11 @@ export const Container = (props: Props) => {
       />
       {props.node.children.map(child => (
         <g
+          key={child.id}
           transform={`rotate(${-Angle.toDeg(props.node.bounds.rotation)} ${center.x} ${center.y})`}
         >
           {child.type === 'node' ? (
             <Node
-              key={child.id}
               def={child}
               diagram={props.node.diagram}
               onDoubleClick={props.childProps.onDoubleClick}
@@ -45,7 +45,6 @@ export const Container = (props: Props) => {
             />
           ) : (
             <Edge
-              key={child.id}
               def={child}
               diagram={props.node.diagram}
               onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}

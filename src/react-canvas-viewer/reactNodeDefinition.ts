@@ -13,6 +13,7 @@ import { Extent } from '../geometry/extent.ts';
 import { Diagram } from '../model/diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
+import { UnitOfWork } from '../model/unitOfWork.ts';
 
 type Props = {
   node: DiagramNode;
@@ -83,6 +84,8 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
       document.execCommand('selectAll', false, undefined);
     }, 0);
   }
+
+  onChildChanged(_node: DiagramNode, _uow: UnitOfWork): void {}
 }
 
 export class ReactNodeDefinition implements NodeDefinition {
@@ -119,5 +122,9 @@ export class ReactNodeDefinition implements NodeDefinition {
 
   requestFocus(node: DiagramNode): void {
     return this.delegate.requestFocus(node);
+  }
+
+  onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
+    this.delegate.onChildChanged(node, uow);
   }
 }

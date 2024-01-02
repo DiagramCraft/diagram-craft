@@ -58,7 +58,7 @@ export class DiagramNode implements AbstractNode {
     this.#children = value;
     this.#children.forEach(c => (c.parent = this));
     UnitOfWork.execute(this.diagram, uow => {
-      this.recalculateBounds(uow);
+      this.getNodeDefinition().onChildChanged(this, uow);
     });
   }
 
@@ -87,7 +87,7 @@ export class DiagramNode implements AbstractNode {
     if (this.parent && !isChild) {
       const parent = this.parent;
       uow.pushAction('recalculateBounds', parent, () => {
-        parent.recalculateBounds(uow);
+        parent.getNodeDefinition().onChildChanged(parent, uow);
       });
     }
 
@@ -269,17 +269,8 @@ export class DiagramNode implements AbstractNode {
     return edge;
   }
 
-  // TODO: Delegate to NodeDefinition
-  //       ... also this is really only for groups
-  private recalculateBounds(uow: UnitOfWork) {
-    const childrenBounds = this.children.map(c => c.bounds);
-    if (childrenBounds.length === 0) return;
-    const newBounds = Box.boundingBox(childrenBounds);
-    if (!Box.isEqual(newBounds, this.bounds)) {
-      this.bounds = newBounds;
-      uow.updateElement(this);
-    }
-    this.parent?.recalculateBounds(uow);
+  getNodeDefinition() {
+    return this.diagram.nodeDefinitions.get(this.nodeType);
   }
 
   // TODO: Need to make sure this is called when e.g. props are changed

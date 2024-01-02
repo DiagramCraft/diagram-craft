@@ -9,14 +9,17 @@ import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export const Group = (props: Props) => {
   const center = Box.center(props.node.bounds);
   return props.node.children.map(child => (
-    <g transform={`rotate(${-Angle.toDeg(props.node.bounds.rotation)} ${center.x} ${center.y})`}>
+    <g
+      key={child.id}
+      transform={`rotate(${-Angle.toDeg(props.node.bounds.rotation)} ${center.x} ${center.y})`}
+    >
       {child.type === 'node' ? (
         <Node
-          key={child.id}
           def={child}
           diagram={props.node.diagram}
           onDoubleClick={props.childProps.onDoubleClick}
@@ -26,7 +29,6 @@ export const Group = (props: Props) => {
         />
       ) : (
         <Edge
-          key={child.id}
           def={child}
           diagram={props.node.diagram}
           onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
@@ -57,6 +59,21 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
     pathBuilder.lineTo(Point.of(-1, 1));
 
     return pathBuilder;
+  }
+
+  onChildChanged(node: DiagramNode, uow: UnitOfWork) {
+    const childrenBounds = node.children.map(c => c.bounds);
+    if (childrenBounds.length === 0) return;
+    const newBounds = Box.boundingBox(childrenBounds);
+    if (!Box.isEqual(newBounds, node.bounds)) {
+      node.bounds = newBounds;
+      uow.updateElement(node);
+    }
+
+    if (node.parent) {
+      const parentDef = node.parent.getNodeDefinition();
+      parentDef.onChildChanged(node.parent, uow);
+    }
   }
 }
 
