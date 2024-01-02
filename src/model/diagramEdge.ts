@@ -13,6 +13,7 @@ import { deepClone } from '../utils/clone.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { UndoableAction } from './undoManager.ts';
+import { round } from '../utils/math.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -347,9 +348,11 @@ export class DiagramEdge implements AbstractEdge {
         newRotation = Math.PI / 2;
       }
 
+      // Note, using rounding here to avoid infinite recursion
       if (
-        !Point.isEqual(newCenterPoint, currentCenterPoint) ||
-        newRotation !== labelNode.node.bounds.rotation
+        round(newCenterPoint.x) !== round(currentCenterPoint.x) ||
+        round(newCenterPoint.y) !== round(currentCenterPoint.y) ||
+        round(newRotation) !== round(labelNode.node.bounds.rotation)
       ) {
         labelNode.node.bounds = {
           ...labelNode.node.bounds,
