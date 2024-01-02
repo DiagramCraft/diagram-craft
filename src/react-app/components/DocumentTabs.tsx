@@ -10,6 +10,7 @@ import {
 import { newid } from '../../utils/id.ts';
 import { DocumentsContextMenu } from './DocumentsContextMenu.tsx';
 import { Diagram } from '../../model/diagram.ts';
+import { Layer } from '../../model/diagramLayer.ts';
 
 export const DocumentTabs = (props: Props) => {
   const redraw = useRedraw();
@@ -51,15 +52,16 @@ export const DocumentTabs = (props: Props) => {
           className={'cmp-document-tabs__add'}
           onClick={() => {
             const id = newid();
-            props.document.addDiagram(
-              new Diagram(
-                id,
-                'Sheet ' + (props.document.diagrams.length + 1).toString(),
-                defaultNodeRegistry(),
-                defaultEdgeRegistry(),
-                []
-              )
+
+            const diagram = new Diagram(
+              id,
+              'Sheet ' + (props.document.diagrams.length + 1).toString(),
+              defaultNodeRegistry(),
+              defaultEdgeRegistry()
             );
+            diagram.layers.add(new Layer('default', 'Default', [], diagram));
+
+            props.document.addDiagram(diagram);
             props.onValueChange(id);
           }}
         >

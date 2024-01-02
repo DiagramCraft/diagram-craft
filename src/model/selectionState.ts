@@ -84,11 +84,11 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     return this.#elements;
   }
 
-  get nodes(): DiagramNode[] {
+  get nodes(): Array<DiagramNode> {
     return this.#elements.filter(isNode);
   }
 
-  get edges(): DiagramEdge[] {
+  get edges(): Array<DiagramEdge> {
     return this.#elements.filter(isEdge);
   }
 

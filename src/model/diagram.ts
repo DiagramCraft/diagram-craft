@@ -73,18 +73,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     readonly id: string,
     readonly name: string,
     readonly nodeDefinitions: NodeDefinitionRegistry,
-    readonly edgeDefinitions: EdgeDefinitionRegistry,
-
-    // TODO: Remove elements from here
-    //       ... but then the logic to create the default layer needs to be moved
-    elements?: ReadonlyArray<DiagramElement>
+    readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
-
-    if (elements) {
-      this.layers.add(new Layer('default', 'Default', [], this));
-      elements.forEach(e => this.layers.active.addElement(e, true));
-    }
   }
 
   lookup(id: string): DiagramElement | undefined {
@@ -192,12 +183,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     this.update();
   }
 
-  // TODO: Maybe we should remove this in favour for UnitOfWork
-  /** @deprecated */
-  updateElement(element: DiagramElement) {
-    this.emit('elementChange', { element });
-  }
-
   transformElements(
     elements: ReadonlyArray<DiagramElement>,
     transforms: ReadonlyArray<Transform>,
@@ -214,6 +199,12 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     for (const el of elements) {
       if (filter(el)) uow.updateElement(el);
     }
+  }
+
+  // TODO: Maybe we should remove this in favour for UnitOfWork
+  /** @deprecated */
+  updateElement(element: DiagramElement) {
+    this.emit('elementChange', { element });
   }
 
   // TODO: Remove this

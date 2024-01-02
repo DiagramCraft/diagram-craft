@@ -42,6 +42,60 @@ const roundToThreshold = (value: number, threshold: number) => {
   return Math.round(value * inv) / inv;
 };
 
+const VALID_EXTREMES = (e: number) => e >= 0 && e <= 1;
+
+const sgn = (a: number) => (a >= 0 ? 1 : -1);
+
+// Based on https://gist.github.com/weepy/6009631
+const cubicRoots = (a: number, b: number, c: number, d: number) => {
+  if (round(a) === 0) return quadraticRoots(b, c, d);
+
+  const bq = b / a;
+  const cq = c / a;
+  const dq = d / a;
+
+  const bq_2 = bq * bq;
+  const q = (3 * cq - bq_2) / 9;
+  const r = (9 * bq * cq - 27 * dq - 2 * bq * bq_2) / 54;
+
+  const q_3 = q * q * q;
+  const discriminator = q_3 + r * r;
+
+  const bq_d3 = bq / 3;
+
+  if (discriminator >= 0) {
+    // One real root and three imaginary roots
+    const dsqrt = Math.sqrt(discriminator);
+    const s = sgn(r + dsqrt) * Math.cbrt(Math.abs(r + dsqrt));
+    const t = sgn(r - dsqrt) * Math.cbrt(Math.abs(r - dsqrt));
+
+    return [-bq_d3 + (s + t)];
+  } else {
+    // Three real roots
+    const th = Math.acos(r / Math.sqrt(-q_3));
+
+    const qs = 2 * Math.sqrt(-q);
+    return [
+      qs * Math.cos(th / 3) - bq_d3,
+      qs * Math.cos((th + PI_2) / 3) - bq_d3,
+      qs * Math.cos((th + PI_4) / 3) - bq_d3
+    ];
+  }
+};
+
+// Basically an implementation of https://en.wikipedia.org/wiki/Quadratic_formula
+const quadraticRoots = (a: number, b: number, c: number) => {
+  const d = b * b - 4 * a * c;
+  if (d < 0) {
+    return [];
+  } else if (d === 0) {
+    return [-b / (2 * a)];
+  } else {
+    const sqd = Math.sqrt(d);
+    return [(-b + sqd) / (2 * a), (-b - sqd) / (2 * a)];
+  }
+};
+
 export const BezierUtils = {
   // For more information of where this Math came from visit:
   // http://www.w3.org/TR/SVG11/implnote.html#ArcImplementationNotes
@@ -164,60 +218,6 @@ export const BezierUtils = {
   }
 };
 
-const VALID_EXTREMES = (e: number) => e >= 0 && e <= 1;
-
-const sgn = (a: number) => (a >= 0 ? 1 : -1);
-
-// Based on https://gist.github.com/weepy/6009631
-const cubicRoots = (a: number, b: number, c: number, d: number) => {
-  if (round(a) === 0) return quadraticRoots(b, c, d);
-
-  const bq = b / a;
-  const cq = c / a;
-  const dq = d / a;
-
-  const bq_2 = bq * bq;
-  const q = (3 * cq - bq_2) / 9;
-  const r = (9 * bq * cq - 27 * dq - 2 * bq * bq_2) / 54;
-
-  const q_3 = q * q * q;
-  const discriminator = q_3 + r * r;
-
-  const bq_d3 = bq / 3;
-
-  if (discriminator >= 0) {
-    // One real root and three imaginary roots
-    const dsqrt = Math.sqrt(discriminator);
-    const s = sgn(r + dsqrt) * Math.cbrt(Math.abs(r + dsqrt));
-    const t = sgn(r - dsqrt) * Math.cbrt(Math.abs(r - dsqrt));
-
-    return [-bq_d3 + (s + t)];
-  } else {
-    // Three real roots
-    const th = Math.acos(r / Math.sqrt(-q_3));
-
-    const qs = 2 * Math.sqrt(-q);
-    return [
-      qs * Math.cos(th / 3) - bq_d3,
-      qs * Math.cos((th + PI_2) / 3) - bq_d3,
-      qs * Math.cos((th + PI_4) / 3) - bq_d3
-    ];
-  }
-};
-
-// Basically an implementation of https://en.wikipedia.org/wiki/Quadratic_formula
-const quadraticRoots = (a: number, b: number, c: number) => {
-  const d = b * b - 4 * a * c;
-  if (d < 0) {
-    return [];
-  } else if (d === 0) {
-    return [-b / (2 * a)];
-  } else {
-    const sqd = Math.sqrt(d);
-    return [(-b + sqd) / (2 * a), (-b - sqd) / (2 * a)];
-  }
-};
-
 export class CubicBezier {
   #dp1: Point;
   #dp2: Point;
@@ -232,18 +232,9 @@ export class CubicBezier {
     public readonly cp2: Point,
     public readonly end: Point
   ) {
-    this.#dp1 = {
-      x: (cp1.x - start.x) * 3,
-      y: (cp1.y - start.y) * 3
-    };
-    this.#dp2 = {
-      x: (cp2.x - cp1.x) * 3,
-      y: (cp2.y - cp1.y) * 3
-    };
-    this.#dp3 = {
-      x: (end.x - cp2.x) * 3,
-      y: (end.y - cp2.y) * 3
-    };
+    this.#dp1 = { x: (cp1.x - start.x) * 3, y: (cp1.y - start.y) * 3 };
+    this.#dp2 = { x: (cp2.x - cp1.x) * 3, y: (cp2.y - cp1.y) * 3 };
+    this.#dp3 = { x: (end.x - cp2.x) * 3, y: (end.y - cp2.y) * 3 };
   }
 
   point(t: number) {
@@ -258,9 +249,9 @@ export class CubicBezier {
     };
   }
 
-  sample(n = 100, start = 0, end = 1) {
+  sample(n = 100, start = 0, end = 1): ReadonlyArray<Point> {
     const d = end - start;
-    const points = [];
+    const points: Array<Point> = [];
     for (let i = 0; i <= n; i++) {
       points.push(this.point(start + (d * i) / n));
     }

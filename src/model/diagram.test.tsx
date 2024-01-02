@@ -47,7 +47,9 @@ describe('Diagram', () => {
       new ReactNodeDefinition(Rect, new RectNodeDefinition('rect', 'Rectangle'))
     );
 
-    const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry(), []);
+    const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());
+    diagram.layers.add(new Layer('default', 'Default', [], diagram));
+
     const layer = diagram.layers.active;
 
     const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer);

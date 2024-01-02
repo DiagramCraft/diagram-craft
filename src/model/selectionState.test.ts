@@ -4,6 +4,7 @@ import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { Diagram } from './diagram.ts';
+import { Layer } from './diagramLayer.ts';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(
@@ -34,7 +35,9 @@ const createEdge = (diagram: Diagram) =>
   );
 
 function createDiagram() {
-  return new Diagram('1', 'test', new NodeDefinitionRegistry(), new EdgeDefinitionRegistry(), []);
+  const d = new Diagram('1', 'test', new NodeDefinitionRegistry(), new EdgeDefinitionRegistry());
+  d.layers.add(new Layer('default', 'Default', [], d));
+  return d;
 }
 
 describe('SelectionState', () => {

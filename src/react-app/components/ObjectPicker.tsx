@@ -5,6 +5,7 @@ import { Node } from '../../react-canvas-viewer/Node.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { Diagram } from '../../model/diagram.ts';
+import { Layer } from '../../model/diagramLayer.ts';
 
 const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;
@@ -58,13 +59,8 @@ export const ObjectPicker = (props: Props) => {
   const diagrams = nodes
     .filter(n => n.type !== 'group')
     .map(n => {
-      const dest = new Diagram(
-        n.type,
-        n.type,
-        diagram.nodeDefinitions,
-        diagram.edgeDefinitions,
-        []
-      );
+      const dest = new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions);
+      dest.layers.add(new Layer('default', 'Default', [], dest));
       dest.layers.active.addElement(
         new DiagramNode(
           n.type,

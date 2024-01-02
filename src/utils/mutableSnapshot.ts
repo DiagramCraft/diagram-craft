@@ -1,4 +1,4 @@
-type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
+import { DeepWriteable } from './types.ts';
 
 export abstract class MutableSnapshot<T> {
   protected value: DeepWriteable<T>;

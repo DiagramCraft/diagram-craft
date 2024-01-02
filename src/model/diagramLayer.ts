@@ -1,7 +1,6 @@
 import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
-import { assert } from '../utils/assert.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { Point } from '../geometry/point.ts';
 import { PathBuilder } from '../geometry/pathBuilder.ts';
@@ -17,20 +16,20 @@ export type LayerEvents = {
 // TODO: Maybe diagram can relay these events, instead of expliclitly calling
 //       diagram.emit
 export class Layer extends EventEmitter<LayerEvents> {
-  id: string;
-  name: string;
-
   // TODO: We should make this a ReadonlyArray
   elements: DiagramElement[] = [];
-  private diagram: Diagram;
 
+  readonly #diagram: Diagram;
   #locked = false;
 
-  constructor(id: string, name: string, elements: DiagramElement[], diagram: Diagram) {
+  constructor(
+    public id: string,
+    public name: string,
+    elements: ReadonlyArray<DiagramElement>,
+    diagram: Diagram
+  ) {
     super();
-    this.id = id;
-    this.name = name;
-    this.diagram = diagram;
+    this.#diagram = diagram;
 
     elements.forEach(e => this.addElement(e, false));
   }
@@ -42,7 +41,7 @@ export class Layer extends EventEmitter<LayerEvents> {
   set locked(value: boolean) {
     this.#locked = value;
     this.emit('change', { layer: this });
-    this.diagram.emit('change', { diagram: this.diagram });
+    this.#diagram.emit('change', { diagram: this.#diagram });
   }
 
   // TODO: Add some tests for the stack operations
@@ -83,7 +82,7 @@ export class Layer extends EventEmitter<LayerEvents> {
       dest.set(parent, oldPositions);
     }
 
-    this.diagram.emit('change', { diagram: this.diagram });
+    this.#diagram.emit('change', { diagram: this.#diagram });
 
     return dest;
   }
@@ -98,7 +97,7 @@ export class Layer extends EventEmitter<LayerEvents> {
       }
     }
     this.emit('change', { layer: this });
-    this.diagram.emit('change', { diagram: this.diagram });
+    this.#diagram.emit('change', { diagram: this.#diagram });
   }
 
   addElement(element: DiagramElement, omitEvents = false) {
@@ -106,7 +105,7 @@ export class Layer extends EventEmitter<LayerEvents> {
     this.processElementForAdd(element);
     if (!omitEvents) {
       this.emit('elementAdd', { element });
-      this.diagram.emit('elementAdd', { element });
+      this.#diagram.emit('elementAdd', { element });
     }
   }
 
@@ -114,22 +113,22 @@ export class Layer extends EventEmitter<LayerEvents> {
     this.elements = this.elements.filter(e => e !== element);
 
     if (element.type === 'node') {
-      this.diagram.nodeLookup.delete(element.id);
+      this.#diagram.nodeLookup.delete(element.id);
     } else if (element.type === 'edge') {
-      this.diagram.edgeLookup.delete(element.id);
+      this.#diagram.edgeLookup.delete(element.id);
     }
 
-    this.diagram.emit('elementRemove', { element });
+    this.#diagram.emit('elementRemove', { element });
     this.emit('elementRemove', { element });
   }
 
   updateElement(element: DiagramElement) {
-    this.diagram.emit('elementChange', { element });
+    this.#diagram.emit('elementChange', { element });
     this.emit('elementChange', { element });
   }
 
   isAbove(layer: Layer) {
-    return this.diagram.layers.all.indexOf(this) < this.diagram.layers.all.indexOf(layer);
+    return this.#diagram.layers.all.indexOf(this) < this.#diagram.layers.all.indexOf(layer);
   }
 
   findElementsByPoint(coord: Point): ReadonlyArray<DiagramElement> {
@@ -162,17 +161,15 @@ export class Layer extends EventEmitter<LayerEvents> {
   }
 
   private processElementForAdd(e: DiagramElement) {
-    e.diagram = this.diagram;
+    e.diagram = this.#diagram;
     e.layer = this;
     if (e.type === 'node') {
-      this.diagram.nodeLookup.set(e.id, e);
+      this.#diagram.nodeLookup.set(e.id, e);
       for (const child of e.children) {
-        // TODO: Eventually remove this assertion
-        assert.true(child.parent === e);
         this.processElementForAdd(child);
       }
     } else {
-      this.diagram.edgeLookup.set(e.id, e);
+      this.#diagram.edgeLookup.set(e.id, e);
     }
   }
 }
@@ -184,11 +181,11 @@ export type LayerManagerEvents = {
 export class LayerManager extends EventEmitter<LayerManagerEvents> {
   #layers: Layer[] = [];
   #activeLayer: Layer;
-  #visibleLayers: Set<string> = new Set<string>();
+  #visibleLayers = new Set<string>();
 
   constructor(
     readonly diagram: Diagram,
-    layers: Layer[]
+    layers: Array<Layer>
   ) {
     super();
     this.#layers = layers;
@@ -239,16 +236,6 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
     this.diagram.emit('change', { diagram: this.diagram });
   }
 
-  setVisibility(layers: Layer, isVisible: boolean) {
-    if (isVisible) {
-      this.#visibleLayers.add(layers.id);
-    } else {
-      this.#visibleLayers.delete(layers.id);
-    }
-    this.emit('change', { layers: this });
-    this.diagram.emit('change', { diagram: this.diagram });
-  }
-
   set active(layer: Layer) {
     this.#activeLayer = layer;
     this.emit('change', { layers: this });
@@ -265,13 +252,14 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
 
   add(layer: Layer) {
     this.#layers.push(layer);
-    this.setVisibility(layer, true);
+    this.#visibleLayers.add(layer.id);
     this.#activeLayer = layer;
     this.emit('change', { layers: this });
   }
 
   remove(layer: Layer) {
     this.#layers = this.#layers.filter(l => l !== layer);
+    this.#visibleLayers.delete(layer.id);
     this.emit('change', { layers: this });
   }
 }
