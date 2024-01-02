@@ -39,7 +39,7 @@ export class MoveDrag extends AbstractDrag {
     const el = this.diagram.lookup(this.#currentElement);
     if (!el) return;
     el.props.highlight = el.props.highlight?.filter(h => h !== 'drop-target');
-    UnitOfWork.execute(this.diagram, uow => uow.updateElement(el));
+    UnitOfWork.updateElement(el);
   }
 
   private setHighlight() {
@@ -48,7 +48,7 @@ export class MoveDrag extends AbstractDrag {
     if (!el) return;
     el.props.highlight ??= [];
     el.props.highlight.push('drop-target');
-    UnitOfWork.execute(this.diagram, uow => uow.updateElement(el));
+    UnitOfWork.updateElement(el);
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {

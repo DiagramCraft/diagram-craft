@@ -161,20 +161,86 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork, changeType: ChangeType) {
-    if (!node.props.container?.autoGrow) return;
     if (changeType === 'interactive') return;
 
-    const childrenBounds = node.children.map(c => c.bounds);
-    if (childrenBounds.length === 0) return;
-    const newBounds = Box.boundingBox([node.bounds, ...childrenBounds]);
-    if (!Box.isEqual(newBounds, node.bounds)) {
-      node.bounds = newBounds;
-      uow.updateElement(node);
+    let newBounds: Box;
+    if (node.props.container?.layout === 'horizontal') {
+      // Sort children by x position
+      const children = [...node.children].sort((a, b) => a.bounds.pos.x - b.bounds.pos.x);
+      if (children.length === 0) return;
+
+      // Layout horizontally
+      let x = node.bounds.pos.x + (node.props.container.gap ?? 0);
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (child.type !== 'node') continue;
+
+        this.updateBounds(
+          child,
+          {
+            ...child.bounds,
+            pos: Point.of(x, child.bounds.pos.y)
+          },
+          uow
+        );
+        x += child.bounds.size.w + (node.props.container.gap ?? 0);
+      }
+
+      newBounds = Box.boundingBox([
+        {
+          ...node.bounds,
+          size: { w: x - node.bounds.pos.x, h: 1 }
+        },
+        ...children.map(c => c.bounds)
+      ]);
+    } else if (node.props.container?.layout === 'vertical') {
+      // Sort children by y position
+      const children = [...node.children].sort((a, b) => a.bounds.pos.y - b.bounds.pos.y);
+      if (children.length === 0) return;
+
+      // Layout verticall
+      let y = node.bounds.pos.y + (node.props.container.gap ?? 0);
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (child.type !== 'node') continue;
+
+        this.updateBounds(
+          child,
+          {
+            ...child.bounds,
+            pos: Point.of(child.bounds.pos.x, y)
+          },
+          uow
+        );
+        y += child.bounds.size.h + (node.props.container.gap ?? 0);
+      }
+
+      newBounds = Box.boundingBox([
+        {
+          ...node.bounds,
+          size: { w: 1, h: y - node.bounds.pos.y }
+        },
+        ...children.map(c => c.bounds)
+      ]);
+    } else {
+      if (!node.props.container?.autoGrow) return;
+
+      const childrenBounds = node.children.map(c => c.bounds);
+      if (childrenBounds.length === 0) return;
+      newBounds = Box.boundingBox([node.bounds, ...childrenBounds]);
     }
 
+    this.updateBounds(node, newBounds, uow);
     if (node.parent) {
       const parentDef = node.parent.getNodeDefinition();
       parentDef.onChildChanged(node.parent, uow, changeType);
+    }
+  }
+
+  private updateBounds(node: DiagramNode, newBounds: Box, uow: UnitOfWork) {
+    if (!Box.isEqual(newBounds, node.bounds)) {
+      node.bounds = newBounds;
+      uow.updateElement(node);
     }
   }
 }
