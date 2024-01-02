@@ -12,6 +12,8 @@ import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 
 export class MoveDrag extends AbstractDrag {
   snapAngle?: Axis;
@@ -21,7 +23,7 @@ export class MoveDrag extends AbstractDrag {
 
   #dragStarted = false;
 
-  #currentElement: DiagramElement | undefined = undefined;
+  #currentElement: string | undefined = undefined;
 
   constructor(
     private readonly diagram: Diagram,
@@ -32,28 +34,21 @@ export class MoveDrag extends AbstractDrag {
     assert.false(selection.isEmpty());
   }
 
-  onDragEnter(id: string): void {
-    const el = this.diagram.lookup(id);
-    if (el) {
-      this.#currentElement = el;
-      el.props.highlight ??= [];
-      el.props.highlight.push('drop-target');
-      UnitOfWork.execute(this.diagram, uow => uow.updateElement(el));
-    }
-  }
-
-  onDragLeave(): void {
-    this.clearHighlight();
-    this.#currentElement = undefined;
-  }
-
   private clearHighlight() {
-    if (this.#currentElement && this.#currentElement.props.highlight) {
-      this.#currentElement.props.highlight = this.#currentElement.props.highlight.filter(
-        h => h !== 'drop-target'
-      );
-      UnitOfWork.execute(this.diagram, uow => uow.updateElement(this.#currentElement!));
-    }
+    if (!this.#currentElement) return;
+    const el = this.diagram.lookup(this.#currentElement);
+    if (!el) return;
+    el.props.highlight = el.props.highlight?.filter(h => h !== 'drop-target');
+    UnitOfWork.execute(this.diagram, uow => uow.updateElement(el));
+  }
+
+  private setHighlight() {
+    if (!this.#currentElement) return;
+    const el = this.diagram.lookup(this.#currentElement);
+    if (!el) return;
+    el.props.highlight ??= [];
+    el.props.highlight.push('drop-target');
+    UnitOfWork.execute(this.diagram, uow => uow.updateElement(el));
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
@@ -70,6 +65,40 @@ export class MoveDrag extends AbstractDrag {
       selection.edges.every(e => e.isStartConnected() || e.isEndConnected())
     ) {
       return;
+    }
+
+    const hover = this.diagram.layers.active
+      .findElementsByPoint(coord)
+      .filter(e => !this.diagram.selectionState.elements.includes(e));
+    if (hover.length === 0) {
+      this.clearHighlight();
+      this.#currentElement = undefined;
+    } else {
+      // Find the deepest element we are currently hovering above
+      let best: DiagramElement | undefined = hover[0];
+      while (best.type === 'node' && best.children.length > 0) {
+        const bestEl: DiagramNode = best;
+        const bestChildren = hover.find(e => bestEl.children.includes(e));
+        if (bestChildren) {
+          best = bestChildren;
+        } else {
+          break;
+        }
+      }
+
+      // Need to filter any edges that are connected to the current selection
+      if (
+        best.type === 'edge' &&
+        this.diagram.selectionState.elements.some(
+          e => e.type === 'node' && e.listEdges().includes(best as DiagramEdge)
+        )
+      ) {
+        best = undefined;
+      }
+
+      this.clearHighlight();
+      this.#currentElement = best?.id;
+      this.setHighlight();
     }
 
     const d = Point.subtract(coord, Point.add(selection.bounds.pos, this.offset));
@@ -203,14 +232,27 @@ export class MoveDrag extends AbstractDrag {
         );
       }
 
-      if (this.#currentElement && this.#currentElement.type === 'node') {
-        // TODO: Handle the same for edges
-        if (this.#currentElement.type === 'node') {
-          this.clearHighlight();
-          this.#currentElement
-            .getNodeDefinition()
-            .onDrop(this.#currentElement, selection.elements, new UnitOfWork(this.diagram));
+      if (this.#currentElement) {
+        const el = this.diagram.lookup(this.#currentElement);
+        if (el?.type === 'node') {
+          // TODO: Handle the same for edges
+          if (el.type === 'node') {
+            this.clearHighlight();
+            el.getNodeDefinition().onDrop(el, selection.elements, new UnitOfWork(this.diagram));
+          }
         }
+      } else {
+        const activeLayer = this.diagram.layers.active;
+        this.diagram.moveElement(
+          selection.elements,
+          activeLayer,
+          activeLayer.elements.length > 0
+            ? {
+                relation: 'above',
+                element: this.diagram.layers.active.elements.at(-1)!
+              }
+            : undefined
+        );
       }
 
       selection.rebaseline();

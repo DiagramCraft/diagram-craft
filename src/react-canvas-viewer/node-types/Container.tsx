@@ -39,9 +39,10 @@ export const Container = (props: Props) => {
         width={props.node.bounds.size.w}
         height={props.node.bounds.size.h}
         stroke={props.nodeProps.highlight?.includes('drop-target') ? 'red' : 'orange'}
+        strokeWidth={props.nodeProps.highlight?.includes('drop-target') ? 3 : 1}
         strokeDasharray={'5,5'}
         fill={'transparent'}
-        {...propsUtils.filterSvgProperties(props, 'fill', 'stroke', 'style')}
+        {...propsUtils.filterSvgProperties(props, 'fill', 'stroke', 'strokeWidth', 'style')}
       />
       {props.node.children.map(child => (
         <g

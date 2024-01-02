@@ -3,6 +3,9 @@ import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { assert } from '../utils/assert.ts';
 import { DiagramElement } from './diagramElement.ts';
+import { Point } from '../geometry/point.ts';
+import { PathBuilder } from '../geometry/pathBuilder.ts';
+import { Box } from '../geometry/box.ts';
 
 export type LayerEvents = {
   change: { layer: Layer };
@@ -127,6 +130,35 @@ export class Layer extends EventEmitter<LayerEvents> {
 
   isAbove(layer: Layer) {
     return this.diagram.layers.all.indexOf(this) < this.diagram.layers.all.indexOf(layer);
+  }
+
+  findElementsByPoint(coord: Point): ReadonlyArray<DiagramElement> {
+    const pb = new PathBuilder();
+    pb.moveTo({ x: -100000, y: -100000 });
+    pb.lineTo(coord);
+    const ref = pb.getPath();
+
+    const dest: Array<DiagramElement> = [];
+    for (const e of this.elements.toReversed()) {
+      if (!Box.contains(e.bounds, coord)) continue;
+
+      if (e.type === 'node') {
+        if (e.getNodeDefinition().getBoundingPath(e).intersections(ref).length % 2 === 1) {
+          dest.push(e);
+        }
+      } else {
+        const projected = e.path().projectPoint(coord);
+        if (
+          projected.segmentT >= 0 &&
+          projected.segmentT <= 1 &&
+          Point.distance(coord, projected.point) < 5
+        ) {
+          dest.push(e);
+        }
+      }
+    }
+
+    return dest;
   }
 
   private processElementForAdd(e: DiagramElement) {

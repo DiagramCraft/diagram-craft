@@ -13,6 +13,7 @@ import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
 import { assert } from '../utils/assert.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
+import { Point } from '../geometry/point.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
@@ -115,6 +116,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       this.diagrams.find(d => d.id === id) ??
       this.diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
     );
+  }
+
+  findElementsByPoint(coord: Point) {
+    return this.layers.visible.flatMap(l => l.findElementsByPoint(coord));
   }
 
   // TODO: Change this to an undoable action?
