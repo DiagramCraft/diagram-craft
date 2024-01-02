@@ -43,13 +43,17 @@ export class MoveDrag extends AbstractDrag {
   }
 
   onDragLeave(): void {
+    this.clearHighlight();
+    this.#currentElement = undefined;
+  }
+
+  private clearHighlight() {
     if (this.#currentElement && this.#currentElement.props.highlight) {
       this.#currentElement.props.highlight = this.#currentElement.props.highlight.filter(
         h => h !== 'drop-target'
       );
       UnitOfWork.execute(this.diagram, uow => uow.updateElement(this.#currentElement!));
     }
-    this.#currentElement = undefined;
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
@@ -202,6 +206,7 @@ export class MoveDrag extends AbstractDrag {
       if (this.#currentElement && this.#currentElement.type === 'node') {
         // TODO: Handle the same for edges
         if (this.#currentElement.type === 'node') {
+          this.clearHighlight();
           this.#currentElement
             .getNodeDefinition()
             .onDrop(this.#currentElement, selection.elements, new UnitOfWork(this.diagram));
