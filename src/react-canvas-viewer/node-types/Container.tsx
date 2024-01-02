@@ -12,6 +12,8 @@ import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
 import { Scale, Transform } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { DiagramElement } from '../../model/diagramElement.ts';
+import { UndoableAction } from '../../model/undoManager.ts';
 
 export const Container = (props: Props) => {
   const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -26,7 +28,7 @@ export const Container = (props: Props) => {
         y={props.node.bounds.pos.y}
         width={props.node.bounds.size.w}
         height={props.node.bounds.size.h}
-        stroke={'orange'}
+        stroke={props.nodeProps.highlight?.includes('drop-target') ? 'red' : 'orange'}
         strokeDasharray={'5,5'}
         fill={'transparent'}
         {...propsUtils.filterSvgProperties(props, 'fill', 'stroke', 'style')}
@@ -86,6 +88,20 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     for (const child of node.children) {
       child.transform(transforms, uow, true);
     }
+  }
+
+  onDrop(
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    _uow: UnitOfWork
+  ): UndoableAction | undefined {
+    node.diagram.moveElement(elements, node.layer, {
+      relation: 'on',
+      element: node
+    });
+
+    // TODO: Need to return undoable action here
+    return undefined;
   }
 }
 

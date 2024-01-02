@@ -15,6 +15,8 @@ import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
+import { DiagramElement } from '../model/diagramElement.ts';
+import { UndoableAction } from '../model/undoManager.ts';
 
 type Props = {
   node: DiagramNode;
@@ -92,6 +94,14 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
       child.transform(transforms, uow, true);
     }
   }
+
+  onDrop(
+    _node: DiagramNode,
+    _elements: ReadonlyArray<DiagramElement>,
+    _uow: UnitOfWork
+  ): UndoableAction | undefined {
+    return undefined;
+  }
 }
 
 export class ReactNodeDefinition implements NodeDefinition {
@@ -136,5 +146,13 @@ export class ReactNodeDefinition implements NodeDefinition {
 
   onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void {
     this.delegate.onTransform(transforms, node, uow);
+  }
+
+  onDrop(
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork
+  ): UndoableAction | undefined {
+    return this.delegate.onDrop(node, elements, uow);
   }
 }

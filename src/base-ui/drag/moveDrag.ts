@@ -11,7 +11,6 @@ import { MoveAction, NodeAddUndoableAction } from '../../model/diagramUndoAction
 import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export class MoveDrag extends AbstractDrag {
@@ -22,8 +21,7 @@ export class MoveDrag extends AbstractDrag {
 
   #dragStarted = false;
 
-  // @ts-ignore
-  private currentEdge: DiagramEdge | undefined = undefined;
+  #currentElement: DiagramElement | undefined = undefined;
 
   constructor(
     private readonly diagram: Diagram,
@@ -35,14 +33,23 @@ export class MoveDrag extends AbstractDrag {
   }
 
   onDragEnter(id: string): void {
-    const el = this.diagram.edgeLookup.get(id);
+    const el = this.diagram.lookup(id);
     if (el) {
-      this.currentEdge = el;
+      this.#currentElement = el;
+      el.props.highlight ??= [];
+      el.props.highlight.push('drop-target');
+      UnitOfWork.execute(this.diagram, uow => uow.updateElement(el));
     }
   }
 
   onDragLeave(): void {
-    this.currentEdge = undefined;
+    if (this.#currentElement && this.#currentElement.props.highlight) {
+      this.#currentElement.props.highlight = this.#currentElement.props.highlight.filter(
+        h => h !== 'drop-target'
+      );
+      UnitOfWork.execute(this.diagram, uow => uow.updateElement(this.#currentElement!));
+    }
+    this.#currentElement = undefined;
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
@@ -166,7 +173,7 @@ export class MoveDrag extends AbstractDrag {
     this.enablePointerEvents(selection.elements);
 
     if (selection.isChanged()) {
-      // TODO: Maybe add a compound action here
+      // TODO: Definitely need a compound undoable action here
       const resizeCanvasAction = createResizeCanvasActionToFit(
         this.diagram,
         Box.boundingBox(
@@ -191,6 +198,16 @@ export class MoveDrag extends AbstractDrag {
           )
         );
       }
+
+      if (this.#currentElement && this.#currentElement.type === 'node') {
+        // TODO: Handle the same for edges
+        if (this.#currentElement.type === 'node') {
+          this.#currentElement
+            .getNodeDefinition()
+            .onDrop(this.#currentElement, selection.elements, new UnitOfWork(this.diagram));
+        }
+      }
+
       selection.rebaseline();
     }
 

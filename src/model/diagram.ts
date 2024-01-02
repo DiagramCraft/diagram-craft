@@ -119,8 +119,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
   // TODO: Change this to an undoable action?
   // TODO: Check layer level events are emitted
+  // TODO: Maybe require a UnitOfWork?
   moveElement(
-    elements: DiagramElement[],
+    elements: ReadonlyArray<DiagramElement>,
     layer: Layer,
     ref?: { relation: 'above' | 'below' | 'on'; element: DiagramElement }
   ) {

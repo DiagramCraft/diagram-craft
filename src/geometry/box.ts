@@ -127,24 +127,12 @@ export const Box = {
       };
     } else {
       for (const box of boxes) {
-        minX = Math.min(minX, box.pos.x, box.pos.x + box.size.w);
-        minY = Math.min(minY, box.pos.y, box.pos.y + box.size.h);
-        maxX = Math.max(maxX, box.pos.x, box.pos.x + box.size.w);
-        maxY = Math.max(maxY, box.pos.y, box.pos.y + box.size.h);
-
-        const corners = [
-          { x: box.pos.x, y: box.pos.y },
-          { x: box.pos.x + box.size.w, y: box.pos.y },
-          { x: box.pos.x, y: box.pos.y + box.size.h },
-          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
-        ];
+        const corners = Box.corners(box);
         for (const c of corners) {
-          const rotated = Point.rotateAround(c, box.rotation, Box.center(box));
-
-          minX = Math.min(minX, rotated.x);
-          minY = Math.min(minY, rotated.y);
-          maxX = Math.max(maxX, rotated.x);
-          maxY = Math.max(maxY, rotated.y);
+          minX = Math.min(minX, c.x);
+          minY = Math.min(minY, c.y);
+          maxX = Math.max(maxX, c.x);
+          maxY = Math.max(maxY, c.y);
         }
       }
 

@@ -4,6 +4,8 @@ import { Extent } from '../geometry/extent.ts';
 import { assert } from '../utils/assert.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
+import { DiagramElement } from './diagramElement.ts';
+import { UndoableAction } from './undoManager.ts';
 
 export type NodeCapability = 'children';
 
@@ -35,6 +37,11 @@ export interface NodeDefinition {
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
   onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void;
+  onDrop(
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork
+  ): UndoableAction | undefined;
 
   requestFocus(node: DiagramNode): void;
 }

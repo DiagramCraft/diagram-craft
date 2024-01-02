@@ -219,12 +219,12 @@ const quadraticRoots = (a: number, b: number, c: number) => {
 };
 
 export class CubicBezier {
-  private _dp1: Point;
-  private _dp2: Point;
-  private _dp3: Point;
+  #dp1: Point;
+  #dp2: Point;
+  #dp3: Point;
 
-  private _bbox: Box | undefined;
-  private _length: number | undefined;
+  #bbox: Box | undefined;
+  #length: number | undefined;
 
   constructor(
     public readonly start: Point,
@@ -232,15 +232,15 @@ export class CubicBezier {
     public readonly cp2: Point,
     public readonly end: Point
   ) {
-    this._dp1 = {
+    this.#dp1 = {
       x: (cp1.x - start.x) * 3,
       y: (cp1.y - start.y) * 3
     };
-    this._dp2 = {
+    this.#dp2 = {
       x: (cp2.x - cp1.x) * 3,
       y: (cp2.y - cp1.y) * 3
     };
-    this._dp3 = {
+    this.#dp3 = {
       x: (end.x - cp2.x) * 3,
       y: (end.y - cp2.y) * 3
     };
@@ -266,8 +266,6 @@ export class CubicBezier {
     }
     return points;
   }
-
-  reduceToQuadratic() {}
 
   split(t: number): [CubicBezier, CubicBezier] {
     const t2 = t * t;
@@ -310,8 +308,8 @@ export class CubicBezier {
   derivative(t: number) {
     const mt = 1 - t;
     return {
-      x: mt * mt * this._dp1.x + 2 * mt * t * this._dp2.x + t * t * this._dp3.x,
-      y: mt * mt * this._dp1.y + 2 * mt * t * this._dp2.y + t * t * this._dp3.y
+      x: mt * mt * this.#dp1.x + 2 * mt * t * this.#dp2.x + t * t * this.#dp3.x,
+      y: mt * mt * this.#dp1.y + 2 * mt * t * this.#dp2.y + t * t * this.#dp3.y
     };
   }
 
@@ -328,24 +326,24 @@ export class CubicBezier {
   }
 
   extreme() {
-    const a_x = this._dp1.x - 2 * this._dp2.x + this._dp3.x;
-    const a_y = this._dp1.y - 2 * this._dp2.y + this._dp3.y;
-    const b_x = 2 * this._dp2.x - 2 * this._dp1.x;
-    const b_y = 2 * this._dp2.y - 2 * this._dp1.y;
-    const roots_x = quadraticRoots(a_x, b_x, this._dp1.x).filter(VALID_EXTREMES);
-    const roots_y = quadraticRoots(a_y, b_y, this._dp1.y).filter(VALID_EXTREMES);
+    const a_x = this.#dp1.x - 2 * this.#dp2.x + this.#dp3.x;
+    const a_y = this.#dp1.y - 2 * this.#dp2.y + this.#dp3.y;
+    const b_x = 2 * this.#dp2.x - 2 * this.#dp1.x;
+    const b_y = 2 * this.#dp2.y - 2 * this.#dp1.y;
+    const roots_x = quadraticRoots(a_x, b_x, this.#dp1.x).filter(VALID_EXTREMES);
+    const roots_y = quadraticRoots(a_y, b_y, this.#dp1.y).filter(VALID_EXTREMES);
 
     return { x: roots_x, y: roots_y };
   }
 
   bbox() {
-    if (this._bbox) return this._bbox;
+    if (this.#bbox) return this.#bbox;
 
     const extreme = this.extreme();
 
     if (extreme.x.length === 0 && extreme.y.length === 0) {
-      this._bbox = Box.fromCorners(this.start, this.end);
-      return this._bbox;
+      this.#bbox = Box.fromCorners(this.start, this.end);
+      return this.#bbox;
     }
 
     const x = [this.start.x, ...extreme.x.map(t => this.point(t).x), this.end.x];
@@ -354,17 +352,17 @@ export class CubicBezier {
     const mx = Math.min(...x);
     const my = Math.min(...y);
 
-    this._bbox = {
+    this.#bbox = {
       pos: { x: mx, y: my },
       size: { w: Math.max(...x) - mx, h: Math.max(...y) - my },
       rotation: 0
     };
 
-    return this._bbox;
+    return this.#bbox;
   }
 
   length() {
-    if (this._length) return this._length;
+    if (this.#length) return this.#length;
 
     const z = 0.5;
 
@@ -373,8 +371,8 @@ export class CubicBezier {
       sum += W[i] * this.darclen(z * X[i] + z);
     }
 
-    this._length = z * sum;
-    return this._length;
+    this.#length = z * sum;
+    return this.#length;
   }
 
   tAtLength(l: number) {
