@@ -14,6 +14,7 @@ import { Diagram } from '../model/diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
+import { Transform } from '../geometry/transform.ts';
 
 type Props = {
   node: DiagramNode;
@@ -86,6 +87,11 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
   }
 
   onChildChanged(_node: DiagramNode, _uow: UnitOfWork): void {}
+  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void {
+    for (const child of node.children) {
+      child.transform(transforms, uow, true);
+    }
+  }
 }
 
 export class ReactNodeDefinition implements NodeDefinition {
@@ -126,5 +132,9 @@ export class ReactNodeDefinition implements NodeDefinition {
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
     this.delegate.onChildChanged(node, uow);
+  }
+
+  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void {
+    this.delegate.onTransform(transforms, node, uow);
   }
 }

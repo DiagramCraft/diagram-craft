@@ -10,6 +10,8 @@ import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
+import { Scale, Transform } from '../../geometry/transform.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export const Container = (props: Props) => {
   const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -77,6 +79,13 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     pathBuilder.lineTo(Point.of(-1, 1));
 
     return pathBuilder;
+  }
+
+  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork) {
+    if (transforms.find(t => t instanceof Scale)) return;
+    for (const child of node.children) {
+      child.transform(transforms, uow, true);
+    }
   }
 }
 

@@ -80,13 +80,11 @@ export class DiagramNode implements AbstractNode {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
 
-    for (const child of this.children) {
-      child.transform(transforms, uow, true);
-    }
+    this.getNodeDefinition().onTransform(transforms, this, uow);
 
     if (this.parent && !isChild) {
       const parent = this.parent;
-      uow.pushAction('recalculateBounds', parent, () => {
+      uow.pushAction('onChildChanged', parent, () => {
         parent.getNodeDefinition().onChildChanged(parent, uow);
       });
     }
