@@ -17,7 +17,7 @@ import { DiagramEdge } from '../../model/diagramEdge.ts';
 
 export class MoveDrag extends AbstractDrag {
   snapAngle?: Axis;
-  metaKey?: boolean = false;
+  isDuplicateDrag?: boolean = false;
 
   oldPointerEventsValues: Record<string, string> = {};
 
@@ -114,13 +114,14 @@ export class MoveDrag extends AbstractDrag {
     let snapDirections = Direction.all();
 
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
-    if (modifiers.metaKey && !this.metaKey) {
+    if (modifiers.metaKey && !this.isDuplicateDrag) {
       // Reset current selection back to original
       const uow = new UnitOfWork(this.diagram);
       this.diagram.transformElements(
         selection.nodes,
         [new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))],
         uow,
+        'interactive',
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
       );
       uow.commit();
@@ -136,9 +137,9 @@ export class MoveDrag extends AbstractDrag {
       });
       selection.setElements(newElements, false);
 
-      this.metaKey = true;
-    } else if (!modifiers.metaKey && this.metaKey) {
-      this.metaKey = false;
+      this.isDuplicateDrag = true;
+    } else if (!modifiers.metaKey && this.isDuplicateDrag) {
+      this.isDuplicateDrag = false;
 
       const elementsToRemove = selection.elements;
 
@@ -192,6 +193,7 @@ export class MoveDrag extends AbstractDrag {
       selection.elements,
       [new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))],
       uow,
+      'interactive',
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
     uow.commit();
@@ -218,7 +220,7 @@ export class MoveDrag extends AbstractDrag {
         this.diagram.undoManager.addAndExecute(resizeCanvasAction);
       }
 
-      if (this.metaKey) {
+      if (this.isDuplicateDrag) {
         this.diagram.undoManager.add(new NodeAddUndoableAction(selection.nodes, this.diagram));
       } else {
         this.diagram.undoManager.add(
@@ -238,7 +240,12 @@ export class MoveDrag extends AbstractDrag {
           // TODO: Handle the same for edges
           if (el.type === 'node') {
             this.clearHighlight();
-            el.getNodeDefinition().onDrop(el, selection.elements, new UnitOfWork(this.diagram));
+            el.getNodeDefinition().onDrop(
+              el,
+              selection.elements,
+              new UnitOfWork(this.diagram),
+              'non-interactive'
+            );
           }
         }
       } else {
@@ -255,10 +262,15 @@ export class MoveDrag extends AbstractDrag {
         );
       }
 
+      // This is needed to force a final transformation to be applied
+      const uow = new UnitOfWork(this.diagram);
+      this.diagram.transformElements(selection.elements, [], uow, 'non-interactive');
+      uow.commit();
+
       selection.rebaseline();
     }
 
-    this.metaKey = false;
+    this.isDuplicateDrag = false;
   }
 
   private enablePointerEvents(elements: ReadonlyArray<DiagramElement>) {

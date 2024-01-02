@@ -2,7 +2,7 @@ import { Box } from '../geometry/box.ts';
 import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
-import { Diagram } from './diagram.ts';
+import { ChangeType, Diagram } from './diagram.ts';
 import { DiagramEdge, Endpoint, isConnected } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
@@ -58,7 +58,7 @@ export class DiagramNode implements AbstractNode {
     this.#children = value;
     this.#children.forEach(c => (c.parent = this));
     UnitOfWork.execute(this.diagram, uow => {
-      this.getNodeDefinition().onChildChanged(this, uow);
+      this.getNodeDefinition().onChildChanged(this, uow, 'non-interactive');
     });
   }
 
@@ -76,16 +76,21 @@ export class DiagramNode implements AbstractNode {
     });
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
+  transform(
+    transforms: ReadonlyArray<Transform>,
+    uow: UnitOfWork,
+    changeType: ChangeType,
+    isChild = false
+  ) {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);
 
-    this.getNodeDefinition().onTransform(transforms, this, uow);
+    this.getNodeDefinition().onTransform(transforms, this, uow, changeType);
 
     if (this.parent && !isChild) {
       const parent = this.parent;
       uow.pushAction('onChildChanged', parent, () => {
-        parent.getNodeDefinition().onChildChanged(parent, uow);
+        parent.getNodeDefinition().onChildChanged(parent, uow, changeType);
       });
     }
 

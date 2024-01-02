@@ -10,6 +10,7 @@ import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { ChangeType } from '../../model/diagram.ts';
 
 export const Group = (props: Props) => {
   const center = Box.center(props.node.bounds);
@@ -61,7 +62,7 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
     return pathBuilder;
   }
 
-  onChildChanged(node: DiagramNode, uow: UnitOfWork) {
+  onChildChanged(node: DiagramNode, uow: UnitOfWork, changeType: ChangeType) {
     const childrenBounds = node.children.map(c => c.bounds);
     if (childrenBounds.length === 0) return;
     const newBounds = Box.boundingBox(childrenBounds);
@@ -72,7 +73,7 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
 
     if (node.parent) {
       const parentDef = node.parent.getNodeDefinition();
-      parentDef.onChildChanged(node.parent, uow);
+      parentDef.onChildChanged(node.parent, uow, changeType);
     }
   }
 }

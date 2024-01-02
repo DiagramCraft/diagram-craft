@@ -10,7 +10,7 @@ import {
   NodeDefinition
 } from '../model/elementDefinitionRegistry.ts';
 import { Extent } from '../geometry/extent.ts';
-import { Diagram } from '../model/diagram.ts';
+import { ChangeType, Diagram } from '../model/diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
@@ -88,10 +88,15 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
     }, 0);
   }
 
-  onChildChanged(_node: DiagramNode, _uow: UnitOfWork): void {}
-  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void {
+  onChildChanged(_node: DiagramNode, _uow: UnitOfWork, _changeType: ChangeType): void {}
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork,
+    changeType: ChangeType
+  ): void {
     for (const child of node.children) {
-      child.transform(transforms, uow, true);
+      child.transform(transforms, uow, changeType, true);
     }
   }
 
@@ -140,19 +145,25 @@ export class ReactNodeDefinition implements NodeDefinition {
     return this.delegate.requestFocus(node);
   }
 
-  onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
-    this.delegate.onChildChanged(node, uow);
+  onChildChanged(node: DiagramNode, uow: UnitOfWork, changeType: ChangeType): void {
+    this.delegate.onChildChanged(node, uow, changeType);
   }
 
-  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void {
-    this.delegate.onTransform(transforms, node, uow);
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork,
+    changeType: ChangeType
+  ): void {
+    this.delegate.onTransform(transforms, node, uow, changeType);
   }
 
   onDrop(
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork
+    uow: UnitOfWork,
+    changeType: ChangeType
   ): UndoableAction | undefined {
-    return this.delegate.onDrop(node, elements, uow);
+    return this.delegate.onDrop(node, elements, uow, changeType);
   }
 }

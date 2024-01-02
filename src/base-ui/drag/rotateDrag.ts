@@ -31,6 +31,7 @@ export class RotateDrag extends AbstractDrag {
         rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
       }),
       uow,
+      'interactive',
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
     uow.commit();
@@ -58,6 +59,12 @@ export class RotateDrag extends AbstractDrag {
         )
       );
       selection.forceRotation(undefined);
+
+      // This is needed to force a final transformation to be applied
+      const uow = new UnitOfWork(this.diagram);
+      this.diagram.transformElements(selection.elements, [], uow, 'non-interactive');
+      uow.commit();
+
       selection.rebaseline();
     }
   }

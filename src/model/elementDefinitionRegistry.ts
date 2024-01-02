@@ -6,6 +6,7 @@ import { UnitOfWork } from './unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { UndoableAction } from './undoManager.ts';
+import { ChangeType } from './diagram.ts';
 
 export type NodeCapability = 'children';
 
@@ -49,12 +50,18 @@ export interface NodeDefinition {
   // TODO: This should support adding children and more than just the size
   getInitialConfig(): { size: Extent };
 
-  onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
-  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void;
+  onChildChanged(node: DiagramNode, uow: UnitOfWork, chanegType: ChangeType): void;
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork,
+    changeType: ChangeType
+  ): void;
   onDrop(
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork
+    uow: UnitOfWork,
+    changeType: ChangeType
   ): UndoableAction | undefined;
 
   requestFocus(node: DiagramNode): void;

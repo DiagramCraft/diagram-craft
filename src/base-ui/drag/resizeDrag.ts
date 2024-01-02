@@ -131,6 +131,7 @@ export class ResizeDrag extends AbstractDrag {
       selection.elements,
       TransformFactory.fromTo(before, newBounds.getSnapshot()),
       uow,
+      'interactive',
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
     uow.commit();
@@ -151,6 +152,12 @@ export class ResizeDrag extends AbstractDrag {
           'Resize'
         )
       );
+
+      // This is needed to force a final transformation to be applied
+      const uow = new UnitOfWork(this.diagram);
+      this.diagram.transformElements(selection.elements, [], uow, 'non-interactive');
+      uow.commit();
+
       selection.rebaseline();
     }
   }
