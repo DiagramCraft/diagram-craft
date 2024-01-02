@@ -3,12 +3,12 @@ import { MutableRefObject, RefObject } from 'react';
 import { Point } from '../../geometry/point.ts';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { AbstractTool } from './abstractTool.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 
-export class TextTool extends AbstractTool {
+export class EdgeTool extends AbstractTool {
   constructor(
     protected readonly diagram: Diagram,
     protected readonly drag: DragDopManager,
@@ -17,36 +17,26 @@ export class TextTool extends AbstractTool {
     protected readonly resetTool: () => void
   ) {
     super(diagram, drag, svgRef, deferedMouseAction, resetTool);
-    this.svgRef.current!.style.cursor = 'text';
+    this.svgRef.current!.style.cursor = 'crosshair';
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
-    const nodeType = 'text';
-    const nodeDef = this.diagram.nodeDefinitions.get(nodeType);
-
-    const nd = new DiagramNode(
+    const nd = new DiagramEdge(
       newid(),
-      nodeType,
-      {
-        pos: this.diagram.viewBox.toDiagramPoint(point),
-        size: nodeDef.getInitialConfig().size,
-        rotation: 0
-      },
+      { position: this.diagram.viewBox.toDiagramPoint(point) },
+      { position: Point.add(this.diagram.viewBox.toDiagramPoint(point), { x: 50, y: 50 }) },
+      {},
+      [],
       this.diagram,
-      this.diagram.layers.active,
-      nodeDef.getDefaultProps('canvas')
+      this.diagram.layers.active
     );
 
     this.diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction([nd], this.diagram, 'Add text')
+      new ElementAddUndoableAction([nd], this.diagram, 'Add edge')
     );
 
     this.diagram.selectionState.clear();
     this.diagram.selectionState.toggle(nd);
-
-    setTimeout(() => {
-      this.diagram.nodeDefinitions.get(nodeType)?.requestFocus(nd);
-    }, 10);
 
     this.resetTool();
   }

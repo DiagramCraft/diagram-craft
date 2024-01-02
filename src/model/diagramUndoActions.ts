@@ -56,11 +56,11 @@ export class RotateAction extends AbstractTransformAction {}
 
 export class ResizeAction extends AbstractTransformAction {}
 
-export class NodeAddUndoableAction implements UndoableAction {
+export class ElementAddUndoableAction implements UndoableAction {
   readonly #layer: Layer;
 
   constructor(
-    private readonly nodes: ReadonlyArray<DiagramNode>,
+    private readonly elements: ReadonlyArray<DiagramElement>,
     private readonly diagram: Diagram,
     public readonly description: string = 'Add node'
   ) {
@@ -68,11 +68,11 @@ export class NodeAddUndoableAction implements UndoableAction {
   }
 
   undo() {
-    this.nodes.forEach(node => node.layer!.removeElement(node));
+    this.elements.forEach(node => node.layer!.removeElement(node));
   }
 
   redo() {
-    this.nodes.forEach(node => this.#layer.addElement(node));
+    this.elements.forEach(node => this.#layer.addElement(node));
   }
 }
 

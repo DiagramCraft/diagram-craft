@@ -6,12 +6,14 @@ declare global {
   interface ActionMap {
     TOOL_MOVE: ToolAction;
     TOOL_TEXT: ToolAction;
+    TOOL_EDGE: ToolAction;
   }
 }
 
 export const toolActions: ActionMapFactory = (state: AppState) => ({
   TOOL_MOVE: new ToolAction('move', state.applicationState, true),
-  TOOL_TEXT: new ToolAction('text', state.applicationState)
+  TOOL_TEXT: new ToolAction('text', state.applicationState),
+  TOOL_EDGE: new ToolAction('edge', state.applicationState)
 });
 
 export class ToolAction extends EventEmitter<ActionEvents> implements ToggleAction {

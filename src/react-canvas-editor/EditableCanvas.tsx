@@ -31,10 +31,12 @@ import { TextTool } from './tools/textTool.ts';
 import { DragLabel } from './DragLabel.tsx';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
 import { getTopMostNode } from '../model/diagramElement.ts';
+import { EdgeTool } from './tools/edgeTool.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
-  text: TextTool
+  text: TextTool,
+  edge: EdgeTool
 };
 
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {

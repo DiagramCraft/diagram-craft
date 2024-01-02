@@ -103,6 +103,7 @@ export const defaultMacKeymap: KeyMap = {
   Backspace: 'SELECTION_DELETE',
   'M-Digit1': 'TOOL_MOVE',
   'M-Digit4': 'TOOL_TEXT',
+  'M-Digit3': 'TOOL_EDGE',
 
   // TODO: These should move to something like defaultAppKeymap
   'A-Digit1': 'SIDEBAR_SHAPES',

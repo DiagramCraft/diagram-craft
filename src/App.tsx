@@ -159,9 +159,9 @@ const App = () => {
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbLayoutGridAdd size={'1.1rem'} />
                   </button>
-                  <button className={'cmp-toolbar__toggle-item'}>
+                  <ActionToggleButton action={'TOOL_EDGE'}>
                     <TbLine size={'1.1rem'} />
-                  </button>
+                  </ActionToggleButton>
                   <ActionToggleButton action={'TOOL_TEXT'}>
                     <TbTextSize size={'1.1rem'} />
                   </ActionToggleButton>
