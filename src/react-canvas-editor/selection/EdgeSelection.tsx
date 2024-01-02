@@ -1,7 +1,7 @@
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { $c } from '../../utils/classname.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
-import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
+import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { Diagram } from '../../model/diagram.ts';
 
 export const EdgeSelection = (props: Props) => {

@@ -20,7 +20,7 @@ import { DocumentBounds } from '../react-canvas-viewer/DocumentBounds.tsx';
 import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
 import { SelectionStateEvents } from '../model/selectionState.ts';
 import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
-import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
+import { useDragDrop } from '../react-canvas-viewer/DragDropManager.ts';
 import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { useDiagram } from '../react-app/context/DiagramContext.tsx';

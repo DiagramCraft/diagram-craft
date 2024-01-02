@@ -1,4 +1,4 @@
-import { useDragDrop } from '../react-canvas-viewer/DragDropManager.tsx';
+import { useDragDrop } from '../react-canvas-viewer/DragDropManager.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { useDomEventListener } from '../react-app/hooks/useEventListener.ts';
 import { useRef, useState } from 'react';

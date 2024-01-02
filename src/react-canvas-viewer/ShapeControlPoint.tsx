@@ -1,4 +1,4 @@
-import { useDragDrop } from './DragDropManager.tsx';
+import { useDragDrop } from './DragDropManager.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { Diagram } from '../model/diagram.ts';
 import { ShapeControlPointDrag } from '../base-ui/drag/shapeControlDrag.ts';

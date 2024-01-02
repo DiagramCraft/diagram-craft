@@ -2,7 +2,7 @@ import { Point } from '../../geometry/point.ts';
 import React, { useCallback } from 'react';
 import { ResizeDrag, ResizeType } from '../../base-ui/drag/resizeDrag.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
-import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
+import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { Box } from '../../geometry/box.ts';
 import { SelectionState } from '../../model/selectionState.ts';

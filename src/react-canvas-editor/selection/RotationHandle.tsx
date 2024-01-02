@@ -2,7 +2,7 @@ import { Point } from '../../geometry/point.ts';
 import { RotateDrag } from '../../base-ui/drag/rotateDrag.ts';
 import { SelectionState } from '../../model/selectionState.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
+import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 
 export const RotationHandle = (props: Props) => {
   const drag = useDragDrop();

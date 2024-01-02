@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
-import { useDragDrop } from './DragDropManager.tsx';
+import { useDragDrop } from './DragDropManager.ts';
 import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
 import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';

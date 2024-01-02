@@ -2,7 +2,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { assert, precondition } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
-import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.tsx';
+import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { AttachmentPointDrag } from '../../base-ui/drag/attachmentPointDrag.ts';
 
 export const LabelNodeSelection = (props: Props) => {
