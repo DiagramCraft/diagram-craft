@@ -146,9 +146,11 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
   }
 
   onDrop(
+    _coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
-    _uow: UnitOfWork
+    _uow: UnitOfWork,
+    _operation: string
   ): UndoableAction | undefined {
     node.diagram.moveElement(elements, node.layer, {
       relation: 'on',

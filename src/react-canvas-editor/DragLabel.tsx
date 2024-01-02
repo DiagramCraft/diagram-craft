@@ -8,10 +8,10 @@ export const DragLabel = () => {
   const redraw = useRedraw();
   const drag = useDragDrop();
   const ref = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<string>('{}');
+  const [state, setState] = useState<State | undefined>(undefined);
 
   drag.on('dragStateChange', () => {
-    setState(JSON.stringify(drag.current()?.state));
+    setState(drag.current()?.state);
   });
   drag.on('dragEnd', redraw);
 
@@ -26,7 +26,7 @@ export const DragLabel = () => {
 
   if (!drag.current() || !drag.current()?.state.label) return undefined;
 
-  const s: State = JSON.parse(state);
+  const s: State = state!;
 
   return (
     <div

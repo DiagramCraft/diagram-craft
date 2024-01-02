@@ -13,6 +13,7 @@ import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { largest } from '../../utils/array.ts';
 
 export class MoveDrag extends AbstractDrag {
   #snapAngle?: Axis;
@@ -200,14 +201,22 @@ export class MoveDrag extends AbstractDrag {
         if (el.type === 'node') {
           this.clearHighlight();
           el.getNodeDefinition().onDrop(
+            selection.bounds.pos,
             el,
             selection.elements,
             new UnitOfWork(this.diagram),
-            'non-interactive'
+            'non-interactive',
+            'default'
           );
         } else {
           this.clearHighlight();
-          el.onDrop(selection.elements, new UnitOfWork(this.diagram), 'non-interactive');
+          el.onDrop(
+            selection.bounds.pos,
+            selection.elements,
+            new UnitOfWork(this.diagram),
+            'non-interactive',
+            this.getLastState(2) === 1 ? 'split' : 'attach'
+          );
         }
       } else if (this.diagram.selectionState.elements.some(e => !!e.parent)) {
         const activeLayer = this.diagram.layers.active;
@@ -224,9 +233,9 @@ export class MoveDrag extends AbstractDrag {
       }
 
       // This is needed to force a final transformation to be applied
-      const uow = new UnitOfWork(this.diagram);
-      this.diagram.transformElements(selection.elements, [], uow, 'non-interactive');
-      uow.commit();
+      UnitOfWork.execute(this.diagram, uow =>
+        this.diagram.transformElements(selection.elements, [], uow, 'non-interactive')
+      );
 
       selection.rebaseline();
     }
@@ -235,6 +244,7 @@ export class MoveDrag extends AbstractDrag {
   }
 
   private getHoverElement(coord: Point): DiagramElement | undefined {
+    if (this.diagram.selectionState.getSelectionType() === 'single-label-node') return;
     const hover = this.diagram.layers.active
       .findElementsByPoint(coord)
       .filter(e => !this.diagram.selectionState.elements.includes(e));
@@ -282,19 +292,23 @@ export class MoveDrag extends AbstractDrag {
     UnitOfWork.updateElement(this.#currentElement);
   }
 
-  private updateState(newPos: { x: number; y: number }) {
-    const last: number[] = [];
-    for (let i = 1; i < 9; i++) {
-      last[i] = this.#keys.lastIndexOf(i.toString());
+  private getLastState(max: number) {
+    const last: [number, number][] = [];
+    for (let i = 1; i <= max; i++) {
+      last[i] = [i, this.#keys.lastIndexOf(i.toString())];
     }
+    return largest(last.slice(1).toReversed(), (a, b) => a[1] - b[1])[0];
+  }
 
+  private updateState(newPos: { x: number; y: number }) {
+    const lastState = this.getLastState(2);
     this.setState({
       label: `x: ${newPos.x.toFixed(0)}, y: ${newPos.y.toFixed(0)}`,
       modifiers:
         this.#currentElement?.type === 'edge'
           ? [
-              { key: '1', label: 'Split', isActive: last[1] >= last[2] },
-              { key: '2', label: 'Attach as label', isActive: last[2] > last[1] }
+              { key: '1', label: 'Split', isActive: lastState === 1 },
+              { key: '2', label: 'Attach as label', isActive: lastState === 2 }
             ]
           : []
     });

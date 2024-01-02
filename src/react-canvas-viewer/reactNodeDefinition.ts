@@ -101,9 +101,11 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
   }
 
   onDrop(
+    _coord: Point,
     _node: DiagramNode,
     _elements: ReadonlyArray<DiagramElement>,
-    _uow: UnitOfWork
+    _uow: UnitOfWork,
+    _operation: string
   ): UndoableAction | undefined {
     return undefined;
   }
@@ -161,12 +163,14 @@ export class ReactNodeDefinition implements NodeDefinition {
   }
 
   onDrop(
+    coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
-    changeType: ChangeType
+    changeType: ChangeType,
+    operation: string
   ): UndoableAction | undefined {
-    return this.delegate.onDrop(node, elements, uow, changeType);
+    return this.delegate.onDrop(coord, node, elements, uow, changeType, operation);
   }
 
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {

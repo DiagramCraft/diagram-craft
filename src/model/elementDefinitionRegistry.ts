@@ -7,6 +7,7 @@ import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { UndoableAction } from './undoManager.ts';
 import { ChangeType } from './diagram.ts';
+import { Point } from '../geometry/point.ts';
 
 export type NodeCapability = 'children';
 
@@ -58,10 +59,12 @@ export interface NodeDefinition {
     changeType: ChangeType
   ): void;
   onDrop(
+    coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
-    changeType: ChangeType
+    changeType: ChangeType,
+    operation: string
   ): UndoableAction | undefined;
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 

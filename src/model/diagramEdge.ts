@@ -6,7 +6,7 @@ import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
-import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
+import { LengthOffsetOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
@@ -243,28 +243,65 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   onDrop(
+    coord: Point,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
-    _changeType: ChangeType
+    _changeType: ChangeType,
+    operation: string
   ): UndoableAction | undefined {
     if (elements.length === 1 && elements[0].type === 'node') {
-      // Split the edge into two edges
-      const element = elements[0] as DiagramNode;
+      if (operation === 'split') {
+        // Split the edge into two edges
+        const element = elements[0] as DiagramNode;
 
-      const newEdge = new DiagramEdge(
-        newid(),
-        { anchor: 0, node: element },
-        this.end,
-        deepClone(this.props),
-        [],
-        this.diagram,
-        this.layer
-      );
-      element.addEdge(0, newEdge);
-      this.layer.addElement(newEdge);
+        const newEdge = new DiagramEdge(
+          newid(),
+          { anchor: 0, node: element },
+          this.end,
+          deepClone(this.props),
+          [],
+          this.diagram,
+          this.layer
+        );
+        element.addEdge(0, newEdge);
+        this.layer.addElement(newEdge);
 
-      this.end = { anchor: 0, node: element };
-      uow.updateElement(this);
+        this.end = { anchor: 0, node: element };
+        uow.updateElement(this);
+      } else {
+        // Attach as label
+        const element = elements[0] as DiagramNode;
+
+        const path = this.path();
+        const projection = path.projectPoint(coord);
+
+        this.labelNodes = [
+          ...(this.labelNodes ?? []),
+          {
+            id: element.id,
+            node: element,
+            offset: Point.ORIGIN,
+            timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
+            type: 'horizontal'
+          }
+        ];
+
+        element.props.labelForEdgeId = this.id;
+
+        if (this.parent) {
+          if (element.parent) {
+            element.parent.children = element.parent.children.filter(c => c !== element);
+            uow.updateElement(element.parent);
+          }
+
+          element.parent = this.parent;
+          this.parent.children = [...this.parent.children, element];
+          uow.updateElement(this.parent);
+        }
+
+        uow.updateElement(element);
+        uow.updateElement(this);
+      }
     }
     return undefined;
   }
