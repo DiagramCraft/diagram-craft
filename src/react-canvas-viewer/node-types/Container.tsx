@@ -152,6 +152,23 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     // TODO: Need to return undoable action here
     return undefined;
   }
+
+  onChildChanged(node: DiagramNode, uow: UnitOfWork) {
+    if (!node.props.container?.autoGrow) return;
+
+    const childrenBounds = node.children.map(c => c.bounds);
+    if (childrenBounds.length === 0) return;
+    const newBounds = Box.boundingBox([node.bounds, ...childrenBounds]);
+    if (!Box.isEqual(newBounds, node.bounds)) {
+      node.bounds = newBounds;
+      uow.updateElement(node);
+    }
+
+    if (node.parent) {
+      const parentDef = node.parent.getNodeDefinition();
+      parentDef.onChildChanged(node.parent, uow);
+    }
+  }
 }
 
 type Props = {
