@@ -248,7 +248,7 @@ export class MoveDrag extends AbstractDrag {
             );
           }
         }
-      } else {
+      } else if (this.diagram.selectionState.elements.some(e => !!e.parent)) {
         const activeLayer = this.diagram.layers.active;
         this.diagram.moveElement(
           selection.elements,
