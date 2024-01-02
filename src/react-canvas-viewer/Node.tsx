@@ -99,6 +99,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
 
+  // TODO: We should only apply the rotation to leaf nodes and not to groups or containers
+  //       ... changing this likely means changing Node.tsx and Container.tsx
+  //       ... or maybe it's better to continue like this with reverse rotations in Node and Container
   return (
     <g
       id={`node-${props.def.id}`}
