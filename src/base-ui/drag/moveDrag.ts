@@ -196,26 +196,34 @@ export class MoveDrag extends AbstractDrag {
       }
 
       if (this.#currentElement) {
+        selection.guides = [];
+
         const el = this.#currentElement;
         // TODO: Handle the same for edges
         if (el.type === 'node') {
           this.clearHighlight();
-          el.getNodeDefinition().onDrop(
-            selection.bounds.pos,
-            el,
-            selection.elements,
-            new UnitOfWork(this.diagram),
-            'non-interactive',
-            'default'
+          UnitOfWork.execute(this.diagram, uow =>
+            el
+              .getNodeDefinition()
+              .onDrop(
+                Point.add(selection.bounds.pos, this.offset),
+                el,
+                selection.elements,
+                uow,
+                'non-interactive',
+                'default'
+              )
           );
         } else {
           this.clearHighlight();
-          el.onDrop(
-            selection.bounds.pos,
-            selection.elements,
-            new UnitOfWork(this.diagram),
-            'non-interactive',
-            this.getLastState(2) === 1 ? 'split' : 'attach'
+          UnitOfWork.execute(this.diagram, uow =>
+            el.onDrop(
+              Point.add(selection.bounds.pos, this.offset),
+              selection.elements,
+              uow,
+              'non-interactive',
+              this.getLastState(2) === 1 ? 'split' : 'attach'
+            )
           );
         }
       } else if (this.diagram.selectionState.elements.some(e => !!e.parent)) {

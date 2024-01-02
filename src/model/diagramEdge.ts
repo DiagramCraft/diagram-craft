@@ -65,6 +65,7 @@ export class DiagramEdge implements AbstractEdge {
       ) {
         this.invalidate();
       } else if (this.#labelNodes?.find(ln => ln.node === element)) {
+        // TODO: Note that this can cause infinite recursion
         this.adjustLabelNodePosition();
       }
     });
@@ -288,6 +289,7 @@ export class DiagramEdge implements AbstractEdge {
 
         element.props.labelForEdgeId = this.id;
 
+        // TODO: Perhaps create a helper to add an element as a label edge
         if (this.parent) {
           if (element.parent) {
             element.parent.children = element.parent.children.filter(c => c !== element);
