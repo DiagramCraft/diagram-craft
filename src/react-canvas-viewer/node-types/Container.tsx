@@ -7,13 +7,23 @@ import { Edge } from '../Edge.tsx';
 import { Node } from '../Node.tsx';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
-import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
+import { CustomPropertyDefinition, NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
 import { Scale, Transform } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
+
+declare global {
+  interface NodeProps {
+    container?: {
+      autoGrow?: boolean;
+      layout?: 'manual' | 'horizontal' | 'vertical';
+      gap?: number;
+    };
+  }
+}
 
 export const Container = (props: Props) => {
   const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -88,6 +98,45 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     for (const child of node.children) {
       child.transform(transforms, uow, true);
     }
+  }
+
+  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
+    return {
+      autoGrow: {
+        type: 'boolean',
+        label: 'Grow',
+        value: node.props.container?.autoGrow ?? false,
+        onChange: (value: boolean) => {
+          node.props.container ??= {};
+          node.props.container.autoGrow = value;
+        }
+      },
+      layout: {
+        type: 'select',
+        label: 'Layout',
+        value: node.props.container?.layout ?? 'manual',
+        options: [
+          { value: 'manual', label: 'Manual' },
+          { value: 'horizontal', label: 'Horizontal' },
+          { value: 'vertical', label: 'Vertical' }
+        ],
+        onChange: (value: string) => {
+          node.props.container ??= {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          node.props.container.layout = value as any;
+        }
+      },
+      gap: {
+        type: 'number',
+        label: 'Gap',
+        value: node.props.container?.gap ?? 0,
+        unit: 'px',
+        onChange: (value: number) => {
+          node.props.container ??= {};
+          node.props.container.gap = value;
+        }
+      }
+    };
   }
 
   onDrop(

@@ -11,15 +11,29 @@ export type NodeCapability = 'children';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 export type CustomPropertyDefinition = {
-  type: 'number';
   label: string;
-  value: number;
-  minValue?: number;
-  maxValue?: number;
-  step?: number;
-  unit?: string;
-  onChange: (value: number) => void;
-};
+} & (
+  | {
+      type: 'number';
+      value: number;
+      minValue?: number;
+      maxValue?: number;
+      step?: number;
+      unit?: string;
+      onChange: (value: number) => void;
+    }
+  | {
+      type: 'select';
+      value: string;
+      options: ReadonlyArray<{ value: string; label: string }>;
+      onChange: (value: string) => void;
+    }
+  | {
+      type: 'boolean';
+      value: boolean;
+      onChange: (value: boolean) => void;
+    }
+);
 
 export interface NodeDefinition {
   type: string;
