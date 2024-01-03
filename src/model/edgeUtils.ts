@@ -114,14 +114,8 @@ export const clipPath = (
     const pathD2 = Math.min(length, projection.pathD + gapSize / 2);
 
     const [before, , after] = toSplit.split(
-      LengthOffsetOnSegment.toTimeOffsetOnSegment(
-        LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD1 }, toSplit),
-        toSplit
-      ),
-      LengthOffsetOnSegment.toTimeOffsetOnSegment(
-        LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD2 }, toSplit),
-        toSplit
-      )
+      LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: pathD1 }, toSplit),
+      LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: pathD2 }, toSplit)
     );
 
     if (dest.length === 0) {

@@ -39,7 +39,8 @@ export const TimeOffsetOnSegment = {
       ...p,
       segmentD: segment.lengthAtT(p.segmentT)
     };
-  },
+  }
+  /*
   toLengthOffsetOnPath: <T extends TimeOffsetOnSegment>(
     p: T,
     path: Path
@@ -58,7 +59,7 @@ export const TimeOffsetOnSegment = {
       ...p,
       point: segment.point(p.segmentT)
     };
-  }
+  }*/
 };
 
 export const LengthOffsetOnSegment = {
@@ -86,6 +87,16 @@ export const TimeOffsetOnPath = {
 };
 
 export const LengthOffsetOnPath = {
+  toTimeOffsetOnSegment: <T extends LengthOffsetOnPath>(
+    p: T,
+    path: Path
+  ): TimeOffsetOnSegment & LengthOffsetOnPath & LengthOffsetOnSegment & T => {
+    return LengthOffsetOnSegment.toTimeOffsetOnSegment(
+      LengthOffsetOnPath.toLengthOffsetOnSegment(p, path),
+      path
+    );
+  },
+
   toLengthOffsetOnSegment: <T extends LengthOffsetOnPath>(
     p: T,
     path: Path
@@ -93,7 +104,7 @@ export const LengthOffsetOnPath = {
     let idx = 0;
     let len = 0;
     while (len < p.pathD && idx < path.segments.length) {
-      const newLen = len + path.segments[idx]!.length();
+      const newLen = len + path.segments[idx].length();
       if (newLen >= p.pathD) {
         break;
       }
@@ -104,10 +115,11 @@ export const LengthOffsetOnPath = {
     return {
       ...p,
       p: path.segments.length,
-      segment: Math.min(path.segments.length - 1, idx),
+      segment: idx,
       segmentD: p.pathD - len
     };
   },
+
   toTimeOffsetOnPath: <T extends LengthOffsetOnPath>(p: T, path: Path): TimeOffsetOnPath & T => {
     // TODO: This is incorrect
     const pathT = p.pathD / path.length();

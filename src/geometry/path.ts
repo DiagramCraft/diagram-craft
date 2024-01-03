@@ -11,6 +11,7 @@ import {
 import { VerifyNotReached } from '../utils/assert.ts';
 import {
   LengthOffsetOnPath,
+  LengthOffsetOnSegment,
   PointOnPath,
   TimeOffsetOnSegment,
   WithSegment
@@ -149,7 +150,14 @@ export class Path {
     if (p2 && p1.segment === p2.segment) {
       // TODO: This seems a bit expensive to calulcate the length and then back to offset
       //       ... maybe we can split into three immediately
-      const d1 = this.segments[p1.segment].lengthAtT(p1.segmentT);
+      //       ... or perhaps a separate method called cut, which skips the middle part
+      // Note: this is a bit of a weird optimization, but it gives quite a bit of
+      //       performance boost when we have already calculated the length offset on the segment
+      // TODO: Maybe we should move this logic into lengthAtT
+      const d1 =
+        (p1 as unknown as LengthOffsetOnSegment)?.segmentD ??
+        this.segments[p1.segment].lengthAtT(p1.segmentT);
+
       const [prefix, end] = this.segments[p2.segment].split(p2.segmentT);
       const [start, mid] = prefix.split(prefix.tAtLength(d1));
       dest.push(

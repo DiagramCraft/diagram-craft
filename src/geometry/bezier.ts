@@ -367,10 +367,9 @@ export class CubicBezier {
   }
 
   tAtLength(l: number) {
+    const len = this.length() / 2; // this.#length ?? 1000;
+
     let total = 0;
-    // TODO: Maybe we can estimate the number of samples needed
-    //       based on the extent of the bounding box
-    const len = 1000;
     let prevSample = this.point(0);
     for (let i = 1; i < len; i++) {
       const sample = this.point(i / len);

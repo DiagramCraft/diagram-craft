@@ -32,6 +32,25 @@ export class BezierPerformanceTest implements PerformanceTest {
   testCases() {
     return [
       {
+        label: 'lengthAt + tAtLength',
+        run: () => {
+          const iter = 5000000;
+          for (let i = 0; i < iter; i++) {
+            const b = new CubicBezier(
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension),
+              randomPoint(dimension)
+            );
+
+            const t = r.nextFloat();
+            const p = b.lengthAtT(t);
+            b.tAtLength(p);
+          }
+          return iter;
+        }
+      },
+      {
         label: 'intersection-line',
         run: () => {
           const iter = 10000000;

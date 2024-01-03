@@ -293,6 +293,7 @@ export class SegmentList {
     return this.segments.reduce((acc, cur) => acc + cur.length(), 0) ?? 0;
   }
 
+  // TODO: This is incorrect
   point(t: number) {
     const totalLength = this.length();
     return this.pointAt({ pathD: t * totalLength });
@@ -308,7 +309,7 @@ export class SegmentList {
       segment = this.segments[++segmentIndex];
     }
 
-    // TODO: We can probably use tAtLength here
+    // TODO: This is a bit incorrect, we should probably use tAtLength here
     return segment.point(currentD / segment.length());
   }
 
@@ -322,6 +323,7 @@ export class SegmentList {
       segment = this.segments[++segmentIndex];
     }
 
+    // TODO: This is a bit incorrect, we should probably use tAtLength here
     return segment.tangent(currentD / segment.length());
   }
 
