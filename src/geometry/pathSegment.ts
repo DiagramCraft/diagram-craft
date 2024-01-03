@@ -344,7 +344,9 @@ export class SegmentList {
     return {
       segmentIndex: bestSegment,
       t: bestProject!.t,
-      globalL: l + bestProject!.t * this.segments[bestSegment].length(),
+
+      // TODO: Should we really return this back here - as it's a bit expensive to calculate
+      globalL: l + this.segments[bestSegment].lengthAtT(bestProject!.t),
       distance: bestProject!.distance,
       point: bestProject!.point
     };

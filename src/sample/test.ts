@@ -53,10 +53,10 @@ export const testDiagram: SerializedDiagramDocument = {
               props: {
                 arrow: {
                   start: {
-                    type: 'SQUARE_ARROW_OUTLINE'
+                    type: 'CROWS_FEET_BAR'
                   },
                   end: {
-                    type: 'CROWS_FEET_BAR'
+                    type: 'SQUARE_ARROW_OUTLINE'
                   }
                 },
                 type: 'bezier'

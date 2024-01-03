@@ -57,7 +57,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   document: DiagramDocument | undefined;
 
   // TODO: Change this based on existence of edges with intersection indicators
-  mustCalculateIntersections = false;
+  mustCalculateIntersections = true;
 
   readonly props: DiagramProps = {};
   readonly viewBox = new Viewbox(this.#canvas.size);

@@ -101,20 +101,6 @@ export const LengthOffsetOnPath = {
       idx++;
     }
 
-    if (idx >= path.segments.length) {
-      console.log('ERROR');
-      console.log('p', p);
-      console.log('path', path);
-      console.log('path.length', path.length());
-      console.log(
-        'segments.length',
-        path.segments.map(s => s.length())
-      );
-      console.log('len', len);
-      console.log('idx', idx);
-      // VERIFY_NOT_REACHED();
-    }
-
     return {
       ...p,
       p: path.segments.length,

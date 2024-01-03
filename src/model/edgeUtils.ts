@@ -100,28 +100,18 @@ export const clipPath = (
     .filter(i => i.pathD >= 0 && i.pathD <= length)
     .filter(i => i.pathD > (startArrow?.height ?? 0) + gapSize / 2)
     .filter(i => i.pathD < length - (endArrow?.height ?? 0) - gapSize / 2)
-    .sort((a, b) => a.pathD - b.pathD);
+    .sort((a, b) => a.pathD - b.pathD)
+    .map(i => i.intersection);
 
   if (validIntersections.length === 0) return basePath.asSvgPath();
 
   for (const intersection of validIntersections) {
-    const pathD1 = Math.max(0, intersection.pathD - gapSize / 2);
-    const pathD2 = Math.min(length, intersection.pathD + gapSize / 2);
-
     const toSplit = dest.at(-1) ?? basePath;
 
-    /*    if (path.segments.length === 2) {
-      console.log(
-        LengthOffsetOnSegment.toTimeOffsetOnSegment(
-          LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD1 }, toSplit),
-          toSplit
-        ),
-        LengthOffsetOnSegment.toTimeOffsetOnSegment(
-          LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD2 }, toSplit),
-          toSplit
-        )
-      );
-    }*/
+    const projection = toSplit.projectPoint(intersection.point);
+
+    const pathD1 = Math.max(0, projection.pathD - gapSize / 2);
+    const pathD2 = Math.min(length, projection.pathD + gapSize / 2);
 
     const [before, , after] = toSplit.split(
       LengthOffsetOnSegment.toTimeOffsetOnSegment(

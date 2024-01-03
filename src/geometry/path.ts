@@ -147,9 +147,11 @@ export class Path {
     const dest: Path[] = [];
 
     if (p2 && p1.segment === p2.segment) {
-      const d1 = p1.segmentT * this.segments[p1.segment].length();
+      // TODO: This seems a bit expensive to calulcate the length and then back to offset
+      //       ... maybe we can split into three immediately
+      const d1 = this.segments[p1.segment].lengthAtT(p1.segmentT);
       const [prefix, end] = this.segments[p2.segment].split(p2.segmentT);
-      const [start, mid] = prefix.split(d1 / prefix.length());
+      const [start, mid] = prefix.split(prefix.tAtLength(d1));
       dest.push(
         new Path([...this.path.slice(0, p1.segment), ...start.asRawSegments()], this.start)
       );
