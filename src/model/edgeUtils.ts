@@ -58,8 +58,7 @@ export const clipPath = (
   path: Path,
   edge: DiagramEdge,
   startArrow: ArrowShape | undefined,
-  endArrow: ArrowShape | undefined,
-  intersections: Intersection[]
+  endArrow: ArrowShape | undefined
 ) => {
   const diagram = edge.diagram!;
 
@@ -86,8 +85,18 @@ export const clipPath = (
     throw new VerifyNotReached();
   }
 
+  return basePath;
+};
+
+export const applyLineHops = (
+  basePath: Path,
+  edge: DiagramEdge,
+  startArrow: ArrowShape | undefined,
+  endArrow: ArrowShape | undefined,
+  intersections: Intersection[]
+) => {
   const length = basePath.length();
-  const gapSize = 10;
+  const gapSize = edge.props.lineHops?.size ?? 10;
   const dest: Path[] = [];
 
   // Sort intersections of length offset on path
@@ -109,11 +118,10 @@ export const clipPath = (
   for (const intersection of validIntersections) {
     const toSplit = dest.at(-1) ?? basePath;
 
-    // types; below-hide, below-line, below-arc, above-arc
-    const thisType = edge.id === 'e1' ? 'below-line' : undefined;
+    const thisType = edge.props.lineHops?.type ?? 'none';
 
     if (
-      thisType !== undefined &&
+      thisType !== 'none' &&
       ((thisType.startsWith('below') && intersection.type === 'below') ||
         (thisType.startsWith('above') && intersection.type === 'above'))
     ) {
@@ -129,11 +137,11 @@ export const clipPath = (
 
       if (dest.length === 0) {
         dest.push(before);
-        addLineHop(dest, before, after, thisType);
+        addLineHop(dest, before, after, thisType, gapSize);
         dest.push(after);
       } else {
         dest[dest.length - 1] = before;
-        addLineHop(dest, before, after, thisType);
+        addLineHop(dest, before, after, thisType, gapSize);
         dest.push(after);
       }
     }
@@ -144,19 +152,41 @@ export const clipPath = (
   return dest.map(p => p.asSvgPath()).join(', ');
 };
 
-const addLineHop = (dest: Path[], before: Path, after: Path, type: string) => {
+const addLineHop = (dest: Path[], before: Path, after: Path, type: string, size: number) => {
   if (type === 'below-hide') return;
   else if (type === 'above-arc') {
     dest.push(
       new Path(
-        [['A', 5, 5, 0, 1, 1, after.segments.at(0)!.start.x, after.segments.at(0)!.start.y]],
+        [
+          [
+            'A',
+            size / 2,
+            size / 2,
+            0,
+            1,
+            1,
+            after.segments.at(0)!.start.x,
+            after.segments.at(0)!.start.y
+          ]
+        ],
         before.segments.at(-1)!.end
       )
     );
   } else if (type === 'below-arc') {
     dest.push(
       new Path(
-        [['A', 5, 5, 0, 1, 0, after.segments.at(0)!.start.x, after.segments.at(0)!.start.y]],
+        [
+          [
+            'A',
+            size / 2,
+            size / 2,
+            0,
+            1,
+            0,
+            after.segments.at(0)!.start.x,
+            after.segments.at(0)!.start.y
+          ]
+        ],
         before.segments.at(-1)!.end
       )
     );
@@ -164,7 +194,7 @@ const addLineHop = (dest: Path[], before: Path, after: Path, type: string) => {
     const tangentStart = before.tangentAt({ pathD: before.length() - 0.01 });
     const tangentEnd = after.tangentAt({ pathD: 0.01 });
 
-    const lineLength = 6;
+    const lineLength = size * 0.6;
 
     const normalStart = Point.rotate(tangentStart, Math.PI / 2);
     const normalEnd = Point.rotate(tangentEnd, Math.PI / 2);

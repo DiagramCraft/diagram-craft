@@ -105,6 +105,10 @@ declare global {
     routing?: {
       rounding?: number;
     };
+    lineHops?: {
+      type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
+      size?: number;
+    };
   }
 
   interface NodeProps extends ElementProps {

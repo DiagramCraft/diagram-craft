@@ -19,7 +19,7 @@ import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx'
 import { Diagram } from '../model/diagram.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { DeepRequired } from 'ts-essentials';
-import { clipPath } from '../model/edgeUtils.ts';
+import { applyLineHops, clipPath } from '../model/edgeUtils.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
@@ -90,7 +90,8 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const endArrowSize = edgeProps.arrow.end.size / 100;
   const endArrow = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
 
-  const path = clipPath(props.def.path(), props.def, startArrow, endArrow, props.def.intersections);
+  const basePath = clipPath(props.def.path(), props.def, startArrow, endArrow);
+  const path = applyLineHops(basePath, props.def, startArrow, endArrow, props.def.intersections);
 
   return (
     <g id={`edge-${props.def.id}`}>

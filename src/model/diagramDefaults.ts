@@ -79,6 +79,10 @@ export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepReq
     },
     routing: {
       rounding: 0
+    },
+    lineHops: {
+      type: 'none',
+      size: 10
     }
   })
 );

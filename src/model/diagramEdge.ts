@@ -261,6 +261,7 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   invalidate() {
+    this.recalculateIntersections(new UnitOfWork(this.diagram), true);
     this.adjustLabelNodePosition();
   }
 
