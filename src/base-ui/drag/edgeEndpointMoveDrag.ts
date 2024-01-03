@@ -81,7 +81,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
       this.element.classList.remove('selection-edge-handle--connected');
     }
 
-    UnitOfWork.updateElement(this.edge);
+    this.edge.update();
   }
 
   onDragEnd(): void {

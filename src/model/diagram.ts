@@ -54,6 +54,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
   diagrams: ReadonlyArray<this> = [];
 
+  // TODO: Change this based on existence of edges with intersection indicators
+  mustCalculateIntersections = false;
+
   readonly props: DiagramProps = {};
   readonly viewBox = new Viewbox(this.#canvas.size);
   readonly nodeLookup = new Map<string, DiagramNode>();

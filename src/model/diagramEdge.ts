@@ -25,10 +25,17 @@ export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
 };
 
+export type Intersection = {
+  point: Point;
+  type: 'above' | 'below';
+};
+
 export class DiagramEdge implements AbstractEdge {
   readonly id: string;
   readonly type = 'edge';
   readonly props: EdgeProps = {};
+
+  #intersections: Intersection[] = [];
 
   waypoints: ReadonlyArray<Waypoint> | undefined;
 
@@ -72,6 +79,10 @@ export class DiagramEdge implements AbstractEdge {
     });
   }
 
+  get intersections() {
+    return this.#intersections;
+  }
+
   get labelNodes() {
     return this.#labelNodes;
   }
@@ -101,7 +112,7 @@ export class DiagramEdge implements AbstractEdge {
     return buildEdgePath(this, this.props.routing?.rounding ?? 0);
   }
 
-  transform(transforms: ReadonlyArray<Transform>, _uow: UnitOfWork, _type: ChangeType) {
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, _type: ChangeType) {
     this.bounds = Transform.box(this.bounds, ...transforms);
 
     this.waypoints = this.waypoints?.map(w => {
@@ -119,6 +130,15 @@ export class DiagramEdge implements AbstractEdge {
         controlPoints: w.controlPoints ? (relativeControlPoints as [Point, Point]) : undefined
       };
     });
+
+    this.recalculateIntersections(uow, true);
+  }
+
+  update() {
+    const uow = new UnitOfWork(this.diagram);
+    this.recalculateIntersections(uow, true);
+    uow.updateElement(this);
+    uow.commit();
   }
 
   duplicate(ctx?: DuplicationContext) {
@@ -307,6 +327,35 @@ export class DiagramEdge implements AbstractEdge {
       }
     }
     return undefined;
+  }
+
+  private recalculateIntersections(uow: UnitOfWork, propagate = false) {
+    if (!this.diagram.mustCalculateIntersections) return;
+
+    let currentEdgeHasBeenSeen = false;
+    const path = this.path();
+    const intersections: Intersection[] = [];
+    for (const edge of this.diagram.visibleElements()) {
+      if (edge === this) currentEdgeHasBeenSeen = true;
+
+      if (edge.type === 'edge' && edge.id !== this.id) {
+        const otherPath = edge.path();
+        const intersectionsWithOtherPath = path.intersections(otherPath);
+        intersections.push(
+          ...intersectionsWithOtherPath.map(e => ({
+            point: e.point,
+            type: (currentEdgeHasBeenSeen ? 'below' : 'above') as Intersection['type']
+          }))
+        );
+        if (propagate) {
+          edge.recalculateIntersections(uow, false);
+        }
+      }
+    }
+    if (this.#intersections !== intersections) {
+      this.#intersections = intersections;
+      uow.updateElement(this);
+    }
   }
 
   private adjustLabelNodePosition() {

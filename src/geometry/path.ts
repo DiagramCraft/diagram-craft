@@ -150,9 +150,11 @@ export class Path {
       const d1 = p1.segmentT * this.segments[p1.segment].length();
       const [prefix, end] = this.segments[p2.segment].split(p2.segmentT);
       const [start, mid] = prefix.split(d1 / prefix.length());
-      dest.push(new Path(start.asRawSegments(), this.start));
+      dest.push(
+        new Path([...this.path.slice(0, p1.segment), ...start.asRawSegments()], this.start)
+      );
       dest.push(new Path(mid.asRawSegments(), mid.start));
-      dest.push(new Path(end.asRawSegments(), end.start));
+      dest.push(new Path([...end.asRawSegments(), ...this.path.slice(p1.segment + 1)], end.start));
       return dest;
     }
 
@@ -175,14 +177,14 @@ export class Path {
       );
       dest.push(
         new Path(
-          [...endSegments[1].asRawSegments(), ...this.path.slice(p2.segment)],
+          [...endSegments[1].asRawSegments(), ...this.path.slice(p2.segment + 1)],
           endSegments[1].start
         )
       );
     } else {
       dest.push(
         new Path(
-          [...startSegments[1].asRawSegments(), ...this.path.slice(p1.segment)],
+          [...startSegments[1].asRawSegments(), ...this.path.slice(p1.segment + 1)],
           startSegments[1].start
         )
       );

@@ -1,10 +1,11 @@
 import { Path } from '../geometry/path.ts';
 import {
+  LengthOffsetOnPath,
   LengthOffsetOnSegment,
   PointOnPath,
   TimeOffsetOnSegment
 } from '../geometry/pathPosition.ts';
-import { ConnectedEndpoint, DiagramEdge, isConnected } from './diagramEdge.ts';
+import { ConnectedEndpoint, DiagramEdge, Intersection, isConnected } from './diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
 import { VerifyNotReached } from '../utils/assert.ts';
 import { ArrowShape } from '../base-ui/arrowShapes.ts';
@@ -56,7 +57,8 @@ export const clipPath = (
   path: Path,
   edge: DiagramEdge,
   startArrow: ArrowShape | undefined,
-  endArrow: ArrowShape | undefined
+  endArrow: ArrowShape | undefined,
+  intersections: Intersection[]
 ) => {
   const diagram = edge.diagram!;
 
@@ -70,15 +72,76 @@ export const clipPath = (
     : undefined;
   const endOffset = adjustForArrow(end, endArrow, path, -1);
 
+  let basePath: Path;
   if (!startOffset && !endOffset) {
-    return path;
+    basePath = path;
   } else if (startOffset && endOffset) {
-    return path.split(startOffset, endOffset)[1];
+    basePath = path.split(startOffset, endOffset)[1];
   } else if (startOffset) {
-    return path.split(startOffset)[1];
+    basePath = path.split(startOffset)[1];
   } else if (endOffset) {
-    return path.split(endOffset)[0];
+    basePath = path.split(endOffset)[0];
   } else {
     throw new VerifyNotReached();
   }
+
+  const length = basePath.length();
+  const gapSize = 10;
+  const dest: Path[] = [];
+
+  // Sort intersections of length offset on path
+  const validIntersections = intersections
+    .map(i => ({
+      intersection: i,
+      // TODO: We could perhaps make this more efficient by remembering the intersecting segment
+      //       ... but a bit difficult since we split the path above
+      pathD: basePath.projectPoint(i.point).pathD
+    }))
+    .filter(i => i.pathD >= 0 && i.pathD <= length)
+    .filter(i => i.pathD > (startArrow?.height ?? 0) + gapSize / 2)
+    .filter(i => i.pathD < length - (endArrow?.height ?? 0) - gapSize / 2)
+    .sort((a, b) => a.pathD - b.pathD);
+
+  if (validIntersections.length === 0) return basePath.asSvgPath();
+
+  for (const intersection of validIntersections) {
+    const pathD1 = Math.max(0, intersection.pathD - gapSize / 2);
+    const pathD2 = Math.min(length, intersection.pathD + gapSize / 2);
+
+    const toSplit = dest.at(-1) ?? basePath;
+
+    /*    if (path.segments.length === 2) {
+      console.log(
+        LengthOffsetOnSegment.toTimeOffsetOnSegment(
+          LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD1 }, toSplit),
+          toSplit
+        ),
+        LengthOffsetOnSegment.toTimeOffsetOnSegment(
+          LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD2 }, toSplit),
+          toSplit
+        )
+      );
+    }*/
+
+    const [before, , after] = toSplit.split(
+      LengthOffsetOnSegment.toTimeOffsetOnSegment(
+        LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD1 }, toSplit),
+        toSplit
+      ),
+      LengthOffsetOnSegment.toTimeOffsetOnSegment(
+        LengthOffsetOnPath.toLengthOffsetOnSegment({ pathD: pathD2 }, toSplit),
+        toSplit
+      )
+    );
+
+    if (dest.length === 0) {
+      dest.push(before);
+      dest.push(after);
+    } else {
+      dest[dest.length - 1] = before;
+      dest.push(after);
+    }
+  }
+
+  return dest.map(p => p.asSvgPath()).join(', ');
 };

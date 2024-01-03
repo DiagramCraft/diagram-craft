@@ -92,15 +92,34 @@ export const LengthOffsetOnPath = {
   ): LengthOffsetOnSegment & T => {
     let idx = 0;
     let len = 0;
-    while (len < p.pathD) {
-      len += path.segments[idx]!.length();
+    while (len < p.pathD && idx < path.segments.length) {
+      const newLen = len + path.segments[idx]!.length();
+      if (newLen >= p.pathD) {
+        break;
+      }
+      len = newLen;
       idx++;
+    }
+
+    if (idx >= path.segments.length) {
+      console.log('ERROR');
+      console.log('p', p);
+      console.log('path', path);
+      console.log('path.length', path.length());
+      console.log(
+        'segments.length',
+        path.segments.map(s => s.length())
+      );
+      console.log('len', len);
+      console.log('idx', idx);
+      // VERIFY_NOT_REACHED();
     }
 
     return {
       ...p,
-      segment: idx,
-      segmentD: len - p.pathD
+      p: path.segments.length,
+      segment: Math.min(path.segments.length - 1, idx),
+      segmentD: p.pathD - len
     };
   },
   toTimeOffsetOnPath: <T extends LengthOffsetOnPath>(p: T, path: Path): TimeOffsetOnPath & T => {

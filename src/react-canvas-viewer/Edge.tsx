@@ -90,7 +90,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const endArrowSize = edgeProps.arrow.end.size / 100;
   const endArrow = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
 
-  const path = clipPath(props.def.path(), props.def, startArrow, endArrow);
+  const path = clipPath(props.def.path(), props.def, startArrow, endArrow, props.def.intersections);
 
   return (
     <g id={`edge-${props.def.id}`}>
@@ -111,7 +111,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
       <path
         className={'svg-edge'}
-        d={path.asSvgPath()}
+        d={path}
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
@@ -122,7 +122,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       />
       <path
         className={'svg-edge'}
-        d={path.asSvgPath()}
+        d={path}
         onMouseDown={onMouseDown}
         onMouseEnter={() => props.onMouseEnter(props.def.id)}
         onMouseLeave={() => props.onMouseLeave(props.def.id)}
@@ -172,6 +172,16 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
             ))}
           </Fragment>
         ))}
+
+      {props.def.intersections.map((p, idx) => (
+        <circle
+          key={`${idx}_${p.point.x}_${p.point.y}`}
+          cx={p.point.x}
+          cy={p.point.y}
+          r="2"
+          fill={p.type === 'above' ? 'red' : 'blue'}
+        />
+      ))}
     </g>
   );
 });
