@@ -7,9 +7,10 @@ import {
 } from '../geometry/pathPosition.ts';
 import { ConnectedEndpoint, DiagramEdge, Intersection, isConnected } from './diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
-import { VerifyNotReached } from '../utils/assert.ts';
+import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
 import { ArrowShape } from '../base-ui/arrowShapes.ts';
 import { Diagram } from './diagram.ts';
+import { Vector } from '../geometry/vector.ts';
 
 const adjustForArrow = (
   pointOnPath: PointOnPath | undefined,
@@ -108,24 +109,94 @@ export const clipPath = (
   for (const intersection of validIntersections) {
     const toSplit = dest.at(-1) ?? basePath;
 
-    const projection = toSplit.projectPoint(intersection.point);
+    // types; below-hide, below-line, below-arc, above-arc
+    const thisType = edge.id === 'e1' ? 'below-line' : undefined;
 
-    const pathD1 = Math.max(0, projection.pathD - gapSize / 2);
-    const pathD2 = Math.min(length, projection.pathD + gapSize / 2);
+    if (
+      thisType !== undefined &&
+      ((thisType.startsWith('below') && intersection.type === 'below') ||
+        (thisType.startsWith('above') && intersection.type === 'above'))
+    ) {
+      const projection = toSplit.projectPoint(intersection.point);
 
-    const [before, , after] = toSplit.split(
-      LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: pathD1 }, toSplit),
-      LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: pathD2 }, toSplit)
-    );
+      const pathD1 = Math.max(0, projection.pathD - gapSize / 2);
+      const pathD2 = Math.min(length, projection.pathD + gapSize / 2);
 
-    if (dest.length === 0) {
-      dest.push(before);
-      dest.push(after);
-    } else {
-      dest[dest.length - 1] = before;
-      dest.push(after);
+      const [before, , after] = toSplit.split(
+        LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: pathD1 }, toSplit),
+        LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: pathD2 }, toSplit)
+      );
+
+      if (dest.length === 0) {
+        dest.push(before);
+        addLineHop(dest, before, after, thisType);
+        dest.push(after);
+      } else {
+        dest[dest.length - 1] = before;
+        addLineHop(dest, before, after, thisType);
+        dest.push(after);
+      }
     }
   }
 
+  if (dest.length === 0) return basePath.asSvgPath();
+
   return dest.map(p => p.asSvgPath()).join(', ');
+};
+
+const addLineHop = (dest: Path[], before: Path, after: Path, type: string) => {
+  if (type === 'below-hide') return;
+  else if (type === 'above-arc') {
+    dest.push(
+      new Path(
+        [['A', 5, 5, 0, 1, 1, after.segments.at(0)!.start.x, after.segments.at(0)!.start.y]],
+        before.segments.at(-1)!.end
+      )
+    );
+  } else if (type === 'below-arc') {
+    dest.push(
+      new Path(
+        [['A', 5, 5, 0, 1, 0, after.segments.at(0)!.start.x, after.segments.at(0)!.start.y]],
+        before.segments.at(-1)!.end
+      )
+    );
+  } else if (type === 'below-line') {
+    const tangentStart = before.tangentAt({ pathD: before.length() - 0.01 });
+    const tangentEnd = after.tangentAt({ pathD: 0.01 });
+
+    const lineLength = 6;
+
+    const normalStart = Point.rotate(tangentStart, Math.PI / 2);
+    const normalEnd = Point.rotate(tangentEnd, Math.PI / 2);
+
+    const startStart = Point.add(
+      before.segments.at(-1)!.end,
+      Vector.scale(normalStart, lineLength / 2)
+    );
+    const startEnd = Point.subtract(
+      before.segments.at(-1)!.end,
+      Vector.scale(normalStart, lineLength / 2)
+    );
+
+    const endStart = Point.add(
+      after.segments.at(0)!.start,
+      Vector.scale(normalEnd, lineLength / 2)
+    );
+    const endEnd = Point.subtract(
+      after.segments.at(0)!.start,
+      Vector.scale(normalEnd, lineLength / 2)
+    );
+
+    if (isNaN(startStart.x) || isNaN(startStart.y) || isNaN(startEnd.x) || isNaN(startEnd.y)) {
+      return;
+    }
+    if (isNaN(endStart.x) || isNaN(endStart.y) || isNaN(endEnd.x) || isNaN(endEnd.y)) {
+      return;
+    }
+
+    dest.push(new Path([['L', startEnd.x, startEnd.y]], startStart));
+    dest.push(new Path([['L', endEnd.x, endEnd.y]], endStart));
+  } else {
+    VERIFY_NOT_REACHED();
+  }
 };

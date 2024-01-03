@@ -173,7 +173,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
           </Fragment>
         ))}
 
-      {props.def.intersections.map((p, idx) => (
+      {/*props.def.intersections.map((p, idx) => (
         <circle
           key={`${idx}_${p.point.x}_${p.point.y}`}
           cx={p.point.x}
@@ -181,7 +181,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
           r="2"
           fill={p.type === 'above' ? 'red' : 'blue'}
         />
-      ))}
+      ))*/}
     </g>
   );
 });
