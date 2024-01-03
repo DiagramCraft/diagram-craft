@@ -22,6 +22,7 @@ import { ApplicationState } from './ApplicationState.ts';
 import { UserState } from './UserState.ts';
 import { sidebarActions } from '../react-app/actions/SidebarAction.tsx';
 import { groupActions } from './actions/groupAction.ts';
+import { saveActions } from './actions/SaveAction.tsx';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -77,6 +78,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeFlipActions(state),
   ...duplicateActions(state),
   ...groupActions(state),
+  ...saveActions(state),
 
   // TODO: These should move to defaultAppActions
   ...toolActions(state),
@@ -104,6 +106,7 @@ export const defaultMacKeymap: KeyMap = {
   'M-Digit1': 'TOOL_MOVE',
   'M-Digit4': 'TOOL_TEXT',
   'M-Digit3': 'TOOL_EDGE',
+  'M-KeyS': 'FILE_SAVE',
 
   // TODO: These should move to something like defaultAppKeymap
   'A-Digit1': 'SIDEBAR_SHAPES',

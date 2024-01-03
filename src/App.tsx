@@ -62,6 +62,7 @@ import { Diagram } from './model/diagram.ts';
 import { ApplicationState } from './base-ui/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
 import { LayerIndicator } from './react-app/components/LayerIndicator.tsx';
+import { testDiagram } from './sample/test.ts';
 
 const factory = (d: SerializedDiagram) => {
   return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -71,6 +72,10 @@ const diagrams = [
   {
     name: 'Snap test',
     document: deserializeDiagramDocument(snapTestDiagram, factory)
+  },
+  {
+    name: 'Test',
+    document: deserializeDiagramDocument(testDiagram, factory)
   },
   {
     name: 'Simple',

@@ -233,6 +233,31 @@ export const deserializeDiagramDocument = <T extends Diagram>(
   return new DiagramDocument(dest);
 };
 
+export const serializeDiagramDocument = (document: DiagramDocument): SerializedDiagramDocument => {
+  return {
+    diagrams: document.diagrams.map(serializeDiagram)
+  };
+};
+
+export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
+  return {
+    id: diagram.id,
+    name: diagram.name,
+    layers: diagram.layers.all.map(l => serializeLayer(l)),
+    diagrams: diagram.diagrams.map(d => serializeDiagram(d))
+  };
+};
+
+export const serializeLayer = (layer: Layer): SerializedLayer => {
+  return {
+    id: layer.id,
+    name: layer.name,
+    type: 'layer',
+    layerType: 'basic',
+    elements: layer.elements.map(serializeDiagramElement)
+  };
+};
+
 export const serializeDiagramElement = (element: DiagramElement): SerializedElement => {
   if (isNode(element)) {
     const node = element;

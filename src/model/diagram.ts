@@ -14,6 +14,7 @@ import { assert } from '../utils/assert.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { Point } from '../geometry/point.ts';
+import { DiagramDocument } from './diagramDocument.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
@@ -53,6 +54,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   };
 
   diagrams: ReadonlyArray<this> = [];
+  document: DiagramDocument | undefined;
 
   // TODO: Change this based on existence of edges with intersection indicators
   mustCalculateIntersections = false;

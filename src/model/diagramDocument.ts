@@ -10,6 +10,7 @@ export type DocumentEvents = {
 export class DiagramDocument extends EventEmitter<DocumentEvents> {
   constructor(public readonly diagrams: Array<Diagram>) {
     super();
+    this.diagrams.forEach(d => (d.document = this));
   }
 
   getById(id: string) {
@@ -21,6 +22,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> {
 
   addDiagram(diagram: Diagram) {
     this.diagrams.push(diagram);
+    diagram.document = this;
     this.emit('diagramadded', { node: diagram });
   }
 
