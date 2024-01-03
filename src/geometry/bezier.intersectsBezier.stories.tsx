@@ -36,6 +36,10 @@ const BezierTest = () => {
       }}
       style={{ border: '1px solid black' }}
     >
+      <text x={20} y={20}>
+        {intersections.length}
+      </text>
+
       <path
         d={`M ${start.x} ${start.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${end.x} ${end.y}`}
         fill={'none'}

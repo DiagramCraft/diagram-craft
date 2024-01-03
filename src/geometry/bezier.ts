@@ -37,11 +37,6 @@ const X = [
   -0.9766639214595175, 0.9766639214595175, -0.9955569697904981, 0.9955569697904981
 ] as const;
 
-const roundToThreshold = (value: number, threshold: number) => {
-  const inv = 1.0 / threshold;
-  return Math.round(value * inv) / inv;
-};
-
 const VALID_EXTREMES = (e: number) => e >= 0 && e <= 1;
 
 const sgn = (a: number) => (a >= 0 ? 1 : -1);
@@ -218,6 +213,43 @@ export const BezierUtils = {
   }
 };
 
+const recurseIntersection = (c1: CubicBezier, c2: CubicBezier, threshold: number): Point[] => {
+  const c1b = c1.bbox();
+  const c2b = c2.bbox();
+  if (Math.max(c1b.size.w, c1b.size.h, c2b.size.w, c2b.size.h) < threshold) return [c2b.pos];
+
+  const cc1 = c1.split(0.5);
+  const cc2 = c2.split(0.5);
+
+  const results: Point[] = [];
+  if (Box.intersects(cc1[0].bbox(), cc2[0].bbox())) {
+    results.push(...recurseIntersection(cc1[0], cc2[0], threshold));
+  }
+  if (Box.intersects(cc1[0].bbox(), cc2[1].bbox())) {
+    results.push(...recurseIntersection(cc1[0], cc2[1], threshold));
+  }
+  if (Box.intersects(cc1[1].bbox(), cc2[1].bbox())) {
+    results.push(...recurseIntersection(cc1[1], cc2[1], threshold));
+  }
+  if (Box.intersects(cc1[1].bbox(), cc2[0].bbox())) {
+    results.push(...recurseIntersection(cc1[1], cc2[0], threshold));
+  }
+
+  if (results.length <= 1) return results;
+
+  const d: Point[] = [];
+  const arr = results;
+
+  for (let i = 0; i < arr.length; i++) {
+    if (d.find(e => Point.squareDistance(e, arr[i]) < 2)) {
+      continue;
+    }
+    d.push(arr[i]);
+  }
+
+  return d;
+};
+
 export class CubicBezier {
   #dp1: Point;
   #dp2: Point;
@@ -390,10 +422,10 @@ export class CubicBezier {
     return this.split(t)[0].length();
   }
 
-  intersectsBezier(other: CubicBezier, threshold = 0.5) {
+  intersectsBezier(other: CubicBezier, threshold = 0.1) {
     if (!Box.intersects(this.bbox(), other.bbox())) return [];
 
-    return this.recurseIntersection(this, other, threshold);
+    return recurseIntersection(this, other, threshold);
   }
 
   intersectsLine(line: Line) {
@@ -469,41 +501,6 @@ export class CubicBezier {
 
     const pp = this.point(t1);
     return { distance: Point.distance(pp, p), t: t1, point: pp };
-  }
-
-  private recurseIntersection(c1: CubicBezier, c2: CubicBezier, threshold: number): Point[] {
-    const c1b = c1.bbox();
-    if (Math.max(c1b.size.w, c1b.size.h) < threshold) return [c1b.pos];
-
-    const c2b = c2.bbox();
-    if (Math.max(c2b.size.w, c2b.size.h) < threshold) return [c2b.pos];
-
-    const cc1 = c1.split(0.5);
-    const cc2 = c2.split(0.5);
-
-    const results: Point[] = [];
-    if (Box.intersects(cc1[0].bbox(), cc2[0].bbox())) {
-      results.push(...this.recurseIntersection(cc1[0], cc2[0], threshold));
-    }
-    if (Box.intersects(cc1[0].bbox(), cc2[1].bbox())) {
-      results.push(...this.recurseIntersection(cc1[0], cc2[1], threshold));
-    }
-    if (Box.intersects(cc1[1].bbox(), cc2[1].bbox())) {
-      results.push(...this.recurseIntersection(cc1[1], cc2[1], threshold));
-    }
-    if (Box.intersects(cc1[1].bbox(), cc2[0].bbox())) {
-      results.push(...this.recurseIntersection(cc1[1], cc2[0], threshold));
-    }
-
-    if (results.length <= 1) return results;
-
-    const dest = new Map<string, Point>();
-    for (let i = 0; i < results.length; i++) {
-      const e = results[i];
-      const key = roundToThreshold(e.x, threshold) + ',' + roundToThreshold(e.y, threshold);
-      dest.set(key, e);
-    }
-    return [...dest.values()];
   }
 
   private darclen(t: number) {

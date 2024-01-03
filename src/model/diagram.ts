@@ -56,7 +56,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   diagrams: ReadonlyArray<this> = [];
   document: DiagramDocument | undefined;
 
-  // TODO: Change this based on existence of edges with intersection indicators
   mustCalculateIntersections = true;
 
   readonly props: DiagramProps = {};
@@ -81,6 +80,15 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();
+
+    const toggleMustCalculateIntersections = () => {
+      this.mustCalculateIntersections = this.visibleElements().some(
+        e => e.type === 'edge' && (e.props.lineHops?.type ?? 'none') !== 'none'
+      );
+    };
+    this.on('elementChange', toggleMustCalculateIntersections);
+    this.on('elementAdd', toggleMustCalculateIntersections);
+    this.on('elementRemove', toggleMustCalculateIntersections);
   }
 
   lookup(id: string): DiagramElement | undefined {
