@@ -6,15 +6,15 @@ import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
-import { LengthOffsetOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
+import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
-import { UndoableAction } from './undoManager.ts';
+import { isEdge } from './diagramElement.ts';
 import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
+import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -80,6 +80,11 @@ export class DiagramEdge implements AbstractEdge {
         });
       }
     });
+  }
+
+  // TODO: This should use the EdgeDefinitionRegistry
+  getEdgeDefinition() {
+    return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
   }
 
   get intersections() {
@@ -268,88 +273,6 @@ export class DiagramEdge implements AbstractEdge {
     this.recalculateIntersections(uow, true);
     this.adjustLabelNodePosition(uow);
     uow.commit();
-  }
-
-  // TODO: Not sure we want UI logic in the model
-  onDrop(
-    coord: Point,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    _changeType: ChangeType,
-    operation: string
-  ): UndoableAction | undefined {
-    if (elements.length !== 1 || !isNode(elements[0])) return undefined;
-
-    if (operation === 'split') {
-      return this.onDropSplit(elements[0], uow);
-    } else {
-      return this.onDropAttachAsLabel(elements[0], coord, uow);
-    }
-  }
-
-  private onDropSplit(element: DiagramNode, uow: UnitOfWork): UndoableAction | undefined {
-    // We will attach to the center point anchor
-    const anchor = 0;
-
-    // TODO: This requires some work to support dropping on multi-segment edges
-    const newEdge = new DiagramEdge(
-      newid(),
-      { anchor, node: element },
-      this.end,
-      deepClone(this.props),
-      [],
-      this.diagram,
-      this.layer
-    );
-    element.addEdge(anchor, newEdge);
-    this.layer.addElement(newEdge, uow);
-
-    this.end = { anchor: anchor, node: element };
-
-    uow.updateElement(this);
-
-    // TODO: Support undo
-    return undefined;
-  }
-
-  private onDropAttachAsLabel(
-    element: DiagramNode,
-    coord: Point,
-    uow: UnitOfWork
-  ): UndoableAction | undefined {
-    const path = this.path();
-    const projection = path.projectPoint(coord);
-
-    this.labelNodes = [
-      ...(this.labelNodes ?? []),
-      {
-        id: element.id,
-        node: element,
-        offset: Point.ORIGIN,
-        timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
-        type: 'horizontal'
-      }
-    ];
-
-    element.props.labelForEdgeId = this.id;
-
-    // TODO: Perhaps create a helper to add an element as a label edge
-    if (this.parent) {
-      if (element.parent) {
-        element.parent.children = element.parent.children.filter(c => c !== element);
-        uow.updateElement(element.parent);
-      }
-
-      element.parent = this.parent;
-      this.parent.children = [...this.parent.children, element];
-      uow.updateElement(this.parent);
-    }
-
-    uow.updateElement(element);
-    uow.updateElement(this);
-
-    // TODO: Support undo
-    return undefined;
   }
 
   private recalculateIntersections(uow: UnitOfWork, propagate = false) {

@@ -8,6 +8,7 @@ import { DiagramElement } from './diagramElement.ts';
 import { UndoableAction } from './undoManager.ts';
 import { ChangeType } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
+import { DiagramEdge } from './diagramEdge.ts';
 
 export type NodeCapability = 'children';
 
@@ -95,6 +96,15 @@ export interface EdgeDefinition {
   type: string;
 
   supports(capability: EdgeCapability): boolean;
+
+  onDrop(
+    coord: Point,
+    edge: DiagramEdge,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    changeType: ChangeType,
+    operation: string
+  ): UndoableAction | undefined;
 }
 
 export class EdgeDefinitionRegistry {

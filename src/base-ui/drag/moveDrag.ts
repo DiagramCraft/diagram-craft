@@ -220,13 +220,16 @@ export class MoveDrag extends AbstractDrag {
         } else {
           this.clearHighlight();
           UnitOfWork.execute(this.diagram, uow =>
-            el.onDrop(
-              Point.add(selection.bounds.pos, this.offset),
-              selection.elements,
-              uow,
-              'non-interactive',
-              this.getLastState(2) === 1 ? 'split' : 'attach'
-            )
+            el
+              .getEdgeDefinition()
+              .onDrop(
+                Point.add(selection.bounds.pos, this.offset),
+                el,
+                selection.elements,
+                uow,
+                'non-interactive',
+                this.getLastState(2) === 1 ? 'split' : 'attach'
+              )
           );
         }
       } else if (this.diagram.selectionState.elements.some(e => !!e.parent)) {
