@@ -28,7 +28,7 @@ export class RotateDrag extends AbstractDrag {
       selection.elements,
       TransformFactory.fromTo(before, {
         ...selection.bounds,
-        rotation: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
+        r: Vector.angle(Vector.from(center, coord)) + Math.PI / 2
       }),
       uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes

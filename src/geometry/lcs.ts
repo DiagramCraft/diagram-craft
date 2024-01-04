@@ -8,14 +8,9 @@ export class LocalCoordinateSystem {
   static UNITY = new LocalCoordinateSystem({ x: 0, y: 0 }, { w: 1, h: 1 }, 0);
 
   static fromBox(box: Box) {
-    if (
-      Point.isEqual(Point.ORIGIN, box.pos) &&
-      box.rotation === 0 &&
-      box.size.w === 1 &&
-      box.size.h === 1
-    )
+    if (Point.isEqual(Point.ORIGIN, box) && box.r === 0 && box.w === 1 && box.h === 1)
       return this.UNITY;
-    return new LocalCoordinateSystem(box.pos, box.size, box.rotation);
+    return new LocalCoordinateSystem(box, box, box.r);
   }
 
   constructor(

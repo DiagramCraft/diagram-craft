@@ -40,12 +40,10 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
       newid(),
       'text',
       {
-        pos: projection.point,
-        rotation: 0,
-        size: {
-          w: 100,
-          h: 10
-        }
+        ...projection.point,
+        r: 0,
+        w: 100,
+        h: 10
       },
       this.diagram,
       this.diagram.layers.active,

@@ -49,7 +49,7 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
   if (orientation === 'horizontal') {
     const toScreenX = (x: number) => viewbox.toScreenPoint({ x, y: 0 }).x;
 
-    for (let x = diagram.canvas.pos.x; x <= diagram.canvas.pos.x + diagram.canvas.size.w; x += 10) {
+    for (let x = diagram.canvas.x; x <= diagram.canvas.x + diagram.canvas.w; x += 10) {
       ticks.push({ coord: toScreenX(x), label: x.toString() });
     }
 
@@ -78,9 +78,9 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
           {!diagram.selectionState.isEmpty() && (
             <rect
               className={'svg-selection'}
-              x={toScreenX(diagram.selectionState.bounds.pos.x)}
+              x={toScreenX(diagram.selectionState.bounds.x)}
               y={-1}
-              width={diagram.selectionState.bounds.size.w / viewbox.zoomLevel}
+              width={diagram.selectionState.bounds.w / viewbox.zoomLevel}
               height={16}
             />
           )}
@@ -92,7 +92,7 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
   } else {
     const toScreenY = (y: number) => viewbox.toScreenPoint({ x: 0, y }).y;
 
-    for (let y = diagram.canvas.pos.y; y <= diagram.canvas.pos.y + diagram.canvas.size.h; y += 10) {
+    for (let y = diagram.canvas.y; y <= diagram.canvas.y + diagram.canvas.h; y += 10) {
       ticks.push({ coord: toScreenY(y), label: y.toString() });
     }
 
@@ -128,8 +128,8 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
             <rect
               className={'svg-selection'}
               x={-1}
-              y={toScreenY(diagram.selectionState.bounds.pos.y)}
-              height={diagram.selectionState.bounds.size.h / viewbox.zoomLevel}
+              y={toScreenY(diagram.selectionState.bounds.y)}
+              height={diagram.selectionState.bounds.h / viewbox.zoomLevel}
               width={16}
             />
           )}

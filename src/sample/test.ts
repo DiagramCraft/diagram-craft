@@ -85,15 +85,11 @@ export const testDiagram: SerializedDiagramDocument = {
               type: 'node',
               nodeType: 'rounded-rect',
               bounds: {
-                pos: {
-                  x: 370,
-                  y: 20
-                },
-                size: {
-                  w: 100,
-                  h: 100
-                },
-                rotation: 0
+                x: 370,
+                y: 20,
+                w: 100,
+                h: 100,
+                r: 0
               },
               anchors: [
                 {
@@ -186,15 +182,11 @@ export const testDiagram: SerializedDiagramDocument = {
                   type: 'node',
                   nodeType: 'star',
                   bounds: {
-                    pos: {
-                      x: 400,
-                      y: 270
-                    },
-                    size: {
-                      w: 150,
-                      h: 150
-                    },
-                    rotation: 0
+                    x: 400,
+                    y: 270,
+                    w: 150,
+                    h: 150,
+                    r: 0
                   },
                   anchors: [
                     {
@@ -300,15 +292,11 @@ export const testDiagram: SerializedDiagramDocument = {
               type: 'node',
               nodeType: 'star',
               bounds: {
-                pos: {
-                  x: 400,
-                  y: 270
-                },
-                size: {
-                  w: 150,
-                  h: 150
-                },
-                rotation: 0
+                x: 400,
+                y: 270,
+                w: 150,
+                h: 150,
+                r: 0
               },
               anchors: [
                 {
@@ -405,15 +393,11 @@ export const testDiagram: SerializedDiagramDocument = {
               type: 'node',
               nodeType: 'rounded-rect',
               bounds: {
-                pos: {
-                  x: 370,
-                  y: 20
-                },
-                size: {
-                  w: 100,
-                  h: 100
-                },
-                rotation: 0
+                x: 370,
+                y: 20,
+                w: 100,
+                h: 100,
+                r: 0
               },
               anchors: [
                 {

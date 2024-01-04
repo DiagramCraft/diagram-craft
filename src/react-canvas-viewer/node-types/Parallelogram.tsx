@@ -26,10 +26,10 @@ export const Parallelogram = (props: Props) => {
     <>
       <path
         d={svgPath}
-        x={props.node.bounds.pos.x}
-        y={props.node.bounds.pos.y}
-        width={props.node.bounds.size.w}
-        height={props.node.bounds.size.h}
+        x={props.node.bounds.x}
+        y={props.node.bounds.y}
+        width={props.node.bounds.w}
+        height={props.node.bounds.h}
         {...propsUtils.filterSvgProperties(props)}
       />
 
@@ -47,17 +47,14 @@ export const Parallelogram = (props: Props) => {
 
       {props.isSingleSelected && (
         <ShapeControlPoint
-          x={props.node.bounds.pos.x + slant}
-          y={props.node.bounds.pos.y}
+          x={props.node.bounds.x + slant}
+          y={props.node.bounds.y}
           diagram={props.diagram}
           def={props.node}
           onDrag={x => {
-            const distance = Math.max(0, x - props.node.bounds.pos.x);
+            const distance = Math.max(0, x - props.node.bounds.x);
             props.node.props.parallelogram ??= {};
-            if (
-              distance < props.node.bounds.size.w / 2 &&
-              distance < props.node.bounds.size.h / 2
-            ) {
+            if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
               props.node.props.parallelogram.slant = distance;
             }
             return `Slant: ${props.node.props.parallelogram.slant}px`;
@@ -83,7 +80,7 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
         unit: 'px',
         onChange: (value: number) => {
           def.props.parallelogram ??= {};
-          if (value >= def.bounds.size.w / 2 || value >= def.bounds.size.h / 2) return;
+          if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
           def.props.parallelogram.slant = value;
         }
       }
@@ -94,7 +91,7 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
     const slant = def.props?.parallelogram?.slant ?? 5;
     const bnd = def.bounds;
 
-    const sr = slant / bnd.size.w;
+    const sr = slant / bnd.w;
     const cds = sr * 2;
 
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));

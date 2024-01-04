@@ -15,17 +15,17 @@ export abstract class AbstractNodeSnapProvider {
 
   protected get(b: Box, dir: Direction) {
     if (dir === 'e' || dir === 'w') {
-      return dir === 'e' ? b.pos.x + b.size.w : b.pos.x;
+      return dir === 'e' ? b.x + b.w : b.x;
     } else {
-      return dir === 'n' ? b.pos.y : b.pos.y + b.size.h;
+      return dir === 'n' ? b.y : b.y + b.h;
     }
   }
 
   protected getRange(b: Box, axis: Axis) {
     if (axis === 'h') {
-      return Range.of(b.pos.x, b.pos.x + b.size.w);
+      return Range.of(b.x, b.x + b.w);
     } else {
-      return Range.of(b.pos.y, b.pos.y + b.size.h);
+      return Range.of(b.y, b.y + b.h);
     }
   }
 
@@ -45,19 +45,19 @@ export abstract class AbstractNodeSnapProvider {
       if (node.props.labelForEdgeId) continue;
       if (this.excludedNodeIds.includes(node.id)) continue;
       if (Box.intersects(node.bounds, box)) continue;
-      if (node.bounds.rotation !== 0) continue;
+      if (node.bounds.r !== 0) continue;
 
       if (
         Range.overlaps(this.getRange(node.bounds, 'h'), boxHRange) ||
         Range.overlaps(this.getRange(node.bounds, 'v'), boxVRange)
       ) {
-        if (this.get(node.bounds, 's') < box.pos.y) {
+        if (this.get(node.bounds, 's') < box.y) {
           result.n.push(node);
-        } else if (this.get(node.bounds, 'e') < box.pos.x) {
+        } else if (this.get(node.bounds, 'e') < box.x) {
           result.w.push(node);
-        } else if (node.bounds.pos.x > this.get(box, 'e')) {
+        } else if (node.bounds.x > this.get(box, 'e')) {
           result.e.push(node);
-        } else if (node.bounds.pos.y > this.get(box, 's')) {
+        } else if (node.bounds.y > this.get(box, 's')) {
           result.s.push(node);
         } else {
           VERIFY_NOT_REACHED();

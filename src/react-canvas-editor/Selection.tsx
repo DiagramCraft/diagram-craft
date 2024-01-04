@@ -48,12 +48,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
         {!isOnlyEdges && (
           <>
             <GroupBounds selection={props.selection} />
-            <g transform={`rotate(${Angle.toDeg(bounds.rotation)} ${center.x} ${center.y})`}>
+            <g transform={`rotate(${Angle.toDeg(bounds.r)} ${center.x} ${center.y})`}>
               <rect
-                x={bounds.pos.x}
-                y={bounds.pos.y}
-                width={bounds.size.w}
-                height={bounds.size.h}
+                x={bounds.x}
+                y={bounds.y}
+                width={bounds.w}
+                height={bounds.h}
                 className={$c('svg-selection__bb', { 'only-edges': isOnlyEdges })}
                 pointerEvents={'none'}
               />

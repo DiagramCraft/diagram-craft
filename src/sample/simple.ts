@@ -22,9 +22,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   nodeType: 'star',
                   id: '2',
                   bounds: {
-                    pos: { x: 400, y: 270 },
-                    size: { w: 150, h: 150 },
-                    rotation: 0
+                    x: 400,
+                    y: 270,
+                    w: 150,
+                    h: 150,
+                    r: 0
                   },
                   children: [],
                   props: {}
@@ -78,9 +80,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
               nodeType: 'star',
               id: '2',
               bounds: {
-                pos: { x: 400, y: 270 },
-                size: { w: 150, h: 150 },
-                rotation: 0
+                x: 400,
+                y: 270,
+                w: 150,
+                h: 150,
+                r: 0
               },
               children: [],
               props: {}
@@ -91,9 +95,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
               nodeType: 'rounded-rect',
               id: '3',
               bounds: {
-                pos: { x: 370, y: 20 },
-                size: { w: 100, h: 100 },
-                rotation: 0
+                x: 370,
+                y: 20,
+                w: 100,
+                h: 100,
+                r: 0
               },
               children: [],
               props: {
@@ -108,9 +114,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
               nodeType: 'rect',
               id: '4',
               bounds: {
-                pos: { x: 300, y: 245 },
-                size: { w: 50, h: 20 },
-                rotation: 0
+                x: 300,
+                y: 245,
+                w: 50,
+                h: 20,
+                r: 0
               },
               children: [],
               props: {}
@@ -120,9 +128,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
               type: 'node',
               nodeType: 'text',
               bounds: {
-                pos: { x: 300, y: 170 },
-                size: { w: 64, h: 17 },
-                rotation: 0
+                x: 300,
+                y: 170,
+                w: 64,
+                h: 17,
+                r: 0
               },
               id: 't2',
               props: {
@@ -158,9 +168,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
               nodeType: 'star',
               id: '2',
               bounds: {
-                pos: { x: 400, y: 270 },
-                size: { w: 150, h: 150 },
-                rotation: 0
+                x: 400,
+                y: 270,
+                w: 150,
+                h: 150,
+                r: 0
               },
               children: [],
               props: {}
@@ -178,9 +190,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
               nodeType: 'rounded-rect',
               id: '3',
               bounds: {
-                pos: { x: 370, y: 20 },
-                size: { w: 100, h: 100 },
-                rotation: 0
+                x: 370,
+                y: 20,
+                w: 100,
+                h: 100,
+                r: 0
               },
               children: [],
               props: {

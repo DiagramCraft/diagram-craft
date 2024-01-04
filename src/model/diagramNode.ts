@@ -97,8 +97,8 @@ export class DiagramNode implements AbstractNode {
         const labelNode = this.labelNode();
         assert.present(labelNode);
 
-        const dx = this.bounds.pos.x - previousBounds.pos.x;
-        const dy = this.bounds.pos.y - previousBounds.pos.y;
+        const dx = this.bounds.x - previousBounds.x;
+        const dy = this.bounds.y - previousBounds.y;
 
         const clampAmount = 100;
         labelNode.offset = {
@@ -140,8 +140,8 @@ export class DiagramNode implements AbstractNode {
 
   getAnchorPosition(anchor: number) {
     return {
-      x: this.bounds.pos.x + this.bounds.size.w * this.getAnchor(anchor).point.x,
-      y: this.bounds.pos.y + this.bounds.size.h * this.getAnchor(anchor).point.y
+      x: this.bounds.x + this.bounds.w * this.getAnchor(anchor).point.x,
+      y: this.bounds.y + this.bounds.h * this.getAnchor(anchor).point.y
     };
   }
 
@@ -275,8 +275,8 @@ export class DiagramNode implements AbstractNode {
 
     for (const p of path.segments) {
       const { x, y } = p.point(0.5);
-      const lx = round((x - this.bounds.pos.x) / this.bounds.size.w);
-      const ly = round((y - this.bounds.pos.y) / this.bounds.size.h);
+      const lx = round((x - this.bounds.x) / this.bounds.w);
+      const ly = round((y - this.bounds.y) / this.bounds.h);
 
       newAnchors.push({ point: { x: lx, y: ly }, clip: false });
     }

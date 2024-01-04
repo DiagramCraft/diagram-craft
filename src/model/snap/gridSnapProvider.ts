@@ -18,10 +18,10 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
       y: this.diagram.props.grid?.size ?? 10
     };
 
-    const minX = Math.floor(box.pos.x / grid.x);
-    const maxX = Math.ceil((box.pos.x + box.size.w) / grid.x);
-    const minY = Math.floor(box.pos.y / grid.y);
-    const maxY = Math.ceil((box.pos.y + box.size.h) / grid.y);
+    const minX = Math.floor(box.x / grid.x);
+    const maxX = Math.ceil((box.x + box.w) / grid.x);
+    const minY = Math.floor(box.y / grid.y);
+    const maxY = Math.ceil((box.y + box.h) / grid.y);
 
     for (let x = minX; x <= maxX; x++) {
       magnets.push({
@@ -46,12 +46,12 @@ export class GridSnapProvider implements SnapProvider<'grid'> {
     return {
       line: Line.isHorizontal(match.matching.line)
         ? Line.of(
-            { x: box.pos.x, y: match.matching.line.from.y },
-            { x: box.pos.x + box.size.w, y: match.matching.line.from.y }
+            { x: box.x, y: match.matching.line.from.y },
+            { x: box.x + box.w, y: match.matching.line.from.y }
           )
         : Line.of(
-            { x: match.matching.line.from.x, y: box.pos.y },
-            { x: match.matching.line.from.x, y: box.pos.y + box.size.h }
+            { x: match.matching.line.from.x, y: box.y },
+            { x: match.matching.line.from.x, y: box.y + box.h }
           ),
       matchingMagnet: match.matching,
       selfMagnet: match.self

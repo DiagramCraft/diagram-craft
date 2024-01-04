@@ -71,7 +71,7 @@ export const deserializeDiagramElements = (
       if (child.parent) {
         nodeLookup[child.id].bounds = {
           ...nodeLookup[child.id].bounds,
-          pos: Point.add(nodeLookup[child.id].bounds.pos, nodeLookup[child.parent.id].bounds.pos)
+          ...Point.add(nodeLookup[child.id].bounds, nodeLookup[child.parent.id].bounds)
         };
       }
     }

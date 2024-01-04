@@ -9,10 +9,12 @@ import { Marquee } from './marquee.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 
-const EMPTY_BOX = {
-  pos: { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER },
-  size: { w: 0, h: 0 },
-  rotation: 0
+const EMPTY_BOX: Box = {
+  x: Number.MIN_SAFE_INTEGER,
+  y: Number.MIN_SAFE_INTEGER,
+  w: 0,
+  h: 0,
+  r: 0
 };
 
 type SelectionSource = {
@@ -116,7 +118,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     }
     this.#bounds = {
       ...this.#bounds,
-      rotation: r
+      r: r
     };
     this.#forcedRotation = true;
   }

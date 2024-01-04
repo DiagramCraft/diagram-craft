@@ -83,7 +83,7 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
     );
 
     if (!context.point) {
-      context.point = { x: bb.pos.x + OFFSET, y: bb.pos.y + OFFSET };
+      context.point = { x: bb.x + OFFSET, y: bb.y + OFFSET };
     }
 
     for (const e of elements) {
@@ -92,9 +92,12 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
         nodeIdMapping.set(e.id, newId);
         e.id = newId;
 
-        const s = Box.asMutableSnapshot(e.bounds);
-        s.set('pos', this.adjustPosition(s.get('pos'), context, bb));
-        e.bounds = s.getSnapshot();
+        const adjustPosition = this.adjustPosition(e.bounds, context, bb);
+        e.bounds = {
+          ...e.bounds,
+          x: adjustPosition.x,
+          y: adjustPosition.y
+        };
       } else {
         e.id = newid();
         if (!isConnected(e.start)) {
@@ -143,8 +146,8 @@ abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> i
 
   private adjustPosition(s: Point, context: ActionContext, bb: Box) {
     return {
-      x: s.x + (context.point!.x - bb.pos.x),
-      y: s.y + (context.point!.y - bb.pos.y)
+      x: s.x + (context.point!.x - bb.x),
+      y: s.y + (context.point!.y - bb.y)
     };
   }
 

@@ -9,9 +9,9 @@ export const RotationHandle = (props: Props) => {
 
   const bounds = props.selection.bounds;
 
-  const north = Point.midpoint(bounds.pos, {
-    x: bounds.pos.x + bounds.size.w,
-    y: bounds.pos.y
+  const north = Point.midpoint(bounds, {
+    x: bounds.x + bounds.w,
+    y: bounds.y
   });
 
   return (

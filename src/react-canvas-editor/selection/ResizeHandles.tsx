@@ -14,7 +14,7 @@ export const ResizeHandles = (props: Props) => {
 
   const points: Point[] = Box.corners({
     ...bounds,
-    rotation: 0
+    r: 0
   });
 
   const north = Point.midpoint(points[0], points[1]);

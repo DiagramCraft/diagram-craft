@@ -27,15 +27,11 @@ export class SnapManagerPerftest implements PerformanceTest {
 
   private randomBox() {
     return {
-      pos: {
-        x: Math.round(Math.random() * 1000),
-        y: Math.round(Math.random() * 1000)
-      },
-      size: {
-        w: Math.round(Math.random() * 100) + 1,
-        h: Math.round(Math.random() * 100) + 1
-      },
-      rotation: 0
+      x: Math.round(Math.random() * 1000),
+      y: Math.round(Math.random() * 1000),
+      w: Math.round(Math.random() * 100) + 1,
+      h: Math.round(Math.random() * 100) + 1,
+      r: 0
     };
   }
 

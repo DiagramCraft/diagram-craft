@@ -7,15 +7,15 @@ export const GroupBounds = (props: Props) => {
   const groups = props.selection.getParents();
   return [...groups].map(g => (
     <rect
-      transform={`rotate(${Angle.toDeg(g.bounds.rotation)} ${Box.center(g.bounds).x} ${
+      transform={`rotate(${Angle.toDeg(g.bounds.r)} ${Box.center(g.bounds).x} ${
         Box.center(g.bounds).y
       })`}
       key={g.id}
-      x={g.bounds.pos.x}
-      y={g.bounds.pos.y}
+      x={g.bounds.x}
+      y={g.bounds.y}
       className={'svg-selection__group-bounds'}
-      width={g.bounds.size.w}
-      height={g.bounds.size.h}
+      width={g.bounds.w}
+      height={g.bounds.h}
     />
   ));
 };

@@ -10,9 +10,11 @@ import { UnitOfWork } from './unitOfWork.ts';
 import { Rect, RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.tsx';
 
 const bounds = {
-  pos: { x: 0, y: 0 },
-  size: { w: 100, h: 100 },
-  rotation: 0
+  x: 0,
+  y: 0,
+  w: 100,
+  h: 100,
+  r: 0
 };
 
 describe('Diagram', () => {
@@ -63,9 +65,11 @@ describe('Diagram', () => {
       '2',
       'rect',
       {
-        pos: { x: 100, y: 100 },
-        size: { w: 100, h: 100 },
-        rotation: 0
+        x: 100,
+        y: 100,
+        w: 100,
+        h: 100,
+        r: 0
       },
       diagram,
       layer
@@ -74,18 +78,13 @@ describe('Diagram', () => {
 
     const nodes = [node1, node2];
 
-    const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
-    const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: Math.PI / 2 };
+    const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
+    const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
 
     diagram.transformElements(nodes, TransformFactory.fromTo(before, after), uow);
     uow.commit();
 
-    expect(node1.bounds.rotation).toStrictEqual(Math.PI / 2);
-    expect(node1.bounds.pos).toStrictEqual({ x: 100, y: 0 });
-    expect(node1.bounds.size).toStrictEqual({ w: 100, h: 100 });
-
-    expect(node2.bounds.rotation).toStrictEqual(Math.PI / 2);
-    expect(node2.bounds.pos).toStrictEqual({ x: 0, y: 100 });
-    expect(node2.bounds.size).toStrictEqual({ w: 100, h: 100 });
+    expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
+    expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
   });
 });

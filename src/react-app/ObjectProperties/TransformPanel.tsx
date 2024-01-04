@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Box } from '../../geometry/box.ts';
+import { Box, WritableBox } from '../../geometry/box.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { round } from '../../utils/math.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbAspectRatio } from 'react-icons/tb';
 import { Point } from '../../geometry/point.ts';
-import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
@@ -29,18 +28,14 @@ export const TransformPanel = (props: Props) => {
   const [lockAspectRatio, setLockAspectRatio] = useState(false);
   const [origin, setOrigin] = useState('top-left');
 
-  const aspectRatio = (bounds?.size.w ?? 1) / (bounds?.size.h ?? 1);
+  const aspectRatio = (bounds?.w ?? 1) / (bounds?.h ?? 1);
 
   const transformedBounds = {
-    pos: {
-      x: (bounds?.pos.x ?? 0) + (bounds?.size.w ?? 1) * origins[origin].x,
-      y: (bounds?.pos.y ?? 0) + (bounds?.size.h ?? 1) * origins[origin].y
-    },
-    size: {
-      w: bounds?.size.w ?? 1,
-      h: bounds?.size.h ?? 1
-    },
-    rotation: bounds?.rotation ?? 0
+    x: (bounds?.x ?? 0) + (bounds?.w ?? 1) * origins[origin].x,
+    y: (bounds?.y ?? 0) + (bounds?.h ?? 1) * origins[origin].y,
+    w: bounds?.w ?? 1,
+    h: bounds?.h ?? 1,
+    r: bounds?.r ?? 0
   };
 
   useEffect(() => {
@@ -62,27 +57,28 @@ export const TransformPanel = (props: Props) => {
 
   // TODO: This seems a bit complicated just to move an element
   //       ... especially all of the updating of the selection state
-  const updateBounds = (newBounds: MutableSnapshot<Box>) => {
-    newBounds.get('pos').x -= (transformedBounds.size.w ?? 1) * origins[origin].x;
-    newBounds.get('pos').y -= (transformedBounds.size.h ?? 1) * origins[origin].y;
+  const updateBounds = (bounds: Box) => {
+    const newBounds = Box.asReadWrite(bounds);
+    newBounds.x -= (transformedBounds.w ?? 1) * origins[origin].x;
+    newBounds.y -= (transformedBounds.h ?? 1) * origins[origin].y;
 
-    if (newBounds.get('size').w !== transformedBounds.size.w) {
-      const dw = newBounds.get('size').w - transformedBounds.size.w;
-      newBounds.get('pos').x -= dw * origins[origin].x;
+    if (newBounds.w !== transformedBounds.w) {
+      const dw = newBounds.w - transformedBounds.w;
+      newBounds.x -= dw * origins[origin].x;
     }
 
-    if (newBounds.get('size').h !== transformedBounds.size.h) {
-      const dh = newBounds.get('size').h - transformedBounds.size.h;
-      newBounds.get('pos').y -= dh * origins[origin].y;
+    if (newBounds.h !== transformedBounds.h) {
+      const dh = newBounds.h - transformedBounds.h;
+      newBounds.y -= dh * origins[origin].y;
     }
 
-    if (newBounds.get('rotation') !== transformedBounds.rotation) {
+    if (newBounds.r !== transformedBounds.r) {
       const newPos = Point.rotateAround(
         {
           x: 0,
           y: 0
         },
-        newBounds.get('rotation'),
+        newBounds.r,
         {
           x: origins[origin].x - 0.5,
           y: origins[origin].y - 0.5
@@ -93,25 +89,17 @@ export const TransformPanel = (props: Props) => {
           x: 0,
           y: 0
         },
-        transformedBounds.rotation,
+        transformedBounds.r,
         {
           x: origins[origin].x - 0.5,
           y: origins[origin].y - 0.5
         }
       );
-      newBounds.set('pos', {
-        x:
-          newBounds.get('pos').x -
-          prevPos.x * transformedBounds.size.w +
-          newPos.x * newBounds.get('size').w,
-        y:
-          newBounds.get('pos').y -
-          prevPos.y * transformedBounds.size.h +
-          newPos.y * newBounds.get('size').h
-      });
+      newBounds.x = newBounds.x - prevPos.x * transformedBounds.w + newPos.x * newBounds.w;
+      newBounds.y = newBounds.y - prevPos.y * transformedBounds.h + newPos.y * newBounds.h;
     }
 
-    diagram.selectionState.elements[0].bounds = newBounds.getSnapshot();
+    diagram.selectionState.elements[0].bounds = WritableBox.asBox(newBounds);
     diagram.selectionState.guides = [];
     diagram.updateElement(diagram.selectionState.elements[0]);
   };
@@ -170,13 +158,14 @@ export const TransformPanel = (props: Props) => {
               <NumberInput
                 style={{ width: '100%' }}
                 label={'x'}
-                value={round(transformedBounds.pos.x)}
+                value={round(transformedBounds.x)}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                  newBounds.get('pos').x = ev ?? 0;
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...transformedBounds,
+                    x: ev ?? 0
+                  });
                 }}
               />
             </div>
@@ -184,63 +173,63 @@ export const TransformPanel = (props: Props) => {
               <NumberInput
                 style={{ width: '100%' }}
                 label={'y'}
-                value={round(transformedBounds.pos.y)}
+                value={round(transformedBounds.y)}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                  newBounds.get('pos').y = ev ?? 0;
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...transformedBounds,
+                    y: ev ?? 0
+                  });
                 }}
               />
             </div>
             <div style={{ gridArea: 'w' }}>
               <NumberInput
                 style={{ width: '100%' }}
-                value={round(transformedBounds.size.w ?? 1)}
+                value={round(transformedBounds.w ?? 1)}
                 label={'w'}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                  newBounds.get('size').w = ev ?? 0;
-                  if (lockAspectRatio) {
-                    newBounds.get('size').h = newBounds.get('size').w / aspectRatio;
-                  }
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...transformedBounds,
+                    w: ev ?? 0,
+                    ...(lockAspectRatio ? { h: (ev ?? 0) / aspectRatio } : {})
+                  });
                 }}
               />
             </div>
             <div style={{ gridArea: 'h' }}>
               <NumberInput
                 style={{ width: '100%' }}
-                value={round(transformedBounds.size.h ?? 1)}
+                value={round(transformedBounds.h ?? 1)}
                 label={'h'}
                 defaultUnit={'px'}
                 min={0}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(transformedBounds!);
-                  newBounds.get('size').h = ev ?? 0;
-                  if (lockAspectRatio) {
-                    newBounds.get('size').w = newBounds.get('size').h * aspectRatio;
-                  }
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...transformedBounds,
+                    ...(lockAspectRatio ? { w: (ev ?? 0) * aspectRatio } : {}),
+                    h: ev ?? 0
+                  });
                 }}
               />
             </div>
             <div style={{ gridArea: 'r' }}>
               <NumberInput
                 style={{ width: '100%' }}
-                value={round(Angle.toDeg(transformedBounds.rotation ?? 0))}
+                value={round(Angle.toDeg(transformedBounds.r ?? 0))}
                 label={'r'}
                 min={-360}
                 max={360}
                 defaultUnit={'°'}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(transformedBounds!);
                   const number = ev ?? 0;
-                  newBounds.set('rotation', Angle.toRad(isNaN(number) ? 0 : number ?? 0));
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...transformedBounds,
+                    r: Angle.toRad(isNaN(number) ? 0 : number ?? 0)
+                  });
                 }}
               />
             </div>

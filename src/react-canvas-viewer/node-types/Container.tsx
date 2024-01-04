@@ -34,10 +34,10 @@ export const Container = (props: Props) => {
     <>
       <path
         d={svgPath}
-        x={props.node.bounds.pos.x}
-        y={props.node.bounds.pos.y}
-        width={props.node.bounds.size.w}
-        height={props.node.bounds.size.h}
+        x={props.node.bounds.x}
+        y={props.node.bounds.y}
+        width={props.node.bounds.w}
+        height={props.node.bounds.h}
         stroke={props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : '#d5d5d4'}
         strokeWidth={props.nodeProps.highlight?.includes('drop-target') ? 3 : 1}
         fill={'transparent'}
@@ -46,7 +46,7 @@ export const Container = (props: Props) => {
       {props.node.children.map(child => (
         <g
           key={child.id}
-          transform={`rotate(${-Angle.toDeg(props.node.bounds.rotation)} ${center.x} ${center.y})`}
+          transform={`rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})`}
         >
           {child.type === 'node' ? (
             <Node
@@ -169,11 +169,11 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     let newBounds: Box;
     if (node.props.container?.layout === 'horizontal') {
       // Sort children by x position
-      const children = [...node.children].sort((a, b) => a.bounds.pos.x - b.bounds.pos.x);
+      const children = [...node.children].sort((a, b) => a.bounds.x - b.bounds.x);
       if (children.length === 0) return;
 
       // Layout horizontally
-      let x = node.bounds.pos.x + (node.props.container.gap ?? 0);
+      let x = node.bounds.x + (node.props.container.gap ?? 0);
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         if (child.type !== 'node') continue;
@@ -182,27 +182,28 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
           child,
           {
             ...child.bounds,
-            pos: Point.of(x, child.bounds.pos.y)
+            ...Point.of(x, child.bounds.y)
           },
           uow
         );
-        x += child.bounds.size.w + (node.props.container.gap ?? 0);
+        x += child.bounds.w + (node.props.container.gap ?? 0);
       }
 
       newBounds = Box.boundingBox([
         {
           ...node.bounds,
-          size: { w: x - node.bounds.pos.x, h: 1 }
+          w: x - node.bounds.x,
+          h: 1
         },
         ...children.map(c => c.bounds)
       ]);
     } else if (node.props.container?.layout === 'vertical') {
       // Sort children by y position
-      const children = [...node.children].sort((a, b) => a.bounds.pos.y - b.bounds.pos.y);
+      const children = [...node.children].sort((a, b) => a.bounds.y - b.bounds.y);
       if (children.length === 0) return;
 
       // Layout verticall
-      let y = node.bounds.pos.y + (node.props.container.gap ?? 0);
+      let y = node.bounds.y + (node.props.container.gap ?? 0);
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         if (child.type !== 'node') continue;
@@ -211,17 +212,18 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
           child,
           {
             ...child.bounds,
-            pos: Point.of(child.bounds.pos.x, y)
+            ...Point.of(child.bounds.x, y)
           },
           uow
         );
-        y += child.bounds.size.h + (node.props.container.gap ?? 0);
+        y += child.bounds.h + (node.props.container.gap ?? 0);
       }
 
       newBounds = Box.boundingBox([
         {
           ...node.bounds,
-          size: { w: 1, h: y - node.bounds.pos.y }
+          w: 1,
+          h: y - node.bounds.y
         },
         ...children.map(c => c.bounds)
       ]);

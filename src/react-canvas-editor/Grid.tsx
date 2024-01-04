@@ -57,8 +57,7 @@ export const Grid = (props: Props) => {
   useEventListener(props.diagram, 'change', redraw);
 
   const { diagram } = props;
-  const { w, h } = diagram.canvas.size;
-  const { x, y } = diagram.canvas.pos;
+  const { x, y, w, h } = diagram.canvas;
 
   const dx = diagram.props.grid?.size ?? 10;
   const dy = diagram.props.grid?.size ?? 10;

@@ -33,11 +33,11 @@ export class Noop implements Transform {
 
 export class Translation implements Transform {
   static toOrigin(b: Box | Point, pointOfReference: 'center' | 'top-left' = 'top-left') {
-    if ('pos' in b) {
+    if ('w' in b) {
       if (pointOfReference === 'center') {
         return new Translation(Vector.negate(Box.center(b)));
       } else {
-        return new Translation(Vector.negate(b.pos));
+        return new Translation(Vector.negate(b));
       }
     } else {
       return new Translation(Vector.negate(b));
@@ -49,11 +49,10 @@ export class Translation implements Transform {
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
-    if ('pos' in b) {
+    if ('w' in b) {
       return {
-        pos: Point.add(b.pos, this.c),
-        size: { ...b.size },
-        rotation: b.rotation
+        ...b,
+        ...Point.add(b, this.c)
       };
     } else {
       return Point.add(b, this.c);
@@ -74,11 +73,13 @@ export class Scale implements Transform {
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
-    if ('pos' in b) {
+    if ('w' in b) {
       return {
-        pos: { x: b.pos.x * this.x, y: b.pos.y * this.y },
-        size: { w: b.size.w * this.x, h: b.size.h * this.y },
-        rotation: b.rotation
+        x: b.x * this.x,
+        y: b.y * this.y,
+        w: b.w * this.x,
+        h: b.h * this.y,
+        r: b.r
       };
     } else {
       return { x: b.x * this.x, y: b.y * this.y };
@@ -92,32 +93,28 @@ export class Scale implements Transform {
 
 export class Rotation implements Transform {
   static reset(b: Box) {
-    if (round(b.rotation) === 0) return new Noop();
-    return new Rotation(-b.rotation);
+    if (round(b.r) === 0) return new Noop();
+    return new Rotation(-b.r);
   }
 
   constructor(private readonly r: number) {}
 
   private moveCenterPoint(b: Box, center: Point): Box {
     return {
-      pos: {
-        x: center.x - b.size.w / 2,
-        y: center.y - b.size.h / 2
-      },
-      size: { ...b.size },
-      rotation: b.rotation
+      ...b,
+      x: center.x - b.w / 2,
+      y: center.y - b.h / 2
     };
   }
 
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
-    if ('pos' in b) {
+    if ('w' in b) {
       const ret = this.moveCenterPoint(b, Point.rotate(Box.center(b), this.r));
       return {
-        pos: ret.pos,
-        size: ret.size,
-        rotation: ret.rotation + this.r
+        ...ret,
+        r: ret.r + this.r
       };
     } else {
       return Point.rotate(b, this.r);
@@ -139,14 +136,11 @@ export class Shear implements Transform {
   apply(b: Box): Box;
   apply(b: Point): Point;
   apply(b: Box | Point): Box | Point {
-    if ('pos' in b) {
+    if ('w' in b) {
       return {
-        pos: b.pos,
-        size: {
-          w: this.axis === 'x' ? b.size.w + b.size.h * this.amount : b.size.w,
-          h: this.axis === 'y' ? b.size.h + b.size.w * this.amount : b.size.h
-        },
-        rotation: b.rotation
+        ...b,
+        w: this.axis === 'x' ? b.w + b.h * this.amount : b.w,
+        h: this.axis === 'y' ? b.h + b.w * this.amount : b.h
       };
       return b;
     } else {
@@ -166,10 +160,10 @@ export class Shear implements Transform {
 
 export const TransformFactory = {
   fromTo: (before: Box, after: Box): Transform[] => {
-    const scaleX = after.size.w / before.size.w;
-    const scaleY = after.size.h / before.size.h;
+    const scaleX = after.w / before.w;
+    const scaleY = after.h / before.h;
 
-    const rot = after.rotation - before.rotation;
+    const rot = after.r - before.r;
 
     const toOrigin = Translation.toOrigin(before, 'center');
     const translateBack = Translation.toOrigin(after, 'center').invert();
@@ -179,10 +173,10 @@ export const TransformFactory = {
 
     if (scaleX !== 1 || scaleY !== 1) {
       // If both scale and rotation, we need to reset the rotation first
-      if (after.rotation !== 0 || before.rotation !== 0) {
+      if (after.r !== 0 || before.r !== 0) {
         transforms.push(Rotation.reset(before));
         transforms.push(new Scale(scaleX, scaleY));
-        transforms.push(new Rotation(after.rotation));
+        transforms.push(new Rotation(after.r));
       } else {
         transforms.push(new Scale(scaleX, scaleY));
       }

@@ -1,5 +1,4 @@
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { Box } from '../../geometry/box.ts';
 import { NodeChangeUndoableAction } from '../../model/diagramUndoActions.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
@@ -51,17 +50,17 @@ export class AlignAction extends AbstractSelectionAction {
 
     const first = this.diagram.selectionState.elements[0];
     if (this.mode === 'top') {
-      this.alignY(first.bounds.pos.y, 0);
+      this.alignY(first.bounds.y, 0);
     } else if (this.mode === 'bottom') {
-      this.alignY(first.bounds.pos.y + first.bounds.size.h, 1);
+      this.alignY(first.bounds.y + first.bounds.h, 1);
     } else if (this.mode === 'center-horizontal') {
-      this.alignY(first.bounds.pos.y + first.bounds.size.h / 2, 0.5);
+      this.alignY(first.bounds.y + first.bounds.h / 2, 0.5);
     } else if (this.mode === 'left') {
-      this.alignX(first.bounds.pos.x, 0);
+      this.alignX(first.bounds.x, 0);
     } else if (this.mode === 'right') {
-      this.alignX(first.bounds.pos.x + first.bounds.size.w, 1);
+      this.alignX(first.bounds.x + first.bounds.w, 1);
     } else if (this.mode === 'center-vertical') {
-      this.alignX(first.bounds.pos.x + first.bounds.size.w / 2, 0.5);
+      this.alignX(first.bounds.x + first.bounds.w / 2, 0.5);
     } else {
       VERIFY_NOT_REACHED();
     }
@@ -75,7 +74,7 @@ export class AlignAction extends AbstractSelectionAction {
   // y === Y           => y = Y           => y = Y - h * offset (offset = 0)
   private alignY(y: number, offset: number) {
     this.diagram.selectionState.elements.forEach(e => {
-      e.bounds = Box.withY(e.bounds, y - e.bounds.size.h * offset);
+      e.bounds = { ...e.bounds, y: y - e.bounds.h * offset };
       this.diagram.updateElement(e as DiagramNode);
     });
   }
@@ -85,7 +84,7 @@ export class AlignAction extends AbstractSelectionAction {
   // x === X           => x = X           => x = X - w * offset (offset = 0)
   private alignX(x: number, offset: number) {
     this.diagram.selectionState.elements.forEach(e => {
-      e.bounds = Box.withX(e.bounds, x - e.bounds.size.w * offset);
+      e.bounds = { ...e.bounds, x: x - e.bounds.w * offset };
       this.diagram.updateElement(e as DiagramNode);
     });
   }

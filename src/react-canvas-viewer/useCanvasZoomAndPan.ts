@@ -31,8 +31,8 @@ export const useCanvasZoomAndPan = (diagram: Diagram, svgRef: RefObject<SVGSVGEl
     // TODO: Respect zoom level
     if (diagram.viewBox.zoomLevel === 1) {
       diagram.viewBox.pan({
-        x: Math.floor(-(svgRef.current!.getBoundingClientRect().width - diagram.canvas.size.w) / 2),
-        y: Math.floor(-(svgRef.current!.getBoundingClientRect().height - diagram.canvas.size.h) / 2)
+        x: Math.floor(-(svgRef.current!.getBoundingClientRect().width - diagram.canvas.w) / 2),
+        y: Math.floor(-(svgRef.current!.getBoundingClientRect().height - diagram.canvas.h) / 2)
       });
     }
     diagram.viewBox.dimensions = {

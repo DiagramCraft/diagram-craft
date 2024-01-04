@@ -67,9 +67,11 @@ export const ObjectPicker = (props: Props) => {
           n.type,
           n.type,
           {
-            pos: { x: 1, y: 1 },
-            size: { w: props.size - 2, h: props.size - 2 },
-            rotation: 0
+            x: 1,
+            y: 1,
+            w: props.size - 2,
+            h: props.size - 2,
+            r: 0
           },
           dest,
           dest.layers.active

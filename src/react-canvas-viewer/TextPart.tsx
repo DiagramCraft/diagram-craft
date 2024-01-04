@@ -46,10 +46,10 @@ export const TextPart = (props: Props) => {
     <foreignObject
       id={props.id}
       className={'svg-node__fo'}
-      x={props.bounds.pos.x}
-      y={props.bounds.pos.y}
-      width={props.bounds.size.w}
-      height={props.bounds.size.h}
+      x={props.bounds.x}
+      y={props.bounds.y}
+      width={props.bounds.w}
+      height={props.bounds.h}
       onMouseDown={props.onMouseDown}
     >
       <div

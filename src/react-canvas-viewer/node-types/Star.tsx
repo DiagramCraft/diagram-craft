@@ -29,10 +29,10 @@ export const Star = (props: Props) => {
     <>
       <path
         d={svgPath}
-        x={props.node.bounds.pos.x}
-        y={props.node.bounds.pos.y}
-        width={props.node.bounds.size.w}
-        height={props.node.bounds.size.h}
+        x={props.node.bounds.x}
+        y={props.node.bounds.y}
+        width={props.node.bounds.w}
+        height={props.node.bounds.h}
         className={'svg-node__boundary svg-node'}
         {...propsUtils.filterSvgProperties(props)}
       />
@@ -59,7 +59,7 @@ export const Star = (props: Props) => {
             onDrag={(x, y) => {
               const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
               props.node.props.star ??= {};
-              props.node.props.star.innerRadius = distance / (props.node.bounds.size.w / 2);
+              props.node.props.star.innerRadius = distance / (props.node.bounds.w / 2);
               return `Inner radius: ${round(props.node.props.star.innerRadius * 100)}%`;
             }}
           />

@@ -9,7 +9,7 @@ import { Range } from '../../geometry/range.ts';
 import { GridSnapProvider } from './gridSnapProvider.ts';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider.ts';
 import { Point } from '../../geometry/point.ts';
-import { Box } from '../../geometry/box.ts';
+import { Box, WritableBox } from '../../geometry/box.ts';
 import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
 import { Magnet, MagnetOfType, MagnetType } from './magnet.ts';
@@ -138,7 +138,7 @@ export class SnapManager {
 
     const matchingMagnets = this.matchMagnets(selfMagnets, magnetsToMatchAgainst);
 
-    const newBounds = Box.asMutableSnapshot(b);
+    const newBounds = Box.asReadWrite(b);
 
     for (const axis of Axis.axises()) {
       // Find magnet with the closest orthogonal distance to the matching magnet line
@@ -153,31 +153,29 @@ export class SnapManager {
       const distance = orhogonalDistance(closest.self, closest.matching);
 
       if (closest.self.matchDirection === 'n' || closest.self.matchDirection === 'w') {
-        newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= distance;
-        newBounds.get('size')[axis === Axis.h ? 'h' : 'w'] += distance;
+        newBounds[Axis.toXY(Axis.orthogonal(axis))] -= distance;
+        newBounds[axis === Axis.h ? 'h' : 'w'] += distance;
       } else {
-        newBounds.get('size')[axis === Axis.h ? 'h' : 'w'] -= distance;
+        newBounds[axis === Axis.h ? 'h' : 'w'] -= distance;
       }
     }
 
     // Readjust self magnets to the new position - post snapping
-    const newMagnets = Magnet.forNode(newBounds.getSnapshot(), 'source');
+    const newMagnets = Magnet.forNode(WritableBox.asBox(newBounds), 'source');
     selfMagnets.forEach(a => {
       a.line = newMagnets.find(b => b.matchDirection === a.matchDirection)!.line;
     });
 
-    const newB = newBounds.getSnapshot();
-
     return {
       guides: this.generateGuides(
-        newB,
+        WritableBox.asBox(newBounds),
         selfMagnets,
         matchingMagnets,
         snapProviders,
         enabledSnapProviders
       ),
       magnets: [...magnetsToMatchAgainst, ...selfMagnets],
-      adjusted: newB
+      adjusted: WritableBox.asBox(newBounds)
     };
   }
 
@@ -195,7 +193,7 @@ export class SnapManager {
 
     const matchingMagnets = this.matchMagnets(magnets, magnetsToMatchAgainst);
 
-    const newBounds = Box.asMutableSnapshot(b);
+    const newBounds = Box.asReadWrite(b);
 
     // Snap to the closest matching magnet in each direction
     for (const axis of Axis.axises()) {
@@ -208,7 +206,7 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      newBounds.get('pos')[Axis.toXY(Axis.orthogonal(axis))] -= orhogonalDistance(
+      newBounds[Axis.toXY(Axis.orthogonal(axis)) === 'x' ? 'x' : 'y'] -= orhogonalDistance(
         closest.self,
         closest.matching
       );
@@ -216,21 +214,19 @@ export class SnapManager {
 
     // Readjust self magnets to the new position - post snapping
     for (const a of magnets) {
-      snapProviders.get(a.type).moveMagnet(a, Point.subtract(newBounds.get('pos'), b.pos));
+      snapProviders.get(a.type).moveMagnet(a, Point.subtract(newBounds, b));
     }
-
-    const newB = newBounds.getSnapshot();
 
     return {
       guides: this.generateGuides(
-        newB,
+        WritableBox.asBox(newBounds),
         magnets,
         matchingMagnets,
         snapProviders,
         enabledSnapProviders
       ),
       magnets: [...magnetsToMatchAgainst, ...magnets],
-      adjusted: newB
+      adjusted: WritableBox.asBox(newBounds)
     };
   }
 
@@ -282,9 +278,9 @@ export class SnapManager {
   reviseGuides(guides: ReadonlyArray<Guide>, b: Box): ReadonlyArray<Guide> {
     return guides.filter(g => {
       if (Line.isHorizontal(g.line)) {
-        return g.line.from.y === b.pos.y || g.line.from.y === b.pos.y + b.size.h;
+        return g.line.from.y === b.y || g.line.from.y === b.y + b.h;
       } else {
-        return g.line.from.x === b.pos.x || g.line.from.x === b.pos.x + b.size.w;
+        return g.line.from.x === b.x || g.line.from.x === b.x + b.w;
       }
     });
   }

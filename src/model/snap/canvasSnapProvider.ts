@@ -11,7 +11,7 @@ export class CanvasSnapProvider implements SnapProvider<'canvas'> {
   constructor(private readonly diagram: Diagram) {}
 
   getMagnets(_box: Box): ReadonlyArray<MagnetOfType<'canvas'>> {
-    const { w, h } = this.diagram.canvas.size;
+    const { w, h } = this.diagram.canvas;
     return [
       {
         line: Line.of({ x: w / 2, y: 0 }, { x: w / 2, y: h }),

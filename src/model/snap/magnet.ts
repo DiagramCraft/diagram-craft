@@ -57,51 +57,39 @@ export const Magnet = {
   forNode: (node: Box, type: 'source' = 'source'): ReadonlyArray<Magnet> => {
     const center: Magnet[] = [
       {
-        line: Line.horizontal(node.pos.y + node.size.h / 2, [node.pos.x, node.pos.x + node.size.w]),
+        line: Line.horizontal(node.y + node.h / 2, [node.x, node.x + node.w]),
         axis: Axis.h,
         type
       },
       {
-        line: Line.vertical(node.pos.x + node.size.w / 2, [node.pos.y, node.pos.y + node.size.h]),
+        line: Line.vertical(node.x + node.w / 2, [node.y, node.y + node.h]),
         axis: Axis.v,
         type
       }
     ];
 
-    if (node.rotation !== 0) return center;
+    if (node.r !== 0) return center;
 
     center.push({
-      line: Line.of(
-        { x: node.pos.x, y: node.pos.y },
-        { x: node.pos.x + node.size.w, y: node.pos.y }
-      ),
+      line: Line.of({ x: node.x, y: node.y }, { x: node.x + node.w, y: node.y }),
       axis: Axis.h,
       type,
       matchDirection: 'n'
     });
     center.push({
-      line: Line.of(
-        { x: node.pos.x, y: node.pos.y + node.size.h },
-        { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
-      ),
+      line: Line.of({ x: node.x, y: node.y + node.h }, { x: node.x + node.w, y: node.y + node.h }),
       axis: Axis.h,
       type,
       matchDirection: 's'
     });
     center.push({
-      line: Line.of(
-        { x: node.pos.x, y: node.pos.y },
-        { x: node.pos.x, y: node.pos.y + node.size.h }
-      ),
+      line: Line.of({ x: node.x, y: node.y }, { x: node.x, y: node.y + node.h }),
       axis: Axis.v,
       type,
       matchDirection: 'w'
     });
     center.push({
-      line: Line.of(
-        { x: node.pos.x + node.size.w, y: node.pos.y },
-        { x: node.pos.x + node.size.w, y: node.pos.y + node.size.h }
-      ),
+      line: Line.of({ x: node.x + node.w, y: node.y }, { x: node.x + node.w, y: node.y + node.h }),
       axis: Axis.v,
       type,
       matchDirection: 'e'

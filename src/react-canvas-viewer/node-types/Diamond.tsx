@@ -14,10 +14,10 @@ export const Diamond = (props: Props) => {
     <>
       <path
         d={svgPath}
-        x={props.node.bounds.pos.x}
-        y={props.node.bounds.pos.y}
-        width={props.node.bounds.size.w}
-        height={props.node.bounds.size.h}
+        x={props.node.bounds.x}
+        y={props.node.bounds.y}
+        width={props.node.bounds.w}
+        height={props.node.bounds.h}
         {...propsUtils.filterSvgProperties(props)}
       />
       <TextPart

@@ -3,7 +3,6 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { Box } from '../../geometry/box.ts';
-import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
@@ -17,10 +16,10 @@ export const CanvasPanel = (props: Props) => {
   useEventListener(diagram, 'change', redraw);
   const bg = useDiagramProperty(diagram, 'background.color', 'white');
 
-  const bounds = { ...diagram.canvas, rotation: 0 };
+  const bounds = { ...diagram.canvas, r: 0 };
 
-  const updateBounds = (newBounds: MutableSnapshot<Box>) => {
-    diagram.canvas = newBounds.getSnapshot();
+  const updateBounds = (newBounds: Box) => {
+    diagram.canvas = newBounds;
   };
 
   return (
@@ -65,14 +64,15 @@ export const CanvasPanel = (props: Props) => {
               <NumberInput
                 label={'x'}
                 style={{ width: '100%' }}
-                value={round(bounds.pos.x)}
+                value={round(bounds.x)}
                 validUnits={['px']}
                 defaultUnit={'px'}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(bounds!);
-                  newBounds.get('size').w += bounds.pos.x - (ev ?? 0);
-                  newBounds.get('pos').x = ev ?? 0;
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...bounds,
+                    w: bounds.w + bounds.x - (ev ?? 0),
+                    x: ev ?? 0
+                  });
                 }}
               />
             </div>
@@ -80,14 +80,15 @@ export const CanvasPanel = (props: Props) => {
               <NumberInput
                 style={{ width: '100%' }}
                 label={'y'}
-                value={round(bounds.pos.y)}
+                value={round(bounds.y)}
                 validUnits={['px']}
                 defaultUnit={'px'}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(bounds!);
-                  newBounds.get('size').h += bounds.pos.y - (ev ?? 0);
-                  newBounds.get('pos').y = ev ?? 0;
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...bounds,
+                    h: bounds.h + bounds.y - (ev ?? 0),
+                    y: ev ?? 0
+                  });
                 }}
               />
             </div>
@@ -95,13 +96,14 @@ export const CanvasPanel = (props: Props) => {
               <NumberInput
                 style={{ width: '100%' }}
                 label={'w'}
-                value={round(bounds.size.w ?? 1)}
+                value={round(bounds.w ?? 1)}
                 validUnits={['px']}
                 defaultUnit={'px'}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(bounds!);
-                  newBounds.get('size').w = ev ?? 0;
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...bounds,
+                    w: ev ?? 0
+                  });
                 }}
               />
             </div>
@@ -109,13 +111,14 @@ export const CanvasPanel = (props: Props) => {
               <NumberInput
                 style={{ width: '100%' }}
                 label={'h'}
-                value={round(bounds.size.h ?? 1)}
+                value={round(bounds.h ?? 1)}
                 validUnits={['px']}
                 defaultUnit={'px'}
                 onChange={ev => {
-                  const newBounds = Box.asMutableSnapshot(bounds!);
-                  newBounds.get('size').h = ev ?? 0;
-                  updateBounds(newBounds);
+                  updateBounds({
+                    ...bounds,
+                    h: ev ?? 0
+                  });
                 }}
               />
             </div>

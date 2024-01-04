@@ -2,11 +2,10 @@ import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { assert, VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { LocalCoordinateSystem } from '../../geometry/lcs.ts';
-import { Box } from '../../geometry/box.ts';
+import { Box, WritableBox } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { ResizeAction } from '../../model/diagramUndoActions.ts';
-import { MutableSnapshot } from '../../utils/mutableSnapshot.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 
@@ -38,70 +37,68 @@ export class ResizeDrag extends AbstractDrag {
 
     const lcs = LocalCoordinateSystem.fromBox(selection.bounds);
 
-    const localTarget = Box.asMutableSnapshot(lcs.toLocal(selection.bounds));
+    // TODO: Need some sort of utility for this piece
+    const localTarget = Box.asReadWrite(lcs.toLocal(selection.bounds));
     const localOriginal = lcs.toLocal(original);
 
     const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(this.offset));
 
     const constrainAspectRatio = modifiers.shiftKey;
-    const aspectRatio = localOriginal.size.w / localOriginal.size.h;
-
-    const targetSize = localTarget.get('size');
-    const targetPos = localTarget.get('pos');
+    const aspectRatio = localOriginal.w / localOriginal.h;
 
     this.setState({
-      label: `w: ${targetSize.w.toFixed(0)}, h: ${targetSize.h.toFixed(0)}`
+      label: `w: ${localTarget.w.toFixed(0)}, h: ${localTarget.h.toFixed(0)}`
     });
 
     const snapDirection: Direction[] = [];
     switch (this.type) {
       case 'resize-e':
-        targetSize.w = localOriginal.size.w + delta.x;
+        localTarget.w = localOriginal.w + delta.x;
         snapDirection.push('e');
         break;
       case 'resize-w':
-        targetPos.x = localOriginal.pos.x + delta.x;
-        targetSize.w = localOriginal.size.w - delta.x;
+        localTarget.x = localOriginal.x + delta.x;
+        localTarget.w = localOriginal.w - delta.x;
         snapDirection.push('w');
         break;
       case 'resize-n':
-        targetPos.y = localOriginal.pos.y + delta.y;
-        targetSize.h = localOriginal.size.h - delta.y;
+        localTarget.y = localOriginal.y + delta.y;
+        localTarget.h = localOriginal.h - delta.y;
         snapDirection.push('n');
         break;
       case 'resize-s':
-        targetSize.h = localOriginal.size.h + delta.y;
+        localTarget.h = localOriginal.h + delta.y;
         snapDirection.push('s');
         break;
       case 'resize-nw':
-        targetPos.x = localOriginal.pos.x + delta.x;
-        targetPos.y = localOriginal.pos.y + delta.y;
-        targetSize.w = localOriginal.size.w - delta.x;
-        targetSize.h = localOriginal.size.h - delta.y;
+        localTarget.x = localOriginal.x + delta.x;
+        localTarget.y = localOriginal.y + delta.y;
+        localTarget.w = localOriginal.w - delta.x;
+        localTarget.h = localOriginal.h - delta.y;
         snapDirection.push('n', 'w');
         break;
       case 'resize-ne':
-        targetPos.y = localOriginal.pos.y + delta.y;
-        targetSize.w = localOriginal.size.w + delta.x;
-        targetSize.h = localOriginal.size.h - delta.y;
+        localTarget.y = localOriginal.y + delta.y;
+        localTarget.w = localOriginal.w + delta.x;
+        localTarget.h = localOriginal.h - delta.y;
         snapDirection.push('n', 'e');
         break;
       case 'resize-se':
-        targetSize.w = localOriginal.size.w + delta.x;
-        targetSize.h = localOriginal.size.h + delta.y;
+        localTarget.w = localOriginal.w + delta.x;
+        localTarget.h = localOriginal.h + delta.y;
         snapDirection.push('s', 'e');
         break;
       case 'resize-sw':
-        targetPos.x = localOriginal.pos.x + delta.x;
-        targetSize.w = localOriginal.size.w - delta.x;
-        targetSize.h = localOriginal.size.h + delta.y;
+        localTarget.x = localOriginal.x + delta.x;
+        localTarget.w = localOriginal.w - delta.x;
+        localTarget.h = localOriginal.h + delta.y;
         snapDirection.push('s', 'w');
         break;
       default:
         VERIFY_NOT_REACHED();
     }
 
-    const newBounds = Box.asMutableSnapshot(lcs.toGlobal(localTarget.getSnapshot()));
+    const newBounds = Box.asReadWrite(lcs.toGlobal(WritableBox.asBox(localTarget)));
 
     if (modifiers.altKey) {
       selection.guides = [];
@@ -112,15 +109,17 @@ export class ResizeDrag extends AbstractDrag {
     } else {
       const snapManager = this.diagram.createSnapManager();
 
-      const result = snapManager.snapResize(newBounds.getSnapshot(), snapDirection);
+      const result = snapManager.snapResize(WritableBox.asBox(newBounds), snapDirection);
       selection.guides = result.guides;
 
-      newBounds.set('pos', result.adjusted.pos);
-      newBounds.set('size', result.adjusted.size);
+      newBounds.x = result.adjusted.x;
+      newBounds.y = result.adjusted.y;
+      newBounds.w = result.adjusted.w;
+      newBounds.h = result.adjusted.h;
 
       if (constrainAspectRatio) {
         this.applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs);
-        selection.guides = snapManager.reviseGuides(result.guides, newBounds.getSnapshot());
+        selection.guides = snapManager.reviseGuides(result.guides, WritableBox.asBox(newBounds));
       }
     }
 
@@ -129,7 +128,7 @@ export class ResizeDrag extends AbstractDrag {
     const uow = new UnitOfWork(this.diagram, 'interactive');
     this.diagram.transformElements(
       selection.elements,
-      TransformFactory.fromTo(before, newBounds.getSnapshot()),
+      TransformFactory.fromTo(before, WritableBox.asBox(newBounds)),
       uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
@@ -163,37 +162,36 @@ export class ResizeDrag extends AbstractDrag {
 
   private applyAspectRatioContraint(
     aspectRatio: number,
-    newBounds: MutableSnapshot<Box>,
+    newBounds: WritableBox,
     localOriginal: Box,
     lcs: LocalCoordinateSystem
   ) {
-    const localTarget = Box.asMutableSnapshot(lcs.toLocal(newBounds.getSnapshot()));
-
-    const targetSize = localTarget.get('size');
-    const targetPos = localTarget.get('pos');
+    const localTarget = Box.asReadWrite(lcs.toLocal(WritableBox.asBox(newBounds)));
 
     switch (this.type) {
       case 'resize-e':
       case 'resize-w':
-        targetSize.h = targetSize.w / aspectRatio;
+        localTarget.h = localTarget.w / aspectRatio;
         break;
       case 'resize-n':
       case 'resize-s':
       case 'resize-ne':
       case 'resize-se':
-        targetSize.w = targetSize.h * aspectRatio;
+        localTarget.w = localTarget.h * aspectRatio;
         break;
       case 'resize-nw':
       case 'resize-sw':
-        targetSize.w = targetSize.h * aspectRatio;
-        targetPos.x = localOriginal.pos.x + localOriginal.size.w - targetSize.w;
+        localTarget.w = localTarget.h * aspectRatio;
+        localTarget.x = localOriginal.x + localOriginal.w - localTarget.w;
         break;
       default:
         VERIFY_NOT_REACHED();
     }
 
-    const globalTarget = lcs.toGlobal(localTarget.getSnapshot());
-    newBounds.set('size', globalTarget.size);
-    newBounds.set('pos', globalTarget.pos);
+    const globalTarget = lcs.toGlobal(WritableBox.asBox(localTarget));
+    newBounds.w = globalTarget.w;
+    newBounds.h = globalTarget.h;
+    newBounds.x = globalTarget.x;
+    newBounds.y = globalTarget.y;
   }
 }

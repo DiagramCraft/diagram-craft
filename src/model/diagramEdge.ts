@@ -110,9 +110,8 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   set bounds(b: Box) {
-    if (!isConnected(this.start)) this.start = { position: { x: b.pos.x, y: b.pos.y } };
-    if (!isConnected(this.end))
-      this.end = { position: { x: b.pos.x + b.size.w, y: b.pos.y + b.size.h } };
+    if (!isConnected(this.start)) this.start = { position: { x: b.x, y: b.y } };
+    if (!isConnected(this.end)) this.end = { position: { x: b.x + b.w, y: b.y + b.h } };
   }
 
   path() {
@@ -290,7 +289,7 @@ export class DiagramEdge implements AbstractEdge {
       const attachmentPoint = path.pointAt(pathD);
 
       let newCenterPoint = Point.add(attachmentPoint, labelNode.offset);
-      let newRotation = labelNode.node.bounds.rotation;
+      let newRotation = labelNode.node.bounds.r;
       if (isParallel(labelNode.type) || isPerpendicular(labelNode.type)) {
         const tangent = path.tangentAt(pathD);
 
@@ -320,16 +319,14 @@ export class DiagramEdge implements AbstractEdge {
       const hasChanged =
         isDifferent(newCenterPoint.x, currentCenterPoint.x) ||
         isDifferent(newCenterPoint.y, currentCenterPoint.y) ||
-        isDifferent(newRotation, labelNode.node.bounds.rotation);
+        isDifferent(newRotation, labelNode.node.bounds.r);
 
       if (hasChanged) {
         labelNode.node.bounds = {
           ...labelNode.node.bounds,
-          rotation: newRotation,
-          pos: {
-            x: newCenterPoint.x - labelNode.node.bounds.size.w / 2,
-            y: newCenterPoint.y - labelNode.node.bounds.size.h / 2
-          }
+          r: newRotation,
+          x: newCenterPoint.x - labelNode.node.bounds.w / 2,
+          y: newCenterPoint.y - labelNode.node.bounds.h / 2
         };
         uow.updateElement(labelNode.node);
       }

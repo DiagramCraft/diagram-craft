@@ -11,10 +11,10 @@ import { Axis } from '../../geometry/axis.ts';
 import { isNode } from '../diagramElement.ts';
 
 const N = Infinity;
-const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.x, b.pos.x + b.size.w), N);
-const maxX = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.pos.x, b.pos.x + b.size.w), 0);
-const minY = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.pos.y, b.pos.y + b.size.h), N);
-const maxY = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.pos.y, b.pos.y + b.size.h), 0);
+const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.x, b.x + b.w), N);
+const maxX = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.x, b.x + b.w), 0);
+const minY = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.y, b.y + b.h), N);
+const maxY = (...bs: Box[]) => bs.reduce((p, b) => Math.max(p, b.y, b.y + b.h), 0);
 
 type AnchorWithDistance = [MagnetOfType<'node'>, number];
 
@@ -28,9 +28,9 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
 
   private getRange(b: Box, axis: Axis) {
     if (axis === 'h') {
-      return Range.of(b.pos.x, b.pos.x + b.size.w);
+      return Range.of(b.x, b.x + b.w);
     } else {
-      return Range.of(b.pos.y, b.pos.y + b.size.h);
+      return Range.of(b.y, b.y + b.h);
     }
   }
 

@@ -11,9 +11,11 @@ const createNode = (diagram: Diagram) =>
     '1',
     'test',
     {
-      pos: { x: 0, y: 0 },
-      size: { w: 10, h: 10 },
-      rotation: 0
+      x: 0,
+      y: 0,
+      w: 10,
+      h: 10,
+      r: 0
     },
     diagram,
     diagram.layers.active
@@ -51,8 +53,8 @@ describe('SelectionState', () => {
   test('isEmpty()', () => {
     const emptySelection = new SelectionState(createDiagram());
     expect(emptySelection.isEmpty()).toBe(true);
-    expect(emptySelection.bounds.size.w).toBe(0);
-    expect(emptySelection.bounds.size.h).toBe(0);
+    expect(emptySelection.bounds.w).toBe(0);
+    expect(emptySelection.bounds.h).toBe(0);
   });
 
   test('toggle()', () => {
@@ -71,8 +73,8 @@ describe('SelectionState', () => {
 
     selectionState.toggle(element);
     expect(selectionState.isEmpty()).toBe(false);
-    expect(selectionState.bounds.size.w).toBe(10);
-    expect(selectionState.bounds.size.h).toBe(10);
+    expect(selectionState.bounds.w).toBe(10);
+    expect(selectionState.bounds.h).toBe(10);
 
     vi.advanceTimersByTime(1);
     expect(addCb).toHaveBeenCalledTimes(1);
@@ -85,8 +87,8 @@ describe('SelectionState', () => {
 
     selectionState.toggle(element);
     expect(selectionState.isEmpty()).toBe(true);
-    expect(selectionState.bounds.size.w).toBe(0);
-    expect(selectionState.bounds.size.h).toBe(0);
+    expect(selectionState.bounds.w).toBe(0);
+    expect(selectionState.bounds.h).toBe(0);
 
     vi.advanceTimersByTime(1);
     expect(addCb).toHaveBeenCalledTimes(0);

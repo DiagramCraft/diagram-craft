@@ -28,9 +28,9 @@ export class TextTool extends AbstractTool {
       newid(),
       nodeType,
       {
-        pos: this.diagram.viewBox.toDiagramPoint(point),
-        size: nodeDef.getInitialConfig().size,
-        rotation: 0
+        ...nodeDef.getInitialConfig().size,
+        ...this.diagram.viewBox.toDiagramPoint(point),
+        r: 0
       },
       this.diagram,
       this.diagram.layers.active,

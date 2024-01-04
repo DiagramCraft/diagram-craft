@@ -14,37 +14,44 @@ export const createResizeCanvasActionToFit = (
 
   let canvas = diagram.canvas;
 
-  if (bbox.pos.x < canvas.pos.x) {
-    const dx = canvas.pos.x - bbox.pos.x + AMOUNT_TO_GROW;
+  if (bbox.x < canvas.x) {
+    const dx = canvas.x - bbox.x + AMOUNT_TO_GROW;
     canvas = {
-      size: { w: canvas.size.w + dx, h: canvas.size.h },
-      pos: { x: canvas.pos.x - dx, y: canvas.pos.y }
+      w: canvas.w + dx,
+      h: canvas.h,
+      x: canvas.x - dx,
+      y: canvas.y
     };
   }
-  if (bbox.pos.y < canvas.pos.y) {
-    const dy = canvas.pos.y - bbox.pos.y + AMOUNT_TO_GROW;
+  if (bbox.y < canvas.y) {
+    const dy = canvas.y - bbox.y + AMOUNT_TO_GROW;
     canvas = {
-      size: { w: canvas.size.w, h: canvas.size.h + dy },
-      pos: { x: canvas.pos.x, y: canvas.pos.y - dy }
+      w: canvas.w,
+      h: canvas.h + dy,
+      x: canvas.x,
+      y: canvas.y - dy
     };
   }
-  if (bbox.pos.x + bbox.size.w > canvas.pos.x + canvas.size.w) {
-    const dx = bbox.pos.x + bbox.size.w - canvas.pos.x - canvas.size.w + AMOUNT_TO_GROW;
+  if (bbox.x + bbox.w > canvas.x + canvas.w) {
+    const dx = bbox.x + bbox.w - canvas.x - canvas.w + AMOUNT_TO_GROW;
     canvas = {
-      size: { w: canvas.pos.x + canvas.size.w - canvas.pos.x + dx, h: canvas.size.h },
-      pos: { x: canvas.pos.x, y: canvas.pos.y }
+      w: canvas.x + canvas.w - canvas.x + dx,
+      h: canvas.h,
+      x: canvas.x,
+      y: canvas.y
     };
   }
-  if (bbox.pos.y + bbox.size.h > canvas.pos.y + canvas.size.h) {
-    const dy = bbox.pos.y + bbox.size.h - canvas.pos.y - canvas.size.h + AMOUNT_TO_GROW;
+  if (bbox.y + bbox.h > canvas.y + canvas.h) {
+    const dy = bbox.y + bbox.h - canvas.y - canvas.h + AMOUNT_TO_GROW;
     canvas = {
-      size: { w: canvas.size.w, h: canvas.pos.y + canvas.size.h - canvas.pos.y + dy },
-      pos: { x: canvas.pos.x, y: canvas.pos.y }
+      w: canvas.w,
+      h: canvas.y + canvas.h - canvas.y + dy,
+      x: canvas.x,
+      y: canvas.y
     };
   }
 
-  if (Point.isEqual(canvas.pos, orig.pos) && Extent.isEqual(canvas.size, orig.size))
-    return undefined;
+  if (Point.isEqual(canvas, orig) && Extent.isEqual(canvas, orig)) return undefined;
 
   return new ResizeCanvasAction(diagram, diagram.canvas, canvas);
 };

@@ -18,11 +18,11 @@ export const distributeActions: ActionMapFactory = (state: State) => ({
 });
 
 const minBounds = (b: Box) => {
-  return { x: Math.min(b.pos.x, b.pos.x + b.size.w), y: Math.min(b.pos.y, b.pos.y + b.size.h) };
+  return { x: Math.min(b.x, b.x + b.w), y: Math.min(b.y, b.y + b.h) };
 };
 
 const maxBounds = (b: Box) => {
-  return { x: Math.max(b.pos.x, b.pos.x + b.size.w), y: Math.max(b.pos.y, b.pos.y + b.size.h) };
+  return { x: Math.max(b.x, b.x + b.w), y: Math.max(b.y, b.y + b.h) };
 };
 
 export class DistributeAction extends AbstractSelectionAction {
@@ -58,26 +58,26 @@ export class DistributeAction extends AbstractSelectionAction {
     const max = maxBounds(elementsInOrder.at(-1)!.bounds)[orientation];
 
     const totalSpace =
-      max - min - this.diagram.selectionState.elements.reduce((p, c) => p + c.bounds.size[size], 0);
+      max - min - this.diagram.selectionState.elements.reduce((p, c) => p + c.bounds[size], 0);
 
     const difference = totalSpace / (this.diagram.selectionState.elements.length - 1);
 
-    let currentPosition = min + Math.abs(minimal.bounds.size[size] + difference);
+    let currentPosition = min + Math.abs(minimal.bounds[size] + difference);
     for (const e of this.diagram.selectionState.elements.slice(1)) {
-      if (e.bounds.size[size] >= 0) {
+      if (e.bounds[size] >= 0) {
         e.bounds =
           orientation === 'y'
-            ? Box.withY(e.bounds, currentPosition)
-            : Box.withX(e.bounds, currentPosition);
+            ? { ...e.bounds, y: currentPosition }
+            : { ...e.bounds, x: currentPosition };
       } else {
         e.bounds =
           orientation === 'y'
-            ? Box.withY(e.bounds, currentPosition - e.bounds.size[size])
-            : Box.withX(e.bounds, currentPosition - e.bounds.size[size]);
+            ? { ...e.bounds, y: currentPosition - e.bounds[size] }
+            : { ...e.bounds, x: currentPosition - e.bounds[size] };
       }
 
       this.diagram.updateElement(e as DiagramNode);
-      currentPosition += Math.abs(e.bounds.size[size] + difference);
+      currentPosition += Math.abs(e.bounds[size] + difference);
     }
   }
 }

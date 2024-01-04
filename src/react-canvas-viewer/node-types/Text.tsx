@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
-import { Box } from '../../geometry/box.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { RectNodeDefinition } from './Rect.tsx';
@@ -13,14 +12,11 @@ export const Text = (props: Props) => {
       const height = size.h;
       const width = size.w;
 
-      const b = Box.asMutableSnapshot(props.node.bounds);
-      if (height !== props.node.bounds.size.h) {
-        b.get('size')!.h = height;
-      }
-      if (width !== props.node.bounds.size.w) {
-        b.get('size')!.w = width;
-      }
-      props.node.bounds = b.getSnapshot();
+      props.node.bounds = {
+        ...props.node.bounds,
+        h: height,
+        w: width
+      };
 
       props.node.diagram!.updateElement(props.node);
       props.node.diagram!.selectionState.rebaseline();
@@ -31,10 +27,10 @@ export const Text = (props: Props) => {
   return (
     <>
       <rect
-        x={props.node.bounds.pos.x}
-        y={props.node.bounds.pos.y}
-        width={props.node.bounds.size.w}
-        height={props.node.bounds.size.h}
+        x={props.node.bounds.x}
+        y={props.node.bounds.y}
+        width={props.node.bounds.w}
+        height={props.node.bounds.h}
         className={'svg-node svg-node__boundary'}
         {...propsUtils.filterSvgProperties(props)}
       />

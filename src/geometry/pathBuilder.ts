@@ -20,12 +20,12 @@ export type Segment =
 /* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
 export const unitCoordinateSystem = (b: Box) => {
   return (p: Point, type?: 'point' | 'distance') => {
-    if (type === 'distance') return { x: p.x * b.size.w, y: p.y * b.size.h };
+    if (type === 'distance') return { x: p.x * b.w, y: p.y * b.h };
 
-    const xPart = (p.x * b.size.w) / 2 + b.size.w / 2;
-    const yPart = (-p.y * b.size.h) / 2 + b.size.h / 2;
+    const xPart = (p.x * b.w) / 2 + b.w / 2;
+    const yPart = (-p.y * b.h) / 2 + b.h / 2;
 
-    return { x: xPart + b.pos.x, y: yPart + b.pos.y };
+    return { x: xPart + b.x, y: yPart + b.y };
   };
 };
 

@@ -119,8 +119,8 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     const anchors = node.anchors.map((a, idx) => {
       return {
         idx,
-        x: node.bounds.pos.x + a.point.x * node.bounds.size.w,
-        y: node.bounds.pos.y + a.point.y * node.bounds.size.h
+        x: node.bounds.x + a.point.x * node.bounds.w,
+        y: node.bounds.y + a.point.y * node.bounds.h
       };
     });
 

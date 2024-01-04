@@ -16,7 +16,7 @@ export const Group = (props: Props) => {
   return props.node.children.map(child => (
     <g
       key={child.id}
-      transform={`rotate(${-Angle.toDeg(props.node.bounds.rotation)} ${center.x} ${center.y})`}
+      transform={`rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})`}
     >
       {child.type === 'node' ? (
         <Node

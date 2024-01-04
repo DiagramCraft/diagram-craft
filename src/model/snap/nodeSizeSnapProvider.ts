@@ -44,8 +44,8 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
       const dir: keyof Extent = k === 'n' || k === 's' ? 'h' : 'w';
       const axis: Axis = k === 'n' || k === 's' ? 'h' : 'v';
 
-      const nodeDim = result[d][0].bounds.size[dir];
-      const selfDim = box.size[dir];
+      const nodeDim = result[d][0].bounds[dir];
+      const selfDim = box[dir];
 
       const diff = nodeDim - selfDim;
       magnets.push({
@@ -58,12 +58,12 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
         line:
           dir === 'h'
             ? Line.of(
-                { x: box.pos.x, y: box.pos.y + box.size.h + diff },
-                { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h + diff }
+                { x: box.x, y: box.y + box.h + diff },
+                { x: box.x + box.w, y: box.y + box.h + diff }
               )
             : Line.of(
-                { x: box.pos.x + box.size.w + diff, y: box.pos.y },
-                { x: box.pos.x + box.size.w + diff, y: box.pos.y + box.size.h }
+                { x: box.x + box.w + diff, y: box.y },
+                { x: box.x + box.w + diff, y: box.y + box.h }
               ),
         distancePairs: []
       });
@@ -76,14 +76,8 @@ export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements Sn
         size: nodeDim,
         line:
           dir === 'h'
-            ? Line.of(
-                { x: box.pos.x, y: box.pos.y - diff },
-                { x: box.pos.x + box.size.w, y: box.pos.y - diff }
-              )
-            : Line.of(
-                { x: box.pos.x - diff, y: box.pos.y },
-                { x: box.pos.x - diff, y: box.pos.y + box.size.h }
-              ),
+            ? Line.of({ x: box.x, y: box.y - diff }, { x: box.x + box.w, y: box.y - diff })
+            : Line.of({ x: box.x - diff, y: box.y }, { x: box.x - diff, y: box.y + box.h }),
         distancePairs: []
       });
     }

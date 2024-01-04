@@ -2,56 +2,44 @@ import { Point } from './point.ts';
 import { Polygon } from './polygon.ts';
 import { Direction } from './direction.ts';
 import { Line } from './line.ts';
-import { MutableSnapshot } from '../utils/mutableSnapshot.ts';
 import { Extent } from './extent.ts';
 import { round } from '../utils/math.ts';
+import { DeepWriteable } from '../utils/types.ts';
 
-export type Box = Readonly<{
-  pos: Point;
-  size: Extent;
-  rotation: number;
-}>;
+export type Box = Point & Extent & Readonly<{ r: number; _discriminator?: 'ro' }>;
 
-class BoxMutableSnapshot extends MutableSnapshot<Box> {
-  getSnapshot(): Box {
-    return {
-      size: { ...this.value.size },
-      pos: { ...this.value.pos },
-      rotation: this.value.rotation
-    };
+export type WritableBox = DeepWriteable<Omit<Box, '_discriminator'>> & { _discriminator: 'rw' };
+
+export const WritableBox = {
+  asBox: (b: WritableBox): Box => {
+    return { ...b, _discriminator: undefined };
   }
-}
+};
 
 export const Box = {
-  asMutableSnapshot: (b: Box): MutableSnapshot<Box> => {
-    return new BoxMutableSnapshot({
-      pos: { ...b.pos },
-      size: { ...b.size },
-      rotation: b.rotation
-    });
+  asReadWrite: (b: Box): WritableBox => {
+    return { ...b, _discriminator: 'rw' };
   },
+
   fromCorners: (a: Point, b: Point): Box => {
     return {
-      pos: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) },
-      size: { w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) },
-      rotation: 0
+      x: Math.min(a.x, b.x),
+      y: Math.min(a.y, b.y),
+      w: Math.abs(a.x - b.x),
+      h: Math.abs(a.y - b.y),
+      r: 0
     };
   },
+
   center: (b: Box) => {
     return {
-      x: b.pos.x + b.size.w / 2,
-      y: b.pos.y + b.size.h / 2
+      x: b.x + b.w / 2,
+      y: b.y + b.h / 2
     };
   },
 
   isEqual: (a: Box, b: Box) => {
-    return (
-      a.pos.x === b.pos.x &&
-      a.pos.y === b.pos.y &&
-      a.size.w === b.size.w &&
-      a.size.h === b.size.h &&
-      a.rotation === b.rotation
-    );
+    return a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h && a.r === b.r;
   },
 
   boundingBox: (boxes: Box[], forceAxisAligned = false): Box => {
@@ -61,12 +49,12 @@ export const Box = {
     let maxY = Number.MIN_SAFE_INTEGER;
 
     // If all boxes have the same rotation
-    if (!forceAxisAligned && boxes.every(b => b.rotation === boxes[0].rotation)) {
+    if (!forceAxisAligned && boxes.every(b => b.r === boxes[0].r)) {
       // Pick one corner of one box and rotate each corner of each box around it
       const rotationPoint = Box.corners(boxes[0], true)[0];
       for (const box of boxes) {
         for (const c of Box.corners(box, true)) {
-          const rotated = Point.rotate(Point.subtract(c, rotationPoint), -box.rotation);
+          const rotated = Point.rotate(Point.subtract(c, rotationPoint), -box.r);
 
           minX = Math.min(minX, rotated.x);
           minY = Math.min(minY, rotated.y);
@@ -78,10 +66,7 @@ export const Box = {
       const w = maxX - minX;
       const h = maxY - minY;
 
-      const centerOfSelection = Point.rotate(
-        { x: minX + w / 2, y: minY + h / 2 },
-        boxes[0].rotation
-      );
+      const centerOfSelection = Point.rotate({ x: minX + w / 2, y: minY + h / 2 }, boxes[0].r);
 
       const posOfSelection = Point.add(
         rotationPoint,
@@ -89,9 +74,10 @@ export const Box = {
       );
 
       return {
-        pos: posOfSelection,
-        size: { w: w, h: h },
-        rotation: boxes[0].rotation
+        ...posOfSelection,
+        w: w,
+        h: h,
+        r: boxes[0].r
       };
     } else {
       for (const box of boxes) {
@@ -105,9 +91,11 @@ export const Box = {
       }
 
       return {
-        pos: { x: minX, y: minY },
-        size: { w: maxX - minX, h: maxY - minY },
-        rotation: 0
+        x: minX,
+        y: minY,
+        w: maxX - minX,
+        h: maxY - minY,
+        r: 0
       };
     }
   },
@@ -115,19 +103,19 @@ export const Box = {
   corners: (box: Box, oppositeOnly = false) => {
     const corners = oppositeOnly
       ? [
-          { x: box.pos.x, y: box.pos.y },
-          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h }
+          { x: box.x, y: box.y },
+          { x: box.x + box.w, y: box.y + box.h }
         ]
       : [
-          { x: box.pos.x, y: box.pos.y },
-          { x: box.pos.x + box.size.w, y: box.pos.y },
-          { x: box.pos.x + box.size.w, y: box.pos.y + box.size.h },
-          { x: box.pos.x, y: box.pos.y + box.size.h }
+          { x: box.x, y: box.y },
+          { x: box.x + box.w, y: box.y },
+          { x: box.x + box.w, y: box.y + box.h },
+          { x: box.x, y: box.y + box.h }
         ];
 
-    if (round(box.rotation) === 0) return corners;
+    if (round(box.r) === 0) return corners;
 
-    return corners.map(c => Point.rotateAround(c, box.rotation, Box.center(box)));
+    return corners.map(c => Point.rotateAround(c, box.r, Box.center(box)));
   },
 
   line: (box: Box, dir: Direction) => {
@@ -145,16 +133,11 @@ export const Box = {
   contains: (box: Box | undefined, c: Box | Point): boolean => {
     if (!box) return false;
 
-    if ('pos' in c) {
+    if ('w' in c) {
       return Box.corners(c).every(c2 => Box.contains(box, c2));
     } else {
-      if (box.rotation === 0) {
-        return (
-          c.x >= box.pos.x &&
-          c.x <= box.pos.x + box.size.w &&
-          c.y >= box.pos.y &&
-          c.y <= box.pos.y + box.size.h
-        );
+      if (box.r === 0) {
+        return c.x >= box.x && c.x <= box.x + box.w && c.y >= box.y && c.y <= box.y + box.h;
       } else {
         return Polygon.contains(Box.asPolygon(box), c);
       }
@@ -162,12 +145,12 @@ export const Box = {
   },
 
   intersects: (box: Box, otherBox: Box) => {
-    if (box.rotation === 0 && otherBox.rotation === 0) {
+    if (box.r === 0 && otherBox.r === 0) {
       return (
-        box.pos.x <= otherBox.pos.x + otherBox.size.w &&
-        box.pos.y <= otherBox.pos.y + otherBox.size.h &&
-        box.pos.x + box.size.w >= otherBox.pos.x &&
-        box.pos.y + box.size.h >= otherBox.pos.y
+        box.x <= otherBox.x + otherBox.w &&
+        box.y <= otherBox.y + otherBox.h &&
+        box.x + box.w >= otherBox.x &&
+        box.y + box.h >= otherBox.y
       );
     }
     return Polygon.intersects(Box.asPolygon(box), Box.asPolygon(otherBox));
@@ -175,29 +158,15 @@ export const Box = {
 
   normalize: (b: Box) => {
     return {
-      pos: { x: Math.min(b.pos.x, b.pos.x + b.size.w), y: Math.min(b.pos.y, b.pos.y + b.size.h) },
-      rotation: b.rotation,
-      size: { w: Math.abs(b.size.w), h: Math.abs(b.size.h) }
+      x: Math.min(b.x, b.x + b.w),
+      y: Math.min(b.y, b.y + b.h),
+      r: b.r,
+      w: Math.abs(b.w),
+      h: Math.abs(b.h)
     };
-  },
+  }
 
-  withX: (b: Box, x: number) => ({
-    ...b,
-    size: { ...b.size },
-    pos: { ...b.pos, x },
-    rotation: b.rotation
-  }),
-  withY: (b: Box, y: number) => ({
-    ...b,
-    size: { ...b.size },
-    pos: { ...b.pos, y },
-    rotation: b.rotation
-  })
   /*
-  withW: (b: Box, w: number) => ({ ...b, size: { ...b.size, w }, rotation: b.rotation }),
-
-  withH: (b: Box, h: number) => ({ ...b, size: { ...b.size, h }, rotation: b.rotation }),
-
   withRotation: (b: Box, r: number) => ({ ...b, size: { ...b.size }, rotation: r })
 
   fromLine: (l: Line): Box => {

@@ -16,7 +16,7 @@ import { DiagramElement } from './diagramElement.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 
-export type Canvas = Omit<Box, 'rotation'>;
+export type Canvas = Omit<Box, 'r'>;
 
 export type DiagramEvents = {
   /* Diagram props, canvas have changed, or a large restructure of
@@ -43,11 +43,10 @@ export const includeAll = () => true;
 
 export class Diagram extends EventEmitter<DiagramEvents> {
   #canvas: Canvas = {
-    pos: { x: 0, y: 0 },
-    size: {
-      w: 640,
-      h: 640
-    }
+    x: 0,
+    y: 0,
+    w: 640,
+    h: 640
   };
 
   diagrams: ReadonlyArray<this> = [];
@@ -56,7 +55,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   mustCalculateIntersections = true;
 
   readonly props: DiagramProps = {};
-  readonly viewBox = new Viewbox(this.#canvas.size);
+  readonly viewBox = new Viewbox(this.#canvas);
   readonly nodeLookup = new Map<string, DiagramNode>();
   readonly edgeLookup = new Map<string, DiagramEdge>();
   readonly selectionState: SelectionState = new SelectionState(this);

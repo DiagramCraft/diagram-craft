@@ -5,8 +5,7 @@ import { useRedraw } from './useRedraw.tsx';
 
 export const DocumentBounds = (props: Props) => {
   const { diagram } = props;
-  const { w, h } = diagram.canvas.size;
-  const { x, y } = diagram.canvas.pos;
+  const { x, y, w, h } = diagram.canvas;
 
   const redraw = useRedraw();
   useEventListener(props.diagram, 'change', redraw);

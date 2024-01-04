@@ -26,10 +26,10 @@ export const RoundedRect = (props: Props) => {
     <>
       <path
         d={svgPath}
-        x={props.node.bounds.pos.x}
-        y={props.node.bounds.pos.y}
-        width={props.node.bounds.size.w}
-        height={props.node.bounds.size.h}
+        x={props.node.bounds.x}
+        y={props.node.bounds.y}
+        width={props.node.bounds.w}
+        height={props.node.bounds.h}
         {...propsUtils.filterSvgProperties(props)}
       />
 
@@ -47,17 +47,14 @@ export const RoundedRect = (props: Props) => {
 
       {props.isSingleSelected && (
         <ShapeControlPoint
-          x={props.node.bounds.pos.x + radius}
-          y={props.node.bounds.pos.y}
+          x={props.node.bounds.x + radius}
+          y={props.node.bounds.y}
           diagram={props.diagram}
           def={props.node}
           onDrag={x => {
-            const distance = Math.max(0, x - props.node.bounds.pos.x);
+            const distance = Math.max(0, x - props.node.bounds.x);
             props.node.props.roundedRect ??= {};
-            if (
-              distance < props.node.bounds.size.w / 2 &&
-              distance < props.node.bounds.size.h / 2
-            ) {
+            if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
               props.node.props.roundedRect.radius = distance;
             }
             return `Radius: ${props.node.props.roundedRect.radius}px`;
@@ -83,7 +80,7 @@ export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
         unit: 'px',
         onChange: (value: number) => {
           def.props.roundedRect ??= {};
-          if (value >= def.bounds.size.w / 2 || value >= def.bounds.size.h / 2) return;
+          if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
           def.props.roundedRect.radius = value;
         }
       }
@@ -94,8 +91,8 @@ export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
     const radius = def.props?.roundedRect?.radius ?? 10;
     const bnd = def.bounds;
 
-    const xr = radius / bnd.size.w;
-    const yr = radius / bnd.size.h;
+    const xr = radius / bnd.w;
+    const yr = radius / bnd.h;
     const cdx = 1 - 2 * xr;
     const cdy = 1 - 2 * yr;
 

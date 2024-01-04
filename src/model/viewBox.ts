@@ -25,16 +25,16 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
 
   toDiagramPoint(point: Point) {
     const transforms = TransformFactory.fromTo(
-      { pos: { x: 0, y: 0 }, size: { w: this.windowSize.w, h: this.windowSize.h }, rotation: 0 },
-      { pos: { x: this.#offset.x, y: this.#offset.y }, size: this.#dimensions, rotation: 0 }
+      { x: 0, y: 0, w: this.windowSize.w, h: this.windowSize.h, r: 0 },
+      { x: this.#offset.x, y: this.#offset.y, ...this.#dimensions, r: 0 }
     );
     return Transform.point(point, ...transforms);
   }
 
   toScreenPoint(point: Point) {
     const transforms = TransformFactory.fromTo(
-      { pos: { x: this.#offset.x, y: this.#offset.y }, size: this.#dimensions, rotation: 0 },
-      { pos: { x: 0, y: 0 }, size: { w: this.windowSize.w, h: this.windowSize.h }, rotation: 0 }
+      { x: this.#offset.x, y: this.#offset.y, ...this.#dimensions, r: 0 },
+      { x: 0, y: 0, w: this.windowSize.w, h: this.windowSize.h, r: 0 }
     );
     return Transform.point(point, ...transforms);
   }

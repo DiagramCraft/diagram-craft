@@ -100,14 +100,7 @@ const BezierTest = () => {
         }
       />
 
-      <rect
-        x={bbox.pos.x}
-        y={bbox.pos.y}
-        width={bbox.size.w}
-        height={bbox.size.h}
-        fill={'none'}
-        stroke={'blue'}
-      />
+      <rect x={bbox.x} y={bbox.y} width={bbox.w} height={bbox.h} fill={'none'} stroke={'blue'} />
     </svg>
   );
 };

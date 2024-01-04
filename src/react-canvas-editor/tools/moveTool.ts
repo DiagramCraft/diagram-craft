@@ -108,7 +108,7 @@ export class MoveTool extends AbstractTool {
         this.drag.initiate(
           new MoveDrag(
             this.diagram,
-            Point.subtract(this.diagram.viewBox.toDiagramPoint(point), selection.bounds.pos)
+            Point.subtract(this.diagram.viewBox.toDiagramPoint(point), selection.bounds)
           )
         );
       }

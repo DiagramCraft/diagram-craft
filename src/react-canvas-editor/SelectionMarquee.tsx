@@ -28,23 +28,23 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
     <>
       <rect
         className={'svg-marquee'}
-        x={bounds.pos.x}
-        y={bounds.pos.y}
-        width={bounds.size.w}
-        height={bounds.size.h}
+        x={bounds.x}
+        y={bounds.y}
+        width={bounds.w}
+        height={bounds.h}
       />
 
       {props.selection.marquee.pendingElements?.map(e => (
         <rect
           key={e.id}
           className={'svg-marquee__element'}
-          x={e.bounds.pos.x}
-          y={e.bounds.pos.y}
-          width={e.bounds.size.w}
-          height={e.bounds.size.h}
-          transform={`rotate(${Angle.toDeg(e.bounds.rotation)} ${
-            e.bounds.pos.x + e.bounds.size.w / 2
-          } ${e.bounds.pos.y + e.bounds.size.h / 2})`}
+          x={e.bounds.x}
+          y={e.bounds.y}
+          width={e.bounds.w}
+          height={e.bounds.h}
+          transform={`rotate(${Angle.toDeg(e.bounds.r)} ${e.bounds.x + e.bounds.w / 2} ${
+            e.bounds.y + e.bounds.h / 2
+          })`}
         />
       ))}
     </>

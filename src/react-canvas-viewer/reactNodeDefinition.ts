@@ -51,8 +51,8 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
     const bnd = node.bounds;
 
     const pb = this.getBoundingPathBuilder(node);
-    if (round(bnd.rotation) !== 0) {
-      pb.setRotation(bnd.rotation, Box.center(bnd));
+    if (round(bnd.r) !== 0) {
+      pb.setRotation(bnd.r, Box.center(bnd));
     }
     return pb.getPath();
   }

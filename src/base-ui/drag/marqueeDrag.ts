@@ -16,9 +16,10 @@ export class MarqueeDrag extends AbstractDrag {
 
   onDrag(coord: Point) {
     this.diagram.selectionState.marquee.bounds = Box.normalize({
-      pos: this.offset,
-      size: { w: coord.x - this.offset.x, h: coord.y - this.offset.y },
-      rotation: 0
+      ...this.offset,
+      w: coord.x - this.offset.x,
+      h: coord.y - this.offset.y,
+      r: 0
     });
 
     this.updatePendingElements(this.diagram.selectionState, this.diagram);

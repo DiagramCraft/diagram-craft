@@ -106,7 +106,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     <g
       id={`node-${props.def.id}`}
       className={'svg-node'}
-      transform={`rotate(${Angle.toDeg(props.def.bounds.rotation)} ${center.x} ${center.y})`}
+      transform={`rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}
       onMouseEnter={() => props.onMouseEnter(props.def.id)}
       onMouseLeave={() => props.onMouseLeave(props.def.id)}
     >
@@ -134,13 +134,13 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       />
 
       {isEdgeConnect && (
-        <g transform={`rotate(${-Angle.toDeg(props.def.bounds.rotation)} ${center.x} ${center.y})`}>
+        <g transform={`rotate(${-Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}>
           {props.def.anchors.map(anchor => (
             <circle
               key={`${anchor.point.x}_${anchor.point.y}`}
               className={'svg-node__anchor'}
-              cx={props.def.bounds.pos.x + anchor.point.x * props.def.bounds.size.w}
-              cy={props.def.bounds.pos.y + anchor.point.y * props.def.bounds.size.h}
+              cx={props.def.bounds.x + anchor.point.x * props.def.bounds.w}
+              cy={props.def.bounds.y + anchor.point.y * props.def.bounds.h}
               r={5}
             />
           ))}

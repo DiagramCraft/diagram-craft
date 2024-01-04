@@ -1,6 +1,6 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
-import { Box } from '../../geometry/box.ts';
+import { Box, WritableBox } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { Translation } from '../../geometry/transform.ts';
 import { Vector } from '../../geometry/vector.ts';
@@ -32,7 +32,7 @@ export class MoveDrag extends AbstractDrag {
 
   onKeyDown(event: KeyboardEvent) {
     this.#keys.push(event.key);
-    this.updateState(this.diagram.selectionState.bounds.pos);
+    this.updateState(this.diagram.selectionState.bounds);
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
@@ -60,13 +60,14 @@ export class MoveDrag extends AbstractDrag {
     }
 
     // Determine the delta between the current mouse position and the original mouse position
-    const delta = Point.subtract(coord, Point.add(selection.bounds.pos, this.offset));
+    const delta = Point.subtract(coord, Point.add(selection.bounds, this.offset));
 
-    const newBounds = Box.asMutableSnapshot(selection.bounds);
+    const newBounds = Box.asReadWrite(selection.bounds);
 
-    const newPos = Point.add(selection.bounds.pos, delta);
+    const newPos = Point.add(selection.bounds, delta);
     this.updateState(newPos);
-    newBounds.set('pos', newPos);
+    newBounds.x = newPos.x;
+    newBounds.y = newPos.y;
 
     let snapDirections = Direction.all();
 
@@ -80,12 +81,13 @@ export class MoveDrag extends AbstractDrag {
       const uow = new UnitOfWork(this.diagram, 'interactive');
       this.diagram.transformElements(
         selection.nodes,
-        [new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))],
+        [new Translation(Point.subtract(selection.source.boundingBox, selection.bounds))],
         uow,
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
       );
 
-      newBounds.set('pos', selection.source.boundingBox.pos);
+      newBounds.x = selection.source.boundingBox.x;
+      newBounds.y = selection.source.boundingBox.y;
       selection.guides = [];
 
       this.enablePointerEvents(selection.elements);
@@ -116,7 +118,7 @@ export class MoveDrag extends AbstractDrag {
 
     // TODO: Perhaps support 45 degree angles
     if (isConstraintDrag) {
-      const source = Point.add(selection.source.boundingBox.pos, this.offset);
+      const source = Point.add(selection.source.boundingBox, this.offset);
 
       const v = Vector.from(source, coord);
       const length = Vector.length(v);
@@ -134,10 +136,9 @@ export class MoveDrag extends AbstractDrag {
         snapDirections = ['e', 'w'];
       }
 
-      newBounds.set(
-        'pos',
-        Point.add(selection.source.boundingBox.pos, Vector.fromPolar(snapAngle, length))
-      );
+      const newPos = Point.add(selection.source.boundingBox, Vector.fromPolar(snapAngle, length));
+      newBounds.x = newPos.x;
+      newBounds.y = newPos.y;
     }
 
     if (isFreeDrag) {
@@ -145,16 +146,17 @@ export class MoveDrag extends AbstractDrag {
     } else {
       const snapManager = this.diagram.createSnapManager();
 
-      const result = snapManager.snapMove(newBounds.getSnapshot(), snapDirections);
+      const result = snapManager.snapMove(WritableBox.asBox(newBounds), snapDirections);
       selection.guides = result.guides;
 
-      newBounds.set('pos', result.adjusted.pos);
+      newBounds.x = result.adjusted.x;
+      newBounds.y = result.adjusted.y;
     }
 
     const uow = new UnitOfWork(this.diagram, 'interactive');
     this.diagram.transformElements(
       selection.elements,
-      [new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))],
+      [new Translation(Point.subtract(newBounds, selection.bounds))],
       uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
@@ -207,7 +209,7 @@ export class MoveDrag extends AbstractDrag {
             el
               .getNodeDefinition()
               .onDrop(
-                Point.add(selection.bounds.pos, this.offset),
+                Point.add(selection.bounds, this.offset),
                 el,
                 selection.elements,
                 uow,
@@ -220,7 +222,7 @@ export class MoveDrag extends AbstractDrag {
             el
               .getEdgeDefinition()
               .onDrop(
-                Point.add(selection.bounds.pos, this.offset),
+                Point.add(selection.bounds, this.offset),
                 el,
                 selection.elements,
                 uow,

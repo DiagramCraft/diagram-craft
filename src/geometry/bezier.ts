@@ -216,7 +216,7 @@ export const BezierUtils = {
 const recurseIntersection = (c1: CubicBezier, c2: CubicBezier, threshold: number): Point[] => {
   const c1b = c1.bbox();
   const c2b = c2.bbox();
-  if (Math.max(c1b.size.w, c1b.size.h, c2b.size.w, c2b.size.h) < threshold) return [c2b.pos];
+  if (Math.max(c1b.w, c1b.h, c2b.w, c2b.h) < threshold) return [c2b];
 
   const cc1 = c1.split(0.5);
   const cc2 = c2.split(0.5);
@@ -376,9 +376,11 @@ export class CubicBezier {
     const my = Math.min(...y);
 
     this.#bbox = {
-      pos: { x: mx, y: my },
-      size: { w: Math.max(...x) - mx, h: Math.max(...y) - my },
-      rotation: 0
+      x: mx,
+      y: my,
+      w: Math.max(...x) - mx,
+      h: Math.max(...y) - my,
+      r: 0
     };
 
     return this.#bbox;
