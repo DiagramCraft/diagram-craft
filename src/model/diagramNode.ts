@@ -21,9 +21,7 @@ export class DiagramNode implements AbstractNode {
   readonly id: string;
   readonly type = 'node';
   readonly nodeType: 'group' | string;
-
-  // TODO: Replace with Map
-  readonly edges: Record<number, DiagramEdge[]> = {};
+  readonly edges: Map<number, DiagramEdge[]> = new Map<number, DiagramEdge[]>();
 
   bounds: Box;
   parent?: DiagramNode;
@@ -131,11 +129,11 @@ export class DiagramNode implements AbstractNode {
   }
 
   removeEdge(anchor: number, edge: DiagramEdge) {
-    this.edges[anchor] = this.edges[anchor].filter(e => e !== edge);
+    this.edges.set(anchor, this.edges.get(anchor)?.filter(e => e !== edge) ?? []);
   }
 
   addEdge(anchor: number, edge: DiagramEdge) {
-    this.edges[anchor] = [...(this.edges[anchor] ?? []), edge];
+    this.edges.set(anchor, [...(this.edges.get(anchor) ?? []), edge]);
   }
 
   getAnchorPosition(anchor: number) {

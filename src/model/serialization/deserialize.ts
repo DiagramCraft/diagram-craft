@@ -110,16 +110,12 @@ export const deserializeDiagramElements = (
 
     if (isConnected(start)) {
       const startNode = nodeLookup[start.node.id];
-
-      startNode.edges[start.anchor] ??= [];
-      startNode.edges[start.anchor].push(edge);
+      startNode.edges.set(start.anchor, [...(startNode.edges.get(start.anchor) ?? []), edge]);
     }
 
     if (isConnected(end)) {
       const endNode = nodeLookup[end.node.id];
-
-      endNode.edges[end.anchor] ??= [];
-      endNode.edges[end.anchor].push(edge);
+      endNode.edges.set(end.anchor, [...(endNode.edges.get(end.anchor) ?? []), edge]);
     }
 
     if (e.labelNodes) {
