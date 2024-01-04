@@ -58,8 +58,9 @@ export class LineSegment implements PathSegment {
     const v = Vector.from(this.start, this.end);
     const w = Vector.from(this.start, point);
 
-    const c1 = Vector.dot(w, v);
-    const c2 = Vector.dot(v, v);
+    // Calculate dot product
+    const c1 = w.x * v.x + w.y * v.y;
+    const c2 = v.x * v.x + v.y * v.y;
 
     const t = c1 / c2;
 

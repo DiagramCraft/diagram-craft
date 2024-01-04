@@ -18,10 +18,6 @@ export const Point = {
 
   midpoint: (c1: Point, c2: Point) => ({ x: (c1.x + c2.x) / 2, y: (c1.y + c2.y) / 2 }),
 
-  round: (c: Point) => {
-    return { x: round(c.x), y: round(c.y) };
-  },
-
   rotate: (c: Point, r: number) => {
     return {
       x: c.x * Math.cos(r) - c.y * Math.sin(r),

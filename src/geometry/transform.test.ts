@@ -51,7 +51,10 @@ describe('Rotation', () => {
     b1 = new Rotation(Math.PI / 2).apply(b1);
     b2 = new Rotation(Math.PI / 2).apply(b2);
 
-    expect(Point.round(b1)).toStrictEqual({ x: 0, y: -10 });
-    expect(Point.round(b2)).toStrictEqual({ x: -20, y: 10 });
+    expect(b1.x).toBeCloseTo(0);
+    expect(b1.y).toBeCloseTo(-10);
+
+    expect(b2.x).toBeCloseTo(-20);
+    expect(b2.y).toBeCloseTo(10);
   });
 });
