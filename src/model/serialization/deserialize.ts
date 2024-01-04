@@ -1,61 +1,26 @@
-import { Point } from '../geometry/point.ts';
-import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
-import { DiagramNode } from './diagramNode.ts';
-import { ConnectedEndpoint, DiagramEdge } from './diagramEdge.ts';
-import { Diagram } from './diagram.ts';
-import { DiagramDocument } from './diagramDocument.ts';
-import { AbstractEdge, AbstractNode } from './types.ts';
-import { Layer } from './diagramLayer.ts';
-import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
-import { UnitOfWork } from './unitOfWork.ts';
-
-interface Reference {
-  id: string;
-}
-
-type SerializedLayer = {
-  id: string;
-  name: string;
-  type: 'layer';
-  layerType: 'basic' | 'reference' | 'adjustment';
-  elements: ReadonlyArray<SerializedElement>;
-};
-
-export type SerializedDiagram = {
-  id: string;
-  name: string;
-  layers: ReadonlyArray<SerializedLayer>;
-  diagrams: ReadonlyArray<SerializedDiagram>;
-};
-
-export interface SerializedDiagramDocument {
-  diagrams: ReadonlyArray<SerializedDiagram>;
-}
-
-export interface SerializedNode extends AbstractNode {
-  edges?: Record<string, ReadonlyArray<Reference>>;
-  children: ReadonlyArray<SerializedElement>;
-}
-
-type SerializedConnectedEndpoint = { anchor: number; node: Reference; position?: Point };
-
-type SerializedEndpoint = SerializedConnectedEndpoint | { position: Point };
-
-export interface SerializedEdge extends AbstractEdge {
-  start: SerializedEndpoint;
-  end: SerializedEndpoint;
-}
-
-export type SerializedElement = SerializedNode | SerializedEdge;
+import { Diagram } from '../diagram.ts';
+import { DiagramNode } from '../diagramNode.ts';
+import { DiagramEdge } from '../diagramEdge.ts';
+import { UnitOfWork } from '../unitOfWork.ts';
+import { Layer } from '../diagramLayer.ts';
+import { isConnected } from './serialize.ts';
+import { DiagramDocument } from '../diagramDocument.ts';
+import { Point } from '../../geometry/point.ts';
+import { DiagramElement } from '../diagramElement.ts';
+import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import {
+  SerializedDiagram,
+  SerializedDiagramDocument,
+  SerializedEdge,
+  SerializedElement,
+  SerializedLayer,
+  SerializedNode
+} from './types.ts';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
 const isEdgeDef = (element: SerializedElement | SerializedLayer): element is SerializedEdge =>
   element.type === 'edge';
-
-export const isConnected = (
-  endpoint: SerializedEndpoint
-): endpoint is SerializedConnectedEndpoint => 'node' in endpoint;
 
 const unfoldGroup = (node: SerializedNode) => {
   const recurse = (
@@ -180,6 +145,16 @@ export const deserializeDiagramElements = (
   return elements;
 };
 
+export const deserializeDiagramDocument = <T extends Diagram>(
+  document: SerializedDiagramDocument,
+  factory: (d: SerializedDiagram) => T
+): DiagramDocument => {
+  const diagrams = document.diagrams;
+  const dest = deserializeDiagrams(diagrams, factory);
+
+  return new DiagramDocument(dest);
+};
+
 const deserializeDiagrams = <T extends Diagram>(
   diagrams: ReadonlyArray<SerializedDiagram>,
   factory: (d: SerializedDiagram) => T
@@ -223,82 +198,4 @@ const deserializeDiagrams = <T extends Diagram>(
   }
 
   return dest;
-};
-
-export const deserializeDiagramDocument = <T extends Diagram>(
-  document: SerializedDiagramDocument,
-  factory: (d: SerializedDiagram) => T
-): DiagramDocument => {
-  const diagrams = document.diagrams;
-  const dest = deserializeDiagrams(diagrams, factory);
-
-  return new DiagramDocument(dest);
-};
-
-export const serializeDiagramDocument = (document: DiagramDocument): SerializedDiagramDocument => {
-  return {
-    diagrams: document.diagrams.map(serializeDiagram)
-  };
-};
-
-export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
-  return {
-    id: diagram.id,
-    name: diagram.name,
-    layers: diagram.layers.all.map(l => serializeLayer(l)),
-    diagrams: diagram.diagrams.map(d => serializeDiagram(d))
-  };
-};
-
-export const serializeLayer = (layer: Layer): SerializedLayer => {
-  return {
-    id: layer.id,
-    name: layer.name,
-    type: 'layer',
-    layerType: 'basic',
-    elements: layer.elements.map(serializeDiagramElement)
-  };
-};
-
-export const serializeDiagramElement = (element: DiagramElement): SerializedElement => {
-  if (isNode(element)) {
-    const node = element;
-    return {
-      id: node.id,
-      type: 'node',
-      nodeType: node.nodeType,
-      bounds: node.bounds,
-      anchors: node.anchors,
-      children: node.children.map(serializeDiagramElement) as SerializedNode[],
-      props: node.props
-    };
-  } else if (isEdge(element)) {
-    const edge = element;
-    return {
-      id: edge.id,
-      type: 'edge',
-      start: edge.isStartConnected()
-        ? {
-            anchor: (edge.start as ConnectedEndpoint).anchor,
-            node: { id: (edge.start as ConnectedEndpoint).node.id },
-            position: edge.startPosition
-          }
-        : {
-            position: edge.startPosition
-          },
-      end: edge.isEndConnected()
-        ? {
-            anchor: (edge.end as ConnectedEndpoint).anchor,
-            node: { id: (edge.end as ConnectedEndpoint).node.id },
-            position: edge.endPosition
-          }
-        : {
-            position: edge.endPosition
-          },
-      waypoints: edge.waypoints,
-      props: edge.props
-    };
-  } else {
-    throw new VerifyNotReached();
-  }
 };

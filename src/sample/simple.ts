@@ -1,4 +1,4 @@
-import { SerializedDiagramDocument } from '../model/serialization.ts';
+import { SerializedDiagramDocument } from '../model/serialization/types.ts';
 
 export const simpleDiagram: SerializedDiagramDocument = {
   diagrams: [

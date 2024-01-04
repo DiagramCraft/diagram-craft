@@ -1,12 +1,7 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
-import {
-  deserializeDiagramElements,
-  isConnected,
-  SerializedElement,
-  serializeDiagramElement
-} from '../../model/serialization.ts';
+import { isConnected, serializeDiagramElement } from '../../model/serialization/serialize.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
@@ -16,6 +11,8 @@ import { Diagram } from '../../model/diagram.ts';
 import { precondition } from '../../utils/assert.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { SerializedElement } from '../../model/serialization/types.ts';
+import { deserializeDiagramElements } from '../../model/serialization/deserialize.ts';
 
 declare global {
   interface ActionMap {

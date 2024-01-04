@@ -1,5 +1,4 @@
 import './App.css';
-import { deserializeDiagramDocument, SerializedDiagram } from './model/serialization.ts';
 import { ContextMenuEvent, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
 import React, { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
@@ -63,6 +62,8 @@ import { ApplicationState } from './base-ui/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
 import { LayerIndicator } from './react-app/components/LayerIndicator.tsx';
 import { testDiagram } from './sample/test.ts';
+import { SerializedDiagram } from './model/serialization/types.ts';
+import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
 
 const factory = (d: SerializedDiagram) => {
   return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry());

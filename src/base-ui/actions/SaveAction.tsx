@@ -1,7 +1,7 @@
 import { EventEmitter } from '../../utils/event.ts';
 import { ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { serializeDiagramDocument } from '../../model/serialization.ts';
+import { serializeDiagramDocument } from '../../model/serialization/serialize.ts';
 
 declare global {
   interface ActionMap {
