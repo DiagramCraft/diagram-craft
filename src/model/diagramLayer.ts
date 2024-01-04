@@ -6,6 +6,7 @@ import { Point } from '../geometry/point.ts';
 import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Box } from '../geometry/box.ts';
 import { UnitOfWork } from './unitOfWork.ts';
+import { groupBy } from '../utils/array.ts';
 
 export class Layer {
   #elements: Array<DiagramElement> = [];
@@ -40,58 +41,42 @@ export class Layer {
   }
 
   // TODO: Add some tests for the stack operations
-  stackModify(
-    elements: ReadonlyArray<DiagramElement>,
-    newPosition: number
-  ): Map<DiagramNode | undefined, StackPosition[]> {
-    // Group by parent
-    const byParent = new Map<DiagramNode | undefined, DiagramElement[]>();
-    for (const el of elements) {
-      const parent = el.type === 'node' ? el.parent : undefined;
-      const arr = byParent.get(parent) ?? [];
-      arr.push(el);
-      byParent.set(parent, arr);
-    }
+  stackModify(elements: ReadonlyArray<DiagramElement>, positionDelta: number, uow: UnitOfWork) {
+    const byParent = groupBy(elements, e => e.parent);
 
-    const dest = new Map<DiagramNode | undefined, StackPosition[]>();
+    const snapshot = new Map<DiagramNode | undefined, StackPosition[]>();
+    const newPositions = new Map<DiagramNode | undefined, StackPosition[]>();
 
     for (const [parent, elements] of byParent) {
       const existing = parent?.children ?? this.elements;
 
-      const withPositions = existing.map((e, i) => ({ element: e, idx: i }));
-      const oldPositions = existing.map((e, i) => ({ element: e, idx: i }));
+      const oldStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
+      snapshot.set(parent, oldStackPositions);
 
-      for (const el of elements) {
-        const idx = withPositions.findIndex(e => e.element === el);
-        withPositions[idx].idx += newPosition;
+      const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
+      for (const p of newStackPositions) {
+        if (!elements.includes(p.element)) continue;
+        p.idx += positionDelta;
       }
-
-      // TODO: Maybe we can add UnitOfWork and avoid emitting diagram level
-      //       change events if only the stack changes
-      withPositions.sort((a, b) => a.idx - b.idx);
-      if (parent) {
-        parent.children = withPositions.map(e => e.element as DiagramNode);
-      } else {
-        this.#elements = withPositions.map(e => e.element);
-      }
-      dest.set(parent, oldPositions);
+      newPositions.set(parent, newStackPositions);
     }
 
-    this.#diagram.emit('change', { diagram: this.#diagram });
+    this.stackSet(newPositions, uow);
 
-    return dest;
+    return snapshot;
   }
 
-  stackSet(newPositions: Map<DiagramNode | undefined, StackPosition[]>) {
+  stackSet(newPositions: Map<DiagramNode | undefined, StackPosition[]>, uow: UnitOfWork) {
     for (const [parent, positions] of newPositions) {
       positions.sort((a, b) => a.idx - b.idx);
       if (parent) {
-        parent.children = positions.map(e => e.element as DiagramNode);
+        parent.children = positions.map(e => e.element);
       } else {
         this.#elements = positions.map(e => e.element);
       }
     }
-    this.#diagram.emit('change', { diagram: this.#diagram });
+
+    uow.updateDiagram();
   }
 
   addElement(element: DiagramElement, uow: UnitOfWork) {
@@ -112,11 +97,10 @@ export class Layer {
     uow.removeElement(element);
   }
 
-  // TODO: Make this elements: ReadonlyArray<DiagramElement>
-  setElements(elements: Array<DiagramElement>, uow: UnitOfWork) {
+  setElements(elements: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
     const added = elements.filter(e => !this.#elements.includes(e));
     const removed = this.#elements.filter(e => !elements.includes(e));
-    this.#elements = elements;
+    this.#elements = elements as Array<DiagramElement>;
     for (const e of added) {
       this.processElementForAdd(e);
       uow.addElement(e);
@@ -183,7 +167,7 @@ export type LayerManagerEvents = {
 };
 
 export class LayerManager extends EventEmitter<LayerManagerEvents> {
-  #layers: Layer[] = [];
+  #layers: Array<Layer> = [];
   #activeLayer: Layer;
   #visibleLayers = new Set<string>();
 
@@ -209,16 +193,16 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
     });
   }
 
-  get all() {
+  get all(): ReadonlyArray<Layer> {
     return this.#layers;
   }
 
-  get visible() {
+  get visible(): ReadonlyArray<Layer> {
     return this.#layers.filter(layer => this.#visibleLayers.has(layer.id));
   }
 
   // TODO: Need undo/redo for this - perhaps change into an UndoableAction
-  move(layers: Layer[], ref: { layer: Layer; relation: 'above' | 'below' }) {
+  move(layers: ReadonlyArray<Layer>, ref: { layer: Layer; relation: 'above' | 'below' }) {
     const idx = this.#layers.indexOf(ref.layer);
     const newIdx = ref.relation === 'below' ? idx : idx + 1;
 
@@ -259,11 +243,13 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
     this.#visibleLayers.add(layer.id);
     this.#activeLayer = layer;
     this.emit('change', { layers: this });
+    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   remove(layer: Layer) {
     this.#layers = this.#layers.filter(l => l !== layer);
     this.#visibleLayers.delete(layer.id);
     this.emit('change', { layers: this });
+    this.diagram.emit('change', { diagram: this.diagram });
   }
 }

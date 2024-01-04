@@ -38,3 +38,17 @@ export const unique = <T>(arr: ReadonlyArray<T>, respectTo: (e: T) => unknown = 
   }
   return result;
 };
+
+/**
+ * Returns a Map grouping the elements of an array by the return value of respectTo.
+ */
+export const groupBy = <T, K>(arr: ReadonlyArray<T>, respectTo: (e: T) => K): Map<K, Array<T>> => {
+  const dest = new Map<K, Array<T>>();
+  for (const e of arr) {
+    const key = respectTo(e);
+    const arr = dest.get(key) ?? [];
+    arr.push(e);
+    dest.set(key, arr);
+  }
+  return dest;
+};

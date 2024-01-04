@@ -61,4 +61,9 @@ export class UnitOfWork {
   commitWithoutEvents() {
     this.#actions.forEach(a => a());
   }
+
+  // TODO: We should defer this, and only do it once per commit - as well as cancelling all other elementChange events
+  updateDiagram() {
+    this.diagram.emit('change', { diagram: this.diagram });
+  }
 }
