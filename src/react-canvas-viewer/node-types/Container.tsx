@@ -10,9 +10,9 @@ import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { CustomPropertyDefinition, NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
-import { Scale, Transform } from '../../geometry/transform.ts';
+import { Rotation, Scale, Transform, Translation } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { DiagramElement } from '../../model/diagramElement.ts';
+import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 
 declare global {
@@ -24,6 +24,12 @@ declare global {
     };
   }
 }
+
+type Entry = {
+  node: DiagramElement;
+  localBounds: Box;
+  newLocalBounds?: Box;
+};
 
 export const Container = (props: Props) => {
   const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -166,76 +172,78 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
   }
 
   private applyLayout(node: DiagramNode, uow: UnitOfWork) {
+    // We need to perform all layout operations in the local coordinate system of the node
+
+    const transformBack = [
+      new Translation({ x: -node.bounds.x, y: -node.bounds.y }),
+      new Rotation(-node.bounds.r)
+    ];
+    const transformForward = [
+      new Rotation(node.bounds.r),
+      new Translation({ x: node.bounds.x, y: node.bounds.y })
+    ];
+
+    const localBounds = Transform.box(node.bounds, ...transformBack);
+    const children: Entry[] = node.children.map(c => ({
+      node: c,
+      localBounds: Transform.box(c.bounds, ...transformBack),
+      newLocalBounds: undefined
+    }));
+
     let newBounds: Box;
     if (node.props.container?.layout === 'horizontal') {
       // Sort children by x position
-      const children = [...node.children].sort((a, b) => a.bounds.x - b.bounds.x);
-      if (children.length === 0) return;
+      const sortedLocalChildren = children.sort((a, b) => a.localBounds.x - b.localBounds.x);
+      if (sortedLocalChildren.length === 0) return;
 
-      // Layout horizontally
-      let x = node.bounds.x + (node.props.container.gap ?? 0);
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        if (child.type !== 'node') continue;
+      let x = node.props.container.gap ?? 0;
+      for (let i = 0; i < sortedLocalChildren.length; i++) {
+        const entry = sortedLocalChildren[i];
+        if (!isNode(entry.node)) continue;
 
-        this.updateBounds(
-          child,
-          {
-            ...child.bounds,
-            ...Point.of(x, child.bounds.y)
-          },
-          uow
-        );
-        x += child.bounds.w + (node.props.container.gap ?? 0);
+        entry.newLocalBounds = { ...entry.localBounds, x };
+        x += entry.newLocalBounds.w + (node.props.container.gap ?? 0);
       }
 
       newBounds = Box.boundingBox([
-        {
-          ...node.bounds,
-          w: x - node.bounds.x,
-          h: 1
-        },
-        ...children.map(c => c.bounds)
+        { ...localBounds, w: x - localBounds.x, h: 1 },
+        ...children.map(c => c.localBounds)
       ]);
     } else if (node.props.container?.layout === 'vertical') {
       // Sort children by y position
-      const children = [...node.children].sort((a, b) => a.bounds.y - b.bounds.y);
-      if (children.length === 0) return;
+      const sortedLocalChildren = children.sort((a, b) => a.localBounds.y - b.localBounds.y);
+      if (sortedLocalChildren.length === 0) return;
 
-      // Layout verticall
-      let y = node.bounds.y + (node.props.container.gap ?? 0);
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        if (child.type !== 'node') continue;
+      let y = node.props.container.gap ?? 0;
+      for (let i = 0; i < sortedLocalChildren.length; i++) {
+        const entry = sortedLocalChildren[i];
+        if (!isNode(entry.node)) continue;
 
-        this.updateBounds(
-          child,
-          {
-            ...child.bounds,
-            ...Point.of(child.bounds.x, y)
-          },
-          uow
-        );
-        y += child.bounds.h + (node.props.container.gap ?? 0);
+        entry.newLocalBounds = { ...entry.localBounds, y };
+        y += entry.newLocalBounds.h + (node.props.container.gap ?? 0);
       }
 
       newBounds = Box.boundingBox([
-        {
-          ...node.bounds,
-          w: 1,
-          h: y - node.bounds.y
-        },
-        ...children.map(c => c.bounds)
+        { ...localBounds, w: 1, h: y - node.bounds.y },
+        ...children.map(c => c.localBounds)
       ]);
     } else {
       if (!node.props.container?.autoGrow) return;
 
-      const childrenBounds = node.children.map(c => c.bounds);
-      if (childrenBounds.length === 0) return;
-      newBounds = Box.boundingBox([node.bounds, ...childrenBounds]);
+      const sortedLocalChildren = children.sort((a, b) => a.localBounds.x - b.localBounds.x);
+      if (sortedLocalChildren.length === 0) return;
+
+      newBounds = Box.boundingBox([localBounds, ...children.map(c => c.localBounds)]);
     }
 
-    this.updateBounds(node, newBounds, uow);
+    // Transform back to global coordinate system
+    node.bounds = Transform.box(newBounds, ...transformForward);
+    for (const entry of children) {
+      if (!entry.newLocalBounds) continue;
+      if (!isNode(entry.node)) continue;
+      this.updateBounds(entry.node, Transform.box(entry.newLocalBounds, ...transformForward), uow);
+    }
+
     if (node.parent) {
       const parentDef = node.parent.getNodeDefinition();
       parentDef.onChildChanged(node.parent, uow);
