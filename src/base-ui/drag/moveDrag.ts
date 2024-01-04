@@ -85,7 +85,6 @@ export class MoveDrag extends AbstractDrag {
         'interactive',
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
       );
-      uow.commit();
 
       newBounds.set('pos', selection.source.boundingBox.pos);
       selection.guides = [];
@@ -94,9 +93,11 @@ export class MoveDrag extends AbstractDrag {
 
       const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
       newElements.forEach(e => {
-        this.diagram.layers.active.addElement(e);
+        this.diagram.layers.active.addElement(e, uow);
       });
       selection.setElements(newElements, false);
+
+      uow.commit();
 
       this.#hasDuplicatedSelection = true;
     } else if (!isDuplicateDrag && this.#hasDuplicatedSelection) {
@@ -107,8 +108,10 @@ export class MoveDrag extends AbstractDrag {
       selection.setElements(selection.source.elementIds.map(e => this.diagram.lookup(e)!));
       selection.guides = [];
 
-      elementsToRemove.forEach(e => {
-        e.layer!.removeElement(e);
+      UnitOfWork.execute(this.diagram, uow => {
+        elementsToRemove.forEach(e => {
+          e.layer!.removeElement(e, uow);
+        });
       });
     }
 

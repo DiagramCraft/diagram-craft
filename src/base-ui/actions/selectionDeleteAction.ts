@@ -4,6 +4,7 @@ import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -29,19 +30,23 @@ class SelectionDeleteUndoableAction implements UndoableAction {
   }
 
   undo(): void {
-    for (const element of this.elements) {
-      this.layer.addElement(element);
-    }
+    UnitOfWork.execute(this.diagram, uow => {
+      for (const element of this.elements) {
+        this.layer.addElement(element, uow);
+      }
+    });
     this.diagram.selectionState.setElements(this.elements);
   }
 
   redo(): void {
-    for (const element of this.elements) {
-      if (element.type === 'edge' && element.labelNodes) {
-        this.elements.push(...element.labelNodes.map(ln => ln.node));
+    UnitOfWork.execute(this.diagram, uow => {
+      for (const element of this.elements) {
+        if (element.type === 'edge' && element.labelNodes) {
+          this.elements.push(...element.labelNodes.map(ln => ln.node));
+        }
+        element.layer!.removeElement(element, uow);
       }
-      element.layer!.removeElement(element);
-    }
+    });
     this.diagram.selectionState.clear();
 
     // TODO: Maybe we need to have the diagram process all element links post delete uow

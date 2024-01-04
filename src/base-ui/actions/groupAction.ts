@@ -6,6 +6,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -53,8 +54,10 @@ class UndoableGroupAction implements UndoableAction {
       this.#elements = this.diagram.selectionState.elements;
     }
 
+    const uow = new UnitOfWork(this.diagram);
+
     this.#elements.forEach(e => {
-      e.layer!.removeElement(e);
+      e.layer!.removeElement(e, uow);
     });
 
     this.#group = new DiagramNode(
@@ -66,9 +69,11 @@ class UndoableGroupAction implements UndoableAction {
     );
     this.#group.children = [...this.#elements];
 
-    this.diagram.layers.active.addElement(this.#group);
+    this.diagram.layers.active.addElement(this.#group, uow);
 
     this.diagram.selectionState.setElements([this.#group]);
+
+    uow.commit();
   }
 
   private ungroup() {
@@ -76,21 +81,23 @@ class UndoableGroupAction implements UndoableAction {
       this.#group = this.diagram.selectionState.elements[0] as DiagramNode;
     }
 
+    const uow = new UnitOfWork(this.diagram);
     const children = this.#group.children;
 
     this.#group.children.forEach(e => {
-      e.layer!.removeElement(e);
+      e.layer!.removeElement(e, uow);
     });
 
-    this.#group?.layer.removeElement(this.#group);
+    this.#group?.layer.removeElement(this.#group, uow);
     this.#elements = this.#group.children;
 
     children.toReversed().forEach(e => {
       e.parent = undefined;
-      this.diagram.layers.active.addElement(e);
+      this.diagram.layers.active.addElement(e, uow);
     });
 
     this.diagram.selectionState.setElements(children);
+    uow.commit();
   }
 }
 

@@ -5,6 +5,7 @@ import { precondition } from '../../utils/assert.ts';
 import { LengthOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -33,6 +34,8 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
+    const uow = new UnitOfWork(this.diagram);
+
     const textNode = new DiagramNode(
       newid(),
       'text',
@@ -59,7 +62,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     if (edge.parent) {
       edge.parent.children = [...edge.parent.children, textNode];
     }
-    edge.layer.addElement(textNode);
+    edge.layer.addElement(textNode, uow);
 
     edge.labelNodes = [
       ...(edge.labelNodes ?? []),
@@ -72,7 +75,8 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
       }
     ];
 
-    this.diagram.updateElement(edge);
+    uow.updateElement(edge);
+    uow.commit();
 
     setTimeout(() => {
       this.diagram.nodeDefinitions.get('text')?.requestFocus(textNode);

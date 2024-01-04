@@ -5,6 +5,8 @@ type Callback = () => void;
 
 export class UnitOfWork {
   #elementsToUpdate = new Map<string, DiagramElement>();
+  #elementsToRemove = new Map<string, DiagramElement>();
+  #elementsToAdd = new Map<string, DiagramElement>();
   #actions = new Map<string, Callback>();
 
   constructor(readonly diagram: Diagram) {}
@@ -21,11 +23,19 @@ export class UnitOfWork {
   }
 
   contains(element: DiagramElement) {
-    return this.#elementsToUpdate.has(element.id);
+    return this.#elementsToUpdate.has(element.id) || this.#elementsToRemove.has(element.id);
   }
 
   updateElement(element: DiagramElement) {
     this.#elementsToUpdate.set(element.id, element);
+  }
+
+  removeElement(element: DiagramElement) {
+    this.#elementsToRemove.set(element.id, element);
+  }
+
+  addElement(element: DiagramElement) {
+    this.#elementsToAdd.set(element.id, element);
   }
 
   pushAction(name: string, element: DiagramElement, cb: Callback) {
@@ -40,6 +50,14 @@ export class UnitOfWork {
   commit() {
     // Note, actions must run before elements events are emitted
     this.#actions.forEach(a => a());
+
+    // TODO: Need to think about the order here a bit better to optimize the number of events
+    this.#elementsToRemove.forEach(e => this.diagram.emit('elementRemove', { element: e }));
     this.#elementsToUpdate.forEach(e => this.diagram.emit('elementChange', { element: e }));
+    this.#elementsToAdd.forEach(e => this.diagram.emit('elementAdd', { element: e }));
+  }
+
+  commitWithoutEvents() {
+    this.#actions.forEach(a => a());
   }
 }

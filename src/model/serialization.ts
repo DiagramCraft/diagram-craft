@@ -7,6 +7,7 @@ import { DiagramDocument } from './diagramDocument.ts';
 import { AbstractEdge, AbstractNode } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
 interface Reference {
   id: string;
@@ -200,6 +201,7 @@ const deserializeDiagrams = <T extends Diagram>(
     }
 
     const newDiagram = factory($d);
+    const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {
       const layer = new Layer(l.id, l.name, [], newDiagram);
       newDiagram.layers.add(layer);
@@ -212,7 +214,7 @@ const deserializeDiagrams = <T extends Diagram>(
         edgeLookup
       );
       elements.forEach(e => {
-        layer.addElement(e);
+        layer.addElement(e, uow);
       });
     }
     dest.push(newDiagram);

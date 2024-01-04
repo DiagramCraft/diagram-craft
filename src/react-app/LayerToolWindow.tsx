@@ -14,16 +14,12 @@ export const LayerToolWindow = () => {
     const onChange = () => {
       redraw();
     };
-    diagram.selectionState.on('change', onChange);
     diagram.on('change', onChange);
     diagram.on('elementRemove', onChange);
-    diagram.on('elementChange', onChange);
     diagram.on('elementAdd', onChange);
     return () => {
-      diagram.selectionState.off('change', onChange);
       diagram.off('change', onChange);
       diagram.off('elementRemove', onChange);
-      diagram.off('elementChange', onChange);
       diagram.off('elementAdd', onChange);
     };
   }, [diagram, redraw]);

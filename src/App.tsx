@@ -102,7 +102,7 @@ const DarkModeToggleButton = () => {
 };
 
 const App = () => {
-  const defaultDiagram = 1;
+  const defaultDiagram = 2;
   const [doc, setDoc] = useState(diagrams[defaultDiagram].document);
   const [$d, setDiagram] = useState(diagrams[defaultDiagram].document.diagrams[0]);
   const contextMenuTarget = useRef<

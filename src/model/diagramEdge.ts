@@ -277,6 +277,7 @@ export class DiagramEdge implements AbstractEdge {
         // Split the edge into two edges
         const element = elements[0] as DiagramNode;
 
+        const uow = new UnitOfWork(this.diagram);
         const newEdge = new DiagramEdge(
           newid(),
           { anchor: 0, node: element },
@@ -287,7 +288,8 @@ export class DiagramEdge implements AbstractEdge {
           this.layer
         );
         element.addEdge(0, newEdge);
-        this.layer.addElement(newEdge);
+        this.layer.addElement(newEdge, uow);
+        uow.commit();
 
         this.end = { anchor: 0, node: element };
         uow.updateElement(this);

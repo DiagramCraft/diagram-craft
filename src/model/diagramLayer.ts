@@ -5,17 +5,9 @@ import { DiagramElement } from './diagramElement.ts';
 import { Point } from '../geometry/point.ts';
 import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Box } from '../geometry/box.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
-export type LayerEvents = {
-  change: { layer: Layer };
-  elementChange: { element: DiagramElement };
-  elementAdd: { element: DiagramElement };
-  elementRemove: { element: DiagramElement };
-};
-
-// TODO: Maybe diagram can relay these events, instead of expliclitly calling
-//       diagram.emit
-export class Layer extends EventEmitter<LayerEvents> {
+export class Layer {
   // TODO: We should make this a ReadonlyArray
   elements: DiagramElement[] = [];
 
@@ -23,15 +15,16 @@ export class Layer extends EventEmitter<LayerEvents> {
   #locked = false;
 
   constructor(
-    public id: string,
-    public name: string,
+    public readonly id: string,
+    public readonly name: string,
     elements: ReadonlyArray<DiagramElement>,
     diagram: Diagram
   ) {
-    super();
     this.#diagram = diagram;
 
-    elements.forEach(e => this.addElement(e, false));
+    const uow = new UnitOfWork(diagram);
+    elements.forEach(e => this.addElement(e, uow));
+    uow.commitWithoutEvents();
   }
 
   isLocked() {
@@ -40,7 +33,6 @@ export class Layer extends EventEmitter<LayerEvents> {
 
   set locked(value: boolean) {
     this.#locked = value;
-    this.emit('change', { layer: this });
     this.#diagram.emit('change', { diagram: this.#diagram });
   }
 
@@ -96,20 +88,16 @@ export class Layer extends EventEmitter<LayerEvents> {
         this.elements = positions.map(e => e.element);
       }
     }
-    this.emit('change', { layer: this });
     this.#diagram.emit('change', { diagram: this.#diagram });
   }
 
-  addElement(element: DiagramElement, omitEvents = false) {
+  addElement(element: DiagramElement, uow: UnitOfWork) {
     if (!element.parent) this.elements.push(element);
     this.processElementForAdd(element);
-    if (!omitEvents) {
-      this.emit('elementAdd', { element });
-      this.#diagram.emit('elementAdd', { element });
-    }
+    uow.addElement(element);
   }
 
-  removeElement(element: DiagramElement) {
+  removeElement(element: DiagramElement, uow: UnitOfWork) {
     this.elements = this.elements.filter(e => e !== element);
 
     if (element.type === 'node') {
@@ -118,13 +106,7 @@ export class Layer extends EventEmitter<LayerEvents> {
       this.#diagram.edgeLookup.delete(element.id);
     }
 
-    this.#diagram.emit('elementRemove', { element });
-    this.emit('elementRemove', { element });
-  }
-
-  updateElement(element: DiagramElement) {
-    this.#diagram.emit('elementChange', { element });
-    this.emit('elementChange', { element });
+    uow.removeElement(element);
   }
 
   isAbove(layer: Layer) {

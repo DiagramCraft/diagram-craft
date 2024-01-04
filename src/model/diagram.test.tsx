@@ -29,10 +29,12 @@ describe('Diagram', () => {
     const layer2 = new Layer(newid(), 'Layer 2', [], diagram);
     diagram.layers.add(layer2);
 
+    const uow = new UnitOfWork(diagram);
     const node1 = new DiagramNode('1', 'a', bounds, diagram, layer1);
     const node2 = new DiagramNode('2', 'b', bounds, diagram, layer2);
-    layer1.addElement(node1);
-    layer2.addElement(node2);
+    layer1.addElement(node1, uow);
+    layer2.addElement(node2, uow);
+    uow.commit();
 
     expect(diagram.visibleElements()).toStrictEqual([node1, node2]);
     diagram.layers.toggleVisibility(layer1);
@@ -50,10 +52,12 @@ describe('Diagram', () => {
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());
     diagram.layers.add(new Layer('default', 'Default', [], diagram));
 
+    const uow = new UnitOfWork(diagram);
+
     const layer = diagram.layers.active;
 
     const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer);
-    diagram.layers.active.addElement(node1);
+    diagram.layers.active.addElement(node1, uow);
 
     const node2 = new DiagramNode(
       '2',
@@ -66,13 +70,13 @@ describe('Diagram', () => {
       diagram,
       layer
     );
-    diagram.layers.active.addElement(node2);
+    diagram.layers.active.addElement(node2, uow);
 
     const nodes = [node1, node2];
 
     const before = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: 0 };
     const after = { pos: { x: 0, y: 0 }, size: { w: 200, h: 200 }, rotation: Math.PI / 2 };
-    const uow = new UnitOfWork(diagram);
+
     diagram.transformElements(nodes, TransformFactory.fromTo(before, after), uow);
     uow.commit();
 

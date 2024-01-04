@@ -94,6 +94,7 @@ export class BezierPerformanceTest implements PerformanceTest {
     ];
   }
 }
+
 export const runBezierPerftest = () => {
   perftest(new BezierPerformanceTest());
 };

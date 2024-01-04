@@ -15,6 +15,7 @@ import { UndoableAction } from '../../model/undoManager.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { precondition } from '../../utils/assert.ts';
 import { Layer } from '../../model/diagramLayer.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -45,14 +46,18 @@ export class PasteUndoableAction implements UndoableAction {
   }
 
   undo() {
-    this.elements.forEach(e => {
-      e.layer!.removeElement(e);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.elements.forEach(e => {
+        e.layer!.removeElement(e, uow);
+      });
     });
   }
 
   redo() {
-    this.elements.forEach(e => {
-      this.layer.addElement(e);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.elements.forEach(e => {
+        this.layer.addElement(e, uow);
+      });
     });
   }
 }
@@ -236,9 +241,11 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   }
 
   private deleteSelection() {
-    for (const element of this.diagram.selectionState.elements) {
-      element.layer!.removeElement(element);
-    }
+    UnitOfWork.execute(this.diagram, uow => {
+      for (const element of this.diagram.selectionState.elements) {
+        element.layer!.removeElement(element, uow);
+      }
+    });
     this.diagram.selectionState.clear();
   }
 }
