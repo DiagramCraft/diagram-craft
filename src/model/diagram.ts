@@ -192,7 +192,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     }
 
     // Assign new layer
-    elements.forEach(e => (e.layer = layer));
+    elements.forEach(e => layer.addElement(e, uow));
 
     uow.commit();
 

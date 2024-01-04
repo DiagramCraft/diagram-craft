@@ -80,7 +80,7 @@ export class Layer {
   }
 
   addElement(element: DiagramElement, uow: UnitOfWork) {
-    if (!element.parent) this.#elements.push(element);
+    if (!element.parent && !this.#elements.includes(element)) this.#elements.push(element);
     this.processElementForAdd(element);
     uow.addElement(element);
   }
