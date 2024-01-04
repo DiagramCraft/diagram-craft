@@ -198,19 +198,11 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   set start(start: Endpoint) {
-    if (isConnected(this.#start) && isConnected(start)) {
-      // both before and after are connected
-      if (this.#start.node === start.node) {
-        this.#start.node.updateEdge(start.anchor, this);
-      } else {
-        this.#start.node.removeEdge(this);
-        start.node.addEdge(start.anchor, this);
-      }
-    } else if (isConnected(this.#start)) {
-      // before is connected, after is not
-      this.#start.node.removeEdge(this);
-    } else if (isConnected(start)) {
-      // before is not connected, after is connected
+    if (isConnected(this.#start)) {
+      this.#start.node.removeEdge(this.#start.anchor, this);
+    }
+
+    if (isConnected(start)) {
       start.node.addEdge(start.anchor, this);
     }
 
@@ -222,19 +214,11 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   set end(end: Endpoint) {
-    if (isConnected(this.#end) && isConnected(end)) {
-      // both before and after are connected
-      if (this.#end.node === end.node) {
-        this.#end.node.updateEdge(end.anchor, this);
-      } else {
-        this.#end.node.removeEdge(this);
-        end.node.addEdge(end.anchor, this);
-      }
-    } else if (isConnected(this.#end)) {
-      // before is connected, after is not
-      this.#end.node.removeEdge(this);
-    } else if (isConnected(end)) {
-      // before is not connected, after is connected
+    if (isConnected(this.#end)) {
+      this.#end.node.removeEdge(this.#end.anchor, this);
+    }
+
+    if (isConnected(end)) {
       end.node.addEdge(end.anchor, this);
     }
 
@@ -249,23 +233,11 @@ export class DiagramEdge implements AbstractEdge {
     const start = this.#start;
     const end = this.#end;
 
-    if (isConnected(this.#start)) {
-      this.#start.node.removeEdge(this);
-    }
+    // Need to "zero" the end so that the setters logic should work correctly
+    this.end = { position: Point.ORIGIN, anchor: 0 };
 
-    if (isConnected(this.#end)) {
-      this.#end.node.removeEdge(this);
-    }
-
-    this.#start = end;
-    this.#end = start;
-
-    if (isConnected(this.#start)) {
-      this.#start.node.addEdge(this.#start.anchor, this);
-    }
-    if (isConnected(this.#end)) {
-      this.#end.node.addEdge(this.#end.anchor, this);
-    }
+    this.start = end;
+    this.end = start;
   }
 
   invalidate() {

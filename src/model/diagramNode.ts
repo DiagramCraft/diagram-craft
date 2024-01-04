@@ -135,21 +135,12 @@ export class DiagramNode implements AbstractNode {
     return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
   }
 
-  removeEdge(edge: DiagramEdge) {
-    for (const [anchor, edges] of Object.entries(this.edges)) {
-      this.edges[anchor as unknown as number] = edges.filter(e => e !== edge);
-    }
+  removeEdge(anchor: number, edge: DiagramEdge) {
+    this.edges[anchor] = this.edges[anchor].filter(e => e !== edge);
   }
 
   addEdge(anchor: number, edge: DiagramEdge) {
     this.edges[anchor] = [...(this.edges[anchor] ?? []), edge];
-  }
-
-  updateEdge(anchor: number, edge: DiagramEdge) {
-    if (this.edges[anchor]?.includes(edge)) return;
-
-    this.removeEdge(edge);
-    this.addEdge(anchor, edge);
   }
 
   getAnchorPosition(anchor: number) {
