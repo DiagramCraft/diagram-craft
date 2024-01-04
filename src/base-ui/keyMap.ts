@@ -22,7 +22,7 @@ import { ApplicationState } from './ApplicationState.ts';
 import { UserState } from './UserState.ts';
 import { sidebarActions } from '../react-app/actions/SidebarAction.tsx';
 import { groupActions } from './actions/groupAction.ts';
-import { saveActions } from './actions/SaveAction.tsx';
+import { saveActions } from './actions/saveAction.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
