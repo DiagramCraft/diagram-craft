@@ -30,15 +30,6 @@ export const Box = {
       rotation: b.rotation
     });
   },
-  /*
-  fromLine: (l: Line): Box => {
-    return {
-      pos: l.from,
-      size: { w: l.to.x - l.from.x, h: l.to.y - l.from.y },
-      rotation: 0
-    };
-  },
-*/
   fromCorners: (a: Point, b: Point): Box => {
     return {
       pos: { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) },
@@ -46,28 +37,6 @@ export const Box = {
       rotation: 0
     };
   },
-  /*
-  fromDomRect: (rect: DOMRect): Box => {
-    return {
-      pos: { x: rect.x, y: rect.y },
-      size: { w: rect.width, h: rect.height },
-      rotation: 0
-    };
-  },
-
-  fromElement: (el: Element): Box => {
-    const rect = el.getBoundingClientRect();
-    return {
-      pos: { x: rect.x, y: rect.y },
-      size: { w: rect.width, h: rect.height },
-      rotation: 0
-    };
-  },
-
-  asDomRect: (b: Box): DOMRect => {
-    return new DOMRect(b.pos.x, b.pos.y, b.size.w, b.size.h);
-  },*/
-
   center: (b: Box) => {
     return {
       x: b.pos.x + b.size.w / 2,
@@ -85,7 +54,6 @@ export const Box = {
     );
   },
 
-  // TODO: This should not be part of the Box API
   boundingBox: (boxes: Box[], forceAxisAligned = false): Box => {
     let minX = Number.MAX_SAFE_INTEGER;
     let minY = Number.MAX_SAFE_INTEGER;
@@ -162,9 +130,6 @@ export const Box = {
     return corners.map(c => Point.rotateAround(c, box.rotation, Box.center(box)));
   },
 
-  // TODO: This can be used in a large number of situations
-  //       ... and it can be optimized to not use the corners method
-  //       ... except when rotating
   line: (box: Box, dir: Direction) => {
     const corners = Box.corners(box);
     if (dir === 'n') return Line.of(corners[0], corners[1]);
@@ -216,13 +181,6 @@ export const Box = {
     };
   },
 
-  minBounds: (b: Box) => {
-    return { x: Math.min(b.pos.x, b.pos.x + b.size.w), y: Math.min(b.pos.y, b.pos.y + b.size.h) };
-  },
-  maxBounds: (b: Box) => {
-    return { x: Math.max(b.pos.x, b.pos.x + b.size.w), y: Math.max(b.pos.y, b.pos.y + b.size.h) };
-  },
-
   withX: (b: Box, x: number) => ({
     ...b,
     size: { ...b.size },
@@ -237,8 +195,37 @@ export const Box = {
   })
   /*
   withW: (b: Box, w: number) => ({ ...b, size: { ...b.size, w }, rotation: b.rotation }),
+
   withH: (b: Box, h: number) => ({ ...b, size: { ...b.size, h }, rotation: b.rotation }),
+
   withRotation: (b: Box, r: number) => ({ ...b, size: { ...b.size }, rotation: r })
 
-   */
+  fromLine: (l: Line): Box => {
+    return {
+      pos: l.from,
+      size: { w: l.to.x - l.from.x, h: l.to.y - l.from.y },
+      rotation: 0
+    };
+  },
+
+  fromDomRect: (rect: DOMRect): Box => {
+    return {
+      pos: { x: rect.x, y: rect.y },
+      size: { w: rect.width, h: rect.height },
+      rotation: 0
+    };
+  },
+
+  fromElement: (el: Element): Box => {
+    const rect = el.getBoundingClientRect();
+    return {
+      pos: { x: rect.x, y: rect.y },
+      size: { w: rect.width, h: rect.height },
+      rotation: 0
+    };
+  },
+
+  asDomRect: (b: Box): DOMRect => {
+    return new DOMRect(b.pos.x, b.pos.y, b.size.w, b.size.h);
+  },*/
 };

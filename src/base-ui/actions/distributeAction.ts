@@ -17,6 +17,14 @@ export const distributeActions: ActionMapFactory = (state: State) => ({
   DISTRIBUTE_VERTICAL: new DistributeAction(state.diagram, 'vertical')
 });
 
+const minBounds = (b: Box) => {
+  return { x: Math.min(b.pos.x, b.pos.x + b.size.w), y: Math.min(b.pos.y, b.pos.y + b.size.h) };
+};
+
+const maxBounds = (b: Box) => {
+  return { x: Math.max(b.pos.x, b.pos.x + b.size.w), y: Math.max(b.pos.y, b.pos.y + b.size.h) };
+};
+
 export class DistributeAction extends AbstractSelectionAction {
   constructor(
     protected readonly diagram: Diagram,
@@ -42,12 +50,12 @@ export class DistributeAction extends AbstractSelectionAction {
 
   private calculateAndUpdateBounds(orientation: 'x' | 'y', size: 'w' | 'h'): void {
     const elementsInOrder = this.diagram.selectionState.elements.toSorted(
-      (a, b) => Box.minBounds(a.bounds)[orientation] - Box.minBounds(b.bounds)[orientation]
+      (a, b) => minBounds(a.bounds)[orientation] - minBounds(b.bounds)[orientation]
     );
 
     const minimal = elementsInOrder[0];
-    const min = Box.minBounds(minimal.bounds)[orientation];
-    const max = Box.maxBounds(elementsInOrder.at(-1)!.bounds)[orientation];
+    const min = minBounds(minimal.bounds)[orientation];
+    const max = maxBounds(elementsInOrder.at(-1)!.bounds)[orientation];
 
     const totalSpace =
       max - min - this.diagram.selectionState.elements.reduce((p, c) => p + c.bounds.size[size], 0);
