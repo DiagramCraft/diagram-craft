@@ -22,18 +22,20 @@ export type Anchor = {
   clip?: boolean;
 };
 
+export type LabelNodeType =
+  | 'parallel'
+  | 'perpendicular'
+  | 'perpendicular-readable'
+  | 'parallel-readable'
+  | 'horizontal'
+  | 'vertical'
+  | 'independent';
+
 export type LabelNode = {
   id: string;
   offset: Point;
   timeOffset: number;
-  type:
-    | 'parallel'
-    | 'perpendicular'
-    | 'perpendicular-readable'
-    | 'parallel-readable'
-    | 'horizontal'
-    | 'vertical'
-    | 'independent';
+  type: LabelNodeType;
 };
 
 export interface AbstractEdge extends AbstractElement {

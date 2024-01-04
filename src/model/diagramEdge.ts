@@ -11,9 +11,10 @@ import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { DiagramElement } from './diagramElement.ts';
+import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { UndoableAction } from './undoManager.ts';
-import { round } from '../utils/math.ts';
+import { isDifferent } from '../utils/math.ts';
+import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 
 export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
 export type Endpoint = ConnectedEndpoint | { position: Point };
@@ -74,7 +75,9 @@ export class DiagramEdge implements AbstractEdge {
         this.invalidate();
       } else if (this.#labelNodes?.find(ln => ln.node === element)) {
         // TODO: Note that this can cause infinite recursion
-        this.adjustLabelNodePosition();
+        UnitOfWork.execute(this.diagram, uow => {
+          this.adjustLabelNodePosition(uow);
+        });
       }
     });
   }
@@ -261,10 +264,13 @@ export class DiagramEdge implements AbstractEdge {
   }
 
   invalidate() {
-    this.recalculateIntersections(new UnitOfWork(this.diagram), true);
-    this.adjustLabelNodePosition();
+    const uow = new UnitOfWork(this.diagram);
+    this.recalculateIntersections(uow, true);
+    this.adjustLabelNodePosition(uow);
+    uow.commit();
   }
 
+  // TODO: Not sure we want UI logic in the model
   onDrop(
     coord: Point,
     elements: ReadonlyArray<DiagramElement>,
@@ -272,63 +278,77 @@ export class DiagramEdge implements AbstractEdge {
     _changeType: ChangeType,
     operation: string
   ): UndoableAction | undefined {
-    if (elements.length === 1 && elements[0].type === 'node') {
-      if (operation === 'split') {
-        // Split the edge into two edges
-        const element = elements[0] as DiagramNode;
+    if (elements.length !== 1 || !isNode(elements[0])) return undefined;
 
-        const uow = new UnitOfWork(this.diagram);
-        const newEdge = new DiagramEdge(
-          newid(),
-          { anchor: 0, node: element },
-          this.end,
-          deepClone(this.props),
-          [],
-          this.diagram,
-          this.layer
-        );
-        element.addEdge(0, newEdge);
-        this.layer.addElement(newEdge, uow);
-        uow.commit();
-
-        this.end = { anchor: 0, node: element };
-        uow.updateElement(this);
-      } else {
-        // Attach as label
-        const element = elements[0] as DiagramNode;
-
-        const path = this.path();
-        const projection = path.projectPoint(coord);
-
-        this.labelNodes = [
-          ...(this.labelNodes ?? []),
-          {
-            id: element.id,
-            node: element,
-            offset: Point.ORIGIN,
-            timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
-            type: 'horizontal'
-          }
-        ];
-
-        element.props.labelForEdgeId = this.id;
-
-        // TODO: Perhaps create a helper to add an element as a label edge
-        if (this.parent) {
-          if (element.parent) {
-            element.parent.children = element.parent.children.filter(c => c !== element);
-            uow.updateElement(element.parent);
-          }
-
-          element.parent = this.parent;
-          this.parent.children = [...this.parent.children, element];
-          uow.updateElement(this.parent);
-        }
-
-        uow.updateElement(element);
-        uow.updateElement(this);
-      }
+    if (operation === 'split') {
+      return this.onDropSplit(elements[0], uow);
+    } else {
+      return this.onDropAttachAsLabel(elements[0], coord, uow);
     }
+  }
+
+  private onDropSplit(element: DiagramNode, uow: UnitOfWork): UndoableAction | undefined {
+    // We will attach to the center point anchor
+    const anchor = 0;
+
+    // TODO: This requires some work to support dropping on multi-segment edges
+    const newEdge = new DiagramEdge(
+      newid(),
+      { anchor, node: element },
+      this.end,
+      deepClone(this.props),
+      [],
+      this.diagram,
+      this.layer
+    );
+    element.addEdge(anchor, newEdge);
+    this.layer.addElement(newEdge, uow);
+
+    this.end = { anchor: anchor, node: element };
+
+    uow.updateElement(this);
+
+    // TODO: Support undo
+    return undefined;
+  }
+
+  private onDropAttachAsLabel(
+    element: DiagramNode,
+    coord: Point,
+    uow: UnitOfWork
+  ): UndoableAction | undefined {
+    const path = this.path();
+    const projection = path.projectPoint(coord);
+
+    this.labelNodes = [
+      ...(this.labelNodes ?? []),
+      {
+        id: element.id,
+        node: element,
+        offset: Point.ORIGIN,
+        timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
+        type: 'horizontal'
+      }
+    ];
+
+    element.props.labelForEdgeId = this.id;
+
+    // TODO: Perhaps create a helper to add an element as a label edge
+    if (this.parent) {
+      if (element.parent) {
+        element.parent.children = element.parent.children.filter(c => c !== element);
+        uow.updateElement(element.parent);
+      }
+
+      element.parent = this.parent;
+      this.parent.children = [...this.parent.children, element];
+      uow.updateElement(this.parent);
+    }
+
+    uow.updateElement(element);
+    uow.updateElement(this);
+
+    // TODO: Support undo
     return undefined;
   }
 
@@ -339,73 +359,75 @@ export class DiagramEdge implements AbstractEdge {
     const path = this.path();
     const intersections: Intersection[] = [];
     for (const edge of this.diagram.visibleElements()) {
-      if (edge === this) currentEdgeHasBeenSeen = true;
+      if (edge === this) {
+        currentEdgeHasBeenSeen = true;
+        continue;
+      }
+      if (!isEdge(edge)) continue;
 
-      if (edge.type === 'edge' && edge.id !== this.id) {
-        const otherPath = edge.path();
-        const intersectionsWithOtherPath = path.intersections(otherPath);
-        intersections.push(
-          ...intersectionsWithOtherPath.map(e => ({
-            point: e.point,
-            type: (currentEdgeHasBeenSeen ? 'below' : 'above') as Intersection['type']
-          }))
-        );
-        if (propagate) {
-          edge.recalculateIntersections(uow, false);
-        }
+      const otherPath = edge.path();
+      const intersectionsWithOther = path.intersections(otherPath);
+      intersections.push(
+        ...intersectionsWithOther.map(e => ({
+          point: e.point,
+          type: (currentEdgeHasBeenSeen ? 'below' : 'above') as Intersection['type']
+        }))
+      );
+      if (propagate) {
+        edge.recalculateIntersections(uow, false);
       }
     }
+
+    // TODO: Maybe use deep-equals here?
     if (this.#intersections !== intersections) {
       this.#intersections = intersections;
       uow.updateElement(this);
     }
   }
 
-  private adjustLabelNodePosition() {
-    if (!this.labelNodes) return;
+  private adjustLabelNodePosition(uow: UnitOfWork) {
+    if (!this.labelNodes || this.labelNodes.length === 0) return;
 
     const path = this.path();
 
     for (const labelNode of this.labelNodes) {
-      const lengthOffsetOnPath = TimeOffsetOnPath.toLengthOffsetOnPath(
-        { pathT: labelNode.timeOffset },
-        path
-      );
-      const refPoint = path.pointAt(lengthOffsetOnPath);
+      const pathD = TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset }, path);
+      const attachmentPoint = path.pointAt(pathD);
 
-      const currentCenterPoint = Box.center(labelNode.node.bounds);
-
-      let newCenterPoint = Point.add(refPoint, labelNode.offset);
+      let newCenterPoint = Point.add(attachmentPoint, labelNode.offset);
       let newRotation = labelNode.node.bounds.rotation;
-      if (labelNode.type.startsWith('parallel') || labelNode.type.startsWith('perpendicular')) {
-        const tangent = path.tangentAt(lengthOffsetOnPath);
-        newRotation = Vector.angle(tangent);
+      if (isParallel(labelNode.type) || isPerpendicular(labelNode.type)) {
+        const tangent = path.tangentAt(pathD);
 
-        if (labelNode.type.startsWith('perpendicular')) {
-          newRotation += Math.PI / 2;
+        if (isParallel(labelNode.type)) {
+          newRotation = Vector.angle(tangent);
+        } else {
+          newRotation = Vector.angle(tangent) + Math.PI / 2;
         }
 
-        if (labelNode.type.endsWith('-readable')) {
+        if (isReadable(labelNode.type)) {
           if (newRotation > Math.PI / 2) newRotation -= Math.PI;
           if (newRotation < -Math.PI / 2) newRotation += Math.PI;
         }
 
         newCenterPoint = Point.add(
-          refPoint,
+          attachmentPoint,
           Point.rotate({ x: -labelNode.offset.x, y: 0 }, Vector.angle(tangent) + Math.PI / 2)
         );
-      } else if (labelNode.type === 'horizontal') {
+      } else if (isHorizontal(labelNode.type)) {
         newRotation = 0;
-      } else if (labelNode.type === 'vertical') {
+      } else if (isVertical(labelNode.type)) {
         newRotation = Math.PI / 2;
       }
 
       // Note, using rounding here to avoid infinite recursion
-      if (
-        round(newCenterPoint.x) !== round(currentCenterPoint.x) ||
-        round(newCenterPoint.y) !== round(currentCenterPoint.y) ||
-        round(newRotation) !== round(labelNode.node.bounds.rotation)
-      ) {
+      const currentCenterPoint = Box.center(labelNode.node.bounds);
+      const hasChanged =
+        isDifferent(newCenterPoint.x, currentCenterPoint.x) ||
+        isDifferent(newCenterPoint.y, currentCenterPoint.y) ||
+        isDifferent(newRotation, labelNode.node.bounds.rotation);
+
+      if (hasChanged) {
         labelNode.node.bounds = {
           ...labelNode.node.bounds,
           rotation: newRotation,
@@ -414,7 +436,7 @@ export class DiagramEdge implements AbstractEdge {
             y: newCenterPoint.y - labelNode.node.bounds.size.h / 2
           }
         };
-        this.diagram.updateElement(labelNode.node);
+        uow.updateElement(labelNode.node);
       }
     }
   }
