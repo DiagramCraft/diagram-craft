@@ -144,10 +144,15 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     // Cannot move an element into itself, so abort if this is the case
     if (elements.some(e => e === ref?.element)) return;
 
+    const uow = new UnitOfWork(this);
+
     // Remove from existing layers
     const sourceLayers = new Set(elementLayers);
     for (const l of sourceLayers) {
-      l.elements = l.elements.filter(e => !elements.includes(e));
+      l.setElements(
+        l.elements.filter(e => !elements.includes(e)),
+        uow
+      );
     }
 
     // Remove from groups
@@ -162,9 +167,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     // Move into the new layer
     if (ref === undefined) {
       if (layer.isAbove(topMostLayer)) {
-        layer.elements.push(...elements);
+        layer.setElements([...layer.elements, ...elements], uow);
       } else {
-        layer.elements.unshift(...elements);
+        layer.setElements([...elements, ...layer.elements], uow);
       }
     } else if (ref.element.type === 'node' && ref.element.parent) {
       const parent = ref.element.parent;
@@ -182,9 +187,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
       const idx = layer.elements.indexOf(ref.element);
       if (ref.relation === 'above') {
-        layer.elements.splice(idx + 1, 0, ...elements);
+        layer.setElements(layer.elements.toSpliced(idx + 1, 0, ...elements), uow);
       } else if (ref.relation === 'below') {
-        layer.elements.splice(idx, 0, ...elements);
+        layer.setElements(layer.elements.toSpliced(idx, 0, ...elements), uow);
       } else if (ref.element.type === 'node') {
         ref.element.children = [...ref.element.children, ...elements];
       }
@@ -192,6 +197,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
     // Assign new layer
     elements.forEach(e => (e.layer = layer));
+
+    uow.commit();
 
     this.update();
   }

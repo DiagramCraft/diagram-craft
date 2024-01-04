@@ -52,6 +52,7 @@ export class UnitOfWork {
     this.#actions.forEach(a => a());
 
     // TODO: Need to think about the order here a bit better to optimize the number of events
+    //       ... can be only CHANGE, ADD, REMOVE, ADD_CHANGE
     this.#elementsToRemove.forEach(e => this.diagram.emit('elementRemove', { element: e }));
     this.#elementsToUpdate.forEach(e => this.diagram.emit('elementChange', { element: e }));
     this.#elementsToAdd.forEach(e => this.diagram.emit('elementAdd', { element: e }));

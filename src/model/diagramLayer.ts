@@ -8,11 +8,10 @@ import { Box } from '../geometry/box.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 
 export class Layer {
-  // TODO: We should make this a ReadonlyArray
-  elements: DiagramElement[] = [];
+  #elements: Array<DiagramElement> = [];
+  #locked = false;
 
   readonly #diagram: Diagram;
-  #locked = false;
 
   constructor(
     public readonly id: string,
@@ -25,6 +24,10 @@ export class Layer {
     const uow = new UnitOfWork(diagram);
     elements.forEach(e => this.addElement(e, uow));
     uow.commitWithoutEvents();
+  }
+
+  get elements(): ReadonlyArray<DiagramElement> {
+    return this.#elements;
   }
 
   isLocked() {
@@ -69,7 +72,7 @@ export class Layer {
       if (parent) {
         parent.children = withPositions.map(e => e.element as DiagramNode);
       } else {
-        this.elements = withPositions.map(e => e.element);
+        this.#elements = withPositions.map(e => e.element);
       }
       dest.set(parent, oldPositions);
     }
@@ -85,20 +88,20 @@ export class Layer {
       if (parent) {
         parent.children = positions.map(e => e.element as DiagramNode);
       } else {
-        this.elements = positions.map(e => e.element);
+        this.#elements = positions.map(e => e.element);
       }
     }
     this.#diagram.emit('change', { diagram: this.#diagram });
   }
 
   addElement(element: DiagramElement, uow: UnitOfWork) {
-    if (!element.parent) this.elements.push(element);
+    if (!element.parent) this.#elements.push(element);
     this.processElementForAdd(element);
     uow.addElement(element);
   }
 
   removeElement(element: DiagramElement, uow: UnitOfWork) {
-    this.elements = this.elements.filter(e => e !== element);
+    this.#elements = this.elements.filter(e => e !== element);
 
     if (element.type === 'node') {
       this.#diagram.nodeLookup.delete(element.id);
@@ -107,6 +110,25 @@ export class Layer {
     }
 
     uow.removeElement(element);
+  }
+
+  // TODO: Make this elements: ReadonlyArray<DiagramElement>
+  setElements(elements: Array<DiagramElement>, uow: UnitOfWork) {
+    const added = elements.filter(e => !this.#elements.includes(e));
+    const removed = this.#elements.filter(e => !elements.includes(e));
+    this.#elements = elements;
+    for (const e of added) {
+      this.processElementForAdd(e);
+      uow.addElement(e);
+    }
+    for (const e of removed) {
+      if (e.type === 'node') {
+        this.#diagram.nodeLookup.delete(e.id);
+      } else if (e.type === 'edge') {
+        this.#diagram.edgeLookup.delete(e.id);
+      }
+      uow.removeElement(e);
+    }
   }
 
   isAbove(layer: Layer) {
