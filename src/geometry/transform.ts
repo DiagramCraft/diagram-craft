@@ -126,7 +126,6 @@ export class Rotation implements Transform {
   }
 }
 
-// TODO: For this to work, we need to keep a shear x and shear y on the node
 export class Shear implements Transform {
   constructor(
     private readonly amount: number,
@@ -155,8 +154,6 @@ export class Shear implements Transform {
     return new Shear(-this.amount, this.axis);
   }
 }
-
-// TODO: We probably want to add flipX and flipY
 
 export const TransformFactory = {
   fromTo: (before: Box, after: Box): Transform[] => {

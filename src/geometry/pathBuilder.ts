@@ -10,7 +10,7 @@ export type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, 
 export type RawCurveSegment = ['T', number, number];
 export type RawQuadSegment = ['Q', number, number, number, number];
 
-export type Segment =
+export type RawSegment =
   | RawCubicSegment
   | RawLineSegment
   | RawArcSegment
@@ -31,7 +31,7 @@ export const unitCoordinateSystem = (b: Box) => {
 
 export class PathBuilder {
   private start: Point | undefined;
-  private path: Segment[] = [];
+  private path: RawSegment[] = [];
   private rotation: number = 0;
   private centerOfRotation: Point = Point.ORIGIN;
 
@@ -93,8 +93,8 @@ export class PathBuilder {
 
   getPath() {
     return new Path(
-      this.applyPathRotation(this.path),
-      Point.ofTuple(this.applyPointRotationArray(this.start ?? Point.ORIGIN))
+      Point.ofTuple(this.applyPointRotationArray(this.start ?? Point.ORIGIN)),
+      this.applyPathRotation(this.path)
     );
   }
 
@@ -103,7 +103,7 @@ export class PathBuilder {
     return [np.x, np.y];
   }
 
-  private applyPathRotation(path: Segment[]) {
+  private applyPathRotation(path: RawSegment[]) {
     return path.map(s => {
       switch (s[0]) {
         case 'L':

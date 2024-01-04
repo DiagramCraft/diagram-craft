@@ -31,6 +31,15 @@ export type Intersection = {
   type: 'above' | 'below';
 };
 
+const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (!Point.isEqual(a[i].point, b[i].point)) return false;
+    if (a[i].type !== b[i].type) return false;
+  }
+  return true;
+};
+
 export class DiagramEdge implements AbstractEdge {
   readonly id: string;
   readonly type = 'edge';
@@ -272,8 +281,7 @@ export class DiagramEdge implements AbstractEdge {
       }
     }
 
-    // TODO: Maybe use deep-equals here?
-    if (this.#intersections !== intersections) {
+    if (!intersectionListIsSame(intersections, this.#intersections)) {
       this.#intersections = intersections;
       uow.updateElement(this);
     }

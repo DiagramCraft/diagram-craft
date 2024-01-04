@@ -167,9 +167,9 @@ const addLineHop = (dest: Path[], before: Path, after: Path, type: string, size:
     const start = before.segments.at(-1)!.end;
 
     if (type === 'above-arc') {
-      dest.push(new Path([['A', hSize, hSize, 0, 1, 1, end.x, end.y]], start));
+      dest.push(new Path(start, [['A', hSize, hSize, 0, 1, 1, end.x, end.y]]));
     } else if (type === 'below-arc') {
-      dest.push(new Path([['A', hSize, hSize, 0, 1, 0, end.x, end.y]], start));
+      dest.push(new Path(start, [['A', hSize, hSize, 0, 1, 0, end.x, end.y]]));
     } else if (type === 'below-line') {
       const tangentStart = before.tangentAt({ pathD: before.length() - 0.01 });
       const tangentEnd = after.tangentAt({ pathD: 0.01 });
@@ -190,8 +190,8 @@ const addLineHop = (dest: Path[], before: Path, after: Path, type: string, size:
         return;
       }
 
-      dest.push(new Path([['L', startEnd.x, startEnd.y]], startStart));
-      dest.push(new Path([['L', endEnd.x, endEnd.y]], endStart));
+      dest.push(new Path(startStart, [['L', startEnd.x, startEnd.y]]));
+      dest.push(new Path(endStart, [['L', endEnd.x, endEnd.y]]));
     } else {
       VERIFY_NOT_REACHED();
     }

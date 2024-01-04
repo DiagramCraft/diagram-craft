@@ -1,20 +1,19 @@
 import { Point } from './point.ts';
 import { Vector } from './vector.ts';
 import { Line } from './line.ts';
-import { BezierUtils, CubicBezier } from './bezier.ts';
-import { RawCubicSegment, RawLineSegment, RawQuadSegment, Segment } from './pathBuilder.ts';
+import { CubicBezier } from './bezier.ts';
+import { RawSegment } from './pathBuilder.ts';
 import { Projection } from './path.ts';
 import { LengthOffsetOnPath } from './pathPosition.ts';
-import { NotImplementedYet } from '../utils/assert.ts';
 
-type NormalizedSegment = RawCubicSegment | RawQuadSegment | RawLineSegment;
+//type NormalizedSegment = RawCubicSegment | RawQuadSegment | RawLineSegment;
 
 export interface PathSegment {
   length(): number;
   point(t: number): Point;
   intersectionsWith(other: PathSegment): Point[] | undefined;
   projectPoint(point: Point): Projection;
-  asRawSegments(): Segment[];
+  raw(): RawSegment[];
   split(t: number): [PathSegment, PathSegment];
   tAtLength(length: number): number;
   lengthAtT(t: number): number;
@@ -25,7 +24,7 @@ export interface PathSegment {
   //splitAt(t: number): [PathSegment, PathSegment];
   //project(p: Point): { t: number, distance: number };
 
-  normalize(): NormalizedSegment[];
+  //normalize(): NormalizedSegment[];
 
   start: Point;
   end: Point;
@@ -37,7 +36,7 @@ export class LineSegment implements PathSegment {
     public readonly end: Point
   ) {}
 
-  asRawSegments(): Segment[] {
+  raw(): RawSegment[] {
     return [['L', this.end.x, this.end.y]];
   }
 
@@ -99,9 +98,9 @@ export class LineSegment implements PathSegment {
     return Vector.normalize(Vector.from(this.start, this.end));
   }
 
-  normalize(): NormalizedSegment[] {
+  /*normalize(): NormalizedSegment[] {
     return [['L', this.end.x, this.end.y]];
-  }
+  }*/
 }
 
 export class CubicSegment extends CubicBezier implements PathSegment {
@@ -122,7 +121,7 @@ export class CubicSegment extends CubicBezier implements PathSegment {
     ];
   }
 
-  asRawSegments(): Segment[] {
+  raw(): RawSegment[] {
     return [['C', this.p1.x, this.p1.y, this.p2.x, this.p2.y, this.end.x, this.end.y]];
   }
 
@@ -136,9 +135,9 @@ export class CubicSegment extends CubicBezier implements PathSegment {
     }
   }
 
-  normalize(): NormalizedSegment[] {
+  /*normalize(): NormalizedSegment[] {
     return [['C', this.p1.x, this.p1.y, this.p2.x, this.p2.y, this.end.x, this.end.y]];
-  }
+  }*/
 }
 
 export const makeCurveSegment = (start: Point, end: Point, previous: QuadSegment): CubicSegment => {
@@ -172,11 +171,13 @@ export class QuadSegment extends CubicSegment {
     this.quadP1 = p1;
   }
 
-  normalize(): NormalizedSegment[] {
+  /*normalize(): NormalizedSegment[] {
     return [['Q', this.p1.x, this.p1.y, this.end.x, this.end.y]];
-  }
+  }*/
 }
 
+// TODO: Do we really need the ArcSegment
+/*
 export class ArcSegment implements PathSegment {
   private _normalized: RawCubicSegment[] | undefined;
   private _segmentList: SegmentList | undefined;
@@ -191,7 +192,7 @@ export class ArcSegment implements PathSegment {
     public readonly end: Point
   ) {}
 
-  asRawSegments(): Segment[] {
+  asRawSegments(): RawSegment[] {
     return this.segmentList.segments.flatMap(s => s.asRawSegments()) ?? [];
   }
 
@@ -286,6 +287,8 @@ export class ArcSegment implements PathSegment {
     return this._segmentList;
   }
 }
+
+ */
 
 export class SegmentList {
   constructor(public readonly segments: PathSegment[]) {}

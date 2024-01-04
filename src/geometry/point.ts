@@ -1,5 +1,5 @@
 import { Vector } from './vector.ts';
-import { round } from '../utils/math.ts';
+import { isSame, round } from '../utils/math.ts';
 
 export type Point = Readonly<{
   x: number;
@@ -33,7 +33,7 @@ export const Point = {
   },
 
   isEqual: (a: Point, b: Point) => {
-    return a.x === b.x && a.y === b.y;
+    return isSame(a.x, b.x) && isSame(a.y, b.y);
   },
 
   squareDistance(posA: Point, posB: Point) {
