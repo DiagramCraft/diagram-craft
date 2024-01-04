@@ -29,7 +29,7 @@ export class DuplicateAction extends AbstractSelectionAction {
     const uow = new UnitOfWork(this.diagram);
     for (const el of this.diagram.selectionState.nodes) {
       const newEl = el.duplicate();
-      newEl.transform([new Translation({ x: OFFSET, y: OFFSET })], uow, 'non-interactive');
+      newEl.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
       newElements.push(newEl);
     }
 

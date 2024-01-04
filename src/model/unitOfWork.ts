@@ -3,13 +3,18 @@ import { Diagram } from './diagram.ts';
 
 type Callback = () => void;
 
+type ChangeType = 'interactive' | 'non-interactive';
+
 export class UnitOfWork {
   #elementsToUpdate = new Map<string, DiagramElement>();
   #elementsToRemove = new Map<string, DiagramElement>();
   #elementsToAdd = new Map<string, DiagramElement>();
   #actions = new Map<string, Callback>();
 
-  constructor(readonly diagram: Diagram) {}
+  constructor(
+    readonly diagram: Diagram,
+    public readonly changeType: ChangeType = 'non-interactive'
+  ) {}
 
   static updateElement(element: DiagramElement) {
     element.diagram.emit('elementChange', { element: element });

@@ -18,9 +18,6 @@ import { DiagramDocument } from './diagramDocument.ts';
 
 export type Canvas = Omit<Box, 'rotation'>;
 
-// TODO: Maybe we could move this into the UnitOfWork instead of passing around a parameter
-export type ChangeType = 'interactive' | 'non-interactive';
-
 export type DiagramEvents = {
   /* Diagram props, canvas have changed, or a large restructure of
    * elements have occured (e.g. change of stacking order)
@@ -207,11 +204,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     elements: ReadonlyArray<DiagramElement>,
     transforms: ReadonlyArray<Transform>,
     uow: UnitOfWork,
-    type: ChangeType = 'non-interactive',
     filter: (e: DiagramElement) => boolean = () => true
   ) {
     for (const el of elements) {
-      if (filter(el)) el.transform(transforms, uow, type);
+      if (filter(el)) el.transform(transforms, uow);
     }
 
     // We do this in a separate loop to as nodes might move which will

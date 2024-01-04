@@ -14,7 +14,6 @@ import { Scale, Transform } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
-import { ChangeType } from '../../model/diagram.ts';
 
 declare global {
   interface NodeProps {
@@ -94,15 +93,10 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     return pathBuilder;
   }
 
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    uow: UnitOfWork,
-    changeType: ChangeType
-  ) {
+  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork) {
     if (transforms.find(t => t instanceof Scale)) return;
     for (const child of node.children) {
-      child.transform(transforms, uow, changeType, true);
+      child.transform(transforms, uow, true);
     }
   }
 
@@ -161,17 +155,17 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     return undefined;
   }
 
-  onChildChanged(node: DiagramNode, uow: UnitOfWork, changeType: ChangeType) {
-    if (changeType === 'interactive') return;
+  onChildChanged(node: DiagramNode, uow: UnitOfWork) {
+    if (uow.changeType === 'interactive') return;
 
-    this.applyLayout(node, uow, changeType);
+    this.applyLayout(node, uow);
   }
 
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
-    this.applyLayout(node, uow, 'non-interactive');
+    this.applyLayout(node, uow);
   }
 
-  private applyLayout(node: DiagramNode, uow: UnitOfWork, changeType: 'non-interactive') {
+  private applyLayout(node: DiagramNode, uow: UnitOfWork) {
     let newBounds: Box;
     if (node.props.container?.layout === 'horizontal') {
       // Sort children by x position
@@ -242,7 +236,7 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     this.updateBounds(node, newBounds, uow);
     if (node.parent) {
       const parentDef = node.parent.getNodeDefinition();
-      parentDef.onChildChanged(node.parent, uow, changeType);
+      parentDef.onChildChanged(node.parent, uow);
     }
   }
 

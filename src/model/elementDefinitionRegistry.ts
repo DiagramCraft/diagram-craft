@@ -6,7 +6,6 @@ import { UnitOfWork } from './unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { UndoableAction } from './undoManager.ts';
-import { ChangeType } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 
@@ -52,19 +51,13 @@ export interface NodeDefinition {
   // TODO: This should support adding children and more than just the size
   getInitialConfig(): { size: Extent };
 
-  onChildChanged(node: DiagramNode, uow: UnitOfWork, chanegType: ChangeType): void;
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    uow: UnitOfWork,
-    changeType: ChangeType
-  ): void;
+  onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
+  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void;
   onDrop(
     coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
-    changeType: ChangeType,
     operation: string
   ): UndoableAction | undefined;
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
@@ -102,7 +95,6 @@ export interface EdgeDefinition {
     edge: DiagramEdge,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
-    changeType: ChangeType,
     operation: string
   ): UndoableAction | undefined;
 }

@@ -1,6 +1,6 @@
 import { Box } from '../geometry/box.ts';
 import { Transform } from '../geometry/transform.ts';
-import { ChangeType, Diagram } from './diagram.ts';
+import { Diagram } from './diagram.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
@@ -120,7 +120,7 @@ export class DiagramEdge implements AbstractEdge {
     return buildEdgePath(this, this.props.routing?.rounding ?? 0);
   }
 
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, _type: ChangeType) {
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
     this.bounds = Transform.box(this.bounds, ...transforms);
 
     this.waypoints = this.waypoints?.map(w => {

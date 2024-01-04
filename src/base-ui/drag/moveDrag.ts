@@ -77,12 +77,11 @@ export class MoveDrag extends AbstractDrag {
     // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
     if (isDuplicateDrag && !this.#hasDuplicatedSelection) {
       // Reset current selection back to original
-      const uow = new UnitOfWork(this.diagram);
+      const uow = new UnitOfWork(this.diagram, 'interactive');
       this.diagram.transformElements(
         selection.nodes,
         [new Translation(Point.subtract(selection.source.boundingBox.pos, selection.bounds.pos))],
         uow,
-        'interactive',
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
       );
 
@@ -152,12 +151,11 @@ export class MoveDrag extends AbstractDrag {
       newBounds.set('pos', result.adjusted.pos);
     }
 
-    const uow = new UnitOfWork(this.diagram);
+    const uow = new UnitOfWork(this.diagram, 'interactive');
     this.diagram.transformElements(
       selection.elements,
       [new Translation(Point.subtract(newBounds.get('pos'), selection.bounds.pos))],
       uow,
-      'interactive',
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
     uow.commit();
@@ -213,7 +211,6 @@ export class MoveDrag extends AbstractDrag {
                 el,
                 selection.elements,
                 uow,
-                'non-interactive',
                 'default'
               )
           );
@@ -227,7 +224,6 @@ export class MoveDrag extends AbstractDrag {
                 el,
                 selection.elements,
                 uow,
-                'non-interactive',
                 this.getLastState(2) === 1 ? 'split' : 'attach'
               )
           );
@@ -248,7 +244,7 @@ export class MoveDrag extends AbstractDrag {
 
       // This is needed to force a final transformation to be applied
       UnitOfWork.execute(this.diagram, uow =>
-        this.diagram.transformElements(selection.elements, [], uow, 'non-interactive')
+        this.diagram.transformElements(selection.elements, [], uow)
       );
 
       selection.rebaseline();

@@ -2,7 +2,6 @@ import { EdgeCapability, EdgeDefinition } from '../model/elementDefinitionRegist
 import { Point } from '../geometry/point.ts';
 import { DiagramElement, isNode } from '../model/diagramElement.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
-import { ChangeType } from '../model/diagram.ts';
 import { UndoableAction } from '../model/undoManager.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';
@@ -30,7 +29,6 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     edge: DiagramEdge,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
-    _changeType: ChangeType,
     operation: string
   ): UndoableAction | undefined {
     if (elements.length !== 1 || !isNode(elements[0])) return undefined;
