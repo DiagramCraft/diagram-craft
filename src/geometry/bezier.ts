@@ -222,20 +222,21 @@ const recurseIntersection = (c1: CubicBezier, c2: CubicBezier, threshold: number
   const cc2 = c2.split(0.5);
 
   const results: Point[] = [];
-  if (Box.intersects(cc1[0].bbox(), cc2[0].bbox())) {
+  if (cc1[0].bboxIntersects(cc2[0])) {
     results.push(...recurseIntersection(cc1[0], cc2[0], threshold));
   }
-  if (Box.intersects(cc1[0].bbox(), cc2[1].bbox())) {
+  if (cc1[0].bboxIntersects(cc2[1])) {
     results.push(...recurseIntersection(cc1[0], cc2[1], threshold));
   }
-  if (Box.intersects(cc1[1].bbox(), cc2[1].bbox())) {
+  if (cc1[1].bboxIntersects(cc2[1])) {
     results.push(...recurseIntersection(cc1[1], cc2[1], threshold));
   }
-  if (Box.intersects(cc1[1].bbox(), cc2[0].bbox())) {
+  if (cc1[1].bboxIntersects(cc2[0])) {
     results.push(...recurseIntersection(cc1[1], cc2[0], threshold));
   }
 
-  if (results.length <= 1) return results;
+  return results;
+  /*if (results.length <= 1) return results;
 
   const d: Point[] = [];
   const arr = results;
@@ -247,7 +248,7 @@ const recurseIntersection = (c1: CubicBezier, c2: CubicBezier, threshold: number
     d.push(arr[i]);
   }
 
-  return d;
+  return d;*/
 };
 
 export class CubicBezier {
@@ -386,6 +387,14 @@ export class CubicBezier {
     return this.#bbox;
   }
 
+  coarseBbox() {
+    const minX = Math.min(this.start.x, this.cp1.x, this.cp2.x, this.end.x);
+    const maxX = Math.max(this.start.x, this.cp1.x, this.cp2.x, this.end.x);
+    const minY = Math.min(this.start.y, this.cp1.y, this.cp2.y, this.end.y);
+    const maxY = Math.max(this.start.y, this.cp1.y, this.cp2.y, this.end.y);
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY, r: 0 };
+  }
+
   length() {
     if (this.#length) return this.#length;
 
@@ -424,13 +433,45 @@ export class CubicBezier {
     return this.split(t)[0].length();
   }
 
-  intersectsBezier(other: CubicBezier, threshold = 0.1) {
-    if (!Box.intersects(this.bbox(), other.bbox())) return [];
+  bboxIntersects(other: CubicBezier) {
+    return (
+      // Note, not entirely sure this is 100% correct, but as far as I can understand
+      //       a cubic bezier is bounded by it's control points
+      //       Since calculating a tight bounding box is quite expensive, it's beneficial
+      //       to first check the simple and coarse bounding box
+      Box.intersects(this.coarseBbox(), other.coarseBbox()) &&
+      Box.intersects(this.bbox(), other.bbox())
+    );
+  }
 
-    return recurseIntersection(this, other, threshold);
+  intersectsBezier(other: CubicBezier, threshold = 0.1) {
+    if (!this.bboxIntersects(other)) return [];
+
+    const results = recurseIntersection(this, other, threshold);
+    if (results.length <= 1) return results;
+
+    const d: Point[] = [];
+    for (let i = 0; i < results.length; i++) {
+      if (d.find(e => Point.squareDistance(e, results[i]) < 2)) {
+        continue;
+      }
+      d.push(results[i]);
+    }
+
+    return d;
   }
 
   intersectsLine(line: Line) {
+    const min_x = Math.min(line.from.x, line.to.x);
+    const max_x = Math.max(line.from.x, line.to.x);
+    const min_y = Math.min(line.from.y, line.to.y);
+    const max_y = Math.max(line.from.y, line.to.y);
+
+    const lineBbox = { x: min_x, y: min_y, w: max_x - min_x, h: max_y - min_y, r: 0 };
+    if (!Box.intersects(this.coarseBbox(), lineBbox)) {
+      return [];
+    }
+
     const Ax = 3 * (this.cp1.x - this.cp2.x) + this.end.x - this.start.x;
     const Ay = 3 * (this.cp1.y - this.cp2.y) + this.end.y - this.start.y;
 
@@ -455,22 +496,19 @@ export class CubicBezier {
       vx * Dx + vy * Dy - d
     );
 
-    const min_x = Math.min(line.from.x, line.to.x);
-    const max_x = Math.max(line.from.x, line.to.x);
-    const min_y = Math.min(line.from.y, line.to.y);
-    const max_y = Math.max(line.from.y, line.to.y);
-
     const res = [];
     for (const t of roots) {
-      if (t < 0 || t > 1 || isNaN(t)) continue;
+      if (isNaN(t) || t < 0 || t > 1) continue;
 
       const p = {
         x: ((Ax * t + Bx) * t + Cx) * t + Dx,
         y: ((Ay * t + By) * t + Cy) * t + Dy
       };
 
-      if (round(p.x) < round(min_x) || round(p.x) > round(max_x)) continue;
-      if (round(p.y) < round(min_y) || round(p.y) > round(max_y)) continue;
+      // Note, we used to apply rounding before checking this, but it's slow
+      //       and unclear if it's actually needed
+      if (p.x < min_x || p.x > max_x) continue;
+      if (p.y < min_y || p.y > max_y) continue;
       res.push(p);
     }
 

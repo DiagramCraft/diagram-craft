@@ -53,6 +53,8 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
   // Component/node refs
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // TODO: Change to Map
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);

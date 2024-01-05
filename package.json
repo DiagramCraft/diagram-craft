@@ -47,6 +47,7 @@
     "eslint-plugin-storybook": "^0.6.15",
     "prettier": "^3.0.3",
     "storybook": "^7.5.3",
+    "tsx": "^4.7.0",
     "typescript": "^5.0.2",
     "vite": "^5.0.6",
     "vite-node": "^0.34.6",
