@@ -91,6 +91,28 @@ export class DiagramEdge implements AbstractEdge {
     });
   }
 
+  detach(uow: UnitOfWork) {
+    // Update any parent
+    if (this.parent) {
+      this.parent.children = this.parent?.children.filter(c => c !== this);
+    }
+    this.parent = undefined;
+
+    // All label nodes must be detached
+    if (this.labelNodes) {
+      for (const l of this.labelNodes) {
+        l.node.detach(uow);
+      }
+    }
+
+    this.diagram.edgeLookup.delete(this.id);
+
+    // Note, need to check if the element is still in the layer to avoid infinite recursion
+    if (this.layer.elements.includes(this)) {
+      this.layer.removeElement(this, uow);
+    }
+  }
+
   // TODO: This should use the EdgeDefinitionRegistry
   getEdgeDefinition() {
     return new BaseEdgeDefinition(this.id, 'Edge', 'edge');

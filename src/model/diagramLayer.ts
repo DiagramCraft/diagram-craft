@@ -87,13 +87,7 @@ export class Layer {
 
   removeElement(element: DiagramElement, uow: UnitOfWork) {
     this.#elements = this.elements.filter(e => e !== element);
-
-    if (element.type === 'node') {
-      this.#diagram.nodeLookup.delete(element.id);
-    } else if (element.type === 'edge') {
-      this.#diagram.edgeLookup.delete(element.id);
-    }
-
+    element.detach(uow);
     uow.removeElement(element);
   }
 

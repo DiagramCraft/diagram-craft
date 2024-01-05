@@ -75,6 +75,45 @@ export class DiagramNode implements AbstractNode {
     });
   }
 
+  detach(uow: UnitOfWork) {
+    // Update any parent
+    if (this.parent) {
+      this.parent.children = this.parent?.children.filter(c => c !== this);
+    }
+    this.parent = undefined;
+
+    this.diagram.nodeLookup.delete(this.id);
+
+    // "Detach" any edges that connects to this node
+    for (const anchor of this.edges.keys()) {
+      for (const edge of this.edges.get(anchor) ?? []) {
+        let isChanged = false;
+        if (isConnected(edge.start) && edge.start.node === this) {
+          edge.start = { position: edge.startPosition };
+          isChanged = true;
+        }
+        if (isConnected(edge.end) && edge.end.node === this) {
+          edge.end = { position: edge.endPosition };
+          isChanged = true;
+        }
+        if (isChanged) uow.updateElement(edge);
+      }
+    }
+
+    // Update edge for which this node is a label node
+    if (this.isLabelNode()) {
+      const edge = this.labelEdge()!;
+      const labelNode = this.labelNode()!;
+      edge.labelNodes = edge.labelNodes!.filter(n => n !== labelNode);
+      uow.updateElement(edge);
+    }
+
+    // Note, need to check if the element is still in the layer to avoid infinite recursion
+    if (this.layer.elements.includes(this)) {
+      this.layer.removeElement(this, uow);
+    }
+  }
+
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
     const previousBounds = this.bounds;
     this.bounds = Transform.box(this.bounds, ...transforms);

@@ -41,15 +41,10 @@ class SelectionDeleteUndoableAction implements UndoableAction {
   redo(): void {
     UnitOfWork.execute(this.diagram, uow => {
       for (const element of this.elements) {
-        if (element.type === 'edge' && element.labelNodes) {
-          this.elements.push(...element.labelNodes.map(ln => ln.node));
-        }
         element.layer!.removeElement(element, uow);
       }
     });
     this.diagram.selectionState.clear();
-
-    // TODO: Maybe we need to have the diagram process all element links post delete uow
   }
 }
 
