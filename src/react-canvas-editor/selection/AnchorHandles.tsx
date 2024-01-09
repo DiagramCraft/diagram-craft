@@ -27,7 +27,6 @@ class AnchorHandleDrag extends AbstractDrag {
   constructor(
     private readonly node: DiagramNode,
     private readonly anchorIndex: number,
-    private readonly element: SVGElement,
     private readonly point: Point
   ) {
     super();
@@ -53,7 +52,7 @@ class AnchorHandleDrag extends AbstractDrag {
     diagram.selectionState.setElements([this.edge]);
 
     // TODO: This is the wrong this.element to use
-    this.delegate = new EdgeEndpointMoveDrag(diagram, this.edge, this.element, 'end');
+    this.delegate = new EdgeEndpointMoveDrag(diagram, this.edge, 'end');
   }
 
   onDragEnd() {
@@ -160,9 +159,7 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
               triggerMouseOut();
             }}
             onMouseDown={e => {
-              drag.initiate(
-                new AnchorHandleDrag(node, idx, e.currentTarget, EventHelper.point(e.nativeEvent))
-              );
+              drag.initiate(new AnchorHandleDrag(node, idx, EventHelper.point(e.nativeEvent)));
               e.preventDefault();
               e.stopPropagation();
             }}

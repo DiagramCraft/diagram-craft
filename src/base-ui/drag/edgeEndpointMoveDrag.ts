@@ -21,22 +21,15 @@ const removeHighlight = (element: DiagramElement, highlight: string) => {
 };
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
-  private readonly originalPointerEvents: string;
   private hoverElement: string | undefined;
   private coord: Point | undefined;
 
   constructor(
     private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
-    private readonly element: SVGElement,
     private readonly type: 'start' | 'end'
   ) {
     super();
-    this.originalPointerEvents = element.getAttribute('pointer-events') ?? 'all';
-    element.classList.add('selection-edge-handle--active');
-
-    // TODO: Should disable point-events on all elements that makes up the edge
-    element.setAttribute('pointer-events', 'none');
   }
 
   onDragEnter(id: string): void {
@@ -74,20 +67,13 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
     // TODO: We should snap to the connection point
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      this.element.classList.add('selection-edge-handle--connected');
-
       this.attachToClosestAnchor(coord);
-    } else {
-      this.element.classList.remove('selection-edge-handle--connected');
     }
 
     this.edge.update();
   }
 
   onDragEnd(): void {
-    this.element.setAttribute('pointer-events', this.originalPointerEvents);
-    this.element.classList.remove('selection-edge-handle--active');
-
     // Using the last known coordinate, attach to the closest anchor
     this.attachToClosestAnchor(this.coord!);
 
