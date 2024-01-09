@@ -22,7 +22,7 @@ const removeHighlight = (element: DiagramElement, highlight: string) => {
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private hoverElement: string | undefined;
-  private coord: Point | undefined;
+  coord: Point | undefined;
 
   constructor(
     private readonly diagram: Diagram,

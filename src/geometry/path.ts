@@ -207,4 +207,8 @@ export class Path {
   asSvgPath() {
     return `M ${this.#start.x} ${this.#start.y} ` + this.#path.map(e => e.join(' ')).join(' ');
   }
+
+  hash() {
+    return this.asSvgPath();
+  }
 }

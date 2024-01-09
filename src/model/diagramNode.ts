@@ -277,7 +277,7 @@ export class DiagramNode implements AbstractNode {
 
   listEdges(): DiagramEdge[] {
     return [
-      ...Object.values(this.edges ?? {}).flatMap(e => e),
+      ...[...this.edges.values()].flatMap(e => e),
       ...this.children.flatMap(c => (c.type === 'node' ? c.listEdges() : []))
     ];
   }
@@ -324,6 +324,11 @@ export class DiagramNode implements AbstractNode {
     }
 
     this.#anchors = newAnchors;
+
+    for (const edge of this.listEdges()) {
+      uow.updateElement(edge);
+    }
+
     uow.updateElement(this);
   }
 }
