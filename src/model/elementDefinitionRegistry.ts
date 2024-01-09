@@ -74,7 +74,7 @@ export class NodeDefinitionRegistry {
 
   get(type: string): NodeDefinition {
     const r = this.nodes.get(type);
-    assert.present(r);
+    assert.present(r, 'Not found: ' + type);
     return r;
   }
 

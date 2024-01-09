@@ -19,12 +19,10 @@ const bounds = {
 
 describe('Diagram', () => {
   test('visibleElements()', () => {
-    const diagram = new Diagram(
-      newid(),
-      'Name',
-      new NodeDefinitionRegistry(),
-      new EdgeDefinitionRegistry()
-    );
+    const registry = new NodeDefinitionRegistry();
+    registry.register(new RectNodeDefinition());
+
+    const diagram = new Diagram(newid(), 'Name', registry, new EdgeDefinitionRegistry());
     const layer1 = new Layer(newid(), 'Layer 1', [], diagram);
     diagram.layers.add(layer1);
 
@@ -32,8 +30,8 @@ describe('Diagram', () => {
     diagram.layers.add(layer2);
 
     const uow = new UnitOfWork(diagram);
-    const node1 = new DiagramNode('1', 'a', bounds, diagram, layer1);
-    const node2 = new DiagramNode('2', 'b', bounds, diagram, layer2);
+    const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer1);
+    const node2 = new DiagramNode('2', 'rect', bounds, diagram, layer2);
     layer1.addElement(node1, uow);
     layer2.addElement(node2, uow);
     uow.commit();

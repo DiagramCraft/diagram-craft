@@ -5,11 +5,12 @@ import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { Diagram } from './diagram.ts';
 import { Layer } from './diagramLayer.ts';
+import { RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.tsx';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(
     '1',
-    'test',
+    'rect',
     {
       x: 0,
       y: 0,
@@ -37,7 +38,9 @@ const createEdge = (diagram: Diagram) =>
   );
 
 function createDiagram() {
-  const d = new Diagram('1', 'test', new NodeDefinitionRegistry(), new EdgeDefinitionRegistry());
+  const registry = new NodeDefinitionRegistry();
+  registry.register(new RectNodeDefinition());
+  const d = new Diagram('1', 'test', registry, new EdgeDefinitionRegistry());
   d.layers.add(new Layer('default', 'Default', [], d));
   return d;
 }
