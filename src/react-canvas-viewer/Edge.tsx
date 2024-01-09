@@ -118,8 +118,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         className={'svg-edge'}
         d={path}
         onMouseDown={onMouseDown}
-        onMouseEnter={() => props.onMouseEnter(props.def.id)}
-        onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onDoubleClick={e => props.onDoubleClick(props.def.id, EventHelper.point(e.nativeEvent))}
         onContextMenu={onContextMenu}
         stroke={'transparent'}
@@ -129,8 +127,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         className={'svg-edge'}
         d={path}
         onMouseDown={onMouseDown}
-        onMouseEnter={() => props.onMouseEnter(props.def.id)}
-        onMouseLeave={() => props.onMouseLeave(props.def.id)}
         onDoubleClick={e => props.onDoubleClick(props.def.id, EventHelper.point(e.nativeEvent))}
         onContextMenu={onContextMenu}
         style={style}
@@ -195,7 +191,5 @@ type Props = {
   def: DiagramEdge;
   diagram: Diagram;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-  onMouseEnter: (id: string) => void;
-  onMouseLeave: (id: string) => void;
   onDoubleClick: (id: string, coord: Point) => void;
 };

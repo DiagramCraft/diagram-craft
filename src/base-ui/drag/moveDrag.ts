@@ -6,13 +6,11 @@ import { Translation } from '../../geometry/transform.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeHelper.ts';
-import { MoveAction, ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
+import { ElementAddUndoableAction, MoveAction } from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
-import { DiagramElement } from '../../model/diagramElement.ts';
+import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { largest } from '../../utils/array.ts';
 
 export class MoveDrag extends AbstractDrag {
@@ -28,6 +26,31 @@ export class MoveDrag extends AbstractDrag {
     private readonly offset: Point
   ) {
     super();
+  }
+
+  onDragEnter(id: string) {
+    const selection = this.diagram.selectionState;
+    if (selection.getSelectionType() !== 'single-node') return;
+
+    const hover = this.diagram.lookup(id);
+
+    // Need to filter any edges that are connected to the current selection
+    if (isEdge(hover) && selection.elements.some(e => isNode(e) && e.listEdges().includes(hover))) {
+      this.clearHighlight();
+      this.#currentElement = undefined;
+      return;
+    }
+
+    if (hover !== this.#currentElement) {
+      this.clearHighlight();
+      this.#currentElement = hover;
+      this.setHighlight();
+    }
+  }
+
+  onDragLeave() {
+    this.clearHighlight();
+    this.#currentElement = undefined;
   }
 
   onKeyDown(event: KeyboardEvent) {
@@ -52,12 +75,12 @@ export class MoveDrag extends AbstractDrag {
       this.disablePointerEvents(selection.elements);
     }
 
-    const hover = this.getHoverElement(coord);
+    /*const hover = this.getHoverElement(coord);
     if (hover !== this.#currentElement) {
       this.clearHighlight();
       this.#currentElement = hover;
       this.setHighlight();
-    }
+    }*/
 
     // Determine the delta between the current mouse position and the original mouse position
     const delta = Point.subtract(coord, Point.add(selection.bounds, this.offset));
@@ -255,6 +278,7 @@ export class MoveDrag extends AbstractDrag {
     this.#hasDuplicatedSelection = false;
   }
 
+  /*
   private getHoverElement(coord: Point): DiagramElement | undefined {
     if (this.diagram.selectionState.getSelectionType() === 'single-label-node') return;
     const hover = this.diagram.layers.active
@@ -288,6 +312,7 @@ export class MoveDrag extends AbstractDrag {
       return best;
     }
   }
+   */
 
   private clearHighlight() {
     if (!this.#currentElement) return;
@@ -328,11 +353,11 @@ export class MoveDrag extends AbstractDrag {
 
   private enablePointerEvents(elements: ReadonlyArray<DiagramElement>) {
     for (const e of elements) {
-      if (e.type === 'node') {
+      if (isNode(e)) {
         const n = document.getElementById(`node-${e.id}`)!;
         n.style.pointerEvents = this.#oldPEvents[n.id];
         this.enablePointerEvents(e.children);
-      } else if (e.type === 'edge') {
+      } else if (isEdge(e)) {
         const n = document.getElementById(`edge-${e.id}`)!;
         n.style.pointerEvents = this.#oldPEvents[n.id];
       }
@@ -341,12 +366,12 @@ export class MoveDrag extends AbstractDrag {
 
   private disablePointerEvents(elements: ReadonlyArray<DiagramElement>) {
     for (const e of elements) {
-      if (e.type === 'node') {
+      if (isNode(e)) {
         const n = document.getElementById(`node-${e.id}`)!;
         this.#oldPEvents[n.id] = n.style.pointerEvents;
         n.style.pointerEvents = 'none';
         this.enablePointerEvents(e.children);
-      } else if (e.type === 'edge') {
+      } else if (isEdge(e)) {
         const n = document.getElementById(`edge-${e.id}`)!;
         this.#oldPEvents[n.id] = n.style.pointerEvents;
         n.style.pointerEvents = 'none';

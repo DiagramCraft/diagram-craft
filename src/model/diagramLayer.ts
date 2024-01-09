@@ -2,9 +2,6 @@ import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { DiagramElement } from './diagramElement.ts';
-import { Point } from '../geometry/point.ts';
-import { PathBuilder } from '../geometry/pathBuilder.ts';
-import { Box } from '../geometry/box.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { groupBy } from '../utils/array.ts';
 
@@ -113,6 +110,7 @@ export class Layer {
     return this.#diagram.layers.all.indexOf(this) < this.#diagram.layers.all.indexOf(layer);
   }
 
+  /*
   findElementsByPoint(coord: Point): ReadonlyArray<DiagramElement> {
     const pb = new PathBuilder();
     pb.moveTo({ x: -100000, y: -100000 });
@@ -141,6 +139,8 @@ export class Layer {
 
     return dest;
   }
+
+   */
 
   private processElementForAdd(e: DiagramElement) {
     e.diagram = this.#diagram;

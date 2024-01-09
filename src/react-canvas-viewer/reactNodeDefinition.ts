@@ -27,8 +27,6 @@ type Props = {
   isSingleSelected: boolean;
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-    onMouseEnter: (id: string) => void;
-    onMouseLeave: (id: string) => void;
     onDoubleClick?: (id: string, coord: Point) => void;
   };
 } & React.SVGProps<SVGRectElement>;

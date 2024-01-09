@@ -1,10 +1,12 @@
-import { DeferedMouseAction } from './types.ts';
+import { DeferedMouseAction, Tool } from './types.ts';
 import { MutableRefObject, RefObject } from 'react';
 import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 
-export abstract class AbstractTool {
+export abstract class AbstractTool implements Tool {
+  currentElement: string | undefined;
+
   protected constructor(
     protected readonly diagram: Diagram,
     protected readonly drag: DragDopManager,
@@ -18,6 +20,14 @@ export abstract class AbstractTool {
   abstract onMouseUp(point: Point): void;
 
   abstract onMouseMove(point: Point, modifiers: Modifiers): void;
+
+  onMouseOver(id: string, _point: Point): void {
+    this.currentElement = id;
+  }
+
+  onMouseOut(_id: string, _point: Point): void {
+    this.currentElement = undefined;
+  }
 
   onKeyDown(_e: KeyboardEvent): void {
     // Do nothing

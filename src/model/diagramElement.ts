@@ -18,5 +18,5 @@ export const getTopMostNode = (element: DiagramNode): DiagramNode => {
   return path.length > 0 ? path[path.length - 1] : element;
 };
 
-export const isNode = (e: DiagramElement): e is DiagramNode => e.type === 'node';
-export const isEdge = (e: DiagramElement): e is DiagramEdge => e.type === 'edge';
+export const isNode = (e: DiagramElement | undefined): e is DiagramNode => !!e && e.type === 'node';
+export const isEdge = (e: DiagramElement | undefined): e is DiagramEdge => !!e && e.type === 'edge';

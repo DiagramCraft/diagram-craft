@@ -10,6 +10,9 @@ export interface Tool {
 
   onMouseMove(point: Point, modifiers: Modifiers): void;
 
+  onMouseOver(id: string, point: Point): void;
+  onMouseOut(id: string, point: Point): void;
+
   onKeyDown(e: KeyboardEvent): void;
 }
 

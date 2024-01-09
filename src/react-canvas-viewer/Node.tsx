@@ -107,8 +107,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       id={`node-${props.def.id}`}
       className={'svg-node'}
       transform={`rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}
-      onMouseEnter={() => props.onMouseEnter(props.def.id)}
-      onMouseLeave={() => props.onMouseLeave(props.def.id)}
     >
       {nodeProps.fill?.type === 'gradient' && (
         <linearGradient id={`node-${props.def.id}-gradient`}>
@@ -127,8 +125,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         style={style}
         childProps={{
           onMouseDown: props.onMouseDown,
-          onMouseEnter: props.onMouseEnter,
-          onMouseLeave: props.onMouseLeave,
           onDoubleClick: props.onDoubleClick
         }}
       />
@@ -154,17 +150,9 @@ type Props = {
   def: DiagramNode;
   diagram: Diagram;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-  onMouseEnter: (id: string) => void;
-  onMouseLeave: (id: string) => void;
   onDoubleClick?: (id: string, coord: Point) => void;
   mode?: 'picker' | 'canvas';
 } & Omit<
   SVGProps<SVGGElement>,
-  | 'id'
-  | 'transform'
-  | 'onMouseMove'
-  | 'onMouseEnter'
-  | 'onMouseDown'
-  | 'onMouseLeave'
-  | 'onDoubleClick'
+  'id' | 'transform' | 'onMouseMove' | 'onMouseDown' | 'onDoubleClick'
 >;

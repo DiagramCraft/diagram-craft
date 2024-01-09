@@ -13,7 +13,6 @@ import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
 import { assert } from '../utils/assert.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
-import { Point } from '../geometry/point.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 
 export type Canvas = Omit<Box, 'r'>;
@@ -121,9 +120,11 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     );
   }
 
+  /*
   findElementsByPoint(coord: Point) {
     return this.layers.visible.flatMap(l => l.findElementsByPoint(coord));
   }
+   */
 
   // TODO: Change this to an undoable action?
   // TODO: Check layer level events are emitted

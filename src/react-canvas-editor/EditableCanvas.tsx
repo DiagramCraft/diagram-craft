@@ -32,6 +32,7 @@ import { DragLabel } from './DragLabel.tsx';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
 import { getTopMostNode } from '../model/diagramElement.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
+import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -118,12 +119,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   useEventListener(selection, 'add', redrawElement);
   useEventListener(selection, 'remove', redrawElement);
 
-  const onMouseEnter = useCallback((id: string) => drag.current()?.onDragEnter?.(id), [drag]);
-
-  const onMouseLeave = useCallback(() => {
-    drag.current()?.onDragLeave?.();
-  }, [drag]);
-
   const onDoubleClick = useCallback(
     (id: string, coord: Point) => {
       actionMap['EDGE_TEXT_ADD']?.execute({
@@ -149,6 +144,14 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           tool.onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
         }}
         style={{ userSelect: 'none' }}
+        onMouseOver={e => {
+          const el = getAncestorDiagramElement(e.target as SVGElement);
+          if (el) tool.onMouseOver(el.id, EventHelper.point(e.nativeEvent));
+        }}
+        onMouseOut={e => {
+          const el = getAncestorDiagramElement(e.target as SVGElement);
+          if (el) tool.onMouseOut(el.id, EventHelper.point(e.nativeEvent));
+        }}
         onMouseUp={e => tool.onMouseUp(EventHelper.point(e.nativeEvent))}
         onMouseMove={e => {
           const r = e.currentTarget.getBoundingClientRect();
@@ -196,8 +199,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                   ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
                   onDoubleClick={onDoubleClick}
                   onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
-                  onMouseEnter={onMouseEnter}
-                  onMouseLeave={onMouseLeave}
                   def={edge}
                   diagram={diagram}
                 />
@@ -209,8 +210,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                   key={id}
                   ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
                   onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
-                  onMouseEnter={onMouseEnter}
-                  onMouseLeave={onMouseLeave}
                   onDoubleClick={onDoubleClick}
                   def={node}
                   diagram={diagram}

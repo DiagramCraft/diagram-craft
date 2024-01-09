@@ -60,8 +60,6 @@ export const Container = (props: Props) => {
               diagram={props.node.diagram}
               onDoubleClick={props.childProps.onDoubleClick}
               onMouseDown={props.childProps.onMouseDown}
-              onMouseLeave={props.childProps.onMouseLeave}
-              onMouseEnter={props.childProps.onMouseEnter}
             />
           ) : (
             <Edge
@@ -69,8 +67,6 @@ export const Container = (props: Props) => {
               diagram={props.node.diagram}
               onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
               onMouseDown={props.childProps.onMouseDown}
-              onMouseLeave={props.childProps.onMouseLeave}
-              onMouseEnter={props.childProps.onMouseEnter}
             />
           )}
         </g>
@@ -265,11 +261,6 @@ type Props = {
   nodeProps: NodeProps;
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-    onMouseEnter: (id: string) => void;
-    onMouseLeave: (id: string) => void;
     onDoubleClick?: (id: string, coord: Point) => void;
   };
-} & Omit<
-  React.SVGProps<SVGRectElement>,
-  'onMouseEnter' | 'onMouseDown' | 'onMouseLeave' | 'onDoubleClick'
->;
+} & Omit<React.SVGProps<SVGRectElement>, 'onMouseDown' | 'onDoubleClick'>;

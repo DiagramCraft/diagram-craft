@@ -41,24 +41,13 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                 key={id}
                 onMouseDown={() => {}}
                 onDoubleClick={() => {}}
-                onMouseEnter={() => {}}
-                onMouseLeave={() => {}}
                 def={edge}
                 diagram={diagram}
               />
             );
           } else {
             const node = diagram.nodeLookup.get(id)!;
-            return (
-              <Node
-                key={id}
-                onMouseDown={() => {}}
-                onMouseEnter={() => {}}
-                onMouseLeave={() => {}}
-                def={node}
-                diagram={diagram}
-              />
-            );
+            return <Node key={id} onMouseDown={() => {}} def={node} diagram={diagram} />;
           }
         });
       })}
