@@ -54,6 +54,14 @@ export class LineSegment implements PathSegment {
   }
 
   projectPoint(point: Point): Projection {
+    // TODO: Check why these checks are actually needed
+    if (Point.isEqual(point, this.start)) {
+      return { t: 0, distance: 0, point: point };
+    }
+    if (Point.isEqual(point, this.end)) {
+      return { t: 1, distance: 0, point: point };
+    }
+
     const v = Vector.from(this.start, this.end);
     const w = Vector.from(this.start, point);
 
@@ -67,7 +75,7 @@ export class LineSegment implements PathSegment {
     const distance = Point.distance(point, projection);
 
     return {
-      t,
+      t: Math.abs(t),
       distance,
       point: projection
     };
@@ -335,6 +343,7 @@ export class SegmentList {
     let bestSegment = -1;
     let bestProject: Projection | undefined;
     let bestDistance = Number.MAX_VALUE;
+
     const segments = this.segments;
     for (let i = 0; i < segments.length; i++) {
       const s = segments[i];

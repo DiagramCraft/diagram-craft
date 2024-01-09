@@ -1,7 +1,7 @@
 import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { DiagramEdge, isConnected } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -33,6 +33,11 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   }
 
   onDragEnter(id: string): void {
+    // Make sure we cannot connect to ourselves
+    if (this.type === 'start' && isConnected(this.edge.end) && this.edge.end.node.id === id) return;
+    if (this.type === 'end' && isConnected(this.edge.start) && this.edge.start.node.id === id)
+      return;
+
     this.hoverElement = id;
 
     if (id && this.diagram.nodeLookup.has(id)) {
