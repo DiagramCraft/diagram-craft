@@ -56,6 +56,20 @@ class AnchorHandleDrag extends AbstractDrag {
   }
 
   onDragEnd() {
+    const diagram = this.node.diagram;
+
+    if (
+      this.delegate.coord === undefined ||
+      Point.distance(this.delegate.coord!, diagram.viewBox.toDiagramPoint(this.point)) < 5
+    ) {
+      UnitOfWork.execute(this.node.diagram, uow => {
+        this.edge.layer.removeElement(this.edge, uow);
+        this.edge.detach(uow);
+      });
+      diagram.selectionState.setElements([]);
+      return;
+    }
+
     this.node.diagram.undoManager.add(new ElementAddUndoableAction([this.edge], this.node.diagram));
 
     // TODO: Need to prevent undoable action from being added twice
