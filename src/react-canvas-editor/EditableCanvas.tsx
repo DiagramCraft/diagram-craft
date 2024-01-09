@@ -33,6 +33,7 @@ import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
 import { getTopMostNode } from '../model/diagramElement.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
 import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
+import { AnchorHandles } from './selection/AnchorHandles.tsx';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -61,12 +62,14 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const selectionRef = useRef<SelectionApi | null>(null);
   const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
 
+  const resetTool = () => (props.applicationState.tool = 'move');
+
   const [tool, setTool] = useState<Tool>(
-    new MoveTool(diagram, drag, svgRef, deferedMouseAction, props.onResetTool)
+    new MoveTool(diagram, drag, svgRef, deferedMouseAction, resetTool)
   );
 
   useEventListener(props.applicationState, 'toolChange', s => {
-    setTool(new TOOLS[s.tool](diagram, drag, svgRef, deferedMouseAction, props.onResetTool));
+    setTool(new TOOLS[s.tool](diagram, drag, svgRef, deferedMouseAction, resetTool));
   });
 
   useImperativeHandle(ref, () => {
@@ -146,11 +149,17 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         style={{ userSelect: 'none' }}
         onMouseOver={e => {
           const el = getAncestorDiagramElement(e.target as SVGElement);
-          if (el) tool.onMouseOver(el.id, EventHelper.point(e.nativeEvent));
+          if (!el) return;
+          // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
+          tool.onMouseOver(el.id, EventHelper.point(e.nativeEvent));
+          props.applicationState.hoverElement = el.id;
         }}
         onMouseOut={e => {
           const el = getAncestorDiagramElement(e.target as SVGElement);
-          if (el) tool.onMouseOut(el.id, EventHelper.point(e.nativeEvent));
+          if (!el) return;
+          // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
+          tool.onMouseOut(el.id, EventHelper.point(e.nativeEvent));
+          props.applicationState.hoverElement = undefined;
         }}
         onMouseUp={e => tool.onMouseUp(EventHelper.point(e.nativeEvent))}
         onMouseMove={e => {
@@ -221,6 +230,8 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
         <Selection ref={selectionRef} selection={selection} diagram={diagram} />
         <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
+
+        <AnchorHandles diagram={diagram} applicationState={props.applicationState} />
       </svg>
     </>
   );
@@ -229,7 +240,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 type Props = {
   applicationState: ApplicationState;
   onContextMenu: (event: ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
-  onResetTool: () => void;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'

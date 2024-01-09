@@ -263,7 +263,6 @@ const App = () => {
                       }}
                       onDrop={canvasDropHandler($d)}
                       onDragOver={canvasDragOverHandler()}
-                      onResetTool={() => (applicationState.current.tool = 'move')}
                     />
                   </ContextMenu.Trigger>
                   <ContextMenu.Portal>

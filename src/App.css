@@ -467,6 +467,14 @@ input::-webkit-input-placeholder {
     fill: transparent;
     stroke: red;
   }
+
+  .svg-anchor-handle {
+    fill: grey;
+    stroke: grey;
+    &:hover {
+      stroke: red;
+    }
+  }
 }
 
 

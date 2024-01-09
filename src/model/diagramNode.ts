@@ -50,6 +50,11 @@ export class DiagramNode implements AbstractNode {
 
     this.props = props ?? {};
     this.#anchors = anchorCache;
+
+    // Ensure all anchors are loaded without triggering a change event
+    if (!this.#anchors) {
+      this.invalidateAnchors(new UnitOfWork(diagram));
+    }
   }
 
   set children(value: ReadonlyArray<DiagramElement>) {
