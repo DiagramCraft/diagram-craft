@@ -1397,6 +1397,51 @@ input::-webkit-input-placeholder {
   }
 }
 
+.cmp-transform {
+  .cmp-transform__graphics {
+    align-self: start;
+    margin-top: 0.1rem;
+
+    svg {
+      width: 3rem;
+      height: 3rem;
+    }
+  }
+
+  .cmp-transform__node {
+    fill: var(--primary-bg);
+    stroke: var(--primary-fg);
+    stroke-width: 0.02;
+    cursor: pointer;
+
+    &.cmp-transform__node--active {
+      stroke: var(--blue-11);
+      fill: var(--blue-11);
+    }
+  }
+
+  .cmp-transform__rect {
+    fill: transparent;
+    stroke: var(--primary-fg);
+    stroke-width: 0.02;
+    stroke-dasharray: 0.05 0.05;
+  }
+
+  .cmp-transform__inputs {
+    display: grid;
+    grid-template-areas: "x w" "y h" "r aspect-ratio";
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    row-gap: 0.5rem;
+    column-gap: 0.3em;
+
+    input {
+      width: 100%;
+    }
+  }
+}
+
 /* Adjustments of general components for specific use-cases */
 
 #menu {
