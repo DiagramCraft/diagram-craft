@@ -9,6 +9,7 @@ import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { PickerCanvas } from './PickerCanvas.tsx';
 import { assert } from '../../utils/assert.ts';
 import { useCallback } from 'react';
+import { newid } from '../../utils/id.ts';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -23,7 +24,7 @@ export const NodeTypePopup = (props: Props) => {
 
       UnitOfWork.execute(diagram, uow => {
         const node = new DiagramNode(
-          nodeType,
+          newid(),
           nodeType,
           {
             x: nodePosition.x,
