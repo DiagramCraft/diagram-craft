@@ -52,7 +52,6 @@ export const Trapetzoid = (props: Props) => {
           <ShapeControlPoint
             x={props.node.bounds.x + slantLeft}
             y={props.node.bounds.y}
-            diagram={props.diagram}
             def={props.node}
             onDrag={x => {
               const distance = Math.max(0, x - props.node.bounds.x);
@@ -66,7 +65,6 @@ export const Trapetzoid = (props: Props) => {
           <ShapeControlPoint
             x={props.node.bounds.x + props.node.bounds.w - slantRight}
             y={props.node.bounds.y}
-            diagram={props.diagram}
             def={props.node}
             onDrag={x => {
               const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);

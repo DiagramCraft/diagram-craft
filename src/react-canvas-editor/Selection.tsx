@@ -1,9 +1,7 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { Angle } from '../geometry/angle.ts';
-import { SelectionState } from '../model/selectionState.ts';
 import { $c } from '../utils/classname.ts';
-import { Diagram } from '../model/diagram.ts';
 import { LabelNodeSelection } from './selection/LabelNodeSelection.tsx';
 import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { GroupBounds } from './selection/GroupBounds.tsx';
@@ -12,29 +10,32 @@ import { RotationHandle } from './selection/RotationHandle.tsx';
 import { ResizeHandles } from './selection/ResizeHandles.tsx';
 import { EdgeSelection } from './selection/EdgeSelection.tsx';
 import { Box } from '../geometry/box.ts';
+import { useDiagram } from '../react-app/context/DiagramContext.tsx';
 
 export type SelectionApi = {
   repaint: () => void;
 };
 
-export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
+export const Selection = forwardRef<SelectionApi, unknown>((_props, ref) => {
   const redraw = useRedraw();
+  const diagram = useDiagram();
+  const selection = diagram.selectionState;
 
   useImperativeHandle(ref, () => {
     return { repaint: redraw };
   });
 
-  useEventListener(props.selection, 'change', redraw);
+  useEventListener(selection, 'change', redraw);
 
-  if (props.selection.isEmpty()) return null;
+  if (selection.isEmpty()) return null;
 
-  const isOnlyEdges = props.selection.isEdgesOnly();
+  const isOnlyEdges = selection.isEdgesOnly();
 
-  const bounds = props.selection.bounds;
+  const bounds = selection.bounds;
 
   const labelNode =
-    props.selection.getSelectionType() === 'single-label-node'
-      ? props.selection.nodes[0].labelNode()!
+    selection.getSelectionType() === 'single-label-node'
+      ? selection.nodes[0].labelNode()!
       : undefined;
   const shouldHaveRotation = !(labelNode && labelNode.type !== 'independent');
 
@@ -42,12 +43,12 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
 
   return (
     <>
-      {!isOnlyEdges && <Guides selection={props.selection} />}
+      {!isOnlyEdges && <Guides selection={selection} />}
 
       <g className={'svg-selection'}>
         {!isOnlyEdges && (
           <>
-            <GroupBounds selection={props.selection} />
+            <GroupBounds selection={selection} />
             <g transform={`rotate(${Angle.toDeg(bounds.r)} ${center.x} ${center.y})`}>
               <rect
                 x={bounds.x}
@@ -57,19 +58,17 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
                 className={$c('svg-selection__bb', { 'only-edges': isOnlyEdges })}
                 pointerEvents={'none'}
               />
-              {shouldHaveRotation && (
-                <RotationHandle diagram={props.diagram} selection={props.selection} />
-              )}
-              <ResizeHandles diagram={props.diagram} selection={props.selection} />
+              {shouldHaveRotation && <RotationHandle />}
+              <ResizeHandles />
             </g>
           </>
         )}
 
-        {props.selection.edges.map(e => (
-          <EdgeSelection key={e.id} diagram={props.diagram} edge={e} />
+        {selection.edges.map(e => (
+          <EdgeSelection key={e.id} edge={e} />
         ))}
 
-        {props.selection.nodes
+        {selection.nodes
           .filter(n => !!n.labelEdge())
           .map(n => (
             <LabelNodeSelection key={n.id} node={n} />
@@ -78,8 +77,3 @@ export const Selection = forwardRef<SelectionApi, Props>((props, ref) => {
     </>
   );
 });
-
-type Props = {
-  selection: SelectionState;
-  diagram: Diagram;
-};

@@ -3,14 +3,15 @@ import React, { useCallback } from 'react';
 import { ResizeDrag, ResizeType } from '../../base-ui/drag/resizeDrag.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
-import { Diagram } from '../../model/diagram.ts';
 import { Box } from '../../geometry/box.ts';
-import { SelectionState } from '../../model/selectionState.ts';
+import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
 
-export const ResizeHandles = (props: Props) => {
+export const ResizeHandles = () => {
+  const diagram = useDiagram();
+  const selection = diagram.selectionState;
   const drag = useDragDrop();
 
-  const bounds = props.selection.bounds;
+  const bounds = selection.bounds;
 
   const points: Point[] = Box.corners({
     ...bounds,
@@ -27,14 +28,14 @@ export const ResizeHandles = (props: Props) => {
       if (e.button !== 0) return;
       drag.initiate(
         new ResizeDrag(
-          props.diagram,
+          diagram,
           type,
-          props.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
+          diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
         )
       );
       e.stopPropagation();
     },
-    [drag, props.diagram]
+    [drag, diagram]
   );
 
   return (
@@ -106,9 +107,4 @@ export const ResizeHandles = (props: Props) => {
       />
     </>
   );
-};
-
-type Props = {
-  diagram: Diagram;
-  selection: SelectionState;
 };

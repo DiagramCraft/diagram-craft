@@ -210,8 +210,8 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           props.onContextMenu?.(event);
         }}
       >
-        <DocumentBounds diagram={diagram} />
-        <Grid diagram={diagram} />
+        <DocumentBounds />
+        <Grid />
 
         {diagram.layers.visible.flatMap(layer => {
           return layer.elements.map(e => {
@@ -246,11 +246,10 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           });
         })}
 
-        <Selection ref={selectionRef} selection={selection} diagram={diagram} />
+        <Selection ref={selectionRef} />
         <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
 
         <AnchorHandles
-          diagram={diagram}
           applicationState={props.applicationState}
           applicationTriggers={props.applicationTriggers}
         />

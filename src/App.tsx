@@ -332,7 +332,6 @@ const App = () => {
                 <NodeTypePopup
                   {...popoverState}
                   onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
-                  diagram={$d}
                 />
               </div>
 

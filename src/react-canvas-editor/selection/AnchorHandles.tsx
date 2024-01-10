@@ -1,4 +1,3 @@
-import { Diagram } from '../../model/diagram.ts';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { ApplicationState } from '../../base-ui/ApplicationState.ts';
@@ -17,6 +16,7 @@ import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
 import { ApplicationTriggers } from '../EditableCanvas.tsx';
 import { VerifyNotReached } from '../../utils/assert.ts';
+import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
 
 export type AnchorHandlesApi = {
   repaint: () => void;
@@ -109,6 +109,7 @@ class AnchorHandleDrag extends AbstractDrag {
 //       to describe the state machine - or somehow subscribe to mouse move events
 //       to trigger the hiding of the handles
 export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) => {
+  const diagram = useDiagram();
   const drag = useDragDrop();
   const [hoverNode, setHoverNode] = useState<DiagramElement | undefined>(undefined);
   const redraw = useRedraw();
@@ -118,7 +119,7 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
     return { repaint: redraw };
   });
 
-  const selection = props.diagram.selectionState;
+  const selection = diagram.selectionState;
   const shouldScale = selection.nodes.length === 1 && selection.nodes[0] === hoverNode;
 
   // eslint-disable-next-line
@@ -141,12 +142,12 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
       triggerMouseOut();
     } else {
       timeout = undefined;
-      setHoverNode(props.diagram.lookup(element));
+      setHoverNode(diagram.lookup(element));
       state.current = 'node';
     }
   });
 
-  useEventListener(props.diagram.selectionState, 'change', () => {
+  useEventListener(diagram.selectionState, 'change', () => {
     if (timeout) clearTimeout(timeout);
     redraw();
   });
@@ -213,7 +214,6 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
 });
 
 type Props = {
-  diagram: Diagram;
   applicationState: ApplicationState;
   applicationTriggers: ApplicationTriggers;
 };

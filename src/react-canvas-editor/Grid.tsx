@@ -1,7 +1,7 @@
-import { Diagram } from '../model/diagram.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 import React, { CSSProperties } from 'react';
+import { useDiagram } from '../react-app/context/DiagramContext.tsx';
 
 type Type = 'major' | 'minor';
 
@@ -52,11 +52,11 @@ const vline = (
   />
 );
 
-export const Grid = (props: Props) => {
+export const Grid = () => {
+  const diagram = useDiagram();
   const redraw = useRedraw();
-  useEventListener(props.diagram, 'change', redraw);
+  useEventListener(diagram, 'change', redraw);
 
-  const { diagram } = props;
   const { x, y, w, h } = diagram.canvas;
 
   const dx = diagram.props.grid?.size ?? 10;
@@ -153,8 +153,4 @@ export const Grid = (props: Props) => {
   }
 
   return <>{dest}</>;
-};
-
-type Props = {
-  diagram: Diagram;
 };

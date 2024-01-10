@@ -1,6 +1,5 @@
 import { useDragDrop } from './DragDropManager.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
-import { Diagram } from '../model/diagram.ts';
 import { ShapeControlPointDrag } from '../base-ui/drag/shapeControlDrag.ts';
 
 export const ShapeControlPoint = (props: Props) => {
@@ -26,5 +25,4 @@ type Props = {
   y: number;
   onDrag: (x: number, y: number) => string;
   def: DiagramNode;
-  diagram: Diagram;
 };

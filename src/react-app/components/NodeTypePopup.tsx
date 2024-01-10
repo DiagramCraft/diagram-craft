@@ -155,5 +155,4 @@ export type NodeTypePopupState = {
 
 type Props = NodeTypePopupState & {
   onClose: () => void;
-  diagram: Diagram;
 };

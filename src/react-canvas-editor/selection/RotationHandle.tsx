@@ -1,13 +1,14 @@
 import { Point } from '../../geometry/point.ts';
 import { RotateDrag } from '../../base-ui/drag/rotateDrag.ts';
-import { SelectionState } from '../../model/selectionState.ts';
-import { Diagram } from '../../model/diagram.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
+import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
 
-export const RotationHandle = (props: Props) => {
+export const RotationHandle = () => {
+  const diagram = useDiagram();
+  const selection = diagram.selectionState;
   const drag = useDragDrop();
 
-  const bounds = props.selection.bounds;
+  const bounds = selection.bounds;
 
   const north = Point.midpoint(bounds, {
     x: bounds.x + bounds.w,
@@ -31,15 +32,10 @@ export const RotationHandle = (props: Props) => {
         cursor={'ew-resize'}
         onMouseDown={e => {
           if (e.button !== 0) return;
-          drag.initiate(new RotateDrag(props.diagram));
+          drag.initiate(new RotateDrag(diagram));
           e.stopPropagation();
         }}
       />
     </>
   );
-};
-
-type Props = {
-  selection: SelectionState;
-  diagram: Diagram;
 };

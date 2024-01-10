@@ -49,7 +49,6 @@ export const Parallelogram = (props: Props) => {
         <ShapeControlPoint
           x={props.node.bounds.x + slant}
           y={props.node.bounds.y}
-          diagram={props.diagram}
           def={props.node}
           onDrag={x => {
             const distance = Math.max(0, x - props.node.bounds.x);

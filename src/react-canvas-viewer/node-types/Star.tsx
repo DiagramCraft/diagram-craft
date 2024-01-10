@@ -55,7 +55,6 @@ export const Star = (props: Props) => {
             x={path.segments[1].start.x}
             y={path.segments[1].start.y}
             def={props.node}
-            diagram={props.diagram}
             onDrag={(x, y) => {
               const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
               props.node.props.star ??= {};
@@ -67,7 +66,6 @@ export const Star = (props: Props) => {
             x={path.segments[2].start.x}
             y={path.segments[2].start.y}
             def={props.node}
-            diagram={props.diagram}
             onDrag={(x, y) => {
               const angle =
                 Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
