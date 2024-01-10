@@ -1,4 +1,4 @@
-import { useNodeProperty } from './useProperty.ts';
+import { useElementProperty } from './useProperty.ts';
 import * as Select from '@radix-ui/react-select';
 import {
   TbAlignCenter,
@@ -30,20 +30,23 @@ export const TextPanel = (props: Props) => {
   const defaults = useNodeDefaults();
   const { fonts } = useConfiguration();
 
-  // TODO: Should be useElementProperty
-  const font = useNodeProperty($d, 'text.font', defaults.text.font);
-  const fontSize = useNodeProperty($d, 'text.fontSize', defaults.text.fontSize);
-  const isBold = useNodeProperty($d, 'text.bold', defaults.text.bold);
-  const isItalic = useNodeProperty($d, 'text.italic', defaults.text.italic);
-  const textDecoration = useNodeProperty($d, 'text.textDecoration', defaults.text.textDecoration);
-  const textTransform = useNodeProperty($d, 'text.textTransform', defaults.text.textTransform);
-  const color = useNodeProperty($d, 'text.color', defaults.text.color);
-  const align = useNodeProperty($d, 'text.align', defaults.text.align);
-  const valign = useNodeProperty($d, 'text.valign', defaults.text.valign);
-  const top = useNodeProperty($d, 'text.top', defaults.text.top);
-  const left = useNodeProperty($d, 'text.left', defaults.text.left);
-  const bottom = useNodeProperty($d, 'text.bottom', defaults.text.bottom);
-  const right = useNodeProperty($d, 'text.right', defaults.text.right);
+  const font = useElementProperty($d, 'text.font', defaults.text.font);
+  const fontSize = useElementProperty($d, 'text.fontSize', defaults.text.fontSize);
+  const isBold = useElementProperty($d, 'text.bold', defaults.text.bold);
+  const isItalic = useElementProperty($d, 'text.italic', defaults.text.italic);
+  const textDecoration = useElementProperty(
+    $d,
+    'text.textDecoration',
+    defaults.text.textDecoration
+  );
+  const textTransform = useElementProperty($d, 'text.textTransform', defaults.text.textTransform);
+  const color = useElementProperty($d, 'text.color', defaults.text.color);
+  const align = useElementProperty($d, 'text.align', defaults.text.align);
+  const valign = useElementProperty($d, 'text.valign', defaults.text.valign);
+  const top = useElementProperty($d, 'text.top', defaults.text.top);
+  const left = useElementProperty($d, 'text.left', defaults.text.left);
+  const bottom = useElementProperty($d, 'text.bottom', defaults.text.bottom);
+  const right = useElementProperty($d, 'text.right', defaults.text.right);
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Text'} id={'text'}>
