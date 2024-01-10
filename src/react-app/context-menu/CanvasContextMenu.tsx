@@ -1,6 +1,6 @@
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { ContextMenuTarget } from '../../react-canvas-editor/EditableCanvas.tsx';
+import { ContextMenuTarget } from '../../App.tsx';
 
 export const CanvasContextMenu = (props: Props) => {
   return (

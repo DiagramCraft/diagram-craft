@@ -9,7 +9,7 @@ import React, {
 import { useRedraw } from './useRedraw.tsx';
 import { Point } from '../geometry/point.ts';
 import { useDragDrop } from './DragDropManager.ts';
-import { ContextMenuEvent } from '../react-canvas-editor/EditableCanvas.tsx';
+import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
@@ -47,12 +47,11 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   );
 
   const onContextMenu = (event: React.MouseEvent<SVGPathElement, MouseEvent>) => {
-    const e = event as ContextMenuEvent & React.MouseEvent<SVGPathElement, MouseEvent>;
-    e.contextMenuTarget = {
-      type: 'edge',
-      id: props.def.id,
-      pos: props.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
-    };
+    props.applicationTriggers.showEdgeContextMenu?.(
+      props.diagram.viewBox.toDiagramPoint(EventHelper.point(event.nativeEvent)),
+      props.def.id,
+      event.nativeEvent
+    );
   };
 
   const isSelected = props.diagram.selectionState.elements.includes(props.def);
@@ -190,6 +189,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 type Props = {
   def: DiagramEdge;
   diagram: Diagram;
+  applicationTriggers: ApplicationTriggers;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onDoubleClick: (id: string, coord: Point) => void;
 };

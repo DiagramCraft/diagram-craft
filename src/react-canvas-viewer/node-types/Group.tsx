@@ -10,6 +10,7 @@ import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 
 export const Group = (props: Props) => {
   const center = Box.center(props.node.bounds);
@@ -24,6 +25,7 @@ export const Group = (props: Props) => {
           diagram={props.node.diagram}
           onDoubleClick={props.childProps.onDoubleClick}
           onMouseDown={props.childProps.onMouseDown}
+          applicationTriggers={props.childProps.applicationTriggers}
         />
       ) : (
         <Edge
@@ -31,6 +33,7 @@ export const Group = (props: Props) => {
           diagram={props.node.diagram}
           onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
           onMouseDown={props.childProps.onMouseDown}
+          applicationTriggers={props.childProps.applicationTriggers}
         />
       )}
     </g>
@@ -81,5 +84,6 @@ type Props = {
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
     onDoubleClick?: (id: string, coord: Point) => void;
+    applicationTriggers: ApplicationTriggers;
   };
 } & Omit<React.SVGProps<SVGRectElement>, 'onMouseDown' | 'onDoubleClick'>;

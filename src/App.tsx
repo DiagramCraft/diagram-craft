@@ -1,6 +1,6 @@
 import './App.css';
-import { ContextMenuEvent, EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
-import React, { useRef, useState } from 'react';
+import { EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
+import { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
 import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
@@ -64,6 +64,15 @@ import { LayerIndicator } from './react-app/components/LayerIndicator.tsx';
 import { testDiagram } from './sample/test.ts';
 import { SerializedDiagram } from './model/serialization/types.ts';
 import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
+import { Point } from './geometry/point.ts';
+
+const oncePerEvent = (e: MouseEvent, fn: () => void) => {
+  // eslint-disable-next-line
+  if ((e as any)._triggered) return;
+  fn();
+  // eslint-disable-next-line
+  (e as any)._triggered = true;
+};
 
 const factory = (d: SerializedDiagram) => {
   return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry());
@@ -102,13 +111,17 @@ const DarkModeToggleButton = () => {
   );
 };
 
+export type ContextMenuTarget = { pos: Point } & (
+  | { type: 'canvas' }
+  | { type: 'edge'; id: string }
+  | { type: 'selection' }
+);
+
 const App = () => {
   const defaultDiagram = 2;
   const [doc, setDoc] = useState(diagrams[defaultDiagram].document);
   const [$d, setDiagram] = useState(diagrams[defaultDiagram].document.diagrams[0]);
-  const contextMenuTarget = useRef<
-    (ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) | null
-  >(null);
+  const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
 
@@ -258,11 +271,40 @@ const App = () => {
                       key={$d.id}
                       applicationState={applicationState.current}
                       className={'canvas'}
-                      onContextMenu={e => {
-                        contextMenuTarget.current = e;
-                      }}
                       onDrop={canvasDropHandler($d)}
                       onDragOver={canvasDragOverHandler()}
+                      applicationTriggers={{
+                        showCanvasContextMenu: (point: Point, mouseEvent: MouseEvent) => {
+                          oncePerEvent(mouseEvent, () => {
+                            contextMenuTarget.current = { type: 'canvas', pos: point };
+                          });
+                        },
+                        showEdgeContextMenu: (point: Point, id: string, mouseEvent: MouseEvent) => {
+                          oncePerEvent(mouseEvent, () => {
+                            contextMenuTarget.current = { type: 'edge', id, pos: point };
+                          });
+                        },
+                        showNodeContextMenu: (
+                          _point: Point,
+                          _id: string,
+                          _mouseEvent: MouseEvent
+                        ) => {
+                          // TODO: To be implemented
+                          //contextMenuTarget.current = { type: 'node', id, pos: point };
+                        },
+                        showSelectionContextMenu: (point: Point, mouseEvent: MouseEvent) => {
+                          oncePerEvent(mouseEvent, () => {
+                            contextMenuTarget.current = { type: 'selection', pos: point };
+                          });
+                        },
+                        showNodeLinkPopup: (
+                          _point: Point,
+                          _sourceNodeId: string,
+                          _edgId: string
+                        ) => {
+                          // TODO: To be implemented
+                        }
+                      }}
                     />
                   </ContextMenu.Trigger>
                   <ContextMenu.Portal>
@@ -270,18 +312,64 @@ const App = () => {
                       <ContextMenuDispatcher
                         state={contextMenuTarget}
                         createContextMenu={state => {
-                          if (state.contextMenuTarget.type === 'canvas') {
-                            return <CanvasContextMenu target={state.contextMenuTarget} />;
-                          } else if (state.contextMenuTarget.type === 'selection') {
+                          if (state.type === 'canvas') {
+                            return <CanvasContextMenu target={state} />;
+                          } else if (state.type === 'selection') {
                             return <SelectionContextMenu />;
                           } else {
-                            return <EdgeContextMenu target={state.contextMenuTarget} />;
+                            return <EdgeContextMenu target={state} />;
                           }
                         }}
                       />
                     </ContextMenu.Content>
                   </ContextMenu.Portal>
                 </ContextMenu.Root>
+
+                {/*
+                <Popover.Root open={true}>
+                  <Popover.Anchor asChild>
+                    <div style={{ position: 'absolute', left: '400px', top: '200px' }}>
+                    </div>
+                  </Popover.Anchor>
+                  <Popover.Portal>
+                    <Popover.Content className="cmp-popover" sideOffset={5}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <p className="Text" style={{ marginBottom: 10 }}>
+                          Dimensions
+                        </p>
+                        <fieldset className="Fieldset">
+                          <label className="Label" htmlFor="width">
+                            Width
+                          </label>
+                          <input className="Input" id="width" defaultValue="100%" />
+                        </fieldset>
+                        <fieldset className="Fieldset">
+                          <label className="Label" htmlFor="maxWidth">
+                            Max. width
+                          </label>
+                          <input className="Input" id="maxWidth" defaultValue="300px" />
+                        </fieldset>
+                        <fieldset className="Fieldset">
+                          <label className="Label" htmlFor="height">
+                            Height
+                          </label>
+                          <input className="Input" id="height" defaultValue="25px" />
+                        </fieldset>
+                        <fieldset className="Fieldset">
+                          <label className="Label" htmlFor="maxHeight">
+                            Max. height
+                          </label>
+                          <input className="Input" id="maxHeight" defaultValue="none" />
+                        </fieldset>
+                      </div>
+                      <Popover.Close className="cmp-popover__close" aria-label="Close">
+                        Close
+                      </Popover.Close>
+                      <Popover.Arrow className="cmp-popover__arrow" />
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover.Root>
+                */}
               </div>
 
               <div id="tabs">

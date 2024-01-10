@@ -1,5 +1,5 @@
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
-import { ContextMenuTarget } from '../../react-canvas-editor/EditableCanvas.tsx';
+import { ContextMenuTarget } from '../../App.tsx';
 
 export const EdgeContextMenu = (props: Props) => {
   return (

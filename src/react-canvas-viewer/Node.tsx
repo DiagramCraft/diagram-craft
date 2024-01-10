@@ -21,6 +21,7 @@ import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DeepRequired } from 'ts-essentials';
 import { Box } from '../geometry/box.ts';
+import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 
 export type NodeApi = {
   repaint: () => void;
@@ -125,7 +126,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         style={style}
         childProps={{
           onMouseDown: props.onMouseDown,
-          onDoubleClick: props.onDoubleClick
+          onDoubleClick: props.onDoubleClick,
+          applicationTriggers: props.applicationTriggers
         }}
       />
 
@@ -152,6 +154,7 @@ type Props = {
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onDoubleClick?: (id: string, coord: Point) => void;
   mode?: 'picker' | 'canvas';
+  applicationTriggers: ApplicationTriggers;
 } & Omit<
   SVGProps<SVGGElement>,
   'id' | 'transform' | 'onMouseMove' | 'onMouseDown' | 'onDoubleClick'

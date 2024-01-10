@@ -24,11 +24,20 @@ const PickerCanvas = (props: PickerCanvasProps) => {
               onDoubleClick={() => {}}
               def={edge}
               diagram={diagram}
+              applicationTriggers={{}}
             />
           );
         } else {
           const node = diagram.nodeLookup.get(id)!;
-          return <Node key={id} onMouseDown={() => {}} def={node} diagram={diagram} />;
+          return (
+            <Node
+              key={id}
+              onMouseDown={() => {}}
+              def={node}
+              diagram={diagram}
+              applicationTriggers={{}}
+            />
+          );
         }
       })}
     </svg>

@@ -4,6 +4,7 @@ import { Edge } from './Edge.tsx';
 import { Node } from './Node.tsx';
 import { useCanvasZoomAndPan } from './useCanvasZoomAndPan.ts';
 import { Diagram } from '../model/diagram.ts';
+import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 
 export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -43,11 +44,20 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                 onDoubleClick={() => {}}
                 def={edge}
                 diagram={diagram}
+                applicationTriggers={props.applicationTriggers}
               />
             );
           } else {
             const node = diagram.nodeLookup.get(id)!;
-            return <Node key={id} onMouseDown={() => {}} def={node} diagram={diagram} />;
+            return (
+              <Node
+                key={id}
+                onMouseDown={() => {}}
+                def={node}
+                diagram={diagram}
+                applicationTriggers={props.applicationTriggers}
+              />
+            );
           }
         });
       })}
@@ -58,6 +68,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 type Props = {
   // TODO: This should really by Diagram and not EditableDiagram
   diagram: Diagram;
+  applicationTriggers: ApplicationTriggers;
 } & Omit<
   SVGProps<SVGSVGElement>,
   'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'

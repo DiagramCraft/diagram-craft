@@ -17,6 +17,7 @@ import { UnitOfWork } from '../model/unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from '../model/diagramElement.ts';
 import { UndoableAction } from '../model/undoManager.ts';
+import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 
 type Props = {
   node: DiagramNode;
@@ -28,6 +29,7 @@ type Props = {
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
     onDoubleClick?: (id: string, coord: Point) => void;
+    applicationTriggers: ApplicationTriggers;
   };
 } & React.SVGProps<SVGRectElement>;
 

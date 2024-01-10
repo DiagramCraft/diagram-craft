@@ -14,6 +14,7 @@ import { Rotation, Scale, Transform, Translation } from '../../geometry/transfor
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
+import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 
 declare global {
   interface NodeProps {
@@ -60,6 +61,7 @@ export const Container = (props: Props) => {
               diagram={props.node.diagram}
               onDoubleClick={props.childProps.onDoubleClick}
               onMouseDown={props.childProps.onMouseDown}
+              applicationTriggers={props.childProps.applicationTriggers}
             />
           ) : (
             <Edge
@@ -67,6 +69,7 @@ export const Container = (props: Props) => {
               diagram={props.node.diagram}
               onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
               onMouseDown={props.childProps.onMouseDown}
+              applicationTriggers={props.childProps.applicationTriggers}
             />
           )}
         </g>
@@ -262,5 +265,6 @@ type Props = {
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
     onDoubleClick?: (id: string, coord: Point) => void;
+    applicationTriggers: ApplicationTriggers;
   };
 } & Omit<React.SVGProps<SVGRectElement>, 'onMouseDown' | 'onDoubleClick'>;

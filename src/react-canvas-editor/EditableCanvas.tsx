@@ -41,6 +41,15 @@ const TOOLS: Record<ToolType, ToolContructor> = {
   edge: EdgeTool
 };
 
+export interface ApplicationTriggers {
+  showCanvasContextMenu?: (point: Point, mouseEvent: MouseEvent) => void;
+  showSelectionContextMenu?: (point: Point, mouseEvent: MouseEvent) => void;
+  showEdgeContextMenu?: (point: Point, id: string, mouseEvent: MouseEvent) => void;
+  showNodeContextMenu?: (point: Point, id: string, mouseEvent: MouseEvent) => void;
+
+  showNodeLinkPopup?: (point: Point, sourceNodeId: string, edgeId: string) => void;
+}
+
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const redraw = useRedraw();
 
@@ -173,7 +182,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           );
         }}
         onContextMenu={event => {
-          const e = event as ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>;
+          const e = event as React.MouseEvent<SVGSVGElement, MouseEvent>;
 
           const bounds = svgRef.current!.getBoundingClientRect();
           const point = {
@@ -186,12 +195,19 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
             diagram.viewBox.toDiagramPoint(point)
           );
 
-          e.contextMenuTarget ??= {
-            type: isClickOnSelection ? 'selection' : 'canvas',
-            pos: diagram.viewBox.toDiagramPoint(point)
-          };
+          if (isClickOnSelection) {
+            props.applicationTriggers.showSelectionContextMenu?.(
+              diagram.viewBox.toDiagramPoint(point),
+              event.nativeEvent
+            );
+          } else {
+            props.applicationTriggers.showCanvasContextMenu?.(
+              diagram.viewBox.toDiagramPoint(point),
+              event.nativeEvent
+            );
+          }
 
-          props.onContextMenu?.(e);
+          props.onContextMenu?.(event);
         }}
       >
         <DocumentBounds diagram={diagram} />
@@ -210,6 +226,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                   onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
                   def={edge}
                   diagram={diagram}
+                  applicationTriggers={props.applicationTriggers}
                 />
               );
             } else {
@@ -222,6 +239,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                   onDoubleClick={onDoubleClick}
                   def={node}
                   diagram={diagram}
+                  applicationTriggers={props.applicationTriggers}
                 />
               );
             }
@@ -239,25 +257,8 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
 type Props = {
   applicationState: ApplicationState;
-  onContextMenu: (event: ContextMenuEvent & React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
+  applicationTriggers: ApplicationTriggers;
 } & Omit<
   SVGProps<SVGSVGElement>,
-  'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
+  'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'preserveAspectRatio'
 >;
-
-export type ContextMenuTarget = { pos: Point } & (
-  | {
-      type: 'canvas';
-    }
-  | {
-      type: 'edge';
-      id: string;
-    }
-  | {
-      type: 'selection';
-    }
-);
-
-export type ContextMenuEvent = {
-  contextMenuTarget: ContextMenuTarget;
-};
