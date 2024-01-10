@@ -249,7 +249,11 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         <Selection ref={selectionRef} selection={selection} diagram={diagram} />
         <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
 
-        <AnchorHandles diagram={diagram} applicationState={props.applicationState} />
+        <AnchorHandles
+          diagram={diagram}
+          applicationState={props.applicationState}
+          applicationTriggers={props.applicationTriggers}
+        />
       </svg>
     </>
   );

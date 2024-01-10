@@ -8,13 +8,15 @@ import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { DiagramEdge, isConnected } from '../../model/diagramEdge.ts';
 import { newid } from '../../utils/id.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
+import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { VerifyNotReached } from '../../utils/assert.ts';
 
 export type AnchorHandlesApi = {
   repaint: () => void;
@@ -27,7 +29,8 @@ class AnchorHandleDrag extends AbstractDrag {
   constructor(
     private readonly node: DiagramNode,
     private readonly anchorIndex: number,
-    private readonly point: Point
+    private readonly point: Point,
+    private readonly applicationTriggers: ApplicationTriggers
   ) {
     super();
 
@@ -74,6 +77,19 @@ class AnchorHandleDrag extends AbstractDrag {
 
     // TODO: Need to prevent undoable action from being added twice
     this.delegate.onDragEnd();
+
+    // In case we have connected to an existing node, we don't need to show the popup
+    if (isConnected(this.edge.end)) {
+      return;
+    }
+
+    const startNode = this.edge.start;
+    if (!isConnected(startNode)) throw new VerifyNotReached();
+    this.applicationTriggers.showNodeLinkPopup?.(
+      this.edge.endPosition,
+      startNode.node.id,
+      this.edge.id
+    );
   }
 
   onDrag(coord: Point, _modifiers: Modifiers): void {
@@ -173,7 +189,14 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
               triggerMouseOut();
             }}
             onMouseDown={e => {
-              drag.initiate(new AnchorHandleDrag(node, idx, EventHelper.point(e.nativeEvent)));
+              drag.initiate(
+                new AnchorHandleDrag(
+                  node,
+                  idx,
+                  EventHelper.point(e.nativeEvent),
+                  props.applicationTriggers
+                )
+              );
               e.preventDefault();
               e.stopPropagation();
             }}
@@ -192,4 +215,5 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
 type Props = {
   diagram: Diagram;
   applicationState: ApplicationState;
+  applicationTriggers: ApplicationTriggers;
 };

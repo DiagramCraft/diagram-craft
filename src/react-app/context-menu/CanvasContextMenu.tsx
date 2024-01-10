@@ -5,11 +5,7 @@ import { ContextMenuTarget } from '../../App.tsx';
 export const CanvasContextMenu = (props: Props) => {
   return (
     <>
-      <ActionContextMenuItem
-        action={'CLIPBOARD_PASTE'}
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        context={{ point: props.target.pos, id: (props.target as any)['id'] }}
-      >
+      <ActionContextMenuItem action={'CLIPBOARD_PASTE'} context={{ point: props.target.pos }}>
         Paste
       </ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />

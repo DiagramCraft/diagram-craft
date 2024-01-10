@@ -34,14 +34,20 @@
   --error-fg: var(--red-9);
 }
 
-.dark-theme #left {
+.dark-theme #left,
+.dark-theme .cmp-node-type-popup
+{
   --canvas-fg: var(--blue-11);
   --canvas-bg: var(--slate-5);
 }
-.light-theme #left {
+.light-theme #left,
+.light-theme .cmp-node-type-popup
+{
   --canvas-fg: var(--blue-11);
   --canvas-bg: var(--slate-5);
 }
+
+
 
 body {
   --right-indent: 0;
@@ -1248,6 +1254,7 @@ input::-webkit-input-placeholder {
   & svg {
     margin: 0.2rem;
     display: block;
+    cursor: pointer;
   }
   .svg-node {
     shape-rendering: geometricprecision;

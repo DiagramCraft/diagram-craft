@@ -7,22 +7,19 @@ export const EdgeContextMenu = (props: Props) => {
       {/* TODO: Disable this when there's alreay a label */}
       <ActionContextMenuItem
         action={'EDGE_TEXT_ADD'}
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        context={{ point: props.target.pos, id: (props.target as any)['id'] }}
+        context={{ point: props.target.pos, id: props.target['id'] }}
       >
         Add text
       </ActionContextMenuItem>
       <ActionContextMenuItem
         action={'WAYPOINT_ADD'}
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        context={{ point: props.target.pos, id: (props.target as any)['id'] }}
+        context={{ point: props.target.pos, id: props.target['id'] }}
       >
         Add waypoint
       </ActionContextMenuItem>
       <ActionContextMenuItem
         action={'WAYPOINT_DELETE'}
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        context={{ point: props.target.pos, id: (props.target as any)['id'] }}
+        context={{ point: props.target.pos, id: props.target['id'] }}
       >
         Delete waypoint
       </ActionContextMenuItem>
@@ -32,5 +29,5 @@ export const EdgeContextMenu = (props: Props) => {
 };
 
 type Props = {
-  target: ContextMenuTarget;
+  target: ContextMenuTarget & { type: 'edge' };
 };

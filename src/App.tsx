@@ -65,6 +65,7 @@ import { testDiagram } from './sample/test.ts';
 import { SerializedDiagram } from './model/serialization/types.ts';
 import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
 import { Point } from './geometry/point.ts';
+import { NodeTypePopup, NodeTypePopupState } from './react-app/components/NodeTypePopup.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -121,6 +122,7 @@ const App = () => {
   const defaultDiagram = 2;
   const [doc, setDoc] = useState(diagrams[defaultDiagram].document);
   const [$d, setDiagram] = useState(diagrams[defaultDiagram].document.diagrams[0]);
+  const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
@@ -297,12 +299,14 @@ const App = () => {
                             contextMenuTarget.current = { type: 'selection', pos: point };
                           });
                         },
-                        showNodeLinkPopup: (
-                          _point: Point,
-                          _sourceNodeId: string,
-                          _edgId: string
-                        ) => {
-                          // TODO: To be implemented
+                        showNodeLinkPopup: (point: Point, sourceNodeId: string, edgId: string) => {
+                          const screenPoint = $d.viewBox.toScreenPoint(point);
+                          setPopoverState({
+                            isOpen: true,
+                            position: screenPoint,
+                            nodeId: sourceNodeId,
+                            edgeId: edgId
+                          });
                         }
                       }}
                     />
@@ -325,51 +329,11 @@ const App = () => {
                   </ContextMenu.Portal>
                 </ContextMenu.Root>
 
-                {/*
-                <Popover.Root open={true}>
-                  <Popover.Anchor asChild>
-                    <div style={{ position: 'absolute', left: '400px', top: '200px' }}>
-                    </div>
-                  </Popover.Anchor>
-                  <Popover.Portal>
-                    <Popover.Content className="cmp-popover" sideOffset={5}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <p className="Text" style={{ marginBottom: 10 }}>
-                          Dimensions
-                        </p>
-                        <fieldset className="Fieldset">
-                          <label className="Label" htmlFor="width">
-                            Width
-                          </label>
-                          <input className="Input" id="width" defaultValue="100%" />
-                        </fieldset>
-                        <fieldset className="Fieldset">
-                          <label className="Label" htmlFor="maxWidth">
-                            Max. width
-                          </label>
-                          <input className="Input" id="maxWidth" defaultValue="300px" />
-                        </fieldset>
-                        <fieldset className="Fieldset">
-                          <label className="Label" htmlFor="height">
-                            Height
-                          </label>
-                          <input className="Input" id="height" defaultValue="25px" />
-                        </fieldset>
-                        <fieldset className="Fieldset">
-                          <label className="Label" htmlFor="maxHeight">
-                            Max. height
-                          </label>
-                          <input className="Input" id="maxHeight" defaultValue="none" />
-                        </fieldset>
-                      </div>
-                      <Popover.Close className="cmp-popover__close" aria-label="Close">
-                        Close
-                      </Popover.Close>
-                      <Popover.Arrow className="cmp-popover__arrow" />
-                    </Popover.Content>
-                  </Popover.Portal>
-                </Popover.Root>
-                */}
+                <NodeTypePopup
+                  {...popoverState}
+                  onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
+                  diagram={$d}
+                />
               </div>
 
               <div id="tabs">
