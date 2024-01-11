@@ -10,6 +10,7 @@ import { PickerCanvas } from './PickerCanvas.tsx';
 import { assert } from '../../utils/assert.ts';
 import { useCallback } from 'react';
 import { newid } from '../../utils/id.ts';
+import { ConnectedEndpoint } from '../../model/diagramEdge.ts';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -41,10 +42,7 @@ export const NodeTypePopup = (props: Props) => {
         const edge = diagram.edgeLookup.get(props.edgeId);
         assert.present(edge);
 
-        edge.end = {
-          node: node,
-          anchor: 0
-        };
+        edge.end = new ConnectedEndpoint(0, node);
         uow.updateElement(edge);
       });
 

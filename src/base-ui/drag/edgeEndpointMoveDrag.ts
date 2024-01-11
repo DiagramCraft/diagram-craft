@@ -1,7 +1,7 @@
 import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
-import { DiagramEdge, isConnected } from '../../model/diagramEdge.ts';
+import { ConnectedEndpoint, DiagramEdge, isConnected } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -92,15 +92,15 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   private attachToClosestAnchor(coord: Point) {
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
       if (this.type === 'start') {
-        this.edge.start = {
-          node: this.diagram.nodeLookup.get(this.hoverElement)!,
-          anchor: this.getClosestAnchor(coord)
-        };
+        this.edge.start = new ConnectedEndpoint(
+          this.getClosestAnchor(coord),
+          this.diagram.nodeLookup.get(this.hoverElement)!
+        );
       } else {
-        this.edge.end = {
-          node: this.diagram.nodeLookup.get(this.hoverElement)!,
-          anchor: this.getClosestAnchor(coord)
-        };
+        this.edge.end = new ConnectedEndpoint(
+          this.getClosestAnchor(coord),
+          this.diagram.nodeLookup.get(this.hoverElement)!
+        );
       }
     }
   }

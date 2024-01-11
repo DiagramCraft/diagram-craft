@@ -19,13 +19,13 @@ export const EdgeInfoDetails = (props: Props) => {
         <Tree.Node isOpen={true}>
           <Tree.NodeLabel>startPosition</Tree.NodeLabel>
           <Tree.Children>
-            <ObjectTreeNode obj={props.obj.startPosition} />
+            <ObjectTreeNode obj={props.obj.start.position} />
           </Tree.Children>
         </Tree.Node>
         <Tree.Node isOpen={true}>
           <Tree.NodeLabel>endPosition</Tree.NodeLabel>
           <Tree.Children>
-            <ObjectTreeNode obj={props.obj.endPosition} />
+            <ObjectTreeNode obj={props.obj.end.position} />
           </Tree.Children>
         </Tree.Node>
         <Tree.Node isOpen={true}>

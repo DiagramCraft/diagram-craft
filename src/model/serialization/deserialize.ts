@@ -1,6 +1,6 @@
 import { Diagram } from '../diagram.ts';
 import { DiagramNode } from '../diagramNode.ts';
-import { DiagramEdge } from '../diagramEdge.ts';
+import { ConnectedEndpoint, DiagramEdge, FreeEndpoint } from '../diagramEdge.ts';
 import { UnitOfWork } from '../unitOfWork.ts';
 import { Layer } from '../diagramLayer.ts';
 import { isConnected } from './serialize.ts';
@@ -97,11 +97,11 @@ export const deserializeDiagramElements = (
     const edge = new DiagramEdge(
       e.id,
       isConnected(start)
-        ? { anchor: start.anchor, node: nodeLookup[start.node.id] }
-        : { position: start.position },
+        ? new ConnectedEndpoint(start.anchor, nodeLookup[start.node.id])
+        : new FreeEndpoint(start.position),
       isConnected(end)
-        ? { anchor: end.anchor, node: nodeLookup[end.node.id] }
-        : { position: end.position },
+        ? new ConnectedEndpoint(end.anchor, nodeLookup[end.node.id])
+        : new FreeEndpoint(end.position),
       e.props,
       e.waypoints ?? [],
       diagram,

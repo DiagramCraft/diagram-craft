@@ -3,7 +3,13 @@ import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Diagram } from './diagram.ts';
-import { DiagramEdge, Endpoint, isConnected } from './diagramEdge.ts';
+import {
+  ConnectedEndpoint,
+  DiagramEdge,
+  Endpoint,
+  FreeEndpoint,
+  isConnected
+} from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
@@ -135,11 +141,11 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       for (const edge of this.edges.get(anchor) ?? []) {
         let isChanged = false;
         if (isConnected(edge.start) && edge.start.node === this) {
-          edge.start = { position: edge.startPosition };
+          edge.start = { position: edge.start.position };
           isChanged = true;
         }
         if (isConnected(edge.end) && edge.end.node === this) {
-          edge.end = { position: edge.endPosition };
+          edge.end = { position: edge.end.position };
           isChanged = true;
         }
         if (isChanged) uow.updateElement(edge);
@@ -268,23 +274,23 @@ export class DiagramNode implements AbstractNode, DiagramElement {
         if (isConnected(e.start)) {
           const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
           if (newStartNode) {
-            newStart = { anchor: e.start.anchor, node: newStartNode as DiagramNode };
+            newStart = new ConnectedEndpoint(e.start.anchor, newStartNode as DiagramNode);
           } else {
-            newStart = { position: e.startPosition };
+            newStart = new FreeEndpoint(e.start.position);
           }
         } else {
-          newStart = { position: e.startPosition };
+          newStart = new FreeEndpoint(e.start.position);
         }
 
         if (isConnected(e.end)) {
           const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
           if (newEndNode) {
-            newEnd = { anchor: e.end.anchor, node: newEndNode as DiagramNode };
+            newEnd = new ConnectedEndpoint(e.end.anchor, newEndNode as DiagramNode);
           } else {
-            newEnd = { position: e.endPosition };
+            newEnd = new FreeEndpoint(e.end.position);
           }
         } else {
-          newEnd = { position: e.endPosition };
+          newEnd = new FreeEndpoint(e.end.position);
         }
 
         e.start = newStart;

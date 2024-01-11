@@ -64,19 +64,19 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
         ? {
             anchor: (edge.start as ConnectedEndpoint).anchor,
             node: { id: (edge.start as ConnectedEndpoint).node.id },
-            position: edge.startPosition
+            position: edge.start.position
           }
         : {
-            position: edge.startPosition
+            position: edge.start.position
           },
       end: isConnected(edge.end)
         ? {
             anchor: (edge.end as ConnectedEndpoint).anchor,
             node: { id: (edge.end as ConnectedEndpoint).node.id },
-            position: edge.endPosition
+            position: edge.end.position
           }
         : {
-            position: edge.endPosition
+            position: edge.end.position
           },
       waypoints: edge.waypoints,
       props: edge.props

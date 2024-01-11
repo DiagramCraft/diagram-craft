@@ -7,7 +7,7 @@ import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
 import { LengthOffsetOnPath } from '../geometry/pathPosition.ts';
-import { DiagramEdge } from '../model/diagramEdge.ts';
+import { ConnectedEndpoint, DiagramEdge } from '../model/diagramEdge.ts';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
   public readonly id: string;
@@ -51,7 +51,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     // TODO: This requires some work to support dropping on multi-segment edges
     const newEdge = new DiagramEdge(
       newid(),
-      { anchor, node: element },
+      new ConnectedEndpoint(anchor, element),
       edge.end,
       deepClone(edge.props),
       [],
@@ -61,7 +61,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     element.addEdge(anchor, newEdge);
     edge.layer.addElement(newEdge, uow);
 
-    edge.end = { anchor: anchor, node: element };
+    edge.end = new ConnectedEndpoint(anchor, element);
 
     uow.updateElement(edge);
 

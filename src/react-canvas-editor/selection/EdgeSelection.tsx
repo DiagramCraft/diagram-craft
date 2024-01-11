@@ -23,8 +23,8 @@ export const EdgeSelection = (props: Props) => {
   return (
     <>
       <circle
-        cx={props.edge.startPosition.x}
-        cy={props.edge.startPosition.y}
+        cx={props.edge.start.position.x}
+        cy={props.edge.start.position.y}
         r="4"
         className={$c('svg-selection__handle-edge', { connected: isConnected(props.edge.start) })}
         onMouseDown={ev => {
@@ -35,8 +35,8 @@ export const EdgeSelection = (props: Props) => {
         style={{ pointerEvents: isDragging ? 'none' : undefined }}
       />
       <circle
-        cx={props.edge.endPosition.x}
-        cy={props.edge.endPosition.y}
+        cx={props.edge.end.position.x}
+        cy={props.edge.end.position.y}
         r="4"
         className={$c('svg-selection__handle-edge', { connected: isConnected(props.edge.end) })}
         onMouseDown={ev => {

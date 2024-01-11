@@ -63,12 +63,12 @@ export const clipPath = (
   const diagram = edge.diagram!;
 
   const start = isConnected(edge.start)
-    ? intersectWithNode(edge.start, edge.startPosition, path, diagram)
+    ? intersectWithNode(edge.start, edge.start.position, path, diagram)
     : undefined;
   const startOffset = adjustForArrow(start, startArrow, path, 1);
 
   const end = isConnected(edge.end)
-    ? intersectWithNode(edge.end, edge.endPosition, path, diagram)
+    ? intersectWithNode(edge.end, edge.end.position, path, diagram)
     : undefined;
   const endOffset = adjustForArrow(end, endArrow, path, -1);
 

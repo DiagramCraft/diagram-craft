@@ -16,11 +16,32 @@ import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 
-export type ConnectedEndpoint = { anchor: number; node: DiagramNode };
-export type Endpoint = ConnectedEndpoint | { position: Point };
+export interface Endpoint {
+  readonly position: Point;
+}
+
+export class ConnectedEndpoint implements Endpoint {
+  constructor(
+    public readonly anchor: number,
+    public readonly node: DiagramNode
+  ) {}
+
+  get position() {
+    return this.node!.getAnchorPosition(this.anchor!);
+  }
+}
+
+export class FreeEndpoint implements Endpoint {
+  readonly position: Point;
+
+  constructor(position: Point) {
+    this.position = position;
+  }
+}
 
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
-  'node' in endpoint;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (endpoint as any).node !== undefined;
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -115,13 +136,13 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   // TODO: This is probably not a sufficient way to calculate the bounding box
   get bounds() {
-    return Box.fromCorners(this.startPosition, this.endPosition);
+    return Box.fromCorners(this.#start.position, this.#end.position);
   }
 
   // TODO: We should change this and provide a UnitOfWork
   set bounds(b: Box) {
-    if (!isConnected(this.start)) this.start = { position: { x: b.x, y: b.y } };
-    if (!isConnected(this.end)) this.end = { position: { x: b.x + b.w, y: b.y + b.h } };
+    if (!isConnected(this.start)) this.start = new FreeEndpoint({ x: b.x, y: b.y });
+    if (!isConnected(this.end)) this.end = new FreeEndpoint({ x: b.x + b.w, y: b.y + b.h });
   }
 
   path() {
@@ -187,19 +208,6 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     return edge;
   }
 
-  // TODO: Would probable be better to change Endpoint to be a class
-  get startPosition() {
-    return isConnected(this.start)
-      ? this.start.node.getAnchorPosition(this.start.anchor)
-      : this.start.position;
-  }
-
-  get endPosition() {
-    return isConnected(this.end)
-      ? this.end.node.getAnchorPosition(this.end.anchor)
-      : this.end.position;
-  }
-
   set start(start: Endpoint) {
     if (isConnected(this.#start)) {
       this.#start.node.removeEdge(this.#start.anchor, this);
@@ -237,7 +245,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     const end = this.#end;
 
     // Need to "zero" the end so that the setters logic should work correctly
-    this.end = { position: Point.ORIGIN, anchor: 0 };
+    this.end = new FreeEndpoint(Point.ORIGIN);
 
     this.start = end;
     this.end = start;

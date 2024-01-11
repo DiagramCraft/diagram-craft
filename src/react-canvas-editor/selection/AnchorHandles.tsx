@@ -7,7 +7,12 @@ import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { DiagramEdge, isConnected } from '../../model/diagramEdge.ts';
+import {
+  ConnectedEndpoint,
+  DiagramEdge,
+  FreeEndpoint,
+  isConnected
+} from '../../model/diagramEdge.ts';
 import { newid } from '../../utils/id.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
@@ -38,8 +43,8 @@ class AnchorHandleDrag extends AbstractDrag {
 
     this.edge = new DiagramEdge(
       newid(),
-      { anchor: this.anchorIndex, node: this.node },
-      { position: diagram.viewBox.toDiagramPoint(this.point) },
+      new ConnectedEndpoint(this.anchorIndex, this.node),
+      new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),
       {},
       [],
       diagram,
@@ -86,8 +91,8 @@ class AnchorHandleDrag extends AbstractDrag {
     const startNode = this.edge.start;
     if (!isConnected(startNode)) throw new VerifyNotReached();
     this.applicationTriggers.showNodeLinkPopup?.(
-      this.edge.endPosition,
-      startNode.node.id,
+      this.edge.end.position,
+      startNode.node!.id,
       this.edge.id
     );
   }
