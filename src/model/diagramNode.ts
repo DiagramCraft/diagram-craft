@@ -216,15 +216,24 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
   }
 
-  removeEdge(anchor: number, edge: DiagramEdge) {
+  /**
+   * Only to be called from DiagramEdge
+   */
+  _removeEdge(anchor: number, edge: DiagramEdge) {
     this.edges.set(anchor, this.edges.get(anchor)?.filter(e => e !== edge) ?? []);
   }
 
-  addEdge(anchor: number, edge: DiagramEdge) {
+  /**
+   * Only to be called from DiagramEdge
+   */
+  _addEdge(anchor: number, edge: DiagramEdge) {
     this.edges.set(anchor, [...(this.edges.get(anchor) ?? []), edge]);
   }
 
-  getAnchorPosition(anchor: number) {
+  /**
+   * Only to be called from ConnectedEndpoint
+   */
+  _getAnchorPosition(anchor: number) {
     return {
       x: this.bounds.x + this.bounds.w * this.getAnchor(anchor).point.x,
       y: this.bounds.y + this.bounds.h * this.getAnchor(anchor).point.y

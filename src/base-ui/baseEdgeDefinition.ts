@@ -58,7 +58,6 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       edge.diagram,
       edge.layer
     );
-    element.addEdge(anchor, newEdge);
     edge.layer.addElement(newEdge, uow);
 
     edge.end = new ConnectedEndpoint(anchor, element);

@@ -27,7 +27,7 @@ export class ConnectedEndpoint implements Endpoint {
   ) {}
 
   get position() {
-    return this.node!.getAnchorPosition(this.anchor!);
+    return this.node!._getAnchorPosition(this.anchor!);
   }
 }
 
@@ -94,6 +94,13 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     this.waypoints = midpoints;
     this.diagram = diagram;
     this.layer = layer;
+
+    if (isConnected(start)) {
+      start.node._addEdge(start.anchor, this);
+    }
+    if (isConnected(end)) {
+      end.node._addEdge(end.anchor, this);
+    }
   }
 
   // TODO: This should use the EdgeDefinitionRegistry
@@ -210,11 +217,11 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   set start(start: Endpoint) {
     if (isConnected(this.#start)) {
-      this.#start.node.removeEdge(this.#start.anchor, this);
+      this.#start.node._removeEdge(this.#start.anchor, this);
     }
 
     if (isConnected(start)) {
-      start.node.addEdge(start.anchor, this);
+      start.node._addEdge(start.anchor, this);
     }
 
     this.#start = start;
@@ -226,11 +233,11 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   set end(end: Endpoint) {
     if (isConnected(this.#end)) {
-      this.#end.node.removeEdge(this.#end.anchor, this);
+      this.#end.node._removeEdge(this.#end.anchor, this);
     }
 
     if (isConnected(end)) {
-      end.node.addEdge(end.anchor, this);
+      end.node._addEdge(end.anchor, this);
     }
 
     this.#end = end;

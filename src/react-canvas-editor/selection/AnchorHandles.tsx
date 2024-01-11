@@ -53,7 +53,7 @@ class AnchorHandleDrag extends AbstractDrag {
 
     const uow = new UnitOfWork(diagram);
     diagram.layers.active.addElement(this.edge, uow);
-    this.node.addEdge(this.anchorIndex, this.edge);
+
     uow.updateElement(this.node);
     uow.commit();
 
