@@ -141,11 +141,11 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       for (const edge of this.edges.get(anchor) ?? []) {
         let isChanged = false;
         if (isConnected(edge.start) && edge.start.node === this) {
-          edge.start = { position: edge.start.position };
+          edge.setStartEndpoint(new FreeEndpoint(edge.start.position), uow);
           isChanged = true;
         }
         if (isConnected(edge.end) && edge.end.node === this) {
-          edge.end = { position: edge.end.position };
+          edge.setEndEndpoint(new FreeEndpoint(edge.end.position), uow);
           isChanged = true;
         }
         if (isChanged) uow.updateElement(edge);
@@ -302,8 +302,10 @@ export class DiagramNode implements AbstractNode, DiagramElement {
           newEnd = new FreeEndpoint(e.end.position);
         }
 
-        e.start = newStart;
-        e.end = newEnd;
+        UnitOfWork.noCommit(this.diagram, uow => {
+          e.setStartEndpoint(newStart, uow);
+          e.setEndEndpoint(newEnd, uow);
+        });
       }
     }
 

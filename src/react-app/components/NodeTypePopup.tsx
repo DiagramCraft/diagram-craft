@@ -42,8 +42,7 @@ export const NodeTypePopup = (props: Props) => {
         const edge = diagram.edgeLookup.get(props.edgeId);
         assert.present(edge);
 
-        edge.end = new ConnectedEndpoint(0, node);
-        uow.updateElement(edge);
+        edge.setEndEndpoint(new ConnectedEndpoint(0, node), uow);
       });
 
       props.onClose();

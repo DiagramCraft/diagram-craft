@@ -1,7 +1,12 @@
 import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
-import { ConnectedEndpoint, DiagramEdge, isConnected } from '../../model/diagramEdge.ts';
+import {
+  ConnectedEndpoint,
+  DiagramEdge,
+  FreeEndpoint,
+  isConnected
+} from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -62,44 +67,54 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
     selection.guides = [];
 
+    const uow = new UnitOfWork(this.diagram);
+
     if (this.type === 'start') {
-      this.edge.start = { position: coord };
+      this.edge.setStartEndpoint(new FreeEndpoint(coord), uow);
     } else {
-      this.edge.end = { position: coord };
+      this.edge.setEndEndpoint(new FreeEndpoint(coord), uow);
     }
 
     this.coord = coord;
 
     // TODO: We should snap to the connection point
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      this.attachToClosestAnchor(coord);
+      this.attachToClosestAnchor(coord, uow);
     }
 
-    this.edge.update();
+    uow.commit();
   }
 
   onDragEnd(): void {
     // Using the last known coordinate, attach to the closest anchor
-    this.attachToClosestAnchor(this.coord!);
+    const uow = new UnitOfWork(this.diagram);
+    this.attachToClosestAnchor(this.coord!, uow);
 
     if (this.hoverElement) {
       removeHighlight(this.diagram.lookup(this.hoverElement)!, 'edge-connect');
     }
 
+    uow.commit();
     // TODO: Create undoable action
   }
 
-  private attachToClosestAnchor(coord: Point) {
+  private attachToClosestAnchor(coord: Point, uow: UnitOfWork) {
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
       if (this.type === 'start') {
-        this.edge.start = new ConnectedEndpoint(
-          this.getClosestAnchor(coord),
-          this.diagram.nodeLookup.get(this.hoverElement)!
+        this.edge.setStartEndpoint(
+          new ConnectedEndpoint(
+            this.getClosestAnchor(coord),
+            this.diagram.nodeLookup.get(this.hoverElement)!
+          ),
+          uow
         );
       } else {
-        this.edge.end = new ConnectedEndpoint(
-          this.getClosestAnchor(coord),
-          this.diagram.nodeLookup.get(this.hoverElement)!
+        this.edge.setEndEndpoint(
+          new ConnectedEndpoint(
+            this.getClosestAnchor(coord),
+            this.diagram.nodeLookup.get(this.hoverElement)!
+          ),
+          uow
         );
       }
     }

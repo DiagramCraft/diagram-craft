@@ -107,6 +107,48 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     return this.#intersections;
   }
 
+  /* Endpoints ********************************************************************************************** */
+
+  setStartEndpoint(start: Endpoint, uow: UnitOfWork) {
+    if (isConnected(this.#start)) {
+      this.#start.node._removeEdge(this.#start.anchor, this);
+      uow.updateElement(this.#start.node);
+    }
+
+    if (isConnected(start)) {
+      start.node._addEdge(start.anchor, this);
+      uow.updateElement(start.node);
+    }
+
+    this.#start = start;
+
+    uow.updateElement(this);
+  }
+
+  get start() {
+    return this.#start;
+  }
+
+  setEndEndpoint(end: Endpoint, uow: UnitOfWork) {
+    if (isConnected(this.#end)) {
+      this.#end.node._removeEdge(this.#end.anchor, this);
+      uow.updateElement(this.#end.node);
+    }
+
+    if (isConnected(end)) {
+      end.node._addEdge(end.anchor, this);
+      uow.updateElement(end.node);
+    }
+
+    this.#end = end;
+
+    uow.updateElement(this);
+  }
+
+  get end() {
+    return this.#end;
+  }
+
   /* Label Nodes ******************************************************************************************** */
 
   get labelNodes() {
@@ -181,8 +223,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   // TODO: We should change this and provide a UnitOfWork
   set bounds(b: Box) {
-    if (!isConnected(this.start)) this.start = new FreeEndpoint({ x: b.x, y: b.y });
-    if (!isConnected(this.end)) this.end = new FreeEndpoint({ x: b.x + b.w, y: b.y + b.h });
+    if (!isConnected(this.start)) this.#start = new FreeEndpoint({ x: b.x, y: b.y });
+    if (!isConnected(this.end)) this.#end = new FreeEndpoint({ x: b.x + b.w, y: b.y + b.h });
   }
 
   path() {
@@ -210,12 +252,6 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     });
 
     uow.updateElement(this);
-  }
-
-  update() {
-    const uow = new UnitOfWork(this.diagram);
-    uow.updateElement(this);
-    uow.commit();
   }
 
   duplicate(ctx?: DuplicationContext) {
@@ -248,49 +284,15 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     return edge;
   }
 
-  set start(start: Endpoint) {
-    if (isConnected(this.#start)) {
-      this.#start.node._removeEdge(this.#start.anchor, this);
-    }
-
-    if (isConnected(start)) {
-      start.node._addEdge(start.anchor, this);
-    }
-
-    this.#start = start;
-  }
-
-  get start() {
-    return this.#start;
-  }
-
-  set end(end: Endpoint) {
-    if (isConnected(this.#end)) {
-      this.#end.node._removeEdge(this.#end.anchor, this);
-    }
-
-    if (isConnected(end)) {
-      end.node._addEdge(end.anchor, this);
-    }
-
-    this.#end = end;
-  }
-
-  get end() {
-    return this.#end;
-  }
-
   flip(uow: UnitOfWork) {
     const start = this.#start;
     const end = this.#end;
 
     // Need to "zero" the end so that the setters logic should work correctly
-    this.end = new FreeEndpoint(Point.ORIGIN);
+    this.#end = new FreeEndpoint(Point.ORIGIN);
 
-    this.start = end;
-    this.end = start;
-
-    uow.updateElement(this);
+    this.setStartEndpoint(end, uow);
+    this.setEndEndpoint(start, uow);
   }
 
   /**
