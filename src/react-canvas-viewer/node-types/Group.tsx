@@ -66,10 +66,7 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
     const childrenBounds = node.children.map(c => c.bounds);
     if (childrenBounds.length === 0) return;
     const newBounds = Box.boundingBox(childrenBounds);
-    if (!Box.isEqual(newBounds, node.bounds)) {
-      node.bounds = newBounds;
-      uow.updateElement(node);
-    }
+    node.setBounds(newBounds, uow);
 
     if (node.parent) {
       const parentDef = node.parent.getNodeDefinition();

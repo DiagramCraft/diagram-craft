@@ -1,9 +1,9 @@
 import { Box } from '../../geometry/box.ts';
 import { NodeChangeUndoableAction } from '../../model/diagramUndoActions.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -63,21 +63,25 @@ export class DistributeAction extends AbstractSelectionAction {
     const difference = totalSpace / (this.diagram.selectionState.elements.length - 1);
 
     let currentPosition = min + Math.abs(minimal.bounds[size] + difference);
-    for (const e of this.diagram.selectionState.elements.slice(1)) {
-      if (e.bounds[size] >= 0) {
-        e.bounds =
-          orientation === 'y'
-            ? { ...e.bounds, y: currentPosition }
-            : { ...e.bounds, x: currentPosition };
-      } else {
-        e.bounds =
-          orientation === 'y'
-            ? { ...e.bounds, y: currentPosition - e.bounds[size] }
-            : { ...e.bounds, x: currentPosition - e.bounds[size] };
+    UnitOfWork.execute(this.diagram, uow => {
+      for (const e of this.diagram.selectionState.elements.slice(1)) {
+        if (e.bounds[size] >= 0) {
+          e.setBounds(
+            orientation === 'y'
+              ? { ...e.bounds, y: currentPosition }
+              : { ...e.bounds, x: currentPosition },
+            uow
+          );
+        } else {
+          e.setBounds(
+            orientation === 'y'
+              ? { ...e.bounds, y: currentPosition - e.bounds[size] }
+              : { ...e.bounds, x: currentPosition - e.bounds[size] },
+            uow
+          );
+        }
+        currentPosition += Math.abs(e.bounds[size] + difference);
       }
-
-      this.diagram.updateElement(e as DiagramNode);
-      currentPosition += Math.abs(e.bounds[size] + difference);
-    }
+    });
   }
 }

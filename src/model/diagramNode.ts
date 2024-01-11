@@ -29,7 +29,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   readonly nodeType: 'group' | string;
   readonly edges: Map<number, DiagramEdge[]> = new Map<number, DiagramEdge[]>();
 
-  bounds: Box;
+  #bounds: Box;
+
   parent?: DiagramNode;
   props: NodeProps = {};
   diagram: Diagram;
@@ -48,7 +49,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     anchorCache?: ReadonlyArray<Anchor>
   ) {
     this.id = id;
-    this.bounds = bounds;
+    this.#bounds = bounds;
     this.nodeType = nodeType;
     this.#children = [];
     this.diagram = diagram;
@@ -62,6 +63,20 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       this.invalidateAnchors(new UnitOfWork(diagram));
     }
   }
+
+  /* Bounds ************************************************************************************************* */
+
+  get bounds(): Box {
+    return this.#bounds;
+  }
+
+  setBounds(bounds: Box, uow: UnitOfWork) {
+    const oldBounds = this.bounds;
+    this.#bounds = bounds;
+    if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
+  }
+
+  /* Children *********************************************************************************************** */
 
   set children(value: ReadonlyArray<DiagramElement>) {
     this.#children = value;
@@ -167,7 +182,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
     const previousBounds = this.bounds;
-    this.bounds = Transform.box(this.bounds, ...transforms);
+    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
     this.getNodeDefinition().onTransform(transforms, this, uow);
 
@@ -325,7 +340,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
-    this.bounds = snapshot.bounds;
+    this.setBounds(snapshot.bounds, uow);
     this.props = snapshot.props;
     uow.updateElement(this);
   }

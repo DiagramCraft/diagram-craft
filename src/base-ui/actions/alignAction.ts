@@ -1,9 +1,9 @@
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { NodeChangeUndoableAction } from '../../model/diagramUndoActions.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -74,8 +74,9 @@ export class AlignAction extends AbstractSelectionAction {
   // y === Y           => y = Y           => y = Y - h * offset (offset = 0)
   private alignY(y: number, offset: number) {
     this.diagram.selectionState.elements.forEach(e => {
-      e.bounds = { ...e.bounds, y: y - e.bounds.h * offset };
-      this.diagram.updateElement(e as DiagramNode);
+      UnitOfWork.execute(this.diagram, uow =>
+        e.setBounds({ ...e.bounds, y: y - e.bounds.h * offset }, uow)
+      );
     });
   }
 
@@ -84,8 +85,9 @@ export class AlignAction extends AbstractSelectionAction {
   // x === X           => x = X           => x = X - w * offset (offset = 0)
   private alignX(x: number, offset: number) {
     this.diagram.selectionState.elements.forEach(e => {
-      e.bounds = { ...e.bounds, x: x - e.bounds.w * offset };
-      this.diagram.updateElement(e as DiagramNode);
+      UnitOfWork.execute(this.diagram, uow =>
+        e.setBounds({ ...e.bounds, x: x - e.bounds.w * offset }, uow)
+      );
     });
   }
 }

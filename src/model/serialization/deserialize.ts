@@ -69,10 +69,13 @@ export const deserializeDiagramElements = (
   for (const n of allNodes) {
     for (const child of unfoldGroup(n)) {
       if (child.parent) {
-        nodeLookup[child.id].bounds = {
-          ...nodeLookup[child.id].bounds,
-          ...Point.add(nodeLookup[child.id].bounds, nodeLookup[child.parent.id].bounds)
-        };
+        nodeLookup[child.id].setBounds(
+          {
+            ...nodeLookup[child.id].bounds,
+            ...Point.add(nodeLookup[child.id].bounds, nodeLookup[child.parent.id].bounds)
+          },
+          new UnitOfWork(diagram)
+        );
       }
     }
   }

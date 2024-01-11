@@ -5,6 +5,7 @@ import { propsUtils } from '../utils/propsUtils.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { RectNodeDefinition } from './Rect.tsx';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export const Text = (props: Props) => {
   const sizeChangeCallback = useCallback(
@@ -12,13 +13,17 @@ export const Text = (props: Props) => {
       const height = size.h;
       const width = size.w;
 
-      props.node.bounds = {
-        ...props.node.bounds,
-        h: height,
-        w: width
-      };
+      UnitOfWork.execute(props.node.diagram!, uow => {
+        props.node.setBounds(
+          {
+            ...props.node.bounds,
+            h: height,
+            w: width
+          },
+          uow
+        );
+      });
 
-      props.node.diagram!.updateElement(props.node);
       props.node.diagram!.selectionState.rebaseline();
     },
     [props.node]

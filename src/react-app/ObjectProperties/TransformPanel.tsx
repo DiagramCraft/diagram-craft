@@ -9,6 +9,7 @@ import { NumberInput } from '../NumberInput.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { $c } from '../../utils/classname.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },
@@ -80,9 +81,10 @@ export const TransformPanel = (props: Props) => {
       newBounds.y = newBounds.y - prevPos.y * transformedBounds.h + newPos.y * newBounds.h;
     }
 
-    diagram.selectionState.elements[0].bounds = WritableBox.asBox(newBounds);
-    diagram.selectionState.guides = [];
-    diagram.updateElement(diagram.selectionState.elements[0]);
+    UnitOfWork.execute(diagram, uow => {
+      diagram.selectionState.elements[0].setBounds(WritableBox.asBox(newBounds), uow);
+      diagram.selectionState.guides = [];
+    });
   };
 
   return (

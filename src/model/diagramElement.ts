@@ -14,9 +14,11 @@ export interface DiagramElement extends AbstractElement {
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
   isLocked(): boolean;
 
+  readonly bounds: Box;
+  setBounds(bounds: Box, uow: UnitOfWork): void;
+
   props: NodeProps | EdgeProps;
   parent?: DiagramNode;
-  bounds: Box;
   layer: Layer;
   diagram: Diagram;
 }

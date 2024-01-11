@@ -237,23 +237,16 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     }
 
     // Transform back to global coordinate system
-    node.bounds = Transform.box(newBounds, ...transformForward);
+    node.setBounds(Transform.box(newBounds, ...transformForward), uow);
     for (const entry of children) {
       if (!entry.newLocalBounds) continue;
       if (!isNode(entry.node)) continue;
-      this.updateBounds(entry.node, Transform.box(entry.newLocalBounds, ...transformForward), uow);
+      entry.node.setBounds(Transform.box(entry.newLocalBounds, ...transformForward), uow);
     }
 
     if (node.parent) {
       const parentDef = node.parent.getNodeDefinition();
       parentDef.onChildChanged(node.parent, uow);
-    }
-  }
-
-  private updateBounds(node: DiagramNode, newBounds: Box, uow: UnitOfWork) {
-    if (!Box.isEqual(newBounds, node.bounds)) {
-      node.bounds = newBounds;
-      uow.updateElement(node);
     }
   }
 }

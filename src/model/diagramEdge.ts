@@ -98,13 +98,22 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     if (isConnected(end)) end.node._addEdge(end.anchor, this);
   }
 
-  // TODO: This should use the EdgeDefinitionRegistry
-  getEdgeDefinition() {
-    return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
+  /* Bounds ************************************************************************************************* */
+
+  // TODO: This is probably not a sufficient way to calculate the bounding box
+  get bounds() {
+    return Box.fromCorners(this.#start.position, this.#end.position);
   }
 
-  get intersections() {
-    return this.#intersections;
+  setBounds(b: Box, uow: UnitOfWork) {
+    if (!isConnected(this.start)) {
+      this.#start = new FreeEndpoint({ x: b.x, y: b.y });
+      uow.updateElement(this);
+    }
+    if (!isConnected(this.end)) {
+      this.#end = new FreeEndpoint({ x: b.x + b.w, y: b.y + b.h });
+      uow.updateElement(this);
+    }
   }
 
   /* Endpoints ********************************************************************************************** */
@@ -216,24 +225,13 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     return this.layer.isLocked() ?? false;
   }
 
-  // TODO: This is probably not a sufficient way to calculate the bounding box
-  get bounds() {
-    return Box.fromCorners(this.#start.position, this.#end.position);
-  }
-
-  // TODO: We should change this and provide a UnitOfWork
-  set bounds(b: Box) {
-    if (!isConnected(this.start)) this.#start = new FreeEndpoint({ x: b.x, y: b.y });
-    if (!isConnected(this.end)) this.#end = new FreeEndpoint({ x: b.x + b.w, y: b.y + b.h });
-  }
-
   path() {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
     return buildEdgePath(this, this.props.routing?.rounding ?? 0);
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
-    this.bounds = Transform.box(this.bounds, ...transforms);
+    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
     this.#waypoints = this.waypoints?.map(w => {
       const absoluteControlPoints = (w.controlPoints ?? []).map(cp => Point.add(w.point, cp));
@@ -282,6 +280,15 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     });
 
     return edge;
+  }
+
+  // TODO: This should use the EdgeDefinitionRegistry
+  getEdgeDefinition() {
+    return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
+  }
+
+  get intersections() {
+    return this.#intersections;
   }
 
   flip(uow: UnitOfWork) {
@@ -410,13 +417,15 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
         isDifferent(newRotation, labelNode.node.bounds.r);
 
       if (hasChanged) {
-        labelNode.node.bounds = {
-          ...labelNode.node.bounds,
-          r: newRotation,
-          x: newCenterPoint.x - labelNode.node.bounds.w / 2,
-          y: newCenterPoint.y - labelNode.node.bounds.h / 2
-        };
-        uow.updateElement(labelNode.node);
+        labelNode.node.setBounds(
+          {
+            ...labelNode.node.bounds,
+            r: newRotation,
+            x: newCenterPoint.x - labelNode.node.bounds.w / 2,
+            y: newCenterPoint.y - labelNode.node.bounds.h / 2
+          },
+          uow
+        );
       }
     }
   }
