@@ -4,6 +4,7 @@ import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
 import { PointOnPath } from '../../geometry/pathPosition.ts';
 import { smallest } from '../../utils/array.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -30,13 +31,12 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
 
     const path = edge.path();
 
-    const wpDistances =
-      edge.waypoints?.map((p, idx) => {
-        return {
-          pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
-          idx
-        };
-      }) ?? [];
+    const wpDistances = edge.waypoints.map((p, idx) => {
+      return {
+        pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
+        idx
+      };
+    });
 
     const projection = path.projectPoint(context.point);
 
@@ -45,7 +45,8 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
       (a, b) => a.d - b.d
     ).idx;
 
-    edge.waypoints = edge.waypoints!.filter((_, idx) => idx !== closestWaypointIndex);
-    this.diagram.updateElement(edge);
+    UnitOfWork.execute(this.diagram, uow => {
+      edge.removeWaypoint(edge.waypoints[closestWaypointIndex], uow);
+    });
   }
 }

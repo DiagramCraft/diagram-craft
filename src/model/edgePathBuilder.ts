@@ -91,7 +91,7 @@ const buildOrthogonalEdgePath = (
     ? [preferedStartDirection]
     : [];
   let prevPosition: Waypoint = { point: sm };
-  edge.waypoints?.forEach(mp => {
+  edge.waypoints.forEach(mp => {
     const result = addSegment(prevPosition, mp, availableDirections, preferedDirections);
 
     availableDirections = result[0].availableDirections;
@@ -121,7 +121,7 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
   const path = new PathBuilder();
 
   path.moveTo(edge.start.position);
-  if (!edge.waypoints || edge.waypoints.length === 0) {
+  if (edge.waypoints.length === 0) {
     path.lineTo(em);
   } else if (edge.waypoints.length === 1) {
     path.quadTo(em, edge.waypoints[0].point);
@@ -140,7 +140,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
   const path = new PathBuilder();
 
   path.moveTo(edge.start.position);
-  if (!edge.waypoints || edge.waypoints.length === 0) {
+  if (edge.waypoints.length === 0) {
     path.lineTo(edge.end.position);
   } else {
     // Ensure all control points exists, as they may not in case the edge type has been changed
@@ -174,7 +174,7 @@ const buildStraightEdgePath = (edge: DiagramEdge) => {
   const path = new PathBuilder();
 
   path.moveTo(edge.start.position);
-  edge.waypoints?.forEach(wp => {
+  edge.waypoints.forEach(wp => {
     path.lineTo(wp.point);
   });
   path.lineTo(edge.end.position);

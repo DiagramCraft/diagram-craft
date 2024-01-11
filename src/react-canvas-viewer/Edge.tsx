@@ -130,7 +130,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       />
 
       {isSingleSelected &&
-        firstEdge.waypoints?.map((wp, idx) => (
+        firstEdge.waypoints.map((wp, idx) => (
           <Fragment key={`${wp.point.x}_${wp.point.y}`}>
             <circle
               className="svg-waypoint-handle"

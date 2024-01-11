@@ -6,7 +6,7 @@ import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
-import { TimeOffsetOnPath } from '../geometry/pathPosition.ts';
+import { PointOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
@@ -67,8 +67,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   readonly props: EdgeProps = {};
 
   #intersections: Intersection[] = [];
-
-  waypoints: ReadonlyArray<Waypoint> | undefined;
+  #waypoints: ReadonlyArray<Waypoint> = [];
 
   diagram: Diagram;
   layer: Layer;
@@ -91,16 +90,12 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     this.#start = start;
     this.#end = end;
     this.props = props;
-    this.waypoints = midpoints;
+    this.#waypoints = midpoints;
     this.diagram = diagram;
     this.layer = layer;
 
-    if (isConnected(start)) {
-      start.node._addEdge(start.anchor, this);
-    }
-    if (isConnected(end)) {
-      end.node._addEdge(end.anchor, this);
-    }
+    if (isConnected(start)) start.node._addEdge(start.anchor, this);
+    if (isConnected(end)) end.node._addEdge(end.anchor, this);
   }
 
   // TODO: This should use the EdgeDefinitionRegistry
@@ -135,6 +130,44 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     this.setLabelNodes(this.labelNodes?.filter(ln => ln !== labelNode), uow);
   }
 
+  /* Waypoints ********************************************************************************************** */
+
+  get waypoints() {
+    return this.#waypoints;
+  }
+
+  addWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
+    const path = this.path();
+    const projection = path.projectPoint(waypoint.point);
+
+    const wpDistances = this.waypoints.map(p => {
+      return {
+        pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
+        ...p
+      };
+    });
+
+    this.#waypoints = [...wpDistances, { ...waypoint, pathD: projection.pathD }].sort(
+      (a, b) => a.pathD - b.pathD
+    );
+
+    uow.updateElement(this);
+  }
+
+  removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
+    this.#waypoints = this.waypoints?.filter(w => w !== waypoint);
+    uow.updateElement(this);
+  }
+
+  moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
+    waypoint.point = point;
+    uow.updateElement(this);
+  }
+
+  updateWaypoint(_waypoint: Waypoint, uow: UnitOfWork) {
+    uow.updateElement(this);
+  }
+
   /* ***** ***** ******************************************************************************************** */
 
   isLocked() {
@@ -160,7 +193,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
     this.bounds = Transform.box(this.bounds, ...transforms);
 
-    this.waypoints = this.waypoints?.map(w => {
+    this.#waypoints = this.waypoints?.map(w => {
       const absoluteControlPoints = (w.controlPoints ?? []).map(cp => Point.add(w.point, cp));
       const transformedControlPoints = absoluteControlPoints.map(cp =>
         Transform.point(cp, ...transforms)

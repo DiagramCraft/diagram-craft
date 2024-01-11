@@ -3,6 +3,7 @@ import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';
@@ -18,25 +19,25 @@ class BezierControlUndoAction implements UndoableAction {
   ) {}
 
   undo(): void {
-    const wp = this.edge.waypoints![this.waypointIdx];
+    const wp = this.edge.waypoints[this.waypointIdx];
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;
 
     wp.controlPoints![cIdx] = this.oldCPoint;
     wp.controlPoints![ocIdx] = this.oldOCPoint;
 
-    this.edge.update();
+    UnitOfWork.execute(this.edge.diagram, uow => this.edge.updateWaypoint(wp, uow));
   }
 
   redo(): void {
-    const wp = this.edge.waypoints![this.waypointIdx];
+    const wp = this.edge.waypoints[this.waypointIdx];
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;
 
     wp.controlPoints![cIdx] = this.newCPoint;
     wp.controlPoints![ocIdx] = this.newOCPoint;
 
-    this.edge.update();
+    UnitOfWork.execute(this.edge.diagram, uow => this.edge.updateWaypoint(wp, uow));
   }
 }
 
@@ -51,13 +52,13 @@ export class BezierControlPointDrag extends AbstractDrag {
     private readonly controlPointIdx: number
   ) {
     super();
-    this.originalCPoint = edge.waypoints![waypointIdx].controlPoints![controlPointIdx];
+    this.originalCPoint = edge.waypoints[waypointIdx].controlPoints![controlPointIdx];
     this.originalOCPoint =
-      edge.waypoints![waypointIdx].controlPoints![controlPointIdx === 0 ? 1 : 0];
+      edge.waypoints[waypointIdx].controlPoints![controlPointIdx === 0 ? 1 : 0];
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
-    const wp = this.edge.waypoints![this.waypointIdx];
+    const wp = this.edge.waypoints[this.waypointIdx];
 
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;
@@ -68,11 +69,11 @@ export class BezierControlPointDrag extends AbstractDrag {
       y: wp.controlPoints![cIdx].y * -1
     };
 
-    this.edge.update();
+    UnitOfWork.execute(this.edge.diagram, uow => this.edge.updateWaypoint(wp, uow));
   }
 
   onDragEnd(): void {
-    const wp = this.edge.waypoints![this.waypointIdx];
+    const wp = this.edge.waypoints[this.waypointIdx];
 
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;

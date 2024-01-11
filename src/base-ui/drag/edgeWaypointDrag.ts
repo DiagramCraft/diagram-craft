@@ -3,6 +3,7 @@ import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 class WaypointUndoAction implements UndoableAction {
   description = 'Move Waypoint';
@@ -15,13 +16,15 @@ class WaypointUndoAction implements UndoableAction {
   ) {}
 
   undo(): void {
-    this.edge.waypoints![this.waypointIdx].point = this.oldPoint;
-    this.edge.update();
+    UnitOfWork.execute(this.edge.diagram, uow =>
+      this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], this.oldPoint, uow)
+    );
   }
 
   redo(): void {
-    this.edge.waypoints![this.waypointIdx].point = this.newPoint;
-    this.edge.update();
+    UnitOfWork.execute(this.edge.diagram, uow =>
+      this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], this.newPoint, uow)
+    );
   }
 }
 
@@ -34,12 +37,13 @@ export class EdgeWaypointDrag extends AbstractDrag {
     private readonly waypointIdx: number
   ) {
     super();
-    this.startPoint = edge.waypoints![waypointIdx].point;
+    this.startPoint = edge.waypoints[waypointIdx].point;
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
-    this.edge.waypoints![this.waypointIdx].point = coord;
-    this.edge.update();
+    UnitOfWork.execute(this.edge.diagram, uow =>
+      this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], coord, uow)
+    );
   }
 
   onDragEnd(): void {
@@ -47,7 +51,7 @@ export class EdgeWaypointDrag extends AbstractDrag {
       new WaypointUndoAction(
         this.edge,
         this.waypointIdx,
-        this.edge.waypoints![this.waypointIdx].point,
+        this.edge.waypoints[this.waypointIdx].point,
         this.startPoint
       )
     );
