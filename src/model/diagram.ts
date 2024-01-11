@@ -159,8 +159,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     // TODO: Can optimize by grouping by parent - probably not worth it
     for (const el of elements) {
       if (el.parent) {
-        el.parent.children = el.parent.children.filter(e => e !== el);
-        el.parent = undefined;
+        el.parent.removeChild(el, uow);
       }
     }
 
@@ -176,11 +175,11 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
       const idx = parent.children.indexOf(ref.element);
       if (ref.relation === 'above') {
-        parent.children = parent.children.toSpliced(idx + 1, 0, ...elements);
+        parent.setChildren(parent.children.toSpliced(idx + 1, 0, ...elements), uow);
       } else if (ref.relation === 'below') {
-        parent.children = parent.children.toSpliced(idx, 0, ...elements);
+        parent.setChildren(parent.children.toSpliced(idx, 0, ...elements), uow);
       } else {
-        ref.element.children = [...ref.element.children, ...elements];
+        ref.element.setChildren([...ref.element.children, ...elements], uow);
       }
     } else {
       assert.true(ref.element.layer === layer);
@@ -191,7 +190,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       } else if (ref.relation === 'below') {
         layer.setElements(layer.elements.toSpliced(idx, 0, ...elements), uow);
       } else if (isNode(ref.element)) {
-        ref.element.children = [...ref.element.children, ...elements];
+        ref.element.setChildren([...ref.element.children, ...elements], uow);
       }
     }
 

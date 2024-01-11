@@ -57,7 +57,7 @@ class UndoableGroupAction implements UndoableAction {
     const uow = new UnitOfWork(this.diagram);
 
     this.#elements.forEach(e => {
-      e.layer!.removeElement(e, uow);
+      e.layer.removeElement(e, uow);
     });
 
     this.#group = new DiagramNode(
@@ -67,7 +67,7 @@ class UndoableGroupAction implements UndoableAction {
       this.diagram,
       this.diagram.layers.active
     );
-    this.#group.children = [...this.#elements];
+    this.#group?.setChildren([...this.#elements], uow);
 
     this.diagram.layers.active.addElement(this.#group, uow);
 
@@ -85,14 +85,14 @@ class UndoableGroupAction implements UndoableAction {
     const children = this.#group.children;
 
     this.#group.children.forEach(e => {
-      e.layer!.removeElement(e, uow);
+      e.layer.removeElement(e, uow);
     });
 
     this.#group?.layer.removeElement(this.#group, uow);
     this.#elements = this.#group.children;
 
     children.toReversed().forEach(e => {
-      e.parent = undefined;
+      this.#group?.removeChild(e, uow);
       this.diagram.layers.active.addElement(e, uow);
     });
 

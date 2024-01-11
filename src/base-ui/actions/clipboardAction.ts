@@ -45,7 +45,7 @@ export class PasteUndoableAction implements UndoableAction {
   undo() {
     UnitOfWork.execute(this.diagram, uow => {
       this.elements.forEach(e => {
-        e.layer!.removeElement(e, uow);
+        e.layer.removeElement(e, uow);
       });
     });
   }
@@ -243,7 +243,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   private deleteSelection() {
     UnitOfWork.execute(this.diagram, uow => {
       for (const element of this.diagram.selectionState.elements) {
-        element.layer!.removeElement(element, uow);
+        element.layer.removeElement(element, uow);
       }
     });
     this.diagram.selectionState.clear();

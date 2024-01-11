@@ -24,18 +24,19 @@ export type DuplicationContext = {
 };
 
 export class DiagramNode implements AbstractNode, DiagramElement {
-  readonly id: string;
   readonly type = 'node';
+
+  readonly id: string;
   readonly nodeType: 'group' | string;
   readonly edges: Map<number, DiagramEdge[]> = new Map<number, DiagramEdge[]>();
 
-  #bounds: Box;
+  #diagram: Diagram;
+  #layer: Layer;
+  #parent?: DiagramNode;
 
-  parent?: DiagramNode;
   props: NodeProps = {};
-  diagram: Diagram;
-  layer: Layer;
 
+  #bounds: Box;
   #anchors?: ReadonlyArray<Anchor>;
   #children: ReadonlyArray<DiagramElement>;
 
@@ -52,8 +53,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     this.#bounds = bounds;
     this.nodeType = nodeType;
     this.#children = [];
-    this.diagram = diagram;
-    this.layer = layer;
+    this.#diagram = diagram;
+    this.#layer = layer;
 
     this.props = props ?? {};
     this.#anchors = anchorCache;
@@ -62,6 +63,60 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     if (!this.#anchors) {
       this.invalidateAnchors(new UnitOfWork(diagram));
     }
+  }
+
+  /* Parent ************************************************************************************************** */
+
+  get parent() {
+    return this.#parent;
+  }
+
+  _setParent(parent: DiagramNode | undefined) {
+    this.#parent = parent;
+  }
+
+  /* Children *********************************************************************************************** */
+
+  get children() {
+    return this.#children;
+  }
+
+  setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    this.#children = children;
+    this.#children.forEach(c => c._setParent(this));
+    uow.updateElement(this);
+    this.getNodeDefinition().onChildChanged(this, uow);
+  }
+
+  addChild(child: DiagramElement, uow: UnitOfWork) {
+    this.#children = [...this.children, child];
+    child._setParent(this);
+    uow.updateElement(this);
+    uow.updateElement(child);
+    this.getNodeDefinition().onChildChanged(this, uow);
+  }
+
+  removeChild(child: DiagramElement, uow: UnitOfWork) {
+    this.#children = this.children.filter(c => c !== child);
+    child._setParent(undefined);
+    uow.updateElement(this);
+    uow.updateElement(child);
+    this.getNodeDefinition().onChildChanged(this, uow);
+  }
+
+  /* Diagram/layer ******************************************************************************************* */
+
+  get diagram() {
+    return this.#diagram;
+  }
+
+  get layer() {
+    return this.#layer;
+  }
+
+  _setLayer(layer: Layer, diagram: Diagram) {
+    this.#layer = layer;
+    this.#diagram = diagram;
   }
 
   /* Bounds ************************************************************************************************* */
@@ -74,22 +129,6 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     const oldBounds = this.bounds;
     this.#bounds = bounds;
     if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
-  }
-
-  /* Children *********************************************************************************************** */
-
-  set children(value: ReadonlyArray<DiagramElement>) {
-    this.#children = value;
-    this.#children.forEach(c => (c.parent = this));
-
-    // TODO: Maybe this can be moved into invalidate() in case we have a way to capture the initial snapshot somehow
-    UnitOfWork.execute(this.diagram, uow => {
-      this.getNodeDefinition().onChildChanged(this, uow);
-    });
-  }
-
-  get children() {
-    return this.#children;
   }
 
   isLocked() {
@@ -145,9 +184,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   detach(uow: UnitOfWork) {
     // Update any parent
     if (this.parent) {
-      this.parent.children = this.parent?.children.filter(c => c !== this);
+      this.parent.removeChild(this, uow);
     }
-    this.parent = undefined;
 
     this.diagram.nodeLookup.delete(this.id);
 
@@ -156,11 +194,11 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       for (const edge of this.edges.get(anchor) ?? []) {
         let isChanged = false;
         if (isConnected(edge.start) && edge.start.node === this) {
-          edge.setStartEndpoint(new FreeEndpoint(edge.start.position), uow);
+          edge.setStart(new FreeEndpoint(edge.start.position), uow);
           isChanged = true;
         }
         if (isConnected(edge.end) && edge.end.node === this) {
-          edge.setEndEndpoint(new FreeEndpoint(edge.end.position), uow);
+          edge.setEnd(new FreeEndpoint(edge.end.position), uow);
           isChanged = true;
         }
         if (isChanged) uow.updateElement(edge);
@@ -284,7 +322,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       const newElement = c.duplicate(context);
       newChildren.push(newElement);
     }
-    node.children = newChildren;
+    node.setChildren(newChildren, new UnitOfWork(this.diagram));
     context.targetElementsInGroup.set(this.id, node);
 
     if (!isTopLevel) return node;
@@ -318,8 +356,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
         }
 
         UnitOfWork.noCommit(this.diagram, uow => {
-          e.setStartEndpoint(newStart, uow);
-          e.setEndEndpoint(newEnd, uow);
+          e.setStart(newStart, uow);
+          e.setEnd(newEnd, uow);
         });
       }
     }

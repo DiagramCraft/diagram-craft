@@ -58,7 +58,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     );
 
     if (edge.parent) {
-      edge.parent.children = [...edge.parent.children, textNode];
+      edge.parent.setChildren([...edge.parent.children, textNode], uow);
     }
     edge.layer.addElement(textNode, uow);
 

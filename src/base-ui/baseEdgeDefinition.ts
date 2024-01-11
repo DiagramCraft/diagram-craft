@@ -60,7 +60,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     );
     edge.layer.addElement(newEdge, uow);
 
-    edge.setEndEndpoint(new ConnectedEndpoint(anchor, element), uow);
+    edge.setEnd(new ConnectedEndpoint(anchor, element), uow);
 
     uow.updateElement(edge);
 
@@ -77,31 +77,27 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     const path = edge.path();
     const projection = path.projectPoint(coord);
 
-    UnitOfWork.execute(edge.diagram, uow => {
-      edge.addLabelNode(
-        {
-          id: element.id,
-          node: element,
-          offset: Point.ORIGIN,
-          timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
-          type: 'horizontal'
-        },
-        uow
-      );
-    });
+    edge.addLabelNode(
+      {
+        id: element.id,
+        node: element,
+        offset: Point.ORIGIN,
+        timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
+        type: 'horizontal'
+      },
+      uow
+    );
 
     element.props.labelForEdgeId = this.id;
 
     // TODO: Perhaps create a helper to add an element as a label edge
+    // TODO: Maybe use detach here
     if (edge.parent) {
       if (element.parent) {
-        element.parent.children = element.parent.children.filter(c => c !== element);
-        uow.updateElement(element.parent);
+        element.parent.removeChild(element, uow);
       }
 
-      element.parent = edge.parent;
-      edge.parent.children = [...edge.parent.children, element];
-      uow.updateElement(edge.parent);
+      edge.parent.addChild(element, uow);
     }
 
     uow.updateElement(element);

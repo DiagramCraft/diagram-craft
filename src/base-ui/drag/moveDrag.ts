@@ -129,7 +129,7 @@ export class MoveDrag extends AbstractDrag {
 
       UnitOfWork.execute(this.diagram, uow => {
         elementsToRemove.forEach(e => {
-          e.layer!.removeElement(e, uow);
+          e.layer.removeElement(e, uow);
         });
       });
     }

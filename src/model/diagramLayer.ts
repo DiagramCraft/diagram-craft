@@ -68,7 +68,10 @@ export class Layer {
     for (const [parent, positions] of newPositions) {
       positions.sort((a, b) => a.idx - b.idx);
       if (parent) {
-        parent.children = positions.map(e => e.element);
+        parent.setChildren(
+          positions.map(e => e.element),
+          uow
+        );
       } else {
         this.#elements = positions.map(e => e.element);
       }
@@ -144,8 +147,7 @@ export class Layer {
    */
 
   private processElementForAdd(e: DiagramElement) {
-    e.diagram = this.#diagram;
-    e.layer = this;
+    e._setLayer(this, this.#diagram);
     if (isNode(e)) {
       this.#diagram.nodeLookup.set(e.id, e);
       for (const child of e.children) {
@@ -180,11 +182,11 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
 
     this.diagram.selectionState.on('add', () => {
       if (!this.diagram.selectionState.isEmpty())
-        this.active = this.diagram.selectionState.elements[0].layer!;
+        this.active = this.diagram.selectionState.elements[0].layer;
     });
     this.diagram.selectionState.on('remove', () => {
       if (!this.diagram.selectionState.isEmpty())
-        this.active = this.diagram.selectionState.elements[0].layer!;
+        this.active = this.diagram.selectionState.elements[0].layer;
     });
   }
 

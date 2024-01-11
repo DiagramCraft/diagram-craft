@@ -134,7 +134,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
 
       diagram.moveElement(
         instances.map((id: string) => diagram.lookup(id)!),
-        e.layer!,
+        e.layer,
         {
           relation,
           element: e

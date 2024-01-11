@@ -15,12 +15,16 @@ export interface DiagramElement extends AbstractElement {
   isLocked(): boolean;
 
   readonly bounds: Box;
+  readonly layer: Layer;
+  readonly diagram: Diagram;
+  readonly parent?: DiagramNode;
+
   setBounds(bounds: Box, uow: UnitOfWork): void;
 
   props: NodeProps | EdgeProps;
-  parent?: DiagramNode;
-  layer: Layer;
-  diagram: Diagram;
+
+  _setLayer(layer: Layer, diagram: Diagram): void;
+  _setParent(parent: DiagramNode | undefined): void;
 }
 
 export const getDiagramElementPath = (element: DiagramElement): DiagramNode[] => {

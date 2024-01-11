@@ -41,7 +41,7 @@ class SelectionDeleteUndoableAction implements UndoableAction {
   redo(): void {
     UnitOfWork.execute(this.diagram, uow => {
       for (const element of this.elements) {
-        element.layer!.removeElement(element, uow);
+        element.layer.removeElement(element, uow);
       }
     });
     this.diagram.selectionState.clear();

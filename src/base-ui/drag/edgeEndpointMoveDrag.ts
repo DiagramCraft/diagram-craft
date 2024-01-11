@@ -70,9 +70,9 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     const uow = new UnitOfWork(this.diagram);
 
     if (this.type === 'start') {
-      this.edge.setStartEndpoint(new FreeEndpoint(coord), uow);
+      this.edge.setStart(new FreeEndpoint(coord), uow);
     } else {
-      this.edge.setEndEndpoint(new FreeEndpoint(coord), uow);
+      this.edge.setEnd(new FreeEndpoint(coord), uow);
     }
 
     this.coord = coord;
@@ -101,7 +101,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   private attachToClosestAnchor(coord: Point, uow: UnitOfWork) {
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
       if (this.type === 'start') {
-        this.edge.setStartEndpoint(
+        this.edge.setStart(
           new ConnectedEndpoint(
             this.getClosestAnchor(coord),
             this.diagram.nodeLookup.get(this.hoverElement)!
@@ -109,7 +109,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
           uow
         );
       } else {
-        this.edge.setEndEndpoint(
+        this.edge.setEnd(
           new ConnectedEndpoint(
             this.getClosestAnchor(coord),
             this.diagram.nodeLookup.get(this.hoverElement)!

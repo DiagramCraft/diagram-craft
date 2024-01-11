@@ -84,9 +84,12 @@ export const deserializeDiagramElements = (
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
       if (c.type === 'edge') continue;
-      nodeLookup[c.id].children = c.children.map(c2 => nodeLookup[c2.id]);
+      nodeLookup[c.id].setChildren(
+        c.children.map(c2 => nodeLookup[c2.id]),
+        new UnitOfWork(diagram)
+      );
       if (c.parent) {
-        nodeLookup[c.id].parent = nodeLookup[c.parent.id];
+        nodeLookup[c.id]._setParent(nodeLookup[c.parent.id]);
       }
     }
   }

@@ -42,7 +42,7 @@ export const NodeTypePopup = (props: Props) => {
         const edge = diagram.edgeLookup.get(props.edgeId);
         assert.present(edge);
 
-        edge.setEndEndpoint(new ConnectedEndpoint(0, node), uow);
+        edge.setEnd(new ConnectedEndpoint(0, node), uow);
       });
 
       props.onClose();
@@ -54,7 +54,7 @@ export const NodeTypePopup = (props: Props) => {
     const edge = diagram.edgeLookup.get(props.edgeId);
     assert.present(edge);
     UnitOfWork.execute(diagram, uow => {
-      edge.layer!.removeElement(edge, uow);
+      edge.layer.removeElement(edge, uow);
     });
     diagram.selectionState.clear();
   }, [diagram, props.edgeId]);

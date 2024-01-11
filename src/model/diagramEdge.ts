@@ -62,16 +62,17 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
 };
 
 export class DiagramEdge implements AbstractEdge, DiagramElement {
-  readonly id: string;
   readonly type = 'edge';
+
+  readonly id: string;
   readonly props: EdgeProps = {};
+
+  #diagram: Diagram;
+  #layer: Layer;
+  #parent?: DiagramNode;
 
   #intersections: Intersection[] = [];
   #waypoints: ReadonlyArray<Waypoint> = [];
-
-  diagram: Diagram;
-  layer: Layer;
-  parent?: DiagramNode;
 
   #start: Endpoint;
   #end: Endpoint;
@@ -91,11 +92,36 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     this.#end = end;
     this.props = props;
     this.#waypoints = midpoints;
-    this.diagram = diagram;
-    this.layer = layer;
+    this.#diagram = diagram;
+    this.#layer = layer;
 
     if (isConnected(start)) start.node._addEdge(start.anchor, this);
     if (isConnected(end)) end.node._addEdge(end.anchor, this);
+  }
+
+  /* Parent ************************************************************************************************** */
+
+  get parent() {
+    return this.#parent;
+  }
+
+  _setParent(parent: DiagramNode | undefined) {
+    this.#parent = parent;
+  }
+
+  /* Diagram/layer ******************************************************************************************* */
+
+  get diagram() {
+    return this.#diagram;
+  }
+
+  get layer() {
+    return this.#layer;
+  }
+
+  _setLayer(layer: Layer, diagram: Diagram) {
+    this.#layer = layer;
+    this.#diagram = diagram;
   }
 
   /* Bounds ************************************************************************************************* */
@@ -118,7 +144,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   /* Endpoints ********************************************************************************************** */
 
-  setStartEndpoint(start: Endpoint, uow: UnitOfWork) {
+  setStart(start: Endpoint, uow: UnitOfWork) {
     if (isConnected(this.#start)) {
       this.#start.node._removeEdge(this.#start.anchor, this);
       uow.updateElement(this.#start.node);
@@ -138,7 +164,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     return this.#start;
   }
 
-  setEndEndpoint(end: Endpoint, uow: UnitOfWork) {
+  setEnd(end: Endpoint, uow: UnitOfWork) {
     if (isConnected(this.#end)) {
       this.#end.node._removeEdge(this.#end.anchor, this);
       uow.updateElement(this.#end.node);
@@ -298,8 +324,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     // Need to "zero" the end so that the setters logic should work correctly
     this.#end = new FreeEndpoint(Point.ORIGIN);
 
-    this.setStartEndpoint(end, uow);
-    this.setEndEndpoint(start, uow);
+    this.setStart(end, uow);
+    this.setEnd(start, uow);
   }
 
   /**
@@ -323,9 +349,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   detach(uow: UnitOfWork) {
     // Update any parent
     if (this.parent) {
-      this.parent.children = this.parent?.children.filter(c => c !== this);
+      this.parent.removeChild(this, uow);
     }
-    this.parent = undefined;
 
     // All label nodes must be detached
     if (this.labelNodes) {
