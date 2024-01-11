@@ -1,6 +1,7 @@
 import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -27,9 +28,10 @@ export class EdgeFlipAction extends EventEmitter<ActionEvents> implements Action
 
   execute(): void {
     // TODO: Implement undo
+    const uow = new UnitOfWork(this.diagram);
     for (const edge of this.diagram.selectionState.edges) {
-      edge.flip();
-      this.diagram.updateElement(edge);
+      edge.flip(uow);
     }
+    uow.commit();
   }
 }

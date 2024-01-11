@@ -78,16 +78,18 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     const path = edge.path();
     const projection = path.projectPoint(coord);
 
-    edge.labelNodes = [
-      ...(edge.labelNodes ?? []),
-      {
-        id: element.id,
-        node: element,
-        offset: Point.ORIGIN,
-        timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
-        type: 'horizontal'
-      }
-    ];
+    UnitOfWork.execute(edge.diagram, uow => {
+      edge.addLabelNode(
+        {
+          id: element.id,
+          node: element,
+          offset: Point.ORIGIN,
+          timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
+          type: 'horizontal'
+        },
+        uow
+      );
+    });
 
     element.props.labelForEdgeId = this.id;
 

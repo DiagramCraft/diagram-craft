@@ -8,7 +8,6 @@ class WaypointUndoAction implements UndoableAction {
   description = 'Move Waypoint';
 
   constructor(
-    private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
     private readonly newPoint: Point,
@@ -17,12 +16,12 @@ class WaypointUndoAction implements UndoableAction {
 
   undo(): void {
     this.edge.waypoints![this.waypointIdx].point = this.oldPoint;
-    this.diagram.updateElement(this.edge);
+    this.edge.update();
   }
 
   redo(): void {
     this.edge.waypoints![this.waypointIdx].point = this.newPoint;
-    this.diagram.updateElement(this.edge);
+    this.edge.update();
   }
 }
 
@@ -40,13 +39,12 @@ export class EdgeWaypointDrag extends AbstractDrag {
 
   onDrag(coord: Point, _modifiers: Modifiers) {
     this.edge.waypoints![this.waypointIdx].point = coord;
-    this.diagram.updateElement(this.edge);
+    this.edge.update();
   }
 
   onDragEnd(): void {
     this.diagram.undoManager.add(
       new WaypointUndoAction(
-        this.diagram,
         this.edge,
         this.waypointIdx,
         this.edge.waypoints![this.waypointIdx].point,

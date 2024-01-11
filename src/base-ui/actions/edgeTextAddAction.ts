@@ -62,16 +62,16 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     }
     edge.layer.addElement(textNode, uow);
 
-    edge.labelNodes = [
-      ...(edge.labelNodes ?? []),
+    edge.addLabelNode(
       {
         timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
         offset: { x: 0, y: 0 },
         id: textNode.id,
         node: textNode,
         type: 'horizontal'
-      }
-    ];
+      },
+      uow
+    );
 
     uow.updateElement(edge);
     uow.commit();

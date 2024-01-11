@@ -118,14 +118,18 @@ export const deserializeDiagramElements = (
       endNode.edges.set(end.anchor, [...(endNode.edges.get(end.anchor) ?? []), edge]);
     }
 
-    if (e.labelNodes) {
-      edge.labelNodes = e.labelNodes.map(ln => ({
-        ...ln,
-        node: nodeLookup[ln.id]
-      }));
-    }
-
     edgeLookup[e.id] = edge;
+
+    if (e.labelNodes) {
+      // Note, we don't commit the UOW here
+      edge.setLabelNodes(
+        e.labelNodes?.map(ln => ({
+          ...ln,
+          node: nodeLookup[ln.id]
+        })),
+        new UnitOfWork(diagram)
+      );
+    }
   }
 
   const elements: DiagramElement[] = [];
@@ -187,6 +191,8 @@ const deserializeDiagrams = <T extends Diagram>(
       elements.forEach(e => {
         layer.addElement(e, uow);
       });
+
+      layer.elements.forEach(e => e.invalidate(uow));
     }
     dest.push(newDiagram);
 

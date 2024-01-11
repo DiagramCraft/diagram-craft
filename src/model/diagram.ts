@@ -12,7 +12,7 @@ import { SnapManager } from './snap/snapManager.ts';
 import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
 import { assert } from '../utils/assert.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { DiagramElement } from './diagramElement.ts';
+import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 
 export type Canvas = Omit<Box, 'r'>;
@@ -35,8 +35,7 @@ export type DiagramEvents = {
 
 export type StackPosition = { element: DiagramElement; idx: number };
 
-export const excludeLabelNodes = (n: DiagramElement) =>
-  !(n.type === 'node' && n.props.labelForEdgeId);
+export const excludeLabelNodes = (n: DiagramElement) => !(isNode(n) && n.props.labelForEdgeId);
 
 export const includeAll = () => true;
 
@@ -76,10 +75,20 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   ) {
     super();
 
+    // TODO: We should be able to remove this
     const toggleMustCalculateIntersections = () => {
+      const old = this.mustCalculateIntersections;
       this.mustCalculateIntersections = this.visibleElements().some(
-        e => e.type === 'edge' && (e.props.lineHops?.type ?? 'none') !== 'none'
+        e => isEdge(e) && (e.props.lineHops?.type ?? 'none') !== 'none'
       );
+      // Only trigger invalidation in case the value has changed to true
+      if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {
+        const uow = new UnitOfWork(this);
+        this.layers.active.elements
+          .filter(e => isEdge(e))
+          .forEach(e => (e as DiagramEdge).invalidate(uow));
+        uow.commit();
+      }
     };
     this.on('elementChange', toggleMustCalculateIntersections);
     this.on('elementAdd', toggleMustCalculateIntersections);
@@ -110,7 +119,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
   set canvas(b: Canvas) {
     this.#canvas = b;
-    this.emit('change', { diagram: this });
+    this.update();
   }
 
   findChildDiagramById(id: string): this | undefined {
@@ -119,12 +128,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       this.diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
     );
   }
-
-  /*
-  findElementsByPoint(coord: Point) {
-    return this.layers.visible.flatMap(l => l.findElementsByPoint(coord));
-  }
-   */
 
   // TODO: Change this to an undoable action?
   // TODO: Check layer level events are emitted
@@ -168,7 +171,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       } else {
         layer.setElements([...elements, ...layer.elements], uow);
       }
-    } else if (ref.element.type === 'node' && ref.element.parent) {
+    } else if (isNode(ref.element) && ref.element.parent) {
       const parent = ref.element.parent;
 
       const idx = parent.children.indexOf(ref.element);
@@ -187,7 +190,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
         layer.setElements(layer.elements.toSpliced(idx + 1, 0, ...elements), uow);
       } else if (ref.relation === 'below') {
         layer.setElements(layer.elements.toSpliced(idx, 0, ...elements), uow);
-      } else if (ref.element.type === 'node') {
+      } else if (isNode(ref.element)) {
         ref.element.children = [...ref.element.children, ...elements];
       }
     }

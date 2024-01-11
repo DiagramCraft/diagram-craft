@@ -30,7 +30,7 @@ import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
 import { DragLabel } from './DragLabel.tsx';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
-import { getTopMostNode } from '../model/diagramElement.ts';
+import { getTopMostNode, isNode } from '../model/diagramElement.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
 import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
 import { AnchorHandles } from './selection/AnchorHandles.tsx';
@@ -103,7 +103,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   });
 
   useEventListener(diagram, 'elementChange', e => {
-    if (e.element.type === 'node') {
+    if (isNode(e.element)) {
       const nodeToRepaint = getTopMostNode(e.element);
       nodeRefs.current[nodeToRepaint.id]?.repaint();
 
@@ -119,7 +119,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   useEventListener(diagram, 'change', redraw);
 
   const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
-    if (e.element.type === 'node') {
+    if (isNode(e.element)) {
       const nodeToRepaint = getTopMostNode(e.element);
       nodeRefs.current[nodeToRepaint.id]?.repaint();
     } else {

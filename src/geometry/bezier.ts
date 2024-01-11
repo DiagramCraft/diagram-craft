@@ -496,6 +496,8 @@ export class CubicBezier {
       vx * Dx + vy * Dy - d
     );
 
+    const EPSILON = 0.001;
+
     const res = [];
     for (const t of roots) {
       if (isNaN(t) || t < 0 || t > 1) continue;
@@ -507,8 +509,8 @@ export class CubicBezier {
 
       // Note, we used to apply rounding before checking this, but it's slow
       //       and unclear if it's actually needed
-      if (p.x < min_x || p.x > max_x) continue;
-      if (p.y < min_y || p.y > max_y) continue;
+      if (p.x < min_x - EPSILON || p.x > max_x + EPSILON) continue;
+      if (p.y < min_y - EPSILON || p.y > max_y + EPSILON) continue;
       res.push(p);
     }
 

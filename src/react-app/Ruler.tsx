@@ -9,7 +9,6 @@ type Tick = {
   label: string;
 };
 
-// TODO: Can we draw in only one direction, and then simply rotate the SVG?
 export const Ruler = ({ canvasRef, orientation }: Props) => {
   const diagram = useDiagram();
   const viewbox = diagram.viewBox;

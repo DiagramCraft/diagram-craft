@@ -11,7 +11,7 @@ import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { isEdge } from './diagramElement.ts';
+import { DiagramElement, isEdge } from './diagramElement.ts';
 import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
@@ -40,7 +40,7 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
   return true;
 };
 
-export class DiagramEdge implements AbstractEdge {
+export class DiagramEdge implements AbstractEdge, DiagramElement {
   readonly id: string;
   readonly type = 'edge';
   readonly props: EdgeProps = {};
@@ -73,44 +73,6 @@ export class DiagramEdge implements AbstractEdge {
     this.waypoints = midpoints;
     this.diagram = diagram;
     this.layer = layer;
-
-    this.diagram.on('change', this.invalidate.bind(this));
-    this.diagram.on('elementChange', ({ element }) => {
-      if (
-        (isConnected(this.#start) && element === this.#start.node) ||
-        (isConnected(this.#end) && element === this.#end.node) ||
-        element === this
-      ) {
-        this.invalidate();
-      } else if (this.#labelNodes?.find(ln => ln.node === element)) {
-        // TODO: Note that this can cause infinite recursion
-        UnitOfWork.execute(this.diagram, uow => {
-          this.adjustLabelNodePosition(uow);
-        });
-      }
-    });
-  }
-
-  detach(uow: UnitOfWork) {
-    // Update any parent
-    if (this.parent) {
-      this.parent.children = this.parent?.children.filter(c => c !== this);
-    }
-    this.parent = undefined;
-
-    // All label nodes must be detached
-    if (this.labelNodes) {
-      for (const l of this.labelNodes) {
-        l.node.detach(uow);
-      }
-    }
-
-    this.diagram.edgeLookup.delete(this.id);
-
-    // Note, need to check if the element is still in the layer to avoid infinite recursion
-    if (this.layer.elements.includes(this)) {
-      this.layer.removeElement(this, uow);
-    }
   }
 
   // TODO: This should use the EdgeDefinitionRegistry
@@ -122,14 +84,30 @@ export class DiagramEdge implements AbstractEdge {
     return this.#intersections;
   }
 
+  /* Label Nodes ******************************************************************************************** */
+
   get labelNodes() {
     return this.#labelNodes;
   }
 
-  set labelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined) {
+  setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
     this.#labelNodes = labelNodes;
-    this.invalidate();
+    this.#labelNodes?.forEach(ln => {
+      ln.node.props.labelForEdgeId = this.id;
+      uow.updateElement(ln.node);
+    });
+    uow.updateElement(this);
   }
+
+  addLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
+    this.setLabelNodes([...(this.labelNodes ?? []), labelNode], uow);
+  }
+
+  removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
+    this.setLabelNodes(this.labelNodes?.filter(ln => ln !== labelNode), uow);
+  }
+
+  /* ***** ***** ******************************************************************************************** */
 
   isLocked() {
     return this.layer.isLocked() ?? false;
@@ -140,6 +118,7 @@ export class DiagramEdge implements AbstractEdge {
     return Box.fromCorners(this.startPosition, this.endPosition);
   }
 
+  // TODO: We should change this and provide a UnitOfWork
   set bounds(b: Box) {
     if (!isConnected(this.start)) this.start = { position: { x: b.x, y: b.y } };
     if (!isConnected(this.end)) this.end = { position: { x: b.x + b.w, y: b.y + b.h } };
@@ -169,12 +148,11 @@ export class DiagramEdge implements AbstractEdge {
       };
     });
 
-    this.recalculateIntersections(uow, true);
+    uow.updateElement(this);
   }
 
   update() {
     const uow = new UnitOfWork(this.diagram);
-    this.recalculateIntersections(uow, true);
     uow.updateElement(this);
     uow.commit();
   }
@@ -202,29 +180,24 @@ export class DiagramEdge implements AbstractEdge {
       });
       newNode.props.labelForEdgeId = edge.id;
     }
-    edge.labelNodes = newLabelNodes;
+    UnitOfWork.noCommit(this.diagram, uow => {
+      edge.setLabelNodes(newLabelNodes, uow);
+    });
 
     return edge;
   }
 
+  // TODO: Would probable be better to change Endpoint to be a class
   get startPosition() {
     return isConnected(this.start)
       ? this.start.node.getAnchorPosition(this.start.anchor)
       : this.start.position;
   }
 
-  isStartConnected() {
-    return isConnected(this.start);
-  }
-
   get endPosition() {
     return isConnected(this.end)
       ? this.end.node.getAnchorPosition(this.end.anchor)
       : this.end.position;
-  }
-
-  isEndConnected() {
-    return isConnected(this.end);
   }
 
   set start(start: Endpoint) {
@@ -259,7 +232,7 @@ export class DiagramEdge implements AbstractEdge {
     return this.#end;
   }
 
-  flip() {
+  flip(uow: UnitOfWork) {
     const start = this.#start;
     const end = this.#end;
 
@@ -268,13 +241,48 @@ export class DiagramEdge implements AbstractEdge {
 
     this.start = end;
     this.end = start;
+
+    uow.updateElement(this);
   }
 
-  invalidate() {
-    const uow = new UnitOfWork(this.diagram);
-    this.recalculateIntersections(uow, true);
+  /**
+   * Called in case the edge has been changed and needs to be recalculated
+   *
+   *  edge -> label nodes -> ...
+   *       -> intersecting edges
+   *
+   * Note, that whilst an edge can be part of a group, a change to the edge will not
+   * impact the state and/or bounds of the parent group/container
+   */
+  invalidate(uow: UnitOfWork) {
+    // Ensure we don't get into an infinite loop
+    if (uow.hasBeenInvalidated(this)) return;
+    uow.beginInvalidation(this);
+
     this.adjustLabelNodePosition(uow);
-    uow.commit();
+    this.recalculateIntersections(uow, true);
+  }
+
+  detach(uow: UnitOfWork) {
+    // Update any parent
+    if (this.parent) {
+      this.parent.children = this.parent?.children.filter(c => c !== this);
+    }
+    this.parent = undefined;
+
+    // All label nodes must be detached
+    if (this.labelNodes) {
+      for (const l of this.labelNodes) {
+        l.node.detach(uow);
+      }
+    }
+
+    this.diagram.edgeLookup.delete(this.id);
+
+    // Note, need to check if the element is still in the layer to avoid infinite recursion
+    if (this.layer.elements.includes(this)) {
+      this.layer.removeElement(this, uow);
+    }
   }
 
   private recalculateIntersections(uow: UnitOfWork, propagate = false) {

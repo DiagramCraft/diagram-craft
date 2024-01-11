@@ -8,7 +8,6 @@ class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';
 
   constructor(
-    private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
     private readonly controlPointIdx: number,
@@ -26,7 +25,7 @@ class BezierControlUndoAction implements UndoableAction {
     wp.controlPoints![cIdx] = this.oldCPoint;
     wp.controlPoints![ocIdx] = this.oldOCPoint;
 
-    this.diagram.updateElement(this.edge);
+    this.edge.update();
   }
 
   redo(): void {
@@ -37,7 +36,7 @@ class BezierControlUndoAction implements UndoableAction {
     wp.controlPoints![cIdx] = this.newCPoint;
     wp.controlPoints![ocIdx] = this.newOCPoint;
 
-    this.diagram.updateElement(this.edge);
+    this.edge.update();
   }
 }
 
@@ -69,7 +68,7 @@ export class BezierControlPointDrag extends AbstractDrag {
       y: wp.controlPoints![cIdx].y * -1
     };
 
-    this.diagram.updateElement(this.edge);
+    this.edge.update();
   }
 
   onDragEnd(): void {
@@ -80,7 +79,6 @@ export class BezierControlPointDrag extends AbstractDrag {
 
     this.diagram.undoManager.add(
       new BezierControlUndoAction(
-        this.diagram,
         this.edge,
         this.waypointIdx,
         this.controlPointIdx,

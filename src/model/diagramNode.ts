@@ -9,7 +9,7 @@ import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { DiagramElement } from './diagramElement.ts';
+import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 
@@ -17,7 +17,7 @@ export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
 };
 
-export class DiagramNode implements AbstractNode {
+export class DiagramNode implements AbstractNode, DiagramElement {
   readonly id: string;
   readonly type = 'node';
   readonly nodeType: 'group' | string;
@@ -60,6 +60,8 @@ export class DiagramNode implements AbstractNode {
   set children(value: ReadonlyArray<DiagramElement>) {
     this.#children = value;
     this.#children.forEach(c => (c.parent = this));
+
+    // TODO: Maybe this can be moved into invalidate() in case we have a way to capture the initial snapshot somehow
     UnitOfWork.execute(this.diagram, uow => {
       this.getNodeDefinition().onChildChanged(this, uow);
     });
@@ -75,9 +77,48 @@ export class DiagramNode implements AbstractNode {
 
   updateCustomProps() {
     UnitOfWork.execute(this.diagram, uow => {
+      // TODO: Maybe this can be moved into invalidate() in case we have a way to capture the initial snapshot somehow
       this.getNodeDefinition().onPropUpdate(this, uow);
-      this.invalidateAnchors(uow);
     });
+  }
+
+  /**
+   * Called in case the node has been changed and needs to be recalculated
+   *
+   *  node -> attached edges -> label nodes -> ...
+   *                         -> intersecting edges
+   *       -> children -> attached edges -> label nodes -> ...          Note, cannot look at parent
+   *                                     -> intersecting edges
+   *       -> parent -> attached edges -> label nodes                   Note, cannot look at children
+   *                                   -> intersecting edges
+   *
+   *  label node -> attached edge                                       Note, cannot revisit edge
+   *             -> label edge                                          Note, cannot revisit node
+   *
+   */
+  invalidate(uow: UnitOfWork) {
+    // Prevent infinite recursion
+    if (uow.hasBeenInvalidated(this)) return;
+    uow.beginInvalidation(this);
+
+    this.invalidateAnchors(uow);
+
+    if (this.parent) {
+      this.parent.invalidate(uow);
+    }
+
+    // Invalidate all attached edges
+    for (const edge of this.listEdges()) {
+      edge.invalidate(uow);
+    }
+
+    for (const child of this.children) {
+      child.invalidate(uow);
+    }
+
+    if (this.isLabelNode()) {
+      this.labelEdge()!.invalidate(uow);
+    }
   }
 
   detach(uow: UnitOfWork) {
@@ -109,8 +150,7 @@ export class DiagramNode implements AbstractNode {
     if (this.isLabelNode()) {
       const edge = this.labelEdge()!;
       const labelNode = this.labelNode()!;
-      edge.labelNodes = edge.labelNodes!.filter(n => n !== labelNode);
-      uow.updateElement(edge);
+      edge.removeLabelNode(labelNode, uow);
     }
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
@@ -132,6 +172,7 @@ export class DiagramNode implements AbstractNode {
       });
     }
 
+    // TODO: This should be possible to put in the invalidation() method
     if (this.isLabelNode() && !isChild) {
       uow.pushAction('updateLabelNode', this, () => {
         if (uow.contains(this.labelEdge()!)) return;
@@ -152,9 +193,6 @@ export class DiagramNode implements AbstractNode {
       });
     }
 
-    uow.pushAction('updateAnchors', this, () => {
-      this.invalidateAnchors(uow);
-    });
     uow.updateElement(this);
   }
 
@@ -223,7 +261,7 @@ export class DiagramNode implements AbstractNode {
 
     // Phase 2 - update all edges to point to the new elements
     for (const e of node.getNestedElements()) {
-      if (e.type === 'edge') {
+      if (isEdge(e)) {
         let newStart: Endpoint;
         let newEnd: Endpoint;
 
@@ -258,7 +296,7 @@ export class DiagramNode implements AbstractNode {
   }
 
   getNestedElements(): DiagramElement[] {
-    return [this, ...this.children.flatMap(c => (c.type === 'node' ? c.getNestedElements() : c))];
+    return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
   }
 
   snapshot() {
@@ -278,7 +316,7 @@ export class DiagramNode implements AbstractNode {
   listEdges(): DiagramEdge[] {
     return [
       ...[...this.edges.values()].flatMap(e => e),
-      ...this.children.flatMap(c => (c.type === 'node' ? c.listEdges() : []))
+      ...this.children.flatMap(c => (isNode(c) ? c.listEdges() : []))
     ];
   }
 
@@ -324,10 +362,6 @@ export class DiagramNode implements AbstractNode {
     }
 
     this.#anchors = newAnchors;
-
-    for (const edge of this.listEdges()) {
-      uow.updateElement(edge);
-    }
 
     uow.updateElement(this);
   }

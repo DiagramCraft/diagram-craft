@@ -11,6 +11,8 @@ import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
+import { isNode } from '../../model/diagramElement.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 
 export const Group = (props: Props) => {
   const center = Box.center(props.node.bounds);
@@ -19,7 +21,7 @@ export const Group = (props: Props) => {
       key={child.id}
       transform={`rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})`}
     >
-      {child.type === 'node' ? (
+      {isNode(child) ? (
         <Node
           def={child}
           diagram={props.node.diagram}
@@ -29,7 +31,7 @@ export const Group = (props: Props) => {
         />
       ) : (
         <Edge
-          def={child}
+          def={child as DiagramEdge}
           diagram={props.node.diagram}
           onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
           onMouseDown={props.childProps.onMouseDown}

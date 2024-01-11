@@ -7,6 +7,7 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { assert } from '../../utils/assert.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 const values = {
   independent: 'Independent',
@@ -53,8 +54,9 @@ export const LabelNodePanel = (props: Props) => {
               onValueChange={v => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 labelNode.type = v as any;
-                edge.invalidate();
-                $d.updateElement(edge);
+                UnitOfWork.execute(edge.diagram, uow => {
+                  edge.invalidate(uow);
+                });
               }}
             >
               <Select.Trigger className="cmp-select-trigger" style={{ width: '100%' }}>
@@ -111,8 +113,9 @@ export const LabelNodePanel = (props: Props) => {
               style={{ width: '50px' }}
               onChange={v => {
                 labelNode.timeOffset = Number(v) / 100;
-                edge.invalidate();
-                $d.updateElement(edge);
+                UnitOfWork.execute(edge.diagram, uow => {
+                  edge.invalidate(uow);
+                });
               }}
             />
           </div>
@@ -125,8 +128,9 @@ export const LabelNodePanel = (props: Props) => {
               style={{ width: '50px' }}
               onChange={v => {
                 labelNode.offset = { x: Number(v), y: offset.y };
-                edge.invalidate();
-                $d.updateElement(edge);
+                UnitOfWork.execute(edge.diagram, uow => {
+                  edge.invalidate(uow);
+                });
               }}
             />
             &nbsp;
@@ -137,8 +141,9 @@ export const LabelNodePanel = (props: Props) => {
                 style={{ width: '50px' }}
                 onChange={v => {
                   labelNode.offset = { x: offset.x, y: Number(v) };
-                  edge.invalidate();
-                  $d.updateElement(edge);
+                  UnitOfWork.execute(edge.diagram, uow => {
+                    edge.invalidate(uow);
+                  });
                 }}
               />
             )}
@@ -147,8 +152,9 @@ export const LabelNodePanel = (props: Props) => {
               className={'cmp-button'}
               onClick={() => {
                 labelNode.offset = { x: 0, y: 0 };
-                edge.invalidate();
-                $d.updateElement(edge);
+                UnitOfWork.execute(edge.diagram, uow => {
+                  edge.invalidate(uow);
+                });
               }}
             >
               <TbRestore />

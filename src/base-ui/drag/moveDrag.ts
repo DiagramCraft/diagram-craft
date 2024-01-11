@@ -12,6 +12,8 @@ import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { largest } from '../../utils/array.ts';
+import { isConnected } from '../../model/diagramEdge.ts';
+import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 
 export class MoveDrag extends AbstractDrag {
   #snapAngle?: Axis;
@@ -64,7 +66,7 @@ export class MoveDrag extends AbstractDrag {
     // Don't move connected edges
     if (
       selection.isEdgesOnly() &&
-      selection.edges.every(e => e.isStartConnected() || e.isEndConnected())
+      selection.edges.every(e => isConnected(e.start) || isConnected(e.end))
     ) {
       return;
     }
@@ -74,13 +76,6 @@ export class MoveDrag extends AbstractDrag {
       this.#dragStarted = true;
       this.disablePointerEvents(selection.elements);
     }
-
-    /*const hover = this.getHoverElement(coord);
-    if (hover !== this.#currentElement) {
-      this.clearHighlight();
-      this.#currentElement = hover;
-      this.setHighlight();
-    }*/
 
     // Determine the delta between the current mouse position and the original mouse position
     const delta = Point.subtract(coord, Point.add(selection.bounds, this.offset));
@@ -221,39 +216,37 @@ export class MoveDrag extends AbstractDrag {
         );
       }
 
+      const uow = new UnitOfWork(this.diagram);
       if (this.#currentElement) {
         selection.guides = [];
 
         const el = this.#currentElement;
         // TODO: Handle the same for edges
-        if (el.type === 'node') {
+        if (isNode(el)) {
           this.clearHighlight();
-          UnitOfWork.execute(this.diagram, uow =>
-            el
-              .getNodeDefinition()
-              .onDrop(
-                Point.add(selection.bounds, this.offset),
-                el,
-                selection.elements,
-                uow,
-                'default'
-              )
+          el.getNodeDefinition().onDrop(
+            Point.add(selection.bounds, this.offset),
+            el,
+            selection.elements,
+            uow,
+            'default'
+          );
+        } else if (isEdge(el)) {
+          this.clearHighlight();
+          el.getEdgeDefinition().onDrop(
+            Point.add(selection.bounds, this.offset),
+            el,
+            selection.elements,
+            uow,
+            this.getLastState(2) === 1 ? 'split' : 'attach'
           );
         } else {
-          this.clearHighlight();
-          UnitOfWork.execute(this.diagram, uow =>
-            el
-              .getEdgeDefinition()
-              .onDrop(
-                Point.add(selection.bounds, this.offset),
-                el,
-                selection.elements,
-                uow,
-                this.getLastState(2) === 1 ? 'split' : 'attach'
-              )
-          );
+          VERIFY_NOT_REACHED();
         }
-      } else if (this.diagram.selectionState.elements.some(e => !!e.parent)) {
+      } else if (
+        this.diagram.selectionState.elements.some(e => !!e.parent) &&
+        !this.diagram.selectionState.elements.some(e => e.parent?.nodeType === 'group')
+      ) {
         const activeLayer = this.diagram.layers.active;
         this.diagram.moveElement(
           selection.elements,
@@ -268,51 +261,14 @@ export class MoveDrag extends AbstractDrag {
       }
 
       // This is needed to force a final transformation to be applied
-      UnitOfWork.execute(this.diagram, uow =>
-        this.diagram.transformElements(selection.elements, [], uow)
-      );
+      this.diagram.transformElements(selection.elements, [], uow);
+      uow.commit();
 
       selection.rebaseline();
     }
 
     this.#hasDuplicatedSelection = false;
   }
-
-  /*
-  private getHoverElement(coord: Point): DiagramElement | undefined {
-    if (this.diagram.selectionState.getSelectionType() === 'single-label-node') return;
-    const hover = this.diagram.layers.active
-      .findElementsByPoint(coord)
-      .filter(e => !this.diagram.selectionState.elements.includes(e));
-    if (hover.length === 0) {
-      return undefined;
-    } else {
-      // Find the deepest element we are currently hovering above
-      let best: DiagramElement | undefined = hover[0];
-      while (best.type === 'node' && best.children.length > 0) {
-        const bestEl: DiagramNode = best;
-        const bestChildren = hover.find(e => bestEl.children.includes(e));
-        if (bestChildren) {
-          best = bestChildren;
-        } else {
-          break;
-        }
-      }
-
-      // Need to filter any edges that are connected to the current selection
-      if (
-        best.type === 'edge' &&
-        this.diagram.selectionState.elements.some(
-          e => e.type === 'node' && e.listEdges().includes(best as DiagramEdge)
-        )
-      ) {
-        best = undefined;
-      }
-
-      return best;
-    }
-  }
-   */
 
   private clearHighlight() {
     if (!this.#currentElement) return;

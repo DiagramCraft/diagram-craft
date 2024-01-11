@@ -15,6 +15,7 @@ import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 
 declare global {
   interface NodeProps {
@@ -55,7 +56,7 @@ export const Container = (props: Props) => {
           key={child.id}
           transform={`rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})`}
         >
-          {child.type === 'node' ? (
+          {isNode(child) ? (
             <Node
               def={child}
               diagram={props.node.diagram}
@@ -65,7 +66,7 @@ export const Container = (props: Props) => {
             />
           ) : (
             <Edge
-              def={child}
+              def={child as DiagramEdge}
               diagram={props.node.diagram}
               onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
               onMouseDown={props.childProps.onMouseDown}

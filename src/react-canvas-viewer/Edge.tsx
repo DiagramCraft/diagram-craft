@@ -92,10 +92,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const basePath = clipPath(props.def.path(), props.def, startArrow, endArrow);
   const path = applyLineHops(basePath, props.def, startArrow, endArrow, props.def.intersections);
 
-  if (props.def.intersections.length > 5) {
-    console.log(props.def.intersections);
-  }
-
   return (
     <g id={`edge-${props.def.id}`}>
       <ArrowMarker

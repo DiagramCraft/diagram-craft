@@ -9,6 +9,10 @@ export class UnitOfWork {
   #elementsToUpdate = new Map<string, DiagramElement>();
   #elementsToRemove = new Map<string, DiagramElement>();
   #elementsToAdd = new Map<string, DiagramElement>();
+
+  #invalidatedElements = new Set<DiagramElement>();
+
+  // TODO: Will we really need #actions going forward
   #actions = new Map<string, Callback>();
 
   constructor(
@@ -25,6 +29,19 @@ export class UnitOfWork {
     const result = cb(uow);
     uow.commit();
     return result;
+  }
+
+  static noCommit<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
+    const uow = new UnitOfWork(diagram);
+    return cb(uow);
+  }
+
+  hasBeenInvalidated(element: DiagramElement) {
+    return this.#invalidatedElements.has(element);
+  }
+
+  beginInvalidation(element: DiagramElement) {
+    this.#invalidatedElements.add(element);
   }
 
   contains(element: DiagramElement) {
@@ -55,6 +72,11 @@ export class UnitOfWork {
   commit() {
     // Note, actions must run before elements events are emitted
     this.#actions.forEach(a => a());
+
+    // At this point, any elements have been added and or removed
+    this.#elementsToRemove.forEach(e => e.invalidate(this));
+    this.#elementsToUpdate.forEach(e => e.invalidate(this));
+    this.#elementsToAdd.forEach(e => e.invalidate(this));
 
     // TODO: Need to think about the order here a bit better to optimize the number of events
     //       ... can be only CHANGE, ADD, REMOVE, ADD_CHANGE

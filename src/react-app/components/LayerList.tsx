@@ -5,7 +5,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { Layer } from '../../model/diagramLayer.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { DiagramElement } from '../../model/diagramElement.ts';
+import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 
@@ -111,8 +111,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   const diagram = useDiagram();
   const e = props.element;
 
-  const childrenAllowed =
-    e.type === 'node' && diagram.nodeDefinitions.get(e.nodeType).supports('children');
+  const childrenAllowed = isNode(e) && diagram.nodeDefinitions.get(e.nodeType).supports('children');
 
   const drag = useDraggable(JSON.stringify([e.id]), ELEMENT_INSTANCES);
   const dropTarget = useDropTarget(
@@ -164,7 +163,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         diagram.selectionState.toggle(e);
       }}
     >
-      <Tree.NodeLabel>{e.type === 'node' ? e.nodeType : e.id}</Tree.NodeLabel>
+      <Tree.NodeLabel>{isNode(e) ? e.nodeType : e.id}</Tree.NodeLabel>
 
       {childrenAllowed && (
         <Tree.Children>

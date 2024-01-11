@@ -1,7 +1,25 @@
 import { DiagramEdge } from './diagramEdge.ts';
-import { DiagramNode } from './diagramNode.ts';
+import { DiagramNode, DuplicationContext } from './diagramNode.ts';
+import { UnitOfWork } from './unitOfWork.ts';
+import { AbstractElement } from './types.ts';
+import { Box } from '../geometry/box.ts';
+import { Layer } from './diagramLayer.ts';
+import { Transform } from '../geometry/transform.ts';
+import { Diagram } from './diagram.ts';
 
-export type DiagramElement = DiagramNode | DiagramEdge;
+export interface DiagramElement extends AbstractElement {
+  invalidate(uow: UnitOfWork): void;
+  detach(uow: UnitOfWork): void;
+  duplicate(ctx?: DuplicationContext): DiagramElement;
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
+  isLocked(): boolean;
+
+  props: NodeProps | EdgeProps;
+  parent?: DiagramNode;
+  bounds: Box;
+  layer: Layer;
+  diagram: Diagram;
+}
 
 export const getDiagramElementPath = (element: DiagramElement): DiagramNode[] => {
   const dest: DiagramNode[] = [];

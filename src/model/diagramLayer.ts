@@ -1,9 +1,10 @@
 import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
-import { DiagramElement } from './diagramElement.ts';
+import { DiagramElement, isNode } from './diagramElement.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { groupBy } from '../utils/array.ts';
+import { DiagramEdge } from './diagramEdge.ts';
 
 export class Layer {
   #elements: Array<DiagramElement> = [];
@@ -145,13 +146,13 @@ export class Layer {
   private processElementForAdd(e: DiagramElement) {
     e.diagram = this.#diagram;
     e.layer = this;
-    if (e.type === 'node') {
+    if (isNode(e)) {
       this.#diagram.nodeLookup.set(e.id, e);
       for (const child of e.children) {
         this.processElementForAdd(child);
       }
     } else {
-      this.#diagram.edgeLookup.set(e.id, e);
+      this.#diagram.edgeLookup.set(e.id, e as DiagramEdge);
     }
   }
 }
