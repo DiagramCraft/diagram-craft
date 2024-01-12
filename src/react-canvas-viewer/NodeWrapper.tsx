@@ -21,16 +21,19 @@ export const NodeWrapper = (
 
   return (
     <g style={{ filter: props.style?.filter }}>
-      {props.children}
       {props.node.props.effects?.reflection && (
         <g
-          transform={`rotate(180 ${center.x} ${center.y}) translate(0 -${offset})`}
+          transform={`rotate(${180} ${center.x} ${center.y}) translate(0 -${offset})`}
           mask="url(#reflection-mask)"
-          style={{ filter: 'url(#reflection-filter)', pointerEvents: 'none' }}
+          style={{
+            filter: 'url(#reflection-filter)',
+            pointerEvents: 'none'
+          }}
         >
           {props.children}
         </g>
       )}
+      {props.children}
     </g>
   );
 };
