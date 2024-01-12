@@ -99,6 +99,11 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     if (isConnected(end)) end.node._addEdge(end.anchor, this);
   }
 
+  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
+    callback(this.props);
+    uow.updateElement(this);
+  }
+
   /* Parent ************************************************************************************************** */
 
   get parent() {

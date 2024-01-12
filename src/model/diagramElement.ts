@@ -23,6 +23,8 @@ export interface DiagramElement extends AbstractElement {
 
   props: NodeProps | EdgeProps;
 
+  updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
+
   _setLayer(layer: Layer, diagram: Diagram): void;
   _setParent(parent: DiagramNode | undefined): void;
 }

@@ -12,16 +12,20 @@ import {
 import { Diagram } from '../../model/diagram.ts';
 import { SnapManagerConfigProps } from '../../model/snap/snapManagerConfig.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePropertyHook<
   Diagram,
   DiagramProps
 >(
   diagram => diagram.props,
+  (diagram, callback) => {
+    callback(diagram.props);
+    diagram.update();
+  },
   (diagram, handler) => {
     useEventListener(diagram, 'change', handler);
   },
-  diagram => diagram.update(),
   {
     onAfterSet: (diagram, path, oldValue, newValue) => {
       diagram.undoManager.add(
@@ -41,10 +45,13 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
 export const useSnapManagerProperty: PropertyHook<Diagram, SnapManagerConfigProps> =
   makePropertyHook<Diagram, SnapManagerConfigProps>(
     diagram => diagram.snapManagerConfig,
+    (diagram, callback) => {
+      callback(diagram.snapManagerConfig);
+      diagram.snapManagerConfig.commit();
+    },
     (diagram, handler) => {
       useEventListener(diagram.snapManagerConfig, 'change', handler);
-    },
-    diagram => diagram.snapManagerConfig.commit()
+    }
   );
 
 export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makePropertyArrayHook<
@@ -54,21 +61,21 @@ export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makeProper
 >(
   diagram => diagram.selectionState.edges,
   edge => edge.props,
+  (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
   },
-  (diagram, edge) => diagram.updateElement(edge),
   {
     onAfterSet: (diagram, edges, path, oldValue, newValue) => {
       diagram.undoManager.add(
-        new PropertyArrayUndoableAction<DiagramEdge>(
+        new PropertyArrayUndoableAction<DiagramEdge, EdgeProps>(
+          `Change edge ${path}`,
           edges,
           path,
           oldValue,
           newValue,
-          `Change edge ${path}`,
-          edge => edge.props,
-          edge => diagram.updateElement(edge)
+          () => new UnitOfWork(diagram),
+          (edge: DiagramEdge, uow: UnitOfWork, cb) => edge.updateProps(cb, uow)
         )
       );
     }
@@ -82,21 +89,21 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
 >(
   diagram => diagram.selectionState.nodes,
   node => node.props,
+  (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
   },
-  (diagram, node) => diagram.updateElement(node),
   {
     onAfterSet: (diagram, nodes, path, oldValue, newValue) => {
       diagram.undoManager.add(
-        new PropertyArrayUndoableAction<DiagramNode>(
+        new PropertyArrayUndoableAction<DiagramNode, NodeProps>(
+          `Change node ${path}`,
           nodes,
           path,
           oldValue,
           newValue,
-          `Change node ${path}`,
-          node => node.props,
-          node => diagram.updateElement(node)
+          () => new UnitOfWork(diagram),
+          (node: DiagramNode, uow: UnitOfWork, cb) => node.updateProps(cb, uow)
         )
       );
     }
@@ -112,21 +119,21 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
   //       maybe change makePropertyArrayHook
   diagram => [...diagram.selectionState.elements],
   element => element.props,
+  (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
   },
-  (diagram, element) => diagram.updateElement(element),
   {
     onAfterSet: (diagram, elements, path, oldValue, newValue) => {
       diagram.undoManager.add(
-        new PropertyArrayUndoableAction<DiagramEdge | DiagramNode>(
+        new PropertyArrayUndoableAction<DiagramElement, ElementProps>(
+          `Change element ${path}`,
           elements,
           path,
           oldValue,
           newValue,
-          `Change element ${path}`,
-          element => element.props,
-          element => diagram.updateElement(element)
+          () => new UnitOfWork(diagram),
+          (el: DiagramElement, uow: UnitOfWork, cb) => el.updateProps(cb, uow)
         )
       );
     }

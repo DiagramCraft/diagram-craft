@@ -65,6 +65,11 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     }
   }
 
+  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
+    callback(this.props);
+    uow.updateElement(this);
+  }
+
   /* Parent ************************************************************************************************** */
 
   get parent() {
@@ -84,23 +89,30 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
     this.#children = children;
     this.#children.forEach(c => c._setParent(this));
+
+    this.#children.forEach(c => uow.updateElement(c));
     uow.updateElement(this);
+
     this.getNodeDefinition().onChildChanged(this, uow);
   }
 
   addChild(child: DiagramElement, uow: UnitOfWork) {
     this.#children = [...this.children, child];
     child._setParent(this);
+
     uow.updateElement(this);
     uow.updateElement(child);
+
     this.getNodeDefinition().onChildChanged(this, uow);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     this.#children = this.children.filter(c => c !== child);
     child._setParent(undefined);
+
     uow.updateElement(this);
     uow.updateElement(child);
+
     this.getNodeDefinition().onChildChanged(this, uow);
   }
 
@@ -140,6 +152,22 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       // TODO: Maybe this can be moved into invalidate() in case we have a way to capture the initial snapshot somehow
       this.getNodeDefinition().onPropUpdate(this, uow);
     });
+  }
+
+  /* Anchors ************************************************************************************************ */
+
+  get anchors(): ReadonlyArray<Anchor> {
+    if (this.#anchors === undefined) {
+      UnitOfWork.execute(this.diagram, uow => {
+        this.invalidateAnchors(uow);
+      });
+    }
+
+    return this.#anchors ?? [];
+  }
+
+  getAnchor(anchor: number) {
+    return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
   }
 
   /**
@@ -255,37 +283,14 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     uow.updateElement(this);
   }
 
-  get anchors(): ReadonlyArray<Anchor> {
-    if (this.#anchors === undefined) {
-      UnitOfWork.execute(this.diagram, uow => {
-        this.invalidateAnchors(uow);
-      });
-    }
-
-    return this.#anchors ?? [];
-  }
-
-  getAnchor(anchor: number) {
-    return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
-  }
-
-  /**
-   * Only to be called from DiagramEdge
-   */
   _removeEdge(anchor: number, edge: DiagramEdge) {
     this.edges.set(anchor, this.edges.get(anchor)?.filter(e => e !== edge) ?? []);
   }
 
-  /**
-   * Only to be called from DiagramEdge
-   */
   _addEdge(anchor: number, edge: DiagramEdge) {
     this.edges.set(anchor, [...(this.edges.get(anchor) ?? []), edge]);
   }
 
-  /**
-   * Only to be called from ConnectedEndpoint
-   */
   _getAnchorPosition(anchor: number) {
     return {
       x: this.bounds.x + this.bounds.w * this.getAnchor(anchor).point.x,
@@ -365,10 +370,6 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     return node;
   }
 
-  getNestedElements(): DiagramElement[] {
-    return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
-  }
-
   snapshot() {
     return {
       id: this.id,
@@ -434,5 +435,9 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     this.#anchors = newAnchors;
 
     uow.updateElement(this);
+  }
+
+  private getNestedElements(): DiagramElement[] {
+    return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
   }
 }

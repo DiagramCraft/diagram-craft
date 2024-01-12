@@ -2,6 +2,7 @@ import { DynamicAccessor, PropPath, PropPathValue } from '../../utils/propertyPa
 import { useEffect, useState } from 'react';
 import { unique } from '../../utils/array.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -39,8 +40,8 @@ export const makePropertyHook = <
   TValue extends PropPathValue<TObj, TPath> = PropPathValue<TObj, TPath>
 >(
   getObj: (obj: TBase) => TObj,
+  updateObj: (obj: TBase, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
-  commit: (obj: TBase) => void = () => {},
   callbacks?: {
     onAfterSet?: (obj: TBase, path: TPath, oldValue: TValue, newValue: TValue) => void;
   }
@@ -60,9 +61,10 @@ export const makePropertyHook = <
     return {
       val: value,
       set: (v: TValue) => {
-        new DynamicAccessor<TObj>().set(getObj(obj), path, v);
+        updateObj(obj, p => {
+          new DynamicAccessor<TObj>().set(p, path, v);
+        });
         callbacks?.onAfterSet?.(obj, path, value, v);
-        commit(obj);
         setValue(v);
       }
     };
@@ -78,8 +80,8 @@ export const makePropertyArrayHook = <
 >(
   getArr: (obj: TBase) => TItem[],
   getObj: (e: TItem) => TObj,
+  updateObj: (obj: TBase, e: TItem, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
-  commit: (obj: TBase, item: TItem) => void,
   callbacks?: {
     onAfterSet?: (
       obj: TBase,
@@ -111,8 +113,9 @@ export const makePropertyArrayHook = <
       set: (v: TValue) => {
         const oldValues = getArr(obj).map(obj => accessor.get(getObj(obj), path));
         getArr(obj).forEach(n => {
-          accessor.set(getObj(n), path, v);
-          commit(obj, n);
+          updateObj(obj, n, p => {
+            accessor.set(p, path, v);
+          });
         });
         callbacks?.onAfterSet?.(obj, getArr(obj), path, oldValues as TValue[], v);
         setValue(v);
@@ -125,30 +128,38 @@ export const makePropertyArrayHook = <
 
 // TODO: Potentially add merge support
 // TODO: Add better typing
-export class PropertyArrayUndoableAction<T> implements UndoableAction {
-  #accessor = new DynamicAccessor<T>();
+export class PropertyArrayUndoableAction<TItem, TObj, TPath extends PropPath<TObj> = PropPath<TObj>>
+  implements UndoableAction
+{
+  #accessor = new DynamicAccessor<TObj>();
 
   constructor(
-    private readonly items: any[],
-    private readonly path: any,
+    public readonly description: string,
+    private readonly items: TItem[],
+    private readonly path: TPath,
     private readonly before: any[],
     private readonly after: any,
-    public readonly description: string,
-    private readonly getObj: (item: T) => any,
-    private readonly commit: (obj: T) => void
+    private readonly uowFactory: () => UnitOfWork,
+    private readonly updateObj: (item: TItem, uow: UnitOfWork, cb: (obj: TObj) => void) => void
   ) {}
 
   undo(): void {
     this.items.forEach((e, idx) => {
-      this.#accessor.set(this.getObj(e), this.path, this.before[idx]);
-      this.commit(e);
+      const uow = this.uowFactory();
+      this.updateObj(e, uow, p => {
+        this.#accessor.set(p, this.path, this.before[idx]);
+      });
+      uow.commit();
     });
   }
 
   redo(): void {
     this.items.forEach(e => {
-      this.#accessor.set(this.getObj(e), this.path, this.after);
-      this.commit(e);
+      const uow = this.uowFactory();
+      this.updateObj(e, uow, p => {
+        this.#accessor.set(p, this.path, this.after);
+      });
+      uow.commit();
     });
   }
 }
