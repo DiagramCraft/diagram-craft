@@ -1,6 +1,7 @@
 import { ActionEvents, ActionMapFactory, State, ToggleAction } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface ActionMap {
@@ -44,14 +45,16 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
     //       maybe add a property setter helper much like useNodeProperty
     const node = this.diagram.selectionState.nodes[0];
 
-    node.props.text ??= {};
-    node.props.text[this.prop] ??= false;
-    node.props.text[this.prop] = !node.props.text[this.prop];
+    UnitOfWork.execute(this.diagram, uow => {
+      node.updateProps(p => {
+        p.text ??= {};
+        p.text[this.prop] ??= false;
+        p.text[this.prop] = !p.text[this.prop];
+      }, uow);
+    });
 
-    this.state = !!node.props.text[this.prop];
+    this.state = !!node.props.text![this.prop];
     this.emit('actionchanged', { action: this });
-
-    this.diagram.updateElement(node);
   }
 }
 
@@ -82,16 +85,18 @@ export class TextDecorationAction extends EventEmitter<ActionEvents> implements 
     //       maybe add a property setter helper much like useNodeProperty
     const node = this.diagram.selectionState.nodes[0];
 
-    node.props.text ??= {};
-    if (node.props.text.textDecoration === this.prop) {
-      node.props.text.textDecoration = 'none';
-    } else {
-      node.props.text.textDecoration = this.prop;
-    }
+    UnitOfWork.execute(this.diagram, uow => {
+      node.updateProps(p => {
+        p.text ??= {};
+        if (p.text.textDecoration === this.prop) {
+          p.text.textDecoration = 'none';
+        } else {
+          p.text.textDecoration = this.prop;
+        }
+      }, uow);
+    });
 
-    this.state = node.props.text.textDecoration === this.prop;
+    this.state = node.props.text!.textDecoration === this.prop;
     this.emit('actionchanged', { action: this });
-
-    this.diagram.updateElement(node);
   }
 }

@@ -34,7 +34,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   #layer: Layer;
   #parent?: DiagramNode;
 
-  props: NodeProps = {};
+  #props: NodeProps = {};
 
   #bounds: Box;
   #anchors?: ReadonlyArray<Anchor>;
@@ -56,7 +56,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     this.#diagram = diagram;
     this.#layer = layer;
 
-    this.props = props ?? {};
+    this.#props = props ?? {};
     this.#anchors = anchorCache;
 
     // Ensure all anchors are loaded without triggering a change event
@@ -65,8 +65,14 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     }
   }
 
-  updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
-    callback(this.props);
+  /* Props *************************************************************************************************** */
+
+  get props(): NodeProps {
+    return this.#props;
+  }
+
+  updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
+    callback(this.#props);
     uow.updateElement(this);
   }
 
@@ -380,7 +386,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
 
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
-    this.props = snapshot.props;
+    this.#props = snapshot.props;
     uow.updateElement(this);
   }
 

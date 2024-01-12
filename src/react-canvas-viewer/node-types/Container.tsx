@@ -113,8 +113,12 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
         label: 'Grow',
         value: node.props.container?.autoGrow ?? false,
         onChange: (value: boolean) => {
-          node.props.container ??= {};
-          node.props.container.autoGrow = value;
+          UnitOfWork.execute(node.diagram, uow => {
+            node.updateProps(props => {
+              props.container ??= {};
+              props.container.autoGrow = value;
+            }, uow);
+          });
         }
       },
       layout: {
@@ -127,9 +131,13 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
           { value: 'vertical', label: 'Vertical' }
         ],
         onChange: (value: string) => {
-          node.props.container ??= {};
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          node.props.container.layout = value as any;
+          UnitOfWork.execute(node.diagram, uow => {
+            node.updateProps(props => {
+              props.container ??= {};
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              props.container.layout = value as any;
+            }, uow);
+          });
         }
       },
       gap: {
@@ -138,8 +146,12 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
         value: node.props.container?.gap ?? 0,
         unit: 'px',
         onChange: (value: number) => {
-          node.props.container ??= {};
-          node.props.container.gap = value;
+          UnitOfWork.execute(node.diagram, uow => {
+            node.updateProps(props => {
+              props.container ??= {};
+              props.container.gap = value;
+            }, uow);
+          });
         }
       }
     };

@@ -44,9 +44,12 @@ export const Text = (props: Props) => {
         text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
-          props.node.props.text ??= {};
-          props.node.props.text.text = text;
-          props.node.diagram!.updateElement(props.node);
+          UnitOfWork.execute(props.node.diagram, uow => {
+            props.node.updateProps(props => {
+              props.text ??= {};
+              props.text.text = text;
+            }, uow);
+          });
         }}
         onSizeChange={sizeChangeCallback}
         onMouseDown={props.onMouseDown!}

@@ -12,17 +12,22 @@ import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 const addHighlight = (element: DiagramElement, highlight: string) => {
-  element.props.highlight ??= [];
-  element.props.highlight.push(highlight);
-
-  UnitOfWork.updateElement(element);
+  UnitOfWork.execute(element.diagram, uow => {
+    element.updateProps(props => {
+      props.highlight ??= [];
+      props.highlight.push(highlight);
+    }, uow);
+  });
 };
 
 const removeHighlight = (element: DiagramElement, highlight: string) => {
   if (!element.props?.highlight) return;
-  element.props.highlight = element.props.highlight.filter(h => h !== highlight);
 
-  UnitOfWork.updateElement(element);
+  UnitOfWork.execute(element.diagram, uow => {
+    element.updateProps(props => {
+      props.highlight = props.highlight!.filter(h => h !== highlight);
+    }, uow);
+  });
 };
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {

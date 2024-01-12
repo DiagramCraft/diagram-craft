@@ -8,6 +8,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface NodeProps {
@@ -38,9 +39,13 @@ export const Parallelogram = (props: Props) => {
         text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
-          props.node.props.text ??= {};
-          props.node.props.text.text = text;
-          props.node.diagram!.updateElement(props.node);
+          /* TODO: We do exactly this in most use of TextPart - can we simplify? */
+          UnitOfWork.execute(props.node.diagram, uow =>
+            props.node.updateProps(props => {
+              props.text ??= {};
+              props.text.text = text;
+            }, uow)
+          );
         }}
         onMouseDown={props.onMouseDown!}
       />
@@ -51,12 +56,17 @@ export const Parallelogram = (props: Props) => {
           y={props.node.bounds.y}
           def={props.node}
           onDrag={x => {
-            const distance = Math.max(0, x - props.node.bounds.x);
-            props.node.props.parallelogram ??= {};
-            if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-              props.node.props.parallelogram.slant = distance;
-            }
-            return `Slant: ${props.node.props.parallelogram.slant}px`;
+            /* TODO: Automatically provide uow in ShapeControlPoint? */
+            UnitOfWork.execute(props.node.diagram, uow => {
+              const distance = Math.max(0, x - props.node.bounds.x);
+              if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
+                props.node.updateProps(props => {
+                  props.parallelogram ??= {};
+                  props.parallelogram.slant = distance;
+                }, uow);
+              }
+            });
+            return `Slant: ${props.node.props.parallelogram!.slant}px`;
           }}
         />
       )}
@@ -78,9 +88,13 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
         maxValue: 60,
         unit: 'px',
         onChange: (value: number) => {
-          def.props.parallelogram ??= {};
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          def.props.parallelogram.slant = value;
+          UnitOfWork.execute(def.diagram, uow => {
+            def.updateProps(props => {
+              props.parallelogram ??= {};
+              props.parallelogram.slant = value;
+            }, uow);
+          });
         }
       }
     };

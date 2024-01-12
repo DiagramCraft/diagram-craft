@@ -11,6 +11,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface NodeProps {
@@ -42,9 +43,12 @@ export const Star = (props: Props) => {
         text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
-          props.node.props.text ??= {};
-          props.node.props.text.text = text;
-          props.node.diagram!.updateElement(props.node);
+          UnitOfWork.execute(props.node.diagram, uow => {
+            props.node.updateProps(props => {
+              props.text ??= {};
+              props.text.text = text;
+            }, uow);
+          });
         }}
         onMouseDown={props.onMouseDown!}
       />
@@ -57,9 +61,13 @@ export const Star = (props: Props) => {
             def={props.node}
             onDrag={(x, y) => {
               const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
-              props.node.props.star ??= {};
-              props.node.props.star.innerRadius = distance / (props.node.bounds.w / 2);
-              return `Inner radius: ${round(props.node.props.star.innerRadius * 100)}%`;
+              UnitOfWork.execute(props.node.diagram, uow => {
+                props.node.updateProps(p => {
+                  p.star ??= {};
+                  p.star.innerRadius = distance / (props.node.bounds.w / 2);
+                }, uow);
+              });
+              return `Inner radius: ${round(props.node.props.star!.innerRadius! * 100)}%`;
             }}
           />
           <ShapeControlPoint
@@ -71,8 +79,13 @@ export const Star = (props: Props) => {
                 Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
               const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-              props.node.props.star ??= {};
-              props.node.props.star.numberOfSides = numberOfSides;
+              UnitOfWork.execute(props.node.diagram, uow => {
+                props.node.updateProps(props => {
+                  props.star ??= {};
+                  props.star.numberOfSides = numberOfSides;
+                }, uow);
+              });
+
               return `Sides: ${numberOfSides}`;
             }}
           />
@@ -116,8 +129,12 @@ export class StarNodeDefinition extends AbstractReactNodeDefinition {
         label: 'Sides',
         value: def.props?.star?.numberOfSides ?? 5,
         onChange: (value: number) => {
-          def.props.star ??= {};
-          def.props.star.numberOfSides = value;
+          UnitOfWork.execute(def.diagram, uow => {
+            def.updateProps(props => {
+              props.star ??= {};
+              props.star.numberOfSides = value;
+            }, uow);
+          });
         }
       },
       innerRadius: {
@@ -127,8 +144,12 @@ export class StarNodeDefinition extends AbstractReactNodeDefinition {
         maxValue: 100,
         unit: '%',
         onChange: (value: number) => {
-          def.props.star ??= {};
-          def.props.star.innerRadius = value / 100;
+          UnitOfWork.execute(def.diagram, uow => {
+            def.updateProps(props => {
+              props.star ??= {};
+              props.star.innerRadius = value / 100;
+            }, uow);
+          });
         }
       }
     };

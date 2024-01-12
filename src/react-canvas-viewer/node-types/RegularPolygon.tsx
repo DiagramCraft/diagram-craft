@@ -10,6 +10,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface NodeProps {
@@ -40,9 +41,12 @@ export const RegularPolygon = (props: Props) => {
         text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
-          props.node.props.text ??= {};
-          props.node.props.text.text = text;
-          props.node.diagram!.updateElement(props.node);
+          UnitOfWork.execute(props.node.diagram, uow => {
+            props.node.updateProps(props => {
+              props.text ??= {};
+              props.text.text = text;
+            }, uow);
+          });
         }}
         onMouseDown={props.onMouseDown!}
       />
@@ -57,8 +61,12 @@ export const RegularPolygon = (props: Props) => {
               Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
             const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-            props.node.props.regularPolygon ??= {};
-            props.node.props.regularPolygon.numberOfSides = numberOfSides;
+            UnitOfWork.execute(props.node.diagram, uow => {
+              props.node.updateProps(props => {
+                props.regularPolygon ??= {};
+                props.regularPolygon.numberOfSides = numberOfSides;
+              }, uow);
+            });
             return `Sides: ${numberOfSides}`;
           }}
         />
@@ -97,8 +105,12 @@ export class RegularPolygonNodeDefinition extends AbstractReactNodeDefinition {
         label: 'Sides',
         value: def.props?.regularPolygon?.numberOfSides ?? 5,
         onChange: (value: number) => {
-          def.props.regularPolygon ??= {};
-          def.props.regularPolygon.numberOfSides = value;
+          UnitOfWork.execute(def.diagram, uow => {
+            def.updateProps(props => {
+              props.regularPolygon ??= {};
+              props.regularPolygon.numberOfSides = value;
+            }, uow);
+          });
         }
       }
     };

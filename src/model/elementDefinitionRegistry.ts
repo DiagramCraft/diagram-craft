@@ -12,6 +12,7 @@ import { DiagramEdge } from './diagramEdge.ts';
 export type NodeCapability = 'children';
 
 // TODO: Make make this into an interface in the global namespace we can extend
+// TODO: Should we change these callbacks to have a UOW parameter?
 export type CustomPropertyDefinition = {
   label: string;
 } & (

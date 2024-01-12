@@ -88,7 +88,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       uow
     );
 
-    element.props.labelForEdgeId = this.id;
+    element.updateProps(props => (props.labelForEdgeId = this.id), uow);
 
     // TODO: Perhaps create a helper to add an element as a label edge
     // TODO: Maybe use detach here

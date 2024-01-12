@@ -5,6 +5,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export const Diamond = (props: Props) => {
   const path = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -25,9 +26,12 @@ export const Diamond = (props: Props) => {
         text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
-          props.node.props.text ??= {};
-          props.node.props.text.text = text;
-          props.node.diagram!.updateElement(props.node);
+          UnitOfWork.execute(props.node.diagram, uow =>
+            props.node.updateProps(props => {
+              props.text ??= {};
+              props.text.text = text;
+            }, uow)
+          );
         }}
         onMouseDown={props.onMouseDown!}
       />

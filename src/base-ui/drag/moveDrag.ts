@@ -272,17 +272,22 @@ export class MoveDrag extends AbstractDrag {
 
   private clearHighlight() {
     if (!this.#currentElement) return;
-    this.#currentElement.props.highlight = this.#currentElement.props.highlight?.filter(
-      h => h !== 'drop-target'
-    );
-    UnitOfWork.updateElement(this.#currentElement);
+
+    UnitOfWork.execute(this.diagram, uow => {
+      this.#currentElement?.updateProps(props => {
+        props.highlight = props.highlight?.filter(h => h !== 'drop-target');
+      }, uow);
+    });
   }
 
   private setHighlight() {
     if (!this.#currentElement) return;
-    this.#currentElement.props.highlight ??= [];
-    this.#currentElement.props.highlight.push('drop-target');
-    UnitOfWork.updateElement(this.#currentElement);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.#currentElement?.updateProps(props => {
+        props.highlight ??= [];
+        props.highlight.push('drop-target');
+      }, uow);
+    });
   }
 
   private getLastState(max: number) {

@@ -8,6 +8,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 declare global {
   interface NodeProps {
@@ -40,9 +41,12 @@ export const Trapetzoid = (props: Props) => {
         text={props.nodeProps.text}
         bounds={props.node.bounds}
         onChange={text => {
-          props.node.props.text ??= {};
-          props.node.props.text.text = text;
-          props.node.diagram!.updateElement(props.node);
+          UnitOfWork.execute(props.node.diagram, uow => {
+            props.node.updateProps(props => {
+              props.text ??= {};
+              props.text.text = text;
+            }, uow);
+          });
         }}
         onMouseDown={props.onMouseDown!}
       />
@@ -55,11 +59,15 @@ export const Trapetzoid = (props: Props) => {
             def={props.node}
             onDrag={x => {
               const distance = Math.max(0, x - props.node.bounds.x);
-              props.node.props.trapetzoid ??= {};
               if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-                props.node.props.trapetzoid.slantLeft = distance;
+                UnitOfWork.execute(props.node.diagram, uow => {
+                  props.node.updateProps(props => {
+                    props.trapetzoid ??= {};
+                    props.trapetzoid.slantLeft = distance;
+                  }, uow);
+                });
               }
-              return `Slant: ${props.node.props.trapetzoid.slantLeft}px`;
+              return `Slant: ${props.node.props.trapetzoid?.slantLeft}px`;
             }}
           />
           <ShapeControlPoint
@@ -68,11 +76,15 @@ export const Trapetzoid = (props: Props) => {
             def={props.node}
             onDrag={x => {
               const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);
-              props.node.props.trapetzoid ??= {};
               if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-                props.node.props.trapetzoid.slantRight = distance;
+                UnitOfWork.execute(props.node.diagram, uow => {
+                  props.node.updateProps(props => {
+                    props.trapetzoid ??= {};
+                    props.trapetzoid.slantRight = distance;
+                  }, uow);
+                });
               }
-              return `Slant: ${props.node.props.trapetzoid.slantRight}px`;
+              return `Slant: ${props.node.props.trapetzoid?.slantRight}px`;
             }}
           />
         </>
@@ -95,9 +107,13 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
         maxValue: 60,
         unit: 'px',
         onChange: (value: number) => {
-          def.props.trapetzoid ??= {};
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          def.props.trapetzoid.slantLeft = value;
+          UnitOfWork.execute(def.diagram, uow => {
+            def.updateProps(props => {
+              props.trapetzoid ??= {};
+              props.trapetzoid.slantLeft = value;
+            }, uow);
+          });
         }
       },
       slantRight: {
@@ -107,9 +123,13 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
         maxValue: 60,
         unit: 'px',
         onChange: (value: number) => {
-          def.props.trapetzoid ??= {};
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          def.props.trapetzoid.slantRight = value;
+          UnitOfWork.execute(def.diagram, uow => {
+            def.updateProps(props => {
+              props.trapetzoid ??= {};
+              props.trapetzoid.slantRight = value;
+            }, uow);
+          });
         }
       }
     };
