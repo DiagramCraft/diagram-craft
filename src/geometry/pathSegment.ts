@@ -5,6 +5,7 @@ import { CubicBezier } from './bezier.ts';
 import { RawSegment } from './pathBuilder.ts';
 import { Projection } from './path.ts';
 import { LengthOffsetOnPath } from './pathPosition.ts';
+import { Box } from './box.ts';
 
 //type NormalizedSegment = RawCubicSegment | RawQuadSegment | RawLineSegment;
 
@@ -18,6 +19,7 @@ export interface PathSegment {
   tAtLength(length: number): number;
   lengthAtT(t: number): number;
   tangent(t: number): Vector;
+  bounds(): Box;
   //tangentAt(t: number): Vector;
   //normalAt(t: number): Vector;
   //boundingBox(): Box;
@@ -106,6 +108,10 @@ export class LineSegment implements PathSegment {
     return Vector.normalize(Vector.from(this.start, this.end));
   }
 
+  bounds() {
+    return Box.fromLine(Line.of(this.start, this.end));
+  }
+
   /*normalize(): NormalizedSegment[] {
     return [['L', this.end.x, this.end.y]];
   }*/
@@ -127,6 +133,10 @@ export class CubicSegment extends CubicBezier implements PathSegment {
       new CubicSegment(b[0].start, b[0].cp1, b[0].cp2, b[0].end),
       new CubicSegment(b[1].start, b[1].cp1, b[1].cp2, b[1].end)
     ];
+  }
+
+  bounds() {
+    return this.bbox();
   }
 
   raw(): RawSegment[] {
@@ -298,6 +308,7 @@ export class ArcSegment implements PathSegment {
 
  */
 
+// TODO: Can we move this into Path directly
 export class SegmentList {
   constructor(public readonly segments: PathSegment[]) {}
 

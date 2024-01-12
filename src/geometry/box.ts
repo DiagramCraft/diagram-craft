@@ -164,18 +164,20 @@ export const Box = {
       w: Math.abs(b.w),
       h: Math.abs(b.h)
     };
+  },
+
+  fromLine: (l: Line): Box => {
+    return {
+      ...l.from,
+      w: l.to.x - l.from.x,
+      h: l.to.y - l.from.y,
+      r: 0
+    };
   }
 
   /*
   withRotation: (b: Box, r: number) => ({ ...b, size: { ...b.size }, rotation: r })
 
-  fromLine: (l: Line): Box => {
-    return {
-      pos: l.from,
-      size: { w: l.to.x - l.from.x, h: l.to.y - l.from.y },
-      rotation: 0
-    };
-  },
 
   fromDomRect: (rect: DOMRect): Box => {
     return {
