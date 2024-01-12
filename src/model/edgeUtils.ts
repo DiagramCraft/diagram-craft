@@ -77,6 +77,9 @@ export const clipPath = (
   if (!startOffset && !endOffset) {
     basePath = path;
   } else if (startOffset && endOffset) {
+    if (startOffset.segment === endOffset.segment && startOffset.segmentT === endOffset.segmentT) {
+      return undefined;
+    }
     basePath = path.split(startOffset, endOffset)[1];
   } else if (startOffset) {
     basePath = path.split(startOffset)[1];

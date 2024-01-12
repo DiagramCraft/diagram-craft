@@ -90,6 +90,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const endArrow = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
 
   const basePath = clipPath(props.def.path(), props.def, startArrow, endArrow);
+
+  if (basePath === undefined) return null;
+
   const path = applyLineHops(basePath, props.def, startArrow, endArrow, props.def.intersections);
 
   return (
