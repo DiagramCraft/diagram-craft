@@ -38,14 +38,7 @@ export const RoundedRect = (props: Props) => {
         id={`text_1_${props.node.id}`}
         text={props.nodeProps.text}
         bounds={props.node.bounds}
-        onChange={text => {
-          UnitOfWork.execute(props.node.diagram, uow => {
-            props.node.updateProps(props => {
-              props.text ??= {};
-              props.text.text = text;
-            }, uow);
-          });
-        }}
+        onChange={TextPart.defaultOnChange(props.node)}
         onMouseDown={props.onMouseDown!}
       />
 

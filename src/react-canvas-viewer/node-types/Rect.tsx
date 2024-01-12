@@ -5,7 +5,6 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export const Rect = (props: Props) => {
   const path = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -25,14 +24,7 @@ export const Rect = (props: Props) => {
         id={`text_1_${props.node.id}`}
         text={props.nodeProps.text}
         bounds={props.node.bounds}
-        onChange={text => {
-          UnitOfWork.execute(props.node.diagram, uow =>
-            props.node.updateProps(props => {
-              props.text ??= {};
-              props.text.text = text;
-            }, uow)
-          );
-        }}
+        onChange={TextPart.defaultOnChange(props.node)}
         onMouseDown={props.onMouseDown!}
       />
     </>

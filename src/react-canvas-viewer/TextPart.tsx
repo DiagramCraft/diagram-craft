@@ -1,6 +1,8 @@
 import { MouseEventHandler, useEffect, useRef } from 'react';
 import { Box } from '../geometry/box.ts';
 import { Extent } from '../geometry/extent.ts';
+import { DiagramNode } from '../model/diagramNode.ts';
+import { UnitOfWork } from '../model/unitOfWork.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -115,6 +117,15 @@ export const TextPart = (props: Props) => {
       </div>
     </foreignObject>
   );
+};
+
+TextPart.defaultOnChange = (node: DiagramNode) => (text: string) => {
+  UnitOfWork.execute(node.diagram, uow => {
+    node.updateProps(props => {
+      props.text ??= {};
+      props.text.text = text;
+    }, uow);
+  });
 };
 
 type Props = {
