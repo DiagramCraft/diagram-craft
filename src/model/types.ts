@@ -1,5 +1,6 @@
 import { Box } from '../geometry/box.ts';
 import { Point } from '../geometry/point.ts';
+import { DeepReadonly } from 'ts-essentials';
 
 export interface AbstractElement {
   id: string;
@@ -13,7 +14,7 @@ export interface AbstractNode extends AbstractElement {
   bounds: Box;
 
   // TODO: Maybe we should make this readonly (deep)?
-  props: NodeProps;
+  props: DeepReadonly<NodeProps>;
   anchors?: ReadonlyArray<Anchor>;
 }
 
@@ -42,7 +43,7 @@ export interface AbstractEdge extends AbstractElement {
   type: 'edge';
   id: string;
   waypoints?: ReadonlyArray<Waypoint>;
-  props: EdgeProps;
+  props: DeepReadonly<EdgeProps>;
 
   labelNodes?: ReadonlyArray<LabelNode>;
 }

@@ -53,7 +53,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       newid(),
       new ConnectedEndpoint(anchor, element),
       edge.end,
-      deepClone(edge.props),
+      deepClone(edge.props) as EdgeProps,
       [],
       edge.diagram,
       edge.layer

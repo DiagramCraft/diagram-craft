@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { unique } from '../../utils/array.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { DeepReadonly } from 'ts-essentials';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -79,7 +80,7 @@ export const makePropertyArrayHook = <
   TValue extends PropPathValue<TObj, TPath> = PropPathValue<TObj, TPath>
 >(
   getArr: (obj: TBase) => TItem[],
-  getObj: (e: TItem) => TObj,
+  getObj: (e: TItem) => DeepReadonly<TObj>,
   updateObj: (obj: TBase, e: TItem, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
   callbacks?: {
@@ -97,7 +98,7 @@ export const makePropertyArrayHook = <
     const [multiple, setMultiple] = useState(false);
     const handler = () => {
       const accessor = new DynamicAccessor<TObj>();
-      const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj), path)));
+      const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path)));
 
       if (arr.length === 1) setValue((arr[0]! as TValue) ?? defaultValue);
       else setValue(defaultValue);
@@ -111,7 +112,7 @@ export const makePropertyArrayHook = <
     return {
       val: value,
       set: (v: TValue) => {
-        const oldValues = getArr(obj).map(obj => accessor.get(getObj(obj), path));
+        const oldValues = getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path));
         getArr(obj).forEach(n => {
           updateObj(obj, n, p => {
             accessor.set(p, path, v);

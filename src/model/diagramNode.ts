@@ -16,6 +16,7 @@ import { assert } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
+import { DeepReadonly } from 'ts-essentials';
 
 export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
 
@@ -46,7 +47,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     bounds: Box,
     diagram: Diagram,
     layer: Layer,
-    props?: NodeProps,
+    props?: DeepReadonly<NodeProps>,
     anchorCache?: ReadonlyArray<Anchor>
   ) {
     this.id = id;
@@ -56,7 +57,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     this.#diagram = diagram;
     this.#layer = layer;
 
-    this.#props = props ?? {};
+    this.#props = (props ?? {}) as NodeProps;
     this.#anchors = anchorCache;
 
     // Ensure all anchors are loaded without triggering a change event
@@ -65,15 +66,34 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     }
   }
 
+  getNodeDefinition() {
+    return this.diagram.nodeDefinitions.get(this.nodeType);
+  }
+
   /* Props *************************************************************************************************** */
 
-  get props(): NodeProps {
+  get props(): DeepReadonly<NodeProps> {
     return this.#props;
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
     callback(this.#props);
     uow.updateElement(this);
+  }
+
+  /* Diagram/layer ******************************************************************************************* */
+
+  get diagram() {
+    return this.#diagram;
+  }
+
+  get layer() {
+    return this.#layer;
+  }
+
+  _setLayer(layer: Layer, diagram: Diagram) {
+    this.#layer = layer;
+    this.#diagram = diagram;
   }
 
   /* Parent ************************************************************************************************** */
@@ -120,21 +140,6 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     uow.updateElement(child);
 
     this.getNodeDefinition().onChildChanged(this, uow);
-  }
-
-  /* Diagram/layer ******************************************************************************************* */
-
-  get diagram() {
-    return this.#diagram;
-  }
-
-  get layer() {
-    return this.#layer;
-  }
-
-  _setLayer(layer: Layer, diagram: Diagram) {
-    this.#layer = layer;
-    this.#diagram = diagram;
   }
 
   /* Bounds ************************************************************************************************* */
@@ -314,7 +319,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       deepClone(this.bounds),
       this.diagram,
       this.layer,
-      deepClone(this.props),
+      deepClone(this.props) as NodeProps,
       this.#anchors
     );
 
@@ -379,7 +384,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
 
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
-    this.#props = snapshot.props;
+    this.#props = snapshot.props as NodeProps;
     uow.updateElement(this);
   }
 
@@ -407,10 +412,6 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     const edge = this.diagram.edgeLookup.get(this.props.labelForEdgeId);
     assert.present(edge);
     return edge;
-  }
-
-  getNodeDefinition() {
-    return this.diagram.nodeDefinitions.get(this.nodeType);
   }
 
   // TODO: Need to make sure this is called when e.g. props are changed

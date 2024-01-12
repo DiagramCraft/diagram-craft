@@ -15,6 +15,7 @@ import { DiagramElement, isEdge } from './diagramElement.ts';
 import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
+import { DeepReadonly } from 'ts-essentials';
 
 export interface Endpoint {
   readonly position: Point;
@@ -65,11 +66,12 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   readonly type = 'edge';
 
   readonly id: string;
-  readonly props: EdgeProps = {};
 
   #diagram: Diagram;
   #layer: Layer;
   #parent?: DiagramNode;
+
+  #props: EdgeProps = {};
 
   #intersections: Intersection[] = [];
   #waypoints: ReadonlyArray<Waypoint> = [];
@@ -82,7 +84,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     id: string,
     start: Endpoint,
     end: Endpoint,
-    props: EdgeProps,
+    props: DeepReadonly<EdgeProps>,
     midpoints: ReadonlyArray<Waypoint>,
     diagram: Diagram,
     layer: Layer
@@ -90,7 +92,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     this.id = id;
     this.#start = start;
     this.#end = end;
-    this.props = props;
+    this.#props = props as EdgeProps;
     this.#waypoints = midpoints;
     this.#diagram = diagram;
     this.#layer = layer;
@@ -99,19 +101,20 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     if (isConnected(end)) end.node._addEdge(end.anchor, this);
   }
 
+  // TODO: This should use the EdgeDefinitionRegistry
+  getEdgeDefinition() {
+    return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
+  }
+
+  /* Props *************************************************************************************************** */
+
+  get props(): DeepReadonly<EdgeProps> {
+    return this.#props;
+  }
+
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
-    callback(this.props);
+    callback(this.#props);
     uow.updateElement(this);
-  }
-
-  /* Parent ************************************************************************************************** */
-
-  get parent() {
-    return this.#parent;
-  }
-
-  _setParent(parent: DiagramNode | undefined) {
-    this.#parent = parent;
   }
 
   /* Diagram/layer ******************************************************************************************* */
@@ -127,6 +130,16 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   _setLayer(layer: Layer, diagram: Diagram) {
     this.#layer = layer;
     this.#diagram = diagram;
+  }
+
+  /* Parent ************************************************************************************************** */
+
+  get parent() {
+    return this.#parent;
+  }
+
+  _setParent(parent: DiagramNode | undefined) {
+    this.#parent = parent;
   }
 
   /* Bounds ************************************************************************************************* */
@@ -198,8 +211,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
     this.#labelNodes = labelNodes;
     this.#labelNodes?.forEach(ln => {
-      ln.node.props.labelForEdgeId = this.id;
-      uow.updateElement(ln.node);
+      ln.node.updateProps(p => (p.labelForEdgeId = this.id), uow);
     });
     uow.updateElement(this);
   }
@@ -284,11 +296,13 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   duplicate(ctx?: DuplicationContext) {
+    const uow = new UnitOfWork(this.diagram);
+
     const edge = new DiagramEdge(
       newid(),
       this.start,
       this.end,
-      deepClone(this.props),
+      deepClone(this.props) as EdgeProps,
       deepClone(this.waypoints ?? []),
       this.diagram,
       this.layer
@@ -304,18 +318,13 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
         ...l,
         node: newNode
       });
-      newNode.props.labelForEdgeId = edge.id;
+      newNode.updateProps(p => p.labelForEdgeId, uow);
     }
-    UnitOfWork.noCommit(this.diagram, uow => {
-      edge.setLabelNodes(newLabelNodes, uow);
-    });
+    edge.setLabelNodes(newLabelNodes, uow);
+
+    // Note, we don't commit the uow
 
     return edge;
-  }
-
-  // TODO: This should use the EdgeDefinitionRegistry
-  getEdgeDefinition() {
-    return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
   }
 
   get intersections() {
