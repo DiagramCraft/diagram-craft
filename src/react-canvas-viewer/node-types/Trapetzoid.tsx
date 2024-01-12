@@ -57,15 +57,13 @@ export const Trapetzoid = (props: Props) => {
             x={props.node.bounds.x + slantLeft}
             y={props.node.bounds.y}
             def={props.node}
-            onDrag={x => {
+            onDrag={(x, _y, uow) => {
               const distance = Math.max(0, x - props.node.bounds.x);
               if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-                UnitOfWork.execute(props.node.diagram, uow => {
-                  props.node.updateProps(props => {
-                    props.trapetzoid ??= {};
-                    props.trapetzoid.slantLeft = distance;
-                  }, uow);
-                });
+                props.node.updateProps(props => {
+                  props.trapetzoid ??= {};
+                  props.trapetzoid.slantLeft = distance;
+                }, uow);
               }
               return `Slant: ${props.node.props.trapetzoid?.slantLeft}px`;
             }}
@@ -74,15 +72,13 @@ export const Trapetzoid = (props: Props) => {
             x={props.node.bounds.x + props.node.bounds.w - slantRight}
             y={props.node.bounds.y}
             def={props.node}
-            onDrag={x => {
+            onDrag={(x, _y, uow) => {
               const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);
               if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-                UnitOfWork.execute(props.node.diagram, uow => {
-                  props.node.updateProps(props => {
-                    props.trapetzoid ??= {};
-                    props.trapetzoid.slantRight = distance;
-                  }, uow);
-                });
+                props.node.updateProps(props => {
+                  props.trapetzoid ??= {};
+                  props.trapetzoid.slantRight = distance;
+                }, uow);
               }
               return `Slant: ${props.node.props.trapetzoid?.slantRight}px`;
             }}
@@ -106,14 +102,12 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
         value: def.props?.trapetzoid?.slantLeft ?? 5,
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number) => {
+        onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          UnitOfWork.execute(def.diagram, uow => {
-            def.updateProps(props => {
-              props.trapetzoid ??= {};
-              props.trapetzoid.slantLeft = value;
-            }, uow);
-          });
+          def.updateProps(props => {
+            props.trapetzoid ??= {};
+            props.trapetzoid.slantLeft = value;
+          }, uow);
         }
       },
       slantRight: {
@@ -122,14 +116,12 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
         value: def.props?.trapetzoid?.slantRight ?? 5,
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number) => {
+        onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          UnitOfWork.execute(def.diagram, uow => {
-            def.updateProps(props => {
-              props.trapetzoid ??= {};
-              props.trapetzoid.slantRight = value;
-            }, uow);
-          });
+          def.updateProps(props => {
+            props.trapetzoid ??= {};
+            props.trapetzoid.slantRight = value;
+          }, uow);
         }
       }
     };

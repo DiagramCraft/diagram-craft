@@ -7,6 +7,7 @@ import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import * as Select from '@radix-ui/react-select';
 import { TbChevronDown } from 'react-icons/tb';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export const CustomPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -60,8 +61,7 @@ export const CustomPropertiesPanel = (props: Props) => {
                     step={value.step ?? 1}
                     style={{ width: '50px' }}
                     onChange={ev => {
-                      value.onChange(ev ?? 0);
-                      node?.updateCustomProps();
+                      UnitOfWork.execute(diagram, uow => value.onChange(ev ?? 0, uow));
                     }}
                   />
                 </div>
@@ -76,8 +76,7 @@ export const CustomPropertiesPanel = (props: Props) => {
                     type="checkbox"
                     checked={value.value}
                     onChange={() => {
-                      value.onChange(!value.value);
-                      node?.updateCustomProps();
+                      UnitOfWork.execute(diagram, uow => value.onChange(!value.value, uow));
                     }}
                   />
                 </div>
@@ -90,8 +89,7 @@ export const CustomPropertiesPanel = (props: Props) => {
                 <div className={'cmp-labeled-table__value'}>
                   <Select.Root
                     onValueChange={v => {
-                      value.onChange(v);
-                      node?.updateCustomProps();
+                      UnitOfWork.execute(diagram, uow => value.onChange(v, uow));
                     }}
                     value={value.value}
                   >

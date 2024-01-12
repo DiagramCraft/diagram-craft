@@ -55,17 +55,14 @@ export const Parallelogram = (props: Props) => {
           x={props.node.bounds.x + slant}
           y={props.node.bounds.y}
           def={props.node}
-          onDrag={x => {
-            /* TODO: Automatically provide uow in ShapeControlPoint? */
-            UnitOfWork.execute(props.node.diagram, uow => {
-              const distance = Math.max(0, x - props.node.bounds.x);
-              if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-                props.node.updateProps(props => {
-                  props.parallelogram ??= {};
-                  props.parallelogram.slant = distance;
-                }, uow);
-              }
-            });
+          onDrag={(x, _y, uow) => {
+            const distance = Math.max(0, x - props.node.bounds.x);
+            if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
+              props.node.updateProps(props => {
+                props.parallelogram ??= {};
+                props.parallelogram.slant = distance;
+              }, uow);
+            }
             return `Slant: ${props.node.props.parallelogram!.slant}px`;
           }}
         />
@@ -87,14 +84,12 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
         value: def.props?.parallelogram?.slant ?? 5,
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number) => {
+        onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          UnitOfWork.execute(def.diagram, uow => {
-            def.updateProps(props => {
-              props.parallelogram ??= {};
-              props.parallelogram.slant = value;
-            }, uow);
-          });
+          def.updateProps(props => {
+            props.parallelogram ??= {};
+            props.parallelogram.slant = value;
+          }, uow);
         }
       }
     };

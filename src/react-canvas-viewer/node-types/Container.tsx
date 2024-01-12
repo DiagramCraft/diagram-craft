@@ -112,13 +112,11 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
         type: 'boolean',
         label: 'Grow',
         value: node.props.container?.autoGrow ?? false,
-        onChange: (value: boolean) => {
-          UnitOfWork.execute(node.diagram, uow => {
-            node.updateProps(props => {
-              props.container ??= {};
-              props.container.autoGrow = value;
-            }, uow);
-          });
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.container ??= {};
+            props.container.autoGrow = value;
+          }, uow);
         }
       },
       layout: {
@@ -130,14 +128,12 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
           { value: 'horizontal', label: 'Horizontal' },
           { value: 'vertical', label: 'Vertical' }
         ],
-        onChange: (value: string) => {
-          UnitOfWork.execute(node.diagram, uow => {
-            node.updateProps(props => {
-              props.container ??= {};
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              props.container.layout = value as any;
-            }, uow);
-          });
+        onChange: (value: string, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.container ??= {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            props.container.layout = value as any;
+          }, uow);
         }
       },
       gap: {
@@ -145,13 +141,11 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
         label: 'Gap',
         value: node.props.container?.gap ?? 0,
         unit: 'px',
-        onChange: (value: number) => {
-          UnitOfWork.execute(node.diagram, uow => {
-            node.updateProps(props => {
-              props.container ??= {};
-              props.container.gap = value;
-            }, uow);
-          });
+        onChange: (value: number, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.container ??= {};
+            props.container.gap = value;
+          }, uow);
         }
       }
     };

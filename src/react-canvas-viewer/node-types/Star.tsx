@@ -59,14 +59,12 @@ export const Star = (props: Props) => {
             x={path.segments[1].start.x}
             y={path.segments[1].start.y}
             def={props.node}
-            onDrag={(x, y) => {
+            onDrag={(x, y, uow) => {
               const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
-              UnitOfWork.execute(props.node.diagram, uow => {
-                props.node.updateProps(p => {
-                  p.star ??= {};
-                  p.star.innerRadius = distance / (props.node.bounds.w / 2);
-                }, uow);
-              });
+              props.node.updateProps(p => {
+                p.star ??= {};
+                p.star.innerRadius = distance / (props.node.bounds.w / 2);
+              }, uow);
               return `Inner radius: ${round(props.node.props.star!.innerRadius! * 100)}%`;
             }}
           />
@@ -74,17 +72,15 @@ export const Star = (props: Props) => {
             x={path.segments[2].start.x}
             y={path.segments[2].start.y}
             def={props.node}
-            onDrag={(x, y) => {
+            onDrag={(x, y, uow) => {
               const angle =
                 Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
               const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-              UnitOfWork.execute(props.node.diagram, uow => {
-                props.node.updateProps(props => {
-                  props.star ??= {};
-                  props.star.numberOfSides = numberOfSides;
-                }, uow);
-              });
+              props.node.updateProps(props => {
+                props.star ??= {};
+                props.star.numberOfSides = numberOfSides;
+              }, uow);
 
               return `Sides: ${numberOfSides}`;
             }}
@@ -128,13 +124,11 @@ export class StarNodeDefinition extends AbstractReactNodeDefinition {
         type: 'number',
         label: 'Sides',
         value: def.props?.star?.numberOfSides ?? 5,
-        onChange: (value: number) => {
-          UnitOfWork.execute(def.diagram, uow => {
-            def.updateProps(props => {
-              props.star ??= {};
-              props.star.numberOfSides = value;
-            }, uow);
-          });
+        onChange: (value: number, uow: UnitOfWork) => {
+          def.updateProps(props => {
+            props.star ??= {};
+            props.star.numberOfSides = value;
+          }, uow);
         }
       },
       innerRadius: {
@@ -143,13 +137,11 @@ export class StarNodeDefinition extends AbstractReactNodeDefinition {
         value: round((def.props?.star?.innerRadius ?? 0.5) * 100),
         maxValue: 100,
         unit: '%',
-        onChange: (value: number) => {
-          UnitOfWork.execute(def.diagram, uow => {
-            def.updateProps(props => {
-              props.star ??= {};
-              props.star.innerRadius = value / 100;
-            }, uow);
-          });
+        onChange: (value: number, uow: UnitOfWork) => {
+          def.updateProps(props => {
+            props.star ??= {};
+            props.star.innerRadius = value / 100;
+          }, uow);
         }
       }
     };

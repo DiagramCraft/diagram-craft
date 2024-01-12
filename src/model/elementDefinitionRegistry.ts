@@ -23,18 +23,18 @@ export type CustomPropertyDefinition = {
       maxValue?: number;
       step?: number;
       unit?: string;
-      onChange: (value: number) => void;
+      onChange: (value: number, uow: UnitOfWork) => void;
     }
   | {
       type: 'select';
       value: string;
       options: ReadonlyArray<{ value: string; label: string }>;
-      onChange: (value: string) => void;
+      onChange: (value: string, uow: UnitOfWork) => void;
     }
   | {
       type: 'boolean';
       value: boolean;
-      onChange: (value: boolean) => void;
+      onChange: (value: boolean, uow: UnitOfWork) => void;
     }
 );
 

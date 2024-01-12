@@ -54,15 +54,13 @@ export const RoundedRect = (props: Props) => {
           x={props.node.bounds.x + radius}
           y={props.node.bounds.y}
           def={props.node}
-          onDrag={x => {
+          onDrag={(x, _y, uow) => {
             const distance = Math.max(0, x - props.node.bounds.x);
             if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-              UnitOfWork.execute(props.node.diagram, uow => {
-                props.node.updateProps(props => {
-                  props.roundedRect ??= {};
-                  props.roundedRect.radius = distance;
-                }, uow);
-              });
+              props.node.updateProps(props => {
+                props.roundedRect ??= {};
+                props.roundedRect.radius = distance;
+              }, uow);
             }
             return `Radius: ${props.node.props.roundedRect!.radius}px`;
           }}
@@ -85,15 +83,13 @@ export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
         value: def.props?.roundedRect?.radius ?? 5,
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number) => {
+        onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
 
-          UnitOfWork.execute(def.diagram, uow => {
-            def.updateProps(props => {
-              props.roundedRect ??= {};
-              props.roundedRect.radius = value;
-            }, uow);
-          });
+          def.updateProps(props => {
+            props.roundedRect ??= {};
+            props.roundedRect.radius = value;
+          }, uow);
         }
       }
     };

@@ -153,13 +153,6 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     return this.layer.isLocked() ?? false;
   }
 
-  updateCustomProps() {
-    UnitOfWork.execute(this.diagram, uow => {
-      // TODO: Maybe this can be moved into invalidate() in case we have a way to capture the initial snapshot somehow
-      this.getNodeDefinition().onPropUpdate(this, uow);
-    });
-  }
-
   /* Anchors ************************************************************************************************ */
 
   get anchors(): ReadonlyArray<Anchor> {
