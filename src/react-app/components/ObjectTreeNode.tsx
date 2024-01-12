@@ -4,6 +4,14 @@ import { round } from '../../utils/math.ts';
 export const ObjectTreeNode = (props: Props) => {
   return Object.keys(props.obj).map(key => {
     const v = props.obj[key];
+    if (v === null || v === undefined) {
+      return (
+        <Tree.Node key={key}>
+          <Tree.NodeLabel>{key}</Tree.NodeLabel>
+          <Tree.NodeValue>-</Tree.NodeValue>
+        </Tree.Node>
+      );
+    }
     if (typeof v === 'number') {
       return (
         <Tree.Node key={key}>
