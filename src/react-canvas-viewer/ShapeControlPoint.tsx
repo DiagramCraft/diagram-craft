@@ -11,7 +11,7 @@ export const ShapeControlPoint = (props: Props) => {
       className={'svg-shape-control-point'}
       cx={props.x}
       cy={props.y}
-      r={5}
+      r={4}
       onMouseDown={e => {
         if (e.button !== 0) return;
         drag.initiate(new ShapeControlPointDrag(props.def, props.onDrag));

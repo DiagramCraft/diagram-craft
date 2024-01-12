@@ -153,8 +153,15 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
     redraw();
   });
 
+  useEventListener(diagram, 'elementRemove', ({ element }) => {
+    if (timeout) clearTimeout(timeout);
+    if (element === hoverNode) {
+      setHoverNode(undefined);
+      state.current = 'background';
+    }
+  });
+
   const scale = 4;
-  const offset = 12;
 
   if (
     hoverNode === undefined ||
@@ -166,14 +173,9 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
 
   const node = hoverNode;
 
-  const scaledBounds = shouldScale
-    ? {
-        x: node.bounds.x - offset,
-        y: node.bounds.y - offset,
-        w: node.bounds.w + 2 * offset,
-        h: node.bounds.h + 2 * offset
-      }
-    : node.bounds;
+  if (shouldScale || selection.isDragging()) return null;
+
+  const scaledBounds = node.bounds;
 
   return (
     <>

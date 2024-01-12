@@ -55,11 +55,18 @@ export const Selection = forwardRef<SelectionApi, unknown>((_props, ref) => {
                 y={bounds.y}
                 width={bounds.w}
                 height={bounds.h}
-                className={$c('svg-selection__bb', { 'only-edges': isOnlyEdges })}
+                className={$c('svg-selection__bb', {
+                  'only-edges': isOnlyEdges,
+                  dragging: selection.isDragging()
+                })}
                 pointerEvents={'none'}
               />
-              {shouldHaveRotation && <RotationHandle />}
-              <ResizeHandles />
+              {!selection.isDragging() && (
+                <>
+                  {shouldHaveRotation && <RotationHandle />}
+                  <ResizeHandles />
+                </>
+              )}
             </g>
           </>
         )}

@@ -62,6 +62,7 @@ export class MoveDrag extends AbstractDrag {
 
   onDrag(coord: Point, modifiers: Modifiers): void {
     const selection = this.diagram.selectionState;
+    selection.setDragging(true);
 
     // Don't move connected edges
     if (
@@ -186,6 +187,7 @@ export class MoveDrag extends AbstractDrag {
 
   onDragEnd(): void {
     const selection = this.diagram.selectionState;
+    selection.setDragging(false);
 
     this.enablePointerEvents(selection.elements);
 

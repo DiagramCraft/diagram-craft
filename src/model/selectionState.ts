@@ -65,6 +65,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
     boundingBox: EMPTY_BOX
   };
   #forcedRotation: boolean = false;
+  #dragging: boolean = false;
 
   constructor(diagram: Diagram) {
     super();
@@ -76,6 +77,15 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
       this.recalculateBoundingBox();
     });
     diagram.on('elementChange', recalculateBoundingBox);
+  }
+
+  setDragging(dragging: boolean) {
+    this.#dragging = dragging;
+    this.emit('change', { selection: this });
+  }
+
+  isDragging() {
+    return this.#dragging;
   }
 
   get source() {

@@ -6,6 +6,28 @@ import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { Box } from '../../geometry/box.ts';
 import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
 
+const Handle = (props: {
+  x: number;
+  y: number;
+  r: number;
+  cursor: string;
+  onMouseDown: React.MouseEventHandler<SVGElement>;
+}) => {
+  return (
+    <rect
+      x={props.x - props.r / 2}
+      y={props.y - props.r / 2}
+      width={props.r}
+      height={props.r}
+      rx={1}
+      ry={1}
+      className="svg-selection__handle"
+      cursor={props.cursor}
+      onMouseDown={props.onMouseDown}
+    />
+  );
+};
+
 export const ResizeHandles = () => {
   const diagram = useDiagram();
   const selection = diagram.selectionState;
@@ -24,7 +46,7 @@ export const ResizeHandles = () => {
   const west = Point.midpoint(points[3], points[0]);
 
   const initiateDrag = useCallback(
-    (e: React.MouseEvent<SVGCircleElement, MouseEvent>, type: ResizeType) => {
+    (e: React.MouseEvent<SVGElement, MouseEvent>, type: ResizeType) => {
       if (e.button !== 0) return;
       drag.initiate(
         new ResizeDrag(
@@ -40,68 +62,60 @@ export const ResizeHandles = () => {
 
   return (
     <>
-      <circle
-        cx={points[0].x}
-        cy={points[0].y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={points[0].x}
+        y={points[0].y}
+        r={6}
         cursor={'nw-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-nw')}
       />
-      <circle
-        cx={points[1].x}
-        cy={points[1].y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={points[1].x}
+        y={points[1].y}
+        r={6}
         cursor={'ne-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-ne')}
       />
-      <circle
-        cx={points[2].x}
-        cy={points[2].y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={points[2].x}
+        y={points[2].y}
+        r={6}
         cursor={'se-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-se')}
       />
-      <circle
-        cx={points[3].x}
-        cy={points[3].y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={points[3].x}
+        y={points[3].y}
+        r={6}
         cursor={'sw-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-sw')}
       />
-      <circle
-        cx={north.x}
-        cy={north.y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={north.x}
+        y={north.y}
+        r={6}
         cursor={'n-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-n')}
       />
-      <circle
-        cx={east.x}
-        cy={east.y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={east.x}
+        y={east.y}
+        r={6}
         cursor={'e-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-e')}
       />
       ;
-      <circle
-        cx={south.x}
-        cy={south.y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={south.x}
+        y={south.y}
+        r={6}
         cursor={'s-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-s')}
       />
-      <circle
-        cx={west.x}
-        cy={west.y}
-        r="4"
-        className="svg-selection__handle"
+      <Handle
+        x={west.x}
+        y={west.y}
+        r={6}
         cursor={'w-resize'}
         onMouseDown={e => initiateDrag(e, 'resize-w')}
       />

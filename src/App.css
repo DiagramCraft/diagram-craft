@@ -329,6 +329,8 @@ input::-webkit-input-placeholder {
         stroke: #a8a29e;
         stroke-dasharray: 5 5;
       }
+      &.svg-selection__bb--dragging {
+      }
     }
 
     .svg-selection__handle {
@@ -470,13 +472,14 @@ input::-webkit-input-placeholder {
   }
   .svg-shape-control-point {
     cursor: crosshair;
-    fill: transparent;
-    stroke: red;
+    fill: white;
+    stroke: #16a34a;
+    stroke-width: 2;
   }
 
   .svg-anchor-handle {
-    fill: grey;
-    stroke: grey;
+    fill: white;
+    stroke: #16a34a;
     &:hover {
       stroke: red;
     }
@@ -1238,7 +1241,7 @@ input::-webkit-input-placeholder {
     .svg-selection {
       stroke: var(--tertiary-fg);
       fill: rgba(0, 0, 0, 0.25);
-      stroke-width: 1,
+      stroke-width: 1;
     }
     .svg-cursor {
         stroke: var(--blue-11);
