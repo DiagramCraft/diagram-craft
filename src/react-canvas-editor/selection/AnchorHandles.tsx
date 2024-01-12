@@ -7,12 +7,7 @@ import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import {
-  ConnectedEndpoint,
-  DiagramEdge,
-  FreeEndpoint,
-  isConnected
-} from '../../model/diagramEdge.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { newid } from '../../utils/id.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
@@ -22,6 +17,7 @@ import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
 import { ApplicationTriggers } from '../EditableCanvas.tsx';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
+import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 
 export type AnchorHandlesApi = {
   repaint: () => void;

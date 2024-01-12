@@ -22,7 +22,7 @@ export class Layer {
 
     const uow = new UnitOfWork(diagram);
     elements.forEach(e => this.addElement(e, uow));
-    uow.commitWithoutEvents();
+    uow.abort();
   }
 
   get elements(): ReadonlyArray<DiagramElement> {

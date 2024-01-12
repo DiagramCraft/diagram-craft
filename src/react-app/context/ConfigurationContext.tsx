@@ -1,6 +1,6 @@
 import React from 'react';
 import { assert } from '../../utils/assert.ts';
-import { DeepRequired } from 'ts-essentials';
+import { DeepRequired } from '../../utils/types.ts';
 
 type ConfigurationContextType = {
   palette: {

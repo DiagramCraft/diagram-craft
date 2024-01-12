@@ -15,34 +15,11 @@ import { DiagramElement, isEdge } from './diagramElement.ts';
 import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
-import { DeepReadonly } from 'ts-essentials';
+import { SerializedEdge } from './serialization/types.ts';
+import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
+import { DeepReadonly } from '../utils/types.ts';
 
-export interface Endpoint {
-  readonly position: Point;
-}
-
-export class ConnectedEndpoint implements Endpoint {
-  constructor(
-    public readonly anchor: number,
-    public readonly node: DiagramNode
-  ) {}
-
-  get position() {
-    return this.node!._getAnchorPosition(this.anchor!);
-  }
-}
-
-export class FreeEndpoint implements Endpoint {
-  readonly position: Point;
-
-  constructor(position: Point) {
-    this.position = position;
-  }
-}
-
-export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (endpoint as any).node !== undefined;
+export type DiagramEdgeSnapshot = SerializedEdge;
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -262,35 +239,35 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     uow.updateElement(this);
   }
 
-  /* ***** ***** ******************************************************************************************** */
+  /* Snapshot ************************************************************************************************ */
 
-  isLocked() {
-    return this.layer.isLocked() ?? false;
+  snapshot(): DiagramEdgeSnapshot {
+    return {
+      id: this.id,
+      type: 'edge',
+      props: deepClone(this.props),
+      start: this.start.serialize(),
+      end: this.end.serialize(),
+      waypoints: deepClone(this.waypoints),
+      labelNodes: this.labelNodes?.map(ln => ({
+        id: ln.id,
+        type: ln.type,
+        offset: ln.offset,
+        timeOffset: ln.timeOffset
+      }))
+    };
   }
 
-  path() {
-    // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
-    return buildEdgePath(this, this.props.routing?.rounding ?? 0);
-  }
-
-  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
-    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
-
-    this.#waypoints = this.waypoints?.map(w => {
-      const absoluteControlPoints = (w.controlPoints ?? []).map(cp => Point.add(w.point, cp));
-      const transformedControlPoints = absoluteControlPoints.map(cp =>
-        Transform.point(cp, ...transforms)
-      );
-      const transformedPoint = Transform.point(w.point, ...transforms);
-      const relativeControlPoints = transformedControlPoints.map(cp =>
-        Point.subtract(cp, transformedPoint)
-      );
-
-      return {
-        point: transformedPoint,
-        controlPoints: w.controlPoints ? (relativeControlPoints as [Point, Point]) : undefined
-      };
-    });
+  // TODO: Add assertions for lookups
+  restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
+    this.#props = snapshot.props as NodeProps;
+    this.#start = Endpoint.deserialize(snapshot.start, this.diagram);
+    this.#end = Endpoint.deserialize(snapshot.end, this.diagram);
+    this.#waypoints = snapshot.waypoints ?? [];
+    this.#labelNodes = snapshot.labelNodes?.map(ln => ({
+      ...ln,
+      node: this.diagram.nodeLookup.get(ln.id)!
+    }));
 
     uow.updateElement(this);
   }
@@ -322,9 +299,42 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     }
     edge.setLabelNodes(newLabelNodes, uow);
 
-    // Note, we don't commit the uow
+    uow.abort();
 
     return edge;
+  }
+
+  /* ***** ***** ******************************************************************************************** */
+
+  isLocked() {
+    return this.layer.isLocked() ?? false;
+  }
+
+  path() {
+    // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
+    return buildEdgePath(this, this.props.routing?.rounding ?? 0);
+  }
+
+  transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
+    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
+
+    this.#waypoints = this.waypoints?.map(w => {
+      const absoluteControlPoints = (w.controlPoints ?? []).map(cp => Point.add(w.point, cp));
+      const transformedControlPoints = absoluteControlPoints.map(cp =>
+        Transform.point(cp, ...transforms)
+      );
+      const transformedPoint = Transform.point(w.point, ...transforms);
+      const relativeControlPoints = transformedControlPoints.map(cp =>
+        Point.subtract(cp, transformedPoint)
+      );
+
+      return {
+        point: transformedPoint,
+        controlPoints: w.controlPoints ? (relativeControlPoints as [Point, Point]) : undefined
+      };
+    });
+
+    uow.updateElement(this);
   }
 
   get intersections() {

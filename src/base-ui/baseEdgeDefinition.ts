@@ -7,7 +7,8 @@ import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
 import { LengthOffsetOnPath } from '../geometry/pathPosition.ts';
-import { ConnectedEndpoint, DiagramEdge } from '../model/diagramEdge.ts';
+import { DiagramEdge } from '../model/diagramEdge.ts';
+import { ConnectedEndpoint } from '../model/endpoint.ts';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
   public readonly id: string;

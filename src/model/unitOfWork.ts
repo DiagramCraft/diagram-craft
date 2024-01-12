@@ -1,7 +1,8 @@
-import { DiagramElement } from './diagramElement.ts';
+import { DiagramElement, Snapshot } from './diagramElement.ts';
 import { Diagram } from './diagram.ts';
+import { assert } from '../utils/assert.ts';
 
-type Callback = () => void;
+type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
 
@@ -12,16 +13,21 @@ export class UnitOfWork {
 
   #invalidatedElements = new Set<DiagramElement>();
 
+  #shouldUpdateDiagram = false;
+
+  #snapshots = new Map<string, undefined | Snapshot>();
+
   // TODO: Will we really need #actions going forward
-  #actions = new Map<string, Callback>();
+  #actions = new Map<string, ActionCallback>();
 
   constructor(
     readonly diagram: Diagram,
-    public readonly changeType: ChangeType = 'non-interactive'
+    public readonly changeType: ChangeType = 'non-interactive',
+    public readonly trackChanges: boolean = false
   ) {}
 
-  static updateElement(element: DiagramElement) {
-    element.diagram.emit('elementChange', { element: element });
+  static throwaway(diagram: Diagram) {
+    return new UnitOfWork(diagram, 'interactive', false);
   }
 
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
@@ -31,9 +37,11 @@ export class UnitOfWork {
     return result;
   }
 
-  static noCommit<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
-    const uow = new UnitOfWork(diagram);
-    return cb(uow);
+  snapshot(element: DiagramElement) {
+    if (!this.trackChanges) return;
+    assert.false(this.#snapshots.has(element.id), 'Can only create snapshot once');
+
+    this.#snapshots.set(element.id, element.snapshot());
   }
 
   hasBeenInvalidated(element: DiagramElement) {
@@ -49,18 +57,37 @@ export class UnitOfWork {
   }
 
   updateElement(element: DiagramElement) {
+    assert.true(
+      !this.trackChanges || this.#snapshots.has(element.id),
+      'Must create snapshot before updating element'
+    );
     this.#elementsToUpdate.set(element.id, element);
   }
 
   removeElement(element: DiagramElement) {
+    assert.true(
+      !this.trackChanges || this.#snapshots.has(element.id),
+      'Must create snapshot before updating element'
+    );
     this.#elementsToRemove.set(element.id, element);
   }
 
   addElement(element: DiagramElement) {
+    assert.false(
+      this.trackChanges && this.#snapshots.has(element.id),
+      'Cannot add element that has a snapshot'
+    );
+    if (this.trackChanges && this.#snapshots.has(element.id)) {
+      this.#snapshots.set(element.id, undefined);
+    }
     this.#elementsToAdd.set(element.id, element);
   }
 
-  pushAction(name: string, element: DiagramElement, cb: Callback) {
+  updateDiagram() {
+    this.#shouldUpdateDiagram = true;
+  }
+
+  pushAction(name: string, element: DiagramElement, cb: ActionCallback) {
     const id = name + element.id;
     if (this.#actions.has(id)) return;
 
@@ -69,7 +96,30 @@ export class UnitOfWork {
     this.#actions.set(id, cb);
   }
 
+  notify() {
+    this.processEvents();
+
+    this.#actions.clear();
+    this.#elementsToUpdate.clear();
+    this.#elementsToRemove.clear();
+    this.#elementsToAdd.clear();
+
+    return this.#snapshots;
+  }
+
   commit() {
+    this.processEvents();
+
+    if (this.#shouldUpdateDiagram) {
+      this.diagram.emit('change', { diagram: this.diagram });
+    }
+
+    return this.#snapshots;
+  }
+
+  abort() {}
+
+  private processEvents() {
     // Note, actions must run before elements events are emitted
     this.#actions.forEach(a => a());
 
@@ -83,14 +133,5 @@ export class UnitOfWork {
     this.#elementsToRemove.forEach(e => this.diagram.emit('elementRemove', { element: e }));
     this.#elementsToUpdate.forEach(e => this.diagram.emit('elementChange', { element: e }));
     this.#elementsToAdd.forEach(e => this.diagram.emit('elementAdd', { element: e }));
-  }
-
-  commitWithoutEvents() {
-    this.#actions.forEach(a => a());
-  }
-
-  // TODO: We should defer this, and only do it once per commit - as well as cancelling all other elementChange events
-  updateDiagram() {
-    this.diagram.emit('change', { diagram: this.diagram });
   }
 }

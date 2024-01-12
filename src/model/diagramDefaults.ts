@@ -1,5 +1,5 @@
-import { DeepPartial, DeepRequired } from 'ts-essentials';
 import { deepMerge } from '../utils/deepmerge.ts';
+import { DeepPartial, DeepRequired } from '../utils/types.ts';
 
 export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: string): T =>
   new Proxy<T>(target as T, {

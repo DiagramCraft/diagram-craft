@@ -3,22 +3,20 @@ import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Diagram } from './diagram.ts';
-import {
-  ConnectedEndpoint,
-  DiagramEdge,
-  Endpoint,
-  FreeEndpoint,
-  isConnected
-} from './diagramEdge.ts';
+import { DiagramEdge } from './diagramEdge.ts';
 import { AbstractNode, Anchor } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
-import { DeepReadonly } from 'ts-essentials';
+import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
+import { SerializedNode } from './serialization/types.ts';
+import { DeepReadonly } from '../utils/types.ts';
 
-export type DiagramNodeSnapshot = Pick<AbstractNode, 'id' | 'bounds' | 'props'>;
+export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
+  children: string[];
+};
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -60,9 +58,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     this.#props = (props ?? {}) as NodeProps;
     this.#anchors = anchorCache;
 
-    // Ensure all anchors are loaded without triggering a change event
     if (!this.#anchors) {
-      this.invalidateAnchors(new UnitOfWork(diagram));
+      this.invalidateAnchors(UnitOfWork.throwaway(diagram));
     }
   }
 
@@ -172,6 +169,113 @@ export class DiagramNode implements AbstractNode, DiagramElement {
 
   getAnchor(anchor: number) {
     return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
+  }
+
+  /* Snapshot ************************************************************************************************ */
+
+  snapshot(): DiagramNodeSnapshot {
+    return {
+      id: this.id,
+      type: 'node',
+      nodeType: this.nodeType,
+      bounds: deepClone(this.bounds),
+      props: deepClone(this.props),
+      children: this.children.map(c => c.id),
+      edges: Object.fromEntries(
+        [...this.edges.entries()].map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
+      )
+    };
+  }
+
+  // TODO: Add assertions for lookups
+  restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
+    this.setBounds(snapshot.bounds, uow);
+    this.#props = snapshot.props as NodeProps;
+    this.setChildren(
+      snapshot.children.map(c => this.diagram.lookup(c)!),
+      uow
+    );
+    this.edges.clear();
+    for (const [k, v] of Object.entries(snapshot.edges ?? {})) {
+      this.edges.set(Number(k), [
+        ...(this.edges.get(Number(k)) ?? []),
+        ...v.map(e => this.diagram.edgeLookup.get(e.id)!)
+      ]);
+    }
+
+    uow.updateElement(this);
+  }
+
+  duplicate(ctx?: DuplicationContext): DiagramNode {
+    const isTopLevel = ctx === undefined;
+    const context = ctx ?? {
+      targetElementsInGroup: new Map()
+    };
+
+    // The node might already have been duplicated being a label node of one of the edges
+    if (context.targetElementsInGroup.has(this.id)) {
+      return context.targetElementsInGroup.get(this.id) as DiagramNode;
+    }
+
+    const node = new DiagramNode(
+      newid(),
+      this.nodeType,
+      deepClone(this.bounds),
+      this.diagram,
+      this.layer,
+      deepClone(this.props) as NodeProps,
+      this.#anchors
+    );
+
+    context.targetElementsInGroup.set(this.id, node);
+
+    // Phase 1 - duplicate all elements in the group
+    const newChildren: DiagramElement[] = [];
+    for (const c of this.children) {
+      const newElement = c.duplicate(context);
+      newChildren.push(newElement);
+    }
+    node.setChildren(newChildren, new UnitOfWork(this.diagram));
+    context.targetElementsInGroup.set(this.id, node);
+
+    if (!isTopLevel) return node;
+
+    // Phase 2 - update all edges to point to the new elements
+    for (const e of node.getNestedElements()) {
+      if (isEdge(e)) {
+        let newStart: Endpoint;
+        let newEnd: Endpoint;
+
+        if (isConnected(e.start)) {
+          const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
+          if (newStartNode) {
+            newStart = new ConnectedEndpoint(e.start.anchor, newStartNode as DiagramNode);
+          } else {
+            newStart = new FreeEndpoint(e.start.position);
+          }
+        } else {
+          newStart = new FreeEndpoint(e.start.position);
+        }
+
+        if (isConnected(e.end)) {
+          const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
+          if (newEndNode) {
+            newEnd = new ConnectedEndpoint(e.end.anchor, newEndNode as DiagramNode);
+          } else {
+            newEnd = new FreeEndpoint(e.end.position);
+          }
+        } else {
+          newEnd = new FreeEndpoint(e.end.position);
+        }
+
+        const uow = new UnitOfWork(this.diagram);
+        e.setStart(newStart, uow);
+        e.setEnd(newEnd, uow);
+        uow.abort();
+      }
+    }
+
+    return node;
   }
 
   /**
@@ -300,92 +404,6 @@ export class DiagramNode implements AbstractNode, DiagramElement {
       x: this.bounds.x + this.bounds.w * this.getAnchor(anchor).point.x,
       y: this.bounds.y + this.bounds.h * this.getAnchor(anchor).point.y
     };
-  }
-
-  duplicate(ctx?: DuplicationContext): DiagramNode {
-    const isTopLevel = ctx === undefined;
-    const context = ctx ?? {
-      targetElementsInGroup: new Map()
-    };
-
-    // The node might already have been duplicated being a label node of one of the edges
-    if (context.targetElementsInGroup.has(this.id)) {
-      return context.targetElementsInGroup.get(this.id) as DiagramNode;
-    }
-
-    const node = new DiagramNode(
-      newid(),
-      this.nodeType,
-      deepClone(this.bounds),
-      this.diagram,
-      this.layer,
-      deepClone(this.props) as NodeProps,
-      this.#anchors
-    );
-
-    context.targetElementsInGroup.set(this.id, node);
-
-    // Phase 1 - duplicate all elements in the group
-    const newChildren: DiagramElement[] = [];
-    for (const c of this.children) {
-      const newElement = c.duplicate(context);
-      newChildren.push(newElement);
-    }
-    node.setChildren(newChildren, new UnitOfWork(this.diagram));
-    context.targetElementsInGroup.set(this.id, node);
-
-    if (!isTopLevel) return node;
-
-    // Phase 2 - update all edges to point to the new elements
-    for (const e of node.getNestedElements()) {
-      if (isEdge(e)) {
-        let newStart: Endpoint;
-        let newEnd: Endpoint;
-
-        if (isConnected(e.start)) {
-          const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
-          if (newStartNode) {
-            newStart = new ConnectedEndpoint(e.start.anchor, newStartNode as DiagramNode);
-          } else {
-            newStart = new FreeEndpoint(e.start.position);
-          }
-        } else {
-          newStart = new FreeEndpoint(e.start.position);
-        }
-
-        if (isConnected(e.end)) {
-          const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
-          if (newEndNode) {
-            newEnd = new ConnectedEndpoint(e.end.anchor, newEndNode as DiagramNode);
-          } else {
-            newEnd = new FreeEndpoint(e.end.position);
-          }
-        } else {
-          newEnd = new FreeEndpoint(e.end.position);
-        }
-
-        UnitOfWork.noCommit(this.diagram, uow => {
-          e.setStart(newStart, uow);
-          e.setEnd(newEnd, uow);
-        });
-      }
-    }
-
-    return node;
-  }
-
-  snapshot() {
-    return {
-      id: this.id,
-      bounds: deepClone(this.bounds),
-      props: deepClone(this.props)
-    };
-  }
-
-  restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
-    this.setBounds(snapshot.bounds, uow);
-    this.#props = snapshot.props as NodeProps;
-    uow.updateElement(this);
   }
 
   listEdges(): DiagramEdge[] {

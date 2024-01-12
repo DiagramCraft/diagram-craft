@@ -6,7 +6,10 @@ import { Box } from '../geometry/box.ts';
 import { Layer } from './diagramLayer.ts';
 import { Transform } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
-import { DeepReadonly } from 'ts-essentials';
+import { DeepReadonly } from '../utils/types.ts';
+
+// eslint-disable-next-line
+export type Snapshot = any;
 
 export interface DiagramElement extends AbstractElement {
   invalidate(uow: UnitOfWork): void;
@@ -25,6 +28,9 @@ export interface DiagramElement extends AbstractElement {
   props: DeepReadonly<NodeProps> | DeepReadonly<EdgeProps>;
 
   updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
+
+  snapshot(): Snapshot;
+  restore(snapshot: Snapshot, uow: UnitOfWork): void;
 
   _setLayer(layer: Layer, diagram: Diagram): void;
   _setParent(parent: DiagramNode | undefined): void;

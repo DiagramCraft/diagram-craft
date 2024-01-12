@@ -7,6 +7,7 @@ import { newid } from '../../utils/id.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { FreeEndpoint } from '../../model/endpoint.ts';
 
 export class EdgeTool extends AbstractTool {
   constructor(
@@ -23,8 +24,8 @@ export class EdgeTool extends AbstractTool {
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
     const nd = new DiagramEdge(
       newid(),
-      { position: this.diagram.viewBox.toDiagramPoint(point) },
-      { position: Point.add(this.diagram.viewBox.toDiagramPoint(point), { x: 50, y: 50 }) },
+      new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
+      new FreeEndpoint(Point.add(this.diagram.viewBox.toDiagramPoint(point), { x: 50, y: 50 })),
       {},
       [],
       this.diagram,

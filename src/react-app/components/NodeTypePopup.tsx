@@ -10,7 +10,7 @@ import { PickerCanvas } from './PickerCanvas.tsx';
 import { assert } from '../../utils/assert.ts';
 import { useCallback } from 'react';
 import { newid } from '../../utils/id.ts';
-import { ConnectedEndpoint } from '../../model/diagramEdge.ts';
+import { ConnectedEndpoint } from '../../model/endpoint.ts';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();

@@ -1,5 +1,4 @@
 import { VerifyNotReached } from '../../utils/assert.ts';
-import { ConnectedEndpoint } from '../diagramEdge.ts';
 import { Diagram } from '../diagram.ts';
 import { DiagramDocument } from '../diagramDocument.ts';
 import { Layer } from '../diagramLayer.ts';
@@ -13,6 +12,7 @@ import {
   SerializedLayer,
   SerializedNode
 } from './types.ts';
+import { ConnectedEndpoint } from '../endpoint.ts';
 
 export const isConnected = (
   endpoint: SerializedEndpoint

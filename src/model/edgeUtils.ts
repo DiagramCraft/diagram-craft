@@ -5,12 +5,13 @@ import {
   PointOnPath,
   TimeOffsetOnSegment
 } from '../geometry/pathPosition.ts';
-import { ConnectedEndpoint, DiagramEdge, Intersection, isConnected } from './diagramEdge.ts';
+import { DiagramEdge, Intersection } from './diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
 import { ArrowShape } from '../base-ui/arrowShapes.ts';
 import { Diagram } from './diagram.ts';
 import { Vector } from '../geometry/vector.ts';
+import { ConnectedEndpoint, isConnected } from './endpoint.ts';
 
 const adjustForArrow = (
   pointOnPath: PointOnPath | undefined,

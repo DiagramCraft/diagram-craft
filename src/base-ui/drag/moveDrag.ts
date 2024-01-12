@@ -12,8 +12,8 @@ import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { largest } from '../../utils/array.ts';
-import { isConnected } from '../../model/diagramEdge.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import { isConnected } from '../../model/endpoint.ts';
 
 export class MoveDrag extends AbstractDrag {
   #snapAngle?: Axis;

@@ -1,6 +1,6 @@
 import { Diagram } from '../diagram.ts';
 import { DiagramNode } from '../diagramNode.ts';
-import { ConnectedEndpoint, DiagramEdge, FreeEndpoint } from '../diagramEdge.ts';
+import { DiagramEdge } from '../diagramEdge.ts';
 import { UnitOfWork } from '../unitOfWork.ts';
 import { Layer } from '../diagramLayer.ts';
 import { isConnected } from './serialize.ts';
@@ -16,6 +16,7 @@ import {
   SerializedLayer,
   SerializedNode
 } from './types.ts';
+import { ConnectedEndpoint, FreeEndpoint } from '../endpoint.ts';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';

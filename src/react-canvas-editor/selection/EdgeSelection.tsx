@@ -1,10 +1,11 @@
-import { DiagramEdge, isConnected } from '../../model/diagramEdge.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { $c } from '../../utils/classname.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { useState } from 'react';
 import { useEventListener } from '../../react-app/hooks/useEventListener.ts';
 import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
+import { isConnected } from '../../model/endpoint.ts';
 
 export const EdgeSelection = (props: Props) => {
   const diagram = useDiagram();

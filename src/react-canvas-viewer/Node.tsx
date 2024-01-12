@@ -19,9 +19,9 @@ import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx'
 import { deepMerge } from '../utils/deepmerge.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { DeepRequired } from 'ts-essentials';
 import { Box } from '../geometry/box.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
+import { DeepRequired } from '../utils/types.ts';
 
 export type NodeApi = {
   repaint: () => void;

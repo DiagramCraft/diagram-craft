@@ -1,15 +1,11 @@
 import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { precondition } from '../../utils/assert.ts';
-import {
-  ConnectedEndpoint,
-  DiagramEdge,
-  FreeEndpoint,
-  isConnected
-} from '../../model/diagramEdge.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 
 const addHighlight = (element: DiagramElement, highlight: string) => {
   UnitOfWork.execute(element.diagram, uow => {

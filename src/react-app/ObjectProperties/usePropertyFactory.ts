@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { unique } from '../../utils/array.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { DeepReadonly } from 'ts-essentials';
+import { DeepReadonly } from '../../utils/types.ts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

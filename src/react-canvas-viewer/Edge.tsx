@@ -18,12 +18,12 @@ import { deepMerge } from '../utils/deepmerge.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { Diagram } from '../model/diagram.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
-import { DeepRequired } from 'ts-essentials';
 import { applyLineHops, clipPath } from '../model/edgeUtils.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 import { ArrowMarker } from './ArrowMarker.tsx';
+import { DeepRequired } from '../utils/types.ts';
 
 export type EdgeApi = {
   repaint: () => void;

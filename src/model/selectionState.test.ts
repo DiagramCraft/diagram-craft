@@ -6,6 +6,7 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { Diagram } from './diagram.ts';
 import { Layer } from './diagramLayer.ts';
 import { RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.tsx';
+import { FreeEndpoint } from './endpoint.ts';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(
@@ -25,12 +26,8 @@ const createNode = (diagram: Diagram) =>
 const createEdge = (diagram: Diagram) =>
   new DiagramEdge(
     '1',
-    {
-      position: { x: 0, y: 0 }
-    },
-    {
-      position: { x: 10, y: 10 }
-    },
+    new FreeEndpoint({ x: 0, y: 0 }),
+    new FreeEndpoint({ x: 10, y: 10 }),
     {},
     [],
     diagram,
