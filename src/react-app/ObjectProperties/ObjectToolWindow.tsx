@@ -14,6 +14,7 @@ import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { LabelNodePanel } from './LabelNodePanel.tsx';
+import { NodeEffectsPanel } from './NodeEffectsPanel.tsx';
 
 export const ObjectToolWindow = () => {
   const diagram = useDiagram();
@@ -46,7 +47,7 @@ export const ObjectToolWindow = () => {
           'stroke',
           'line',
           'text',
-          'transform',
+          'effects',
           'snap',
           'grid',
           'canvas',
@@ -63,6 +64,7 @@ export const ObjectToolWindow = () => {
             <TextPanel />
             {type !== 'single-label-node' && <TransformPanel />}
             {type === 'single-label-node' && <LabelNodePanel />}
+            <NodeEffectsPanel />
             <CustomPropertiesPanel />
           </>
         )}

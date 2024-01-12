@@ -12,6 +12,7 @@ import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDef
 import { Diagram } from '../../model/diagram.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { NodeWrapper } from '../NodeWrapper.tsx';
 
 declare global {
   interface NodeProps {
@@ -28,23 +29,25 @@ export const Star = (props: Props) => {
 
   return (
     <>
-      <path
-        d={svgPath}
-        x={props.node.bounds.x}
-        y={props.node.bounds.y}
-        width={props.node.bounds.w}
-        height={props.node.bounds.h}
-        className={'svg-node__boundary svg-node'}
-        {...propsUtils.filterSvgProperties(props)}
-      />
+      <NodeWrapper {...props} node={props.node} path={path}>
+        <path
+          d={svgPath}
+          x={props.node.bounds.x}
+          y={props.node.bounds.y}
+          width={props.node.bounds.w}
+          height={props.node.bounds.h}
+          className={'svg-node__boundary svg-node'}
+          {...propsUtils.filterSvgProperties(props)}
+        />
 
-      <TextPart
-        id={`text_1_${props.node.id}`}
-        text={props.nodeProps.text}
-        bounds={props.node.bounds}
-        onChange={TextPart.defaultOnChange(props.node)}
-        onMouseDown={props.onMouseDown!}
-      />
+        <TextPart
+          id={`text_1_${props.node.id}`}
+          text={props.nodeProps.text}
+          bounds={props.node.bounds}
+          onChange={TextPart.defaultOnChange(props.node)}
+          onMouseDown={props.onMouseDown!}
+        />
+      </NodeWrapper>
 
       {props.isSingleSelected && (
         <>

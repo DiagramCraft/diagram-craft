@@ -121,5 +121,11 @@ declare global {
       type?: FillType;
       color2?: string;
     };
+
+    effects?: {
+      reflection?: boolean;
+      blur?: number;
+      opacity?: number;
+    };
   }
 }

@@ -9,6 +9,7 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { NodeWrapper } from '../NodeWrapper.tsx';
 
 declare global {
   interface NodeProps {
@@ -25,22 +26,24 @@ export const RoundedRect = (props: Props) => {
 
   return (
     <>
-      <path
-        d={svgPath}
-        x={props.node.bounds.x}
-        y={props.node.bounds.y}
-        width={props.node.bounds.w}
-        height={props.node.bounds.h}
-        {...propsUtils.filterSvgProperties(props)}
-      />
+      <NodeWrapper {...props} node={props.node} path={path}>
+        <path
+          d={svgPath}
+          x={props.node.bounds.x}
+          y={props.node.bounds.y}
+          width={props.node.bounds.w}
+          height={props.node.bounds.h}
+          {...propsUtils.filterSvgProperties(props)}
+        />
 
-      <TextPart
-        id={`text_1_${props.node.id}`}
-        text={props.nodeProps.text}
-        bounds={props.node.bounds}
-        onChange={TextPart.defaultOnChange(props.node)}
-        onMouseDown={props.onMouseDown!}
-      />
+        <TextPart
+          id={`text_1_${props.node.id}`}
+          text={props.nodeProps.text}
+          bounds={props.node.bounds}
+          onChange={TextPart.defaultOnChange(props.node)}
+          onMouseDown={props.onMouseDown!}
+        />
+      </NodeWrapper>
 
       {props.isSingleSelected && (
         <ShapeControlPoint

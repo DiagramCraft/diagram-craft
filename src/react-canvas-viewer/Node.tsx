@@ -100,51 +100,70 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
 
+  let filterId = undefined;
+  if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
+    filterId = `node-${props.def.id}-filter`;
+    style.filter = `url(#${filterId})`;
+  }
+
   // TODO: We should only apply the rotation to leaf nodes and not to groups or containers
   //       ... changing this likely means changing Node.tsx and Container.tsx
   //       ... or maybe it's better to continue like this with reverse rotations in Node and Container
   return (
-    <g
-      id={`node-${props.def.id}`}
-      className={'svg-node'}
-      transform={`rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}
-    >
-      {nodeProps.fill?.type === 'gradient' && (
-        <linearGradient id={`node-${props.def.id}-gradient`}>
-          <stop stopColor={nodeProps.fill.color} offset="0%" />
-          <stop stopColor={nodeProps.fill.color2} offset="100%" />
-        </linearGradient>
-      )}
-      <ReactNodeImpl
-        def={nodeDef}
-        diagram={props.diagram}
-        node={props.def}
-        nodeProps={nodeProps}
-        onMouseDown={onMouseDown}
-        isSelected={isSelected}
-        isSingleSelected={isSingleSelected}
-        style={style}
-        childProps={{
-          onMouseDown: props.onMouseDown,
-          onDoubleClick: props.onDoubleClick,
-          applicationTriggers: props.applicationTriggers
-        }}
-      />
-
-      {isEdgeConnect && (
-        <g transform={`rotate(${-Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}>
-          {props.def.anchors.map(anchor => (
-            <circle
-              key={`${anchor.point.x}_${anchor.point.y}`}
-              className={'svg-node__anchor'}
-              cx={props.def.bounds.x + anchor.point.x * props.def.bounds.w}
-              cy={props.def.bounds.y + anchor.point.y * props.def.bounds.h}
-              r={5}
+    <>
+      {filterId && (
+        <filter id={filterId} filterUnits={'objectBoundingBox'}>
+          {nodeProps.effects.blur && <feGaussianBlur stdDeviation={5 * nodeProps.effects.blur} />}
+          {nodeProps.effects.opacity !== 1 && (
+            <feColorMatrix
+              type="matrix"
+              values={`1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${nodeProps.effects.opacity} 0`}
             />
-          ))}
-        </g>
+          )}
+        </filter>
       )}
-    </g>
+      <g
+        id={`node-${props.def.id}`}
+        className={'svg-node'}
+        transform={`rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}
+      >
+        {nodeProps.fill?.type === 'gradient' && (
+          <linearGradient id={`node-${props.def.id}-gradient`}>
+            <stop stopColor={nodeProps.fill.color} offset="0%" />
+            <stop stopColor={nodeProps.fill.color2} offset="100%" />
+          </linearGradient>
+        )}
+        <ReactNodeImpl
+          def={nodeDef}
+          diagram={props.diagram}
+          node={props.def}
+          nodeProps={nodeProps}
+          onMouseDown={onMouseDown}
+          isSelected={isSelected}
+          isSingleSelected={isSingleSelected}
+          style={style}
+          childProps={{
+            onMouseDown: props.onMouseDown,
+            onDoubleClick: props.onDoubleClick,
+            applicationTriggers: props.applicationTriggers
+          }}
+        />
+
+        {isEdgeConnect && (
+          <g transform={`rotate(${-Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}>
+            {props.def.anchors.map(anchor => (
+              <circle
+                key={`${anchor.point.x}_${anchor.point.y}`}
+                className={'svg-node__anchor'}
+                cx={props.def.bounds.x + anchor.point.x * props.def.bounds.w}
+                cy={props.def.bounds.y + anchor.point.y * props.def.bounds.h}
+                r={5}
+              />
+            ))}
+          </g>
+        )}
+      </g>
+    </>
   );
 });
 
