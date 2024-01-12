@@ -1180,6 +1180,47 @@ input::-webkit-input-placeholder {
   }
 }
 
+.cmp-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  touch-action: none;
+  width: 100px;
+  height: 20px;
+
+  .cmp-slider__track {
+    background-color: var(--blue-3);
+    position: relative;
+    flex-grow: 1;
+    border-radius: 9999px;
+    height: 2px;
+  }
+
+  .cmp-slider__range {
+    position: absolute;
+    background-color: var(--blue-6);
+    border-radius: 9999px;
+    height: 100%;
+  }
+
+  .cmp-slider__thumb {
+    display: block;
+    width: 12px;
+    height: 12px;
+    background-color: var(--blue-6);
+    border-radius: 10px;
+  }
+  .cmp-slider__thumb:hover {
+    background-color: var(--blue-11);
+  }
+  .cmp-slider__thumb:focus {
+    outline: none;
+    background-color: var(--blue-11);
+    box-shadow: 0 0 0 1px var(--blue-10);
+  }
+}
+
 
 /* Specific / one-use components */
 

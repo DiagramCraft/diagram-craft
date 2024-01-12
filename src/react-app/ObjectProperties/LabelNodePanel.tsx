@@ -8,6 +8,7 @@ import { assert } from '../../utils/assert.ts';
 import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 
 const values = {
   independent: 'Independent',
@@ -105,12 +106,8 @@ export const LabelNodePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Position:</div>
           <div className={'cmp-labeled-table__value'}>
-            <NumberInput
-              defaultUnit={'%'}
+            <SliderAndNumberInput
               value={round(timeOffset * 100)}
-              min={0}
-              max={100}
-              style={{ width: '50px' }}
               onChange={v => {
                 labelNode.timeOffset = Number(v) / 100;
                 UnitOfWork.execute(edge.diagram, uow => {

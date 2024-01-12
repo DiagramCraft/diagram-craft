@@ -2,10 +2,10 @@ import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { NumberInput } from '../NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { useNodeProperty } from './useProperty.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
+import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 
 export const NodeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();
@@ -40,12 +40,8 @@ export const NodeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Blur:</div>
           <div className={'cmp-labeled-table__value'}>
-            <NumberInput
-              defaultUnit={'%'}
+            <SliderAndNumberInput
               value={round(blur.val * 100)}
-              min={0}
-              max={100}
-              style={{ width: '50px' }}
               onChange={v => {
                 blur.set(Number(v) / 100);
               }}
@@ -54,12 +50,8 @@ export const NodeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Opacity:</div>
           <div className={'cmp-labeled-table__value'}>
-            <NumberInput
-              defaultUnit={'%'}
+            <SliderAndNumberInput
               value={round(opacity.val * 100)}
-              min={0}
-              max={100}
-              style={{ width: '50px' }}
               onChange={v => {
                 opacity.set(Number(v) / 100);
               }}
