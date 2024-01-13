@@ -74,7 +74,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const resetTool = () => (props.applicationState.tool = 'move');
 
   const [tool, setTool] = useState<Tool>(
-    new MoveTool(diagram, drag, svgRef, deferedMouseAction, resetTool)
+    () => new MoveTool(diagram, drag, svgRef, deferedMouseAction, resetTool)
   );
 
   useEventListener(props.applicationState, 'toolChange', s => {

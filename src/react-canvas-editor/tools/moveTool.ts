@@ -18,6 +18,7 @@ export class MoveTool extends AbstractTool {
     protected readonly resetTool: () => void
   ) {
     super(diagram, drag, svgRef, deferedMouseAction, resetTool);
+    if (this.svgRef.current) this.svgRef.current!.style.cursor = 'default';
   }
 
   onMouseOver(id: string, _point: Point) {
