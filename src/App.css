@@ -447,6 +447,13 @@ input::-webkit-input-placeholder {
     stroke: #1d4ed8;
   }
 
+  .svg-midpoint-handle {
+    fill: white;
+    cursor: move;
+    stroke-width: 1;
+    stroke: #9DBCFA;
+  }
+
   .svg-node {
     cursor: move;
     .svg-node__anchor {

@@ -198,7 +198,10 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
-    this.setLabelNodes(this.labelNodes?.filter(ln => ln !== labelNode), uow);
+    this.setLabelNodes(
+      this.labelNodes?.filter(ln => ln !== labelNode),
+      uow
+    );
   }
 
   /* Waypoints ********************************************************************************************** */
@@ -218,11 +221,12 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
       };
     });
 
-    this.#waypoints = [...wpDistances, { ...waypoint, pathD: projection.pathD }].sort(
-      (a, b) => a.pathD - b.pathD
-    );
+    const newWaypoint = { ...waypoint, pathD: projection.pathD };
+    this.#waypoints = [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD);
 
     uow.updateElement(this);
+
+    return this.#waypoints.indexOf(newWaypoint);
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
@@ -237,6 +241,13 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   updateWaypoint(_waypoint: Waypoint, uow: UnitOfWork) {
     uow.updateElement(this);
+  }
+
+  get midpoints() {
+    const path = this.path();
+    return path.segments.map(s => {
+      return s.point(0.5);
+    });
   }
 
   /* Snapshot ************************************************************************************************ */

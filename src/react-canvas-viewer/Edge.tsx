@@ -24,6 +24,7 @@ import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.t
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 import { ArrowMarker } from './ArrowMarker.tsx';
 import { DeepRequired } from '../utils/types.ts';
+import { UnitOfWork } from '../model/unitOfWork.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -133,6 +134,30 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       />
 
       {isSingleSelected &&
+        firstEdge.midpoints.map(mp => (
+          <circle
+            key={`${mp.x}_${mp.y}`}
+            className="svg-midpoint-handle"
+            cx={mp.x}
+            cy={mp.y}
+            r="3"
+            onMouseDown={e => {
+              if (e.button !== 0) return;
+              const uow = new UnitOfWork(props.diagram);
+              const idx = props.def.addWaypoint(
+                { point: props.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent)) },
+                uow
+              );
+              uow.commit();
+
+              drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));
+              e.stopPropagation();
+            }}
+            onContextMenu={onContextMenu}
+          />
+        ))}
+
+      {isSingleSelected &&
         firstEdge.waypoints.map((wp, idx) => (
           <Fragment key={`${wp.point.x}_${wp.point.y}`}>
             <circle
@@ -171,16 +196,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
             ))}
           </Fragment>
         ))}
-
-      {/*props.def.intersections.map((p, idx) => (
-        <circle
-          key={`${idx}_${p.point.x}_${p.point.y}`}
-          cx={p.point.x}
-          cy={p.point.y}
-          r="2"
-          fill={p.type === 'above' ? 'red' : 'blue'}
-        />
-      ))*/}
     </g>
   );
 });
