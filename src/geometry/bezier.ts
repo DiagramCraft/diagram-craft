@@ -5,6 +5,7 @@ import { smallestIndex } from '../utils/array.ts';
 import { Line } from './line.ts';
 import { round } from '../utils/math.ts';
 import { Angle } from './angle.ts';
+import { Vector } from './vector.ts';
 
 const PI = Math.PI;
 const PI_2 = Math.PI * 2;
@@ -210,6 +211,23 @@ export const BezierUtils = {
       }
       return dest;
     }
+  },
+
+  qubicFromThreePoints: (start: Point, pointOnPath: Point, end: Point): Point => {
+    const B = pointOnPath;
+    const d1 = Point.distance(start, B);
+    const d2 = Point.distance(end, B);
+
+    const t = d1 / (d1 + d2);
+    const t1 = 1 - t;
+
+    const ratio = Math.abs((t * t + t1 * t1 - 1) / (t * t + t1 * t1));
+    const ut = (t1 * t1) / (t * t + t1 * t1);
+
+    const C = Point.add(Vector.scale(start, ut), Vector.scale(end, 1 - ut));
+    const A = Point.add(B, Vector.scale(Point.subtract(B, C), 1 / ratio));
+
+    return A;
   }
 };
 

@@ -7,6 +7,7 @@ import { DiagramEdge } from './diagramEdge.ts';
 import { Waypoint } from './types.ts';
 import { Line } from '../geometry/line.ts';
 import { CubicSegment, LineSegment, PathSegment } from '../geometry/pathSegment.ts';
+import { BezierUtils } from '../geometry/bezier.ts';
 
 type Result = {
   startDirection: Direction;
@@ -124,9 +125,19 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
   if (edge.waypoints.length === 0) {
     path.lineTo(em);
   } else if (edge.waypoints.length === 1) {
-    path.quadTo(em, edge.waypoints[0].point);
+    path.quadTo(
+      em,
+      BezierUtils.qubicFromThreePoints(edge.start.position, em, edge.waypoints[0].point)
+    );
   } else {
-    path.quadTo(edge.waypoints[1].point, edge.waypoints[0].point);
+    path.quadTo(
+      edge.waypoints[1].point,
+      BezierUtils.qubicFromThreePoints(
+        edge.start.position,
+        edge.waypoints[0].point,
+        edge.waypoints[1].point
+      )
+    );
     for (let i = 2; i < edge.waypoints.length; i++) {
       path.curveTo(edge.waypoints[i].point);
     }

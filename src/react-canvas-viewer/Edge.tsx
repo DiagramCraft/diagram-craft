@@ -136,6 +136,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       />
 
       {isSingleSelected &&
+        edgeProps.type !== 'curved' &&
         firstEdge.midpoints.map(mp => (
           <circle
             key={`${mp.x}_${mp.y}`}
