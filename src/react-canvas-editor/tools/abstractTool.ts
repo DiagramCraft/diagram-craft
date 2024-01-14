@@ -3,11 +3,13 @@ import { MutableRefObject, RefObject } from 'react';
 import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
+import { ToolType } from '../../base-ui/ApplicationState.ts';
 
 export abstract class AbstractTool implements Tool {
   currentElement: string | undefined;
 
   protected constructor(
+    public readonly type: ToolType,
     protected readonly diagram: Diagram,
     protected readonly drag: DragDopManager,
     protected readonly svgRef: RefObject<SVGSVGElement>,

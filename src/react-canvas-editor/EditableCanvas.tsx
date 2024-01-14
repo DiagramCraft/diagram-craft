@@ -34,11 +34,13 @@ import { getTopMostNode, isNode } from '../model/diagramElement.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
 import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
 import { AnchorHandles } from './selection/AnchorHandles.tsx';
+import { NodeTool } from './tools/nodeTool.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
   text: TextTool,
-  edge: EdgeTool
+  edge: EdgeTool,
+  node: NodeTool
 };
 
 export interface ApplicationTriggers {
@@ -261,13 +263,15 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           });
         })}
 
-        <Selection ref={selectionRef} />
+        {tool.type === 'move' && <Selection ref={selectionRef} />}
         <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
 
-        <AnchorHandles
-          applicationState={props.applicationState}
-          applicationTriggers={props.applicationTriggers}
-        />
+        {tool.type === 'move' && (
+          <AnchorHandles
+            applicationState={props.applicationState}
+            applicationTriggers={props.applicationTriggers}
+          />
+        )}
       </svg>
     </>
   );

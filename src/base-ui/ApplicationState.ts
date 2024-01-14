@@ -1,6 +1,6 @@
 import { EventEmitter } from '../utils/event.ts';
 
-export type ToolType = 'move' | 'text' | 'edge';
+export type ToolType = 'move' | 'text' | 'edge' | 'node';
 
 type ApplicationStateEvents = {
   toolChange: { tool: ToolType };

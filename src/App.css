@@ -159,6 +159,12 @@ input::-webkit-input-placeholder {
     grid-area: tools;
     display: flex;
     gap: 0.25rem;
+
+    .cmp-toolbar__button[data-state='on'],
+    .cmp-toolbar__toggle-item[data-state='on'] {
+      background-color: var(--blue-3);
+      color: var(--blue-11);
+    }
   }
   > ._document {
     grid-area: document;

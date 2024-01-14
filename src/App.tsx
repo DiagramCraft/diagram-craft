@@ -9,17 +9,18 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import {
   TbCategoryPlus,
-  TbClick,
   TbDatabaseEdit,
   TbFiles,
   TbHistory,
   TbInfoCircle,
   TbLayoutGridAdd,
   TbLine,
+  TbLocation,
   TbMenu2,
   TbMoon,
   TbPalette,
   TbPencil,
+  TbPointer,
   TbPolygon,
   TbSelectAll,
   TbStack2,
@@ -175,7 +176,7 @@ const App = () => {
               <div className={'_tools'}>
                 <ReactToolbar.Root className="cmp-toolbar" data-size={'large'}>
                   <ActionToggleButton action={'TOOL_MOVE'}>
-                    <TbClick size={'1.1rem'} />
+                    <TbPointer size={'1.1rem'} />
                   </ActionToggleButton>
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbLayoutGridAdd size={'1.1rem'} />
@@ -192,6 +193,9 @@ const App = () => {
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbPolygon size={'1.1rem'} />
                   </button>
+                  <ActionToggleButton action={'TOOL_NODE'}>
+                    <TbLocation size={'1.1rem'} transform={'scale(-1,1)'} />
+                  </ActionToggleButton>
                 </ReactToolbar.Root>
               </div>
 

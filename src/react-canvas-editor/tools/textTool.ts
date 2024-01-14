@@ -16,7 +16,7 @@ export class TextTool extends AbstractTool {
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
     protected readonly resetTool: () => void
   ) {
-    super(diagram, drag, svgRef, deferedMouseAction, resetTool);
+    super('text', diagram, drag, svgRef, deferedMouseAction, resetTool);
     this.svgRef.current!.style.cursor = 'text';
   }
 

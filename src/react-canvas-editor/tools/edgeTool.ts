@@ -17,7 +17,7 @@ export class EdgeTool extends AbstractTool {
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
     protected readonly resetTool: () => void
   ) {
-    super(diagram, drag, svgRef, deferedMouseAction, resetTool);
+    super('edge', diagram, drag, svgRef, deferedMouseAction, resetTool);
     this.svgRef.current!.style.cursor = 'crosshair';
   }
 

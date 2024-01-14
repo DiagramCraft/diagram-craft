@@ -17,7 +17,7 @@ import { edgeFlipActions } from './actions/edgeFlipAction.ts';
 import { duplicateActions } from './actions/duplicateAction.ts';
 import { Diagram } from '../model/diagram.ts';
 import { edgeTextAddActions } from './actions/edgeTextAddAction.ts';
-import { toolActions } from '../react-app/actions/ToolAction.tsx';
+import { toolActions } from '../react-app/actions/toolAction.ts';
 import { ApplicationState } from './ApplicationState.ts';
 import { UserState } from './UserState.ts';
 import { sidebarActions } from '../react-app/actions/SidebarAction.tsx';
@@ -106,6 +106,7 @@ export const defaultMacKeymap: KeyMap = {
   'M-Digit1': 'TOOL_MOVE',
   'M-Digit4': 'TOOL_TEXT',
   'M-Digit3': 'TOOL_EDGE',
+  'M-Digit7': 'TOOL_NODE',
   'M-KeyS': 'FILE_SAVE',
 
   // TODO: These should move to something like defaultAppKeymap
