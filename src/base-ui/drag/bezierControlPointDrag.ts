@@ -4,6 +4,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Vector } from '../../geometry/vector.ts';
 
 class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';
@@ -57,17 +58,28 @@ export class BezierControlPointDrag extends AbstractDrag {
       edge.waypoints[waypointIdx].controlPoints![controlPointIdx === 0 ? 1 : 0];
   }
 
-  onDrag(coord: Point, _modifiers: Modifiers) {
+  // meta - preserve ratios
+  // alt - ignore angle
+  onDrag(coord: Point, modifiers: Modifiers) {
     const wp = this.edge.waypoints[this.waypointIdx];
 
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;
 
     wp.controlPoints![cIdx] = Point.subtract(coord, wp!.point);
-    wp.controlPoints![ocIdx] = {
-      x: wp.controlPoints![cIdx].x * -1,
-      y: wp.controlPoints![cIdx].y * -1
-    };
+
+    if (modifiers.metaKey) {
+      wp.controlPoints![ocIdx] = {
+        x: wp.controlPoints![cIdx].x * -1,
+        y: wp.controlPoints![cIdx].y * -1
+      };
+    } else if (!modifiers.altKey) {
+      const oLength = Point.distance(Point.ORIGIN, wp.controlPoints![ocIdx]);
+      wp.controlPoints![ocIdx] = Vector.fromPolar(
+        Vector.angle(wp.controlPoints![cIdx]) + Math.PI,
+        oLength
+      );
+    }
 
     UnitOfWork.execute(this.edge.diagram, uow => this.edge.updateWaypoint(wp, uow));
   }

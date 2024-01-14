@@ -160,18 +160,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       {isSingleSelected &&
         firstEdge.waypoints.map((wp, idx) => (
           <Fragment key={`${wp.point.x}_${wp.point.y}`}>
-            <circle
-              className="svg-waypoint-handle"
-              cx={wp.point.x}
-              cy={wp.point.y}
-              r="4"
-              onMouseDown={e => {
-                if (e.button !== 0) return;
-                drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));
-                e.stopPropagation();
-              }}
-              onContextMenu={onContextMenu}
-            />
             {wp.controlPoints?.map((cp, cIdx) => (
               <Fragment key={`${idx}_${cp.x}_${cp.y}`}>
                 <line
@@ -194,6 +182,18 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
                 />
               </Fragment>
             ))}
+            <circle
+              className="svg-waypoint-handle"
+              cx={wp.point.x}
+              cy={wp.point.y}
+              r="4"
+              onMouseDown={e => {
+                if (e.button !== 0) return;
+                drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));
+                e.stopPropagation();
+              }}
+              onContextMenu={onContextMenu}
+            />
           </Fragment>
         ))}
     </g>
