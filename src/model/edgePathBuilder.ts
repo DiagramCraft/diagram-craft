@@ -8,6 +8,7 @@ import { Waypoint } from './types.ts';
 import { Line } from '../geometry/line.ts';
 import { CubicSegment, LineSegment, PathSegment } from '../geometry/pathSegment.ts';
 import { BezierUtils } from '../geometry/bezier.ts';
+import { Vector } from '../geometry/vector.ts';
 
 type Result = {
   startDirection: Direction;
@@ -154,13 +155,18 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
   if (edge.waypoints.length === 0) {
     path.lineTo(edge.end.position);
   } else {
-    // TODO: Need a better way to interpolate missing control points
     // Ensure all control points exists, as they may not in case the edge type has been changed
     for (let i = 0; i < edge.waypoints.length; i++) {
-      edge.waypoints[i].controlPoints ??= [
-        { x: 20, y: 20 },
-        { x: -20, y: -20 }
-      ];
+      const wp = edge.waypoints[i];
+      if (!wp.controlPoints) {
+        const before = i === 0 ? edge.start.position : edge.waypoints[i - 1].point;
+        const after =
+          i === edge.waypoints.length - 1 ? edge.end.position : edge.waypoints[i + 1].point;
+        wp.controlPoints = [
+          Vector.scale(Vector.from(after, before), 0.2),
+          Vector.scale(Vector.from(before, after), 0.2)
+        ];
+      }
     }
 
     const fp = edge.waypoints[0];
