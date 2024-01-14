@@ -18,6 +18,7 @@ import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 import { SerializedEdge } from './serialization/types.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { DeepReadonly } from '../utils/types.ts';
+import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
 
 export type DiagramEdgeSnapshot = SerializedEdge;
 
@@ -214,19 +215,51 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     const path = this.path();
     const projection = path.projectPoint(waypoint.point);
 
-    const wpDistances = this.waypoints.map(p => {
-      return {
-        pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
-        ...p
-      };
-    });
+    if (this.props.type === 'bezier' && !waypoint.controlPoints) {
+      const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
+      const [p1, p2] = path.split(offset);
 
-    const newWaypoint = { ...waypoint, pathD: projection.pathD };
-    this.#waypoints = [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD);
+      const segments: CubicSegment[] = [];
+      for (const s of [...p1.segments, ...p2.segments]) {
+        if (s instanceof CubicSegment) {
+          segments.push(s);
+        } else if (s instanceof LineSegment) {
+          segments.push(CubicSegment.fromLine(s));
+        }
+      }
+      const newWaypoints: Waypoint[] = [];
 
-    uow.updateElement(this);
+      for (let i = 0; i < segments.length - 1; i++) {
+        const segment = segments[i];
+        newWaypoints.push({
+          point: segment.end,
+          controlPoints: [
+            Point.subtract(segment.p2, segment.end),
+            Point.subtract(segments[i + 1].p1, segment.end)
+          ]
+        });
+      }
 
-    return this.#waypoints.indexOf(newWaypoint);
+      this.#waypoints = newWaypoints;
+
+      uow.updateElement(this);
+
+      return offset.segment;
+    } else {
+      const wpDistances = this.waypoints.map(p => {
+        return {
+          pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
+          ...p
+        };
+      });
+
+      const newWaypoint = { ...waypoint, pathD: projection.pathD };
+      this.#waypoints = [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD);
+
+      uow.updateElement(this);
+
+      return this.#waypoints.indexOf(newWaypoint);
+    }
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {

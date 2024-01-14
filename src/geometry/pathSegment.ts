@@ -121,10 +121,19 @@ export class CubicSegment extends CubicBezier implements PathSegment {
   constructor(
     public readonly start: Point,
     public readonly p1: Point,
-    private readonly p2: Point,
+    public readonly p2: Point,
     public readonly end: Point
   ) {
     super(start, p1, p2, end);
+  }
+
+  static fromLine(s: LineSegment) {
+    return new CubicSegment(
+      s.start,
+      Point.add(s.start, Vector.scale(Vector.from(s.start, s.end), 0.25)),
+      Point.add(s.end, Vector.scale(Vector.from(s.end, s.start), 0.25)),
+      s.end
+    );
   }
 
   split(t: number): [CubicSegment, CubicSegment] {
