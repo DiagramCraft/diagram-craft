@@ -25,6 +25,7 @@ import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 import { ArrowMarker } from './ArrowMarker.tsx';
 import { DeepRequired } from '../utils/types.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
+import { useActions } from '../react-app/context/ActionsContext.tsx';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -33,6 +34,7 @@ export type EdgeApi = {
 export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const redraw = useRedraw();
   const drag = useDragDrop();
+  const { actionMap } = useActions();
 
   const { defaults } = useConfiguration();
 
@@ -160,33 +162,45 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
       {isSingleSelected &&
         firstEdge.waypoints.map((wp, idx) => (
           <Fragment key={`${wp.point.x}_${wp.point.y}`}>
-            {wp.controlPoints?.map((cp, cIdx) => (
-              <Fragment key={`${idx}_${cp.x}_${cp.y}`}>
-                <line
-                  className="svg-bezier-handle-line"
-                  x1={wp.point.x + cp.x}
-                  y1={wp.point.y + cp.y}
-                  x2={wp.point.x}
-                  y2={wp.point.y}
-                />
-                <circle
-                  className="svg-bezier-handle"
-                  cx={wp.point.x + cp.x}
-                  cy={wp.point.y + cp.y}
-                  r="4"
-                  onMouseDown={e => {
-                    if (e.button !== 0) return;
-                    drag.initiate(new BezierControlPointDrag(props.diagram, props.def, idx, cIdx));
-                    e.stopPropagation();
-                  }}
-                />
-              </Fragment>
-            ))}
+            {edgeProps.type === 'bezier' &&
+              wp.controlPoints?.map((cp, cIdx) => (
+                <Fragment key={`${idx}_${cp.x}_${cp.y}`}>
+                  <line
+                    className="svg-bezier-handle-line"
+                    x1={wp.point.x + cp.x}
+                    y1={wp.point.y + cp.y}
+                    x2={wp.point.x}
+                    y2={wp.point.y}
+                  />
+                  <circle
+                    className="svg-bezier-handle"
+                    cx={wp.point.x + cp.x}
+                    cy={wp.point.y + cp.y}
+                    r="4"
+                    onMouseDown={e => {
+                      if (e.button !== 0) return;
+                      drag.initiate(
+                        new BezierControlPointDrag(props.diagram, props.def, idx, cIdx)
+                      );
+                      e.stopPropagation();
+                    }}
+                  />
+                </Fragment>
+              ))}
             <circle
               className="svg-waypoint-handle"
               cx={wp.point.x}
               cy={wp.point.y}
               r="4"
+              onDoubleClick={e => {
+                if (e.button !== 0) return;
+                if (!e.metaKey) return;
+                actionMap['WAYPOINT_DELETE']?.execute({
+                  id: props.def.id,
+                  point: wp.point
+                });
+                e.stopPropagation();
+              }}
               onMouseDown={e => {
                 if (e.button !== 0) return;
                 drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));

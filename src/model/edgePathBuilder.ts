@@ -143,6 +143,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
   if (edge.waypoints.length === 0) {
     path.lineTo(edge.end.position);
   } else {
+    // TODO: Need a better way to interpolate missing control points
     // Ensure all control points exists, as they may not in case the edge type has been changed
     for (let i = 0; i < edge.waypoints.length; i++) {
       edge.waypoints[i].controlPoints ??= [

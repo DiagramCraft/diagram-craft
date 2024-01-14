@@ -430,13 +430,13 @@ input::-webkit-input-placeholder {
   .svg-bezier-handle {
     fill: white;
     stroke-width: 1;
-    stroke: orange;
+    stroke: darkorange;
     cursor: move
   }
   .svg-bezier-handle-line {
     stroke-width: 1;
-    stroke: orange;
-    stroke-dasharray: 5 5;
+    stroke: darkorange;
+    stroke-dasharray: 2 2;
     cursor: move;
   }
 
