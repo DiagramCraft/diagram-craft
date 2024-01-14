@@ -14,10 +14,10 @@ export const NodeFillPanel = (props: Props) => {
   const diagram = useDiagram();
   const defaults = useNodeDefaults();
 
-  const fill = useNodeProperty(diagram, 'fill.color', defaults.fill?.color);
-  const color2 = useNodeProperty(diagram, 'fill.color2', defaults.fill?.color2);
-  const type = useNodeProperty(diagram, 'fill.type', defaults.fill?.type);
-  const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill?.enabled);
+  const fill = useNodeProperty(diagram, 'fill.color', defaults.fill.color);
+  const color2 = useNodeProperty(diagram, 'fill.color2', defaults.fill.color2);
+  const type = useNodeProperty(diagram, 'fill.type', defaults.fill.type);
+  const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill.enabled);
 
   const [open, setOpen] = useState(false);
 

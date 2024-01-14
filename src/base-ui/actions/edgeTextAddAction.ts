@@ -77,7 +77,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     uow.commit();
 
     setTimeout(() => {
-      this.diagram.nodeDefinitions.get('text')?.requestFocus(textNode);
+      this.diagram.nodeDefinitions.get('text').requestFocus(textNode);
     }, 10);
   }
 }

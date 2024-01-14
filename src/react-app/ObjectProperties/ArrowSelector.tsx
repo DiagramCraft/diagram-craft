@@ -41,7 +41,7 @@ export const ArrowSelector = (props: Props) => {
                 </Select.ItemIndicator>
               </Select.Item>
               {Object.keys(ARROW_SHAPES).map(type => {
-                const arrow = ARROW_SHAPES[type](PREVIEW_SCALE);
+                const arrow = ARROW_SHAPES[type]?.(PREVIEW_SCALE);
                 return (
                   <Select.Item key={type} className={'cmp-select-content__item'} value={type}>
                     <Select.ItemText>

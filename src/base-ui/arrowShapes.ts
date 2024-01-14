@@ -11,7 +11,7 @@ export type ArrowShape = {
 
 export type ArrowShapeFactory = (scale: number) => ArrowShape;
 
-export const ARROW_SHAPES: Record<string, ArrowShapeFactory> = {
+export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
   SQUARE_ARROW_FILLED: s => ({
     width: s * 10,
     height: s * 10,

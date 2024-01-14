@@ -67,7 +67,7 @@ class UndoableGroupAction implements UndoableAction {
       this.diagram,
       this.diagram.layers.active
     );
-    this.#group?.setChildren([...this.#elements], uow);
+    this.#group.setChildren([...this.#elements], uow);
 
     this.diagram.layers.active.addElement(this.#group, uow);
 
@@ -88,7 +88,7 @@ class UndoableGroupAction implements UndoableAction {
       e.layer.removeElement(e, uow);
     });
 
-    this.#group?.layer.removeElement(this.#group, uow);
+    this.#group.layer.removeElement(this.#group!, uow);
     this.#elements = this.#group.children;
 
     children.toReversed().forEach(e => {

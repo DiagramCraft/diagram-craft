@@ -39,9 +39,9 @@ export const ActionToggleGroup = (props: Props) => {
         onValueChange={value => {
           for (const action of Object.keys(values)) {
             if (value.includes(action) && !values[action]) {
-              (actionMap[action as keyof ActionMap] as ToggleAction)?.execute({});
+              (actionMap[action as keyof ActionMap] as ToggleAction).execute({});
             } else if (!value.includes(action) && values[action]) {
-              (actionMap[action as keyof ActionMap] as ToggleAction)?.execute({});
+              (actionMap[action as keyof ActionMap] as ToggleAction).execute({});
             }
           }
         }}

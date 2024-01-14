@@ -43,7 +43,7 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
     const closestWaypointIndex = smallest(
       wpDistances.map(wp => ({ ...wp, d: Math.abs(projection.pathD - wp.pathD) })),
       (a, b) => a.d - b.d
-    ).idx;
+    )!.idx;
 
     UnitOfWork.execute(this.diagram, uow => {
       edge.removeWaypoint(edge.waypoints[closestWaypointIndex], uow);

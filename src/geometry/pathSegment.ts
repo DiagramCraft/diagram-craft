@@ -322,7 +322,7 @@ export class SegmentList {
   constructor(public readonly segments: PathSegment[]) {}
 
   length() {
-    return this.segments.reduce((acc, cur) => acc + cur.length(), 0) ?? 0;
+    return this.segments.reduce((acc, cur) => acc + cur.length(), 0);
   }
 
   // TODO: This is incorrect

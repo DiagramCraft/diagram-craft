@@ -96,7 +96,7 @@ export const CanvasPanel = (props: Props) => {
               <NumberInput
                 style={{ width: '100%' }}
                 label={'w'}
-                value={round(bounds.w ?? 1)}
+                value={round(bounds.w)}
                 validUnits={['px']}
                 defaultUnit={'px'}
                 onChange={ev => {
@@ -111,7 +111,7 @@ export const CanvasPanel = (props: Props) => {
               <NumberInput
                 style={{ width: '100%' }}
                 label={'h'}
-                value={round(bounds.h ?? 1)}
+                value={round(bounds.h)}
                 validUnits={['px']}
                 defaultUnit={'px'}
                 onChange={ev => {

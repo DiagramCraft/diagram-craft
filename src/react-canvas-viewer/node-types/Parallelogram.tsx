@@ -19,7 +19,7 @@ declare global {
 }
 
 export const Parallelogram = (props: Props) => {
-  const slant = props.node.props?.parallelogram?.slant ?? 5;
+  const slant = props.node.props.parallelogram?.slant ?? 5;
   const path = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
@@ -73,7 +73,7 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
       slant: {
         type: 'number',
         label: 'Slant',
-        value: def.props?.parallelogram?.slant ?? 5,
+        value: def.props.parallelogram?.slant ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -88,7 +88,7 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slant = def.props?.parallelogram?.slant ?? 5;
+    const slant = def.props.parallelogram?.slant ?? 5;
     const bnd = def.bounds;
 
     const sr = slant / bnd.w;

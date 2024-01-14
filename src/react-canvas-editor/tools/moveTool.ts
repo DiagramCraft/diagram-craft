@@ -40,7 +40,7 @@ export class MoveTool extends AbstractTool {
     );
 
     if (isClickOnSelection) {
-      let element = this.diagram.lookup(id)!;
+      let element = this.diagram.lookup(id);
 
       // If we click on an element that is part of a group, select the group instead
       // ... except, when the group is already selected, in which case we allow for "drill-down"
@@ -62,7 +62,7 @@ export class MoveTool extends AbstractTool {
       this.deferedMouseAction.current = {
         callback: () => {
           if (!modifiers.shiftKey) selection.clear();
-          if (!isClickOnBackground) {
+          if (!isClickOnBackground && element) {
             selection.toggle(element);
           }
         }

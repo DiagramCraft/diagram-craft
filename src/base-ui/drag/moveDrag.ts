@@ -297,7 +297,7 @@ export class MoveDrag extends AbstractDrag {
     for (let i = 1; i <= max; i++) {
       last[i] = [i, this.#keys.lastIndexOf(i.toString())];
     }
-    return largest(last.slice(1).toReversed(), (a, b) => a[1] - b[1])[0];
+    return largest(last.slice(1).toReversed(), (a, b) => a[1] - b[1])![0];
   }
 
   private updateState(newPos: { x: number; y: number }) {

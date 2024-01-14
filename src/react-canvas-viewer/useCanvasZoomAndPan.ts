@@ -14,7 +14,7 @@ export const useCanvasZoomAndPan = (diagram: Diagram, svgRef: RefObject<SVGSVGEl
     e => {
       e.preventDefault();
       if (e.ctrlKey) {
-        const delta = e.deltaY ?? e.detail ?? 0;
+        const delta = e.deltaY;
         const normalized = -(delta % 3 ? delta * 10 : delta / 3);
         diagram.viewBox.zoom(EventHelper.point(e), normalized > 0 ? 1 / 1.008 : 1.008);
       } else {

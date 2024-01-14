@@ -11,7 +11,6 @@ import { Diagram } from '../model/diagram.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { Point } from '../geometry/point.ts';
-import { precondition } from '../utils/assert.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
@@ -38,7 +37,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     e => {
       if (e.button !== 0) return;
 
-      const target = document.getElementById(`diagram-${props.diagram.id}`) as HTMLElement;
+      const target = document.getElementById(`diagram-${props.diagram.id}`) as
+        | HTMLElement
+        | undefined;
       if (!target) return;
       props.onMouseDown(
         props.def.id,
@@ -63,7 +64,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const isSelected = props.diagram.selectionState.elements.includes(props.def);
   const isSingleSelected = isSelected && props.diagram.selectionState.elements.length === 1;
-  const isEdgeConnect = nodeProps.highlight?.includes('edge-connect');
+  const isEdgeConnect = nodeProps.highlight.includes('edge-connect');
 
   const style: CSSProperties = {
     fill: nodeProps.fill.color,
@@ -71,14 +72,14 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     stroke: isEdgeConnect ? 'red' : nodeProps.stroke.color
   };
 
-  if (nodeProps?.fill?.type === 'gradient') {
+  if (nodeProps.fill.type === 'gradient') {
     style.fill = `url(#node-${props.def.id}-gradient)`;
   }
 
-  if (nodeProps.stroke?.pattern) {
-    style.strokeDasharray = DASH_PATTERNS[nodeProps.stroke.pattern](
-      (nodeProps.stroke.patternSize ?? 100) / 100,
-      (nodeProps.stroke.patternSpacing ?? 100) / 100
+  if (nodeProps.stroke.pattern) {
+    style.strokeDasharray = DASH_PATTERNS[nodeProps.stroke.pattern]?.(
+      nodeProps.stroke.patternSize / 100,
+      nodeProps.stroke.patternSpacing / 100
     );
   }
 
@@ -94,9 +95,6 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   if (nodeProps.fill.enabled === false) {
     style.fill = 'transparent';
   }
-
-  // TODO: Better error handling here
-  precondition.is.true(nodeDef && 'reactNode' in nodeDef);
 
   const ReactNodeImpl = (nodeDef as ReactNodeDefinition).reactNode;
 
@@ -127,7 +125,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         className={'svg-node'}
         transform={`rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}
       >
-        {nodeProps.fill?.type === 'gradient' && (
+        {nodeProps.fill.type === 'gradient' && (
           <linearGradient id={`node-${props.def.id}-gradient`}>
             <stop stopColor={nodeProps.fill.color} offset="0%" />
             <stop stopColor={nodeProps.fill.color2} offset="100%" />

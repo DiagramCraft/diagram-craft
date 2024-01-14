@@ -45,13 +45,13 @@ const intersectWithNode = (
 
   if (anchor.clip) {
     // TODO: Handle multiple intersections
-    return endIntersections?.[0] ?? { point: endpointPosition };
+    return endIntersections[0] ?? { point: endpointPosition };
   } else {
     const closeIntersections = endIntersections.filter(
       i =>
         Point.distance(endpointPosition, i.point) < 1.5 * (endpoint.node.props.stroke?.width ?? 1)
     );
-    return closeIntersections?.[0] ?? { point: endpointPosition };
+    return closeIntersections[0] ?? { point: endpointPosition };
   }
 };
 

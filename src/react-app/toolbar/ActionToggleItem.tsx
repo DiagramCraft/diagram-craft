@@ -10,11 +10,11 @@ export const ActionToggleItem = (props: Props) => {
   const actions = useContext(ActionToggleGroupContext);
 
   useEffect(() => {
-    actions!.setActionState(props.action, (actionMap[props.action] as ToggleAction)?.state);
+    actions!.setActionState(props.action, (actionMap[props.action] as ToggleAction).state);
   }, [props.action, actionMap, actions]);
 
   useEventListener(actionMap[props.action]!, 'actionchanged', ({ action }) => {
-    actions!.setActionState(props.action, (action as ToggleAction)?.state);
+    actions!.setActionState(props.action, (action as ToggleAction).state);
   });
 
   return (

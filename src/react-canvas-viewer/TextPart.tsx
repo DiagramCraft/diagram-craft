@@ -75,7 +75,7 @@ export const TextPart = (props: Props) => {
             fontStyle: props.text?.italic ? 'italic' : 'normal',
             minWidth: 'min-content',
             textDecoration: props.text?.textDecoration
-              ? `${props.text.textDecoration} ${props.text?.color ?? 'black'}`
+              ? `${props.text.textDecoration} ${props.text.color ?? 'black'}`
               : 'none',
             textTransform: props.text?.textTransform ?? 'none',
             textAlign: props.text?.align ?? 'unset',

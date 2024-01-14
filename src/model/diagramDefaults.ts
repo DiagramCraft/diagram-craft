@@ -64,7 +64,8 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
     blur: 0,
     opacity: 1,
     reflection: false
-  }
+  },
+  highlight: []
 });
 
 export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepRequired<EdgeProps>>(

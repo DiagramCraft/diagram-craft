@@ -154,7 +154,7 @@ export class Path {
       // Note: this is a bit of a weird optimization, but it gives quite a bit of
       //       performance boost when we have already calculated the length offset on the segment
       const d1 =
-        (p1 as LengthOffsetOnSegment)?.segmentD ?? this.segments[p1.segment].lengthAtT(p1.segmentT);
+        (p1 as LengthOffsetOnSegment).segmentD ?? this.segments[p1.segment].lengthAtT(p1.segmentT);
 
       // Split into a,b,c as follows
       //

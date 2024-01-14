@@ -130,7 +130,7 @@ export const deserializeDiagramElements = (
     if (e.labelNodes) {
       // Note, we don't commit the UOW here
       edge.setLabelNodes(
-        e.labelNodes?.map(ln => ({
+        e.labelNodes.map(ln => ({
           ...ln,
           node: nodeLookup[ln.id]
         })),

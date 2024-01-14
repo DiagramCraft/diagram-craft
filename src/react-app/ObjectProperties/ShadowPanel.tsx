@@ -38,7 +38,7 @@ export const ShadowPanel = (props: Props) => {
           />
           &nbsp;
           <NumberInput
-            value={round((1 - (opacity.val ?? 0)) * 100)?.toString()}
+            value={round((1 - opacity.val) * 100).toString()}
             onChange={v => opacity.set((100 - (v ?? 100)) / 100)}
             style={{ width: '45px' }}
             min={0}

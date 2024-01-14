@@ -34,7 +34,7 @@ export const canvasDropHandler = ($d: Diagram) => {
 
     if (nodeType === 'text') {
       setTimeout(() => {
-        $d.nodeDefinitions.get(nodeType)?.requestFocus(nd);
+        $d.nodeDefinitions.get(nodeType).requestFocus(nd);
       }, 10);
     }
   };

@@ -28,7 +28,7 @@ export const DashSelector = (props: Props) => {
             ) : (
               <DashPatternPreview
                 type={props.value ?? 'SOLID'}
-                pattern={DASH_PATTERNS[props.value ?? 'SOLID'](0.25, 0.25)}
+                pattern={DASH_PATTERNS[props.value ?? 'SOLID']?.(0.25, 0.25)}
               />
             )
           }
@@ -46,7 +46,7 @@ export const DashSelector = (props: Props) => {
                 return (
                   <Select.Item key={type} className={'cmp-select-content__item'} value={type}>
                     <Select.ItemText>
-                      <DashPatternPreview type={type} pattern={pattern(0.5, 0.5)} width={30} />
+                      <DashPatternPreview type={type} pattern={pattern?.(0.5, 0.5)} width={30} />
                     </Select.ItemText>
                     <Select.ItemIndicator className="cmp-select-content__item-indicator">
                       <TbCheck />

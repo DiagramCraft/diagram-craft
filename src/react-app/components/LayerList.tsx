@@ -55,7 +55,7 @@ const LayerEntry = (props: { layer: Layer }) => {
           JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
           layer
         );
-      } else {
+      } else if (ev[LAYER_INSTANCES]) {
         let relation: 'above' | 'below' = 'below';
         const instances: string[] = [];
         if (ev[LAYER_INSTANCES].before) {
@@ -119,14 +119,14 @@ const ElementEntry = (props: { element: DiagramElement }) => {
     ev => {
       let relation: 'above' | 'below' | 'on' = 'below';
       const instances: string[] = [];
-      if (ev[ELEMENT_INSTANCES].before) {
-        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].before));
+      if (ev[ELEMENT_INSTANCES]!.before) {
+        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES]!.before));
         relation = 'above';
-      } else if (ev[ELEMENT_INSTANCES].after) {
-        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].after));
+      } else if (ev[ELEMENT_INSTANCES]!.after) {
+        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES]!.after));
         relation = 'below';
-      } else if (ev[ELEMENT_INSTANCES].on) {
-        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES].on));
+      } else if (ev[ELEMENT_INSTANCES]!.on) {
+        instances.push(...JSON.parse(ev[ELEMENT_INSTANCES]!.on));
         relation = 'on';
       } else {
         VERIFY_NOT_REACHED();
@@ -153,8 +153,8 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         diagram.selectionState.elements.includes(e)
           ? 'on'
           : diagram.selectionState.getParents().has(e)
-          ? 'child'
-          : 'off'
+            ? 'child'
+            : 'off'
       }
       {...drag.eventHandlers}
       {...dropTarget.eventHandlers}

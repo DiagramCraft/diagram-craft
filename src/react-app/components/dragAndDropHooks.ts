@@ -6,13 +6,13 @@ type PendingDrop = {
   after?: string[];
 };
 
-type Drop<M extends string> = {
+type Drop<M extends string> = Partial<{
   [K in M]: {
     before?: string;
     on?: string;
     after?: string;
   };
-};
+}>;
 
 export const useDraggable = <E extends HTMLElement>(
   data: string,

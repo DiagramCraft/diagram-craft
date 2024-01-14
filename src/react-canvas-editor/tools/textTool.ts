@@ -45,7 +45,7 @@ export class TextTool extends AbstractTool {
     this.diagram.selectionState.toggle(nd);
 
     setTimeout(() => {
-      this.diagram.nodeDefinitions.get(nodeType)?.requestFocus(nd);
+      this.diagram.nodeDefinitions.get(nodeType).requestFocus(nd);
     }, 10);
 
     this.resetTool();

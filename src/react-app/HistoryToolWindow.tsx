@@ -31,7 +31,7 @@ export const HistoryToolWindow = () => {
               <div key={idx} className={'util-vcenter util-hgap'}>
                 <TbCircleDotted />
                 <span>
-                  {a?.description} {formatTimestamp(a.timestamp)}
+                  {a.description} {formatTimestamp(a.timestamp)}
                 </span>
               </div>
             ))}
@@ -40,7 +40,7 @@ export const HistoryToolWindow = () => {
                 {idx === 0 && <TbCircleArrowRightFilled />}
                 {idx !== 0 && <TbCircleDotted />}
                 <span>
-                  {a?.description} {formatTimestamp(a.timestamp)}
+                  {a.description} {formatTimestamp(a.timestamp)}
                 </span>
               </div>
             ))}

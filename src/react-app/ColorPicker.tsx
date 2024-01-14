@@ -44,7 +44,7 @@ export const ColorPicker = (props: Props) => {
                     style={{ backgroundColor: c }}
                     onClick={() => {
                       close();
-                      props.onClick?.(c);
+                      props.onClick(c);
                     }}
                   ></button>
                 ))}
@@ -59,7 +59,7 @@ export const ColorPicker = (props: Props) => {
                         style={{ backgroundColor: c }}
                         onClick={() => {
                           close();
-                          props.onClick?.(c);
+                          props.onClick(c);
                         }}
                       ></button>
                     ));
@@ -77,7 +77,7 @@ export const ColorPicker = (props: Props) => {
                     style={{ backgroundColor: c }}
                     onClick={() => {
                       close();
-                      props.onClick?.(c);
+                      props.onClick(c);
                     }}
                   ></button>
                 ))}
@@ -93,7 +93,7 @@ export const ColorPicker = (props: Props) => {
                     style={{ backgroundColor: c }}
                     onClick={() => {
                       close();
-                      props.onClick?.(c);
+                      props.onClick(c);
                     }}
                   ></button>
                 ))}

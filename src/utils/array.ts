@@ -1,7 +1,10 @@
 /**
  * Returns the first element of an array that satisfies the provided testing function.
  */
-export const smallest = <T>(arr: ReadonlyArray<T>, comparator: (a: T, b: T) => number): T => {
+export const smallest = <T>(
+  arr: ReadonlyArray<T>,
+  comparator: (a: T, b: T) => number
+): T | undefined => {
   return arr.slice(1).reduce((acc, cur) => (comparator(acc, cur) < 0 ? acc : cur), arr[0]);
 };
 
@@ -19,7 +22,10 @@ export const smallestIndex = <T>(a: ReadonlyArray<T>) => {
 /**
  * Returns the index of the largest element in an array.
  */
-export const largest = <T>(arr: ReadonlyArray<T>, comparator: (a: T, b: T) => number): T => {
+export const largest = <T>(
+  arr: ReadonlyArray<T>,
+  comparator: (a: T, b: T) => number
+): T | undefined => {
   return arr.slice(1).reduce((acc, cur) => (comparator(acc, cur) > 0 ? acc : cur), arr[0]);
 };
 

@@ -171,8 +171,8 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
       'clipboard'
     )! as HTMLTextAreaElement;
     $clipboard.value = '';
+    $clipboard.focus();
 
-    $clipboard?.focus();
     document.execCommand('paste');
 
     window.setTimeout(() => {
@@ -225,8 +225,8 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
     $clipboard.value =
       'application/x-diagram-craft-selection;' +
       JSON.stringify(this.diagram.selectionState.elements.map(e => serializeDiagramElement(e)));
-    $clipboard?.focus();
-    $clipboard?.select();
+    $clipboard.focus();
+    $clipboard.select();
 
     document.execCommand(this.mode);
 

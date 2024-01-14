@@ -13,7 +13,7 @@ export const DocumentBounds = () => {
   const style: CSSProperties = {};
 
   if (diagram.props.background?.color) {
-    style.fill = diagram.props.background?.color;
+    style.fill = diagram.props.background.color;
   }
 
   return <rect className="svg-doc-bounds" x={x} y={y} width={w} height={h} style={style} />;

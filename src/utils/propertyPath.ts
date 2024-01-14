@@ -6,14 +6,14 @@ type PropPathImpl<T, Key extends keyof T> = Key extends string
   ? IsAny<T[Key]> extends true
     ? never
     : NonNullable<T[Key]> extends Record<string, any>
-    ?
-        | `${Key}.${PropPathImpl<
-            NonNullable<T[Key]>,
-            Exclude<keyof NonNullable<T[Key]>, keyof any[]>
-          > &
-            string}`
-        | `${Key}.${Exclude<keyof NonNullable<T[Key]>, keyof any[]> & string}`
-    : never
+      ?
+          | `${Key}.${PropPathImpl<
+              NonNullable<T[Key]>,
+              Exclude<keyof NonNullable<T[Key]>, keyof any[]>
+            > &
+              string}`
+          | `${Key}.${Exclude<keyof NonNullable<T[Key]>, keyof any[]> & string}`
+      : never
   : never;
 
 type PropPathImpl2<T> = PropPathImpl<T, keyof T> | keyof T;
@@ -33,13 +33,13 @@ export type PropPathValue<T, P extends PropPath<T>> = P extends `${infer Key}.${
       : never
     : never
   : P extends keyof T
-  ? T[P]
-  : never;
+    ? T[P]
+    : never;
 
 export class DynamicAccessor<T> {
   constructor() {}
 
-  get<K extends PropPath<T> = PropPath<T>>(obj: T, key: K): PropPathValue<T, K> {
+  get<K extends PropPath<T> = PropPath<T>>(obj: T, key: K): PropPathValue<T, K> | undefined {
     const parts = (key as string).split('.');
     let current: any = obj;
     for (const part of parts) {

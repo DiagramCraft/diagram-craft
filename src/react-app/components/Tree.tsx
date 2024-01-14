@@ -65,7 +65,7 @@ export const Node = (props: NodeProps) => {
       {open &&
         React.Children.map(props.children, child => {
           return isReactElement(child) && child.type.name === 'Children'
-            ? child?.props.children
+            ? child.props.children
             : null;
         })}
     </TreeContext.Provider>

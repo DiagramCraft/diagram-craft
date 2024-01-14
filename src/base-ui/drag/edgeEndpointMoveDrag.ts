@@ -1,6 +1,5 @@
 import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
-import { precondition } from '../../utils/assert.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
@@ -17,7 +16,7 @@ const addHighlight = (element: DiagramElement, highlight: string) => {
 };
 
 const removeHighlight = (element: DiagramElement, highlight: string) => {
-  if (!element.props?.highlight) return;
+  if (!element.props.highlight) return;
 
   UnitOfWork.execute(element.diagram, uow => {
     element.updateProps(props => {
@@ -64,7 +63,6 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
   onDrag(coord: Point) {
     const selection = this.diagram.selectionState;
-    precondition.is.true(this.type === 'start' || this.type === 'end');
 
     selection.guides = [];
 

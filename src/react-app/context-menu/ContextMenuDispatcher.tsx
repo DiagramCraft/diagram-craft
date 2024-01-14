@@ -1,7 +1,7 @@
 import React, { MutableRefObject } from 'react';
 
 export function ContextMenuDispatcher<T>(props: Props<T>) {
-  if (props.state?.current === null) return null;
+  if (props.state.current === null) return null;
   return props.createContextMenu(props.state.current);
 }
 

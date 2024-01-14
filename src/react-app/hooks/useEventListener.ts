@@ -59,7 +59,7 @@ export function useDomEventListener<
   useEffect(() => {
     const $target =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      element === window || element === document ? element : (element as RefObject<any>)?.current;
+      element === window || element === document ? element : (element as RefObject<any>).current;
     if (!$target || !$target.addEventListener) return;
 
     $target.addEventListener(eventName, handler);

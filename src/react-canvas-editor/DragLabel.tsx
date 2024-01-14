@@ -41,7 +41,7 @@ export const DragLabel = () => {
       <div>{s.label}</div>
       {s.props && (
         <div className={'cmp-drag-label__props'}>
-          {Object.entries(s.props ?? {}).map(([key, value]) => (
+          {Object.entries(s.props).map(([key, value]) => (
             <div key={key} className={'cmp-drag-label__prop'}>
               {key}: {value}
             </div>
@@ -50,7 +50,7 @@ export const DragLabel = () => {
       )}
       {s.modifiers && s.modifiers.length > 0 && (
         <div className={'cmp-drag-label__modifiers'}>
-          {s.modifiers?.map(modifier => (
+          {s.modifiers.map(modifier => (
             <div key={modifier.key} data-state={modifier.isActive ? 'active' : 'inactive'}>
               {modifier.key}: {modifier.label}
             </div>

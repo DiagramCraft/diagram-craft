@@ -20,7 +20,7 @@ declare global {
 }
 
 export const RoundedRect = (props: Props) => {
-  const radius = props.node.props?.roundedRect?.radius ?? 10;
+  const radius = props.node.props.roundedRect?.radius ?? 10;
   const path = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
@@ -76,7 +76,7 @@ export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
       radius: {
         type: 'number',
         label: 'Radius',
-        value: def.props?.roundedRect?.radius ?? 5,
+        value: def.props.roundedRect?.radius ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -92,7 +92,7 @@ export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const radius = def.props?.roundedRect?.radius ?? 5;
+    const radius = def.props.roundedRect?.radius ?? 5;
     const bnd = def.bounds;
 
     const xr = radius / bnd.w;

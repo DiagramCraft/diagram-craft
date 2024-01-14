@@ -20,8 +20,8 @@ declare global {
 }
 
 export const Trapetzoid = (props: Props) => {
-  const slantLeft = props.node.props?.trapetzoid?.slantLeft ?? 5;
-  const slantRight = props.node.props?.trapetzoid?.slantRight ?? 5;
+  const slantLeft = props.node.props.trapetzoid?.slantLeft ?? 5;
+  const slantRight = props.node.props.trapetzoid?.slantRight ?? 5;
   const path = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPath();
   const svgPath = path.asSvgPath();
 
@@ -92,7 +92,7 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
       slantLeft: {
         type: 'number',
         label: 'Slant (left)',
-        value: def.props?.trapetzoid?.slantLeft ?? 5,
+        value: def.props.trapetzoid?.slantLeft ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -106,7 +106,7 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
       slantRight: {
         type: 'number',
         label: 'Slant (right)',
-        value: def.props?.trapetzoid?.slantRight ?? 5,
+        value: def.props.trapetzoid?.slantRight ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -121,8 +121,8 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slantLeft = def.props?.trapetzoid?.slantLeft ?? 5;
-    const slantRight = def.props?.trapetzoid?.slantRight ?? 5;
+    const slantLeft = def.props.trapetzoid?.slantLeft ?? 5;
+    const slantRight = def.props.trapetzoid?.slantRight ?? 5;
     const bnd = def.bounds;
 
     const cdSl = (slantLeft / bnd.w) * 2;
