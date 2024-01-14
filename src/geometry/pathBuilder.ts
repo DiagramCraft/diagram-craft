@@ -1,6 +1,6 @@
 import { Point } from './point.ts';
 import { Box } from './box.ts';
-import { precondition } from '../utils/assert.ts';
+import { precondition, VerifyNotReached } from '../utils/assert.ts';
 import { Path } from './path.ts';
 import { Angle } from './angle.ts';
 
@@ -29,15 +29,36 @@ export const unitCoordinateSystem = (b: Box) => {
   };
 };
 
+type PathBuilderTransform = (p: Point, type?: 'point' | 'distance') => Point;
+
 export class PathBuilder {
   private start: Point | undefined;
   private path: RawSegment[] = [];
   private rotation: number = 0;
   private centerOfRotation: Point = Point.ORIGIN;
 
-  constructor(
-    private readonly transform: (p: Point, type?: 'point' | 'distance') => Point = p => p
-  ) {}
+  constructor(private readonly transform: PathBuilderTransform = p => p) {}
+
+  static fromString(path: string, transform: PathBuilderTransform = p => p) {
+    const d = new PathBuilder(transform);
+    const parts = path.split(',');
+    parts.forEach(p => {
+      const [t, ...params] = p.trim().split(' ');
+      const pn = params.map(p => parseFloat(p));
+
+      if (t === 'M') d.moveTo({ x: pn[0], y: pn[1] });
+      else if (t === 'L') d.lineTo({ x: pn[0], y: pn[1] });
+      else if (t === 'C')
+        d.cubicTo({ x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] }, { x: pn[4], y: pn[5] });
+      else if (t === 'Q') d.quadTo({ x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] });
+      else if (t === 'T') d.curveTo({ x: pn[0], y: pn[1] });
+      else if (t === 'A')
+        d.arcTo({ x: pn[5], y: pn[6] }, pn[0], pn[1], pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+      else throw new VerifyNotReached();
+    });
+
+    return d;
+  }
 
   moveTo(p: Point) {
     precondition.is.notPresent(this.start);

@@ -14,6 +14,7 @@ import { Parallelogram, ParallelogramNodeDefinition } from './node-types/Paralle
 import { Trapetzoid, TrapetzoidNodeDefinition } from './node-types/Trapetzoid.tsx';
 import { Group, GroupNodeDefinition } from './node-types/Group.tsx';
 import { Container, ContainerNodeDefinition } from './node-types/Container.tsx';
+import { GenericPath, GenericPathNodeDefinition } from './node-types/GenericPath.tsx';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -26,6 +27,7 @@ export const defaultNodeRegistry = () => {
   dest.register(new ReactNodeDefinition(Parallelogram, new ParallelogramNodeDefinition()));
   dest.register(new ReactNodeDefinition(Trapetzoid, new TrapetzoidNodeDefinition()));
   dest.register(new ReactNodeDefinition(Diamond, new DiamondNodeDefinition()));
+  dest.register(new ReactNodeDefinition(GenericPath, new GenericPathNodeDefinition()));
   dest.register(new ReactNodeDefinition(Container, new ContainerNodeDefinition()));
 
   // Note: group must be the last element
