@@ -13,6 +13,7 @@ import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 import { isNode } from '../../model/diagramElement.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 export const Group = (props: Props) => {
   const center = Box.center(props.node.bounds);
@@ -25,6 +26,7 @@ export const Group = (props: Props) => {
         <Node
           def={child}
           diagram={props.node.diagram}
+          tool={props.tool}
           onDoubleClick={props.childProps.onDoubleClick}
           onMouseDown={props.childProps.onMouseDown}
           applicationTriggers={props.childProps.applicationTriggers}
@@ -33,6 +35,7 @@ export const Group = (props: Props) => {
         <Edge
           def={child as DiagramEdge}
           diagram={props.node.diagram}
+          tool={props.tool}
           onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
           onMouseDown={props.childProps.onMouseDown}
           applicationTriggers={props.childProps.applicationTriggers}
@@ -80,6 +83,7 @@ type Props = {
   isSelected: boolean;
   isSingleSelected: boolean;
   nodeProps: NodeProps;
+  tool: Tool | undefined;
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
     onDoubleClick?: (id: string, coord: Point) => void;

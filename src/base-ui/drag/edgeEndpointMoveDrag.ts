@@ -5,25 +5,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
-
-const addHighlight = (element: DiagramElement, highlight: string) => {
-  UnitOfWork.execute(element.diagram, uow => {
-    element.updateProps(props => {
-      props.highlight ??= [];
-      props.highlight.push(highlight);
-    }, uow);
-  });
-};
-
-const removeHighlight = (element: DiagramElement, highlight: string) => {
-  if (!element.props.highlight) return;
-
-  UnitOfWork.execute(element.diagram, uow => {
-    element.updateProps(props => {
-      props.highlight = props.highlight!.filter(h => h !== highlight);
-    }, uow);
-  });
-};
+import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private hoverElement: string | undefined;

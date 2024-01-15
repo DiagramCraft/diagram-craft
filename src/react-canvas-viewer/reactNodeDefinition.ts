@@ -18,6 +18,7 @@ import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from '../model/diagramElement.ts';
 import { UndoableAction } from '../model/undoManager.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
+import { Tool } from '../react-canvas-editor/tools/types.ts';
 
 type Props = {
   node: DiagramNode;
@@ -26,6 +27,7 @@ type Props = {
   diagram: Diagram;
   isSelected: boolean;
   isSingleSelected: boolean;
+  tool: Tool | undefined;
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
     onDoubleClick?: (id: string, coord: Point) => void;

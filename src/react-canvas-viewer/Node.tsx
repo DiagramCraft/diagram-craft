@@ -21,6 +21,7 @@ import { EventHelper } from '../base-ui/eventHelper.ts';
 import { Box } from '../geometry/box.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 import { DeepRequired } from '../utils/types.ts';
+import { Tool } from '../react-canvas-editor/tools/types.ts';
 
 export type NodeApi = {
   repaint: () => void;
@@ -122,7 +123,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       )}
       <g
         id={`node-${props.def.id}`}
-        className={'svg-node'}
+        className={'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' ')}
         transform={`rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}
       >
         {nodeProps.fill.type === 'gradient' && (
@@ -140,6 +141,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           isSelected={isSelected}
           isSingleSelected={isSingleSelected}
           style={style}
+          tool={props.tool}
           childProps={{
             onMouseDown: props.onMouseDown,
             onDoubleClick: props.onDoubleClick,
@@ -168,6 +170,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 type Props = {
   def: DiagramNode;
   diagram: Diagram;
+  tool: Tool | undefined;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onDoubleClick?: (id: string, coord: Point) => void;
   mode?: 'picker' | 'canvas';

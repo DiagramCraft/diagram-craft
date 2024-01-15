@@ -179,7 +179,7 @@ export const TextPanel = (props: Props) => {
         </div>
 
         <div className={'cmp-labeled-table__label'}>Align:</div>
-        <div className={'cmp-labeled-table__value util-vecenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter'}>
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}

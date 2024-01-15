@@ -21,6 +21,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               def={edge}
               diagram={diagram}
               applicationTriggers={{}}
+              tool={undefined}
             />
           );
         } else {
@@ -32,6 +33,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               def={node}
               diagram={diagram}
               applicationTriggers={{}}
+              tool={undefined}
             />
           );
         }

@@ -244,6 +244,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                   def={edge}
                   diagram={diagram}
                   applicationTriggers={props.applicationTriggers}
+                  tool={tool}
                 />
               );
             } else {
@@ -257,6 +258,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                   def={node}
                   diagram={diagram}
                   applicationTriggers={props.applicationTriggers}
+                  tool={tool}
                 />
               );
             }
@@ -264,6 +266,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
         })}
 
         {tool.type === 'move' && <Selection ref={selectionRef} />}
+
         <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
 
         {tool.type === 'move' && (

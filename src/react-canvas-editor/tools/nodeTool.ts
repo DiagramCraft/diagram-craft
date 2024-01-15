@@ -3,6 +3,9 @@ import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts
 import { DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { Point } from '../../geometry/point.ts';
+import { isNode } from '../../model/diagramElement.ts';
+import { addHighlight, removeHighlight } from '../highlight.ts';
 
 export class NodeTool extends AbstractTool {
   constructor(
@@ -14,14 +17,49 @@ export class NodeTool extends AbstractTool {
   ) {
     super('node', diagram, drag, svgRef, deferedMouseAction, resetTool);
     if (this.svgRef.current) this.svgRef.current!.style.cursor = 'default';
+
+    if (
+      diagram.selectionState.getSelectionType() !== 'single-node' &&
+      diagram.selectionState.nodes[0].nodeType !== 'generic-path'
+    ) {
+      diagram.selectionState.clear();
+    }
   }
 
-  onMouseDown(
-    _id: string,
-    _point: Readonly<{ x: number; y: number }>,
-    _modifiers: Modifiers
-  ): void {
-    console.log('_id', _id);
+  onMouseOver(id: string, point: Point) {
+    super.onMouseOver(id, point);
+
+    const el = this.diagram.lookup(id);
+    if (this.diagram.selectionState.elements.includes(el!)) return;
+    if (isNode(el)) {
+      if (el.nodeType === 'generic-path') {
+        addHighlight(el, 'node-tool-edit');
+      } else if (el.nodeType !== 'text') {
+        addHighlight(el, 'node-tool-convert');
+      }
+    }
+  }
+
+  onMouseOut(id: string, point: Point) {
+    super.onMouseOut(id, point);
+
+    const el = this.diagram.lookup(id);
+    if (isNode(el)) {
+      removeHighlight(el, 'node-tool-edit');
+      removeHighlight(el, 'node-tool-convert');
+    }
+  }
+
+  onMouseDown(id: string, _point: Readonly<{ x: number; y: number }>, _modifiers: Modifiers): void {
+    const el = this.diagram.lookup(id);
+    if (isNode(el)) {
+      if (el.nodeType === 'generic-path') {
+        this.diagram.selectionState.setElements([el]);
+        console.log('selected');
+      } else if (el.nodeType !== 'text') {
+        // TODO: Implement
+      }
+    }
   }
 
   onMouseUp(_point: Readonly<{ x: number; y: number }>): void {}

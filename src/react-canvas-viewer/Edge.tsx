@@ -26,6 +26,7 @@ import { ArrowMarker } from './ArrowMarker.tsx';
 import { DeepRequired } from '../utils/types.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { useActions } from '../react-app/context/ActionsContext.tsx';
+import { Tool } from '../react-canvas-editor/tools/types.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -218,6 +219,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 type Props = {
   def: DiagramEdge;
   diagram: Diagram;
+  tool: Tool | undefined;
   applicationTriggers: ApplicationTriggers;
   onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
   onDoubleClick: (id: string, coord: Point) => void;

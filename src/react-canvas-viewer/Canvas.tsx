@@ -42,6 +42,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
                 key={id}
                 onMouseDown={() => {}}
                 onDoubleClick={() => {}}
+                tool={undefined}
                 def={edge}
                 diagram={diagram}
                 applicationTriggers={props.applicationTriggers}
@@ -53,6 +54,7 @@ export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
               <Node
                 key={id}
                 onMouseDown={() => {}}
+                tool={undefined}
                 def={node}
                 diagram={diagram}
                 applicationTriggers={props.applicationTriggers}

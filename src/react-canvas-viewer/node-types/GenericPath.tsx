@@ -3,6 +3,9 @@ import { propsUtils } from '../utils/propsUtils.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { Tool } from '../../react-canvas-editor/tools/types.ts';
+import { CubicSegment, LineSegment } from '../../geometry/pathSegment.ts';
+import { VerifyNotReached } from '../../utils/assert.ts';
 
 declare global {
   interface NodeProps {
@@ -13,8 +16,19 @@ declare global {
 }
 
 export const GenericPath = (props: Props) => {
-  const path = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+  const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
+  const path = pathBuilder.getPath();
   const svgPath = path.asSvgPath();
+
+  const normalizedSegments = path.segments.map(s => {
+    if (s instanceof CubicSegment) {
+      return s;
+    } else if (s instanceof LineSegment) {
+      return CubicSegment.fromLine(s);
+    } else {
+      throw new VerifyNotReached();
+    }
+  });
 
   return (
     <>
@@ -26,6 +40,36 @@ export const GenericPath = (props: Props) => {
         height={props.node.bounds.h}
         {...propsUtils.filterSvgProperties(props)}
       />
+
+      {props.isSingleSelected && props.tool?.type === 'node' && (
+        <>
+          <circle
+            cx={path.segments[0].start.x}
+            cy={path.segments[0].start.y}
+            fill={'red'}
+            r={4}
+            onMouseDown={e => {
+              if (e.button !== 0) return;
+              console.log('click');
+              e.stopPropagation();
+            }}
+          />
+
+          {normalizedSegments.slice(1).map((s, i) => (
+            <circle
+              key={i}
+              cx={s.start.x}
+              cy={s.start.y}
+              fill={'green'}
+              r={4}
+              onMouseDown={e => {
+                if (e.button !== 0) return;
+                e.stopPropagation();
+              }}
+            />
+          ))}
+        </>
+      )}
     </>
   );
 };
@@ -45,6 +89,7 @@ export class GenericPathNodeDefinition extends AbstractReactNodeDefinition {
 
 type Props = {
   node: DiagramNode;
+  tool: Tool | undefined;
   isSelected: boolean;
   isSingleSelected: boolean;
   nodeProps: NodeProps;

@@ -16,6 +16,7 @@ import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 declare global {
   interface NodeProps {
@@ -63,6 +64,7 @@ export const Container = (props: Props) => {
               onDoubleClick={props.childProps.onDoubleClick}
               onMouseDown={props.childProps.onMouseDown}
               applicationTriggers={props.childProps.applicationTriggers}
+              tool={props.tool}
             />
           ) : (
             <Edge
@@ -71,6 +73,7 @@ export const Container = (props: Props) => {
               onDoubleClick={props.childProps.onDoubleClick ?? (() => {})}
               onMouseDown={props.childProps.onMouseDown}
               applicationTriggers={props.childProps.applicationTriggers}
+              tool={props.tool}
             />
           )}
         </g>
@@ -262,6 +265,7 @@ type Props = {
   isSelected: boolean;
   isSingleSelected: boolean;
   nodeProps: NodeProps;
+  tool: Tool | undefined;
   childProps: {
     onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
     onDoubleClick?: (id: string, coord: Point) => void;
