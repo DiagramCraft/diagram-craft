@@ -206,7 +206,7 @@ export class Path {
   }
 
   asSvgPath() {
-    return `M ${this.#start.x} ${this.#start.y} ` + this.#path.map(e => e.join(' ')).join(', ');
+    return `M ${this.#start.x} ${this.#start.y}, ` + this.#path.map(e => e.join(' ')).join(', ');
   }
 
   bounds() {

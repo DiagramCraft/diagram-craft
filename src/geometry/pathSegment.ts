@@ -7,8 +7,6 @@ import { Projection } from './path.ts';
 import { LengthOffsetOnPath } from './pathPosition.ts';
 import { Box } from './box.ts';
 
-//type NormalizedSegment = RawCubicSegment | RawQuadSegment | RawLineSegment;
-
 export interface PathSegment {
   length(): number;
   point(t: number): Point;
@@ -111,10 +109,6 @@ export class LineSegment implements PathSegment {
   bounds() {
     return Box.fromLine(Line.of(this.start, this.end));
   }
-
-  /*normalize(): NormalizedSegment[] {
-    return [['L', this.end.x, this.end.y]];
-  }*/
 }
 
 export class CubicSegment extends CubicBezier implements PathSegment {
@@ -167,14 +161,6 @@ export class CubicSegment extends CubicBezier implements PathSegment {
   }*/
 }
 
-export const makeCurveSegment = (start: Point, end: Point, previous: QuadSegment): CubicSegment => {
-  const p = start;
-  const cp = previous.p1!;
-  const cp2 = Point.add(p, Point.subtract(p, cp));
-
-  return new QuadSegment(start, cp2, end);
-};
-
 export class QuadSegment extends CubicSegment {
   quadP1: Point;
 
@@ -197,125 +183,7 @@ export class QuadSegment extends CubicSegment {
     );
     this.quadP1 = p1;
   }
-
-  /*normalize(): NormalizedSegment[] {
-    return [['Q', this.p1.x, this.p1.y, this.end.x, this.end.y]];
-  }*/
 }
-
-// TODO: Do we really need the ArcSegment
-/*
-export class ArcSegment implements PathSegment {
-  private _normalized: RawCubicSegment[] | undefined;
-  private _segmentList: SegmentList | undefined;
-
-  constructor(
-    public readonly start: Point,
-    private readonly rx: number,
-    private readonly ry: number,
-    private readonly angle: number,
-    private readonly large_arc_flag: 0 | 1,
-    private readonly sweep_flag: 0 | 1,
-    public readonly end: Point
-  ) {}
-
-  asRawSegments(): RawSegment[] {
-    return this.segmentList.segments.flatMap(s => s.asRawSegments()) ?? [];
-  }
-
-  length(): number {
-    return this.segmentList.length();
-  }
-
-  point(t: number): Point {
-    return this.segmentList.point(t);
-  }
-
-  split(_t: number): [PathSegment, PathSegment] {
-    // TODO: Implement this - maybe this can be implemented without looking at the bezier curves
-    //       essentially by creating a new arc with new bezier curves
-    throw new NotImplementedYet();
-  }
-
-  tAtLength(l: number): number {
-    // find segment that contains the point
-    let currentL = l;
-    let segmentIndex = 0;
-    let segment = this.segmentList.segments[segmentIndex];
-    while (currentL > segment.length()) {
-      currentL -= segment.length();
-      segment = this.segmentList.segments[++segmentIndex];
-    }
-
-    return segment.tAtLength(currentL);
-  }
-
-  lengthAtT(_t: number): number {
-    // TODO: Implement this - maybe this can be implemented without looking at the bezier curves
-    //       essentially by creating a new arc with new bezier curves
-    throw new NotImplementedYet();
-  }
-
-  intersectionsWith(other: PathSegment): Point[] | undefined {
-    const dest: Point[] = [];
-
-    for (const segment of this.segmentList.segments) {
-      const intersections = segment.intersectionsWith(other);
-      if (intersections) {
-        dest.push(...intersections);
-      }
-    }
-
-    return dest;
-  }
-
-  tangent(_t: number): Vector {
-    throw new NotImplementedYet();
-  }
-
-  normalize(): RawCubicSegment[] {
-    if (this._normalized) return this._normalized;
-
-    this._normalized = BezierUtils.fromArc(
-      this.start.x,
-      this.start.y,
-      this.rx,
-      this.ry,
-      this.angle,
-      this.large_arc_flag,
-      this.sweep_flag,
-      this.end.x,
-      this.end.y
-    );
-
-    return this._normalized;
-  }
-
-  projectPoint(point: Point): Projection {
-    const projection = this.segmentList.projectPoint(point);
-    projection.t = projection.globalL / this.length();
-    return projection;
-  }
-
-  private get segmentList() {
-    if (this._segmentList) return this._segmentList;
-
-    this._segmentList = new SegmentList(
-      this.normalize().map(
-        c =>
-          new CubicSegment(
-            this.start,
-            { x: c[1], y: c[2] },
-            { x: c[3], y: c[4] },
-            { x: c[5], y: c[6] }
-          )
-      )
-    );
-    return this._segmentList;
-  }
-}
-
- */
 
 // TODO: Can we move this into Path directly
 export class SegmentList {
@@ -387,3 +255,11 @@ export class SegmentList {
     };
   }
 }
+
+export const makeCurveSegment = (start: Point, end: Point, previous: QuadSegment): CubicSegment => {
+  const p = start;
+  const cp = previous.p1!;
+  const cp2 = Point.add(p, Point.subtract(p, cp));
+
+  return new QuadSegment(start, cp2, end);
+};

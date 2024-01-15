@@ -18,14 +18,30 @@ export type RawSegment =
   | RawQuadSegment;
 
 /* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
-export const unitCoordinateSystem = (b: Box) => {
+export const unitCoordinateSystem = (b: Box, invert = true) => {
   return (p: Point, type?: 'point' | 'distance') => {
     if (type === 'distance') return { x: p.x * b.w, y: p.y * b.h };
 
     const xPart = (p.x * b.w) / 2 + b.w / 2;
-    const yPart = (-p.y * b.h) / 2 + b.h / 2;
+    const yPart = ((invert ? -1 : 1) * (p.y * b.h)) / 2 + b.h / 2;
 
     return { x: xPart + b.x, y: yPart + b.y };
+  };
+};
+
+const posZero = (n: number) => (n === 0 ? 0 : n);
+
+export const inverseUnitCoordinateSystem = (b: Box, invert = true) => {
+  return (p: Point, type?: 'point' | 'distance') => {
+    if (type === 'distance') return { x: p.x / b.w, y: p.y / b.h };
+
+    const xPart = p.x - b.x;
+    const yPart = p.y - b.y;
+
+    return {
+      x: posZero((xPart / b.w) * 2 - 1),
+      y: posZero((invert ? -1 : 1) * ((yPart / b.h) * 2 - 1))
+    };
   };
 };
 

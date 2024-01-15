@@ -62,7 +62,19 @@ export class NodeTool extends AbstractTool {
     }
   }
 
-  onMouseUp(_point: Readonly<{ x: number; y: number }>): void {}
+  onMouseUp(_point: Readonly<{ x: number; y: number }>): void {
+    const current = this.drag.current();
+    current?.onDragEnd();
+    this.drag.clear();
+  }
 
-  onMouseMove(_point: Readonly<{ x: number; y: number }>, _modifiers: Modifiers): void {}
+  onMouseMove(point: Readonly<{ x: number; y: number }>, modifiers: Modifiers): void {
+    const current = this.drag.current();
+    current?.onDrag(this.diagram.viewBox.toDiagramPoint(point), modifiers);
+  }
+
+  onKeyDown(e: KeyboardEvent) {
+    const current = this.drag.current();
+    current?.onKeyDown?.(e);
+  }
 }

@@ -2,7 +2,6 @@ import { AbstractDrag } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
