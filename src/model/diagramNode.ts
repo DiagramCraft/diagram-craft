@@ -13,6 +13,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { SerializedNode } from './serialization/types.ts';
 import { DeepReadonly } from '../utils/types.ts';
+import { PathUtils } from '../geometry/pathUtils.ts';
 
 export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
   children: string[];
@@ -26,9 +27,9 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   readonly type = 'node';
 
   readonly id: string;
-  readonly nodeType: 'group' | string;
   readonly edges: Map<number, DiagramEdge[]> = new Map<number, DiagramEdge[]>();
 
+  #nodeType: 'group' | string;
   #diagram: Diagram;
   #layer: Layer;
   #parent?: DiagramNode;
@@ -50,7 +51,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   ) {
     this.id = id;
     this.#bounds = bounds;
-    this.nodeType = nodeType;
+    this.#nodeType = nodeType;
     this.#children = [];
     this.#diagram = diagram;
     this.#layer = layer;
@@ -64,7 +65,11 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   getNodeDefinition() {
-    return this.diagram.nodeDefinitions.get(this.nodeType);
+    return this.diagram.nodeDefinitions.get(this.#nodeType);
+  }
+
+  get nodeType() {
+    return this.#nodeType;
   }
 
   /* Props *************************************************************************************************** */
@@ -204,6 +209,23 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     }
 
     uow.updateElement(this);
+  }
+
+  convertToPath(uow: UnitOfWork) {
+    const path = this.getNodeDefinition().getBoundingPath(this);
+    const scaledPath = PathUtils.scalePath(path, this.bounds, {
+      x: -1,
+      y: 1,
+      w: 2,
+      h: -2,
+      r: 0
+    });
+
+    this.#nodeType = 'generic-path';
+    this.updateProps(p => {
+      p.genericPath = {};
+      p.genericPath.path = scaledPath.asSvgPath();
+    }, uow);
   }
 
   duplicate(ctx?: DuplicationContext): DiagramNode {

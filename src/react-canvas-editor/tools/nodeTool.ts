@@ -6,6 +6,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { Point } from '../../geometry/point.ts';
 import { isNode } from '../../model/diagramElement.ts';
 import { addHighlight, removeHighlight } from '../highlight.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export class NodeTool extends AbstractTool {
   constructor(
@@ -63,7 +64,11 @@ export class NodeTool extends AbstractTool {
       if (el.nodeType === 'generic-path') {
         this.diagram.selectionState.setElements([el]);
       } else if (el.nodeType !== 'text') {
-        // TODO: Implement
+        // TODO: Maybe ask through a dialog if the user really wants to convert the element to a path?
+        const uow = new UnitOfWork(this.diagram);
+        el.convertToPath(uow);
+        uow.commit();
+        this.diagram.selectionState.setElements([el]);
       }
     }
   }

@@ -92,6 +92,10 @@ export class Path {
     return this.#start;
   }
 
+  get path() {
+    return this.#path;
+  }
+
   get segments(): ReadonlyArray<PathSegment> {
     return this.segmentList.segments;
   }
