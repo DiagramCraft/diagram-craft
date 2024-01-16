@@ -44,10 +44,10 @@ class EditablePath {
   segments: EditableSegment[];
 
   constructor(
-    private readonly path: Path,
+    path: Path,
     private readonly node: DiagramNode
   ) {
-    this.segments = this.path.segments.map(s => {
+    this.segments = path.segments.map(s => {
       if (s instanceof LineSegment) {
         return {
           type: 'line',
@@ -67,7 +67,7 @@ class EditablePath {
     });
 
     const segCount = this.segments.length;
-    this.waypoints = this.path.segments.map((s, idx) => ({
+    this.waypoints = path.segments.map((s, idx) => ({
       point: s.start,
       type: 'corner',
       controlPoints: {
@@ -88,9 +88,13 @@ class EditablePath {
     return Point.rotateAround(coord, -this.node.bounds.r, Box.center(this.node.bounds));
   }
 
+  deleteWaypoint(idx: number) {
+    this.waypoints = this.waypoints.toSpliced(idx, 1);
+    this.segments = this.segments.toSpliced(idx, 1);
+  }
+
   updateWaypoint(idx: number, point: Partial<EditableWaypoint>) {
     this.waypoints[idx] = { ...this.waypoints[idx], ...point };
-    // TODO: Update control points of adjacent segments
   }
 
   updateControlPoint(
@@ -121,8 +125,6 @@ class EditablePath {
         y: -1 * wp.controlPoints[cp].y
       };
     }
-
-    // TODO: Update control points of adjacent segments
   }
 
   getPath() {
@@ -181,9 +183,16 @@ class EditablePath {
   }
 
   commit() {
-    const { path, bounds } = this.resizePathToUnitLCS();
-
     UnitOfWork.execute(this.node.diagram, uow => {
+      this.node.updateProps(p => {
+        p.genericPath ??= {};
+        p.genericPath.path = this.getPath().asSvgPath();
+        p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
+      }, uow);
+
+      // As this reads the genericPath.path, we have to first set the path provisionally -
+      // ... see code above
+      const { path, bounds } = this.resizePathToUnitLCS();
       this.node.updateProps(p => {
         p.genericPath ??= {};
         p.genericPath.path = path.asSvgPath();
@@ -304,31 +313,6 @@ export const GenericPath = (props: Props) => {
         <>
           {editablePath.waypoints.map((wp, idx) => (
             <React.Fragment key={idx}>
-              <circle
-                cx={wp.point.x}
-                cy={wp.point.y}
-                fill={COLORS[wp.type]}
-                r={4}
-                onMouseDown={e => {
-                  if (e.button !== 0) return;
-                  drag.initiate(
-                    new NodeDrag(
-                      editablePath,
-                      props.node.diagram,
-                      props.node,
-                      idx,
-                      props.node.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
-                    )
-                  );
-                  e.stopPropagation();
-                }}
-                onDoubleClick={e => {
-                  editablePath.updateWaypoint(idx, { type: NEXT_TYPE[wp.type] });
-                  editablePath.commit();
-                  e.stopPropagation();
-                }}
-              />
-
               <line
                 x1={wp.point.x}
                 y1={wp.point.y}
@@ -369,6 +353,35 @@ export const GenericPath = (props: Props) => {
                   drag.initiate(
                     new ControlPointDrag(editablePath, props.node.diagram, props.node, idx, 'p2')
                   );
+                  e.stopPropagation();
+                }}
+              />
+
+              <circle
+                cx={wp.point.x}
+                cy={wp.point.y}
+                fill={COLORS[wp.type]}
+                r={4}
+                onMouseDown={e => {
+                  if (e.button !== 0) return;
+                  drag.initiate(
+                    new NodeDrag(
+                      editablePath,
+                      props.node.diagram,
+                      props.node,
+                      idx,
+                      props.node.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
+                    )
+                  );
+                  e.stopPropagation();
+                }}
+                onDoubleClick={e => {
+                  if (e.metaKey) {
+                    editablePath.deleteWaypoint(idx);
+                  } else {
+                    editablePath.updateWaypoint(idx, { type: NEXT_TYPE[wp.type] });
+                  }
+                  editablePath.commit();
                   e.stopPropagation();
                 }}
               />
