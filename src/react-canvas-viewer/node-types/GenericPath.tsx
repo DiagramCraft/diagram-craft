@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import {
@@ -98,6 +98,8 @@ class EditablePath {
     const wp = this.waypoints[idx];
     wp.controlPoints[cp] = Point.subtract(absolutePoint, wp.point);
 
+    // TODO: We don't need to change both segments here - it depends on which control point is
+    //       being changed
     const nextSegment = this.segments[idx];
     nextSegment.type = 'cubic';
 
@@ -306,6 +308,7 @@ export const GenericPath = (props: Props) => {
   const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
   const path = pathBuilder.getPath();
   const svgPath = path.asSvgPath();
+  const [selectedWaypoints, setSelectedWaypoints] = useState<number[]>([]);
 
   const editablePath = new EditablePath(path, props.node);
 
@@ -366,50 +369,55 @@ export const GenericPath = (props: Props) => {
         <>
           {editablePath.waypoints.map((wp, idx) => (
             <React.Fragment key={idx}>
-              <line
-                x1={wp.point.x}
-                y1={wp.point.y}
-                x2={wp.point.x + wp.controlPoints.p1.x}
-                y2={wp.point.y + wp.controlPoints.p1.y}
-                stroke={'blue'}
-              />
-              <circle
-                cx={wp.point.x + wp.controlPoints.p1.x}
-                cy={wp.point.y + wp.controlPoints.p1.y}
-                stroke={'blue'}
-                fill={'white'}
-                r={4}
-                onMouseDown={e => {
-                  if (e.button !== 0) return;
-                  drag.initiate(new ControlPointDrag(editablePath, idx, 'p1'));
-                  e.stopPropagation();
-                }}
-              />
+              {selectedWaypoints.includes(idx) && (
+                <>
+                  <line
+                    x1={wp.point.x}
+                    y1={wp.point.y}
+                    x2={wp.point.x + wp.controlPoints.p1.x}
+                    y2={wp.point.y + wp.controlPoints.p1.y}
+                    stroke={'blue'}
+                  />
+                  <circle
+                    cx={wp.point.x + wp.controlPoints.p1.x}
+                    cy={wp.point.y + wp.controlPoints.p1.y}
+                    stroke={'blue'}
+                    fill={'white'}
+                    r={4}
+                    onMouseDown={e => {
+                      if (e.button !== 0) return;
+                      drag.initiate(new ControlPointDrag(editablePath, idx, 'p1'));
+                      e.stopPropagation();
+                    }}
+                  />
 
-              <line
-                x1={wp.point.x}
-                y1={wp.point.y}
-                x2={wp.point.x + wp.controlPoints.p2.x}
-                y2={wp.point.y + wp.controlPoints.p2.y}
-                stroke={'green'}
-              />
-              <circle
-                cx={wp.point.x + wp.controlPoints.p2.x}
-                cy={wp.point.y + wp.controlPoints.p2.y}
-                stroke={'green'}
-                fill={'white'}
-                r={4}
-                onMouseDown={e => {
-                  if (e.button !== 0) return;
-                  drag.initiate(new ControlPointDrag(editablePath, idx, 'p2'));
-                  e.stopPropagation();
-                }}
-              />
+                  <line
+                    x1={wp.point.x}
+                    y1={wp.point.y}
+                    x2={wp.point.x + wp.controlPoints.p2.x}
+                    y2={wp.point.y + wp.controlPoints.p2.y}
+                    stroke={'green'}
+                  />
+                  <circle
+                    cx={wp.point.x + wp.controlPoints.p2.x}
+                    cy={wp.point.y + wp.controlPoints.p2.y}
+                    stroke={'green'}
+                    fill={'white'}
+                    r={4}
+                    onMouseDown={e => {
+                      if (e.button !== 0) return;
+                      drag.initiate(new ControlPointDrag(editablePath, idx, 'p2'));
+                      e.stopPropagation();
+                    }}
+                  />
+                </>
+              )}
 
               <circle
                 cx={wp.point.x}
                 cy={wp.point.y}
-                fill={COLORS[wp.type]}
+                stroke={COLORS[wp.type]}
+                fill={selectedWaypoints.includes(idx) ? COLORS[wp.type] : 'white'}
                 r={4}
                 onMouseDown={e => {
                   if (e.button !== 0) return;
@@ -420,6 +428,12 @@ export const GenericPath = (props: Props) => {
                       props.node.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
                     )
                   );
+
+                  if (e.shiftKey) {
+                    setSelectedWaypoints([...selectedWaypoints, idx]);
+                  } else {
+                    setSelectedWaypoints([idx]);
+                  }
                   e.stopPropagation();
                 }}
                 onDoubleClick={e => {
