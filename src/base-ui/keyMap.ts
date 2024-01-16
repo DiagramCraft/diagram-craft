@@ -106,6 +106,7 @@ export const defaultMacKeymap: KeyMap = {
   'M-Digit1': 'TOOL_MOVE',
   'M-Digit4': 'TOOL_TEXT',
   'M-Digit3': 'TOOL_EDGE',
+  'M-Digit6': 'TOOL_PEN',
   'M-Digit7': 'TOOL_NODE',
   'M-KeyS': 'FILE_SAVE',
 

@@ -192,9 +192,9 @@ const App = () => {
                   <button className={'cmp-toolbar__toggle-item'}>
                     <TbPencil size={'1.1rem'} />
                   </button>
-                  <button className={'cmp-toolbar__toggle-item'}>
+                  <ActionToggleButton action={'TOOL_PEN'}>
                     <TbPolygon size={'1.1rem'} />
-                  </button>
+                  </ActionToggleButton>
                   <ActionToggleButton action={'TOOL_NODE'}>
                     <TbLocation size={'1.1rem'} transform={'scale(-1,1)'} />
                   </ActionToggleButton>

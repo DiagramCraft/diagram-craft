@@ -213,13 +213,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
 
   convertToPath(uow: UnitOfWork) {
     const path = this.getNodeDefinition().getBoundingPath(this);
-    const scaledPath = PathUtils.scalePath(path, this.bounds, {
-      x: -1,
-      y: 1,
-      w: 2,
-      h: -2,
-      r: 0
-    });
+    const scaledPath = PathUtils.scalePath(path, this.bounds, { x: -1, y: 1, w: 2, h: -2, r: 0 });
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {

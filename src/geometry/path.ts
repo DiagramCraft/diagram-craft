@@ -216,7 +216,8 @@ export class Path {
 
   asSvgPath() {
     return (
-      `M ${round(this.#start.x)} ${round(this.#start.y)}, ` +
+      `M ${round(this.#start.x)} ${round(this.#start.y)}` +
+      (this.#path.length > 0 ? ', ' : '') +
       this.#path.map(e => e.join(' ')).join(', ')
     );
   }

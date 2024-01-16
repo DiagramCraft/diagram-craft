@@ -35,12 +35,14 @@ import { EdgeTool } from './tools/edgeTool.ts';
 import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
 import { AnchorHandles } from './selection/AnchorHandles.tsx';
 import { NodeTool } from './tools/node/nodeTool.ts';
+import { PenTool } from './tools/penTool.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
   text: TextTool,
   edge: EdgeTool,
-  node: NodeTool
+  node: NodeTool,
+  pen: PenTool
 };
 
 export interface ApplicationTriggers {
