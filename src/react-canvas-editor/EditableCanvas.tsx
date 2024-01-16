@@ -34,7 +34,7 @@ import { getTopMostNode, isNode } from '../model/diagramElement.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
 import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
 import { AnchorHandles } from './selection/AnchorHandles.tsx';
-import { NodeTool } from './tools/nodeTool.ts';
+import { NodeTool } from './tools/node/nodeTool.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
