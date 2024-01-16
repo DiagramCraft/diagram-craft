@@ -7,6 +7,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { ApplicationTriggers } from '../EditableCanvas.tsx';
 
 export class TextTool extends AbstractTool {
   constructor(
@@ -14,9 +15,10 @@ export class TextTool extends AbstractTool {
     protected readonly drag: DragDopManager,
     protected readonly svgRef: RefObject<SVGSVGElement>,
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('text', diagram, drag, svgRef, deferedMouseAction, resetTool);
+    super('text', diagram, drag, svgRef, deferedMouseAction, applicationTriggers, resetTool);
     this.svgRef.current!.style.cursor = 'text';
   }
 

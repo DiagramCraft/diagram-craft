@@ -4,6 +4,7 @@ import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { ToolType } from '../../base-ui/ApplicationState.ts';
+import { ApplicationTriggers } from '../EditableCanvas.tsx';
 
 export abstract class AbstractTool implements Tool {
   currentElement: string | undefined;
@@ -14,6 +15,7 @@ export abstract class AbstractTool implements Tool {
     protected readonly drag: DragDopManager,
     protected readonly svgRef: RefObject<SVGSVGElement>,
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {}
 

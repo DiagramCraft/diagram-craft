@@ -8,6 +8,7 @@ import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { MarqueeDrag } from '../../base-ui/drag/marqueeDrag.ts';
 import { getDiagramElementPath } from '../../model/diagramElement.ts';
+import { ApplicationTriggers } from '../EditableCanvas.tsx';
 
 export class MoveTool extends AbstractTool {
   constructor(
@@ -15,9 +16,10 @@ export class MoveTool extends AbstractTool {
     protected readonly drag: DragDopManager,
     protected readonly svgRef: RefObject<SVGSVGElement>,
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('move', diagram, drag, svgRef, deferedMouseAction, resetTool);
+    super('move', diagram, drag, svgRef, deferedMouseAction, applicationTriggers, resetTool);
     if (this.svgRef.current) this.svgRef.current!.style.cursor = 'default';
   }
 

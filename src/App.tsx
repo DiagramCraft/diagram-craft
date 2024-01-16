@@ -67,6 +67,7 @@ import { SerializedDiagram } from './model/serialization/types.ts';
 import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
 import { Point } from './geometry/point.ts';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/components/NodeTypePopup.tsx';
+import { SimpleDialog, SimpleDialogState } from './react-app/components/SimpleDialog.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -124,6 +125,7 @@ const App = () => {
   const [doc, setDoc] = useState(diagrams[defaultDiagram].document);
   const [$d, setDiagram] = useState(diagrams[defaultDiagram].document.diagrams[0]);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
+  const [dialogState, setDialogState] = useState<SimpleDialogState>(SimpleDialog.INITIAL_STATE);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
@@ -311,6 +313,36 @@ const App = () => {
                             nodeId: sourceNodeId,
                             edgeId: edgId
                           });
+                        },
+                        showDialog: (
+                          title: string,
+                          message: string,
+                          okLabel: string,
+                          cancelLabel: string,
+                          onClick: () => void
+                        ) => {
+                          setDialogState({
+                            isOpen: true,
+                            title,
+                            message,
+                            buttons: [
+                              {
+                                label: okLabel,
+                                type: 'default',
+                                onClick: () => {
+                                  onClick();
+                                  setDialogState(SimpleDialog.INITIAL_STATE);
+                                }
+                              },
+                              {
+                                label: cancelLabel,
+                                type: 'cancel',
+                                onClick: () => {
+                                  setDialogState(SimpleDialog.INITIAL_STATE);
+                                }
+                              }
+                            ]
+                          });
                         }
                       }}
                     />
@@ -336,6 +368,11 @@ const App = () => {
                 <NodeTypePopup
                   {...popoverState}
                   onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
+                />
+
+                <SimpleDialog
+                  {...dialogState}
+                  onClose={() => setDialogState(SimpleDialog.INITIAL_STATE)}
                 />
               </div>
 

@@ -50,6 +50,14 @@ export interface ApplicationTriggers {
   showNodeContextMenu?: (point: Point, id: string, mouseEvent: MouseEvent) => void;
 
   showNodeLinkPopup?: (point: Point, sourceNodeId: string, edgeId: string) => void;
+
+  showDialog?: (
+    title: string,
+    message: string,
+    okLabel: string,
+    cancelLabel: string,
+    onClick: () => void
+  ) => void;
 }
 
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
@@ -76,11 +84,21 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const resetTool = () => (props.applicationState.tool = 'move');
 
   const [tool, setTool] = useState<Tool>(
-    () => new MoveTool(diagram, drag, svgRef, deferedMouseAction, resetTool)
+    () =>
+      new MoveTool(diagram, drag, svgRef, deferedMouseAction, props.applicationTriggers, resetTool)
   );
 
   useEventListener(props.applicationState, 'toolChange', s => {
-    setTool(new TOOLS[s.tool](diagram, drag, svgRef, deferedMouseAction, resetTool));
+    setTool(
+      new TOOLS[s.tool](
+        diagram,
+        drag,
+        svgRef,
+        deferedMouseAction,
+        props.applicationTriggers,
+        resetTool
+      )
+    );
   });
 
   useImperativeHandle(ref, () => {

@@ -8,6 +8,7 @@ import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { FreeEndpoint } from '../../model/endpoint.ts';
+import { ApplicationTriggers } from '../EditableCanvas.tsx';
 
 export class EdgeTool extends AbstractTool {
   constructor(
@@ -15,9 +16,10 @@ export class EdgeTool extends AbstractTool {
     protected readonly drag: DragDopManager,
     protected readonly svgRef: RefObject<SVGSVGElement>,
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('edge', diagram, drag, svgRef, deferedMouseAction, resetTool);
+    super('edge', diagram, drag, svgRef, deferedMouseAction, applicationTriggers, resetTool);
     this.svgRef.current!.style.cursor = 'crosshair';
   }
 

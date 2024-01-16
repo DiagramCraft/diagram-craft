@@ -7,6 +7,7 @@ import { Point } from '../../../geometry/point.ts';
 import { isNode } from '../../../model/diagramElement.ts';
 import { addHighlight, removeHighlight } from '../../highlight.ts';
 import { UnitOfWork } from '../../../model/unitOfWork.ts';
+import { ApplicationTriggers } from '../../EditableCanvas.tsx';
 
 export class NodeTool extends AbstractTool {
   constructor(
@@ -14,9 +15,10 @@ export class NodeTool extends AbstractTool {
     protected readonly drag: DragDopManager,
     protected readonly svgRef: RefObject<SVGSVGElement>,
     protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('node', diagram, drag, svgRef, deferedMouseAction, resetTool);
+    super('node', diagram, drag, svgRef, deferedMouseAction, applicationTriggers, resetTool);
     if (this.svgRef.current) this.svgRef.current!.style.cursor = 'default';
 
     if (
@@ -64,11 +66,18 @@ export class NodeTool extends AbstractTool {
       if (el.nodeType === 'generic-path') {
         this.diagram.selectionState.setElements([el]);
       } else if (el.nodeType !== 'text') {
-        // TODO: Maybe ask through a dialog if the user really wants to convert the element to a path?
-        const uow = new UnitOfWork(this.diagram);
-        el.convertToPath(uow);
-        uow.commit();
-        this.diagram.selectionState.setElements([el]);
+        this.applicationTriggers.showDialog!(
+          'Convert to path',
+          'Do you want to convert this shape to a editable path?',
+          'Yes',
+          'Cancel',
+          () => {
+            const uow = new UnitOfWork(this.diagram);
+            el.convertToPath(uow);
+            uow.commit();
+            this.diagram.selectionState.setElements([el]);
+          }
+        );
       }
     }
   }
