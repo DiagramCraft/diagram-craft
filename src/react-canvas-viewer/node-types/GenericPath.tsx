@@ -311,6 +311,34 @@ export const GenericPath = (props: Props) => {
 
   return (
     <>
+      {props.isSingleSelected && props.tool?.type === 'node' && (
+        <path
+          d={svgPath}
+          x={props.node.bounds.x}
+          y={props.node.bounds.y}
+          width={props.node.bounds.w}
+          height={props.node.bounds.h}
+          {...propsUtils.filterSvgProperties(props)}
+          style={{
+            ...props.style,
+            stroke: '#e8e8f8',
+            strokeWidth: 20,
+            strokeLinejoin: 'miter',
+            strokeLinecap: 'square'
+          }}
+          onDoubleClick={
+            props.tool?.type === 'node'
+              ? e => {
+                  const domPoint = EventHelper.point(e.nativeEvent);
+                  const dp = props.node.diagram.viewBox.toDiagramPoint(domPoint);
+                  editablePath.split(editablePath.toLocalCoordinate(dp));
+                  editablePath.commit();
+                }
+              : undefined
+          }
+        />
+      )}
+
       <path
         d={svgPath}
         x={props.node.bounds.x}
@@ -318,6 +346,10 @@ export const GenericPath = (props: Props) => {
         width={props.node.bounds.w}
         height={props.node.bounds.h}
         {...propsUtils.filterSvgProperties(props)}
+        style={{
+          ...props.style,
+          pointerEvents: props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined
+        }}
         onDoubleClick={
           props.tool?.type === 'node'
             ? e => {

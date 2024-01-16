@@ -1,6 +1,6 @@
 import { MutableRefObject, RefObject } from 'react';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
-import { DeferedMouseAction } from './types.ts';
+import { BACKGROUND, DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { Point } from '../../geometry/point.ts';
@@ -20,7 +20,7 @@ export class NodeTool extends AbstractTool {
 
     if (
       diagram.selectionState.getSelectionType() !== 'single-node' &&
-      diagram.selectionState.nodes[0].nodeType !== 'generic-path'
+      diagram.selectionState.nodes[0]?.nodeType !== 'generic-path'
     ) {
       diagram.selectionState.clear();
     }
@@ -51,11 +51,17 @@ export class NodeTool extends AbstractTool {
   }
 
   onMouseDown(id: string, _point: Readonly<{ x: number; y: number }>, _modifiers: Modifiers): void {
+    const isClickOnBackground = id === BACKGROUND;
+
+    if (isClickOnBackground) {
+      this.resetTool();
+      return;
+    }
+
     const el = this.diagram.lookup(id);
     if (isNode(el)) {
       if (el.nodeType === 'generic-path') {
         this.diagram.selectionState.setElements([el]);
-        console.log('selected');
       } else if (el.nodeType !== 'text') {
         // TODO: Implement
       }
