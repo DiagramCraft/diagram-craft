@@ -8,12 +8,11 @@ import {
 } from '../../geometry/pathBuilder.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { Tool } from '../../react-canvas-editor/tools/types.ts';
-import { CubicSegment, LineSegment } from '../../geometry/pathSegment.ts';
+import { CubicSegment, LineSegment, PathSegment } from '../../geometry/pathSegment.ts';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { useDragDrop } from '../DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
-import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Path } from '../../geometry/path.ts';
 import { Box } from '../../geometry/box.ts';
@@ -40,41 +39,14 @@ type EditableWaypoint = {
 const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
 
 class EditablePath {
-  waypoints: EditableWaypoint[];
-  segments: EditableSegment[];
+  waypoints: EditableWaypoint[] = [];
+  segments: EditableSegment[] = [];
 
   constructor(
     path: Path,
     private readonly node: DiagramNode
   ) {
-    this.segments = path.segments.map(s => {
-      if (s instanceof LineSegment) {
-        return {
-          type: 'line',
-          controlPoints: {
-            p1: Vector.scale(Vector.from(s.start, s.end), 0.25),
-            p2: Vector.scale(Vector.from(s.end, s.start), 0.25)
-          }
-        };
-      } else if (s instanceof CubicSegment) {
-        return {
-          type: 'cubic',
-          controlPoints: { p1: Point.subtract(s.p1, s.start), p2: Point.subtract(s.p2, s.end) }
-        };
-      } else {
-        throw new VerifyNotReached();
-      }
-    });
-
-    const segCount = this.segments.length;
-    this.waypoints = path.segments.map((s, idx) => ({
-      point: s.start,
-      type: 'corner',
-      controlPoints: {
-        p1: this.segments[idx === 0 ? segCount - 1 : idx - 1].controlPoints.p2,
-        p2: this.segments[idx].controlPoints.p1
-      }
-    }));
+    this.buildFromPath(path.segments);
 
     const gpProps = node.props.genericPath ?? {};
     if (gpProps.waypointTypes && gpProps.waypointTypes.length === this.waypoints.length) {
@@ -95,6 +67,26 @@ class EditablePath {
 
   updateWaypoint(idx: number, point: Partial<EditableWaypoint>) {
     this.waypoints[idx] = { ...this.waypoints[idx], ...point };
+  }
+
+  split(p: Point) {
+    const path = this.getPath('as-displayed');
+    const [pre, post] = path.split(path.projectPoint(p));
+
+    const all = [...pre.segments, ...post.segments];
+
+    const originalWaypoints = this.waypoints;
+
+    this.buildFromPath(all);
+
+    for (let i = 0; i < this.waypoints.length; i++) {
+      for (let j = 0; j < originalWaypoints.length; j++) {
+        if (Point.squareDistance(this.waypoints[i].point, originalWaypoints[j].point) < 0.0001) {
+          this.waypoints[i].type = originalWaypoints[j].type;
+          break;
+        }
+      }
+    }
   }
 
   updateControlPoint(
@@ -127,9 +119,13 @@ class EditablePath {
     }
   }
 
-  getPath() {
+  getPath(type: 'as-stored' | 'as-displayed') {
     const bounds = this.node.bounds;
-    const pb = new PathBuilder(inverseUnitCoordinateSystem(bounds));
+    const pb =
+      type === 'as-displayed'
+        ? new PathBuilder()
+        : new PathBuilder(inverseUnitCoordinateSystem(bounds));
+
     pb.moveTo(this.waypoints[0].point);
 
     const segCount = this.segments.length;
@@ -186,7 +182,7 @@ class EditablePath {
     UnitOfWork.execute(this.node.diagram, uow => {
       this.node.updateProps(p => {
         p.genericPath ??= {};
-        p.genericPath.path = this.getPath().asSvgPath();
+        p.genericPath.path = this.getPath('as-stored').asSvgPath();
         p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
       }, uow);
 
@@ -201,6 +197,37 @@ class EditablePath {
       this.node.setBounds(bounds, uow);
     });
   }
+
+  private buildFromPath(segments: ReadonlyArray<PathSegment>) {
+    this.segments = segments.map(s => {
+      if (s instanceof LineSegment) {
+        return {
+          type: 'line',
+          controlPoints: {
+            p1: Vector.scale(Vector.from(s.start, s.end), 0.25),
+            p2: Vector.scale(Vector.from(s.end, s.start), 0.25)
+          }
+        };
+      } else if (s instanceof CubicSegment) {
+        return {
+          type: 'cubic',
+          controlPoints: { p1: Point.subtract(s.p1, s.start), p2: Point.subtract(s.p2, s.end) }
+        };
+      } else {
+        throw new VerifyNotReached();
+      }
+    });
+
+    const segCount = this.segments.length;
+    this.waypoints = segments.map((s, idx) => ({
+      point: s.start,
+      type: 'corner',
+      controlPoints: {
+        p1: this.segments[idx === 0 ? segCount - 1 : idx - 1].controlPoints.p2,
+        p2: this.segments[idx].controlPoints.p1
+      }
+    }));
+  }
 }
 
 class NodeDrag extends AbstractDrag {
@@ -209,8 +236,6 @@ class NodeDrag extends AbstractDrag {
 
   constructor(
     private readonly editablePath: EditablePath,
-    private readonly diagram: Diagram,
-    private readonly node: DiagramNode,
     private readonly waypointIdx: number,
     private readonly startPoint: Point
   ) {
@@ -223,13 +248,7 @@ class NodeDrag extends AbstractDrag {
     this.editablePath.updateWaypoint(this.waypointIdx, {
       point: this.editablePath.toLocalCoordinate(coord)
     });
-
-    UnitOfWork.execute(this.diagram, uow =>
-      this.node.updateProps(p => {
-        p.genericPath ??= {};
-        p.genericPath!.path = this.editablePath.getPath().asSvgPath();
-      }, uow)
-    );
+    this.editablePath.commit();
   }
 
   onDragEnd(): void {
@@ -249,8 +268,6 @@ class NodeDrag extends AbstractDrag {
 class ControlPointDrag extends AbstractDrag {
   constructor(
     private readonly editablePath: EditablePath,
-    private readonly diagram: Diagram,
-    private readonly node: DiagramNode,
     private readonly waypointIdx: number,
     private readonly controlPoint: 'p1' | 'p2'
   ) {
@@ -264,13 +281,7 @@ class ControlPointDrag extends AbstractDrag {
       this.editablePath.toLocalCoordinate(coord),
       modifiers.metaKey ? 'symmetric' : modifiers.altKey ? 'corner' : undefined
     );
-
-    UnitOfWork.execute(this.diagram, uow =>
-      this.node.updateProps(p => {
-        p.genericPath ??= {};
-        p.genericPath!.path = this.editablePath.getPath().asSvgPath();
-      }, uow)
-    );
+    this.editablePath.commit();
   }
 
   onDragEnd(): void {
@@ -307,6 +318,16 @@ export const GenericPath = (props: Props) => {
         width={props.node.bounds.w}
         height={props.node.bounds.h}
         {...propsUtils.filterSvgProperties(props)}
+        onDoubleClick={
+          props.tool?.type === 'node'
+            ? e => {
+                const domPoint = EventHelper.point(e.nativeEvent);
+                const dp = props.node.diagram.viewBox.toDiagramPoint(domPoint);
+                editablePath.split(editablePath.toLocalCoordinate(dp));
+                editablePath.commit();
+              }
+            : undefined
+        }
       />
 
       {props.isSingleSelected && props.tool?.type === 'node' && (
@@ -328,9 +349,7 @@ export const GenericPath = (props: Props) => {
                 r={4}
                 onMouseDown={e => {
                   if (e.button !== 0) return;
-                  drag.initiate(
-                    new ControlPointDrag(editablePath, props.node.diagram, props.node, idx, 'p1')
-                  );
+                  drag.initiate(new ControlPointDrag(editablePath, idx, 'p1'));
                   e.stopPropagation();
                 }}
               />
@@ -350,9 +369,7 @@ export const GenericPath = (props: Props) => {
                 r={4}
                 onMouseDown={e => {
                   if (e.button !== 0) return;
-                  drag.initiate(
-                    new ControlPointDrag(editablePath, props.node.diagram, props.node, idx, 'p2')
-                  );
+                  drag.initiate(new ControlPointDrag(editablePath, idx, 'p2'));
                   e.stopPropagation();
                 }}
               />
@@ -367,8 +384,6 @@ export const GenericPath = (props: Props) => {
                   drag.initiate(
                     new NodeDrag(
                       editablePath,
-                      props.node.diagram,
-                      props.node,
                       idx,
                       props.node.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
                     )
