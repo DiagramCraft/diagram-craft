@@ -18,11 +18,13 @@ import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Path } from '../../geometry/path.ts';
 import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
+import { EventHelper } from '../../base-ui/eventHelper.ts';
 
 declare global {
   interface NodeProps {
     genericPath?: {
       path?: string;
+      waypointTypes?: EditableWaypointType[];
     };
   }
 }
@@ -73,6 +75,13 @@ class EditablePath {
         p2: this.segments[idx].controlPoints.p1
       }
     }));
+
+    const gpProps = node.props.genericPath ?? {};
+    if (gpProps.waypointTypes && gpProps.waypointTypes.length === this.waypoints.length) {
+      for (let i = 0; i < this.waypoints.length; i++) {
+        this.waypoints[i].type = gpProps.waypointTypes[i];
+      }
+    }
   }
 
   toLocalCoordinate(coord: Point) {
@@ -84,17 +93,34 @@ class EditablePath {
     // TODO: Update control points of adjacent segments
   }
 
-  updateControlPoint(idx: number, controlPoint: 'p1' | 'p2', absolutePoint: Point) {
-    this.waypoints[idx].controlPoints[controlPoint] = Point.subtract(
-      absolutePoint,
-      this.waypoints[idx].point
-    );
+  updateControlPoint(
+    idx: number,
+    cp: 'p1' | 'p2',
+    absolutePoint: Point,
+    type: EditableWaypointType | undefined = undefined
+  ) {
+    const wp = this.waypoints[idx];
+    wp.controlPoints[cp] = Point.subtract(absolutePoint, wp.point);
 
     const nextSegment = this.segments[idx];
     nextSegment.type = 'cubic';
 
     const previousSegment = this.segments[idx === 0 ? this.segments.length - 1 : idx - 1];
     previousSegment.type = 'cubic';
+
+    const otherCP = cp === 'p1' ? 'p2' : 'p1';
+    const typeInUse = type ?? wp.type;
+    if (typeInUse === 'smooth') {
+      const otherLength = Vector.length(wp.controlPoints[otherCP]);
+      const angle = Vector.angle(wp.controlPoints[cp]);
+      const otherAngle = angle + Math.PI;
+      wp.controlPoints[otherCP] = Vector.fromPolar(otherAngle, otherLength);
+    } else if (typeInUse === 'symmetric') {
+      wp.controlPoints[otherCP] = {
+        x: -1 * wp.controlPoints[cp].x,
+        y: -1 * wp.controlPoints[cp].y
+      };
+    }
 
     // TODO: Update control points of adjacent segments
   }
@@ -120,7 +146,7 @@ class EditablePath {
     return pb.getPath();
   }
 
-  getUnitPath(): { path: Path; bounds: Box } {
+  resizePathToUnitLCS(): { path: Path; bounds: Box } {
     const rot = this.node.bounds.r;
 
     const nodePath = new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPath();
@@ -153,19 +179,38 @@ class EditablePath {
       }
     };
   }
+
+  commit() {
+    const { path, bounds } = this.resizePathToUnitLCS();
+
+    UnitOfWork.execute(this.node.diagram, uow => {
+      this.node.updateProps(p => {
+        p.genericPath ??= {};
+        p.genericPath.path = path.asSvgPath();
+        p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
+      }, uow);
+      this.node.setBounds(bounds, uow);
+    });
+  }
 }
 
 class NodeDrag extends AbstractDrag {
+  private startTime: number;
+  private lastPoint: Point | undefined;
+
   constructor(
     private readonly editablePath: EditablePath,
     private readonly diagram: Diagram,
     private readonly node: DiagramNode,
-    private readonly waypointIdx: number
+    private readonly waypointIdx: number,
+    private readonly startPoint: Point
   ) {
     super();
+    this.startTime = new Date().getTime();
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
+    this.lastPoint = coord;
     this.editablePath.updateWaypoint(this.waypointIdx, {
       point: this.editablePath.toLocalCoordinate(coord)
     });
@@ -179,12 +224,16 @@ class NodeDrag extends AbstractDrag {
   }
 
   onDragEnd(): void {
-    const { path, bounds } = this.editablePath.getUnitPath();
+    // Abort drag if too short and if the drag was too small
+    if (
+      this.lastPoint === undefined ||
+      (new Date().getTime() - this.startTime < 200 &&
+        Point.distance(this.lastPoint, this.startPoint) < 5)
+    ) {
+      return;
+    }
 
-    UnitOfWork.execute(this.diagram, uow => {
-      this.node.updateProps(p => (p.genericPath!.path = path.asSvgPath()), uow);
-      this.node.setBounds(bounds, uow);
-    });
+    this.editablePath.commit();
   }
 }
 
@@ -199,11 +248,12 @@ class ControlPointDrag extends AbstractDrag {
     super();
   }
 
-  onDrag(coord: Point, _modifiers: Modifiers) {
+  onDrag(coord: Point, modifiers: Modifiers) {
     this.editablePath.updateControlPoint(
       this.waypointIdx,
       this.controlPoint,
-      this.editablePath.toLocalCoordinate(coord)
+      this.editablePath.toLocalCoordinate(coord),
+      modifiers.metaKey ? 'symmetric' : modifiers.altKey ? 'corner' : undefined
     );
 
     UnitOfWork.execute(this.diagram, uow =>
@@ -214,13 +264,21 @@ class ControlPointDrag extends AbstractDrag {
     );
   }
 
-  onDragEnd(): void {}
+  onDragEnd(): void {
+    this.editablePath.commit();
+  }
 }
 
 const COLORS: Record<EditableWaypointType, string> = {
   corner: 'red',
   smooth: 'blue',
   symmetric: 'green'
+};
+
+const NEXT_TYPE: Record<EditableWaypointType, EditableWaypointType> = {
+  corner: 'smooth',
+  smooth: 'symmetric',
+  symmetric: 'corner'
 };
 
 export const GenericPath = (props: Props) => {
@@ -244,58 +302,72 @@ export const GenericPath = (props: Props) => {
 
       {props.isSingleSelected && props.tool?.type === 'node' && (
         <>
-          {editablePath.waypoints.map((s, i) => (
-            <React.Fragment key={i}>
+          {editablePath.waypoints.map((wp, idx) => (
+            <React.Fragment key={idx}>
               <circle
-                cx={s.point.x}
-                cy={s.point.y}
-                fill={COLORS[s.type]}
+                cx={wp.point.x}
+                cy={wp.point.y}
+                fill={COLORS[wp.type]}
                 r={4}
                 onMouseDown={e => {
                   if (e.button !== 0) return;
-                  drag.initiate(new NodeDrag(editablePath, props.node.diagram, props.node, i));
+                  drag.initiate(
+                    new NodeDrag(
+                      editablePath,
+                      props.node.diagram,
+                      props.node,
+                      idx,
+                      props.node.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent))
+                    )
+                  );
+                  e.stopPropagation();
+                }}
+                onDoubleClick={e => {
+                  editablePath.updateWaypoint(idx, { type: NEXT_TYPE[wp.type] });
+                  editablePath.commit();
                   e.stopPropagation();
                 }}
               />
+
               <line
-                x1={s.point.x}
-                y1={s.point.y}
-                x2={s.point.x + s.controlPoints.p1.x}
-                y2={s.point.y + s.controlPoints.p1.y}
+                x1={wp.point.x}
+                y1={wp.point.y}
+                x2={wp.point.x + wp.controlPoints.p1.x}
+                y2={wp.point.y + wp.controlPoints.p1.y}
                 stroke={'blue'}
               />
               <circle
-                cx={s.point.x + s.controlPoints.p1.x}
-                cy={s.point.y + s.controlPoints.p1.y}
+                cx={wp.point.x + wp.controlPoints.p1.x}
+                cy={wp.point.y + wp.controlPoints.p1.y}
                 stroke={'blue'}
                 fill={'white'}
                 r={4}
                 onMouseDown={e => {
                   if (e.button !== 0) return;
                   drag.initiate(
-                    new ControlPointDrag(editablePath, props.node.diagram, props.node, i, 'p1')
+                    new ControlPointDrag(editablePath, props.node.diagram, props.node, idx, 'p1')
                   );
                   e.stopPropagation();
                 }}
               />
 
               <line
-                x1={s.point.x}
-                y1={s.point.y}
-                x2={s.point.x + s.controlPoints.p2.x}
-                y2={s.point.y + s.controlPoints.p2.y}
+                x1={wp.point.x}
+                y1={wp.point.y}
+                x2={wp.point.x + wp.controlPoints.p2.x}
+                y2={wp.point.y + wp.controlPoints.p2.y}
                 stroke={'green'}
               />
               <circle
-                cx={s.point.x + s.controlPoints.p2.x}
-                cy={s.point.y + s.controlPoints.p2.y}
+                cx={wp.point.x + wp.controlPoints.p2.x}
+                cy={wp.point.y + wp.controlPoints.p2.y}
                 stroke={'green'}
                 fill={'white'}
                 r={4}
                 onMouseDown={e => {
                   if (e.button !== 0) return;
                   drag.initiate(
-                    new ControlPointDrag(editablePath, props.node.diagram, props.node, i, 'p2')
+                    new ControlPointDrag(editablePath, props.node.diagram, props.node, idx, 'p2')
                   );
                   e.stopPropagation();
                 }}
