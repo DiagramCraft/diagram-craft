@@ -45,6 +45,14 @@ export const GenericPath = (props: Props) => {
 
   const editablePath = new EditablePath(path, props.node);
 
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const domPoint = EventHelper.point(e.nativeEvent);
+    const dp = props.node.diagram.viewBox.toDiagramPoint(domPoint);
+    const idx = editablePath.split(editablePath.toLocalCoordinate(dp));
+    editablePath.commit();
+    setSelectedWaypoints([idx]);
+  };
+
   return (
     <>
       {props.isSingleSelected && props.tool?.type === 'node' && (
@@ -62,16 +70,7 @@ export const GenericPath = (props: Props) => {
             strokeLinejoin: 'miter',
             strokeLinecap: 'square'
           }}
-          onDoubleClick={
-            props.tool?.type === 'node'
-              ? e => {
-                  const domPoint = EventHelper.point(e.nativeEvent);
-                  const dp = props.node.diagram.viewBox.toDiagramPoint(domPoint);
-                  editablePath.split(editablePath.toLocalCoordinate(dp));
-                  editablePath.commit();
-                }
-              : undefined
-          }
+          onDoubleClick={props.tool?.type === 'node' ? onDoubleClick : undefined}
         />
       )}
 
@@ -86,16 +85,7 @@ export const GenericPath = (props: Props) => {
           ...props.style,
           pointerEvents: props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined
         }}
-        onDoubleClick={
-          props.tool?.type === 'node'
-            ? e => {
-                const domPoint = EventHelper.point(e.nativeEvent);
-                const dp = props.node.diagram.viewBox.toDiagramPoint(domPoint);
-                editablePath.split(editablePath.toLocalCoordinate(dp));
-                editablePath.commit();
-              }
-            : undefined
-        }
+        onDoubleClick={props.tool?.type === 'node' ? onDoubleClick : undefined}
       />
 
       {props.isSingleSelected && props.tool?.type === 'node' && (

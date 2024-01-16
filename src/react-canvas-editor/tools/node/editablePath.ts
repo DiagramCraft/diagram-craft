@@ -50,7 +50,7 @@ export class EditablePath {
     this.waypoints[idx] = { ...this.waypoints[idx], ...point };
   }
 
-  split(p: Point) {
+  split(p: Point): number {
     const path = this.getPath('as-displayed');
     const [pre, post] = path.split(path.projectPoint(p));
 
@@ -68,6 +68,8 @@ export class EditablePath {
         }
       }
     }
+
+    return pre.segments.length;
   }
 
   updateControlPoint(
