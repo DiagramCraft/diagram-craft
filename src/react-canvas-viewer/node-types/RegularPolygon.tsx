@@ -11,6 +11,7 @@ import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDef
 import { Diagram } from '../../model/diagram.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 declare global {
   interface NodeProps {
@@ -44,7 +45,7 @@ export const RegularPolygon = (props: Props) => {
         onMouseDown={props.onMouseDown!}
       />
 
-      {props.isSingleSelected && (
+      {props.isSingleSelected && props.tool?.type === 'move' && (
         <ShapeControlPoint
           x={path.segments[1].start.x}
           y={path.segments[1].start.y}
@@ -109,6 +110,7 @@ export class RegularPolygonNodeDefinition extends AbstractReactNodeDefinition {
 type Props = {
   def: NodeDefinition;
   node: DiagramNode;
+  tool: Tool | undefined;
   diagram: Diagram;
   isSelected: boolean;
   isSingleSelected: boolean;

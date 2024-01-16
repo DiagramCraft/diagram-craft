@@ -13,6 +13,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { NodeWrapper } from '../NodeWrapper.tsx';
+import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 declare global {
   interface NodeProps {
@@ -49,7 +50,7 @@ export const Star = (props: Props) => {
         />
       </NodeWrapper>
 
-      {props.isSingleSelected && (
+      {props.isSingleSelected && props.tool?.type === 'move' && (
         <>
           <ShapeControlPoint
             x={path.segments[1].start.x}
@@ -148,6 +149,7 @@ type Props = {
   def: NodeDefinition;
   node: DiagramNode;
   diagram: Diagram;
+  tool: Tool | undefined;
   isSelected: boolean;
   isSingleSelected: boolean;
   nodeProps: NodeProps;

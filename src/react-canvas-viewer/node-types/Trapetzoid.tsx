@@ -9,6 +9,7 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 declare global {
   interface NodeProps {
@@ -44,7 +45,7 @@ export const Trapetzoid = (props: Props) => {
         onMouseDown={props.onMouseDown!}
       />
 
-      {props.isSingleSelected && (
+      {props.isSingleSelected && props.tool?.type === 'move' && (
         <>
           <ShapeControlPoint
             x={props.node.bounds.x + slantLeft}
@@ -143,6 +144,7 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
 type Props = {
   node: DiagramNode;
   diagram: Diagram;
+  tool: Tool | undefined;
   nodeProps: NodeProps;
   isSelected: boolean;
   isSingleSelected: boolean;
