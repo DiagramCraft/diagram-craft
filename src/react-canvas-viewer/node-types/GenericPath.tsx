@@ -17,6 +17,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Path } from '../../geometry/path.ts';
 import { Box } from '../../geometry/box.ts';
+import { Vector } from '../../geometry/vector.ts';
 
 declare global {
   interface NodeProps {
@@ -26,48 +27,93 @@ declare global {
   }
 }
 
-type EditableSegment = { type: 'cubic' | 'line'; controlPoints?: { p1: Point; p2: Point } };
+type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };
+type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';
+type EditableWaypoint = {
+  point: Point;
+  type: EditableWaypointType;
+  controlPoints: { p1: Point; p2: Point };
+};
+
+const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
 
 class EditablePath {
-  waypoints: Point[];
+  waypoints: EditableWaypoint[];
   segments: EditableSegment[];
 
   constructor(
     private readonly path: Path,
     private readonly node: DiagramNode
   ) {
-    this.waypoints = this.path.segments.map(s => s.start);
     this.segments = this.path.segments.map(s => {
       if (s instanceof LineSegment) {
-        return { type: 'line' };
+        return {
+          type: 'line',
+          controlPoints: {
+            p1: Vector.scale(Vector.from(s.start, s.end), 0.25),
+            p2: Vector.scale(Vector.from(s.end, s.start), 0.25)
+          }
+        };
       } else if (s instanceof CubicSegment) {
         return {
           type: 'cubic',
-          controlPoints: { p1: Point.subtract(s.p1, s.start), p2: Point.subtract(s.end, s.p2) }
+          controlPoints: { p1: Point.subtract(s.p1, s.start), p2: Point.subtract(s.p2, s.end) }
         };
       } else {
         throw new VerifyNotReached();
       }
     });
+
+    const segCount = this.segments.length;
+    this.waypoints = this.path.segments.map((s, idx) => ({
+      point: s.start,
+      type: 'corner',
+      controlPoints: {
+        p1: this.segments[idx === 0 ? segCount - 1 : idx - 1].controlPoints.p2,
+        p2: this.segments[idx].controlPoints.p1
+      }
+    }));
   }
 
   toLocalCoordinate(coord: Point) {
     return Point.rotateAround(coord, -this.node.bounds.r, Box.center(this.node.bounds));
   }
 
+  updateWaypoint(idx: number, point: Partial<EditableWaypoint>) {
+    this.waypoints[idx] = { ...this.waypoints[idx], ...point };
+    // TODO: Update control points of adjacent segments
+  }
+
+  updateControlPoint(idx: number, controlPoint: 'p1' | 'p2', absolutePoint: Point) {
+    this.waypoints[idx].controlPoints[controlPoint] = Point.subtract(
+      absolutePoint,
+      this.waypoints[idx].point
+    );
+
+    const nextSegment = this.segments[idx];
+    nextSegment.type = 'cubic';
+
+    const previousSegment = this.segments[idx === 0 ? this.segments.length - 1 : idx - 1];
+    previousSegment.type = 'cubic';
+
+    // TODO: Update control points of adjacent segments
+  }
+
   getPath() {
     const bounds = this.node.bounds;
     const pb = new PathBuilder(inverseUnitCoordinateSystem(bounds));
-    pb.moveTo(this.waypoints[0]);
-    for (let i = 0; i < this.segments.length; i++) {
+    pb.moveTo(this.waypoints[0].point);
+
+    const segCount = this.segments.length;
+    for (let i = 0; i < segCount; i++) {
+      const nextWp = this.waypoints[(i + 1) % segCount];
       if (this.segments[i].type === 'line') {
-        pb.lineTo(this.waypoints[i + 1] ?? this.waypoints[0]);
+        pb.lineTo(nextWp.point);
       } else {
-        const s = this.segments[i];
         pb.cubicTo(
-          Point.add(this.waypoints[i], s.controlPoints!.p1),
-          Point.add(this.waypoints[i + 1], s.controlPoints!.p2),
-          this.waypoints[i + 1] ?? this.waypoints[0]
+          nextWp.point,
+          Point.add(this.waypoints[i].point, this.waypoints[i].controlPoints.p2),
+          Point.add(nextWp.point, nextWp.controlPoints.p1)
         );
       }
     }
@@ -82,7 +128,9 @@ class EditablePath {
 
     // Raw path and raw bounds represent the path in the original unit coordinate system,
     // but since waypoints have been moved, some points may lie outside the [-1, 1] range
-    const rawPath = PathBuilder.fromString(this.node.props.genericPath!.path!).getPath();
+    const rawPath = PathBuilder.fromString(
+      this.node.props.genericPath?.path ?? DEFAULT_PATH
+    ).getPath();
     const rawBounds = rawPath.bounds();
 
     // Need to adjust the position of the bounds to account for the rotation and the shifted
@@ -108,22 +156,19 @@ class EditablePath {
 }
 
 class NodeDrag extends AbstractDrag {
-  private editablePath: EditablePath;
-
   constructor(
+    private readonly editablePath: EditablePath,
     private readonly diagram: Diagram,
     private readonly node: DiagramNode,
     private readonly waypointIdx: number
   ) {
     super();
-    this.editablePath = new EditablePath(
-      new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPath(),
-      this.node
-    );
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
-    this.editablePath.waypoints[this.waypointIdx] = this.editablePath.toLocalCoordinate(coord);
+    this.editablePath.updateWaypoint(this.waypointIdx, {
+      point: this.editablePath.toLocalCoordinate(coord)
+    });
 
     UnitOfWork.execute(this.diagram, uow =>
       this.node.updateProps(p => {
@@ -143,21 +188,48 @@ class NodeDrag extends AbstractDrag {
   }
 }
 
+class ControlPointDrag extends AbstractDrag {
+  constructor(
+    private readonly editablePath: EditablePath,
+    private readonly diagram: Diagram,
+    private readonly node: DiagramNode,
+    private readonly waypointIdx: number,
+    private readonly controlPoint: 'p1' | 'p2'
+  ) {
+    super();
+  }
+
+  onDrag(coord: Point, _modifiers: Modifiers) {
+    this.editablePath.updateControlPoint(
+      this.waypointIdx,
+      this.controlPoint,
+      this.editablePath.toLocalCoordinate(coord)
+    );
+
+    UnitOfWork.execute(this.diagram, uow =>
+      this.node.updateProps(p => {
+        p.genericPath ??= {};
+        p.genericPath!.path = this.editablePath.getPath().asSvgPath();
+      }, uow)
+    );
+  }
+
+  onDragEnd(): void {}
+}
+
+const COLORS: Record<EditableWaypointType, string> = {
+  corner: 'red',
+  smooth: 'blue',
+  symmetric: 'green'
+};
+
 export const GenericPath = (props: Props) => {
   const drag = useDragDrop();
   const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
   const path = pathBuilder.getPath();
   const svgPath = path.asSvgPath();
 
-  const normalizedSegments = path.segments.map(s => {
-    if (s instanceof CubicSegment) {
-      return s;
-    } else if (s instanceof LineSegment) {
-      return CubicSegment.fromLine(s);
-    } else {
-      throw new VerifyNotReached();
-    }
-  });
+  const editablePath = new EditablePath(path, props.node);
 
   return (
     <>
@@ -172,31 +244,63 @@ export const GenericPath = (props: Props) => {
 
       {props.isSingleSelected && props.tool?.type === 'node' && (
         <>
-          <circle
-            cx={path.segments[0].start.x}
-            cy={path.segments[0].start.y}
-            fill={'red'}
-            r={4}
-            onMouseDown={e => {
-              if (e.button !== 0) return;
-              drag.initiate(new NodeDrag(props.node.diagram, props.node, 0));
-              e.stopPropagation();
-            }}
-          />
+          {editablePath.waypoints.map((s, i) => (
+            <React.Fragment key={i}>
+              <circle
+                cx={s.point.x}
+                cy={s.point.y}
+                fill={COLORS[s.type]}
+                r={4}
+                onMouseDown={e => {
+                  if (e.button !== 0) return;
+                  drag.initiate(new NodeDrag(editablePath, props.node.diagram, props.node, i));
+                  e.stopPropagation();
+                }}
+              />
+              <line
+                x1={s.point.x}
+                y1={s.point.y}
+                x2={s.point.x + s.controlPoints.p1.x}
+                y2={s.point.y + s.controlPoints.p1.y}
+                stroke={'blue'}
+              />
+              <circle
+                cx={s.point.x + s.controlPoints.p1.x}
+                cy={s.point.y + s.controlPoints.p1.y}
+                stroke={'blue'}
+                fill={'white'}
+                r={4}
+                onMouseDown={e => {
+                  if (e.button !== 0) return;
+                  drag.initiate(
+                    new ControlPointDrag(editablePath, props.node.diagram, props.node, i, 'p1')
+                  );
+                  e.stopPropagation();
+                }}
+              />
 
-          {normalizedSegments.slice(1).map((s, i) => (
-            <circle
-              key={i}
-              cx={s.start.x}
-              cy={s.start.y}
-              fill={'green'}
-              r={4}
-              onMouseDown={e => {
-                if (e.button !== 0) return;
-                drag.initiate(new NodeDrag(props.node.diagram, props.node, i + 1));
-                e.stopPropagation();
-              }}
-            />
+              <line
+                x1={s.point.x}
+                y1={s.point.y}
+                x2={s.point.x + s.controlPoints.p2.x}
+                y2={s.point.y + s.controlPoints.p2.y}
+                stroke={'green'}
+              />
+              <circle
+                cx={s.point.x + s.controlPoints.p2.x}
+                cy={s.point.y + s.controlPoints.p2.y}
+                stroke={'green'}
+                fill={'white'}
+                r={4}
+                onMouseDown={e => {
+                  if (e.button !== 0) return;
+                  drag.initiate(
+                    new ControlPointDrag(editablePath, props.node.diagram, props.node, i, 'p2')
+                  );
+                  e.stopPropagation();
+                }}
+              />
+            </React.Fragment>
           ))}
         </>
       )}
@@ -211,7 +315,7 @@ export class GenericPathNodeDefinition extends AbstractReactNodeDefinition {
 
   getBoundingPathBuilder(def: DiagramNode) {
     return PathBuilder.fromString(
-      def.props.genericPath?.path ?? 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1',
+      def.props.genericPath?.path ?? DEFAULT_PATH,
       unitCoordinateSystem(def.bounds)
     );
   }

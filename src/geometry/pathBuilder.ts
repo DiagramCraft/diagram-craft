@@ -65,8 +65,8 @@ export class PathBuilder {
       if (t === 'M') d.moveTo({ x: pn[0], y: pn[1] });
       else if (t === 'L') d.lineTo({ x: pn[0], y: pn[1] });
       else if (t === 'C')
-        d.cubicTo({ x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] }, { x: pn[4], y: pn[5] });
-      else if (t === 'Q') d.quadTo({ x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] });
+        d.cubicTo({ x: pn[4], y: pn[5] }, { x: pn[0], y: pn[1] }, { x: pn[2], y: pn[3] });
+      else if (t === 'Q') d.quadTo({ x: pn[2], y: pn[3] }, { x: pn[0], y: pn[1] });
       else if (t === 'T') d.curveTo({ x: pn[0], y: pn[1] });
       else if (t === 'A')
         d.arcTo({ x: pn[5], y: pn[6] }, pn[0], pn[1], pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);

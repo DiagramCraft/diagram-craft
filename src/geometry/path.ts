@@ -18,6 +18,7 @@ import {
 import { RawSegment } from './pathBuilder.ts';
 import { BezierUtils } from './bezier.ts';
 import { Box } from './box.ts';
+import { round } from '../utils/math.ts';
 
 export type Projection = { t: number; distance: number; point: Point };
 
@@ -210,7 +211,10 @@ export class Path {
   }
 
   asSvgPath() {
-    return `M ${this.#start.x} ${this.#start.y}, ` + this.#path.map(e => e.join(' ')).join(', ');
+    return (
+      `M ${round(this.#start.x)} ${round(this.#start.y)}, ` +
+      this.#path.map(e => e.join(' ')).join(', ')
+    );
   }
 
   bounds() {

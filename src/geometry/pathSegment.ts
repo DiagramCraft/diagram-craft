@@ -6,6 +6,7 @@ import { RawSegment } from './pathBuilder.ts';
 import { Projection } from './path.ts';
 import { LengthOffsetOnPath } from './pathPosition.ts';
 import { Box } from './box.ts';
+import { round } from '../utils/math.ts';
 
 export interface PathSegment {
   length(): number;
@@ -143,7 +144,17 @@ export class CubicSegment extends CubicBezier implements PathSegment {
   }
 
   raw(): RawSegment[] {
-    return [['C', this.p1.x, this.p1.y, this.p2.x, this.p2.y, this.end.x, this.end.y]];
+    return [
+      [
+        'C',
+        round(this.p1.x),
+        round(this.p1.y),
+        round(this.p2.x),
+        round(this.p2.y),
+        round(this.end.x),
+        round(this.end.y)
+      ]
+    ];
   }
 
   intersectionsWith(other: PathSegment): Point[] | undefined {
