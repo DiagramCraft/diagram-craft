@@ -143,7 +143,9 @@ export const executeAction = (
   actionMap: Partial<ActionMap>
 ): boolean => {
   const target: HTMLElement = e.target as HTMLElement;
-  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return false;
+
+  if (target.tagName === 'INPUT' || (target.tagName === 'TEXTAREA' && target.id !== 'clipboard'))
+    return false;
 
   if (target.classList.contains('svg-node__text')) return false;
 
