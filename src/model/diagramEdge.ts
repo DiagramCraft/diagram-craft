@@ -251,10 +251,10 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
         const segment = segments[i];
         newWaypoints.push({
           point: segment.end,
-          controlPoints: [
-            Point.subtract(segment.p2, segment.end),
-            Point.subtract(segments[i + 1].p1, segment.end)
-          ]
+          controlPoints: {
+            cp1: Point.subtract(segment.p2, segment.end),
+            cp2: Point.subtract(segments[i + 1].p1, segment.end)
+          }
         });
       }
 
@@ -403,7 +403,9 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
     this.#waypoints = this.waypoints.map(w => {
-      const absoluteControlPoints = (w.controlPoints ?? []).map(cp => Point.add(w.point, cp));
+      const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
+        Point.add(w.point, cp)
+      );
       const transformedControlPoints = absoluteControlPoints.map(cp =>
         Transform.point(cp, ...transforms)
       );
@@ -414,7 +416,12 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
       return {
         point: transformedPoint,
-        controlPoints: w.controlPoints ? (relativeControlPoints as [Point, Point]) : undefined
+        controlPoints: w.controlPoints
+          ? {
+              cp1: relativeControlPoints[0],
+              cp2: relativeControlPoints[1]
+            }
+          : undefined
       };
     });
 

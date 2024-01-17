@@ -50,7 +50,10 @@ export interface AbstractEdge extends AbstractElement {
 
 export type Waypoint = Readonly<{
   point: Point;
+  controlPoints?: ControlPoints;
+}>;
 
-  // TODO: We should change this to a proper type, with e.g. cp1 and cp2
-  controlPoints?: readonly [Point, Point];
+export type ControlPoints = Readonly<{
+  cp1: Point;
+  cp2: Point;
 }>;

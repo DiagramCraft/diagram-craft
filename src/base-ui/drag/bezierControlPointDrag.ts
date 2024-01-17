@@ -5,6 +5,9 @@ import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Vector } from '../../geometry/vector.ts';
+import { ControlPoints } from '../../model/types.ts';
+
+const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 
 class BezierControlUndoAction implements UndoableAction {
   description = 'Move Control point';
@@ -12,7 +15,7 @@ class BezierControlUndoAction implements UndoableAction {
   constructor(
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
-    private readonly controlPointIdx: number,
+    private readonly controlPointIdx: keyof ControlPoints,
     private readonly newCPoint: Point,
     private readonly newOCPoint: Point,
     private readonly oldCPoint: Point,
@@ -22,11 +25,12 @@ class BezierControlUndoAction implements UndoableAction {
   undo(): void {
     const wp = this.edge.waypoints[this.waypointIdx];
     const cIdx = this.controlPointIdx;
-    const ocIdx = cIdx === 0 ? 1 : 0;
+    const ocIdx = otherCp(cIdx);
 
-    const controlPoints: [Point, Point] = [Point.ORIGIN, Point.ORIGIN];
-    controlPoints[cIdx] = this.oldCPoint;
-    controlPoints[ocIdx] = this.oldOCPoint;
+    const controlPoints = {
+      [cIdx]: this.oldCPoint,
+      [ocIdx]: this.oldOCPoint
+    } as ControlPoints;
 
     UnitOfWork.execute(this.edge.diagram, uow =>
       this.edge.updateWaypoint(this.waypointIdx, { ...wp, controlPoints }, uow)
@@ -36,11 +40,12 @@ class BezierControlUndoAction implements UndoableAction {
   redo(): void {
     const wp = this.edge.waypoints[this.waypointIdx];
     const cIdx = this.controlPointIdx;
-    const ocIdx = cIdx === 0 ? 1 : 0;
+    const ocIdx = otherCp(cIdx);
 
-    const controlPoints: [Point, Point] = [Point.ORIGIN, Point.ORIGIN];
-    controlPoints[cIdx] = this.newCPoint;
-    controlPoints[ocIdx] = this.newOCPoint;
+    const controlPoints = {
+      [cIdx]: this.newCPoint,
+      [ocIdx]: this.newOCPoint
+    } as ControlPoints;
 
     UnitOfWork.execute(this.edge.diagram, uow =>
       this.edge.updateWaypoint(this.waypointIdx, { ...wp, controlPoints }, uow)
@@ -56,12 +61,11 @@ export class BezierControlPointDrag extends AbstractDrag {
     private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
-    private readonly controlPointIdx: number
+    private readonly controlPointIdx: keyof ControlPoints
   ) {
     super();
     this.originalCPoint = edge.waypoints[waypointIdx].controlPoints![controlPointIdx];
-    this.originalOCPoint =
-      edge.waypoints[waypointIdx].controlPoints![controlPointIdx === 0 ? 1 : 0];
+    this.originalOCPoint = edge.waypoints[waypointIdx].controlPoints![otherCp(controlPointIdx)];
   }
 
   // meta - preserve ratios
@@ -70,26 +74,34 @@ export class BezierControlPointDrag extends AbstractDrag {
     const wp = this.edge.waypoints[this.waypointIdx];
 
     const cIdx = this.controlPointIdx;
-    const ocIdx = cIdx === 0 ? 1 : 0;
+    const ocIdx = otherCp(cIdx);
 
-    const controlPoints: [Point, Point] = [Point.ORIGIN, Point.ORIGIN];
-    controlPoints[cIdx] = Point.subtract(coord, wp!.point);
-
+    let otherControlPoint: Point;
     if (modifiers.metaKey) {
-      controlPoints[ocIdx] = {
+      otherControlPoint = {
         x: wp.controlPoints![cIdx].x * -1,
         y: wp.controlPoints![cIdx].y * -1
       };
     } else if (!modifiers.altKey) {
-      const oLength = Point.distance(Point.ORIGIN, wp.controlPoints![ocIdx]);
-      controlPoints[ocIdx] = Vector.fromPolar(
+      otherControlPoint = Vector.fromPolar(
         Vector.angle(wp.controlPoints![cIdx]) + Math.PI,
-        oLength
+        Point.distance(Point.ORIGIN, wp.controlPoints![ocIdx])
       );
+    } else {
+      otherControlPoint = wp.controlPoints![ocIdx];
     }
 
+    const controlPoints: ControlPoints = {
+      [cIdx]: Point.subtract(coord, wp!.point),
+      [ocIdx]: otherControlPoint
+    } as ControlPoints;
+
     UnitOfWork.execute(this.edge.diagram, uow =>
-      this.edge.updateWaypoint(this.waypointIdx, { ...wp, controlPoints }, uow)
+      this.edge.updateWaypoint(
+        this.waypointIdx,
+        { ...wp, controlPoints: controlPoints as ControlPoints },
+        uow
+      )
     );
   }
 
@@ -97,7 +109,7 @@ export class BezierControlPointDrag extends AbstractDrag {
     const wp = this.edge.waypoints[this.waypointIdx];
 
     const cIdx = this.controlPointIdx;
-    const ocIdx = cIdx === 0 ? 1 : 0;
+    const ocIdx = otherCp(cIdx);
 
     this.diagram.undoManager.add(
       new BezierControlUndoAction(

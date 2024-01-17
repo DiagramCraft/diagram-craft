@@ -38,16 +38,16 @@ export const testDiagram: SerializedDiagramDocument = {
                     x: 360,
                     y: 200
                   },
-                  controlPoints: [
-                    {
+                  controlPoints: {
+                    cp1: {
                       x: 31,
                       y: 62.5
                     },
-                    {
+                    cp2: {
                       x: -31,
                       y: -62.5
                     }
-                  ]
+                  }
                 }
               ],
               props: {

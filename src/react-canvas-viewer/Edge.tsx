@@ -27,6 +27,7 @@ import { DeepRequired } from '../utils/types.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { useActions } from '../react-app/context/ActionsContext.tsx';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
+import { ControlPoints } from '../model/types.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -165,7 +166,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         firstEdge.waypoints.map((wp, idx) => (
           <Fragment key={`${wp.point.x}_${wp.point.y}`}>
             {edgeProps.type === 'bezier' &&
-              wp.controlPoints?.map((cp, cIdx) => (
+              Object.entries(wp.controlPoints ?? {}).map(([name, cp]) => (
                 <Fragment key={`${idx}_${cp.x}_${cp.y}`}>
                   <line
                     className="svg-bezier-handle-line"
@@ -182,7 +183,12 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
                     onMouseDown={e => {
                       if (e.button !== 0) return;
                       drag.initiate(
-                        new BezierControlPointDrag(props.diagram, props.def, idx, cIdx)
+                        new BezierControlPointDrag(
+                          props.diagram,
+                          props.def,
+                          idx,
+                          name as keyof ControlPoints
+                        )
                       );
                       e.stopPropagation();
                     }}

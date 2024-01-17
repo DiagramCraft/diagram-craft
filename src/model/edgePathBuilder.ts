@@ -4,7 +4,7 @@ import { Direction } from '../geometry/direction.ts';
 import { Point } from '../geometry/point.ts';
 import { Path } from '../geometry/path.ts';
 import { DiagramEdge } from './diagramEdge.ts';
-import { Waypoint } from './types.ts';
+import { ControlPoints, Waypoint } from './types.ts';
 import { Line } from '../geometry/line.ts';
 import { CubicSegment, LineSegment, PathSegment } from '../geometry/pathSegment.ts';
 import { BezierUtils } from '../geometry/bezier.ts';
@@ -155,7 +155,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
   if (edge.waypoints.length === 0) {
     path.lineTo(edge.end.position);
   } else {
-    const controlPoints: (readonly [Point, Point])[] = [];
+    const controlPoints: ControlPoints[] = [];
 
     // Ensure all control points exists, as they may not in case the edge type has been changed
     for (let i = 0; i < edge.waypoints.length; i++) {
@@ -167,27 +167,27 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
         const after =
           i === edge.waypoints.length - 1 ? edge.end.position : edge.waypoints[i + 1].point;
 
-        controlPoints.push([
-          Vector.scale(Vector.from(after, before), 0.2),
-          Vector.scale(Vector.from(before, after), 0.2)
-        ]);
+        controlPoints.push({
+          cp1: Vector.scale(Vector.from(after, before), 0.2),
+          cp2: Vector.scale(Vector.from(before, after), 0.2)
+        });
       }
     }
 
     const fp = edge.waypoints[0];
-    path.quadTo(fp.point, Point.add(controlPoints[0][0], fp.point));
+    path.quadTo(fp.point, Point.add(controlPoints[0].cp1, fp.point));
     for (let i = 1; i < edge.waypoints.length; i++) {
       const wp = edge.waypoints[i];
       const pwp = edge.waypoints[i - 1];
       path.cubicTo(
         wp.point,
-        Point.add(controlPoints[i - 1][1], pwp.point),
-        Point.add(controlPoints[i][0], wp.point)
+        Point.add(controlPoints[i - 1].cp2, pwp.point),
+        Point.add(controlPoints[i].cp1, wp.point)
       );
     }
 
     const last = edge.waypoints.at(-1)!;
-    path.quadTo(edge.end.position, Point.add(controlPoints.at(-1)![1], last.point));
+    path.quadTo(edge.end.position, Point.add(controlPoints.at(-1)!.cp2, last.point));
   }
 
   return path;
