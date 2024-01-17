@@ -4,7 +4,7 @@ import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
-import { snapshotForTransform, UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
 export class RotateDrag extends AbstractDrag {
@@ -13,7 +13,6 @@ export class RotateDrag extends AbstractDrag {
   constructor(private readonly diagram: Diagram) {
     super();
     this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
-    diagram.selectionState.elements.forEach(e => snapshotForTransform(e, this.uow));
   }
 
   onDrag(coord: Point) {

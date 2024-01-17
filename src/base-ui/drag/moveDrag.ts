@@ -13,7 +13,7 @@ import {
 import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
-import { snapshotForTransform, UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { largest } from '../../utils/array.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
@@ -57,7 +57,6 @@ export class MoveDrag extends AbstractDrag {
     super();
 
     this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
-    diagram.selectionState.elements.forEach(e => snapshotForTransform(e, this.uow));
   }
 
   onDragEnter(id: string) {

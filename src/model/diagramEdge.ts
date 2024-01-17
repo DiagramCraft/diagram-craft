@@ -91,6 +91,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
+    uow.snapshot(this);
     callback(this.#props);
     uow.updateElement(this);
   }
@@ -128,6 +129,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   setBounds(b: Box, uow: UnitOfWork) {
+    uow.snapshot(this);
     if (!isConnected(this.start)) {
       this.#start = new FreeEndpoint({ x: b.x, y: b.y });
       uow.updateElement(this);
@@ -141,6 +143,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   /* Endpoints ********************************************************************************************** */
 
   setStart(start: Endpoint, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     if (isConnected(this.#start)) {
       this.#start.node._removeEdge(this.#start.anchor, this);
       uow.updateElement(this.#start.node);
@@ -161,6 +165,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     if (isConnected(this.#end)) {
       this.#end.node._removeEdge(this.#end.anchor, this);
       uow.updateElement(this.#end.node);
@@ -191,6 +197,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   setLabelNodes(labelNodes: ReadonlyArray<ResolvedLabelNode> | undefined, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.#labelNodes = labelNodes;
     this.#labelNodes?.forEach(ln => {
       ln.node.updateProps(p => (p.labelForEdgeId = this.id), uow);
@@ -199,10 +207,14 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   addLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.setLabelNodes([...(this.labelNodes ?? []), labelNode], uow);
   }
 
   removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.setLabelNodes(
       this.labelNodes?.filter(ln => ln !== labelNode),
       uow
@@ -216,6 +228,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   addWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     const path = this.path();
     const projection = path.projectPoint(waypoint.point);
 
@@ -267,15 +281,18 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
+    uow.snapshot(this);
     this.#waypoints = this.waypoints?.filter(w => w !== waypoint);
     uow.updateElement(this);
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
+    uow.snapshot(this);
     waypoint.point = point;
     uow.updateElement(this);
   }
 
+  // TODO: There's no way to snapshot here, need to change the signature and make Waypoint readonly
   updateWaypoint(_waypoint: Waypoint, uow: UnitOfWork) {
     uow.updateElement(this);
   }
@@ -364,6 +381,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
     this.#waypoints = this.waypoints?.map(w => {
@@ -390,6 +409,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   flip(uow: UnitOfWork) {
+    uow.snapshot(this);
+
     const start = this.#start;
     const end = this.#end;
 
@@ -410,6 +431,8 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
    * impact the state and/or bounds of the parent group/container
    */
   invalidate(uow: UnitOfWork) {
+    uow.snapshot(this);
+
     // Ensure we don't get into an infinite loop
     if (uow.hasBeenInvalidated(this)) return;
     uow.beginInvalidation(this);

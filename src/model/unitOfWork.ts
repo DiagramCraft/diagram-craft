@@ -1,4 +1,4 @@
-import { DiagramElement, isEdge, isNode, Snapshot } from './diagramElement.ts';
+import { DiagramElement, Snapshot } from './diagramElement.ts';
 import { Diagram } from './diagram.ts';
 import { assert } from '../utils/assert.ts';
 
@@ -63,12 +63,9 @@ export class UnitOfWork {
     return result;
   }
 
-  snapshot(element: DiagramElement, ignoreDuplicates = false) {
+  snapshot(element: DiagramElement) {
     if (!this.trackChanges) return;
-    assert.false(
-      !ignoreDuplicates && this.#snapshots.has(element.id),
-      'Can only create snapshot once'
-    );
+    if (this.#snapshots.has(element.id)) return;
 
     this.#snapshots.set(element.id, element.snapshot());
   }
@@ -177,19 +174,3 @@ export class UnitOfWork {
     this.trackChanges = false;
   }
 }
-
-// TODO: We should be able to largely remove this and rely on snapshotting in
-//       methods such as Diagram.transform etc
-export const snapshotForTransform = (e: DiagramElement, uow: UnitOfWork) => {
-  if (uow.hasSnapshot(e)) return;
-  uow.snapshot(e, true);
-  if (isNode(e)) {
-    e.listEdges().forEach(ed => {
-      snapshotForTransform(ed, uow);
-    });
-    e.children.forEach(c => snapshotForTransform(c, uow));
-    if (e.parent) snapshotForTransform(e.parent, uow);
-  } else if (isEdge(e)) {
-    e.labelNodes?.forEach(ln => snapshotForTransform(ln.node, uow));
-  }
-};

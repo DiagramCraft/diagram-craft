@@ -6,7 +6,7 @@ import { Box, WritableBox } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
-import { snapshotForTransform, UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
@@ -24,7 +24,6 @@ export class ResizeDrag extends AbstractDrag {
   ) {
     super();
     this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
-    diagram.selectionState.elements.forEach(e => snapshotForTransform(e, this.uow));
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {

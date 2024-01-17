@@ -79,6 +79,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
+    uow.snapshot(this);
     callback(this.#props);
     uow.updateElement(this);
   }
@@ -115,6 +116,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.#children = children;
     this.#children.forEach(c => c._setParent(this));
 
@@ -125,6 +128,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   addChild(child: DiagramElement, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.#children = [...this.children, child];
     child._setParent(this);
 
@@ -135,6 +140,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.#children = this.children.filter(c => c !== child);
     child._setParent(undefined);
 
@@ -151,6 +158,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
+    uow.snapshot(this);
     const oldBounds = this.bounds;
     this.#bounds = bounds;
     if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
@@ -309,6 +317,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
    *
    */
   invalidate(uow: UnitOfWork) {
+    uow.snapshot(this);
+
     // Prevent infinite recursion
     if (uow.hasBeenInvalidated(this)) return;
     uow.beginInvalidation(this);
@@ -371,6 +381,8 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false) {
+    uow.snapshot(this);
+
     const previousBounds = this.bounds;
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
