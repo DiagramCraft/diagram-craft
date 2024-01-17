@@ -155,34 +155,39 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
   if (edge.waypoints.length === 0) {
     path.lineTo(edge.end.position);
   } else {
+    const controlPoints: (readonly [Point, Point])[] = [];
+
     // Ensure all control points exists, as they may not in case the edge type has been changed
     for (let i = 0; i < edge.waypoints.length; i++) {
       const wp = edge.waypoints[i];
-      if (!wp.controlPoints) {
+      if (wp.controlPoints) {
+        controlPoints.push(wp.controlPoints);
+      } else {
         const before = i === 0 ? edge.start.position : edge.waypoints[i - 1].point;
         const after =
           i === edge.waypoints.length - 1 ? edge.end.position : edge.waypoints[i + 1].point;
-        wp.controlPoints = [
+
+        controlPoints.push([
           Vector.scale(Vector.from(after, before), 0.2),
           Vector.scale(Vector.from(before, after), 0.2)
-        ];
+        ]);
       }
     }
 
     const fp = edge.waypoints[0];
-    path.quadTo(fp.point, Point.add(fp.controlPoints![0], fp.point));
+    path.quadTo(fp.point, Point.add(controlPoints[0][0], fp.point));
     for (let i = 1; i < edge.waypoints.length; i++) {
       const wp = edge.waypoints[i];
       const pwp = edge.waypoints[i - 1];
       path.cubicTo(
         wp.point,
-        Point.add(pwp.controlPoints![1], pwp.point),
-        Point.add(wp.controlPoints![0], wp.point)
+        Point.add(controlPoints[i - 1][1], pwp.point),
+        Point.add(controlPoints[i][0], wp.point)
       );
     }
 
     const last = edge.waypoints.at(-1)!;
-    path.quadTo(edge.end.position, Point.add(last.controlPoints![1], last.point));
+    path.quadTo(edge.end.position, Point.add(controlPoints.at(-1)![1], last.point));
   }
 
   return path;

@@ -17,7 +17,7 @@ import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } fro
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 import { SerializedEdge } from './serialization/types.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
-import { DeepReadonly } from '../utils/types.ts';
+import { DeepReadonly, DeepWriteable } from '../utils/types.ts';
 import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
 
 export type DiagramEdgeSnapshot = SerializedEdge;
@@ -223,7 +223,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   /* Waypoints ********************************************************************************************** */
 
-  get waypoints() {
+  get waypoints(): ReadonlyArray<Waypoint> {
     return this.#waypoints;
   }
 
@@ -272,7 +272,9 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
       });
 
       const newWaypoint = { ...waypoint, pathD: projection.pathD };
-      this.#waypoints = [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD);
+      this.#waypoints = [...wpDistances, newWaypoint].sort(
+        (a, b) => a.pathD - b.pathD
+      ) as Array<Waypoint>;
 
       uow.updateElement(this);
 
@@ -282,20 +284,35 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
     uow.snapshot(this);
-    this.#waypoints = this.waypoints?.filter(w => w !== waypoint);
+    this.#waypoints = this.#waypoints.filter(w => w !== waypoint);
     uow.updateElement(this);
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
     uow.snapshot(this);
-    waypoint.point = point;
+    // TODO: Fix this
+    (waypoint as DeepWriteable<Waypoint>).point = point;
     uow.updateElement(this);
   }
 
-  // TODO: There's no way to snapshot here, need to change the signature and make Waypoint readonly
-  updateWaypoint(_waypoint: Waypoint, uow: UnitOfWork) {
+  updateWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
+    uow.snapshot(this);
+    this.#waypoints = this.waypoints.map((w, i) => (i === idx ? waypoint : w));
     uow.updateElement(this);
   }
+
+  /*updateWaypointControlPoint(wpIdx: number, cpIdx: 0 | 1, point: Point, uow: UnitOfWork) {
+    uow.snapshot(this);
+    const wp = this.waypoints[wpIdx];
+    wp.controlPoints = wp.controlPoints ?? [Point.ORIGIN, Point.ORIGIN];
+    wp.controlPoints[cpIdx] = point;
+    uow.updateElement(this);
+  }*/
+
+  // TODO: There's no way to snapshot here, need to change the signature and make Waypoint readonly
+  /*updateWaypoint(_waypoint: Waypoint, uow: UnitOfWork) {
+    uow.updateElement(this);
+  }*/
 
   get midpoints() {
     const path = this.path();
@@ -328,7 +345,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     this.#props = snapshot.props as NodeProps;
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram);
-    this.#waypoints = snapshot.waypoints ?? [];
+    this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;
     this.#labelNodes = snapshot.labelNodes?.map(ln => ({
       ...ln,
       node: this.diagram.nodeLookup.get(ln.id)!
@@ -345,7 +362,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
       this.start,
       this.end,
       deepClone(this.props) as EdgeProps,
-      deepClone(this.waypoints ?? []),
+      deepClone(this.waypoints) as Array<Waypoint>,
       this.diagram,
       this.layer
     );
@@ -385,7 +402,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
-    this.#waypoints = this.waypoints?.map(w => {
+    this.#waypoints = this.waypoints.map(w => {
       const absoluteControlPoints = (w.controlPoints ?? []).map(cp => Point.add(w.point, cp));
       const transformedControlPoints = absoluteControlPoints.map(cp =>
         Transform.point(cp, ...transforms)

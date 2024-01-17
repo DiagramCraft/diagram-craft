@@ -24,10 +24,13 @@ class BezierControlUndoAction implements UndoableAction {
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;
 
-    wp.controlPoints![cIdx] = this.oldCPoint;
-    wp.controlPoints![ocIdx] = this.oldOCPoint;
+    const controlPoints: [Point, Point] = [Point.ORIGIN, Point.ORIGIN];
+    controlPoints[cIdx] = this.oldCPoint;
+    controlPoints[ocIdx] = this.oldOCPoint;
 
-    UnitOfWork.execute(this.edge.diagram, uow => this.edge.updateWaypoint(wp, uow));
+    UnitOfWork.execute(this.edge.diagram, uow =>
+      this.edge.updateWaypoint(this.waypointIdx, { ...wp, controlPoints }, uow)
+    );
   }
 
   redo(): void {
@@ -35,10 +38,13 @@ class BezierControlUndoAction implements UndoableAction {
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;
 
-    wp.controlPoints![cIdx] = this.newCPoint;
-    wp.controlPoints![ocIdx] = this.newOCPoint;
+    const controlPoints: [Point, Point] = [Point.ORIGIN, Point.ORIGIN];
+    controlPoints[cIdx] = this.newCPoint;
+    controlPoints[ocIdx] = this.newOCPoint;
 
-    UnitOfWork.execute(this.edge.diagram, uow => this.edge.updateWaypoint(wp, uow));
+    UnitOfWork.execute(this.edge.diagram, uow =>
+      this.edge.updateWaypoint(this.waypointIdx, { ...wp, controlPoints }, uow)
+    );
   }
 }
 
@@ -66,22 +72,25 @@ export class BezierControlPointDrag extends AbstractDrag {
     const cIdx = this.controlPointIdx;
     const ocIdx = cIdx === 0 ? 1 : 0;
 
-    wp.controlPoints![cIdx] = Point.subtract(coord, wp!.point);
+    const controlPoints: [Point, Point] = [Point.ORIGIN, Point.ORIGIN];
+    controlPoints[cIdx] = Point.subtract(coord, wp!.point);
 
     if (modifiers.metaKey) {
-      wp.controlPoints![ocIdx] = {
+      controlPoints[ocIdx] = {
         x: wp.controlPoints![cIdx].x * -1,
         y: wp.controlPoints![cIdx].y * -1
       };
     } else if (!modifiers.altKey) {
       const oLength = Point.distance(Point.ORIGIN, wp.controlPoints![ocIdx]);
-      wp.controlPoints![ocIdx] = Vector.fromPolar(
+      controlPoints[ocIdx] = Vector.fromPolar(
         Vector.angle(wp.controlPoints![cIdx]) + Math.PI,
         oLength
       );
     }
 
-    UnitOfWork.execute(this.edge.diagram, uow => this.edge.updateWaypoint(wp, uow));
+    UnitOfWork.execute(this.edge.diagram, uow =>
+      this.edge.updateWaypoint(this.waypointIdx, { ...wp, controlPoints }, uow)
+    );
   }
 
   onDragEnd(): void {

@@ -3,8 +3,8 @@ import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '../utils/clone.ts';
 import { Diagram } from './diagram.ts';
-import { DiagramEdge } from './diagramEdge.ts';
-import { AbstractNode, Anchor } from './types.ts';
+import { DiagramEdge, ResolvedLabelNode } from './diagramEdge.ts';
+import { AbstractNode, Anchor, LabelNode } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
@@ -165,7 +165,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   isLocked() {
-    return this.layer.isLocked() ?? false;
+    return this.layer.isLocked();
   }
 
   /* Anchors ************************************************************************************************ */
@@ -407,12 +407,16 @@ export class DiagramNode implements AbstractNode, DiagramElement {
         const dy = this.bounds.y - previousBounds.y;
 
         const clampAmount = 100;
-        labelNode.offset = {
-          x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-          y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-        };
 
-        uow.updateElement(this.labelEdge()!);
+        this.updateLabelNode(
+          {
+            offset: {
+              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+            }
+          },
+          uow
+        );
       });
     }
 
@@ -447,7 +451,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
 
   labelNode() {
     if (!this.props.labelForEdgeId) return undefined;
-    const edge = this.diagram.edgeLookup.get(this.props.labelForEdgeId);
+    const edge = this.labelEdge();
     assert.present(edge);
     assert.present(edge.labelNodes);
     return edge.labelNodes.find(n => n.node === this);
@@ -458,6 +462,27 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     const edge = this.diagram.edgeLookup.get(this.props.labelForEdgeId);
     assert.present(edge);
     return edge;
+  }
+
+  updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
+    if (!this.props.labelForEdgeId) return;
+
+    uow.snapshot(this);
+
+    const replacement: ResolvedLabelNode = {
+      ...this.labelNode()!,
+      ...labelNode,
+      node: this
+    };
+
+    const edge = this.labelEdge();
+    assert.present(edge);
+    edge.setLabelNodes(
+      edge.labelNodes!.map((n: ResolvedLabelNode) => (n.node === this ? replacement : n)),
+      uow
+    );
+
+    uow.updateElement(this);
   }
 
   // TODO: Need to make sure this is called when e.g. props are changed

@@ -32,12 +32,12 @@ export type LabelNodeType =
   | 'vertical'
   | 'independent';
 
-export type LabelNode = {
+export type LabelNode = Readonly<{
   id: string;
   offset: Point;
   timeOffset: number;
   type: LabelNodeType;
-};
+}>;
 
 export interface AbstractEdge extends AbstractElement {
   type: 'edge';
@@ -48,7 +48,9 @@ export interface AbstractEdge extends AbstractElement {
   labelNodes?: ReadonlyArray<LabelNode>;
 }
 
-export type Waypoint = {
+export type Waypoint = Readonly<{
   point: Point;
-  controlPoints?: [Point, Point];
-};
+
+  // TODO: We should change this to a proper type, with e.g. cp1 and cp2
+  controlPoints?: readonly [Point, Point];
+}>;

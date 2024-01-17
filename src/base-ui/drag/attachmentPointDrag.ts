@@ -4,6 +4,7 @@ import { Point } from '../../geometry/point.ts';
 import { DiagramEdge, ResolvedLabelNode } from '../../model/diagramEdge.ts';
 import { Path } from '../../geometry/path.ts';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export class AttachmentPointDrag extends AbstractDrag implements UndoableAction {
   description = 'Move label node';
@@ -36,14 +37,21 @@ export class AttachmentPointDrag extends AbstractDrag implements UndoableAction 
     const dx = p.x - prevOffset.x;
     const dy = p.y - prevOffset.y;
 
-    this.labelNode!.timeOffset = offset.pathT;
-    if (this.labelNode.type === 'independent') {
-      this.labelNode!.offset = {
-        x: this.labelNode!.offset.x - dx,
-        y: this.labelNode!.offset.y - dy
-      };
-    }
-    this.edge.diagram?.updateElement(this.edge);
+    const uow = new UnitOfWork(this.edge.diagram!);
+    this.labelNode.node.updateLabelNode(
+      {
+        timeOffset: offset.pathT,
+        offset:
+          this.labelNode.type === 'independent'
+            ? {
+                x: this.labelNode!.offset.x - dx,
+                y: this.labelNode!.offset.y - dy
+              }
+            : this.labelNode.offset
+      },
+      uow
+    );
+    uow.commit();
   }
 
   onDragEnd(): void {
@@ -53,12 +61,20 @@ export class AttachmentPointDrag extends AbstractDrag implements UndoableAction 
   }
 
   redo(): void {
-    this.labelNode!.timeOffset = this.newTimeOffset!;
-    this.labelNode!.offset = this.newOffset!;
+    const uow = new UnitOfWork(this.edge.diagram!);
+    this.labelNode.node.updateLabelNode(
+      { timeOffset: this.newTimeOffset!, offset: this.newOffset! },
+      uow
+    );
+    uow.commit();
   }
 
   undo(): void {
-    this.labelNode!.timeOffset = this.oldTimeOffset;
-    this.labelNode!.offset = this.oldOffset;
+    const uow = new UnitOfWork(this.edge.diagram!);
+    this.labelNode.node.updateLabelNode(
+      { timeOffset: this.oldTimeOffset!, offset: this.oldOffset! },
+      uow
+    );
+    uow.commit();
   }
 }

@@ -53,10 +53,9 @@ export const LabelNodePanel = (props: Props) => {
             <Select.Root
               value={type}
               onValueChange={v => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                labelNode.type = v as any;
                 UnitOfWork.execute(edge.diagram, uow => {
-                  edge.invalidate(uow);
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  node.updateLabelNode({ type: v as any }, uow);
                 });
               }}
             >
@@ -109,9 +108,8 @@ export const LabelNodePanel = (props: Props) => {
             <SliderAndNumberInput
               value={round(timeOffset * 100)}
               onChange={v => {
-                labelNode.timeOffset = Number(v) / 100;
                 UnitOfWork.execute(edge.diagram, uow => {
-                  edge.invalidate(uow);
+                  node.updateLabelNode({ timeOffset: Number(v) / 100 }, uow);
                 });
               }}
             />
@@ -124,9 +122,8 @@ export const LabelNodePanel = (props: Props) => {
               value={round(offset.x)}
               style={{ width: '50px' }}
               onChange={v => {
-                labelNode.offset = { x: Number(v), y: offset.y };
                 UnitOfWork.execute(edge.diagram, uow => {
-                  edge.invalidate(uow);
+                  node.updateLabelNode({ offset: { x: Number(v), y: offset.y } }, uow);
                 });
               }}
             />
@@ -137,9 +134,8 @@ export const LabelNodePanel = (props: Props) => {
                 value={round(offset.y)}
                 style={{ width: '50px' }}
                 onChange={v => {
-                  labelNode.offset = { x: offset.x, y: Number(v) };
                   UnitOfWork.execute(edge.diagram, uow => {
-                    edge.invalidate(uow);
+                    node.updateLabelNode({ offset: { x: offset.x, y: Number(v) } }, uow);
                   });
                 }}
               />
@@ -148,9 +144,8 @@ export const LabelNodePanel = (props: Props) => {
             <button
               className={'cmp-button'}
               onClick={() => {
-                labelNode.offset = { x: 0, y: 0 };
                 UnitOfWork.execute(edge.diagram, uow => {
-                  edge.invalidate(uow);
+                  node.updateLabelNode({ offset: { x: 0, y: 0 } }, uow);
                 });
               }}
             >

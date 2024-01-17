@@ -17,6 +17,7 @@ import {
   SerializedNode
 } from './types.ts';
 import { ConnectedEndpoint, FreeEndpoint } from '../endpoint.ts';
+import { Waypoint } from '../types.ts';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -110,7 +111,7 @@ export const deserializeDiagramElements = (
         ? new ConnectedEndpoint(end.anchor, nodeLookup[end.node.id])
         : new FreeEndpoint(end.position),
       e.props,
-      e.waypoints ?? [],
+      (e.waypoints ?? []) as Array<Waypoint>,
       diagram,
       layer
     );
