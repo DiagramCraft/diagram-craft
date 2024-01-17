@@ -64,7 +64,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     }
   }
 
-  getNodeDefinition() {
+  getDefinition() {
     return this.diagram.nodeDefinitions.get(this.#nodeType);
   }
 
@@ -121,7 +121,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     this.#children.forEach(c => uow.updateElement(c));
     uow.updateElement(this);
 
-    this.getNodeDefinition().onChildChanged(this, uow);
+    this.getDefinition().onChildChanged(this, uow);
   }
 
   addChild(child: DiagramElement, uow: UnitOfWork) {
@@ -131,7 +131,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     uow.updateElement(this);
     uow.updateElement(child);
 
-    this.getNodeDefinition().onChildChanged(this, uow);
+    this.getDefinition().onChildChanged(this, uow);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
@@ -141,7 +141,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     uow.updateElement(this);
     uow.updateElement(child);
 
-    this.getNodeDefinition().onChildChanged(this, uow);
+    this.getDefinition().onChildChanged(this, uow);
   }
 
   /* Bounds ************************************************************************************************* */
@@ -212,7 +212,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   }
 
   convertToPath(uow: UnitOfWork) {
-    const path = this.getNodeDefinition().getBoundingPath(this);
+    const path = this.getDefinition().getBoundingPath(this);
     const scaledPath = PathUtils.scalePath(path, this.bounds, { x: -1, y: 1, w: 2, h: -2, r: 0 });
 
     this.#nodeType = 'generic-path';
@@ -374,12 +374,12 @@ export class DiagramNode implements AbstractNode, DiagramElement {
     const previousBounds = this.bounds;
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
-    this.getNodeDefinition().onTransform(transforms, this, uow);
+    this.getDefinition().onTransform(transforms, this, uow);
 
     if (this.parent && !isChild) {
       const parent = this.parent;
       uow.pushAction('onChildChanged', parent, () => {
-        parent.getNodeDefinition().onChildChanged(parent, uow);
+        parent.getDefinition().onChildChanged(parent, uow);
       });
     }
 

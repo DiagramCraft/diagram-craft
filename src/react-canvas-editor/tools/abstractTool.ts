@@ -36,4 +36,8 @@ export abstract class AbstractTool implements Tool {
   onKeyDown(_e: KeyboardEvent): void {
     // Do nothing
   }
+
+  onKeyUp(_e: KeyboardEvent): void {
+    // Do nothing
+  }
 }

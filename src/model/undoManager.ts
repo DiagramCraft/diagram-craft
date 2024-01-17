@@ -11,6 +11,42 @@ export type UndoableAction = {
   merge?: (other: UndoableAction) => boolean;
 };
 
+export class CompoundUndoableAction implements UndoableAction {
+  #actions: UndoableAction[];
+
+  constructor() {
+    this.#actions = [];
+  }
+
+  addAction(action: UndoableAction | undefined) {
+    if (!action) {
+      console.warn('No undoable action provided');
+      return;
+    }
+    this.#actions.push(action);
+  }
+
+  get description() {
+    return this.#actions.map(a => a.description).join(', ');
+  }
+
+  undo() {
+    for (const action of this.#actions.reverse()) {
+      action.undo();
+    }
+  }
+
+  redo() {
+    for (const action of this.#actions) {
+      action.redo();
+    }
+  }
+
+  hasActions() {
+    return this.#actions.length > 0;
+  }
+}
+
 export type UndoEvents = {
   /* Triggered when an action is either executed when added, undone or redone */
   execute: { action: UndoableAction; type: 'undo' | 'redo' };

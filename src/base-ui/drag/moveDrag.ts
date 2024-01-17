@@ -6,28 +6,58 @@ import { Translation } from '../../geometry/transform.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeHelper.ts';
-import { ElementAddUndoableAction, MoveAction } from '../../model/diagramUndoActions.ts';
+import {
+  ElementAddUndoableAction,
+  SnapshotUndoableAction
+} from '../../model/diagramUndoActions.ts';
 import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { largest } from '../../utils/array.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { isConnected } from '../../model/endpoint.ts';
+import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
+import { CompoundUndoableAction } from '../../model/undoManager.ts';
+import { SelectionState } from '../../model/selectionState.ts';
+
+const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
+
+const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
+  for (const e of elements) {
+    document.getElementById(getId(e))!.style.pointerEvents = '';
+    if (isNode(e)) enablePointerEvents(e.children);
+  }
+};
+
+const disablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
+  for (const e of elements) {
+    document.getElementById(getId(e))!.style.pointerEvents = 'none';
+    if (isNode(e)) disablePointerEvents(e.children);
+  }
+};
+
+// TODO: We can/should make this configurable by platform
+const isConstraintDrag = (m: Modifiers) => m.shiftKey;
+const isFreeDrag = (m: Modifiers) => m.altKey;
+const isDuplicateDrag = (e: KeyboardEvent) => e.key === 'Meta';
 
 export class MoveDrag extends AbstractDrag {
   #snapAngle?: Axis;
   #hasDuplicatedSelection?: boolean = false;
-  #oldPEvents: Record<string, string> = {};
   #dragStarted = false;
   #currentElement: DiagramElement | undefined = undefined;
   #keys: string[] = [];
+
+  private readonly uow: UnitOfWork;
 
   constructor(
     private readonly diagram: Diagram,
     private readonly offset: Point
   ) {
     super();
+
+    this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
+    diagram.selectionState.elements.forEach(e => this.snapshot(e));
   }
 
   onDragEnter(id: string) {
@@ -36,15 +66,15 @@ export class MoveDrag extends AbstractDrag {
 
     const hover = this.diagram.lookup(id);
 
+    this.clearHighlight();
+
     // Need to filter any edges that are connected to the current selection
     if (isEdge(hover) && selection.elements.some(e => isNode(e) && e.listEdges().includes(hover))) {
-      this.clearHighlight();
       this.#currentElement = undefined;
       return;
     }
 
     if (hover !== this.#currentElement) {
-      this.clearHighlight();
       this.#currentElement = hover;
       this.setHighlight();
     }
@@ -58,6 +88,16 @@ export class MoveDrag extends AbstractDrag {
   onKeyDown(event: KeyboardEvent) {
     this.#keys.push(event.key);
     this.updateState(this.diagram.selectionState.bounds);
+
+    if (isDuplicateDrag(event)) {
+      this.duplicate();
+    }
+  }
+
+  onKeyUp(event: KeyboardEvent) {
+    if (isDuplicateDrag(event)) {
+      this.removeDuplicate();
+    }
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
@@ -65,102 +105,34 @@ export class MoveDrag extends AbstractDrag {
     selection.setDragging(true);
 
     // Don't move connected edges
-    if (
-      selection.isEdgesOnly() &&
-      selection.edges.every(e => isConnected(e.start) || isConnected(e.end))
-    ) {
+    if (selection.isEdgesOnly() && selection.edges.every(e => e.isConnected())) {
       return;
     }
 
     // Disable pointer events on the first onDrag event
     if (!this.#dragStarted) {
       this.#dragStarted = true;
-      this.disablePointerEvents(selection.elements);
+      disablePointerEvents(selection.elements);
     }
 
     // Determine the delta between the current mouse position and the original mouse position
     const delta = Point.subtract(coord, Point.add(selection.bounds, this.offset));
+    const newPos = Point.add(selection.bounds, delta);
 
     const newBounds = Box.asReadWrite(selection.bounds);
-
-    const newPos = Point.add(selection.bounds, delta);
-    this.updateState(newPos);
     newBounds.x = newPos.x;
     newBounds.y = newPos.y;
 
     let snapDirections = Direction.all();
 
-    const isDuplicateDrag = modifiers.metaKey;
-    const isConstraintDrag = modifiers.shiftKey;
-    const isFreeDrag = modifiers.altKey;
-
-    // TODO: Ideally we would want to trigger some of this based on button press instead of mouse move
-    if (isDuplicateDrag && !this.#hasDuplicatedSelection) {
-      // Reset current selection back to original
-      const uow = new UnitOfWork(this.diagram, 'interactive');
-      this.diagram.transformElements(
-        selection.nodes,
-        [new Translation(Point.subtract(selection.source.boundingBox, selection.bounds))],
-        uow,
-        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
-      );
-
-      newBounds.x = selection.source.boundingBox.x;
-      newBounds.y = selection.source.boundingBox.y;
-      selection.guides = [];
-
-      this.enablePointerEvents(selection.elements);
-
-      const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
-      newElements.forEach(e => {
-        this.diagram.layers.active.addElement(e, uow);
-      });
-      selection.setElements(newElements, false);
-
-      uow.commit();
-
-      this.#hasDuplicatedSelection = true;
-    } else if (!isDuplicateDrag && this.#hasDuplicatedSelection) {
-      this.#hasDuplicatedSelection = false;
-
-      const elementsToRemove = selection.elements;
-
-      selection.setElements(selection.source.elementIds.map(e => this.diagram.lookup(e)!));
-      selection.guides = [];
-
-      UnitOfWork.execute(this.diagram, uow => {
-        elementsToRemove.forEach(e => {
-          e.layer.removeElement(e, uow);
-        });
-      });
+    if (isConstraintDrag(modifiers)) {
+      const res = this.constrainDrag(selection, coord);
+      snapDirections = res.availableSnapDirections;
+      newBounds.x = res.adjustedPosition.x;
+      newBounds.y = res.adjustedPosition.y;
     }
 
-    // TODO: Perhaps support 45 degree angles
-    if (isConstraintDrag) {
-      const source = Point.add(selection.source.boundingBox, this.offset);
-
-      const v = Vector.from(source, coord);
-      const length = Vector.length(v);
-      const angle = Vector.angle(v);
-
-      let snapAngle = Math.round(angle / (Math.PI / 2)) * (Math.PI / 2);
-
-      if (this.#snapAngle === 'h') {
-        snapAngle = Math.round(angle / Math.PI) * Math.PI;
-      } else if (this.#snapAngle === 'v') {
-        snapAngle = Math.round((angle + Math.PI / 2) / Math.PI) * Math.PI - Math.PI / 2;
-        snapDirections = ['n', 's'];
-      } else if (length > 20) {
-        this.#snapAngle = Angle.isHorizontal(snapAngle) ? 'h' : 'v';
-        snapDirections = ['e', 'w'];
-      }
-
-      const newPos = Point.add(selection.source.boundingBox, Vector.fromPolar(snapAngle, length));
-      newBounds.x = newPos.x;
-      newBounds.y = newPos.y;
-    }
-
-    if (isFreeDrag) {
+    if (isFreeDrag(modifiers)) {
       selection.guides = [];
     } else {
       const snapManager = this.diagram.createSnapManager();
@@ -172,124 +144,197 @@ export class MoveDrag extends AbstractDrag {
       newBounds.y = result.adjusted.y;
     }
 
-    const uow = new UnitOfWork(this.diagram, 'interactive');
+    // This is to update the tooltip
+    this.updateState(newBounds);
+
     this.diagram.transformElements(
       selection.elements,
       [new Translation(Point.subtract(newBounds, selection.bounds))],
-      uow,
+      this.uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
-    uow.commit();
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selectionState.recalculateBoundingBox();
+
+    this.uow.notify();
   }
 
   onDragEnd(): void {
     const selection = this.diagram.selectionState;
     selection.setDragging(false);
+    selection.guides = [];
 
-    this.enablePointerEvents(selection.elements);
+    this.clearHighlight();
+    enablePointerEvents(selection.elements);
+    this.#hasDuplicatedSelection = false;
 
-    if (selection.isChanged()) {
-      // TODO: Definitely need a compound undoable action here
-      const resizeCanvasAction = createResizeCanvasActionToFit(
-        this.diagram,
-        Box.boundingBox(
-          selection.nodes.map(e => e.bounds),
-          true
-        )
-      );
-      if (resizeCanvasAction) {
-        this.diagram.undoManager.addAndExecute(resizeCanvasAction);
-      }
+    this.uow.stopTracking();
+    const snapshots = this.uow.commit();
 
-      if (this.#hasDuplicatedSelection) {
-        this.diagram.undoManager.add(new ElementAddUndoableAction(selection.nodes, this.diagram));
-      } else {
-        this.diagram.undoManager.add(
-          new MoveAction(
-            selection.source.elementBoxes,
-            selection.elements.map(e => e.bounds),
-            selection.elements,
-            this.diagram,
-            'Move'
-          )
-        );
-      }
+    if (!selection.isChanged()) return;
 
-      const uow = new UnitOfWork(this.diagram);
-      if (this.#currentElement) {
-        selection.guides = [];
+    const compoundUndoAction = new CompoundUndoableAction();
 
-        const el = this.#currentElement;
-        // TODO: Handle the same for edges
-        if (isNode(el)) {
-          this.clearHighlight();
-          el.getNodeDefinition().onDrop(
-            Point.add(selection.bounds, this.offset),
-            el,
-            selection.elements,
-            uow,
-            'default'
-          );
-        } else if (isEdge(el)) {
-          this.clearHighlight();
-          el.getEdgeDefinition().onDrop(
-            Point.add(selection.bounds, this.offset),
-            el,
-            selection.elements,
-            uow,
-            this.getLastState(2) === 1 ? 'split' : 'attach'
-          );
-        } else {
-          VERIFY_NOT_REACHED();
-        }
-      } else if (
-        this.diagram.selectionState.elements.some(e => !!e.parent) &&
-        !this.diagram.selectionState.elements.some(e => e.parent?.nodeType === 'group')
-      ) {
-        const activeLayer = this.diagram.layers.active;
-        this.diagram.moveElement(
-          selection.elements,
-          activeLayer,
-          activeLayer.elements.length > 0
-            ? {
-                relation: 'above',
-                element: this.diagram.layers.active.elements.at(-1)!
-              }
-            : undefined
-        );
-      }
-
-      // This is needed to force a final transformation to be applied
-      this.diagram.transformElements(selection.elements, [], uow);
-      uow.commit();
-
-      selection.rebaseline();
+    const resizeCanvasAction = createResizeCanvasActionToFit(
+      this.diagram,
+      Box.boundingBox(
+        selection.nodes.map(e => e.bounds),
+        true
+      )
+    );
+    if (resizeCanvasAction) {
+      resizeCanvasAction.redo();
+      compoundUndoAction.addAction(resizeCanvasAction);
     }
 
+    const addedElements = snapshots.getAdded();
+    if (addedElements.length > 0) {
+      compoundUndoAction.addAction(
+        new ElementAddUndoableAction(
+          addedElements.map(e => this.diagram.lookup(e)!),
+          this.diagram
+        )
+      );
+    }
+
+    // This means we are dropping onto an element
+    if (this.#currentElement) {
+      const p = Point.add(selection.bounds, this.offset);
+      const el = this.#currentElement;
+      if (isNode(el)) {
+        compoundUndoAction.addAction(
+          el.getDefinition().onDrop(p, el, selection.elements, this.uow, 'default')
+        );
+      } else if (isEdge(el)) {
+        const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
+        compoundUndoAction.addAction(
+          el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation)
+        );
+      } else {
+        VERIFY_NOT_REACHED();
+      }
+
+      // Move elements out of a container
+    } else if (selection.elements.every(e => e.parent?.nodeType === 'container')) {
+      const activeLayer = this.diagram.layers.active;
+      this.diagram.moveElement(
+        selection.elements,
+        activeLayer,
+        activeLayer.elements.length > 0
+          ? {
+              relation: 'above',
+              element: this.diagram.layers.active.elements.at(-1)!
+            }
+          : undefined
+      );
+    } else {
+      // TODO: Extend snapshots to support layers as well
+      compoundUndoAction.addAction(
+        new SnapshotUndoableAction(
+          'Move',
+          snapshots,
+          snapshots.retakeSnapshot(this.diagram),
+          this.diagram
+        )
+      );
+    }
+
+    if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);
+
+    this.uow.commit();
+    selection.rebaseline();
+  }
+
+  private constrainDrag(selection: SelectionState, coord: Point) {
+    let snapDirections = Direction.all();
+    const source = Point.add(selection.source.boundingBox, this.offset);
+
+    const v = Vector.from(source, coord);
+    const length = Vector.length(v);
+    const angle = Vector.angle(v);
+
+    let snapAngle = Math.round(angle / (Math.PI / 2)) * (Math.PI / 2);
+
+    if (this.#snapAngle === 'h') {
+      snapAngle = Math.round(angle / Math.PI) * Math.PI;
+    } else if (this.#snapAngle === 'v') {
+      snapAngle = Math.round((angle + Math.PI / 2) / Math.PI) * Math.PI - Math.PI / 2;
+      snapDirections = ['n', 's'];
+    } else if (length > 20) {
+      this.#snapAngle = Angle.isHorizontal(snapAngle) ? 'h' : 'v';
+      snapDirections = ['e', 'w'];
+    }
+
+    return {
+      availableSnapDirections: snapDirections,
+      adjustedPosition: Point.add(selection.source.boundingBox, Vector.fromPolar(snapAngle, length))
+    };
+  }
+
+  private duplicate() {
+    if (this.#hasDuplicatedSelection) return;
+
+    this.#hasDuplicatedSelection = true;
+
+    const selection = this.diagram.selectionState;
+
+    // Clone the current selection to keep in its original position
+    const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
+    newElements.forEach(e => {
+      this.diagram.layers.active.addElement(e, this.uow);
+    });
+
+    // Reset current selection back to original
+    this.diagram.transformElements(
+      selection.nodes,
+      [new Translation(Point.subtract(selection.source.boundingBox, selection.bounds))],
+      this.uow,
+      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+    );
+
+    enablePointerEvents(selection.elements);
+
+    selection.guides = [];
+    selection.setElements(newElements, false);
+
+    this.uow.notify();
+  }
+
+  private removeDuplicate() {
+    if (!this.#hasDuplicatedSelection) return;
+
     this.#hasDuplicatedSelection = false;
+
+    const selection = this.diagram.selectionState;
+
+    const elementsToRemove = selection.elements;
+    const posititions = elementsToRemove.map(e => e.bounds);
+
+    selection.setElements(selection.source.elementIds.map(e => this.diagram.lookup(e)!));
+    selection.guides = [];
+
+    elementsToRemove.forEach(e => {
+      e.layer.removeElement(e, this.uow);
+    });
+
+    // Reset the original selection back to the position of the now
+    // removed duplicates
+    selection.elements.forEach((e, idx) => {
+      e.setBounds(posititions[idx], this.uow);
+    });
+
+    this.uow.notify();
   }
 
   private clearHighlight() {
     if (!this.#currentElement) return;
-
-    UnitOfWork.execute(this.diagram, uow => {
-      this.#currentElement?.updateProps(props => {
-        props.highlight = props.highlight?.filter(h => h !== 'drop-target');
-      }, uow);
-    });
+    removeHighlight(this.#currentElement, 'drop-target');
   }
 
   private setHighlight() {
     if (!this.#currentElement) return;
-    UnitOfWork.execute(this.diagram, uow => {
-      this.#currentElement?.updateProps(props => {
-        props.highlight ??= [];
-        props.highlight.push('drop-target');
-      }, uow);
-    });
+    addHighlight(this.#currentElement, 'drop-target');
   }
 
   private getLastState(max: number) {
@@ -314,31 +359,19 @@ export class MoveDrag extends AbstractDrag {
     });
   }
 
-  private enablePointerEvents(elements: ReadonlyArray<DiagramElement>) {
-    for (const e of elements) {
-      if (isNode(e)) {
-        const n = document.getElementById(`node-${e.id}`)!;
-        n.style.pointerEvents = this.#oldPEvents[n.id];
-        this.enablePointerEvents(e.children);
-      } else if (isEdge(e)) {
-        const n = document.getElementById(`edge-${e.id}`)!;
-        n.style.pointerEvents = this.#oldPEvents[n.id];
-      }
-    }
-  }
-
-  private disablePointerEvents(elements: ReadonlyArray<DiagramElement>) {
-    for (const e of elements) {
-      if (isNode(e)) {
-        const n = document.getElementById(`node-${e.id}`)!;
-        this.#oldPEvents[n.id] = n.style.pointerEvents;
-        n.style.pointerEvents = 'none';
-        this.enablePointerEvents(e.children);
-      } else if (isEdge(e)) {
-        const n = document.getElementById(`edge-${e.id}`)!;
-        this.#oldPEvents[n.id] = n.style.pointerEvents;
-        n.style.pointerEvents = 'none';
-      }
+  // TODO: We should be able to largely remove this and rely on snapshotting in
+  //       methods such as Diagram.transform etc
+  private snapshot(e: DiagramElement) {
+    if (this.uow.hasSnapshot(e)) return;
+    this.uow.snapshot(e, true);
+    if (isNode(e)) {
+      e.listEdges().forEach(ed => {
+        this.snapshot(ed);
+      });
+      e.children.forEach(c => this.snapshot(c));
+      if (e.parent) this.snapshot(e.parent);
+    } else if (isEdge(e)) {
+      e.labelNodes?.forEach(ln => this.snapshot(ln.node));
     }
   }
 }

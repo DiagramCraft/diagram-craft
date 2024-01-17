@@ -4,10 +4,45 @@ import { TransformFactory } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
 import { Layer } from './diagramLayer.ts';
-import { UnitOfWork } from './unitOfWork.ts';
+import { ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
 
-class AbstractTransformAction implements UndoableAction {
+export class SnapshotUndoableAction implements UndoableAction {
+  constructor(
+    public readonly description: string,
+    private readonly beforeSnapshot: ElementsSnapshot,
+    private readonly afterSnapshot: ElementsSnapshot,
+    private readonly diagram: Diagram
+  ) {}
+
+  undo() {
+    const uow = new UnitOfWork(this.diagram);
+    for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
+      // TODO: Handle addition
+      if (!snapshot) continue;
+      const node = this.diagram.lookup(id);
+      if (node) {
+        node.restore(snapshot!, uow);
+      }
+    }
+    uow.commit();
+  }
+
+  redo() {
+    const uow = new UnitOfWork(this.diagram);
+    for (const [id, snapshot] of this.afterSnapshot.snapshots) {
+      // TODO: Handle addition
+      if (!snapshot) continue;
+      const node = this.diagram.lookup(id);
+      if (node) {
+        node.restore(snapshot!, uow);
+      }
+    }
+    uow.commit();
+  }
+}
+
+export class TransformAction implements UndoableAction {
   readonly #elements: ReadonlyArray<DiagramElement>;
   readonly #source: ReadonlyArray<Box>;
   readonly #target: ReadonlyArray<Box>;
@@ -16,11 +51,11 @@ class AbstractTransformAction implements UndoableAction {
   description: string;
 
   constructor(
+    description: string,
     source: ReadonlyArray<Box>,
     target: ReadonlyArray<Box>,
     nodes: ReadonlyArray<DiagramElement>,
-    diagram: Diagram,
-    description: string
+    diagram: Diagram
   ) {
     this.#diagram = diagram;
     this.#elements = [...nodes];
@@ -49,12 +84,6 @@ class AbstractTransformAction implements UndoableAction {
     uow.commit();
   }
 }
-
-export class MoveAction extends AbstractTransformAction {}
-
-export class RotateAction extends AbstractTransformAction {}
-
-export class ResizeAction extends AbstractTransformAction {}
 
 export class ElementAddUndoableAction implements UndoableAction {
   readonly #layer: Layer;

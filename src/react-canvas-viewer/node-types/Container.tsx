@@ -254,7 +254,7 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     }
 
     if (node.parent) {
-      const parentDef = node.parent.getNodeDefinition();
+      const parentDef = node.parent.getDefinition();
       parentDef.onChildChanged(node.parent, uow);
     }
   }

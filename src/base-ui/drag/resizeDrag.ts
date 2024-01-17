@@ -5,9 +5,9 @@ import { LocalCoordinateSystem } from '../../geometry/lcs.ts';
 import { Box, WritableBox } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
-import { ResizeAction } from '../../model/diagramUndoActions.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { TransformAction } from '../../model/diagramUndoActions.ts';
 
 export type ResizeType =
   | 'resize-nw'
@@ -142,12 +142,12 @@ export class ResizeDrag extends AbstractDrag {
     const selection = this.diagram.selectionState;
     if (selection.isChanged()) {
       this.diagram.undoManager.add(
-        new ResizeAction(
+        new TransformAction(
+          'Resize',
           selection.source.elementBoxes,
           selection.elements.map(e => e.bounds),
           selection.elements,
-          this.diagram,
-          'Resize'
+          this.diagram
         )
       );
 

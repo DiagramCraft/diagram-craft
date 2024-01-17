@@ -72,7 +72,7 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
     node.setBounds(newBounds, uow);
 
     if (node.parent) {
-      const parentDef = node.parent.getNodeDefinition();
+      const parentDef = node.parent.getDefinition();
       parentDef.onChildChanged(node.parent, uow);
     }
   }

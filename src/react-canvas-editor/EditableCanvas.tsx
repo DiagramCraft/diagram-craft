@@ -117,6 +117,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
     },
     document
   );
+  useDomEventListener('keyup', e => tool.onKeyUp(e), document);
 
   const clearSelection = debounce(() => selection.clear());
 

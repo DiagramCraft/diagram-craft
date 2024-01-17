@@ -18,6 +18,7 @@ export interface Tool {
   onMouseOut(id: string, point: Point): void;
 
   onKeyDown(e: KeyboardEvent): void;
+  onKeyUp(e: KeyboardEvent): void;
 }
 
 export type ToolContructor = {

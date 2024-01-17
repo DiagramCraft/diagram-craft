@@ -4,9 +4,9 @@ import { assert } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
-import { RotateAction } from '../../model/diagramUndoActions.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { TransformAction } from '../../model/diagramUndoActions.ts';
 
 export class RotateDrag extends AbstractDrag {
   constructor(private readonly diagram: Diagram) {
@@ -49,12 +49,12 @@ export class RotateDrag extends AbstractDrag {
     const selection = this.diagram.selectionState;
     if (selection.isChanged()) {
       this.diagram.undoManager.add(
-        new RotateAction(
+        new TransformAction(
+          'Rotate',
           selection.source.elementBoxes,
           selection.elements.map(e => e.bounds),
           selection.elements,
-          this.diagram,
-          'Rotate'
+          this.diagram
         )
       );
       selection.forceRotation(undefined);

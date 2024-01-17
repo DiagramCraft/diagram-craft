@@ -136,4 +136,9 @@ export class MoveTool extends AbstractTool {
     const current = this.drag.current();
     current?.onKeyDown?.(e);
   }
+
+  onKeyUp(e: KeyboardEvent) {
+    const current = this.drag.current();
+    current?.onKeyUp?.(e);
+  }
 }

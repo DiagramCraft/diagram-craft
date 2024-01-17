@@ -80,7 +80,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   }
 
   // TODO: This should use the EdgeDefinitionRegistry
-  getEdgeDefinition() {
+  getDefinition() {
     return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
   }
 
@@ -178,6 +178,10 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   get end() {
     return this.#end;
+  }
+
+  isConnected() {
+    return isConnected(this.start) || isConnected(this.end);
   }
 
   /* Label Nodes ******************************************************************************************** */

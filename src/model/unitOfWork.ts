@@ -6,6 +6,32 @@ type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
 
+export class ElementsSnapshot {
+  constructor(readonly snapshots: Map<string, undefined | ElementsSnapshot>) {}
+
+  getUpdated() {
+    return [...this.snapshots.entries()].filter(([, v]) => v !== undefined).map(([k]) => k);
+  }
+
+  getAdded() {
+    return [...this.snapshots.entries()].filter(([, v]) => v === undefined).map(([k]) => k);
+  }
+
+  get(key: string) {
+    return this.snapshots.get(key);
+  }
+
+  retakeSnapshot(diagram: Diagram) {
+    const dest = new Map<string, undefined | ElementsSnapshot>();
+    for (const k of this.snapshots.keys()) {
+      const element = diagram.lookup(k);
+      if (!element) continue;
+      dest.set(k, element.snapshot());
+    }
+    return new ElementsSnapshot(dest);
+  }
+}
+
 export class UnitOfWork {
   #elementsToUpdate = new Map<string, DiagramElement>();
   #elementsToRemove = new Map<string, DiagramElement>();
@@ -22,8 +48,8 @@ export class UnitOfWork {
 
   constructor(
     readonly diagram: Diagram,
-    public readonly changeType: ChangeType = 'non-interactive',
-    public readonly trackChanges: boolean = false
+    public changeType: ChangeType = 'non-interactive',
+    public trackChanges: boolean = false
   ) {}
 
   static throwaway(diagram: Diagram) {
@@ -37,11 +63,18 @@ export class UnitOfWork {
     return result;
   }
 
-  snapshot(element: DiagramElement) {
+  snapshot(element: DiagramElement, ignoreDuplicates = false) {
     if (!this.trackChanges) return;
-    assert.false(this.#snapshots.has(element.id), 'Can only create snapshot once');
+    assert.false(
+      !ignoreDuplicates && this.#snapshots.has(element.id),
+      'Can only create snapshot once'
+    );
 
     this.#snapshots.set(element.id, element.snapshot());
+  }
+
+  hasSnapshot(element: DiagramElement) {
+    return this.#snapshots.has(element.id);
   }
 
   hasBeenInvalidated(element: DiagramElement) {
@@ -77,7 +110,7 @@ export class UnitOfWork {
       this.trackChanges && this.#snapshots.has(element.id),
       'Cannot add element that has a snapshot'
     );
-    if (this.trackChanges && this.#snapshots.has(element.id)) {
+    if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.set(element.id, undefined);
     }
     this.#elementsToAdd.set(element.id, element);
@@ -97,24 +130,29 @@ export class UnitOfWork {
   }
 
   notify() {
+    this.changeType = 'interactive';
+
     this.processEvents();
 
     this.#actions.clear();
     this.#elementsToUpdate.clear();
     this.#elementsToRemove.clear();
     this.#elementsToAdd.clear();
+    this.#invalidatedElements.clear();
 
     return this.#snapshots;
   }
 
   commit() {
+    this.changeType = 'non-interactive';
+
     this.processEvents();
 
     if (this.#shouldUpdateDiagram) {
       this.diagram.emit('change', { diagram: this.diagram });
     }
 
-    return this.#snapshots;
+    return new ElementsSnapshot(this.#snapshots);
   }
 
   abort() {}
@@ -133,5 +171,9 @@ export class UnitOfWork {
     this.#elementsToRemove.forEach(e => this.diagram.emit('elementRemove', { element: e }));
     this.#elementsToUpdate.forEach(e => this.diagram.emit('elementChange', { element: e }));
     this.#elementsToAdd.forEach(e => this.diagram.emit('elementAdd', { element: e }));
+  }
+
+  stopTracking() {
+    this.trackChanges = false;
   }
 }
