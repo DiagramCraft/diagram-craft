@@ -2,34 +2,11 @@ import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { UndoableAction } from '../../model/undoManager.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-
-class WaypointUndoAction implements UndoableAction {
-  description = 'Move Waypoint';
-
-  constructor(
-    private readonly edge: DiagramEdge,
-    private readonly waypointIdx: number,
-    private readonly newPoint: Point,
-    private readonly oldPoint: Point
-  ) {}
-
-  undo(): void {
-    UnitOfWork.execute(this.edge.diagram, uow =>
-      this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], this.oldPoint, uow)
-    );
-  }
-
-  redo(): void {
-    UnitOfWork.execute(this.edge.diagram, uow =>
-      this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], this.newPoint, uow)
-    );
-  }
-}
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
 export class EdgeWaypointDrag extends AbstractDrag {
-  private startPoint: Point;
+  private readonly uow: UnitOfWork;
 
   constructor(
     private readonly diagram: Diagram,
@@ -37,22 +14,23 @@ export class EdgeWaypointDrag extends AbstractDrag {
     private readonly waypointIdx: number
   ) {
     super();
-    this.startPoint = edge.waypoints[waypointIdx].point;
+    this.uow = new UnitOfWork(this.edge.diagram, true);
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
-    UnitOfWork.execute(this.edge.diagram, uow =>
-      this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], coord, uow)
-    );
+    this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx], coord, this.uow);
+    this.uow.notify();
   }
 
   onDragEnd(): void {
+    const snapshot = this.uow.commit();
+
     this.diagram.undoManager.add(
-      new WaypointUndoAction(
-        this.edge,
-        this.waypointIdx,
-        this.edge.waypoints[this.waypointIdx].point,
-        this.startPoint
+      new SnapshotUndoableAction(
+        'Move Waypoint',
+        snapshot,
+        snapshot.retakeSnapshot(this.diagram),
+        this.diagram
       )
     );
   }
