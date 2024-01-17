@@ -1,36 +1,34 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
-import { assert, VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { LocalCoordinateSystem } from '../../geometry/lcs.ts';
 import { Box, WritableBox } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { TransformAction } from '../../model/diagramUndoActions.ts';
+import { snapshotForTransform, UnitOfWork } from '../../model/unitOfWork.ts';
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
-export type ResizeType =
-  | 'resize-nw'
-  | 'resize-ne'
-  | 'resize-sw'
-  | 'resize-se'
-  | 'resize-n'
-  | 'resize-s'
-  | 'resize-w'
-  | 'resize-e';
+export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
+
+const isConstraintDrag = (m: Modifiers) => m.shiftKey;
+const isFreeDrag = (m: Modifiers) => m.altKey;
 
 export class ResizeDrag extends AbstractDrag {
+  private readonly uow: UnitOfWork;
+
   constructor(
     private readonly diagram: Diagram,
     private readonly type: ResizeType,
     private readonly offset: Point
   ) {
     super();
+    this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
+    diagram.selectionState.elements.forEach(e => snapshotForTransform(e, this.uow));
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
     const selection = this.diagram.selectionState;
-    assert.false(selection.isEmpty());
 
     const before = selection.bounds;
     const original = selection.source.boundingBox;
@@ -43,7 +41,6 @@ export class ResizeDrag extends AbstractDrag {
 
     const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(this.offset));
 
-    const constrainAspectRatio = modifiers.shiftKey;
     const aspectRatio = localOriginal.w / localOriginal.h;
 
     this.setState({
@@ -52,43 +49,43 @@ export class ResizeDrag extends AbstractDrag {
 
     const snapDirection: Direction[] = [];
     switch (this.type) {
-      case 'resize-e':
+      case 'e':
         localTarget.w = localOriginal.w + delta.x;
         snapDirection.push('e');
         break;
-      case 'resize-w':
+      case 'w':
         localTarget.x = localOriginal.x + delta.x;
         localTarget.w = localOriginal.w - delta.x;
         snapDirection.push('w');
         break;
-      case 'resize-n':
+      case 'n':
         localTarget.y = localOriginal.y + delta.y;
         localTarget.h = localOriginal.h - delta.y;
         snapDirection.push('n');
         break;
-      case 'resize-s':
+      case 's':
         localTarget.h = localOriginal.h + delta.y;
         snapDirection.push('s');
         break;
-      case 'resize-nw':
+      case 'nw':
         localTarget.x = localOriginal.x + delta.x;
         localTarget.y = localOriginal.y + delta.y;
         localTarget.w = localOriginal.w - delta.x;
         localTarget.h = localOriginal.h - delta.y;
         snapDirection.push('n', 'w');
         break;
-      case 'resize-ne':
+      case 'ne':
         localTarget.y = localOriginal.y + delta.y;
         localTarget.w = localOriginal.w + delta.x;
         localTarget.h = localOriginal.h - delta.y;
         snapDirection.push('n', 'e');
         break;
-      case 'resize-se':
+      case 'se':
         localTarget.w = localOriginal.w + delta.x;
         localTarget.h = localOriginal.h + delta.y;
         snapDirection.push('s', 'e');
         break;
-      case 'resize-sw':
+      case 'sw':
         localTarget.x = localOriginal.x + delta.x;
         localTarget.w = localOriginal.w - delta.x;
         localTarget.h = localOriginal.h + delta.y;
@@ -100,10 +97,10 @@ export class ResizeDrag extends AbstractDrag {
 
     const newBounds = Box.asReadWrite(lcs.toGlobal(WritableBox.asBox(localTarget)));
 
-    if (modifiers.altKey) {
+    if (isFreeDrag(modifiers)) {
       selection.guides = [];
 
-      if (constrainAspectRatio) {
+      if (isConstraintDrag(modifiers)) {
         this.applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs);
       }
     } else {
@@ -117,7 +114,7 @@ export class ResizeDrag extends AbstractDrag {
       newBounds.w = result.adjusted.w;
       newBounds.h = result.adjusted.h;
 
-      if (constrainAspectRatio) {
+      if (isConstraintDrag(modifiers)) {
         this.applyAspectRatioContraint(aspectRatio, newBounds, localOriginal, lcs);
         selection.guides = snapManager.reviseGuides(result.guides, WritableBox.asBox(newBounds));
       }
@@ -125,14 +122,13 @@ export class ResizeDrag extends AbstractDrag {
 
     selection.forceRotation(undefined);
 
-    const uow = new UnitOfWork(this.diagram, 'interactive');
     this.diagram.transformElements(
       selection.elements,
       TransformFactory.fromTo(before, WritableBox.asBox(newBounds)),
-      uow,
+      this.uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
-    uow.commit();
+    this.uow.notify();
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selectionState.recalculateBoundingBox();
@@ -140,24 +136,22 @@ export class ResizeDrag extends AbstractDrag {
 
   onDragEnd(): void {
     const selection = this.diagram.selectionState;
+
+    this.uow.stopTracking();
+    const snapshots = this.uow.commit();
+
     if (selection.isChanged()) {
       this.diagram.undoManager.add(
-        new TransformAction(
+        new SnapshotUndoableAction(
           'Resize',
-          selection.source.elementBoxes,
-          selection.elements.map(e => e.bounds),
-          selection.elements,
+          snapshots,
+          snapshots.retakeSnapshot(this.diagram),
           this.diagram
         )
       );
-
-      // This is needed to force a final transformation to be applied
-      const uow = new UnitOfWork(this.diagram);
-      this.diagram.transformElements(selection.elements, [], uow);
-      uow.commit();
-
-      selection.rebaseline();
     }
+
+    selection.rebaseline();
   }
 
   private applyAspectRatioContraint(
@@ -169,18 +163,18 @@ export class ResizeDrag extends AbstractDrag {
     const localTarget = Box.asReadWrite(lcs.toLocal(WritableBox.asBox(newBounds)));
 
     switch (this.type) {
-      case 'resize-e':
-      case 'resize-w':
+      case 'e':
+      case 'w':
         localTarget.h = localTarget.w / aspectRatio;
         break;
-      case 'resize-n':
-      case 'resize-s':
-      case 'resize-ne':
-      case 'resize-se':
+      case 'n':
+      case 's':
+      case 'ne':
+      case 'se':
         localTarget.w = localTarget.h * aspectRatio;
         break;
-      case 'resize-nw':
-      case 'resize-sw':
+      case 'nw':
+      case 'sw':
         localTarget.w = localTarget.h * aspectRatio;
         localTarget.x = localOriginal.x + localOriginal.w - localTarget.w;
         break;

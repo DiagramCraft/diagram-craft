@@ -67,42 +67,42 @@ export const ResizeHandles = () => {
         y={points[0].y}
         r={6}
         cursor={'nw-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-nw')}
+        onMouseDown={e => initiateDrag(e, 'nw')}
       />
       <Handle
         x={points[1].x}
         y={points[1].y}
         r={6}
         cursor={'ne-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-ne')}
+        onMouseDown={e => initiateDrag(e, 'ne')}
       />
       <Handle
         x={points[2].x}
         y={points[2].y}
         r={6}
         cursor={'se-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-se')}
+        onMouseDown={e => initiateDrag(e, 'se')}
       />
       <Handle
         x={points[3].x}
         y={points[3].y}
         r={6}
         cursor={'sw-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-sw')}
+        onMouseDown={e => initiateDrag(e, 'sw')}
       />
       <Handle
         x={north.x}
         y={north.y}
         r={6}
         cursor={'n-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-n')}
+        onMouseDown={e => initiateDrag(e, 'n')}
       />
       <Handle
         x={east.x}
         y={east.y}
         r={6}
         cursor={'e-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-e')}
+        onMouseDown={e => initiateDrag(e, 'e')}
       />
       ;
       <Handle
@@ -110,14 +110,14 @@ export const ResizeHandles = () => {
         y={south.y}
         r={6}
         cursor={'s-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-s')}
+        onMouseDown={e => initiateDrag(e, 's')}
       />
       <Handle
         x={west.x}
         y={west.y}
         r={6}
         cursor={'w-resize'}
-        onMouseDown={e => initiateDrag(e, 'resize-w')}
+        onMouseDown={e => initiateDrag(e, 'w')}
       />
     </>
   );
