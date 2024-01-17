@@ -22,6 +22,8 @@ declare global {
   }
 }
 
+// TODO: We should be able to cleanup the undo in here
+
 export const clipboardActions: ActionMapFactory = (state: State) => ({
   CLIPBOARD_COPY: new ClipboardCopyAction(state.diagram, 'copy'),
   CLIPBOARD_CUT: new ClipboardCopyAction(state.diagram, 'cut'),
