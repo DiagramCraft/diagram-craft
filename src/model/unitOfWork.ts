@@ -3,12 +3,31 @@ import { Diagram, DiagramEvents } from './diagram.ts';
 import { assert } from '../utils/assert.ts';
 import { Layer } from './diagramLayer.ts';
 import { EventKey } from '../utils/event.ts';
+import { SerializedEdge, SerializedNode } from './serialization/types.ts';
 
 type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
 
-type Snapshot = { _snapshotType: string };
+export type LayerSnapshot = {
+  _snapshotType: 'layer';
+  elements: string[];
+};
+
+export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
+  _snapshotType: 'node';
+  children: string[];
+};
+
+export type DiagramEdgeSnapshot = SerializedEdge & {
+  _snapshotType: 'edge';
+};
+
+type Snapshot = { _snapshotType: string } & (
+  | LayerSnapshot
+  | DiagramNodeSnapshot
+  | DiagramEdgeSnapshot
+);
 
 export interface UOWTrackable<T extends Snapshot> {
   id: string;
@@ -22,12 +41,20 @@ type Trackable = (DiagramElement | Layer) & UOWTrackable<Snapshot>;
 export class ElementsSnapshot {
   constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
 
-  getUpdated() {
-    return [...this.snapshots.entries()].filter(([, v]) => v !== undefined).map(([k]) => k);
+  onlyUpdated() {
+    return new ElementsSnapshot(
+      new Map([...this.snapshots.entries()].filter(([, v]) => v !== undefined))
+    );
   }
 
-  getAdded() {
-    return [...this.snapshots.entries()].filter(([, v]) => v === undefined).map(([k]) => k);
+  onlyAdded() {
+    return new ElementsSnapshot(
+      new Map([...this.snapshots.entries()].filter(([, v]) => v === undefined))
+    );
+  }
+
+  get keys() {
+    return [...this.snapshots.keys()];
   }
 
   get(key: string) {

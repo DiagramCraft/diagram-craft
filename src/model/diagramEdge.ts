@@ -10,19 +10,14 @@ import { PointOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
-import { UnitOfWork, UOWTrackable } from './unitOfWork.ts';
+import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge } from './diagramElement.ts';
 import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
-import { SerializedEdge } from './serialization/types.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { DeepReadonly, DeepWriteable } from '../utils/types.ts';
 import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
-
-export type DiagramEdgeSnapshot = SerializedEdge & {
-  _snapshotType: 'edge';
-};
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;

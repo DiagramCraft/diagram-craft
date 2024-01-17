@@ -8,17 +8,11 @@ import { AbstractNode, Anchor, LabelNode } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { assert } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
-import { UnitOfWork, UOWTrackable } from './unitOfWork.ts';
+import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
-import { SerializedNode } from './serialization/types.ts';
 import { DeepReadonly } from '../utils/types.ts';
 import { PathUtils } from '../geometry/pathUtils.ts';
-
-export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
-  _snapshotType: 'node';
-  children: string[];
-};
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

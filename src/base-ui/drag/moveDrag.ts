@@ -186,7 +186,7 @@ export class MoveDrag extends AbstractDrag {
         compoundUndoAction.addAction(resizeCanvasAction);
       }
 
-      const addedElements = snapshots.getAdded();
+      const addedElements = snapshots.onlyAdded().keys;
       if (addedElements.length > 0) {
         compoundUndoAction.addAction(
           new ElementAddUndoableAction(
@@ -227,12 +227,11 @@ export class MoveDrag extends AbstractDrag {
             : undefined
         );
       } else {
-        // TODO: Extend snapshots to support layers as well
         compoundUndoAction.addAction(
           new SnapshotUndoableAction(
             'Move',
-            snapshots,
-            snapshots.retakeSnapshot(this.diagram),
+            snapshots.onlyUpdated(),
+            snapshots.onlyUpdated().retakeSnapshot(this.diagram),
             this.diagram
           )
         );

@@ -2,14 +2,9 @@ import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { DiagramElement, isNode } from './diagramElement.ts';
-import { UnitOfWork, UOWTrackable } from './unitOfWork.ts';
+import { LayerSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { groupBy } from '../utils/array.ts';
 import { DiagramEdge } from './diagramEdge.ts';
-
-export type LayerSnapshot = {
-  _snapshotType: 'layer';
-  elements: string[];
-};
 
 export class Layer implements UOWTrackable<LayerSnapshot> {
   #elements: Array<DiagramElement> = [];

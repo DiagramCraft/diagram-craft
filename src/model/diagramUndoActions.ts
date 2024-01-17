@@ -1,9 +1,10 @@
 import { UndoableAction } from './undoManager.ts';
 import { Diagram } from './diagram.ts';
-import { DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
-import { Layer, LayerSnapshot } from './diagramLayer.ts';
-import { ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
+import { DiagramNode } from './diagramNode.ts';
+import { Layer } from './diagramLayer.ts';
+import { DiagramNodeSnapshot, ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
+import { assert } from '../utils/assert.ts';
 
 export class SnapshotUndoableAction implements UndoableAction {
   constructor(
@@ -16,14 +17,13 @@ export class SnapshotUndoableAction implements UndoableAction {
   undo() {
     const uow = new UnitOfWork(this.diagram);
     for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
-      // Addition must be handled differently
-      // TODO: Handle addition ... of both layers and nodes
-      if (!snapshot) continue;
+      // Addition must be handled differently ... and explictly before this
+      assert.present(snapshot);
 
       if (snapshot._snapshotType === 'layer') {
         const layer = this.diagram.layers.byId(id);
         if (layer) {
-          layer.restore(snapshot as LayerSnapshot, uow);
+          layer.restore(snapshot, uow);
         }
       } else {
         const node = this.diagram.lookup(id);
@@ -38,14 +38,13 @@ export class SnapshotUndoableAction implements UndoableAction {
   redo() {
     const uow = new UnitOfWork(this.diagram);
     for (const [id, snapshot] of this.afterSnapshot.snapshots) {
-      // Addition must be handled differently
-      // TODO: Handle addition ... of both layers and nodes
-      if (!snapshot) continue;
+      // Addition must be handled differently ... and explictly before this
+      assert.present(snapshot);
 
       if (snapshot._snapshotType === 'layer') {
         const layer = this.diagram.layers.byId(id);
         if (layer) {
-          layer.restore(snapshot as LayerSnapshot, uow);
+          layer.restore(snapshot, uow);
         }
       } else {
         const node = this.diagram.lookup(id);
