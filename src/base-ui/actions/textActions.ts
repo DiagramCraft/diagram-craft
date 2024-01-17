@@ -2,6 +2,7 @@ import { ActionEvents, ActionMapFactory, State, ToggleAction } from '../keyMap.t
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface ActionMap {
@@ -45,14 +46,25 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
     //       maybe add a property setter helper much like useNodeProperty
     const node = this.diagram.selectionState.nodes[0];
 
-    UnitOfWork.execute(this.diagram, uow => {
-      node.updateProps(p => {
-        p.text ??= {};
-        p.text[this.prop] ??= false;
-        p.text[this.prop] = !p.text[this.prop];
-      }, uow);
-    });
+    const uow = new UnitOfWork(this.diagram, true);
 
+    node.updateProps(p => {
+      p.text ??= {};
+      p.text[this.prop] ??= false;
+      p.text[this.prop] = !p.text[this.prop];
+    }, uow);
+
+    const snapshots = uow.commit();
+    this.diagram.undoManager.add(
+      new SnapshotUndoableAction(
+        `Text: ${this.prop}`,
+        snapshots,
+        snapshots.retakeSnapshot(this.diagram),
+        this.diagram
+      )
+    );
+
+    // TODO: Need to add the this state to the undoable action
     this.state = !!node.props.text![this.prop];
     this.emit('actionchanged', { action: this });
   }
@@ -85,17 +97,28 @@ export class TextDecorationAction extends EventEmitter<ActionEvents> implements 
     //       maybe add a property setter helper much like useNodeProperty
     const node = this.diagram.selectionState.nodes[0];
 
-    UnitOfWork.execute(this.diagram, uow => {
-      node.updateProps(p => {
-        p.text ??= {};
-        if (p.text.textDecoration === this.prop) {
-          p.text.textDecoration = 'none';
-        } else {
-          p.text.textDecoration = this.prop;
-        }
-      }, uow);
-    });
+    const uow = new UnitOfWork(this.diagram, true);
 
+    node.updateProps(p => {
+      p.text ??= {};
+      if (p.text.textDecoration === this.prop) {
+        p.text.textDecoration = 'none';
+      } else {
+        p.text.textDecoration = this.prop;
+      }
+    }, uow);
+
+    const snapshots = uow.commit();
+    this.diagram.undoManager.add(
+      new SnapshotUndoableAction(
+        `Text decoration`,
+        snapshots,
+        snapshots.retakeSnapshot(this.diagram),
+        this.diagram
+      )
+    );
+
+    // TODO: Need to add the this state to the undoable action
     this.state = node.props.text!.textDecoration === this.prop;
     this.emit('actionchanged', { action: this });
   }

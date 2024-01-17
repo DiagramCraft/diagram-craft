@@ -5,6 +5,7 @@ import { precondition } from '../../utils/assert.ts';
 import { PointOnPath } from '../../geometry/pathPosition.ts';
 import { smallest } from '../../utils/array.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface ActionMap {
@@ -45,8 +46,17 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
       (a, b) => a.d - b.d
     )!.idx;
 
-    UnitOfWork.execute(this.diagram, uow => {
-      edge.removeWaypoint(edge.waypoints[closestWaypointIndex], uow);
-    });
+    const uow = new UnitOfWork(this.diagram, true);
+    edge.removeWaypoint(edge.waypoints[closestWaypointIndex], uow);
+
+    const snapshots = uow.commit();
+    this.diagram.undoManager.add(
+      new SnapshotUndoableAction(
+        'Delete waypoint',
+        snapshots,
+        snapshots.retakeSnapshot(this.diagram),
+        this.diagram
+      )
+    );
   }
 }
