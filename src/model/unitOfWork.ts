@@ -46,14 +46,15 @@ export class UnitOfWork {
   // TODO: Will we really need #actions going forward
   #actions = new Map<string, ActionCallback>();
 
+  changeType: ChangeType = 'non-interactive';
+
   constructor(
     readonly diagram: Diagram,
-    public changeType: ChangeType = 'non-interactive',
     public trackChanges: boolean = false
   ) {}
 
   static throwaway(diagram: Diagram) {
-    return new UnitOfWork(diagram, 'interactive', false);
+    return new UnitOfWork(diagram, false);
   }
 
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {

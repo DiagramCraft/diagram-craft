@@ -12,7 +12,7 @@ export class RotateDrag extends AbstractDrag {
 
   constructor(private readonly diagram: Diagram) {
     super();
-    this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
+    this.uow = new UnitOfWork(this.diagram, true);
   }
 
   onDrag(coord: Point) {

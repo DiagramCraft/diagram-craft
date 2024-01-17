@@ -23,7 +23,7 @@ export class ResizeDrag extends AbstractDrag {
     private readonly offset: Point
   ) {
     super();
-    this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
+    this.uow = new UnitOfWork(this.diagram, true);
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {

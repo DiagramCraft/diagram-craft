@@ -56,7 +56,7 @@ export class MoveDrag extends AbstractDrag {
   ) {
     super();
 
-    this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
+    this.uow = new UnitOfWork(this.diagram, true);
   }
 
   onDragEnter(id: string) {
