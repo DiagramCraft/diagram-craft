@@ -3,10 +3,15 @@ import { Point } from '../../geometry/point.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
+import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { isNode } from '../../model/diagramElement.ts';
+
+const EDGE_HIGHLIGHT = 'edge-connect';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
+  private readonly uow: UnitOfWork;
   private hoverElement: string | undefined;
   coord: Point | undefined;
 
@@ -16,87 +21,84 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     private readonly type: 'start' | 'end'
   ) {
     super();
+    this.uow = new UnitOfWork(this.edge.diagram, true);
   }
 
   onDragEnter(id: string): void {
+    const type = this.type;
+
     // Make sure we cannot connect to ourselves
-    if (this.type === 'start' && isConnected(this.edge.end) && this.edge.end.node.id === id) return;
-    if (this.type === 'end' && isConnected(this.edge.start) && this.edge.start.node.id === id)
-      return;
+    if (type === 'start' && isConnected(this.edge.end) && this.edge.end.node.id === id) return;
+    if (type === 'end' && isConnected(this.edge.start) && this.edge.start.node.id === id) return;
 
     this.hoverElement = id;
 
-    if (id && this.diagram.nodeLookup.has(id)) {
-      const el = this.diagram.nodeLookup.get(id)!;
-      el.anchors;
+    const el = this.diagram.lookup(id)!;
+
+    if (isNode(el)) {
+      el.anchors; // This looks like a noop, but it will trigger the anchors to be calculated
     }
 
-    const el = this.diagram.lookup(id)!;
-    addHighlight(el, 'edge-connect');
+    addHighlight(el, EDGE_HIGHLIGHT);
   }
 
   onDragLeave(): void {
     if (this.hoverElement) {
-      removeHighlight(this.diagram.lookup(this.hoverElement)!, 'edge-connect');
+      removeHighlight(this.diagram.lookup(this.hoverElement), EDGE_HIGHLIGHT);
     }
     this.hoverElement = undefined;
   }
 
   onDrag(coord: Point) {
     const selection = this.diagram.selectionState;
-
     selection.guides = [];
 
-    const uow = new UnitOfWork(this.diagram);
-
-    if (this.type === 'start') {
-      this.edge.setStart(new FreeEndpoint(coord), uow);
-    } else {
-      this.edge.setEnd(new FreeEndpoint(coord), uow);
-    }
+    this.setEndpoint(new FreeEndpoint(coord));
 
     this.coord = coord;
 
-    // TODO: We should snap to the connection point
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      this.attachToClosestAnchor(coord, uow);
+      this.attachToClosestAnchor(coord);
     }
 
-    uow.commit();
+    this.uow.notify();
   }
 
   onDragEnd(): void {
-    // Using the last known coordinate, attach to the closest anchor
-    const uow = new UnitOfWork(this.diagram);
-    this.attachToClosestAnchor(this.coord!, uow);
+    this.attachToClosestAnchor(this.coord!);
 
     if (this.hoverElement) {
-      removeHighlight(this.diagram.lookup(this.hoverElement)!, 'edge-connect');
+      removeHighlight(this.diagram.lookup(this.hoverElement), EDGE_HIGHLIGHT);
     }
 
-    uow.commit();
-    // TODO: Create undoable action
+    const snapshot = this.uow.commit();
+
+    this.diagram.undoManager.add(
+      new SnapshotUndoableAction(
+        'Move edge endpoint',
+        snapshot,
+        snapshot.retakeSnapshot(this.diagram),
+        this.diagram
+      )
+    );
   }
 
-  private attachToClosestAnchor(coord: Point, uow: UnitOfWork) {
-    if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      if (this.type === 'start') {
-        this.edge.setStart(
-          new ConnectedEndpoint(
-            this.getClosestAnchor(coord),
-            this.diagram.nodeLookup.get(this.hoverElement)!
-          ),
-          uow
-        );
-      } else {
-        this.edge.setEnd(
-          new ConnectedEndpoint(
-            this.getClosestAnchor(coord),
-            this.diagram.nodeLookup.get(this.hoverElement)!
-          ),
-          uow
-        );
-      }
+  private attachToClosestAnchor(coord: Point) {
+    if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
+
+    this.setEndpoint(
+      new ConnectedEndpoint(
+        this.getClosestAnchor(coord),
+        this.diagram.nodeLookup.get(this.hoverElement)!
+      )
+    );
+  }
+
+  private setEndpoint(endpoint: Endpoint) {
+    if (this.type === 'start') {
+      this.edge.setStart(endpoint, this.uow);
+    } else {
+      this.edge.setEnd(endpoint, this.uow);
     }
   }
 

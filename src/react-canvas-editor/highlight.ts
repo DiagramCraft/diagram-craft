@@ -10,7 +10,8 @@ export const addHighlight = (element: DiagramElement, highlight: string) => {
   });
 };
 
-export const removeHighlight = (element: DiagramElement, highlight: string) => {
+export const removeHighlight = (element: DiagramElement | undefined, highlight: string) => {
+  if (!element) return;
   if (!element.props.highlight) return;
 
   UnitOfWork.execute(element.diagram, uow => {

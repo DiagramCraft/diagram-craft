@@ -146,11 +146,15 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     uow.snapshot(this);
 
     if (isConnected(this.#start)) {
+      uow.snapshot(this.#start.node);
+
       this.#start.node._removeEdge(this.#start.anchor, this);
       uow.updateElement(this.#start.node);
     }
 
     if (isConnected(start)) {
+      uow.snapshot(start.node);
+
       start.node._addEdge(start.anchor, this);
       uow.updateElement(start.node);
     }
@@ -168,11 +172,15 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     uow.snapshot(this);
 
     if (isConnected(this.#end)) {
+      uow.snapshot(this.#end.node);
+
       this.#end.node._removeEdge(this.#end.anchor, this);
       uow.updateElement(this.#end.node);
     }
 
     if (isConnected(end)) {
+      uow.snapshot(end.node);
+
       end.node._addEdge(end.anchor, this);
       uow.updateElement(end.node);
     }
@@ -330,6 +338,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props = snapshot.props as NodeProps;
+    this.#props.highlight = undefined;
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram);
     this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;

@@ -204,6 +204,7 @@ export class DiagramNode implements AbstractNode, DiagramElement {
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props = snapshot.props as NodeProps;
+    this.#props.highlight = undefined;
     this.setChildren(
       snapshot.children.map(c => this.diagram.lookup(c)!),
       uow
