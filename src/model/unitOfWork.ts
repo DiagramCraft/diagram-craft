@@ -1,13 +1,25 @@
-import { DiagramElement, Snapshot } from './diagramElement.ts';
-import { Diagram } from './diagram.ts';
+import { DiagramElement } from './diagramElement.ts';
+import { Diagram, DiagramEvents } from './diagram.ts';
 import { assert } from '../utils/assert.ts';
+import { Layer } from './diagramLayer.ts';
+import { EventKey } from '../utils/event.ts';
 
 type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
 
+type Snapshot = { _snapshotType: string };
+
+export interface UOWTrackable<T extends Snapshot> {
+  invalidate(uow: UnitOfWork): void;
+  snapshot(): T;
+  restore(snapshot: T, uow: UnitOfWork): void;
+}
+
+type Trackable = (DiagramElement | Layer) & UOWTrackable<Snapshot>;
+
 export class ElementsSnapshot {
-  constructor(readonly snapshots: Map<string, undefined | ElementsSnapshot>) {}
+  constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
 
   getUpdated() {
     return [...this.snapshots.entries()].filter(([, v]) => v !== undefined).map(([k]) => k);
@@ -22,7 +34,7 @@ export class ElementsSnapshot {
   }
 
   retakeSnapshot(diagram: Diagram) {
-    const dest = new Map<string, undefined | ElementsSnapshot>();
+    const dest = new Map<string, undefined | Snapshot>();
     for (const k of this.snapshots.keys()) {
       const element = diagram.lookup(k);
       if (!element) continue;
@@ -33,11 +45,11 @@ export class ElementsSnapshot {
 }
 
 export class UnitOfWork {
-  #elementsToUpdate = new Map<string, DiagramElement>();
-  #elementsToRemove = new Map<string, DiagramElement>();
-  #elementsToAdd = new Map<string, DiagramElement>();
+  #elementsToUpdate = new Map<string, Trackable>();
+  #elementsToRemove = new Map<string, Trackable>();
+  #elementsToAdd = new Map<string, Trackable>();
 
-  #invalidatedElements = new Set<DiagramElement>();
+  #invalidatedElements = new Set<Trackable>();
 
   #shouldUpdateDiagram = false;
 
@@ -64,30 +76,26 @@ export class UnitOfWork {
     return result;
   }
 
-  snapshot(element: DiagramElement) {
+  snapshot(element: Trackable) {
     if (!this.trackChanges) return;
     if (this.#snapshots.has(element.id)) return;
 
     this.#snapshots.set(element.id, element.snapshot());
   }
 
-  hasSnapshot(element: DiagramElement) {
-    return this.#snapshots.has(element.id);
-  }
-
-  hasBeenInvalidated(element: DiagramElement) {
+  hasBeenInvalidated(element: Trackable) {
     return this.#invalidatedElements.has(element);
   }
 
-  beginInvalidation(element: DiagramElement) {
+  beginInvalidation(element: Trackable) {
     this.#invalidatedElements.add(element);
   }
 
-  contains(element: DiagramElement) {
+  contains(element: Trackable) {
     return this.#elementsToUpdate.has(element.id) || this.#elementsToRemove.has(element.id);
   }
 
-  updateElement(element: DiagramElement) {
+  updateElement(element: Trackable) {
     assert.true(
       !this.trackChanges || this.#snapshots.has(element.id),
       'Must create snapshot before updating element'
@@ -95,7 +103,7 @@ export class UnitOfWork {
     this.#elementsToUpdate.set(element.id, element);
   }
 
-  removeElement(element: DiagramElement) {
+  removeElement(element: Trackable) {
     assert.true(
       !this.trackChanges || this.#snapshots.has(element.id),
       'Must create snapshot before updating element'
@@ -103,7 +111,7 @@ export class UnitOfWork {
     this.#elementsToRemove.set(element.id, element);
   }
 
-  addElement(element: DiagramElement) {
+  addElement(element: Trackable) {
     assert.false(
       this.trackChanges && this.#snapshots.has(element.id),
       'Cannot add element that has a snapshot'
@@ -118,7 +126,7 @@ export class UnitOfWork {
     this.#shouldUpdateDiagram = true;
   }
 
-  pushAction(name: string, element: DiagramElement, cb: ActionCallback) {
+  pushAction(name: string, element: Trackable, cb: ActionCallback) {
     const id = name + element.id;
     if (this.#actions.has(id)) return;
 
@@ -164,11 +172,19 @@ export class UnitOfWork {
     this.#elementsToUpdate.forEach(e => e.invalidate(this));
     this.#elementsToAdd.forEach(e => e.invalidate(this));
 
+    const handle = (s: EventKey<DiagramEvents>) => (e: Trackable) => {
+      if (e instanceof Layer) {
+        this.#shouldUpdateDiagram = true;
+      } else {
+        this.diagram.emit(s, { element: e });
+      }
+    };
+
     // TODO: Need to think about the order here a bit better to optimize the number of events
     //       ... can be only CHANGE, ADD, REMOVE, ADD_CHANGE
-    this.#elementsToRemove.forEach(e => this.diagram.emit('elementRemove', { element: e }));
-    this.#elementsToUpdate.forEach(e => this.diagram.emit('elementChange', { element: e }));
-    this.#elementsToAdd.forEach(e => this.diagram.emit('elementAdd', { element: e }));
+    this.#elementsToRemove.forEach(handle('elementRemove'));
+    this.#elementsToUpdate.forEach(handle('elementChange'));
+    this.#elementsToAdd.forEach(handle('elementAdd'));
   }
 
   stopTracking() {

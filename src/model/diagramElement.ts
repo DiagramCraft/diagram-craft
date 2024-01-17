@@ -9,7 +9,7 @@ import { Diagram } from './diagram.ts';
 import { DeepReadonly } from '../utils/types.ts';
 
 // eslint-disable-next-line
-export type Snapshot = any;
+type Snapshot = any;
 
 export interface DiagramElement extends AbstractElement {
   invalidate(uow: UnitOfWork): void;

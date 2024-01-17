@@ -2,11 +2,16 @@ import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { DiagramElement, isNode } from './diagramElement.ts';
-import { UnitOfWork } from './unitOfWork.ts';
+import { UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { groupBy } from '../utils/array.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 
-export class Layer {
+type LayerSnapshot = {
+  _snapshotType: 'layer';
+  elements: string[];
+};
+
+export class Layer implements UOWTrackable<LayerSnapshot> {
   #elements: Array<DiagramElement> = [];
   #locked = false;
 
@@ -33,13 +38,33 @@ export class Layer {
     return this.#locked;
   }
 
+  // TODO: Add uow here
   set locked(value: boolean) {
     this.#locked = value;
     this.#diagram.emit('change', { diagram: this.#diagram });
   }
 
+  /* Snapshot ************************************************************************************************ */
+
+  snapshot(): LayerSnapshot {
+    return {
+      _snapshotType: 'layer',
+      elements: this.elements.map(e => e.id)
+    };
+  }
+
+  restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
+    this.setElements(
+      snapshot.elements.map(id => this.#diagram.lookup(id)!),
+      uow
+    );
+    uow.updateElement(this);
+  }
+
   // TODO: Add some tests for the stack operations
   stackModify(elements: ReadonlyArray<DiagramElement>, positionDelta: number, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     const byParent = groupBy(elements, e => e.parent);
 
     const snapshot = new Map<DiagramNode | undefined, StackPosition[]>();
@@ -65,6 +90,8 @@ export class Layer {
   }
 
   stackSet(newPositions: Map<DiagramNode | undefined, StackPosition[]>, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     for (const [parent, positions] of newPositions) {
       positions.sort((a, b) => a.idx - b.idx);
       if (parent) {
@@ -77,22 +104,30 @@ export class Layer {
       }
     }
 
-    uow.updateDiagram();
+    uow.updateElement(this);
   }
 
   addElement(element: DiagramElement, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     if (!element.parent && !this.#elements.includes(element)) this.#elements.push(element);
     this.processElementForAdd(element);
     uow.addElement(element);
+    uow.updateElement(this);
   }
 
   removeElement(element: DiagramElement, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     this.#elements = this.elements.filter(e => e !== element);
     element.detach(uow);
     uow.removeElement(element);
+    uow.updateElement(this);
   }
 
   setElements(elements: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    uow.snapshot(this);
+
     const added = elements.filter(e => !this.#elements.includes(e));
     const removed = this.#elements.filter(e => !elements.includes(e));
     this.#elements = elements as Array<DiagramElement>;
@@ -108,43 +143,17 @@ export class Layer {
       }
       uow.removeElement(e);
     }
+
+    uow.updateElement(this);
   }
 
   isAbove(layer: Layer) {
     return this.#diagram.layers.all.indexOf(this) < this.#diagram.layers.all.indexOf(layer);
   }
 
-  /*
-  findElementsByPoint(coord: Point): ReadonlyArray<DiagramElement> {
-    const pb = new PathBuilder();
-    pb.moveTo({ x: -100000, y: -100000 });
-    pb.lineTo(coord);
-    const ref = pb.getPath();
-
-    const dest: Array<DiagramElement> = [];
-    for (const e of this.elements.toReversed()) {
-      if (!Box.contains(e.bounds, coord)) continue;
-
-      if (e.type === 'node') {
-        if (e.getNodeDefinition().getBoundingPath(e).intersections(ref).length % 2 === 1) {
-          dest.push(e);
-        }
-      } else {
-        const projected = e.path().projectPoint(coord);
-        if (
-          projected.segmentT >= 0 &&
-          projected.segmentT <= 1 &&
-          Point.distance(coord, projected.point) < 5
-        ) {
-          dest.push(e);
-        }
-      }
-    }
-
-    return dest;
+  invalidate(_uow: UnitOfWork) {
+    // Nothing for now...
   }
-
-   */
 
   private processElementForAdd(e: DiagramElement) {
     e._setLayer(this, this.#diagram);

@@ -10,7 +10,7 @@ import { PointOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
-import { UnitOfWork } from './unitOfWork.ts';
+import { UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge } from './diagramElement.ts';
 import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
@@ -20,7 +20,9 @@ import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { DeepReadonly, DeepWriteable } from '../utils/types.ts';
 import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
 
-export type DiagramEdgeSnapshot = SerializedEdge;
+export type DiagramEdgeSnapshot = SerializedEdge & {
+  _snapshotType: 'edge';
+};
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -40,7 +42,9 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
   return true;
 };
 
-export class DiagramEdge implements AbstractEdge, DiagramElement {
+export class DiagramEdge
+  implements AbstractEdge, DiagramElement, UOWTrackable<DiagramEdgeSnapshot>
+{
   readonly type = 'edge';
 
   readonly id: string;
@@ -320,6 +324,7 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
 
   snapshot(): DiagramEdgeSnapshot {
     return {
+      _snapshotType: 'edge',
       id: this.id,
       type: 'edge',
       props: deepClone(this.props),
