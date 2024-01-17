@@ -342,10 +342,17 @@ export class DiagramEdge
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram);
     this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;
+
+    const oldLabelNodes = this.#labelNodes ?? [];
     this.#labelNodes = snapshot.labelNodes?.map(ln => ({
       ...ln,
       node: this.diagram.nodeLookup.get(ln.id)!
     }));
+    for (const ln of oldLabelNodes) {
+      if (!this.#labelNodes?.find(e => e.node === ln.node)) {
+        ln.node.updateProps(p => (p.labelForEdgeId = undefined), uow);
+      }
+    }
 
     uow.updateElement(this);
   }

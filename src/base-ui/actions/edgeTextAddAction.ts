@@ -6,6 +6,11 @@ import { LengthOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { CompoundUndoableAction } from '../../model/undoManager.ts';
+import {
+  ElementAddUndoableAction,
+  SnapshotUndoableAction
+} from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface ActionMap {
@@ -34,7 +39,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const uow = new UnitOfWork(this.diagram);
+    const uow = new UnitOfWork(this.diagram, true);
 
     const textNode = new DiagramNode(
       newid(),
@@ -74,7 +79,19 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     );
 
     uow.updateElement(edge);
-    uow.commit();
+
+    const snapshots = uow.commit();
+    this.diagram.undoManager.add(
+      new CompoundUndoableAction([
+        new ElementAddUndoableAction([textNode], this.diagram),
+        new SnapshotUndoableAction(
+          `Add edge text`,
+          snapshots.onlyUpdated(),
+          snapshots.onlyUpdated().retakeSnapshot(this.diagram),
+          this.diagram
+        )
+      ])
+    );
 
     setTimeout(() => {
       this.diagram.nodeDefinitions.get('text').requestFocus(textNode);

@@ -14,8 +14,8 @@ export type UndoableAction = {
 export class CompoundUndoableAction implements UndoableAction {
   #actions: UndoableAction[];
 
-  constructor() {
-    this.#actions = [];
+  constructor(actions?: UndoableAction[]) {
+    this.#actions = actions ?? [];
   }
 
   addAction(action: UndoableAction | undefined) {
@@ -31,7 +31,7 @@ export class CompoundUndoableAction implements UndoableAction {
   }
 
   undo() {
-    for (const action of this.#actions.reverse()) {
+    for (const action of this.#actions.toReversed()) {
       action.undo();
     }
   }
