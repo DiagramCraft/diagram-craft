@@ -25,8 +25,9 @@ export class DuplicateAction extends AbstractSelectionAction {
 
   execute() {
     // TODO: Support cloning of edges
-    const newElements: DiagramNode[] = [];
     const uow = new UnitOfWork(this.diagram);
+
+    const newElements: DiagramNode[] = [];
     for (const el of this.diagram.selectionState.nodes) {
       const newEl = el.duplicate();
       newEl.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);

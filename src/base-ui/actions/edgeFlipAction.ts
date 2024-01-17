@@ -2,6 +2,7 @@ import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface ActionMap {
@@ -27,11 +28,18 @@ export class EdgeFlipAction extends EventEmitter<ActionEvents> implements Action
   }
 
   execute(): void {
-    // TODO: Implement undo
-    const uow = new UnitOfWork(this.diagram);
+    const uow = new UnitOfWork(this.diagram, true);
     for (const edge of this.diagram.selectionState.edges) {
       edge.flip(uow);
     }
-    uow.commit();
+    const snapshots = uow.commit();
+    this.diagram.undoManager.add(
+      new SnapshotUndoableAction(
+        'Flip edge',
+        snapshots,
+        snapshots.retakeSnapshot(this.diagram),
+        this.diagram
+      )
+    );
   }
 }
