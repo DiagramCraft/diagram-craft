@@ -18,7 +18,9 @@ export const textActions: ActionMapFactory = (state: State) => ({
   TEXT_UNDERLINE: new TextDecorationAction(state.diagram, 'underline')
 });
 
-// TODO: Both of these actions must listen for node changes and update state
+// TODO: Maybe we can create an AbstractPropertyAction that takes a prop name and a value and
+//       to make all of this a bit more streamlined
+
 export class TextAction extends EventEmitter<ActionEvents> implements ToggleAction {
   enabled = false;
   state = false;
@@ -30,7 +32,9 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
     super();
     const callback = () => {
       if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
-        this.enabled = diagram.selectionState.nodes[0].nodeType === 'text';
+        const node = diagram.selectionState.nodes[0];
+        this.enabled = node.nodeType === 'text';
+        this.state = !!node.props.text?.[this.prop];
       } else {
         this.enabled = false;
       }
@@ -39,11 +43,10 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
     callback();
     diagram.selectionState.on('add', callback);
     diagram.selectionState.on('remove', callback);
+    diagram.undoManager.on('execute', callback);
   }
 
   execute(): void {
-    // TODO: Make these undoable
-    //       maybe add a property setter helper much like useNodeProperty
     const node = this.diagram.selectionState.nodes[0];
 
     const uow = new UnitOfWork(this.diagram, true);
@@ -64,7 +67,6 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
       )
     );
 
-    // TODO: Need to add the this state to the undoable action
     this.state = !!node.props.text![this.prop];
     this.emit('actionchanged', { action: this });
   }
@@ -81,7 +83,9 @@ export class TextDecorationAction extends EventEmitter<ActionEvents> implements 
     super();
     const callback = () => {
       if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
-        this.enabled = diagram.selectionState.nodes[0].nodeType === 'text';
+        const node = diagram.selectionState.nodes[0];
+        this.enabled = node.nodeType === 'text';
+        this.state = node.props.text?.textDecoration === this.prop;
       } else {
         this.enabled = false;
       }
@@ -90,11 +94,10 @@ export class TextDecorationAction extends EventEmitter<ActionEvents> implements 
     callback();
     diagram.selectionState.on('add', callback);
     diagram.selectionState.on('remove', callback);
+    diagram.undoManager.on('execute', callback);
   }
 
   execute(): void {
-    // TODO: Make these undoable
-    //       maybe add a property setter helper much like useNodeProperty
     const node = this.diagram.selectionState.nodes[0];
 
     const uow = new UnitOfWork(this.diagram, true);
@@ -118,7 +121,6 @@ export class TextDecorationAction extends EventEmitter<ActionEvents> implements 
       )
     );
 
-    // TODO: Need to add the this state to the undoable action
     this.state = node.props.text!.textDecoration === this.prop;
     this.emit('actionchanged', { action: this });
   }
