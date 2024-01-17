@@ -13,7 +13,7 @@ import {
 import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { snapshotForTransform, UnitOfWork } from '../../model/unitOfWork.ts';
 import { largest } from '../../utils/array.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
@@ -57,7 +57,7 @@ export class MoveDrag extends AbstractDrag {
     super();
 
     this.uow = new UnitOfWork(this.diagram, 'non-interactive', true);
-    diagram.selectionState.elements.forEach(e => this.snapshot(e));
+    diagram.selectionState.elements.forEach(e => snapshotForTransform(e, this.uow));
   }
 
   onDragEnter(id: string) {
@@ -172,75 +172,75 @@ export class MoveDrag extends AbstractDrag {
     this.uow.stopTracking();
     const snapshots = this.uow.commit();
 
-    if (!selection.isChanged()) return;
+    if (selection.isChanged()) {
+      const compoundUndoAction = new CompoundUndoableAction();
 
-    const compoundUndoAction = new CompoundUndoableAction();
-
-    const resizeCanvasAction = createResizeCanvasActionToFit(
-      this.diagram,
-      Box.boundingBox(
-        selection.nodes.map(e => e.bounds),
-        true
-      )
-    );
-    if (resizeCanvasAction) {
-      resizeCanvasAction.redo();
-      compoundUndoAction.addAction(resizeCanvasAction);
-    }
-
-    const addedElements = snapshots.getAdded();
-    if (addedElements.length > 0) {
-      compoundUndoAction.addAction(
-        new ElementAddUndoableAction(
-          addedElements.map(e => this.diagram.lookup(e)!),
-          this.diagram
+      const resizeCanvasAction = createResizeCanvasActionToFit(
+        this.diagram,
+        Box.boundingBox(
+          selection.nodes.map(e => e.bounds),
+          true
         )
       );
-    }
-
-    // This means we are dropping onto an element
-    if (this.#currentElement) {
-      const p = Point.add(selection.bounds, this.offset);
-      const el = this.#currentElement;
-      if (isNode(el)) {
-        compoundUndoAction.addAction(
-          el.getDefinition().onDrop(p, el, selection.elements, this.uow, 'default')
-        );
-      } else if (isEdge(el)) {
-        const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
-        compoundUndoAction.addAction(
-          el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation)
-        );
-      } else {
-        VERIFY_NOT_REACHED();
+      if (resizeCanvasAction) {
+        resizeCanvasAction.redo();
+        compoundUndoAction.addAction(resizeCanvasAction);
       }
 
-      // Move elements out of a container
-    } else if (selection.elements.every(e => e.parent?.nodeType === 'container')) {
-      const activeLayer = this.diagram.layers.active;
-      this.diagram.moveElement(
-        selection.elements,
-        activeLayer,
-        activeLayer.elements.length > 0
-          ? {
-              relation: 'above',
-              element: this.diagram.layers.active.elements.at(-1)!
-            }
-          : undefined
-      );
-    } else {
-      // TODO: Extend snapshots to support layers as well
-      compoundUndoAction.addAction(
-        new SnapshotUndoableAction(
-          'Move',
-          snapshots,
-          snapshots.retakeSnapshot(this.diagram),
-          this.diagram
-        )
-      );
-    }
+      const addedElements = snapshots.getAdded();
+      if (addedElements.length > 0) {
+        compoundUndoAction.addAction(
+          new ElementAddUndoableAction(
+            addedElements.map(e => this.diagram.lookup(e)!),
+            this.diagram
+          )
+        );
+      }
 
-    if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);
+      // This means we are dropping onto an element
+      if (this.#currentElement) {
+        const p = Point.add(selection.bounds, this.offset);
+        const el = this.#currentElement;
+        if (isNode(el)) {
+          compoundUndoAction.addAction(
+            el.getDefinition().onDrop(p, el, selection.elements, this.uow, 'default')
+          );
+        } else if (isEdge(el)) {
+          const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
+          compoundUndoAction.addAction(
+            el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation)
+          );
+        } else {
+          VERIFY_NOT_REACHED();
+        }
+
+        // Move elements out of a container
+      } else if (selection.elements.every(e => e.parent?.nodeType === 'container')) {
+        const activeLayer = this.diagram.layers.active;
+        this.diagram.moveElement(
+          selection.elements,
+          activeLayer,
+          activeLayer.elements.length > 0
+            ? {
+                relation: 'above',
+                element: this.diagram.layers.active.elements.at(-1)!
+              }
+            : undefined
+        );
+      } else {
+        // TODO: Extend snapshots to support layers as well
+        compoundUndoAction.addAction(
+          new SnapshotUndoableAction(
+            'Move',
+            snapshots,
+            snapshots.retakeSnapshot(this.diagram),
+            this.diagram
+          )
+        );
+      }
+
+      if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);
+    }
 
     this.uow.commit();
     selection.rebaseline();
@@ -357,21 +357,5 @@ export class MoveDrag extends AbstractDrag {
             ]
           : []
     });
-  }
-
-  // TODO: We should be able to largely remove this and rely on snapshotting in
-  //       methods such as Diagram.transform etc
-  private snapshot(e: DiagramElement) {
-    if (this.uow.hasSnapshot(e)) return;
-    this.uow.snapshot(e, true);
-    if (isNode(e)) {
-      e.listEdges().forEach(ed => {
-        this.snapshot(ed);
-      });
-      e.children.forEach(c => this.snapshot(c));
-      if (e.parent) this.snapshot(e.parent);
-    } else if (isEdge(e)) {
-      e.labelNodes?.forEach(ln => this.snapshot(ln.node));
-    }
   }
 }
