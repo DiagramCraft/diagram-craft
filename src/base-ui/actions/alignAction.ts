@@ -1,5 +1,5 @@
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { NodeChangeUndoableAction } from '../../model/diagramUndoActions.ts';
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
@@ -42,52 +42,52 @@ export class AlignAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const action = new NodeChangeUndoableAction(
-      this.diagram.selectionState.nodes,
-      this.diagram,
-      `Align ${this.mode}`
-    );
+    const uow = new UnitOfWork(this.diagram, true);
 
     const first = this.diagram.selectionState.elements[0];
     if (this.mode === 'top') {
-      this.alignY(first.bounds.y, 0);
+      this.alignY(first.bounds.y, 0, uow);
     } else if (this.mode === 'bottom') {
-      this.alignY(first.bounds.y + first.bounds.h, 1);
+      this.alignY(first.bounds.y + first.bounds.h, 1, uow);
     } else if (this.mode === 'center-horizontal') {
-      this.alignY(first.bounds.y + first.bounds.h / 2, 0.5);
+      this.alignY(first.bounds.y + first.bounds.h / 2, 0.5, uow);
     } else if (this.mode === 'left') {
-      this.alignX(first.bounds.x, 0);
+      this.alignX(first.bounds.x, 0, uow);
     } else if (this.mode === 'right') {
-      this.alignX(first.bounds.x + first.bounds.w, 1);
+      this.alignX(first.bounds.x + first.bounds.w, 1, uow);
     } else if (this.mode === 'center-vertical') {
-      this.alignX(first.bounds.x + first.bounds.w / 2, 0.5);
+      this.alignX(first.bounds.x + first.bounds.w / 2, 0.5, uow);
     } else {
       VERIFY_NOT_REACHED();
     }
 
-    this.diagram.undoManager.add(action);
+    const snapshots = uow.commit();
+    this.diagram.undoManager.add(
+      new SnapshotUndoableAction(
+        `Align ${this.mode}`,
+        snapshots,
+        snapshots.retakeSnapshot(this.diagram),
+        this.diagram
+      )
+    );
     this.emit('actiontriggered', { action: this });
   }
 
   // y + h === Y       => y = Y - h       => y = Y - h * offset (offset = 1)
   // y + h / 2 === Y   => y = Y - h / 2   => y = Y - h * offset (offset = 0.5)
   // y === Y           => y = Y           => y = Y - h * offset (offset = 0)
-  private alignY(y: number, offset: number) {
+  private alignY(y: number, offset: number, uow: UnitOfWork) {
     this.diagram.selectionState.elements.forEach(e => {
-      UnitOfWork.execute(this.diagram, uow =>
-        e.setBounds({ ...e.bounds, y: y - e.bounds.h * offset }, uow)
-      );
+      e.setBounds({ ...e.bounds, y: y - e.bounds.h * offset }, uow);
     });
   }
 
   // x + w === X       => x = X - w       => x = X - w * offset (offset = 1)
   // x + w / 2 === X   => x = X - w / 2   => x = X - w * offset (offset = 0.5)
   // x === X           => x = X           => x = X - w * offset (offset = 0)
-  private alignX(x: number, offset: number) {
+  private alignX(x: number, offset: number, uow: UnitOfWork) {
     this.diagram.selectionState.elements.forEach(e => {
-      UnitOfWork.execute(this.diagram, uow =>
-        e.setBounds({ ...e.bounds, x: x - e.bounds.w * offset }, uow)
-      );
+      e.setBounds({ ...e.bounds, x: x - e.bounds.w * offset }, uow);
     });
   }
 }
