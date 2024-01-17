@@ -131,11 +131,6 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
       uow.addElement(e);
     }
     for (const e of removed) {
-      if (e.type === 'node') {
-        this.#diagram.nodeLookup.delete(e.id);
-      } else if (e.type === 'edge') {
-        this.#diagram.edgeLookup.delete(e.id);
-      }
       uow.removeElement(e);
     }
 

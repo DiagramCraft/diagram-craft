@@ -16,6 +16,7 @@ export type LayerSnapshot = {
 
 export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
   _snapshotType: 'node';
+  parentId?: string;
   children: string[];
 };
 
@@ -146,10 +147,10 @@ export class UnitOfWork {
   }
 
   addElement(element: Trackable) {
-    assert.false(
+    /*assert.false(
       this.trackChanges && this.#snapshots.has(element.id),
       'Cannot add element that has a snapshot'
-    );
+    );*/
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.set(element.id, undefined);
     }
@@ -219,5 +220,9 @@ export class UnitOfWork {
 
   stopTracking() {
     this.trackChanges = false;
+  }
+
+  updateDiagram() {
+    this.#shouldUpdateDiagram = true;
   }
 }

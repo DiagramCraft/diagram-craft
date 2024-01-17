@@ -158,10 +158,10 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     _coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
-    _uow: UnitOfWork,
+    uow: UnitOfWork,
     _operation: string
   ): UndoableAction | undefined {
-    node.diagram.moveElement(elements, node.layer, {
+    node.diagram.moveElement(elements, uow, node.layer, {
       relation: 'on',
       element: node
     });

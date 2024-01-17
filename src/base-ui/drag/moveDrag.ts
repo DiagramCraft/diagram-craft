@@ -168,7 +168,6 @@ export class MoveDrag extends AbstractDrag {
     enablePointerEvents(selection.elements);
     this.#hasDuplicatedSelection = false;
 
-    this.uow.stopTracking();
     const snapshots = this.uow.commit();
 
     if (selection.isChanged()) {
@@ -218,6 +217,7 @@ export class MoveDrag extends AbstractDrag {
         const activeLayer = this.diagram.layers.active;
         this.diagram.moveElement(
           selection.elements,
+          this.uow,
           activeLayer,
           activeLayer.elements.length > 0
             ? {
@@ -226,16 +226,16 @@ export class MoveDrag extends AbstractDrag {
               }
             : undefined
         );
-      } else {
-        compoundUndoAction.addAction(
-          new SnapshotUndoableAction(
-            'Move',
-            snapshots.onlyUpdated(),
-            snapshots.onlyUpdated().retakeSnapshot(this.diagram),
-            this.diagram
-          )
-        );
       }
+
+      compoundUndoAction.addAction(
+        new SnapshotUndoableAction(
+          'Move',
+          snapshots.onlyUpdated(),
+          snapshots.onlyUpdated().retakeSnapshot(this.diagram),
+          this.diagram
+        )
+      );
 
       if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);
     }

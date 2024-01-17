@@ -6,7 +6,7 @@ import { Diagram } from './diagram.ts';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge.ts';
 import { AbstractNode, Anchor, LabelNode } from './types.ts';
 import { Layer } from './diagramLayer.ts';
-import { assert } from '../utils/assert.ts';
+import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { newid } from '../utils/id.ts';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
@@ -115,8 +115,16 @@ export class DiagramNode
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
     uow.snapshot(this);
 
+    const oldChildren = this.children;
+
     this.#children = children;
-    this.#children.forEach(c => c._setParent(this));
+    this.#children.forEach(c => {
+      c._setParent(this);
+      if (isNode(c)) this.diagram.nodeLookup.set(c.id, c);
+      else if (isEdge(c)) this.diagram.edgeLookup.set(c.id, c);
+    });
+
+    oldChildren.filter(c => !children.includes(c)).forEach(c => c._setParent(undefined));
 
     this.#children.forEach(c => uow.updateElement(c));
     uow.updateElement(this);
@@ -187,6 +195,7 @@ export class DiagramNode
     return {
       _snapshotType: 'node',
       id: this.id,
+      parentId: this.parent?.id,
       type: 'node',
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
@@ -203,8 +212,13 @@ export class DiagramNode
     this.setBounds(snapshot.bounds, uow);
     this.#props = snapshot.props as NodeProps;
     this.#props.highlight = undefined;
+
     this.setChildren(
-      snapshot.children.map(c => this.diagram.lookup(c)!),
+      snapshot.children.map(c => {
+        const el = this.diagram.lookup(c);
+        if (!el) VERIFY_NOT_REACHED();
+        return el!;
+      }),
       uow
     );
     this.edges.clear();

@@ -15,6 +15,10 @@ export class SnapshotUndoableAction implements UndoableAction {
   ) {}
 
   undo() {
+    // Let's keep these for now... aids in debugging
+    console.log('before', this.beforeSnapshot);
+    console.log('after', this.afterSnapshot);
+
     const uow = new UnitOfWork(this.diagram);
     for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
       // Addition must be handled differently ... and explictly before this

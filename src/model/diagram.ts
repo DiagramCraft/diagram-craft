@@ -129,12 +129,10 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     );
   }
 
-  // TODO: Change this to an undoable action?
   // TODO: Check layer level events are emitted
-  // TODO: Maybe require a UnitOfWork?
-  // TODO: Return UndoableAction
   moveElement(
     elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
     layer: Layer,
     ref?: { relation: 'above' | 'below' | 'on'; element: DiagramElement }
   ) {
@@ -144,8 +142,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
 
     // Cannot move an element into itself, so abort if this is the case
     if (elements.some(e => e === ref?.element)) return;
-
-    const uow = new UnitOfWork(this);
 
     // Remove from existing layers
     const sourceLayers = new Set(elementLayers);
@@ -198,9 +194,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     // Assign new layer
     elements.forEach(e => layer.addElement(e, uow));
 
-    uow.commit();
-
-    this.update();
+    // TODO: Not clear if this is needed or not
+    uow.updateDiagram();
   }
 
   transformElements(

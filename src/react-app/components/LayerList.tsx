@@ -8,6 +8,7 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -50,9 +51,11 @@ const LayerEntry = (props: { layer: Layer }) => {
   const dropTarget = useDropTarget(
     [LAYER_INSTANCES, ELEMENT_INSTANCES],
     ev => {
+      const uow = new UnitOfWork(diagram);
       if (ev[ELEMENT_INSTANCES]) {
         diagram.moveElement(
           JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
+          uow,
           layer
         );
       } else if (ev[LAYER_INSTANCES]) {
@@ -73,6 +76,7 @@ const LayerEntry = (props: { layer: Layer }) => {
           { relation, layer: layer }
         );
       }
+      uow.commit();
     },
     {
       split: m => (m === LAYER_INSTANCES ? [0.5, 0, 0.5] : [0, 1, 0])
@@ -132,14 +136,17 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         VERIFY_NOT_REACHED();
       }
 
+      const uow = new UnitOfWork(diagram);
       diagram.moveElement(
         instances.map((id: string) => diagram.lookup(id)!),
+        uow,
         e.layer,
         {
           relation,
           element: e
         }
       );
+      uow.commit();
     },
     {
       split: () => (childrenAllowed ? [0.25, 0.5, 0.25] : [0.5, 0, 0.5])
