@@ -1,9 +1,7 @@
 import { UndoableAction } from './undoManager.ts';
-import { Box } from '../geometry/box.ts';
-import { TransformFactory } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramNode, DiagramNodeSnapshot } from './diagramNode.ts';
-import { Layer } from './diagramLayer.ts';
+import { Layer, LayerSnapshot } from './diagramLayer.ts';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
 
@@ -18,11 +16,20 @@ export class SnapshotUndoableAction implements UndoableAction {
   undo() {
     const uow = new UnitOfWork(this.diagram);
     for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
-      // TODO: Handle addition
+      // Addition must be handled differently
+      // TODO: Handle addition ... of both layers and nodes
       if (!snapshot) continue;
-      const node = this.diagram.lookup(id);
-      if (node) {
-        node.restore(snapshot!, uow);
+
+      if (snapshot._snapshotType === 'layer') {
+        const layer = this.diagram.layers.byId(id);
+        if (layer) {
+          layer.restore(snapshot as LayerSnapshot, uow);
+        }
+      } else {
+        const node = this.diagram.lookup(id);
+        if (node) {
+          node.restore(snapshot!, uow);
+        }
       }
     }
     uow.commit();
@@ -31,55 +38,21 @@ export class SnapshotUndoableAction implements UndoableAction {
   redo() {
     const uow = new UnitOfWork(this.diagram);
     for (const [id, snapshot] of this.afterSnapshot.snapshots) {
-      // TODO: Handle addition
+      // Addition must be handled differently
+      // TODO: Handle addition ... of both layers and nodes
       if (!snapshot) continue;
-      const node = this.diagram.lookup(id);
-      if (node) {
-        node.restore(snapshot!, uow);
+
+      if (snapshot._snapshotType === 'layer') {
+        const layer = this.diagram.layers.byId(id);
+        if (layer) {
+          layer.restore(snapshot as LayerSnapshot, uow);
+        }
+      } else {
+        const node = this.diagram.lookup(id);
+        if (node) {
+          node.restore(snapshot!, uow);
+        }
       }
-    }
-    uow.commit();
-  }
-}
-
-export class TransformAction implements UndoableAction {
-  readonly #elements: ReadonlyArray<DiagramElement>;
-  readonly #source: ReadonlyArray<Box>;
-  readonly #target: ReadonlyArray<Box>;
-  readonly #diagram: Diagram;
-
-  description: string;
-
-  constructor(
-    description: string,
-    source: ReadonlyArray<Box>,
-    target: ReadonlyArray<Box>,
-    nodes: ReadonlyArray<DiagramElement>,
-    diagram: Diagram
-  ) {
-    this.#diagram = diagram;
-    this.#elements = [...nodes];
-    this.#source = [...source];
-    this.#target = [...target];
-    this.description = description;
-  }
-
-  undo() {
-    this.transformElementsAction(this.#target, this.#source);
-  }
-
-  redo() {
-    this.transformElementsAction(this.#source, this.#target);
-  }
-
-  private transformElementsAction(source: ReadonlyArray<Box>, target: ReadonlyArray<Box>): void {
-    const uow = new UnitOfWork(this.#diagram);
-    for (let i = 0; i < this.#elements.length; i++) {
-      this.#diagram.transformElements(
-        [this.#elements[i]],
-        TransformFactory.fromTo(source[i], target[i]),
-        uow
-      );
     }
     uow.commit();
   }

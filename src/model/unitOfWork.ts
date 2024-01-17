@@ -11,6 +11,7 @@ type ChangeType = 'interactive' | 'non-interactive';
 type Snapshot = { _snapshotType: string };
 
 export interface UOWTrackable<T extends Snapshot> {
+  id: string;
   invalidate(uow: UnitOfWork): void;
   snapshot(): T;
   restore(snapshot: T, uow: UnitOfWork): void;
@@ -36,9 +37,15 @@ export class ElementsSnapshot {
   retakeSnapshot(diagram: Diagram) {
     const dest = new Map<string, undefined | Snapshot>();
     for (const k of this.snapshots.keys()) {
-      const element = diagram.lookup(k);
-      if (!element) continue;
-      dest.set(k, element.snapshot());
+      if (this.snapshots.get(k)?._snapshotType === 'layer') {
+        const layer = diagram.layers.byId(k);
+        if (!layer) continue;
+        dest.set(k, layer.snapshot());
+      } else {
+        const element = diagram.lookup(k);
+        if (!element) continue;
+        dest.set(k, element.snapshot());
+      }
     }
     return new ElementsSnapshot(dest);
   }
@@ -120,10 +127,6 @@ export class UnitOfWork {
       this.#snapshots.set(element.id, undefined);
     }
     this.#elementsToAdd.set(element.id, element);
-  }
-
-  updateDiagram() {
-    this.#shouldUpdateDiagram = true;
   }
 
   pushAction(name: string, element: Trackable, cb: ActionCallback) {

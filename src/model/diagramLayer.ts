@@ -6,7 +6,7 @@ import { UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { groupBy } from '../utils/array.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 
-type LayerSnapshot = {
+export type LayerSnapshot = {
   _snapshotType: 'layer';
   elements: string[];
 };

@@ -298,6 +298,9 @@ export class MoveDrag extends AbstractDrag {
     selection.setElements(newElements, false);
 
     this.uow.notify();
+
+    // To ensure that pointer events are disabled at the next drag event
+    this.#dragStarted = false;
   }
 
   private removeDuplicate() {
