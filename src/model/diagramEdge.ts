@@ -301,19 +301,6 @@ export class DiagramEdge implements AbstractEdge, DiagramElement {
     uow.updateElement(this);
   }
 
-  /*updateWaypointControlPoint(wpIdx: number, cpIdx: 0 | 1, point: Point, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const wp = this.waypoints[wpIdx];
-    wp.controlPoints = wp.controlPoints ?? [Point.ORIGIN, Point.ORIGIN];
-    wp.controlPoints[cpIdx] = point;
-    uow.updateElement(this);
-  }*/
-
-  // TODO: There's no way to snapshot here, need to change the signature and make Waypoint readonly
-  /*updateWaypoint(_waypoint: Waypoint, uow: UnitOfWork) {
-    uow.updateElement(this);
-  }*/
-
   get midpoints() {
     const path = this.path();
     return path.segments.map(s => {

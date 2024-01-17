@@ -183,12 +183,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
                     onMouseDown={e => {
                       if (e.button !== 0) return;
                       drag.initiate(
-                        new BezierControlPointDrag(
-                          props.diagram,
-                          props.def,
-                          idx,
-                          name as keyof ControlPoints
-                        )
+                        new BezierControlPointDrag(props.def, idx, name as keyof ControlPoints)
                       );
                       e.stopPropagation();
                     }}
