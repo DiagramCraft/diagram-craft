@@ -1,18 +1,13 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
-import { UndoableAction } from '../../model/undoManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramEdge, ResolvedLabelNode } from '../../model/diagramEdge.ts';
 import { Path } from '../../geometry/path.ts';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 
-export class AttachmentPointDrag extends AbstractDrag implements UndoableAction {
-  description = 'Move label node';
-
-  private readonly oldTimeOffset: number;
-  private readonly oldOffset: Point;
-  private newTimeOffset: number | undefined;
-  private newOffset: Point | undefined;
+export class AttachmentPointDrag extends AbstractDrag {
+  private readonly uow: UnitOfWork;
 
   constructor(
     private labelNode: ResolvedLabelNode,
@@ -20,61 +15,37 @@ export class AttachmentPointDrag extends AbstractDrag implements UndoableAction 
     private path: Path
   ) {
     super();
-    this.oldTimeOffset = labelNode.timeOffset!;
-    this.oldOffset = labelNode.offset!;
+    this.uow = new UnitOfWork(this.edge.diagram, true);
   }
 
   onDrag(coord: Point, _modifiers: Modifiers): void {
-    // TODO: This seems to give the wrong result in some situation
-    //       Hence the const p = ... below
-    const s = this.path.projectPoint(coord);
-    const offset = LengthOffsetOnPath.toTimeOffsetOnPath(s, this.path);
+    const pointOnPath = this.path.projectPoint(coord);
+    const timeOffset = LengthOffsetOnPath.toTimeOffsetOnPath(pointOnPath, this.path);
+
     const prevOffset = this.path.pointAt(
       TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: this.labelNode!.timeOffset! }, this.path)
     );
-    const p = this.path.pointAt(offset);
+    const delta = Point.subtract(pointOnPath.point, prevOffset);
 
-    const dx = p.x - prevOffset.x;
-    const dy = p.y - prevOffset.y;
+    const offset =
+      this.labelNode.type === 'independent'
+        ? Point.subtract(this.labelNode!.offset, delta)
+        : this.labelNode.offset;
+    this.labelNode.node.updateLabelNode({ timeOffset: timeOffset.pathT, offset: offset }, this.uow);
 
-    const uow = new UnitOfWork(this.edge.diagram!);
-    this.labelNode.node.updateLabelNode(
-      {
-        timeOffset: offset.pathT,
-        offset:
-          this.labelNode.type === 'independent'
-            ? {
-                x: this.labelNode!.offset.x - dx,
-                y: this.labelNode!.offset.y - dy
-              }
-            : this.labelNode.offset
-      },
-      uow
-    );
-    uow.commit();
+    this.uow.notify();
   }
 
   onDragEnd(): void {
-    this.newTimeOffset = this.labelNode!.timeOffset!;
-    this.newOffset = this.labelNode!.offset!;
-    this.edge.diagram?.undoManager.add(this);
-  }
+    const snapshot = this.uow.commit();
 
-  redo(): void {
-    const uow = new UnitOfWork(this.edge.diagram!);
-    this.labelNode.node.updateLabelNode(
-      { timeOffset: this.newTimeOffset!, offset: this.newOffset! },
-      uow
+    this.edge.diagram.undoManager.add(
+      new SnapshotUndoableAction(
+        'Move label node',
+        snapshot,
+        snapshot.retakeSnapshot(this.edge.diagram),
+        this.edge.diagram
+      )
     );
-    uow.commit();
-  }
-
-  undo(): void {
-    const uow = new UnitOfWork(this.edge.diagram!);
-    this.labelNode.node.updateLabelNode(
-      { timeOffset: this.oldTimeOffset!, offset: this.oldOffset! },
-      uow
-    );
-    uow.commit();
   }
 }

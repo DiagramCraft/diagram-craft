@@ -55,30 +55,17 @@ export class LineSegment implements PathSegment {
   }
 
   projectPoint(point: Point): Projection {
-    // TODO: Check why these checks are actually needed
-    if (Point.isEqual(point, this.start)) {
-      return { t: 0, distance: 0, point: point };
-    }
-    if (Point.isEqual(point, this.end)) {
-      return { t: 1, distance: 0, point: point };
-    }
+    const px = this.end.x - this.start.x;
+    const py = this.end.y - this.start.y;
+    const d = px * px + py * py;
+    const t = ((point.x - this.start.x) * px + (point.y - this.start.y) * py) / d;
 
-    const v = Vector.from(this.start, this.end);
-    const w = Vector.from(this.start, point);
-
-    // Calculate dot product
-    const c1 = w.x * v.x + w.y * v.y;
-    const c2 = v.x * v.x + v.y * v.y;
-
-    const t = c1 / c2;
-
-    const projection = Point.add(this.start, Vector.scale(v, t));
-    const distance = Point.distance(point, projection);
+    const projection = { x: this.start.x + t * px, y: this.start.y + t * py };
 
     return {
-      t: Math.abs(t),
-      distance,
-      point: projection
+      point: projection,
+      t,
+      distance: Point.distance(point, projection)
     };
   }
 
