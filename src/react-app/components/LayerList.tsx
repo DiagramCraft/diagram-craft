@@ -9,6 +9,7 @@ import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -51,7 +52,7 @@ const LayerEntry = (props: { layer: Layer }) => {
   const dropTarget = useDropTarget(
     [LAYER_INSTANCES, ELEMENT_INSTANCES],
     ev => {
-      const uow = new UnitOfWork(diagram);
+      const uow = new UnitOfWork(diagram, true);
       if (ev[ELEMENT_INSTANCES]) {
         diagram.moveElement(
           JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
@@ -73,10 +74,12 @@ const LayerEntry = (props: { layer: Layer }) => {
 
         diagram.layers.move(
           instances.map((id: string) => diagram.layers.byId(id)!),
+          uow,
           { relation, layer: layer }
         );
       }
-      uow.commit();
+
+      commitWithUndo(uow, 'Change stack');
     },
     {
       split: m => (m === LAYER_INSTANCES ? [0.5, 0, 0.5] : [0, 1, 0])
@@ -136,7 +139,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         VERIFY_NOT_REACHED();
       }
 
-      const uow = new UnitOfWork(diagram);
+      const uow = new UnitOfWork(diagram, true);
       diagram.moveElement(
         instances.map((id: string) => diagram.lookup(id)!),
         uow,
@@ -146,7 +149,8 @@ const ElementEntry = (props: { element: DiagramElement }) => {
           element: e
         }
       );
-      uow.commit();
+
+      commitWithUndo(uow, 'Change stack');
     },
     {
       split: () => (childrenAllowed ? [0.25, 0.5, 0.25] : [0.5, 0, 0.5])

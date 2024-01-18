@@ -1,13 +1,18 @@
 import { DiagramElement } from './diagramElement.ts';
 import { Diagram, DiagramEvents } from './diagram.ts';
 import { assert } from '../utils/assert.ts';
-import { Layer } from './diagramLayer.ts';
+import { Layer, LayerManager } from './diagramLayer.ts';
 import { EventKey } from '../utils/event.ts';
 import { SerializedEdge, SerializedNode } from './serialization/types.ts';
 
 type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
+
+export type LayersSnapshot = {
+  _snapshotType: 'layers';
+  layers: string[];
+};
 
 export type LayerSnapshot = {
   _snapshotType: 'layer';
@@ -25,6 +30,7 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
 };
 
 type Snapshot = { _snapshotType: string } & (
+  | LayersSnapshot
   | LayerSnapshot
   | DiagramNodeSnapshot
   | DiagramEdgeSnapshot
@@ -37,7 +43,7 @@ export interface UOWTrackable<T extends Snapshot> {
   restore(snapshot: T, uow: UnitOfWork): void;
 }
 
-type Trackable = (DiagramElement | Layer) & UOWTrackable<Snapshot>;
+type Trackable = (DiagramElement | Layer | LayerManager) & UOWTrackable<Snapshot>;
 
 export class ElementsSnapshot {
   constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
@@ -204,7 +210,7 @@ export class UnitOfWork {
     this.#elementsToAdd.forEach(e => e.invalidate(this));
 
     const handle = (s: EventKey<DiagramEvents>) => (e: Trackable) => {
-      if (e instanceof Layer) {
+      if (e instanceof Layer || e instanceof LayerManager) {
         this.#shouldUpdateDiagram = true;
       } else {
         this.diagram.emit(s, { element: e });

@@ -136,6 +136,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     layer: Layer,
     ref?: { relation: 'above' | 'below' | 'on'; element: DiagramElement }
   ) {
+    elements.forEach(e => uow.snapshot(e));
+
     const elementLayers = elements.map(e => e.layer);
     const topMostLayer = this.layers.all.findLast(layer => elementLayers.includes(layer));
     assert.present(topMostLayer);
@@ -146,6 +148,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     // Remove from existing layers
     const sourceLayers = new Set(elementLayers);
     for (const l of sourceLayers) {
+      uow.snapshot(l);
       l.setElements(
         l.elements.filter(e => !elements.includes(e)),
         uow
@@ -156,9 +159,12 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     // TODO: Can optimize by grouping by parent - probably not worth it
     for (const el of elements) {
       if (el.parent) {
+        uow.snapshot(el.parent);
         el.parent.removeChild(el, uow);
       }
     }
+
+    uow.snapshot(layer);
 
     // Move into the new layer
     if (ref === undefined) {
@@ -169,6 +175,8 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       }
     } else if (isNode(ref.element) && ref.element.parent) {
       const parent = ref.element.parent;
+      uow.snapshot(parent);
+      uow.snapshot(ref.element);
 
       const idx = parent.children.indexOf(ref.element);
       if (ref.relation === 'above') {
@@ -180,6 +188,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       }
     } else {
       assert.true(ref.element.layer === layer);
+      uow.snapshot(ref.element);
 
       const idx = layer.elements.indexOf(ref.element);
       if (ref.relation === 'above') {

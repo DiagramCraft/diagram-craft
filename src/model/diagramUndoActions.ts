@@ -37,6 +37,8 @@ export class SnapshotUndoableAction implements UndoableAction {
         if (layer) {
           layer.restore(snapshot, uow);
         }
+      } else if (snapshot._snapshotType === 'layers') {
+        this.diagram.layers.restore(snapshot, uow);
       } else {
         const node = this.diagram.lookup(id);
         if (node) {
@@ -58,6 +60,8 @@ export class SnapshotUndoableAction implements UndoableAction {
         if (layer) {
           layer.restore(snapshot, uow);
         }
+      } else if (snapshot._snapshotType === 'layers') {
+        this.diagram.layers.restore(snapshot, uow);
       } else {
         const node = this.diagram.lookup(id);
         if (node) {

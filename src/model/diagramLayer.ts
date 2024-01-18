@@ -2,7 +2,7 @@ import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { DiagramElement, isNode } from './diagramElement.ts';
-import { LayerSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
+import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { groupBy } from '../utils/array.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 
@@ -162,7 +162,11 @@ export type LayerManagerEvents = {
   change: { layers: LayerManager };
 };
 
-export class LayerManager extends EventEmitter<LayerManagerEvents> {
+export class LayerManager
+  extends EventEmitter<LayerManagerEvents>
+  implements UOWTrackable<LayersSnapshot>
+{
+  id = 'layers';
   #layers: Array<Layer> = [];
   #activeLayer: Layer;
   #visibleLayers = new Set<string>();
@@ -197,8 +201,13 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
     return this.#layers.filter(layer => this.#visibleLayers.has(layer.id));
   }
 
-  // TODO: Need undo/redo for this - perhaps change into an UndoableAction
-  move(layers: ReadonlyArray<Layer>, ref: { layer: Layer; relation: 'above' | 'below' }) {
+  move(
+    layers: ReadonlyArray<Layer>,
+    uow: UnitOfWork,
+    ref: { layer: Layer; relation: 'above' | 'below' }
+  ) {
+    uow.snapshot(this);
+
     const idx = this.#layers.indexOf(ref.layer);
     const newIdx = ref.relation === 'below' ? idx : idx + 1;
 
@@ -208,8 +217,9 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
       this.#layers.splice(newIdx, 0, layer);
     }
 
+    uow.updateElement(this);
     this.emit('change', { layers: this });
-    this.diagram.emit('change', { diagram: this.diagram });
+    //    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   toggleVisibility(layer: Layer) {
@@ -247,5 +257,21 @@ export class LayerManager extends EventEmitter<LayerManagerEvents> {
     this.#visibleLayers.delete(layer.id);
     this.emit('change', { layers: this });
     this.diagram.emit('change', { diagram: this.diagram });
+  }
+
+  invalidate(_uow: UnitOfWork) {
+    // Nothing for now...
+  }
+
+  snapshot(): LayersSnapshot {
+    return {
+      _snapshotType: 'layers',
+      layers: this.all.map(l => l.id)
+    };
+  }
+
+  restore(snapshot: LayersSnapshot, uow: UnitOfWork) {
+    this.#layers = snapshot.layers.map(id => this.diagram.layers.byId(id)!);
+    uow.updateElement(this);
   }
 }
