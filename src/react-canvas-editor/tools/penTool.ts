@@ -10,6 +10,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { PathUtils } from '../../geometry/pathUtils.ts';
+import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 
 export class PenTool extends AbstractTool {
   private node: DiagramNode | undefined;
@@ -106,6 +107,11 @@ export class PenTool extends AbstractTool {
   }
 
   onKeyDown(_e: KeyboardEvent) {
+    if (this.node) {
+      this.diagram.undoManager.add(
+        new ElementAddUndoableAction([this.node], this.diagram, 'Add path')
+      );
+    }
     this.node = undefined;
   }
 }
