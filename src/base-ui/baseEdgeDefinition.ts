@@ -2,7 +2,6 @@ import { EdgeCapability, EdgeDefinition } from '../model/elementDefinitionRegist
 import { Point } from '../geometry/point.ts';
 import { DiagramElement, isNode } from '../model/diagramElement.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
-import { UndoableAction } from '../model/undoManager.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';
 import { deepClone } from '../utils/clone.ts';
@@ -31,21 +30,17 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     operation: string
-  ): UndoableAction | undefined {
-    if (elements.length !== 1 || !isNode(elements[0])) return undefined;
+  ) {
+    if (elements.length !== 1 || !isNode(elements[0])) return;
 
     if (operation === 'split') {
-      return this.onDropSplit(edge, elements[0], uow);
+      this.onDropSplit(edge, elements[0], uow);
     } else {
-      return this.onDropAttachAsLabel(edge, elements[0], coord, uow);
+      this.onDropAttachAsLabel(edge, elements[0], coord, uow);
     }
   }
 
-  private onDropSplit(
-    edge: DiagramEdge,
-    element: DiagramNode,
-    uow: UnitOfWork
-  ): UndoableAction | undefined {
+  private onDropSplit(edge: DiagramEdge, element: DiagramNode, uow: UnitOfWork) {
     // We will attach to the center point anchor
     const anchor = 0;
 
@@ -64,9 +59,6 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     edge.setEnd(new ConnectedEndpoint(anchor, element), uow);
 
     uow.updateElement(edge);
-
-    // TODO: Support undo
-    return undefined;
   }
 
   private onDropAttachAsLabel(
@@ -74,7 +66,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     element: DiagramNode,
     coord: Point,
     uow: UnitOfWork
-  ): UndoableAction | undefined {
+  ) {
     const path = edge.path();
     const projection = path.projectPoint(coord);
 
@@ -103,8 +95,5 @@ export class BaseEdgeDefinition implements EdgeDefinition {
 
     uow.updateElement(element);
     uow.updateElement(edge);
-
-    // TODO: Support undo
-    return undefined;
   }
 }

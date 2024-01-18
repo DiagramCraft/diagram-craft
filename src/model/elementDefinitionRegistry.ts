@@ -5,7 +5,6 @@ import { assert } from '../utils/assert.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from './diagramElement.ts';
-import { UndoableAction } from './undoManager.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 
@@ -60,7 +59,7 @@ export interface NodeDefinition {
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     operation: string
-  ): UndoableAction | undefined;
+  ): void;
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode): void;
@@ -97,7 +96,7 @@ export interface EdgeDefinition {
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     operation: string
-  ): UndoableAction | undefined;
+  ): void;
 }
 
 export class EdgeDefinitionRegistry {

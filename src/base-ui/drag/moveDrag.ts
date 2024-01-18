@@ -200,14 +200,10 @@ export class MoveDrag extends AbstractDrag {
         const p = Point.add(selection.bounds, this.offset);
         const el = this.#currentElement;
         if (isNode(el)) {
-          compoundUndoAction.addAction(
-            el.getDefinition().onDrop(p, el, selection.elements, this.uow, 'default')
-          );
+          el.getDefinition().onDrop(p, el, selection.elements, this.uow, 'default');
         } else if (isEdge(el)) {
           const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
-          compoundUndoAction.addAction(
-            el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation)
-          );
+          el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation);
         } else {
           VERIFY_NOT_REACHED();
         }

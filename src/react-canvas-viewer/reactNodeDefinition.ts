@@ -16,7 +16,6 @@ import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from '../model/diagramElement.ts';
-import { UndoableAction } from '../model/undoManager.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
 
@@ -103,8 +102,8 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
     _elements: ReadonlyArray<DiagramElement>,
     _uow: UnitOfWork,
     _operation: string
-  ): UndoableAction | undefined {
-    return undefined;
+  ) {
+    // Do nothing
   }
 
   onPropUpdate(_node: DiagramNode, _uow: UnitOfWork): void {}
@@ -160,8 +159,8 @@ export class ReactNodeDefinition implements NodeDefinition {
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     operation: string
-  ): UndoableAction | undefined {
-    return this.delegate.onDrop(coord, node, elements, uow, operation);
+  ) {
+    this.delegate.onDrop(coord, node, elements, uow, operation);
   }
 
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {

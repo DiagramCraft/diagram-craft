@@ -13,7 +13,6 @@ import { Box } from '../../geometry/box.ts';
 import { Rotation, Scale, Transform, Translation } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
-import { UndoableAction } from '../../model/undoManager.ts';
 import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Tool } from '../../react-canvas-editor/tools/types.ts';
@@ -160,14 +159,11 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     _operation: string
-  ): UndoableAction | undefined {
+  ) {
     node.diagram.moveElement(elements, uow, node.layer, {
       relation: 'on',
       element: node
     });
-
-    // TODO: Need to return undoable action here
-    return undefined;
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork) {
