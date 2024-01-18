@@ -24,12 +24,7 @@ export class ShapeControlPointDrag extends AbstractDrag {
     const snapshot = this.uow.commit();
 
     this.node.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Adjust shape',
-        snapshot,
-        snapshot.retakeSnapshot(this.node.diagram),
-        this.node.diagram
-      )
+      new SnapshotUndoableAction('Adjust shape', this.node.diagram, snapshot)
     );
   }
 }

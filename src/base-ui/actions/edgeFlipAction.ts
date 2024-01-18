@@ -33,13 +33,6 @@ export class EdgeFlipAction extends EventEmitter<ActionEvents> implements Action
       edge.flip(uow);
     }
     const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Flip edge',
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
-    );
+    this.diagram.undoManager.add(new SnapshotUndoableAction('Flip edge', this.diagram, snapshots));
   }
 }

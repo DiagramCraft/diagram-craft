@@ -51,12 +51,7 @@ export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements 
 
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Delete waypoint',
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction('Delete waypoint', this.diagram, snapshots)
     );
   }
 }

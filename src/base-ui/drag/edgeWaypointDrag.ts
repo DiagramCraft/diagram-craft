@@ -26,12 +26,7 @@ export class EdgeWaypointDrag extends AbstractDrag {
     const snapshot = this.uow.commit();
 
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Move Waypoint',
-        snapshot,
-        snapshot.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction('Move Waypoint', this.diagram, snapshot)
     );
   }
 }

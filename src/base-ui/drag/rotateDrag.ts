@@ -50,14 +50,7 @@ export class RotateDrag extends AbstractDrag {
     const snapshots = this.uow.commit();
 
     if (selection.isChanged()) {
-      this.diagram.undoManager.add(
-        new SnapshotUndoableAction(
-          'Rotate',
-          snapshots,
-          snapshots.retakeSnapshot(this.diagram),
-          this.diagram
-        )
-      );
+      this.diagram.undoManager.add(new SnapshotUndoableAction('Rotate', this.diagram, snapshots));
     }
 
     selection.forceRotation(undefined);

@@ -74,12 +74,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     const snapshot = this.uow.commit();
 
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Move edge endpoint',
-        snapshot,
-        snapshot.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction('Move edge endpoint', this.diagram, snapshot)
     );
   }
 

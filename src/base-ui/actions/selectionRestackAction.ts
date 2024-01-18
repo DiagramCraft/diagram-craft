@@ -52,12 +52,7 @@ export class SelectionRestackAction extends AbstractSelectionAction {
     const snapshots = uow.commit();
 
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Restack selection',
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction('Restack selection', this.diagram, snapshots)
     );
 
     this.emit('actiontriggered', { action: this });

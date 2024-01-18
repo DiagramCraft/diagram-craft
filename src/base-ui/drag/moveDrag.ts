@@ -225,12 +225,7 @@ export class MoveDrag extends AbstractDrag {
       }
 
       compoundUndoAction.addAction(
-        new SnapshotUndoableAction(
-          'Move',
-          snapshots.onlyUpdated(),
-          snapshots.onlyUpdated().retakeSnapshot(this.diagram),
-          this.diagram
-        )
+        new SnapshotUndoableAction('Move', this.diagram, snapshots.onlyUpdated())
       );
 
       if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);

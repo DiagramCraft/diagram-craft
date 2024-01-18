@@ -84,12 +84,7 @@ export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Act
     this.diagram.undoManager.add(
       new CompoundUndoableAction([
         new ElementAddUndoableAction([textNode], this.diagram),
-        new SnapshotUndoableAction(
-          `Add edge text`,
-          snapshots.onlyUpdated(),
-          snapshots.onlyUpdated().retakeSnapshot(this.diagram),
-          this.diagram
-        )
+        new SnapshotUndoableAction(`Add edge text`, this.diagram, snapshots.onlyUpdated())
       ])
     );
 

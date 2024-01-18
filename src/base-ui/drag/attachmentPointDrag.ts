@@ -40,12 +40,7 @@ export class AttachmentPointDrag extends AbstractDrag {
     const snapshot = this.uow.commit();
 
     this.edge.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Move label node',
-        snapshot,
-        snapshot.retakeSnapshot(this.edge.diagram),
-        this.edge.diagram
-      )
+      new SnapshotUndoableAction('Move label node', this.edge.diagram, snapshot)
     );
   }
 }

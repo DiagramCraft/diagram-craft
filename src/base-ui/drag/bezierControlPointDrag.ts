@@ -56,12 +56,7 @@ export class BezierControlPointDrag extends AbstractDrag {
     const snapshot = this.uow.commit();
 
     this.edge.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Move Control point',
-        snapshot,
-        snapshot.retakeSnapshot(this.edge.diagram),
-        this.edge.diagram
-      )
+      new SnapshotUndoableAction('Move Control point', this.edge.diagram, snapshot)
     );
   }
 }

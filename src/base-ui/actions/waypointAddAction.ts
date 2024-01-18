@@ -29,12 +29,7 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
 
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        'Add waypoint',
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction('Add waypoint', this.diagram, snapshots)
     );
   }
 }

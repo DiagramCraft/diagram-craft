@@ -43,12 +43,7 @@ export class DistributeAction extends AbstractSelectionAction {
 
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        `Distribute ${this.mode}`,
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction(`Distribute ${this.mode}`, this.diagram, snapshots)
     );
     this.emit('actiontriggered', { action: this });
   }

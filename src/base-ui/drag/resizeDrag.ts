@@ -140,14 +140,7 @@ export class ResizeDrag extends AbstractDrag {
     const snapshots = this.uow.commit();
 
     if (selection.isChanged()) {
-      this.diagram.undoManager.add(
-        new SnapshotUndoableAction(
-          'Resize',
-          snapshots,
-          snapshots.retakeSnapshot(this.diagram),
-          this.diagram
-        )
-      );
+      this.diagram.undoManager.add(new SnapshotUndoableAction('Resize', this.diagram, snapshots));
     }
 
     selection.rebaseline();

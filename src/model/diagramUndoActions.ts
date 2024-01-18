@@ -6,12 +6,16 @@ import { DiagramElement } from './diagramElement.ts';
 import { assert } from '../utils/assert.ts';
 
 export class SnapshotUndoableAction implements UndoableAction {
+  private readonly afterSnapshot: ElementsSnapshot;
+
   constructor(
     public readonly description: string,
+    private readonly diagram: Diagram,
     private readonly beforeSnapshot: ElementsSnapshot,
-    private readonly afterSnapshot: ElementsSnapshot,
-    private readonly diagram: Diagram
-  ) {}
+    afterSnapshot?: ElementsSnapshot
+  ) {
+    this.afterSnapshot = afterSnapshot ?? beforeSnapshot.retakeSnapshot(diagram);
+  }
 
   undo() {
     // Let's keep these for now... aids in debugging

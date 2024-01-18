@@ -63,12 +63,7 @@ export class AlignAction extends AbstractSelectionAction {
 
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        `Align ${this.mode}`,
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction(`Align ${this.mode}`, this.diagram, snapshots)
     );
     this.emit('actiontriggered', { action: this });
   }

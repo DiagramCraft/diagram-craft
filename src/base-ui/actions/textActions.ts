@@ -59,12 +59,7 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
 
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        `Text: ${this.prop}`,
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction(`Text: ${this.prop}`, this.diagram, snapshots)
     );
 
     this.state = !!node.props.text![this.prop];
@@ -113,12 +108,7 @@ export class TextDecorationAction extends EventEmitter<ActionEvents> implements 
 
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
-      new SnapshotUndoableAction(
-        `Text decoration`,
-        snapshots,
-        snapshots.retakeSnapshot(this.diagram),
-        this.diagram
-      )
+      new SnapshotUndoableAction(`Text decoration`, this.diagram, snapshots)
     );
 
     this.state = node.props.text!.textDecoration === this.prop;
