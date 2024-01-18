@@ -12,6 +12,8 @@ import {
 } from '../../react-canvas-editor/tools/node/editablePath.ts';
 import { ControlPointDrag } from '../../react-canvas-editor/tools/node/controlPointDrag.ts';
 import { NodeDrag } from '../../react-canvas-editor/tools/node/nodeDrag.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface NodeProps {
@@ -49,7 +51,11 @@ export const GenericPath = (props: Props) => {
     const domPoint = EventHelper.point(e.nativeEvent);
     const dp = props.node.diagram.viewBox.toDiagramPoint(domPoint);
     const idx = editablePath.split(editablePath.toLocalCoordinate(dp));
-    editablePath.commit();
+
+    const uow = new UnitOfWork(props.node.diagram, true);
+    editablePath.commitToNode(uow);
+    commitWithUndo(uow, 'Add waypoint');
+
     setSelectedWaypoints([idx]);
   };
 
@@ -160,12 +166,16 @@ export const GenericPath = (props: Props) => {
                   e.stopPropagation();
                 }}
                 onDoubleClick={e => {
+                  const uow = new UnitOfWork(props.node.diagram, true);
                   if (e.metaKey) {
                     editablePath.deleteWaypoint(idx);
+                    editablePath.commitToNode(uow);
+                    commitWithUndo(uow, 'Delete waypoint');
                   } else {
                     editablePath.updateWaypoint(idx, { type: NEXT_TYPE[wp.type] });
+                    editablePath.commitToNode(uow);
+                    commitWithUndo(uow, 'Change waypoint type');
                   }
-                  editablePath.commit();
                   e.stopPropagation();
                 }}
               />

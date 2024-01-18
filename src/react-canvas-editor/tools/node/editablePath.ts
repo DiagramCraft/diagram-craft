@@ -37,6 +37,10 @@ export class EditablePath {
     }
   }
 
+  get diagram() {
+    return this.node.diagram;
+  }
+
   toLocalCoordinate(coord: Point) {
     return Point.rotateAround(coord, -this.node.bounds.r, Box.center(this.node.bounds));
   }
@@ -163,24 +167,22 @@ export class EditablePath {
     };
   }
 
-  commit() {
-    UnitOfWork.execute(this.node.diagram, uow => {
-      this.node.updateProps(p => {
-        p.genericPath ??= {};
-        p.genericPath.path = this.getPath('as-stored').asSvgPath();
-        p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
-      }, uow);
+  public commitToNode(uow: UnitOfWork) {
+    this.node.updateProps(p => {
+      p.genericPath ??= {};
+      p.genericPath.path = this.getPath('as-stored').asSvgPath();
+      p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
+    }, uow);
 
-      // As this reads the genericPath.path, we have to first set the path provisionally -
-      // ... see code above
-      const { path, bounds } = this.resizePathToUnitLCS();
-      this.node.updateProps(p => {
-        p.genericPath ??= {};
-        p.genericPath.path = path.asSvgPath();
-        p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
-      }, uow);
-      this.node.setBounds(bounds, uow);
-    });
+    // As this reads the genericPath.path, we have to first set the path provisionally -
+    // ... see code above
+    const { path, bounds } = this.resizePathToUnitLCS();
+    this.node.updateProps(p => {
+      p.genericPath ??= {};
+      p.genericPath.path = path.asSvgPath();
+      p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
+    }, uow);
+    this.node.setBounds(bounds, uow);
   }
 
   private buildFromPath(segments: ReadonlyArray<PathSegment>) {

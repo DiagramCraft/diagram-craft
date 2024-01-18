@@ -1,10 +1,13 @@
 import { AbstractDrag, Modifiers } from '../../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../../geometry/point.ts';
 import { EditablePath } from './editablePath.ts';
+import { UnitOfWork } from '../../../model/unitOfWork.ts';
+import { commitWithUndo } from '../../../model/diagramUndoActions.ts';
 
 export class NodeDrag extends AbstractDrag {
   private startTime: number;
   private lastPoint: Point | undefined;
+  private uow: UnitOfWork;
 
   constructor(
     private readonly editablePath: EditablePath,
@@ -13,6 +16,7 @@ export class NodeDrag extends AbstractDrag {
   ) {
     super();
     this.startTime = new Date().getTime();
+    this.uow = new UnitOfWork(this.editablePath.diagram, true);
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
@@ -20,7 +24,9 @@ export class NodeDrag extends AbstractDrag {
     this.editablePath.updateWaypoint(this.waypointIdx, {
       point: this.editablePath.toLocalCoordinate(coord)
     });
-    this.editablePath.commit();
+
+    this.editablePath.commitToNode(this.uow);
+    this.uow.notify();
   }
 
   onDragEnd(): void {
@@ -33,6 +39,7 @@ export class NodeDrag extends AbstractDrag {
       return;
     }
 
-    this.editablePath.commit();
+    this.editablePath.commitToNode(this.uow);
+    commitWithUndo(this.uow, 'Edit path');
   }
 }
