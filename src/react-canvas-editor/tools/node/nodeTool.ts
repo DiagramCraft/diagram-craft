@@ -8,6 +8,7 @@ import { isNode } from '../../../model/diagramElement.ts';
 import { addHighlight, removeHighlight } from '../../highlight.ts';
 import { UnitOfWork } from '../../../model/unitOfWork.ts';
 import { ApplicationTriggers } from '../../EditableCanvas.tsx';
+import { commitWithUndo } from '../../../model/diagramUndoActions.ts';
 
 export class NodeTool extends AbstractTool {
   constructor(
@@ -72,9 +73,9 @@ export class NodeTool extends AbstractTool {
           'Yes',
           'Cancel',
           () => {
-            const uow = new UnitOfWork(this.diagram);
+            const uow = new UnitOfWork(this.diagram, true);
             el.convertToPath(uow);
-            uow.commit();
+            commitWithUndo(uow, 'Convert to path');
             this.diagram.selectionState.setElements([el]);
           }
         );

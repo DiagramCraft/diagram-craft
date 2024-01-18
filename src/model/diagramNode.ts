@@ -212,6 +212,7 @@ export class DiagramNode
     this.setBounds(snapshot.bounds, uow);
     this.#props = snapshot.props as NodeProps;
     this.#props.highlight = undefined;
+    this.#nodeType = snapshot.nodeType;
 
     this.setChildren(
       snapshot.children.map(c => {
@@ -233,6 +234,8 @@ export class DiagramNode
   }
 
   convertToPath(uow: UnitOfWork) {
+    uow.snapshot(this);
+
     const path = this.getDefinition().getBoundingPath(this);
     const scaledPath = PathUtils.scalePath(path, this.bounds, { x: -1, y: 1, w: 2, h: -2, r: 0 });
 
