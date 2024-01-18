@@ -215,10 +215,17 @@ export class Path {
   }
 
   asSvgPath() {
+    // Need to resolve any T-segments, as many of the QuadSegments will
+    // at this point (post processing) have turned into CubicSegment and SVG
+    // cannot rended a C-segment followed by a T-segment
+    const normalizedPath = this.#path.find(e => e[0] === 'T')
+      ? this.segments.flatMap(e => e.raw())
+      : this.#path;
+
     return (
       `M ${round(this.#start.x)} ${round(this.#start.y)}` +
-      (this.#path.length > 0 ? ', ' : '') +
-      this.#path.map(e => e.join(' ')).join(', ')
+      (normalizedPath.length > 0 ? ', ' : '') +
+      normalizedPath.map(e => e.join(' ')).join(', ')
     );
   }
 

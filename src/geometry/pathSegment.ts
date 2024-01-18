@@ -256,7 +256,8 @@ export class SegmentList {
 
 export const makeCurveSegment = (start: Point, end: Point, previous: QuadSegment): CubicSegment => {
   const p = start;
-  const cp = previous.p1!;
+
+  const cp = previous.p2!;
   const cp2 = Point.add(p, Point.subtract(p, cp));
 
   return new QuadSegment(start, cp2, end);

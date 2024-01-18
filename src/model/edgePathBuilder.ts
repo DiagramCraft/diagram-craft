@@ -128,7 +128,7 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
   } else if (edge.waypoints.length === 1) {
     path.quadTo(
       em,
-      BezierUtils.qubicFromThreePoints(edge.start.position, em, edge.waypoints[0].point)
+      BezierUtils.qubicFromThreePoints(edge.start.position, edge.waypoints[0].point, em)
     );
   } else {
     path.quadTo(
