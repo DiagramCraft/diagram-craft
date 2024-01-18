@@ -2,7 +2,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface ActionMap {
@@ -49,11 +49,7 @@ export class SelectionRestackAction extends AbstractSelectionAction {
         break;
     }
 
-    const snapshots = uow.commit();
-
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction('Restack selection', this.diagram, snapshots)
-    );
+    commitWithUndo(uow, 'Restack selection');
 
     this.emit('actiontriggered', { action: this });
   }

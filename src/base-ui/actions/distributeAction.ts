@@ -1,5 +1,5 @@
 import { Box } from '../../geometry/box.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
@@ -41,10 +41,8 @@ export class DistributeAction extends AbstractSelectionAction {
 
     this.calculateAndUpdateBounds(boundsOrientation, boundsSize, uow);
 
-    const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction(`Distribute ${this.mode}`, this.diagram, snapshots)
-    );
+    commitWithUndo(uow, `Distribute ${this.mode}`);
+
     this.emit('actiontriggered', { action: this });
   }
 

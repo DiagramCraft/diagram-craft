@@ -7,7 +7,7 @@ import { Direction } from '../../geometry/direction.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -136,11 +136,9 @@ export class ResizeDrag extends AbstractDrag {
   onDragEnd(): void {
     const selection = this.diagram.selectionState;
 
-    this.uow.stopTracking();
-    const snapshots = this.uow.commit();
-
     if (selection.isChanged()) {
-      this.diagram.undoManager.add(new SnapshotUndoableAction('Resize', this.diagram, snapshots));
+      this.uow.stopTracking();
+      commitWithUndo(this.uow, 'Resize');
     }
 
     selection.rebaseline();

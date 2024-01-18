@@ -4,7 +4,7 @@ import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { ControlPoints } from '../../model/types.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 
@@ -53,10 +53,6 @@ export class BezierControlPointDrag extends AbstractDrag {
   }
 
   onDragEnd(): void {
-    const snapshot = this.uow.commit();
-
-    this.edge.diagram.undoManager.add(
-      new SnapshotUndoableAction('Move Control point', this.edge.diagram, snapshot)
-    );
+    commitWithUndo(this.uow, 'Move Control point');
   }
 }

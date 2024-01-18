@@ -5,7 +5,7 @@ import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { isNode } from '../../model/diagramElement.ts';
 
 const EDGE_HIGHLIGHT = 'edge-connect';
@@ -71,11 +71,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
       removeHighlight(this.diagram.lookup(this.hoverElement), EDGE_HIGHLIGHT);
     }
 
-    const snapshot = this.uow.commit();
-
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction('Move edge endpoint', this.diagram, snapshot)
-    );
+    commitWithUndo(this.uow, 'Move edge endpoint');
   }
 
   private attachToClosestAnchor(coord: Point) {

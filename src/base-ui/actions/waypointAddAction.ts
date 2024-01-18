@@ -2,7 +2,7 @@ import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '..
 import { Diagram } from '../../model/diagram.ts';
 import { EventEmitter } from '../../utils/event.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface ActionMap {
@@ -27,9 +27,6 @@ export class WaypointAddAction extends EventEmitter<ActionEvents> implements Act
     const uow = new UnitOfWork(this.diagram, true);
     edge!.addWaypoint({ point: context.point! }, uow);
 
-    const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction('Add waypoint', this.diagram, snapshots)
-    );
+    commitWithUndo(uow, 'Add waypoint');
   }
 }

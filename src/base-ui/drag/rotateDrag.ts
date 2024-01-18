@@ -5,7 +5,7 @@ import { Vector } from '../../geometry/vector.ts';
 import { TransformFactory } from '../../geometry/transform.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 export class RotateDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -46,11 +46,9 @@ export class RotateDrag extends AbstractDrag {
   onDragEnd(): void {
     const selection = this.diagram.selectionState;
 
-    this.uow.stopTracking();
-    const snapshots = this.uow.commit();
-
     if (selection.isChanged()) {
-      this.diagram.undoManager.add(new SnapshotUndoableAction('Rotate', this.diagram, snapshots));
+      this.uow.stopTracking();
+      commitWithUndo(this.uow, 'Rotate');
     }
 
     selection.forceRotation(undefined);

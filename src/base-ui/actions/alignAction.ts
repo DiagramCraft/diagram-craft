@@ -1,5 +1,5 @@
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
@@ -61,10 +61,8 @@ export class AlignAction extends AbstractSelectionAction {
       VERIFY_NOT_REACHED();
     }
 
-    const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction(`Align ${this.mode}`, this.diagram, snapshots)
-    );
+    commitWithUndo(uow, `Align ${this.mode}`);
+
     this.emit('actiontriggered', { action: this });
   }
 

@@ -155,7 +155,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
               );
               uow.commit();
 
-              drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));
+              drag.initiate(new EdgeWaypointDrag(props.def, idx));
               e.stopPropagation();
             }}
             onContextMenu={onContextMenu}
@@ -206,7 +206,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
               }}
               onMouseDown={e => {
                 if (e.button !== 0) return;
-                drag.initiate(new EdgeWaypointDrag(props.diagram, props.def, idx));
+                drag.initiate(new EdgeWaypointDrag(props.def, idx));
                 e.stopPropagation();
               }}
               onContextMenu={onContextMenu}

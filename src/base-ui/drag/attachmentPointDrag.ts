@@ -4,7 +4,7 @@ import { DiagramEdge, ResolvedLabelNode } from '../../model/diagramEdge.ts';
 import { Path } from '../../geometry/path.ts';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 export class AttachmentPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -37,10 +37,6 @@ export class AttachmentPointDrag extends AbstractDrag {
   }
 
   onDragEnd(): void {
-    const snapshot = this.uow.commit();
-
-    this.edge.diagram.undoManager.add(
-      new SnapshotUndoableAction('Move label node', this.edge.diagram, snapshot)
-    );
+    commitWithUndo(this.uow, 'Move label node');
   }
 }

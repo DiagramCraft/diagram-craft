@@ -5,6 +5,11 @@ import { ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { assert } from '../utils/assert.ts';
 
+export const commitWithUndo = (uow: UnitOfWork, description: string) => {
+  const snapshots = uow.commit();
+  uow.diagram.undoManager.add(new SnapshotUndoableAction(description, uow.diagram, snapshots));
+};
+
 export class SnapshotUndoableAction implements UndoableAction {
   private readonly afterSnapshot: ElementsSnapshot;
 

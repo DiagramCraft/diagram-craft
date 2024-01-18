@@ -2,7 +2,7 @@ import { ActionEvents, ActionMapFactory, State, ToggleAction } from '../keyMap.t
 import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 
 declare global {
   interface ActionMap {
@@ -57,10 +57,7 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
       p.text[this.prop] = !p.text[this.prop];
     }, uow);
 
-    const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction(`Text: ${this.prop}`, this.diagram, snapshots)
-    );
+    commitWithUndo(uow, `Text: ${this.prop}`);
 
     this.state = !!node.props.text![this.prop];
     this.emit('actionchanged', { action: this });
@@ -106,10 +103,7 @@ export class TextDecorationAction extends EventEmitter<ActionEvents> implements 
       }
     }, uow);
 
-    const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new SnapshotUndoableAction(`Text decoration`, this.diagram, snapshots)
-    );
+    commitWithUndo(uow, `Text decoration`);
 
     this.state = node.props.text!.textDecoration === this.prop;
     this.emit('actionchanged', { action: this });
