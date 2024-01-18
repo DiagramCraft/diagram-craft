@@ -119,8 +119,9 @@ export const TextPanel = (props: Props) => {
                 .filter(([_, value]) => value)
                 .map(([key, _]) => key)}
               onValueChange={value => {
-                isBold.set(value.includes('bold'));
-                isItalic.set(value.includes('italic'));
+                if (!!isBold.val !== value.includes('bold')) isBold.set(value.includes('bold'));
+                if (!!isItalic.val !== value.includes('italic'))
+                  isItalic.set(value.includes('italic'));
 
                 const isUnderlineChanged =
                   value.includes('underline') !== (textDecoration.val === 'underline');
