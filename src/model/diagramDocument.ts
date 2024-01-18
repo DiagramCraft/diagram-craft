@@ -1,5 +1,6 @@
 import { Diagram } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
+import { AttachmentManager } from './attachment.ts';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -8,6 +9,8 @@ export type DocumentEvents = {
 };
 
 export class DiagramDocument extends EventEmitter<DocumentEvents> {
+  attachments = new AttachmentManager(this);
+
   constructor(public readonly diagrams: Array<Diagram>) {
     super();
     this.diagrams.forEach(d => (d.document = this));

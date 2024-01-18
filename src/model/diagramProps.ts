@@ -14,10 +14,10 @@ export function assertEdgeType(s: string | undefined): asserts s is EdgeType | u
     throw new Error();
 }
 
-type FillType = 'solid' | 'gradient';
+type FillType = 'solid' | 'gradient' | 'image';
 
 export function assertFillType(s: string | undefined): asserts s is FillType | undefined {
-  if (!(s === 'solid' || s === 'gradient' || s === undefined)) throw new Error();
+  if (!(s === 'solid' || s === 'gradient' || s === 'image' || s === undefined)) throw new Error();
 }
 
 type HAlign = 'left' | 'center' | 'right';
@@ -117,6 +117,8 @@ declare global {
 
     fill?: {
       enabled?: boolean;
+      image?: string;
+      pattern?: string;
       color?: string;
       type?: FillType;
       color2?: string;

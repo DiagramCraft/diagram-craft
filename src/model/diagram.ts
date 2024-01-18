@@ -48,7 +48,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   };
 
   diagrams: ReadonlyArray<this> = [];
-  document: DiagramDocument | undefined;
+  #document: DiagramDocument | undefined;
 
   mustCalculateIntersections = true;
 
@@ -93,6 +93,14 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     this.on('elementChange', toggleMustCalculateIntersections);
     this.on('elementAdd', toggleMustCalculateIntersections);
     this.on('elementRemove', toggleMustCalculateIntersections);
+  }
+
+  set document(d: DiagramDocument) {
+    this.#document = d;
+  }
+
+  get document(): DiagramDocument {
+    return this.#document!;
   }
 
   lookup(id: string): DiagramElement | undefined {

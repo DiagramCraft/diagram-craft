@@ -73,8 +73,13 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     stroke: isEdgeConnect ? 'red' : nodeProps.stroke.color
   };
 
+  let patternId = undefined;
+
   if (nodeProps.fill.type === 'gradient') {
     style.fill = `url(#node-${props.def.id}-gradient)`;
+  } else if (nodeProps.fill.type === 'image') {
+    patternId = `node-${props.def.id}-pattern`;
+    style.fill = `url(#${patternId})`;
   }
 
   if (nodeProps.stroke.pattern) {
@@ -120,6 +125,18 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
             />
           )}
         </filter>
+      )}
+      {patternId && (
+        <pattern id={patternId} patternContentUnits="objectBoundingBox" width="1" height="1">
+          <image
+            href={nodeProps.fill.image}
+            preserveAspectRatio="xMidYMid slice"
+            x="0"
+            y="0"
+            width="1"
+            height="1"
+          />
+        </pattern>
       )}
       <g
         id={`node-${props.def.id}`}

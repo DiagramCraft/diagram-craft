@@ -31,6 +31,7 @@ body {
 
 button {
   border: 1px solid transparent;
+  font-family: inherit;
 }
 button:hover {
 }
