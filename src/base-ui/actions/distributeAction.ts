@@ -61,7 +61,7 @@ export class DistributeAction extends AbstractSelectionAction {
     const difference = totalSpace / (this.diagram.selectionState.elements.length - 1);
 
     let currentPosition = min + Math.abs(minimal.bounds[size] + difference);
-    for (const e of this.diagram.selectionState.elements.slice(1)) {
+    for (const e of elementsInOrder.slice(1)) {
       if (e.bounds[size] >= 0) {
         e.setBounds(
           orientation === 'y'
