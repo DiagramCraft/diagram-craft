@@ -117,7 +117,13 @@ declare global {
 
     fill?: {
       enabled?: boolean;
-      image?: string;
+      image?: {
+        w?: number;
+        h?: number;
+        url: string;
+        fit: 'fill' | 'contain' | 'cover' | 'keep' | 'tile';
+        scale?: number;
+      };
       pattern?: string;
       color?: string;
       type?: FillType;

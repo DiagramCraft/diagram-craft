@@ -1115,6 +1115,7 @@ input::-webkit-input-placeholder {
   background-color: var(--secondary-bg);
   margin: 0;
   width: fit-content !important;
+  box-sizing: content-box;
 
   &:hover {
     background-color: var(--blue-3);
@@ -1124,12 +1125,13 @@ input::-webkit-input-placeholder {
     position: relative;
     box-shadow: 0 0 0 2px var(--blue-7);
   }
+  &:disabled {
+    color: var(--slate-8);
+    pointer-events: none;
+    border: 1px solid var(--slate-6);
+  }
 }
 
-/* TODO: This should be a utility class instead */
-button.cmp-button {
-  aspect-ratio: 1/1;
-}
 
 .cmp-tree {
   display: grid;
@@ -1668,6 +1670,9 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 }
 .util-disable-nested-pointer-events * {
   pointer-events: none;
+}
+.util-square {
+  aspect-ratio: 1/1;
 }
 
 

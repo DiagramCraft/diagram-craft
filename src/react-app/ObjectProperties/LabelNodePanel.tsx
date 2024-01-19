@@ -142,7 +142,7 @@ export const LabelNodePanel = (props: Props) => {
             )}
             &nbsp;
             <button
-              className={'cmp-button'}
+              className={'cmp-button util-square'}
               onClick={() => {
                 UnitOfWork.execute(edge.diagram, uow => {
                   node.updateLabelNode({ offset: { x: 0, y: 0 } }, uow);

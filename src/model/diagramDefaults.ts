@@ -27,7 +27,14 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
     color: 'var(--canvas-bg)',
     color2: 'blue',
     type: 'solid',
-    enabled: true
+    enabled: true,
+    image: {
+      fit: 'fill',
+      url: '',
+      w: 0,
+      h: 0,
+      scale: 1
+    }
   },
   stroke: {
     color: 'var(--canvas-fg)',

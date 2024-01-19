@@ -55,7 +55,7 @@ export class AttachmentManager {
         for (const element of layer.elements) {
           if (isNode(element)) {
             const props = element.props;
-            used.add(props.fill?.image);
+            used.add(props.fill?.image?.url);
             used.add(props.fill?.pattern);
           } else if (isEdge(element)) {
             // No attachments possible for edges

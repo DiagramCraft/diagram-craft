@@ -9,13 +9,19 @@ import { assertFillType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import * as Select from '@radix-ui/react-select';
+import { round } from '../../utils/math.ts';
+import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 
 export const NodeFillPanel = (props: Props) => {
   const diagram = useDiagram();
   const defaults = useNodeDefaults();
 
   const fill = useNodeProperty(diagram, 'fill.color', defaults.fill.color);
-  const fillImage = useNodeProperty(diagram, 'fill.image', defaults.fill.color);
+  const fillImage = useNodeProperty(diagram, 'fill.image.url', '');
+  const fillImageFit = useNodeProperty(diagram, 'fill.image.fit', defaults.fill.image.fit);
+  const fillImageW = useNodeProperty(diagram, 'fill.image.w', defaults.fill.image.w);
+  const fillImageH = useNodeProperty(diagram, 'fill.image.h', defaults.fill.image.h);
+  const fillImageScale = useNodeProperty(diagram, 'fill.image.scale', defaults.fill.image.scale);
   const color2 = useNodeProperty(diagram, 'fill.color2', defaults.fill.color2);
   const type = useNodeProperty(diagram, 'fill.type', defaults.fill.type);
   const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill.enabled);
@@ -149,13 +155,25 @@ export const NodeFillPanel = (props: Props) => {
                 >
                   Upload...
                 </label>
+                &nbsp;
+                <button
+                  className={'cmp-button'}
+                  style={{ fontSize: '11px' }}
+                  disabled={fillImage.val === ''}
+                  onClick={() => {
+                    fillImage.set('');
+                    fillImageW.set(0);
+                    fillImageH.set(0);
+                    (document.getElementById('fill-file-upload') as HTMLInputElement).value = '';
+                  }}
+                >
+                  Clear
+                </button>
                 <input
                   id={'fill-file-upload'}
                   style={{ display: 'none', width: 0 }}
                   type="file"
                   onChange={async e => {
-                    console.log(e.target.files![0]);
-
                     // TODO: Should add a spinner...
 
                     const att = await diagram.document.attachments.addAttachment(
@@ -163,21 +181,87 @@ export const NodeFillPanel = (props: Props) => {
                     );
 
                     const img = await createImageBitmap(att.content);
-                    console.log(img.width, img.height);
+                    const { width, height } = img;
                     img.close();
 
                     fillImage.set(att.url);
-                    console.log(att.url);
+                    fillImageW.set(width);
+                    fillImageH.set(height);
                   }}
                 />
               </div>
               <div>
-                <img src={fillImage.val} width={80} height={80} />
+                {fillImage.val !== '' && fillImage.val !== undefined && (
+                  <img
+                    src={fillImage.val}
+                    style={{ marginTop: '0.5rem', maxWidth: 80, maxHeight: 80 }}
+                  />
+                )}
               </div>
             </div>
-            <div className={'cmp-labeled-table__label util-a-top'}>Settings:</div>
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Settings:</div>
             <div className={'cmp-labeled-table__value'}>
-              <div>Tile | Cover | None</div>
+              <Select.Root
+                onValueChange={v => {
+                  // eslint-disable-next-line
+                  fillImageFit.set(v as any);
+                }}
+                value={fillImageFit.val}
+              >
+                <Select.Trigger className="cmp-select-trigger">
+                  <Select.Value placeholder={''} />
+                  <Select.Icon className="cmp-select-trigger__icon">
+                    <TbChevronDown />
+                  </Select.Icon>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Content className="cmp-select-content">
+                    <Select.Viewport className="cmp-select-content__viewpoint">
+                      <Select.Group>
+                        <Select.Item className={'cmp-select-content__item'} value={'fill'}>
+                          <Select.ItemText>Fill</Select.ItemText>
+                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
+                            <TbCheck />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                        <Select.Item className={'cmp-select-content__item'} value={'contain'}>
+                          <Select.ItemText>Contain</Select.ItemText>
+                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
+                            <TbCheck />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                        <Select.Item className={'cmp-select-content__item'} value={'cover'}>
+                          <Select.ItemText>Cover</Select.ItemText>
+                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
+                            <TbCheck />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                        <Select.Item className={'cmp-select-content__item'} value={'keep'}>
+                          <Select.ItemText>Keep</Select.ItemText>
+                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
+                            <TbCheck />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                        <Select.Item className={'cmp-select-content__item'} value={'tile'}>
+                          <Select.ItemText>Tile</Select.ItemText>
+                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
+                            <TbCheck />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                      </Select.Group>
+                    </Select.Viewport>
+                  </Select.Content>
+                </Select.Portal>
+              </Select.Root>
+
+              {fillImageFit.val === 'tile' && (
+                <SliderAndNumberInput
+                  value={round(fillImageScale.val * 100)}
+                  onChange={v => {
+                    fillImageScale.set(Number(v) / 100);
+                  }}
+                />
+              )}
             </div>
           </>
         )}

@@ -27,6 +27,72 @@ export type NodeApi = {
   repaint: () => void;
 };
 
+const getPatternProps = (nodeProps: DeepRequired<NodeProps>, bounds: Box) => {
+  if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {
+    if (nodeProps.fill.image.fit === 'fill') {
+      return {
+        patternUnits: 'objectBoundingBox',
+        width: 1,
+        height: 1,
+        patternContentUnits: 'objectBoundingBox',
+        imgWith: 1,
+        imgHeight: 1,
+        preserveAspectRatio: 'xMidYMid slice'
+      };
+    } else if (nodeProps.fill.image.fit === 'keep') {
+      return {
+        patternUnits: 'objectBoundingBox',
+        width: 1,
+        height: 1,
+        patternContentUnits: 'userSpaceOnUse',
+        imgWith: nodeProps.fill.image.w,
+        imgHeight: nodeProps.fill.image.h,
+        preserveAspectRatio: 'xMidYMid slice'
+      };
+    } else if (nodeProps.fill.image.fit === 'contain') {
+      return {
+        patternUnits: 'objectBoundingBox',
+        width: 1,
+        height: 1,
+        patternContentUnits: 'userSpaceOnUse',
+        imgWith: bounds.w,
+        imgHeight: bounds.h,
+        preserveAspectRatio: 'xMidYMid meet'
+      };
+    } else if (nodeProps.fill.image.fit === 'cover') {
+      return {
+        patternUnits: 'objectBoundingBox',
+        width: 1,
+        height: 1,
+        patternContentUnits: 'userSpaceOnUse',
+        imgWith: bounds.w,
+        imgHeight: bounds.h,
+        preserveAspectRatio: 'xMidYMid slice'
+      };
+    } else if (nodeProps.fill.image.fit === 'tile') {
+      return {
+        patternUnits: 'userSpaceOnUse',
+        width: Math.max(1, nodeProps.fill.image.w * nodeProps.fill.image.scale),
+        height: Math.max(1, nodeProps.fill.image.h * nodeProps.fill.image.scale),
+        patternContentUnits: 'userSpaceOnUse',
+        imgWith: Math.max(1, nodeProps.fill.image.w * nodeProps.fill.image.scale),
+        imgHeight: Math.max(1, nodeProps.fill.image.h * nodeProps.fill.image.scale),
+        preserveAspectRatio: 'xMidYMid slice'
+      };
+    }
+  }
+
+  return {
+    patternUnits: 'objectBoundingBox',
+    width: 1,
+    height: 1,
+    patternContentUnits: 'objectBoundingBox',
+    imgWith: 1,
+    imgHeight: 1,
+    preserveAspectRatio: 'xMidYMid slice'
+  };
+};
+
 export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   const redraw = useRedraw();
 
@@ -110,6 +176,8 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     style.filter = `url(#${filterId})`;
   }
 
+  const patternProps = getPatternProps(nodeProps, props.def.bounds);
+
   // TODO: We should only apply the rotation to leaf nodes and not to groups or containers
   //       ... changing this likely means changing Node.tsx and Container.tsx
   //       ... or maybe it's better to continue like this with reverse rotations in Node and Container
@@ -126,16 +194,28 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
           )}
         </filter>
       )}
+
       {patternId && (
-        <pattern id={patternId} patternContentUnits="objectBoundingBox" width="1" height="1">
-          <image
-            href={nodeProps.fill.image}
-            preserveAspectRatio="xMidYMid slice"
-            x="0"
-            y="0"
-            width="1"
-            height="1"
+        <pattern
+          id={patternId}
+          patternUnits={patternProps.patternUnits}
+          patternContentUnits={patternProps.patternContentUnits}
+          width={patternProps.width}
+          height={patternProps.height}
+        >
+          <rect
+            width={patternProps.imgWith}
+            height={patternProps.imgHeight}
+            fill={nodeProps.fill.color}
           />
+          {nodeProps.fill.image.url && nodeProps.fill.image.url !== '' && (
+            <image
+              href={nodeProps.fill.image.url}
+              preserveAspectRatio={patternProps.preserveAspectRatio}
+              width={patternProps.imgWith}
+              height={patternProps.imgHeight}
+            />
+          )}
         </pattern>
       )}
       <g
