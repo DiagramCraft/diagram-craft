@@ -33,7 +33,8 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
       url: '',
       w: 0,
       h: 0,
-      scale: 1
+      scale: 1,
+      tint: ''
     }
   },
   stroke: {

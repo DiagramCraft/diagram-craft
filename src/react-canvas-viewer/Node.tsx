@@ -143,7 +143,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   if (nodeProps.fill.type === 'gradient') {
     style.fill = `url(#node-${props.def.id}-gradient)`;
-  } else if (nodeProps.fill.type === 'image') {
+  } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
     patternId = `node-${props.def.id}-pattern`;
     style.fill = `url(#${patternId})`;
   }
@@ -196,27 +196,41 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
       )}
 
       {patternId && (
-        <pattern
-          id={patternId}
-          patternUnits={patternProps.patternUnits}
-          patternContentUnits={patternProps.patternContentUnits}
-          width={patternProps.width}
-          height={patternProps.height}
-        >
-          <rect
-            width={patternProps.imgWith}
-            height={patternProps.imgHeight}
-            fill={nodeProps.fill.color}
-          />
-          {nodeProps.fill.image.url && nodeProps.fill.image.url !== '' && (
-            <image
-              href={nodeProps.fill.image.url}
-              preserveAspectRatio={patternProps.preserveAspectRatio}
+        <>
+          <filter id={`${patternId}-filter`}>
+            <feFlood
+              result="fill"
+              width="100%"
+              height="100%"
+              floodColor={nodeProps.fill.image.tint}
+              floodOpacity="1"
+            />
+            <feColorMatrix in="SourceGraphic" result="desaturate" type="saturate" values="0" />
+            <feBlend in2="desaturate" in="fill" mode="color" />
+          </filter>
+          <pattern
+            id={patternId}
+            patternUnits={patternProps.patternUnits}
+            patternContentUnits={patternProps.patternContentUnits}
+            width={patternProps.width}
+            height={patternProps.height}
+          >
+            <rect
               width={patternProps.imgWith}
               height={patternProps.imgHeight}
+              fill={nodeProps.fill.color}
             />
-          )}
-        </pattern>
+            {nodeProps.fill.image.url && nodeProps.fill.image.url !== '' && (
+              <image
+                href={nodeProps.fill.image.url}
+                preserveAspectRatio={patternProps.preserveAspectRatio}
+                width={patternProps.imgWith}
+                height={patternProps.imgHeight}
+                filter={nodeProps.fill.image.tint === '' ? undefined : `url(#${patternId}-filter)`}
+              />
+            )}
+          </pattern>
+        </>
       )}
       <g
         id={`node-${props.def.id}`}

@@ -12,6 +12,33 @@ import * as Select from '@radix-ui/react-select';
 import { round } from '../../utils/math.ts';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 
+const TEXTURES = [
+  'bubbles1.jpeg',
+  'grunge1.jpeg',
+  'grunge2.jpeg',
+  'grunge3.jpeg',
+  'marble1.jpeg',
+  'marble2.jpeg',
+  'paper1.jpeg',
+  'paper2.jpeg',
+  'paper3.jpeg',
+  'paper4.jpeg',
+  'paper5.jpeg',
+  'textile1.jpeg'
+];
+
+const ImageScale = (props: {
+  fillImageScale: number;
+  onChange: (v: number | undefined) => void;
+}) => (
+  <>
+    <div className={'cmp-labeled-table__label'}>Scale:</div>
+    <div className={'cmp-labeled-table__value'}>
+      <SliderAndNumberInput value={round(props.fillImageScale * 100)} onChange={props.onChange} />
+    </div>
+  </>
+);
+
 export const NodeFillPanel = (props: Props) => {
   const diagram = useDiagram();
   const defaults = useNodeDefaults();
@@ -22,6 +49,7 @@ export const NodeFillPanel = (props: Props) => {
   const fillImageW = useNodeProperty(diagram, 'fill.image.w', defaults.fill.image.w);
   const fillImageH = useNodeProperty(diagram, 'fill.image.h', defaults.fill.image.h);
   const fillImageScale = useNodeProperty(diagram, 'fill.image.scale', defaults.fill.image.scale);
+  const fillImageTint = useNodeProperty(diagram, 'fill.image.tint', defaults.fill.image.tint);
   const color2 = useNodeProperty(diagram, 'fill.color2', defaults.fill.color2);
   const type = useNodeProperty(diagram, 'fill.type', defaults.fill.type);
   const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill.enabled);
@@ -143,6 +171,52 @@ export const NodeFillPanel = (props: Props) => {
           </>
         )}
 
+        {type.val === 'texture' && (
+          <>
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Texture:</div>
+            <div className={'cmp-labeled-table__value'}>
+              {TEXTURES.map(t => (
+                <img
+                  key={t}
+                  src={`/textures/${t}`}
+                  style={{ width: 50, height: 50, marginRight: '0.25rem' }}
+                  onClick={async () => {
+                    const response = await fetch(`/textures/${t}`);
+                    const blob = await response.blob();
+                    const att = await diagram.document.attachments.addAttachment(blob);
+
+                    const img = await createImageBitmap(att.content);
+                    const { width, height } = img;
+                    img.close();
+
+                    fillImage.set(`/textures/${t}`);
+                    fillImageFit.set('tile');
+                    fillImageW.set(width);
+                    fillImageH.set(height);
+                  }}
+                />
+              ))}
+            </div>
+
+            <ImageScale
+              fillImageScale={fillImageScale.val}
+              onChange={v => {
+                fillImageScale.set(Number(v) / 100);
+              }}
+            />
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <ColorPicker
+                primaryColors={primaryColors}
+                additionalHues={additionalHues}
+                color={fillImageTint.val}
+                onClick={fillImageTint.set}
+                hasMultipleValues={fillImageTint.hasMultipleValues}
+              />
+            </div>
+          </>
+        )}
+
         {type.val === 'image' && (
           <>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Image:</div>
@@ -187,6 +261,7 @@ export const NodeFillPanel = (props: Props) => {
                     fillImage.set(att.url);
                     fillImageW.set(width);
                     fillImageH.set(height);
+                    fillImageTint.set('');
                   }}
                 />
               </div>
@@ -199,7 +274,7 @@ export const NodeFillPanel = (props: Props) => {
                 )}
               </div>
             </div>
-            <div className={'cmp-labeled-table__label util-a-top-center'}>Settings:</div>
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Fit:</div>
             <div className={'cmp-labeled-table__value'}>
               <Select.Root
                 onValueChange={v => {
@@ -253,16 +328,16 @@ export const NodeFillPanel = (props: Props) => {
                   </Select.Content>
                 </Select.Portal>
               </Select.Root>
-
-              {fillImageFit.val === 'tile' && (
-                <SliderAndNumberInput
-                  value={round(fillImageScale.val * 100)}
-                  onChange={v => {
-                    fillImageScale.set(Number(v) / 100);
-                  }}
-                />
-              )}
             </div>
+
+            {fillImageFit.val === 'tile' && (
+              <ImageScale
+                fillImageScale={fillImageScale.val}
+                onChange={v => {
+                  fillImageScale.set(Number(v) / 100);
+                }}
+              />
+            )}
           </>
         )}
       </div>

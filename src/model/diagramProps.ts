@@ -14,10 +14,11 @@ export function assertEdgeType(s: string | undefined): asserts s is EdgeType | u
     throw new Error();
 }
 
-type FillType = 'solid' | 'gradient' | 'image';
+type FillType = 'solid' | 'gradient' | 'image' | 'texture';
 
 export function assertFillType(s: string | undefined): asserts s is FillType | undefined {
-  if (!(s === 'solid' || s === 'gradient' || s === 'image' || s === undefined)) throw new Error();
+  if (!(s === 'solid' || s === 'gradient' || s === 'image' || s === 'texture' || s === undefined))
+    throw new Error();
 }
 
 type HAlign = 'left' | 'center' | 'right';
@@ -123,6 +124,7 @@ declare global {
         url: string;
         fit: 'fill' | 'contain' | 'cover' | 'keep' | 'tile';
         scale?: number;
+        tint?: string;
       };
       pattern?: string;
       color?: string;
