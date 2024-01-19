@@ -258,6 +258,7 @@ export const NodeFillPanel = (props: Props) => {
                     const { width, height } = img;
                     img.close();
 
+                    // TODO: Combine into one undoable action
                     fillImage.set(att.url);
                     fillImageW.set(width);
                     fillImageH.set(height);
