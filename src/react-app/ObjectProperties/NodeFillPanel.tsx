@@ -189,10 +189,12 @@ export const NodeFillPanel = (props: Props) => {
                     const { width, height } = img;
                     img.close();
 
-                    fillImage.set(`/textures/${t}`);
-                    fillImageFit.set('tile');
-                    fillImageW.set(width);
-                    fillImageH.set(height);
+                    diagram.undoManager.combine(() => {
+                      fillImage.set(`/textures/${t}`);
+                      fillImageFit.set('tile');
+                      fillImageW.set(width);
+                      fillImageH.set(height);
+                    });
                   }}
                 />
               ))}
@@ -235,9 +237,11 @@ export const NodeFillPanel = (props: Props) => {
                   style={{ fontSize: '11px' }}
                   disabled={fillImage.val === ''}
                   onClick={() => {
-                    fillImage.set('');
-                    fillImageW.set(0);
-                    fillImageH.set(0);
+                    diagram.undoManager.combine(() => {
+                      fillImage.set('');
+                      fillImageW.set(0);
+                      fillImageH.set(0);
+                    });
                     (document.getElementById('fill-file-upload') as HTMLInputElement).value = '';
                   }}
                 >
@@ -258,11 +262,12 @@ export const NodeFillPanel = (props: Props) => {
                     const { width, height } = img;
                     img.close();
 
-                    // TODO: Combine into one undoable action
-                    fillImage.set(att.url);
-                    fillImageW.set(width);
-                    fillImageH.set(height);
-                    fillImageTint.set('');
+                    diagram.undoManager.combine(() => {
+                      fillImage.set(att.url);
+                      fillImageW.set(width);
+                      fillImageH.set(height);
+                      fillImageTint.set('');
+                    });
                   }}
                 />
               </div>

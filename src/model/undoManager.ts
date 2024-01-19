@@ -68,6 +68,19 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     this.redoableActions = [];
   }
 
+  combine(callback: () => void) {
+    const top = this.undoableActions.at(-1);
+    callback();
+
+    const actions: UndoableAction[] = [];
+    while (this.undoableActions.at(-1) !== top) {
+      actions.push(this.undoableActions.pop()!);
+    }
+    actions.reverse();
+
+    this.add(new CompoundUndoableAction(actions));
+  }
+
   add(action: UndoableAction) {
     if (this.undoableActions.at(-1)?.merge?.(action)) {
       return;
