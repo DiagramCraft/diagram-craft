@@ -1,4 +1,4 @@
-import { TbChevronDown, TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
+import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ArrowSelector } from './ArrowSelector.tsx';
 import { ColorPicker } from '../ColorPicker.tsx';
@@ -10,7 +10,7 @@ import { assertEdgeType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useEdgeDefaults } from '../useDefaults.tsx';
-import * as Select from '@radix-ui/react-select';
+import { Select } from '../components/Select.tsx';
 
 export const LinePanel = (props: Props) => {
   const $d = useDiagram();
@@ -157,43 +157,21 @@ export const LinePanel = (props: Props) => {
           <div className={'cmp-labeled-table__label util-a-top-center'}>Line hops:</div>
           <div className={'cmp-labeled-table__value util-vcenter'}>
             <div className={'util-vstack'} style={{ width: '100%' }}>
-              <Select.Root
+              <Select
                 onValueChange={v => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   lineHopsType.set(v as any);
                 }}
                 value={lineHopsType.val}
-              >
-                <Select.Trigger className="cmp-select-trigger" style={{ width: '100%' }}>
-                  <Select.Value placeholder={'Select'} />
-                  <Select.Icon className="cmp-select-trigger__icon">
-                    <TbChevronDown />
-                  </Select.Icon>
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Content className="cmp-select-content">
-                    <Select.Viewport className="cmp-select-content__viewpoint">
-                      <Select.Group>
-                        <Select.Item className={'cmp-select-content__item'} value={'none'}>
-                          <Select.ItemText>None</Select.ItemText>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'below-hide'}>
-                          <Select.ItemText>Gap when below</Select.ItemText>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'below-line'}>
-                          <Select.ItemText>Gap with line when below</Select.ItemText>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'below-arc'}>
-                          <Select.ItemText>Arc when below</Select.ItemText>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'above-arc'}>
-                          <Select.ItemText>Arc when above</Select.ItemText>
-                        </Select.Item>
-                      </Select.Group>
-                    </Select.Viewport>
-                  </Select.Content>
-                </Select.Portal>
-              </Select.Root>
+                values={[
+                  { label: 'None', value: 'none' },
+                  { label: 'Gap when below', value: 'below-hide' },
+                  { label: 'Gap with line when below', value: 'below-line' },
+                  { label: 'Arc when below', value: 'below-arc' },
+                  { label: 'Arc when above', value: 'above-arc' }
+                ]}
+              />
+
               <NumberInput
                 defaultUnit={'px'}
                 value={lineHopsSize.val}

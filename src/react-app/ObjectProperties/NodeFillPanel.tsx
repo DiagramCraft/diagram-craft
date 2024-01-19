@@ -1,16 +1,16 @@
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../ColorPicker.tsx';
 import { useNodeProperty } from './useProperty.ts';
-import { TbAdjustmentsHorizontal, TbCheck, TbChevronDown, TbX } from 'react-icons/tb';
+import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { assertFillType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
-import * as Select from '@radix-ui/react-select';
 import { round } from '../../utils/math.ts';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
+import { Select } from '../components/Select.tsx';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -68,58 +68,20 @@ export const NodeFillPanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Type:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Select.Root
+          <Select
             onValueChange={v => {
               assertFillType(v);
               type.set(v);
             }}
             value={type.val}
-          >
-            <Select.Trigger className="cmp-select-trigger">
-              <Select.Value placeholder={''} />
-              <Select.Icon className="cmp-select-trigger__icon">
-                <TbChevronDown />
-              </Select.Icon>
-            </Select.Trigger>
-            <Select.Portal>
-              <Select.Content className="cmp-select-content">
-                <Select.Viewport className="cmp-select-content__viewpoint">
-                  <Select.Group>
-                    <Select.Item className={'cmp-select-content__item'} value={'solid'}>
-                      <Select.ItemText>Solid</Select.ItemText>
-                      <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                        <TbCheck />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                    <Select.Item className={'cmp-select-content__item'} value={'gradient'}>
-                      <Select.ItemText>Gradient</Select.ItemText>
-                      <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                        <TbCheck />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                    <Select.Item className={'cmp-select-content__item'} value={'pattern'}>
-                      <Select.ItemText>Pattern</Select.ItemText>
-                      <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                        <TbCheck />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                    <Select.Item className={'cmp-select-content__item'} value={'texture'}>
-                      <Select.ItemText>Texture</Select.ItemText>
-                      <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                        <TbCheck />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                    <Select.Item className={'cmp-select-content__item'} value={'image'}>
-                      <Select.ItemText>Image</Select.ItemText>
-                      <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                        <TbCheck />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  </Select.Group>
-                </Select.Viewport>
-              </Select.Content>
-            </Select.Portal>
-          </Select.Root>
+            values={[
+              { label: 'Solid', value: 'solid' },
+              { label: 'Gradient', value: 'gradient' },
+              { label: 'Pattern', value: 'pattern' },
+              { label: 'Texture', value: 'texture' },
+              { label: 'Image', value: 'image' }
+            ]}
+          />
         </div>
 
         {(type.val === 'gradient' || type.val === 'solid') && (
@@ -282,58 +244,20 @@ export const NodeFillPanel = (props: Props) => {
             </div>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Fit:</div>
             <div className={'cmp-labeled-table__value'}>
-              <Select.Root
+              <Select
                 onValueChange={v => {
                   // eslint-disable-next-line
                   fillImageFit.set(v as any);
                 }}
                 value={fillImageFit.val}
-              >
-                <Select.Trigger className="cmp-select-trigger">
-                  <Select.Value placeholder={''} />
-                  <Select.Icon className="cmp-select-trigger__icon">
-                    <TbChevronDown />
-                  </Select.Icon>
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Content className="cmp-select-content">
-                    <Select.Viewport className="cmp-select-content__viewpoint">
-                      <Select.Group>
-                        <Select.Item className={'cmp-select-content__item'} value={'fill'}>
-                          <Select.ItemText>Fill</Select.ItemText>
-                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                            <TbCheck />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'contain'}>
-                          <Select.ItemText>Contain</Select.ItemText>
-                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                            <TbCheck />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'cover'}>
-                          <Select.ItemText>Cover</Select.ItemText>
-                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                            <TbCheck />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'keep'}>
-                          <Select.ItemText>Keep</Select.ItemText>
-                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                            <TbCheck />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                        <Select.Item className={'cmp-select-content__item'} value={'tile'}>
-                          <Select.ItemText>Tile</Select.ItemText>
-                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                            <TbCheck />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                      </Select.Group>
-                    </Select.Viewport>
-                  </Select.Content>
-                </Select.Portal>
-              </Select.Root>
+                values={[
+                  { label: 'Fill', value: 'fill' },
+                  { label: 'Contain', value: 'contain' },
+                  { label: 'Cover', value: 'cover' },
+                  { label: 'Keep', value: 'keep' },
+                  { label: 'Tile', value: 'tile' }
+                ]}
+              />
             </div>
 
             {fillImageFit.val === 'tile' && (

@@ -62,6 +62,7 @@ export const TextPanel = (props: Props) => {
             hasMultipleValues={fontSize.hasMultipleValues}
           />
           &nbsp;
+          {/* TODO: Can we use Select here - need to support hasMultipleValues */}
           <Select.Root
             value={font.hasMultipleValues ? undefined : font.val}
             onValueChange={font.set}

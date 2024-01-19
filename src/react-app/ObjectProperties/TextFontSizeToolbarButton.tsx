@@ -1,8 +1,7 @@
-import * as Select from '@radix-ui/react-select';
-import { TbCheck, TbChevronDown } from 'react-icons/tb';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { Select } from '../components/Select.tsx';
 
 const SIZES = {
   '10px': 10,
@@ -26,36 +25,11 @@ export const TextFontSizeToolbarButton = (_props: Props) => {
   const fontSize = useNodeProperty($d, 'text.fontSize', defaults.text.fontSize);
 
   return (
-    <Select.Root value={fontSize.val.toString()} onValueChange={a => fontSize.set(Number(a))}>
-      <Select.Trigger className="cmp-select-trigger">
-        <Select.Value placeholder={fontSize.val} />
-        <Select.Icon className="cmp-select-trigger__icon">
-          <TbChevronDown />
-        </Select.Icon>
-      </Select.Trigger>
-      <Select.Portal>
-        <Select.Content className="cmp-select-content">
-          <Select.Viewport className="cmp-select-content__viewpoint">
-            <Select.Group>
-              {Object.entries(SIZES).map(([label, value]) => {
-                return (
-                  <Select.Item
-                    key={value}
-                    className={'cmp-select-content__item'}
-                    value={value.toString()}
-                  >
-                    <Select.ItemText>{label}</Select.ItemText>
-                    <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                      <TbCheck />
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                );
-              })}
-            </Select.Group>
-          </Select.Viewport>
-        </Select.Content>
-      </Select.Portal>
-    </Select.Root>
+    <Select
+      value={fontSize.val.toString()}
+      onValueChange={a => fontSize.set(Number(a))}
+      values={Object.entries(SIZES).map(([k, v]) => ({ label: k, value: v.toString() }))}
+    />
   );
 };
 

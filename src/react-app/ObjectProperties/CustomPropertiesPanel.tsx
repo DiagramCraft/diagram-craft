@@ -5,9 +5,8 @@ import { NumberInput } from '../NumberInput.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
-import * as Select from '@radix-ui/react-select';
-import { TbChevronDown } from 'react-icons/tb';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Select } from '../components/Select.tsx';
 
 export const CustomPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -87,36 +86,13 @@ export const CustomPropertiesPanel = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <Select.Root
+                  <Select
                     onValueChange={v => {
                       UnitOfWork.execute(diagram, uow => value.onChange(v, uow));
                     }}
                     value={value.value}
-                  >
-                    <Select.Trigger className="cmp-select-trigger" style={{ width: '100%' }}>
-                      <Select.Value placeholder={'Select'} />
-                      <Select.Icon className="cmp-select-trigger__icon">
-                        <TbChevronDown />
-                      </Select.Icon>
-                    </Select.Trigger>
-                    <Select.Portal>
-                      <Select.Content className="cmp-select-content">
-                        <Select.Viewport className="cmp-select-content__viewpoint">
-                          <Select.Group>
-                            {value.options.map(d => (
-                              <Select.Item
-                                key={d.value}
-                                className={'cmp-select-content__item'}
-                                value={d.value}
-                              >
-                                <Select.ItemText>{d.label}</Select.ItemText>
-                              </Select.Item>
-                            ))}
-                          </Select.Group>
-                        </Select.Viewport>
-                      </Select.Content>
-                    </Select.Portal>
-                  </Select.Root>
+                    values={value.options.map(o => ({ value: o.value, label: o.label }))}
+                  />
                 </div>
               </React.Fragment>
             );
