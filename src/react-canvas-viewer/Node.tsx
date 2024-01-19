@@ -22,75 +22,11 @@ import { Box } from '../geometry/box.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 import { DeepRequired } from '../utils/types.ts';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
+import { NodePattern } from './NodePattern.tsx';
+import { NodeFilter } from './NodeFilter.tsx';
 
 export type NodeApi = {
   repaint: () => void;
-};
-
-const getPatternProps = (nodeProps: DeepRequired<NodeProps>, bounds: Box) => {
-  if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {
-    if (nodeProps.fill.image.fit === 'fill') {
-      return {
-        patternUnits: 'objectBoundingBox',
-        width: 1,
-        height: 1,
-        patternContentUnits: 'objectBoundingBox',
-        imgWith: 1,
-        imgHeight: 1,
-        preserveAspectRatio: 'xMidYMid slice'
-      };
-    } else if (nodeProps.fill.image.fit === 'keep') {
-      return {
-        patternUnits: 'objectBoundingBox',
-        width: 1,
-        height: 1,
-        patternContentUnits: 'userSpaceOnUse',
-        imgWith: nodeProps.fill.image.w,
-        imgHeight: nodeProps.fill.image.h,
-        preserveAspectRatio: 'xMidYMid slice'
-      };
-    } else if (nodeProps.fill.image.fit === 'contain') {
-      return {
-        patternUnits: 'objectBoundingBox',
-        width: 1,
-        height: 1,
-        patternContentUnits: 'userSpaceOnUse',
-        imgWith: bounds.w,
-        imgHeight: bounds.h,
-        preserveAspectRatio: 'xMidYMid meet'
-      };
-    } else if (nodeProps.fill.image.fit === 'cover') {
-      return {
-        patternUnits: 'objectBoundingBox',
-        width: 1,
-        height: 1,
-        patternContentUnits: 'userSpaceOnUse',
-        imgWith: bounds.w,
-        imgHeight: bounds.h,
-        preserveAspectRatio: 'xMidYMid slice'
-      };
-    } else if (nodeProps.fill.image.fit === 'tile') {
-      return {
-        patternUnits: 'userSpaceOnUse',
-        width: Math.max(1, nodeProps.fill.image.w * nodeProps.fill.image.scale),
-        height: Math.max(1, nodeProps.fill.image.h * nodeProps.fill.image.scale),
-        patternContentUnits: 'userSpaceOnUse',
-        imgWith: Math.max(1, nodeProps.fill.image.w * nodeProps.fill.image.scale),
-        imgHeight: Math.max(1, nodeProps.fill.image.h * nodeProps.fill.image.scale),
-        preserveAspectRatio: 'xMidYMid slice'
-      };
-    }
-  }
-
-  return {
-    patternUnits: 'objectBoundingBox',
-    width: 1,
-    height: 1,
-    patternContentUnits: 'objectBoundingBox',
-    imgWith: 1,
-    imgHeight: 1,
-    preserveAspectRatio: 'xMidYMid slice'
-  };
 };
 
 export const Node = forwardRef<NodeApi, Props>((props, ref) => {
@@ -176,62 +112,15 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     style.filter = `url(#${filterId})`;
   }
 
-  const patternProps = getPatternProps(nodeProps, props.def.bounds);
-
   // TODO: We should only apply the rotation to leaf nodes and not to groups or containers
   //       ... changing this likely means changing Node.tsx and Container.tsx
   //       ... or maybe it's better to continue like this with reverse rotations in Node and Container
   return (
     <>
-      {filterId && (
-        <filter id={filterId} filterUnits={'objectBoundingBox'}>
-          {nodeProps.effects.blur && <feGaussianBlur stdDeviation={5 * nodeProps.effects.blur} />}
-          {nodeProps.effects.opacity !== 1 && (
-            <feColorMatrix
-              type="matrix"
-              values={`1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${nodeProps.effects.opacity} 0`}
-            />
-          )}
-        </filter>
-      )}
+      {filterId && <NodeFilter id={filterId} nodeProps={nodeProps} />}
 
-      {patternId && (
-        <>
-          <filter id={`${patternId}-filter`}>
-            <feFlood
-              result="fill"
-              width="100%"
-              height="100%"
-              floodColor={nodeProps.fill.image.tint}
-              floodOpacity="1"
-            />
-            <feColorMatrix in="SourceGraphic" result="desaturate" type="saturate" values="0" />
-            <feBlend in2="desaturate" in="fill" mode="color" />
-          </filter>
-          <pattern
-            id={patternId}
-            patternUnits={patternProps.patternUnits}
-            patternContentUnits={patternProps.patternContentUnits}
-            width={patternProps.width}
-            height={patternProps.height}
-          >
-            <rect
-              width={patternProps.imgWith}
-              height={patternProps.imgHeight}
-              fill={nodeProps.fill.color}
-            />
-            {nodeProps.fill.image.url && nodeProps.fill.image.url !== '' && (
-              <image
-                href={nodeProps.fill.image.url}
-                preserveAspectRatio={patternProps.preserveAspectRatio}
-                width={patternProps.imgWith}
-                height={patternProps.imgHeight}
-                filter={nodeProps.fill.image.tint === '' ? undefined : `url(#${patternId}-filter)`}
-              />
-            )}
-          </pattern>
-        </>
-      )}
+      {patternId && <NodePattern patternId={patternId} nodeProps={nodeProps} def={props.def} />}
+
       <g
         id={`node-${props.def.id}`}
         className={'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' ')}
