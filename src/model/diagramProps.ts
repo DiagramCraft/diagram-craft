@@ -125,6 +125,10 @@ declare global {
         fit: 'fill' | 'contain' | 'cover' | 'keep' | 'tile';
         scale?: number;
         tint?: string;
+        tintStrength?: number;
+        brightness?: number;
+        contrast?: number;
+        saturation?: number;
       };
       pattern?: string;
       color?: string;

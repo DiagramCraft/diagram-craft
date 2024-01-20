@@ -37,6 +37,26 @@ export const ColorPicker = (props: Props) => {
             <h2>Colors</h2>
 
             <div className={'cmp-color-grid'}>
+              {props.canClearColor && (
+                <div
+                  className={'cmp-color-grid__primary'}
+                  style={{
+                    marginBottom: '0.25rem'
+                  }}
+                >
+                  <button
+                    style={{
+                      background:
+                        'linear-gradient(to right bottom, white 48%, red 48%, red 52%, white 52%)'
+                    }}
+                    onClick={() => {
+                      close();
+                      props.onClick('');
+                    }}
+                  ></button>
+                </div>
+              )}
+
               <div className={'cmp-color-grid__primary'}>
                 {props.primaryColors.map(c => (
                   <button
@@ -117,4 +137,5 @@ type Props = {
   hasMultipleValues?: boolean;
   color: string;
   onClick: (s: string) => void;
+  canClearColor?: boolean;
 };

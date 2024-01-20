@@ -34,7 +34,11 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
       w: 0,
       h: 0,
       scale: 1,
-      tint: ''
+      tint: '',
+      tintStrength: 1,
+      brightness: 1,
+      contrast: 1,
+      saturation: 1
     }
   },
   stroke: {

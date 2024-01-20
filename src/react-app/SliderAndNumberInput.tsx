@@ -8,7 +8,7 @@ export const SliderAndNumberInput = (props: Props) => {
         className="cmp-slider"
         defaultValue={[props.value]}
         value={[props.value]}
-        max={100}
+        max={props.max ?? 100}
         step={1}
         onValueChange={v => props.onChange(v[0])}
       >
@@ -32,5 +32,6 @@ export const SliderAndNumberInput = (props: Props) => {
 
 type Props = {
   value: number;
+  max?: number;
   onChange: (value: number | undefined) => void;
 };

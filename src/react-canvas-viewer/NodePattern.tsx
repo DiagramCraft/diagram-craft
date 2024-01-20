@@ -71,18 +71,73 @@ const getPatternProps = (nodeProps: DeepRequired<NodeProps>, bounds: Box) => {
 export const NodePattern = (props: Props) => {
   const patternProps = getPatternProps(props.nodeProps, props.def.bounds);
 
+  const filterNeeded =
+    props.nodeProps.fill.image.tint !== '' ||
+    props.nodeProps.fill.image.saturation !== 1 ||
+    props.nodeProps.fill.image.brightness !== 1 ||
+    props.nodeProps.fill.image.contrast !== 1;
+
   return (
     <>
       <filter id={`${props.patternId}-filter`}>
-        <feFlood
-          result="fill"
-          width="100%"
-          height="100%"
-          floodColor={props.nodeProps.fill.image.tint}
-          floodOpacity="1"
-        />
-        <feColorMatrix in="SourceGraphic" result="desaturate" type="saturate" values="0" />
-        <feBlend in2="desaturate" in="fill" mode="color" />
+        {props.nodeProps.fill.image.tint !== '' && (
+          <>
+            <feFlood
+              result="fill"
+              width="100%"
+              height="100%"
+              floodColor={props.nodeProps.fill.image.tint}
+              floodOpacity="1"
+            />
+            <feColorMatrix in="SourceGraphic" result="desaturate" type="saturate" values={'0'} />
+            <feBlend in2="desaturate" in="fill" mode="color" result="blend" />
+
+            <feComposite
+              in="blend"
+              in2="SourceGraphic"
+              operator="arithmetic"
+              k1="0"
+              k4="0"
+              k2={props.nodeProps.fill.image.tintStrength}
+              k3={(1 - props.nodeProps.fill.image.tintStrength).toString()}
+            />
+          </>
+        )}
+
+        {props.nodeProps.fill.image.saturation !== 1 && (
+          <feColorMatrix
+            type="saturate"
+            values={props.nodeProps.fill.image.saturation?.toString()}
+          />
+        )}
+
+        {props.nodeProps.fill.image.brightness !== 1 && (
+          <feComponentTransfer>
+            <feFuncR type="linear" slope={props.nodeProps.fill.image.brightness} />
+            <feFuncG type="linear" slope={props.nodeProps.fill.image.brightness} />
+            <feFuncB type="linear" slope={props.nodeProps.fill.image.brightness} />
+          </feComponentTransfer>
+        )}
+
+        {props.nodeProps.fill.image.contrast !== 1 && (
+          <feComponentTransfer>
+            <feFuncR
+              type="linear"
+              slope={props.nodeProps.fill.image.contrast}
+              intercept={-(0.5 * props.nodeProps.fill.image.contrast) + 0.5}
+            />
+            <feFuncG
+              type="linear"
+              slope={props.nodeProps.fill.image.contrast}
+              intercept={-(0.5 * props.nodeProps.fill.image.contrast) + 0.5}
+            />
+            <feFuncB
+              type="linear"
+              slope={props.nodeProps.fill.image.contrast}
+              intercept={-(0.5 * props.nodeProps.fill.image.contrast) + 0.5}
+            />
+          </feComponentTransfer>
+        )}
       </filter>
       <pattern
         id={props.patternId}
@@ -102,9 +157,7 @@ export const NodePattern = (props: Props) => {
             preserveAspectRatio={patternProps.preserveAspectRatio}
             width={patternProps.imgWith}
             height={patternProps.imgHeight}
-            filter={
-              props.nodeProps.fill.image.tint === '' ? undefined : `url(#${props.patternId}-filter)`
-            }
+            filter={filterNeeded ? `url(#${props.patternId}-filter)` : undefined}
           />
         )}
       </pattern>

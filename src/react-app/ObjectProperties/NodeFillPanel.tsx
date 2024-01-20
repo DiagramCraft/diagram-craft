@@ -11,6 +11,7 @@ import { useNodeDefaults } from '../useDefaults.tsx';
 import { round } from '../../utils/math.ts';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
+import { Collapsible } from '../components/Collapsible.tsx';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -39,6 +40,75 @@ const ImageScale = (props: {
   </>
 );
 
+const ImageTint = (props: {
+  tint: string;
+  onChangeTint: (v: string) => void;
+  tintStrength: number;
+  onChangeTintStrength: (v: number | undefined) => void;
+}) => (
+  <Collapsible label={'Tint'}>
+    <div className={'cmp-labeled-table'}>
+      <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <ColorPicker
+          primaryColors={primaryColors}
+          additionalHues={additionalHues}
+          color={props.tint}
+          onClick={props.onChangeTint}
+          canClearColor={true}
+        />
+      </div>
+      <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <SliderAndNumberInput
+          value={round(props.tintStrength * 100)}
+          onChange={props.onChangeTintStrength}
+        />
+      </div>
+    </div>
+  </Collapsible>
+);
+
+const ImageAdjustments = (props: {
+  contrast: number;
+  onChangeContrast: (v: number | undefined) => void;
+  brightness: number;
+  onChangeBrightness: (v: number | undefined) => void;
+  saturation: number;
+  onChangeSaturation: (v: number | undefined) => void;
+}) => (
+  <Collapsible label={'Adjustments'}>
+    <div className={'cmp-labeled-table'}>
+      <div className={'cmp-labeled-table__label util-a-top-center'}>Contrast:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <SliderAndNumberInput
+          max={200}
+          value={round(props.contrast * 100)}
+          onChange={props.onChangeContrast}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label util-a-top-center'}>Brightness:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <SliderAndNumberInput
+          max={200}
+          value={round(props.brightness * 100)}
+          onChange={props.onChangeBrightness}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label util-a-top-center'}>Saturation:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <SliderAndNumberInput
+          max={200}
+          value={round(props.saturation * 100)}
+          onChange={props.onChangeSaturation}
+        />
+      </div>
+    </div>
+  </Collapsible>
+);
+
 export const NodeFillPanel = (props: Props) => {
   const diagram = useDiagram();
   const defaults = useNodeDefaults();
@@ -50,6 +120,26 @@ export const NodeFillPanel = (props: Props) => {
   const fillImageH = useNodeProperty(diagram, 'fill.image.h', defaults.fill.image.h);
   const fillImageScale = useNodeProperty(diagram, 'fill.image.scale', defaults.fill.image.scale);
   const fillImageTint = useNodeProperty(diagram, 'fill.image.tint', defaults.fill.image.tint);
+  const fillImageTintStrength = useNodeProperty(
+    diagram,
+    'fill.image.tintStrength',
+    defaults.fill.image.tintStrength
+  );
+  const fillImageBrightness = useNodeProperty(
+    diagram,
+    'fill.image.brightness',
+    defaults.fill.image.brightness
+  );
+  const fillImageContrast = useNodeProperty(
+    diagram,
+    'fill.image.contrast',
+    defaults.fill.image.contrast
+  );
+  const fillImageSaturation = useNodeProperty(
+    diagram,
+    'fill.image.saturation',
+    defaults.fill.image.saturation
+  );
   const color2 = useNodeProperty(diagram, 'fill.color2', defaults.fill.color2);
   const type = useNodeProperty(diagram, 'fill.type', defaults.fill.type);
   const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill.enabled);
@@ -141,7 +231,7 @@ export const NodeFillPanel = (props: Props) => {
                 <img
                   key={t}
                   src={`/textures/${t}`}
-                  style={{ width: 50, height: 50, marginRight: '0.25rem' }}
+                  style={{ width: 35, height: 35, marginRight: '0.25rem' }}
                   onClick={async () => {
                     const response = await fetch(`/textures/${t}`);
                     const blob = await response.blob();
@@ -168,16 +258,30 @@ export const NodeFillPanel = (props: Props) => {
                 fillImageScale.set(Number(v) / 100);
               }}
             />
-            <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
-            <div className={'cmp-labeled-table__value'}>
-              <ColorPicker
-                primaryColors={primaryColors}
-                additionalHues={additionalHues}
-                color={fillImageTint.val}
-                onClick={fillImageTint.set}
-                hasMultipleValues={fillImageTint.hasMultipleValues}
-              />
-            </div>
+
+            <ImageAdjustments
+              contrast={fillImageContrast.val}
+              onChangeContrast={v => {
+                fillImageContrast.set(Number(v) / 100);
+              }}
+              brightness={fillImageBrightness.val}
+              onChangeBrightness={v => {
+                fillImageBrightness.set(Number(v) / 100);
+              }}
+              saturation={fillImageSaturation.val}
+              onChangeSaturation={v => {
+                fillImageSaturation.set(Number(v) / 100);
+              }}
+            />
+
+            <ImageTint
+              tint={fillImageTint.val}
+              onChangeTint={fillImageTint.set}
+              tintStrength={fillImageTintStrength.val}
+              onChangeTintStrength={v => {
+                fillImageTintStrength.set(Number(v) / 100);
+              }}
+            />
           </>
         )}
 
@@ -268,6 +372,30 @@ export const NodeFillPanel = (props: Props) => {
                 }}
               />
             )}
+
+            <ImageAdjustments
+              contrast={fillImageContrast.val}
+              onChangeContrast={v => {
+                fillImageContrast.set(Number(v) / 100);
+              }}
+              brightness={fillImageBrightness.val}
+              onChangeBrightness={v => {
+                fillImageBrightness.set(Number(v) / 100);
+              }}
+              saturation={fillImageSaturation.val}
+              onChangeSaturation={v => {
+                fillImageSaturation.set(Number(v) / 100);
+              }}
+            />
+
+            <ImageTint
+              tint={fillImageTint.val}
+              onChangeTint={fillImageTint.set}
+              tintStrength={fillImageTintStrength.val}
+              onChangeTintStrength={v => {
+                fillImageTintStrength.set(Number(v) / 100);
+              }}
+            />
           </>
         )}
       </div>
