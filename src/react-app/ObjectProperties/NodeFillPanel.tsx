@@ -28,6 +28,23 @@ const TEXTURES = [
   'textile1.jpeg'
 ];
 
+const PATTERNS = [
+  `<pattern id="#ID#" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#BG#" /><line x1="0" y1="0" x2="0" y2="4" stroke="#FG#" stroke-width="2" /></pattern>`,
+  `<pattern id="#ID#" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(90)"><rect width="4" height="4" fill="#BG#" /><line x1="0" y1="0" x2="0" y2="4" stroke="#FG#" stroke-width="2" /></pattern>`,
+  `<pattern id="#ID#" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#BG#" /><line x1="0" y1="0" x2="0" y2="4" stroke="#FG#" stroke-width="2" /></pattern>`,
+  `<pattern id="#ID#" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#BG#" /><line x1="0" y1="0" x2="0" y2="4" stroke="#FG#" stroke-width="2" /></pattern>`,
+
+  `<pattern id="#ID#" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#BG#" /> <line x1="0" y1="0" x2="0" y2="4" stroke="#FG#" strokeWidth="2" /><line x1="0" y1="0" x2="4" y2="0" stroke="#FG#" stroke-width="2" /></pattern>`,
+  `<pattern id="#ID#" x="2" y="2" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#BG#" /><line x1="0" y1="0" x2="0" y2="4" stroke="#FG#" strokeWidth="2" /><line x1="0" y1="0" x2="4" y2="0" stroke="#FG#" stroke-width="2" /></pattern>`,
+  `<pattern id="#ID#" x="2" y="2" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#BG#" /><rect x="0" y="0" width="1" height="1" fill="#FG#" /></pattern>`,
+  `<pattern id="#ID#" x="2" y="2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#BG#" /><rect x="0" y="0" width="1" height="1" fill="#FG#" /></pattern>`,
+
+  `<pattern id="#ID#" x="2" y="2" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#BG#" /><rect x="0" y="0" width="2" height="2" fill="#FG#" /><rect x="2" y="2" width="2" height="2" fill="#FG#" /></pattern>`,
+  `<pattern id="#ID#" x="2" y="2" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#BG#" /><rect x="0" y="0" width="4" height="4" fill="#FG#" /><rect x="4" y="4" width="4" height="4" fill="#FG#" /></pattern>`,
+  `<pattern id="#ID#" x="2" y="2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#BG#" /><rect x="0" y="0" width="2" height="2" fill="#FG#" /><rect x="2" y="2" width="2" height="2" fill="#FG#" /></pattern>`,
+  `<pattern id="#ID#" x="2" y="2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="8" height="8" fill="#BG#" /><rect x="0" y="0" width="4" height="4" fill="#FG#" /><rect x="4" y="4" width="4" height="4" fill="#FG#" /></pattern>`
+];
+
 const ImageScale = (props: {
   fillImageScale: number;
   onChange: (v: number | undefined) => void;
@@ -113,7 +130,8 @@ export const NodeFillPanel = (props: Props) => {
   const diagram = useDiagram();
   const defaults = useNodeDefaults();
 
-  const fill = useNodeProperty(diagram, 'fill.color', defaults.fill.color);
+  const color = useNodeProperty(diagram, 'fill.color', defaults.fill.color);
+  const fillPattern = useNodeProperty(diagram, 'fill.pattern', '');
   const fillImage = useNodeProperty(diagram, 'fill.image.url', '');
   const fillImageFit = useNodeProperty(diagram, 'fill.image.fit', defaults.fill.image.fit);
   const fillImageW = useNodeProperty(diagram, 'fill.image.w', defaults.fill.image.w);
@@ -182,9 +200,9 @@ export const NodeFillPanel = (props: Props) => {
                 <ColorPicker
                   primaryColors={primaryColors}
                   additionalHues={additionalHues}
-                  color={fill.val}
-                  onClick={fill.set}
-                  hasMultipleValues={fill.hasMultipleValues}
+                  color={color.val}
+                  onClick={color.set}
+                  hasMultipleValues={color.hasMultipleValues}
                 />
                 {type.val === 'gradient' && (
                   <>
@@ -223,6 +241,57 @@ export const NodeFillPanel = (props: Props) => {
           </>
         )}
 
+        {type.val === 'pattern' && (
+          <>
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Pattern:</div>
+            <div className={'cmp-labeled-table__value'}>
+              {PATTERNS.map((p, idx) => (
+                <svg
+                  width={35}
+                  height={35}
+                  style={{
+                    border: '1px solid var(--blue-6)',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    marginRight: '0.2rem'
+                  }}
+                  onClick={() => {
+                    fillPattern.set(p);
+                  }}
+                >
+                  <defs
+                    dangerouslySetInnerHTML={{
+                      __html: p
+                        .replace('#ID#', `pattern-preview-${idx}`)
+                        .replaceAll('#BG#', color.val)
+                        .replaceAll('#FG#', color2.val)
+                    }}
+                  ></defs>
+                  <rect width={35} height={35} fill={`url(#pattern-preview-${idx}`} />
+                </svg>
+              ))}
+            </div>
+
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Color:</div>
+            <div className={'cmp-labeled-table__value util-hstack'}>
+              <ColorPicker
+                primaryColors={primaryColors}
+                additionalHues={additionalHues}
+                color={color.val}
+                onClick={color.set}
+                hasMultipleValues={color.hasMultipleValues}
+              />
+              <ColorPicker
+                primaryColors={primaryColors}
+                additionalHues={additionalHues}
+                color={color2.val}
+                onClick={color2.set}
+                hasMultipleValues={color2.hasMultipleValues}
+              />
+            </div>
+          </>
+        )}
+
         {type.val === 'texture' && (
           <>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Texture:</div>
@@ -231,7 +300,13 @@ export const NodeFillPanel = (props: Props) => {
                 <img
                   key={t}
                   src={`/textures/${t}`}
-                  style={{ width: 35, height: 35, marginRight: '0.25rem' }}
+                  style={{
+                    width: 35,
+                    height: 35,
+                    marginRight: '0.2rem',
+                    border: '1px solid var(--blue-6)',
+                    borderRadius: 2
+                  }}
                   onClick={async () => {
                     const response = await fetch(`/textures/${t}`);
                     const blob = await response.blob();

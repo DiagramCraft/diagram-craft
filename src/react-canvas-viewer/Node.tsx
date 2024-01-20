@@ -82,6 +82,9 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
     patternId = `node-${props.def.id}-pattern`;
     style.fill = `url(#${patternId})`;
+  } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
+    patternId = `node-${props.def.id}-pattern`;
+    style.fill = `url(#${patternId})`;
   }
 
   if (nodeProps.stroke.pattern) {

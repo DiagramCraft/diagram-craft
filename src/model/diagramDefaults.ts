@@ -39,7 +39,8 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
       brightness: 1,
       contrast: 1,
       saturation: 1
-    }
+    },
+    pattern: ''
   },
   stroke: {
     color: 'var(--canvas-fg)',

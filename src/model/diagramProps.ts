@@ -14,10 +14,19 @@ export function assertEdgeType(s: string | undefined): asserts s is EdgeType | u
     throw new Error();
 }
 
-type FillType = 'solid' | 'gradient' | 'image' | 'texture';
+type FillType = 'solid' | 'gradient' | 'image' | 'texture' | 'pattern';
 
 export function assertFillType(s: string | undefined): asserts s is FillType | undefined {
-  if (!(s === 'solid' || s === 'gradient' || s === 'image' || s === 'texture' || s === undefined))
+  if (
+    !(
+      s === 'solid' ||
+      s === 'gradient' ||
+      s === 'image' ||
+      s === 'texture' ||
+      s === 'pattern' ||
+      s === undefined
+    )
+  )
     throw new Error();
 }
 

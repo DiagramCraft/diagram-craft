@@ -71,6 +71,21 @@ const getPatternProps = (nodeProps: DeepRequired<NodeProps>, bounds: Box) => {
 export const NodePattern = (props: Props) => {
   const patternProps = getPatternProps(props.nodeProps, props.def.bounds);
 
+  if (props.nodeProps.fill.type === 'pattern') {
+    return (
+      <>
+        <defs
+          dangerouslySetInnerHTML={{
+            __html: props.nodeProps.fill.pattern
+              .replace('#ID#', props.patternId)
+              .replaceAll('#BG#', props.nodeProps.fill.color)
+              .replaceAll('#FG#', props.nodeProps.fill.color2)
+          }}
+        ></defs>
+      </>
+    );
+  }
+
   const filterNeeded =
     props.nodeProps.fill.image.tint !== '' ||
     props.nodeProps.fill.image.saturation !== 1 ||
