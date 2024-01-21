@@ -1,6 +1,6 @@
 import { SelectionState } from '../../model/selectionState.ts';
 import * as Tree from '../components/Tree.tsx';
-import { ObjectTreeNode } from '../components/ObjectTreeNode.tsx';
+import { ObjectTreeNode } from '../ObjectTreeNode.tsx';
 
 export const SelectionInfoDetails = (props: { obj: SelectionState }) => {
   return (

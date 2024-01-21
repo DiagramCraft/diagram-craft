@@ -3,7 +3,7 @@ import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
-import { LayerList } from './components/LayerList.tsx';
+import { LayerList } from './LayerList.tsx';
 import { useDiagram } from './context/DiagramContext.tsx';
 
 export const LayerToolWindow = () => {

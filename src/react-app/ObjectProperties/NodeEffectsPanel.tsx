@@ -1,5 +1,5 @@
 import { useDiagram } from '../context/DiagramContext.tsx';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { round } from '../../utils/math.ts';

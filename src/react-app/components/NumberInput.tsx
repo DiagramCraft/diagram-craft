@@ -1,7 +1,7 @@
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { $c } from '../utils/classname.ts';
-import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
+import { $c } from '../../utils/classname.ts';
+import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
 
 const parse = (value: string) => {
   const m = value.match(/^ ?(-?\d+\.?\d*) ?([^ ]*)$/);

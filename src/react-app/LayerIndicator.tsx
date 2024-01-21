@@ -1,9 +1,9 @@
 import { TbCheck, TbEye, TbEyeOff, TbLock, TbStack2 } from 'react-icons/tb';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
+import { useDiagram } from './context/DiagramContext.tsx';
+import { useEventListener } from './hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useActions } from '../context/ActionsContext.tsx';
+import { useActions } from './context/ActionsContext.tsx';
 
 export const LayerIndicator = () => {
   const redraw = useRedraw();

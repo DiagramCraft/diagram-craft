@@ -3,7 +3,7 @@ import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
-import { ObjectTreeNode } from '../components/ObjectTreeNode.tsx';
+import { ObjectTreeNode } from '../ObjectTreeNode.tsx';
 
 export const NodeInfoDetails = (props: Props) => {
   const diagram = useDiagram();

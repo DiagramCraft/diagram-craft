@@ -1,12 +1,12 @@
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { additionalHues, primaryColors } from './palette.ts';
-import { ColorPicker } from '../ColorPicker.tsx';
+import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbGrid3X3, TbGridDots } from 'react-icons/tb';
-import { NumberInput } from '../NumberInput.tsx';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { NumberInput } from '../components/NumberInput.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { assertGridType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 

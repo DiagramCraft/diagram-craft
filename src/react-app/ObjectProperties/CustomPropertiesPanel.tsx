@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
-import { NumberInput } from '../NumberInput.tsx';
+import { NumberInput } from '../components/NumberInput.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Select } from '../components/Select.tsx';

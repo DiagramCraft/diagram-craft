@@ -1,6 +1,6 @@
 import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from '../AccordionTrigger.tsx';
-import { AccordionContent } from '../AccordionContext.tsx';
+import { AccordionTrigger } from './AccordionTrigger.tsx';
+import { AccordionContent } from './AccordionContext.tsx';
 import React, { useRef } from 'react';
 
 export const ToolWindowPanel = (props: Props) => {

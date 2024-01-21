@@ -1,10 +1,10 @@
 import { additionalHues, primaryColors } from './palette.ts';
-import { ColorPicker } from '../ColorPicker.tsx';
+import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { assertFillType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';

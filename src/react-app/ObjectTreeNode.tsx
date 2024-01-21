@@ -1,5 +1,5 @@
-import * as Tree from './Tree.tsx';
-import { round } from '../../utils/math.ts';
+import * as Tree from './components/Tree.tsx';
+import { round } from '../utils/math.ts';
 
 export const ObjectTreeNode = (props: Props) => {
   return Object.keys(props.obj).map(key => {

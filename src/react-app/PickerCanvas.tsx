@@ -1,7 +1,7 @@
-import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
-import { Edge } from '../../react-canvas-viewer/Edge.tsx';
-import { Node } from '../../react-canvas-viewer/Node.tsx';
-import { Diagram } from '../../model/diagram.ts';
+import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
+import { Edge } from '../react-canvas-viewer/Edge.tsx';
+import { Node } from '../react-canvas-viewer/Node.tsx';
+import { Diagram } from '../model/diagram.ts';
 import { SVGProps } from 'react';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {

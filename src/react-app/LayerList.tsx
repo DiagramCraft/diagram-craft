@@ -1,15 +1,15 @@
-import { useDiagram } from '../context/DiagramContext.tsx';
-import * as Tree from './Tree.tsx';
+import { useDiagram } from './context/DiagramContext.tsx';
+import * as Tree from './components/Tree.tsx';
 import { TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
-import { Diagram } from '../../model/diagram.ts';
-import { Layer } from '../../model/diagramLayer.ts';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
-import { DiagramElement, isNode } from '../../model/diagramElement.ts';
+import { Diagram } from '../model/diagram.ts';
+import { Layer } from '../model/diagramLayer.ts';
+import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
+import { useEventListener } from './hooks/useEventListener.ts';
+import { DiagramElement, isNode } from '../model/diagramElement.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
-import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
+import { UnitOfWork } from '../model/unitOfWork.ts';
+import { commitWithUndo } from '../model/diagramUndoActions.ts';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';

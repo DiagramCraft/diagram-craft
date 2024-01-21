@@ -1,13 +1,13 @@
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { NumberInput } from '../NumberInput.tsx';
+import { NumberInput } from '../components/NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { Box } from '../../geometry/box.ts';
 import { additionalHues, primaryColors } from './palette.ts';
-import { ColorPicker } from '../ColorPicker.tsx';
+import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 
 export const CanvasPanel = (props: Props) => {
   const redraw = useRedraw();

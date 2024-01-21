@@ -1,12 +1,12 @@
-import { ColorPicker } from '../ColorPicker.tsx';
+import { ColorPicker } from '../components/ColorPicker.tsx';
 import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useNodeProperty } from './useProperty.ts';
-import { NumberInput } from '../NumberInput.tsx';
+import { NumberInput } from '../components/NumberInput.tsx';
 import * as Popover from '@radix-ui/react-popover';
 import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
 import React from 'react';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
 

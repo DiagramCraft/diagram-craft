@@ -1,10 +1,10 @@
 import { TbRestore } from 'react-icons/tb';
 import { useDiagram } from '../context/DiagramContext.tsx';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { assert } from '../../utils/assert.ts';
-import { NumberInput } from '../NumberInput.tsx';
+import { NumberInput } from '../components/NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';

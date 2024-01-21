@@ -1,14 +1,14 @@
 import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ArrowSelector } from './ArrowSelector.tsx';
-import { ColorPicker } from '../ColorPicker.tsx';
+import { ColorPicker } from '../components/ColorPicker.tsx';
 import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
-import { NumberInput } from '../NumberInput.tsx';
+import { NumberInput } from '../components/NumberInput.tsx';
 import { assertEdgeType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useEdgeDefaults } from '../useDefaults.tsx';
 import { Select } from '../components/Select.tsx';
 

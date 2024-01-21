@@ -1,4 +1,4 @@
-import { ActionContextMenuItem } from '../context-menu/ActionContextMenuItem.tsx';
+import { ActionContextMenuItem } from './context-menu/ActionContextMenuItem.tsx';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ReactNode } from 'react';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
-import { ObjectPicker } from './components/ObjectPicker.tsx';
+import { ObjectPicker } from './ObjectPicker.tsx';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';

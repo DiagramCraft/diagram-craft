@@ -48,7 +48,7 @@ import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
-import { DocumentTabs } from './react-app/components/DocumentTabs.tsx';
+import { DocumentTabs } from './react-app/DocumentTabs.tsx';
 import { UserState } from './base-ui/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
 import { Ruler } from './react-app/Ruler.tsx';
@@ -61,12 +61,12 @@ import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
 import { Diagram } from './model/diagram.ts';
 import { ApplicationState } from './base-ui/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
-import { LayerIndicator } from './react-app/components/LayerIndicator.tsx';
+import { LayerIndicator } from './react-app/LayerIndicator.tsx';
 import { testDiagram } from './sample/test.ts';
 import { SerializedDiagram } from './model/serialization/types.ts';
 import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
 import { Point } from './geometry/point.ts';
-import { NodeTypePopup, NodeTypePopupState } from './react-app/components/NodeTypePopup.tsx';
+import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx';
 import { SimpleDialog, SimpleDialogState } from './react-app/components/SimpleDialog.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {

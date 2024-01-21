@@ -1,6 +1,6 @@
-import { NumberInput } from '../NumberInput.tsx';
-import { ActionCheckbox } from '../components/ActionCheckbox.tsx';
-import { ToolWindowPanel } from '../components/ToolWindowPanel.tsx';
+import { NumberInput } from '../components/NumberInput.tsx';
+import { ActionCheckbox } from '../ActionCheckbox.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useSnapManagerProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 
