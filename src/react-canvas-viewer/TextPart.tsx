@@ -29,7 +29,8 @@ export const TextPart = (props: Props) => {
     props.text?.left,
     props.text?.right,
     props.text?.top,
-    props.text?.bottom
+    props.text?.bottom,
+    props.text?.lineHeight
   ];
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export const TextPart = (props: Props) => {
             fontSize: withPx(props.text?.fontSize) ?? 'unset',
             fontWeight: props.text?.bold ? 'bold' : 'normal',
             fontStyle: props.text?.italic ? 'italic' : 'normal',
+            lineHeight: `${1.2 * (props.text?.lineHeight ?? 1) * 100}%`,
             minWidth: 'min-content',
             textDecoration: props.text?.textDecoration
               ? `${props.text.textDecoration} ${props.text.color ?? 'black'}`

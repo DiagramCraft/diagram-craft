@@ -53,6 +53,7 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
   text: {
     color: 'var(--canvas-fg)',
     fontSize: 10,
+    lineHeight: 1,
     font: 'sans-serif',
     italic: false,
     bold: false,

@@ -23,6 +23,8 @@ import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { useConfiguration } from '../context/ConfigurationContext.tsx';
+import { Collapsible } from '../components/Collapsible.tsx';
+import { round } from '../../utils/math.ts';
 
 export const TextPanel = (props: Props) => {
   const $d = useDiagram();
@@ -32,6 +34,7 @@ export const TextPanel = (props: Props) => {
 
   const font = useElementProperty($d, 'text.font', defaults.text.font);
   const fontSize = useElementProperty($d, 'text.fontSize', defaults.text.fontSize);
+  const lineHeight = useElementProperty($d, 'text.lineHeight', defaults.text.lineHeight);
   const isBold = useElementProperty($d, 'text.bold', defaults.text.bold);
   const isItalic = useElementProperty($d, 'text.italic', defaults.text.italic);
   const textDecoration = useElementProperty(
@@ -274,6 +277,24 @@ export const TextPanel = (props: Props) => {
             />
           </div>
         </div>
+
+        <Collapsible label={'Additional settings'}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Line height:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <NumberInput
+                defaultUnit={'%'}
+                value={round(lineHeight.val * 100)}
+                min={0}
+                style={{ width: '45px' }}
+                onChange={v => {
+                  lineHeight.set(v ? v / 100 : 0);
+                }}
+                hasMultipleValues={lineHeight.hasMultipleValues}
+              />
+            </div>
+          </div>
+        </Collapsible>
       </div>
     </ToolWindowPanel>
   );

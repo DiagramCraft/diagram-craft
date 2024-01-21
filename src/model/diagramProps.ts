@@ -74,6 +74,7 @@ declare global {
       text?: string;
       font?: string;
       fontSize?: number;
+      lineHeight?: number;
       bold?: boolean;
       italic?: boolean;
       textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
