@@ -388,6 +388,9 @@ export class DiagramNode
       const edge = this.labelEdge()!;
       const labelNode = this.labelNode()!;
       edge.removeLabelNode(labelNode, uow);
+      this.updateProps(p => {
+        p.labelForEdgeId = undefined;
+      }, uow);
     }
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
