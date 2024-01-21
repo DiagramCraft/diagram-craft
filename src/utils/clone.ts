@@ -1,3 +1,21 @@
+/**
+ * Creates a deep clone of the provided target object.
+ *
+ * @param target - The object to be cloned.
+ * @returns A deep clone of the target object.
+ *
+ * @example
+ * // returns a new object with the same properties as the original
+ * deepClone({ a: 1, b: 2 });
+ *
+ * @example
+ * // returns a new array with the same elements as the original
+ * deepClone([1, 2, 3]);
+ *
+ * @example
+ * // returns a new date object with the same time as the original
+ * deepClone(new Date());
+ */
 export const deepClone = <T>(target: T): T => {
   if (target === null) {
     return target;

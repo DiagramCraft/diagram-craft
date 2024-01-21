@@ -36,9 +36,24 @@ export type PropPathValue<T, P extends PropPath<T>> = P extends `${infer Key}.${
     ? T[P]
     : never;
 
+/**
+ * DynamicAccessor class provides methods to get and set values of an object using a string path.
+ *
+ * @example
+ * const accessor = new DynamicAccessor<MyType>();
+ * const value = accessor.get(myObject, 'path.to.property');
+ * accessor.set(myObject, 'path.to.property', newValue);
+ */
 export class DynamicAccessor<T> {
   constructor() {}
 
+  /**
+   * Gets the value of a property in an object using a string path.
+   *
+   * @param obj - The object to get the value from.
+   * @param key - The string path to the property.
+   * @returns The value of the property, or undefined if the property does not exist.
+   */
   get<K extends PropPath<T> = PropPath<T>>(obj: T, key: K): PropPathValue<T, K> | undefined {
     const parts = (key as string).split('.');
     let current: any = obj;
@@ -49,6 +64,14 @@ export class DynamicAccessor<T> {
     return current;
   }
 
+  /**
+   * Sets the value of a property in an object using a string path.
+   * If the property does not exist, it will be created.
+   *
+   * @param obj - The object to set the value in.
+   * @param key - The string path to the property.
+   * @param value - The value to set.
+   */
   set<K extends PropPath<T> = PropPath<T>>(obj: T, key: K, value: PropPathValue<T, K>): void {
     const parts = (key as string).split('.');
     let current: any = obj;

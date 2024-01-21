@@ -10,15 +10,64 @@ export const round = (n: number) => {
 
 /**
  * Returns a number whose value is limited to the given range.
+ *
+ * @param n - The number to be clamped.
+ * @param min - The lower limit of the range.
+ * @param max - The upper limit of the range.
+ * @returns The clamped number.
+ *
+ * @example
+ * // returns 10
+ * clamp(10, 5, 15);
+ *
+ * @example
+ * // returns 5
+ * clamp(3, 5, 15);
+ *
+ * @example
+ * // returns 15
+ * clamp(20, 5, 15);
  */
 export const clamp = (n: number, min: number, max: number) => {
   return Math.max(min, Math.min(max, n));
 };
 
+/**
+ * Checks if two numbers are approximately equal within a certain tolerance.
+ *
+ * @param a - The first number to compare.
+ * @param b - The second number to compare.
+ * @param [epsilon=0.01] - The tolerance for the comparison. Defaults to 0.01.
+ * @returns True if the absolute difference between the two numbers is less than the tolerance, false otherwise.
+ *
+ * @example
+ * // returns true
+ * isSame(10, 10.005);
+ *
+ * @example
+ * // returns false
+ * isSame(10, 10.02);
+ */
 export const isSame = (a: number, b: number, epsilon = 0.01) => {
   return Math.abs(a - b) < epsilon;
 };
 
+/**
+ * Checks if two numbers are not approximately equal within a certain tolerance.
+ *
+ * @param a - The first number to compare.
+ * @param b - The second number to compare.
+ * @param [epsilon=0.01] - The tolerance for the comparison. Defaults to 0.01.
+ * @returns True if the absolute difference between the two numbers is greater than or equal to the tolerance, false otherwise.
+ *
+ * @example
+ * // returns false
+ * isDifferent(10, 10.005);
+ *
+ * @example
+ * // returns true
+ * isDifferent(10, 10.02);
+ */
 export const isDifferent = (a: number, b: number, epsilon = 0.01) => {
   return !isSame(a, b, epsilon);
 };
