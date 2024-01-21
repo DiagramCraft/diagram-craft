@@ -132,7 +132,7 @@ export const NodeFillPanel = (props: Props) => {
 
   const color = useNodeProperty(diagram, 'fill.color', defaults.fill.color);
   const fillPattern = useNodeProperty(diagram, 'fill.pattern', '');
-  const fillImage = useNodeProperty(diagram, 'fill.image.url', '');
+  const fillImage = useNodeProperty(diagram, 'fill.image.id', '');
   const fillImageFit = useNodeProperty(diagram, 'fill.image.fit', defaults.fill.image.fit);
   const fillImageW = useNodeProperty(diagram, 'fill.image.w', defaults.fill.image.w);
   const fillImageH = useNodeProperty(diagram, 'fill.image.h', defaults.fill.image.h);
@@ -247,6 +247,7 @@ export const NodeFillPanel = (props: Props) => {
             <div className={'cmp-labeled-table__value'}>
               {PATTERNS.map((p, idx) => (
                 <svg
+                  key={idx}
                   width={35}
                   height={35}
                   style={{
@@ -255,8 +256,9 @@ export const NodeFillPanel = (props: Props) => {
                     overflow: 'hidden',
                     marginRight: '0.2rem'
                   }}
-                  onClick={() => {
-                    fillPattern.set(p);
+                  onClick={async () => {
+                    const att = await diagram.document.attachments.addAttachment(new Blob([p]));
+                    fillPattern.set(att.hash);
                   }}
                 >
                   <defs
@@ -317,7 +319,7 @@ export const NodeFillPanel = (props: Props) => {
                     img.close();
 
                     diagram.undoManager.combine(() => {
-                      fillImage.set(`/textures/${t}`);
+                      fillImage.set(att.hash);
                       fillImageFit.set('tile');
                       fillImageW.set(width);
                       fillImageH.set(height);
@@ -404,7 +406,7 @@ export const NodeFillPanel = (props: Props) => {
                     img.close();
 
                     diagram.undoManager.combine(() => {
-                      fillImage.set(att.url);
+                      fillImage.set(att.hash);
                       fillImageW.set(width);
                       fillImageH.set(height);
                       fillImageTint.set('');
@@ -415,7 +417,7 @@ export const NodeFillPanel = (props: Props) => {
               <div>
                 {fillImage.val !== '' && fillImage.val !== undefined && (
                   <img
-                    src={fillImage.val}
+                    src={diagram.document.attachments.getAttachment(fillImage.val)?.url}
                     style={{ marginTop: '0.5rem', maxWidth: 80, maxHeight: 80 }}
                   />
                 )}

@@ -31,6 +31,7 @@ export class Attachment {
 }
 
 export class AttachmentManager {
+  // TODO: Maybe we can make this a weak hashmap?
   #attachments: Map<string, Attachment> = new Map();
 
   public constructor(private readonly diagramDocument: DiagramDocument) {}
@@ -44,6 +45,10 @@ export class AttachmentManager {
 
     this.#attachments.set(att.hash, att);
     return att;
+  }
+
+  getAttachment(hash: string) {
+    return this.#attachments.get(hash);
   }
 
   // TODO: Also need to check it's not part of the undo stack

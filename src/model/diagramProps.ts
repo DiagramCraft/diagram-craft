@@ -130,7 +130,8 @@ declare global {
       image?: {
         w?: number;
         h?: number;
-        url: string;
+        url?: string;
+        id?: string;
         fit: 'fill' | 'contain' | 'cover' | 'keep' | 'tile';
         scale?: number;
         tint?: string;

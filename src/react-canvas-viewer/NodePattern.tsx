@@ -1,6 +1,7 @@
 import { DeepRequired } from '../utils/types.ts';
 import { Box } from '../geometry/box.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
+import { useEffect, useState } from 'react';
 
 const getPatternProps = (nodeProps: DeepRequired<NodeProps>, bounds: Box) => {
   if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {
@@ -69,17 +70,42 @@ const getPatternProps = (nodeProps: DeepRequired<NodeProps>, bounds: Box) => {
 };
 
 export const NodePattern = (props: Props) => {
-  const patternProps = getPatternProps(props.nodeProps, props.def.bounds);
+  const nodeProps = props.nodeProps;
 
-  if (props.nodeProps.fill.type === 'pattern') {
+  const patternProps = getPatternProps(nodeProps, props.def.bounds);
+  const [pattern, setPattern] = useState('');
+
+  useEffect(() => {
+    if (nodeProps.fill.type !== 'pattern') return;
+    props.def.diagram.document.attachments
+      .getAttachment(nodeProps.fill.pattern)!
+      .content.text()
+      .then(t => {
+        if (pattern !== t) {
+          setPattern(t);
+        }
+      });
+  }, [pattern, props.def, nodeProps]);
+
+  let imageUrl = '';
+  if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
+    if (nodeProps.fill.image.url && nodeProps.fill.image.url !== '') {
+      imageUrl = nodeProps.fill.image.url;
+    } else {
+      const att = props.def.diagram.document.attachments.getAttachment(nodeProps.fill.image.id);
+      imageUrl = att?.url ?? '';
+    }
+  }
+
+  if (nodeProps.fill.type === 'pattern') {
     return (
       <>
         <defs
           dangerouslySetInnerHTML={{
-            __html: props.nodeProps.fill.pattern
+            __html: pattern
               .replace('#ID#', props.patternId)
-              .replaceAll('#BG#', props.nodeProps.fill.color)
-              .replaceAll('#FG#', props.nodeProps.fill.color2)
+              .replaceAll('#BG#', nodeProps.fill.color)
+              .replaceAll('#FG#', nodeProps.fill.color2)
           }}
         ></defs>
       </>
@@ -87,21 +113,21 @@ export const NodePattern = (props: Props) => {
   }
 
   const filterNeeded =
-    props.nodeProps.fill.image.tint !== '' ||
-    props.nodeProps.fill.image.saturation !== 1 ||
-    props.nodeProps.fill.image.brightness !== 1 ||
-    props.nodeProps.fill.image.contrast !== 1;
+    nodeProps.fill.image.tint !== '' ||
+    nodeProps.fill.image.saturation !== 1 ||
+    nodeProps.fill.image.brightness !== 1 ||
+    nodeProps.fill.image.contrast !== 1;
 
   return (
     <>
       <filter id={`${props.patternId}-filter`}>
-        {props.nodeProps.fill.image.tint !== '' && (
+        {nodeProps.fill.image.tint !== '' && (
           <>
             <feFlood
               result="fill"
               width="100%"
               height="100%"
-              floodColor={props.nodeProps.fill.image.tint}
+              floodColor={nodeProps.fill.image.tint}
               floodOpacity="1"
             />
             <feColorMatrix in="SourceGraphic" result="desaturate" type="saturate" values={'0'} />
@@ -113,43 +139,40 @@ export const NodePattern = (props: Props) => {
               operator="arithmetic"
               k1="0"
               k4="0"
-              k2={props.nodeProps.fill.image.tintStrength}
-              k3={(1 - props.nodeProps.fill.image.tintStrength).toString()}
+              k2={nodeProps.fill.image.tintStrength}
+              k3={(1 - nodeProps.fill.image.tintStrength).toString()}
             />
           </>
         )}
 
-        {props.nodeProps.fill.image.saturation !== 1 && (
-          <feColorMatrix
-            type="saturate"
-            values={props.nodeProps.fill.image.saturation?.toString()}
-          />
+        {nodeProps.fill.image.saturation !== 1 && (
+          <feColorMatrix type="saturate" values={nodeProps.fill.image.saturation?.toString()} />
         )}
 
-        {props.nodeProps.fill.image.brightness !== 1 && (
+        {nodeProps.fill.image.brightness !== 1 && (
           <feComponentTransfer>
-            <feFuncR type="linear" slope={props.nodeProps.fill.image.brightness} />
-            <feFuncG type="linear" slope={props.nodeProps.fill.image.brightness} />
-            <feFuncB type="linear" slope={props.nodeProps.fill.image.brightness} />
+            <feFuncR type="linear" slope={nodeProps.fill.image.brightness} />
+            <feFuncG type="linear" slope={nodeProps.fill.image.brightness} />
+            <feFuncB type="linear" slope={nodeProps.fill.image.brightness} />
           </feComponentTransfer>
         )}
 
-        {props.nodeProps.fill.image.contrast !== 1 && (
+        {nodeProps.fill.image.contrast !== 1 && (
           <feComponentTransfer>
             <feFuncR
               type="linear"
-              slope={props.nodeProps.fill.image.contrast}
-              intercept={-(0.5 * props.nodeProps.fill.image.contrast) + 0.5}
+              slope={nodeProps.fill.image.contrast}
+              intercept={-(0.5 * nodeProps.fill.image.contrast) + 0.5}
             />
             <feFuncG
               type="linear"
-              slope={props.nodeProps.fill.image.contrast}
-              intercept={-(0.5 * props.nodeProps.fill.image.contrast) + 0.5}
+              slope={nodeProps.fill.image.contrast}
+              intercept={-(0.5 * nodeProps.fill.image.contrast) + 0.5}
             />
             <feFuncB
               type="linear"
-              slope={props.nodeProps.fill.image.contrast}
-              intercept={-(0.5 * props.nodeProps.fill.image.contrast) + 0.5}
+              slope={nodeProps.fill.image.contrast}
+              intercept={-(0.5 * nodeProps.fill.image.contrast) + 0.5}
             />
           </feComponentTransfer>
         )}
@@ -164,11 +187,11 @@ export const NodePattern = (props: Props) => {
         <rect
           width={patternProps.imgWith}
           height={patternProps.imgHeight}
-          fill={props.nodeProps.fill.color}
+          fill={nodeProps.fill.color}
         />
-        {props.nodeProps.fill.image.url && props.nodeProps.fill.image.url !== '' && (
+        {imageUrl !== '' && (
           <image
-            href={props.nodeProps.fill.image.url}
+            href={imageUrl}
             preserveAspectRatio={patternProps.preserveAspectRatio}
             width={patternProps.imgWith}
             height={patternProps.imgHeight}
