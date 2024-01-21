@@ -52,7 +52,7 @@ export const TextPanel = (props: Props) => {
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Text'} id={'text'}>
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Font:</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <NumberInput
             defaultUnit={'pt'}
             value={fontSize.val}
@@ -61,7 +61,6 @@ export const TextPanel = (props: Props) => {
             onChange={fontSize.set}
             hasMultipleValues={fontSize.hasMultipleValues}
           />
-          &nbsp;
           {/* TODO: Can we use Select here - need to support hasMultipleValues */}
           <Select.Root
             value={font.hasMultipleValues ? undefined : font.val}
@@ -107,7 +106,7 @@ export const TextPanel = (props: Props) => {
         </div>
 
         <div></div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'multiple'}
@@ -150,7 +149,6 @@ export const TextPanel = (props: Props) => {
               </ReactToolbar.ToggleItem>
             </ReactToolbar.ToggleGroup>
           </ReactToolbar.Root>
-          &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
@@ -181,7 +179,7 @@ export const TextPanel = (props: Props) => {
         </div>
 
         <div className={'cmp-labeled-table__label'}>Align:</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
@@ -202,7 +200,6 @@ export const TextPanel = (props: Props) => {
               </ReactToolbar.ToggleItem>
             </ReactToolbar.ToggleGroup>
           </ReactToolbar.Root>
-          &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
             <ReactToolbar.ToggleGroup
               type={'single'}
@@ -235,7 +232,7 @@ export const TextPanel = (props: Props) => {
           <div
             style={{
               display: 'grid',
-              gap: '0.25rem',
+              gap: '0.2rem',
               gridTemplateAreas: '"gap1 top gap2" "left bottom right"',
               gridTemplateRows: 'repeat(2, 1fr)',
               gridTemplateColumns: 'repeat(3, 1fr)'

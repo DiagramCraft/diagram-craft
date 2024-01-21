@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Box, WritableBox } from '../../geometry/box.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { round } from '../../utils/math.ts';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbAspectRatio } from 'react-icons/tb';
 import { Point } from '../../geometry/point.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -10,6 +9,7 @@ import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { $c } from '../../utils/classname.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { ToggleButton } from '../components/ToggleButton.tsx';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },
@@ -178,19 +178,9 @@ export const TransformPanel = (props: Props) => {
             </div>
 
             <div style={{ gridArea: 'aspect-ratio', justifySelf: 'end' }}>
-              <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-                <ReactToolbar.ToggleGroup
-                  type={'single'}
-                  value={lockAspectRatio ? 'maintain' : 'free'}
-                  onValueChange={value => {
-                    setLockAspectRatio(value === 'maintain');
-                  }}
-                >
-                  <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'maintain'}>
-                    <TbAspectRatio />
-                  </ReactToolbar.ToggleItem>
-                </ReactToolbar.ToggleGroup>
-              </ReactToolbar.Root>
+              <ToggleButton value={lockAspectRatio} onChange={setLockAspectRatio}>
+                <TbAspectRatio />
+              </ToggleButton>
             </div>
           </div>
         </div>

@@ -29,14 +29,13 @@ export const ShadowPanel = (props: Props) => {
     >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Color:</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
             color={color.val}
             onClick={color.set}
           />
-          &nbsp;
           <NumberInput
             value={round((1 - opacity.val) * 100).toString()}
             onChange={v => opacity.set((100 - (v ?? 100)) / 100)}
@@ -47,21 +46,19 @@ export const ShadowPanel = (props: Props) => {
           />
         </div>
         <div className={'cmp-labeled-table__label'}>Position:</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <NumberInput
             value={x.val}
             onChange={x.set}
             style={{ width: '45px' }}
             defaultUnit={'px'}
           />
-          &nbsp;
           <NumberInput
             value={y.val}
             onChange={y.set}
             style={{ width: '45px' }}
             defaultUnit={'px'}
           />
-          &nbsp;
           <NumberInput
             value={blur.val}
             onChange={blur.set}

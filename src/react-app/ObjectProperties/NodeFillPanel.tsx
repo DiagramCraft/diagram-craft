@@ -1,9 +1,7 @@
 import { additionalHues, primaryColors } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useNodeProperty } from './useProperty.ts';
-import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
-import * as Popover from '@radix-ui/react-popover';
-import { useState } from 'react';
+import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { assertFillType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
@@ -12,6 +10,7 @@ import { round } from '../../utils/math.ts';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
 import { Collapsible } from '../components/Collapsible.tsx';
+import { PopoverButton } from '../components/PopoverButton.tsx';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -162,8 +161,6 @@ export const NodeFillPanel = (props: Props) => {
   const type = useNodeProperty(diagram, 'fill.type', defaults.fill.type);
   const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill.enabled);
 
-  const [open, setOpen] = useState(false);
-
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
@@ -195,48 +192,28 @@ export const NodeFillPanel = (props: Props) => {
         {(type.val === 'gradient' || type.val === 'solid') && (
           <>
             <div className={'cmp-labeled-table__label'}>Color:</div>
-            <div className={'cmp-labeled-table__value'}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ColorPicker
-                  primaryColors={primaryColors}
-                  additionalHues={additionalHues}
-                  color={color.val}
-                  onClick={color.set}
-                  hasMultipleValues={color.hasMultipleValues}
-                />
-                {type.val === 'gradient' && (
-                  <>
-                    &nbsp;
-                    <ColorPicker
-                      primaryColors={primaryColors}
-                      additionalHues={additionalHues}
-                      color={color2.val}
-                      onClick={color2.set}
-                      hasMultipleValues={color2.hasMultipleValues}
-                    />
-                    &nbsp;
-                    <div className={'cmp-more'}>
-                      <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
-                        <Popover.Trigger asChild>
-                          <button>
-                            <TbAdjustmentsHorizontal />
-                          </button>
-                        </Popover.Trigger>
-                        <Popover.Portal>
-                          <Popover.Content className="cmp-popover" sideOffset={5}>
-                            <h2>Gradient</h2>
-
-                            <Popover.Close className="cmp-popover__close" aria-label="Close">
-                              <TbX />
-                            </Popover.Close>
-                            <Popover.Arrow className="cmp-popover__arrow" />
-                          </Popover.Content>
-                        </Popover.Portal>
-                      </Popover.Root>
-                    </div>
-                  </>
-                )}
-              </div>
+            <div className={'cmp-labeled-table__value util-hstack'}>
+              <ColorPicker
+                primaryColors={primaryColors}
+                additionalHues={additionalHues}
+                color={color.val}
+                onClick={color.set}
+                hasMultipleValues={color.hasMultipleValues}
+              />
+              {type.val === 'gradient' && (
+                <>
+                  <ColorPicker
+                    primaryColors={primaryColors}
+                    additionalHues={additionalHues}
+                    color={color2.val}
+                    onClick={color2.set}
+                    hasMultipleValues={color2.hasMultipleValues}
+                  />
+                  <PopoverButton label={<TbAdjustmentsHorizontal />}>
+                    <h2>Gradient</h2>
+                  </PopoverButton>
+                </>
+              )}
             </div>
           </>
         )}

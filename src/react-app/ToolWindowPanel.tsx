@@ -9,7 +9,7 @@ export const ToolWindowPanel = (props: Props) => {
   if (props.mode === 'panel') {
     return (
       <>
-        <h2 className={'util-hstack'}>
+        <h2 className={'util-hstack'} style={{ gap: '0.5rem' }}>
           {props.hasCheckbox && (
             <input
               className="cmp-panel__enabled"
@@ -34,7 +34,7 @@ export const ToolWindowPanel = (props: Props) => {
     return (
       <Accordion.Item className="cmp-accordion__item" value={props.id}>
         <AccordionTrigger ref={ref}>
-          <div className={'util-hstack'}>
+          <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
             {props.hasCheckbox && (
               <input
                 className="cmp-accordion__enabled"

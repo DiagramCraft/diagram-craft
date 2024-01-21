@@ -69,9 +69,8 @@ export const LinePanel = (props: Props) => {
           </div>
 
           <div className={'cmp-labeled-table__label'}>Line start:</div>
-          <div className={'cmp-labeled-table__value util-vcenter'}>
+          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
             <ArrowSelector value={startType.val} onValueChange={startType.set} />
-            &nbsp;
             <NumberInput
               defaultUnit={'%'}
               value={startSize.val}
@@ -82,9 +81,8 @@ export const LinePanel = (props: Props) => {
           </div>
 
           <div className={'cmp-labeled-table__label'}>Line end:</div>
-          <div className={'cmp-labeled-table__value util-vcenter'}>
+          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
             <ArrowSelector value={endType.val} onValueChange={endType.set} />
-            &nbsp;
             <NumberInput
               defaultUnit={'%'}
               value={endSize.val}
@@ -95,14 +93,13 @@ export const LinePanel = (props: Props) => {
           </div>
 
           <div className={'cmp-labeled-table__label'}>Color:</div>
-          <div className={'cmp-labeled-table__value util-vcenter'}>
+          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
             <ColorPicker
               primaryColors={primaryColors}
               additionalHues={additionalHues}
               color={strokeColor.val}
               onClick={strokeColor.set}
             />
-            &nbsp;
             <ColorPicker
               primaryColors={primaryColors}
               additionalHues={additionalHues}
@@ -123,9 +120,8 @@ export const LinePanel = (props: Props) => {
           </div>
 
           <div className={'cmp-labeled-table__label'}>Dash:</div>
-          <div className={'cmp-labeled-table__value util-vcenter'}>
+          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
             <DashSelector value={pattern.val} onValueChange={pattern.set} />
-            &nbsp;
             <NumberInput
               defaultUnit={'%'}
               value={strokSize.val}
@@ -133,7 +129,6 @@ export const LinePanel = (props: Props) => {
               style={{ width: '45px' }}
               onChange={strokSize.set}
             />
-            &nbsp;
             <NumberInput
               defaultUnit={'%'}
               value={strokeSpacing.val}

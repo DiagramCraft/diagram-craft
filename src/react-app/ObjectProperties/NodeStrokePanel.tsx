@@ -3,16 +3,13 @@ import { additionalHues, primaryColors } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
-import * as Popover from '@radix-ui/react-popover';
-import { TbAdjustmentsHorizontal, TbX } from 'react-icons/tb';
-import React from 'react';
+import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
+import { PopoverButton } from '../components/PopoverButton.tsx';
 
 export const NodeStrokePanel = (props: Props) => {
-  const [open, setOpen] = React.useState(false);
-
   const $d = useDiagram();
   const defaults = useNodeDefaults();
 
@@ -46,7 +43,7 @@ export const NodeStrokePanel = (props: Props) => {
         </div>
 
         <div className={'cmp-labeled-table__label'}>Style:</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <NumberInput
             defaultUnit={'px'}
             value={strokeWidth.val}
@@ -55,7 +52,6 @@ export const NodeStrokePanel = (props: Props) => {
             onChange={strokeWidth.set}
             hasMultipleValues={strokeWidth.hasMultipleValues}
           />
-          &nbsp;
           <DashSelector
             value={pattern.val}
             onValueChange={value => {
@@ -63,41 +59,25 @@ export const NodeStrokePanel = (props: Props) => {
             }}
             hasMultipleValues={pattern.hasMultipleValues}
           />
-          &nbsp;
-          <div className={'cmp-more'}>
-            <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
-              <Popover.Trigger asChild>
-                <button>
-                  <TbAdjustmentsHorizontal />
-                </button>
-              </Popover.Trigger>
-              <Popover.Portal>
-                <Popover.Content className="cmp-popover" sideOffset={5}>
-                  <h2>Stroke</h2>
-                  &nbsp;
-                  <NumberInput
-                    defaultUnit={'%'}
-                    value={strokeSize.val}
-                    min={1}
-                    style={{ width: '45px' }}
-                    onChange={strokeSize.set}
-                  />
-                  &nbsp;
-                  <NumberInput
-                    defaultUnit={'%'}
-                    value={strokeSpacing.val}
-                    min={1}
-                    style={{ width: '45px' }}
-                    onChange={strokeSpacing.set}
-                  />
-                  <Popover.Close className="cmp-popover__close" aria-label="Close">
-                    <TbX />
-                  </Popover.Close>
-                  <Popover.Arrow className="cmp-popover__arrow" />
-                </Popover.Content>
-              </Popover.Portal>
-            </Popover.Root>
-          </div>
+          <PopoverButton label={<TbAdjustmentsHorizontal />}>
+            <h2>Stroke</h2>
+            &nbsp;
+            <NumberInput
+              defaultUnit={'%'}
+              value={strokeSize.val}
+              min={1}
+              style={{ width: '45px' }}
+              onChange={strokeSize.set}
+            />
+            &nbsp;
+            <NumberInput
+              defaultUnit={'%'}
+              value={strokeSpacing.val}
+              min={1}
+              style={{ width: '45px' }}
+              onChange={strokeSpacing.set}
+            />
+          </PopoverButton>
         </div>
       </div>
     </ToolWindowPanel>

@@ -75,7 +75,7 @@ export const LabelNodePanel = (props: Props) => {
           </div>
 
           <div className={'cmp-labeled-table__label'}>Offset:</div>
-          <div className={'cmp-labeled-table__value util-vcenter'}>
+          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
             <NumberInput
               defaultUnit={'px'}
               value={round(offset.x)}
@@ -86,7 +86,6 @@ export const LabelNodePanel = (props: Props) => {
                 });
               }}
             />
-            &nbsp;
             {(type === 'independent' || type === 'horizontal' || type === 'vertical') && (
               <NumberInput
                 defaultUnit={'px'}
@@ -99,7 +98,6 @@ export const LabelNodePanel = (props: Props) => {
                 }}
               />
             )}
-            &nbsp;
             <button
               className={'cmp-button util-square'}
               onClick={() => {

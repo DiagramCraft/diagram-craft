@@ -35,14 +35,13 @@ export const CanvasGridPanel = (props: Props) => {
     >
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Base</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
             color={color.val ?? 'transparent'}
             onClick={color.set}
           />
-          &nbsp;
           <NumberInput
             style={{ width: '45px' }}
             value={size.val ?? 10}
@@ -50,7 +49,6 @@ export const CanvasGridPanel = (props: Props) => {
             validUnits={['px']}
             defaultUnit={'px'}
           />
-          &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
             <ReactToolbar.ToggleGroup
               type={'single'}
@@ -71,20 +69,18 @@ export const CanvasGridPanel = (props: Props) => {
         </div>
 
         <div className={'cmp-labeled-table__label'}>Major</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
             primaryColors={primaryColors}
             additionalHues={additionalHues}
             color={majorColor.val ?? 'transparent'}
             onClick={majorColor.set}
           />
-          &nbsp;
           <NumberInput
             style={{ width: '45px' }}
             value={majorCount.val ?? 5}
             onChange={n => majorCount.set(n ?? 0)}
           />
-          &nbsp;
           <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
             <ReactToolbar.ToggleGroup
               type={'single'}
