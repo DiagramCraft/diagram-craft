@@ -2,6 +2,7 @@ import React from 'react';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { Box } from '../geometry/box.ts';
 import { Path } from '../geometry/path.ts';
+import { Angle } from '../geometry/angle.ts';
 
 export const NodeWrapper = (
   props: {
@@ -23,7 +24,13 @@ export const NodeWrapper = (
     <g style={{ filter: props.style?.filter }}>
       {props.node.props.effects?.reflection && (
         <g
-          transform={`rotate(${180} ${center.x} ${center.y}) translate(0 -${offset})`}
+          transform={`
+            rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
+            scale(1 -1)
+            translate(0 -${2 * props.node.bounds.y + props.node.bounds.h}) 
+            translate(0 -${offset})
+            rotate(${Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
+          `}
           mask="url(#reflection-mask)"
           style={{
             filter: 'url(#reflection-filter)',
