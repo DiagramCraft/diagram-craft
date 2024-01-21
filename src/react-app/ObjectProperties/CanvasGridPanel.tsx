@@ -1,6 +1,6 @@
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { additionalHues, primaryColors } from './palette.ts';
+import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
@@ -37,10 +37,11 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Base</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
-            primaryColors={primaryColors}
-            additionalHues={additionalHues}
+            palette={defaultPalette}
             color={color.val ?? 'transparent'}
-            onClick={color.set}
+            onChange={color.set}
+            customPalette={$d.document.customPalette}
+            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
           />
           <NumberInput
             style={{ width: '45px' }}
@@ -71,10 +72,11 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Major</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
-            primaryColors={primaryColors}
-            additionalHues={additionalHues}
+            palette={defaultPalette}
             color={majorColor.val ?? 'transparent'}
-            onClick={majorColor.set}
+            onChange={majorColor.set}
+            customPalette={$d.document.customPalette}
+            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
           />
           <NumberInput
             style={{ width: '45px' }}

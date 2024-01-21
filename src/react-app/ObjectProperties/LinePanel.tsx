@@ -2,7 +2,7 @@ import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/t
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ArrowSelector } from './ArrowSelector.tsx';
 import { ColorPicker } from '../components/ColorPicker.tsx';
-import { additionalHues, primaryColors } from './palette.ts';
+import { defaultPalette } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -95,16 +95,18 @@ export const LinePanel = (props: Props) => {
           <div className={'cmp-labeled-table__label'}>Color:</div>
           <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
             <ColorPicker
-              primaryColors={primaryColors}
-              additionalHues={additionalHues}
+              palette={defaultPalette}
               color={strokeColor.val}
-              onClick={strokeColor.set}
+              onChange={strokeColor.set}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
             />
             <ColorPicker
-              primaryColors={primaryColors}
-              additionalHues={additionalHues}
+              palette={defaultPalette}
               color={fillColor.val}
-              onClick={fillColor.set}
+              onChange={fillColor.set}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
             />
           </div>
 

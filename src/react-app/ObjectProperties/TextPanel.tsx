@@ -15,7 +15,7 @@ import {
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
-import { additionalHues, primaryColors } from './palette.ts';
+import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { assertHAlign, assertVAlign } from '../../model/diagramProps.ts';
@@ -173,11 +173,12 @@ export const TextPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
-            primaryColors={primaryColors}
-            additionalHues={additionalHues}
+            palette={defaultPalette}
             color={color.val}
-            onClick={color.set}
+            onChange={color.set}
             hasMultipleValues={color.hasMultipleValues}
+            customPalette={$d.document.customPalette}
+            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
           />
         </div>
 

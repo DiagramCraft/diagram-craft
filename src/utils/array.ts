@@ -58,3 +58,18 @@ export const groupBy = <T, K>(arr: ReadonlyArray<T>, respectTo: (e: T) => K): Ma
   }
   return dest;
 };
+
+/**
+ * Generates an array of numbers within a specified range.
+ *
+ * @param {number} start - The start of the range.
+ * @param {number} end - The end of the range.
+ * @returns {number[]} An array of numbers from start to end (exclusive).
+ *
+ * @example
+ * // returns [2, 3, 4]
+ * range(2, 5);
+ */
+export const range = (start: number, end: number) => {
+  return Array.from({ length: end - start }, (_v, k) => k + start);
+};

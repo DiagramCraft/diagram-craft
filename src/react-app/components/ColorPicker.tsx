@@ -1,11 +1,42 @@
 import * as Popover from '@radix-ui/react-popover';
 import { TbChevronDown, TbDots, TbX } from 'react-icons/tb';
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
+import { range } from '../../utils/array.ts';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]).map(colNumber =>
     matrix.map(rowNumber => rowNumber[colNumber as unknown as number])
   );
+
+const EditableColowWell = (props: { color: string; onChange: (s: string) => void }) => {
+  const [color, setColor] = React.useState(props.color);
+  return (
+    <div className={'cmp-color-grid__editable'} style={{ backgroundColor: color }}>
+      <button
+        onClick={() => {
+          close();
+          props.onChange(color);
+        }}
+      ></button>
+      <input
+        type="color"
+        value={color}
+        onDoubleClick={e => {
+          e.currentTarget.select();
+        }}
+        onInput={v => {
+          setColor(v.currentTarget.value);
+        }}
+        onChange={v => {
+          setColor(v.currentTarget.value);
+        }}
+      />
+      <TbDots />
+    </div>
+  );
+};
+
+const recentColors: string[] = [];
 
 export const ColorPicker = (props: Props) => {
   const contentRef = useRef<HTMLDivElement>(null);
@@ -14,6 +45,18 @@ export const ColorPicker = (props: Props) => {
   const close = () => {
     setOpen(false);
   };
+
+  const setColor = useCallback(
+    (c: string) => {
+      close();
+      props.onChange(c);
+      if (c && c !== '' && !recentColors.includes(c)) {
+        recentColors.unshift(c);
+        recentColors.splice(14);
+      }
+    },
+    [props]
+  );
 
   return (
     <div className={'cmp-color-picker'}>
@@ -34,12 +77,12 @@ export const ColorPicker = (props: Props) => {
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content className="cmp-popover" sideOffset={5} ref={contentRef}>
-            <h2>Colors</h2>
-
             <div className={'cmp-color-grid'}>
+              <h2>Colors</h2>
+
               {props.canClearColor && (
                 <div
-                  className={'cmp-color-grid__primary'}
+                  className={'cmp-color-grid__row'}
                   style={{
                     marginBottom: '0.25rem'
                   }}
@@ -50,74 +93,61 @@ export const ColorPicker = (props: Props) => {
                         'linear-gradient(to right bottom, white 48%, red 48%, red 52%, white 52%)'
                     }}
                     onClick={() => {
-                      close();
-                      props.onClick('');
+                      setColor('');
                     }}
                   ></button>
                 </div>
               )}
 
-              <div className={'cmp-color-grid__primary'}>
-                {props.primaryColors.map(c => (
+              {transpose(props.palette).map(arr => {
+                return arr.map((c, idx) => (
                   <button
-                    key={c}
+                    key={idx}
                     style={{ backgroundColor: c }}
                     onClick={() => {
-                      close();
-                      props.onClick(c);
+                      setColor(c);
                     }}
                   ></button>
-                ))}
-              </div>
+                ));
+              })}
 
-              {props.additionalHues && (
-                <div className={'cmp-color-grid__additional'}>
-                  {transpose(props.additionalHues).map(arr => {
-                    return arr.map((c, idx) => (
-                      <button
-                        key={idx}
-                        style={{ backgroundColor: c }}
-                        onClick={() => {
-                          close();
-                          props.onClick(c);
-                        }}
-                      ></button>
-                    ));
-                  })}
-                </div>
+              <h2>Standard colors</h2>
+              {['red', 'green', 'blue', 'yellow', 'gray', 'white', 'black'].map(c => (
+                <button
+                  key={c}
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    setColor(c);
+                  }}
+                ></button>
+              ))}
+
+              {recentColors.length > 0 && (
+                <>
+                  <h2>Recent colors</h2>
+                  {recentColors.map(c => (
+                    <button
+                      key={c}
+                      style={{ backgroundColor: c }}
+                      onClick={() => {
+                        setColor(c);
+                      }}
+                    ></button>
+                  ))}
+                </>
               )}
-            </div>
 
-            <h2>Standard colors</h2>
-            <div className={'cmp-color-grid'}>
-              <div className={'cmp-color-grid__primary'}>
-                {['red', 'green', 'blue', 'yellow', 'gray', 'white', 'black'].map(c => (
-                  <button
-                    key={c}
-                    style={{ backgroundColor: c }}
-                    onClick={() => {
-                      close();
-                      props.onClick(c);
-                    }}
-                  ></button>
-                ))}
-              </div>
-            </div>
-
-            <h2>Custom palette</h2>
-            <div className={'cmp-color-grid'}>
-              <div className={'cmp-color-grid__primary'}>
-                {props.primaryColors.map(c => (
-                  <button
-                    key={c}
-                    style={{ backgroundColor: c }}
-                    onClick={() => {
-                      close();
-                      props.onClick(c);
-                    }}
-                  ></button>
-                ))}
-              </div>
+              <h2>Custom palette</h2>
+              {range(0, 14).map(i => (
+                <EditableColowWell
+                  key={i}
+                  color={props.customPalette[i]}
+                  onChange={c => {
+                    setColor(c);
+                    props.onChangeCustomPalette(i, c);
+                  }}
+                />
+              ))}
             </div>
 
             <Popover.Close className="cmp-popover__close" aria-label="Close">
@@ -132,10 +162,11 @@ export const ColorPicker = (props: Props) => {
 };
 
 type Props = {
-  primaryColors: string[];
-  additionalHues?: string[][];
+  palette: string[][];
   hasMultipleValues?: boolean;
+  customPalette: string[];
   color: string;
-  onClick: (s: string) => void;
+  onChange: (s: string) => void;
+  onChangeCustomPalette: (idx: number, s: string) => void;
   canClearColor?: boolean;
 };

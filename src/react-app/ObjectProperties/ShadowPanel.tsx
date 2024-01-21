@@ -1,4 +1,4 @@
-import { additionalHues, primaryColors } from './palette.ts';
+import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useElementProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -31,10 +31,11 @@ export const ShadowPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
-            primaryColors={primaryColors}
-            additionalHues={additionalHues}
+            palette={defaultPalette}
             color={color.val}
-            onClick={color.set}
+            onChange={color.set}
+            customPalette={$d.document.customPalette}
+            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
           />
           <NumberInput
             value={round((1 - opacity.val) * 100).toString()}

@@ -3,7 +3,7 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { Box } from '../../geometry/box.ts';
-import { additionalHues, primaryColors } from './palette.ts';
+import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
@@ -33,12 +33,13 @@ export const CanvasPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
-            primaryColors={primaryColors}
-            additionalHues={additionalHues}
+            palette={defaultPalette}
             color={bg.val ?? 'transparent'}
-            onClick={v => {
+            onChange={v => {
               bg.set(v);
             }}
+            customPalette={diagram.document.customPalette}
+            onChangeCustomPalette={(idx, v) => diagram.document.setCustomPalette(idx, v)}
           />
         </div>
 

@@ -1,5 +1,5 @@
 import { ColorPicker } from '../components/ColorPicker.tsx';
-import { additionalHues, primaryColors } from './palette.ts';
+import { defaultPalette } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -34,11 +34,12 @@ export const NodeStrokePanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
-            primaryColors={primaryColors}
-            additionalHues={additionalHues}
+            palette={defaultPalette}
             color={strokeColor.val}
-            onClick={strokeColor.set}
+            onChange={strokeColor.set}
             hasMultipleValues={strokeColor.hasMultipleValues}
+            customPalette={$d.document.customPalette}
+            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
           />
         </div>
 

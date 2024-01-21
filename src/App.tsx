@@ -55,7 +55,7 @@ import { Ruler } from './react-app/Ruler.tsx';
 import { ActionsContext, useActions } from './react-app/context/ActionsContext.tsx';
 import { DiagramContext } from './react-app/context/DiagramContext.tsx';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext.tsx';
-import { additionalHues, primaryColors } from './react-app/ObjectProperties/palette.ts';
+import { defaultPalette } from './react-app/ObjectProperties/palette.ts';
 import { edgeDefaults, nodeDefaults } from './model/diagramDefaults.ts';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
 import { Diagram } from './model/diagram.ts';
@@ -145,8 +145,7 @@ const App = () => {
         <ConfigurationContext.Provider
           value={{
             palette: {
-              primary: primaryColors,
-              secondary: additionalHues
+              primary: defaultPalette
             },
             defaults: {
               node: nodeDefaults,

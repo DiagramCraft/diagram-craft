@@ -1,4 +1,4 @@
-import { additionalHues, primaryColors } from './palette.ts';
+import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
@@ -11,6 +11,7 @@ import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
 import { Collapsible } from '../components/Collapsible.tsx';
 import { PopoverButton } from '../components/PopoverButton.tsx';
+import { Diagram } from '../../model/diagram.ts';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -57,6 +58,7 @@ const ImageScale = (props: {
 );
 
 const ImageTint = (props: {
+  diagram: Diagram;
   tint: string;
   onChangeTint: (v: string) => void;
   tintStrength: number;
@@ -67,11 +69,12 @@ const ImageTint = (props: {
       <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
       <div className={'cmp-labeled-table__value'}>
         <ColorPicker
-          primaryColors={primaryColors}
-          additionalHues={additionalHues}
+          palette={defaultPalette}
           color={props.tint}
-          onClick={props.onChangeTint}
+          onChange={props.onChangeTint}
           canClearColor={true}
+          customPalette={props.diagram.document.customPalette}
+          onChangeCustomPalette={(idx, v) => props.diagram.document.setCustomPalette(idx, v)}
         />
       </div>
       <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
@@ -194,20 +197,22 @@ export const NodeFillPanel = (props: Props) => {
             <div className={'cmp-labeled-table__label'}>Color:</div>
             <div className={'cmp-labeled-table__value util-hstack'}>
               <ColorPicker
-                primaryColors={primaryColors}
-                additionalHues={additionalHues}
+                palette={defaultPalette}
                 color={color.val}
-                onClick={color.set}
+                onChange={color.set}
                 hasMultipleValues={color.hasMultipleValues}
+                customPalette={diagram.document.customPalette}
+                onChangeCustomPalette={(idx, v) => diagram.document.setCustomPalette(idx, v)}
               />
               {type.val === 'gradient' && (
                 <>
                   <ColorPicker
-                    primaryColors={primaryColors}
-                    additionalHues={additionalHues}
+                    palette={defaultPalette}
                     color={color2.val}
-                    onClick={color2.set}
+                    onChange={color2.set}
                     hasMultipleValues={color2.hasMultipleValues}
+                    customPalette={diagram.document.customPalette}
+                    onChangeCustomPalette={(idx, v) => diagram.document.setCustomPalette(idx, v)}
                   />
                   <PopoverButton label={<TbAdjustmentsHorizontal />}>
                     <h2>Gradient</h2>
@@ -254,18 +259,20 @@ export const NodeFillPanel = (props: Props) => {
             <div className={'cmp-labeled-table__label util-a-top-center'}>Color:</div>
             <div className={'cmp-labeled-table__value util-hstack'}>
               <ColorPicker
-                primaryColors={primaryColors}
-                additionalHues={additionalHues}
+                palette={defaultPalette}
                 color={color.val}
-                onClick={color.set}
+                onChange={color.set}
                 hasMultipleValues={color.hasMultipleValues}
+                customPalette={diagram.document.customPalette}
+                onChangeCustomPalette={(idx, v) => diagram.document.setCustomPalette(idx, v)}
               />
               <ColorPicker
-                primaryColors={primaryColors}
-                additionalHues={additionalHues}
+                palette={defaultPalette}
                 color={color2.val}
-                onClick={color2.set}
+                onChange={color2.set}
                 hasMultipleValues={color2.hasMultipleValues}
+                customPalette={diagram.document.customPalette}
+                onChangeCustomPalette={(idx, v) => diagram.document.setCustomPalette(idx, v)}
               />
             </div>
           </>
@@ -335,6 +342,7 @@ export const NodeFillPanel = (props: Props) => {
               onChangeTintStrength={v => {
                 fillImageTintStrength.set(Number(v) / 100);
               }}
+              diagram={diagram}
             />
           </>
         )}
@@ -449,6 +457,7 @@ export const NodeFillPanel = (props: Props) => {
               onChangeTintStrength={v => {
                 fillImageTintStrength.set(Number(v) / 100);
               }}
+              diagram={diagram}
             />
           </>
         )}

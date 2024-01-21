@@ -4,8 +4,7 @@ import { DeepRequired } from '../../utils/types.ts';
 
 type ConfigurationContextType = {
   palette: {
-    primary: string[];
-    secondary: string[][];
+    primary: string[][];
   };
 
   fonts: Record<string, string>;
