@@ -202,6 +202,9 @@ export const StylesheetPanel = (props: Props) => {
                           | EdgeProps,
                         uow
                       );
+                      $d.selectionState.elements.forEach(n => {
+                        $d.document.styles.setStylesheet(n, stylesheet.val, uow);
+                      });
                     }
                     commitWithUndo(uow, 'Redefine style');
                   }}
