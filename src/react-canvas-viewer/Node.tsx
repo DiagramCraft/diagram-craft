@@ -14,7 +14,6 @@ import { Point } from '../geometry/point.ts';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
-import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { Box } from '../geometry/box.ts';
@@ -30,8 +29,6 @@ export type NodeApi = {
 export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   const $d = props.diagram;
   const redraw = useRedraw();
-
-  const { defaults } = useConfiguration();
 
   useImperativeHandle(ref, () => ({ repaint: redraw }));
 
@@ -53,11 +50,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
 
   const nodeDef = $d.nodeDefinitions.get(props.def.nodeType);
 
-  const nodeProps = $d.document.styles.getNodeProps(
-    props.def,
-    defaults.node,
-    props.mode ?? 'canvas'
-  );
+  const nodeProps = props.def.propsForRendering;
 
   const center = Box.center(props.def.bounds);
 

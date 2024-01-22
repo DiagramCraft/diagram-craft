@@ -1,11 +1,9 @@
-import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { Diagram } from '../../model/diagram.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 
 declare global {
   interface NodeProps {}
@@ -54,10 +52,4 @@ export class CircleNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-type Props = {
-  node: DiagramNode;
-  diagram: Diagram;
-  nodeProps: NodeProps;
-  isSelected: boolean;
-  isSingleSelected: boolean;
-} & React.SVGProps<SVGRectElement>;
+type Props = ReactNodeProps;

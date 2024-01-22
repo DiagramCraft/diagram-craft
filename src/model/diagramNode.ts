@@ -11,8 +11,10 @@ import { newid } from '../utils/id.ts';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
-import { DeepReadonly } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired } from '../utils/types.ts';
 import { PathUtils } from '../geometry/pathUtils.ts';
+import { deepMerge } from '../utils/deepmerge.ts';
+import { nodeDefaults } from './diagramDefaults.ts';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -70,6 +72,22 @@ export class DiagramNode
   }
 
   /* Props *************************************************************************************************** */
+
+  get propsForEditing(): DeepReadonly<NodeProps> {
+    return deepMerge(
+      {},
+      nodeDefaults,
+      this.diagram.nodeDefinitions
+        .get(this.nodeType)
+        .getDefaultProps('canvas') as Partial<NodeProps>,
+      this.diagram.document.styles.nodeStyles.find(s => s.id === this.props.style)?.props ?? {},
+      this.#props as NodeProps
+    ) as DeepRequired<NodeProps>;
+  }
+
+  get propsForRendering(): DeepReadonly<DeepRequired<NodeProps>> {
+    return this.propsForEditing as DeepRequired<NodeProps>;
+  }
 
   get props(): DeepReadonly<NodeProps> {
     return this.#props;

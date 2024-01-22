@@ -62,6 +62,7 @@ declare global {
   }
 
   interface ElementProps {
+    style?: string;
     stroke?: {
       enabled?: boolean;
       color?: string;
@@ -100,8 +101,6 @@ declare global {
   interface EdgeProps extends ElementProps {
     highlight?: string[];
 
-    style?: string;
-
     type?: EdgeType;
     arrow?: {
       start?: {
@@ -128,8 +127,6 @@ declare global {
   interface NodeProps extends ElementProps {
     labelForEdgeId?: string;
     highlight?: string[];
-
-    style?: string;
 
     fill?: {
       enabled?: boolean;

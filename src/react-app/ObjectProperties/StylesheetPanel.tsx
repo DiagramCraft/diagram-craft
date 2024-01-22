@@ -3,9 +3,15 @@ import { Select } from '../components/Select.tsx';
 import { TbDots } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { useElementProperty } from './useProperty.ts';
 
-export const NodeStylesheetPanel = (props: Props) => {
+export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();
+
+  const stylesheet = useElementProperty($d, 'style', 'default');
+
+  // TODO: Handle if stylesheet has multiple values
+
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
@@ -17,7 +23,7 @@ export const NodeStylesheetPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Styles:</div>
         <div className={'cmp-labeled-table__value util-hstack'}>
           <Select
-            value={'default'}
+            value={stylesheet.val}
             values={$d.document.styles.nodeStyles.map(e => ({
               value: e.id,
               label: e.name

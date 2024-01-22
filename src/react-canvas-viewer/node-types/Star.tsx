@@ -1,4 +1,3 @@
-import React from 'react';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
@@ -8,12 +7,10 @@ import { Vector } from '../../geometry/vector.ts';
 import { TextPart } from '../TextPart.tsx';
 import { round } from '../../utils/math.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { CustomPropertyDefinition, NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
-import { Diagram } from '../../model/diagram.ts';
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
+import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { NodeWrapper } from '../NodeWrapper.tsx';
-import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 declare global {
   interface NodeProps {
@@ -145,12 +142,4 @@ export class StarNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-type Props = {
-  def: NodeDefinition;
-  node: DiagramNode;
-  diagram: Diagram;
-  tool: Tool | undefined;
-  isSelected: boolean;
-  isSingleSelected: boolean;
-  nodeProps: NodeProps;
-} & React.SVGProps<SVGRectElement>;
+type Props = ReactNodeProps;

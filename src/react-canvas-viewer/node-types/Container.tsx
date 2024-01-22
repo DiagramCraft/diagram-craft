@@ -1,21 +1,17 @@
-import React from 'react';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { Edge } from '../Edge.tsx';
 import { Node } from '../Node.tsx';
-import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { CustomPropertyDefinition, NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
 import { Rotation, Scale, Transform, Translation } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
-import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 declare global {
   interface NodeProps {
@@ -256,15 +252,4 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-type Props = {
-  node: DiagramNode;
-  isSelected: boolean;
-  isSingleSelected: boolean;
-  nodeProps: NodeProps;
-  tool: Tool | undefined;
-  childProps: {
-    onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-    onDoubleClick?: (id: string, coord: Point) => void;
-    applicationTriggers: ApplicationTriggers;
-  };
-} & Omit<React.SVGProps<SVGRectElement>, 'onMouseDown' | 'onDoubleClick'>;
+type Props = ReactNodeProps;

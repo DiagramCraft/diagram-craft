@@ -1,5 +1,3 @@
-import { DeepRequired } from '../utils/types.ts';
-import { deepMerge } from '../utils/deepmerge.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramEdge } from './diagramEdge.ts';
@@ -77,20 +75,6 @@ export class DiagramStyles {
     }
   ];
 
-  getNodeProps(
-    node: DiagramNode,
-    defaults: DeepRequired<NodeProps>,
-    mode: 'canvas' | 'picker' = 'canvas'
-  ): DeepRequired<NodeProps> {
-    return deepMerge(
-      {},
-      defaults,
-      node.diagram.nodeDefinitions.get(node.nodeType).getDefaultProps(mode),
-      this.nodeStyles.find(s => s.id === node.props.style)?.props ?? {},
-      node.props as NodeProps
-    ) as DeepRequired<NodeProps>;
-  }
-
   applyNodeProps(node: DiagramNode, style: string, uow: UnitOfWork) {
     node.updateProps(props => {
       Object.keys(props).forEach(key => {
@@ -98,20 +82,6 @@ export class DiagramStyles {
       });
       props.style = style;
     }, uow);
-  }
-
-  getEdgeProps(
-    edge: DiagramEdge,
-    defaults: DeepRequired<EdgeProps>,
-    _mode: 'canvas' | 'picker' = 'canvas'
-  ): DeepRequired<EdgeProps> {
-    return deepMerge(
-      {},
-      defaults,
-      {}, // TODO: Should be using EdgeDefinition
-      this.edgeStyles.find(s => s.id === edge.props.style)?.props ?? {},
-      edge.props as EdgeProps
-    ) as DeepRequired<EdgeProps>;
   }
 
   applyEdgeProps(edge: DiagramEdge, style: string, uow: UnitOfWork) {

@@ -1,19 +1,15 @@
-import React from 'react';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { Node } from '../Node.tsx';
 import { Edge } from '../Edge.tsx';
-import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { Box } from '../../geometry/box.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 import { isNode } from '../../model/diagramElement.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { Tool } from '../../react-canvas-editor/tools/types.ts';
 
 export const Group = (props: Props) => {
   const center = Box.center(props.node.bounds);
@@ -78,15 +74,4 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-type Props = {
-  node: DiagramNode;
-  isSelected: boolean;
-  isSingleSelected: boolean;
-  nodeProps: NodeProps;
-  tool: Tool | undefined;
-  childProps: {
-    onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-    onDoubleClick?: (id: string, coord: Point) => void;
-    applicationTriggers: ApplicationTriggers;
-  };
-} & Omit<React.SVGProps<SVGRectElement>, 'onMouseDown' | 'onDoubleClick'>;
+type Props = ReactNodeProps;

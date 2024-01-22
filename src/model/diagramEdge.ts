@@ -16,8 +16,10 @@ import { isDifferent } from '../utils/math.ts';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
-import { DeepReadonly, DeepWriteable } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired, DeepWriteable } from '../utils/types.ts';
 import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
+import { deepMerge } from '../utils/deepmerge.ts';
+import { edgeDefaults } from './diagramDefaults.ts';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -84,6 +86,20 @@ export class DiagramEdge
   }
 
   /* Props *************************************************************************************************** */
+
+  get propsForEditing(): DeepReadonly<EdgeProps> {
+    return deepMerge(
+      {},
+      edgeDefaults,
+      {},
+      this.diagram.document.styles.edgeStyles.find(s => s.id === this.props.style)?.props ?? {},
+      this.#props as EdgeProps
+    ) as DeepRequired<EdgeProps>;
+  }
+
+  get propsForRendering(): DeepReadonly<DeepRequired<EdgeProps>> {
+    return this.propsForEditing as DeepRequired<EdgeProps>;
+  }
 
   get props(): DeepReadonly<EdgeProps> {
     return this.#props;

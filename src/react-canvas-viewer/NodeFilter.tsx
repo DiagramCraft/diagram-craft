@@ -1,4 +1,4 @@
-import { DeepRequired } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired } from '../utils/types.ts';
 
 export const NodeFilter = (props: Props) => (
   <filter id={props.id} filterUnits={'objectBoundingBox'}>
@@ -14,4 +14,4 @@ export const NodeFilter = (props: Props) => (
   </filter>
 );
 
-type Props = { id: string; nodeProps: DeepRequired<NodeProps> };
+type Props = { id: string; nodeProps: DeepRequired<DeepReadonly<NodeProps>> };

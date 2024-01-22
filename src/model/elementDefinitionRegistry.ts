@@ -7,6 +7,7 @@ import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { Point } from '../geometry/point.ts';
 import { DiagramEdge } from './diagramEdge.ts';
+import { DeepReadonly } from '../utils/types.ts';
 
 export type NodeCapability = 'children';
 
@@ -46,7 +47,7 @@ export interface NodeDefinition {
   getBoundingPath(node: DiagramNode): Path;
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
 
-  getDefaultProps(mode: 'picker' | 'canvas'): NodeProps;
+  getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;
 
   // TODO: This should support adding children and more than just the size
   getInitialConfig(): { size: Extent };

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
-import { Tool } from '../../react-canvas-editor/tools/types.ts';
+import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { useDragDrop } from '../DragDropManager.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import {
@@ -200,10 +199,4 @@ export class GenericPathNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-type Props = {
-  node: DiagramNode;
-  tool: Tool | undefined;
-  isSelected: boolean;
-  isSingleSelected: boolean;
-  nodeProps: NodeProps;
-} & React.SVGProps<SVGRectElement>;
+type Props = ReactNodeProps;

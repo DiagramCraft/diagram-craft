@@ -14,7 +14,6 @@ import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
-import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { Diagram } from '../model/diagram.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { applyLineHops, clipPath } from '../model/edgeUtils.ts';
@@ -36,8 +35,6 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const redraw = useRedraw();
   const drag = useDragDrop();
   const { actionMap } = useActions();
-
-  const { defaults } = useConfiguration();
 
   useImperativeHandle(ref, () => ({ repaint: redraw }));
 
@@ -62,7 +59,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
   const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
   const firstEdge = $d.selectionState.edges[0];
 
-  const edgeProps = $d.document.styles.getEdgeProps(props.def, defaults.edge);
+  const edgeProps = props.def.propsForRendering;
 
   const color = edgeProps.stroke.color;
   const fillColor = edgeProps.fill.color;

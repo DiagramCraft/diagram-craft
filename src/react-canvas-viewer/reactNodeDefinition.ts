@@ -18,10 +18,11 @@ import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from '../model/diagramElement.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
+import { DeepReadonly } from '../utils/types.ts';
 
-type Props = {
+export type ReactNodeProps<E = SVGPathElement> = {
   node: DiagramNode;
-  nodeProps: NodeProps;
+  nodeProps: DeepReadonly<NodeProps>;
   def: NodeDefinition;
   diagram: Diagram;
   isSelected: boolean;
@@ -32,9 +33,10 @@ type Props = {
     onDoubleClick?: (id: string, coord: Point) => void;
     applicationTriggers: ApplicationTriggers;
   };
-} & React.SVGProps<SVGRectElement>;
+} & React.SVGProps<E>;
 
-type ReactNode = React.FunctionComponent<Props>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ReactNode = React.FunctionComponent<ReactNodeProps<any>>;
 
 export abstract class AbstractReactNodeDefinition implements NodeDefinition {
   protected constructor(
@@ -63,7 +65,9 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
   }
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
-    return {};
+    return {
+      style: this.name === 'text' ? 'default-text' : 'default'
+    };
   }
 
   getInitialConfig(): { size: Extent } {
@@ -133,7 +137,7 @@ export class ReactNodeDefinition implements NodeDefinition {
     return this.delegate.getCustomProperties(node);
   }
 
-  getDefaultProps(mode: 'picker' | 'canvas'): NodeProps {
+  getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps> {
     return this.delegate.getDefaultProps(mode);
   }
 

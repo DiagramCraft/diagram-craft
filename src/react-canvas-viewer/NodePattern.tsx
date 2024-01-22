@@ -1,9 +1,9 @@
-import { DeepRequired } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired } from '../utils/types.ts';
 import { Box } from '../geometry/box.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { useEffect, useState } from 'react';
 
-const getPatternProps = (nodeProps: DeepRequired<NodeProps>, bounds: Box) => {
+const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {
   if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {
     if (nodeProps.fill.image.fit === 'fill') {
       return {
@@ -205,6 +205,6 @@ export const NodePattern = (props: Props) => {
 
 type Props = {
   patternId: string;
-  nodeProps: DeepRequired<NodeProps>;
+  nodeProps: DeepRequired<DeepReadonly<NodeProps>>;
   def: DiagramNode;
 };

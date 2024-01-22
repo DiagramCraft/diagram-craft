@@ -1,10 +1,9 @@
-import React from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 
 export const Diamond = (props: Props) => {
   const path = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPath();
@@ -48,9 +47,4 @@ export class DiamondNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-type Props = {
-  node: DiagramNode;
-  isSelected: boolean;
-  isSingleSelected: boolean;
-  nodeProps: NodeProps;
-} & React.SVGProps<SVGRectElement>;
+type Props = ReactNodeProps;

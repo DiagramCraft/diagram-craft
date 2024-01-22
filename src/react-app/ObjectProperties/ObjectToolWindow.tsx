@@ -15,7 +15,7 @@ import { NodeStrokePanel } from './NodeStrokePanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { LabelNodePanel } from './LabelNodePanel.tsx';
 import { NodeEffectsPanel } from './NodeEffectsPanel.tsx';
-import { NodeStylesheetPanel } from './NodeStylesheetPanel.tsx';
+import { StylesheetPanel } from './StylesheetPanel.tsx';
 
 export const ObjectToolWindow = () => {
   const diagram = useDiagram();
@@ -57,7 +57,7 @@ export const ObjectToolWindow = () => {
           'label-node'
         ]}
       >
-        {type === 'node' && <NodeStylesheetPanel />}
+        {type === 'node' && <StylesheetPanel />}
         {(type === 'node' || type === 'mixed' || type === 'single-label-node') && (
           <>
             <NodeFillPanel />
@@ -73,7 +73,7 @@ export const ObjectToolWindow = () => {
 
         {type === 'edge' && (
           <>
-            <NodeStylesheetPanel />
+            <StylesheetPanel />
             <LinePanel />
             <ShadowPanel />
           </>

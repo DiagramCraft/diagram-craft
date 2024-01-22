@@ -4,6 +4,7 @@ import { Diagram } from '../model/diagram.ts';
 import { Layer } from '../model/diagramLayer.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { PickerCanvas } from './PickerCanvas.tsx';
+import { DiagramDocument } from '../model/diagramDocument.ts';
 
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
@@ -30,6 +31,9 @@ export const ObjectPicker = (props: Props) => {
         ),
         new UnitOfWork(dest)
       );
+
+      dest.document = new DiagramDocument([dest]);
+
       return dest;
     });
 
