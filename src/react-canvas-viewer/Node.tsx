@@ -129,11 +129,23 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         className={'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' ')}
         transform={`rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`}
       >
-        {nodeProps.fill.type === 'gradient' && (
-          <linearGradient id={`node-${props.def.id}-gradient`}>
+        {nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'linear' && (
+          <linearGradient
+            id={`node-${props.def.id}-gradient`}
+            gradientTransform={`rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`}
+          >
             <stop stopColor={nodeProps.fill.color} offset="0%" />
             <stop stopColor={nodeProps.fill.color2} offset="100%" />
           </linearGradient>
+        )}
+        {nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'radial' && (
+          <radialGradient
+            id={`node-${props.def.id}-gradient`}
+            gradientTransform={`rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`}
+          >
+            <stop stopColor={nodeProps.fill.color} offset="0%" />
+            <stop stopColor={nodeProps.fill.color2} offset="100%" />
+          </radialGradient>
         )}
         <ReactNodeImpl
           def={nodeDef}

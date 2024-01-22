@@ -1,6 +1,5 @@
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useNodeProperty } from './useProperty.ts';
-import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { assertFillType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
@@ -9,8 +8,8 @@ import { round } from '../../utils/math.ts';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
 import { Collapsible } from '../components/Collapsible.tsx';
-import { PopoverButton } from '../components/PopoverButton.tsx';
 import { useConfiguration } from '../context/ConfigurationContext.tsx';
+import { Angle } from '../../geometry/angle.ts';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -131,41 +130,39 @@ const ImageAdjustments = (props: {
 );
 
 export const NodeFillPanel = (props: Props) => {
-  const diagram = useDiagram();
+  const $d = useDiagram();
   const $cfg = useConfiguration();
   const defaults = useNodeDefaults();
 
-  const color = useNodeProperty(diagram, 'fill.color', defaults.fill.color);
-  const fillPattern = useNodeProperty(diagram, 'fill.pattern', '');
-  const fillImage = useNodeProperty(diagram, 'fill.image.id', '');
-  const fillImageFit = useNodeProperty(diagram, 'fill.image.fit', defaults.fill.image.fit);
-  const fillImageW = useNodeProperty(diagram, 'fill.image.w', defaults.fill.image.w);
-  const fillImageH = useNodeProperty(diagram, 'fill.image.h', defaults.fill.image.h);
-  const fillImageScale = useNodeProperty(diagram, 'fill.image.scale', defaults.fill.image.scale);
-  const fillImageTint = useNodeProperty(diagram, 'fill.image.tint', defaults.fill.image.tint);
-  const fillImageTintStrength = useNodeProperty(
-    diagram,
+  const color = useNodeProperty($d, 'fill.color', defaults.fill.color);
+  const pattern = useNodeProperty($d, 'fill.pattern', '');
+  const image = useNodeProperty($d, 'fill.image.id', '');
+  const imageFit = useNodeProperty($d, 'fill.image.fit', defaults.fill.image.fit);
+  const imageW = useNodeProperty($d, 'fill.image.w', defaults.fill.image.w);
+  const imageH = useNodeProperty($d, 'fill.image.h', defaults.fill.image.h);
+  const imageScale = useNodeProperty($d, 'fill.image.scale', defaults.fill.image.scale);
+  const imageTint = useNodeProperty($d, 'fill.image.tint', defaults.fill.image.tint);
+  const imageTintStrength = useNodeProperty(
+    $d,
     'fill.image.tintStrength',
     defaults.fill.image.tintStrength
   );
-  const fillImageBrightness = useNodeProperty(
-    diagram,
+  const imageBrightness = useNodeProperty(
+    $d,
     'fill.image.brightness',
     defaults.fill.image.brightness
   );
-  const fillImageContrast = useNodeProperty(
-    diagram,
-    'fill.image.contrast',
-    defaults.fill.image.contrast
-  );
-  const fillImageSaturation = useNodeProperty(
-    diagram,
+  const imageContrast = useNodeProperty($d, 'fill.image.contrast', defaults.fill.image.contrast);
+  const imageSaturation = useNodeProperty(
+    $d,
     'fill.image.saturation',
     defaults.fill.image.saturation
   );
-  const color2 = useNodeProperty(diagram, 'fill.color2', defaults.fill.color2);
-  const type = useNodeProperty(diagram, 'fill.type', defaults.fill.type);
-  const enabled = useNodeProperty(diagram, 'fill.enabled', defaults.fill.enabled);
+  const color2 = useNodeProperty($d, 'fill.color2', defaults.fill.color2);
+  const type = useNodeProperty($d, 'fill.type', defaults.fill.type);
+  const enabled = useNodeProperty($d, 'fill.enabled', defaults.fill.enabled);
+  const gradientDirection = useNodeProperty($d, 'fill.gradient.direction', 0);
+  const gradientType = useNodeProperty($d, 'fill.gradient.type', 'linear');
 
   return (
     <ToolWindowPanel
@@ -204,8 +201,8 @@ export const NodeFillPanel = (props: Props) => {
                 color={color.val}
                 onChange={color.set}
                 hasMultipleValues={color.hasMultipleValues}
-                customPalette={diagram.document.customPalette.colors}
-                onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+                customPalette={$d.document.customPalette.colors}
+                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
               />
               {type.val === 'gradient' && (
                 <>
@@ -214,17 +211,45 @@ export const NodeFillPanel = (props: Props) => {
                     color={color2.val}
                     onChange={color2.set}
                     hasMultipleValues={color2.hasMultipleValues}
-                    customPalette={diagram.document.customPalette.colors}
-                    onChangeCustomPalette={(idx, v) =>
-                      diagram.document.customPalette.setColor(idx, v)
-                    }
+                    customPalette={$d.document.customPalette.colors}
+                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                   />
-                  <PopoverButton label={<TbAdjustmentsHorizontal />}>
-                    <h2>Gradient</h2>
-                  </PopoverButton>
                 </>
               )}
             </div>
+          </>
+        )}
+
+        {type.val === 'gradient' && (
+          <>
+            <div className={'cmp-labeled-table__label'}>Type:</div>
+            <div className={'cmp-labeled-table__value util-hstack'}>
+              <Select
+                onValueChange={v => {
+                  // eslint-disable-next-line
+                  gradientType.set(v as any);
+                }}
+                value={gradientType.val}
+                values={[
+                  { label: 'Linear', value: 'linear' },
+                  { label: 'Radial', value: 'radial' }
+                ]}
+              />
+            </div>
+
+            {gradientType.val === 'linear' && (
+              <>
+                <div className={'cmp-labeled-table__label'}>Direction:</div>
+                <div className={'cmp-labeled-table__value util-hstack'}>
+                  <SliderAndNumberInput
+                    unit={'°'}
+                    max={360}
+                    value={round(Angle.toDeg(gradientDirection.val))}
+                    onChange={v => gradientDirection.set(Angle.toRad(Number(v)))}
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
 
@@ -244,8 +269,8 @@ export const NodeFillPanel = (props: Props) => {
                     marginRight: '0.2rem'
                   }}
                   onClick={async () => {
-                    const att = await diagram.document.attachments.addAttachment(new Blob([p]));
-                    fillPattern.set(att.hash);
+                    const att = await $d.document.attachments.addAttachment(new Blob([p]));
+                    pattern.set(att.hash);
                   }}
                 >
                   <defs
@@ -268,16 +293,16 @@ export const NodeFillPanel = (props: Props) => {
                 color={color.val}
                 onChange={color.set}
                 hasMultipleValues={color.hasMultipleValues}
-                customPalette={diagram.document.customPalette.colors}
-                onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+                customPalette={$d.document.customPalette.colors}
+                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
               />
               <ColorPicker
                 palette={$cfg.palette.primary}
                 color={color2.val}
                 onChange={color2.set}
                 hasMultipleValues={color2.hasMultipleValues}
-                customPalette={diagram.document.customPalette.colors}
-                onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+                customPalette={$d.document.customPalette.colors}
+                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
               />
             </div>
           </>
@@ -301,17 +326,17 @@ export const NodeFillPanel = (props: Props) => {
                   onClick={async () => {
                     const response = await fetch(`/textures/${t}`);
                     const blob = await response.blob();
-                    const att = await diagram.document.attachments.addAttachment(blob);
+                    const att = await $d.document.attachments.addAttachment(blob);
 
                     const img = await createImageBitmap(att.content);
                     const { width, height } = img;
                     img.close();
 
-                    diagram.undoManager.combine(() => {
-                      fillImage.set(att.hash);
-                      fillImageFit.set('tile');
-                      fillImageW.set(width);
-                      fillImageH.set(height);
+                    $d.undoManager.combine(() => {
+                      image.set(att.hash);
+                      imageFit.set('tile');
+                      imageW.set(width);
+                      imageH.set(height);
                     });
                   }}
                 />
@@ -319,33 +344,33 @@ export const NodeFillPanel = (props: Props) => {
             </div>
 
             <ImageScale
-              fillImageScale={fillImageScale.val}
+              fillImageScale={imageScale.val}
               onChange={v => {
-                fillImageScale.set(Number(v) / 100);
+                imageScale.set(Number(v) / 100);
               }}
             />
 
             <ImageAdjustments
-              contrast={fillImageContrast.val}
+              contrast={imageContrast.val}
               onChangeContrast={v => {
-                fillImageContrast.set(Number(v) / 100);
+                imageContrast.set(Number(v) / 100);
               }}
-              brightness={fillImageBrightness.val}
+              brightness={imageBrightness.val}
               onChangeBrightness={v => {
-                fillImageBrightness.set(Number(v) / 100);
+                imageBrightness.set(Number(v) / 100);
               }}
-              saturation={fillImageSaturation.val}
+              saturation={imageSaturation.val}
               onChangeSaturation={v => {
-                fillImageSaturation.set(Number(v) / 100);
+                imageSaturation.set(Number(v) / 100);
               }}
             />
 
             <ImageTint
-              tint={fillImageTint.val}
-              onChangeTint={fillImageTint.set}
-              tintStrength={fillImageTintStrength.val}
+              tint={imageTint.val}
+              onChangeTint={imageTint.set}
+              tintStrength={imageTintStrength.val}
               onChangeTintStrength={v => {
-                fillImageTintStrength.set(Number(v) / 100);
+                imageTintStrength.set(Number(v) / 100);
               }}
             />
           </>
@@ -367,12 +392,12 @@ export const NodeFillPanel = (props: Props) => {
                 <button
                   className={'cmp-button'}
                   style={{ fontSize: '11px' }}
-                  disabled={fillImage.val === ''}
+                  disabled={image.val === ''}
                   onClick={() => {
-                    diagram.undoManager.combine(() => {
-                      fillImage.set('');
-                      fillImageW.set(0);
-                      fillImageH.set(0);
+                    $d.undoManager.combine(() => {
+                      image.set('');
+                      imageW.set(0);
+                      imageH.set(0);
                     });
                     (document.getElementById('fill-file-upload') as HTMLInputElement).value = '';
                   }}
@@ -386,27 +411,25 @@ export const NodeFillPanel = (props: Props) => {
                   onChange={async e => {
                     // TODO: Should add a spinner...
 
-                    const att = await diagram.document.attachments.addAttachment(
-                      e.target.files![0]
-                    );
+                    const att = await $d.document.attachments.addAttachment(e.target.files![0]);
 
                     const img = await createImageBitmap(att.content);
                     const { width, height } = img;
                     img.close();
 
-                    diagram.undoManager.combine(() => {
-                      fillImage.set(att.hash);
-                      fillImageW.set(width);
-                      fillImageH.set(height);
-                      fillImageTint.set('');
+                    $d.undoManager.combine(() => {
+                      image.set(att.hash);
+                      imageW.set(width);
+                      imageH.set(height);
+                      imageTint.set('');
                     });
                   }}
                 />
               </div>
               <div>
-                {fillImage.val !== '' && fillImage.val !== undefined && (
+                {image.val !== '' && image.val !== undefined && (
                   <img
-                    src={diagram.document.attachments.getAttachment(fillImage.val)?.url}
+                    src={$d.document.attachments.getAttachment(image.val)?.url}
                     style={{ marginTop: '0.5rem', maxWidth: 80, maxHeight: 80 }}
                   />
                 )}
@@ -417,9 +440,9 @@ export const NodeFillPanel = (props: Props) => {
               <Select
                 onValueChange={v => {
                   // eslint-disable-next-line
-                  fillImageFit.set(v as any);
+                  imageFit.set(v as any);
                 }}
-                value={fillImageFit.val}
+                value={imageFit.val}
                 values={[
                   { label: 'Fill', value: 'fill' },
                   { label: 'Contain', value: 'contain' },
@@ -430,36 +453,36 @@ export const NodeFillPanel = (props: Props) => {
               />
             </div>
 
-            {fillImageFit.val === 'tile' && (
+            {imageFit.val === 'tile' && (
               <ImageScale
-                fillImageScale={fillImageScale.val}
+                fillImageScale={imageScale.val}
                 onChange={v => {
-                  fillImageScale.set(Number(v) / 100);
+                  imageScale.set(Number(v) / 100);
                 }}
               />
             )}
 
             <ImageAdjustments
-              contrast={fillImageContrast.val}
+              contrast={imageContrast.val}
               onChangeContrast={v => {
-                fillImageContrast.set(Number(v) / 100);
+                imageContrast.set(Number(v) / 100);
               }}
-              brightness={fillImageBrightness.val}
+              brightness={imageBrightness.val}
               onChangeBrightness={v => {
-                fillImageBrightness.set(Number(v) / 100);
+                imageBrightness.set(Number(v) / 100);
               }}
-              saturation={fillImageSaturation.val}
+              saturation={imageSaturation.val}
               onChangeSaturation={v => {
-                fillImageSaturation.set(Number(v) / 100);
+                imageSaturation.set(Number(v) / 100);
               }}
             />
 
             <ImageTint
-              tint={fillImageTint.val}
-              onChangeTint={fillImageTint.set}
-              tintStrength={fillImageTintStrength.val}
+              tint={imageTint.val}
+              onChangeTint={imageTint.set}
+              tintStrength={imageTintStrength.val}
               onChangeTintStrength={v => {
-                fillImageTintStrength.set(Number(v) / 100);
+                imageTintStrength.set(Number(v) / 100);
               }}
             />
           </>

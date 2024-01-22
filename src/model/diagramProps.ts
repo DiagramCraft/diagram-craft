@@ -145,6 +145,10 @@ declare global {
       color?: string;
       type?: FillType;
       color2?: string;
+      gradient?: {
+        direction?: number;
+        type?: 'linear' | 'radial';
+      };
     };
 
     effects?: {

@@ -19,7 +19,7 @@ export const SliderAndNumberInput = (props: Props) => {
       </Slider.Root>
 
       <NumberInput
-        defaultUnit={'%'}
+        defaultUnit={props.unit ?? '%'}
         value={props.value}
         min={0}
         max={100}
@@ -33,5 +33,6 @@ export const SliderAndNumberInput = (props: Props) => {
 type Props = {
   value: number;
   max?: number;
+  unit?: string;
   onChange: (value: number | undefined) => void;
 };

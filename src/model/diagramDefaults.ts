@@ -40,7 +40,11 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
       contrast: 1,
       saturation: 1
     },
-    pattern: ''
+    pattern: '',
+    gradient: {
+      direction: 0,
+      type: 'linear'
+    }
   },
   stroke: {
     color: 'var(--canvas-fg)',
