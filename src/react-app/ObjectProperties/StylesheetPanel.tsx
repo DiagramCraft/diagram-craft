@@ -7,12 +7,115 @@ import { useElementProperty } from './useProperty.ts';
 import { newid } from '../../utils/id.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
-import { isEdge, isNode } from '../../model/diagramElement.ts';
+import { ComponentProps, useEffect, useRef, useState } from 'react';
+import { SimpleDialog, SimpleDialogState } from '../components/SimpleDialog.tsx';
+import { Dialog } from '../components/Dialog.tsx';
+import { Stylesheet } from '../../model/diagramStyles.ts';
+
+const NewStyleDialog = (props: NewStyleDialogProps) => {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (props.isOpen) {
+      setTimeout(() => {
+        ref.current?.focus();
+      }, 100);
+    }
+  });
+  return (
+    <Dialog
+      title={'New style'}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      buttons={[
+        {
+          label: 'Create',
+          type: 'default',
+          onClick: () => {
+            props.onCreate(ref.current!.value);
+          }
+        },
+        { label: 'Cancel', type: 'cancel', onClick: () => {} }
+      ]}
+    >
+      <label>Name:</label>
+      <div className={'cmp-text-input'}>
+        <input className={'cmp-text-input'} ref={ref} type={'text'} size={40} />
+      </div>
+    </Dialog>
+  );
+};
+
+type NewStyleDialogProps = Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
+  onCreate: (v: string) => void;
+};
+
+const ModifyStyleDialog = (props: ModifyStyleDialogProps) => {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (props.isOpen) {
+      setTimeout(() => {
+        ref.current?.focus();
+      }, 100);
+    }
+  });
+  return (
+    <Dialog
+      title={'Modify style'}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      buttons={[
+        {
+          label: 'Save',
+          type: 'default',
+          onClick: () => {
+            try {
+              JSON.parse(ref.current!.value);
+            } catch (e) {
+              console.log('error');
+              setError(e?.toString());
+              throw e;
+            }
+            props.onModify(JSON.parse(ref.current!.value));
+          }
+        },
+        { label: 'Cancel', type: 'cancel', onClick: () => {} }
+      ]}
+    >
+      <label>Style definition:</label>
+      <div className={'cmp-text-input'}>
+        <textarea
+          ref={ref}
+          rows={30}
+          cols={60}
+          defaultValue={props.stylesheet ? JSON.stringify(props.stylesheet, undefined, 2) : ''}
+        />
+      </div>
+      {error && <div className={'cmp-text-input__error'}>Error: {error}</div>}
+    </Dialog>
+  );
+};
+
+type ModifyStyleDialogProps = Omit<
+  ComponentProps<typeof Dialog>,
+  'children' | 'title' | 'buttons'
+> & {
+  stylesheet: Stylesheet<ElementProps> | undefined;
+  // eslint-disable-next-line
+  onModify: (v: any) => void;
+};
 
 export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();
 
   const stylesheet = useElementProperty($d, 'style', 'default');
+
+  const [confirmDeleteState, setConfirmDeleteState] = useState<SimpleDialogState>(
+    SimpleDialog.INITIAL_STATE
+  );
+  const [isNewOpen, setIsNewOpen] = useState(false);
+  const [modifyProps, setModifyProps] = useState<Stylesheet<ElementProps> | undefined>(undefined);
 
   // TODO: Handle if stylesheet has multiple values
 
@@ -50,11 +153,7 @@ export const StylesheetPanel = (props: Props) => {
                   onSelect={() => {
                     const uow = new UnitOfWork($d, true);
                     $d.selectionState.elements.forEach(n => {
-                      if (isNode(n)) {
-                        $d.document.styles.applyNodeProps(n, stylesheet.val, uow);
-                      } else if (isEdge(n)) {
-                        $d.document.styles.applyEdgeProps(n, stylesheet.val, uow);
-                      }
+                      $d.document.styles.applyProps(n, stylesheet.val, uow);
                     });
                     commitWithUndo(uow, 'Reapply style');
                   }}
@@ -64,6 +163,8 @@ export const StylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
+                    // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
+                    // TODO: Need to find the common props across all selected nodes
                     const style = $d.document.styles.nodeStyles.find(s => s.id === stylesheet.val);
                     if (style) {
                       style.props = $d.selectionState.nodes[0].props as Partial<NodeProps>;
@@ -73,25 +174,52 @@ export const StylesheetPanel = (props: Props) => {
                 >
                   Redefine from current
                 </DropdownMenu.Item>
-                <DropdownMenu.Item className="cmp-context-menu__item">Delete</DropdownMenu.Item>
-                <DropdownMenu.Item className="cmp-context-menu__item">Modify</DropdownMenu.Item>
-                <DropdownMenu.Item className="cmp-context-menu__item">Rename</DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="cmp-context-menu__item"
+                  onSelect={() => {
+                    setConfirmDeleteState({
+                      isOpen: true,
+                      title: 'Confirm delete',
+                      message: 'Are you sure you want to delete this style?',
+                      buttons: [
+                        {
+                          label: 'Yes',
+                          type: 'danger',
+                          onClick: () => {
+                            // TODO: Need to implement this
+                          }
+                        },
+                        { label: 'No', type: 'cancel', onClick: () => {} }
+                      ]
+                    });
+                  }}
+                >
+                  Delete
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="cmp-context-menu__item"
+                  onSelect={() => {
+                    setModifyProps(
+                      $d.document.styles.nodeStyles.find(s => s.id === stylesheet.val) ??
+                        $d.document.styles.edgeStyles.find(s => s.id === stylesheet.val)
+                    );
+                  }}
+                >
+                  Modify
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="cmp-context-menu__item"
+                  onSelect={() => {
+                    // TODO: Need to implement this
+                  }}
+                >
+                  Rename
+                </DropdownMenu.Item>
                 <DropdownMenu.Separator className="cmp-context-menu__separator" />
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    const id = newid();
-                    $d.document.styles.nodeStyles.push({
-                      id: id,
-                      name: 'New style: ' + id,
-
-                      // TODO: Should get common props across selection
-                      props: $d.selectionState.nodes[0].propsForEditing as Partial<NodeProps>
-                    });
-
-                    const uow = new UnitOfWork($d, true);
-                    $d.document.styles.applyNodeProps($d.selectionState.nodes[0], id, uow);
-                    commitWithUndo(uow, 'New style');
+                    setIsNewOpen(true);
                   }}
                 >
                   Add new
@@ -100,6 +228,49 @@ export const StylesheetPanel = (props: Props) => {
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
+          <SimpleDialog
+            {...confirmDeleteState}
+            onClose={() => setConfirmDeleteState(SimpleDialog.INITIAL_STATE)}
+          />
+          <NewStyleDialog
+            isOpen={isNewOpen}
+            onClose={() => setIsNewOpen(!isNewOpen)}
+            onCreate={v => {
+              const id = newid();
+              $d.document.styles.nodeStyles.push({
+                id: id,
+                name: v,
+
+                // TODO: Should get common props across selection
+                props: $d.selectionState.nodes[0].propsForEditing as Partial<NodeProps>
+              });
+
+              const uow = new UnitOfWork($d, true);
+              $d.document.styles.applyProps($d.selectionState.nodes[0], id, uow);
+              commitWithUndo(uow, 'New style');
+            }}
+          />
+          <ModifyStyleDialog
+            isOpen={modifyProps !== undefined}
+            onClose={() => setModifyProps(undefined)}
+            stylesheet={modifyProps}
+            onModify={e => {
+              const nodeStylesheet = $d.document.styles.nodeStyles.find(
+                e => e.id === modifyProps!.id
+              );
+              const edgeStylesheet = $d.document.styles.edgeStyles.find(
+                e => e.id === modifyProps!.id
+              );
+
+              // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
+              if (nodeStylesheet) {
+                nodeStylesheet.props = e.props;
+              } else if (edgeStylesheet) {
+                edgeStylesheet.props = e.props;
+              }
+              $d.update();
+            }}
+          />
         </div>
       </div>
     </ToolWindowPanel>

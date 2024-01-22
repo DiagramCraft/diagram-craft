@@ -1,21 +1,14 @@
-import { DiagramNode } from './diagramNode.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { DiagramEdge } from './diagramEdge.ts';
+import { DiagramElement } from './diagramElement.ts';
 
-type NodeStyle = {
+export type Stylesheet<P extends ElementProps> = {
   id: string;
   name: string;
-  props: Partial<NodeProps>;
-};
-
-type EdgeStyle = {
-  id: string;
-  name: string;
-  props: Partial<EdgeProps>;
+  props: Partial<P>;
 };
 
 export class DiagramStyles {
-  nodeStyles: NodeStyle[] = [
+  nodeStyles: Stylesheet<NodeProps>[] = [
     {
       id: 'default',
       name: 'Default',
@@ -62,9 +55,9 @@ export class DiagramStyles {
       }
     }
   ];
-  edgeStyles: EdgeStyle[] = [
+  edgeStyles: Stylesheet<EdgeProps>[] = [
     {
-      id: 'default',
+      id: 'default-edge',
       name: 'Default',
       props: {
         stroke: {
@@ -75,19 +68,10 @@ export class DiagramStyles {
     }
   ];
 
-  applyNodeProps(node: DiagramNode, style: string, uow: UnitOfWork) {
-    node.updateProps(props => {
+  applyProps(el: DiagramElement, style: string, uow: UnitOfWork) {
+    el.updateProps(props => {
       Object.keys(props).forEach(key => {
-        delete props[key as keyof NodeProps];
-      });
-      props.style = style;
-    }, uow);
-  }
-
-  applyEdgeProps(edge: DiagramEdge, style: string, uow: UnitOfWork) {
-    edge.updateProps(props => {
-      Object.keys(props).forEach(key => {
-        delete props[key as keyof EdgeProps];
+        delete props[key as keyof (NodeProps | EdgeProps)];
       });
       props.style = style;
     }, uow);

@@ -114,7 +114,7 @@ export const deserializeDiagramElements = (
         ? new ConnectedEndpoint(end.anchor, nodeLookup[end.node.id])
         : new FreeEndpoint(end.position),
       {
-        style: 'default',
+        style: 'default-edge',
         ...e.props
       },
       (e.waypoints ?? []) as Array<Waypoint>,
