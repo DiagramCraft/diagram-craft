@@ -536,6 +536,10 @@
     align-items: center;
     justify-content: center;
   }
+
+  .cmp-context-menu__arrow {
+    fill: var(--secondary-bg);
+  }
 }
 
 .cmp-accordion {

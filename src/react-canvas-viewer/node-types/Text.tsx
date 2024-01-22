@@ -58,6 +58,9 @@ export class TextNodeDefinition extends RectNodeDefinition {
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
     return {
+      style: 'default-text',
+
+      // TODO: Remove all of this
       stroke: {
         enabled: false
       },

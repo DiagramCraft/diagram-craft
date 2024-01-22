@@ -75,6 +75,7 @@ export const LayerIndicator = () => {
               </div>
             </DropdownMenu.Item>
           ))}
+          <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

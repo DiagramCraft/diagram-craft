@@ -14,7 +14,6 @@ import { ARROW_SHAPES } from '../base-ui/arrowShapes.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
-import { deepMerge } from '../utils/deepmerge.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
 import { Diagram } from '../model/diagram.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
@@ -23,7 +22,6 @@ import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 import { ArrowMarker } from './ArrowMarker.tsx';
-import { DeepRequired } from '../utils/types.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { useActions } from '../react-app/context/ActionsContext.tsx';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
@@ -34,6 +32,7 @@ export type EdgeApi = {
 };
 
 export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
+  const $d = props.diagram;
   const redraw = useRedraw();
   const drag = useDragDrop();
   const { actionMap } = useActions();
@@ -53,17 +52,17 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
   const onContextMenu = (event: React.MouseEvent<SVGPathElement, MouseEvent>) => {
     props.applicationTriggers.showEdgeContextMenu?.(
-      props.diagram.viewBox.toDiagramPoint(EventHelper.point(event.nativeEvent)),
+      $d.viewBox.toDiagramPoint(EventHelper.point(event.nativeEvent)),
       props.def.id,
       event.nativeEvent
     );
   };
 
-  const isSelected = props.diagram.selectionState.elements.includes(props.def);
-  const isSingleSelected = isSelected && props.diagram.selectionState.elements.length === 1;
-  const firstEdge = props.diagram.selectionState.edges[0];
+  const isSelected = $d.selectionState.elements.includes(props.def);
+  const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
+  const firstEdge = $d.selectionState.edges[0];
 
-  const edgeProps = deepMerge({}, defaults.edge, props.def.props) as DeepRequired<EdgeProps>;
+  const edgeProps = $d.document.styles.getEdgeProps(props.def, defaults.edge);
 
   const color = edgeProps.stroke.color;
   const fillColor = edgeProps.fill.color;
@@ -148,9 +147,9 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
             r="3"
             onMouseDown={e => {
               if (e.button !== 0) return;
-              const uow = new UnitOfWork(props.diagram);
+              const uow = new UnitOfWork($d);
               const idx = props.def.addWaypoint(
-                { point: props.diagram.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent)) },
+                { point: $d.viewBox.toDiagramPoint(EventHelper.point(e.nativeEvent)) },
                 uow
               );
               uow.commit();

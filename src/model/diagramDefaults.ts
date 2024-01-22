@@ -23,6 +23,7 @@ export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, pa
   });
 
 export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepRequired<NodeProps>>({
+  style: 'default',
   fill: {
     color: 'var(--canvas-bg)',
     color2: 'blue',

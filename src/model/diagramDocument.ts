@@ -3,6 +3,7 @@ import { EventEmitter } from '../utils/event.ts';
 import { AttachmentManager } from './attachment.ts';
 import { range } from '../utils/array.ts';
 import { DiagramPalette } from './diagramPalette.ts';
+import { DiagramStyles } from './diagramStyles.ts';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -13,6 +14,7 @@ export type DocumentEvents = {
 export class DiagramDocument extends EventEmitter<DocumentEvents> {
   attachments = new AttachmentManager(this);
   customPalette = new DiagramPalette(range(0, 14).map(() => '#000000'));
+  styles = new DiagramStyles();
 
   constructor(public readonly diagrams: Array<Diagram>) {
     super();

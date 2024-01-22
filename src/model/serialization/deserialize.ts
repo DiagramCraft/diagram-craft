@@ -61,7 +61,10 @@ export const deserializeDiagramElements = (
         c.bounds,
         diagram,
         layer,
-        c.props,
+        {
+          style: c.nodeType === 'text' ? 'default-text' : 'default',
+          ...c.props
+        },
         c.anchors
       );
     }
@@ -110,7 +113,10 @@ export const deserializeDiagramElements = (
       isConnected(end)
         ? new ConnectedEndpoint(end.anchor, nodeLookup[end.node.id])
         : new FreeEndpoint(end.position),
-      e.props,
+      {
+        style: 'default',
+        ...e.props
+      },
       (e.waypoints ?? []) as Array<Waypoint>,
       diagram,
       layer

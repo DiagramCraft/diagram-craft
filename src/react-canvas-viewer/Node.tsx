@@ -15,12 +15,10 @@ import { ReactNodeDefinition } from './reactNodeDefinition.ts';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { useConfiguration } from '../react-app/context/ConfigurationContext.tsx';
-import { deepMerge } from '../utils/deepmerge.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { Box } from '../geometry/box.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
-import { DeepRequired } from '../utils/types.ts';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
 import { NodePattern } from './NodePattern.tsx';
 import { NodeFilter } from './NodeFilter.tsx';
@@ -30,6 +28,7 @@ export type NodeApi = {
 };
 
 export const Node = forwardRef<NodeApi, Props>((props, ref) => {
+  const $d = props.diagram;
   const redraw = useRedraw();
 
   const { defaults } = useConfiguration();
@@ -40,9 +39,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     e => {
       if (e.button !== 0) return;
 
-      const target = document.getElementById(`diagram-${props.diagram.id}`) as
-        | HTMLElement
-        | undefined;
+      const target = document.getElementById(`diagram-${$d.id}`) as HTMLElement | undefined;
       if (!target) return;
       props.onMouseDown(
         props.def.id,
@@ -54,19 +51,18 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
     [props]
   );
 
-  const nodeDef = props.diagram.nodeDefinitions.get(props.def.nodeType);
+  const nodeDef = $d.nodeDefinitions.get(props.def.nodeType);
 
-  const nodeProps = deepMerge(
-    {},
+  const nodeProps = $d.document.styles.getNodeProps(
+    props.def,
     defaults.node,
-    nodeDef.getDefaultProps(props.mode ?? 'canvas'),
-    props.def.props
-  ) as DeepRequired<NodeProps>;
+    props.mode ?? 'canvas'
+  );
 
   const center = Box.center(props.def.bounds);
 
-  const isSelected = props.diagram.selectionState.elements.includes(props.def);
-  const isSingleSelected = isSelected && props.diagram.selectionState.elements.length === 1;
+  const isSelected = $d.selectionState.elements.includes(props.def);
+  const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
   const isEdgeConnect = nodeProps.highlight.includes('edge-connect');
 
   const style: CSSProperties = {
@@ -149,7 +145,7 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
         )}
         <ReactNodeImpl
           def={nodeDef}
-          diagram={props.diagram}
+          diagram={$d}
           node={props.def}
           nodeProps={nodeProps}
           onMouseDown={onMouseDown}
