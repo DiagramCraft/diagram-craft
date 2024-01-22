@@ -1,5 +1,4 @@
 import { ColorPicker } from '../components/ColorPicker.tsx';
-import { defaultPalette } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -8,9 +7,11 @@ import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { PopoverButton } from '../components/PopoverButton.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.tsx';
 
 export const NodeStrokePanel = (props: Props) => {
   const $d = useDiagram();
+  const $cfg = useConfiguration();
   const defaults = useNodeDefaults();
 
   const strokeColor = useNodeProperty($d, 'stroke.color', defaults.stroke.color);
@@ -34,12 +35,12 @@ export const NodeStrokePanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
-            palette={defaultPalette}
+            palette={$cfg.palette.primary}
             color={strokeColor.val}
             onChange={strokeColor.set}
             hasMultipleValues={strokeColor.hasMultipleValues}
-            customPalette={$d.document.customPalette}
-            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
+            customPalette={$d.document.customPalette.colors}
+            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
         </div>
 

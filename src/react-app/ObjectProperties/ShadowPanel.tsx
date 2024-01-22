@@ -1,4 +1,3 @@
-import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useElementProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -6,9 +5,11 @@ import { round } from '../../utils/math.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useNodeDefaults } from '../useDefaults.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.tsx';
 
 export const ShadowPanel = (props: Props) => {
   const $d = useDiagram();
+  const $cfg = useConfiguration();
   const defaults = useNodeDefaults();
 
   const color = useElementProperty($d, 'shadow.color', defaults.shadow.color);
@@ -31,11 +32,11 @@ export const ShadowPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
-            palette={defaultPalette}
+            palette={$cfg.palette.primary}
             color={color.val}
             onChange={color.set}
-            customPalette={$d.document.customPalette}
-            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
+            customPalette={$d.document.customPalette.colors}
+            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
           <NumberInput
             value={round((1 - opacity.val) * 100).toString()}

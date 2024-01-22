@@ -15,7 +15,6 @@ import {
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
-import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { assertHAlign, assertVAlign } from '../../model/diagramProps.ts';
@@ -28,6 +27,7 @@ import { round } from '../../utils/math.ts';
 
 export const TextPanel = (props: Props) => {
   const $d = useDiagram();
+  const $cfg = useConfiguration();
 
   const defaults = useNodeDefaults();
   const { fonts } = useConfiguration();
@@ -173,12 +173,12 @@ export const TextPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
-            palette={defaultPalette}
+            palette={$cfg.palette.primary}
             color={color.val}
             onChange={color.set}
             hasMultipleValues={color.hasMultipleValues}
-            customPalette={$d.document.customPalette}
-            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
+            customPalette={$d.document.customPalette.colors}
+            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
         </div>
 

@@ -3,13 +3,14 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { round } from '../../utils/math.ts';
 import { Box } from '../../geometry/box.ts';
-import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.tsx';
 
 export const CanvasPanel = (props: Props) => {
+  const $cfg = useConfiguration();
   const redraw = useRedraw();
   const diagram = useDiagram();
 
@@ -33,13 +34,13 @@ export const CanvasPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
-            palette={defaultPalette}
+            palette={$cfg.palette.primary}
             color={bg.val ?? 'transparent'}
             onChange={v => {
               bg.set(v);
             }}
-            customPalette={diagram.document.customPalette}
-            onChangeCustomPalette={(idx, v) => diagram.document.setCustomPalette(idx, v)}
+            customPalette={diagram.document.customPalette.colors}
+            onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
           />
         </div>
 

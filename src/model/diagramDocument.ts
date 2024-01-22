@@ -2,6 +2,7 @@ import { Diagram } from './diagram.ts';
 import { EventEmitter } from '../utils/event.ts';
 import { AttachmentManager } from './attachment.ts';
 import { range } from '../utils/array.ts';
+import { DiagramPalette } from './diagramPalette.ts';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -11,15 +12,11 @@ export type DocumentEvents = {
 
 export class DiagramDocument extends EventEmitter<DocumentEvents> {
   attachments = new AttachmentManager(this);
-  customPalette = range(0, 14).map(() => '#000000');
+  customPalette = new DiagramPalette(range(0, 14).map(() => '#000000'));
 
   constructor(public readonly diagrams: Array<Diagram>) {
     super();
     this.diagrams.forEach(d => (d.document = this));
-  }
-
-  setCustomPalette(idx: number, v: string) {
-    this.customPalette = this.customPalette.map((c, i) => (i === idx ? v : c));
   }
 
   getById(id: string) {

@@ -1,6 +1,5 @@
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { defaultPalette } from './palette.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
@@ -9,9 +8,11 @@ import { NumberInput } from '../components/NumberInput.tsx';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { assertGridType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.tsx';
 
 export const CanvasGridPanel = (props: Props) => {
   const $d = useDiagram();
+  const $cfg = useConfiguration();
 
   const redraw = useRedraw();
   useEventListener($d, 'change', redraw);
@@ -37,11 +38,11 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Base</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
-            palette={defaultPalette}
+            palette={$cfg.palette.primary}
             color={color.val ?? 'transparent'}
             onChange={color.set}
-            customPalette={$d.document.customPalette}
-            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
+            customPalette={$d.document.customPalette.colors}
+            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
           <NumberInput
             style={{ width: '45px' }}
@@ -72,11 +73,11 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Major</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
-            palette={defaultPalette}
+            palette={$cfg.palette.primary}
             color={majorColor.val ?? 'transparent'}
             onChange={majorColor.set}
-            customPalette={$d.document.customPalette}
-            onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
+            customPalette={$d.document.customPalette.colors}
+            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
           />
           <NumberInput
             style={{ width: '45px' }}

@@ -2,7 +2,6 @@ import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/t
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ArrowSelector } from './ArrowSelector.tsx';
 import { ColorPicker } from '../components/ColorPicker.tsx';
-import { defaultPalette } from './palette.ts';
 import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -11,9 +10,11 @@ import { useDiagram } from '../context/DiagramContext.tsx';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useEdgeDefaults } from '../useDefaults.tsx';
 import { Select } from '../components/Select.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.tsx';
 
 export const LinePanel = (props: Props) => {
   const $d = useDiagram();
+  const $cfg = useConfiguration();
 
   const defaults = useEdgeDefaults();
 
@@ -95,18 +96,18 @@ export const LinePanel = (props: Props) => {
           <div className={'cmp-labeled-table__label'}>Color:</div>
           <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
             <ColorPicker
-              palette={defaultPalette}
+              palette={$cfg.palette.primary}
               color={strokeColor.val}
               onChange={strokeColor.set}
-              customPalette={$d.document.customPalette}
-              onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
+              customPalette={$d.document.customPalette.colors}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
             <ColorPicker
-              palette={defaultPalette}
+              palette={$cfg.palette.primary}
               color={fillColor.val}
               onChange={fillColor.set}
-              customPalette={$d.document.customPalette}
-              onChangeCustomPalette={(idx, v) => $d.document.setCustomPalette(idx, v)}
+              customPalette={$d.document.customPalette.colors}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
           </div>
 
