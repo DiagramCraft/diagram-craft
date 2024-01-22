@@ -1,7 +1,7 @@
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement, isEdge } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
-import { common } from '../utils/object.ts';
+import { common, isObj } from '../utils/object.ts';
 
 export type Stylesheet<P extends ElementProps> = {
   id: string;
@@ -80,6 +80,25 @@ export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>)
     e = common(e, arr[i]) as T;
   }
   return e as Partial<T>;
+};
+
+export const isPropsDirty = (
+  props: Record<string, unknown>,
+  stylesheetProps: Record<string, unknown>
+): boolean => {
+  for (const key of Object.keys(props)) {
+    if (stylesheetProps[key] === undefined) continue;
+    if (isObj(props[key])) {
+      const r = isPropsDirty(
+        props[key] as Record<string, unknown>,
+        stylesheetProps[key] as Record<string, unknown>
+      );
+      if (r) return true;
+    } else if (props[key] !== stylesheetProps[key]) {
+      return true;
+    }
+  }
+  return false;
 };
 
 export class DiagramStyles {

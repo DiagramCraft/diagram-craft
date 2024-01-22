@@ -1,6 +1,6 @@
 import { DeepPartial } from './types.ts';
 
-const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object';
+export const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object';
 
 /**
  * This function takes two objects of the same type and returns a new object that only includes the properties that have the same values in both input objects.

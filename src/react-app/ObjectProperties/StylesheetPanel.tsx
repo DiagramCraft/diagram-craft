@@ -10,8 +10,10 @@ import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { SimpleDialog, SimpleDialogState } from '../components/SimpleDialog.tsx';
 import { Dialog } from '../components/Dialog.tsx';
-import { getCommonProps, Stylesheet } from '../../model/diagramStyles.ts';
+import { getCommonProps, isPropsDirty, Stylesheet } from '../../model/diagramStyles.ts';
 import { isNode } from '../../model/diagramElement.ts';
+import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useEventListener } from '../hooks/useEventListener.ts';
 
 const NewStyleDialog = (props: NewStyleDialogProps) => {
   const ref = useRef<HTMLInputElement>(null);
@@ -109,6 +111,10 @@ type ModifyStyleDialogProps = Omit<
 
 export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();
+  const redraw = useRedraw();
+
+  useEventListener($d.selectionState, 'change', redraw);
+  useEventListener($d, 'change', redraw);
 
   const stylesheet = useElementProperty($d, 'style', 'default');
 
@@ -119,22 +125,28 @@ export const StylesheetPanel = (props: Props) => {
   const [modifyProps, setModifyProps] = useState<Stylesheet<ElementProps> | undefined>(undefined);
 
   // TODO: Handle if stylesheet has multiple values
+  // TODO: Undo/redo of stylesheet changes
+
+  const style = $d.document.styles.get($d.selectionState.elements[0].props.style!)!;
+  const isDirty =
+    !stylesheet.hasMultipleValues &&
+    $d.selectionState.elements.some(e => isPropsDirty(e.props, style.props));
 
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
       id="stylesheet"
-      title={'Styles'}
+      title={'Style'}
       hasCheckbox={false}
     >
       <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Styles:</div>
+        <div className={'cmp-labeled-table__label'}>Style:</div>
         <div className={'cmp-labeled-table__value util-hstack'}>
           <Select
             value={stylesheet.val}
             values={$d.document.styles.nodeStyles.map(e => ({
               value: e.id,
-              label: e.name
+              label: isDirty && e.id === stylesheet.val ? `${e.name} ∗` : e.name
             }))}
             onValueChange={v => {
               stylesheet.set(v);
