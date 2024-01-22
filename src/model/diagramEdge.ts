@@ -9,7 +9,7 @@ import { buildEdgePath } from './edgePathBuilder.ts';
 import { PointOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
 import { newid } from '../utils/id.ts';
-import { deepClone } from '../utils/clone.ts';
+import { deepClone } from '../utils/object.ts';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge } from './diagramElement.ts';
 import { isDifferent } from '../utils/math.ts';
@@ -18,7 +18,7 @@ import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { DeepReadonly, DeepRequired, DeepWriteable } from '../utils/types.ts';
 import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
-import { deepMerge } from '../utils/deepmerge.ts';
+import { deepMerge } from '../utils/object.ts';
 import { edgeDefaults } from './diagramDefaults.ts';
 
 export type ResolvedLabelNode = LabelNode & {

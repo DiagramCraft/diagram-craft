@@ -2,7 +2,7 @@ import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 import { common, isObj } from '../utils/object.ts';
-import { deepClone } from '../utils/clone.ts';
+import { deepClone } from '../utils/object.ts';
 
 export class Stylesheet<P extends ElementProps> implements UOWTrackable<StylesheetSnapshot> {
   id: string;

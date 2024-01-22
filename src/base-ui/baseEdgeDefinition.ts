@@ -4,7 +4,7 @@ import { DiagramElement, isNode } from '../model/diagramElement.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '../utils/id.ts';
-import { deepClone } from '../utils/clone.ts';
+import { deepClone } from '../utils/object.ts';
 import { LengthOffsetOnPath } from '../geometry/pathPosition.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
 import { ConnectedEndpoint } from '../model/endpoint.ts';

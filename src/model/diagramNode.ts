@@ -1,7 +1,7 @@
 import { Box } from '../geometry/box.ts';
 import { clamp, round } from '../utils/math.ts';
 import { Transform } from '../geometry/transform.ts';
-import { deepClone } from '../utils/clone.ts';
+import { deepClone } from '../utils/object.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge.ts';
 import { AbstractNode, Anchor, LabelNode } from './types.ts';
@@ -13,7 +13,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { DeepReadonly, DeepRequired } from '../utils/types.ts';
 import { PathUtils } from '../geometry/pathUtils.ts';
-import { deepMerge } from '../utils/deepmerge.ts';
+import { deepMerge } from '../utils/object.ts';
 import { nodeDefaults } from './diagramDefaults.ts';
 
 export type DuplicationContext = {
