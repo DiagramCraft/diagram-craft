@@ -14,7 +14,7 @@ export type DocumentEvents = {
 export class DiagramDocument extends EventEmitter<DocumentEvents> {
   attachments = new AttachmentManager(this);
   customPalette = new DiagramPalette(range(0, 14).map(() => '#000000'));
-  styles = new DiagramStyles();
+  styles = new DiagramStyles(this);
 
   constructor(public readonly diagrams: Array<Diagram>) {
     super();

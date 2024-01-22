@@ -10,7 +10,8 @@ import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { SimpleDialog, SimpleDialogState } from '../components/SimpleDialog.tsx';
 import { Dialog } from '../components/Dialog.tsx';
-import { Stylesheet } from '../../model/diagramStyles.ts';
+import { getCommonProps, Stylesheet } from '../../model/diagramStyles.ts';
+import { isNode } from '../../model/diagramElement.ts';
 
 const NewStyleDialog = (props: NewStyleDialogProps) => {
   const ref = useRef<HTMLInputElement>(null);
@@ -153,7 +154,7 @@ export const StylesheetPanel = (props: Props) => {
                   onSelect={() => {
                     const uow = new UnitOfWork($d, true);
                     $d.selectionState.elements.forEach(n => {
-                      $d.document.styles.applyProps(n, stylesheet.val, uow);
+                      $d.document.styles.setStylesheet(n, stylesheet.val, uow);
                     });
                     commitWithUndo(uow, 'Reapply style');
                   }}
@@ -164,10 +165,11 @@ export const StylesheetPanel = (props: Props) => {
                   className="cmp-context-menu__item"
                   onSelect={() => {
                     // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-                    // TODO: Need to find the common props across all selected nodes
                     const style = $d.document.styles.nodeStyles.find(s => s.id === stylesheet.val);
                     if (style) {
-                      style.props = $d.selectionState.nodes[0].props as Partial<NodeProps>;
+                      style.props = getCommonProps(
+                        $d.selectionState.elements.map(e => e.propsForEditing)
+                      ) as NodeProps | EdgeProps;
                     }
                     $d.update();
                   }}
@@ -187,6 +189,9 @@ export const StylesheetPanel = (props: Props) => {
                           type: 'danger',
                           onClick: () => {
                             // TODO: Need to implement this
+                            const uow = new UnitOfWork($d, true);
+                            $d.document.styles.deleteStylesheet(stylesheet.val, uow);
+                            commitWithUndo(uow, 'Delete style');
                           }
                         },
                         { label: 'No', type: 'cancel', onClick: () => {} }
@@ -199,10 +204,7 @@ export const StylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setModifyProps(
-                      $d.document.styles.nodeStyles.find(s => s.id === stylesheet.val) ??
-                        $d.document.styles.edgeStyles.find(s => s.id === stylesheet.val)
-                    );
+                    setModifyProps($d.document.styles.get(stylesheet.val));
                   }}
                 >
                   Modify
@@ -240,13 +242,14 @@ export const StylesheetPanel = (props: Props) => {
               $d.document.styles.nodeStyles.push({
                 id: id,
                 name: v,
-
-                // TODO: Should get common props across selection
-                props: $d.selectionState.nodes[0].propsForEditing as Partial<NodeProps>
+                type: isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
+                props: getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
+                  | NodeProps
+                  | EdgeProps
               });
 
               const uow = new UnitOfWork($d, true);
-              $d.document.styles.applyProps($d.selectionState.nodes[0], id, uow);
+              $d.document.styles.setStylesheet($d.selectionState.nodes[0], id, uow);
               commitWithUndo(uow, 'New style');
             }}
           />
@@ -255,18 +258,22 @@ export const StylesheetPanel = (props: Props) => {
             onClose={() => setModifyProps(undefined)}
             stylesheet={modifyProps}
             onModify={e => {
-              const nodeStylesheet = $d.document.styles.nodeStyles.find(
-                e => e.id === modifyProps!.id
-              );
-              const edgeStylesheet = $d.document.styles.edgeStyles.find(
-                e => e.id === modifyProps!.id
-              );
-
               // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-              if (nodeStylesheet) {
-                nodeStylesheet.props = e.props;
-              } else if (edgeStylesheet) {
-                edgeStylesheet.props = e.props;
+              if (e.type === 'node') {
+                const nodeStylesheet = $d.document.styles.nodeStyles.find(
+                  e => e.id === modifyProps!.id
+                );
+                if (nodeStylesheet) {
+                  nodeStylesheet.props = e.props;
+                }
+              } else {
+                const edgeStylesheet = $d.document.styles.edgeStyles.find(
+                  e => e.id === modifyProps!.id
+                );
+
+                if (edgeStylesheet) {
+                  edgeStylesheet.props = e.props;
+                }
               }
               $d.update();
             }}
