@@ -39,6 +39,11 @@ export class SnapshotUndoableAction implements UndoableAction {
         }
       } else if (snapshot._snapshotType === 'layers') {
         this.diagram.layers.restore(snapshot, uow);
+      } else if (snapshot._snapshotType === 'stylesheet') {
+        const stylesheet = this.diagram.document.styles.get(id);
+        if (stylesheet) {
+          stylesheet.restore(snapshot, uow);
+        }
       } else {
         const node = this.diagram.lookup(id);
         if (node) {
@@ -62,6 +67,11 @@ export class SnapshotUndoableAction implements UndoableAction {
         }
       } else if (snapshot._snapshotType === 'layers') {
         this.diagram.layers.restore(snapshot, uow);
+      } else if (snapshot._snapshotType === 'stylesheet') {
+        const stylesheet = this.diagram.document.styles.get(id);
+        if (stylesheet) {
+          stylesheet.restore(snapshot, uow);
+        }
       } else {
         const node = this.diagram.lookup(id);
         if (node) {

@@ -92,7 +92,20 @@ const ModifyStyleDialog = (props: ModifyStyleDialogProps) => {
           ref={ref}
           rows={30}
           cols={60}
-          defaultValue={props.stylesheet ? JSON.stringify(props.stylesheet, undefined, 2) : ''}
+          defaultValue={
+            props.stylesheet
+              ? JSON.stringify(
+                  {
+                    props: {
+                      ...props.stylesheet.props,
+                      highlight: []
+                    }
+                  },
+                  undefined,
+                  2
+                )
+              : ''
+          }
         />
       </div>
       {error && <div className={'cmp-text-input__error'}>Error: {error}</div>}
@@ -125,12 +138,15 @@ export const StylesheetPanel = (props: Props) => {
   const [modifyProps, setModifyProps] = useState<Stylesheet<ElementProps> | undefined>(undefined);
 
   // TODO: Handle if stylesheet has multiple values
-  // TODO: Undo/redo of stylesheet changes
 
   const style = $d.document.styles.get($d.selectionState.elements[0].props.style!)!;
   const isDirty =
     !stylesheet.hasMultipleValues &&
     $d.selectionState.elements.some(e => isPropsDirty(e.props, style.props));
+
+  const styleList = $d.selectionState.isNodesOnly()
+    ? $d.document.styles.nodeStyles
+    : $d.document.styles.edgeStyles;
 
   return (
     <ToolWindowPanel
@@ -144,7 +160,7 @@ export const StylesheetPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value util-hstack'}>
           <Select
             value={stylesheet.val}
-            values={$d.document.styles.nodeStyles.map(e => ({
+            values={styleList.map(e => ({
               value: e.id,
               label: isDirty && e.id === stylesheet.val ? `${e.name} ∗` : e.name
             }))}
@@ -177,13 +193,17 @@ export const StylesheetPanel = (props: Props) => {
                   className="cmp-context-menu__item"
                   onSelect={() => {
                     // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-                    const style = $d.document.styles.nodeStyles.find(s => s.id === stylesheet.val);
+                    const uow = new UnitOfWork($d, true);
+                    const style = $d.document.styles.get(stylesheet.val);
                     if (style) {
-                      style.props = getCommonProps(
-                        $d.selectionState.elements.map(e => e.propsForEditing)
-                      ) as NodeProps | EdgeProps;
+                      style.setProps(
+                        getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
+                          | NodeProps
+                          | EdgeProps,
+                        uow
+                      );
                     }
-                    $d.update();
+                    commitWithUndo(uow, 'Redefine style');
                   }}
                 >
                   Redefine from current
@@ -202,7 +222,10 @@ export const StylesheetPanel = (props: Props) => {
                           onClick: () => {
                             // TODO: Need to implement this
                             const uow = new UnitOfWork($d, true);
-                            $d.document.styles.deleteStylesheet(stylesheet.val, uow);
+                            $d.document.styles.clearStylesheet(stylesheet.val, uow);
+
+                            // TODO: Need to undo the delete of the style itself
+
                             commitWithUndo(uow, 'Delete style');
                           }
                         },
@@ -251,17 +274,22 @@ export const StylesheetPanel = (props: Props) => {
             onClose={() => setIsNewOpen(!isNewOpen)}
             onCreate={v => {
               const id = newid();
-              $d.document.styles.nodeStyles.push({
-                id: id,
-                name: v,
-                type: isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
-                props: getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
-                  | NodeProps
-                  | EdgeProps
-              });
+              $d.document.styles.nodeStyles.push(
+                new Stylesheet(
+                  isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
+                  id,
+                  v,
+                  getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
+                    | NodeProps
+                    | EdgeProps
+                )
+              );
 
               const uow = new UnitOfWork($d, true);
               $d.document.styles.setStylesheet($d.selectionState.nodes[0], id, uow);
+
+              // TODO: Need undo of the adding of style
+
               commitWithUndo(uow, 'New style');
             }}
           />
@@ -271,12 +299,13 @@ export const StylesheetPanel = (props: Props) => {
             stylesheet={modifyProps}
             onModify={e => {
               // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
+              const uow = new UnitOfWork($d, true);
               if (e.type === 'node') {
                 const nodeStylesheet = $d.document.styles.nodeStyles.find(
                   e => e.id === modifyProps!.id
                 );
                 if (nodeStylesheet) {
-                  nodeStylesheet.props = e.props;
+                  nodeStylesheet.setProps(e.props, uow);
                 }
               } else {
                 const edgeStylesheet = $d.document.styles.edgeStyles.find(
@@ -284,10 +313,10 @@ export const StylesheetPanel = (props: Props) => {
                 );
 
                 if (edgeStylesheet) {
-                  edgeStylesheet.props = e.props;
+                  edgeStylesheet.setProps(e.props, uow);
                 }
               }
-              $d.update();
+              commitWithUndo(uow, 'Modify style');
             }}
           />
         </div>

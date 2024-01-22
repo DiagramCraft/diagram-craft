@@ -4,6 +4,7 @@ import { assert } from '../utils/assert.ts';
 import { Layer, LayerManager } from './diagramLayer.ts';
 import { EventKey } from '../utils/event.ts';
 import { SerializedEdge, SerializedNode } from './serialization/types.ts';
+import { Stylesheet } from './diagramStyles.ts';
 
 type ActionCallback = () => void;
 
@@ -29,11 +30,21 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type StylesheetSnapshot = {
+  id: string;
+  name: string;
+  props: Record<string, unknown>;
+  type: 'node' | 'edge';
+  _snapshotType: 'stylesheet';
+};
+
 type Snapshot = { _snapshotType: string } & (
   | LayersSnapshot
   | LayerSnapshot
   | DiagramNodeSnapshot
   | DiagramEdgeSnapshot
+  | StylesheetSnapshot
 );
 
 export interface UOWTrackable<T extends Snapshot> {
@@ -43,7 +54,8 @@ export interface UOWTrackable<T extends Snapshot> {
   restore(snapshot: T, uow: UnitOfWork): void;
 }
 
-type Trackable = (DiagramElement | Layer | LayerManager) & UOWTrackable<Snapshot>;
+// eslint-disable-next-line
+type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>) & UOWTrackable<Snapshot>;
 
 export class ElementsSnapshot {
   constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
@@ -75,6 +87,8 @@ export class ElementsSnapshot {
         const layer = diagram.layers.byId(k);
         if (!layer) continue;
         dest.set(k, layer.snapshot());
+      } else if (this.snapshots.get(k)?._snapshotType === 'stylesheet') {
+        dest.set(k, diagram.document.styles.get(k)!.snapshot());
       } else {
         const element = diagram.lookup(k);
         if (!element) continue;
@@ -211,6 +225,8 @@ export class UnitOfWork {
 
     const handle = (s: EventKey<DiagramEvents>) => (e: Trackable) => {
       if (e instanceof Layer || e instanceof LayerManager) {
+        this.#shouldUpdateDiagram = true;
+      } else if (e instanceof Stylesheet) {
         this.#shouldUpdateDiagram = true;
       } else {
         this.diagram.emit(s, { element: e });

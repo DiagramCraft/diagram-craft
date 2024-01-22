@@ -1,77 +1,101 @@
-import { UnitOfWork } from './unitOfWork.ts';
+import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 import { common, isObj } from '../utils/object.ts';
+import { deepClone } from '../utils/clone.ts';
 
-export type Stylesheet<P extends ElementProps> = {
+export class Stylesheet<P extends ElementProps> implements UOWTrackable<StylesheetSnapshot> {
   id: string;
   name: string;
-  props: Partial<P>;
+  #props: Partial<P>;
   type: 'node' | 'edge';
-};
+
+  constructor(type: 'node' | 'edge', id: string, name: string, props: Partial<P>) {
+    this.id = id;
+    this.name = name;
+    this.#props = props;
+    this.type = type;
+  }
+
+  get props(): Partial<P> {
+    return this.#props;
+  }
+
+  setProps(props: Partial<P>, uow: UnitOfWork): void {
+    uow.snapshot(this);
+    this.#props = props;
+    uow.updateElement(this);
+  }
+
+  invalidate(_uow: UnitOfWork): void {
+    // Do nothing
+  }
+
+  restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
+    this.name = snapshot.name;
+    // eslint-disable-next-line
+    this.#props = snapshot.props as any;
+    uow.updateElement(this);
+  }
+
+  snapshot(): StylesheetSnapshot {
+    return {
+      _snapshotType: 'stylesheet',
+      id: this.id,
+      name: this.name,
+      props: deepClone(this.#props),
+      type: this.type
+    };
+  }
+}
 
 const DEFAULT_NODE_STYLES: Stylesheet<NodeProps>[] = [
-  {
-    id: 'default',
-    name: 'Default',
-    type: 'node',
-    props: {
-      fill: {
-        color: 'red'
-        //color: 'var(--canvas-bg)'
-      },
-      stroke: {
-        color: 'var(--canvas-fg)'
-      },
-      text: {
-        color: 'var(--canvas-fg)',
-        fontSize: 10,
-        font: 'sans-serif',
-        top: 6,
-        left: 6,
-        right: 6,
-        bottom: 6
-      }
+  new Stylesheet('node', 'default', 'Default', {
+    fill: {
+      color: 'red'
+      //color: 'var(--canvas-bg)'
+    },
+    stroke: {
+      color: 'var(--canvas-fg)'
+    },
+    text: {
+      color: 'var(--canvas-fg)',
+      fontSize: 10,
+      font: 'sans-serif',
+      top: 6,
+      left: 6,
+      right: 6,
+      bottom: 6
     }
-  },
-  {
-    id: 'default-text',
-    name: 'Default text',
-    type: 'node',
-    props: {
-      fill: {
-        enabled: false
-      },
-      stroke: {
-        enabled: false
-      },
-      text: {
-        color: 'pink',
-        //color: 'var(--canvas-fg)',
-        fontSize: 10,
-        font: 'sans-serif',
-        align: 'left',
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0
-      }
+  }),
+  new Stylesheet('node', 'default-text', 'Default text', {
+    fill: {
+      enabled: false
+    },
+    stroke: {
+      enabled: false
+    },
+    text: {
+      color: 'pink',
+      //color: 'var(--canvas-fg)',
+      fontSize: 10,
+      font: 'sans-serif',
+      align: 'left',
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0
     }
-  }
+  })
 ];
 
 const DEFAULT_EDGE_STYLES: Stylesheet<EdgeProps>[] = [
-  {
-    id: 'default-edge',
-    type: 'edge',
-    name: 'Default',
-    props: {
-      stroke: {
-        color: 'green'
-        //color: 'var(--canvas-fg)'
-      }
+  new Stylesheet('edge', 'default', 'Default', {
+    stroke: {
+      color: 'green'
+      //color: 'var(--canvas-fg)'
     }
-  }
+  })
 ];
 
 export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>): Partial<T> => {
@@ -120,7 +144,7 @@ export class DiagramStyles {
     }, uow);
   }
 
-  clearStylesheet(el: DiagramElement, uow: UnitOfWork) {
+  private clearStylesheetFromElement(el: DiagramElement, uow: UnitOfWork) {
     el.updateProps(props => {
       Object.keys(props).forEach(key => {
         const validKey = key as keyof (NodeProps | EdgeProps);
@@ -131,7 +155,7 @@ export class DiagramStyles {
     }, uow);
   }
 
-  deleteStylesheet(id: string, uow: UnitOfWork) {
+  clearStylesheet(id: string, uow: UnitOfWork) {
     // Cannot delete the default stylesheet
     if (id === 'default' || id === 'default-text') {
       return;
@@ -140,12 +164,12 @@ export class DiagramStyles {
     for (const diagram of this.document.diagrams) {
       for (const node of Object.values(diagram.nodeLookup)) {
         if (node.props.style === id) {
-          this.clearStylesheet(node, uow);
+          this.clearStylesheetFromElement(node, uow);
         }
       }
       for (const edge of Object.values(diagram.edgeLookup)) {
         if (edge.props.style === id) {
-          this.clearStylesheet(edge, uow);
+          this.clearStylesheetFromElement(edge, uow);
         }
       }
     }
