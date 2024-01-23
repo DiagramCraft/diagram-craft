@@ -1,5 +1,6 @@
 import { DynamicAccessor } from './propertyPath';
 import { test, expect, describe } from 'vitest';
+import { UNSAFE } from './testUtils.ts';
 
 describe('DynamicAccessor', () => {
   test('get returns the correct value for a given path', () => {
@@ -13,8 +14,7 @@ describe('DynamicAccessor', () => {
     const accessor = new DynamicAccessor<{ a: { b: number } }>();
     const obj = { a: { b: 42 } };
 
-    // @ts-expect-error
-    const result = accessor.get(obj, 'a.c');
+    const result = accessor.get(obj, 'a.c' as unknown as UNSAFE<'a.b'>);
     expect(result).toBeUndefined();
   });
 
@@ -29,10 +29,9 @@ describe('DynamicAccessor', () => {
     const accessor = new DynamicAccessor<{ a: { b: number } }>();
     const obj = { a: { b: 42 } };
 
-    // @ts-expect-error
-    accessor.set(obj, 'a.c', 100);
+    accessor.set(obj, 'a.c' as unknown as UNSAFE<'a.b'>, 100);
 
-    // @ts-expect-error
+    // @ts-ignore
     expect(obj.a.c).toBe(100);
   });
 });

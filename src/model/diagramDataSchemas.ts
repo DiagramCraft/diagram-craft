@@ -74,7 +74,6 @@ export class DeleteSchemaUndoableAction implements UndoableAction {
 
   constructor(
     private readonly diagram: Diagram,
-    // eslint-disable-next-line
     private readonly schema: DataSchema
   ) {}
 

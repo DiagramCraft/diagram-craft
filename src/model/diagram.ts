@@ -232,12 +232,6 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     }
   }
 
-  // TODO: Maybe we should remove this in favour for UnitOfWork
-  /** @deprecated */
-  updateElement(element: DiagramElement) {
-    this.emit('elementChange', { element });
-  }
-
   // TODO: Remove this
   /** @deprecated */
   update() {

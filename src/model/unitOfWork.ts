@@ -30,7 +30,6 @@ export type DiagramEdgeSnapshot = SerializedEdge & {
   _snapshotType: 'edge';
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type StylesheetSnapshot = {
   id: string;
   name: string;

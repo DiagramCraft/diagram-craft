@@ -213,8 +213,7 @@ export class DiagramStyles {
     }, uow);
   }
 
-  // eslint-disable-next-line
-  addStylesheet(stylesheet: Stylesheet<any>, _uow: UnitOfWork) {
+  addStylesheet(stylesheet: Stylesheet, _uow: UnitOfWork) {
     if (stylesheet.type === 'node') {
       this.nodeStyles.push(stylesheet);
     } else {
@@ -228,8 +227,7 @@ export class DeleteStylesheetUndoableAction implements UndoableAction {
 
   constructor(
     private readonly diagram: Diagram,
-    // eslint-disable-next-line
-    private readonly stylesheet: Stylesheet<any>
+    private readonly stylesheet: Stylesheet
   ) {}
 
   undo() {
@@ -250,8 +248,7 @@ export class AddStylesheetUndoableAction implements UndoableAction {
 
   constructor(
     private readonly diagram: Diagram,
-    // eslint-disable-next-line
-    private readonly stylesheet: Stylesheet<any>
+    private readonly stylesheet: Stylesheet
   ) {}
 
   undo() {

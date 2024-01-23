@@ -1,5 +1,6 @@
 import { common, deepMerge, deepClone } from './object';
 import { expect, describe, test } from 'vitest';
+import { UNSAFE } from './testUtils.ts';
 
 describe('common function', () => {
   test('should return an object with common properties', () => {
@@ -11,24 +12,21 @@ describe('common function', () => {
 
   test('should return an empty object if there are no common properties', () => {
     const obj1 = { a: 1, b: 2 };
-    const obj2 = { c: 1, d: 2 };
-    // @ts-ignore
+    const obj2 = { c: 1, d: 2 } as unknown as UNSAFE<typeof obj1>;
     const result = common(obj1, obj2);
     expect(result).to.deep.equal({});
   });
 
   test('should handle nested objects', () => {
     const obj1 = { a: { b: 1, c: 2 }, d: 3 };
-    const obj2 = { a: { b: 1, e: 4 }, d: 4 };
-    // @ts-ignore
+    const obj2 = { a: { b: 1, e: 4 }, d: 4 } as unknown as UNSAFE<typeof obj1>;
     const result = common(obj1, obj2);
     expect(result).to.deep.equal({ a: { b: 1 } });
   });
 
   test('should return an empty object if inputs are not objects', () => {
-    const obj1 = 'not an object';
     const obj2 = { a: 1, b: 2 };
-    // @ts-ignore
+    const obj1 = 'not an object' as unknown as UNSAFE<typeof obj2>;
     const result = common(obj1, obj2);
     expect(result).to.deep.equal({});
   });
@@ -43,9 +41,8 @@ describe('deepmerge', () => {
 
   test('should merge nested objects', () => {
     const a = { a: 1, b: { c: 2 } };
-    const b = { a: 2, b: { d: 3 } };
-    // eslint-disable-next-line
-    expect(deepMerge<any>(a, b)).toEqual({ a: 2, b: { c: 2, d: 3 } });
+    const b = { a: 2, b: { d: 3 } } as unknown as UNSAFE<typeof a>;
+    expect(deepMerge(a, b)).toEqual({ a: 2, b: { c: 2, d: 3 } });
   });
 
   test('should not merge with object of different shape', () => {
