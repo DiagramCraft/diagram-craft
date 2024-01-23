@@ -66,8 +66,7 @@ export class Stylesheet<P extends ElementProps = ElementProps>
 const DEFAULT_NODE_STYLES: Stylesheet<NodeProps>[] = [
   new Stylesheet('node', 'default', 'Default', {
     fill: {
-      color: 'red'
-      //color: 'var(--canvas-bg)'
+      color: 'var(--canvas-bg)'
     },
     stroke: {
       color: 'var(--canvas-fg)'
@@ -90,8 +89,7 @@ const DEFAULT_NODE_STYLES: Stylesheet<NodeProps>[] = [
       enabled: false
     },
     text: {
-      color: 'pink',
-      //color: 'var(--canvas-fg)',
+      color: 'var(--canvas-fg)',
       fontSize: 10,
       font: 'sans-serif',
       align: 'left',
@@ -106,8 +104,7 @@ const DEFAULT_NODE_STYLES: Stylesheet<NodeProps>[] = [
 const DEFAULT_EDGE_STYLES: Stylesheet<EdgeProps>[] = [
   new Stylesheet('edge', 'default', 'Default', {
     stroke: {
-      color: 'green'
-      //color: 'var(--canvas-fg)'
+      color: 'var(--canvas-fg)'
     }
   })
 ];
