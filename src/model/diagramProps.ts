@@ -96,6 +96,12 @@ declare global {
       y?: number;
       blur?: number;
     };
+    data?: {
+      type?: 'schema' | 'derived-from';
+      schema?: string;
+      data?: Record<string, string>;
+      customData?: Record<string, string>;
+    };
   }
 
   interface EdgeProps extends ElementProps {

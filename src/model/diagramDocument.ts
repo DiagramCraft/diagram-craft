@@ -4,6 +4,7 @@ import { AttachmentManager } from './attachment.ts';
 import { range } from '../utils/array.ts';
 import { DiagramPalette } from './diagramPalette.ts';
 import { DiagramStyles } from './diagramStyles.ts';
+import { DiagramDataSchemas } from './diagramDataSchemas.ts';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -15,6 +16,26 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> {
   attachments = new AttachmentManager(this);
   customPalette = new DiagramPalette(range(0, 14).map(() => '#000000'));
   styles = new DiagramStyles(this);
+
+  // TODO: To be loaded from file
+  schemas = new DiagramDataSchemas([
+    {
+      id: 'default',
+      name: 'Default',
+      fields: [
+        {
+          id: 'name',
+          name: 'Name',
+          type: 'text'
+        },
+        {
+          id: 'notes',
+          name: 'Notes',
+          type: 'longtext'
+        }
+      ]
+    }
+  ]);
 
   constructor(public readonly diagrams: Array<Diagram>) {
     super();

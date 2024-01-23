@@ -68,6 +68,7 @@ import { deserializeDiagramDocument } from './model/serialization/deserialize.ts
 import { Point } from './geometry/point.ts';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx';
 import { SimpleDialog, SimpleDialogState } from './react-app/components/SimpleDialog.tsx';
+import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -264,7 +265,9 @@ const App = () => {
                 <SideBarPage icon={TbInfoCircle}>
                   <ObjectInfo />
                 </SideBarPage>
-                <SideBarPage icon={TbDatabaseEdit}>TbDatabaseEdit</SideBarPage>
+                <SideBarPage icon={TbDatabaseEdit}>
+                  <ObjectData />
+                </SideBarPage>
               </SideBar>
 
               <div id="canvas-area" className={'light-theme'}>

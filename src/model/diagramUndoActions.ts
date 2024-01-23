@@ -4,6 +4,7 @@ import { Layer } from './diagramLayer.ts';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { assert } from '../utils/assert.ts';
+import { hasSameElements } from '../utils/array.ts';
 
 export const commitWithUndo = (uow: UnitOfWork, description: string) => {
   const snapshots = uow.commit();
@@ -11,12 +12,14 @@ export const commitWithUndo = (uow: UnitOfWork, description: string) => {
 };
 
 export class SnapshotUndoableAction implements UndoableAction {
-  private readonly afterSnapshot: ElementsSnapshot;
+  private afterSnapshot: ElementsSnapshot;
+
+  timestamp?: Date;
 
   constructor(
     public readonly description: string,
     private readonly diagram: Diagram,
-    private readonly beforeSnapshot: ElementsSnapshot,
+    private beforeSnapshot: ElementsSnapshot,
     afterSnapshot?: ElementsSnapshot
   ) {
     this.afterSnapshot = afterSnapshot ?? beforeSnapshot.retakeSnapshot(diagram);
@@ -80,6 +83,22 @@ export class SnapshotUndoableAction implements UndoableAction {
       }
     }
     uow.commit();
+  }
+
+  merge(nextAction: UndoableAction): boolean {
+    if (!(nextAction instanceof SnapshotUndoableAction)) return false;
+
+    if (
+      nextAction.description === this.description &&
+      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&
+      new Date().getTime() - this.timestamp!.getTime() < 2000
+    ) {
+      this.afterSnapshot = nextAction.afterSnapshot;
+      this.timestamp = new Date();
+      return true;
+    }
+
+    return false;
   }
 }
 

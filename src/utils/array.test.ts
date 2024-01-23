@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import { groupBy, largest, range, smallest, smallestIndex, unique } from './array.ts';
+import {
+  groupBy,
+  hasSameElements,
+  largest,
+  range,
+  smallest,
+  smallestIndex,
+  unique
+} from './array.ts';
 
 describe('smallest', () => {
   test('should return the smallest number in an array', () => {
@@ -113,5 +121,31 @@ describe('range', () => {
 
   test('should return an array with a single element when end is one more than start', () => {
     expect(range(2, 3)).toEqual([2]);
+  });
+});
+
+describe('hasSameElements', () => {
+  test('should return true for two identical arrays', () => {
+    expect(hasSameElements([1, 2, 3], [1, 2, 3])).toBe(true);
+  });
+
+  test('should return true for two arrays with the same elements in different order', () => {
+    expect(hasSameElements([1, 2, 3], [3, 2, 1])).toBe(true);
+  });
+
+  test('should return false for two arrays with different elements', () => {
+    expect(hasSameElements([1, 2, 3], [1, 2, 4])).toBe(false);
+  });
+
+  test('should return false for two arrays with different lengths', () => {
+    expect(hasSameElements([1, 2, 3], [1, 2])).toBe(false);
+  });
+
+  test('should return true for two empty arrays', () => {
+    expect(hasSameElements([], [])).toBe(true);
+  });
+
+  test('should return false for an empty array and a non-empty array', () => {
+    expect(hasSameElements([], [1, 2, 3])).toBe(false);
   });
 });

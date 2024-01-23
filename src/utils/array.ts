@@ -128,3 +128,40 @@ export const groupBy = <T, K>(arr: ReadonlyArray<T>, respectTo: (e: T) => K): Ma
 export const range = (start: number, end: number) => {
   return Array.from({ length: end - start }, (_v, k) => k + start);
 };
+
+/**
+ * Checks if two arrays have the same elements.
+ *
+ * This function checks if two arrays have the same elements, regardless of their order.
+ * It first checks if the lengths of the arrays are equal. If they are not, it returns false.
+ * Then, it checks if all elements in the first array exist in the second array. If any element does not exist, it returns false.
+ * Finally, it checks if all elements in the second array exist in the first array. If any element does not exist, it returns false.
+ * If all checks pass, it returns true, indicating that the two arrays have the same elements.
+ *
+ * @param a - The first array to be compared.
+ * @param b - The second array to be compared.
+ * @returns A boolean indicating whether the two arrays have the same elements.
+ *
+ * @example
+ * // returns true
+ * hasSameElements([1, 2, 3], [3, 2, 1]);
+ *
+ * @example
+ * // returns false
+ * hasSameElements([1, 2, 3], [1, 2, 4]);
+ */
+export const hasSameElements = <T>(a: T[], b: T[]) => {
+  if (a.length !== b.length) return false;
+
+  // Check all elements in a exists in b
+  for (const e of a) {
+    if (!b.includes(e)) return false;
+  }
+
+  // Check all elements in b exists in a
+  for (const e of b) {
+    if (!a.includes(e)) return false;
+  }
+
+  return true;
+};
