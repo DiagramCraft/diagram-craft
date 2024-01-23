@@ -131,9 +131,19 @@ export const ObjectData = () => {
     [$d]
   );
 
+  if ($d.selectionState.elements.length === 0)
+    return (
+      <Accordion.Root className="cmp-accordion" type="single" defaultValue={'data'}>
+        <Accordion.Item className="cmp-accordion__item" value="data">
+          <AccordionTrigger>Data</AccordionTrigger>
+          <AccordionContent>&nbsp;</AccordionContent>
+        </Accordion.Item>
+      </Accordion.Root>
+    );
+
   return (
     <>
-      <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['data', 'local']}>
+      <Accordion.Root className="cmp-accordion" type="single" defaultValue={'data'}>
         <Accordion.Item className="cmp-accordion__item" value="data">
           <AccordionTrigger>Data</AccordionTrigger>
           <AccordionContent>
@@ -281,7 +291,7 @@ export const ObjectData = () => {
         schema={modifyDialog}
         onModify={s => {
           const schemas = $d.document.schemas;
-          const isNew = schemas.get(s.id) === undefined;
+          const isNew = schemas.get(s.id).id === '';
           if (isNew) {
             $d.undoManager.addAndExecute(new AddSchemaUndoableAction($d, s));
           } else {
