@@ -3,9 +3,16 @@ import { TbCheck, TbChevronDown } from 'react-icons/tb';
 
 export const Select = (props: Props) => {
   return (
-    <ReactSelect.Root onValueChange={props.onValueChange} value={props.value}>
+    <ReactSelect.Root
+      onValueChange={props.onValueChange}
+      value={props.hasMultipleValues ? undefined : props.value}
+    >
       <ReactSelect.Trigger className="cmp-select-trigger">
-        <ReactSelect.Value placeholder={''} />
+        <ReactSelect.Value
+          placeholder={
+            props.hasMultipleValues ? <div style={{ color: 'var(--primary-fg)' }}>···</div> : ''
+          }
+        />
         <ReactSelect.Icon className="cmp-select-trigger__icon">
           <TbChevronDown />
         </ReactSelect.Icon>
@@ -35,6 +42,7 @@ export const Select = (props: Props) => {
 };
 
 type Props = {
+  hasMultipleValues?: boolean;
   values: { label: string; value: string }[];
   value: string;
   onValueChange: (value: string) => void;

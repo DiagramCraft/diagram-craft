@@ -137,8 +137,6 @@ export const StylesheetPanel = (props: Props) => {
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [modifyProps, setModifyProps] = useState<Stylesheet<ElementProps> | undefined>(undefined);
 
-  // TODO: Handle if stylesheet has multiple values
-
   const style = $d.document.styles.get($d.selectionState.elements[0].props.style!)!;
   const isDirty =
     !stylesheet.hasMultipleValues &&
@@ -164,6 +162,7 @@ export const StylesheetPanel = (props: Props) => {
               value: e.id,
               label: isDirty && e.id === stylesheet.val ? `${e.name} ∗` : e.name
             }))}
+            hasMultipleValues={stylesheet.hasMultipleValues}
             onValueChange={v => {
               stylesheet.set(v);
             }}

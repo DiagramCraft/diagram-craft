@@ -1,12 +1,9 @@
 import { useElementProperty } from './useProperty.ts';
-import * as Select from '@radix-ui/react-select';
 import {
   TbAlignCenter,
   TbAlignLeft,
   TbAlignRight,
   TbBold,
-  TbCheck,
-  TbChevronDown,
   TbItalic,
   TbLetterCase,
   TbLetterCaseUpper,
@@ -24,6 +21,7 @@ import { useNodeDefaults } from '../useDefaults.tsx';
 import { useConfiguration } from '../context/ConfigurationContext.tsx';
 import { Collapsible } from '../components/Collapsible.tsx';
 import { round } from '../../utils/math.ts';
+import { Select } from '../components/Select.tsx';
 
 export const TextPanel = (props: Props) => {
   const $d = useDiagram();
@@ -65,47 +63,15 @@ export const TextPanel = (props: Props) => {
             hasMultipleValues={fontSize.hasMultipleValues}
           />
           {/* TODO: Can we use Select here - need to support hasMultipleValues */}
-          <Select.Root
-            value={font.hasMultipleValues ? undefined : font.val}
+          <Select
+            value={font.val}
+            hasMultipleValues={font.hasMultipleValues}
             onValueChange={font.set}
-          >
-            <Select.Trigger className="cmp-select-trigger">
-              <Select.Value
-                placeholder={
-                  font.hasMultipleValues ? (
-                    <div style={{ color: 'var(--primary-fg)' }}>···</div>
-                  ) : (
-                    font.val
-                  )
-                }
-              />
-              <Select.Icon className="cmp-select-trigger__icon">
-                <TbChevronDown />
-              </Select.Icon>
-            </Select.Trigger>
-            <Select.Portal>
-              <Select.Content className="cmp-select-content">
-                <Select.Viewport className="cmp-select-content__viewpoint">
-                  <Select.Group>
-                    {Object.entries(fonts).map(([label, value]) => {
-                      return (
-                        <Select.Item
-                          key={value}
-                          className={'cmp-select-content__item'}
-                          value={value}
-                        >
-                          <Select.ItemText>{label}</Select.ItemText>
-                          <Select.ItemIndicator className="cmp-select-content__item-indicator">
-                            <TbCheck />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                      );
-                    })}
-                  </Select.Group>
-                </Select.Viewport>
-              </Select.Content>
-            </Select.Portal>
-          </Select.Root>
+            values={Object.entries(fonts).map(([label, value]) => ({
+              value,
+              label
+            }))}
+          />
         </div>
 
         <div></div>
