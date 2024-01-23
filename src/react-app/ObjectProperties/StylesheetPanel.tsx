@@ -29,11 +29,10 @@ const NewStyleDialog = (
 ) => {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (props.isOpen) {
-      setTimeout(() => {
-        ref.current?.focus();
-      }, 100);
-    }
+    if (!props.isOpen) return;
+    setTimeout(() => {
+      ref.current?.focus();
+    }, 100);
   });
   return (
     <Dialog
@@ -67,11 +66,10 @@ const RenameStyleDialog = (
 ) => {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (props.isOpen) {
-      setTimeout(() => {
-        ref.current?.focus();
-      }, 100);
-    }
+    if (!props.isOpen) return;
+    setTimeout(() => {
+      ref.current?.focus();
+    }, 100);
   });
   return (
     <Dialog
@@ -133,7 +131,6 @@ const ModifyStyleDialog = (
             try {
               JSON.parse(ref.current!.value);
             } catch (e) {
-              console.log('error');
               setError(e?.toString());
               throw e;
             }
@@ -177,19 +174,19 @@ export const StylesheetPanel = (props: Props) => {
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
 
-  const stylesheet = useElementProperty($d, 'style', 'default');
+  const style = useElementProperty($d, 'style', 'default');
 
-  const [confirmDeleteState, setConfirmDeleteState] = useState<SimpleDialogState>(
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<SimpleDialogState>(
     SimpleDialog.INITIAL_STATE
   );
-  const [isNewOpen, setIsNewOpen] = useState(false);
-  const [modifyProps, setModifyProps] = useState<Stylesheet | undefined>(undefined);
-  const [renameProps, setRenameProps] = useState<Stylesheet | undefined>(undefined);
+  const [newDialog, setNewDialog] = useState(false);
+  const [modifyDialog, setModifyDialog] = useState<Stylesheet | undefined>(undefined);
+  const [renameDialog, setRenameDialog] = useState<Stylesheet | undefined>(undefined);
 
-  const style = $d.document.styles.get($d.selectionState.elements[0].props.style!)!;
+  const stylesheet = $d.document.styles.get($d.selectionState.elements[0].props.style!)!;
   const isDirty =
-    !stylesheet.hasMultipleValues &&
-    $d.selectionState.elements.some(e => isPropsDirty(e.props, style.props));
+    !style.hasMultipleValues &&
+    $d.selectionState.elements.some(e => isPropsDirty(e.props, stylesheet.props));
 
   const styleList = $d.selectionState.isNodesOnly()
     ? $d.document.styles.nodeStyles
@@ -206,14 +203,14 @@ export const StylesheetPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Style:</div>
         <div className={'cmp-labeled-table__value util-hstack'}>
           <Select
-            value={stylesheet.val}
+            value={style.val}
             values={styleList.map(e => ({
               value: e.id,
-              label: isDirty && e.id === stylesheet.val ? `${e.name} ∗` : e.name
+              label: isDirty && e.id === style.val ? `${e.name} ∗` : e.name
             }))}
-            hasMultipleValues={stylesheet.hasMultipleValues}
+            hasMultipleValues={style.hasMultipleValues}
             onValueChange={v => {
-              stylesheet.set(v);
+              style.set(v);
             }}
           />
           <DropdownMenu.Root>
@@ -230,7 +227,7 @@ export const StylesheetPanel = (props: Props) => {
                   onSelect={() => {
                     const uow = new UnitOfWork($d, true);
                     $d.selectionState.elements.forEach(n => {
-                      $d.document.styles.setStylesheet(n, stylesheet.val, uow);
+                      $d.document.styles.setStylesheet(n, style.val, uow);
                     });
                     commitWithUndo(uow, 'Reapply style');
                   }}
@@ -242,16 +239,16 @@ export const StylesheetPanel = (props: Props) => {
                   onSelect={() => {
                     // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
                     const uow = new UnitOfWork($d, true);
-                    const style = $d.document.styles.get(stylesheet.val);
-                    if (style) {
-                      style.setProps(
+                    const stylesheet = $d.document.styles.get(style.val);
+                    if (stylesheet) {
+                      stylesheet.setProps(
                         getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
                           | NodeProps
                           | EdgeProps,
                         uow
                       );
                       $d.selectionState.elements.forEach(n => {
-                        $d.document.styles.setStylesheet(n, stylesheet.val, uow);
+                        $d.document.styles.setStylesheet(n, style.val, uow);
                       });
                     }
                     commitWithUndo(uow, 'Redefine style');
@@ -262,7 +259,7 @@ export const StylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setConfirmDeleteState({
+                    setConfirmDeleteDialog({
                       isOpen: true,
                       title: 'Confirm delete',
                       message: 'Are you sure you want to delete this style?',
@@ -271,11 +268,10 @@ export const StylesheetPanel = (props: Props) => {
                           label: 'Yes',
                           type: 'danger',
                           onClick: () => {
-                            // TODO: Not working
                             const uow = new UnitOfWork($d, true);
 
-                            const s = $d.document.styles.get(stylesheet.val)!;
-                            $d.document.styles.deleteStylesheet(stylesheet.val, uow);
+                            const s = $d.document.styles.get(style.val)!;
+                            $d.document.styles.deleteStylesheet(style.val, uow);
 
                             const snapshots = uow.commit();
                             uow.diagram.undoManager.add(
@@ -296,7 +292,7 @@ export const StylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setModifyProps($d.document.styles.get(stylesheet.val));
+                    setModifyDialog($d.document.styles.get(style.val));
                   }}
                 >
                   Modify
@@ -304,7 +300,7 @@ export const StylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setRenameProps($d.document.styles.get(stylesheet.val));
+                    setRenameDialog($d.document.styles.get(style.val));
                   }}
                 >
                   Rename
@@ -313,7 +309,7 @@ export const StylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setIsNewOpen(true);
+                    setNewDialog(true);
                   }}
                 >
                   Add new
@@ -323,12 +319,12 @@ export const StylesheetPanel = (props: Props) => {
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
           <SimpleDialog
-            {...confirmDeleteState}
-            onClose={() => setConfirmDeleteState(SimpleDialog.INITIAL_STATE)}
+            {...confirmDeleteDialog}
+            onClose={() => setConfirmDeleteDialog(SimpleDialog.INITIAL_STATE)}
           />
           <NewStyleDialog
-            isOpen={isNewOpen}
-            onClose={() => setIsNewOpen(!isNewOpen)}
+            isOpen={newDialog}
+            onClose={() => setNewDialog(!newDialog)}
             onCreate={v => {
               const id = newid();
               const s = new Stylesheet(
@@ -358,13 +354,13 @@ export const StylesheetPanel = (props: Props) => {
             }}
           />
           <ModifyStyleDialog
-            isOpen={modifyProps !== undefined}
-            onClose={() => setModifyProps(undefined)}
-            stylesheet={modifyProps}
+            isOpen={modifyDialog !== undefined}
+            onClose={() => setModifyDialog(undefined)}
+            stylesheet={modifyDialog}
             onModify={e => {
               // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
               const uow = new UnitOfWork($d, true);
-              const stylesheet = $d.document.styles.get(modifyProps!.id);
+              const stylesheet = $d.document.styles.get(modifyDialog!.id);
               if (stylesheet) {
                 stylesheet.setProps(e.props, uow);
                 commitWithUndo(uow, 'Modify style');
@@ -374,12 +370,12 @@ export const StylesheetPanel = (props: Props) => {
             }}
           />
           <RenameStyleDialog
-            isOpen={renameProps !== undefined}
-            onClose={() => setRenameProps(undefined)}
-            stylesheet={renameProps}
+            isOpen={renameDialog !== undefined}
+            onClose={() => setRenameDialog(undefined)}
+            stylesheet={renameDialog}
             onRename={v => {
               const uow = new UnitOfWork($d, true);
-              const stylesheet = $d.document.styles.get(renameProps!.id)!;
+              const stylesheet = $d.document.styles.get(renameDialog!.id)!;
               stylesheet.setName(v, uow);
               commitWithUndo(uow, 'Rename style');
             }}

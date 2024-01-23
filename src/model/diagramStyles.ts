@@ -2,7 +2,7 @@ import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 import { common, isObj } from '../utils/object.ts';
-import { deepClone } from '../utils/object.ts';
+import { deepClone, deepMerge } from '../utils/object.ts';
 import { UndoableAction } from './undoManager.ts';
 import { Diagram } from './diagram.ts';
 
@@ -169,13 +169,13 @@ export class DiagramStyles {
       return;
     }
 
+    this.clearStylesheet(id, uow);
+
     if (stylesheet.type === 'node') {
       this.nodeStyles = this.nodeStyles.filter(s => s.id !== id);
     } else {
       this.edgeStyles = this.edgeStyles.filter(s => s.id !== id);
     }
-
-    this.clearStylesheet(id, uow);
   }
 
   clearStylesheet(id: string, uow: UnitOfWork) {
@@ -184,26 +184,29 @@ export class DiagramStyles {
       return;
     }
 
+    const stylesheet = this.get(id);
+    if (!stylesheet) return;
+
     for (const diagram of this.document.diagrams) {
-      for (const node of Object.values(diagram.nodeLookup)) {
+      for (const node of diagram.nodeLookup.values()) {
         if (node.props.style === id) {
-          this.clearStylesheetFromElement(node, uow);
+          this.clearStylesheetFromElement(node, stylesheet, uow);
         }
       }
-      for (const edge of Object.values(diagram.edgeLookup)) {
+      for (const edge of diagram.edgeLookup.values()) {
         if (edge.props.style === id) {
-          this.clearStylesheetFromElement(edge, uow);
+          this.clearStylesheetFromElement(edge, stylesheet, uow);
         }
       }
     }
   }
 
-  private clearStylesheetFromElement(el: DiagramElement, uow: UnitOfWork) {
+  private clearStylesheetFromElement(el: DiagramElement, stylesheet: Stylesheet, uow: UnitOfWork) {
     el.updateProps(props => {
-      Object.keys(props).forEach(key => {
+      Object.keys(stylesheet.props).forEach(key => {
         const validKey = key as keyof (NodeProps | EdgeProps);
         // @ts-ignore
-        props[validKey] = el.propsForEditing[validKey];
+        props[validKey] = deepMerge({}, props[validKey], stylesheet.props[validKey]);
       });
       props.style = isEdge(el)
         ? 'default-edge'
