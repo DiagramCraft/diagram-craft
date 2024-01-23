@@ -1,8 +1,10 @@
 import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
-import { DiagramElement, isEdge } from './diagramElement.ts';
+import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
 import { common, isObj } from '../utils/object.ts';
 import { deepClone } from '../utils/object.ts';
+import { UndoableAction } from './undoManager.ts';
+import { Diagram } from './diagram.ts';
 
 export class Stylesheet<P extends ElementProps> implements UOWTrackable<StylesheetSnapshot> {
   id: string;
@@ -144,15 +146,24 @@ export class DiagramStyles {
     }, uow);
   }
 
-  private clearStylesheetFromElement(el: DiagramElement, uow: UnitOfWork) {
-    el.updateProps(props => {
-      Object.keys(props).forEach(key => {
-        const validKey = key as keyof (NodeProps | EdgeProps);
-        // @ts-ignore
-        props[validKey] = el.propsForEditing[validKey];
-      });
-      props.style = isEdge(el) ? 'default-edge' : 'default';
-    }, uow);
+  deleteStylesheet(id: string, uow: UnitOfWork) {
+    // Cannot delete the default stylesheet
+    if (id === 'default' || id === 'default-text') {
+      return;
+    }
+
+    const stylesheet = this.get(id);
+    if (!stylesheet) {
+      return;
+    }
+
+    if (stylesheet.type === 'node') {
+      this.nodeStyles = this.nodeStyles.filter(s => s.id !== id);
+    } else {
+      this.edgeStyles = this.edgeStyles.filter(s => s.id !== id);
+    }
+
+    this.clearStylesheet(id, uow);
   }
 
   clearStylesheet(id: string, uow: UnitOfWork) {
@@ -173,5 +184,73 @@ export class DiagramStyles {
         }
       }
     }
+  }
+
+  private clearStylesheetFromElement(el: DiagramElement, uow: UnitOfWork) {
+    el.updateProps(props => {
+      Object.keys(props).forEach(key => {
+        const validKey = key as keyof (NodeProps | EdgeProps);
+        // @ts-ignore
+        props[validKey] = el.propsForEditing[validKey];
+      });
+      props.style = isEdge(el)
+        ? 'default-edge'
+        : isNode(el) && el.nodeType === 'text'
+          ? 'default-text'
+          : 'default';
+    }, uow);
+  }
+
+  // eslint-disable-next-line
+  addStylesheet(stylesheet: Stylesheet<any>, _uow: UnitOfWork) {
+    if (stylesheet.type === 'node') {
+      this.nodeStyles.push(stylesheet);
+    } else {
+      this.edgeStyles.push(stylesheet);
+    }
+  }
+}
+
+export class DeleteStylesheetUndoableAction implements UndoableAction {
+  description = 'Delete stylesheet';
+
+  constructor(
+    private readonly diagram: Diagram,
+    // eslint-disable-next-line
+    private readonly stylesheet: Stylesheet<any>
+  ) {}
+
+  undo() {
+    UnitOfWork.execute(this.diagram, uow => {
+      this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
+    });
+  }
+
+  redo() {
+    UnitOfWork.execute(this.diagram, uow => {
+      this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
+    });
+  }
+}
+
+export class AddStylesheetUndoableAction implements UndoableAction {
+  description = 'Add stylesheet';
+
+  constructor(
+    private readonly diagram: Diagram,
+    // eslint-disable-next-line
+    private readonly stylesheet: Stylesheet<any>
+  ) {}
+
+  undo() {
+    UnitOfWork.execute(this.diagram, uow => {
+      this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
+    });
+  }
+
+  redo() {
+    UnitOfWork.execute(this.diagram, uow => {
+      this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
+    });
   }
 }

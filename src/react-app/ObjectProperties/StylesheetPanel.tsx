@@ -6,14 +6,21 @@ import { useDiagram } from '../context/DiagramContext.tsx';
 import { useElementProperty } from './useProperty.ts';
 import { newid } from '../../utils/id.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { SimpleDialog, SimpleDialogState } from '../components/SimpleDialog.tsx';
 import { Dialog } from '../components/Dialog.tsx';
-import { getCommonProps, isPropsDirty, Stylesheet } from '../../model/diagramStyles.ts';
+import {
+  AddStylesheetUndoableAction,
+  DeleteStylesheetUndoableAction,
+  getCommonProps,
+  isPropsDirty,
+  Stylesheet
+} from '../../model/diagramStyles.ts';
 import { isNode } from '../../model/diagramElement.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
+import { CompoundUndoableAction } from '../../model/undoManager.ts';
 
 const NewStyleDialog = (props: NewStyleDialogProps) => {
   const ref = useRef<HTMLInputElement>(null);
@@ -222,13 +229,19 @@ export const StylesheetPanel = (props: Props) => {
                           label: 'Yes',
                           type: 'danger',
                           onClick: () => {
-                            // TODO: Need to implement this
+                            // TODO: Not working
                             const uow = new UnitOfWork($d, true);
-                            $d.document.styles.clearStylesheet(stylesheet.val, uow);
 
-                            // TODO: Need to undo the delete of the style itself
+                            const s = $d.document.styles.get(stylesheet.val)!;
+                            $d.document.styles.deleteStylesheet(stylesheet.val, uow);
 
-                            commitWithUndo(uow, 'Delete style');
+                            const snapshots = uow.commit();
+                            uow.diagram.undoManager.add(
+                              new CompoundUndoableAction([
+                                new DeleteStylesheetUndoableAction(uow.diagram, s),
+                                new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                              ])
+                            );
                           }
                         },
                         { label: 'No', type: 'cancel', onClick: () => {} }
@@ -276,23 +289,30 @@ export const StylesheetPanel = (props: Props) => {
             onClose={() => setIsNewOpen(!isNewOpen)}
             onCreate={v => {
               const id = newid();
-              $d.document.styles.nodeStyles.push(
-                new Stylesheet(
-                  isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
-                  id,
-                  v,
-                  getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
+              const s = new Stylesheet(
+                isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
+                id,
+                v,
+                {
+                  ...(getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
                     | NodeProps
-                    | EdgeProps
-                )
+                    | EdgeProps),
+                  style: undefined,
+                  highlight: []
+                }
               );
-
               const uow = new UnitOfWork($d, true);
+
+              $d.document.styles.addStylesheet(s, uow);
               $d.document.styles.setStylesheet($d.selectionState.nodes[0], id, uow);
 
-              // TODO: Need undo of the adding of style
-
-              commitWithUndo(uow, 'New style');
+              const snapshots = uow.commit();
+              uow.diagram.undoManager.add(
+                new CompoundUndoableAction([
+                  new AddStylesheetUndoableAction(uow.diagram, s),
+                  new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
+                ])
+              );
             }}
           />
           <ModifyStyleDialog
@@ -302,23 +322,13 @@ export const StylesheetPanel = (props: Props) => {
             onModify={e => {
               // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
               const uow = new UnitOfWork($d, true);
-              if (e.type === 'node') {
-                const nodeStylesheet = $d.document.styles.nodeStyles.find(
-                  e => e.id === modifyProps!.id
-                );
-                if (nodeStylesheet) {
-                  nodeStylesheet.setProps(e.props, uow);
-                }
+              const stylesheet = $d.document.styles.get(modifyProps!.id);
+              if (stylesheet) {
+                stylesheet.setProps(e.props, uow);
+                commitWithUndo(uow, 'Modify style');
               } else {
-                const edgeStylesheet = $d.document.styles.edgeStyles.find(
-                  e => e.id === modifyProps!.id
-                );
-
-                if (edgeStylesheet) {
-                  edgeStylesheet.setProps(e.props, uow);
-                }
+                uow.abort();
               }
-              commitWithUndo(uow, 'Modify style');
             }}
           />
         </div>
