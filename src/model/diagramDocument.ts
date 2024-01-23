@@ -18,7 +18,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> {
   styles = new DiagramStyles(this);
 
   // TODO: To be loaded from file
-  schemas = new DiagramDataSchemas([
+  schemas = new DiagramDataSchemas(this, [
     {
       id: 'default',
       name: 'Default',

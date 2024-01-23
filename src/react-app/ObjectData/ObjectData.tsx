@@ -13,16 +13,22 @@ import React, {
   useState
 } from 'react';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 import { unique } from '../../utils/array.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
 import { Dialog } from '../components/Dialog.tsx';
-import { DataSchema } from '../../model/diagramDataSchemas.ts';
+import {
+  AddSchemaUndoableAction,
+  DataSchema,
+  DeleteSchemaUndoableAction,
+  ModifySchemaUndoableAction
+} from '../../model/diagramDataSchemas.ts';
 import { newid } from '../../utils/id.ts';
 import { SimpleDialog, SimpleDialogState } from '../components/SimpleDialog.tsx';
+import { CompoundUndoableAction } from '../../model/undoManager.ts';
 
 const ModifySchemaDialog = (
   props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
@@ -188,7 +194,23 @@ export const ObjectData = () => {
                                 label: 'Yes',
                                 type: 'danger',
                                 onClick: () => {
-                                  // TODO: Implement shi
+                                  const uow = new UnitOfWork($d, true);
+                                  const schemas = $d.document.schemas;
+                                  const s = schemas.get(schema.val);
+                                  schemas.removeSchema(s, uow);
+
+                                  const snapshots = uow.commit();
+                                  $d.undoManager.add(
+                                    new CompoundUndoableAction([
+                                      new DeleteSchemaUndoableAction(uow.diagram, s),
+                                      new SnapshotUndoableAction(
+                                        'Delete schema',
+                                        uow.diagram,
+                                        snapshots
+                                      )
+                                    ])
+                                  );
+                                  redraw();
                                 }
                               },
                               { label: 'No', type: 'cancel', onClick: () => {} }
@@ -218,19 +240,22 @@ export const ObjectData = () => {
                     return e.props.data?.data?.[f.id];
                   })
                 );
-                // TODO: Handle multiple values (mixed)
 
                 return (
                   <React.Fragment key={f.id}>
                     <div className={'cmp-labeled-table__label util-a-top-center'}>{f.name}:</div>
                     <div className={'cmp-labeled-table__value cmp-text-input'}>
                       {f.type === 'text' && (
-                        <input type={'text'} value={v[0]} onChange={e => changeCallback(f.id, e)} />
+                        <input
+                          type={'text'}
+                          value={v.length > 1 ? '***' : v[0] ?? ''}
+                          onChange={e => changeCallback(f.id, e)}
+                        />
                       )}
                       {f.type === 'longtext' && (
                         <textarea
                           style={{ height: '40px' }}
-                          value={v[0]}
+                          value={v.length > 1 ? '***' : v[0] ?? ''}
                           onChange={e => changeCallback(f.id, e)}
                         />
                       )}
@@ -241,10 +266,6 @@ export const ObjectData = () => {
             </div>
           </AccordionContent>
         </Accordion.Item>
-        {/*      <Accordion.Item className="cmp-accordion__item" value="local">
-        <AccordionTrigger>Local Data</AccordionTrigger>
-      </Accordion.Item>
-      */}
       </Accordion.Root>
 
       <SimpleDialog
@@ -258,8 +279,15 @@ export const ObjectData = () => {
           setModifyDialog(undefined);
         }}
         schema={modifyDialog}
-        onModify={() => {
-          // TODO: Implement this
+        onModify={s => {
+          const schemas = $d.document.schemas;
+          const isNew = schemas.get(s.id) === undefined;
+          if (isNew) {
+            $d.undoManager.addAndExecute(new AddSchemaUndoableAction($d, s));
+          } else {
+            $d.undoManager.addAndExecute(new ModifySchemaUndoableAction($d, s));
+          }
+          redraw();
         }}
       />
     </>
