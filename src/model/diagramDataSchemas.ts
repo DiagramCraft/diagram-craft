@@ -4,7 +4,7 @@ type DataSchemaField = {
   type: 'text' | 'longtext';
 };
 
-type DataSchema = {
+export type DataSchema = {
   id: string;
   name: string;
   fields: DataSchemaField[];
