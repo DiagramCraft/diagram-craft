@@ -22,7 +22,11 @@ import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 
-const NewStyleDialog = (props: NewStyleDialogProps) => {
+const NewStyleDialog = (
+  props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
+    onCreate: (v: string) => void;
+  }
+) => {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (props.isOpen) {
@@ -55,11 +59,57 @@ const NewStyleDialog = (props: NewStyleDialogProps) => {
   );
 };
 
-type NewStyleDialogProps = Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
-  onCreate: (v: string) => void;
+const RenameStyleDialog = (
+  props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
+    stylesheet: Stylesheet | undefined;
+    onRename: (v: string) => void;
+  }
+) => {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (props.isOpen) {
+      setTimeout(() => {
+        ref.current?.focus();
+      }, 100);
+    }
+  });
+  return (
+    <Dialog
+      title={'Rename style'}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      buttons={[
+        {
+          label: 'Rename',
+          type: 'default',
+          onClick: () => {
+            props.onRename(ref.current!.value);
+          }
+        },
+        { label: 'Cancel', type: 'cancel', onClick: () => {} }
+      ]}
+    >
+      <label>Name:</label>
+      <div className={'cmp-text-input'}>
+        <input
+          className={'cmp-text-input'}
+          ref={ref}
+          type={'text'}
+          size={40}
+          defaultValue={props.stylesheet?.name ?? ''}
+        />
+      </div>
+    </Dialog>
+  );
 };
 
-const ModifyStyleDialog = (props: ModifyStyleDialogProps) => {
+const ModifyStyleDialog = (
+  props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
+    stylesheet: Stylesheet<ElementProps> | undefined;
+    // eslint-disable-next-line
+    onModify: (v: any) => void;
+  }
+) => {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState<string | undefined>(undefined);
 
@@ -120,15 +170,6 @@ const ModifyStyleDialog = (props: ModifyStyleDialogProps) => {
   );
 };
 
-type ModifyStyleDialogProps = Omit<
-  ComponentProps<typeof Dialog>,
-  'children' | 'title' | 'buttons'
-> & {
-  stylesheet: Stylesheet<ElementProps> | undefined;
-  // eslint-disable-next-line
-  onModify: (v: any) => void;
-};
-
 export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();
   const redraw = useRedraw();
@@ -142,7 +183,8 @@ export const StylesheetPanel = (props: Props) => {
     SimpleDialog.INITIAL_STATE
   );
   const [isNewOpen, setIsNewOpen] = useState(false);
-  const [modifyProps, setModifyProps] = useState<Stylesheet<ElementProps> | undefined>(undefined);
+  const [modifyProps, setModifyProps] = useState<Stylesheet | undefined>(undefined);
+  const [renameProps, setRenameProps] = useState<Stylesheet | undefined>(undefined);
 
   const style = $d.document.styles.get($d.selectionState.elements[0].props.style!)!;
   const isDirty =
@@ -262,7 +304,7 @@ export const StylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    // TODO: Need to implement this
+                    setRenameProps($d.document.styles.get(stylesheet.val));
                   }}
                 >
                   Rename
@@ -329,6 +371,17 @@ export const StylesheetPanel = (props: Props) => {
               } else {
                 uow.abort();
               }
+            }}
+          />
+          <RenameStyleDialog
+            isOpen={renameProps !== undefined}
+            onClose={() => setRenameProps(undefined)}
+            stylesheet={renameProps}
+            onRename={v => {
+              const uow = new UnitOfWork($d, true);
+              const stylesheet = $d.document.styles.get(renameProps!.id)!;
+              stylesheet.setName(v, uow);
+              commitWithUndo(uow, 'Rename style');
             }}
           />
         </div>

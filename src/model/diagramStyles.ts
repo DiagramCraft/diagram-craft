@@ -6,15 +6,17 @@ import { deepClone } from '../utils/object.ts';
 import { UndoableAction } from './undoManager.ts';
 import { Diagram } from './diagram.ts';
 
-export class Stylesheet<P extends ElementProps> implements UOWTrackable<StylesheetSnapshot> {
+export class Stylesheet<P extends ElementProps = ElementProps>
+  implements UOWTrackable<StylesheetSnapshot>
+{
   id: string;
-  name: string;
+  #name: string;
   #props: Partial<P>;
   type: 'node' | 'edge';
 
   constructor(type: 'node' | 'edge', id: string, name: string, props: Partial<P>) {
     this.id = id;
-    this.name = name;
+    this.#name = name;
     this.#props = props;
     this.type = type;
   }
@@ -29,12 +31,22 @@ export class Stylesheet<P extends ElementProps> implements UOWTrackable<Styleshe
     uow.updateElement(this);
   }
 
+  get name() {
+    return this.#name;
+  }
+
+  setName(name: string, uow: UnitOfWork) {
+    uow.snapshot(this);
+    this.#name = name;
+    uow.updateElement(this);
+  }
+
   invalidate(_uow: UnitOfWork): void {
     // Do nothing
   }
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
-    this.name = snapshot.name;
+    this.setName(snapshot.name, uow);
     // eslint-disable-next-line
     this.#props = snapshot.props as any;
     uow.updateElement(this);
