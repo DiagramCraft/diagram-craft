@@ -587,6 +587,8 @@
 }
 
 .cmp-accordion {
+  height: 100%;
+
   .cmp-accordion__item {
     overflow: hidden;
     &:first-child {
@@ -596,6 +598,15 @@
     &:focus-within {
       position: relative;
       z-index: 1;
+    }
+  }
+  .cmp-accordion__item--fill {
+    height: 100%;
+    .cmp-accordion__content {
+      height: 100%;
+    }
+    .cmp-accordion__content_text {
+      height: 100%;
     }
   }
 

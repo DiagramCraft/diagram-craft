@@ -195,12 +195,14 @@ export const LayerList = () => {
   useEventListener(diagram, 'change', redraw);
 
   return (
-    <div style={{ margin: '-10px' }} className={'cmp-layer-list'}>
-      <Tree.Root data-dragmimetype={'application/x-diagram-craft-element-instances'}>
-        {layers.map(l => (
-          <LayerEntry key={l.id} layer={l} />
-        ))}
-      </Tree.Root>
+    <div style={{ height: '100%', margin: '-10px' }} className={'cmp-layer-list'}>
+      <div>
+        <Tree.Root data-dragmimetype={'application/x-diagram-craft-element-instances'}>
+          {layers.map(l => (
+            <LayerEntry key={l.id} layer={l} />
+          ))}
+        </Tree.Root>
+      </div>
     </div>
   );
 };

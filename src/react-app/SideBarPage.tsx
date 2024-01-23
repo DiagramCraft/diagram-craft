@@ -2,7 +2,7 @@ import { IconType } from 'react-icons/lib/cjs/iconBase';
 import React from 'react';
 
 export const SideBarPage = (props: Props) => {
-  return <div>{props.children}</div>;
+  return props.children;
 };
 
 type Props = {
