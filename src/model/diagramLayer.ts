@@ -55,6 +55,8 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
   snapshot(): LayerSnapshot {
     return {
       _snapshotType: 'layer',
+      name: this.name,
+      locked: this.isLocked(),
       elements: this.elements.map(e => e.id)
     };
   }
@@ -64,6 +66,8 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
       snapshot.elements.map(id => this.#diagram.lookup(id)!),
       uow
     );
+    this.setName(snapshot.name, uow);
+    this.locked = snapshot.locked;
     uow.updateElement(this);
   }
 

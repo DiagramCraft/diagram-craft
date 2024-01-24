@@ -121,3 +121,31 @@ export class ElementAddUndoableAction implements UndoableAction {
     });
   }
 }
+
+export class ElementDeleteUndoableAction implements UndoableAction {
+  description = 'Delete elements';
+  private layer: Layer;
+  private readonly elements: DiagramElement[];
+
+  constructor(
+    private readonly diagram: Diagram,
+    elements: ReadonlyArray<DiagramElement>
+  ) {
+    this.layer = this.diagram.layers.active;
+    this.elements = [...elements];
+  }
+
+  undo(uow: UnitOfWork): void {
+    for (const element of this.elements) {
+      this.layer.addElement(element, uow);
+    }
+    this.diagram.selectionState.setElements(this.elements);
+  }
+
+  redo(uow: UnitOfWork): void {
+    for (const element of this.elements) {
+      element.layer.removeElement(element, uow);
+    }
+    this.diagram.selectionState.clear();
+  }
+}

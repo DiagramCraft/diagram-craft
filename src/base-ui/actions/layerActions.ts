@@ -10,7 +10,11 @@ import {
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { CompoundUndoableAction, UndoableAction } from '../../model/undoManager.ts';
 import { Layer } from '../../model/diagramLayer.ts';
-import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import {
+  commitWithUndo,
+  ElementDeleteUndoableAction,
+  SnapshotUndoableAction
+} from '../../model/diagramUndoActions.ts';
 import { newid } from '../../utils/id.ts';
 
 export const layerActions = (state: State) => ({
@@ -46,8 +50,9 @@ export class LayerDeleteAction extends AbstractAction {
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
       new CompoundUndoableAction([
-        new LayerDeleteUndoableAction(this.diagram, layer),
-        new SnapshotUndoableAction('Delete layer', this.diagram, snapshots)
+        new SnapshotUndoableAction('Delete layer', this.diagram, snapshots.onlyUpdated()),
+        new ElementDeleteUndoableAction(this.diagram, layer.elements),
+        new LayerDeleteUndoableAction(this.diagram, layer)
       ])
     );
   }
@@ -142,7 +147,7 @@ export class LayerRenameAction extends AbstractAction<string> {
     assert.present(layer);
 
     const uow = new UnitOfWork(this.diagram, true);
-    layer.setName(name, uow);
+    layer.setName(typeof name === 'string' ? name : 'New name', uow);
     commitWithUndo(uow, `Rename layer`);
   }
 }

@@ -17,6 +17,8 @@ export type LayersSnapshot = {
 
 export type LayerSnapshot = {
   _snapshotType: 'layer';
+  name: string;
+  locked: boolean;
   elements: string[];
 };
 

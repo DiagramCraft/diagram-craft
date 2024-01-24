@@ -10,7 +10,7 @@ export const LayerContextMenu = (props: Props) => {
       <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className="cmp-context-menu">
-          <ActionContextMenuItem action={'EDGE_FLIP'} context={{ id: props.layer?.id }}>
+          <ActionContextMenuItem action={'LAYER_RENAME'} context={{ id: props.layer?.id }}>
             Rename...
           </ActionContextMenuItem>
           <ToggleActionContextMenuItem
