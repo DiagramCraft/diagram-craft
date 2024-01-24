@@ -38,7 +38,8 @@ export type KeyMap = Record<string, keyof ActionMap>;
 
 declare global {
   interface ActionMap
-    extends Record<string, (Action | ToggleAction) & EventEmitter<ActionEvents>> {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
 }
 
 export type ActionMapFactory = (state: AppState) => Partial<ActionMap>;

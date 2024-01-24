@@ -8,20 +8,32 @@ import { DiagramEdge } from './diagramEdge.ts';
 export class Layer implements UOWTrackable<LayerSnapshot> {
   #elements: Array<DiagramElement> = [];
   #locked = false;
+  #name: string;
 
   readonly #diagram: Diagram;
 
   constructor(
     public readonly id: string,
-    public readonly name: string,
+    name: string,
     elements: ReadonlyArray<DiagramElement>,
     diagram: Diagram
   ) {
+    this.#name = name;
     this.#diagram = diagram;
 
     const uow = new UnitOfWork(diagram);
     elements.forEach(e => this.addElement(e, uow));
     uow.abort();
+  }
+
+  get name() {
+    return this.#name;
+  }
+
+  setName(name: string, uow: UnitOfWork) {
+    uow.snapshot(this);
+    this.#name = name;
+    uow.updateElement(this);
   }
 
   get elements(): ReadonlyArray<DiagramElement> {
@@ -243,6 +255,9 @@ export class LayerManager implements UOWTrackable<LayersSnapshot> {
     uow.snapshot(this);
     this.#layers = this.#layers.filter(l => l !== layer);
     this.#visibleLayers.delete(layer.id);
+    if (this.diagram.selectionState.nodes.some(e => e.layer === layer)) {
+      this.diagram.selectionState.clear();
+    }
     uow.updateElement(this);
   }
 

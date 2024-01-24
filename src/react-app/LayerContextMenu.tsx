@@ -2,6 +2,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './context-menu/ActionContextMenuItem.tsx';
 import { Layer } from '../model/diagramLayer.ts';
 import React from 'react';
+import { ToggleActionContextMenuItem } from './context-menu/ToggleActionContextMenuItem.tsx';
 
 export const LayerContextMenu = (props: Props) => {
   return (
@@ -12,17 +13,25 @@ export const LayerContextMenu = (props: Props) => {
           <ActionContextMenuItem action={'EDGE_FLIP'} context={{ id: props.layer?.id }}>
             Rename...
           </ActionContextMenuItem>
-          <ActionContextMenuItem action={'EDGE_FLIP'} context={{ id: props.layer?.id }}>
-            Hide/show
-          </ActionContextMenuItem>
-          <ActionContextMenuItem action={'EDGE_FLIP'} context={{ id: props.layer?.id }}>
-            Lock/unlock
-          </ActionContextMenuItem>
+          <ToggleActionContextMenuItem
+            action={'LAYER_TOGGLE_VISIBILITY'}
+            context={{ id: props.layer?.id }}
+          >
+            Visible
+          </ToggleActionContextMenuItem>
+          <ToggleActionContextMenuItem
+            action={'LAYER_TOGGLE_LOCK'}
+            context={{ id: props.layer?.id }}
+          >
+            Locked
+          </ToggleActionContextMenuItem>
           <ActionContextMenuItem action={'LAYER_DELETE_LAYER'} context={{ id: props.layer?.id }}>
             Delete
           </ActionContextMenuItem>
           <ContextMenu.Separator className="cmp-context-menu__separator" />
-          <ActionContextMenuItem action={'EDGE_FLIP'}>New layer...</ActionContextMenuItem>
+          <ActionContextMenuItem action={'LAYER_ADD'}>New layer...</ActionContextMenuItem>
+
+          {/* TODO: Implement this */}
           <ActionContextMenuItem action={'EDGE_FLIP'}>
             New adjustment layer...
           </ActionContextMenuItem>

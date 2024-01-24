@@ -1,5 +1,6 @@
 import { Point } from '../geometry/point.ts';
 import { Emitter, EventEmitter } from '../utils/event.ts';
+import { UndoableAction } from '../model/undoManager.ts';
 
 export type ActionEvents = {
   actionchanged: { action: Action };
@@ -44,4 +45,20 @@ export abstract class AbstractToggleAction<T = unknown>
 
 export interface ToggleAction<T = unknown> extends Action<T> {
   getState: (context: ActionContext) => boolean;
+}
+
+export class ToggleActionUndoableAction implements UndoableAction {
+  constructor(
+    public description: string,
+    private readonly action: ToggleAction,
+    private readonly context: ActionContext
+  ) {}
+
+  undo() {
+    this.action.execute(this.context);
+  }
+
+  redo() {
+    this.action.execute(this.context);
+  }
 }
