@@ -4,14 +4,7 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { Select } from '../components/Select.tsx';
 import { useDiagram } from '../context/DiagramContext.tsx';
 import { useElementProperty } from '../ObjectProperties/useProperty.ts';
-import React, {
-  ChangeEvent,
-  ComponentProps,
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react';
+import React, { ChangeEvent, useCallback, useState } from 'react';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 import { unique } from '../../utils/array.ts';
@@ -19,7 +12,6 @@ import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
-import { Dialog } from '../components/Dialog.tsx';
 import {
   AddSchemaUndoableAction,
   DataSchema,
@@ -27,60 +19,9 @@ import {
   ModifySchemaUndoableAction
 } from '../../model/diagramDataSchemas.ts';
 import { newid } from '../../utils/id.ts';
-import { SimpleDialog, SimpleDialogState } from '../components/SimpleDialog.tsx';
+import { MessageDialog, MessageDialogState } from '../components/MessageDialog.tsx';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
-
-const ModifySchemaDialog = (
-  props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
-    schema: DataSchema | undefined;
-    onModify: (v: DataSchema) => void;
-  }
-) => {
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (props.isOpen) {
-      setTimeout(() => {
-        ref.current?.focus();
-      }, 100);
-    }
-  });
-  return (
-    <Dialog
-      title={'Schema'}
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      buttons={[
-        {
-          label: 'Save',
-          type: 'default',
-          onClick: () => {
-            try {
-              JSON.parse(ref.current!.value);
-            } catch (e) {
-              setError(e?.toString());
-              throw e;
-            }
-            props.onModify(JSON.parse(ref.current!.value));
-          }
-        },
-        { label: 'Cancel', type: 'cancel', onClick: () => {} }
-      ]}
-    >
-      <label>Style definition:</label>
-      <div className={'cmp-text-input'}>
-        <textarea
-          ref={ref}
-          rows={30}
-          cols={60}
-          defaultValue={JSON.stringify(props.schema ? props.schema : {}, undefined, 2)}
-        />
-      </div>
-      {error && <div className={'cmp-text-input__error'}>Error: {error}</div>}
-    </Dialog>
-  );
-};
+import { JSONDialog } from '../components/JSONDialog.tsx';
 
 export const makeTemplate = (): DataSchema => {
   return {
@@ -105,8 +46,8 @@ export const ObjectData = () => {
   const $d = useDiagram();
   const redraw = useRedraw();
 
-  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<SimpleDialogState>(
-    SimpleDialog.INITIAL_STATE
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
+    MessageDialog.INITIAL_STATE
   );
 
   const [modifyDialog, setModifyDialog] = useState<DataSchema | undefined>(undefined);
@@ -278,17 +219,19 @@ export const ObjectData = () => {
         </Accordion.Item>
       </Accordion.Root>
 
-      <SimpleDialog
+      <MessageDialog
         {...confirmDeleteDialog}
-        onClose={() => setConfirmDeleteDialog(SimpleDialog.INITIAL_STATE)}
+        onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
       />
 
-      <ModifySchemaDialog
+      <JSONDialog<DataSchema>
+        title={'Modify schema'}
+        label={'Schema'}
         isOpen={modifyDialog !== undefined}
         onClose={() => {
           setModifyDialog(undefined);
         }}
-        schema={modifyDialog}
+        data={modifyDialog}
         onModify={s => {
           const schemas = $d.document.schemas;
           const isNew = schemas.get(s.id).id === '';

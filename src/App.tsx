@@ -67,7 +67,7 @@ import { SerializedDiagram } from './model/serialization/types.ts';
 import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
 import { Point } from './geometry/point.ts';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx';
-import { SimpleDialog, SimpleDialogState } from './react-app/components/SimpleDialog.tsx';
+import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog.tsx';
 import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
@@ -126,7 +126,7 @@ const App = () => {
   const [doc, setDoc] = useState(diagrams[defaultDiagram].document);
   const [$d, setDiagram] = useState(diagrams[defaultDiagram].document.diagrams[0]);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
-  const [dialogState, setDialogState] = useState<SimpleDialogState>(SimpleDialog.INITIAL_STATE);
+  const [dialogState, setDialogState] = useState<MessageDialogState>(MessageDialog.INITIAL_STATE);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
@@ -333,14 +333,14 @@ const App = () => {
                                 type: 'default',
                                 onClick: () => {
                                   onClick();
-                                  setDialogState(SimpleDialog.INITIAL_STATE);
+                                  setDialogState(MessageDialog.INITIAL_STATE);
                                 }
                               },
                               {
                                 label: cancelLabel,
                                 type: 'cancel',
                                 onClick: () => {
-                                  setDialogState(SimpleDialog.INITIAL_STATE);
+                                  setDialogState(MessageDialog.INITIAL_STATE);
                                 }
                               }
                             ]
@@ -372,9 +372,9 @@ const App = () => {
                   onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
                 />
 
-                <SimpleDialog
+                <MessageDialog
                   {...dialogState}
-                  onClose={() => setDialogState(SimpleDialog.INITIAL_STATE)}
+                  onClose={() => setDialogState(MessageDialog.INITIAL_STATE)}
                 />
               </div>
 

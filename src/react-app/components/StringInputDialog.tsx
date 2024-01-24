@@ -1,7 +1,7 @@
 import { ComponentProps, useEffect, useRef } from 'react';
 import { Dialog } from './Dialog.tsx';
 
-export const AskStringDialog = (
+export const StringInputDialog = (
   props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
     name?: string;
     title?: string;
@@ -50,4 +50,4 @@ export const AskStringDialog = (
   );
 };
 
-export type AskStringDialogState = Omit<ComponentProps<typeof AskStringDialog>, 'onClose'>;
+export type StringInputDialogState = Omit<ComponentProps<typeof StringInputDialog>, 'onClose'>;

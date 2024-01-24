@@ -7,9 +7,8 @@ import { useElementProperty } from './useProperty.ts';
 import { newid } from '../../utils/id.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
-import { ComponentProps, useEffect, useRef, useState } from 'react';
-import { SimpleDialog, SimpleDialogState } from '../components/SimpleDialog.tsx';
-import { Dialog } from '../components/Dialog.tsx';
+import { useState } from 'react';
+import { MessageDialog, MessageDialogState } from '../components/MessageDialog.tsx';
 import {
   AddStylesheetUndoableAction,
   DeleteStylesheetUndoableAction,
@@ -21,151 +20,8 @@ import { isNode } from '../../model/diagramElement.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
-
-const NewStyleDialog = (
-  props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
-    onCreate: (v: string) => void;
-  }
-) => {
-  const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (!props.isOpen) return;
-    setTimeout(() => {
-      ref.current?.focus();
-    }, 100);
-  });
-  return (
-    <Dialog
-      title={'New style'}
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      buttons={[
-        {
-          label: 'Create',
-          type: 'default',
-          onClick: () => {
-            props.onCreate(ref.current!.value);
-          }
-        },
-        { label: 'Cancel', type: 'cancel', onClick: () => {} }
-      ]}
-    >
-      <label>Name:</label>
-      <div className={'cmp-text-input'}>
-        <input className={'cmp-text-input'} ref={ref} type={'text'} size={40} />
-      </div>
-    </Dialog>
-  );
-};
-
-const RenameStyleDialog = (
-  props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
-    stylesheet: Stylesheet | undefined;
-    onRename: (v: string) => void;
-  }
-) => {
-  const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (!props.isOpen) return;
-    setTimeout(() => {
-      ref.current?.focus();
-    }, 100);
-  });
-  return (
-    <Dialog
-      title={'Rename style'}
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      buttons={[
-        {
-          label: 'Rename',
-          type: 'default',
-          onClick: () => {
-            props.onRename(ref.current!.value);
-          }
-        },
-        { label: 'Cancel', type: 'cancel', onClick: () => {} }
-      ]}
-    >
-      <label>Name:</label>
-      <div className={'cmp-text-input'}>
-        <input
-          className={'cmp-text-input'}
-          ref={ref}
-          type={'text'}
-          size={40}
-          defaultValue={props.stylesheet?.name ?? ''}
-        />
-      </div>
-    </Dialog>
-  );
-};
-
-const ModifyStyleDialog = (
-  props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
-    stylesheet: Stylesheet<ElementProps> | undefined;
-    // eslint-disable-next-line
-    onModify: (v: any) => void;
-  }
-) => {
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (props.isOpen) {
-      setTimeout(() => {
-        ref.current?.focus();
-      }, 100);
-    }
-  });
-  return (
-    <Dialog
-      title={'Modify style'}
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      buttons={[
-        {
-          label: 'Save',
-          type: 'default',
-          onClick: () => {
-            try {
-              JSON.parse(ref.current!.value);
-            } catch (e) {
-              setError(e?.toString());
-              throw e;
-            }
-            props.onModify(JSON.parse(ref.current!.value));
-          }
-        },
-        { label: 'Cancel', type: 'cancel', onClick: () => {} }
-      ]}
-    >
-      <label>Style definition:</label>
-      <div className={'cmp-text-input'}>
-        <textarea
-          ref={ref}
-          rows={30}
-          cols={60}
-          defaultValue={
-            props.stylesheet
-              ? JSON.stringify(
-                  {
-                    props: {
-                      ...props.stylesheet.props,
-                      highlight: []
-                    }
-                  },
-                  undefined,
-                  2
-                )
-              : ''
-          }
-        />
-      </div>
-      {error && <div className={'cmp-text-input__error'}>Error: {error}</div>}
-    </Dialog>
-  );
-};
+import { StringInputDialog } from '../components/StringInputDialog.tsx';
+import { JSONDialog } from '../components/JSONDialog.tsx';
 
 export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();
@@ -176,8 +32,8 @@ export const StylesheetPanel = (props: Props) => {
 
   const style = useElementProperty($d, 'style', 'default');
 
-  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<SimpleDialogState>(
-    SimpleDialog.INITIAL_STATE
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
+    MessageDialog.INITIAL_STATE
   );
   const [newDialog, setNewDialog] = useState(false);
   const [modifyDialog, setModifyDialog] = useState<Stylesheet | undefined>(undefined);
@@ -318,14 +174,20 @@ export const StylesheetPanel = (props: Props) => {
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
-          <SimpleDialog
+
+          <MessageDialog
             {...confirmDeleteDialog}
-            onClose={() => setConfirmDeleteDialog(SimpleDialog.INITIAL_STATE)}
+            onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
           />
-          <NewStyleDialog
+
+          <StringInputDialog
             isOpen={newDialog}
             onClose={() => setNewDialog(!newDialog)}
-            onCreate={v => {
+            label={'Name'}
+            title={'New style'}
+            saveButtonLabel={'Create'}
+            name={renameDialog?.name ?? ''}
+            onSave={v => {
               const id = newid();
               const s = new Stylesheet(
                 isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
@@ -353,10 +215,18 @@ export const StylesheetPanel = (props: Props) => {
               );
             }}
           />
-          <ModifyStyleDialog
+
+          <JSONDialog
             isOpen={modifyDialog !== undefined}
             onClose={() => setModifyDialog(undefined)}
-            stylesheet={modifyDialog}
+            title={'Modify style'}
+            label={'Style definition'}
+            data={{
+              props: {
+                ...(modifyDialog?.props ?? {}),
+                highlight: []
+              }
+            }}
             onModify={e => {
               // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
               const uow = new UnitOfWork($d, true);
@@ -369,11 +239,16 @@ export const StylesheetPanel = (props: Props) => {
               }
             }}
           />
-          <RenameStyleDialog
+
+          <StringInputDialog
             isOpen={renameDialog !== undefined}
             onClose={() => setRenameDialog(undefined)}
-            stylesheet={renameDialog}
-            onRename={v => {
+            label={'Name'}
+            title={'Rename style'}
+            description={'Enter a new name for the style.'}
+            saveButtonLabel={'Rename'}
+            name={renameDialog?.name ?? ''}
+            onSave={v => {
               const uow = new UnitOfWork($d, true);
               const stylesheet = $d.document.styles.get(renameDialog!.id)!;
               stylesheet.setName(v, uow);

@@ -1,6 +1,6 @@
 import { Button, Dialog } from './Dialog.tsx';
 
-export const SimpleDialog = (props: Props) => {
+export const MessageDialog = (props: Props) => {
   return (
     <Dialog
       isOpen={props.isOpen}
@@ -13,18 +13,18 @@ export const SimpleDialog = (props: Props) => {
   );
 };
 
-type Props = SimpleDialogState & {
+type Props = MessageDialogState & {
   onClose: () => void;
 };
 
-SimpleDialog.INITIAL_STATE = {
+MessageDialog.INITIAL_STATE = {
   isOpen: false,
   title: '',
   message: '',
   buttons: []
 };
 
-export type SimpleDialogState = {
+export type MessageDialogState = {
   isOpen: boolean;
   title: string;
   message: string;

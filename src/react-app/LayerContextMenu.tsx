@@ -3,14 +3,14 @@ import { ActionContextMenuItem } from './context-menu/ActionContextMenuItem.tsx'
 import { Layer } from '../model/diagramLayer.ts';
 import React, { useState } from 'react';
 import { ToggleActionContextMenuItem } from './context-menu/ToggleActionContextMenuItem.tsx';
-import { SimpleDialog, SimpleDialogState } from './components/SimpleDialog.tsx';
-import { AskStringDialog, AskStringDialogState } from './components/AskStringDialog.tsx';
+import { MessageDialog, MessageDialogState } from './components/MessageDialog.tsx';
+import { StringInputDialog, StringInputDialogState } from './components/StringInputDialog.tsx';
 
 export const LayerContextMenu = (props: Props) => {
-  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<SimpleDialogState>(
-    SimpleDialog.INITIAL_STATE
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
+    MessageDialog.INITIAL_STATE
   );
-  const [nameDialog, setNameDialog] = useState<AskStringDialogState | undefined>(undefined);
+  const [nameDialog, setNameDialog] = useState<StringInputDialogState | undefined>(undefined);
 
   return (
     <>
@@ -29,9 +29,7 @@ export const LayerContextMenu = (props: Props) => {
                     description: 'Enter a new name for the layer.',
                     saveButtonLabel: 'Rename',
                     name: props.layer?.name ?? '',
-                    onSave: (v: string) => {
-                      resolve(v);
-                    }
+                    onSave: (v: string) => resolve(v)
                   });
                 });
               }}
@@ -88,9 +86,7 @@ export const LayerContextMenu = (props: Props) => {
                     description: 'Enter a new name for the layer.',
                     saveButtonLabel: 'Create',
                     name: '',
-                    onSave: (v: string) => {
-                      resolve(v);
-                    }
+                    onSave: (v: string) => resolve(v)
                   });
                 });
               }}
@@ -106,12 +102,12 @@ export const LayerContextMenu = (props: Props) => {
         </ContextMenu.Portal>
       </ContextMenu.Root>
 
-      <SimpleDialog
+      <MessageDialog
         {...confirmDeleteDialog}
-        onClose={() => setConfirmDeleteDialog(SimpleDialog.INITIAL_STATE)}
+        onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
       />
 
-      <AskStringDialog
+      <StringInputDialog
         {...(nameDialog ?? { isOpen: false })}
         onClose={() => setNameDialog(undefined)}
       />
