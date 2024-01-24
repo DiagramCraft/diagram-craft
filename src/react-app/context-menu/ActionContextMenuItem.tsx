@@ -1,7 +1,8 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { ActionContext, findKeyBindings, formatKeyBinding } from '../../base-ui/keyMap.ts';
+import { findKeyBindings, formatKeyBinding } from '../../base-ui/keyMap.ts';
 import React from 'react';
 import { useActions } from '../context/ActionsContext.tsx';
+import { ActionContext } from '../../base-ui/action.ts';
 
 // TODO: Maybe attach listener to action and re-render when it changes?
 export const ActionContextMenuItem = (props: Props) => {
@@ -9,7 +10,7 @@ export const ActionContextMenuItem = (props: Props) => {
   return (
     <ContextMenu.Item
       className="cmp-context-menu__item"
-      disabled={!actionMap[props.action]?.enabled}
+      disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
       onSelect={() => {
         actionMap[props.action]!.execute(props.context ?? {});
       }}

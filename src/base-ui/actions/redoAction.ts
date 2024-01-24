@@ -1,6 +1,6 @@
-import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { AbstractAction } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -12,9 +12,7 @@ export const redoActions: ActionMapFactory = (state: State) => ({
   REDO: new RedoAction(state.diagram)
 });
 
-export class RedoAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = false;
-
+export class RedoAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
     const cb = () => {

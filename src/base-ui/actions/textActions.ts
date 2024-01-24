@@ -1,8 +1,8 @@
-import { ActionEvents, ActionMapFactory, State, ToggleAction } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { AbstractAction, ToggleAction } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -21,8 +21,7 @@ export const textActions: ActionMapFactory = (state: State) => ({
 // TODO: Maybe we can create an AbstractPropertyAction that takes a prop name and a value and
 //       to make all of this a bit more streamlined
 
-export class TextAction extends EventEmitter<ActionEvents> implements ToggleAction {
-  enabled = false;
+export class TextAction extends AbstractAction implements ToggleAction {
   state = false;
 
   constructor(
@@ -64,8 +63,7 @@ export class TextAction extends EventEmitter<ActionEvents> implements ToggleActi
   }
 }
 
-export class TextDecorationAction extends EventEmitter<ActionEvents> implements ToggleAction {
-  enabled = false;
+export class TextDecorationAction extends AbstractAction implements ToggleAction {
   state = false;
 
   constructor(

@@ -26,8 +26,6 @@ export const alignActions: ActionMapFactory = (state: State) => ({
 });
 
 export class AlignAction extends AbstractSelectionAction {
-  enabled = false;
-
   constructor(
     protected readonly diagram: Diagram,
     private readonly mode:

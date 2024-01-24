@@ -1,8 +1,8 @@
-import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { AbstractAction } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -14,9 +14,7 @@ export const edgeFlipActions: ActionMapFactory = (state: State) => ({
   EDGE_FLIP: new EdgeFlipAction(state.diagram)
 });
 
-export class EdgeFlipAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = false;
-
+export class EdgeFlipAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
     const cb = () => {

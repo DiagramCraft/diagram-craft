@@ -1,6 +1,6 @@
-import { EventEmitter } from '../../utils/event.ts';
-import { ActionEvents, ActionMapFactory, AppState, ToggleAction } from '../../base-ui/keyMap.ts';
+import { ActionMapFactory, AppState } from '../../base-ui/keyMap.ts';
 import { ApplicationState, ToolType } from '../../base-ui/ApplicationState.ts';
+import { AbstractAction, ToggleAction } from '../../base-ui/action.ts';
 
 declare global {
   interface ActionMap {
@@ -20,8 +20,7 @@ export const toolActions: ActionMapFactory = (state: AppState) => ({
   TOOL_PEN: new ToolAction('pen', state.applicationState)
 });
 
-export class ToolAction extends EventEmitter<ActionEvents> implements ToggleAction {
-  enabled = true;
+export class ToolAction extends AbstractAction implements ToggleAction {
   state = false;
 
   constructor(

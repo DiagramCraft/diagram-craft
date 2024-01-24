@@ -1,10 +1,7 @@
-import { EventEmitter } from '../../utils/event.ts';
-import { Action, ActionEvents } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { AbstractAction } from '../action.ts';
 
-export abstract class AbstractSelectionAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
-
+export abstract class AbstractSelectionAction extends AbstractAction {
   protected constructor(
     protected readonly diagram: Diagram,
     protected readonly multiple = false

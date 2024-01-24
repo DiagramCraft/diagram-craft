@@ -1,7 +1,7 @@
 import { Diagram } from '../../model/diagram.ts';
-import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { assert } from '../../utils/assert.ts';
+import { AbstractAction, ActionContext } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -17,9 +17,7 @@ export const layerActions: ActionMapFactory = (state: State) => ({
   LAYER_TOGGLE_LOCK: new LayerDeleteAction(state.diagram)
 });
 
-export class LayerDeleteAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
-
+export class LayerDeleteAction extends AbstractAction {
   constructor(protected readonly diagram: Diagram) {
     super();
   }

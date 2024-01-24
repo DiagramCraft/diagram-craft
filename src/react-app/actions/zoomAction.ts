@@ -1,6 +1,5 @@
-import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { ActionEvents, ToggleAction } from '../../base-ui/keyMap.ts';
+import { AbstractAction, ToggleAction } from '../../base-ui/action.ts';
 
 declare global {
   interface ActionMap {
@@ -9,8 +8,7 @@ declare global {
   }
 }
 
-export class ZoomAction extends EventEmitter<ActionEvents> implements ToggleAction {
-  enabled = true;
+export class ZoomAction extends AbstractAction implements ToggleAction {
   state: boolean = false;
 
   constructor(

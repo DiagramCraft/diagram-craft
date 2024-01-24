@@ -1,8 +1,8 @@
-import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { EventEmitter } from '../../utils/event.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { AbstractAction, Action, ActionContext } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -14,9 +14,7 @@ export const waypointAddActions: ActionMapFactory = (state: State) => ({
   WAYPOINT_ADD: new WaypointAddAction(state.diagram)
 });
 
-export class WaypointAddAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
-
+export class WaypointAddAction extends AbstractAction implements Action {
   constructor(private readonly diagram: Diagram) {
     super();
   }

@@ -1,6 +1,5 @@
-import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
 import { LengthOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
@@ -11,6 +10,7 @@ import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
 } from '../../model/diagramUndoActions.ts';
+import { AbstractAction, ActionContext } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -22,9 +22,7 @@ export const edgeTextAddActions: ActionMapFactory = (state: State) => ({
   EDGE_TEXT_ADD: new EdgeTextAddAction(state.diagram)
 });
 
-export class EdgeTextAddAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
-
+export class EdgeTextAddAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
   }

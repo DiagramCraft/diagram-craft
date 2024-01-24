@@ -1,11 +1,11 @@
-import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { EventEmitter } from '../../utils/event.ts';
 import { precondition } from '../../utils/assert.ts';
 import { PointOnPath } from '../../geometry/pathPosition.ts';
 import { smallest } from '../../utils/array.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { AbstractAction, ActionContext } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -17,9 +17,7 @@ export const waypointDeleteActions: ActionMapFactory = (state: State) => ({
   WAYPOINT_DELETE: new WaypointDeleteAction(state.diagram)
 });
 
-export class WaypointDeleteAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
-
+export class WaypointDeleteAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
   }

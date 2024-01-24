@@ -1,6 +1,6 @@
-import { Action, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
-import { EventEmitter } from '../../utils/event.ts';
 import { Diagram } from '../../model/diagram.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
+import { AbstractAction } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -16,9 +16,7 @@ export const selectAllActions: ActionMapFactory = (state: State) => ({
   SELECT_ALL_EDGES: new SelectAllAction(state.diagram, 'edges')
 });
 
-export class SelectAllAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
-
+export class SelectAllAction extends AbstractAction {
   constructor(
     private readonly diagram: Diagram,
     private readonly mode: 'all' | 'nodes' | 'edges' = 'all'

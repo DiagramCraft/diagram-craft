@@ -1,6 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { EventEmitter } from '../../utils/event.ts';
-import { Action, ActionContext, ActionEvents, ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { isConnected, serializeDiagramElement } from '../../model/serialization/serialize.ts';
 import { newid } from '../../utils/id.ts';
 import { Box } from '../../geometry/box.ts';
@@ -13,6 +12,7 @@ import { Layer } from '../../model/diagramLayer.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { SerializedElement } from '../../model/serialization/types.ts';
 import { deserializeDiagramElements } from '../../model/serialization/deserialize.ts';
+import { AbstractAction, ActionContext } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -59,9 +59,7 @@ export class PasteUndoableAction implements UndoableAction {
   }
 }
 
-abstract class AbstractClipboardPasteAction extends EventEmitter<ActionEvents> implements Action {
-  enabled = true;
-
+abstract class AbstractClipboardPasteAction extends AbstractAction {
   protected constructor(protected readonly diagram: Diagram) {
     super();
   }
@@ -209,8 +207,6 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
 }
 
 export class ClipboardCopyAction extends AbstractSelectionAction {
-  enabled = true;
-
   constructor(
     protected readonly diagram: Diagram,
     private readonly mode: 'copy' | 'cut'

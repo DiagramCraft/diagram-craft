@@ -1,11 +1,9 @@
 import { undoActions } from './actions/undoAction.ts';
 import { redoActions } from './actions/redoAction.ts';
-import { Emitter } from '../utils/event.ts';
 import { selectAllActions } from './actions/selectAllAction.ts';
 import { alignActions } from './actions/alignAction.ts';
 import { toggleMagnetTypeActions } from './actions/toggleMagnetTypeAction.ts';
 import { distributeActions } from './actions/distributeAction.ts';
-import { Point } from '../geometry/point.ts';
 import { waypointAddActions } from './actions/waypointAddAction.ts';
 import { waypointDeleteActions } from './actions/waypointDeleteAction.ts';
 import { toggleRulerActions } from './actions/toggleRulerAction.ts';
@@ -23,25 +21,7 @@ import { UserState } from './UserState.ts';
 import { sidebarActions } from '../react-app/actions/SidebarAction.tsx';
 import { groupActions } from './actions/groupAction.ts';
 import { saveActions } from './actions/saveAction.ts';
-
-export type ActionEvents = {
-  actionchanged: { action: Action };
-  actiontriggered: { action: Action };
-};
-
-export type ActionContext = {
-  point?: Point;
-  id?: string;
-};
-
-export interface Action extends Emitter<ActionEvents> {
-  execute: (context: ActionContext) => void;
-  enabled: boolean;
-}
-
-export interface ToggleAction extends Action {
-  state: boolean;
-}
+import { Action, ActionContext } from './action.ts';
 
 export type State = {
   diagram: Diagram;
@@ -150,7 +130,7 @@ export const executeAction = (
   if (target.classList.contains('svg-node__text')) return false;
 
   const action = findAction(e, keyMap, actionMap);
-  if (!action || !action.enabled) return false;
+  if (!action || !action.isEnabled) return false;
 
   action.execute(actionContext);
 

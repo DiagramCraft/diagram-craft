@@ -1,6 +1,6 @@
-import { EventEmitter } from '../../utils/event.ts';
-import { ActionEvents, ActionMapFactory, AppState, ToggleAction } from '../../base-ui/keyMap.ts';
 import { UserState } from '../../base-ui/UserState.ts';
+import { ActionMapFactory, AppState } from '../../base-ui/keyMap.ts';
+import { AbstractAction, ToggleAction } from '../../base-ui/action.ts';
 
 declare global {
   interface ActionMap {
@@ -26,8 +26,7 @@ export const sidebarActions: ActionMapFactory = (state: AppState) => ({
   SIDEBAR_DATA: new SidebarAction('right', 2, state.userState)
 });
 
-export class SidebarAction extends EventEmitter<ActionEvents> implements ToggleAction {
-  enabled = true;
+export class SidebarAction extends AbstractAction implements ToggleAction {
   state = false;
 
   constructor(
