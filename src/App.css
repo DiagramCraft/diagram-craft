@@ -20,6 +20,7 @@
   --secondary-bg: var(--slate-3);
   --secondary-fg: var(--slate-11);
   --tertiary-fg: var(--slate-9);
+  --dimmed-fg: var(--slate-4);
   --canvas-fg: var(--slate-12);
   --canvas-bg: var(--slate-1);
   --error-fg: var(--red-9);
@@ -31,6 +32,7 @@
   --secondary-bg: var(--slate-4);
   --secondary-fg: var(--slate-11);
   --tertiary-fg: var(--slate-9);
+  --dimmed-fg: var(--slate-6);
   --canvas-fg: var(--slate-1);
   --canvas-bg: var(--slate-12);
   --error-fg: var(--red-9);

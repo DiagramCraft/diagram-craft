@@ -9,7 +9,7 @@ import {
 } from '../action.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { CompoundUndoableAction, UndoableAction } from '../../model/undoManager.ts';
-import { Layer } from '../../model/diagramLayer.ts';
+import { Layer, LayerType } from '../../model/diagramLayer.ts';
 import {
   commitWithUndo,
   ElementDeleteUndoableAction,
@@ -22,7 +22,8 @@ export const layerActions = (state: State) => ({
   LAYER_TOGGLE_VISIBILITY: new LayerToggleVisibilityAction(state.diagram),
   LAYER_TOGGLE_LOCK: new LayerToggleLockedAction(state.diagram),
   LAYER_RENAME: new LayerRenameAction(state.diagram),
-  LAYER_ADD: new LayerAddAction(state.diagram)
+  LAYER_ADD: new LayerAddAction(state.diagram, 'layer'),
+  LAYER_ADD_ADJUSTMENT: new LayerAddAction(state.diagram, 'adjustment')
 });
 
 declare global {
@@ -153,7 +154,10 @@ export class LayerRenameAction extends AbstractAction<string> {
 }
 
 export class LayerAddAction extends AbstractAction<string | undefined> {
-  constructor(protected readonly diagram: Diagram) {
+  constructor(
+    protected readonly diagram: Diagram,
+    private readonly type: LayerType
+  ) {
     super();
   }
 
@@ -163,7 +167,8 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
       newid(),
       typeof name === 'string' ? name : 'New Layer',
       [],
-      this.diagram
+      this.diagram,
+      this.type
     );
     this.diagram.layers.add(layer, uow);
 

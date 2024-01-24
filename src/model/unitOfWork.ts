@@ -1,7 +1,7 @@
 import { DiagramElement } from './diagramElement.ts';
 import { Diagram, DiagramEvents } from './diagram.ts';
 import { assert } from '../utils/assert.ts';
-import { Layer, LayerManager } from './diagramLayer.ts';
+import { Layer, LayerManager, LayerType } from './diagramLayer.ts';
 import { EventKey } from '../utils/event.ts';
 import { SerializedEdge, SerializedNode } from './serialization/types.ts';
 import { Stylesheet } from './diagramStyles.ts';
@@ -20,6 +20,7 @@ export type LayerSnapshot = {
   name: string;
   locked: boolean;
   elements: string[];
+  type: LayerType;
 };
 
 export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {

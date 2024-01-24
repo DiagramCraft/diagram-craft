@@ -5,10 +5,13 @@ import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitO
 import { groupBy } from '../utils/array.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 
+export type LayerType = 'layer' | 'adjustment';
+
 export class Layer implements UOWTrackable<LayerSnapshot> {
   #elements: Array<DiagramElement> = [];
   #locked = false;
   #name: string;
+  #type: LayerType = 'layer';
 
   readonly #diagram: Diagram;
 
@@ -16,14 +19,20 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
     public readonly id: string,
     name: string,
     elements: ReadonlyArray<DiagramElement>,
-    diagram: Diagram
+    diagram: Diagram,
+    type?: LayerType
   ) {
     this.#name = name;
     this.#diagram = diagram;
+    this.#type = type ?? 'layer';
 
     const uow = new UnitOfWork(diagram);
     elements.forEach(e => this.addElement(e, uow));
     uow.abort();
+  }
+
+  get type() {
+    return this.#type;
   }
 
   get name() {
@@ -57,7 +66,8 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
       _snapshotType: 'layer',
       name: this.name,
       locked: this.isLocked(),
-      elements: this.elements.map(e => e.id)
+      elements: this.elements.map(e => e.id),
+      type: this.type
     };
   }
 
@@ -68,6 +78,7 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
     );
     this.setName(snapshot.name, uow);
     this.locked = snapshot.locked;
+    this.#type = snapshot.type;
     uow.updateElement(this);
   }
 

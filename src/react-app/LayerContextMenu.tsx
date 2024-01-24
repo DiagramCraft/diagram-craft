@@ -94,8 +94,21 @@ export const LayerContextMenu = (props: Props) => {
               New layer...
             </ActionContextMenuItem>
 
-            {/* TODO: Implement this */}
-            <ActionContextMenuItem action={'EDGE_FLIP'}>
+            <ActionContextMenuItem
+              action={'LAYER_ADD_ADJUSTMENT'}
+              onBeforeSelect={async () => {
+                return new Promise<string | boolean>(resolve => {
+                  setNameDialog({
+                    isOpen: true,
+                    title: 'New adjustment layer',
+                    description: 'Enter a new name for the adjustment layer.',
+                    saveButtonLabel: 'Create',
+                    name: '',
+                    onSave: (v: string) => resolve(v)
+                  });
+                });
+              }}
+            >
               New adjustment layer...
             </ActionContextMenuItem>
           </ContextMenu.Content>

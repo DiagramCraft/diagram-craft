@@ -1,6 +1,6 @@
 import { useDiagram } from './context/DiagramContext.tsx';
 import * as Tree from './components/Tree.tsx';
-import { TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
+import { TbAdjustments, TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
 import { Diagram } from '../model/diagram.ts';
 import { Layer } from '../model/diagramLayer.ts';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
@@ -102,6 +102,13 @@ const LayerEntry = (props: { layer: Layer }) => {
         <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
         <Tree.NodeValue>{diagram.layers.active === layer ? 'Active' : ''}</Tree.NodeValue>
         <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
+          {layer.type === 'adjustment' ? (
+            <div style={{ color: 'var(--blue-11)' }}>
+              <TbAdjustments />
+            </div>
+          ) : (
+            ''
+          )}
           <LockToggle layer={layer} diagram={diagram} />
           <VisibilityToggle layer={layer} diagram={diagram} />
         </Tree.NodeAction>

@@ -546,6 +546,10 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      color: var(--blue-11);
+      &[data-state='unchecked'] {
+        color: var(--dimmed-fg);
+      }
     }
 
     .cmp-context-menu__right-slot {
