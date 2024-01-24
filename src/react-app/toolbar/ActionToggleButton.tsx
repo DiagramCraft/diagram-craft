@@ -13,7 +13,7 @@ export const ActionToggleButton = (props: Props) => {
   return (
     <ReactToolbar.Button
       className="cmp-toolbar__button"
-      data-state={(actionMap[props.action]! as ToggleAction).state ? 'on' : 'off'}
+      data-state={(actionMap[props.action]! as ToggleAction).getState({}) ? 'on' : 'off'}
       value={props.action}
       aria-label={props.action}
       onClick={() => {

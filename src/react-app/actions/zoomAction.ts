@@ -1,5 +1,5 @@
 import { Diagram } from '../../model/diagram.ts';
-import { AbstractAction, ToggleAction } from '../../base-ui/action.ts';
+import { AbstractToggleAction } from '../../base-ui/action.ts';
 
 declare global {
   interface ActionMap {
@@ -8,9 +8,7 @@ declare global {
   }
 }
 
-export class ZoomAction extends AbstractAction implements ToggleAction {
-  state: boolean = false;
-
+export class ZoomAction extends AbstractToggleAction {
   constructor(
     private readonly diagram: Diagram,
     private readonly direction: 'in' | 'out'

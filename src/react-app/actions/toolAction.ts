@@ -1,6 +1,6 @@
 import { ActionMapFactory, AppState } from '../../base-ui/keyMap.ts';
 import { ApplicationState, ToolType } from '../../base-ui/ApplicationState.ts';
-import { AbstractAction, ToggleAction } from '../../base-ui/action.ts';
+import { AbstractToggleAction } from '../../base-ui/action.ts';
 
 declare global {
   interface ActionMap {
@@ -20,9 +20,7 @@ export const toolActions: ActionMapFactory = (state: AppState) => ({
   TOOL_PEN: new ToolAction('pen', state.applicationState)
 });
 
-export class ToolAction extends AbstractAction implements ToggleAction {
-  state = false;
-
+export class ToolAction extends AbstractToggleAction {
   constructor(
     private readonly tool: ToolType,
     private readonly applicationState: ApplicationState,

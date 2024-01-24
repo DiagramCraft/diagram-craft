@@ -1,6 +1,6 @@
 import { UserState } from '../../base-ui/UserState.ts';
 import { ActionMapFactory, AppState } from '../../base-ui/keyMap.ts';
-import { AbstractAction, ToggleAction } from '../../base-ui/action.ts';
+import { AbstractToggleAction } from '../../base-ui/action.ts';
 
 declare global {
   interface ActionMap {
@@ -26,9 +26,7 @@ export const sidebarActions: ActionMapFactory = (state: AppState) => ({
   SIDEBAR_DATA: new SidebarAction('right', 2, state.userState)
 });
 
-export class SidebarAction extends AbstractAction implements ToggleAction {
-  state = false;
-
+export class SidebarAction extends AbstractToggleAction {
   constructor(
     private readonly side: 'left' | 'right',
     private readonly idx: number,

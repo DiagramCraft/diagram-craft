@@ -26,6 +26,16 @@ export abstract class AbstractAction extends EventEmitter<ActionEvents> implemen
   abstract execute(context: ActionContext): void;
 }
 
+export abstract class AbstractToggleAction extends AbstractAction implements ToggleAction {
+  protected state: boolean = true;
+
+  getState(_context: ActionContext): boolean {
+    return this.state;
+  }
+
+  abstract execute(context: ActionContext): void;
+}
+
 export interface ToggleAction extends Action {
-  state: boolean;
+  getState: (context: ActionContext) => boolean;
 }

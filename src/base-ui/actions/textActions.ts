@@ -2,7 +2,7 @@ import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
-import { AbstractAction, ToggleAction } from '../action.ts';
+import { AbstractToggleAction } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -21,9 +21,7 @@ export const textActions: ActionMapFactory = (state: State) => ({
 // TODO: Maybe we can create an AbstractPropertyAction that takes a prop name and a value and
 //       to make all of this a bit more streamlined
 
-export class TextAction extends AbstractAction implements ToggleAction {
-  state = false;
-
+export class TextAction extends AbstractToggleAction {
   constructor(
     protected readonly diagram: Diagram,
     private readonly prop: 'bold' | 'italic'
@@ -63,9 +61,7 @@ export class TextAction extends AbstractAction implements ToggleAction {
   }
 }
 
-export class TextDecorationAction extends AbstractAction implements ToggleAction {
-  state = false;
-
+export class TextDecorationAction extends AbstractToggleAction {
   constructor(
     protected readonly diagram: Diagram,
     private readonly prop: 'underline' | 'line-through' | 'overline'

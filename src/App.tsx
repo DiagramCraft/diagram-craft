@@ -106,7 +106,7 @@ const DarkModeToggleButton = () => {
       className={'cmp-toolbar__button'}
       onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}
     >
-      {actionMap['TOGGLE_DARK_MODE']?.state ? (
+      {actionMap['TOGGLE_DARK_MODE']?.getState({}) ? (
         <TbSun size={'1.1rem'} />
       ) : (
         <TbMoon size={'1.1rem'} />

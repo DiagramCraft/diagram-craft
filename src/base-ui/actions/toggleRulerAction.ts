@@ -1,6 +1,6 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { AbstractAction, ToggleAction } from '../action.ts';
+import { AbstractToggleAction } from '../action.ts';
 
 declare global {
   interface ActionMap {
@@ -12,7 +12,7 @@ export const toggleRulerActions: ActionMapFactory = (state: State) => ({
   TOGGLE_RULER: new ToggleRulerAction(state.diagram)
 });
 
-export class ToggleRulerAction extends AbstractAction implements ToggleAction {
+export class ToggleRulerAction extends AbstractToggleAction {
   state: boolean;
 
   constructor(private readonly diagram: Diagram) {

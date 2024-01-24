@@ -18,7 +18,7 @@ export const ActionCheckbox = (props: Props) => {
       <input
         id={id}
         type={'checkbox'}
-        checked={(actionMap[props.action] as ToggleAction).state}
+        checked={(actionMap[props.action] as ToggleAction).getState({})}
         onChange={() => {
           (actionMap[props.action] as ToggleAction).execute({});
         }}

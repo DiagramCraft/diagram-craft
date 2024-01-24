@@ -1,4 +1,4 @@
-import { AbstractAction, ToggleAction } from '../../base-ui/action.ts';
+import { AbstractToggleAction } from '../../base-ui/action.ts';
 
 declare global {
   interface ActionMap {
@@ -6,9 +6,7 @@ declare global {
   }
 }
 
-export class ToggleDarkModeAction extends AbstractAction implements ToggleAction {
-  state: boolean = false;
-
+export class ToggleDarkModeAction extends AbstractToggleAction {
   constructor() {
     super();
     setTimeout(() => {
