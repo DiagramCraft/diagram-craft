@@ -4,6 +4,7 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useActions } from '../context/ActionsContext.tsx';
 import { ToggleAction } from '../../base-ui/action.ts';
+import { ActionName } from '../../base-ui/keyMap.ts';
 
 export const ActionToggleButton = (props: Props) => {
   const { actionMap } = useActions();
@@ -26,6 +27,6 @@ export const ActionToggleButton = (props: Props) => {
 };
 
 type Props = {
-  action: keyof ActionMap;
+  action: ActionName;
   children: React.ReactNode;
 };

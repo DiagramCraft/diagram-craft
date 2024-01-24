@@ -11,6 +11,7 @@ import { newid } from '../utils/id.ts';
 import { DocumentsContextMenu } from './DocumentsContextMenu.tsx';
 import { Diagram } from '../model/diagram.ts';
 import { Layer } from '../model/diagramLayer.ts';
+import { UnitOfWork } from '../model/unitOfWork.ts';
 
 export const DocumentTabs = (props: Props) => {
   const redraw = useRedraw();
@@ -53,13 +54,18 @@ export const DocumentTabs = (props: Props) => {
           onClick={() => {
             const id = newid();
 
+            // TODO: Add undo here
+
             const diagram = new Diagram(
               id,
               'Sheet ' + (props.document.diagrams.length + 1).toString(),
               defaultNodeRegistry(),
               defaultEdgeRegistry()
             );
-            diagram.layers.add(new Layer('default', 'Default', [], diagram));
+            diagram.layers.add(
+              new Layer('default', 'Default', [], diagram),
+              UnitOfWork.throwaway(diagram)
+            );
 
             props.document.addDiagram(diagram);
             props.onValueChange(id);

@@ -1,6 +1,5 @@
 import { DiagramNode } from './diagramNode.ts';
 import { Diagram, StackPosition } from './diagram.ts';
-import { EventEmitter } from '../utils/event.ts';
 import { DiagramElement, isNode } from './diagramElement.ts';
 import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { groupBy } from '../utils/array.ts';
@@ -158,14 +157,7 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
   }
 }
 
-export type LayerManagerEvents = {
-  change: { layers: LayerManager };
-};
-
-export class LayerManager
-  extends EventEmitter<LayerManagerEvents>
-  implements UOWTrackable<LayersSnapshot>
-{
+export class LayerManager implements UOWTrackable<LayersSnapshot> {
   id = 'layers';
   #layers: Array<Layer> = [];
   #activeLayer: Layer;
@@ -175,7 +167,6 @@ export class LayerManager
     readonly diagram: Diagram,
     layers: Array<Layer>
   ) {
-    super();
     this.#layers = layers;
     this.#activeLayer = layers[0];
 
@@ -218,21 +209,17 @@ export class LayerManager
     }
 
     uow.updateElement(this);
-    this.emit('change', { layers: this });
-    //    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   toggleVisibility(layer: Layer) {
     this.#visibleLayers.has(layer.id)
       ? this.#visibleLayers.delete(layer.id)
       : this.#visibleLayers.add(layer.id);
-    this.emit('change', { layers: this });
     this.diagram.emit('change', { diagram: this.diagram });
   }
 
   set active(layer: Layer) {
     this.#activeLayer = layer;
-    this.emit('change', { layers: this });
     this.diagram.emit('change', { diagram: this.diagram });
   }
 
@@ -244,19 +231,19 @@ export class LayerManager
     return this.#layers.find(l => l.id === id);
   }
 
-  add(layer: Layer) {
+  add(layer: Layer, uow: UnitOfWork) {
+    uow.snapshot(this);
     this.#layers.push(layer);
     this.#visibleLayers.add(layer.id);
     this.#activeLayer = layer;
-    this.emit('change', { layers: this });
-    this.diagram.emit('change', { diagram: this.diagram });
+    uow.updateElement(this);
   }
 
-  remove(layer: Layer) {
+  remove(layer: Layer, uow: UnitOfWork) {
+    uow.snapshot(this);
     this.#layers = this.#layers.filter(l => l !== layer);
     this.#visibleLayers.delete(layer.id);
-    this.emit('change', { layers: this });
-    this.diagram.emit('change', { diagram: this.diagram });
+    uow.updateElement(this);
   }
 
   invalidate(_uow: UnitOfWork) {

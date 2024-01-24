@@ -193,7 +193,7 @@ const deserializeDiagrams = <T extends Diagram>(
     const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {
       const layer = new Layer(l.id, l.name, [], newDiagram);
-      newDiagram.layers.add(layer);
+      newDiagram.layers.add(layer, UnitOfWork.throwaway(newDiagram));
 
       const elements = deserializeDiagramElements(
         l.elements,

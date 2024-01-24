@@ -2,17 +2,24 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { findKeyBindings, formatKeyBinding } from '../../base-ui/keyMap.ts';
 import React from 'react';
 import { useActions } from '../context/ActionsContext.tsx';
-import { ActionContext } from '../../base-ui/action.ts';
+import { Action, ActionContext } from '../../base-ui/action.ts';
 
+// TODO: Wrap with confirmation dialog?
 // TODO: Maybe attach listener to action and re-render when it changes?
 export const ActionContextMenuItem = (props: Props) => {
   const { actionMap, keyMap } = useActions();
+
   return (
     <ContextMenu.Item
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
       onSelect={() => {
-        actionMap[props.action]!.execute(props.context ?? {});
+        const res = props.onBeforeSelect?.() ?? true;
+        if (res === false) return;
+
+        const a: Action = actionMap[props.action]!;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        a.execute(props.context ?? {}, res as any);
       }}
     >
       {props.children}{' '}
@@ -27,4 +34,5 @@ type Props = {
   action: keyof ActionMap;
   context?: ActionContext;
   children: React.ReactNode;
+  onBeforeSelect?: () => boolean | unknown;
 };

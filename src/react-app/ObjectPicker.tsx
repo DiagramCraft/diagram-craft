@@ -14,7 +14,7 @@ export const ObjectPicker = (props: Props) => {
     .filter(n => n.type !== 'group')
     .map(n => {
       const dest = new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions);
-      dest.layers.add(new Layer('default', 'Default', [], dest));
+      dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.throwaway(dest));
       dest.layers.active.addElement(
         new DiagramNode(
           n.type,

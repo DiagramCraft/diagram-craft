@@ -1,6 +1,7 @@
 import { EventEmitter } from '../utils/event.ts';
 import { assert } from '../utils/assert.ts';
 
+// TODO: Should we always provide a UnitOfWork here
 export type UndoableAction = {
   undo: () => void;
   redo: () => void;

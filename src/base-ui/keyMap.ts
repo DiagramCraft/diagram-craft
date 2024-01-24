@@ -21,7 +21,9 @@ import { UserState } from './UserState.ts';
 import { sidebarActions } from '../react-app/actions/SidebarAction.tsx';
 import { groupActions } from './actions/groupAction.ts';
 import { saveActions } from './actions/saveAction.ts';
-import { Action, ActionContext } from './action.ts';
+import { Action, ActionContext, ActionEvents, ToggleAction } from './action.ts';
+import { layerActions } from './actions/layerActions.ts';
+import { EventEmitter } from '../utils/event.ts';
 
 export type State = {
   diagram: Diagram;
@@ -35,10 +37,13 @@ export type AppState = State & {
 export type KeyMap = Record<string, keyof ActionMap>;
 
 declare global {
-  interface ActionMap {}
+  interface ActionMap
+    extends Record<string, (Action | ToggleAction) & EventEmitter<ActionEvents>> {}
 }
 
 export type ActionMapFactory = (state: AppState) => Partial<ActionMap>;
+
+export type ActionName = keyof ActionMap & string;
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
@@ -59,6 +64,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...duplicateActions(state),
   ...groupActions(state),
   ...saveActions(state),
+  ...layerActions(state),
 
   // TODO: These should move to defaultAppActions
   ...toolActions(state),

@@ -24,10 +24,10 @@ describe('Diagram', () => {
 
     const diagram = new Diagram(newid(), 'Name', registry, new EdgeDefinitionRegistry());
     const layer1 = new Layer(newid(), 'Layer 1', [], diagram);
-    diagram.layers.add(layer1);
+    diagram.layers.add(layer1, new UnitOfWork(diagram));
 
     const layer2 = new Layer(newid(), 'Layer 2', [], diagram);
-    diagram.layers.add(layer2);
+    diagram.layers.add(layer2, new UnitOfWork(diagram));
 
     const uow = new UnitOfWork(diagram);
     const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer1);
@@ -50,7 +50,7 @@ describe('Diagram', () => {
     );
 
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());
-    diagram.layers.add(new Layer('default', 'Default', [], diagram));
+    diagram.layers.add(new Layer('default', 'Default', [], diagram), new UnitOfWork(diagram));
 
     const uow = new UnitOfWork(diagram);
 

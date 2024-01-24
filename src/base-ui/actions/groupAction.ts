@@ -1,6 +1,6 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { ActionMapFactory, State } from '../keyMap.ts';
+import { State } from '../keyMap.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
@@ -8,17 +8,14 @@ import { Box } from '../../geometry/box.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 
-declare global {
-  interface ActionMap {
-    GROUP_GROUP: GroupAction;
-    GROUP_UNGROUP: GroupAction;
-  }
-}
-
-export const groupActions: ActionMapFactory = (state: State) => ({
+export const groupActions = (state: State) => ({
   GROUP_GROUP: new GroupAction(state.diagram, 'group'),
   GROUP_UNGROUP: new GroupAction(state.diagram, 'ungroup')
 });
+
+declare global {
+  interface ActionMap extends ReturnType<typeof groupActions> {}
+}
 
 class UndoableGroupAction implements UndoableAction {
   #elements: ReadonlyArray<DiagramElement> | undefined = undefined;

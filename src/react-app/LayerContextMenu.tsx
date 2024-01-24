@@ -18,7 +18,7 @@ export const LayerContextMenu = (props: Props) => {
           <ActionContextMenuItem action={'EDGE_FLIP'} context={{ id: props.layer?.id }}>
             Lock/unlock
           </ActionContextMenuItem>
-          <ActionContextMenuItem action={'EDGE_FLIP'} context={{ id: props.layer?.id }}>
+          <ActionContextMenuItem action={'LAYER_DELETE_LAYER'} context={{ id: props.layer?.id }}>
             Delete
           </ActionContextMenuItem>
           <ContextMenu.Separator className="cmp-context-menu__separator" />

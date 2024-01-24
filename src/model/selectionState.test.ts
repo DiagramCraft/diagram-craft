@@ -7,6 +7,7 @@ import { Diagram } from './diagram.ts';
 import { Layer } from './diagramLayer.ts';
 import { RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.tsx';
 import { FreeEndpoint } from './endpoint.ts';
+import { UnitOfWork } from './unitOfWork.ts';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(
@@ -38,7 +39,7 @@ function createDiagram() {
   const registry = new NodeDefinitionRegistry();
   registry.register(new RectNodeDefinition());
   const d = new Diagram('1', 'test', registry, new EdgeDefinitionRegistry());
-  d.layers.add(new Layer('default', 'Default', [], d));
+  d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.throwaway(d));
   return d;
 }
 

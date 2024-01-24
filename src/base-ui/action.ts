@@ -11,12 +11,12 @@ export type ActionContext = {
   id?: string;
 };
 
-export interface Action<T = never> extends Emitter<ActionEvents> {
+export interface Action<T = unknown> extends Emitter<ActionEvents> {
   execute: (context: ActionContext, arg?: T) => void;
   isEnabled: (context: ActionContext) => boolean;
 }
 
-export abstract class AbstractAction<T = never>
+export abstract class AbstractAction<T = unknown>
   extends EventEmitter<ActionEvents>
   implements Action<T>
 {
@@ -26,12 +26,12 @@ export abstract class AbstractAction<T = never>
     return this.enabled;
   }
 
-  abstract execute(context: ActionContext): void;
+  abstract execute(context: ActionContext, arg?: T): void;
 }
 
-export abstract class AbstractToggleAction<T = never>
+export abstract class AbstractToggleAction<T = unknown>
   extends AbstractAction<T>
-  implements ToggleAction
+  implements ToggleAction<T>
 {
   protected state: boolean = true;
 
@@ -39,9 +39,9 @@ export abstract class AbstractToggleAction<T = never>
     return this.state;
   }
 
-  abstract execute(context: ActionContext): void;
+  abstract execute(context: ActionContext, arg?: T): void;
 }
 
-export interface ToggleAction extends Action {
+export interface ToggleAction<T = unknown> extends Action<T> {
   getState: (context: ActionContext) => boolean;
 }
