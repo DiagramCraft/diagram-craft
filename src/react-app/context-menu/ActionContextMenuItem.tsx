@@ -11,8 +11,8 @@ export const ActionContextMenuItem = (props: Props) => {
     <ContextMenu.Item
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
-      onSelect={() => {
-        const res = props.onBeforeSelect?.() ?? true;
+      onSelect={async () => {
+        const res = (await props.onBeforeSelect?.()) ?? true;
         if (res === false) return;
 
         const a: Action = actionMap[props.action]!;
@@ -32,5 +32,5 @@ type Props = {
   action: keyof ActionMap;
   context?: ActionContext;
   children: React.ReactNode;
-  onBeforeSelect?: () => boolean | unknown;
+  onBeforeSelect?: () => Promise<boolean | unknown>;
 };

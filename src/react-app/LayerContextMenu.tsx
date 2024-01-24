@@ -1,43 +1,121 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './context-menu/ActionContextMenuItem.tsx';
 import { Layer } from '../model/diagramLayer.ts';
-import React from 'react';
+import React, { useState } from 'react';
 import { ToggleActionContextMenuItem } from './context-menu/ToggleActionContextMenuItem.tsx';
+import { SimpleDialog, SimpleDialogState } from './components/SimpleDialog.tsx';
+import { AskStringDialog, AskStringDialogState } from './components/AskStringDialog.tsx';
 
 export const LayerContextMenu = (props: Props) => {
-  return (
-    <ContextMenu.Root>
-      <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="cmp-context-menu">
-          <ActionContextMenuItem action={'LAYER_RENAME'} context={{ id: props.layer?.id }}>
-            Rename...
-          </ActionContextMenuItem>
-          <ToggleActionContextMenuItem
-            action={'LAYER_TOGGLE_VISIBILITY'}
-            context={{ id: props.layer?.id }}
-          >
-            Visible
-          </ToggleActionContextMenuItem>
-          <ToggleActionContextMenuItem
-            action={'LAYER_TOGGLE_LOCK'}
-            context={{ id: props.layer?.id }}
-          >
-            Locked
-          </ToggleActionContextMenuItem>
-          <ActionContextMenuItem action={'LAYER_DELETE_LAYER'} context={{ id: props.layer?.id }}>
-            Delete
-          </ActionContextMenuItem>
-          <ContextMenu.Separator className="cmp-context-menu__separator" />
-          <ActionContextMenuItem action={'LAYER_ADD'}>New layer...</ActionContextMenuItem>
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<SimpleDialogState>(
+    SimpleDialog.INITIAL_STATE
+  );
+  const [nameDialog, setNameDialog] = useState<AskStringDialogState | undefined>(undefined);
 
-          {/* TODO: Implement this */}
-          <ActionContextMenuItem action={'EDGE_FLIP'}>
-            New adjustment layer...
-          </ActionContextMenuItem>
-        </ContextMenu.Content>
-      </ContextMenu.Portal>
-    </ContextMenu.Root>
+  return (
+    <>
+      <ContextMenu.Root>
+        <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
+        <ContextMenu.Portal>
+          <ContextMenu.Content className="cmp-context-menu">
+            <ActionContextMenuItem
+              action={'LAYER_RENAME'}
+              context={{ id: props.layer?.id }}
+              onBeforeSelect={async () => {
+                return new Promise<string | boolean>(resolve => {
+                  setNameDialog({
+                    isOpen: true,
+                    title: 'Rename layer',
+                    description: 'Enter a new name for the layer.',
+                    saveButtonLabel: 'Rename',
+                    name: props.layer?.name ?? '',
+                    onSave: (v: string) => {
+                      resolve(v);
+                    }
+                  });
+                });
+              }}
+            >
+              Rename...
+            </ActionContextMenuItem>
+            <ToggleActionContextMenuItem
+              action={'LAYER_TOGGLE_VISIBILITY'}
+              context={{ id: props.layer?.id }}
+            >
+              Visible
+            </ToggleActionContextMenuItem>
+            <ToggleActionContextMenuItem
+              action={'LAYER_TOGGLE_LOCK'}
+              context={{ id: props.layer?.id }}
+            >
+              Locked
+            </ToggleActionContextMenuItem>
+            <ActionContextMenuItem
+              action={'LAYER_DELETE_LAYER'}
+              context={{ id: props.layer?.id }}
+              onBeforeSelect={async () => {
+                return new Promise<boolean>(resolve => {
+                  setConfirmDeleteDialog({
+                    isOpen: true,
+                    title: 'Delete layer',
+                    message: 'Are you sure you want to delete this layer?',
+                    buttons: [
+                      {
+                        label: 'Cancel',
+                        type: 'cancel',
+                        onClick: () => resolve(false)
+                      },
+                      {
+                        label: 'Delete',
+                        type: 'danger',
+                        onClick: () => resolve(true)
+                      }
+                    ]
+                  });
+                });
+              }}
+            >
+              Delete
+            </ActionContextMenuItem>
+            <ContextMenu.Separator className="cmp-context-menu__separator" />
+            <ActionContextMenuItem
+              action={'LAYER_ADD'}
+              onBeforeSelect={async () => {
+                return new Promise<string | boolean>(resolve => {
+                  setNameDialog({
+                    isOpen: true,
+                    title: 'New layer',
+                    description: 'Enter a new name for the layer.',
+                    saveButtonLabel: 'Create',
+                    name: '',
+                    onSave: (v: string) => {
+                      resolve(v);
+                    }
+                  });
+                });
+              }}
+            >
+              New layer...
+            </ActionContextMenuItem>
+
+            {/* TODO: Implement this */}
+            <ActionContextMenuItem action={'EDGE_FLIP'}>
+              New adjustment layer...
+            </ActionContextMenuItem>
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
+
+      <SimpleDialog
+        {...confirmDeleteDialog}
+        onClose={() => setConfirmDeleteDialog(SimpleDialog.INITIAL_STATE)}
+      />
+
+      <AskStringDialog
+        {...(nameDialog ?? { isOpen: false })}
+        onClose={() => setNameDialog(undefined)}
+      />
+    </>
   );
 };
 

@@ -17,8 +17,8 @@ export const ToggleActionContextMenuItem = (props: Props) => {
       className="cmp-context-menu__item"
       disabled={!actionMap[props.action]?.isEnabled(props.context ?? {})}
       checked={(action as ToggleAction).getState(props.context ?? {})}
-      onCheckedChange={() => {
-        const res = props.onBeforeSelect?.() ?? true;
+      onCheckedChange={async () => {
+        const res = (await props.onBeforeSelect?.()) ?? true;
         if (res === false) return;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,5 +41,5 @@ type Props = {
   action: keyof ActionMap;
   context?: ActionContext;
   children: React.ReactNode;
-  onBeforeSelect?: () => boolean | unknown;
+  onBeforeSelect?: () => Promise<boolean | unknown>;
 };
