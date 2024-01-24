@@ -10,6 +10,7 @@ import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
 import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { commitWithUndo } from '../model/diagramUndoActions.ts';
+import { LayerContextMenu } from './LayerContextMenu.tsx';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -87,30 +88,32 @@ const LayerEntry = (props: { layer: Layer }) => {
   );
 
   return (
-    <Tree.Node
-      key={layer.id}
-      isOpen={true}
-      className={diagram.layers.active === layer ? 'cmp-layer-list__layer--selected' : ''}
-      {...drag.eventHandlers}
-      {...dropTarget.eventHandlers}
-      onClick={() => {
-        diagram.layers.active = layer;
-      }}
-    >
-      <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
-      <Tree.NodeValue>{diagram.layers.active === layer ? 'Active' : ''}</Tree.NodeValue>
-      <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
-        <LockToggle layer={layer} diagram={diagram} />
-        <VisibilityToggle layer={layer} diagram={diagram} />
-      </Tree.NodeAction>
-      <Tree.Children>
-        <div style={{ display: 'contents' }}>
-          {layer.elements.toReversed().map(e => (
-            <ElementEntry key={e.id} element={e} />
-          ))}
-        </div>
-      </Tree.Children>
-    </Tree.Node>
+    <LayerContextMenu layer={layer}>
+      <Tree.Node
+        key={layer.id}
+        isOpen={true}
+        className={diagram.layers.active === layer ? 'cmp-layer-list__layer--selected' : ''}
+        {...drag.eventHandlers}
+        {...dropTarget.eventHandlers}
+        onClick={() => {
+          diagram.layers.active = layer;
+        }}
+      >
+        <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
+        <Tree.NodeValue>{diagram.layers.active === layer ? 'Active' : ''}</Tree.NodeValue>
+        <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
+          <LockToggle layer={layer} diagram={diagram} />
+          <VisibilityToggle layer={layer} diagram={diagram} />
+        </Tree.NodeAction>
+        <Tree.Children>
+          <div style={{ display: 'contents' }}>
+            {layer.elements.toReversed().map(e => (
+              <ElementEntry key={e.id} element={e} />
+            ))}
+          </div>
+        </Tree.Children>
+      </Tree.Node>
+    </LayerContextMenu>
   );
 };
 
@@ -196,13 +199,14 @@ export const LayerList = () => {
 
   return (
     <div style={{ height: '100%', margin: '-10px' }} className={'cmp-layer-list'}>
-      <div>
-        <Tree.Root data-dragmimetype={'application/x-diagram-craft-element-instances'}>
-          {layers.map(l => (
-            <LayerEntry key={l.id} layer={l} />
-          ))}
-        </Tree.Root>
-      </div>
+      <Tree.Root data-dragmimetype={'application/x-diagram-craft-element-instances'}>
+        {layers.map(l => (
+          <LayerEntry key={l.id} layer={l} />
+        ))}
+      </Tree.Root>
+      <LayerContextMenu>
+        <div style={{ height: '100%' }}></div>
+      </LayerContextMenu>
     </div>
   );
 };
