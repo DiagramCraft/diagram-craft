@@ -65,7 +65,7 @@ export class Diagram extends EventEmitter<DiagramEvents> {
     'distance',
     'size'
   ]);
-  readonly undoManager = new UndoManager();
+  readonly undoManager = new UndoManager(this);
 
   constructor(
     readonly id: string,

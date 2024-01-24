@@ -25,12 +25,11 @@ export class SnapshotUndoableAction implements UndoableAction {
     this.afterSnapshot = afterSnapshot ?? beforeSnapshot.retakeSnapshot(diagram);
   }
 
-  undo() {
+  undo(uow: UnitOfWork) {
     // Let's keep these for now... aids in debugging
     console.log('before', this.beforeSnapshot);
     console.log('after', this.afterSnapshot);
 
-    const uow = new UnitOfWork(this.diagram);
     for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
       // Addition must be handled differently ... and explictly before this
       assert.present(snapshot);
@@ -54,11 +53,9 @@ export class SnapshotUndoableAction implements UndoableAction {
         }
       }
     }
-    uow.commit();
   }
 
-  redo() {
-    const uow = new UnitOfWork(this.diagram);
+  redo(uow: UnitOfWork) {
     for (const [id, snapshot] of this.afterSnapshot.snapshots) {
       // Addition must be handled differently ... and explictly before this
       assert.present(snapshot);
@@ -82,7 +79,6 @@ export class SnapshotUndoableAction implements UndoableAction {
         }
       }
     }
-    uow.commit();
   }
 
   merge(nextAction: UndoableAction): boolean {

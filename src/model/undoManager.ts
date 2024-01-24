@@ -1,10 +1,11 @@
 import { EventEmitter } from '../utils/event.ts';
 import { assert } from '../utils/assert.ts';
+import { UnitOfWork } from './unitOfWork.ts';
+import { Diagram } from './diagram.ts';
 
-// TODO: Should we always provide a UnitOfWork here
 export type UndoableAction = {
-  undo: () => void;
-  redo: () => void;
+  undo: (uow: UnitOfWork) => void;
+  redo: (uow: UnitOfWork) => void;
 
   description: string;
   timestamp?: Date;
@@ -31,15 +32,15 @@ export class CompoundUndoableAction implements UndoableAction {
     return this.#actions.map(a => a.description).join(', ');
   }
 
-  undo() {
+  undo(uow: UnitOfWork) {
     for (const action of this.#actions.toReversed()) {
-      action.undo();
+      action.undo(uow);
     }
   }
 
-  redo() {
+  redo(uow: UnitOfWork) {
     for (const action of this.#actions) {
-      action.redo();
+      action.redo(uow);
     }
   }
 
@@ -62,7 +63,7 @@ export class UndoManager extends EventEmitter<UndoEvents> {
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
 
-  constructor() {
+  constructor(private readonly diagram: Diagram) {
     super();
 
     this.undoableActions = [];
@@ -97,7 +98,10 @@ export class UndoManager extends EventEmitter<UndoEvents> {
   addAndExecute(action: UndoableAction) {
     this.add(action);
 
-    action.redo();
+    const uow = new UnitOfWork(this.diagram);
+    action.redo(uow);
+    uow.commit();
+
     this.emit('execute', { action, type: 'redo' });
   }
 
@@ -110,7 +114,10 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     this.redoableActions.push(action);
     this.prune();
 
-    action.undo();
+    const uow = new UnitOfWork(this.diagram);
+    action.undo(uow);
+    uow.commit();
+
     this.emit('execute', { action: action, type: 'undo' });
   }
 
@@ -123,7 +130,10 @@ export class UndoManager extends EventEmitter<UndoEvents> {
     this.undoableActions.push(action);
     this.prune();
 
-    action.redo();
+    const uow = new UnitOfWork(this.diagram);
+    action.redo(uow);
+    uow.commit();
+
     this.emit('execute', { action: action, type: 'undo' });
   }
 

@@ -1,9 +1,15 @@
 import { expect, test, describe } from 'vitest';
 import { UndoManager } from './undoManager.ts';
+import { Diagram } from './diagram.ts';
+import {
+  defaultEdgeRegistry,
+  defaultNodeRegistry
+} from '../react-canvas-viewer/defaultRegistry.ts';
 
 describe('UndoManager', () => {
   test('add()', () => {
-    const manager = new UndoManager();
+    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const manager = new UndoManager(d);
     let x = 0;
 
     manager.add({
@@ -22,7 +28,8 @@ describe('UndoManager', () => {
   });
 
   test('addAndExecute()', () => {
-    const manager = new UndoManager();
+    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const manager = new UndoManager(d);
     let x = 0;
 
     manager.addAndExecute({
@@ -40,7 +47,8 @@ describe('UndoManager', () => {
   });
 
   test('undo()', () => {
-    const manager = new UndoManager();
+    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const manager = new UndoManager(d);
     let x = 0;
 
     manager.addAndExecute({
@@ -60,7 +68,8 @@ describe('UndoManager', () => {
   });
 
   test('redo()', () => {
-    const manager = new UndoManager();
+    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const manager = new UndoManager(d);
     let x = 0;
 
     manager.addAndExecute({

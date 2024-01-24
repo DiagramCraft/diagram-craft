@@ -77,10 +77,8 @@ export class DeleteSchemaUndoableAction implements UndoableAction {
     private readonly schema: DataSchema
   ) {}
 
-  undo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.document.schemas.removeSchema(this.schema, uow);
-    });
+  undo(uow: UnitOfWork) {
+    this.diagram.document.schemas.removeSchema(this.schema, uow);
   }
 
   redo() {
@@ -96,10 +94,8 @@ export class AddSchemaUndoableAction implements UndoableAction {
     private readonly schema: DataSchema
   ) {}
 
-  undo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.document.schemas.removeSchema(this.schema, uow);
-    });
+  undo(uow: UnitOfWork) {
+    this.diagram.document.schemas.removeSchema(this.schema, uow);
   }
 
   redo() {

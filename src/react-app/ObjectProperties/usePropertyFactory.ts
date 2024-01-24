@@ -140,6 +140,8 @@ export class PropertyArrayUndoableAction<TItem, TObj, TPath extends PropPath<TOb
     private readonly path: TPath,
     private readonly before: any[],
     private readonly after: any,
+
+    // TODO: Where is this uowFactory coming from
     private readonly uowFactory: () => UnitOfWork,
     private readonly updateObj: (item: TItem, uow: UnitOfWork, cb: (obj: TObj) => void) => void
   ) {}

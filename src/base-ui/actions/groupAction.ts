@@ -30,28 +30,26 @@ class UndoableGroupAction implements UndoableAction {
     return this.type === 'group' ? 'Group' : 'Ungroup';
   }
 
-  redo(): void {
+  redo(uow: UnitOfWork): void {
     if (this.type === 'group') {
-      this.group();
+      this.group(uow);
     } else {
-      this.ungroup();
+      this.ungroup(uow);
     }
   }
 
-  undo(): void {
+  undo(uow: UnitOfWork): void {
     if (this.type === 'group') {
-      this.ungroup();
+      this.ungroup(uow);
     } else {
-      this.group();
+      this.group(uow);
     }
   }
 
-  private group() {
+  private group(uow: UnitOfWork) {
     if (this.#elements === undefined) {
       this.#elements = this.diagram.selectionState.elements;
     }
-
-    const uow = new UnitOfWork(this.diagram);
 
     this.#elements.forEach(e => {
       e.layer.removeElement(e, uow);
@@ -69,16 +67,13 @@ class UndoableGroupAction implements UndoableAction {
     this.diagram.layers.active.addElement(this.#group, uow);
 
     this.diagram.selectionState.setElements([this.#group]);
-
-    uow.commit();
   }
 
-  private ungroup() {
+  private ungroup(uow: UnitOfWork) {
     if (this.#group === undefined) {
       this.#group = this.diagram.selectionState.elements[0] as DiagramNode;
     }
 
-    const uow = new UnitOfWork(this.diagram);
     const children = this.#group.children;
 
     this.#group.children.forEach(e => {
@@ -94,7 +89,6 @@ class UndoableGroupAction implements UndoableAction {
     });
 
     this.diagram.selectionState.setElements(children);
-    uow.commit();
   }
 }
 

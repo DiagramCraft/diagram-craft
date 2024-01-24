@@ -53,15 +53,11 @@ class LayerDeleteUndoableAction implements UndoableAction {
     private readonly layer: Layer
   ) {}
 
-  undo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.layers.add(this.layer, uow);
-    });
+  undo(uow: UnitOfWork) {
+    this.diagram.layers.add(this.layer, uow);
   }
 
-  redo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.layers.remove(this.layer, uow);
-    });
+  redo(uow: UnitOfWork) {
+    this.diagram.layers.remove(this.layer, uow);
   }
 }

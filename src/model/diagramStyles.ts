@@ -230,16 +230,12 @@ export class DeleteStylesheetUndoableAction implements UndoableAction {
     private readonly stylesheet: Stylesheet
   ) {}
 
-  undo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
-    });
+  undo(uow: UnitOfWork) {
+    this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
   }
 
-  redo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
-    });
+  redo(uow: UnitOfWork) {
+    this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
   }
 }
 
@@ -251,15 +247,11 @@ export class AddStylesheetUndoableAction implements UndoableAction {
     private readonly stylesheet: Stylesheet
   ) {}
 
-  undo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
-    });
+  undo(uow: UnitOfWork) {
+    this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
   }
 
-  redo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
-    });
+  redo(uow: UnitOfWork) {
+    this.diagram.document.styles.addStylesheet(this.stylesheet, uow);
   }
 }

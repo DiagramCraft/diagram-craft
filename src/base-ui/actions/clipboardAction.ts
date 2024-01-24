@@ -42,19 +42,15 @@ export class PasteUndoableAction implements UndoableAction {
     this.layer = this.diagram.layers.active;
   }
 
-  undo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.elements.forEach(e => {
-        e.layer.removeElement(e, uow);
-      });
+  undo(uow: UnitOfWork) {
+    this.elements.forEach(e => {
+      e.layer.removeElement(e, uow);
     });
   }
 
-  redo() {
-    UnitOfWork.execute(this.diagram, uow => {
-      this.elements.forEach(e => {
-        this.layer.addElement(e, uow);
-      });
+  redo(uow: UnitOfWork) {
+    this.elements.forEach(e => {
+      this.layer.addElement(e, uow);
     });
   }
 }
