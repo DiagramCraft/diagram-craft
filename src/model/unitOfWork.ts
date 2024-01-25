@@ -5,6 +5,7 @@ import { Layer, LayerManager, LayerType } from './diagramLayer.ts';
 import { EventKey } from '../utils/event.ts';
 import { SerializedEdge, SerializedNode } from './serialization/types.ts';
 import { Stylesheet } from './diagramStyles.ts';
+import { AdjustmentRule } from './diagramAdjustmentLayer.ts';
 
 type ActionCallback = () => void;
 
@@ -21,6 +22,7 @@ export type LayerSnapshot = {
   locked: boolean;
   elements: string[];
   type: LayerType;
+  rules?: AdjustmentRule[];
 };
 
 export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {

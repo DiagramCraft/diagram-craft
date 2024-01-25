@@ -202,12 +202,14 @@ export class LayerManager implements UOWTrackable<LayersSnapshot> {
     });
 
     this.diagram.selectionState.on('add', () => {
-      if (!this.diagram.selectionState.isEmpty())
+      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'layer') {
         this.active = this.diagram.selectionState.elements[0].layer;
+      }
     });
     this.diagram.selectionState.on('remove', () => {
-      if (!this.diagram.selectionState.isEmpty())
+      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'layer') {
         this.active = this.diagram.selectionState.elements[0].layer;
+      }
     });
   }
 
