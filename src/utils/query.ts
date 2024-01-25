@@ -353,6 +353,34 @@ class GTEOperator implements ASTNode {
   }
 }
 
+class AnyOperator implements ASTNode {
+  constructor() {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      if (Array.isArray(v)) {
+        return v.some(a => !!a);
+      } else {
+        return false;
+      }
+    });
+  }
+}
+
+class AllOperator implements ASTNode {
+  constructor() {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      if (Array.isArray(v)) {
+        return v.every(a => !!a);
+      } else {
+        return false;
+      }
+    });
+  }
+}
+
 const getBetweenBrackets = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
@@ -497,7 +525,14 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
     if (!nextTok) throw new Error();
     arr[arr.length - 1] = new GTEOperator(arr.at(-1)!, nextTok);
     return [nextS, undefined, nextArr];
+  } else if (q.startsWith('any')) {
+    // TODO: Handle function
+    return [q.slice(3), new AnyOperator(), arr];
+  } else if (q.startsWith('all')) {
+    // TODO: Handle function
+    return [q.slice(3), new AllOperator(), arr];
   }
+
   throw new Error(`Cannot parse: ${q}`);
 };
 

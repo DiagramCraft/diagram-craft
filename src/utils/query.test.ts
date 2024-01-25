@@ -308,6 +308,22 @@ describe('SelectOperator', () => {
   });
 });
 
+describe('AnyOperator', () => {
+  test('query: any', () => {
+    expect(query('any', ResultSet.of([true, true, false]))).toEqual([true]);
+    expect(query('any', ResultSet.of([false, false, false]))).toEqual([false]);
+    expect(query('any', ResultSet.of([]))).toEqual([false]);
+  });
+});
+
+describe('AllOperator', () => {
+  test('query: all', () => {
+    expect(query('all', ResultSet.of([true, true, false]))).toEqual([false]);
+    expect(query('all', ResultSet.of([true, true, true]))).toEqual([true]);
+    expect(query('all', ResultSet.of([]))).toEqual([true]);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {
