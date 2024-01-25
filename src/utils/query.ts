@@ -327,6 +327,35 @@ class AllFilter implements ASTNode {
   }
 }
 
+class UniqueFilter implements ASTNode {
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      if (Array.isArray(v)) {
+        return v.filter((a, i) => v.indexOf(a) === i);
+      } else {
+        return v;
+      }
+    });
+  }
+}
+
+class StringFn implements ASTNode {
+  constructor(
+    private readonly node: ASTNode,
+    private readonly fn: (a: string, b: string) => boolean
+  ) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return flatMap(input, v => {
+      const lvs = v;
+      const rvs = the(this.node.evaluate(ResultSet.of(undefined)));
+      if (Array.isArray(lvs)) return lvs.map(a => this.fn(a as string, rvs as string));
+      // @ts-ignore
+      return this.fn(lvs as string, rvs as string);
+    });
+  }
+}
+
 const getBetweenBrackets = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
@@ -343,14 +372,15 @@ const getBetweenBrackets = (q: string, left: string, right: string) => {
   return { end, sub };
 };
 
-const makeFN = (
+const makeFN = <T>(
   fnName: string,
   q: string,
   arr: ASTNode[],
-  ctr: new (n: ASTNode) => ASTNode
+  ctr: new (n: ASTNode, arg?: T) => ASTNode,
+  arg?: T
 ): [string, ASTNode, ASTNode[]] => {
   const { end, sub } = getBetweenBrackets(q.slice(fnName.length), '(', ')');
-  return [q.slice(end + fnName.length + 1), new ctr(parse(sub)[0]), arr];
+  return [q.slice(end + fnName.length + 1), new ctr(parse(sub)[0], arg), arr];
 };
 
 const makeBinaryOp = <T>(
@@ -494,6 +524,16 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
     return [q.slice(5), new Literal(false), arr];
   } else if (q.startsWith('true')) {
     return [q.slice(4), new Literal(true), arr];
+  } else if (q.startsWith('unique_by(')) {
+    throw NOT_IMPLEMENTED_YET();
+  } else if (q.startsWith('unique')) {
+    return [q.slice(6), new UniqueFilter(), arr];
+  } else if (q.startsWith('startswith(')) {
+    // @ts-ignore
+    return makeFN('startswith', q, arr, StringFn, (a, b) => a.startsWith(b));
+  } else if (q.startsWith('endswith(')) {
+    // @ts-ignore
+    return makeFN('endswith', q, arr, StringFn, (a, b) => a.endswith(b));
   }
 
   throw new Error(`Cannot parse: ${q}`);

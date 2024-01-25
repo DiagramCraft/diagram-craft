@@ -338,6 +338,23 @@ describe('NotFilter', () => {
   });
 });
 
+describe('UniqueFilter', () => {
+  test('query: unique', () => {
+    expect(query('unique', ResultSet.of([1, 2, 3, 2, 1]))).toEqual([[1, 2, 3]]);
+  });
+});
+
+describe('startswith', () => {
+  test('query: startswith("foo")', () => {
+    expect(query('startswith("foo")', ResultSet.of(['foo', 'bar']))).toEqual([true, false]);
+  });
+  test('query: [.[] | startswith("foo")]', () => {
+    expect(
+      query('[.[] | startswith("foo")]', ResultSet.of(['fo', 'foo', 'barfoo', 'foobar', 'barfoob']))
+    ).toEqual([[false, true, false, true, false]]);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {
