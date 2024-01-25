@@ -1,40 +1,76 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isObj } from './object.ts';
 
-/*
 type ResultSet = {
   _type: 'resultSet';
   _values: unknown[];
 };
- */
+
+export const ResultSet = {
+  of: (o: unknown): ResultSet => {
+    return {
+      _type: 'resultSet',
+      _values: [o]
+    };
+  },
+  ofList: (...o: unknown[]): ResultSet => {
+    return {
+      _type: 'resultSet',
+      _values: o
+    };
+  }
+};
+
+const map = (input: ResultSet, fn: (v: unknown) => unknown) => {
+  return {
+    _type: 'resultSet',
+    _values: input._values.map(fn)
+  } satisfies ResultSet;
+};
+
+const flatMap = (input: ResultSet, fn: (v: unknown) => unknown) => {
+  return {
+    _type: 'resultSet',
+    _values: input._values.flatMap(fn)
+  } satisfies ResultSet;
+};
+
+const flatten = (arr: unknown[]) => {
+  const dest: unknown[] = [];
+  for (let i = 0; i < arr.length; i++) {
+    if ((arr[i] as any)?._type === 'resultSet') {
+      dest.push(...(arr[i] as ResultSet)._values);
+    } else {
+      dest.push(arr[i]);
+    }
+  }
+  return dest;
+};
 
 interface ASTNode {
-  evaluate(input: unknown[]): unknown[];
+  evaluate(input: ResultSet): ResultSet;
 }
 
-class PropertyLookup implements ASTNode {
+export class PropertyLookup implements ASTNode {
   constructor(public readonly identifier: string) {}
 
-  evaluate(input: unknown[]): unknown[] {
-    if (
-      this.identifier === '' ||
-      this.identifier === 'prototype' ||
-      this.identifier === 'constructor'
-    )
-      return input;
-    return input.map(i => (i === undefined ? undefined : (i as any)[this.identifier]));
+  evaluate(input: ResultSet): ResultSet {
+    if (this.identifier === '') return input;
+    if (this.identifier === 'prototype' || this.identifier === 'constructor')
+      return ResultSet.of(undefined);
+    return map(input, i => (i === undefined ? undefined : (i as any)[this.identifier]));
   }
 }
 
-class ArrayIndexOperator implements ASTNode {
+export class ArrayIndexOperator implements ASTNode {
   private readonly index: number;
 
   constructor(query: string) {
     this.index = parseInt(query);
   }
 
-  evaluate(input: unknown[]): unknown[] {
-    return input.map(i => {
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, i => {
       if (i === undefined) return undefined;
       if (Array.isArray(i)) {
         return i[this.index];
@@ -45,7 +81,7 @@ class ArrayIndexOperator implements ASTNode {
   }
 }
 
-class ArraySliceOperator implements ASTNode {
+export class ArraySliceOperator implements ASTNode {
   private readonly from: number;
   private readonly to: number;
 
@@ -55,8 +91,8 @@ class ArraySliceOperator implements ASTNode {
     this.to = to === '' ? Infinity : parseInt(to);
   }
 
-  evaluate(input: unknown[]): unknown[] {
-    return input.map(i => {
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, i => {
       if (i === undefined) return undefined;
       if (Array.isArray(i)) {
         return i.slice(this.from, Math.min(this.to, i.length));
@@ -67,30 +103,38 @@ class ArraySliceOperator implements ASTNode {
   }
 }
 
-class ArrayOperator implements ASTNode {
+export class ArrayOperator implements ASTNode {
   constructor() {}
 
-  evaluate(input: unknown[]): unknown[] {
-    return input.flatMap(i => (Array.isArray(i) || isObj(i) ? i : undefined));
-  }
-}
-
-class Sequence implements ASTNode {
-  constructor(public readonly nodes: ASTNode[]) {}
-
-  evaluate(input: unknown[]): unknown[] {
-    return this.nodes.map(n => {
-      const res = n.evaluate(input);
-      if (res === undefined || res.length === 1 || res.length === 0) return res?.[0];
-      return res;
+  evaluate(input: ResultSet): ResultSet {
+    return flatMap(input, i => {
+      if (Array.isArray(i) || isObj(i)) return i;
+      else throw new Error();
     });
   }
 }
 
-class Group implements ASTNode {
+export class Sequence implements ASTNode {
   constructor(public readonly nodes: ASTNode[]) {}
 
-  evaluate(input: unknown[]): unknown[] {
+  evaluate(input: ResultSet): ResultSet {
+    const dest: ResultSet[] = [];
+    input._values.forEach(i => {
+      const v = ResultSet.of(i);
+      for (const node of this.nodes) {
+        dest.push(node.evaluate(v));
+      }
+      return v;
+    });
+
+    return ResultSet.ofList(...flatten(dest));
+  }
+}
+
+export class Group implements ASTNode {
+  constructor(public readonly nodes: ASTNode[]) {}
+
+  evaluate(input: ResultSet): ResultSet {
     let v = input;
     for (const node of this.nodes) {
       v = node.evaluate(v);
@@ -99,11 +143,11 @@ class Group implements ASTNode {
   }
 }
 
-class ArrayConstructor implements ASTNode {
-  constructor(public readonly nodes: ASTNode[]) {}
+export class ArrayConstructor implements ASTNode {
+  constructor(public readonly node: ASTNode) {}
 
-  evaluate(input: unknown[]): unknown[] {
-    return [this.nodes.flatMap(n => n.evaluate(input))];
+  evaluate(input: ResultSet): ResultSet {
+    return ResultSet.ofList(...input._values.map(i => this.node.evaluate(ResultSet.of(i))._values));
   }
 }
 
@@ -143,7 +187,7 @@ const parse = (query: string) => {
 
       if (depth !== 0) throw new Error('Unbalanced brackets');
 
-      dest.push(new ArrayConstructor(parse(remaining.slice(0, end).trim())));
+      dest.push(new ArrayConstructor(new Group(parse(remaining.slice(0, end).trim()))));
       remaining = remaining.slice(end + 1);
     } else if ((m = remaining.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
       remaining = remaining.slice(m[0].length);
@@ -170,18 +214,18 @@ const parse = (query: string) => {
   return dest;
 };
 
-export const query = (query: string, input: any[]) => {
+export const query = (query: string, input: ResultSet) => {
   const ast = parse(query);
 
   let v = input;
   for (const node of ast) {
     v = node.evaluate(v);
   }
-  return v;
+  return v._values;
 };
 
 export const queryOne = (q: string, input: any) => {
-  const res = query(q, [input]);
+  const res = query(q, { _type: 'resultSet', _values: [input] });
   if (res === undefined || res.length === 1 || res.length === 0) return res?.[0];
   else {
     console.log(q, input, res);
