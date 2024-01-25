@@ -174,6 +174,174 @@ export class RecursiveDescentOperator implements ASTNode {
   }
 }
 
+const safeParseInt = (s: string) => {
+  const n = Number(s);
+  return isNaN(n) ? 0 : n;
+};
+
+export class AdditionOperator implements ASTNode {
+  constructor(
+    public readonly left: ASTNode,
+    public readonly right: ASTNode
+  ) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      const lv = this.left.evaluate(ResultSet.of(v));
+      const rv = this.right.evaluate(ResultSet.of(v));
+
+      const lvs = lv._values?.[0];
+      const rvs = rv._values?.[0];
+
+      if (Array.isArray(lvs) && Array.isArray(rvs)) {
+        return [...lvs, ...rvs];
+      } else if (isObj(lvs) && isObj(rvs)) {
+        return { ...lvs, ...rvs };
+      } else {
+        // @ts-ignore
+        return safeParseInt(lvs) + safeParseInt(rvs);
+      }
+    });
+  }
+}
+
+export class SubtractionOperator implements ASTNode {
+  constructor(
+    public readonly left: ASTNode,
+    public readonly right: ASTNode
+  ) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      const lv = this.left.evaluate(ResultSet.of(v));
+      const rv = this.right.evaluate(ResultSet.of(v));
+
+      const lvs = lv._values?.[0];
+      const rvs = rv._values?.[0];
+
+      if (Array.isArray(lvs) && Array.isArray(rvs)) {
+        return lvs.filter(e => !rvs.includes(e));
+      } else if (isObj(lvs) && isObj(rvs)) {
+        return Object.fromEntries(
+          Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k))
+        );
+      } else {
+        // @ts-ignore
+        return safeParseInt(lvs) - safeParseInt(rvs);
+      }
+    });
+  }
+}
+
+class LiteralOperator implements ASTNode {
+  constructor(public readonly value: unknown) {}
+
+  evaluate(_input: ResultSet): ResultSet {
+    return ResultSet.of(this.value);
+  }
+}
+
+const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, ASTNode[]] => {
+  let m;
+  if (q.startsWith('|')) {
+    return [q.slice(1), undefined, arr];
+  } else if (q.startsWith(',')) {
+    const last = arr.at(-1)!;
+    if (!(last instanceof Sequence)) {
+      const seq = new Sequence([last]);
+      arr[arr.length - 1] = seq;
+      return [q.slice(1), undefined, seq.nodes];
+    } else {
+      return [q.slice(1), undefined, arr];
+    }
+  } else if (q.startsWith('..')) {
+    return [q.slice(2), new RecursiveDescentOperator(), arr];
+  } else if (q.startsWith('+')) {
+    const [nextS, nextTok, nextArr] = nextToken(q.slice(1).trim(), arr);
+    if (!nextTok) throw new Error();
+    arr[arr.length - 1] = new AdditionOperator(arr.at(-1)!, nextTok);
+    return [nextS, undefined, nextArr];
+  } else if (q.startsWith('-')) {
+    const [nextS, nextTok, nextArr] = nextToken(q.slice(1).trim(), arr);
+    if (!nextTok) throw new Error();
+    arr[arr.length - 1] = new SubtractionOperator(arr.at(-1)!, nextTok);
+    return [nextS, undefined, nextArr];
+  } else if (q.startsWith('[')) {
+    q = q.slice(1);
+
+    // Find right ] (considering balanced brackets)
+    let depth = 1;
+    let end = 0;
+    for (; end < q.length; end++) {
+      if (q[end] === '[') depth++;
+      else if (q[end] === ']') {
+        depth--;
+        if (depth === 0) break;
+      }
+    }
+
+    if (depth !== 0) throw new Error('Unbalanced brackets');
+
+    return [q.slice(end + 1), new ArrayConstructor(new Group(parse(q.slice(0, end).trim()))), arr];
+  } else if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
+    const s = q.slice(m[0].length);
+
+    const [, identifier, arrayQuery] = m;
+
+    if (arrayQuery === '') {
+      return [s, new Group([new PropertyLookup(identifier), new ArrayOperator()]), arr];
+    } else if (arrayQuery.includes(':')) {
+      return [
+        s,
+        new Group([new PropertyLookup(identifier), new ArraySliceOperator(arrayQuery)]),
+        arr
+      ];
+    } else {
+      return [
+        s,
+        new Group([new PropertyLookup(identifier), new ArrayIndexOperator(arrayQuery)]),
+        arr
+      ];
+    }
+  } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*/))) {
+    return [q.slice(m[0].length), new PropertyLookup(m[0].slice(1)), arr];
+  } else if ((m = q.match(/^[0-9]+/))) {
+    return [q.slice(m[0].length), new LiteralOperator(m[0]), arr];
+  } else if (q.startsWith('null')) {
+    return [q.slice(4), new LiteralOperator(null), arr];
+  } else if (q.startsWith('{')) {
+    // Find right } (considering balanced brackets)
+    let depth = 0;
+    let end = 0;
+    for (; end < q.length; end++) {
+      if (q[end] === '{') depth++;
+      else if (q[end] === '}') {
+        depth--;
+        if (depth === 0) break;
+      }
+    }
+
+    if (depth !== 0) throw new Error('Unbalanced brackets');
+
+    // TODO: Must remove eval here
+    return [
+      q.slice(end + 1),
+      new LiteralOperator(eval('(' + q.slice(0, end + 1).trim() + ')')),
+      arr
+    ];
+  } else if (q.startsWith('"')) {
+    // Find right " (considering balanced brackets)
+    let end = 1;
+    for (; end < q.length; end++) {
+      if (q[end] === '"') break;
+    }
+
+    return [q.slice(end + 1), new LiteralOperator(q.slice(1, end)), arr];
+  }
+
+  throw new Error(`Cannot parse: ${q}`);
+};
+
 const parse = (query: string) => {
   const dest: ASTNode[] = [];
   let arr = dest;
@@ -182,60 +350,12 @@ const parse = (query: string) => {
 
   let i = 0;
   do {
-    let m;
-    if (q.startsWith('|')) {
-      q = q.slice(1);
-    } else if (q.startsWith(',')) {
-      q = q.slice(1);
+    const [s, t, newArr] = nextToken(q, arr);
+    if (t) arr.push(t);
+    arr = newArr;
 
-      const last = arr.at(-1)!;
-      if (!(last instanceof Sequence)) {
-        const seq = new Sequence([last]);
-        arr[arr.length - 1] = seq;
-        arr = seq.nodes;
-      }
-    } else if (q.startsWith('..')) {
-      q = q.slice(2);
-
-      arr.push(new RecursiveDescentOperator());
-    } else if (q.startsWith('[')) {
-      q = q.slice(1);
-
-      // Find right ] (considering balanced brackets)
-      let depth = 1;
-      let end = 0;
-      for (; end < q.length; end++) {
-        if (q[end] === '[') depth++;
-        else if (q[end] === ']') {
-          depth--;
-          if (depth === 0) break;
-        }
-      }
-
-      if (depth !== 0) throw new Error('Unbalanced brackets');
-
-      dest.push(new ArrayConstructor(new Group(parse(q.slice(0, end).trim()))));
-      q = q.slice(end + 1);
-    } else if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
-      q = q.slice(m[0].length);
-
-      const [, identifier, arrayQuery] = m;
-
-      if (arrayQuery === '') {
-        arr.push(new Group([new PropertyLookup(identifier), new ArrayOperator()]));
-      } else if (arrayQuery.includes(':')) {
-        arr.push(new Group([new PropertyLookup(identifier), new ArraySliceOperator(arrayQuery)]));
-      } else {
-        arr.push(new Group([new PropertyLookup(identifier), new ArrayIndexOperator(arrayQuery)]));
-      }
-    } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*/))) {
-      q = q.slice(m[0].length);
-
-      arr.push(new PropertyLookup(m[0].slice(1)));
-    }
-
-    q = q.trim();
-    if (i++ > 100) throw new Error('Infinite loop detected');
+    q = s.trim(); // q.slice(s.length).trim();
+    if (i++ > 1000) throw new Error('Infinite loop detected');
   } while (q.trim().length > 0);
 
   return dest;
@@ -255,7 +375,6 @@ export const queryOne = (q: string, input: any) => {
   const res = query(q, { _type: 'resultSet', _values: [input] });
   if (res === undefined || res.length === 1 || res.length === 0) return res?.[0];
   else {
-    console.log(q, input, res);
     throw new Error('Expected one result, got ' + res.length);
   }
 };

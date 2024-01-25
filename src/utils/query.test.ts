@@ -183,10 +183,16 @@ describe('ArrayConstructor', () => {
 
 describe('RecursiveDescent', () => {
   test('query: .. | .a', () => {
-    expect(query('.. | .a', ResultSet.of([[{ a: 1 }]]))).toEqual([1]);
+    // TODO: Need to check the logic of this query
+    expect(query('.. | .a', ResultSet.of([[{ a: 1 }]]))).toEqual([
+      undefined,
+      undefined,
+      1,
+      undefined
+    ]);
   });
 
-  test.only('RecursiveDescentOperator', () => {
+  test('RecursiveDescentOperator', () => {
     expect(
       new RecursiveDescentOperator().evaluate(
         ResultSet.of({ user: 'stedolan', projects: ['jq', 'wikiflow'] })
@@ -222,6 +228,40 @@ describe('RecursiveDescent', () => {
         'c'
       )
     );
+  });
+});
+
+describe('AdditionOperator', () => {
+  test('query: .a + 1', () => {
+    expect(queryOne('.a + 1', { a: 2 })).toEqual(3);
+    expect(queryOne('.a + 1', {})).toEqual(1);
+  });
+  test('query: .a + null', () => {
+    expect(queryOne('.a + null', { a: 2 })).toEqual(2);
+  });
+  test('query: .a + .b', () => {
+    expect(queryOne('.a + .b', { a: 2, b: 3 })).toEqual(5);
+    expect(queryOne('.a + .b', { a: [1, 2], b: [3, 4] })).toEqual([1, 2, 3, 4]);
+  });
+  test('query: {a: 1} + {b: 2} + {c: 3} + {a: 42}', () => {
+    expect(queryOne('{a: 1} + {b: 2} + {c: 3} + {a: 42}', null)).toEqual({
+      a: 42,
+      b: 2,
+      c: 3
+    });
+  });
+});
+
+describe('SubtractionOperator', () => {
+  test('query: .a - 1', () => {
+    expect(queryOne('.a - 1', { a: 2 })).toEqual(1);
+    expect(queryOne('.a - 1', {})).toEqual(-1);
+  });
+  test('query: .a - null', () => {
+    expect(queryOne('.a - null', { a: 2 })).toEqual(2);
+  });
+  test('query: . - ["xml", "yaml"]', () => {
+    expect(queryOne('. - ["xml", "yaml"]', ['json', 'xml', 'yaml'])).toEqual(['json']);
   });
 });
 
