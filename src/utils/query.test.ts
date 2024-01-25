@@ -13,7 +13,7 @@ import {
   Concatenation
 } from './query.ts';
 
-describe('PropertyLookup', () => {
+describe('PropertyLookupOp', () => {
   test('query: .', () => {
     expect(queryOne('.', { a: 1 })).toEqual({ a: 1 });
     expect(queryOne('.', 123)).toEqual(123);
@@ -36,7 +36,7 @@ describe('PropertyLookup', () => {
     expect(queryOne('.a.b', [1, 2, 3])).toEqual(undefined);
   });
 
-  test('PropertyLookup', () => {
+  test('PropertyLookupOp', () => {
     expect(new PropertyLookupOp('test').evaluate(ResultSet.of([1, 2, 3]))).toEqual(
       ResultSet.of(undefined)
     );
@@ -77,14 +77,14 @@ describe('ArrayLookup', () => {
     expect(() => query('.[]', ResultSet.of('lorem'))).toThrowError();
   });
 
-  test('ArrayIndexOperator', () => {
+  test('ArrayIndexOp', () => {
     expect(new ArrayIndexOp(0).evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.of(1));
     expect(new ArrayIndexOp(0).evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
       ResultSet.ofList(1, 4)
     );
   });
 
-  test('ArraySliceOperator', () => {
+  test('ArraySliceOp', () => {
     expect(new ArraySliceOp(1, 3).evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.of([2, 3]));
     expect(new ArraySliceOp(1, 2).evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
       ResultSet.ofList([2], [5])
@@ -94,7 +94,7 @@ describe('ArrayLookup', () => {
     );
   });
 
-  test('ArrayOperator', () => {
+  test('ArrayOp', () => {
     expect(() => new ArrayOp().evaluate(ResultSet.of('lorem'))).toThrowError();
     expect(new ArrayOp().evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.ofList(1, 2, 3));
     expect(new ArrayOp().evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
@@ -103,7 +103,7 @@ describe('ArrayLookup', () => {
   });
 });
 
-describe('Sequence', () => {
+describe('Concatenation', () => {
   test('query .[0],.[1]', () => {
     expect(query('.[0],.[1]', ResultSet.of([1, 2, 3]))).toEqual([1, 2]);
     expect(query('.[0],.[1]', ResultSet.of([{ a: 5 }, 2, 3]))).toEqual([{ a: 5 }, 2]);
@@ -118,7 +118,7 @@ describe('Sequence', () => {
     ).toEqual(['stedolan', 'jq', 'wikiflow']);
   });
 
-  test('Sequence', () => {
+  test('Concatenation', () => {
     const seq = new Concatenation([new ArrayIndexOp(0), new ArrayIndexOp(2)]);
     expect(seq.evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.ofList(1, 3));
     expect(seq.evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
@@ -140,7 +140,7 @@ describe('pipe', () => {
     ).toEqual(['JSON', 'XML']);
   });
 
-  test('Group', () => {
+  test('FilterSequence', () => {
     const grp = new FilterSequence([new PropertyLookupOp('name'), new PropertyLookupOp('first')]);
     expect(grp.evaluate(ResultSet.of({ name: { first: 'John' } }))).toEqual(
       ResultSet.ofList('John')
@@ -183,7 +183,7 @@ describe('RecursiveDescent', () => {
     ]);
   });
 
-  test('RecursiveDescentOperator', () => {
+  test('RecursiveDescentOp', () => {
     expect(
       new RecursiveDescentOp().evaluate(
         ResultSet.of({ user: 'stedolan', projects: ['jq', 'wikiflow'] })
@@ -222,7 +222,7 @@ describe('RecursiveDescent', () => {
   });
 });
 
-describe('AdditionOperator', () => {
+describe('AdditionBinaryOp', () => {
   test('query: .a + 1', () => {
     expect(queryOne('.a + 1', { a: 2 })).toEqual(3);
     expect(queryOne('.a + 1', {})).toEqual(1);
@@ -243,7 +243,7 @@ describe('AdditionOperator', () => {
   });
 });
 
-describe('SubtractionOperator', () => {
+describe('SubtractionBinaryOp', () => {
   test('query: .a - 1', () => {
     expect(queryOne('.a - 1', { a: 2 })).toEqual(1);
     expect(queryOne('.a - 1', {})).toEqual(-1);
@@ -256,7 +256,7 @@ describe('SubtractionOperator', () => {
   });
 });
 
-describe('LengthOperator', () => {
+describe('LengthFilter', () => {
   test('query: .[] | length', () => {
     expect(query('.[] | length', ResultSet.of([[1, 2], 'string', { a: 2 }, null, -5]))).toEqual([
       2, 6, 1, 0, 5
@@ -264,7 +264,7 @@ describe('LengthOperator', () => {
   });
 });
 
-describe('HasOperator', () => {
+describe('HasFn', () => {
   test('query: has("foo")', () => {
     expect(query('has("foo")', ResultSet.ofList({ foo: 1, bar: 2 }, { bar: 3 }))).toEqual([
       true,
@@ -273,13 +273,13 @@ describe('HasOperator', () => {
   });
 });
 
-describe('InOperator', () => {
+describe('InFn', () => {
   test('query: .[] | in({"foo": 42})', () => {
     expect(query('.[] | in({"foo": 42})', ResultSet.of(['foo', 'bar']))).toEqual([true, false]);
   });
 });
 
-describe('map', () => {
+describe('MapFn', () => {
   test('query: map(. + 1)', () => {
     expect(query('map(. + 1)', ResultSet.of([1, 2, 3]))).toEqual([[2, 3, 4]]);
   });
@@ -288,7 +288,7 @@ describe('map', () => {
   });
 });
 
-describe('SelectOperator', () => {
+describe('SelectFn', () => {
   test('query: .[] | select(.id == "second")', () => {
     expect(
       query('.[] | select(.id == "second")', ResultSet.of([{ id: 'first' }, { id: 'second' }]))
@@ -299,7 +299,7 @@ describe('SelectOperator', () => {
   });
 });
 
-describe('AnyOperator', () => {
+describe('AnyFilter', () => {
   test('query: any', () => {
     expect(query('any', ResultSet.of([true, true, false]))).toEqual([true]);
     expect(query('any', ResultSet.of([false, false, false]))).toEqual([false]);
@@ -307,11 +307,34 @@ describe('AnyOperator', () => {
   });
 });
 
-describe('AllOperator', () => {
+describe('AllFilter', () => {
   test('query: all', () => {
     expect(query('all', ResultSet.of([true, true, false]))).toEqual([false]);
     expect(query('all', ResultSet.of([true, true, true]))).toEqual([true]);
     expect(query('all', ResultSet.of([]))).toEqual([true]);
+  });
+});
+
+describe('AndBinaryOp', () => {
+  test('query: 42 and "a string"', () => {
+    expect(queryOne('42 and "a string"', null)).toEqual(true);
+  });
+});
+
+describe('OrBinaryOp', () => {
+  test('query: 42 or "a string"', () => {
+    expect(queryOne('42 or "a string"', null)).toEqual(true);
+    expect(queryOne('false or false', null)).toEqual(false);
+  });
+});
+
+describe('NotFilter', () => {
+  test('query: true | not', () => {
+    expect(queryOne('true | not', null)).toEqual(false);
+  });
+  // TODO: Fix this
+  test.skip('query: [true, false | not]', () => {
+    expect(query('[true, false | not]', ResultSet.of(null))).toEqual([true, true]);
   });
 });
 

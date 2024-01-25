@@ -277,8 +277,9 @@ class SelectFn implements ASTNode {
 
 class EqualsBinaryOp implements ASTNode {
   constructor(
-    public readonly left: ASTNode,
-    public readonly right: ASTNode
+    private readonly left: ASTNode,
+    private readonly right: ASTNode,
+    private readonly negate: boolean
   ) {}
 
   evaluate(input: ResultSet): ResultSet {
@@ -292,7 +293,7 @@ class EqualsBinaryOp implements ASTNode {
         throw NOT_IMPLEMENTED_YET();
       } else {
         // @ts-ignore
-        return lvs === rvs;
+        return lvs === rvs && !this.negate;
       }
     });
   }
@@ -309,7 +310,7 @@ class CmpBinaryOp implements ASTNode {
     return map(input, v => {
       const lvs = the(this.left.evaluate(ResultSet.of(v)));
       const rvs = the(this.right.evaluate(ResultSet.of(v)));
-      return this.cmp(lvs, rvs);
+      return !!this.cmp(lvs, rvs);
     });
   }
 }
@@ -455,7 +456,11 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
   } else if (q.startsWith('select(')) {
     return makeFN('select', q, arr, SelectFn);
   } else if (q.startsWith('==')) {
-    return makeBinaryOp('==', q, arr, EqualsBinaryOp);
+    // @ts-ignore
+    return makeBinaryOp('==', q, arr, EqualsBinaryOp, false);
+  } else if (q.startsWith('!=')) {
+    // @ts-ignore
+    return makeBinaryOp('!=', q, arr, EqualsBinaryOp, true);
   } else if (q.startsWith('>=')) {
     // @ts-ignore
     return makeBinaryOp('>=', q, arr, CmpBinaryOp, (a, b) => a >= b);
@@ -474,6 +479,21 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
   } else if (q.startsWith('all')) {
     // TODO: Handle function
     return [q.slice(3), new AllFilter(), arr];
+  } else if (q.startsWith('and')) {
+    // @ts-ignore
+    return makeBinaryOp('and', q, arr, CmpBinaryOp, (a, b) => a && b);
+  } else if (q.startsWith('or')) {
+    // @ts-ignore
+    return makeBinaryOp('or', q, arr, CmpBinaryOp, (a, b) => {
+      console.log('||', a, b);
+      return a || b;
+    });
+  } else if (q.startsWith('not')) {
+    return [q.slice(3), new EqualsBinaryOp(new Literal(true), arr.at(-1)!, true), arr];
+  } else if (q.startsWith('false')) {
+    return [q.slice(5), new Literal(false), arr];
+  } else if (q.startsWith('true')) {
+    return [q.slice(4), new Literal(true), arr];
   }
 
   throw new Error(`Cannot parse: ${q}`);
