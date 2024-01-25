@@ -265,6 +265,14 @@ describe('SubtractionOperator', () => {
   });
 });
 
+describe('LengthOperator', () => {
+  test('query: .[] | length', () => {
+    expect(query('.[] | length', ResultSet.of([[1, 2], 'string', { a: 2 }, null, -5]))).toEqual([
+      2, 6, 1, 0, 5
+    ]);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {

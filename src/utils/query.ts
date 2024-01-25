@@ -241,6 +241,28 @@ class LiteralOperator implements ASTNode {
   }
 }
 
+class LengthOperator implements ASTNode {
+  constructor() {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      if (v === undefined || v === null) {
+        return 0;
+      } else if (Array.isArray(v)) {
+        return v.length;
+      } else if (typeof v === 'string') {
+        return v.length;
+      } else if (!isNaN(Number(v))) {
+        return Math.abs(Number(v));
+      } else if (isObj(v)) {
+        return Object.keys(v).length;
+      } else {
+        return undefined;
+      }
+    });
+  }
+}
+
 const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, ASTNode[]] => {
   let m;
   if (q.startsWith('|')) {
@@ -337,6 +359,8 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
     }
 
     return [q.slice(end + 1), new LiteralOperator(q.slice(1, end)), arr];
+  } else if (q.startsWith('length')) {
+    return [q.slice(6), new LengthOperator(), arr];
   }
 
   throw new Error(`Cannot parse: ${q}`);
