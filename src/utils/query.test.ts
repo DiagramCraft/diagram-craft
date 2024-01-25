@@ -297,6 +297,17 @@ describe('map', () => {
   });
 });
 
+describe('SelectOperator', () => {
+  test('query: .[] | select(.id == "second")', () => {
+    expect(
+      query('.[] | select(.id == "second")', ResultSet.of([{ id: 'first' }, { id: 'second' }]))
+    ).toEqual([{ id: 'second' }]);
+  });
+  test('query: map(select(. >= 2))', () => {
+    expect(query('map(select(. >= 2))', ResultSet.of([1, 2, 3]))).toEqual([[2, 3]]);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {

@@ -22,6 +22,13 @@ export const ResultSet = {
   }
 };
 
+const removeUndefined = (input: ResultSet) => {
+  return {
+    _type: 'resultSet',
+    _values: input._values.filter(a => a !== undefined && a !== null)
+  } satisfies ResultSet;
+};
+
 const map = (input: ResultSet, fn: (v: unknown) => unknown) => {
   return {
     _type: 'resultSet',
@@ -288,6 +295,64 @@ class InOperator implements ASTNode {
   }
 }
 
+class SelectOperator implements ASTNode {
+  constructor(public readonly node: ASTNode) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    if (this.node === undefined) throw new Error();
+    return removeUndefined(
+      map(input, v => {
+        const res = this.node.evaluate(ResultSet.of(v));
+        if (res._values?.[0] === true) return v;
+        else return undefined;
+      })
+    );
+  }
+}
+
+class EqualsOperator implements ASTNode {
+  constructor(
+    public readonly left: ASTNode,
+    public readonly right: ASTNode
+  ) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      const lv = this.left.evaluate(ResultSet.of(v));
+      const rv = this.right.evaluate(ResultSet.of(v));
+
+      const lvs = lv._values?.[0];
+      const rvs = rv._values?.[0];
+
+      if (Array.isArray(lvs) && Array.isArray(rvs)) {
+        throw NOT_IMPLEMENTED_YET();
+      } else if (isObj(lvs) && isObj(rvs)) {
+        throw NOT_IMPLEMENTED_YET();
+      } else {
+        // @ts-ignore
+        return lvs === rvs;
+      }
+    });
+  }
+}
+
+class GTEOperator implements ASTNode {
+  constructor(
+    public readonly left: ASTNode,
+    public readonly right: ASTNode
+  ) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    return map(input, v => {
+      const lvs = this.left.evaluate(ResultSet.of(v))._values?.[0];
+      const rvs = this.right.evaluate(ResultSet.of(v))._values?.[0];
+
+      // @ts-ignore
+      return lvs >= rvs;
+    });
+  }
+}
+
 const getBetweenBrackets = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
@@ -419,6 +484,19 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
     ];
   } else if (q.startsWith('map_values(')) {
     throw NOT_IMPLEMENTED_YET();
+  } else if (q.startsWith('select(')) {
+    const { end, sub } = getBetweenBrackets(q.slice(6), '(', ')');
+    return [q.slice(6 + end + 1), new SelectOperator(parse(sub)?.[0]), arr];
+  } else if (q.startsWith('==')) {
+    const [nextS, nextTok, nextArr] = nextToken(q.slice(2).trim(), arr);
+    if (!nextTok) throw new Error();
+    arr[arr.length - 1] = new EqualsOperator(arr.at(-1)!, nextTok);
+    return [nextS, undefined, nextArr];
+  } else if (q.startsWith('>=')) {
+    const [nextS, nextTok, nextArr] = nextToken(q.slice(2).trim(), arr);
+    if (!nextTok) throw new Error();
+    arr[arr.length - 1] = new GTEOperator(arr.at(-1)!, nextTok);
+    return [nextS, undefined, nextArr];
   }
   throw new Error(`Cannot parse: ${q}`);
 };
