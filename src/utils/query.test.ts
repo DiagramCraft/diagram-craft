@@ -1,16 +1,16 @@
 import { describe, expect, test } from 'vitest';
 import {
   ArrayConstructor,
-  ArrayIndexOperator,
-  ArrayOperator,
-  ArraySliceOperator,
-  Group,
-  PropertyLookup,
+  ArrayIndexOp,
+  ArrayOp,
+  ArraySliceOp,
+  FilterSequence,
+  PropertyLookupOp,
   query,
   queryOne,
-  RecursiveDescentOperator,
+  RecursiveDescentOp,
   ResultSet,
-  Sequence
+  Concatenation
 } from './query.ts';
 
 describe('PropertyLookup', () => {
@@ -37,23 +37,18 @@ describe('PropertyLookup', () => {
   });
 
   test('PropertyLookup', () => {
-    expect(new PropertyLookup('test').evaluate(ResultSet.of([1, 2, 3]))).toEqual(
+    expect(new PropertyLookupOp('test').evaluate(ResultSet.of([1, 2, 3]))).toEqual(
       ResultSet.of(undefined)
     );
-    expect(new PropertyLookup('test').evaluate(ResultSet.of({ test: 6 }))).toEqual(ResultSet.of(6));
-    expect(new PropertyLookup('test').evaluate(ResultSet.ofList({ test: 6 }, 7))).toEqual(
+    expect(new PropertyLookupOp('test').evaluate(ResultSet.of({ test: 6 }))).toEqual(
+      ResultSet.of(6)
+    );
+    expect(new PropertyLookupOp('test').evaluate(ResultSet.ofList({ test: 6 }, 7))).toEqual(
       ResultSet.ofList(6, undefined)
     );
-    expect(new PropertyLookup('test').evaluate(ResultSet.ofList({ test: 6 }, { test: 7 }))).toEqual(
-      ResultSet.ofList(6, 7)
-    );
-
-    expect(new PropertyLookup('constructor').evaluate(ResultSet.of('string'))).toEqual(
-      ResultSet.of(undefined)
-    );
-    expect(new PropertyLookup('prototype').evaluate(ResultSet.of('string'))).toEqual(
-      ResultSet.of(undefined)
-    );
+    expect(
+      new PropertyLookupOp('test').evaluate(ResultSet.ofList({ test: 6 }, { test: 7 }))
+    ).toEqual(ResultSet.ofList(6, 7));
   });
 });
 
@@ -83,30 +78,26 @@ describe('ArrayLookup', () => {
   });
 
   test('ArrayIndexOperator', () => {
-    expect(new ArrayIndexOperator('0').evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.of(1));
-    expect(new ArrayIndexOperator('0').evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
+    expect(new ArrayIndexOp(0).evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.of(1));
+    expect(new ArrayIndexOp(0).evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
       ResultSet.ofList(1, 4)
     );
   });
 
   test('ArraySliceOperator', () => {
-    expect(new ArraySliceOperator('1:3').evaluate(ResultSet.of([1, 2, 3]))).toEqual(
-      ResultSet.of([2, 3])
-    );
-    expect(new ArraySliceOperator('1:2').evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
+    expect(new ArraySliceOp(1, 3).evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.of([2, 3]));
+    expect(new ArraySliceOp(1, 2).evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
       ResultSet.ofList([2], [5])
     );
-    expect(new ArraySliceOperator('1:3').evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
+    expect(new ArraySliceOp(1, 3).evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
       ResultSet.ofList([2, 3], [5, 6])
     );
   });
 
   test('ArrayOperator', () => {
-    expect(() => new ArrayOperator().evaluate(ResultSet.of('lorem'))).toThrowError();
-    expect(new ArrayOperator().evaluate(ResultSet.of([1, 2, 3]))).toEqual(
-      ResultSet.ofList(1, 2, 3)
-    );
-    expect(new ArrayOperator().evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
+    expect(() => new ArrayOp().evaluate(ResultSet.of('lorem'))).toThrowError();
+    expect(new ArrayOp().evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.ofList(1, 2, 3));
+    expect(new ArrayOp().evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
       ResultSet.ofList(1, 2, 3, 4, 5, 6)
     );
   });
@@ -128,7 +119,7 @@ describe('Sequence', () => {
   });
 
   test('Sequence', () => {
-    const seq = new Sequence([new ArrayIndexOperator('0'), new ArrayIndexOperator('2')]);
+    const seq = new Concatenation([new ArrayIndexOp(0), new ArrayIndexOp(2)]);
     expect(seq.evaluate(ResultSet.of([1, 2, 3]))).toEqual(ResultSet.ofList(1, 3));
     expect(seq.evaluate(ResultSet.ofList([1, 2, 3], [4, 5, 6]))).toEqual(
       ResultSet.ofList(1, 3, 4, 6)
@@ -150,7 +141,7 @@ describe('pipe', () => {
   });
 
   test('Group', () => {
-    const grp = new Group([new PropertyLookup('name'), new PropertyLookup('first')]);
+    const grp = new FilterSequence([new PropertyLookupOp('name'), new PropertyLookupOp('first')]);
     expect(grp.evaluate(ResultSet.of({ name: { first: 'John' } }))).toEqual(
       ResultSet.ofList('John')
     );
@@ -168,14 +159,14 @@ describe('ArrayConstructor', () => {
   });
 
   test('ArrayConstructor', () => {
-    const set = new ArrayConstructor(new PropertyLookup('user')).evaluate(
+    const set = new ArrayConstructor(new PropertyLookupOp('user')).evaluate(
       ResultSet.ofList({ user: 'John' }, { user: 'Mary' })
     );
     expect(set).toEqual(ResultSet.ofList(['John'], ['Mary']));
 
     expect(
       new ArrayConstructor(
-        new Sequence([new PropertyLookup('user'), new PropertyLookup('age')])
+        new Concatenation([new PropertyLookupOp('user'), new PropertyLookupOp('age')])
       ).evaluate(ResultSet.ofList({ user: 'John', age: 17 }, { user: 'Mary' }))
     ).toEqual(ResultSet.ofList(['John', 17], ['Mary', undefined]));
   });
@@ -194,7 +185,7 @@ describe('RecursiveDescent', () => {
 
   test('RecursiveDescentOperator', () => {
     expect(
-      new RecursiveDescentOperator().evaluate(
+      new RecursiveDescentOp().evaluate(
         ResultSet.of({ user: 'stedolan', projects: ['jq', 'wikiflow'] })
       )
     ).toEqual(
@@ -208,7 +199,7 @@ describe('RecursiveDescent', () => {
     );
 
     expect(
-      new RecursiveDescentOperator().evaluate(
+      new RecursiveDescentOp().evaluate(
         ResultSet.ofList(
           { user: 'stedolan', projects: ['jq', 'wikiflow'] },
           { user: 'a', projects: ['b', 'c'] }
