@@ -8,6 +8,7 @@ import {
   PropertyLookup,
   query,
   queryOne,
+  RecursiveDescentOperator,
   ResultSet,
   Sequence
 } from './query.ts';
@@ -177,5 +178,64 @@ describe('ArrayConstructor', () => {
         new Sequence([new PropertyLookup('user'), new PropertyLookup('age')])
       ).evaluate(ResultSet.ofList({ user: 'John', age: 17 }, { user: 'Mary' }))
     ).toEqual(ResultSet.ofList(['John', 17], ['Mary', undefined]));
+  });
+});
+
+describe('RecursiveDescent', () => {
+  test('query: .. | .a', () => {
+    expect(query('.. | .a', ResultSet.of([[{ a: 1 }]]))).toEqual([1]);
+  });
+
+  test.only('RecursiveDescentOperator', () => {
+    expect(
+      new RecursiveDescentOperator().evaluate(
+        ResultSet.of({ user: 'stedolan', projects: ['jq', 'wikiflow'] })
+      )
+    ).toEqual(
+      ResultSet.ofList(
+        { user: 'stedolan', projects: ['jq', 'wikiflow'] },
+        'stedolan',
+        ['jq', 'wikiflow'],
+        'jq',
+        'wikiflow'
+      )
+    );
+
+    expect(
+      new RecursiveDescentOperator().evaluate(
+        ResultSet.ofList(
+          { user: 'stedolan', projects: ['jq', 'wikiflow'] },
+          { user: 'a', projects: ['b', 'c'] }
+        )
+      )
+    ).toEqual(
+      ResultSet.ofList(
+        { user: 'stedolan', projects: ['jq', 'wikiflow'] },
+        'stedolan',
+        ['jq', 'wikiflow'],
+        'jq',
+        'wikiflow',
+        { user: 'a', projects: ['b', 'c'] },
+        'a',
+        ['b', 'c'],
+        'b',
+        'c'
+      )
+    );
+  });
+});
+
+// TODO: To be implemented
+describe.skip('ObjectConstructor', () => {
+  test('{name: .user, projects: .projects[]}', () => {
+    expect(
+      query(
+        '{name: .user, projects: .projects[]}',
+        ResultSet.of({ user: 'stedolan', projects: ['jq', 'wikiflow'] })
+      )
+    ).toEqual([
+      { name: 'stedolan', projects: 'jq' },
+      { name: 'stedolan', projects: 'wikiflow' }
+    ]);
   });
 });
