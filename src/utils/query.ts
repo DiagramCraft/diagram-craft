@@ -263,6 +263,48 @@ class LengthOperator implements ASTNode {
   }
 }
 
+class HasOperator implements ASTNode {
+  constructor(public readonly node: ASTNode) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    if (this.node === undefined) throw new Error();
+    return map(input, v => {
+      const res = this.node.evaluate(ResultSet.of(undefined));
+      return (res._values?.[0] as string | number) in (v as any);
+    });
+  }
+}
+
+class InOperator implements ASTNode {
+  constructor(public readonly node: ASTNode) {}
+
+  evaluate(input: ResultSet): ResultSet {
+    if (this.node === undefined) throw new Error();
+    return map(input, v => {
+      const res = this.node.evaluate(ResultSet.of(undefined));
+      return (v as any) in (res._values?.[0] as any);
+    });
+  }
+}
+
+const getBetweenBrackets = (q: string, left: string, right: string) => {
+  let depth = 0;
+  let end = 0;
+  for (; end < q.length; end++) {
+    if (q[end] === left) depth++;
+    else if (q[end] === right) {
+      depth--;
+      if (depth === 0) break;
+    }
+  }
+
+  if (depth !== 0) throw new Error('Unbalanced brackets');
+
+  const sub = q.slice(1, end).trim();
+
+  return { end, sub };
+};
+
 const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, ASTNode[]] => {
   let m;
   if (q.startsWith('|')) {
@@ -345,9 +387,9 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
 
     if (depth !== 0) throw new Error('Unbalanced brackets');
 
-    // TODO: Must remove eval here
     return [
       q.slice(end + 1),
+      // TODO: Must remove eval here
       new LiteralOperator(eval('(' + q.slice(0, end + 1).trim() + ')')),
       arr
     ];
@@ -361,6 +403,12 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
     return [q.slice(end + 1), new LiteralOperator(q.slice(1, end)), arr];
   } else if (q.startsWith('length')) {
     return [q.slice(6), new LengthOperator(), arr];
+  } else if (q.startsWith('has(')) {
+    const { end, sub } = getBetweenBrackets(q.slice(3), '(', ')');
+    return [q.slice(3 + end + 1), new HasOperator(parse(sub)?.[0]), arr];
+  } else if (q.startsWith('in(')) {
+    const { end, sub } = getBetweenBrackets(q.slice(2), '(', ')');
+    return [q.slice(2 + end + 1), new InOperator(parse(sub)?.[0]), arr];
   }
 
   throw new Error(`Cannot parse: ${q}`);

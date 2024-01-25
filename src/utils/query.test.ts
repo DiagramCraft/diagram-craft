@@ -273,6 +273,21 @@ describe('LengthOperator', () => {
   });
 });
 
+describe('HasOperator', () => {
+  test('query: has("foo")', () => {
+    expect(query('has("foo")', ResultSet.ofList({ foo: 1, bar: 2 }, { bar: 3 }))).toEqual([
+      true,
+      false
+    ]);
+  });
+});
+
+describe('InOperator', () => {
+  test('query: .[] | in({"foo": 42})', () => {
+    expect(query('.[] | in({"foo": 42})', ResultSet.of(['foo', 'bar']))).toEqual([true, false]);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {
