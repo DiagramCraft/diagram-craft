@@ -288,6 +288,15 @@ describe('InOperator', () => {
   });
 });
 
+describe('map', () => {
+  test('query: map(. + 1)', () => {
+    expect(query('map(. + 1)', ResultSet.of([1, 2, 3]))).toEqual([[2, 3, 4]]);
+  });
+  test('query: map(., .)', () => {
+    expect(query('map(., .)', ResultSet.of([1, 2]))).toEqual([[1, 1, 2, 2]]);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {

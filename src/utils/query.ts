@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isObj } from './object.ts';
+import { NOT_IMPLEMENTED_YET } from './assert.ts';
 
 type ResultSet = {
   _type: 'resultSet';
@@ -409,8 +410,16 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
   } else if (q.startsWith('in(')) {
     const { end, sub } = getBetweenBrackets(q.slice(2), '(', ')');
     return [q.slice(2 + end + 1), new InOperator(parse(sub)?.[0]), arr];
+  } else if (q.startsWith('map(')) {
+    const { end, sub } = getBetweenBrackets(q.slice(3), '(', ')');
+    return [
+      q.slice(3 + end + 1),
+      new ArrayConstructor(new Group([new ArrayOperator(), new Sequence(parse(sub))])),
+      arr
+    ];
+  } else if (q.startsWith('map_values(')) {
+    throw NOT_IMPLEMENTED_YET();
   }
-
   throw new Error(`Cannot parse: ${q}`);
 };
 
