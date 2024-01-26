@@ -561,6 +561,13 @@ class AbsFilter implements Operator {
   }
 }
 
+class KeysFilter implements Operator {
+  evaluate(input: unknown): unknown {
+    if (input && typeof input === 'object') return Object.keys(input).sort();
+    return input;
+  }
+}
+
 const parsePair = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
@@ -743,6 +750,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return makeFN('endswith', q, arr, StringFn, (a, b) => a.endsWith(b));
   } else if (q.startsWith('abs')) {
     return [q.slice(3), new AbsFilter(), arr];
+  } else if (q.startsWith('keys')) {
+    return [q.slice(4), new KeysFilter(), arr];
   }
 
   throw new Error(`Cannot parse: ${q}`);
@@ -794,7 +803,6 @@ export const queryOne = (q: string, input: any) => {
     - any and all as functions
     - optional object identifiers, e.g. .a?
     - object construction
-    - keys
     - map_values
     - pick
     - add

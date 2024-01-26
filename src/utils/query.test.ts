@@ -361,6 +361,13 @@ describe('AbsFilter', () => {
   });
 });
 
+describe('KeysFilter', () => {
+  test('query: keys', () => {
+    expect(query('keys', [{ a: 1, b: 2 }])).toEqual([['a', 'b']]);
+    expect(query('keys', [{ b: 2, a: 1 }])).toEqual([['a', 'b']]);
+  });
+});
+
 describe('SimpleBinaryOp: %', () => {
   test('query: . % 4', () => {
     expect(queryOne('. % 4', 10)).toEqual(2);
