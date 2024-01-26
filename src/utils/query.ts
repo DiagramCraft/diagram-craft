@@ -25,12 +25,211 @@ export const ResultSet = {
 
 const isResultSet = (o: unknown): o is ResultSet => (o as any)?._type === 'resultSet';
 
+const isOperator = (o: unknown): o is Operator => (o as any)?.evaluate;
+
 interface Operator {
   evaluate(input: unknown): unknown;
 }
 
 interface Generator extends Operator {
   evaluate(input: unknown): ResultSet;
+}
+
+type OObjects = OObject | OBoolean | OArray | ONumber | OString | Operator;
+
+export const OObjects = {
+  parse(s: string): OObjects {
+    return OObjects.parseNext(s)[1];
+  },
+
+  parseNext(s: string): [string, OObjects] {
+    if (s.startsWith('"')) {
+      const [str, r] = OString.parse(s);
+      return [r.trim(), str];
+    } else if (s.startsWith('.')) {
+      let end = 1;
+      for (; end < s.length; end++) {
+        if (s[end] === ',' || s[end] === '}' || s[end] === ' ' || s[end] === ':') break;
+      }
+      return [s.slice(end), parse(s.slice(0, end))];
+    } else if (s.startsWith('{')) {
+      const [obj, r] = OObject.parse(s);
+      return [r.trim(), obj];
+    } else if (s.startsWith('(')) {
+      const { sub } = getBetweenBrackets(s, '(', ')');
+      return [s.slice(sub.length + 2).trim(), parse(sub.trim())];
+    } else if (s.startsWith('[')) {
+      const [arr, r] = OArray.parse(s);
+      return [r.trim(), arr];
+    } else if (s.match(/^[0-9].*/)) {
+      const [num, r] = ONumber.parse(s);
+      return [r.trim(), num];
+    } else if (s.startsWith('true') || s.startsWith('false')) {
+      const [num, r] = OBoolean.parse(s);
+      return [r.trim(), num];
+    } else {
+      let end = 1;
+      for (; end < s.length; end++) {
+        if (!s[end].match(/^[a-zA-Z0-9_]/)) {
+          break;
+        }
+      }
+      return [s.slice(end), new OString(s.slice(0, end))];
+    }
+  }
+};
+
+export class OObject {
+  entries: [OString | Operator, OObjects][] = [];
+
+  constructor(entries?: [OString | Operator, OObjects][]) {
+    this.entries = entries ?? [];
+  }
+
+  static parse(s: string): [OObject, string] {
+    const { sub } = getBetweenBrackets(s, '{', '}');
+
+    const obj = new OObject();
+
+    let currentKey: OString | Operator | undefined = undefined;
+    let remaining = sub.trim();
+
+    while (remaining.length > 0) {
+      const [r, entry] = OObjects.parseNext(remaining);
+      remaining = r.trim();
+
+      if (entry instanceof OString || isOperator(entry)) {
+        if (currentKey) {
+          obj.entries.push([currentKey, entry]);
+          currentKey = undefined;
+
+          if (remaining.startsWith(',')) remaining = remaining.slice(1).trim();
+        } else {
+          currentKey = entry;
+          if (!remaining.startsWith(':')) throw new Error('Expected :');
+          remaining = remaining.slice(1).trim();
+        }
+      } else if (entry instanceof OArray || entry instanceof ONumber || entry instanceof OBoolean) {
+        if (!currentKey) throw new Error();
+
+        obj.entries.push([currentKey, entry]);
+        currentKey = undefined;
+        if (remaining.startsWith(',')) remaining = remaining.slice(1).trim();
+      } else {
+        throw new Error();
+      }
+    }
+
+    return [obj, remaining];
+  }
+
+  val() {
+    const dest: any = {};
+    for (const [k, v] of this.entries) {
+      if (isOperator(k) || isOperator(v)) throw new Error();
+      dest[k.val()] = v.val();
+    }
+    return dest;
+  }
+}
+
+export class OString {
+  value: string;
+
+  constructor(value: string) {
+    this.value = value;
+  }
+
+  static parse(s: string): [OString, string] {
+    let end = 1;
+    for (; end < s.length; end++) {
+      if (s[end] === '"') break;
+    }
+
+    return [new OString(s.slice(1, end)), s.slice(end + 1)];
+  }
+
+  val() {
+    return this.value;
+  }
+}
+
+export class OBoolean {
+  value: boolean;
+
+  constructor(value: boolean) {
+    this.value = value;
+  }
+
+  static parse(s: string): [OBoolean, string] {
+    if (s.startsWith('true')) {
+      return [new OBoolean(true), s.slice(4)];
+    } else if (s.startsWith('false')) {
+      return [new OBoolean(false), s.slice(5)];
+    } else {
+      throw new Error();
+    }
+  }
+
+  val() {
+    return this.value;
+  }
+}
+
+export class OArray {
+  value: OObjects[] = [];
+
+  constructor(value?: OObjects[]) {
+    this.value = value ?? [];
+  }
+
+  static parse(s: string): [OArray, string] {
+    const { sub } = getBetweenBrackets(s, '[', ']');
+
+    const arr = new OArray();
+
+    let remaining = sub.trim();
+
+    while (remaining.length > 0) {
+      const [r, next] = OObjects.parseNext(remaining);
+      remaining = r.trim();
+
+      arr.value.push(next);
+
+      if (remaining.startsWith(',')) remaining = remaining.slice(1).trim();
+      else break;
+    }
+
+    return [arr, s.slice(sub.length + 2).trim()];
+  }
+
+  val(): unknown[] {
+    return this.value.map(e => {
+      if (isOperator(e)) throw new Error();
+      return e.val();
+    });
+  }
+}
+
+export class ONumber {
+  value: number;
+
+  constructor(value: number) {
+    this.value = value;
+  }
+
+  static parse(s: string): [ONumber, string] {
+    let end = 0;
+    for (; end < s.length; end++) {
+      if (!s[end].match(/[0-9]/)) break;
+    }
+
+    return [new ONumber(Number(s.slice(0, end))), s.slice(end)];
+  }
+
+  val() {
+    return this.value;
+  }
 }
 
 export class PropertyLookupOp implements Operator {
@@ -40,7 +239,7 @@ export class PropertyLookupOp implements Operator {
     if (this.identifier === '') return input;
     // TODO: Maye we should remove this and rely of .a?
     if (input === undefined) return undefined;
-    assert.false(this.identifier === 'prototype' || this.identifier === 'constructor');
+    assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
     return (input as any)[this.identifier];
   }
 }

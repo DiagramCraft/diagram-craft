@@ -6,13 +6,44 @@ import {
   ArraySliceOp,
   Concatenation,
   FilterSequence,
-  parse,
+  OArray,
+  ONumber,
+  OObject,
+  OObjects,
+  OString,
   PropertyLookupOp,
   query,
   queryOne,
   RecursiveDescentGenerator,
   ResultSet
 } from './query.ts';
+
+describe('OObject', () => {
+  test('parse OString', () => {
+    expect((OObjects.parse('"lorem"') as OString).val()).toEqual('lorem');
+  });
+
+  test('parse ONumber', () => {
+    expect((OObjects.parse('1234') as ONumber).val()).toEqual(1234);
+  });
+
+  test('parse OBoolean', () => {
+    expect((OObjects.parse('true') as ONumber).val()).toEqual(true);
+    expect((OObjects.parse('false') as ONumber).val()).toEqual(false);
+  });
+
+  test('parse OArray', () => {
+    expect((OObjects.parse('[1, 2, 3]') as OArray).val()).toEqual([1, 2, 3]);
+    expect((OObjects.parse('["a", "b"]') as OArray).val()).toEqual(['a', 'b']);
+    expect((OObjects.parse('[1, "b"]') as OArray).val()).toEqual([1, 'b']);
+  });
+
+  test('parse OObject', () => {
+    expect((OObjects.parse('{ ab: 1, b: 2}') as OObject).val()).toEqual({ ab: 1, b: 2 });
+    expect((OObjects.parse('{ ab: "test", b: 2}') as OObject).val()).toEqual({ ab: 'test', b: 2 });
+    expect((OObjects.parse('{ ab: [7, 8], b: 2}') as OObject).val()).toEqual({ ab: [7, 8], b: 2 });
+  });
+});
 
 describe('PropertyLookupOp', () => {
   test('query: .', () => {
@@ -235,8 +266,6 @@ describe('MapFn', () => {
 // TODO: Fix
 describe('SelectFn', () => {
   test('query: .[] | select(.id == "second")', () => {
-    console.dir(parse('.[] | select(.id == "second")'), { depth: 10 });
-
     expect(query('.[] | select(.id == "second")', [[{ id: 'first' }, { id: 'second' }]])).toEqual([
       { id: 'second' }
     ]);
