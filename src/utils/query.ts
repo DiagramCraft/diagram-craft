@@ -38,7 +38,13 @@ interface Generator extends Operator {
 type OObjects = OObject | OBoolean | OArray | ONumber | OString | Operator;
 
 export const OObjects = {
-  parse(s: string): OObjects {
+  parse(s: string): OObjects & { val(): unknown } {
+    const r = OObjects.parseNext(s)[1];
+    if (isOperator(r)) throw new Error();
+    return r;
+  },
+
+  parseTemplate(s: string): OObjects {
     return OObjects.parseNext(s)[1];
   },
 
@@ -610,13 +616,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return [q.slice(4), new Literal(null), arr];
   } else if (q.startsWith('{')) {
     const { end, sub } = getBetweenBrackets(q, '{', '}');
-
-    return [
-      q.slice(end + 1),
-      // TODO: Must remove eval here
-      new Literal(eval('({' + sub + '})')),
-      arr
-    ];
+    return [q.slice(end + 1), new Literal(OObjects.parse('{' + sub + '}').val()), arr];
   } else if (q.startsWith('"')) {
     let end = 1;
     for (; end < q.length; end++) {
