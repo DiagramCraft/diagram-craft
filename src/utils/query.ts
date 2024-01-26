@@ -13,14 +13,8 @@ type ResultSet = {
 };
 
 export const ResultSet = {
-  of: (o: unknown): ResultSet => ({
-    _type: 'resultSet',
-    _values: [o]
-  }),
-  ofList: (...o: unknown[]): ResultSet => ({
-    _type: 'resultSet',
-    _values: o
-  })
+  of: (o: unknown): ResultSet => ({ _type: 'resultSet', _values: [o] }),
+  ofList: (...o: unknown[]): ResultSet => ({ _type: 'resultSet', _values: o })
 };
 
 const eat = (remaining: string, s: string) => {
@@ -399,16 +393,17 @@ export class SubtractionBinaryOp implements Operator {
   }
 }
 
-export class ModuloBinaryOp implements Operator {
+export class SimpleBinaryOp implements Operator {
   constructor(
     public readonly left: Operator,
-    public readonly right: Operator
+    public readonly right: Operator,
+    public readonly fn: (a: unknown, b: unknown) => unknown
   ) {}
 
   evaluate(input: unknown): unknown {
     const lvs = this.left.evaluate(input);
     const rvs = this.right.evaluate(input);
-    return safeParseInt(lvs) % safeParseInt(rvs);
+    return this.fn(lvs, rvs);
   }
 }
 
@@ -605,7 +600,9 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('-')) {
     return makeBinaryOp('-', q, arr, SubtractionBinaryOp, undefined);
   } else if (q.startsWith('%')) {
-    return makeBinaryOp('/', q, arr, ModuloBinaryOp, undefined);
+    return makeBinaryOp('%', q, arr, SimpleBinaryOp, (a, b) => safeParseInt(a) % safeParseInt(b));
+  } else if (q.startsWith('//')) {
+    return makeBinaryOp('//', q, arr, SimpleBinaryOp, (a, b) => a ?? b);
   } else if (q.startsWith('[')) {
     const { end, sub } = parsePair(q, '[', ']');
     return [
@@ -647,8 +644,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     }
   } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*/))) {
     return [q.slice(m[0].length), new PropertyLookupOp(m[0].slice(1)), arr];
-  } else if ((m = q.match(/^[0-9]+/))) {
-    return [q.slice(m[0].length), new Literal(m[0]), arr];
+  } else if ((m = q.match(/^-?[0-9]+/))) {
+    return [q.slice(m[0].length), new Literal(Number(m[0])), arr];
   } else if (q.startsWith('null')) {
     return [q.slice(4), new Literal(null), arr];
   } else if (q.startsWith('{')) {
@@ -780,5 +777,4 @@ export const queryOne = (q: string, input: any) => {
     - unique_by
     - contains
     - join and split
-    - alternative operator
  */

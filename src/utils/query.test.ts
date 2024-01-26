@@ -335,12 +335,19 @@ describe('AbsFilter', () => {
   });
 });
 
-describe('ModuloBinaryOp', () => {
+describe('SimpleBinaryOp: %', () => {
   test('query: . % 4', () => {
     expect(queryOne('. % 4', 10)).toEqual(2);
   });
   test('query: 5 % 4', () => {
     expect(queryOne('5 % 4', null)).toEqual(1);
+  });
+});
+
+describe('SimpleBinaryOp: //', () => {
+  test('query: .a // 42', () => {
+    expect(queryOne('.a // 42', { a: 1 })).toEqual(1);
+    expect(queryOne('.a // 42', {})).toEqual(42);
   });
 });
 
