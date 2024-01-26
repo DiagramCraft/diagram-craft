@@ -509,15 +509,36 @@ class AllFilter implements Operator {
   }
 }
 
-class UniqueFilter implements Operator {
+class ArrayFilter implements Operator {
+  constructor(
+    private readonly node: Operator,
+    private readonly fn: (arr: [unknown, unknown][]) => [unknown, unknown][] | unknown
+  ) {}
+
   evaluate(input: unknown): unknown {
     if (Array.isArray(input)) {
-      return input.filter((a, i) => input.indexOf(a) === i);
-    } else {
-      return input;
+      const res = this.fn(input.map(e => [e, this.node.evaluate(e)]));
+      if (Array.isArray(res)) return res.map(a => a[0]);
+      else return res;
     }
+    return input;
   }
 }
+
+const ArrayFilterFns: Record<
+  string,
+  (arr: [unknown, unknown][]) => [unknown, unknown][] | unknown
+> = {
+  UNIQUE: arr => arr.filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i),
+  MIN: arr => {
+    const min = Math.min(...arr.map(a => Number(a[1])));
+    return arr.find(a => a[1] === min)![0];
+  },
+  MAX: arr => {
+    const max = Math.max(...arr.map(a => Number(a[1])));
+    return arr.find(a => a[1] === max)![0];
+  }
+};
 
 class StringFn implements Operator {
   constructor(
@@ -705,9 +726,17 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('true')) {
     return [q.slice(4), new Literal(true), arr];
   } else if (q.startsWith('unique_by(')) {
-    throw NOT_IMPLEMENTED_YET();
+    return makeFN('unique_by', q, arr, ArrayFilter, ArrayFilterFns.UNIQUE);
   } else if (q.startsWith('unique')) {
-    return [q.slice(6), new UniqueFilter(), arr];
+    return [q.slice(6), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.UNIQUE), arr];
+  } else if (q.startsWith('min_by(')) {
+    return makeFN('min_by', q, arr, ArrayFilter, ArrayFilterFns.MIN);
+  } else if (q.startsWith('min')) {
+    return [q.slice(3), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MIN), arr];
+  } else if (q.startsWith('max_by(')) {
+    return makeFN('max_by', q, arr, ArrayFilter, ArrayFilterFns.MAX);
+  } else if (q.startsWith('max')) {
+    return [q.slice(3), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MAX), arr];
   } else if (q.startsWith('startswith(')) {
     return makeFN('startswith', q, arr, StringFn, (a, b) => a.startsWith(b));
   } else if (q.startsWith('endswith(')) {
@@ -756,10 +785,8 @@ export const query = (query: string, input: unknown[]) => {
 
 export const queryOne = (q: string, input: any) => {
   const res = query(q, [input]);
-  if (res.length === 1 || res.length === 0) return res[0];
-  else {
-    throw new Error('Expected one result, got ' + res.length);
-  }
+  if (res.length > 1) throw new Error();
+  return res[0];
 };
 
 /*
@@ -773,8 +800,6 @@ export const queryOne = (q: string, input: any) => {
     - add
     - flatten
     - group_by
-    - min/max/min_by/max_by
-    - unique_by
     - contains
     - join and split
  */

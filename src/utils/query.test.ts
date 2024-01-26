@@ -312,9 +312,35 @@ describe('NotFilter', () => {
   });
 });
 
-describe('UniqueFilter', () => {
+describe('ArrayFilter: unique', () => {
   test('query: unique', () => {
     expect(query('unique', [[1, 2, 3, 2, 1]])).toEqual([[1, 2, 3]]);
+  });
+
+  test('query: unique_by(.a)', () => {
+    expect(query('unique_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([
+      [{ a: 1 }, { a: 2 }]
+    ]);
+  });
+});
+
+describe('ArrayFilter: max', () => {
+  test('query: max', () => {
+    expect(query('max', [[1, 2, 3, 2, 1]])).toEqual([3]);
+  });
+
+  test('query: max_by(.a)', () => {
+    expect(query('max_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 2 }]);
+  });
+});
+
+describe('ArrayFilter: min', () => {
+  test('query: min', () => {
+    expect(query('min', [[1, 2, 3, 2, 1]])).toEqual([1]);
+  });
+
+  test('query: min_by(.a)', () => {
+    expect(query('min_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 1 }]);
   });
 });
 
