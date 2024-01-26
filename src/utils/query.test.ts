@@ -5,7 +5,7 @@ import {
   ArrayIndexOp,
   ArraySliceOp,
   ConcatenationGenerator,
-  FilterSequenceGenerator,
+  PipeGenerator,
   OObjects,
   PropertyLookupOp,
   query,
@@ -133,7 +133,7 @@ describe('Concatenation', () => {
     expect(
       new ConcatenationGenerator([
         new PropertyLookupOp('test'),
-        new FilterSequenceGenerator([new PropertyLookupOp('arr'), new ArrayGenerator()])
+        new PipeGenerator([new PropertyLookupOp('arr'), new ArrayGenerator()])
       ]).evaluate({ test: 'lorem', arr: [1, 2] })
     ).toEqual(ResultSet.ofList('lorem', 1, 2));
   });
@@ -152,10 +152,7 @@ describe('pipe', () => {
   });
 
   test('FilterSequence', () => {
-    const grp = new FilterSequenceGenerator([
-      new PropertyLookupOp('name'),
-      new PropertyLookupOp('first')
-    ]);
+    const grp = new PipeGenerator([new PropertyLookupOp('name'), new PropertyLookupOp('first')]);
     expect(grp.evaluate({ name: { first: 'John' } })).toEqual(ResultSet.of('John'));
   });
 });
@@ -435,22 +432,5 @@ describe('contains', () => {
   test('contains(["baz", "bar"])', () => {
     expect(query('contains(["baz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([true]);
     expect(query('contains(["bazzzzz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([false]);
-  });
-});
-
-// TODO: To be implemented
-describe.skip('ObjectConstructor', () => {
-  test('{name: .user, projects: .projects[]}', () => {
-    expect(
-      query('{name: .user, projects: .projects[]}', [
-        {
-          user: 'stedolan',
-          projects: ['jq', 'wikiflow']
-        }
-      ])
-    ).toEqual([
-      { name: 'stedolan', projects: 'jq' },
-      { name: 'stedolan', projects: 'wikiflow' }
-    ]);
   });
 });

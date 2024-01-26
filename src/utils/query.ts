@@ -291,7 +291,7 @@ export class ConcatenationGenerator implements Generator {
   }
 }
 
-export class FilterSequenceGenerator implements Generator {
+export class PipeGenerator implements Generator {
   constructor(public readonly nodes: Operator[]) {}
 
   evaluate(input: unknown): ResultSet {
@@ -629,31 +629,58 @@ const parsePair = (q: string, left: string, right: string) => {
   return { end, sub };
 };
 
-const makeFN = <T = undefined>(
-  fnName: string,
-  q: string,
-  arr: Operator[],
-  ctr: new (n: Operator, arg: T) => Operator,
-  arg: T
-): [string, Operator, Operator[]] => {
-  const { end, sub } = parsePair(q.slice(fnName.length), '(', ')');
-  return [q.slice(end + fnName.length + 1), new ctr(parse(sub), arg), arr];
+type FnRegistration =
+  | { args: '0'; fn: () => Operator }
+  | { args: '1'; fn: (arg: Operator) => Operator }
+  | { args: '0&1'; fn: (arg: Operator | undefined) => Operator };
+type BinaryOpRegistration = (l: Operator, r: Operator) => Operator;
+
+const FN_REGISTRY: Record<string, FnRegistration> = {
+  length: { args: '0', fn: () => new LengthFilter() },
+  has: { args: '1', fn: a => new HasFn(a) },
+  in: { args: '1', fn: a => new InFn(a) },
+  map: { args: '1', fn: a => new ArrayConstructor(new PipeGenerator([new ArrayGenerator(), a])) },
+  map_values: { args: '1', fn: a => new MapValuesFn(a) },
+  select: { args: '1', fn: a => new SelectFn(a) },
+  any: { args: '0', fn: () => new AnyFilter() },
+  all: { args: '0', fn: () => new AllFilter() },
+  unique_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.UNIQUE) },
+  unique: { args: '0', fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.UNIQUE) },
+  min_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.MIN) },
+  min: { args: '0', fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MIN) },
+  max_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.MAX) },
+  max: { args: '0', fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MAX) },
+  group_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.GROUP_BY) },
+  startswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.startsWith(b)) },
+  endswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.endsWith(b)) },
+  abs: { args: '0', fn: () => new AbsFilter() },
+  keys: { args: '0', fn: () => new KeysFilter() },
+  split: { args: '1', fn: a => new StringFn(a, (a, b) => a.split(b)) },
+  join: { args: '1', fn: a => new JoinFn(a) },
+  contains: { args: '1', fn: a => new ContainsFn(a) },
+  flatten: { args: '0', fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) }
 };
 
-const makeBinaryOp = <T = undefined>(
-  op: string,
-  q: string,
-  arr: Operator[],
-  ctr: new (l: Operator, r: Operator, arg: T) => Operator,
-  arg: T
-): [string, Operator | undefined, Operator[]] => {
-  const [nextS, nextTok, nextArr] = nextToken(q.slice(op.length).trim(), arr);
-  assert.present(nextTok);
-  arr[arr.length - 1] = new ctr(arr.at(-1)!, nextTok, arg);
-  return [nextS, undefined, nextArr];
+const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
+  '+': (l, r) => new AdditionBinaryOp(l, r),
+  '-': (l, r) => new SubtractionBinaryOp(l, r),
+  '%': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeParseInt(a) % safeParseInt(b)),
+  '//': (l, r) => new SimpleBinaryOp(l, r, (a, b) => a ?? b),
+  '==': (l, r) => new EqualsBinaryOp(l, r, false),
+  '!=': (l, r) => new EqualsBinaryOp(l, r, true),
+  '>=': (l, r) => new CmpBinaryOp(l, r, (a: any, b: any) => a >= b),
+  '>': (l, r) => new CmpBinaryOp(l, r, (a: any, b: any) => a > b),
+  '<=': (l, r) => new CmpBinaryOp(l, r, (a: any, b: any) => a <= b),
+  '<': (l, r) => new CmpBinaryOp(l, r, (a: any, b: any) => a < b),
+  and: (l, r) => new CmpBinaryOp(l, r, (a, b) => a && b),
+  or: (l, r) => new CmpBinaryOp(l, r, (a, b) => a || b)
 };
+
+const FN_NAMES = Object.keys(FN_REGISTRY).sort((a, b) => b.length - a.length);
+const BINOP_NAMES = Object.keys(BINOP_REGISTRY).sort((a, b) => b.length - a.length);
 
 const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, Operator[]] => {
+  let op: string | undefined;
   let m;
   if (q.startsWith('|')) {
     return [q.slice(1), undefined, arr];
@@ -668,38 +695,22 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     }
   } else if (q.startsWith('..')) {
     return [q.slice(2), new RecursiveDescentGenerator(), arr];
-  } else if (q.startsWith('+')) {
-    return makeBinaryOp('+', q, arr, AdditionBinaryOp, undefined);
-  } else if (q.startsWith('-')) {
-    return makeBinaryOp('-', q, arr, SubtractionBinaryOp, undefined);
-  } else if (q.startsWith('%')) {
-    return makeBinaryOp('%', q, arr, SimpleBinaryOp, (a, b) => safeParseInt(a) % safeParseInt(b));
-  } else if (q.startsWith('//')) {
-    return makeBinaryOp('//', q, arr, SimpleBinaryOp, (a, b) => a ?? b);
   } else if (q.startsWith('[')) {
     const { end, sub } = parsePair(q, '[', ']');
-    return [
-      q.slice(end + 1),
-      new ArrayConstructor(new FilterSequenceGenerator([parse(sub.trim())])),
-      arr
-    ];
+    return [q.slice(end + 1), new ArrayConstructor(new PipeGenerator([parse(sub.trim())])), arr];
   } else if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
     const s = q.slice(m[0].length);
 
     const [, identifier, arrayQuery] = m;
 
     if (arrayQuery === '') {
-      return [
-        s,
-        new FilterSequenceGenerator([new PropertyLookupOp(identifier), new ArrayGenerator()]),
-        arr
-      ];
+      return [s, new PipeGenerator([new PropertyLookupOp(identifier), new ArrayGenerator()]), arr];
     } else if (arrayQuery.includes(':')) {
       const [from, to] = arrayQuery.split(':');
 
       return [
         s,
-        new FilterSequenceGenerator([
+        new PipeGenerator([
           new PropertyLookupOp(identifier),
           new ArraySliceOp(from === '' ? 0 : parseInt(from), to === '' ? Infinity : parseInt(to))
         ]),
@@ -708,7 +719,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     } else {
       return [
         s,
-        new FilterSequenceGenerator([
+        new PipeGenerator([
           new PropertyLookupOp(identifier),
           new ArrayIndexOp(parseInt(arrayQuery))
         ]),
@@ -717,103 +728,48 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     }
   } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*/))) {
     return [q.slice(m[0].length), new PropertyLookupOp(m[0].slice(1)), arr];
+  } else if (q.startsWith('not')) {
+    arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
+    return [q.slice(3), undefined, arr];
+
+    /* LITERALS ************************************************************************** */
   } else if ((m = q.match(/^-?[0-9]+/))) {
     return [q.slice(m[0].length), new Literal(Number(m[0])), arr];
-  } else if (q.startsWith('null')) {
-    return [q.slice(4), new Literal(null), arr];
   } else if (q.startsWith('{')) {
     const { end, sub } = parsePair(q, '{', '}');
     return [q.slice(end + 1), new Literal(OObjects.parse('{' + sub + '}').val()), arr];
   } else if (q.startsWith('"')) {
-    let end = 1;
-    for (; end < q.length; end++) {
-      if (q[end] === '"') break;
-    }
-
+    const end = q.indexOf('"', 1);
     return [q.slice(end + 1), new Literal(q.slice(1, end)), arr];
-  } else if (q.startsWith('length')) {
-    return [q.slice(6), new LengthFilter(), arr];
-  } else if (q.startsWith('has(')) {
-    return makeFN('has', q, arr, HasFn, undefined);
-  } else if (q.startsWith('in(')) {
-    return makeFN('in', q, arr, InFn, undefined);
-  } else if (q.startsWith('map(')) {
-    const { end, sub } = parsePair(q.slice(3), '(', ')');
-    return [
-      q.slice(3 + end + 1),
-      new ArrayConstructor(new FilterSequenceGenerator([new ArrayGenerator(), parse(sub)])),
-      arr
-    ];
-  } else if (q.startsWith('map_values(')) {
-    return makeFN('map_values', q, arr, MapValuesFn, undefined);
-  } else if (q.startsWith('select(')) {
-    return makeFN('select', q, arr, SelectFn, undefined);
-  } else if (q.startsWith('==')) {
-    return makeBinaryOp('==', q, arr, EqualsBinaryOp, false);
-  } else if (q.startsWith('!=')) {
-    return makeBinaryOp('!=', q, arr, EqualsBinaryOp, true);
-  } else if (q.startsWith('>=')) {
-    return makeBinaryOp('>=', q, arr, CmpBinaryOp, (a: any, b: any) => a >= b);
-  } else if (q.startsWith('>')) {
-    return makeBinaryOp('>', q, arr, CmpBinaryOp, (a: any, b: any) => a > b);
-  } else if (q.startsWith('<=')) {
-    return makeBinaryOp('<=', q, arr, CmpBinaryOp, (a: any, b: any) => a <= b);
-  } else if (q.startsWith('<')) {
-    return makeBinaryOp('<', q, arr, CmpBinaryOp, (a: any, b: any) => a < b);
-  } else if (q.startsWith('any')) {
-    // TODO: Handle function
-    return [q.slice(3), new AnyFilter(), arr];
-  } else if (q.startsWith('all')) {
-    // TODO: Handle function
-    return [q.slice(3), new AllFilter(), arr];
-  } else if (q.startsWith('and')) {
-    return makeBinaryOp('and', q, arr, CmpBinaryOp, (a: any, b: any) => a && b);
-  } else if (q.startsWith('or')) {
-    return makeBinaryOp('or', q, arr, CmpBinaryOp, (a: any, b: any) => a || b);
-  } else if (q.startsWith('not')) {
-    arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
-    return [q.slice(3), undefined, arr];
+  } else if (q.startsWith('null')) {
+    return [q.slice(4), new Literal(null), arr];
   } else if (q.startsWith('false')) {
     return [q.slice(5), new Literal(false), arr];
   } else if (q.startsWith('true')) {
     return [q.slice(4), new Literal(true), arr];
-  } else if (q.startsWith('unique_by(')) {
-    return makeFN('unique_by', q, arr, ArrayFilter, ArrayFilterFns.UNIQUE);
-  } else if (q.startsWith('unique')) {
-    return [q.slice(6), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.UNIQUE), arr];
-  } else if (q.startsWith('min_by(')) {
-    return makeFN('min_by', q, arr, ArrayFilter, ArrayFilterFns.MIN);
-  } else if (q.startsWith('min')) {
-    return [q.slice(3), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MIN), arr];
-  } else if (q.startsWith('max_by(')) {
-    return makeFN('max_by', q, arr, ArrayFilter, ArrayFilterFns.MAX);
-  } else if (q.startsWith('group_by(')) {
-    return makeFN('group_by', q, arr, ArrayFilter, ArrayFilterFns.GROUP_BY);
-  } else if (q.startsWith('max')) {
-    return [q.slice(3), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MAX), arr];
-  } else if (q.startsWith('startswith(')) {
-    return makeFN('startswith', q, arr, StringFn, (a, b) => a.startsWith(b));
-  } else if (q.startsWith('endswith(')) {
-    return makeFN('endswith', q, arr, StringFn, (a, b) => a.endsWith(b));
-  } else if (q.startsWith('abs')) {
-    return [q.slice(3), new AbsFilter(), arr];
-  } else if (q.startsWith('keys')) {
-    return [q.slice(4), new KeysFilter(), arr];
-  } else if (q.startsWith('split(')) {
-    return makeFN('split', q, arr, StringFn, (a, b) => a.split(b));
-  } else if (q.startsWith('join(')) {
-    return makeFN('join', q, arr, JoinFn, undefined);
-  } else if (q.startsWith('contains(')) {
-    return makeFN('contains', q, arr, ContainsFn, undefined);
-  } else if (q.startsWith('flatten(')) {
-    // TODO: This is not correct...
-    //       Need some better way to represent a function like this
-    return makeFN('flatten', q, arr, ArrayFilter, ArrayFilterFns.FLATTEN);
-  } else if (q.startsWith('flatten')) {
-    return [q.slice(7), new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN), arr];
-  }
 
-  throw new Error(`Cannot parse: ${q}`);
+    /* BINARY OPS ************************************************************************** */
+  } else if ((op = BINOP_NAMES.find(o => q.startsWith(o)))) {
+    const [nextS, nextTok, nextArr] = nextToken(q.slice(op.length).trim(), arr);
+    assert.present(nextTok);
+    arr[arr.length - 1] = BINOP_REGISTRY[op](arr.at(-1)!, nextTok);
+    return [nextS, undefined, nextArr];
+
+    /* FUNCTIONS ************************************************************************** */
+  } else if ((op = FN_NAMES.find(o => q.startsWith(o)))) {
+    const { args, fn: fnFn } = FN_REGISTRY[op];
+    if (args === '0') {
+      return [q.slice(op.length), fnFn(), arr];
+    } else if (args === '0&1' && q[op.length] !== '(') {
+      return [q.slice(op.length + 1), fnFn(undefined), arr];
+    }
+    const { end, sub } = parsePair(q.slice(op.length), '(', ')');
+    return [q.slice(op.length + end + 1), fnFn(parse(sub)), arr];
+
+    /* ERROR ****************************************************************************** */
+  } else {
+    throw new Error('Cannot parse: ' + q);
+  }
 };
 
 export const parse = (query: string): Operator => {
@@ -832,7 +788,7 @@ export const parse = (query: string): Operator => {
     if (i++ > 1000) throw new Error('Infinite loop detected');
   } while (q.trim().length > 0);
 
-  return dest.length === 1 ? dest[0] : new FilterSequenceGenerator(dest);
+  return dest.length === 1 ? dest[0] : new PipeGenerator(dest);
 };
 
 export const query = (query: string, input: unknown[]) => {
@@ -858,12 +814,6 @@ export const queryOne = (q: string, input: any) => {
 };
 
 /*
-  TODO:
-    - any and all as functions
-    - object construction
-    - pick
-    - add
-
   ISSUES:
     - null vs undefined
     - optional object identifiers, e.g. .a?
