@@ -1,20 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isObj } from './object.ts';
 import { assert, NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED, VerifyNotReached } from './assert.ts';
+import { isTaggedType, tag, TaggedType } from './types.ts';
 
 const safeParseInt = (s: any) => {
   const n = Number(s);
   return isNaN(n) ? 0 : n;
 };
 
-type ResultSet = {
-  _type: 'resultSet';
-  _values: unknown[];
-};
+type ResultSet = TaggedType<'resultSet', unknown[]>;
 
 export const ResultSet = {
-  of: (o: unknown): ResultSet => ({ _type: 'resultSet', _values: [o] }),
-  ofList: (...o: unknown[]): ResultSet => ({ _type: 'resultSet', _values: o })
+  of: (o: unknown): ResultSet => ({ _type: 'resultSet', _val: [o] }),
+  ofList: (...o: unknown[]): ResultSet => ({ _type: 'resultSet', _val: o })
 };
 
 const eat = (remaining: string, s: string) => {
@@ -27,7 +25,7 @@ const expect = (remaining: string, s: string) => {
   else return eat(remaining, s);
 };
 
-const isResultSet = (o: unknown): o is ResultSet => (o as any)?._type === 'resultSet';
+const isResultSet = (o: unknown): o is ResultSet => isTaggedType(o, 'resultSet');
 
 const isOperator = (o: unknown): o is Operator => (o as any)?.evaluate;
 
@@ -284,7 +282,7 @@ export class ConcatenationGenerator implements Generator {
     for (const n of this.nodes) {
       const r = n.evaluate(input);
       if (isResultSet(r)) {
-        dest.push(...r._values);
+        dest.push(...r._val);
       } else {
         dest.push(r);
       }
@@ -303,7 +301,7 @@ export class FilterSequenceGenerator implements Generator {
       for (const e of v) {
         const res = node.evaluate(e);
         if (isResultSet(res)) {
-          dest.push(...res._values);
+          dest.push(...res._val);
         } else {
           dest.push(res);
         }
@@ -320,7 +318,7 @@ export class ArrayConstructor implements Operator {
   evaluate(input: unknown): unknown {
     const v = this.node.evaluate(input);
     if (isResultSet(v)) {
-      return [...v._values];
+      return [...v._val];
     } else {
       return [v];
     }
@@ -504,9 +502,7 @@ class AllFilter implements Operator {
   }
 }
 
-type ArrayFn = (
-  arr: [unknown, unknown][]
-) => [unknown, unknown][] | { _type: 'single'; val: unknown };
+type ArrayFn = (arr: [unknown, unknown][]) => [unknown, unknown][] | TaggedType<'single', unknown>;
 
 class ArrayFilter implements Operator {
   constructor(
@@ -517,7 +513,7 @@ class ArrayFilter implements Operator {
   evaluate(input: unknown): unknown {
     if (Array.isArray(input)) {
       const res = this.fn(input.map(e => [e, this.node.evaluate(e)]));
-      if ((res as any)._type === 'single') return (res as any).val;
+      if (isTaggedType(res, 'single')) return res._val;
       if (Array.isArray(res)) return res.map(a => a[0]);
       else return res;
     }
@@ -529,11 +525,11 @@ const ArrayFilterFns: Record<string, ArrayFn> = {
   UNIQUE: arr => arr.filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i),
   MIN: arr => {
     const min = Math.min(...arr.map(a => Number(a[1])));
-    return { _type: 'single', val: arr.find(a => a[1] === min)![0] };
+    return tag('single', arr.find(a => a[1] === min)![0]);
   },
   MAX: arr => {
     const max = Math.max(...arr.map(a => Number(a[1])));
-    return { _type: 'single', val: arr.find(a => a[1] === max)![0] };
+    return tag('single', arr.find(a => a[1] === max)![0]);
   },
   GROUP_BY: arr => {
     console.log(arr);
@@ -542,9 +538,7 @@ const ArrayFilterFns: Record<string, ArrayFn> = {
       dest[v as any] ??= [];
       dest[v as any].push(k);
     }
-    console.log(dest);
-    console.log(Object.values(dest));
-    return { _type: 'single', val: Object.values(dest) };
+    return tag('single', Object.values(dest));
   }
 };
 
@@ -840,7 +834,7 @@ export const query = (query: string, input: unknown[]) => {
     let v = i;
     v = node.evaluate(v);
     if (isResultSet(v)) {
-      dest.push(...v._values);
+      dest.push(...v._val);
     } else {
       dest.push(v);
     }
