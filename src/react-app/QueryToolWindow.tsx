@@ -10,7 +10,13 @@ export const QueryToolWindow = () => {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [queryString, setQueryString] = useState<string>('.elements[]');
 
-  const res = query(queryString, [diagram.layers.active]);
+  let res = undefined;
+  let error = undefined;
+  try {
+    res = query(queryString, [diagram.layers.active]);
+  } catch (e) {
+    error = e;
+  }
   return (
     <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['query', 'response']}>
       <Accordion.Item className="cmp-accordion__item cmp-accordion__item" value="query">
@@ -36,9 +42,8 @@ export const QueryToolWindow = () => {
         <AccordionTrigger>Response</AccordionTrigger>
         <AccordionContent>
           <div className={'cmp-query-response'}>
-            {res.map(e => (
-              <pre style={{}}>{JSON.stringify(e, undefined, 2)}</pre>
-            ))}
+            {!!error && <div className={'cmp-text-input__error'}>{error.toString()}</div>}
+            {res && res.map(e => <pre style={{}}>{JSON.stringify(e, undefined, 2)}</pre>)}
           </div>
         </AccordionContent>
       </Accordion.Item>

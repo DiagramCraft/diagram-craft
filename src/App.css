@@ -782,11 +782,12 @@ input::-webkit-input-placeholder {
 .cmp-query-response {
   margin-top: -10px;
   pre {
-    border-left: 2px solid var(--secondary-fg);
+    border-left: 2px solid transparent;
     margin-left: -10px;
+    margin-right: -10px;
     padding-left: 10px;
-    margin-top: 0.25rem;
-    margin-bottom: 0;
+    margin-bottom: 0.25rem;
+    margin-top: 0;
     max-height: 100px;
     overflow: hidden;
     &:hover {
