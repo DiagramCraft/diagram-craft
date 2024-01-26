@@ -344,6 +344,20 @@ describe('ArrayFilter: min', () => {
   });
 });
 
+describe('group_by', () => {
+  test('query: group_by(.a)', () => {
+    expect(query('group_by(.a)', [[{ a: 1, c: 2 }, { a: 2 }, { a: 1, c: 3 }]])).toEqual([
+      [
+        [
+          { a: 1, c: 2 },
+          { a: 1, c: 3 }
+        ],
+        [{ a: 2 }]
+      ]
+    ]);
+  });
+});
+
 describe('startswith', () => {
   test('query: startswith("foo")', () => {
     expect(query('startswith("foo")', [['foo', 'bar']])).toEqual([[true, false]]);

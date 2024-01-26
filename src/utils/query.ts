@@ -537,6 +537,14 @@ const ArrayFilterFns: Record<
   MAX: arr => {
     const max = Math.max(...arr.map(a => Number(a[1])));
     return arr.find(a => a[1] === max)![0];
+  },
+  GROUP_BY: arr => {
+    const dest: Record<string, unknown[]> = {};
+    for (const [k, v] of arr) {
+      dest[v as any] ??= [];
+      dest[v as any].push(k);
+    }
+    return Object.values(dest);
   }
 };
 
@@ -782,6 +790,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return [q.slice(3), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MIN), arr];
   } else if (q.startsWith('max_by(')) {
     return makeFN('max_by', q, arr, ArrayFilter, ArrayFilterFns.MAX);
+  } else if (q.startsWith('group_by(')) {
+    return makeFN('group_by', q, arr, ArrayFilter, ArrayFilterFns.GROUP_BY);
   } else if (q.startsWith('max')) {
     return [q.slice(3), new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MAX), arr];
   } else if (q.startsWith('startswith(')) {
@@ -852,5 +862,4 @@ export const queryOne = (q: string, input: any) => {
     - pick
     - add
     - flatten
-    - group_by
  */
