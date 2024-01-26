@@ -590,6 +590,24 @@ class MapValuesFn implements Operator {
   }
 }
 
+class ContainsFn implements Operator {
+  constructor(public readonly node: Operator) {}
+
+  evaluate(input: unknown): unknown {
+    assert.present(this.node);
+    const cv = this.node.evaluate(undefined);
+
+    if (typeof cv === 'string') {
+      return typeof input === 'string' ? input.includes(cv) : false;
+    } else if (Array.isArray(cv)) {
+      return Array.isArray(input) ? cv.every(e => input.includes(e)) : false;
+    }
+
+    // TODO: We don't support contains for objects yet
+    return false;
+  }
+}
+
 const parsePair = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
@@ -778,6 +796,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return makeFN('split', q, arr, StringFn, (a, b) => a.split(b));
   } else if (q.startsWith('join(')) {
     return makeFN('join', q, arr, JoinFn, undefined);
+  } else if (q.startsWith('contains(')) {
+    return makeFN('contains', q, arr, ContainsFn, undefined);
   }
 
   throw new Error(`Cannot parse: ${q}`);
@@ -833,5 +853,4 @@ export const queryOne = (q: string, input: any) => {
     - add
     - flatten
     - group_by
-    - contains
  */

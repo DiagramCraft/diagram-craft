@@ -18,6 +18,8 @@ export default defineConfig({
             return 'vendor';
           } else if (id.includes('sample/')) {
             return 'sample-data';
+          } else if (id.includes('query')) {
+            return 'query';
           }
         }
       }

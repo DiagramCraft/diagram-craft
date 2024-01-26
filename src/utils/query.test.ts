@@ -407,6 +407,19 @@ describe('join', () => {
   });
 });
 
+describe('contains', () => {
+  test('contains("foo")', () => {
+    expect(query('contains("foo")', [['foo', 'bar']])).toEqual([[true, false]]);
+  });
+
+  test('contains(["baz", "bar"])', () => {
+    expect(query('contains(["baz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([[true]]);
+    expect(query('contains(["bazzzzz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([
+      [false]
+    ]);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {
