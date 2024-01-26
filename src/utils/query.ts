@@ -2,7 +2,7 @@
 import { isObj } from './object.ts';
 import { assert, NOT_IMPLEMENTED_YET } from './assert.ts';
 
-const safeParseInt = (s: string) => {
+const safeParseInt = (s: any) => {
   const n = Number(s);
   return isNaN(n) ? 0 : n;
 };
@@ -126,8 +126,6 @@ export class ArrayConstructor implements Operator {
   }
 }
 
-//export class ObjectConstructor implements Operator {}
-
 export class RecursiveDescentGenerator implements Generator {
   constructor() {}
 
@@ -164,7 +162,6 @@ export class AdditionBinaryOp implements Operator {
     } else if (isObj(lvs) && isObj(rvs)) {
       return { ...lvs, ...rvs };
     } else {
-      // @ts-ignore
       return safeParseInt(lvs) + safeParseInt(rvs);
     }
   }
@@ -185,7 +182,6 @@ export class SubtractionBinaryOp implements Operator {
     } else if (isObj(lvs) && isObj(rvs)) {
       return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
     } else {
-      // @ts-ignore
       return safeParseInt(lvs) - safeParseInt(rvs);
     }
   }
@@ -262,7 +258,6 @@ class EqualsBinaryOp implements Operator {
     } else if (isObj(lvs) && isObj(rvs)) {
       throw NOT_IMPLEMENTED_YET();
     } else {
-      // @ts-ignore
       return this.negate ? lvs !== rvs : lvs === rvs;
     }
   }
@@ -272,7 +267,7 @@ class CmpBinaryOp implements Operator {
   constructor(
     private readonly left: Operator,
     private readonly right: Operator,
-    private readonly cmp: (a: unknown, b: unknown) => boolean
+    private readonly cmp: (a: unknown, b: unknown) => boolean | any
   ) {}
 
   evaluate(input: unknown): unknown {
@@ -314,7 +309,6 @@ class StringFn implements Operator {
     const lvs = input;
     const rvs = this.node.evaluate(undefined);
     if (Array.isArray(lvs)) return lvs.map(a => this.fn(a as string, rvs as string));
-    // @ts-ignore
     return this.fn(lvs as string, rvs as string);
   }
 }
@@ -335,23 +329,23 @@ const getBetweenBrackets = (q: string, left: string, right: string) => {
   return { end, sub };
 };
 
-const makeFN = <T>(
+const makeFN = <T = undefined>(
   fnName: string,
   q: string,
   arr: Operator[],
-  ctr: new (n: Operator, arg?: T) => Operator,
-  arg?: T
+  ctr: new (n: Operator, arg: T) => Operator,
+  arg: T
 ): [string, Operator, Operator[]] => {
   const { end, sub } = getBetweenBrackets(q.slice(fnName.length), '(', ')');
   return [q.slice(end + fnName.length + 1), new ctr(parse(sub), arg), arr];
 };
 
-const makeBinaryOp = <T>(
+const makeBinaryOp = <T = undefined>(
   op: string,
   q: string,
   arr: Operator[],
-  ctr: new (l: Operator, r: Operator, arg?: T) => Operator,
-  arg?: T
+  ctr: new (l: Operator, r: Operator, arg: T) => Operator,
+  arg: T
 ): [string, Operator | undefined, Operator[]] => {
   const [nextS, nextTok, nextArr] = nextToken(q.slice(op.length).trim(), arr);
   assert.present(nextTok);
@@ -375,9 +369,9 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('..')) {
     return [q.slice(2), new RecursiveDescentGenerator(), arr];
   } else if (q.startsWith('+')) {
-    return makeBinaryOp('+', q, arr, AdditionBinaryOp);
+    return makeBinaryOp('+', q, arr, AdditionBinaryOp, undefined);
   } else if (q.startsWith('-')) {
-    return makeBinaryOp('-', q, arr, SubtractionBinaryOp);
+    return makeBinaryOp('-', q, arr, SubtractionBinaryOp, undefined);
   } else if (q.startsWith('[')) {
     const { end, sub } = getBetweenBrackets(q, '[', ']');
     return [q.slice(end + 1), new ArrayConstructor(new FilterSequence([parse(sub.trim())])), arr];
@@ -434,9 +428,9 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('length')) {
     return [q.slice(6), new LengthFilter(), arr];
   } else if (q.startsWith('has(')) {
-    return makeFN('has', q, arr, HasFn);
+    return makeFN('has', q, arr, HasFn, undefined);
   } else if (q.startsWith('in(')) {
-    return makeFN('in', q, arr, InFn);
+    return makeFN('in', q, arr, InFn, undefined);
   } else if (q.startsWith('map(')) {
     const { end, sub } = getBetweenBrackets(q.slice(3), '(', ')');
     return [
@@ -447,25 +441,19 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('map_values(')) {
     throw NOT_IMPLEMENTED_YET();
   } else if (q.startsWith('select(')) {
-    return makeFN('select', q, arr, SelectFn);
+    return makeFN('select', q, arr, SelectFn, undefined);
   } else if (q.startsWith('==')) {
-    // @ts-ignore
     return makeBinaryOp('==', q, arr, EqualsBinaryOp, false);
   } else if (q.startsWith('!=')) {
-    // @ts-ignore
     return makeBinaryOp('!=', q, arr, EqualsBinaryOp, true);
   } else if (q.startsWith('>=')) {
-    // @ts-ignore
-    return makeBinaryOp('>=', q, arr, CmpBinaryOp, (a, b) => a >= b);
+    return makeBinaryOp('>=', q, arr, CmpBinaryOp, (a: any, b: any) => a >= b);
   } else if (q.startsWith('>')) {
-    // @ts-ignore
-    return makeBinaryOp('>', q, arr, CmpBinaryOp, (a, b) => a > b);
+    return makeBinaryOp('>', q, arr, CmpBinaryOp, (a: any, b: any) => a > b);
   } else if (q.startsWith('<=')) {
-    // @ts-ignore
-    return makeBinaryOp('<=', q, arr, CmpBinaryOp, (a, b) => a <= b);
+    return makeBinaryOp('<=', q, arr, CmpBinaryOp, (a: any, b: any) => a <= b);
   } else if (q.startsWith('<')) {
-    // @ts-ignore
-    return makeBinaryOp('<', q, arr, CmpBinaryOp, (a, b) => a < b);
+    return makeBinaryOp('<', q, arr, CmpBinaryOp, (a: any, b: any) => a < b);
   } else if (q.startsWith('any')) {
     // TODO: Handle function
     return [q.slice(3), new AnyFilter(), arr];
@@ -473,11 +461,9 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     // TODO: Handle function
     return [q.slice(3), new AllFilter(), arr];
   } else if (q.startsWith('and')) {
-    // @ts-ignore
-    return makeBinaryOp('and', q, arr, CmpBinaryOp, (a, b) => a && b);
+    return makeBinaryOp('and', q, arr, CmpBinaryOp, (a: any, b: any) => a && b);
   } else if (q.startsWith('or')) {
-    // @ts-ignore
-    return makeBinaryOp('or', q, arr, CmpBinaryOp, (a, b) => a || b);
+    return makeBinaryOp('or', q, arr, CmpBinaryOp, (a: any, b: any) => a || b);
   } else if (q.startsWith('not')) {
     arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
     return [q.slice(3), undefined, arr];
@@ -490,11 +476,9 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('unique')) {
     return [q.slice(6), new UniqueFilter(), arr];
   } else if (q.startsWith('startswith(')) {
-    // @ts-ignore
     return makeFN('startswith', q, arr, StringFn, (a, b) => a.startsWith(b));
   } else if (q.startsWith('endswith(')) {
-    // @ts-ignore
-    return makeFN('endswith', q, arr, StringFn, (a, b) => a.endswith(b));
+    return makeFN('endswith', q, arr, StringFn, (a, b) => a.endsWith(b));
   }
 
   throw new Error(`Cannot parse: ${q}`);
@@ -537,7 +521,7 @@ export const query = (query: string, input: unknown[]) => {
 
 export const queryOne = (q: string, input: any) => {
   const res = query(q, [input]);
-  if (res === undefined || res.length === 1 || res.length === 0) return res[0];
+  if (res.length === 1 || res.length === 0) return res[0];
   else {
     throw new Error('Expected one result, got ' + res.length);
   }
