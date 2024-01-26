@@ -2,10 +2,10 @@ import { describe, expect, test } from 'vitest';
 import {
   ArrayConstructor,
   ArrayIndexOp,
-  ArrayOp,
+  ArrayGenerator,
   ArraySliceOp,
-  Concatenation,
-  FilterSequence,
+  ConcatenationGenerator,
+  FilterSequenceGenerator,
   OObjects,
   PropertyLookupOp,
   query,
@@ -105,8 +105,8 @@ describe('ArrayLookup', () => {
   });
 
   test('ArrayOp', () => {
-    expect(() => new ArrayOp().evaluate('lorem')).toThrowError();
-    expect(new ArrayOp().evaluate([1, 2, 3])).toEqual(ResultSet.ofList(1, 2, 3));
+    expect(() => new ArrayGenerator().evaluate('lorem')).toThrowError();
+    expect(new ArrayGenerator().evaluate([1, 2, 3])).toEqual(ResultSet.ofList(1, 2, 3));
   });
 });
 
@@ -127,13 +127,13 @@ describe('Concatenation', () => {
 
   test('Concatenation', () => {
     expect(
-      new Concatenation([new ArrayIndexOp(0), new ArrayIndexOp(2)]).evaluate([1, 2, 3])
+      new ConcatenationGenerator([new ArrayIndexOp(0), new ArrayIndexOp(2)]).evaluate([1, 2, 3])
     ).toEqual(ResultSet.ofList(1, 3));
 
     expect(
-      new Concatenation([
+      new ConcatenationGenerator([
         new PropertyLookupOp('test'),
-        new FilterSequence([new PropertyLookupOp('arr'), new ArrayOp()])
+        new FilterSequenceGenerator([new PropertyLookupOp('arr'), new ArrayGenerator()])
       ]).evaluate({ test: 'lorem', arr: [1, 2] })
     ).toEqual(ResultSet.ofList('lorem', 1, 2));
   });
@@ -152,7 +152,10 @@ describe('pipe', () => {
   });
 
   test('FilterSequence', () => {
-    const grp = new FilterSequence([new PropertyLookupOp('name'), new PropertyLookupOp('first')]);
+    const grp = new FilterSequenceGenerator([
+      new PropertyLookupOp('name'),
+      new PropertyLookupOp('first')
+    ]);
     expect(grp.evaluate({ name: { first: 'John' } })).toEqual(ResultSet.of('John'));
   });
 });
@@ -170,7 +173,7 @@ describe('ArrayConstructor', () => {
 
     expect(
       new ArrayConstructor(
-        new Concatenation([new PropertyLookupOp('user'), new PropertyLookupOp('age')])
+        new ConcatenationGenerator([new PropertyLookupOp('user'), new PropertyLookupOp('age')])
       ).evaluate({ user: 'John', age: 17 })
     ).toEqual(['John', 17]);
   });
@@ -323,6 +326,21 @@ describe('startswith', () => {
     expect(
       query('[.[] | startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
     ).toEqual([[false, true, false, true, false]]);
+  });
+});
+
+describe('AbsFilter', () => {
+  test('query: map(abs)', () => {
+    expect(query('map(abs)', [[-1, 2, -3]])).toEqual([[1, 2, 3]]);
+  });
+});
+
+describe('ModuloBinaryOp', () => {
+  test('query: . % 4', () => {
+    expect(queryOne('. % 4', 10)).toEqual(2);
+  });
+  test('query: 5 % 4', () => {
+    expect(queryOne('5 % 4', null)).toEqual(1);
   });
 });
 

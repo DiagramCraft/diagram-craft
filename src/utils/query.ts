@@ -278,7 +278,7 @@ export class ArraySliceOp implements Operator {
   }
 }
 
-export class ArrayOp implements Generator {
+export class ArrayGenerator implements Generator {
   constructor() {}
 
   evaluate(i: unknown): ResultSet {
@@ -287,7 +287,7 @@ export class ArrayOp implements Generator {
   }
 }
 
-export class Concatenation implements Generator {
+export class ConcatenationGenerator implements Generator {
   constructor(public readonly nodes: Operator[]) {}
 
   evaluate(input: unknown): ResultSet {
@@ -304,7 +304,7 @@ export class Concatenation implements Generator {
   }
 }
 
-export class FilterSequence implements Generator {
+export class FilterSequenceGenerator implements Generator {
   constructor(public readonly nodes: Operator[]) {}
 
   evaluate(input: unknown): ResultSet {
@@ -396,6 +396,19 @@ export class SubtractionBinaryOp implements Operator {
     } else {
       return safeParseInt(lvs) - safeParseInt(rvs);
     }
+  }
+}
+
+export class ModuloBinaryOp implements Operator {
+  constructor(
+    public readonly left: Operator,
+    public readonly right: Operator
+  ) {}
+
+  evaluate(input: unknown): unknown {
+    const lvs = this.left.evaluate(input);
+    const rvs = this.right.evaluate(input);
+    return safeParseInt(lvs) % safeParseInt(rvs);
   }
 }
 
@@ -525,6 +538,13 @@ class StringFn implements Operator {
   }
 }
 
+class AbsFilter implements Operator {
+  evaluate(input: unknown): unknown {
+    if (typeof input === 'number') return Math.abs(input);
+    return input;
+  }
+}
+
 const parsePair = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
@@ -571,8 +591,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return [q.slice(1), undefined, arr];
   } else if (q.startsWith(',')) {
     const last = arr.at(-1)!;
-    if (!(last instanceof Concatenation)) {
-      const seq = new Concatenation([last]);
+    if (!(last instanceof ConcatenationGenerator)) {
+      const seq = new ConcatenationGenerator([last]);
       arr[arr.length - 1] = seq;
       return [q.slice(1), undefined, seq.nodes];
     } else {
@@ -584,22 +604,32 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return makeBinaryOp('+', q, arr, AdditionBinaryOp, undefined);
   } else if (q.startsWith('-')) {
     return makeBinaryOp('-', q, arr, SubtractionBinaryOp, undefined);
+  } else if (q.startsWith('%')) {
+    return makeBinaryOp('/', q, arr, ModuloBinaryOp, undefined);
   } else if (q.startsWith('[')) {
     const { end, sub } = parsePair(q, '[', ']');
-    return [q.slice(end + 1), new ArrayConstructor(new FilterSequence([parse(sub.trim())])), arr];
+    return [
+      q.slice(end + 1),
+      new ArrayConstructor(new FilterSequenceGenerator([parse(sub.trim())])),
+      arr
+    ];
   } else if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
     const s = q.slice(m[0].length);
 
     const [, identifier, arrayQuery] = m;
 
     if (arrayQuery === '') {
-      return [s, new FilterSequence([new PropertyLookupOp(identifier), new ArrayOp()]), arr];
+      return [
+        s,
+        new FilterSequenceGenerator([new PropertyLookupOp(identifier), new ArrayGenerator()]),
+        arr
+      ];
     } else if (arrayQuery.includes(':')) {
       const [from, to] = arrayQuery.split(':');
 
       return [
         s,
-        new FilterSequence([
+        new FilterSequenceGenerator([
           new PropertyLookupOp(identifier),
           new ArraySliceOp(from === '' ? 0 : parseInt(from), to === '' ? Infinity : parseInt(to))
         ]),
@@ -608,7 +638,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     } else {
       return [
         s,
-        new FilterSequence([
+        new FilterSequenceGenerator([
           new PropertyLookupOp(identifier),
           new ArrayIndexOp(parseInt(arrayQuery))
         ]),
@@ -641,7 +671,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     const { end, sub } = parsePair(q.slice(3), '(', ')');
     return [
       q.slice(3 + end + 1),
-      new ArrayConstructor(new FilterSequence([new ArrayOp(), parse(sub)])),
+      new ArrayConstructor(new FilterSequenceGenerator([new ArrayGenerator(), parse(sub)])),
       arr
     ];
   } else if (q.startsWith('map_values(')) {
@@ -685,6 +715,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return makeFN('startswith', q, arr, StringFn, (a, b) => a.startsWith(b));
   } else if (q.startsWith('endswith(')) {
     return makeFN('endswith', q, arr, StringFn, (a, b) => a.endsWith(b));
+  } else if (q.startsWith('abs')) {
+    return [q.slice(3), new AbsFilter(), arr];
   }
 
   throw new Error(`Cannot parse: ${q}`);
@@ -706,7 +738,7 @@ export const parse = (query: string): Operator => {
     if (i++ > 1000) throw new Error('Infinite loop detected');
   } while (q.trim().length > 0);
 
-  return dest.length === 1 ? dest[0] : new FilterSequence(dest);
+  return dest.length === 1 ? dest[0] : new FilterSequenceGenerator(dest);
 };
 
 export const query = (query: string, input: unknown[]) => {
@@ -738,8 +770,6 @@ export const queryOne = (q: string, input: any) => {
     - any and all as functions
     - optional object identifiers, e.g. .a?
     - object construction
-    - modulo
-    - abs
     - keys
     - map_values
     - pick
