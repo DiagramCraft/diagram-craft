@@ -722,6 +722,8 @@
 }
 
 .cmp-button {
+  --_button-border: var(--blue-6);
+
   flex: 0 0 auto;
   color: var(--slate-11);
   height: 23px;
@@ -732,7 +734,7 @@
   line-height: 1;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--blue-6);
+  border: 1px solid var(--_button-border);
   border-radius: 4px;
   background-color: var(--secondary-bg);
   margin: 0;
@@ -752,6 +754,16 @@
     pointer-events: none;
     border: 1px solid var(--slate-6);
   }
+}
+.cmp-button--primary {
+  outline: 2px solid var(--_button-border);
+  outline-offset: -1px;
+}
+.cmp-button--secondary {
+  --_button-border: var(--tertiary-fg);
+}
+.cmp-button--danger {
+  --_button-border: var(--error-fg);
 }
 
 .cmp-collapsible {

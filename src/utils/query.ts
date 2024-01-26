@@ -246,7 +246,12 @@ export class PropertyLookupOp implements Operator {
     if (this.strict && !isObj(input) && input !== undefined) throw new Error();
     assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
     if (!isObj(input)) return undefined;
-    return (input as any)[this.identifier];
+
+    if (input instanceof Map) {
+      return input.get(this.identifier);
+    } else {
+      return (input as any)[this.identifier];
+    }
   }
 }
 

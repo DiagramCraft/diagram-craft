@@ -782,10 +782,17 @@ input::-webkit-input-placeholder {
 .cmp-query-response {
   margin-top: -10px;
   pre {
+    margin: 0;
+  }
+  .cmp-query-response__item {
+    display: grid;
+    grid-template-columns: 1rem 1fr;
+    align-items: top;
+
     border-left: 2px solid transparent;
     margin-left: -10px;
     margin-right: -10px;
-    padding-left: 10px;
+    padding-left: 5px;
     margin-bottom: 0.25rem;
     margin-top: 0;
     max-height: 100px;
@@ -794,6 +801,14 @@ input::-webkit-input-placeholder {
       border-left: 2px solid var(--blue-11);
       background-color: var(--slate-3);
     }
+
+    & svg {
+      margin-top: 2px;
+      color: var(--blue-11);
+    }
+  }
+  .cmp-query-response__item--expanded {
+    max-height: 1000px !important;
   }
 }
 
