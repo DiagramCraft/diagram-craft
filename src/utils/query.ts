@@ -233,13 +233,19 @@ export class ONumber {
 }
 
 export class PropertyLookupOp implements Operator {
-  constructor(public readonly identifier: string) {}
+  public readonly strict: boolean;
+  public readonly identifier: string;
+
+  constructor(identifier: string) {
+    this.strict = !identifier.endsWith('?');
+    this.identifier = identifier.replace(/\?$/, '');
+  }
 
   evaluate(input: unknown): unknown {
     if (this.identifier === '') return input;
-    // TODO: Maye we should remove this and rely of .a?
-    if (input === undefined) return undefined;
+    if (this.strict && !isObj(input) && input !== undefined) throw new Error();
     assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
+    if (!isObj(input)) return undefined;
     return (input as any)[this.identifier];
   }
 }
@@ -726,7 +732,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
         arr
       ];
     }
-  } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*/))) {
+  } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*\??/))) {
     return [q.slice(m[0].length), new PropertyLookupOp(m[0].slice(1)), arr];
   } else if (q.startsWith('not')) {
     arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
@@ -812,9 +818,3 @@ export const queryOne = (q: string, input: any) => {
   if (res.length > 1) throw new Error();
   return res[0];
 };
-
-/*
-  ISSUES:
-    - null vs undefined
-    - optional object identifiers, e.g. .a?
- */

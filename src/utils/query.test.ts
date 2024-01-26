@@ -5,8 +5,8 @@ import {
   ArrayIndexOp,
   ArraySliceOp,
   ConcatenationGenerator,
-  PipeGenerator,
   OObjects,
+  PipeGenerator,
   PropertyLookupOp,
   query,
   queryOne,
@@ -51,21 +51,29 @@ describe('PropertyLookupOp', () => {
 
   test('query: .test', () => {
     expect(queryOne('.test', { test: 1 })).toEqual(1);
-    expect(queryOne('.test', 123)).toEqual(undefined);
-    expect(queryOne('.test', 'lorem')).toEqual(undefined);
-    expect(queryOne('.test', [1, 2, 3])).toEqual(undefined);
+    expect(() => queryOne('.test', 123)).toThrowError();
+    expect(() => queryOne('.test', 'lorem')).toThrowError();
+    expect(() => queryOne('.test', [1, 2, 3])).toThrowError();
   });
 
   test('query: .a.b', () => {
     expect(queryOne('.a.b', { a: { b: 1 } })).toEqual(1);
     expect(queryOne('.a.b', { a: { c: 1 } })).toEqual(undefined);
-    expect(queryOne('.a.b', 123)).toEqual(undefined);
-    expect(queryOne('.a.b', 'lorem')).toEqual(undefined);
-    expect(queryOne('.a.b', [1, 2, 3])).toEqual(undefined);
+    expect(() => queryOne('.a.b', 123)).toThrowError();
+    expect(() => queryOne('.a.b', 'lorem')).toThrowError();
+    expect(() => queryOne('.a.b', [1, 2, 3])).toThrowError();
+  });
+
+  test('query: .a?.b', () => {
+    expect(queryOne('.a.b', { a: { b: 1 } })).toEqual(1);
+    expect(queryOne('.a.b', { a: { c: 1 } })).toEqual(undefined);
+    expect(queryOne('.a?.b', 123)).toEqual(undefined);
+    expect(queryOne('.a?.b', 'lorem')).toEqual(undefined);
+    expect(queryOne('.a?.b', [1, 2, 3])).toEqual(undefined);
   });
 
   test('PropertyLookupOp', () => {
-    expect(new PropertyLookupOp('test').evaluate([1, 2, 3])).toEqual(undefined);
+    expect(new PropertyLookupOp('test?').evaluate([1, 2, 3])).toEqual(undefined);
     expect(new PropertyLookupOp('test').evaluate({ test: 6 })).toEqual(6);
   });
 });
@@ -177,8 +185,8 @@ describe('ArrayConstructor', () => {
 });
 
 describe('RecursiveDescent', () => {
-  test('query: .. | .a', () => {
-    expect(query('.. | .a', [[[{ a: 1 }]]])).toEqual([1]);
+  test('query: .. | .a?', () => {
+    expect(query('.. | .a?', [[[{ a: 1 }]]])).toEqual([1]);
   });
 
   test('RecursiveDescentGenerator', () => {
