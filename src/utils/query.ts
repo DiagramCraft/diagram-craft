@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isObj } from './object.ts';
-import { assert, NOT_IMPLEMENTED_YET } from './assert.ts';
+import { assert, NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED, VerifyNotReached } from './assert.ts';
 
 const safeParseInt = (s: any) => {
   const n = Number(s);
@@ -21,6 +21,16 @@ export const ResultSet = {
     _type: 'resultSet',
     _values: o
   })
+};
+
+const eat = (remaining: string, s: string) => {
+  if (remaining.startsWith(s)) return remaining.slice(s.length).trimStart();
+  else return remaining;
+};
+
+const expect = (remaining: string, s: string) => {
+  if (!remaining.startsWith(s)) throw new Error('Expect: ' + s);
+  else return eat(remaining, s);
 };
 
 const isResultSet = (o: unknown): o is ResultSet => (o as any)?._type === 'resultSet';
@@ -62,7 +72,7 @@ export const OObjects = {
       const [obj, r] = OObject.parse(s);
       return [r.trim(), obj];
     } else if (s.startsWith('(')) {
-      const { sub } = getBetweenBrackets(s, '(', ')');
+      const { sub } = parsePair(s, '(', ')');
       return [s.slice(sub.length + 2).trim(), parse(sub.trim())];
     } else if (s.startsWith('[')) {
       const [arr, r] = OArray.parse(s);
@@ -93,7 +103,7 @@ export class OObject {
   }
 
   static parse(s: string): [OObject, string] {
-    const { sub } = getBetweenBrackets(s, '{', '}');
+    const { sub } = parsePair(s, '{', '}');
 
     const obj = new OObject();
 
@@ -108,21 +118,18 @@ export class OObject {
         if (currentKey) {
           obj.entries.push([currentKey, entry]);
           currentKey = undefined;
-
-          if (remaining.startsWith(',')) remaining = remaining.slice(1).trim();
+          remaining = eat(remaining, ',');
         } else {
           currentKey = entry;
-          if (!remaining.startsWith(':')) throw new Error('Expected :');
-          remaining = remaining.slice(1).trim();
+          remaining = expect(remaining, ':');
         }
       } else if (entry instanceof OArray || entry instanceof ONumber || entry instanceof OBoolean) {
-        if (!currentKey) throw new Error();
-
+        assert.present(currentKey);
         obj.entries.push([currentKey, entry]);
         currentKey = undefined;
-        if (remaining.startsWith(',')) remaining = remaining.slice(1).trim();
+        remaining = eat(remaining, ',');
       } else {
-        throw new Error();
+        VERIFY_NOT_REACHED();
       }
     }
 
@@ -173,7 +180,7 @@ export class OBoolean {
     } else if (s.startsWith('false')) {
       return [new OBoolean(false), s.slice(5)];
     } else {
-      throw new Error();
+      throw new VerifyNotReached();
     }
   }
 
@@ -190,7 +197,7 @@ export class OArray {
   }
 
   static parse(s: string): [OArray, string] {
-    const { sub } = getBetweenBrackets(s, '[', ']');
+    const { sub } = parsePair(s, '[', ']');
 
     const arr = new OArray();
 
@@ -202,7 +209,7 @@ export class OArray {
 
       arr.value.push(next);
 
-      if (remaining.startsWith(',')) remaining = remaining.slice(1).trim();
+      if (remaining.startsWith(',')) remaining = eat(remaining, ',');
       else break;
     }
 
@@ -518,7 +525,7 @@ class StringFn implements Operator {
   }
 }
 
-const getBetweenBrackets = (q: string, left: string, right: string) => {
+const parsePair = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
   for (; end < q.length; end++) {
@@ -541,7 +548,7 @@ const makeFN = <T = undefined>(
   ctr: new (n: Operator, arg: T) => Operator,
   arg: T
 ): [string, Operator, Operator[]] => {
-  const { end, sub } = getBetweenBrackets(q.slice(fnName.length), '(', ')');
+  const { end, sub } = parsePair(q.slice(fnName.length), '(', ')');
   return [q.slice(end + fnName.length + 1), new ctr(parse(sub), arg), arr];
 };
 
@@ -578,7 +585,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('-')) {
     return makeBinaryOp('-', q, arr, SubtractionBinaryOp, undefined);
   } else if (q.startsWith('[')) {
-    const { end, sub } = getBetweenBrackets(q, '[', ']');
+    const { end, sub } = parsePair(q, '[', ']');
     return [q.slice(end + 1), new ArrayConstructor(new FilterSequence([parse(sub.trim())])), arr];
   } else if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
     const s = q.slice(m[0].length);
@@ -615,7 +622,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('null')) {
     return [q.slice(4), new Literal(null), arr];
   } else if (q.startsWith('{')) {
-    const { end, sub } = getBetweenBrackets(q, '{', '}');
+    const { end, sub } = parsePair(q, '{', '}');
     return [q.slice(end + 1), new Literal(OObjects.parse('{' + sub + '}').val()), arr];
   } else if (q.startsWith('"')) {
     let end = 1;
@@ -631,7 +638,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('in(')) {
     return makeFN('in', q, arr, InFn, undefined);
   } else if (q.startsWith('map(')) {
-    const { end, sub } = getBetweenBrackets(q.slice(3), '(', ')');
+    const { end, sub } = parsePair(q.slice(3), '(', ')');
     return [
       q.slice(3 + end + 1),
       new ArrayConstructor(new FilterSequence([new ArrayOp(), parse(sub)])),
@@ -725,3 +732,23 @@ export const queryOne = (q: string, input: any) => {
     throw new Error('Expected one result, got ' + res.length);
   }
 };
+
+/*
+  TODO:
+    - any and all as functions
+    - optional object identifiers, e.g. .a?
+    - object construction
+    - modulo
+    - abs
+    - keys
+    - map_values
+    - pick
+    - add
+    - flatten
+    - group_by
+    - min/max/min_by/max_by
+    - unique_by
+    - contains
+    - join and split
+    - alternative operator
+ */
