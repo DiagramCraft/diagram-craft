@@ -43,40 +43,35 @@ type OObjects = OObject | OBoolean | OArray | ONumber | OString | Operator;
 
 export const OObjects = {
   parse(s: string): OObjects & { val(): unknown } {
-    const r = OObjects.parseNext(s)[1];
+    const r = OObjects.parseNext(s)[0];
     if (isOperator(r)) throw new Error();
     return r;
   },
 
   parseTemplate(s: string): OObjects {
-    return OObjects.parseNext(s)[1];
+    return OObjects.parseNext(s)[0];
   },
 
-  parseNext(s: string): [string, OObjects] {
+  parseNext(s: string): [OObjects, string] {
     if (s.startsWith('"')) {
-      const [str, r] = OString.parse(s);
-      return [r.trim(), str];
+      return OString.parse(s);
     } else if (s.startsWith('.')) {
       let end = 1;
       for (; end < s.length; end++) {
         if (s[end] === ',' || s[end] === '}' || s[end] === ' ' || s[end] === ':') break;
       }
-      return [s.slice(end), parse(s.slice(0, end))];
+      return [parse(s.slice(0, end)), s.slice(end)];
     } else if (s.startsWith('{')) {
-      const [obj, r] = OObject.parse(s);
-      return [r.trim(), obj];
+      return OObject.parse(s);
     } else if (s.startsWith('(')) {
       const { sub } = parsePair(s, '(', ')');
-      return [s.slice(sub.length + 2).trim(), parse(sub.trim())];
+      return [parse(sub.trim()), s.slice(sub.length + 2)];
     } else if (s.startsWith('[')) {
-      const [arr, r] = OArray.parse(s);
-      return [r.trim(), arr];
+      return OArray.parse(s);
     } else if (s.match(/^[0-9].*/)) {
-      const [num, r] = ONumber.parse(s);
-      return [r.trim(), num];
+      return ONumber.parse(s);
     } else if (s.startsWith('true') || s.startsWith('false')) {
-      const [num, r] = OBoolean.parse(s);
-      return [r.trim(), num];
+      return OBoolean.parse(s);
     } else {
       let end = 1;
       for (; end < s.length; end++) {
@@ -84,7 +79,7 @@ export const OObjects = {
           break;
         }
       }
-      return [s.slice(end), new OString(s.slice(0, end))];
+      return [new OString(s.slice(0, end)), s.slice(end)];
     }
   }
 };
@@ -105,7 +100,7 @@ export class OObject {
     let remaining = sub.trim();
 
     while (remaining.length > 0) {
-      const [r, entry] = OObjects.parseNext(remaining);
+      const [entry, r] = OObjects.parseNext(remaining);
       remaining = r.trim();
 
       if (entry instanceof OString || isOperator(entry)) {
@@ -198,7 +193,7 @@ export class OArray {
     let remaining = sub.trim();
 
     while (remaining.length > 0) {
-      const [r, next] = OObjects.parseNext(remaining);
+      const [next, r] = OObjects.parseNext(remaining);
       remaining = r.trim();
 
       arr.value.push(next);
@@ -509,15 +504,20 @@ class AllFilter implements Operator {
   }
 }
 
+type ArrayFn = (
+  arr: [unknown, unknown][]
+) => [unknown, unknown][] | { _type: 'single'; val: unknown };
+
 class ArrayFilter implements Operator {
   constructor(
     private readonly node: Operator,
-    private readonly fn: (arr: [unknown, unknown][]) => [unknown, unknown][] | unknown
+    private readonly fn: ArrayFn
   ) {}
 
   evaluate(input: unknown): unknown {
     if (Array.isArray(input)) {
       const res = this.fn(input.map(e => [e, this.node.evaluate(e)]));
+      if ((res as any)._type === 'single') return (res as any).val;
       if (Array.isArray(res)) return res.map(a => a[0]);
       else return res;
     }
@@ -525,26 +525,26 @@ class ArrayFilter implements Operator {
   }
 }
 
-const ArrayFilterFns: Record<
-  string,
-  (arr: [unknown, unknown][]) => [unknown, unknown][] | unknown
-> = {
+const ArrayFilterFns: Record<string, ArrayFn> = {
   UNIQUE: arr => arr.filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i),
   MIN: arr => {
     const min = Math.min(...arr.map(a => Number(a[1])));
-    return arr.find(a => a[1] === min)![0];
+    return { _type: 'single', val: arr.find(a => a[1] === min)![0] };
   },
   MAX: arr => {
     const max = Math.max(...arr.map(a => Number(a[1])));
-    return arr.find(a => a[1] === max)![0];
+    return { _type: 'single', val: arr.find(a => a[1] === max)![0] };
   },
   GROUP_BY: arr => {
+    console.log(arr);
     const dest: Record<string, unknown[]> = {};
     for (const [k, v] of arr) {
       dest[v as any] ??= [];
       dest[v as any].push(k);
     }
-    return Object.values(dest);
+    console.log(dest);
+    console.log(Object.values(dest));
+    return { _type: 'single', val: Object.values(dest) };
   }
 };
 
@@ -608,7 +608,7 @@ class ContainsFn implements Operator {
     if (typeof cv === 'string') {
       return typeof input === 'string' ? input.includes(cv) : false;
     } else if (Array.isArray(cv)) {
-      return Array.isArray(input) ? cv.every(e => input.includes(e)) : false;
+      return Array.isArray(input) ? cv.every(e => input.some(v => v.includes(e))) : false;
     }
 
     // TODO: We don't support contains for objects yet
@@ -857,9 +857,12 @@ export const queryOne = (q: string, input: any) => {
 /*
   TODO:
     - any and all as functions
-    - optional object identifiers, e.g. .a?
     - object construction
     - pick
     - add
     - flatten
+
+  ISSUES:
+    - null vs undefined
+    - optional object identifiers, e.g. .a?
  */
