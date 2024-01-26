@@ -10,6 +10,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import {
   TbCategoryPlus,
   TbDatabaseEdit,
+  TbDropletSearch,
   TbFiles,
   TbHistory,
   TbInfoCircle,
@@ -69,6 +70,7 @@ import { Point } from './geometry/point.ts';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx';
 import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog.tsx';
 import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
+import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -255,6 +257,9 @@ const App = () => {
                 </SideBarPage>
                 <SideBarPage icon={TbHistory}>
                   <HistoryToolWindow />
+                </SideBarPage>
+                <SideBarPage icon={TbDropletSearch}>
+                  <QueryToolWindow />
                 </SideBarPage>
               </SideBar>
 

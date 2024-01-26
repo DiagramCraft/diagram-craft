@@ -779,6 +779,23 @@ input::-webkit-input-placeholder {
   }
 }
 
+.cmp-query-response {
+  margin-top: -10px;
+  pre {
+    border-left: 2px solid var(--secondary-fg);
+    margin-left: -10px;
+    padding-left: 10px;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+    max-height: 100px;
+    overflow: hidden;
+    &:hover {
+      border-left: 2px solid var(--blue-11);
+      background-color: var(--slate-3);
+    }
+  }
+}
+
 /* Adjustments of general components for specific use-cases */
 
 #menu {
