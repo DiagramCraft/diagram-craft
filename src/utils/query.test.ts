@@ -358,6 +358,12 @@ describe('group_by', () => {
   });
 });
 
+describe('flatten', () => {
+  test('query: flatten', () => {
+    expect(query('flatten', [[1, [2, [3, 5]], 4, [5, 6]]])).toEqual([[1, 2, [3, 5], 4, 5, 6]]);
+  });
+});
+
 describe('startswith', () => {
   test('query: startswith("foo")', () => {
     expect(query('startswith("foo")', [['foo', 'bar']])).toEqual([[true, false]]);

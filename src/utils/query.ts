@@ -532,13 +532,16 @@ const ArrayFilterFns: Record<string, ArrayFn> = {
     return tag('single', arr.find(a => a[1] === max)![0]);
   },
   GROUP_BY: arr => {
-    console.log(arr);
     const dest: Record<string, unknown[]> = {};
     for (const [k, v] of arr) {
       dest[v as any] ??= [];
       dest[v as any].push(k);
     }
     return tag('single', Object.values(dest));
+  },
+  FLATTEN: arr => {
+    const dest: unknown[] = arr.map(a => a[0]).flat();
+    return tag('single', dest);
   }
 };
 
@@ -802,6 +805,12 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return makeFN('join', q, arr, JoinFn, undefined);
   } else if (q.startsWith('contains(')) {
     return makeFN('contains', q, arr, ContainsFn, undefined);
+  } else if (q.startsWith('flatten(')) {
+    // TODO: This is not correct...
+    //       Need some better way to represent a function like this
+    return makeFN('flatten', q, arr, ArrayFilter, ArrayFilterFns.FLATTEN);
+  } else if (q.startsWith('flatten')) {
+    return [q.slice(7), new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN), arr];
   }
 
   throw new Error(`Cannot parse: ${q}`);
@@ -854,7 +863,6 @@ export const queryOne = (q: string, input: any) => {
     - object construction
     - pick
     - add
-    - flatten
 
   ISSUES:
     - null vs undefined
