@@ -395,6 +395,18 @@ describe('SimpleBinaryOp: //', () => {
   });
 });
 
+describe('split', () => {
+  test('split(",")', () => {
+    expect(query('split(",")', ['a,b,c'])).toEqual([['a', 'b', 'c']]);
+  });
+});
+
+describe('join', () => {
+  test('join(",")', () => {
+    expect(query('join(",")', [['a', 'b', 'c']])).toEqual(['a,b,c']);
+  });
+});
+
 // TODO: To be implemented
 describe.skip('ObjectConstructor', () => {
   test('{name: .user, projects: .projects[]}', () => {

@@ -543,7 +543,7 @@ const ArrayFilterFns: Record<
 class StringFn implements Operator {
   constructor(
     private readonly node: Operator,
-    private readonly fn: (a: string, b: string) => boolean
+    private readonly fn: (a: string, b: string) => unknown
   ) {}
 
   evaluate(input: unknown): unknown {
@@ -551,6 +551,16 @@ class StringFn implements Operator {
     const rvs = this.node.evaluate(undefined);
     if (Array.isArray(lvs)) return lvs.map(a => this.fn(a as string, rvs as string));
     return this.fn(lvs as string, rvs as string);
+  }
+}
+
+class JoinFn implements Operator {
+  constructor(private readonly node: Operator) {}
+
+  evaluate(input: unknown): unknown {
+    const rvs = this.node.evaluate(undefined);
+    if (Array.isArray(input)) return input.join(rvs as string);
+    return input;
   }
 }
 
@@ -764,6 +774,10 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     return [q.slice(3), new AbsFilter(), arr];
   } else if (q.startsWith('keys')) {
     return [q.slice(4), new KeysFilter(), arr];
+  } else if (q.startsWith('split(')) {
+    return makeFN('split', q, arr, StringFn, (a, b) => a.split(b));
+  } else if (q.startsWith('join(')) {
+    return makeFN('join', q, arr, JoinFn, undefined);
   }
 
   throw new Error(`Cannot parse: ${q}`);
@@ -820,5 +834,4 @@ export const queryOne = (q: string, input: any) => {
     - flatten
     - group_by
     - contains
-    - join and split
  */
