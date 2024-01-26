@@ -368,6 +368,17 @@ describe('KeysFilter', () => {
   });
 });
 
+describe('map_values', () => {
+  test('query: map_values(.+1)', () => {
+    expect(query('map_values(.+1)', [{ a: 1, b: 2 }])).toEqual([
+      {
+        a: 2,
+        b: 3
+      }
+    ]);
+  });
+});
+
 describe('SimpleBinaryOp: %', () => {
   test('query: . % 4', () => {
     expect(queryOne('. % 4', 10)).toEqual(2);

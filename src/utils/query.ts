@@ -568,6 +568,18 @@ class KeysFilter implements Operator {
   }
 }
 
+class MapValuesFn implements Operator {
+  constructor(public readonly node: Operator) {}
+
+  evaluate(input: unknown): unknown {
+    assert.present(this.node);
+    if (isObj(input)) {
+      return Object.fromEntries(Object.entries(input).map(([k, v]) => [k, this.node.evaluate(v)]));
+    }
+    return input;
+  }
+}
+
 const parsePair = (q: string, left: string, right: string) => {
   let depth = 0;
   let end = 0;
@@ -700,7 +712,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
       arr
     ];
   } else if (q.startsWith('map_values(')) {
-    throw NOT_IMPLEMENTED_YET();
+    return makeFN('map_values', q, arr, MapValuesFn, undefined);
   } else if (q.startsWith('select(')) {
     return makeFN('select', q, arr, SelectFn, undefined);
   } else if (q.startsWith('==')) {
@@ -803,7 +815,6 @@ export const queryOne = (q: string, input: any) => {
     - any and all as functions
     - optional object identifiers, e.g. .a?
     - object construction
-    - map_values
     - pick
     - add
     - flatten
