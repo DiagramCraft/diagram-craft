@@ -23,130 +23,117 @@ export const ResultSet = {
   })
 };
 
-const the = (r: ResultSet) => {
-  assert.true(r._values.length === 1);
-  return r._values[0];
-};
-
-const removeUndefined = (input: ResultSet) => {
-  return ResultSet.ofList(...input._values.filter(a => a !== undefined && a !== null));
-};
-
-const map = (input: ResultSet, fn: (v: unknown) => unknown) => {
-  return ResultSet.ofList(...input._values.map(fn));
-};
-
-const flatMap = (input: ResultSet, fn: (v: unknown) => unknown) => {
-  return ResultSet.ofList(...input._values.flatMap(fn));
-};
-
 const isResultSet = (o: unknown): o is ResultSet => (o as any)?._type === 'resultSet';
 
-const flatten = (arr: unknown[]) => {
-  const dest: unknown[] = [];
-  for (const e of arr) {
-    if (isResultSet(e)) {
-      dest.push(...e._values);
-    } else {
-      dest.push(e);
-    }
-  }
-  return dest;
-};
-
-interface ASTNode {
-  evaluate(input: ResultSet): ResultSet;
+interface Operator {
+  evaluate(input: unknown): unknown;
 }
 
-export class PropertyLookupOp implements ASTNode {
+interface Generator extends Operator {
+  evaluate(input: unknown): ResultSet;
+}
+
+export class PropertyLookupOp implements Operator {
   constructor(public readonly identifier: string) {}
 
-  evaluate(input: ResultSet): ResultSet {
+  evaluate(input: unknown): unknown {
     if (this.identifier === '') return input;
+    // TODO: Maye we should remove this and rely of .a?
+    if (input === undefined) return undefined;
     assert.false(this.identifier === 'prototype' || this.identifier === 'constructor');
-    return map(input, i => (i === undefined ? undefined : (i as any)[this.identifier]));
+    return (input as any)[this.identifier];
   }
 }
 
-export class ArrayIndexOp implements ASTNode {
+export class ArrayIndexOp implements Operator {
   constructor(private readonly index: number) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, i => {
-      if (i === undefined || !Array.isArray(i)) return undefined;
-      return i[this.index];
-    });
+  evaluate(input: unknown): unknown {
+    if (input === undefined || !Array.isArray(input)) return undefined;
+    return input[this.index];
   }
 }
 
-export class ArraySliceOp implements ASTNode {
+export class ArraySliceOp implements Operator {
   constructor(
     private readonly from: number,
     private readonly to: number
   ) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, i => {
-      if (i === undefined || !Array.isArray(i)) return undefined;
-      return i.slice(this.from, Math.min(this.to, i.length));
-    });
+  evaluate(i: unknown): unknown {
+    if (i === undefined || !Array.isArray(i)) return undefined;
+    return i.slice(this.from, Math.min(this.to, i.length));
   }
 }
 
-export class ArrayOp implements ASTNode {
+export class ArrayOp implements Generator {
   constructor() {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return flatMap(input, i => {
-      assert.true(Array.isArray(i) || isObj(i));
-      return i;
-    });
+  evaluate(i: unknown): ResultSet {
+    assert.true(Array.isArray(i));
+    return ResultSet.ofList(...(i as unknown[]));
   }
 }
 
-export class Concatenation implements ASTNode {
-  constructor(public readonly nodes: ASTNode[]) {}
+export class Concatenation implements Generator {
+  constructor(public readonly nodes: Operator[]) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    const dest: ResultSet[] = [];
-    input._values.forEach(i => {
-      for (const node of this.nodes) {
-        dest.push(node.evaluate(ResultSet.of(i)));
-      }
-    });
-
-    return ResultSet.ofList(...flatten(dest));
-  }
-}
-
-export class FilterSequence implements ASTNode {
-  constructor(public readonly nodes: ASTNode[]) {}
-
-  evaluate(input: ResultSet): ResultSet {
-    let v = input;
-    for (const node of this.nodes) {
-      v = node.evaluate(v);
-    }
-    return v;
-  }
-}
-
-export class ArrayConstructor implements ASTNode {
-  constructor(public readonly node: ASTNode) {}
-
-  evaluate(input: ResultSet): ResultSet {
-    return ResultSet.ofList(...input._values.map(i => this.node.evaluate(ResultSet.of(i))._values));
-  }
-}
-
-//export class ObjectConstructor implements ASTNode {}
-
-export class RecursiveDescentOp implements ASTNode {
-  constructor() {}
-
-  evaluate(input: ResultSet): ResultSet {
+  evaluate(input: unknown): ResultSet {
     const dest: unknown[] = [];
-    input._values.forEach(e => this.recurse(e, dest));
+    for (const n of this.nodes) {
+      const r = n.evaluate(input);
+      if (isResultSet(r)) {
+        dest.push(...r._values);
+      } else {
+        dest.push(r);
+      }
+    }
+    return ResultSet.ofList(...dest);
+  }
+}
+
+export class FilterSequence implements Generator {
+  constructor(public readonly nodes: Operator[]) {}
+
+  evaluate(input: unknown): ResultSet {
+    let v = [input];
+    for (const node of this.nodes) {
+      const dest: unknown[] = [];
+      for (const e of v) {
+        const res = node.evaluate(e);
+        if (isResultSet(res)) {
+          dest.push(...res._values);
+        } else {
+          dest.push(res);
+        }
+      }
+      v = dest;
+    }
+    return ResultSet.ofList(...v.filter(e => e !== undefined));
+  }
+}
+
+export class ArrayConstructor implements Operator {
+  constructor(public readonly node: Operator) {}
+
+  evaluate(input: unknown): unknown {
+    const v = this.node.evaluate(input);
+    if (isResultSet(v)) {
+      return [...v._values];
+    } else {
+      return [v];
+    }
+  }
+}
+
+//export class ObjectConstructor implements Operator {}
+
+export class RecursiveDescentGenerator implements Generator {
+  constructor() {}
+
+  evaluate(input: unknown): ResultSet {
+    const dest: unknown[] = [];
+    this.recurse(input, dest);
     return ResultSet.ofList(...dest);
   }
 
@@ -162,197 +149,173 @@ export class RecursiveDescentOp implements ASTNode {
   }
 }
 
-export class AdditionBinaryOp implements ASTNode {
+export class AdditionBinaryOp implements Operator {
   constructor(
-    public readonly left: ASTNode,
-    public readonly right: ASTNode
+    public readonly left: Operator,
+    public readonly right: Operator
   ) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => {
-      const lvs = the(this.left.evaluate(ResultSet.of(v)));
-      const rvs = the(this.right.evaluate(ResultSet.of(v)));
+  evaluate(input: unknown): unknown {
+    const lvs = this.left.evaluate(input);
+    const rvs = this.right.evaluate(input);
 
-      if (Array.isArray(lvs) && Array.isArray(rvs)) {
-        return [...lvs, ...rvs];
-      } else if (isObj(lvs) && isObj(rvs)) {
-        return { ...lvs, ...rvs };
-      } else {
-        // @ts-ignore
-        return safeParseInt(lvs) + safeParseInt(rvs);
-      }
-    });
+    if (Array.isArray(lvs) && Array.isArray(rvs)) {
+      return [...lvs, ...rvs];
+    } else if (isObj(lvs) && isObj(rvs)) {
+      return { ...lvs, ...rvs };
+    } else {
+      // @ts-ignore
+      return safeParseInt(lvs) + safeParseInt(rvs);
+    }
   }
 }
 
-export class SubtractionBinaryOp implements ASTNode {
+export class SubtractionBinaryOp implements Operator {
   constructor(
-    public readonly left: ASTNode,
-    public readonly right: ASTNode
+    public readonly left: Operator,
+    public readonly right: Operator
   ) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => {
-      const lvs = the(this.left.evaluate(ResultSet.of(v)));
-      const rvs = the(this.right.evaluate(ResultSet.of(v)));
+  evaluate(input: unknown): unknown {
+    const lvs = this.left.evaluate(input);
+    const rvs = this.right.evaluate(input);
 
-      if (Array.isArray(lvs) && Array.isArray(rvs)) {
-        return lvs.filter(e => !rvs.includes(e));
-      } else if (isObj(lvs) && isObj(rvs)) {
-        return Object.fromEntries(
-          Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k))
-        );
-      } else {
-        // @ts-ignore
-        return safeParseInt(lvs) - safeParseInt(rvs);
-      }
-    });
+    if (Array.isArray(lvs) && Array.isArray(rvs)) {
+      return lvs.filter(e => !rvs.includes(e));
+    } else if (isObj(lvs) && isObj(rvs)) {
+      return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
+    } else {
+      // @ts-ignore
+      return safeParseInt(lvs) - safeParseInt(rvs);
+    }
   }
 }
 
-class Literal implements ASTNode {
+class Literal implements Operator {
   constructor(public readonly value: unknown) {}
 
-  evaluate(_input: ResultSet): ResultSet {
-    return ResultSet.of(this.value);
+  evaluate(_input: unknown): unknown {
+    return this.value;
   }
 }
 
-class LengthFilter implements ASTNode {
+class LengthFilter implements Operator {
   constructor() {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => {
-      if (v === undefined || v === null) {
-        return 0;
-      } else if (Array.isArray(v) || typeof v === 'string') {
-        return v.length;
-      } else if (!isNaN(Number(v))) {
-        return Math.abs(Number(v));
-      } else if (isObj(v)) {
-        return Object.keys(v).length;
-      } else {
-        return undefined;
-      }
-    });
+  evaluate(input: unknown): unknown {
+    if (input === undefined || input === null) {
+      return 0;
+    } else if (Array.isArray(input) || typeof input === 'string') {
+      return input.length;
+    } else if (!isNaN(Number(input))) {
+      return Math.abs(Number(input));
+    } else if (isObj(input)) {
+      return Object.keys(input).length;
+    } else {
+      return undefined;
+    }
   }
 }
 
-class HasFn implements ASTNode {
-  constructor(public readonly node: ASTNode) {}
+class HasFn implements Operator {
+  constructor(public readonly node: Operator) {}
 
-  evaluate(input: ResultSet): ResultSet {
+  evaluate(input: unknown): unknown {
     assert.present(this.node);
-    return map(input, v => {
-      const res = this.node.evaluate(ResultSet.of(undefined));
-      return (the(res) as string | number) in (v as any);
-    });
+    const res = this.node.evaluate(undefined);
+    return (res as string | number) in (input as any);
   }
 }
 
-class InFn implements ASTNode {
-  constructor(public readonly node: ASTNode) {}
+class InFn implements Operator {
+  constructor(public readonly node: Operator) {}
 
-  evaluate(input: ResultSet): ResultSet {
+  evaluate(input: unknown): unknown {
     assert.present(this.node);
-    return map(input, v => {
-      const res = this.node.evaluate(ResultSet.of(undefined));
-      return (v as any) in (the(res) as any);
-    });
+    const res = this.node.evaluate(ResultSet.of(undefined));
+    return (input as any) in (res as any);
   }
 }
 
-class SelectFn implements ASTNode {
-  constructor(public readonly node: ASTNode) {}
+class SelectFn implements Operator {
+  constructor(public readonly node: Operator) {}
 
-  evaluate(input: ResultSet): ResultSet {
+  evaluate(input: unknown): unknown {
     assert.present(this.node);
-    return removeUndefined(
-      map(input, v => {
-        if (the(this.node.evaluate(ResultSet.of(v))) === true) return v;
-      })
-    );
+    if (this.node.evaluate(input) === true) return input;
   }
 }
 
-class EqualsBinaryOp implements ASTNode {
+class EqualsBinaryOp implements Operator {
   constructor(
-    private readonly left: ASTNode,
-    private readonly right: ASTNode,
+    private readonly left: Operator,
+    private readonly right: Operator,
     private readonly negate: boolean
   ) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => {
-      const lvs = the(this.left.evaluate(ResultSet.of(v)));
-      const rvs = the(this.right.evaluate(ResultSet.of(v)));
+  evaluate(input: unknown): unknown {
+    const lvs = this.left.evaluate(input);
+    const rvs = this.right.evaluate(input);
 
-      if (Array.isArray(lvs) && Array.isArray(rvs)) {
-        throw NOT_IMPLEMENTED_YET();
-      } else if (isObj(lvs) && isObj(rvs)) {
-        throw NOT_IMPLEMENTED_YET();
-      } else {
-        // @ts-ignore
-        return lvs === rvs && !this.negate;
-      }
-    });
+    if (Array.isArray(lvs) && Array.isArray(rvs)) {
+      throw NOT_IMPLEMENTED_YET();
+    } else if (isObj(lvs) && isObj(rvs)) {
+      throw NOT_IMPLEMENTED_YET();
+    } else {
+      // @ts-ignore
+      return this.negate ? lvs !== rvs : lvs === rvs;
+    }
   }
 }
 
-class CmpBinaryOp implements ASTNode {
+class CmpBinaryOp implements Operator {
   constructor(
-    private readonly left: ASTNode,
-    private readonly right: ASTNode,
+    private readonly left: Operator,
+    private readonly right: Operator,
     private readonly cmp: (a: unknown, b: unknown) => boolean
   ) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => {
-      const lvs = the(this.left.evaluate(ResultSet.of(v)));
-      const rvs = the(this.right.evaluate(ResultSet.of(v)));
-      return !!this.cmp(lvs, rvs);
-    });
+  evaluate(input: unknown): unknown {
+    const lvs = this.left.evaluate(input);
+    const rvs = this.right.evaluate(input);
+    return !!this.cmp(lvs, rvs);
   }
 }
 
-class AnyFilter implements ASTNode {
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => Array.isArray(v) && v.some(a => !!a));
+class AnyFilter implements Operator {
+  evaluate(input: unknown): unknown {
+    return Array.isArray(input) && input.some(a => !!a);
   }
 }
 
-class AllFilter implements ASTNode {
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => Array.isArray(v) && v.every(a => !!a));
+class AllFilter implements Operator {
+  evaluate(input: unknown): unknown {
+    return Array.isArray(input) && input.every(a => !!a);
   }
 }
 
-class UniqueFilter implements ASTNode {
-  evaluate(input: ResultSet): ResultSet {
-    return map(input, v => {
-      if (Array.isArray(v)) {
-        return v.filter((a, i) => v.indexOf(a) === i);
-      } else {
-        return v;
-      }
-    });
+class UniqueFilter implements Operator {
+  evaluate(input: unknown): unknown {
+    if (Array.isArray(input)) {
+      return input.filter((a, i) => input.indexOf(a) === i);
+    } else {
+      return input;
+    }
   }
 }
 
-class StringFn implements ASTNode {
+class StringFn implements Operator {
   constructor(
-    private readonly node: ASTNode,
+    private readonly node: Operator,
     private readonly fn: (a: string, b: string) => boolean
   ) {}
 
-  evaluate(input: ResultSet): ResultSet {
-    return flatMap(input, v => {
-      const lvs = v;
-      const rvs = the(this.node.evaluate(ResultSet.of(undefined)));
-      if (Array.isArray(lvs)) return lvs.map(a => this.fn(a as string, rvs as string));
-      // @ts-ignore
-      return this.fn(lvs as string, rvs as string);
-    });
+  evaluate(input: unknown): unknown {
+    const lvs = input;
+    const rvs = this.node.evaluate(undefined);
+    if (Array.isArray(lvs)) return lvs.map(a => this.fn(a as string, rvs as string));
+    // @ts-ignore
+    return this.fn(lvs as string, rvs as string);
   }
 }
 
@@ -375,28 +338,28 @@ const getBetweenBrackets = (q: string, left: string, right: string) => {
 const makeFN = <T>(
   fnName: string,
   q: string,
-  arr: ASTNode[],
-  ctr: new (n: ASTNode, arg?: T) => ASTNode,
+  arr: Operator[],
+  ctr: new (n: Operator, arg?: T) => Operator,
   arg?: T
-): [string, ASTNode, ASTNode[]] => {
+): [string, Operator, Operator[]] => {
   const { end, sub } = getBetweenBrackets(q.slice(fnName.length), '(', ')');
-  return [q.slice(end + fnName.length + 1), new ctr(parse(sub)[0], arg), arr];
+  return [q.slice(end + fnName.length + 1), new ctr(parse(sub), arg), arr];
 };
 
 const makeBinaryOp = <T>(
   op: string,
   q: string,
-  arr: ASTNode[],
-  ctr: new (l: ASTNode, r: ASTNode, arg?: T) => ASTNode,
+  arr: Operator[],
+  ctr: new (l: Operator, r: Operator, arg?: T) => Operator,
   arg?: T
-): [string, ASTNode | undefined, ASTNode[]] => {
+): [string, Operator | undefined, Operator[]] => {
   const [nextS, nextTok, nextArr] = nextToken(q.slice(op.length).trim(), arr);
   assert.present(nextTok);
   arr[arr.length - 1] = new ctr(arr.at(-1)!, nextTok, arg);
   return [nextS, undefined, nextArr];
 };
 
-const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, ASTNode[]] => {
+const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, Operator[]] => {
   let m;
   if (q.startsWith('|')) {
     return [q.slice(1), undefined, arr];
@@ -410,14 +373,14 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
       return [q.slice(1), undefined, arr];
     }
   } else if (q.startsWith('..')) {
-    return [q.slice(2), new RecursiveDescentOp(), arr];
+    return [q.slice(2), new RecursiveDescentGenerator(), arr];
   } else if (q.startsWith('+')) {
     return makeBinaryOp('+', q, arr, AdditionBinaryOp);
   } else if (q.startsWith('-')) {
     return makeBinaryOp('-', q, arr, SubtractionBinaryOp);
   } else if (q.startsWith('[')) {
     const { end, sub } = getBetweenBrackets(q, '[', ']');
-    return [q.slice(end + 1), new ArrayConstructor(new FilterSequence(parse(sub.trim()))), arr];
+    return [q.slice(end + 1), new ArrayConstructor(new FilterSequence([parse(sub.trim())])), arr];
   } else if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
     const s = q.slice(m[0].length);
 
@@ -478,7 +441,7 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
     const { end, sub } = getBetweenBrackets(q.slice(3), '(', ')');
     return [
       q.slice(3 + end + 1),
-      new ArrayConstructor(new FilterSequence([new ArrayOp(), new Concatenation(parse(sub))])),
+      new ArrayConstructor(new FilterSequence([new ArrayOp(), parse(sub)])),
       arr
     ];
   } else if (q.startsWith('map_values(')) {
@@ -514,12 +477,10 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
     return makeBinaryOp('and', q, arr, CmpBinaryOp, (a, b) => a && b);
   } else if (q.startsWith('or')) {
     // @ts-ignore
-    return makeBinaryOp('or', q, arr, CmpBinaryOp, (a, b) => {
-      console.log('||', a, b);
-      return a || b;
-    });
+    return makeBinaryOp('or', q, arr, CmpBinaryOp, (a, b) => a || b);
   } else if (q.startsWith('not')) {
-    return [q.slice(3), new EqualsBinaryOp(new Literal(true), arr.at(-1)!, true), arr];
+    arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
+    return [q.slice(3), undefined, arr];
   } else if (q.startsWith('false')) {
     return [q.slice(5), new Literal(false), arr];
   } else if (q.startsWith('true')) {
@@ -539,8 +500,8 @@ const nextToken = (q: string, arr: ASTNode[]): [string, ASTNode | undefined, AST
   throw new Error(`Cannot parse: ${q}`);
 };
 
-const parse = (query: string) => {
-  const dest: ASTNode[] = [];
+export const parse = (query: string): Operator => {
+  const dest: Operator[] = [];
 
   let arr = dest;
   let q = query;
@@ -555,22 +516,28 @@ const parse = (query: string) => {
     if (i++ > 1000) throw new Error('Infinite loop detected');
   } while (q.trim().length > 0);
 
+  return dest.length === 1 ? dest[0] : new FilterSequence(dest);
+};
+
+export const query = (query: string, input: unknown[]) => {
+  const node = parse(query);
+
+  const dest: unknown[] = [];
+  for (const i of input) {
+    let v = i;
+    v = node.evaluate(v);
+    if (isResultSet(v)) {
+      dest.push(...v._values);
+    } else {
+      dest.push(v);
+    }
+  }
   return dest;
 };
 
-export const query = (query: string, input: ResultSet) => {
-  const ast = parse(query);
-
-  let v = input;
-  for (const node of ast) {
-    v = node.evaluate(v);
-  }
-  return v._values;
-};
-
 export const queryOne = (q: string, input: any) => {
-  const res = query(q, { _type: 'resultSet', _values: [input] });
-  if (res === undefined || res.length === 1 || res.length === 0) return res?.[0];
+  const res = query(q, [input]);
+  if (res === undefined || res.length === 1 || res.length === 0) return res[0];
   else {
     throw new Error('Expected one result, got ' + res.length);
   }
