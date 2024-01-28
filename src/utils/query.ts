@@ -658,6 +658,50 @@ const parsePair = (q: string, left: string, right: string) => {
   return { end, sub };
 };
 
+type Token = {
+  s: string;
+  type: 'number' | 'string' | 'identifier' | 'operator' | 'separator' | 'end';
+};
+
+class Tokenizer {
+  private remaining: string;
+
+  constructor(public readonly query: string) {
+    this.remaining = query;
+  }
+
+  peek(): Token {
+    const q = this.remaining;
+    let m;
+    if ((m = q.match(/^-?[0-9]+/))) {
+      return { s: m[0], type: 'number' };
+    } else if ((m = q.match(/^"[^"]*"/))) {
+      return { s: m[0], type: 'string' };
+    } else if ((m = q.match(/^[a-zA-Z_][a-zA-Z0-9_]*/))) {
+      return { s: m[0], type: 'identifier' };
+    } else if ((m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:)/))) {
+      return { s: m[0], type: 'operator' };
+    } else if ((m = q.match(/^(\s+)/))) {
+      return { s: m[0], type: 'separator' };
+    } else if (q === '') {
+      return { s: '', type: 'end' };
+    } else {
+      throw new Error('Unexpected token: ' + q);
+    }
+  }
+
+  next() {
+    const s = this.peek();
+    this.remaining = this.remaining.slice(s.s.length);
+    return s;
+  }
+
+  eat(s: string) {
+    if (this.peek().s === s) return this.next();
+    else throw new Error('Expected: ' + s + ', found ' + this.peek());
+  }
+}
+
 type FnRegistration =
   | { args: '0'; fn: () => Operator }
   | { args: '1'; fn: (arg: Operator) => Operator }
@@ -813,6 +857,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
 
 export const parse = (query: string): Operator => {
   const dest: Operator[] = [];
+
+  //const tokenizer = new Tokenizer(query);
 
   let arr = dest;
   let q = query;
