@@ -790,7 +790,10 @@ const parsePathExpression = (
   return [q, new PathExpression(dest), arr];
 };
 
-const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, Operator[]] => {
+const nextToken = (
+  q: string,
+  arr: Operator[]
+): undefined | [string, Operator | undefined, Operator[]] => {
   let op: string | undefined;
   let m;
   if (q.startsWith('|')) {
@@ -807,8 +810,10 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('..')) {
     return [q.slice(2), new RecursiveDescentGenerator(), arr];
   } else if (q.startsWith('[')) {
-    const { end, sub } = parsePair(q, '[', ']');
-    return [q.slice(end + 1), new ArrayConstructor(new PipeGenerator([parse(sub.trim())])), arr];
+    const [inner, rest] = parseNextPart(q.slice(1));
+    if (rest.trim()[0] !== ']') throw new Error(`Expecting ]: ` + rest);
+
+    return [rest.slice(1), new ArrayConstructor(new PipeGenerator([inner])), arr];
   } else if (q.startsWith('.')) {
     return parsePathExpression(q, arr);
   } else if (q.startsWith('not')) {
@@ -833,7 +838,7 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
 
     /* BINARY OPS ************************************************************************** */
   } else if ((op = BINOP_NAMES.find(o => q.startsWith(o)))) {
-    const [nextS, nextTok, nextArr] = nextToken(q.slice(op.length).trim(), arr);
+    const [nextS, nextTok, nextArr] = nextToken(q.slice(op.length).trim(), arr)!;
     assert.present(nextTok);
     arr[arr.length - 1] = BINOP_REGISTRY[op](arr.at(-1)!, nextTok);
     return [nextS, undefined, nextArr];
@@ -846,16 +851,16 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
     } else if (args === '0&1' && q[op.length] !== '(') {
       return [q.slice(op.length + 1), fnFn(undefined), arr];
     }
-    const { end, sub } = parsePair(q.slice(op.length), '(', ')');
-    return [q.slice(op.length + end + 1), fnFn(parse(sub)), arr];
 
-    /* ERROR ****************************************************************************** */
-  } else {
-    throw new Error('Cannot parse: ' + q);
+    const [inner, remaining] = parseNextPart(q.slice(op.length + 1));
+    if (remaining[0] !== ')') throw new Error('Expecting ): ' + remaining);
+    return [remaining.slice(1), fnFn(inner), arr];
   }
+
+  return undefined;
 };
 
-export const parse = (query: string): Operator => {
+const parseNextPart = (query: string): [Operator, string] => {
   const dest: Operator[] = [];
 
   //const tokenizer = new Tokenizer(query);
@@ -865,7 +870,13 @@ export const parse = (query: string): Operator => {
 
   let i = 0;
   do {
-    const [s, t, newArr] = nextToken(q, arr);
+    const v = nextToken(q, arr);
+
+    if (v === undefined) {
+      break;
+    }
+
+    const [s, t, newArr] = v;
     if (t) arr.push(t);
     arr = newArr;
 
@@ -873,7 +884,19 @@ export const parse = (query: string): Operator => {
     if (i++ > 1000) throw new Error('Infinite loop detected');
   } while (q.trim().length > 0);
 
-  return dest.length === 1 ? dest[0] : new PipeGenerator(dest);
+  return [dest.length === 1 ? dest[0] : new PipeGenerator(dest), q];
+};
+
+export const parse = (query: string): Operator => {
+  //const tokenizer = new Tokenizer(query);
+
+  const [op, remaining] = parseNextPart(query);
+
+  if (remaining.trim().length > 0) {
+    throw new Error('Cannot parse: ' + remaining);
+  }
+
+  return op;
 };
 
 export const query = (query: string, input: unknown[]) => {
