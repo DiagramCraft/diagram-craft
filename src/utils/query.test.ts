@@ -6,6 +6,7 @@ import {
   ArraySliceOp,
   ConcatenationGenerator,
   OObjects,
+  parse,
   PipeGenerator,
   PropertyLookupOp,
   query,
@@ -41,22 +42,22 @@ describe('OObject', () => {
   });
 });
 
-describe('PropertyLookupOp', () => {
-  test('query: .', () => {
+describe('.abc', () => {
+  test('.', () => {
     expect(queryOne('.', { a: 1 })).toEqual({ a: 1 });
     expect(queryOne('.', 123)).toEqual(123);
     expect(queryOne('.', 'lorem')).toEqual('lorem');
     expect(queryOne('.', [1, 2, 3])).toEqual([1, 2, 3]);
   });
 
-  test('query: .test', () => {
+  test('.test', () => {
     expect(queryOne('.test', { test: 1 })).toEqual(1);
     expect(() => queryOne('.test', 123)).toThrowError();
     expect(() => queryOne('.test', 'lorem')).toThrowError();
     expect(() => queryOne('.test', [1, 2, 3])).toThrowError();
   });
 
-  test('query: .a.b', () => {
+  test('.a.b', () => {
     expect(queryOne('.a.b', { a: { b: 1 } })).toEqual(1);
     expect(queryOne('.a.b', { a: { c: 1 } })).toEqual(undefined);
     expect(() => queryOne('.a.b', 123)).toThrowError();
@@ -64,7 +65,7 @@ describe('PropertyLookupOp', () => {
     expect(() => queryOne('.a.b', [1, 2, 3])).toThrowError();
   });
 
-  test('query: .a?.b', () => {
+  test('.a?.b', () => {
     expect(queryOne('.a.b', { a: { b: 1 } })).toEqual(1);
     expect(queryOne('.a.b', { a: { c: 1 } })).toEqual(undefined);
     expect(queryOne('.a?.b', 123)).toEqual(undefined);
@@ -78,8 +79,8 @@ describe('PropertyLookupOp', () => {
   });
 });
 
-describe('ArrayLookup', () => {
-  test('query .[0]', () => {
+describe('.[], .[0], .[0:2]', () => {
+  test('.[0]', () => {
     expect(queryOne('.[0]', [1, 2, 3])).toEqual(1);
     expect(queryOne('.[0]', [{ a: 5 }, 2, 3])).toEqual({ a: 5 });
     expect(queryOne('.[0]', [[4, 5], 2, 3])).toEqual([4, 5]);
@@ -87,7 +88,7 @@ describe('ArrayLookup', () => {
     expect(queryOne('.[0]', 'lorem')).toEqual(undefined);
   });
 
-  test('query .[2:4]', () => {
+  test('.[2:4]', () => {
     expect(queryOne('.[2:4]', [1, 2, 3, 4, 5, 6])).toEqual([3, 4]);
     expect(queryOne('.[2:4]', [{ a: 5 }, 2, 3, 4, 5, 6])).toEqual([3, 4]);
     expect(queryOne('.[2:4]', [[4, 5], 2, 3, 4, 5, 6])).toEqual([3, 4]);
@@ -95,7 +96,7 @@ describe('ArrayLookup', () => {
     expect(queryOne('.[2:4]', ['lorem'])).toEqual([]);
   });
 
-  test('query .[]', () => {
+  test('.[]', () => {
     expect(query('.[]', [[1, 2, 3]])).toEqual([1, 2, 3]);
     expect(query('.[]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2, 3]);
     expect(query('.[]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2, 3]);
@@ -118,8 +119,8 @@ describe('ArrayLookup', () => {
   });
 });
 
-describe('Concatenation', () => {
-  test('query .[0],.[1]', () => {
+describe(',', () => {
+  test('.[0],.[1]', () => {
     expect(query('.[0],.[1]', [[1, 2, 3]])).toEqual([1, 2]);
     expect(query('.[0],.[1]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2]);
     expect(query('.[0],.[1]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2]);
@@ -127,7 +128,7 @@ describe('Concatenation', () => {
     expect(query('.[0],.[1]', ['lorem'])).toEqual([]);
   });
 
-  test('query .user, .projects[]', () => {
+  test('.user, .projects[]', () => {
     expect(
       query('.user, .projects[]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
     ).toEqual(['stedolan', 'jq', 'wikiflow']);
@@ -147,8 +148,8 @@ describe('Concatenation', () => {
   });
 });
 
-describe('pipe', () => {
-  test('query .[] | .name', () => {
+describe('|', () => {
+  test('.[] | .name', () => {
     expect(
       query('.[] | .name', [
         [
@@ -165,7 +166,7 @@ describe('pipe', () => {
   });
 });
 
-describe('ArrayConstructor', () => {
+describe('[...]', () => {
   test('[.user, .projects[]]', () => {
     expect(
       query('[.user, .projects[]]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
@@ -184,7 +185,7 @@ describe('ArrayConstructor', () => {
   });
 });
 
-describe('RecursiveDescent', () => {
+describe('..', () => {
   test('query: .. | .a?', () => {
     expect(query('.. | .a?', [[[{ a: 1 }]]])).toEqual([1]);
   });
@@ -204,7 +205,7 @@ describe('RecursiveDescent', () => {
   });
 });
 
-describe('AdditionBinaryOp', () => {
+describe('+', () => {
   test('query: .a + 1', () => {
     expect(queryOne('.a + 1', { a: 2 })).toEqual(3);
     expect(queryOne('.a + 1', {})).toEqual(1);
@@ -225,7 +226,7 @@ describe('AdditionBinaryOp', () => {
   });
 });
 
-describe('SubtractionBinaryOp', () => {
+describe('-', () => {
   test('query: .a - 1', () => {
     expect(queryOne('.a - 1', { a: 2 })).toEqual(1);
     expect(queryOne('.a - 1', {})).toEqual(-1);
@@ -238,7 +239,7 @@ describe('SubtractionBinaryOp', () => {
   });
 });
 
-describe('LengthFilter', () => {
+describe('length', () => {
   test('query: .[] | length', () => {
     expect(query('.[] | length', [[[1, 2], 'string', { a: 2 }, null, -5]])).toEqual([
       2, 6, 1, 0, 5
@@ -246,19 +247,19 @@ describe('LengthFilter', () => {
   });
 });
 
-describe('HasFn', () => {
+describe('has()', () => {
   test('query: has("foo")', () => {
     expect(query('has("foo")', [{ foo: 1, bar: 2 }, { bar: 3 }])).toEqual([true, false]);
   });
 });
 
-describe('InFn', () => {
+describe('in()', () => {
   test('query: .[] | in({"foo": 42})', () => {
     expect(query('.[] | in({"foo": 42})', [['foo', 'bar']])).toEqual([true, false]);
   });
 });
 
-describe('MapFn', () => {
+describe('map()', () => {
   test('query: map(. + 1)', () => {
     expect(query('map(. + 1)', [[1, 2, 3]])).toEqual([[2, 3, 4]]);
   });
@@ -267,90 +268,89 @@ describe('MapFn', () => {
   });
 });
 
-// TODO: Fix
-describe('SelectFn', () => {
-  test('query: .[] | select(.id == "second")', () => {
+describe('select()', () => {
+  test('.[] | select(.id == "second")', () => {
     expect(query('.[] | select(.id == "second")', [[{ id: 'first' }, { id: 'second' }]])).toEqual([
       { id: 'second' }
     ]);
   });
-  test('query: map(select(. >= 2))', () => {
+  test('map(select(. >= 2))', () => {
     expect(query('map(select(. >= 2))', [[1, 2, 3]])).toEqual([[2, 3]]);
   });
 });
 
-describe('AnyFilter', () => {
-  test('query: any', () => {
+describe('any', () => {
+  test('any', () => {
     expect(query('any', [[true, true, false]])).toEqual([true]);
     expect(query('any', [[false, false, false]])).toEqual([false]);
     expect(query('any', [[]])).toEqual([false]);
   });
 });
 
-describe('AllFilter', () => {
-  test('query: all', () => {
+describe('all', () => {
+  test('all', () => {
     expect(query('all', [[true, true, false]])).toEqual([false]);
     expect(query('all', [[true, true, true]])).toEqual([true]);
     expect(query('all', [[]])).toEqual([true]);
   });
 });
 
-describe('AndBinaryOp', () => {
-  test('query: 42 and "a string"', () => {
+describe('and', () => {
+  test('42 and "a string"', () => {
     expect(queryOne('42 and "a string"', null)).toEqual(true);
   });
 });
 
-describe('OrBinaryOp', () => {
-  test('query: 42 or "a string"', () => {
+describe('or', () => {
+  test('42 or "a string"', () => {
     expect(queryOne('42 or "a string"', null)).toEqual(true);
     expect(queryOne('false or false', null)).toEqual(false);
   });
 });
 
-describe('NotFilter', () => {
-  test('query: true | not', () => {
+describe('not', () => {
+  test('true | not', () => {
     expect(queryOne('true | not', null)).toEqual(false);
   });
-  test('query: [true, false | not]', () => {
+  test('[true, false | not]', () => {
     expect(query('[true, false | not]', [null])).toEqual([[true, true]]);
   });
 });
 
-describe('ArrayFilter: unique', () => {
-  test('query: unique', () => {
+describe('unique', () => {
+  test('unique', () => {
     expect(query('unique', [[1, 2, 3, 2, 1]])).toEqual([[1, 2, 3]]);
   });
 
-  test('query: unique_by(.a)', () => {
+  test('unique_by(.a)', () => {
     expect(query('unique_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([
       [{ a: 1 }, { a: 2 }]
     ]);
   });
 });
 
-describe('ArrayFilter: max', () => {
-  test('query: max', () => {
+describe('max', () => {
+  test('max', () => {
     expect(query('max', [[1, 2, 3, 2, 1]])).toEqual([3]);
   });
 
-  test('query: max_by(.a)', () => {
+  test('max_by(.a)', () => {
     expect(query('max_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 2 }]);
   });
 });
 
-describe('ArrayFilter: min', () => {
-  test('query: min', () => {
+describe('min', () => {
+  test('min', () => {
     expect(query('min', [[1, 2, 3, 2, 1]])).toEqual([1]);
   });
 
-  test('query: min_by(.a)', () => {
+  test('min_by(.a)', () => {
     expect(query('min_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 1 }]);
   });
 });
 
 describe('group_by', () => {
-  test('query: group_by(.a)', () => {
+  test('group_by(.a)', () => {
     expect(query('group_by(.a)', [[{ a: 1, c: 2 }, { a: 2 }, { a: 1, c: 3 }]])).toEqual([
       [
         [
@@ -364,37 +364,37 @@ describe('group_by', () => {
 });
 
 describe('flatten', () => {
-  test('query: flatten', () => {
+  test('flatten', () => {
     expect(query('flatten', [[1, [2, [3, 5]], 4, [5, 6]]])).toEqual([[1, 2, [3, 5], 4, 5, 6]]);
   });
 });
 
-describe('startswith', () => {
-  test('query: startswith("foo")', () => {
+describe('startswith()', () => {
+  test('startswith("foo")', () => {
     expect(query('startswith("foo")', [['foo', 'bar']])).toEqual([[true, false]]);
   });
-  test('query: [.[] | startswith("foo")]', () => {
+  test('[.[] | startswith("foo")]', () => {
     expect(
       query('[.[] | startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
     ).toEqual([[false, true, false, true, false]]);
   });
 });
 
-describe('AbsFilter', () => {
-  test('query: map(abs)', () => {
+describe('abs', () => {
+  test('map(abs)', () => {
     expect(query('map(abs)', [[-1, 2, -3]])).toEqual([[1, 2, 3]]);
   });
 });
 
-describe('KeysFilter', () => {
+describe('keys', () => {
   test('query: keys', () => {
     expect(query('keys', [{ a: 1, b: 2 }])).toEqual([['a', 'b']]);
     expect(query('keys', [{ b: 2, a: 1 }])).toEqual([['a', 'b']]);
   });
 });
 
-describe('map_values', () => {
-  test('query: map_values(.+1)', () => {
+describe('map_values()', () => {
+  test('map_values(.+1)', () => {
     expect(query('map_values(.+1)', [{ a: 1, b: 2 }])).toEqual([
       {
         a: 2,
@@ -404,35 +404,35 @@ describe('map_values', () => {
   });
 });
 
-describe('SimpleBinaryOp: %', () => {
-  test('query: . % 4', () => {
+describe('%', () => {
+  test('. % 4', () => {
     expect(queryOne('. % 4', 10)).toEqual(2);
   });
-  test('query: 5 % 4', () => {
+  test('5 % 4', () => {
     expect(queryOne('5 % 4', null)).toEqual(1);
   });
 });
 
-describe('SimpleBinaryOp: //', () => {
-  test('query: .a // 42', () => {
+describe('//', () => {
+  test('.a // 42', () => {
     expect(queryOne('.a // 42', { a: 1 })).toEqual(1);
     expect(queryOne('.a // 42', {})).toEqual(42);
   });
 });
 
-describe('split', () => {
+describe('split()', () => {
   test('split(",")', () => {
     expect(query('split(",")', ['a,b,c'])).toEqual([['a', 'b', 'c']]);
   });
 });
 
-describe('join', () => {
+describe('join()', () => {
   test('join(",")', () => {
     expect(query('join(",")', [['a', 'b', 'c']])).toEqual(['a,b,c']);
   });
 });
 
-describe('contains', () => {
+describe('contains()', () => {
   test('contains("foo")', () => {
     expect(query('contains("foo")', ['foobar'])).toEqual([true]);
   });
@@ -440,5 +440,22 @@ describe('contains', () => {
   test('contains(["baz", "bar"])', () => {
     expect(query('contains(["baz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([true]);
     expect(query('contains(["bazzzzz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([false]);
+  });
+});
+
+describe.skip('complex use-cases', () => {
+  test('.elements[] | select(.id == "2" or .id == "4")', () => {
+    const data = {
+      elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
+    };
+
+    console.dir(parse('.elements[] | select(.id == "2" or .id == "4")'), { depth: 10 });
+
+    console.dir(query('.elements[] | select(.id == "2")', [data]));
+
+    expect(query('.elements[] | select(.id == "2" or .id == "4")', [data])).toEqual([
+      { id: '2' },
+      { id: '4' }
+    ]);
   });
 });

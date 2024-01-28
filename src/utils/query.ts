@@ -232,6 +232,44 @@ export class ONumber {
   }
 }
 
+export class PipeGenerator implements Generator {
+  constructor(public readonly nodes: Operator[]) {}
+
+  evaluate(input: unknown): ResultSet {
+    let v = [input];
+    for (const node of this.nodes) {
+      const dest: unknown[] = [];
+      for (const e of v) {
+        const res = node.evaluate(e);
+        if (isResultSet(res)) {
+          dest.push(...res._val);
+        } else {
+          dest.push(res);
+        }
+      }
+      v = dest;
+    }
+    return ResultSet.ofList(...v.filter(e => e !== undefined));
+  }
+}
+
+export class PathExpression extends PipeGenerator {
+  constructor(public readonly nodes: Operator[]) {
+    super(nodes);
+  }
+
+  evaluate(input: unknown): ResultSet {
+    const res = super.evaluate(input);
+
+    // @ts-ignore
+    if (res._val.length === 0) return undefined;
+    // @ts-ignore
+    if (res._val.length === 1) return res._val[0];
+
+    return res;
+  }
+}
+
 export class PropertyLookupOp implements Operator {
   public readonly strict: boolean;
   public readonly identifier: string;
@@ -294,32 +332,12 @@ export class ConcatenationGenerator implements Generator {
       const r = n.evaluate(input);
       if (isResultSet(r)) {
         dest.push(...r._val);
-      } else {
+      } else if (r !== undefined) {
         dest.push(r);
       }
     }
+
     return ResultSet.ofList(...dest);
-  }
-}
-
-export class PipeGenerator implements Generator {
-  constructor(public readonly nodes: Operator[]) {}
-
-  evaluate(input: unknown): ResultSet {
-    let v = [input];
-    for (const node of this.nodes) {
-      const dest: unknown[] = [];
-      for (const e of v) {
-        const res = node.evaluate(e);
-        if (isResultSet(res)) {
-          dest.push(...res._val);
-        } else {
-          dest.push(res);
-        }
-      }
-      v = dest;
-    }
-    return ResultSet.ofList(...v.filter(e => e !== undefined));
   }
 }
 
@@ -690,6 +708,44 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
 const FN_NAMES = Object.keys(FN_REGISTRY).sort((a, b) => b.length - a.length);
 const BINOP_NAMES = Object.keys(BINOP_REGISTRY).sort((a, b) => b.length - a.length);
 
+const parsePathExpression = (
+  query: string,
+  arr: Operator[]
+): [string, Operator | undefined, Operator[]] => {
+  const dest: Operator[] = [];
+
+  let q = query;
+  let m;
+
+  do {
+    if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
+      q = q.slice(m[0].length);
+
+      const [, identifier, arrayQuery] = m;
+
+      if (arrayQuery === '') {
+        dest.push(new PipeGenerator([new PropertyLookupOp(identifier), new ArrayGenerator()]));
+      } else if (arrayQuery.includes(':')) {
+        const [from, to] = arrayQuery.split(':');
+
+        dest.push(
+          new PropertyLookupOp(identifier),
+          new ArraySliceOp(from === '' ? 0 : parseInt(from), to === '' ? Infinity : parseInt(to))
+        );
+      } else {
+        dest.push(new PropertyLookupOp(identifier), new ArrayIndexOp(parseInt(arrayQuery)));
+      }
+    } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*\??/))) {
+      dest.push(new PropertyLookupOp(m[0].slice(1)));
+      q = q.slice(m[0].length);
+    } else {
+      break;
+    }
+  } while (q.trim().length > 0);
+
+  return [q, new PathExpression(dest), arr];
+};
+
 const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, Operator[]] => {
   let op: string | undefined;
   let m;
@@ -709,36 +765,8 @@ const nextToken = (q: string, arr: Operator[]): [string, Operator | undefined, O
   } else if (q.startsWith('[')) {
     const { end, sub } = parsePair(q, '[', ']');
     return [q.slice(end + 1), new ArrayConstructor(new PipeGenerator([parse(sub.trim())])), arr];
-  } else if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
-    const s = q.slice(m[0].length);
-
-    const [, identifier, arrayQuery] = m;
-
-    if (arrayQuery === '') {
-      return [s, new PipeGenerator([new PropertyLookupOp(identifier), new ArrayGenerator()]), arr];
-    } else if (arrayQuery.includes(':')) {
-      const [from, to] = arrayQuery.split(':');
-
-      return [
-        s,
-        new PipeGenerator([
-          new PropertyLookupOp(identifier),
-          new ArraySliceOp(from === '' ? 0 : parseInt(from), to === '' ? Infinity : parseInt(to))
-        ]),
-        arr
-      ];
-    } else {
-      return [
-        s,
-        new PipeGenerator([
-          new PropertyLookupOp(identifier),
-          new ArrayIndexOp(parseInt(arrayQuery))
-        ]),
-        arr
-      ];
-    }
-  } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*\??/))) {
-    return [q.slice(m[0].length), new PropertyLookupOp(m[0].slice(1)), arr];
+  } else if (q.startsWith('.')) {
+    return parsePathExpression(q, arr);
   } else if (q.startsWith('not')) {
     arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
     return [q.slice(3), undefined, arr];
@@ -811,7 +839,7 @@ export const query = (query: string, input: unknown[]) => {
     v = node.evaluate(v);
     if (isResultSet(v)) {
       dest.push(...v._val);
-    } else {
+    } else if (v !== undefined) {
       dest.push(v);
     }
   }
