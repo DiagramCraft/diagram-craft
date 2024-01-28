@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isObj } from './object.ts';
-import { assert, NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED, VerifyNotReached } from './assert.ts';
+import { assert, NOT_IMPLEMENTED_YET, VERIFY_NOT_REACHED } from './assert.ts';
 import { isTaggedType, tag, TaggedType } from './types.ts';
 
 const safeParseInt = (s: any) => {
@@ -13,16 +13,6 @@ type ResultSet = TaggedType<'resultSet', unknown[]>;
 export const ResultSet = {
   of: (o: unknown): ResultSet => ({ _type: 'resultSet', _val: [o] }),
   ofList: (...o: unknown[]): ResultSet => ({ _type: 'resultSet', _val: o })
-};
-
-const eat = (remaining: string, s: string) => {
-  if (remaining.startsWith(s)) return remaining.slice(s.length).trimStart();
-  else return remaining;
-};
-
-const expect = (remaining: string, s: string) => {
-  if (!remaining.startsWith(s)) throw new Error('Expect: ' + s);
-  else return eat(remaining, s);
 };
 
 const isResultSet = (o: unknown): o is ResultSet => isTaggedType(o, 'resultSet');
@@ -40,44 +30,42 @@ interface Generator extends Operator {
 type OObjects = OObject | OBoolean | OArray | ONumber | OString | Operator;
 
 export const OObjects = {
-  parse(s: string): OObjects & { val(): unknown } {
-    const r = OObjects.parseNext(s)[0];
+  parse(tok: Tokenizer): OObjects & { val(): unknown } {
+    const r = OObjects.parseNext(tok);
     if (isOperator(r)) throw new Error();
     return r;
   },
 
-  parseTemplate(s: string): OObjects {
-    return OObjects.parseNext(s)[0];
+  parseTemplate(tok: Tokenizer): OObjects {
+    return OObjects.parseNext(tok);
   },
 
-  parseNext(s: string): [OObjects, string] {
-    if (s.startsWith('"')) {
-      return OString.parse(s);
-    } else if (s.startsWith('.')) {
-      let end = 1;
-      for (; end < s.length; end++) {
-        if (s[end] === ',' || s[end] === '}' || s[end] === ' ' || s[end] === ':') break;
+  parseNext(tokenizer: Tokenizer): OObjects {
+    const tok = tokenizer.next();
+    if (tok.type === 'string') {
+      return new OString(tok.s.slice(1, -1));
+    } else if (tok.s === '.') {
+      let dest = '.';
+
+      // TODO: Need to fix this part - should call parsePathExpression
+      while (![',', '}', ':', ' '].includes(tokenizer.peek().s)) {
+        dest += tokenizer.next().s;
       }
-      return [parse(s.slice(0, end)), s.slice(end)];
-    } else if (s.startsWith('{')) {
-      return OObject.parse(s);
-    } else if (s.startsWith('(')) {
-      const { sub } = parsePair(s, '(', ')');
-      return [parse(sub.trim()), s.slice(sub.length + 2)];
-    } else if (s.startsWith('[')) {
-      return OArray.parse(s);
-    } else if (s.match(/^[0-9].*/)) {
-      return ONumber.parse(s);
-    } else if (s.startsWith('true') || s.startsWith('false')) {
-      return OBoolean.parse(s);
+      return new Literal(dest);
+    } else if (tok.s === '{') {
+      return OObject.parse(tokenizer);
+    } else if (tok.s === '(') {
+      const e = OObjects.parseNext(tokenizer);
+      tokenizer.eat(')');
+      return e;
+    } else if (tok.s === '[') {
+      return OArray.parse(tokenizer);
+    } else if (tok.type === 'number') {
+      return new ONumber(Number(tok.s));
+    } else if (tok.s === 'true' || tok.s === 'false') {
+      return new OBoolean(tok.s === 'true');
     } else {
-      let end = 1;
-      for (; end < s.length; end++) {
-        if (!s[end].match(/^[a-zA-Z0-9_]/)) {
-          break;
-        }
-      }
-      return [new OString(s.slice(0, end)), s.slice(end)];
+      throw new Error('Cannot parse: ' + tokenizer.rest);
     }
   }
 };
@@ -89,38 +77,47 @@ export class OObject {
     this.entries = entries ?? [];
   }
 
-  static parse(s: string): [OObject, string] {
-    const { sub } = parsePair(s, '{', '}');
-
+  static parse(s: Tokenizer) {
     const obj = new OObject();
 
     let currentKey: OString | Operator | undefined = undefined;
-    let remaining = sub.trim();
 
-    while (remaining.length > 0) {
-      const [entry, r] = OObjects.parseNext(remaining);
-      remaining = r.trim();
+    while (s.peek().s !== '}') {
+      while (s.peek().type === 'separator') s.next();
 
-      if (entry instanceof OString || isOperator(entry)) {
+      if (s.peek().type === 'identifier') {
         if (currentKey) {
-          obj.entries.push([currentKey, entry]);
-          currentKey = undefined;
-          remaining = eat(remaining, ',');
+          throw new Error('Cannot have two keys in a row');
         } else {
-          currentKey = entry;
-          remaining = expect(remaining, ':');
+          currentKey = new OString(s.next().s);
+          s.eat(':');
         }
-      } else if (entry instanceof OArray || entry instanceof ONumber || entry instanceof OBoolean) {
-        assert.present(currentKey);
-        obj.entries.push([currentKey, entry]);
-        currentKey = undefined;
-        remaining = eat(remaining, ',');
       } else {
-        VERIFY_NOT_REACHED();
+        const next = OObjects.parseNext(s);
+
+        if (next instanceof OString || isOperator(next)) {
+          if (currentKey) {
+            obj.entries.push([currentKey, next]);
+            currentKey = undefined;
+            if (!s.eatIfPossible(',')) break;
+          } else {
+            currentKey = next;
+            s.eat(':');
+          }
+        } else if (next instanceof OArray || next instanceof ONumber || next instanceof OBoolean) {
+          assert.present(currentKey);
+          obj.entries.push([currentKey, next]);
+          currentKey = undefined;
+          if (!s.eatIfPossible(',')) break;
+        } else {
+          VERIFY_NOT_REACHED();
+        }
       }
     }
 
-    return [obj, remaining];
+    s.eat('}');
+
+    return obj;
   }
 
   val() {
@@ -140,15 +137,6 @@ export class OString {
     this.value = value;
   }
 
-  static parse(s: string): [OString, string] {
-    let end = 1;
-    for (; end < s.length; end++) {
-      if (s[end] === '"') break;
-    }
-
-    return [new OString(s.slice(1, end)), s.slice(end + 1)];
-  }
-
   val() {
     return this.value;
   }
@@ -159,16 +147,6 @@ export class OBoolean {
 
   constructor(value: boolean) {
     this.value = value;
-  }
-
-  static parse(s: string): [OBoolean, string] {
-    if (s.startsWith('true')) {
-      return [new OBoolean(true), s.slice(4)];
-    } else if (s.startsWith('false')) {
-      return [new OBoolean(false), s.slice(5)];
-    } else {
-      throw new VerifyNotReached();
-    }
   }
 
   val() {
@@ -183,24 +161,20 @@ export class OArray {
     this.value = value ?? [];
   }
 
-  static parse(s: string): [OArray, string] {
-    const { sub } = parsePair(s, '[', ']');
-
+  static parse(s: Tokenizer) {
     const arr = new OArray();
 
-    let remaining = sub.trim();
+    while (s.peek().s !== ']') {
+      while (s.peek().type === 'separator') s.next();
 
-    while (remaining.length > 0) {
-      const [next, r] = OObjects.parseNext(remaining);
-      remaining = r.trim();
-
+      const next = OObjects.parseNext(s);
       arr.value.push(next);
 
-      if (remaining.startsWith(',')) remaining = eat(remaining, ',');
-      else break;
+      if (!s.eatIfPossible(',')) break;
     }
+    s.eat(']');
 
-    return [arr, s.slice(sub.length + 2).trim()];
+    return arr;
   }
 
   val(): unknown[] {
@@ -216,15 +190,6 @@ export class ONumber {
 
   constructor(value: number) {
     this.value = value;
-  }
-
-  static parse(s: string): [ONumber, string] {
-    let end = 0;
-    for (; end < s.length; end++) {
-      if (!s[end].match(/[0-9]/)) break;
-    }
-
-    return [new ONumber(Number(s.slice(0, end))), s.slice(end)];
   }
 
   val() {
@@ -642,32 +607,20 @@ class ContainsFn implements Operator {
   }
 }
 
-const parsePair = (q: string, left: string, right: string) => {
-  let depth = 0;
-  let end = 0;
-  for (; end < q.length; end++) {
-    if (q[end] === left) depth++;
-    else if (q[end] === right) {
-      depth--;
-      if (depth === 0) break;
-    }
-  }
-  assert.true(depth === 0);
-
-  const sub = q.slice(1, end).trim();
-  return { end, sub };
-};
-
 type Token = {
   s: string;
   type: 'number' | 'string' | 'identifier' | 'operator' | 'separator' | 'end';
 };
 
-class Tokenizer {
+export class Tokenizer {
   private remaining: string;
 
   constructor(public readonly query: string) {
     this.remaining = query;
+  }
+
+  get rest() {
+    return this.remaining;
   }
 
   peek(): Token {
@@ -679,7 +632,7 @@ class Tokenizer {
       return { s: m[0], type: 'string' };
     } else if ((m = q.match(/^[a-zA-Z_][a-zA-Z0-9_]*/))) {
       return { s: m[0], type: 'identifier' };
-    } else if ((m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:)/))) {
+    } else if ((m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|{|})/))) {
       return { s: m[0], type: 'operator' };
     } else if ((m = q.match(/^(\s+)/))) {
       return { s: m[0], type: 'separator' };
@@ -699,6 +652,13 @@ class Tokenizer {
   eat(s: string) {
     if (this.peek().s === s) return this.next();
     else throw new Error('Expected: ' + s + ', found ' + this.peek());
+  }
+
+  eatIfPossible(s: string) {
+    if (this.peek().s === s) {
+      this.eat(s);
+      return true;
+    } else false;
   }
 }
 
@@ -824,8 +784,9 @@ const nextToken = (
   } else if ((m = q.match(/^-?[0-9]+/))) {
     return [q.slice(m[0].length), new Literal(Number(m[0])), arr];
   } else if (q.startsWith('{')) {
-    const { end, sub } = parsePair(q, '{', '}');
-    return [q.slice(end + 1), new Literal(OObjects.parse('{' + sub + '}').val()), arr];
+    const t = new Tokenizer(q);
+    const res = OObjects.parse(t);
+    return [t.rest, new Literal(res.val()), arr];
   } else if (q.startsWith('"')) {
     const end = q.indexOf('"', 1);
     return [q.slice(end + 1), new Literal(q.slice(1, end)), arr];

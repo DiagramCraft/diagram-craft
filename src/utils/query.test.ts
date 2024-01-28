@@ -12,33 +12,40 @@ import {
   query,
   queryOne,
   RecursiveDescentGenerator,
-  ResultSet
+  ResultSet,
+  Tokenizer
 } from './query.ts';
 
 describe('OObject', () => {
   test('parse OString', () => {
-    expect(OObjects.parse('"lorem"').val()).toEqual('lorem');
+    expect(OObjects.parse(new Tokenizer('"lorem"')).val()).toEqual('lorem');
   });
 
   test('parse ONumber', () => {
-    expect(OObjects.parse('1234').val()).toEqual(1234);
+    expect(OObjects.parse(new Tokenizer('1234')).val()).toEqual(1234);
   });
 
   test('parse OBoolean', () => {
-    expect(OObjects.parse('true').val()).toEqual(true);
-    expect(OObjects.parse('false').val()).toEqual(false);
+    expect(OObjects.parse(new Tokenizer('true')).val()).toEqual(true);
+    expect(OObjects.parse(new Tokenizer('false')).val()).toEqual(false);
   });
 
   test('parse OArray', () => {
-    expect(OObjects.parse('[1, 2, 3]').val()).toEqual([1, 2, 3]);
-    expect(OObjects.parse('["a", "b"]').val()).toEqual(['a', 'b']);
-    expect(OObjects.parse('[1, "b"]').val()).toEqual([1, 'b']);
+    expect(OObjects.parse(new Tokenizer('[1, 2, 3]')).val()).toEqual([1, 2, 3]);
+    expect(OObjects.parse(new Tokenizer('["a", "b"]')).val()).toEqual(['a', 'b']);
+    expect(OObjects.parse(new Tokenizer('[1, "b"]')).val()).toEqual([1, 'b']);
   });
 
   test('parse OObject', () => {
-    expect(OObjects.parse('{ ab: 1, b: 2}').val()).toEqual({ ab: 1, b: 2 });
-    expect(OObjects.parse('{ ab: "test", b: 2}').val()).toEqual({ ab: 'test', b: 2 });
-    expect(OObjects.parse('{ ab: [7, 8], b: 2}').val()).toEqual({ ab: [7, 8], b: 2 });
+    expect(OObjects.parse(new Tokenizer('{ ab: 1, b: 2}')).val()).toEqual({ ab: 1, b: 2 });
+    expect(OObjects.parse(new Tokenizer('{ ab: "test", b: 2}')).val()).toEqual({
+      ab: 'test',
+      b: 2
+    });
+    expect(OObjects.parse(new Tokenizer('{ ab: [7, 8], b: 2}')).val()).toEqual({
+      ab: [7, 8],
+      b: 2
+    });
   });
 });
 
