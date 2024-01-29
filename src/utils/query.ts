@@ -632,7 +632,9 @@ export class Tokenizer {
       return { s: m[0], type: 'string' };
     } else if ((m = q.match(/^[a-zA-Z_][a-zA-Z0-9_]*/))) {
       return { s: m[0], type: 'identifier' };
-    } else if ((m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|{|}|\?)/))) {
+    } else if (
+      (m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.\.|\.|\[|\]|\(|\)|,|:|{|}|\?|\|)/))
+    ) {
       return { s: m[0], type: 'operator' };
     } else if ((m = q.match(/^(\s+)/))) {
       return { s: m[0], type: 'separator' };
@@ -651,7 +653,13 @@ export class Tokenizer {
 
   expect(s: string) {
     if (this.peek().s === s) return this.next();
-    else throw new Error('Expected: ' + s + ', found ' + this.peek());
+    else throw new Error('Expected: ' + s + ', found ' + JSON.stringify(this.peek()));
+  }
+
+  processWhitespace() {
+    while (this.peek().type === 'separator') {
+      this.remaining = this.remaining.slice(this.peek().s.length);
+    }
   }
 
   accept(s: string) {
@@ -710,8 +718,8 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   or: (l, r) => new CmpBinaryOp(l, r, (a, b) => a || b)
 };
 
-const FN_NAMES = Object.keys(FN_REGISTRY).sort((a, b) => b.length - a.length);
-const BINOP_NAMES = Object.keys(BINOP_REGISTRY).sort((a, b) => b.length - a.length);
+//const FN_NAMES = Object.keys(FN_REGISTRY).sort((a, b) => b.length - a.length);
+//const BINOP_NAMES = Object.keys(BINOP_REGISTRY).sort((a, b) => b.length - a.length);
 
 const parsePathExpression = (tokenizer: Tokenizer): Operator => {
   const dest: Operator[] = [new PropertyLookupOp('')];
@@ -753,112 +761,128 @@ const parsePathExpression = (tokenizer: Tokenizer): Operator => {
 };
 
 const nextToken = (
-  q: string,
+  tokenizer: Tokenizer,
   arr: Operator[]
-): undefined | [string, Operator | undefined, Operator[]] => {
-  let op: string | undefined;
-  let m;
-  if (q.startsWith('|')) {
-    return [q.slice(1), undefined, arr];
-  } else if (q.startsWith(',')) {
+): undefined | [Operator | undefined, Operator[]] => {
+  tokenizer.processWhitespace();
+
+  const tok = tokenizer.peek();
+  if (tok.s === '|') {
+    tokenizer.next();
+    return [undefined, arr];
+  } else if (tok.s === ',') {
+    tokenizer.next();
     const last = arr.at(-1)!;
     if (!(last instanceof ConcatenationGenerator)) {
       const seq = new ConcatenationGenerator([last]);
       arr[arr.length - 1] = seq;
-      return [q.slice(1), undefined, seq.nodes];
+      return [undefined, seq.nodes];
     } else {
-      return [q.slice(1), undefined, arr];
+      return [undefined, arr];
     }
-  } else if (q.startsWith('..')) {
-    return [q.slice(2), new RecursiveDescentGenerator(), arr];
-  } else if (q.startsWith('[')) {
-    const [inner, rest] = parseNextPart(q.slice(1));
-    if (rest.trim()[0] !== ']') throw new Error(`Expecting ]: ` + rest);
+  } else if (tok.s === '..') {
+    tokenizer.next();
+    return [new RecursiveDescentGenerator(), arr];
+  } else if (tok.s === '[') {
+    tokenizer.next();
+    const inner = parseNextPart(tokenizer);
+    tokenizer.processWhitespace();
+    tokenizer.expect(']');
 
-    return [rest.slice(1), new ArrayConstructor(new PipeGenerator([inner])), arr];
-  } else if (q.startsWith('.')) {
-    const tokenizer = new Tokenizer(q);
+    return [new ArrayConstructor(new PipeGenerator([inner])), arr];
+  } else if (tok.s === '.') {
     const res = parsePathExpression(tokenizer);
-    return [tokenizer.rest, res, arr];
-  } else if (q.startsWith('not')) {
+    return [res, arr];
+  } else if (tok.s === 'not') {
+    tokenizer.next();
     arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
-    return [q.slice(3), undefined, arr];
+    return [undefined, arr];
 
     /* LITERALS ************************************************************************** */
-  } else if ((m = q.match(/^-?[0-9]+/))) {
-    return [q.slice(m[0].length), new Literal(Number(m[0])), arr];
-  } else if (q.startsWith('{')) {
-    const t = new Tokenizer(q);
-    const res = OObjects.parse(t);
-    return [t.rest, new Literal(res.val()), arr];
-  } else if (q.startsWith('"')) {
-    const end = q.indexOf('"', 1);
-    return [q.slice(end + 1), new Literal(q.slice(1, end)), arr];
-  } else if (q.startsWith('null')) {
-    return [q.slice(4), new Literal(null), arr];
-  } else if (q.startsWith('false')) {
-    return [q.slice(5), new Literal(false), arr];
-  } else if (q.startsWith('true')) {
-    return [q.slice(4), new Literal(true), arr];
+  } else if (tok.type === 'number') {
+    return [new Literal(Number(tokenizer.next().s)), arr];
+  } else if (tok.s === '{') {
+    const res = OObjects.parse(tokenizer);
+    return [new Literal(res.val()), arr];
+  } else if (tok.type === 'string') {
+    return [new Literal(tokenizer.next().s.slice(1, -1)), arr];
+  } else if (tok.s === 'null') {
+    tokenizer.next();
+    return [new Literal(null), arr];
+  } else if (tok.s === 'false') {
+    tokenizer.next();
+    return [new Literal(false), arr];
+  } else if (tok.s === 'true') {
+    tokenizer.next();
+    return [new Literal(true), arr];
 
     /* BINARY OPS ************************************************************************** */
-  } else if ((op = BINOP_NAMES.find(o => q.startsWith(o)))) {
-    const [nextS, nextTok, nextArr] = nextToken(q.slice(op.length).trim(), arr)!;
+  } else if (tok.type === 'operator' || tok.s === 'or' || tok.s === 'and') {
+    const op = tok.s;
+    tokenizer.next();
+
+    const [nextTok, nextArr] = nextToken(tokenizer, arr)!;
     assert.present(nextTok);
     arr[arr.length - 1] = BINOP_REGISTRY[op](arr.at(-1)!, nextTok);
-    return [nextS, undefined, nextArr];
+    return [undefined, nextArr];
 
     /* FUNCTIONS ************************************************************************** */
-  } else if ((op = FN_NAMES.find(o => q.startsWith(o)))) {
+  } else if (tok.type === 'identifier') {
+    const op = tok.s;
+    tokenizer.next();
+
     const { args, fn: fnFn } = FN_REGISTRY[op];
+
     if (args === '0') {
-      return [q.slice(op.length), fnFn(), arr];
-    } else if (args === '0&1' && q[op.length] !== '(') {
-      return [q.slice(op.length + 1), fnFn(undefined), arr];
+      return [fnFn(), arr];
+    } else if (args === '0&1' && tokenizer.peek().s !== '(') {
+      return [fnFn(undefined), arr];
     }
 
-    const [inner, remaining] = parseNextPart(q.slice(op.length + 1));
-    if (remaining[0] !== ')') throw new Error('Expecting ): ' + remaining);
-    return [remaining.slice(1), fnFn(inner), arr];
+    tokenizer.expect('(');
+    const inner = parseNextPart(tokenizer);
+    tokenizer.expect(')');
+
+    return [fnFn(inner), arr];
   }
 
   return undefined;
 };
 
-const parseNextPart = (query: string): [Operator, string] => {
+const parseNextPart = (tokenizer: Tokenizer): Operator => {
   const dest: Operator[] = [];
 
-  //const tokenizer = new Tokenizer(query);
-
   let arr = dest;
-  let q = query;
 
   let i = 0;
   do {
-    const v = nextToken(q, arr);
+    const v = nextToken(tokenizer, arr);
 
     if (v === undefined) {
       break;
     }
 
-    const [s, t, newArr] = v;
+    const [t, newArr] = v;
     if (t) arr.push(t);
     arr = newArr;
 
-    q = s.trim();
     if (i++ > 1000) throw new Error('Infinite loop detected');
-  } while (q.trim().length > 0);
+  } while (
+    tokenizer.peek().type !== 'end' &&
+    tokenizer.peek().s !== ')' &&
+    tokenizer.peek().s !== ']'
+  );
 
-  return [dest.length === 1 ? dest[0] : new PipeGenerator(dest), q];
+  return dest.length === 1 ? dest[0] : new PipeGenerator(dest);
 };
 
 export const parse = (query: string): Operator => {
-  //const tokenizer = new Tokenizer(query);
+  const tokenizer = new Tokenizer(query);
 
-  const [op, remaining] = parseNextPart(query);
+  const op = parseNextPart(tokenizer);
 
-  if (remaining.trim().length > 0) {
-    throw new Error('Cannot parse: ' + remaining);
+  if (tokenizer.peek().type !== 'end') {
+    throw new Error('Cannot parse: ' + tokenizer.rest);
   }
 
   return op;

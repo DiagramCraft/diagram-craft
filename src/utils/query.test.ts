@@ -194,6 +194,7 @@ describe('[...]', () => {
 
 describe('..', () => {
   test('query: .. | .a?', () => {
+    console.dir(parse('.. | .a?'), { depth: 10 });
     expect(query('.. | .a?', [[[{ a: 1 }]]])).toEqual([1]);
   });
 
