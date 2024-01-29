@@ -56,7 +56,7 @@ export const OObjects = {
       return OObject.parse(tokenizer);
     } else if (tok.s === '(') {
       const e = OObjects.parseNext(tokenizer);
-      tokenizer.eat(')');
+      tokenizer.expect(')');
       return e;
     } else if (tok.s === '[') {
       return OArray.parse(tokenizer);
@@ -90,7 +90,7 @@ export class OObject {
           throw new Error('Cannot have two keys in a row');
         } else {
           currentKey = new OString(s.next().s);
-          s.eat(':');
+          s.expect(':');
         }
       } else {
         const next = OObjects.parseNext(s);
@@ -99,23 +99,23 @@ export class OObject {
           if (currentKey) {
             obj.entries.push([currentKey, next]);
             currentKey = undefined;
-            if (!s.eatIfPossible(',')) break;
+            if (!s.accept(',')) break;
           } else {
             currentKey = next;
-            s.eat(':');
+            s.expect(':');
           }
         } else if (next instanceof OArray || next instanceof ONumber || next instanceof OBoolean) {
           assert.present(currentKey);
           obj.entries.push([currentKey, next]);
           currentKey = undefined;
-          if (!s.eatIfPossible(',')) break;
+          if (!s.accept(',')) break;
         } else {
           VERIFY_NOT_REACHED();
         }
       }
     }
 
-    s.eat('}');
+    s.expect('}');
 
     return obj;
   }
@@ -170,9 +170,9 @@ export class OArray {
       const next = OObjects.parseNext(s);
       arr.value.push(next);
 
-      if (!s.eatIfPossible(',')) break;
+      if (!s.accept(',')) break;
     }
-    s.eat(']');
+    s.expect(']');
 
     return arr;
   }
@@ -239,9 +239,9 @@ export class PropertyLookupOp implements Operator {
   public readonly strict: boolean;
   public readonly identifier: string;
 
-  constructor(identifier: string) {
-    this.strict = !identifier.endsWith('?');
-    this.identifier = identifier.replace(/\?$/, '');
+  constructor(identifier: string, strict = true) {
+    this.strict = strict;
+    this.identifier = identifier;
   }
 
   evaluate(input: unknown): unknown {
@@ -632,7 +632,7 @@ export class Tokenizer {
       return { s: m[0], type: 'string' };
     } else if ((m = q.match(/^[a-zA-Z_][a-zA-Z0-9_]*/))) {
       return { s: m[0], type: 'identifier' };
-    } else if ((m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|{|})/))) {
+    } else if ((m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|{|}|\?)/))) {
       return { s: m[0], type: 'operator' };
     } else if ((m = q.match(/^(\s+)/))) {
       return { s: m[0], type: 'separator' };
@@ -649,16 +649,17 @@ export class Tokenizer {
     return s;
   }
 
-  eat(s: string) {
+  expect(s: string) {
     if (this.peek().s === s) return this.next();
     else throw new Error('Expected: ' + s + ', found ' + this.peek());
   }
 
-  eatIfPossible(s: string) {
+  accept(s: string) {
     if (this.peek().s === s) {
-      this.eat(s);
+      this.expect(s);
       return true;
-    } else false;
+    }
+    return false;
   }
 }
 
@@ -712,42 +713,43 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
 const FN_NAMES = Object.keys(FN_REGISTRY).sort((a, b) => b.length - a.length);
 const BINOP_NAMES = Object.keys(BINOP_REGISTRY).sort((a, b) => b.length - a.length);
 
-const parsePathExpression = (
-  query: string,
-  arr: Operator[]
-): [string, Operator | undefined, Operator[]] => {
-  const dest: Operator[] = [];
+const parsePathExpression = (tokenizer: Tokenizer): Operator => {
+  const dest: Operator[] = [new PropertyLookupOp('')];
 
-  let q = query;
-  let m;
+  tokenizer.expect('.');
 
-  do {
-    if ((m = q.match(/^\.([a-zA-Z_]?[a-zA-Z0-9_]*)\[([^\]]*)\]/))) {
-      q = q.slice(m[0].length);
+  let token = tokenizer.peek();
 
-      const [, identifier, arrayQuery] = m;
-
-      if (arrayQuery === '') {
-        dest.push(new PipeGenerator([new PropertyLookupOp(identifier), new ArrayGenerator()]));
-      } else if (arrayQuery.includes(':')) {
-        const [from, to] = arrayQuery.split(':');
-
-        dest.push(
-          new PropertyLookupOp(identifier),
-          new ArraySliceOp(from === '' ? 0 : parseInt(from), to === '' ? Infinity : parseInt(to))
-        );
+  let i = 0;
+  while (i++ < 1000) {
+    if (token.type === 'identifier') {
+      tokenizer.next();
+      const strict = !tokenizer.accept('?');
+      dest.push(new PropertyLookupOp(token.s, strict));
+    } else if (token.type === 'operator' && token.s === '[') {
+      tokenizer.next();
+      const nextToken = tokenizer.next();
+      if (nextToken.s === ']') {
+        dest.push(new ArrayGenerator());
+      } else if (nextToken.type === 'number') {
+        const nextNextToken = tokenizer.next();
+        if (nextNextToken.s === ':') {
+          dest.push(new ArraySliceOp(parseInt(nextToken.s), parseInt(tokenizer.next().s)));
+          tokenizer.expect(']');
+        } else if (nextNextToken.s === ']') {
+          dest.push(new ArrayIndexOp(parseInt(nextToken.s)));
+        }
       } else {
-        dest.push(new PropertyLookupOp(identifier), new ArrayIndexOp(parseInt(arrayQuery)));
+        throw new Error('Unexpected token: ' + nextToken.s);
       }
-    } else if ((m = q.match(/^\.[a-zA-Z_]?[a-zA-Z0-9_]*\??/))) {
-      dest.push(new PropertyLookupOp(m[0].slice(1)));
-      q = q.slice(m[0].length);
     } else {
       break;
     }
-  } while (q.trim().length > 0);
 
-  return [q, new PathExpression(dest), arr];
+    token = tokenizer.peek();
+  }
+
+  return new PathExpression(dest);
 };
 
 const nextToken = (
@@ -775,7 +777,9 @@ const nextToken = (
 
     return [rest.slice(1), new ArrayConstructor(new PipeGenerator([inner])), arr];
   } else if (q.startsWith('.')) {
-    return parsePathExpression(q, arr);
+    const tokenizer = new Tokenizer(q);
+    const res = parsePathExpression(tokenizer);
+    return [tokenizer.rest, res, arr];
   } else if (q.startsWith('not')) {
     arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
     return [q.slice(3), undefined, arr];

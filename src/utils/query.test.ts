@@ -81,7 +81,7 @@ describe('.abc', () => {
   });
 
   test('PropertyLookupOp', () => {
-    expect(new PropertyLookupOp('test?').evaluate([1, 2, 3])).toEqual(undefined);
+    expect(new PropertyLookupOp('test', false).evaluate([1, 2, 3])).toEqual(undefined);
     expect(new PropertyLookupOp('test').evaluate({ test: 6 })).toEqual(6);
   });
 });
