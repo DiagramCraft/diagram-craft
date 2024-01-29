@@ -461,4 +461,15 @@ describe('complex use-cases', () => {
       { id: '4' }
     ]);
   });
+
+  test.skip('.elements[] | select(.id == ("2" , "4"))', () => {
+    const data = {
+      elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
+    };
+
+    expect(query('.elements[] | select(.id == ("2" , "4"))', [data])).toEqual([
+      { id: '2' },
+      { id: '4' }
+    ]);
+  });
 });
