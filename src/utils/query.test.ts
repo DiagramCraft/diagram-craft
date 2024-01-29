@@ -6,7 +6,6 @@ import {
   ArraySliceOp,
   ConcatenationGenerator,
   OObjects,
-  parse,
   PipeGenerator,
   PropertyLookupOp,
   query,
@@ -451,15 +450,11 @@ describe('contains()', () => {
   });
 });
 
-describe.skip('complex use-cases', () => {
+describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {
       elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
     };
-
-    console.dir(parse('.elements[] | select(.id == "2" or .id == "4")'), { depth: 10 });
-
-    console.dir(query('.elements[] | select(.id == "2")', [data]));
 
     expect(query('.elements[] | select(.id == "2" or .id == "4")', [data])).toEqual([
       { id: '2' },
