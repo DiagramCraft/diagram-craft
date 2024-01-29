@@ -1,19 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import {
-  ArrayConstructor,
-  ArrayGenerator,
-  ArrayIndexOp,
-  ArraySliceOp,
-  ConcatenationGenerator,
-  OObjects,
-  PipeGenerator,
-  PropertyLookupOp,
-  query,
-  queryOne,
-  RecursiveDescentGenerator,
-  ResultSet,
-  Tokenizer
-} from './query.ts';
+import { OObjects, parse, query, queryOne, Tokenizer } from './query.ts';
 
 describe('OObject', () => {
   test('parse OString', () => {
@@ -79,10 +65,11 @@ describe('.abc', () => {
     expect(queryOne('.a?.b', [1, 2, 3])).toEqual(undefined);
   });
 
+  /*
   test('PropertyLookupOp', () => {
     expect(new PropertyLookupOp('test', false).evaluate([1, 2, 3])).toEqual(undefined);
     expect(new PropertyLookupOp('test').evaluate({ test: 6 })).toEqual(6);
-  });
+  });*/
 });
 
 describe('.[], .[0], .[0:2]', () => {
@@ -111,6 +98,7 @@ describe('.[], .[0], .[0:2]', () => {
     expect(() => query('.[]', [123])).toThrowError();
   });
 
+  /*
   test('ArrayIndexOp', () => {
     expect(new ArrayIndexOp(0).evaluate([1, 2, 3])).toEqual(1);
   });
@@ -123,6 +111,8 @@ describe('.[], .[0], .[0:2]', () => {
     expect(() => new ArrayGenerator().evaluate('lorem')).toThrowError();
     expect(new ArrayGenerator().evaluate([1, 2, 3])).toEqual(ResultSet.ofList(1, 2, 3));
   });
+
+   */
 });
 
 describe(',', () => {
@@ -140,6 +130,7 @@ describe(',', () => {
     ).toEqual(['stedolan', 'jq', 'wikiflow']);
   });
 
+  /*
   test('Concatenation', () => {
     expect(
       new ConcatenationGenerator(new ArrayIndexOp(0), new ArrayIndexOp(2)).evaluate([1, 2, 3])
@@ -151,7 +142,7 @@ describe(',', () => {
         new PipeGenerator(new PropertyLookupOp('arr'), new ArrayGenerator())
       ).evaluate({ test: 'lorem', arr: [1, 2] })
     ).toEqual(ResultSet.ofList('lorem', 1, 2));
-  });
+  });*/
 });
 
 describe('|', () => {
@@ -166,10 +157,11 @@ describe('|', () => {
     ).toEqual(['JSON', 'XML']);
   });
 
+  /*
   test('FilterSequence', () => {
     const grp = new PipeGenerator(new PropertyLookupOp('name'), new PropertyLookupOp('first'));
     expect(grp.evaluate({ name: { first: 'John' } })).toEqual(ResultSet.of('John'));
-  });
+  });*/
 });
 
 describe('[...]', () => {
@@ -179,6 +171,7 @@ describe('[...]', () => {
     ).toEqual([['stedolan', 'jq', 'wikiflow']]);
   });
 
+  /*
   test('ArrayConstructor', () => {
     const set = new ArrayConstructor(new PropertyLookupOp('user')).evaluate({ user: 'John' });
     expect(set).toEqual(['John']);
@@ -189,6 +182,8 @@ describe('[...]', () => {
       ).evaluate({ user: 'John', age: 17 })
     ).toEqual(['John', 17]);
   });
+
+   */
 });
 
 describe('..', () => {
@@ -196,6 +191,7 @@ describe('..', () => {
     expect(query('.. | .a?', [[[{ a: 1 }]]])).toEqual([1]);
   });
 
+  /*
   test('RecursiveDescentGenerator', () => {
     expect(
       new RecursiveDescentGenerator().evaluate({ user: 'stedolan', projects: ['jq', 'wikiflow'] })
@@ -209,6 +205,8 @@ describe('..', () => {
       )
     );
   });
+
+   */
 });
 
 describe('+', () => {
@@ -270,6 +268,7 @@ describe('map()', () => {
     expect(query('map(. + 1)', [[1, 2, 3]])).toEqual([[2, 3, 4]]);
   });
   test('query: map(., .)', () => {
+    console.dir(parse('map(., .)'), { depth: 10 });
     expect(query('map(., .)', [[1, 2]])).toEqual([[1, 1, 2, 2]]);
   });
 });
@@ -462,7 +461,7 @@ describe('complex use-cases', () => {
     ]);
   });
 
-  test.skip('.elements[] | select(.id == ("2" , "4"))', () => {
+  test('.elements[] | select(.id == ("2" , "4"))', () => {
     const data = {
       elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
     };

@@ -4,10 +4,10 @@ import { assert, NOT_IMPLEMENTED_YET } from './assert.ts';
 import { isTaggedType, tag, TaggedType } from './types.ts';
 
 type FnRegistration =
-  | { args: '0'; fn: () => Operator }
-  | { args: '1'; fn: (arg: Operator) => Operator }
-  | { args: '0&1'; fn: (arg: Operator | undefined) => Operator };
-type BinaryOpRegistration = (l: Operator, r: Operator) => Operator;
+  | { args: '0'; fn: () => Generator }
+  | { args: '1'; fn: (arg: Generator) => Generator }
+  | { args: '0&1'; fn: (arg: Generator | undefined) => Generator };
+type BinaryOpRegistration = (l: Generator, r: Generator) => Generator;
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
   '..': { args: '0', fn: () => new RecursiveDescentGenerator() },
@@ -128,31 +128,18 @@ export class Tokenizer {
   }
 }
 
-type ResultSet = TaggedType<'resultSet', unknown[]>;
+const isGenerator = (o: unknown): o is Generator => (o as any)?.iterable;
 
-export const ResultSet = {
-  of: (o: unknown): ResultSet => ({ _type: 'resultSet', _val: [o] }),
-  ofList: (...o: unknown[]): ResultSet => ({ _type: 'resultSet', _val: o })
-};
-
-const isResultSet = (o: unknown): o is ResultSet => isTaggedType(o, 'resultSet');
-
-const isOperator = (o: unknown): o is Operator => (o as any)?.evaluate;
-
-interface Operator {
-  evaluate(input: unknown): unknown;
+interface Generator {
+  iterable(input: Iterable<unknown>): Iterable<unknown>;
 }
 
-interface Generator extends Operator {
-  evaluate(input: unknown): ResultSet;
-}
-
-type OObjects = OObject | OBoolean | OArray | ONumber | OString | Operator;
+type OObjects = OObject | OBoolean | OArray | ONumber | OString | Generator;
 
 export const OObjects = {
   parse(tok: Tokenizer): OObjects & { val(): unknown } {
     const r = OObjects.parseNext(tok);
-    if (isOperator(r)) throw new Error();
+    if (isGenerator(r)) throw new Error();
     return r;
   },
 
@@ -185,16 +172,16 @@ export const OObjects = {
 };
 
 export class OObject {
-  entries: [OString | Operator, OObjects][] = [];
+  entries: [OString | Generator, OObjects][] = [];
 
-  constructor(entries?: [OString | Operator, OObjects][]) {
+  constructor(entries?: [OString | Generator, OObjects][]) {
     this.entries = entries ?? [];
   }
 
   static parse(s: Tokenizer) {
     const obj = new OObject();
 
-    let currentKey: OString | Operator | undefined = undefined;
+    let currentKey: OString | Generator | undefined = undefined;
 
     while (s.peek().s !== '}') {
       while (s.peek().type === 'separator') s.next();
@@ -209,7 +196,7 @@ export class OObject {
       } else {
         const next = OObjects.parseNext(s);
 
-        if (next instanceof OString || isOperator(next)) {
+        if (next instanceof OString || isGenerator(next)) {
           if (currentKey) {
             obj.entries.push([currentKey, next]);
             currentKey = undefined;
@@ -235,7 +222,7 @@ export class OObject {
   val() {
     const dest: any = {};
     for (const [k, v] of this.entries) {
-      if (isOperator(k) || isOperator(v)) throw new Error();
+      if (isGenerator(k) || isGenerator(v)) throw new Error();
       dest[k.val()] = v.val();
     }
     return dest;
@@ -280,7 +267,7 @@ export class OArray {
 
   val(): unknown[] {
     return this.value.map(e => {
-      if (isOperator(e)) throw new Error();
+      if (isGenerator(e)) throw new Error();
       return e.val();
     });
   }
@@ -296,142 +283,114 @@ export class ONumber {
 
 export class PipeGenerator implements Generator {
   constructor(
-    private readonly left: Operator,
-    private readonly right: Operator
+    private readonly left: Generator,
+    private readonly right: Generator
   ) {}
 
-  evaluate(input: unknown): ResultSet {
-    let v = [input];
-    for (const node of [this.left, this.right]) {
-      const dest: unknown[] = [];
-      for (const e of v) {
-        const res = node.evaluate(e);
-        if (isResultSet(res)) {
-          dest.push(...res._val);
-        } else {
-          dest.push(res);
-        }
-      }
-      v = dest;
-    }
-    return ResultSet.ofList(...v.filter(e => e !== undefined));
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    yield* this.right.iterable(this.left.iterable(input));
   }
 }
 
-export class PathExpression implements Operator {
-  constructor(public readonly nodes: Operator[]) {}
-
-  evaluate(input: unknown): unknown {
-    let v = [input];
-    for (const node of this.nodes) {
-      const dest: unknown[] = [];
-      for (const e of v) {
-        const res = node.evaluate(e);
-        if (isResultSet(res)) {
-          dest.push(...res._val);
-        } else {
-          dest.push(res);
-        }
-      }
-      v = dest;
-    }
-    const results = v.filter(e => e !== undefined);
-    if (results.length === 0) return undefined;
-    if (results.length === 1) return results[0];
-
-    return ResultSet.ofList(...results);
+export class PathExpression extends PipeGenerator {
+  constructor(left: Generator, right: Generator) {
+    super(left, right);
   }
 }
 
-export class PropertyLookupOp implements Operator {
+export class PropertyLookupOp implements Generator {
   constructor(
     private readonly identifier: string,
     private readonly strict = true
   ) {}
 
-  evaluate(input: unknown): unknown {
-    if (this.identifier === '') return input;
-    if (this.strict && !isObj(input) && input !== undefined) throw new Error();
-    assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
-    if (!isObj(input)) return undefined;
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      if (this.identifier === '') {
+        yield e;
+      } else {
+        if (this.strict && !isObj(e) && e !== undefined) throw new Error();
+        assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
+        if (!isObj(e)) {
+          continue;
+        }
 
-    if (input instanceof Map) {
-      return input.get(this.identifier);
-    } else {
-      return (input as any)[this.identifier];
+        if (e instanceof Map) {
+          yield e.get(this.identifier);
+        } else {
+          yield (e as any)[this.identifier];
+        }
+      }
     }
   }
 }
 
-export class ArrayIndexOp implements Operator {
+export class ArrayIndexOp implements Generator {
   constructor(private readonly index: number) {}
 
-  evaluate(input: unknown): unknown {
-    if (input === undefined || !Array.isArray(input)) return undefined;
-    return input[this.index];
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      if (e === undefined || !Array.isArray(e)) continue;
+      if (this.index >= e.length) continue;
+      yield e[this.index];
+    }
   }
 }
 
-export class ArraySliceOp implements Operator {
+export class ArraySliceOp implements Generator {
   constructor(
     private readonly from: number,
     private readonly to: number
   ) {}
 
-  evaluate(i: unknown): unknown {
-    if (i === undefined || !Array.isArray(i)) return undefined;
-    return i.slice(this.from, Math.min(this.to, i.length));
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      if (e === undefined || !Array.isArray(e)) continue;
+      yield e.slice(this.from, Math.min(this.to, e.length));
+    }
   }
 }
 
 export class ArrayGenerator implements Generator {
   constructor() {}
 
-  evaluate(i: unknown): ResultSet {
-    assert.true(Array.isArray(i));
-    return ResultSet.ofList(...(i as unknown[]));
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      if (!Array.isArray(e)) throw new Error('Not an array');
+      yield* e;
+    }
   }
 }
 
 export class ConcatenationGenerator implements Generator {
   constructor(
-    private readonly left: Operator,
-    private readonly right: Operator
+    private readonly left: Generator,
+    private readonly right: Generator
   ) {}
 
-  evaluate(input: unknown): ResultSet {
-    const dest: unknown[] = [];
-    for (const n of [this.left, this.right]) {
-      const r = n.evaluate(input);
-      if (isResultSet(r)) {
-        dest.push(...r._val);
-      } else if (r !== undefined) {
-        dest.push(r);
-      }
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      yield* this.left.iterable([e]);
+      yield* this.right.iterable([e]);
     }
-
-    return ResultSet.ofList(...dest);
   }
 }
 
-export class ArrayConstructor implements Operator {
-  constructor(private readonly node: Operator) {}
+export class ArrayConstructor implements Generator {
+  constructor(private readonly node: Generator) {}
 
-  evaluate(input: unknown): unknown {
-    const v = this.node.evaluate(input);
-    if (isResultSet(v)) {
-      return [...v._val];
-    } else {
-      return [v];
-    }
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    yield [...this.node.iterable(input)];
   }
 }
 
 export class RecursiveDescentGenerator implements Generator {
-  evaluate(input: unknown): ResultSet {
-    const dest: unknown[] = [];
-    this.recurse(input, dest);
-    return ResultSet.ofList(...dest);
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      const dest: unknown[] = [];
+      this.recurse(e, dest);
+      yield* dest;
+    }
   }
 
   private recurse(input: unknown, dest: unknown[]) {
@@ -446,16 +405,29 @@ export class RecursiveDescentGenerator implements Generator {
   }
 }
 
-export class AdditionBinaryOp implements Operator {
+abstract class BinaryOperator implements Generator {
   constructor(
-    private readonly left: Operator,
-    private readonly right: Operator
+    protected readonly left: Generator,
+    protected readonly right: Generator
   ) {}
 
-  evaluate(input: unknown): unknown {
-    const lvs = this.left.evaluate(input);
-    const rvs = this.right.evaluate(input);
+  abstract combine(l: unknown, r: unknown): unknown;
 
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const r of this.right.iterable(input)) {
+      for (const l of this.left.iterable(input)) {
+        yield this.combine(l, r);
+      }
+    }
+  }
+}
+
+export class AdditionBinaryOp extends BinaryOperator {
+  constructor(left: Generator, right: Generator) {
+    super(left, right);
+  }
+
+  combine(lvs: unknown, rvs: unknown) {
     if (Array.isArray(lvs) && Array.isArray(rvs)) {
       return [...lvs, ...rvs];
     } else if (isObj(lvs) && isObj(rvs)) {
@@ -466,16 +438,12 @@ export class AdditionBinaryOp implements Operator {
   }
 }
 
-export class SubtractionBinaryOp implements Operator {
-  constructor(
-    private readonly left: Operator,
-    private readonly right: Operator
-  ) {}
+export class SubtractionBinaryOp extends BinaryOperator {
+  constructor(left: Generator, right: Generator) {
+    super(left, right);
+  }
 
-  evaluate(input: unknown): unknown {
-    const lvs = this.left.evaluate(input);
-    const rvs = this.right.evaluate(input);
-
+  combine(lvs: unknown, rvs: unknown) {
     if (Array.isArray(lvs) && Array.isArray(rvs)) {
       return lvs.filter(e => !rvs.includes(e));
     } else if (isObj(lvs) && isObj(rvs)) {
@@ -486,87 +454,100 @@ export class SubtractionBinaryOp implements Operator {
   }
 }
 
-export class SimpleBinaryOp implements Operator {
+export class SimpleBinaryOp extends BinaryOperator {
   constructor(
-    private readonly left: Operator,
-    private readonly right: Operator,
+    left: Generator,
+    right: Generator,
     private readonly fn: (a: unknown, b: unknown) => unknown
-  ) {}
+  ) {
+    super(left, right);
+  }
 
-  evaluate(input: unknown): unknown {
-    const lvs = this.left.evaluate(input);
-    const rvs = this.right.evaluate(input);
+  combine(lvs: unknown, rvs: unknown) {
     return this.fn(lvs, rvs);
   }
 }
 
-class Literal implements Operator {
+class Literal implements Generator {
   constructor(private readonly value: unknown) {}
 
-  evaluate() {
-    return this.value;
+  iterable() {
+    return [this.value];
   }
 }
 
-class LengthFilter implements Operator {
-  evaluate(input: unknown): unknown {
-    if (input === undefined || input === null) {
-      return 0;
-    } else if (Array.isArray(input) || typeof input === 'string') {
-      return input.length;
-    } else if (!isNaN(Number(input))) {
-      return Math.abs(Number(input));
-    } else if (isObj(input)) {
-      return Object.keys(input).length;
-    } else {
-      return undefined;
+class LengthFilter implements Generator {
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      if (e === undefined || e === null) {
+        yield 0;
+      } else if (Array.isArray(e) || typeof e === 'string') {
+        yield e.length;
+      } else if (!isNaN(Number(e))) {
+        yield Math.abs(Number(e));
+      } else if (isObj(e)) {
+        yield Object.keys(e).length;
+      }
     }
   }
 }
 
-class NotFilter implements Operator {
-  evaluate(input: unknown): unknown {
-    return !input;
+class NotFilter implements Generator {
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      yield !e;
+    }
   }
 }
 
-class HasFn implements Operator {
-  constructor(private readonly node: Operator) {}
+class HasFn implements Generator {
+  constructor(private readonly node: Generator) {}
 
-  evaluate(input: unknown): unknown {
-    const res = this.node.evaluate(undefined);
-    return (res as string | number) in (input as any);
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      for (const r of this.node.iterable([undefined])) {
+        yield (r as string | number) in (e as any);
+      }
+    }
   }
 }
 
-class InFn implements Operator {
-  constructor(private readonly node: Operator) {}
+class InFn implements Generator {
+  constructor(private readonly node: Generator) {}
 
-  evaluate(input: unknown): unknown {
-    const res = this.node.evaluate(ResultSet.of(undefined));
-    return (input as any) in (res as any);
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      for (const r of this.node.iterable([undefined])) {
+        yield (e as any) in (r as any);
+      }
+    }
   }
 }
 
-class SelectFn implements Operator {
-  constructor(private readonly node: Operator) {}
+class SelectFn implements Generator {
+  constructor(private readonly node: Generator) {}
 
-  evaluate(input: unknown): unknown {
-    if (this.node.evaluate(input) === true) return input;
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      for (const r of this.node.iterable([e])) {
+        if (r === true) {
+          yield e;
+        }
+      }
+    }
   }
 }
 
-class EqualsBinaryOp implements Operator {
+class EqualsBinaryOp extends BinaryOperator {
   constructor(
-    private readonly left: Operator,
-    private readonly right: Operator,
+    left: Generator,
+    right: Generator,
     private readonly negate: boolean
-  ) {}
+  ) {
+    super(left, right);
+  }
 
-  evaluate(input: unknown): unknown {
-    const lvs = this.left.evaluate(input);
-    const rvs = this.right.evaluate(input);
-
+  combine(lvs: unknown, rvs: unknown): unknown {
     if (Array.isArray(lvs) && Array.isArray(rvs)) {
       throw NOT_IMPLEMENTED_YET();
     } else if (isObj(lvs) && isObj(rvs)) {
@@ -577,48 +558,62 @@ class EqualsBinaryOp implements Operator {
   }
 }
 
-class CmpBinaryOp implements Operator {
+class CmpBinaryOp extends BinaryOperator {
   constructor(
-    private readonly left: Operator,
-    private readonly right: Operator,
+    left: Generator,
+    right: Generator,
     private readonly cmp: (a: unknown, b: unknown) => boolean | any
-  ) {}
+  ) {
+    super(left, right);
+  }
 
-  evaluate(input: unknown): unknown {
-    const lvs = this.left.evaluate(input);
-    const rvs = this.right.evaluate(input);
+  combine(lvs: unknown, rvs: unknown): unknown {
     return !!this.cmp(lvs, rvs);
   }
 }
 
-class AnyFilter implements Operator {
-  evaluate(input: unknown): unknown {
-    return Array.isArray(input) && input.some(a => !!a);
+class AnyFilter implements Generator {
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      yield Array.isArray(e) && e.some(a => !!a);
+    }
   }
 }
 
-class AllFilter implements Operator {
-  evaluate(input: unknown): unknown {
-    return Array.isArray(input) && input.every(a => !!a);
+class AllFilter implements Generator {
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      yield Array.isArray(e) && e.every(a => !!a);
+    }
   }
 }
 
 type ArrayFn = (arr: [unknown, unknown][]) => [unknown, unknown][] | TaggedType<'single', unknown>;
 
-class ArrayFilter implements Operator {
+const exactOne = (it: Iterable<unknown>) => {
+  const arr = [...it];
+  if (arr.length !== 1) throw new Error();
+  return arr[0];
+};
+
+class ArrayFilter implements Generator {
   constructor(
-    private readonly node: Operator,
+    private readonly node: Generator,
     private readonly fn: ArrayFn
   ) {}
 
-  evaluate(input: unknown): unknown {
-    if (Array.isArray(input)) {
-      const res = this.fn(input.map(e => [e, this.node.evaluate(e)]));
-      if (isTaggedType(res, 'single')) return res._val;
-      if (Array.isArray(res)) return res.map(a => a[0]);
-      else return res;
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const el of input) {
+      if (Array.isArray(el)) {
+        const res = this.fn(el.map(e => [e, exactOne(this.node.iterable([e]))]));
+        if (isTaggedType(res, 'single')) yield res._val;
+        else if (Array.isArray(res)) {
+          return yield (this.fn(res) as [unknown, unknown][]).map(a => a[0]);
+        } else yield res;
+      } else {
+        yield* input;
+      }
     }
-    return input;
   }
 }
 
@@ -646,76 +641,92 @@ const ArrayFilterFns: Record<string, ArrayFn> = {
   }
 };
 
-class StringFn implements Operator {
+class StringFn implements Generator {
   constructor(
-    private readonly node: Operator,
+    private readonly node: Generator,
     private readonly fn: (a: string, b: string) => unknown
   ) {}
 
-  evaluate(input: unknown): unknown {
-    const lvs = input;
-    const rvs = this.node.evaluate(undefined);
-    if (Array.isArray(lvs)) return lvs.map(a => this.fn(a as string, rvs as string));
-    return this.fn(lvs as string, rvs as string);
-  }
-}
-
-class JoinFn implements Operator {
-  constructor(private readonly node: Operator) {}
-
-  evaluate(input: unknown): unknown {
-    const rvs = this.node.evaluate(undefined);
-    if (Array.isArray(input)) return input.join(rvs as string);
-    return input;
-  }
-}
-
-class AbsFilter implements Operator {
-  evaluate(input: unknown): unknown {
-    if (typeof input === 'number') return Math.abs(input);
-    return input;
-  }
-}
-
-class KeysFilter implements Operator {
-  evaluate(input: unknown): unknown {
-    if (input && typeof input === 'object') return Object.keys(input).sort();
-    return input;
-  }
-}
-
-class MapValuesFn implements Operator {
-  constructor(public readonly node: Operator) {}
-
-  evaluate(input: unknown): unknown {
-    assert.present(this.node);
-    if (isObj(input)) {
-      return Object.fromEntries(Object.entries(input).map(([k, v]) => [k, this.node.evaluate(v)]));
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const el of input) {
+      const arg = exactOne(this.node.iterable([undefined]));
+      if (Array.isArray(el)) {
+        yield el.map(e => this.fn(e as string, arg as string));
+      } else {
+        yield this.fn(el as string, arg as string);
+      }
     }
-    return input;
   }
 }
 
-class ContainsFn implements Operator {
-  constructor(public readonly node: Operator) {}
+class JoinFn implements Generator {
+  constructor(private readonly node: Generator) {}
 
-  evaluate(input: unknown): unknown {
-    assert.present(this.node);
-    const cv = this.node.evaluate(undefined);
-
-    if (typeof cv === 'string') {
-      return typeof input === 'string' ? input.includes(cv) : false;
-    } else if (Array.isArray(cv)) {
-      return Array.isArray(input) ? cv.every(e => input.some(v => v.includes(e))) : false;
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const el of input) {
+      for (const r of this.node.iterable([el])) {
+        if (Array.isArray(el)) yield el.join(r as string);
+        else yield el;
+      }
     }
-
-    // TODO: We don't support contains for objects yet
-    return false;
   }
 }
 
-const parsePathExpression = (tokenizer: Tokenizer): Operator => {
-  const dest: Operator[] = [new PropertyLookupOp('')];
+class AbsFilter implements Generator {
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const el of input) {
+      if (typeof el === 'number') yield Math.abs(el);
+      else yield el;
+    }
+  }
+}
+
+class KeysFilter implements Generator {
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const el of input) {
+      if (el && typeof el === 'object') yield Object.keys(el).sort();
+      else yield el;
+    }
+  }
+}
+
+class MapValuesFn implements Generator {
+  constructor(public readonly node: Generator) {}
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const el of input) {
+      if (isObj(el)) {
+        yield Object.fromEntries(
+          Object.entries(el).map(([k, v]) => [k, exactOne(this.node.iterable([v]))])
+        );
+      } else {
+        yield input;
+      }
+    }
+  }
+}
+
+class ContainsFn implements Generator {
+  constructor(public readonly node: Generator) {}
+
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const el of input) {
+      const cv = this.node.iterable([undefined]);
+
+      for (const a of cv) {
+        if (typeof a === 'string') {
+          yield typeof el === 'string' ? el.includes(a) : false;
+        } else if (Array.isArray(a)) {
+          yield Array.isArray(el) ? a.every(e => el.some(v => v.includes(e))) : false;
+        } else {
+          yield false;
+        }
+      }
+    }
+  }
+}
+
+const parsePathExpression = (tokenizer: Tokenizer): Generator => {
+  let left: Generator = new PropertyLookupOp('');
 
   tokenizer.accept('.');
 
@@ -726,19 +737,22 @@ const parsePathExpression = (tokenizer: Tokenizer): Operator => {
     if (token.type === 'identifier') {
       tokenizer.next();
       const strict = !tokenizer.accept('?');
-      dest.push(new PropertyLookupOp(token.s, strict));
+      left = new PathExpression(left, new PropertyLookupOp(token.s, strict));
     } else if (token.type === 'operator' && token.s === '[') {
       tokenizer.next();
       const nextToken = tokenizer.next();
       if (nextToken.s === ']') {
-        dest.push(new ArrayGenerator());
+        left = new PathExpression(left, new ArrayGenerator());
       } else if (nextToken.type === 'number') {
         const nextNextToken = tokenizer.next();
         if (nextNextToken.s === ':') {
-          dest.push(new ArraySliceOp(parseInt(nextToken.s), parseInt(tokenizer.next().s)));
+          left = new PathExpression(
+            left,
+            new ArraySliceOp(parseInt(nextToken.s), parseInt(tokenizer.next().s))
+          );
           tokenizer.expect(']');
         } else if (nextNextToken.s === ']') {
-          dest.push(new ArrayIndexOp(parseInt(nextToken.s)));
+          left = new PathExpression(left, new ArrayIndexOp(parseInt(nextToken.s)));
         }
       } else {
         throw new Error('Unexpected token: ' + nextToken.s);
@@ -752,10 +766,10 @@ const parsePathExpression = (tokenizer: Tokenizer): Operator => {
     token = tokenizer.peek();
   }
 
-  return new PathExpression(dest);
+  return left;
 };
 
-const parseOperand = (tokenizer: Tokenizer): Operator => {
+const parseOperand = (tokenizer: Tokenizer): Generator => {
   const tok = tokenizer.peek();
   if (tok.s === '[') {
     tokenizer.next();
@@ -809,7 +823,7 @@ const parseOperand = (tokenizer: Tokenizer): Operator => {
   throw new Error('Cannot parse: ' + tokenizer.head);
 };
 
-const parseExpression = (tokenizer: Tokenizer, lastOp: string | undefined): Operator => {
+const parseExpression = (tokenizer: Tokenizer, lastOp: string | undefined): Generator => {
   tokenizer.consumeWhitespace();
 
   let left = parseOperand(tokenizer);
@@ -834,7 +848,7 @@ const parseExpression = (tokenizer: Tokenizer, lastOp: string | undefined): Oper
   throw new Error('Infinite loop');
 };
 
-export const parse = (query: string): Operator => {
+export const parse = (query: string): Generator => {
   const tokenizer = new Tokenizer(query);
 
   const op = parseExpression(tokenizer, undefined);
@@ -850,14 +864,8 @@ export const query = (query: string, input: unknown[]) => {
   const node = parse(query);
 
   const dest: unknown[] = [];
-  for (const i of input) {
-    let v = i;
-    v = node.evaluate(v);
-    if (isResultSet(v)) {
-      dest.push(...v._val);
-    } else if (v !== undefined) {
-      dest.push(v);
-    }
+  for (const i of node.iterable(input)) {
+    dest.push(i);
   }
   return dest;
 };
