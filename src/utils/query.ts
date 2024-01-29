@@ -134,6 +134,16 @@ interface Generator {
   iterable(input: Iterable<unknown>): Iterable<unknown>;
 }
 
+abstract class BaseGenerator implements Generator {
+  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+    for (const e of input) {
+      yield* this.handleElement(e);
+    }
+  }
+
+  abstract handleElement(e: unknown): Iterable<unknown>;
+}
+
 type OObjects = OObject | OBoolean | OArray | ONumber | OString | Generator;
 
 export const OObjects = {
@@ -298,81 +308,76 @@ export class PathExpression extends PipeGenerator {
   }
 }
 
-export class PropertyLookupOp implements Generator {
+export class PropertyLookupOp extends BaseGenerator {
   constructor(
     private readonly identifier: string,
     private readonly strict = true
-  ) {}
+  ) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      if (this.identifier === '') {
-        yield e;
+  *handleElement(e: unknown): Iterable<unknown> {
+    if (this.identifier === '') {
+      yield e;
+    } else {
+      if (this.strict && !isObj(e) && e !== undefined) throw new Error();
+      assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
+      if (!isObj(e)) {
+        return;
+      }
+
+      if (e instanceof Map) {
+        yield e.get(this.identifier);
       } else {
-        if (this.strict && !isObj(e) && e !== undefined) throw new Error();
-        assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
-        if (!isObj(e)) {
-          continue;
-        }
-
-        if (e instanceof Map) {
-          yield e.get(this.identifier);
-        } else {
-          yield (e as any)[this.identifier];
-        }
+        yield (e as any)[this.identifier];
       }
     }
   }
 }
 
-export class ArrayIndexOp implements Generator {
-  constructor(private readonly index: number) {}
+export class ArrayIndexOp extends BaseGenerator {
+  constructor(private readonly index: number) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      if (e === undefined || !Array.isArray(e)) continue;
-      if (this.index >= e.length) continue;
-      yield e[this.index];
-    }
+  *handleElement(e: unknown): Iterable<unknown> {
+    if (e === undefined || !Array.isArray(e) || this.index >= e.length) return;
+    yield e[this.index];
   }
 }
 
-export class ArraySliceOp implements Generator {
+export class ArraySliceOp extends BaseGenerator {
   constructor(
     private readonly from: number,
     private readonly to: number
-  ) {}
+  ) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      if (e === undefined || !Array.isArray(e)) continue;
-      yield e.slice(this.from, Math.min(this.to, e.length));
-    }
+  *handleElement(e: unknown): Iterable<unknown> {
+    if (e === undefined || !Array.isArray(e)) return;
+    yield e.slice(this.from, Math.min(this.to, e.length));
   }
 }
 
-export class ArrayGenerator implements Generator {
-  constructor() {}
-
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      if (!Array.isArray(e)) throw new Error('Not an array');
-      yield* e;
-    }
+export class ArrayGenerator extends BaseGenerator {
+  *handleElement(e: unknown): Iterable<unknown> {
+    if (!Array.isArray(e)) throw new Error('Not an array');
+    yield* e;
   }
 }
 
-export class ConcatenationGenerator implements Generator {
+export class ConcatenationGenerator extends BaseGenerator {
   constructor(
     private readonly left: Generator,
     private readonly right: Generator
-  ) {}
+  ) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      yield* this.left.iterable([e]);
-      yield* this.right.iterable([e]);
-    }
+  *handleElement(e: unknown): Iterable<unknown> {
+    yield* this.left.iterable([e]);
+    yield* this.right.iterable([e]);
   }
 }
 
@@ -384,13 +389,11 @@ export class ArrayConstructor implements Generator {
   }
 }
 
-export class RecursiveDescentGenerator implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      const dest: unknown[] = [];
-      this.recurse(e, dest);
-      yield* dest;
-    }
+export class RecursiveDescentGenerator extends BaseGenerator {
+  *handleElement(e: unknown): Iterable<unknown> {
+    const dest: unknown[] = [];
+    this.recurse(e, dest);
+    yield* dest;
   }
 
   private recurse(input: unknown, dest: unknown[]) {
@@ -476,63 +479,55 @@ class Literal implements Generator {
   }
 }
 
-class LengthFilter implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      if (e === undefined || e === null) {
-        yield 0;
-      } else if (Array.isArray(e) || typeof e === 'string') {
-        yield e.length;
-      } else if (!isNaN(Number(e))) {
-        yield Math.abs(Number(e));
-      } else if (isObj(e)) {
-        yield Object.keys(e).length;
-      }
+class LengthFilter extends BaseGenerator {
+  *handleElement(e: unknown): Iterable<unknown> {
+    if (e === undefined || e === null) {
+      yield 0;
+    } else if (Array.isArray(e) || typeof e === 'string') {
+      yield e.length;
+    } else if (!isNaN(Number(e))) {
+      yield Math.abs(Number(e));
+    } else if (isObj(e)) {
+      yield Object.keys(e).length;
     }
   }
 }
 
-class NotFilter implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      yield !e;
-    }
+class NotFilter extends BaseGenerator {
+  *handleElement(e: unknown): Iterable<unknown> {
+    yield !e;
   }
 }
 
-class HasFn implements Generator {
-  constructor(private readonly node: Generator) {}
+class HasFn extends BaseGenerator {
+  constructor(private readonly node: Generator) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      for (const r of this.node.iterable([undefined])) {
-        yield (r as string | number) in (e as any);
-      }
-    }
+  *handleElement(e: unknown): Iterable<unknown> {
+    yield (exactOne(this.node.iterable([undefined])) as string | number) in (e as any);
   }
 }
 
-class InFn implements Generator {
-  constructor(private readonly node: Generator) {}
+class InFn extends BaseGenerator {
+  constructor(private readonly node: Generator) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      for (const r of this.node.iterable([undefined])) {
-        yield (e as any) in (r as any);
-      }
-    }
+  *handleElement(e: unknown): Iterable<unknown> {
+    yield (e as any) in (exactOne(this.node.iterable([undefined])) as any);
   }
 }
 
-class SelectFn implements Generator {
-  constructor(private readonly node: Generator) {}
+class SelectFn extends BaseGenerator {
+  constructor(private readonly node: Generator) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      for (const r of this.node.iterable([e])) {
-        if (r === true) {
-          yield e;
-        }
+  *handleElement(e: unknown): Iterable<unknown> {
+    for (const r of this.node.iterable([e])) {
+      if (r === true) {
+        yield e;
       }
     }
   }
@@ -572,19 +567,15 @@ class CmpBinaryOp extends BinaryOperator {
   }
 }
 
-class AnyFilter implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      yield Array.isArray(e) && e.some(a => !!a);
-    }
+class AnyFilter extends BaseGenerator {
+  *handleElement(e: unknown): Iterable<unknown> {
+    yield Array.isArray(e) && e.some(a => !!a);
   }
 }
 
-class AllFilter implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const e of input) {
-      yield Array.isArray(e) && e.every(a => !!a);
-    }
+class AllFilter extends BaseGenerator {
+  *handleElement(e: unknown): Iterable<unknown> {
+    yield Array.isArray(e) && e.every(a => !!a);
   }
 }
 
@@ -596,23 +587,23 @@ const exactOne = (it: Iterable<unknown>) => {
   return arr[0];
 };
 
-class ArrayFilter implements Generator {
+class ArrayFilter extends BaseGenerator {
   constructor(
     private readonly node: Generator,
     private readonly fn: ArrayFn
-  ) {}
+  ) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const el of input) {
-      if (Array.isArray(el)) {
-        const res = this.fn(el.map(e => [e, exactOne(this.node.iterable([e]))]));
-        if (isTaggedType(res, 'single')) yield res._val;
-        else if (Array.isArray(res)) {
-          return yield (this.fn(res) as [unknown, unknown][]).map(a => a[0]);
-        } else yield res;
-      } else {
-        yield* input;
-      }
+  *handleElement(el: unknown): Iterable<unknown> {
+    if (Array.isArray(el)) {
+      const res = this.fn(el.map(e => [e, exactOne(this.node.iterable([e]))]));
+      if (isTaggedType(res, 'single')) yield res._val;
+      else if (Array.isArray(res)) {
+        return yield (this.fn(res) as [unknown, unknown][]).map(a => a[0]);
+      } else yield res;
+    } else {
+      yield el;
     }
   }
 }
@@ -641,85 +632,83 @@ const ArrayFilterFns: Record<string, ArrayFn> = {
   }
 };
 
-class StringFn implements Generator {
+class StringFn extends BaseGenerator {
   constructor(
     private readonly node: Generator,
     private readonly fn: (a: string, b: string) => unknown
-  ) {}
+  ) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const el of input) {
-      const arg = exactOne(this.node.iterable([undefined]));
-      if (Array.isArray(el)) {
-        yield el.map(e => this.fn(e as string, arg as string));
-      } else {
-        yield this.fn(el as string, arg as string);
-      }
+  *handleElement(el: unknown): Iterable<unknown> {
+    const arg = exactOne(this.node.iterable([undefined]));
+    if (Array.isArray(el)) {
+      yield el.map(e => this.fn(e as string, arg as string));
+    } else {
+      yield this.fn(el as string, arg as string);
     }
   }
 }
 
-class JoinFn implements Generator {
-  constructor(private readonly node: Generator) {}
-
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const el of input) {
-      for (const r of this.node.iterable([el])) {
-        if (Array.isArray(el)) yield el.join(r as string);
-        else yield el;
-      }
-    }
+class JoinFn extends BaseGenerator {
+  constructor(private readonly node: Generator) {
+    super();
   }
-}
 
-class AbsFilter implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const el of input) {
-      if (typeof el === 'number') yield Math.abs(el);
+  *handleElement(el: unknown): Iterable<unknown> {
+    for (const r of this.node.iterable([el])) {
+      if (Array.isArray(el)) yield el.join(r as string);
       else yield el;
     }
   }
 }
 
-class KeysFilter implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const el of input) {
-      if (el && typeof el === 'object') yield Object.keys(el).sort();
-      else yield el;
+class AbsFilter extends BaseGenerator {
+  *handleElement(el: unknown): Iterable<unknown> {
+    if (typeof el === 'number') yield Math.abs(el);
+    else yield el;
+  }
+}
+
+class KeysFilter extends BaseGenerator {
+  *handleElement(el: unknown): Iterable<unknown> {
+    if (el && typeof el === 'object') yield Object.keys(el).sort();
+    else yield el;
+  }
+}
+
+class MapValuesFn extends BaseGenerator {
+  constructor(public readonly node: Generator) {
+    super();
+  }
+
+  *handleElement(el: unknown): Iterable<unknown> {
+    if (isObj(el)) {
+      yield Object.fromEntries(
+        Object.entries(el).map(([k, v]) => [k, exactOne(this.node.iterable([v]))])
+      );
+    } else {
+      yield el;
     }
   }
 }
 
-class MapValuesFn implements Generator {
-  constructor(public readonly node: Generator) {}
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const el of input) {
-      if (isObj(el)) {
-        yield Object.fromEntries(
-          Object.entries(el).map(([k, v]) => [k, exactOne(this.node.iterable([v]))])
-        );
+// for each e
+class ContainsFn extends BaseGenerator {
+  constructor(public readonly node: Generator) {
+    super();
+  }
+
+  *handleElement(el: unknown): Iterable<unknown> {
+    const cv = this.node.iterable([undefined]);
+
+    for (const a of cv) {
+      if (typeof a === 'string') {
+        yield typeof el === 'string' ? el.includes(a) : false;
+      } else if (Array.isArray(a)) {
+        yield Array.isArray(el) ? a.every(e => el.some(v => v.includes(e))) : false;
       } else {
-        yield input;
-      }
-    }
-  }
-}
-
-class ContainsFn implements Generator {
-  constructor(public readonly node: Generator) {}
-
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const el of input) {
-      const cv = this.node.iterable([undefined]);
-
-      for (const a of cv) {
-        if (typeof a === 'string') {
-          yield typeof el === 'string' ? el.includes(a) : false;
-        } else if (Array.isArray(a)) {
-          yield Array.isArray(el) ? a.every(e => el.some(v => v.includes(e))) : false;
-        } else {
-          yield false;
-        }
+        yield false;
       }
     }
   }
