@@ -64,12 +64,6 @@ describe('.abc', () => {
     expect(queryOne('.a?.b', 'lorem')).toEqual(undefined);
     expect(queryOne('.a?.b', [1, 2, 3])).toEqual(undefined);
   });
-
-  /*
-  test('PropertyLookupOp', () => {
-    expect(new PropertyLookupOp('test', false).evaluate([1, 2, 3])).toEqual(undefined);
-    expect(new PropertyLookupOp('test').evaluate({ test: 6 })).toEqual(6);
-  });*/
 });
 
 describe('.[], .[0], .[0:2]', () => {
@@ -97,22 +91,6 @@ describe('.[], .[0], .[0:2]', () => {
     expect(() => query('.[]', ['lorem'])).toThrowError();
     expect(() => query('.[]', [123])).toThrowError();
   });
-
-  /*
-  test('ArrayIndexOp', () => {
-    expect(new ArrayIndexOp(0).evaluate([1, 2, 3])).toEqual(1);
-  });
-
-  test('ArraySliceOp', () => {
-    expect(new ArraySliceOp(1, 3).evaluate([1, 2, 3])).toEqual([2, 3]);
-  });
-
-  test('ArrayOp', () => {
-    expect(() => new ArrayGenerator().evaluate('lorem')).toThrowError();
-    expect(new ArrayGenerator().evaluate([1, 2, 3])).toEqual(ResultSet.ofList(1, 2, 3));
-  });
-
-   */
 });
 
 describe(',', () => {
@@ -129,20 +107,6 @@ describe(',', () => {
       query('.user, .projects[]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
     ).toEqual(['stedolan', 'jq', 'wikiflow']);
   });
-
-  /*
-  test('Concatenation', () => {
-    expect(
-      new ConcatenationGenerator(new ArrayIndexOp(0), new ArrayIndexOp(2)).evaluate([1, 2, 3])
-    ).toEqual(ResultSet.ofList(1, 3));
-
-    expect(
-      new ConcatenationGenerator(
-        new PropertyLookupOp('test'),
-        new PipeGenerator(new PropertyLookupOp('arr'), new ArrayGenerator())
-      ).evaluate({ test: 'lorem', arr: [1, 2] })
-    ).toEqual(ResultSet.ofList('lorem', 1, 2));
-  });*/
 });
 
 describe('|', () => {
@@ -156,12 +120,6 @@ describe('|', () => {
       ])
     ).toEqual(['JSON', 'XML']);
   });
-
-  /*
-  test('FilterSequence', () => {
-    const grp = new PipeGenerator(new PropertyLookupOp('name'), new PropertyLookupOp('first'));
-    expect(grp.evaluate({ name: { first: 'John' } })).toEqual(ResultSet.of('John'));
-  });*/
 });
 
 describe('[...]', () => {
@@ -170,43 +128,12 @@ describe('[...]', () => {
       query('[.user, .projects[]]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
     ).toEqual([['stedolan', 'jq', 'wikiflow']]);
   });
-
-  /*
-  test('ArrayConstructor', () => {
-    const set = new ArrayConstructor(new PropertyLookupOp('user')).evaluate({ user: 'John' });
-    expect(set).toEqual(['John']);
-
-    expect(
-      new ArrayConstructor(
-        new ConcatenationGenerator(new PropertyLookupOp('user'), new PropertyLookupOp('age'))
-      ).evaluate({ user: 'John', age: 17 })
-    ).toEqual(['John', 17]);
-  });
-
-   */
 });
 
 describe('..', () => {
   test('query: .. | .a?', () => {
     expect(query('.. | .a?', [[[{ a: 1 }]]])).toEqual([1]);
   });
-
-  /*
-  test('RecursiveDescentGenerator', () => {
-    expect(
-      new RecursiveDescentGenerator().evaluate({ user: 'stedolan', projects: ['jq', 'wikiflow'] })
-    ).toEqual(
-      ResultSet.ofList(
-        { user: 'stedolan', projects: ['jq', 'wikiflow'] },
-        'stedolan',
-        ['jq', 'wikiflow'],
-        'jq',
-        'wikiflow'
-      )
-    );
-  });
-
-   */
 });
 
 describe('+', () => {
