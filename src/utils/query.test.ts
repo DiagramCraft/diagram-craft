@@ -143,14 +143,14 @@ describe(',', () => {
 
   test('Concatenation', () => {
     expect(
-      new ConcatenationGenerator([new ArrayIndexOp(0), new ArrayIndexOp(2)]).evaluate([1, 2, 3])
+      new ConcatenationGenerator(new ArrayIndexOp(0), new ArrayIndexOp(2)).evaluate([1, 2, 3])
     ).toEqual(ResultSet.ofList(1, 3));
 
     expect(
-      new ConcatenationGenerator([
+      new ConcatenationGenerator(
         new PropertyLookupOp('test'),
-        new PipeGenerator([new PropertyLookupOp('arr'), new ArrayGenerator()])
-      ]).evaluate({ test: 'lorem', arr: [1, 2] })
+        new PipeGenerator(new PropertyLookupOp('arr'), new ArrayGenerator())
+      ).evaluate({ test: 'lorem', arr: [1, 2] })
     ).toEqual(ResultSet.ofList('lorem', 1, 2));
   });
 });
@@ -168,7 +168,7 @@ describe('|', () => {
   });
 
   test('FilterSequence', () => {
-    const grp = new PipeGenerator([new PropertyLookupOp('name'), new PropertyLookupOp('first')]);
+    const grp = new PipeGenerator(new PropertyLookupOp('name'), new PropertyLookupOp('first'));
     expect(grp.evaluate({ name: { first: 'John' } })).toEqual(ResultSet.of('John'));
   });
 });
@@ -186,7 +186,7 @@ describe('[...]', () => {
 
     expect(
       new ArrayConstructor(
-        new ConcatenationGenerator([new PropertyLookupOp('user'), new PropertyLookupOp('age')])
+        new ConcatenationGenerator(new PropertyLookupOp('user'), new PropertyLookupOp('age'))
       ).evaluate({ user: 'John', age: 17 })
     ).toEqual(['John', 17]);
   });

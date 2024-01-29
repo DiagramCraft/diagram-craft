@@ -45,13 +45,7 @@ export const OObjects = {
     if (tok.type === 'string') {
       return new OString(tok.s.slice(1, -1));
     } else if (tok.s === '.') {
-      let dest = '.';
-
-      // TODO: Need to fix this part - should call parsePathExpression
-      while (![',', '}', ':', ' '].includes(tokenizer.peek().s)) {
-        dest += tokenizer.next().s;
-      }
-      return new Literal(dest);
+      return parsePathExpression(tokenizer);
     } else if (tok.s === '{') {
       return OObject.parse(tokenizer);
     } else if (tok.s === '(') {
@@ -198,11 +192,14 @@ export class ONumber {
 }
 
 export class PipeGenerator implements Generator {
-  constructor(public readonly nodes: Operator[]) {}
+  constructor(
+    public readonly left: Operator,
+    public readonly right: Operator
+  ) {}
 
   evaluate(input: unknown): ResultSet {
     let v = [input];
-    for (const node of this.nodes) {
+    for (const node of [this.left, this.right]) {
       const dest: unknown[] = [];
       for (const e of v) {
         const res = node.evaluate(e);
@@ -218,20 +215,28 @@ export class PipeGenerator implements Generator {
   }
 }
 
-export class PathExpression extends PipeGenerator {
-  constructor(public readonly nodes: Operator[]) {
-    super(nodes);
-  }
+export class PathExpression implements Operator {
+  constructor(public readonly nodes: Operator[]) {}
 
-  evaluate(input: unknown): ResultSet {
-    const res = super.evaluate(input);
+  evaluate(input: unknown): unknown {
+    let v = [input];
+    for (const node of this.nodes) {
+      const dest: unknown[] = [];
+      for (const e of v) {
+        const res = node.evaluate(e);
+        if (isResultSet(res)) {
+          dest.push(...res._val);
+        } else {
+          dest.push(res);
+        }
+      }
+      v = dest;
+    }
+    const results = v.filter(e => e !== undefined);
+    if (results.length === 0) return undefined;
+    if (results.length === 1) return results[0];
 
-    // @ts-ignore
-    if (res._val.length === 0) return undefined;
-    // @ts-ignore
-    if (res._val.length === 1) return res._val[0];
-
-    return res;
+    return ResultSet.ofList(...results);
   }
 }
 
@@ -289,11 +294,14 @@ export class ArrayGenerator implements Generator {
 }
 
 export class ConcatenationGenerator implements Generator {
-  constructor(public readonly nodes: Operator[]) {}
+  constructor(
+    public readonly left: Operator,
+    public readonly right: Operator
+  ) {}
 
   evaluate(input: unknown): ResultSet {
     const dest: unknown[] = [];
-    for (const n of this.nodes) {
+    for (const n of [this.left, this.right]) {
       const r = n.evaluate(input);
       if (isResultSet(r)) {
         dest.push(...r._val);
@@ -634,14 +642,14 @@ export class Tokenizer {
   peek(): Token {
     const q = this.remaining;
     let m;
-    if ((m = q.match(/^-?[0-9]+/))) {
+    if ((m = q.match(/^-?[0-9]+(\.[0-9]+)?/))) {
       return { s: m[0], type: 'number' };
     } else if ((m = q.match(/^"[^"]*"/))) {
       return { s: m[0], type: 'string' };
-    } else if ((m = q.match(/^[a-zA-Z_][a-zA-Z0-9_]*/))) {
+    } else if ((m = q.match(/^([a-zA-Z_][a-zA-Z0-9_]*|\.\.)/))) {
       return { s: m[0], type: 'identifier' };
     } else if (
-      (m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.\.|\.|\[|\]|\(|\)|,|:|{|}|\?|\|)/))
+      (m = q.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|{|}|\?|\|)/))
     ) {
       return { s: m[0], type: 'operator' };
     } else if ((m = q.match(/^(\s+)/))) {
@@ -686,10 +694,12 @@ type FnRegistration =
 type BinaryOpRegistration = (l: Operator, r: Operator) => Operator;
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
+  '..': { args: '0', fn: () => new RecursiveDescentGenerator() },
+  not: { args: '0', fn: () => new NotFilter() },
   length: { args: '0', fn: () => new LengthFilter() },
   has: { args: '1', fn: a => new HasFn(a) },
   in: { args: '1', fn: a => new InFn(a) },
-  map: { args: '1', fn: a => new ArrayConstructor(new PipeGenerator([new ArrayGenerator(), a])) },
+  map: { args: '1', fn: a => new ArrayConstructor(new PipeGenerator(new ArrayGenerator(), a)) },
   map_values: { args: '1', fn: a => new MapValuesFn(a) },
   select: { args: '1', fn: a => new SelectFn(a) },
   any: { args: '0', fn: () => new AnyFilter() },
@@ -724,14 +734,14 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '<': (l, r) => new CmpBinaryOp(l, r, (a: any, b: any) => a < b),
   and: (l, r) => new CmpBinaryOp(l, r, (a, b) => a && b),
   or: (l, r) => new CmpBinaryOp(l, r, (a, b) => a || b),
-  '|': (l, r) => new PipeGenerator([l, r]),
-  ',': (l, r) => new ConcatenationGenerator([l, r])
+  '|': (l, r) => new PipeGenerator(l, r),
+  ',': (l, r) => new ConcatenationGenerator(l, r)
 };
 
 const parsePathExpression = (tokenizer: Tokenizer): Operator => {
   const dest: Operator[] = [new PropertyLookupOp('')];
 
-  tokenizer.expect('.');
+  tokenizer.accept('.');
 
   let token = tokenizer.peek();
 
@@ -770,13 +780,8 @@ const parsePathExpression = (tokenizer: Tokenizer): Operator => {
 };
 
 const parseOperand = (tokenizer: Tokenizer): Operator => {
-  tokenizer.consumeWhitespace();
-
   const tok = tokenizer.peek();
-  if (tok.s === '..') {
-    tokenizer.next();
-    return new RecursiveDescentGenerator();
-  } else if (tok.s === '[') {
+  if (tok.s === '[') {
     tokenizer.next();
     const inner = parseExpression(tokenizer);
     tokenizer.expect(']');
@@ -784,9 +789,6 @@ const parseOperand = (tokenizer: Tokenizer): Operator => {
     return new ArrayConstructor(inner);
   } else if (tok.s === '.') {
     return parsePathExpression(tokenizer);
-  } else if (tok.s === 'not') {
-    tokenizer.next();
-    return new NotFilter();
 
     /* LITERALS ************************************************************************** */
   } else if (tok.type === 'number') {
