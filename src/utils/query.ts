@@ -420,6 +420,14 @@ class LengthFilter implements Operator {
   }
 }
 
+class NotFilter implements Operator {
+  constructor() {}
+
+  evaluate(input: unknown): unknown {
+    return !input;
+  }
+}
+
 class HasFn implements Operator {
   constructor(public readonly node: Operator) {}
 
@@ -656,7 +664,7 @@ export class Tokenizer {
     else throw new Error('Expected: ' + s + ', found ' + JSON.stringify(this.peek()));
   }
 
-  processWhitespace() {
+  consumeWhitespace() {
     while (this.peek().type === 'separator') {
       this.remaining = this.remaining.slice(this.peek().s.length);
     }
@@ -750,6 +758,8 @@ const parsePathExpression = (tokenizer: Tokenizer): Operator => {
       } else {
         throw new Error('Unexpected token: ' + nextToken.s);
       }
+    } else if (token.s === '.') {
+      tokenizer.next();
     } else {
       break;
     }
@@ -760,33 +770,20 @@ const parsePathExpression = (tokenizer: Tokenizer): Operator => {
   return new PathExpression(dest);
 };
 
-const nextToken = (
+const parseOperand = (
   tokenizer: Tokenizer,
   arr: Operator[]
 ): undefined | [Operator | undefined, Operator[]] => {
-  tokenizer.processWhitespace();
+  tokenizer.consumeWhitespace();
 
   const tok = tokenizer.peek();
-  if (tok.s === '|') {
-    tokenizer.next();
-    return [undefined, arr];
-  } else if (tok.s === ',') {
-    tokenizer.next();
-    const last = arr.at(-1)!;
-    if (!(last instanceof ConcatenationGenerator)) {
-      const seq = new ConcatenationGenerator([last]);
-      arr[arr.length - 1] = seq;
-      return [undefined, seq.nodes];
-    } else {
-      return [undefined, arr];
-    }
-  } else if (tok.s === '..') {
+  if (tok.s === '..') {
     tokenizer.next();
     return [new RecursiveDescentGenerator(), arr];
   } else if (tok.s === '[') {
     tokenizer.next();
-    const inner = parseNextPart(tokenizer);
-    tokenizer.processWhitespace();
+    const inner = parseExpression(tokenizer);
+    tokenizer.consumeWhitespace();
     tokenizer.expect(']');
 
     return [new ArrayConstructor(new PipeGenerator([inner])), arr];
@@ -795,8 +792,7 @@ const nextToken = (
     return [res, arr];
   } else if (tok.s === 'not') {
     tokenizer.next();
-    arr[arr.length - 1] = new EqualsBinaryOp(arr.at(-1)!, new Literal(true), true);
-    return [undefined, arr];
+    return [new NotFilter(), arr];
 
     /* LITERALS ************************************************************************** */
   } else if (tok.type === 'number') {
@@ -816,16 +812,6 @@ const nextToken = (
     tokenizer.next();
     return [new Literal(true), arr];
 
-    /* BINARY OPS ************************************************************************** */
-  } else if (tok.type === 'operator' || tok.s === 'or' || tok.s === 'and') {
-    const op = tok.s;
-    tokenizer.next();
-
-    const [nextTok, nextArr] = nextToken(tokenizer, arr)!;
-    assert.present(nextTok);
-    arr[arr.length - 1] = BINOP_REGISTRY[op](arr.at(-1)!, nextTok);
-    return [undefined, nextArr];
-
     /* FUNCTIONS ************************************************************************** */
   } else if (tok.type === 'identifier') {
     const op = tok.s;
@@ -840,7 +826,7 @@ const nextToken = (
     }
 
     tokenizer.expect('(');
-    const inner = parseNextPart(tokenizer);
+    const inner = parseExpression(tokenizer);
     tokenizer.expect(')');
 
     return [fnFn(inner), arr];
@@ -849,37 +835,38 @@ const nextToken = (
   return undefined;
 };
 
-const parseNextPart = (tokenizer: Tokenizer): Operator => {
-  const dest: Operator[] = [];
+const parseExpression = (tokenizer: Tokenizer): Operator => {
+  tokenizer.consumeWhitespace();
 
-  let arr = dest;
+  const v = parseOperand(tokenizer, []);
 
-  let i = 0;
-  do {
-    const v = nextToken(tokenizer, arr);
+  tokenizer.consumeWhitespace();
 
-    if (v === undefined) {
-      break;
-    }
+  assert.present(v);
 
-    const [t, newArr] = v;
-    if (t) arr.push(t);
-    arr = newArr;
+  if (tokenizer.peek().s === '|') {
+    tokenizer.next();
+    const right = parseExpression(tokenizer);
+    return new PipeGenerator([v[0]!, right]);
+  } else if (tokenizer.peek().s === ',') {
+    tokenizer.next();
+    const right = parseExpression(tokenizer);
+    return new ConcatenationGenerator([v[0]!, right]);
+  } else if (Object.keys(BINOP_REGISTRY).includes(tokenizer.peek().s)) {
+    const op = tokenizer.next().s;
 
-    if (i++ > 1000) throw new Error('Infinite loop detected');
-  } while (
-    tokenizer.peek().type !== 'end' &&
-    tokenizer.peek().s !== ')' &&
-    tokenizer.peek().s !== ']'
-  );
+    const right = parseExpression(tokenizer);
 
-  return dest.length === 1 ? dest[0] : new PipeGenerator(dest);
+    return BINOP_REGISTRY[op](v[0]!, right);
+  } else {
+    return v![0]!;
+  }
 };
 
 export const parse = (query: string): Operator => {
   const tokenizer = new Tokenizer(query);
 
-  const op = parseNextPart(tokenizer);
+  const op = parseExpression(tokenizer);
 
   if (tokenizer.peek().type !== 'end') {
     throw new Error('Cannot parse: ' + tokenizer.rest);
