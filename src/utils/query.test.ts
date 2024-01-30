@@ -376,6 +376,26 @@ describe('contains()', () => {
   });
 });
 
+describe('object construction', () => {
+  test('{user: .user, title: .titles[]}', () => {
+    // TODO: Support shorthand {user, title: .titles[]}
+    expect(
+      query('{user: .user, title: .titles[]}', [
+        { user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }
+      ])
+    ).toEqual([
+      { user: 'stedolan', title: 'JQ Primer' },
+      { user: 'stedolan', title: 'More JQ' }
+    ]);
+  });
+
+  test('{(.user): .titles}', () => {
+    expect(
+      query('{(.user): .titles}', [{ user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }])
+    ).toEqual([{ stedolan: ['JQ Primer', 'More JQ'] }]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {
@@ -397,5 +417,21 @@ describe('complex use-cases', () => {
       { id: '2' },
       { id: '4' }
     ]);
+  });
+
+  // TODO: Add support for this somehow
+  test.skip('.elements[] | select(.id == ["2", "4"][])', () => {
+    const data = {
+      elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
+    };
+
+    expect(query('.elements[] | select(.id == ["2", "4"][])', [data])).toEqual([
+      { id: '2' },
+      { id: '4' }
+    ]);
+  });
+
+  test('dummy', () => {
+    console.log(query('["a", "b"] | .[]', [undefined]));
   });
 });

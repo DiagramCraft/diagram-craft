@@ -2,6 +2,7 @@
 import { isObj } from './object.ts';
 import { assert, NOT_IMPLEMENTED_YET } from './assert.ts';
 import { isTaggedType, tag, TaggedType } from './types.ts';
+import { newid } from './id.ts';
 
 type FnRegistration =
   | { args: '0'; fn: () => Generator }
@@ -194,7 +195,7 @@ export class OObject {
     let currentKey: OString | Generator | undefined = undefined;
 
     while (s.peek().s !== '}') {
-      while (s.peek().type === 'separator') s.next();
+      s.consumeWhitespace();
 
       if (s.peek().type === 'identifier') {
         if (currentKey) {
@@ -230,11 +231,23 @@ export class OObject {
   }
 
   val() {
+    const generators = new Map<string, Generator>();
+
     const dest: any = {};
     for (const [k, v] of this.entries) {
-      if (isGenerator(k) || isGenerator(v)) throw new Error();
-      dest[k.val()] = v.val();
+      const key: string = isGenerator(k) ? '_____' + newid() : k.val();
+      if (isGenerator(k)) generators.set(key, k);
+
+      const val: any = isGenerator(v) ? '_____' + newid() : v.val();
+      if (isGenerator(v)) generators.set(val, v);
+
+      dest[key] = val;
     }
+
+    if (generators.size > 0) {
+      dest._____generators = generators;
+    }
+
     return dest;
   }
 }
@@ -632,6 +645,58 @@ const ArrayFilterFns: Record<string, ArrayFn> = {
   }
 };
 
+class ObjectTemplate extends BaseGenerator {
+  constructor(private readonly template: any) {
+    super();
+  }
+
+  *handleElement(el: unknown): Iterable<unknown> {
+    const generators = this.template._____generators as Map<string, Generator>;
+    const iterables = [...generators.keys()];
+
+    for (const a of this.iterate(generators, iterables, 0, el, {})) {
+      yield this.applyTemplate(a);
+    }
+  }
+
+  private applyTemplate(assignment: Record<string, unknown>) {
+    const dest: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(this.template)) {
+      if (k === '_____generators') continue;
+
+      const key = assignment[k] === undefined ? k : (assignment[k] as string);
+
+      if (typeof v === 'string') {
+        dest[key] = assignment[v];
+      } else if (Array.isArray(v)) {
+        dest[key] = v.map(e => this.applyTemplate({ ...assignment, ...e }));
+      } else if (isObj(v)) {
+        dest[key] = this.applyTemplate({ ...assignment, ...v });
+      } else {
+        dest[key] = v;
+      }
+    }
+    return dest;
+  }
+
+  private *iterate(
+    generators: Map<string, Generator>,
+    iterables: string[],
+    idx: number,
+    el: unknown,
+    context: Record<string, unknown>
+  ): Iterable<Record<string, unknown>> {
+    for (const a of generators.get(iterables[idx])!.iterable([el])) {
+      const nc = { ...context, [iterables[idx]]: a };
+      if (idx === iterables.length - 1) {
+        yield nc;
+      } else {
+        yield* this.iterate(generators, iterables, idx + 1, el, nc);
+      }
+    }
+  }
+}
+
 class StringFn extends BaseGenerator {
   constructor(
     private readonly node: Generator,
@@ -693,7 +758,6 @@ class MapValuesFn extends BaseGenerator {
   }
 }
 
-// for each e
 class ContainsFn extends BaseGenerator {
   constructor(public readonly node: Generator) {
     super();
@@ -779,7 +843,11 @@ const parseOperand = (tokenizer: Tokenizer): Generator => {
     return new Literal(Number(tokenizer.next().s));
   } else if (tok.s === '{') {
     const res = OObjects.parse(tokenizer);
-    return new Literal(res.val());
+    if (res.val()._____generators) {
+      return new ObjectTemplate(res.val());
+    } else {
+      return new Literal(res.val());
+    }
   } else if (tok.type === 'string') {
     return new Literal(tokenizer.next().s.slice(1, -1));
   } else if (tok.s === 'null') {
