@@ -154,10 +154,6 @@ export const OObjects = {
     return r;
   },
 
-  parseTemplate(tok: Tokenizer): OObjects {
-    return OObjects.parseNext(tok);
-  },
-
   parseNext(tokenizer: Tokenizer): OObjects {
     const tok = tokenizer.next();
     if (tok.type === 'string') {
@@ -202,7 +198,16 @@ export class OObject {
           throw new Error('Cannot have two keys in a row');
         } else {
           currentKey = new OString(s.next().s);
-          s.expect(':');
+
+          // shorthand notation
+          if (!s.accept(':')) {
+            obj.entries.push([
+              currentKey,
+              parsePathExpression(new Tokenizer('.' + currentKey.val()))
+            ]);
+            currentKey = undefined;
+            if (!s.accept(',')) break;
+          }
         }
       } else {
         const next = OObjects.parseNext(s);

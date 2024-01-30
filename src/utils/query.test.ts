@@ -378,11 +378,19 @@ describe('contains()', () => {
 
 describe('object construction', () => {
   test('{user: .user, title: .titles[]}', () => {
-    // TODO: Support shorthand {user, title: .titles[]}
     expect(
       query('{user: .user, title: .titles[]}', [
         { user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }
       ])
+    ).toEqual([
+      { user: 'stedolan', title: 'JQ Primer' },
+      { user: 'stedolan', title: 'More JQ' }
+    ]);
+  });
+
+  test('{user, title: .titles[]}', () => {
+    expect(
+      query('{user, title: .titles[]}', [{ user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }])
     ).toEqual([
       { user: 'stedolan', title: 'JQ Primer' },
       { user: 'stedolan', title: 'More JQ' }
