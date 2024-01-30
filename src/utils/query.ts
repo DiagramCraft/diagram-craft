@@ -340,11 +340,12 @@ export class PropertyLookupOp extends BaseGenerator {
     } else {
       if (this.strict && !isObj(e) && e !== undefined) throw new Error();
       assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
-      if (!isObj(e)) {
+      if (!isObj(e) && e !== undefined) {
         return;
       }
 
-      if (e instanceof Map) {
+      if (e === undefined) yield undefined;
+      else if (e instanceof Map) {
         yield e.get(this.identifier);
       } else {
         yield (e as any)[this.identifier];
@@ -792,10 +793,11 @@ const parsePathExpression = (tokenizer: Tokenizer): Generator => {
 
   let i = 0;
   while (i++ < MAX_LOOP) {
-    if (token.type === 'identifier') {
+    if (token.type === 'identifier' || token.type === 'string') {
       tokenizer.next();
+      const s = token.type === 'string' ? token.s.slice(1, -1) : token.s;
       const strict = !tokenizer.accept('?');
-      left = new PathExpression(left, new PropertyLookupOp(token.s, strict));
+      left = new PathExpression(left, new PropertyLookupOp(s, strict));
     } else if (token.type === 'operator' && token.s === '[') {
       tokenizer.next();
       const nextToken = tokenizer.next();
@@ -885,7 +887,7 @@ const parseOperand = (tokenizer: Tokenizer): Generator => {
     return fnFn(inner);
   }
 
-  throw new Error('Cannot parse: ' + tokenizer.head);
+  throw new Error('Cannot parse operand: ' + tokenizer.head);
 };
 
 const parseExpression = (tokenizer: Tokenizer, lastOp: string | undefined): Generator => {
@@ -919,7 +921,7 @@ export const parse = (query: string): Generator => {
   const op = parseExpression(tokenizer, undefined);
 
   if (tokenizer.peek().type !== 'end') {
-    throw new Error('Cannot parse: ' + tokenizer.head);
+    throw new Error('Cannot parse expression: ' + tokenizer.head);
   }
 
   return op;
