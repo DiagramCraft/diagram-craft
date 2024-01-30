@@ -799,7 +799,10 @@ const parsePathExpression = (tokenizer: Tokenizer): Generator => {
     } else if (token.type === 'operator' && token.s === '[') {
       tokenizer.next();
       const nextToken = tokenizer.next();
-      if (nextToken.s === ']') {
+      if (nextToken.type === 'string') {
+        left = new PathExpression(left, new PropertyLookupOp(nextToken.s.slice(1, -1)));
+        tokenizer.expect(']');
+      } else if (nextToken.s === ']') {
         left = new PathExpression(left, new ArrayGenerator());
       } else if (nextToken.type === 'number') {
         const nextNextToken = tokenizer.next();

@@ -93,6 +93,15 @@ describe('.[], .[0], .[0:2]', () => {
   });
 });
 
+describe('.["<string>"]', () => {
+  test('.["test"]', () => {
+    expect(queryOne('.["test"]', { test: 1 })).toEqual(1);
+    expect(() => queryOne('.["test"]', 123)).toThrowError();
+    expect(() => queryOne('.["test"]', 'lorem')).toThrowError();
+    expect(() => queryOne('.["test"]', [1, 2, 3])).toThrowError();
+  });
+});
+
 describe(',', () => {
   test('.[0],.[1]', () => {
     expect(query('.[0],.[1]', [[1, 2, 3]])).toEqual([1, 2]);
