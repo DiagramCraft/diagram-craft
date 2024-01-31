@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isObj } from './object.ts';
-import { assert, NOT_IMPLEMENTED_YET } from './assert.ts';
 import { isTaggedType, tag, TaggedType } from './types.ts';
 import { newid } from './id.ts';
 
@@ -71,10 +70,7 @@ const BINOP_ORDERING = Object.fromEntries(
 
 const MAX_LOOP = 100;
 
-const safeParseInt = (s: any) => {
-  const n = Number(s);
-  return isNaN(n) ? 0 : n;
-};
+const safeParseInt = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
 
 type Token = {
   s: string;
@@ -129,7 +125,7 @@ export class Tokenizer {
   }
 
   accept(s: string) {
-    return this.peek().s === s && this.expect(s);
+    return this.peek().s === s && this.next();
   }
 }
 
@@ -149,20 +145,18 @@ abstract class BaseGenerator implements Generator {
   abstract handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown>;
 }
 
-type OObjects = OObject | OBoolean | OArray | ONumber | OString | Generator;
+type OObjects = OObject | OLiteral | OArray | Generator;
 
 export const OObjects = {
   parse(tok: Tokenizer): OObjects & { val(): unknown } {
-    const r = OObjects.parseNext(tok);
-    if (isGenerator(r)) throw new Error();
-    return r;
+    return OObjects.parseNext(tok) as OObjects & { val(): unknown };
   },
 
   parseNext(tokenizer: Tokenizer): OObjects {
     const tok = tokenizer.next();
 
     if (tok.type === 'str') {
-      return new OString(tok.s.slice(1, -1));
+      return new OLiteral(tok.s.slice(1, -1));
     } else if (tok.s === '.') {
       return parsePathExpression(tokenizer);
     } else if (tok.s === '{') {
@@ -174,9 +168,9 @@ export const OObjects = {
     } else if (tok.s === '[') {
       return OArray.parse(tokenizer);
     } else if (tok.type === 'num') {
-      return new ONumber(Number(tok.s));
+      return new OLiteral(Number(tok.s));
     } else if (tok.s === 'true' || tok.s === 'false') {
-      return new OBoolean(tok.s === 'true');
+      return new OLiteral(tok.s === 'true');
     } else {
       throw new Error('Cannot parse: ' + tokenizer.head);
     }
@@ -184,53 +178,42 @@ export const OObjects = {
 };
 
 export class OObject {
-  entries: [OString | Generator, OObjects][] = [];
+  entries: [OLiteral | Generator, OObjects][] = [];
 
-  constructor(entries?: [OString | Generator, OObjects][]) {
+  constructor(entries?: [OLiteral | Generator, OObjects][]) {
     this.entries = entries ?? [];
   }
 
   static parse(s: Tokenizer) {
     const obj = new OObject();
 
-    let currentKey: OString | Generator | undefined = undefined;
+    let currentKey: OLiteral | Generator | undefined = undefined;
 
     while (s.peek().s !== '}') {
       s.consumeWhitespace();
 
       if (s.peek().type === 'id') {
-        if (currentKey) {
-          throw new Error('Cannot have two keys in a row');
-        } else {
-          currentKey = new OString(s.next().s);
+        currentKey = new OLiteral(s.next().s);
 
-          // shorthand notation
-          if (!s.accept(':')) {
-            obj.entries.push([
-              currentKey,
-              parsePathExpression(new Tokenizer('.' + currentKey.val()))
-            ]);
-            currentKey = undefined;
-            if (!s.accept(',')) break;
-          }
+        // shorthand notation
+        if (!s.accept(':')) {
+          obj.entries.push([
+            currentKey,
+            parsePathExpression(new Tokenizer('.' + currentKey.val()))
+          ]);
+          currentKey = undefined;
+          if (!s.accept(',')) break;
         }
       } else {
         const next = OObjects.parseNext(s);
 
-        if (next instanceof OString || isGenerator(next)) {
-          if (currentKey) {
-            obj.entries.push([currentKey, next]);
-            currentKey = undefined;
-            if (!s.accept(',')) break;
-          } else {
-            currentKey = next;
-            s.expect(':');
-          }
-        } else {
-          assert.present(currentKey);
+        if (currentKey) {
           obj.entries.push([currentKey, next]);
           currentKey = undefined;
           if (!s.accept(',')) break;
+        } else {
+          currentKey = next as OLiteral | Generator;
+          s.expect(':');
         }
       }
     }
@@ -246,7 +229,7 @@ export class OObject {
 
     const dest: any = {};
     for (const [k, v] of this.entries) {
-      const key: string = isGenerator(k) ? '_____' + newid() : k.val();
+      const key: string = isGenerator(k) ? '_____' + newid() : k.val()!.toString();
       if (isGenerator(k)) generators.set(key, k);
 
       const val: any = isGenerator(v) ? '_____' + newid() : v.val();
@@ -263,16 +246,8 @@ export class OObject {
   }
 }
 
-export class OString {
-  constructor(public value: string) {}
-
-  val() {
-    return this.value;
-  }
-}
-
-export class OBoolean {
-  constructor(public value: boolean) {}
+export class OLiteral {
+  constructor(public value: unknown) {}
 
   val() {
     return this.value;
@@ -307,14 +282,6 @@ export class OArray {
   }
 }
 
-export class ONumber {
-  constructor(public value: number) {}
-
-  val() {
-    return this.value;
-  }
-}
-
 export class PipeGenerator implements Generator {
   constructor(
     private readonly left: Generator,
@@ -345,7 +312,7 @@ export class PropertyLookupOp extends BaseGenerator {
       yield e;
     } else {
       if (this.strict && !isObj(e) && e !== undefined) throw new Error();
-      assert.false(this.identifier === '__proto__' || this.identifier === 'constructor');
+      if (this.identifier === '__proto__' || this.identifier === 'constructor') throw new Error();
       if (!isObj(e) && e !== undefined) {
         return;
       }
@@ -569,9 +536,9 @@ class EqualsBinaryOp extends BinaryOperator {
 
   combine(lvs: unknown, rvs: unknown): unknown {
     if (Array.isArray(lvs) && Array.isArray(rvs)) {
-      throw NOT_IMPLEMENTED_YET();
+      throw new Error();
     } else if (isObj(lvs) && isObj(rvs)) {
-      throw NOT_IMPLEMENTED_YET();
+      throw new Error();
     } else {
       return this.negate ? lvs !== rvs : lvs === rvs;
     }
@@ -872,7 +839,7 @@ const parsePathExpression = (tokenizer: Tokenizer): Generator => {
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
       const strict = !tokenizer.accept('?');
       left = new PathExpression(left, new PropertyLookupOp(s, strict));
-    } else if (token.type === 'op' && token.s === '[') {
+    } else if (token.s === '[') {
       tokenizer.next();
       const nextToken = tokenizer.next();
       if (nextToken.type === 'str') {
@@ -1010,7 +977,6 @@ const parseExpression = (
   tokenizer.consumeWhitespace();
 
   let left = parseOperand(tokenizer, functions);
-  assert.present(left);
 
   let i = 0;
   do {
@@ -1039,13 +1005,9 @@ export const parse = (query: string): Generator => {
   const tokenizer = new Tokenizer(query);
 
   const functions = {};
-  const op = [parseExpression(tokenizer, undefined, functions)];
+  const op = [];
   while (tokenizer.peek().type !== 'end') {
     op.push(parseExpression(tokenizer, undefined, functions));
-  }
-
-  if (tokenizer.peek().type !== 'end') {
-    throw new Error('Cannot parse exp: ' + tokenizer.head);
   }
 
   return op.reduceRight((a, b) => new ConsBinaryOp(b, a));
