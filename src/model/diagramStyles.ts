@@ -220,6 +220,13 @@ export class DiagramStyles {
       this.edgeStyles.push(stylesheet);
     }
   }
+
+  toJSON() {
+    return {
+      nodeStyles: this.nodeStyles,
+      edgeStyles: this.edgeStyles
+    };
+  }
 }
 
 export class DeleteStylesheetUndoableAction implements UndoableAction {

@@ -237,4 +237,15 @@ export class Diagram extends EventEmitter<DiagramEvents> {
   update() {
     this.emit('change', { diagram: this });
   }
+
+  toJSON() {
+    return {
+      diagrams: this.diagrams,
+      props: this.props,
+      selectionState: this.selectionState,
+      id: this.id,
+      name: this.name,
+      layers: this.layers
+    };
+  }
 }

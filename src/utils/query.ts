@@ -156,6 +156,7 @@ export const OObjects = {
 
   parseNext(tokenizer: Tokenizer): OObjects {
     const tok = tokenizer.next();
+
     if (tok.type === 'string') {
       return new OString(tok.s.slice(1, -1));
     } else if (tok.s === '.') {
@@ -230,6 +231,7 @@ export class OObject {
       }
     }
 
+    s.consumeWhitespace();
     s.expect('}');
 
     return obj;
@@ -507,7 +509,7 @@ class LengthFilter extends BaseGenerator {
     } else if (!isNaN(Number(e))) {
       yield Math.abs(Number(e));
     } else if (isObj(e)) {
-      yield Object.keys(e).length;
+      yield e instanceof Map ? e.size : Object.keys(e).length;
     }
   }
 }

@@ -37,6 +37,16 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> {
     }
   ]);
 
+  // TODO: To be loaded from file
+  props: DocumentProps = {
+    query: {
+      saved: [
+        ['active-layer', '.elements[]'],
+        ['active-layer', '.elements[] | select(.edges | length > 0)']
+      ]
+    }
+  };
+
   constructor(public readonly diagrams: Array<Diagram>) {
     super();
     this.diagrams.forEach(d => (d.document = this));
@@ -65,5 +75,14 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> {
 
   changeDiagram(diagram: Diagram) {
     this.emit('diagramchanged', { after: diagram });
+  }
+
+  toJSON() {
+    return {
+      diagrams: this.diagrams,
+      styles: this.styles,
+      props: this.props,
+      customPalette: this.customPalette
+    };
   }
 }

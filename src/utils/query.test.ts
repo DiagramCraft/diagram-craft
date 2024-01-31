@@ -436,6 +436,18 @@ describe('complex use-cases', () => {
     ]);
   });
 
+  test('.elements[] | { id, type }', () => {
+    const data = {
+      elements: [{ id: '2', test: '123' }, { id: '3', type: 'abc' }, { id: '4' }]
+    };
+
+    expect(query('.elements[] | { id, type }', [data])).toEqual([
+      { id: '2' },
+      { id: '3', type: 'abc' },
+      { id: '4' }
+    ]);
+  });
+
   // TODO: Add support for this somehow
   test.skip('.elements[] | select(.id == ["2", "4"][])', () => {
     const data = {

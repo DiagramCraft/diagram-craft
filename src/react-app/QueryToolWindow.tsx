@@ -4,8 +4,11 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { query } from '../utils/query.ts';
 import { useDiagram } from './context/DiagramContext.tsx';
 import { useRef, useState } from 'react';
-import { TbChevronDown, TbChevronRight, TbFileSpreadsheet, TbHistory } from 'react-icons/tb';
+import { TbChevronDown, TbChevronRight, TbFile, TbHistory } from 'react-icons/tb';
 import { Select } from './components/Select.tsx';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Diagram } from '../model/diagram.ts';
+import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 
 const replacer = (_key: string, value: unknown) => {
   if (value instanceof Map) {
@@ -20,19 +23,55 @@ const replacer = (_key: string, value: unknown) => {
 
 // TODO: Maybe add max-depth to the JSON conversion
 
+const getSource = (source: string, diagram: Diagram) => {
+  switch (source) {
+    case 'active-layer':
+      return diagram.layers.active;
+    case 'active-diagram':
+      return diagram;
+    case 'active-document':
+      return diagram.document;
+    case 'selection':
+      return diagram.selectionState;
+  }
+};
+
 export const QueryToolWindow = () => {
+  const redraw = useRedraw();
   const diagram = useDiagram();
   const ref = useRef<HTMLTextAreaElement>(null);
+  const downloadRef = useRef<HTMLAnchorElement>(null);
   const [queryString, setQueryString] = useState<string>('.elements[]');
   const [expanded, setExpanded] = useState<number[]>([]);
+  const [source, setSource] = useState<string>('active-layer');
+  const [downloadLink, setDownloadLink] = useState('');
 
-  let res = undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let res: any[] | undefined = undefined;
   let error = undefined;
   try {
-    res = query(queryString, [diagram.layers.active]);
+    res = query(queryString, [getSource(source, diagram)]);
+
+    diagram.document.props.query ??= {};
+    diagram.document.props.query.history ??= [];
+
+    diagram.document.props.query.history.unshift(['active-layer', queryString]);
+    diagram.document.props.query.history = diagram.document.props.query.history.filter((e, idx) => {
+      return idx === 0 || e[0] !== 'active-layer' || e[1] !== queryString;
+    });
   } catch (e) {
     error = e;
   }
+
+  const exportToFile = () => {
+    const data = new Blob([JSON.stringify(res, replacer, '  ')], { type: 'application/json' });
+    if (downloadLink !== '') window.URL.revokeObjectURL(downloadLink);
+    const link = window.URL.createObjectURL(data);
+    setDownloadLink(link);
+    downloadRef.current!.href = link;
+    downloadRef.current!.click();
+  };
+
   return (
     <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['query', 'response']}>
       <Accordion.Item className="cmp-accordion__item cmp-accordion__item" value="query">
@@ -47,8 +86,8 @@ export const QueryToolWindow = () => {
             }}
           >
             <Select
-              onValueChange={() => {}}
-              value={'active-layer'}
+              onValueChange={setSource}
+              value={source}
               values={[
                 { label: 'Active Layer', value: 'active-layer' },
                 { label: 'Active Diagram', value: 'active-diagram' },
@@ -57,12 +96,73 @@ export const QueryToolWindow = () => {
               ]}
             />
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className={'cmp-button'}>
-                <TbHistory />
-              </button>
-              <button className={'cmp-button'}>
-                <TbFileSpreadsheet />
-              </button>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button className={'cmp-button'}>
+                    <TbHistory />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                    {(diagram.document.props.query?.history ?? []).map(h => (
+                      <DropdownMenu.Item
+                        key={h[1]}
+                        className="cmp-context-menu__item"
+                        onClick={() => {
+                          setSource(h[0]);
+                          ref.current!.value = h[1];
+                        }}
+                      >
+                        {h[1]}
+                      </DropdownMenu.Item>
+                    ))}
+                    <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button className={'cmp-button'}>
+                    <TbFile />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
+                    <DropdownMenu.Item
+                      className="cmp-context-menu__item"
+                      onClick={() => {
+                        diagram.document.props.query ??= {};
+                        diagram.document.props.query.saved ??= [];
+                        diagram.document.props.query.saved.push([source, ref.current!.value]);
+                      }}
+                    >
+                      Save
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      className="cmp-context-menu__item"
+                      onClick={() => {
+                        // TODO: To be implemented
+                      }}
+                    >
+                      Manage
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator className="cmp-context-menu__separator" />
+                    {(diagram.document.props.query?.saved ?? []).map(h => (
+                      <DropdownMenu.Item
+                        key={h[1]}
+                        className="cmp-context-menu__item"
+                        onClick={() => {
+                          setSource(h[0]);
+                          ref.current!.value = h[1];
+                        }}
+                      >
+                        {h[1]}
+                      </DropdownMenu.Item>
+                    ))}
+                    <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
             </div>
           </div>
 
@@ -83,16 +183,28 @@ export const QueryToolWindow = () => {
             <button
               className={'cmp-button cmp-button--secondary'}
               onClick={() => {
-                setExpanded([]);
+                exportToFile();
               }}
             >
               Export
             </button>
+            <a
+              style={{ display: 'none' }}
+              download={'export.json'}
+              href={downloadLink}
+              ref={downloadRef}
+            >
+              -
+            </a>
             <button
               className={'cmp-button cmp-button--primary'}
               onClick={() => {
-                setExpanded([]);
-                setQueryString(ref.current?.value ?? '');
+                if (ref.current?.value === queryString) {
+                  redraw();
+                } else {
+                  setExpanded([]);
+                  setQueryString(ref.current?.value ?? '');
+                }
               }}
             >
               Run

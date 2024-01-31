@@ -209,6 +209,19 @@ export class DiagramNode
 
   /* Snapshot ************************************************************************************************ */
 
+  toJSON() {
+    return {
+      id: this.id,
+      parent: this.parent,
+      type: 'node',
+      nodeType: this.nodeType,
+      bounds: this.bounds,
+      props: this.props,
+      children: this.children,
+      edges: this.edges
+    };
+  }
+
   snapshot(): DiagramNodeSnapshot {
     return {
       _snapshotType: 'node',

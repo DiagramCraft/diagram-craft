@@ -61,6 +61,15 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
 
   /* Snapshot ************************************************************************************************ */
 
+  toJSON() {
+    return {
+      name: this.name,
+      locked: this.isLocked(),
+      elements: this.elements,
+      type: this.type
+    };
+  }
+
   snapshot(): LayerSnapshot {
     return {
       _snapshotType: 'layer',
@@ -292,5 +301,13 @@ export class LayerManager implements UOWTrackable<LayersSnapshot> {
   restore(snapshot: LayersSnapshot, uow: UnitOfWork) {
     this.#layers = snapshot.layers.map(id => this.diagram.layers.byId(id)!);
     uow.updateElement(this);
+  }
+
+  toJSON() {
+    return {
+      layers: this.#layers,
+      activeLayers: this.#activeLayer,
+      visibleLayers: this.#visibleLayers
+    };
   }
 }

@@ -43,6 +43,13 @@ export function assertVAlign(s: string | undefined): asserts s is Valign | undef
 }
 
 declare global {
+  interface DocumentProps {
+    query?: {
+      history?: [string, string][];
+      saved?: [string, string][];
+    };
+  }
+
   interface DiagramProps {
     background?: {
       color?: string;
