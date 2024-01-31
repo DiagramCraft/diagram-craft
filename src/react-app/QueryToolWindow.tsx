@@ -4,7 +4,14 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { query } from '../utils/query.ts';
 import { useDiagram } from './context/DiagramContext.tsx';
 import { useRef, useState } from 'react';
-import { TbChevronDown, TbChevronRight, TbFile, TbHistory } from 'react-icons/tb';
+import {
+  TbArrowDownRight,
+  TbChevronDown,
+  TbChevronRight,
+  TbClipboardCopy,
+  TbFile,
+  TbHistory
+} from 'react-icons/tb';
 import { Select } from './components/Select.tsx';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Diagram } from '../model/diagram.ts';
@@ -45,12 +52,35 @@ export const QueryToolWindow = () => {
   const [expanded, setExpanded] = useState<number[]>([]);
   const [source, setSource] = useState<string>('active-layer');
   const [downloadLink, setDownloadLink] = useState('');
+  const [queryIdx, setQueryIdx] = useState(0);
+  const [queryInput, setQueryInput] = useState<unknown>({});
+
+  let queries: { q: string; output: unknown }[] = [];
+
+  let qs = queryString;
+  while (true) {
+    const m = qs.match(/^(.*?)\|\s*?drilldown\(([^)]+)\)\s*?\|(.*)$/);
+
+    if (!m) {
+      queries.push({ q: qs, output: undefined });
+      break;
+    }
+
+    qs = m[3];
+
+    queries.push({ q: m[1], output: m[2] });
+  }
+
+  //console.log(queries);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let res: any[] | undefined = undefined;
   let error = undefined;
   try {
-    res = query(queryString, [getSource(source, diagram)]);
+    const q = queries[queryIdx].q;
+    const input = queryIdx === 0 ? getSource(source, diagram) : queryInput;
+
+    res = query(q, [input]);
 
     diagram.document.props.query ??= {};
     diagram.document.props.query.history ??= [];
@@ -202,6 +232,8 @@ export const QueryToolWindow = () => {
                 if (ref.current?.value === queryString) {
                   redraw();
                 } else {
+                  setQueryIdx(0);
+                  setQueryInput({});
                   setExpanded([]);
                   setQueryString(ref.current?.value ?? '');
                 }
@@ -231,6 +263,33 @@ export const QueryToolWindow = () => {
                   }}
                 >
                   {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
+                  {expanded.includes(idx) && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: '0.5rem',
+                        top: '0.125rem',
+                        display: 'flex',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <button className={'cmp-button--icon-only'}>
+                        <TbArrowDownRight />
+                      </button>
+                      <button
+                        className={'cmp-button--icon-only'}
+                        onClick={ev => {
+                          navigator.clipboard.writeText(
+                            JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
+                          );
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                        }}
+                      >
+                        <TbClipboardCopy />
+                      </button>
+                    </div>
+                  )}
                   <pre key={idx}>
                     {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
                   </pre>

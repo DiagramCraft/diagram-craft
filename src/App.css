@@ -808,6 +808,7 @@ input::-webkit-input-placeholder {
     }
   }
   .cmp-query-response__item--expanded {
+    position: relative;
     max-height: 1000px !important;
   }
 }
