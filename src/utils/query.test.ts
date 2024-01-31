@@ -419,6 +419,40 @@ describe('variable expansion', () => {
   });
 });
 
+describe('def', () => {
+  test('def foo(f): 7; 5|foo(3)', () => {
+    expect(query('def foo(f): 7; 5|foo(3)', [undefined])).toEqual([7]);
+  });
+
+  test('def foo(f): 7+f; 5|foo(3)', () => {
+    expect(query('def foo(f): 7+f; 5|foo(3)', [undefined])).toEqual([10]);
+  });
+
+  test('def foo(f): 7|f; 5|foo(.+1)', () => {
+    expect(query('def foo(f): 7|f; 5|foo(.+1)', [undefined])).toEqual([8]);
+  });
+
+  test('def foo(f): f|f; 5|foo(.+2)', () => {
+    expect(query('def foo(f): f|f; 5|foo(.+2)', [undefined])).toEqual([9]);
+  });
+
+  test('def addvalue(f): . + [f]; map(addvalue(.[0]))', () => {
+    expect(
+      query('def addvalue(f): . + [f]; map(addvalue(.[0]))', [
+        [
+          [1, 2],
+          [10, 20]
+        ]
+      ])
+    ).toEqual([
+      [
+        [1, 2, 1],
+        [10, 20, 10]
+      ]
+    ]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {
