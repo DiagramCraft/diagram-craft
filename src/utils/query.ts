@@ -663,13 +663,13 @@ class ObjectTemplate extends BaseGenerator {
     const iterables = [...generators.keys()];
 
     for (const a of this.iterate(generators, iterables, 0, el, {})) {
-      yield this.applyTemplate(a);
+      yield this.applyTemplate(this.template, a);
     }
   }
 
-  private applyTemplate(assignment: Record<string, unknown>) {
+  private applyTemplate(target: Record<string, unknown>, assignment: Record<string, unknown>) {
     const dest: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(this.template)) {
+    for (const [k, v] of Object.entries(target)) {
       if (k === '_____generators') continue;
 
       const key = assignment[k] === undefined ? k : (assignment[k] as string);
@@ -677,9 +677,9 @@ class ObjectTemplate extends BaseGenerator {
       if (typeof v === 'string') {
         dest[key] = assignment[v];
       } else if (Array.isArray(v)) {
-        dest[key] = v.map(e => this.applyTemplate({ ...assignment, ...e }));
+        dest[key] = v;
       } else if (isObj(v)) {
-        dest[key] = this.applyTemplate({ ...assignment, ...v });
+        dest[key] = this.applyTemplate(v, assignment);
       } else {
         dest[key] = v;
       }

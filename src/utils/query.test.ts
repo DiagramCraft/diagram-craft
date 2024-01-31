@@ -448,6 +448,12 @@ describe('complex use-cases', () => {
     ]);
   });
 
+  test('. | { id, type, _drilldown: ["a"] }', () => {
+    expect(query('. | { id, type, _drilldown: ["a"] }', [{ id: '2', type: 'abc' }])).toEqual([
+      { id: '2', type: 'abc', _drilldown: ['a'] }
+    ]);
+  });
+
   // TODO: Add support for this somehow
   test.skip('.elements[] | select(.id == ["2", "4"][])', () => {
     const data = {
