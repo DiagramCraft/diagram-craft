@@ -413,6 +413,12 @@ describe('object construction', () => {
   });
 });
 
+describe('variable expansion', () => {
+  test('$foo', () => {
+    expect(query('$foo', [undefined], { foo: 1 })).toEqual([1]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {

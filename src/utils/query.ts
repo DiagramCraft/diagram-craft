@@ -95,7 +95,9 @@ export class Tokenizer {
     } else if ((m = this.head.match(/^([a-zA-Z_][a-zA-Z0-9_]*|\.\.)/))) {
       return { s: m[0], type: 'identifier' };
     } else if (
-      (m = this.head.match(/^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|{|}|\?|\|)/))
+      (m = this.head.match(
+        /^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|\$|{|}|\?|\|)/
+      ))
     ) {
       return { s: m[0], type: 'operator' };
     } else if ((m = this.head.match(/^(\s+)/))) {
@@ -132,17 +134,17 @@ export class Tokenizer {
 const isGenerator = (o: unknown): o is Generator => (o as any)?.iterable;
 
 interface Generator {
-  iterable(input: Iterable<unknown>): Iterable<unknown>;
+  iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown>;
 }
 
 abstract class BaseGenerator implements Generator {
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const e of input) {
-      yield* this.handleElement(e);
+      yield* this.handleElement(e, bindings);
     }
   }
 
-  abstract handleElement(e: unknown): Iterable<unknown>;
+  abstract handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown>;
 }
 
 type OObjects = OObject | OBoolean | OArray | ONumber | OString | Generator;
@@ -317,8 +319,8 @@ export class PipeGenerator implements Generator {
     private readonly right: Generator
   ) {}
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    yield* this.right.iterable(this.left.iterable(input));
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield* this.right.iterable(this.left.iterable(input, bindings), bindings);
   }
 }
 
@@ -396,17 +398,17 @@ export class ConcatenationGenerator extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown): Iterable<unknown> {
-    yield* this.left.iterable([e]);
-    yield* this.right.iterable([e]);
+  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield* this.left.iterable([e], bindings);
+    yield* this.right.iterable([e], bindings);
   }
 }
 
 export class ArrayConstructor implements Generator {
   constructor(private readonly node: Generator) {}
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    yield [...this.node.iterable(input)];
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield [...this.node.iterable(input, bindings)];
   }
 }
 
@@ -437,9 +439,9 @@ abstract class BinaryOperator implements Generator {
 
   abstract combine(l: unknown, r: unknown): unknown;
 
-  *iterable(input: Iterable<unknown>): Iterable<unknown> {
-    for (const r of this.right.iterable(input)) {
-      for (const l of this.left.iterable(input)) {
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const r of this.right.iterable(input, bindings)) {
+      for (const l of this.left.iterable(input, bindings)) {
         yield this.combine(l, r);
       }
     }
@@ -525,8 +527,8 @@ class HasFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown): Iterable<unknown> {
-    yield (exactOne(this.node.iterable([undefined])) as string | number) in (e as any);
+  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield (exactOne(this.node.iterable([undefined], bindings)) as string | number) in (e as any);
   }
 }
 
@@ -535,8 +537,8 @@ class InFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown): Iterable<unknown> {
-    yield (e as any) in (exactOne(this.node.iterable([undefined])) as any);
+  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield (e as any) in (exactOne(this.node.iterable([undefined], bindings)) as any);
   }
 }
 
@@ -545,8 +547,8 @@ class SelectFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown): Iterable<unknown> {
-    for (const r of this.node.iterable([e])) {
+  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const r of this.node.iterable([e], bindings)) {
       if (r === true) {
         yield e;
       }
@@ -616,9 +618,9 @@ class ArrayFilter extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown): Iterable<unknown> {
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (Array.isArray(el)) {
-      const res = this.fn(el.map(e => [e, exactOne(this.node.iterable([e]))]));
+      const res = this.fn(el.map(e => [e, exactOne(this.node.iterable([e], bindings))]));
       if (isTaggedType(res, 'single')) yield res._val;
       else if (Array.isArray(res)) {
         return yield (this.fn(res) as [unknown, unknown][]).map(a => a[0]);
@@ -658,11 +660,11 @@ class ObjectTemplate extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown): Iterable<unknown> {
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     const generators = this.template._____generators as Map<string, Generator>;
     const iterables = [...generators.keys()];
 
-    for (const a of this.iterate(generators, iterables, 0, el, {})) {
+    for (const a of this.iterate(generators, iterables, 0, el, {}, bindings)) {
       yield this.applyTemplate(this.template, a);
     }
   }
@@ -692,14 +694,15 @@ class ObjectTemplate extends BaseGenerator {
     iterables: string[],
     idx: number,
     el: unknown,
-    context: Record<string, unknown>
+    context: Record<string, unknown>,
+    bindings: Record<string, unknown>
   ): Iterable<Record<string, unknown>> {
-    for (const a of generators.get(iterables[idx])!.iterable([el])) {
+    for (const a of generators.get(iterables[idx])!.iterable([el], bindings)) {
       const nc = { ...context, [iterables[idx]]: a };
       if (idx === iterables.length - 1) {
         yield nc;
       } else {
-        yield* this.iterate(generators, iterables, idx + 1, el, nc);
+        yield* this.iterate(generators, iterables, idx + 1, el, nc, bindings);
       }
     }
   }
@@ -713,8 +716,8 @@ class StringFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown): Iterable<unknown> {
-    const arg = exactOne(this.node.iterable([undefined]));
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    const arg = exactOne(this.node.iterable([undefined], bindings));
     if (Array.isArray(el)) {
       yield el.map(e => this.fn(e as string, arg as string));
     } else {
@@ -728,8 +731,8 @@ class JoinFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown): Iterable<unknown> {
-    for (const r of this.node.iterable([el])) {
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const r of this.node.iterable([el], bindings)) {
       if (Array.isArray(el)) yield el.join(r as string);
       else yield el;
     }
@@ -755,10 +758,10 @@ class MapValuesFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown): Iterable<unknown> {
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (isObj(el)) {
       yield Object.fromEntries(
-        Object.entries(el).map(([k, v]) => [k, exactOne(this.node.iterable([v]))])
+        Object.entries(el).map(([k, v]) => [k, exactOne(this.node.iterable([v], bindings))])
       );
     } else {
       yield el;
@@ -771,8 +774,8 @@ class ContainsFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown): Iterable<unknown> {
-    const cv = this.node.iterable([undefined]);
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    const cv = this.node.iterable([undefined], bindings);
 
     for (const a of cv) {
       if (typeof a === 'string') {
@@ -783,6 +786,16 @@ class ContainsFn extends BaseGenerator {
         yield false;
       }
     }
+  }
+}
+
+class VariableExpansion extends BaseGenerator {
+  constructor(public readonly identifier: string) {
+    super();
+  }
+
+  *handleElement(_el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield bindings[this.identifier];
   }
 }
 
@@ -849,6 +862,9 @@ const parseOperand = (tokenizer: Tokenizer): Generator => {
     return inner;
   } else if (tok.s === '.') {
     return parsePathExpression(tokenizer);
+  } else if (tok.s === '$') {
+    tokenizer.next();
+    return new VariableExpansion(tokenizer.next().s);
 
     /* LITERALS ************************************************************************** */
   } else if (tok.type === 'number') {
@@ -929,11 +945,11 @@ export const parse = (query: string): Generator => {
   return op;
 };
 
-export const query = (query: string, input: unknown[]) => {
+export const query = (query: string, input: unknown[], bindings?: Record<string, unknown>) => {
   const node = parse(query);
 
   const dest: unknown[] = [];
-  for (const i of node.iterable(input)) {
+  for (const i of node.iterable(input, bindings ?? {})) {
     dest.push(i);
   }
   return dest;
