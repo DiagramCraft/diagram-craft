@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { OObjects, parse, query, queryOne, Tokenizer } from './query.ts';
+import { OObjects, query, queryOne, Tokenizer } from './query.ts';
 
 describe('OObject', () => {
   test('parse OString', () => {
@@ -204,7 +204,6 @@ describe('map()', () => {
     expect(query('map(. + 1)', [[1, 2, 3]])).toEqual([[2, 3, 4]]);
   });
   test('query: map(., .)', () => {
-    console.dir(parse('map(., .)'), { depth: 10 });
     expect(query('map(., .)', [[1, 2]])).toEqual([[1, 1, 2, 2]]);
   });
 });
@@ -466,6 +465,14 @@ describe('range', () => {
 describe('limit', () => {
   test('[limit(3;.[])]', () => {
     expect(query('[limit(3;.[])]', [[0, 1, 2, 3, 4, 5]])).toEqual([[0, 1, 2]]);
+  });
+});
+
+describe('first and last', () => {
+  test('first, last', () => {
+    expect(query('.|first', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([0]);
+    expect(query('.|last', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([6]);
+    expect(query('.|nth(5)', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([5]);
   });
 });
 

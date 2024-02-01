@@ -4,39 +4,45 @@ import { isTaggedType, tag, TaggedType } from './types.ts';
 import { newid } from './id.ts';
 
 type FnRegistration =
-  | { args: '0'; fn: () => Generator }
+  | { fn: () => Generator }
   | { args: '1'; fn: (arg: ArgList) => Generator }
   | { args: '0&1'; fn: (arg: ArgList | undefined) => Generator };
 type BinaryOpRegistration = (l: Generator, r: Generator) => Generator;
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
-  '..': { args: '0', fn: () => new RecursiveDescentGenerator() },
-  not: { args: '0', fn: () => new NotFilter() },
-  length: { args: '0', fn: () => new LengthFilter() },
+  '..': { fn: () => new RecursiveDescentGenerator() },
+  not: { fn: () => new NotFilter() },
+  length: { fn: () => new LengthFilter() },
   has: { args: '1', fn: a => new HasFn(a) },
   in: { args: '1', fn: a => new InFn(a) },
   map: { args: '1', fn: a => new ArrayConstructor(new PipeGenerator(new ArrayGenerator(), a)) },
   map_values: { args: '1', fn: a => new MapValuesFn(a) },
   select: { args: '1', fn: a => new SelectFn(a) },
-  any: { args: '0', fn: () => new AnyFilter() },
-  all: { args: '0', fn: () => new AllFilter() },
+  any: { fn: () => new AnyFilter() },
+  all: { fn: () => new AllFilter() },
   unique_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.UNIQUE) },
-  unique: { args: '0', fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.UNIQUE) },
+  unique: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.UNIQUE) },
   min_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.MIN) },
-  min: { args: '0', fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MIN) },
+  min: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MIN) },
   max_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.MAX) },
-  max: { args: '0', fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MAX) },
+  max: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MAX) },
   group_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.GROUP_BY) },
   startswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.startsWith(b)) },
   endswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.endsWith(b)) },
-  abs: { args: '0', fn: () => new AbsFilter() },
-  keys: { args: '0', fn: () => new KeysFilter() },
+  abs: { fn: () => new AbsFilter() },
+  keys: { fn: () => new KeysFilter() },
   split: { args: '1', fn: a => new StringFn(a, (a, b) => a.split(b)) },
   join: { args: '1', fn: a => new JoinFn(a) },
   contains: { args: '1', fn: a => new ContainsFn(a) },
-  flatten: { args: '0', fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) },
+  flatten: { fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) },
   range: { args: '1', fn: a => new RangeGenerator(a) },
-  limit: { args: '1', fn: a => new LimitGenerator(a) }
+  limit: { args: '1', fn: a => new LimitGenerator(a) },
+  first: { fn: () => new ArrayFilter(new Literal(1), arr => tag('single', arr[0][0])) },
+  last: { fn: () => new ArrayFilter(new Literal(1), arr => tag('single', arr[arr.length - 1][0])) },
+  nth: {
+    args: '1',
+    fn: a => new ArrayFilter(a, arr => tag('single', arr[arr[0][1] as number][0]))
+  }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -131,7 +137,7 @@ export class Tokenizer {
   }
 }
 
-const isGenerator = (o: unknown): o is Generator => (o as any)?.iterable;
+const isGenerator = (o: unknown): o is Generator => 'iterable' in (o as any);
 
 interface Generator {
   iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown>;
@@ -849,8 +855,10 @@ class RangeGenerator extends BaseGenerator {
 
   *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const args of iterateAll(this.node.args, 0, [el], [], bindings)) {
-      const [from, to] = args as [number, number];
-      for (let i = from; i < to; i++) {
+      const [from, to, rawStep] = args as [number, number, number?];
+      const step = rawStep ?? 1;
+
+      for (let i = from; step > 0 ? i < to : i > to; i += step) {
         yield i;
       }
     }
@@ -983,19 +991,19 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     tokenizer.next();
 
     if (op in FN_REGISTRY) {
-      const { args, fn: fnFn } = FN_REGISTRY[op];
+      const reg = FN_REGISTRY[op];
 
-      if (args === '0') {
-        return fnFn();
-      } else if (args === '0&1' && tokenizer.peek().s !== '(') {
-        return fnFn(undefined);
+      if (!('args' in reg)) {
+        return reg.fn();
+      } else if (reg.args === '0&1' && tokenizer.peek().s !== '(') {
+        return reg.fn(undefined);
       }
 
       tokenizer.expect('(');
       const inner = parseArgList(tokenizer, functions);
       tokenizer.expect(')');
 
-      return fnFn(inner);
+      return reg.fn(inner);
     } else if (op in functions) {
       const argCount = functions[op];
       if (argCount === 0) {
