@@ -393,7 +393,9 @@ export class ArrayConstructor implements Generator {
   constructor(private readonly node: Generator) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    yield [...this.node.iterable(input, bindings)];
+    for (const e of input) {
+      yield [...this.node.iterable([e], bindings)];
+    }
   }
 }
 
@@ -919,6 +921,10 @@ class RangeGenerator extends BaseGenerator {
   }
 }
 
+class Noop implements Generator {
+  *iterable(_input: Iterable<unknown>, _bindings: Record<string, unknown>): Iterable<unknown> {}
+}
+
 class LimitGenerator implements Generator {
   constructor(private readonly node: ArgList) {}
 
@@ -994,7 +1000,8 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
   const tok = tokenizer.peek();
   if (tok.s === '[') {
     tokenizer.next();
-    const inner = parseExpression(tokenizer, undefined, functions);
+    const inner =
+      tokenizer.peek().s !== ']' ? parseExpression(tokenizer, undefined, functions) : new Noop();
     tokenizer.expect(']');
 
     return new ArrayConstructor(inner);

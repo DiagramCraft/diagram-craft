@@ -28,8 +28,7 @@ describe('jqtest', () => {
     expect(query('{}', [undefined])).toEqual([{}]);
   });
 
-  // TODO: Fix
-  test.skip('[]', () => {
+  test('[]', () => {
     expect(query('[]', [undefined])).toEqual([[]]);
   });
 
@@ -365,8 +364,7 @@ describe('jqtest', () => {
     ).toEqual([[[1, 2], [1], [3], [42], [41]]]);
   });
 
-  // TODO: Fix
-  test.skip('.[] | [.[0] and .[1], .[0] or .[1]]', () => {
+  test('.[] | [.[0] and .[1], .[0] or .[1]]', () => {
     expect(
       query('.[] | [.[0] and .[1], .[0] or .[1]]', [
         [
