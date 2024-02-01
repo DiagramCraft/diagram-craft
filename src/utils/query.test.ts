@@ -453,6 +453,10 @@ describe('def', () => {
 });
 
 describe('range', () => {
+  test('range(2)', () => {
+    expect(query('range(2)', [undefined])).toEqual([0, 1]);
+  });
+
   test('[range(0;5)]', () => {
     expect(query('[range(0;5)]', [undefined])).toEqual([[0, 1, 2, 3, 4]]);
   });
@@ -469,10 +473,16 @@ describe('limit', () => {
 });
 
 describe('first and last', () => {
-  test('first, last', () => {
+  test('first, last, nth', () => {
     expect(query('.|first', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([0]);
     expect(query('.|last', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([6]);
     expect(query('.|nth(5)', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([5]);
+  });
+
+  test('first(), last(), nth()', () => {
+    expect(query('first(range(.))', [10])).toEqual([0]);
+    expect(query('last(range(.))', [10])).toEqual([9]);
+    expect(query('nth(. - 2; range(.))', [10])).toEqual([8]);
   });
 });
 

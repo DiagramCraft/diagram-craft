@@ -37,12 +37,16 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   flatten: { fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) },
   range: { args: '1', fn: a => new RangeGenerator(a) },
   limit: { args: '1', fn: a => new LimitGenerator(a) },
-  first: { fn: () => new ArrayFilter(new Literal(1), arr => tag('single', arr[0][0])) },
-  last: { fn: () => new ArrayFilter(new Literal(1), arr => tag('single', arr[arr.length - 1][0])) },
-  nth: {
-    args: '1',
-    fn: a => new ArrayFilter(a, arr => tag('single', arr[arr[0][1] as number][0]))
-  }
+  first: {
+    args: '0&1',
+    fn: a => new NthFilter(a ? (a.args.unshift(new Literal(0)), a) : new ArgList([new Literal(0)]))
+  },
+  last: {
+    args: '0&1',
+    fn: a =>
+      new NthFilter(a ? (a.args.unshift(new Literal(-1)), a) : new ArgList([new Literal(-1)]))
+  },
+  nth: { args: '1', fn: a => new NthFilter(a) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -649,6 +653,22 @@ class ArrayFilter extends BaseGenerator {
   }
 }
 
+class NthFilter extends BaseGenerator {
+  constructor(private readonly args: ArgList) {
+    super();
+  }
+
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    const idx = exactOne(this.args.args[0].iterable([el], bindings)) as number;
+    if (this.args.args.length === 1 && Array.isArray(el)) {
+      yield el.at(idx);
+    } else if (this.args.args.length === 2) {
+      const arr = [...this.args.args[1].iterable([el], bindings)];
+      yield (arr as unknown[]).at(idx);
+    }
+  }
+}
+
 const ArrayFilterFns: Record<string, ArrayFn> = {
   UNIQUE: arr => arr.filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i),
   MIN: arr => {
@@ -855,8 +875,9 @@ class RangeGenerator extends BaseGenerator {
 
   *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const args of iterateAll(this.node.args, 0, [el], [], bindings)) {
-      const [from, to, rawStep] = args as [number, number, number?];
-      const step = rawStep ?? 1;
+      const from = (args.length === 1 ? 0 : args[0]) as number;
+      const to = (args.length === 1 ? args[0] : args[1]) as number;
+      const step = (args[2] ?? 1) as number;
 
       for (let i = from; step > 0 ? i < to : i > to; i += step) {
         yield i;
