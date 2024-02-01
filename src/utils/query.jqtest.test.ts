@@ -4,6 +4,44 @@ import { query } from './query.ts';
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
 describe('jqtest', () => {
+  test('true', () => {
+    expect(query('true', [undefined])).toEqual([true]);
+  });
+
+  test('false', () => {
+    expect(query('false', [undefined])).toEqual([false]);
+  });
+
+  test('null', () => {
+    expect(query('null', [undefined])).toEqual([null]);
+  });
+
+  test('1', () => {
+    expect(query('1', [undefined])).toEqual([1]);
+  });
+
+  test('-1', () => {
+    expect(query('-1', [undefined])).toEqual([-1]);
+  });
+
+  test('{}', () => {
+    expect(query('{}', [undefined])).toEqual([{}]);
+  });
+
+  // TODO: Fix
+  test.skip('[]', () => {
+    expect(query('[]', [undefined])).toEqual([[]]);
+  });
+
+  test('{x: -1}', () => {
+    expect(query('{x: -1}', [undefined])).toEqual([{ x: -1 }]);
+  });
+
+  // TODO: Fix
+  test.skip('"inter\\("pol" + "ation")"', () => {
+    expect(query('"inter\\("pol" + "ation")"', [undefined])).toEqual(['interpolation']);
+  });
+
   test('{a: 1}', () => {
     expect(query('{a: 1}', [undefined])).toEqual([{ a: 1 }]);
   });
@@ -103,6 +141,13 @@ describe('jqtest', () => {
   // TODO: Fix
   test.skip('{x: (1,2)},{x:3} | .x', () => {
     expect(query('{x: (1,2)},{x:3} | .x', [undefined])).toEqual([1, 2, 3]);
+  });
+
+  // TODO: Fix
+  test.skip('[.[-4,-3,-2,-1,0,1,2,3]]', () => {
+    expect(query('[.[-4,-3,-2,-1,0,1,2,3]]', [[1, 2, 3]])).toEqual([
+      [undefined, 1, 2, 3, 1, 2, 3, undefined]
+    ]);
   });
 
   test('[range(0;10)]', () => {
