@@ -463,6 +463,12 @@ describe('range', () => {
   });
 });
 
+describe('limit', () => {
+  test('[limit(3;.[])]', () => {
+    expect(query('[limit(3;.[])]', [[0, 1, 2, 3, 4, 5]])).toEqual([[0, 1, 2]]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {

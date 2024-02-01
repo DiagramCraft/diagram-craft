@@ -35,7 +35,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   join: { args: '1', fn: a => new JoinFn(a) },
   contains: { args: '1', fn: a => new ContainsFn(a) },
   flatten: { args: '0', fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) },
-  range: { args: '1', fn: a => new RangeGenerator(a) }
+  range: { args: '1', fn: a => new RangeGenerator(a) },
+  limit: { args: '1', fn: a => new LimitGenerator(a) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -852,6 +853,20 @@ class RangeGenerator extends BaseGenerator {
       for (let i = from; i < to; i++) {
         yield i;
       }
+    }
+  }
+}
+
+class LimitGenerator implements Generator {
+  constructor(private readonly node: ArgList) {}
+
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    let m = exactOne(this.node.args[0].iterable(input, bindings)) as number;
+
+    for (const e of this.node.args[1].iterable(input, bindings)) {
+      if (m === 0) break;
+      yield e;
+      m--;
     }
   }
 }
