@@ -5,8 +5,8 @@ import { newid } from './id.ts';
 
 type FnRegistration =
   | { args: '0'; fn: () => Generator }
-  | { args: '1'; fn: (arg: Generator) => Generator }
-  | { args: '0&1'; fn: (arg: Generator | undefined) => Generator };
+  | { args: '1'; fn: (arg: ArgList) => Generator }
+  | { args: '0&1'; fn: (arg: ArgList | undefined) => Generator };
 type BinaryOpRegistration = (l: Generator, r: Generator) => Generator;
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
@@ -34,7 +34,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   split: { args: '1', fn: a => new StringFn(a, (a, b) => a.split(b)) },
   join: { args: '1', fn: a => new JoinFn(a) },
   contains: { args: '1', fn: a => new ContainsFn(a) },
-  flatten: { args: '0', fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) }
+  flatten: { args: '0', fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) },
+  range: { args: '1', fn: a => new RangeGenerator(a) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -115,7 +116,7 @@ export class Tokenizer {
 
   expect(s: string) {
     if (this.peek().s === s) return this.next();
-    else throw new Error('Expected: ' + s + ', found ' + this.query);
+    else throw new Error('Expected: ' + s + ', found ' + this.peek().s);
   }
 
   consumeWhitespace() {
@@ -571,6 +572,35 @@ class ConsBinaryOp implements Generator {
   }
 }
 
+class ArgList implements Generator {
+  constructor(public readonly args: Generator[]) {}
+
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    if (this.args.length === 1) {
+      yield* this.args[0].iterable(input, bindings);
+    } else {
+      yield* iterateAll(this.args, 0, input, [], bindings);
+    }
+  }
+}
+
+function* iterateAll(
+  generators: Generator[],
+  idx: number,
+  input: Iterable<unknown>,
+  arr: unknown[],
+  bindings: Record<string, unknown>
+): Iterable<unknown[]> {
+  for (const a of generators[idx].iterable(input, bindings)) {
+    const nc = [...arr, a];
+    if (idx === generators.length - 1) {
+      yield nc;
+    } else {
+      yield* iterateAll(generators, idx + 1, input, nc, bindings);
+    }
+  }
+}
+
 class AnyFilter extends BaseGenerator {
   *handleElement(e: unknown): Iterable<unknown> {
     yield Array.isArray(e) && e.some(a => !!a);
@@ -645,8 +675,12 @@ class ObjectTemplate extends BaseGenerator {
     const generators = this.template._____generators as Map<string, Generator>;
     const iterables = [...generators.keys()];
 
-    for (const a of this.iterate(generators, iterables, 0, el, {}, bindings)) {
-      yield this.applyTemplate(this.template, a);
+    for (const a of iterateAll([...generators.values()], 0, [el], [], bindings)) {
+      const obj: Record<string, unknown> = {};
+      for (let i = 0; i < iterables.length; i++) {
+        obj[iterables[i]] = a[i];
+      }
+      yield this.applyTemplate(this.template, obj);
     }
   }
 
@@ -668,24 +702,6 @@ class ObjectTemplate extends BaseGenerator {
       }
     }
     return dest;
-  }
-
-  private *iterate(
-    generators: Map<string, Generator>,
-    iterables: string[],
-    idx: number,
-    el: unknown,
-    context: Record<string, unknown>,
-    bindings: Record<string, unknown>
-  ): Iterable<Record<string, unknown>> {
-    for (const a of generators.get(iterables[idx])!.iterable([el], bindings)) {
-      const nc = { ...context, [iterables[idx]]: a };
-      if (idx === iterables.length - 1) {
-        yield nc;
-      } else {
-        yield* this.iterate(generators, iterables, idx + 1, el, nc, bindings);
-      }
-    }
   }
 }
 
@@ -825,6 +841,21 @@ class FunctionDef implements Generator {
   }
 }
 
+class RangeGenerator extends BaseGenerator {
+  constructor(private readonly node: ArgList) {
+    super();
+  }
+
+  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const args of iterateAll(this.node.args, 0, [el], [], bindings)) {
+      const [from, to] = args as [number, number];
+      for (let i = from; i < to; i++) {
+        yield i;
+      }
+    }
+  }
+}
+
 const parsePathExpression = (tokenizer: Tokenizer): Generator => {
   let left: Generator = new PropertyLookupOp('');
 
@@ -946,7 +977,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       }
 
       tokenizer.expect('(');
-      const inner = parseExpression(tokenizer, undefined, functions);
+      const inner = parseArgList(tokenizer, functions);
       tokenizer.expect(')');
 
       return fnFn(inner);
@@ -956,7 +987,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         return new FunctionCall(op);
       } else {
         tokenizer.expect('(');
-        const arg = parseExpression(tokenizer, undefined, functions);
+        const arg = parseArgList(tokenizer, functions);
         tokenizer.expect(')');
 
         return new FunctionCall(op, arg);
@@ -999,6 +1030,16 @@ const parseExpression = (
     }
   } while (i++ < MAX_LOOP);
   throw new Error('Infinite loop');
+};
+
+const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): ArgList => {
+  const op = [];
+  while (tokenizer.peek().s !== ')') {
+    op.push(parseExpression(tokenizer, undefined, functions));
+    tokenizer.consumeWhitespace();
+    if (!tokenizer.accept(';')) break;
+  }
+  return new ArgList(op);
 };
 
 export const parse = (query: string): Generator => {

@@ -453,6 +453,16 @@ describe('def', () => {
   });
 });
 
+describe('range', () => {
+  test('[range(0;5)]', () => {
+    expect(query('[range(0;5)]', [undefined])).toEqual([[0, 1, 2, 3, 4]]);
+  });
+
+  test('[range(0,1;3,4)]', () => {
+    expect(query('[range(0,1;3,4)]', [undefined])).toEqual([[0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {
