@@ -312,8 +312,41 @@ describe('jqtest', () => {
     );
   });
 
+  test('map(add)', () => {
+    expect(
+      query('map(add)', [
+        [[], [1, 2, 3], ['a', 'b', 'c'], [[3], [4, 5], [6]], [{ a: 1 }, { b: 2 }, { a: 3 }]]
+      ])
+    ).toEqual([[undefined, 6, 'abc', [3, 4, 5, 6], { a: 3, b: 2 }]]);
+  });
+
   test('map_values(.+1)', () => {
     expect(query('map_values(.+1)', [[0, 1, 2]])).toEqual([[1, 2, 3]]);
+  });
+
+  // TODO: Fix
+  test.skip('def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g', () => {
+    expect(query('def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g', [3])).toEqual([
+      106, 105
+    ]);
+  });
+
+  test('def f: (1000,2000); f', () => {
+    expect(query('def f: (1000,2000); f', [123412345])).toEqual([1000, 2000]);
+  });
+
+  // TODO: Fix
+  test.skip('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]', () => {
+    expect(
+      query(
+        'def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]',
+        [undefined]
+      )
+    ).toEqual([[4, 1, 2, 3, 3, 5, 4, 1, 2, 3, 3]]);
+  });
+
+  test('def a: 0; . | a', () => {
+    expect(query('def a: 0; . | a', [undefined])).toEqual([0]);
   });
 
   test('([1,2] + [4,5])', () => {
@@ -330,6 +363,22 @@ describe('jqtest', () => {
 
   test('[1,2,3]', () => {
     expect(query('[1,2,3]', [[5, 6]])).toEqual([[1, 2, 3]]);
+  });
+
+  test('[.[]|floor]', () => {
+    expect(query('[.[]|floor]', [[-1.1, 1.1, 1.9]])).toEqual([[-2, 1, 1]]);
+  });
+
+  test('[.[]|sqrt]', () => {
+    expect(query('[.[]|sqrt]', [[4, 9]])).toEqual([[2, 3]]);
+  });
+
+  test('(add / length) as $m | map((. - $m) as $d | $d * $d) | add / length | sqrt', () => {
+    expect(
+      query('(add / length) as $m | map((. - $m) as $d | $d * $d) | add / length | sqrt', [
+        [2, 4, 4, 4, 5, 5, 7, 9]
+      ])
+    ).toEqual([2]);
   });
 
   test('def f(x): x | x; f([.], . + [42])', () => {

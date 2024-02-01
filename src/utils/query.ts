@@ -46,7 +46,10 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
     fn: a =>
       new NthFilter(a ? (a.args.unshift(new Literal(-1)), a) : new ArgList([new Literal(-1)]))
   },
-  nth: { args: '1', fn: a => new NthFilter(a) }
+  nth: { args: '1', fn: a => new NthFilter(a) },
+  floor: { fn: () => new MathFilter(Math.floor) },
+  sqrt: { fn: () => new MathFilter(Math.sqrt) },
+  add: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.ADD) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -318,6 +321,16 @@ class PathExpression extends PipeGenerator {
   }
 }
 
+class MathFilter extends BaseGenerator {
+  constructor(private readonly fn: (a: number) => number) {
+    super();
+  }
+
+  *handle(e: unknown): Iterable<unknown> {
+    yield this.fn(safeNum(e));
+  }
+}
+
 class PropertyLookupOp extends BaseGenerator {
   constructor(
     private readonly identifier: string,
@@ -440,21 +453,25 @@ abstract class BinaryOperator implements Generator {
   }
 }
 
+const add = (lvs: unknown, rvs: unknown) => {
+  if (Array.isArray(lvs) && Array.isArray(rvs)) {
+    return [...lvs, ...rvs];
+  } else if (typeof lvs === 'string' && typeof rvs === 'string') {
+    return lvs + rvs;
+  } else if (isObj(lvs) && isObj(rvs)) {
+    return { ...lvs, ...rvs };
+  } else {
+    return safeNum(lvs) + safeNum(rvs);
+  }
+};
+
 class AdditionBinaryOp extends BinaryOperator {
   constructor(left: Generator, right: Generator) {
     super(left, right);
   }
 
   combine(lvs: unknown, rvs: unknown) {
-    if (Array.isArray(lvs) && Array.isArray(rvs)) {
-      return [...lvs, ...rvs];
-    } else if (typeof lvs === 'string' && typeof rvs === 'string') {
-      return lvs + rvs;
-    } else if (isObj(lvs) && isObj(rvs)) {
-      return { ...lvs, ...rvs };
-    } else {
-      return safeNum(lvs) + safeNum(rvs);
-    }
+    return add(lvs, rvs);
   }
 }
 
@@ -705,6 +722,8 @@ const ArrayFilterFns: Record<string, ArrayFn> = {
     arr
       .filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i)
       .sort((a, b) => (a[1] as number) - (b[1] as number)),
+  ADD: arr =>
+    tag('single', arr.length === 0 ? undefined : arr.map(a => a[1]).reduce((a, b) => add(a, b))),
   MIN: arr => {
     const min = Math.min(...arr.map(a => Number(a[1])));
     return tag('single', arr.find(a => a[1] === min)![0]);
