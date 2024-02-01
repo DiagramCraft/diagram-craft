@@ -486,6 +486,16 @@ describe('first and last', () => {
   });
 });
 
+describe('variable binding', () => {
+  test('.bar as $x | .foo | . + $x', () => {
+    expect(query('.bar as $x | .foo | . + $x', [{ foo: 10, bar: 200 }])).toEqual([210]);
+  });
+
+  test('. as $i|[(. + 2|. as $i| $i), $i]', () => {
+    expect(query('. as $i|[(. + 2|. as $i| $i), $i]', [5])).toEqual([[7, 5]]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {

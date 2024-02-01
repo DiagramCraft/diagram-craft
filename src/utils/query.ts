@@ -64,7 +64,8 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   or: (l, r) => new CmpBinaryOp(l, r, (a, b) => a || b),
   '|': (l, r) => new PipeGenerator(l, r),
   ',': (l, r) => new ConcatenationGenerator(l, r),
-  ';': (l, r) => new ConsBinaryOp(l, r)
+  ';': (l, r) => new ConsBinaryOp(l, r),
+  as: (l, r) => new VarBindingOp(l, r)
 };
 
 const BINOP_ORDERING = Object.fromEntries(
@@ -72,6 +73,7 @@ const BINOP_ORDERING = Object.fromEntries(
     [';'],
     [','],
     ['|'],
+    ['as'],
     ['//'],
     ['and', 'or'],
     ['==', '!=', '>=', '>', '<=', '<'],
@@ -421,9 +423,11 @@ abstract class BinaryOperator implements Generator {
   abstract combine(l: unknown, r: unknown): unknown;
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    for (const r of this.right.iterable(input, bindings)) {
-      for (const l of this.left.iterable(input, bindings)) {
-        yield this.combine(l, r);
+    for (const e of input) {
+      for (const r of this.right.iterable([e], bindings)) {
+        for (const l of this.left.iterable([e], bindings)) {
+          yield this.combine(l, r);
+        }
       }
     }
   }
@@ -568,6 +572,22 @@ class CmpBinaryOp extends BinaryOperator {
 
   combine(lvs: unknown, rvs: unknown): unknown {
     return !!this.cmp(lvs, rvs);
+  }
+}
+
+class VarBindingOp implements Generator {
+  constructor(
+    private readonly node: Generator,
+    private readonly identifier: Generator
+  ) {}
+
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const e of input) {
+      for (const v of this.node.iterable([e], bindings)) {
+        bindings[(this.identifier as VariableExpansion).identifier] = v;
+        yield e;
+      }
+    }
   }
 }
 
@@ -903,6 +923,14 @@ class LimitGenerator implements Generator {
   }
 }
 
+class ParenExpression implements Generator {
+  constructor(private readonly node: Generator) {}
+
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield* this.node.iterable(input, { ...bindings });
+  }
+}
+
 const parsePathExpression = (tokenizer: Tokenizer): Generator => {
   let left: Generator = new PropertyLookupOp('');
 
@@ -963,7 +991,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     tokenizer.next();
     const inner = parseExpression(tokenizer, undefined, functions);
     tokenizer.expect(')');
-    return inner;
+    return new ParenExpression(inner);
   } else if (tok.s === '.') {
     return parsePathExpression(tokenizer);
   } else if (tok.s === '$') {
