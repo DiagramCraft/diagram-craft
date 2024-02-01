@@ -1,33 +1,40 @@
 import { describe, expect, test } from 'vitest';
-import { OObjects, query, queryOne, Tokenizer } from './query.ts';
+import { OObjects, query } from './query.ts';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const queryOne = (q: string, input: any) => {
+  const res = query(q, [input]);
+  if (res.length > 1) throw new Error();
+  return res[0];
+};
 
 describe('OObject', () => {
   test('parse OString', () => {
-    expect(OObjects.parse(new Tokenizer('"lorem"')).val()).toEqual('lorem');
+    expect(OObjects.parseString('"lorem"').val()).toEqual('lorem');
   });
 
   test('parse ONumber', () => {
-    expect(OObjects.parse(new Tokenizer('1234')).val()).toEqual(1234);
+    expect(OObjects.parseString('1234').val()).toEqual(1234);
   });
 
   test('parse OBoolean', () => {
-    expect(OObjects.parse(new Tokenizer('true')).val()).toEqual(true);
-    expect(OObjects.parse(new Tokenizer('false')).val()).toEqual(false);
+    expect(OObjects.parseString('true').val()).toEqual(true);
+    expect(OObjects.parseString('false').val()).toEqual(false);
   });
 
   test('parse OArray', () => {
-    expect(OObjects.parse(new Tokenizer('[1, 2, 3]')).val()).toEqual([1, 2, 3]);
-    expect(OObjects.parse(new Tokenizer('["a", "b"]')).val()).toEqual(['a', 'b']);
-    expect(OObjects.parse(new Tokenizer('[1, "b"]')).val()).toEqual([1, 'b']);
+    expect(OObjects.parseString('[1, 2, 3]').val()).toEqual([1, 2, 3]);
+    expect(OObjects.parseString('["a", "b"]').val()).toEqual(['a', 'b']);
+    expect(OObjects.parseString('[1, "b"]').val()).toEqual([1, 'b']);
   });
 
   test('parse OObject', () => {
-    expect(OObjects.parse(new Tokenizer('{ ab: 1, b: 2}')).val()).toEqual({ ab: 1, b: 2 });
-    expect(OObjects.parse(new Tokenizer('{ ab: "test", b: 2}')).val()).toEqual({
+    expect(OObjects.parseString('{ ab: 1, b: 2}').val()).toEqual({ ab: 1, b: 2 });
+    expect(OObjects.parseString('{ ab: "test", b: 2}').val()).toEqual({
       ab: 'test',
       b: 2
     });
-    expect(OObjects.parse(new Tokenizer('{ ab: [7, 8], b: 2}')).val()).toEqual({
+    expect(OObjects.parseString('{ ab: [7, 8], b: 2}').val()).toEqual({
       ab: [7, 8],
       b: 2
     });
@@ -419,6 +426,10 @@ describe('variable expansion', () => {
 });
 
 describe('def', () => {
+  test('def foo: .test; .|foo', () => {
+    expect(query('def foo: .test; .|foo', [{ test: 'abc' }])).toEqual(['abc']);
+  });
+
   test('def foo(f): 7; 5|foo(3)', () => {
     expect(query('def foo(f): 7; 5|foo(3)', [undefined])).toEqual([7]);
   });

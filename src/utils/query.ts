@@ -52,9 +52,9 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '+': (l, r) => new AdditionBinaryOp(l, r),
   '-': (l, r) => new SubtractionBinaryOp(l, r),
-  '%': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeParseInt(a) % safeParseInt(b)),
-  '*': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeParseInt(a) * safeParseInt(b)),
-  '/': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeParseInt(a) / safeParseInt(b)),
+  '%': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeNum(a) % safeNum(b)),
+  '*': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeNum(a) * safeNum(b)),
+  '/': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeNum(a) / safeNum(b)),
   '//': (l, r) => new SimpleBinaryOp(l, r, (a, b) => a ?? b),
   '==': (l, r) => new EqualsBinaryOp(l, r, false),
   '!=': (l, r) => new EqualsBinaryOp(l, r, true),
@@ -86,14 +86,14 @@ const BINOP_ORDERING = Object.fromEntries(
 
 const MAX_LOOP = 100;
 
-const safeParseInt = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
+const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
 
 type Token = {
   s: string;
   type: 'num' | 'str' | 'id' | 'op' | 'sep' | 'end';
 };
 
-export class Tokenizer {
+class Tokenizer {
   public head: string;
 
   constructor(readonly query: string) {
@@ -134,10 +134,9 @@ export class Tokenizer {
     else throw new Error(`Expected: ${s}, found ${this.peek().s}`);
   }
 
-  consumeWhitespace() {
-    while (this.peek().type === 'sep') {
-      this.head = this.head.slice(this.peek().s.length);
-    }
+  strip() {
+    if (this.peek().type !== 'sep') return;
+    this.head = this.head.slice(this.peek().s.length);
   }
 
   accept(s: string) {
@@ -154,16 +153,20 @@ interface Generator {
 abstract class BaseGenerator implements Generator {
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const e of input) {
-      yield* this.handleElement(e, bindings);
+      yield* this.handle(e, bindings);
     }
   }
 
-  abstract handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown>;
+  abstract handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown>;
 }
 
 type OObjects = OObject | OLiteral | OArray | Generator;
 
 export const OObjects = {
+  parseString(s: string): OObjects & { val(): unknown } {
+    return OObjects.parse(new Tokenizer(s));
+  },
+
   parse(tok: Tokenizer): OObjects & { val(): unknown } {
     return OObjects.parseNext(tok) as OObjects & { val(): unknown };
   },
@@ -193,7 +196,7 @@ export const OObjects = {
   }
 };
 
-export class OObject {
+class OObject {
   entries: [OLiteral | Generator, OObjects][] = [];
 
   constructor(entries?: [OLiteral | Generator, OObjects][]) {
@@ -206,7 +209,7 @@ export class OObject {
     let currentKey: OLiteral | Generator | undefined = undefined;
 
     while (s.peek().s !== '}') {
-      s.consumeWhitespace();
+      s.strip();
 
       if (s.peek().type === 'id') {
         currentKey = new OLiteral(s.next().s);
@@ -234,7 +237,7 @@ export class OObject {
       }
     }
 
-    s.consumeWhitespace();
+    s.strip();
     s.expect('}');
 
     return obj;
@@ -262,7 +265,7 @@ export class OObject {
   }
 }
 
-export class OLiteral {
+class OLiteral {
   constructor(public value: unknown) {}
 
   val() {
@@ -270,7 +273,7 @@ export class OLiteral {
   }
 }
 
-export class OArray {
+class OArray {
   value: OObjects[] = [];
 
   constructor(value?: OObjects[]) {
@@ -281,7 +284,7 @@ export class OArray {
     const arr = new OArray();
 
     while (s.peek().s !== ']') {
-      s.consumeWhitespace();
+      s.strip();
       arr.value.push(OObjects.parseNext(s));
       if (!s.accept(',')) break;
     }
@@ -298,7 +301,7 @@ export class OArray {
   }
 }
 
-export class PipeGenerator implements Generator {
+class PipeGenerator implements Generator {
   constructor(
     private readonly left: Generator,
     private readonly right: Generator
@@ -309,13 +312,13 @@ export class PipeGenerator implements Generator {
   }
 }
 
-export class PathExpression extends PipeGenerator {
+class PathExpression extends PipeGenerator {
   constructor(left: Generator, right: Generator) {
     super(left, right);
   }
 }
 
-export class PropertyLookupOp extends BaseGenerator {
+class PropertyLookupOp extends BaseGenerator {
   constructor(
     private readonly identifier: string,
     private readonly strict = true
@@ -323,7 +326,7 @@ export class PropertyLookupOp extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown): Iterable<unknown> {
+  *handle(e: unknown): Iterable<unknown> {
     if (this.identifier === '') {
       yield e;
     } else {
@@ -343,18 +346,18 @@ export class PropertyLookupOp extends BaseGenerator {
   }
 }
 
-export class ArrayIndexOp extends BaseGenerator {
+class ArrayIndexOp extends BaseGenerator {
   constructor(private readonly index: number) {
     super();
   }
 
-  *handleElement(e: unknown): Iterable<unknown> {
+  *handle(e: unknown): Iterable<unknown> {
     if (e === undefined || !Array.isArray(e) || this.index >= e.length) return;
     yield e[this.index];
   }
 }
 
-export class ArraySliceOp extends BaseGenerator {
+class ArraySliceOp extends BaseGenerator {
   constructor(
     private readonly from: number,
     private readonly to: number
@@ -362,20 +365,20 @@ export class ArraySliceOp extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown): Iterable<unknown> {
+  *handle(e: unknown): Iterable<unknown> {
     if (e === undefined || !Array.isArray(e)) return;
     yield e.slice(this.from, Math.min(this.to, e.length));
   }
 }
 
-export class ArrayGenerator extends BaseGenerator {
-  *handleElement(e: unknown): Iterable<unknown> {
+class ArrayGenerator extends BaseGenerator {
+  *handle(e: unknown): Iterable<unknown> {
     if (!Array.isArray(e)) throw new Error('Not an array');
     yield* e;
   }
 }
 
-export class ConcatenationGenerator extends BaseGenerator {
+class ConcatenationGenerator extends BaseGenerator {
   constructor(
     private readonly left: Generator,
     private readonly right: Generator
@@ -383,13 +386,13 @@ export class ConcatenationGenerator extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     yield* this.left.iterable([e], bindings);
     yield* this.right.iterable([e], bindings);
   }
 }
 
-export class ArrayConstructor implements Generator {
+class ArrayConstructor implements Generator {
   constructor(private readonly node: Generator) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
@@ -399,8 +402,8 @@ export class ArrayConstructor implements Generator {
   }
 }
 
-export class RecursiveDescentGenerator extends BaseGenerator {
-  *handleElement(e: unknown): Iterable<unknown> {
+class RecursiveDescentGenerator extends BaseGenerator {
+  *handle(e: unknown): Iterable<unknown> {
     const dest: unknown[] = [];
     this.recurse(e, dest);
     yield* dest;
@@ -437,7 +440,7 @@ abstract class BinaryOperator implements Generator {
   }
 }
 
-export class AdditionBinaryOp extends BinaryOperator {
+class AdditionBinaryOp extends BinaryOperator {
   constructor(left: Generator, right: Generator) {
     super(left, right);
   }
@@ -450,12 +453,12 @@ export class AdditionBinaryOp extends BinaryOperator {
     } else if (isObj(lvs) && isObj(rvs)) {
       return { ...lvs, ...rvs };
     } else {
-      return safeParseInt(lvs) + safeParseInt(rvs);
+      return safeNum(lvs) + safeNum(rvs);
     }
   }
 }
 
-export class SubtractionBinaryOp extends BinaryOperator {
+class SubtractionBinaryOp extends BinaryOperator {
   constructor(left: Generator, right: Generator) {
     super(left, right);
   }
@@ -466,12 +469,12 @@ export class SubtractionBinaryOp extends BinaryOperator {
     } else if (isObj(lvs) && isObj(rvs)) {
       return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
     } else {
-      return safeParseInt(lvs) - safeParseInt(rvs);
+      return safeNum(lvs) - safeNum(rvs);
     }
   }
 }
 
-export class SimpleBinaryOp extends BinaryOperator {
+class SimpleBinaryOp extends BinaryOperator {
   constructor(
     left: Generator,
     right: Generator,
@@ -494,7 +497,7 @@ class Literal implements Generator {
 }
 
 class LengthFilter extends BaseGenerator {
-  *handleElement(e: unknown): Iterable<unknown> {
+  *handle(e: unknown): Iterable<unknown> {
     if (e === undefined || e === null) {
       yield 0;
     } else if (Array.isArray(e) || typeof e === 'string') {
@@ -508,7 +511,7 @@ class LengthFilter extends BaseGenerator {
 }
 
 class NotFilter extends BaseGenerator {
-  *handleElement(e: unknown): Iterable<unknown> {
+  *handle(e: unknown): Iterable<unknown> {
     yield e === false || e === null || e === undefined;
   }
 }
@@ -518,7 +521,7 @@ class HasFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     yield (exactOne(this.node.iterable([undefined], bindings)) as string | number) in (e as any);
   }
 }
@@ -528,7 +531,7 @@ class InFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     yield (e as any) in (exactOne(this.node.iterable([undefined], bindings)) as any);
   }
 }
@@ -538,7 +541,7 @@ class SelectFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const r of this.node.iterable([e], bindings)) {
       if (r === true) {
         yield e;
@@ -639,13 +642,13 @@ function* iterateAll(
 }
 
 class AnyFilter extends BaseGenerator {
-  *handleElement(e: unknown): Iterable<unknown> {
+  *handle(e: unknown): Iterable<unknown> {
     yield Array.isArray(e) && e.some(a => !!a);
   }
 }
 
 class AllFilter extends BaseGenerator {
-  *handleElement(e: unknown): Iterable<unknown> {
+  *handle(e: unknown): Iterable<unknown> {
     yield Array.isArray(e) && e.every(a => !!a);
   }
 }
@@ -666,7 +669,7 @@ class ArrayFilter extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (Array.isArray(el)) {
       const res = this.fn(el.map(e => [e, exactOne(this.node.iterable([e], bindings))]));
       if (isTaggedType(res, 'single')) yield res._val;
@@ -684,9 +687,9 @@ class NthFilter extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const IDX of this.args.args[0].iterable([el], bindings)) {
-      const idx = safeParseInt(IDX);
+      const idx = safeNum(IDX);
       if (this.args.args.length === 1 && Array.isArray(el)) {
         yield el.at(idx);
       } else if (this.args.args.length === 2) {
@@ -729,7 +732,7 @@ class ObjectTemplate extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     const generators = this.template.__generators as Map<string, Generator>;
     const iterables = [...generators.keys()];
 
@@ -771,7 +774,7 @@ class StringFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     const arg = exactOne(this.node.iterable([undefined], bindings));
     if (Array.isArray(el)) {
       yield el.map(e => this.fn(e as string, arg as string));
@@ -786,7 +789,7 @@ class JoinFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const r of this.node.iterable([el], bindings)) {
       if (Array.isArray(el)) yield el.join(r as string);
       else yield el;
@@ -795,14 +798,14 @@ class JoinFn extends BaseGenerator {
 }
 
 class AbsFilter extends BaseGenerator {
-  *handleElement(el: unknown): Iterable<unknown> {
+  *handle(el: unknown): Iterable<unknown> {
     if (typeof el === 'number') yield Math.abs(el);
     else yield el;
   }
 }
 
 class KeysFilter extends BaseGenerator {
-  *handleElement(el: unknown): Iterable<unknown> {
+  *handle(el: unknown): Iterable<unknown> {
     if (el && typeof el === 'object') yield Object.keys(el).sort();
     else yield el;
   }
@@ -813,7 +816,7 @@ class MapValuesFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (isObj(el)) {
       yield Object.fromEntries(
         Object.entries(el).map(([k, v]) => [k, exactOne(this.node.iterable([v], bindings))])
@@ -831,7 +834,7 @@ class ContainsFn extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     const cv = this.node.iterable([undefined], bindings);
 
     for (const a of cv) {
@@ -853,13 +856,13 @@ class VariableExpansion extends BaseGenerator {
     super();
   }
 
-  *handleElement(_el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(_el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     yield bindings[this.identifier];
   }
 }
 
 type FnDef = {
-  arg?: string;
+  arg?: string[];
   body: Generator;
 };
 
@@ -871,14 +874,14 @@ class FunctionCall extends BaseGenerator {
     super();
   }
 
-  *handleElement(input: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(input: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     const fnDef = bindings[this.identifier] as FnDef;
 
     yield* fnDef.body.iterable([input], {
       ...bindings,
       ...(fnDef.arg
         ? {
-            [fnDef.arg]: {
+            [fnDef.arg[0]]: {
               body: this.arg
             }
           }
@@ -890,7 +893,7 @@ class FunctionCall extends BaseGenerator {
 class FunctionDef implements Generator {
   constructor(
     public readonly identifier: string,
-    public readonly arg: string,
+    public readonly arg: string[],
     public readonly body: Generator
   ) {}
 
@@ -908,7 +911,7 @@ class RangeGenerator extends BaseGenerator {
     super();
   }
 
-  *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const args of iterateAll(this.node.args, 0, [el], [], bindings)) {
       const from = (args.length === 1 ? 0 : args[0]) as number;
       const to = (args.length === 1 ? args[0] : args[1]) as number;
@@ -930,7 +933,7 @@ class LimitGenerator implements Generator {
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const M of this.node.args[0].iterable(input, bindings)) {
-      let m = safeParseInt(M);
+      let m = safeNum(M);
       for (const e of this.node.args[1].iterable(input, bindings)) {
         if (m === 0) break;
         yield e;
@@ -1017,24 +1020,28 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     return new VariableExpansion('$' + tokenizer.next().s);
   } else if (tok.s === 'def') {
     tokenizer.next();
-    tokenizer.consumeWhitespace();
+    tokenizer.strip();
 
     const name = tokenizer.next();
 
-    tokenizer.expect('(');
+    const args = [];
+    if (tokenizer.peek().s === '(') {
+      tokenizer.expect('(');
+      args.push(tokenizer.next().s);
+      tokenizer.expect(')');
+    }
 
-    const arg = tokenizer.next();
-
-    tokenizer.expect(')');
     tokenizer.expect(':');
 
-    const body = parseExpression(tokenizer, undefined, { ...functions, [arg.s]: 0, [name.s]: 1 });
+    const innerFunctions = { ...functions, [name.s]: args.length };
+    args.forEach(e => (innerFunctions[e] = 0));
+    const body = parseExpression(tokenizer, undefined, innerFunctions);
 
-    functions[name.s] = 1;
+    functions[name.s] = args.length;
 
     tokenizer.accept(';');
 
-    return new FunctionDef(name.s, arg.s, body);
+    return new FunctionDef(name.s, args.length === 1 ? args : [], body);
 
     /* LITERALS ************************************************************************** */
   } else if (tok.type === 'num') {
@@ -1098,13 +1105,13 @@ const parseExpression = (
   lastOp: string | undefined,
   functions: Record<string, number>
 ): Generator => {
-  tokenizer.consumeWhitespace();
+  tokenizer.strip();
 
   let left = parseOperand(tokenizer, functions);
 
   let i = 0;
   do {
-    tokenizer.consumeWhitespace();
+    tokenizer.strip();
 
     const tok = tokenizer.peek().s;
     if (tok === ';') return left;
@@ -1125,7 +1132,7 @@ const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): 
   const op = [];
   while (tokenizer.peek().s !== ')') {
     op.push(parseExpression(tokenizer, undefined, functions));
-    tokenizer.consumeWhitespace();
+    tokenizer.strip();
     if (!tokenizer.accept(';')) break;
   }
   return new ArgList(op);
@@ -1145,10 +1152,4 @@ export const parse = (query: string): Generator => {
 
 export const query = (query: string, input: unknown[], bindings?: Record<string, unknown>) => {
   return [...parse(query).iterable(input, bindings ?? {})];
-};
-
-export const queryOne = (q: string, input: any) => {
-  const res = query(q, [input]);
-  if (res.length > 1) throw new Error();
-  return res[0];
 };
