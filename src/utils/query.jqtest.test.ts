@@ -167,6 +167,127 @@ describe('jqtest', () => {
     ]);
   });
 
+  test('1 as $x | 2 as $y | [$x,$y,$x]', () => {
+    expect(query('1 as $x | 2 as $y | [$x,$y,$x]', [undefined])).toEqual([[1, 2, 1]]);
+  });
+
+  test('42 as $x | . | . | . + 432 | $x + 1', () => {
+    expect(query('42 as $x | . | . | . + 432 | $x + 1', [34324])).toEqual([43]);
+  });
+
+  test('1 as $x | [$x,$x,$x as $x | $x]', () => {
+    expect(query('1 as $x | [$x,$x,$x as $x | $x]', [undefined])).toEqual([[1, 1, 1]]);
+  });
+
+  test('1 + 1', () => {
+    expect(query('1 + 1', [undefined])).toEqual([2]);
+  });
+
+  test('1 + 1', () => {
+    expect(query('1 + 1', ['wtasdf'])).toEqual([2]);
+  });
+
+  test('2 - 1', () => {
+    expect(query('2 - 1', [undefined])).toEqual([1]);
+  });
+
+  test('2-(-1)', () => {
+    expect(query('2-(-1)', [undefined])).toEqual([3]);
+  });
+
+  test('.+4', () => {
+    expect(query('.+4', [15])).toEqual([19]);
+  });
+
+  test('.+null', () => {
+    expect(query('.+null', [{ a: 42 }])).toEqual([{ a: 42 }]);
+  });
+
+  // TODO: Fix
+  test.skip('null+.', () => {
+    expect(query('null+.', [undefined])).toEqual([undefined]);
+  });
+
+  test('.a+.b', () => {
+    expect(query('.a+.b', [{ a: 42 }])).toEqual([42]);
+  });
+
+  test('[1,2,3] + [.]', () => {
+    expect(query('[1,2,3] + [.]', [undefined])).toEqual([[1, 2, 3, undefined]]);
+  });
+
+  test('{"a":1} + {"b":2} + {"c":3}', () => {
+    expect(query('{"a":1} + {"b":2} + {"c":3}', [undefined])).toEqual([{ a: 1, b: 2, c: 3 }]);
+  });
+
+  test('"asdf" + "jkl;" + . + . + .', () => {
+    expect(query('"asdf" + "jkl;" + . + . + .', ['some string'])).toEqual([
+      'asdfjkl;some stringsome stringsome string'
+    ]);
+  });
+
+  test('42 - .', () => {
+    expect(query('42 - .', [11])).toEqual([31]);
+  });
+
+  test('[1,2,3,4,1] - [.,3]', () => {
+    expect(query('[1,2,3,4,1] - [.,3]', [1])).toEqual([[2, 4]]);
+  });
+
+  test('[10 * 20, 20 / .]', () => {
+    expect(query('[10 * 20, 20 / .]', [4])).toEqual([[200, 5]]);
+  });
+
+  test('1 + 2 * 2 + 10 / 2', () => {
+    expect(query('1 + 2 * 2 + 10 / 2', [undefined])).toEqual([10]);
+  });
+
+  test('[16 / 4 / 2, 16 / 4 * 2, 16 - 4 - 2, 16 - 4 + 2]', () => {
+    expect(query('[16 / 4 / 2, 16 / 4 * 2, 16 - 4 - 2, 16 - 4 + 2]', [undefined])).toEqual([
+      [2, 8, 10, 14]
+    ]);
+  });
+
+  test('25 % 7', () => {
+    expect(query('25 % 7', [undefined])).toEqual([4]);
+  });
+
+  test('49732 % 472', () => {
+    expect(query('49732 % 472', [undefined])).toEqual([172]);
+  });
+
+  test('[.[] | length]', () => {
+    expect(query('[.[] | length]', [[[], {}, [1, 2], { a: 42 }, 'asdf', '\u03bc']])).toEqual([
+      [0, 0, 2, 1, 4, 1]
+    ]);
+  });
+
+  test('map(keys)', () => {
+    expect(query('map(keys)', [[{}, { abcd: 1, abc: 2, abcde: 3 }, { x: 1, z: 3, y: 2 }]])).toEqual(
+      [[[], ['abc', 'abcd', 'abcde'], ['x', 'y', 'z']]]
+    );
+  });
+
+  test('map_values(.+1)', () => {
+    expect(query('map_values(.+1)', [[0, 1, 2]])).toEqual([[1, 2, 3]]);
+  });
+
+  test('([1,2] + [4,5])', () => {
+    expect(query('([1,2] + [4,5])', [undefined])).toEqual([[1, 2, 4, 5]]);
+  });
+
+  test('true', () => {
+    expect(query('true', [[1]])).toEqual([true]);
+  });
+
+  test('null,1,null', () => {
+    expect(query('null,1,null', ['hello'])).toEqual([null, 1, null]);
+  });
+
+  test('[1,2,3]', () => {
+    expect(query('[1,2,3]', [[5, 6]])).toEqual([[1, 2, 3]]);
+  });
+
   test('def f(x): x | x; f([.], . + [42])', () => {
     expect(query('def f(x): x | x; f([.], . + [42])', [[1, 2, 3]])).toEqual([
       [[[1, 2, 3]]],
@@ -174,5 +295,202 @@ describe('jqtest', () => {
       [[1, 2, 3, 42]],
       [1, 2, 3, 42, 42]
     ]);
+  });
+
+  test('[any,all]', () => {
+    expect(query('[any,all]', [[]])).toEqual([[false, true]]);
+    expect(query('[any,all]', [[true]])).toEqual([[true, true]]);
+    expect(query('[any,all]', [[false]])).toEqual([[false, false]]);
+    expect(query('[any,all]', [[true, false]])).toEqual([[true, false]]);
+    expect(query('[any,all]', [[undefined, undefined, true]])).toEqual([[true, false]]);
+  });
+
+  // TODO: Fix
+  test.skip('[.[] | [.foo[] // .bar]]', () => {
+    expect(
+      query('[.[] | [.foo[] // .bar]]', [
+        [
+          { foo: [1, 2], bar: 42 },
+          { foo: [1], bar: null },
+          { foo: [null, false, 3], bar: 18 },
+          { foo: [], bar: 42 },
+          { foo: [null, false, null], bar: 41 }
+        ]
+      ])
+    ).toEqual([[[1, 2], [1], [3], [42], [41]]]);
+  });
+
+  // TODO: Fix
+  test.skip('.[] | [.[0] and .[1], .[0] or .[1]]', () => {
+    expect(
+      query('.[] | [.[0] and .[1], .[0] or .[1]]', [
+        [
+          [true, []],
+          [false, 1],
+          [42, null],
+          [null, false]
+        ]
+      ])
+    ).toEqual([
+      [true, true],
+      [false, true],
+      [false, true],
+      [false, false]
+    ]);
+  });
+
+  test('[.[] | not]', () => {
+    expect(query('[.[] | not]', [[1, 0, false, null, true, 'hello']])).toEqual([
+      [false, false, true, true, false, false]
+    ]);
+  });
+
+  test('[10 > 0, 10 > 10, 10 > 20, 10 < 0, 10 < 10, 10 < 20]', () => {
+    expect(query('[10 > 0, 10 > 10, 10 > 20, 10 < 0, 10 < 10, 10 < 20]', [{}])).toEqual([
+      [true, false, false, false, false, true]
+    ]);
+  });
+
+  test('[10 >= 0, 10 >= 10, 10 >= 20, 10 <= 0, 10 <= 10, 10 <= 20]', () => {
+    expect(query('[10 >= 0, 10 >= 10, 10 >= 20, 10 <= 0, 10 <= 10, 10 <= 20]', [{}])).toEqual([
+      [true, true, false, false, true, true]
+    ]);
+  });
+
+  test('[ 10 == 10, 10 != 10, 10 != 11, 10 == 11]', () => {
+    expect(query('[ 10 == 10, 10 != 10, 10 != 11, 10 == 11]', [{}])).toEqual([
+      [true, false, true, false]
+    ]);
+  });
+
+  test('["hello" == "hello", "hello" != "hello", "hello" == "world", "hello" != "world" ]', () => {
+    expect(
+      query('["hello" == "hello", "hello" != "hello", "hello" == "world", "hello" != "world" ]', [
+        {}
+      ])
+    ).toEqual([[true, false, false, true]]);
+  });
+
+  test('[[1,2,3] == [1,2,3], [1,2,3] != [1,2,3], [1,2,3] == [4,5,6], [1,2,3] != [4,5,6]]', () => {
+    expect(
+      query('[[1,2,3] == [1,2,3], [1,2,3] != [1,2,3], [1,2,3] == [4,5,6], [1,2,3] != [4,5,6]]', [
+        {}
+      ])
+    ).toEqual([[true, false, false, true]]);
+  });
+
+  test('[{"foo":42} == {"foo":42},{"foo":42} != {"foo":42}, {"foo":42} != {"bar":42}, {"foo":42} == {"bar":42}]', () => {
+    expect(
+      query(
+        '[{"foo":42} == {"foo":42},{"foo":42} != {"foo":42}, {"foo":42} != {"bar":42}, {"foo":42} == {"bar":42}]',
+        [{}]
+      )
+    ).toEqual([[true, false, true, false]]);
+  });
+
+  test('[{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":18},"world"]},{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":19},"world"]}]', () => {
+    expect(
+      query(
+        '[{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":18},"world"]},{"foo":[1,2,{"bar":18},"world"]} == {"foo":[1,2,{"bar":19},"world"]}]',
+        [{}]
+      )
+    ).toEqual([[true, false]]);
+  });
+
+  test('[("foo" | contains("foo")), ("foobar" | contains("foo")), ("foo" | contains("foobar"))]', () => {
+    expect(
+      query(
+        '[("foo" | contains("foo")), ("foobar" | contains("foo")), ("foo" | contains("foobar"))]',
+        [{}]
+      )
+    ).toEqual([[true, true, false]]);
+  });
+
+  test('[.[]|startswith("foo")]', () => {
+    expect(
+      query('[.[]|startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
+    ).toEqual([[false, true, false, true, false]]);
+  });
+
+  test('[.[]|endswith("foo")]', () => {
+    expect(query('[.[]|endswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])).toEqual([
+      [false, true, true, false, false]
+    ]);
+  });
+
+  test('[.[] | split(", ")]', () => {
+    expect(query('[.[] | split(", ")]', [['a,b, c, d, e,f', ', a,b, c, d, e,f, ']])).toEqual([
+      [
+        ['a,b', 'c', 'd', 'e,f'],
+        ['', 'a,b', 'c', 'd', 'e,f', '']
+      ]
+    ]);
+  });
+
+  test('split("")', () => {
+    expect(query('split("")', ['abc'])).toEqual([['a', 'b', 'c']]);
+  });
+
+  test('[.[]|split(",")]', () => {
+    expect(
+      query('[.[]|split(",")]', [['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']])
+    ).toEqual([
+      [
+        ['a', ' bc', ' def', ' ghij', ' jklmn', ' a', 'b', ' c', 'd', ' e', 'f'],
+        ['a', 'b', 'c', 'd', ' e', 'f', 'g', 'h']
+      ]
+    ]);
+  });
+
+  test('[.[]|split(", ")]', () => {
+    expect(
+      query('[.[]|split(", ")]', [['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']])
+    ).toEqual([
+      [
+        ['a', 'bc', 'def', 'ghij', 'jklmn', 'a,b', 'c,d', 'e,f'],
+        ['a,b,c,d', 'e,f,g,h']
+      ]
+    ]);
+  });
+
+  test('map(.[1] as $needle | .[0] | contains($needle))', () => {
+    expect(
+      query('map(.[1] as $needle | .[0] | contains($needle))', [
+        [
+          [[], []],
+          [
+            [1, 2, 3],
+            [1, 2]
+          ],
+          [
+            [1, 2, 3],
+            [3, 1]
+          ],
+          [[1, 2, 3], [4]],
+          [
+            [1, 2, 3],
+            [1, 4]
+          ]
+        ]
+      ])
+    ).toEqual([[true, true, true, false, false]]);
+
+    expect(
+      query('map(.[1] as $needle | .[0] | contains($needle))', [
+        [
+          [
+            ['foobar', 'foobaz'],
+            ['baz', 'bar']
+          ],
+          [['foobar', 'foobaz'], ['foo']],
+          [['foobar', 'foobaz'], ['blap']]
+        ]
+      ])
+    ).toEqual([[true, true, false]]);
+  });
+
+  test('unique', () => {
+    expect(query('unique', [[1, 2, 5, 3, 5, 3, 1, 3]])).toEqual([[1, 2, 3, 5]]);
+    expect(query('unique', [[]])).toEqual([[]]);
   });
 });

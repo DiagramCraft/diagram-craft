@@ -414,7 +414,7 @@ describe('object construction', () => {
 
 describe('variable expansion', () => {
   test('$foo', () => {
-    expect(query('$foo', [undefined], { foo: 1 })).toEqual([1]);
+    expect(query('$foo', [undefined], { $foo: 1 })).toEqual([1]);
   });
 });
 

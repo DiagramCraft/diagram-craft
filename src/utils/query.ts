@@ -53,6 +53,8 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '+': (l, r) => new AdditionBinaryOp(l, r),
   '-': (l, r) => new SubtractionBinaryOp(l, r),
   '%': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeParseInt(a) % safeParseInt(b)),
+  '*': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeParseInt(a) * safeParseInt(b)),
+  '/': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeParseInt(a) / safeParseInt(b)),
   '//': (l, r) => new SimpleBinaryOp(l, r, (a, b) => a ?? b),
   '==': (l, r) => new EqualsBinaryOp(l, r, false),
   '!=': (l, r) => new EqualsBinaryOp(l, r, true),
@@ -78,7 +80,7 @@ const BINOP_ORDERING = Object.fromEntries(
     ['and', 'or'],
     ['==', '!=', '>=', '>', '<=', '<'],
     ['+', '-'],
-    ['%']
+    ['*', '/', '%']
   ].flatMap((e, idx) => e.map(a => [a, idx * 10])) as [string, number][]
 );
 
@@ -100,15 +102,15 @@ export class Tokenizer {
 
   peek(): Token {
     let m;
-    if ((m = this.head.match(/^-?[0-9]+(\.[0-9]+)?/))) {
+    if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?/))) {
       return { s: m[0], type: 'num' };
     } else if ((m = this.head.match(/^"[^"]*"/))) {
       return { s: m[0], type: 'str' };
-    } else if ((m = this.head.match(/^([a-zA-Z_][a-zA-Z0-9_]*|\.\.)/))) {
+    } else if ((m = this.head.match(/^([a-zA-Z_][\w]*|\.\.)/))) {
       return { s: m[0], type: 'id' };
     } else if (
       (m = this.head.match(
-        /^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|;|\$|{|}|\?|\|)/
+        /^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|;|\$|{|}|\*|\/|\?|\|)/
       ))
     ) {
       return { s: m[0], type: 'op' };
@@ -129,7 +131,7 @@ export class Tokenizer {
 
   expect(s: string) {
     if (this.peek().s === s) return this.next();
-    else throw new Error('Expected: ' + s + ', found ' + this.peek().s);
+    else throw new Error(`Expected: ${s}, found ${this.peek().s}`);
   }
 
   consumeWhitespace() {
@@ -185,9 +187,9 @@ export const OObjects = {
       return new OLiteral(Number(tok.s));
     } else if (tok.s === 'true' || tok.s === 'false') {
       return new OLiteral(tok.s === 'true');
-    } else {
-      throw new Error('Cannot parse: ' + tokenizer.head);
     }
+
+    throw new Error(`Cannot parse: ${tokenizer.head}`);
   }
 };
 
@@ -243,17 +245,17 @@ export class OObject {
 
     const dest: any = {};
     for (const [k, v] of this.entries) {
-      const key: string = isGenerator(k) ? '_____' + newid() : k.val()!.toString();
+      const key: string = isGenerator(k) ? '__' + newid() : k.val()!.toString();
       if (isGenerator(k)) generators.set(key, k);
 
-      const val: any = isGenerator(v) ? '_____' + newid() : v.val();
+      const val: any = isGenerator(v) ? '__' + newid() : v.val();
       if (isGenerator(v)) generators.set(val, v);
 
       dest[key] = val;
     }
 
     if (generators.size > 0) {
-      dest._____generators = generators;
+      dest.__generators = generators;
     }
 
     return dest;
@@ -441,6 +443,8 @@ export class AdditionBinaryOp extends BinaryOperator {
   combine(lvs: unknown, rvs: unknown) {
     if (Array.isArray(lvs) && Array.isArray(rvs)) {
       return [...lvs, ...rvs];
+    } else if (typeof lvs === 'string' && typeof rvs === 'string') {
+      return lvs + rvs;
     } else if (isObj(lvs) && isObj(rvs)) {
       return { ...lvs, ...rvs };
     } else {
@@ -503,7 +507,7 @@ class LengthFilter extends BaseGenerator {
 
 class NotFilter extends BaseGenerator {
   *handleElement(e: unknown): Iterable<unknown> {
-    yield !e;
+    yield e === false || e === null || e === undefined;
   }
 }
 
@@ -551,10 +555,10 @@ class EqualsBinaryOp extends BinaryOperator {
   }
 
   combine(lvs: unknown, rvs: unknown): unknown {
-    if (Array.isArray(lvs) && Array.isArray(rvs)) {
-      throw new Error();
-    } else if (isObj(lvs) && isObj(rvs)) {
-      throw new Error();
+    if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
+      return this.negate
+        ? JSON.stringify(lvs) !== JSON.stringify(rvs)
+        : JSON.stringify(lvs) === JSON.stringify(rvs);
     } else {
       return this.negate ? lvs !== rvs : lvs === rvs;
     }
@@ -692,7 +696,10 @@ class NthFilter extends BaseGenerator {
 }
 
 const ArrayFilterFns: Record<string, ArrayFn> = {
-  UNIQUE: arr => arr.filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i),
+  UNIQUE: arr =>
+    arr
+      .filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i)
+      .sort((a, b) => (a[1] as number) - (b[1] as number)),
   MIN: arr => {
     const min = Math.min(...arr.map(a => Number(a[1])));
     return tag('single', arr.find(a => a[1] === min)![0]);
@@ -721,7 +728,7 @@ class ObjectTemplate extends BaseGenerator {
   }
 
   *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
-    const generators = this.template._____generators as Map<string, Generator>;
+    const generators = this.template.__generators as Map<string, Generator>;
     const iterables = [...generators.keys()];
 
     for (const a of iterateAll([...generators.values()], 0, [el], [], bindings)) {
@@ -736,7 +743,7 @@ class ObjectTemplate extends BaseGenerator {
   private applyTemplate(target: Record<string, unknown>, assignment: Record<string, unknown>) {
     const dest: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(target)) {
-      if (k === '_____generators') continue;
+      if (k === '__generators') continue;
 
       const key = assignment[k] === undefined ? k : (assignment[k] as string);
 
@@ -809,6 +816,8 @@ class MapValuesFn extends BaseGenerator {
       yield Object.fromEntries(
         Object.entries(el).map(([k, v]) => [k, exactOne(this.node.iterable([v], bindings))])
       );
+    } else if (Array.isArray(el)) {
+      yield el.map(e => exactOne(this.node.iterable([e], bindings)));
     } else {
       yield el;
     }
@@ -827,7 +836,9 @@ class ContainsFn extends BaseGenerator {
       if (typeof a === 'string') {
         yield typeof el === 'string' ? el.includes(a) : false;
       } else if (Array.isArray(a)) {
-        yield Array.isArray(el) ? a.every(e => el.some(v => v.includes(e))) : false;
+        yield Array.isArray(el)
+          ? a.every(e => el.some(v => v === e || (typeof v === 'string' && v.includes(e))))
+          : false;
       } else {
         yield false;
       }
@@ -1023,7 +1034,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     return new Literal(Number(tokenizer.next().s));
   } else if (tok.s === '{') {
     const res = OObjects.parse(tokenizer);
-    if (res.val()._____generators) {
+    if (res.val().__generators) {
       return new ObjectTemplate(res.val());
     } else {
       return new Literal(res.val());
@@ -1088,14 +1099,10 @@ const parseExpression = (
   do {
     tokenizer.consumeWhitespace();
 
-    if (tokenizer.peek().s === ';') {
-      return left;
-    }
+    const tok = tokenizer.peek().s;
+    if (tok === ';') return left;
 
-    if (
-      Object.keys(BINOP_REGISTRY).includes(tokenizer.peek().s) &&
-      (BINOP_ORDERING[tokenizer.peek().s] ?? 0) >= (BINOP_ORDERING[lastOp ?? ''] ?? 0)
-    ) {
+    if (!!BINOP_REGISTRY[tok] && (BINOP_ORDERING[tok] ?? 0) > (BINOP_ORDERING[lastOp ?? ''] ?? 0)) {
       const op = tokenizer.next().s;
 
       const right = parseExpression(tokenizer, op, functions);
@@ -1104,7 +1111,7 @@ const parseExpression = (
       return left;
     }
   } while (i++ < MAX_LOOP);
-  throw new Error('Infinite loop');
+  throw new Error();
 };
 
 const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): ArgList => {
@@ -1130,16 +1137,7 @@ export const parse = (query: string): Generator => {
 };
 
 export const query = (query: string, input: unknown[], bindings?: Record<string, unknown>) => {
-  const node = parse(query);
-
-  const dest: unknown[] = [];
-  for (const i of node.iterable(
-    input,
-    Object.fromEntries(Object.entries(bindings ?? {}).map(([k, v]) => [`$${k}`, v]))
-  )) {
-    dest.push(i);
-  }
-  return dest;
+  return [...parse(query).iterable(input, bindings ?? {})];
 };
 
 export const queryOne = (q: string, input: any) => {
