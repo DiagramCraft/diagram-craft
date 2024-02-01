@@ -659,12 +659,14 @@ class NthFilter extends BaseGenerator {
   }
 
   *handleElement(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
-    const idx = exactOne(this.args.args[0].iterable([el], bindings)) as number;
-    if (this.args.args.length === 1 && Array.isArray(el)) {
-      yield el.at(idx);
-    } else if (this.args.args.length === 2) {
-      const arr = [...this.args.args[1].iterable([el], bindings)];
-      yield (arr as unknown[]).at(idx);
+    for (const IDX of this.args.args[0].iterable([el], bindings)) {
+      const idx = safeParseInt(IDX);
+      if (this.args.args.length === 1 && Array.isArray(el)) {
+        yield el.at(idx);
+      } else if (this.args.args.length === 2) {
+        const arr = [...this.args.args[1].iterable([el], bindings)];
+        yield (arr as unknown[]).at(idx);
+      }
     }
   }
 }
@@ -890,12 +892,13 @@ class LimitGenerator implements Generator {
   constructor(private readonly node: ArgList) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    let m = exactOne(this.node.args[0].iterable(input, bindings)) as number;
-
-    for (const e of this.node.args[1].iterable(input, bindings)) {
-      if (m === 0) break;
-      yield e;
-      m--;
+    for (const M of this.node.args[0].iterable(input, bindings)) {
+      let m = safeParseInt(M);
+      for (const e of this.node.args[1].iterable(input, bindings)) {
+        if (m === 0) break;
+        yield e;
+        m--;
+      }
     }
   }
 }

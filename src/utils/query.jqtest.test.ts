@@ -137,6 +137,36 @@ describe('jqtest', () => {
     ]);
   });
 
+  test('[limit(5,7; range(9))]', () => {
+    expect(query('[limit(5,7; range(9))]', [undefined])).toEqual([
+      [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 5, 6]
+    ]);
+  });
+
+  test('[nth(5,7; range(9;0;-1))]', () => {
+    expect(query('[nth(5,7; range(9;0;-1))]', [undefined])).toEqual([[4, 2]]);
+  });
+
+  test('[range(0,1,2;4,3,2;2,3)]', () => {
+    expect(query('[range(0,1,2;4,3,2;2,3)]', [undefined])).toEqual([
+      [0, 2, 0, 3, 0, 2, 0, 0, 0, 1, 3, 1, 1, 1, 1, 1, 2, 2, 2, 2]
+    ]);
+  });
+
+  test('[range(3,5)]', () => {
+    expect(query('[range(3,5)]', [undefined])).toEqual([[0, 1, 2, 0, 1, 2, 3, 4]]);
+  });
+
+  test('join(",","/")', () => {
+    expect(query('join(",","/")', [['a', 'b', 'c', 'd']])).toEqual(['a,b,c,d', 'a/b/c/d']);
+  });
+
+  test('[.[]|join("a")]', () => {
+    expect(query('[.[]|join("a")]', [[[], [''], ['', ''], ['', '', '']]])).toEqual([
+      ['', '', 'a', 'aa']
+    ]);
+  });
+
   test('def f(x): x | x; f([.], . + [42])', () => {
     expect(query('def f(x): x | x; f([.], . + [42])', [[1, 2, 3]])).toEqual([
       [[[1, 2, 3]]],
