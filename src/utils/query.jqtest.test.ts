@@ -433,6 +433,13 @@ describe('jqtest', () => {
     ]);
   });
 
+  // TODO: Fix
+  test.skip('def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]', () => {
+    expect(
+      query('def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]', [1])
+    ).toEqual([[33, 101]]);
+  });
+
   test('[any,all]', () => {
     expect(query('[any,all]', [[]])).toEqual([[false, true]]);
     expect(query('[any,all]', [[true]])).toEqual([[true, true]]);

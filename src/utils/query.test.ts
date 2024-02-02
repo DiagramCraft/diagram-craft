@@ -10,31 +10,31 @@ const queryOne = (q: string, input: any) => {
 
 describe('OObject', () => {
   test('parse OString', () => {
-    expect(OObjects.parseString('"lorem"').val()).toEqual('lorem');
+    expect(OObjects.parseString('"lorem"').val).toEqual('lorem');
   });
 
   test('parse ONumber', () => {
-    expect(OObjects.parseString('1234').val()).toEqual(1234);
+    expect(OObjects.parseString('1234').val).toEqual(1234);
   });
 
   test('parse OBoolean', () => {
-    expect(OObjects.parseString('true').val()).toEqual(true);
-    expect(OObjects.parseString('false').val()).toEqual(false);
+    expect(OObjects.parseString('true').val).toEqual(true);
+    expect(OObjects.parseString('false').val).toEqual(false);
   });
 
   test('parse OArray', () => {
-    expect(OObjects.parseString('[1, 2, 3]').val()).toEqual([1, 2, 3]);
-    expect(OObjects.parseString('["a", "b"]').val()).toEqual(['a', 'b']);
-    expect(OObjects.parseString('[1, "b"]').val()).toEqual([1, 'b']);
+    expect(OObjects.parseString('[1, 2, 3]').val).toEqual([1, 2, 3]);
+    expect(OObjects.parseString('["a", "b"]').val).toEqual(['a', 'b']);
+    expect(OObjects.parseString('[1, "b"]').val).toEqual([1, 'b']);
   });
 
   test('parse OObject', () => {
-    expect(OObjects.parseString('{ ab: 1, b: 2}').val()).toEqual({ ab: 1, b: 2 });
-    expect(OObjects.parseString('{ ab: "test", b: 2}').val()).toEqual({
+    expect(OObjects.parseString('{ ab: 1, b: 2}').val).toEqual({ ab: 1, b: 2 });
+    expect(OObjects.parseString('{ ab: "test", b: 2}').val).toEqual({
       ab: 'test',
       b: 2
     });
-    expect(OObjects.parseString('{ ab: [7, 8], b: 2}').val()).toEqual({
+    expect(OObjects.parseString('{ ab: [7, 8], b: 2}').val).toEqual({
       ab: [7, 8],
       b: 2
     });

@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { isObj } from './object.ts';
 import { isTaggedType, tag, TaggedType } from './types.ts';
 import { newid } from './id.ts';
+
+const isObj = (x: unknown): x is Record<string, unknown> =>
+  typeof x === 'object' && !Array.isArray(x);
 
 type FnRegistration =
   | { fn: () => Generator }
@@ -20,13 +22,13 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   select: { args: '1', fn: a => new SelectFn(a) },
   any: { fn: () => new AnyFilter() },
   all: { fn: () => new AllFilter() },
-  unique_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.UNIQUE) },
-  unique: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.UNIQUE) },
-  min_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.MIN) },
-  min: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MIN) },
-  max_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.MAX) },
-  max: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.MAX) },
-  group_by: { args: '1', fn: a => new ArrayFilter(a, ArrayFilterFns.GROUP_BY) },
+  unique_by: { args: '1', fn: a => new ArrayFilter(a, Array_Unique) },
+  unique: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Unique) },
+  min_by: { args: '1', fn: a => new ArrayFilter(a, Array_Min) },
+  min: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Min) },
+  max_by: { args: '1', fn: a => new ArrayFilter(a, Array_Max) },
+  max: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Max) },
+  group_by: { args: '1', fn: a => new ArrayFilter(a, Array_GroupBy) },
   startswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.startsWith(b)) },
   endswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.endsWith(b)) },
   abs: { fn: () => new AbsFilter() },
@@ -34,7 +36,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   split: { args: '1', fn: a => new StringFn(a, (a, b) => a.split(b)) },
   join: { args: '1', fn: a => new JoinFn(a) },
   contains: { args: '1', fn: a => new ContainsFn(a) },
-  flatten: { fn: () => new ArrayFilter(new Literal(1), ArrayFilterFns.FLATTEN) },
+  flatten: { fn: () => new ArrayFilter(new Literal(1), Array_Flatten) },
   range: { args: '1', fn: a => new RangeGenerator(a) },
   limit: { args: '1', fn: a => new LimitGenerator(a) },
   first: {
@@ -52,16 +54,16 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   cos: { fn: () => new MathFilter(Math.cos) },
   sin: { fn: () => new MathFilter(Math.sin) },
   sqrt: { fn: () => new MathFilter(Math.sqrt) },
-  add: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.ADD) }
+  add: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Add) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '+': (l, r) => new AdditionBinaryOp(l, r),
   '-': (l, r) => new SubtractionBinaryOp(l, r),
-  '%': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeNum(a) % safeNum(b)),
-  '*': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeNum(a) * safeNum(b)),
-  '/': (l, r) => new SimpleBinaryOp(l, r, (a, b) => safeNum(a) / safeNum(b)),
-  '//': (l, r) => new SimpleBinaryOp(l, r, (a, b) => a ?? b),
+  '%': (l, r) => new BinaryOp(l, r, (a, b) => safeNum(a) % safeNum(b)),
+  '*': (l, r) => new BinaryOp(l, r, (a, b) => safeNum(a) * safeNum(b)),
+  '/': (l, r) => new BinaryOp(l, r, (a, b) => safeNum(a) / safeNum(b)),
+  '//': (l, r) => new BinaryOp(l, r, (a, b) => a ?? b),
   '==': (l, r) => new EqualsBinaryOp(l, r, false),
   '!=': (l, r) => new EqualsBinaryOp(l, r, true),
   '>=': (l, r) => new CmpBinaryOp(l, r, (a: any, b: any) => a >= b),
@@ -174,15 +176,21 @@ abstract class BaseGenerator implements Generator {
   abstract handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown>;
 }
 
+abstract class Base1Generator<T = Generator> extends BaseGenerator {
+  constructor(protected readonly node: T) {
+    super();
+  }
+}
+
 type OObjects = OObject | OLiteral | OArray | Generator;
 
 export const OObjects = {
-  parseString(s: string): OObjects & { val(): unknown } {
+  parseString(s: string): OObjects & { val: unknown } {
     return OObjects.parse(new Tokenizer(s));
   },
 
-  parse(tok: Tokenizer): OObjects & { val(): unknown } {
-    return OObjects.parseNext(tok) as OObjects & { val(): unknown };
+  parse(tok: Tokenizer): OObjects & { val: unknown } {
+    return OObjects.parseNext(tok) as OObjects & { val: unknown };
   },
 
   parseNext(tokenizer: Tokenizer): OObjects {
@@ -230,10 +238,7 @@ class OObject {
 
         // shorthand notation
         if (!s.accept(':')) {
-          obj.entries.push([
-            currentKey,
-            parsePathExpression(new Tokenizer('.' + currentKey.val()))
-          ]);
+          obj.entries.push([currentKey, parsePathExpression(new Tokenizer('.' + currentKey.val))]);
           currentKey = undefined;
           if (!s.accept(',')) break;
         }
@@ -257,15 +262,15 @@ class OObject {
     return obj;
   }
 
-  val() {
+  get val() {
     const generators = new Map<string, Generator>();
 
     const dest: any = {};
     for (const [k, v] of this.entries) {
-      const key: string = isGenerator(k) ? '__' + newid() : k.val()!.toString();
+      const key: string = isGenerator(k) ? '__' + newid() : k.val!.toString();
       if (isGenerator(k)) generators.set(key, k);
 
-      const val: any = isGenerator(v) ? '__' + newid() : v.val();
+      const val: any = isGenerator(v) ? '__' + newid() : v.val;
       if (isGenerator(v)) generators.set(val, v);
 
       dest[key] = val;
@@ -280,11 +285,7 @@ class OObject {
 }
 
 class OLiteral {
-  constructor(public value: unknown) {}
-
-  val() {
-    return this.value;
-  }
+  constructor(public val: unknown) {}
 }
 
 class OArray {
@@ -307,10 +308,10 @@ class OArray {
     return arr;
   }
 
-  val(): unknown[] {
+  get val(): unknown[] {
     return this.value.map(e => {
       if (isGenerator(e)) throw new Error();
-      return e.val();
+      return e.val;
     });
   }
 }
@@ -416,13 +417,13 @@ class ConcatenationGenerator extends BaseGenerator {
   }
 }
 
-class ArrayConstructor implements Generator {
-  constructor(private readonly node: Generator) {}
+class ArrayConstructor extends BaseGenerator {
+  constructor(private readonly node: Generator) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    for (const e of input) {
-      yield [...this.node.iterable([e], bindings)];
-    }
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield [...this.node.iterable([e], bindings)];
   }
 }
 
@@ -445,20 +446,19 @@ class RecursiveDescentGenerator extends BaseGenerator {
   }
 }
 
-abstract class BinaryOperator implements Generator {
+class BinaryOp extends BaseGenerator {
   constructor(
     protected readonly left: Generator,
-    protected readonly right: Generator
-  ) {}
+    protected readonly right: Generator,
+    private readonly fn: (a: unknown, b: unknown) => unknown
+  ) {
+    super();
+  }
 
-  abstract combine(l: unknown, r: unknown): unknown;
-
-  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    for (const e of input) {
-      for (const r of this.right.iterable([e], bindings)) {
-        for (const l of this.left.iterable([e], bindings)) {
-          yield this.combine(l, r);
-        }
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const r of this.right.iterable([e], bindings)) {
+      for (const l of this.left.iterable([e], bindings)) {
+        yield this.fn(l, r);
       }
     }
   }
@@ -476,43 +476,25 @@ const add = (lvs: unknown, rvs: unknown) => {
   }
 };
 
-class AdditionBinaryOp extends BinaryOperator {
+class AdditionBinaryOp extends BinaryOp {
   constructor(left: Generator, right: Generator) {
-    super(left, right);
-  }
-
-  combine(lvs: unknown, rvs: unknown) {
-    return add(lvs, rvs);
+    super(left, right, (a, b) => add(a, b));
   }
 }
 
-class SubtractionBinaryOp extends BinaryOperator {
+class SubtractionBinaryOp extends BinaryOp {
   constructor(left: Generator, right: Generator) {
-    super(left, right);
-  }
-
-  combine(lvs: unknown, rvs: unknown) {
-    if (Array.isArray(lvs) && Array.isArray(rvs)) {
-      return lvs.filter(e => !rvs.includes(e));
-    } else if (isObj(lvs) && isObj(rvs)) {
-      return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
-    } else {
-      return safeNum(lvs) - safeNum(rvs);
-    }
-  }
-}
-
-class SimpleBinaryOp extends BinaryOperator {
-  constructor(
-    left: Generator,
-    right: Generator,
-    private readonly fn: (a: unknown, b: unknown) => unknown
-  ) {
-    super(left, right);
-  }
-
-  combine(lvs: unknown, rvs: unknown) {
-    return this.fn(lvs, rvs);
+    super(left, right, (lvs, rvs) => {
+      if (Array.isArray(lvs) && Array.isArray(rvs)) {
+        return lvs.filter(e => !rvs.includes(e));
+      } else if (isObj(lvs) && isObj(rvs)) {
+        return Object.fromEntries(
+          Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k))
+        );
+      } else {
+        return safeNum(lvs) - safeNum(rvs);
+      }
+    });
   }
 }
 
@@ -544,31 +526,19 @@ class NotFilter extends BaseGenerator {
   }
 }
 
-class HasFn extends BaseGenerator {
-  constructor(private readonly node: Generator) {
-    super();
-  }
-
+class HasFn extends Base1Generator {
   *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     yield (exactOne(this.node.iterable([undefined], bindings)) as string | number) in (e as any);
   }
 }
 
-class InFn extends BaseGenerator {
-  constructor(private readonly node: Generator) {
-    super();
-  }
-
+class InFn extends Base1Generator {
   *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     yield (e as any) in (exactOne(this.node.iterable([undefined], bindings)) as any);
   }
 }
 
-class SelectFn extends BaseGenerator {
-  constructor(private readonly node: Generator) {
-    super();
-  }
-
+class SelectFn extends Base1Generator {
   *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const r of this.node.iterable([e], bindings)) {
       if (r === true) {
@@ -578,52 +548,46 @@ class SelectFn extends BaseGenerator {
   }
 }
 
-class EqualsBinaryOp extends BinaryOperator {
+class EqualsBinaryOp extends BinaryOp {
   constructor(
     left: Generator,
     right: Generator,
     private readonly negate: boolean
   ) {
-    super(left, right);
-  }
-
-  combine(lvs: unknown, rvs: unknown): unknown {
-    if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
-      return this.negate
-        ? JSON.stringify(lvs) !== JSON.stringify(rvs)
-        : JSON.stringify(lvs) === JSON.stringify(rvs);
-    } else {
-      return this.negate ? lvs !== rvs : lvs === rvs;
-    }
+    super(left, right, (lvs, rvs) => {
+      if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
+        return this.negate
+          ? JSON.stringify(lvs) !== JSON.stringify(rvs)
+          : JSON.stringify(lvs) === JSON.stringify(rvs);
+      } else {
+        return this.negate ? lvs !== rvs : lvs === rvs;
+      }
+    });
   }
 }
 
-class CmpBinaryOp extends BinaryOperator {
+class CmpBinaryOp extends BinaryOp {
   constructor(
     left: Generator,
     right: Generator,
     private readonly cmp: (a: unknown, b: unknown) => boolean | any
   ) {
-    super(left, right);
-  }
-
-  combine(lvs: unknown, rvs: unknown): unknown {
-    return !!this.cmp(lvs, rvs);
+    super(left, right, (lvs, rvs) => !!this.cmp(lvs, rvs));
   }
 }
 
-class VarBindingOp implements Generator {
+class VarBindingOp extends BaseGenerator {
   constructor(
     private readonly node: Generator,
     private readonly identifier: Generator
-  ) {}
+  ) {
+    super();
+  }
 
-  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    for (const e of input) {
-      for (const v of this.node.iterable([e], bindings)) {
-        bindings[(this.identifier as VariableExpansion).identifier] = v;
-        yield e;
-      }
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const v of this.node.iterable([e], bindings)) {
+      bindings[(this.identifier as VariableExpansion).identifier] = v;
+      yield e;
     }
   }
 }
@@ -728,33 +692,36 @@ class NthFilter extends BaseGenerator {
   }
 }
 
-const ArrayFilterFns: Record<string, ArrayFn> = {
-  UNIQUE: arr =>
-    arr
-      .filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i)
-      .sort((a, b) => (a[1] as number) - (b[1] as number)),
-  ADD: arr =>
-    tag('single', arr.length === 0 ? undefined : arr.map(a => a[1]).reduce((a, b) => add(a, b))),
-  MIN: arr => {
-    const min = Math.min(...arr.map(a => Number(a[1])));
-    return tag('single', arr.find(a => a[1] === min)![0]);
-  },
-  MAX: arr => {
-    const max = Math.max(...arr.map(a => Number(a[1])));
-    return tag('single', arr.find(a => a[1] === max)![0]);
-  },
-  GROUP_BY: arr => {
-    const dest: Record<string, unknown[]> = {};
-    for (const [k, v] of arr) {
-      dest[v as any] ??= [];
-      dest[v as any].push(k);
-    }
-    return tag('single', Object.values(dest));
-  },
-  FLATTEN: arr => {
-    const dest: unknown[] = arr.map(a => a[0]).flat();
-    return tag('single', dest);
+const Array_Unique: ArrayFn = arr =>
+  arr
+    .filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i)
+    .sort((a, b) => (a[1] as number) - (b[1] as number));
+
+const Array_Add: ArrayFn = arr =>
+  tag('single', arr.length === 0 ? undefined : arr.map(a => a[1]).reduce((a, b) => add(a, b)));
+
+const Array_Min: ArrayFn = arr => {
+  const min = Math.min(...arr.map(a => Number(a[1])));
+  return tag('single', arr.find(a => a[1] === min)![0]);
+};
+
+const Array_Max: ArrayFn = arr => {
+  const max = Math.max(...arr.map(a => Number(a[1])));
+  return tag('single', arr.find(a => a[1] === max)![0]);
+};
+
+const Array_GroupBy: ArrayFn = arr => {
+  const dest: Record<string, unknown[]> = {};
+  for (const [k, v] of arr) {
+    dest[v as any] ??= [];
+    dest[v as any].push(k);
   }
+  return tag('single', Object.values(dest));
+};
+
+const Array_Flatten: ArrayFn = arr => {
+  const dest: unknown[] = arr.map(a => a[0]).flat();
+  return tag('single', dest);
 };
 
 class ObjectTemplate extends BaseGenerator {
@@ -814,11 +781,7 @@ class StringFn extends BaseGenerator {
   }
 }
 
-class JoinFn extends BaseGenerator {
-  constructor(private readonly node: Generator) {
-    super();
-  }
-
+class JoinFn extends Base1Generator {
   *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const r of this.node.iterable([el], bindings)) {
       if (Array.isArray(el)) yield el.join(r as string);
@@ -841,11 +804,7 @@ class KeysFilter extends BaseGenerator {
   }
 }
 
-class MapValuesFn extends BaseGenerator {
-  constructor(public readonly node: Generator) {
-    super();
-  }
-
+class MapValuesFn extends Base1Generator {
   *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (isObj(el)) {
       yield Object.fromEntries(
@@ -859,11 +818,7 @@ class MapValuesFn extends BaseGenerator {
   }
 }
 
-class ContainsFn extends BaseGenerator {
-  constructor(public readonly node: Generator) {
-    super();
-  }
-
+class ContainsFn extends Base1Generator {
   *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     const cv = this.node.iterable([undefined], bindings);
 
@@ -934,11 +889,7 @@ class FunctionDef implements Generator {
   }
 }
 
-class RangeGenerator extends BaseGenerator {
-  constructor(private readonly node: ArgList) {
-    super();
-  }
-
+class RangeGenerator extends Base1Generator<ArgList> {
   *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const args of iterateAll(this.node.args, 0, [el], [], bindings)) {
       const from = (args.length === 1 ? 0 : args[0]) as number;
@@ -971,11 +922,9 @@ class LimitGenerator implements Generator {
   }
 }
 
-class ParenExpression implements Generator {
-  constructor(private readonly node: Generator) {}
-
-  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    yield* this.node.iterable(input, { ...bindings });
+class ParenExpression extends Base1Generator {
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    yield* this.node.iterable([e], { ...bindings });
   }
 }
 
@@ -1029,7 +978,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
   if (tok.s === '[') {
     tokenizer.next();
     const inner =
-      tokenizer.peek().s !== ']' ? parseExpression(tokenizer, undefined, functions) : new Noop();
+      tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, undefined, functions);
     tokenizer.expect(']');
 
     return new ArrayConstructor(inner);
@@ -1077,10 +1026,10 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     return new Literal(Number(tokenizer.next().s));
   } else if (tok.s === '{') {
     const res = OObjects.parse(tokenizer);
-    if (res.val().__generators) {
-      return new ObjectTemplate(res.val());
+    if (res.val.__generators) {
+      return new ObjectTemplate(res.val);
     } else {
-      return new Literal(res.val());
+      return new Literal(res.val);
     }
   } else if (tok.type === 'str') {
     return new Literal(tokenizer.next().s.slice(1, -1));
