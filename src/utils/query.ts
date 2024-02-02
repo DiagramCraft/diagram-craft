@@ -87,7 +87,15 @@ const BINOP_ORDERING = Object.fromEntries(
   ].flatMap((e, idx) => e.map(a => [a, idx * 10])) as [string, number][]
 );
 
-const MAX_LOOP = 100;
+// To ensure no infinite loops
+const boundLoop = <T>(fn: () => T) => {
+  let i = 0;
+  while (i++ < 1000) {
+    const res = fn();
+    if (res !== undefined) return res;
+  }
+  throw new Error();
+};
 
 const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
 
@@ -975,8 +983,7 @@ const parsePathExpression = (tokenizer: Tokenizer): Generator => {
 
   let token = tokenizer.peek();
 
-  let i = 0;
-  while (i++ < MAX_LOOP) {
+  return boundLoop(() => {
     if (token.type === 'id' || token.type === 'str') {
       tokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
@@ -1007,13 +1014,11 @@ const parsePathExpression = (tokenizer: Tokenizer): Generator => {
     } else if (token.s === '.') {
       tokenizer.next();
     } else {
-      break;
+      return left;
     }
 
     token = tokenizer.peek();
-  }
-
-  return left;
+  });
 };
 
 const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): Generator => {
@@ -1041,15 +1046,14 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
     const name = tokenizer.next();
 
-    const args = [];
+    const args: string[] = [];
     if (tokenizer.peek().s === '(') {
       tokenizer.expect('(');
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
+      boundLoop(() => {
         args.push(tokenizer.next().s);
         tokenizer.strip();
-        if (!tokenizer.accept(';')) break;
-      }
+        if (!tokenizer.accept(';')) return true;
+      });
       tokenizer.expect(')');
     }
 
@@ -1131,8 +1135,7 @@ const parseExpression = (
 
   let left = parseOperand(tokenizer, functions);
 
-  let i = 0;
-  do {
+  return boundLoop(() => {
     tokenizer.strip();
 
     const tok = tokenizer.peek().s;
@@ -1146,8 +1149,7 @@ const parseExpression = (
     } else {
       return left;
     }
-  } while (i++ < MAX_LOOP);
-  throw new Error();
+  });
 };
 
 const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): ArgList => {
