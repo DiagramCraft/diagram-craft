@@ -635,4 +635,99 @@ describe('jqtest', () => {
     expect(query('unique', [[1, 2, 5, 3, 5, 3, 1, 3]])).toEqual([[1, 2, 3, 5]]);
     expect(query('unique', [[]])).toEqual([[]]);
   });
+
+  // TODO: Fix
+  test.skip('[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]', () => {
+    expect(
+      query('[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]', [
+        [
+          [4, 2, 'a'],
+          [3, 1, 'a'],
+          [2, 4, 'a'],
+          [1, 3, 'a']
+        ]
+      ])
+    ).toEqual([
+      [
+        [1, 3, 'a'],
+        [4, 2, 'a'],
+        [3, 1, 'a'],
+        [2, 4, 'a'],
+        [4, 2, 'a'],
+        [1, 3, 'a']
+      ]
+    ]);
+  });
+
+  test('[min,max,min_by(.),max_by(.)]', () => {
+    expect(query('[min,max,min_by(.),max_by(.)]', [[]])).toEqual([
+      [undefined, undefined, undefined, undefined]
+    ]);
+  });
+
+  // TODO: Fix
+  test.skip('.foo[.baz]', () => {
+    expect(query('.foo[.baz]', [{ foo: { bar: 4 }, baz: 'bar' }])).toEqual([4]);
+  });
+
+  test('map(has("foo"))', () => {
+    expect(query('map(has("foo"))', [[{ foo: 42 }, {}]])).toEqual([[true, false]]);
+  });
+
+  test('map(has(2))', () => {
+    expect(
+      query('map(has(2))', [
+        [
+          [0, 1],
+          ['a', 'b', 'c']
+        ]
+      ])
+    ).toEqual([[false, true]]);
+  });
+
+  test('keys', () => {
+    expect(query('keys', [[42, 3, 35]])).toEqual([[0, 1, 2]]);
+  });
+
+  test('flatten', () => {
+    expect(query('flatten', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, 1, 2, 3]]);
+  });
+
+  test('flatten(0)', () => {
+    expect(query('flatten(0)', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, [1], [[2]], [[[3]]]]]);
+  });
+
+  test('flatten(2)', () => {
+    expect(query('flatten(2)', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, 1, 2, [3]]]);
+    expect(query('flatten(2)', [[0, [1, [2]], [1, [[3], 2]]]])).toEqual([[0, 1, 2, 1, [3], 2]]);
+  });
+
+  test('abs', () => {
+    expect(query('abs', ['abc'])).toEqual(['abc']);
+  });
+
+  test('map(abs)', () => {
+    expect(query('map(abs)', [[-0, 0, -10, -1.1]])).toEqual([[0, 0, 10, 1.1]]);
+  });
+
+  test('[range(10)] | .[1.2:3.5]', () => {
+    expect(query('[range(10)] | .[1.2:3.5]', [undefined])).toEqual([[1, 2, 3]]);
+    expect(query('[range(10)] | .[1.5:3.5]', [undefined])).toEqual([[1, 2, 3]]);
+    expect(query('[range(10)] | .[1.7:3.5]', [undefined])).toEqual([[1, 2, 3]]);
+  });
+
+  test('[range(10)] | .[1.7:4294967295]', () => {
+    expect(query('[range(10)] | .[1.7:4294967295]', [undefined])).toEqual([
+      [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    ]);
+  });
+
+  test('[range(10)] | .[1.7:-4294967296]', () => {
+    expect(query('[range(10)] | .[1.7:-4294967296]', [undefined])).toEqual([[]]);
+  });
+
+  // TODO: Fix
+  test.skip('[[range(10)] | .[1.1,1.5,1.7]]', () => {
+    expect(query('[[range(10)] | .[1.1,1.5,1.7]]', [undefined])).toEqual([[1, 1, 1]]);
+  });
 });

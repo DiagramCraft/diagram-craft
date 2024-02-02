@@ -313,7 +313,7 @@ describe('group_by', () => {
 
 describe('flatten', () => {
   test('flatten', () => {
-    expect(query('flatten', [[1, [2, [3, 5]], 4, [5, 6]]])).toEqual([[1, 2, [3, 5], 4, 5, 6]]);
+    expect(query('flatten', [[1, [2, [3, 5]], 4, [5, 6]]])).toEqual([[1, 2, 3, 5, 4, 5, 6]]);
   });
 });
 

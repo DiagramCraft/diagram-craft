@@ -36,7 +36,6 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   split: { args: '1', fn: a => new StringFn(a, (a, b) => a.split(b)) },
   join: { args: '1', fn: a => new JoinFn(a) },
   contains: { args: '1', fn: a => new ContainsFn(a) },
-  flatten: { fn: () => new ArrayFilter(new Literal(1), Array_Flatten) },
   range: { args: '1', fn: a => new RangeGenerator(a) },
   limit: { args: '1', fn: a => new LimitGenerator(a) },
   first: {
@@ -47,6 +46,10 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
     args: '0&1',
     fn: a =>
       new NthFilter(a ? (a.args.unshift(new Literal(-1)), a) : new ArgList([new Literal(-1)]))
+  },
+  flatten: {
+    args: '0&1',
+    fn: a => new FlattenFilter(a ?? new ArgList([new Literal(100)]))
   },
   nth: { args: '1', fn: a => new NthFilter(a) },
   floor: { fn: () => new MathFilter(Math.floor) },
@@ -692,6 +695,14 @@ class NthFilter extends BaseGenerator {
   }
 }
 
+class FlattenFilter extends Base1Generator {
+  *handle(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    const arg = exactOne(this.node.iterable([undefined], bindings));
+    if (Array.isArray(el)) yield el.flat(arg as number);
+    else yield el;
+  }
+}
+
 const Array_Unique: ArrayFn = arr =>
   arr
     .filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i)
@@ -701,11 +712,13 @@ const Array_Add: ArrayFn = arr =>
   tag('single', arr.length === 0 ? undefined : arr.map(a => a[1]).reduce((a, b) => add(a, b)));
 
 const Array_Min: ArrayFn = arr => {
+  if (arr.length === 0) return tag('single', undefined);
   const min = Math.min(...arr.map(a => Number(a[1])));
   return tag('single', arr.find(a => a[1] === min)![0]);
 };
 
 const Array_Max: ArrayFn = arr => {
+  if (arr.length === 0) return tag('single', undefined);
   const max = Math.max(...arr.map(a => Number(a[1])));
   return tag('single', arr.find(a => a[1] === max)![0]);
 };
@@ -717,11 +730,6 @@ const Array_GroupBy: ArrayFn = arr => {
     dest[v as any].push(k);
   }
   return tag('single', Object.values(dest));
-};
-
-const Array_Flatten: ArrayFn = arr => {
-  const dest: unknown[] = arr.map(a => a[0]).flat();
-  return tag('single', dest);
 };
 
 class ObjectTemplate extends BaseGenerator {
@@ -799,7 +807,10 @@ class AbsFilter extends BaseGenerator {
 
 class KeysFilter extends BaseGenerator {
   *handle(el: unknown): Iterable<unknown> {
-    if (el && typeof el === 'object') yield Object.keys(el).sort();
+    if (el && typeof el === 'object')
+      yield Object.keys(el)
+        .sort()
+        .map(e => (Array.isArray(el) ? Number(e) : e));
     else yield el;
   }
 }
@@ -954,7 +965,7 @@ const parsePathExpression = (tokenizer: Tokenizer): Generator => {
         if (nextNextToken.s === ':') {
           left = new PathExpression(
             left,
-            new ArraySliceOp(parseInt(nextToken.s), parseInt(tokenizer.next().s))
+            new ArraySliceOp(parseInt(nextToken.s), Math.round(parseFloat(tokenizer.next().s)))
           );
           tokenizer.expect(']');
         } else if (nextNextToken.s === ']') {
