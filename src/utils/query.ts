@@ -48,6 +48,9 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   },
   nth: { args: '1', fn: a => new NthFilter(a) },
   floor: { fn: () => new MathFilter(Math.floor) },
+  atan: { fn: () => new MathFilter(Math.atan) },
+  cos: { fn: () => new MathFilter(Math.cos) },
+  sin: { fn: () => new MathFilter(Math.sin) },
   sqrt: { fn: () => new MathFilter(Math.sqrt) },
   add: { fn: () => new ArrayFilter(new PropertyLookupOp(''), ArrayFilterFns.ADD) }
 };
