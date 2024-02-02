@@ -888,7 +888,7 @@ type FnDef = {
 class FunctionCall extends BaseGenerator {
   constructor(
     public readonly identifier: string,
-    public readonly arg?: Generator
+    public readonly arg?: ArgList
   ) {
     super();
   }
@@ -896,16 +896,14 @@ class FunctionCall extends BaseGenerator {
   *handle(input: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     const fnDef = bindings[this.identifier] as FnDef;
 
-    yield* fnDef.body.iterable([input], {
-      ...bindings,
-      ...(fnDef.arg
-        ? {
-            [fnDef.arg[0]]: {
-              body: this.arg
-            }
-          }
-        : {})
+    const newBindings = { ...bindings };
+    (fnDef.arg ?? []).forEach((a, idx) => {
+      newBindings[a] = {
+        body: this.arg!.args[idx]
+      };
     });
+
+    yield* fnDef.body.iterable([input], newBindings);
   }
 }
 
@@ -1046,7 +1044,12 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     const args = [];
     if (tokenizer.peek().s === '(') {
       tokenizer.expect('(');
-      args.push(tokenizer.next().s);
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        args.push(tokenizer.next().s);
+        tokenizer.strip();
+        if (!tokenizer.accept(';')) break;
+      }
       tokenizer.expect(')');
     }
 
@@ -1060,7 +1063,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
     tokenizer.accept(';');
 
-    return new FunctionDef(name.s, args.length === 1 ? args : [], body);
+    return new FunctionDef(name.s, args, body);
 
     /* LITERALS ************************************************************************** */
   } else if (tok.type === 'num') {

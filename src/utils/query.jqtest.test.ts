@@ -335,6 +335,12 @@ describe('jqtest', () => {
     expect(query('def f: (1000,2000); f', [123412345])).toEqual([1000, 2000]);
   });
 
+  test('def f(a;b;c;d;e;f): [a+1,b,c,d,e,f]; f(.[0];.[1];.[0];.[0];.[0];.[0])', () => {
+    expect(
+      query('def f(a;b;c;d;e;f): [a+1,b,c,d,e,f]; f(.[0];.[1];.[0];.[0];.[0];.[0])', [[1, 2]])
+    ).toEqual([[2, 2, 1, 1, 1, 1]]);
+  });
+
   // TODO: Fix
   test.skip('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]', () => {
     expect(
@@ -347,6 +353,15 @@ describe('jqtest', () => {
 
   test('def a: 0; . | a', () => {
     expect(query('def a: 0; . | a', [undefined])).toEqual([0]);
+  });
+
+  test('def f(a;b;c;d;e;f;g;h;i;j): [j,i,h,g,f,e,d,c,b,a]; f(.[0];.[1];.[2];.[3];.[4];.[5];.[6];.[7];.[8];.[9])', () => {
+    expect(
+      query(
+        'def f(a;b;c;d;e;f;g;h;i;j): [j,i,h,g,f,e,d,c,b,a]; f(.[0];.[1];.[2];.[3];.[4];.[5];.[6];.[7];.[8];.[9])',
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]
+      )
+    ).toEqual([[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]]);
   });
 
   test('([1,2] + [4,5])', () => {
