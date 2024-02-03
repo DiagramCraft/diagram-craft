@@ -202,7 +202,7 @@ export const OObjects = {
     if (tok.type === 'str') {
       return new OLiteral(tok.s.slice(1, -1));
     } else if (tok.s === '.') {
-      return parsePathExpression(tokenizer);
+      return parsePathExpression(tokenizer, {});
     } else if (tok.s === '{') {
       return OObject.parse(tokenizer);
     } else if (tok.s === '(') {
@@ -241,7 +241,10 @@ class OObject {
 
         // shorthand notation
         if (!s.accept(':')) {
-          obj.entries.push([currentKey, parsePathExpression(new Tokenizer('.' + currentKey.val))]);
+          obj.entries.push([
+            currentKey,
+            parsePathExpression(new Tokenizer('.' + currentKey.val), {})
+          ]);
           currentKey = undefined;
           if (!s.accept(',')) break;
         }
@@ -374,28 +377,30 @@ class PropertyLookupOp extends BaseGenerator {
   }
 }
 
-class ArrayIndexOp extends BaseGenerator {
-  constructor(private readonly index: number) {
-    super();
-  }
-
-  *handle(e: unknown): Iterable<unknown> {
-    if (e === undefined || !Array.isArray(e) || this.index >= e.length) return;
-    yield e[this.index];
+class ArrayIndexOp extends Base1Generator {
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const index of this.node.iterable([e], bindings) as Iterable<number>) {
+      if (e === undefined || !Array.isArray(e) || index >= e.length) continue;
+      yield e[index];
+    }
   }
 }
 
 class ArraySliceOp extends BaseGenerator {
   constructor(
-    private readonly from: number,
-    private readonly to: number
+    private readonly from: Generator,
+    private readonly to: Generator
   ) {
     super();
   }
 
-  *handle(e: unknown): Iterable<unknown> {
-    if (e === undefined || !Array.isArray(e)) return;
-    yield e.slice(this.from, Math.min(this.to, e.length));
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const t of this.to.iterable([e], bindings) as Iterable<number>) {
+      for (const f of this.from.iterable([e], bindings) as Iterable<number>) {
+        if (e === undefined || !Array.isArray(e)) continue;
+        yield e.slice(Math.floor(f), Math.ceil(t));
+      }
+    }
   }
 }
 
@@ -502,7 +507,7 @@ class SubtractionBinaryOp extends BinaryOp {
 }
 
 class Literal implements Generator {
-  constructor(private readonly value: unknown) {}
+  constructor(public readonly value: unknown) {}
 
   iterable() {
     return [this.value];
@@ -939,7 +944,10 @@ class ParenExpression extends Base1Generator {
   }
 }
 
-const parsePathExpression = (tokenizer: Tokenizer): Generator => {
+const parsePathExpression = (
+  tokenizer: Tokenizer,
+  functions: Record<string, number>
+): Generator => {
   let left: Generator = new PropertyLookupOp('');
 
   tokenizer.accept('.');
@@ -954,25 +962,24 @@ const parsePathExpression = (tokenizer: Tokenizer): Generator => {
       left = new PathExpression(left, new PropertyLookupOp(s, strict));
     } else if (token.s === '[') {
       tokenizer.next();
-      const nextToken = tokenizer.next();
-      if (nextToken.type === 'str') {
-        left = new PathExpression(left, new PropertyLookupOp(nextToken.s.slice(1, -1)));
-        tokenizer.expect(']');
-      } else if (nextToken.s === ']') {
+      if (tokenizer.peek().s === ']') {
+        tokenizer.next();
         left = new PathExpression(left, new ArrayGenerator());
-      } else if (nextToken.type === 'num') {
-        const nextNextToken = tokenizer.next();
-        if (nextNextToken.s === ':') {
-          left = new PathExpression(
-            left,
-            new ArraySliceOp(parseInt(nextToken.s), Math.round(parseFloat(tokenizer.next().s)))
-          );
-          tokenizer.expect(']');
-        } else if (nextNextToken.s === ']') {
-          left = new PathExpression(left, new ArrayIndexOp(parseInt(nextToken.s)));
-        }
       } else {
-        throw new Error('Unexpected token: ' + nextToken.s);
+        const e1 = parseExpression(tokenizer, undefined, functions);
+        if (tokenizer.peek().s === ':') {
+          tokenizer.next();
+          const e2 = parseExpression(tokenizer, undefined, functions);
+          tokenizer.expect(']');
+          left = new PathExpression(left, new ArraySliceOp(e1, e2));
+        } else {
+          tokenizer.expect(']');
+          if (e1 instanceof Literal && typeof e1.value === 'string') {
+            left = new PathExpression(left, new PropertyLookupOp(e1.value, true));
+          } else {
+            left = new PathExpression(left, new ArrayIndexOp(e1));
+          }
+        }
       }
     } else if (token.s === '.') {
       tokenizer.next();
@@ -999,7 +1006,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     tokenizer.expect(')');
     return new ParenExpression(inner);
   } else if (tok.s === '.') {
-    return parsePathExpression(tokenizer);
+    return parsePathExpression(tokenizer, functions);
   } else if (tok.s === '$') {
     tokenizer.next();
     return new VariableExpansion('$' + tokenizer.next().s);
