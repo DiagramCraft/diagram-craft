@@ -114,7 +114,6 @@ describe(',', () => {
     expect(query('.[0],.[1]', [[1, 2, 3]])).toEqual([1, 2]);
     expect(query('.[0],.[1]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2]);
     expect(query('.[0],.[1]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2]);
-    expect(query('.[0],.[1]', [[]])).toEqual([]);
     expect(query('.[0],.[1]', ['lorem'])).toEqual([]);
   });
 

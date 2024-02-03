@@ -23,11 +23,11 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   any: { fn: () => new AnyFilter() },
   all: { fn: () => new AllFilter() },
   unique_by: { args: '1', fn: a => new ArrayFilter(a, Array_Unique) },
-  unique: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Unique) },
+  unique: { fn: () => new ArrayFilter(new IdentityOp(), Array_Unique) },
   min_by: { args: '1', fn: a => new ArrayFilter(a, Array_Min) },
-  min: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Min) },
+  min: { fn: () => new ArrayFilter(new IdentityOp(), Array_Min) },
   max_by: { args: '1', fn: a => new ArrayFilter(a, Array_Max) },
-  max: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Max) },
+  max: { fn: () => new ArrayFilter(new IdentityOp(), Array_Max) },
   group_by: { args: '1', fn: a => new ArrayFilter(a, Array_GroupBy) },
   startswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.startsWith(b)) },
   endswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.endsWith(b)) },
@@ -57,7 +57,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   cos: { fn: () => new MathFilter(Math.cos) },
   sin: { fn: () => new MathFilter(Math.sin) },
   sqrt: { fn: () => new MathFilter(Math.sqrt) },
-  add: { fn: () => new ArrayFilter(new PropertyLookupOp(''), Array_Add) }
+  add: { fn: () => new ArrayFilter(new IdentityOp(), Array_Add) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -349,29 +349,33 @@ class MathFilter extends BaseGenerator {
   }
 }
 
+class IdentityOp extends BaseGenerator {
+  *handle(e: unknown): Iterable<unknown> {
+    yield e;
+  }
+}
+
 class PropertyLookupOp extends BaseGenerator {
   constructor(
-    private readonly identifier: string,
+    private readonly node: Generator,
     private readonly strict = true
   ) {
     super();
   }
 
-  *handle(e: unknown): Iterable<unknown> {
-    if (this.identifier === '') {
-      yield e;
-    } else {
-      if (this.strict && !isObj(e) && e !== undefined) throw new Error();
-      if (this.identifier === '__proto__' || this.identifier === 'constructor') throw new Error();
+  *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    for (const identifier of this.node.iterable([e], bindings) as Iterable<string>) {
+      if (identifier === '__proto__' || identifier === 'constructor') throw new Error();
+
       if (!isObj(e) && e !== undefined) {
-        return;
+        if (this.strict) throw new Error();
+        continue;
       }
 
-      if (e === undefined) yield undefined;
-      else if (e instanceof Map) {
-        yield e.get(this.identifier);
+      if (e instanceof Map) {
+        yield e.get(identifier);
       } else {
-        yield (e as any)[this.identifier];
+        yield (e as any)?.[identifier];
       }
     }
   }
@@ -380,8 +384,8 @@ class PropertyLookupOp extends BaseGenerator {
 class ArrayIndexOp extends Base1Generator {
   *handle(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     for (const index of this.node.iterable([e], bindings) as Iterable<number>) {
-      if (e === undefined || !Array.isArray(e) || index >= e.length) continue;
-      yield e[index];
+      if (e === undefined || !Array.isArray(e)) continue;
+      yield e.at(index);
     }
   }
 }
@@ -948,7 +952,7 @@ const parsePathExpression = (
   tokenizer: Tokenizer,
   functions: Record<string, number>
 ): Generator => {
-  let left: Generator = new PropertyLookupOp('');
+  let left: Generator = new IdentityOp();
 
   tokenizer.accept('.');
 
@@ -959,7 +963,7 @@ const parsePathExpression = (
       tokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
       const strict = !tokenizer.accept('?');
-      left = new PathExpression(left, new PropertyLookupOp(s, strict));
+      left = new PathExpression(left, new PropertyLookupOp(new Literal(s), strict));
     } else if (token.s === '[') {
       tokenizer.next();
       if (tokenizer.peek().s === ']') {
@@ -975,7 +979,7 @@ const parsePathExpression = (
         } else {
           tokenizer.expect(']');
           if (e1 instanceof Literal && typeof e1.value === 'string') {
-            left = new PathExpression(left, new PropertyLookupOp(e1.value, true));
+            left = new PathExpression(left, new PropertyLookupOp(e1, true));
           } else {
             left = new PathExpression(left, new ArrayIndexOp(e1));
           }

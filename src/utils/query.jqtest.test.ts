@@ -142,8 +142,7 @@ describe('jqtest', () => {
     expect(query('{x: (1,2)},{x:3} | .x', [undefined])).toEqual([1, 2, 3]);
   });
 
-  // TODO: Fix
-  test.skip('[.[-4,-3,-2,-1,0,1,2,3]]', () => {
+  test('[.[-4,-3,-2,-1,0,1,2,3]]', () => {
     expect(query('[.[-4,-3,-2,-1,0,1,2,3]]', [[1, 2, 3]])).toEqual([
       [undefined, 1, 2, 3, 1, 2, 3, undefined]
     ]);
