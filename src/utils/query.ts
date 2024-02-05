@@ -4,9 +4,8 @@ import { newid } from './id.ts';
 
 /*
 TODO:
-  try/catch
-  regexp
   string interpolation
+  error handling
 */
 
 const BACKTRACK_ERROR = Symbol('backtrack');
@@ -72,7 +71,9 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   sin: { fn: () => new MathFilter(Math.sin) },
   sqrt: { fn: () => new MathFilter(Math.sqrt) },
   add: { fn: () => new ArrayFilter(new IdentityOp(), Array_Add) },
-  empty: { fn: () => new EmptyFilter() }
+  empty: { fn: () => new EmptyFilter() },
+  test: { args: '1', fn: a => new MatchFilter(a, true) },
+  match: { args: '1', fn: a => new MatchFilter(a) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -671,6 +672,38 @@ class ArrayFilter extends BaseGenerator1 {
   }
 }
 
+class MatchFilter extends BaseGenerator2<string, string | undefined> {
+  constructor(
+    args: ArgList,
+    private readonly onlyTest = false
+  ) {
+    super(args.args[0], args.args[1] ?? new Literal(''));
+  }
+
+  *handle(el: unknown, [re, flags]: [string, string | undefined]) {
+    if (flags?.includes('g') && !this.onlyTest) {
+      yield* [...(el as string).matchAll(new RegExp(re, flags))]!.map(e => this.mapMatch(e));
+    } else {
+      const a = (el as string).match(new RegExp(re, flags ?? ''));
+      yield this.onlyTest ? a !== null : this.mapMatch(a!);
+    }
+  }
+
+  private mapMatch(e: RegExpMatchArray) {
+    return {
+      offset: e.index,
+      length: e[0].length,
+      string: e[0],
+      captures: e.slice(1).map(el => ({
+        //offset: e.index,
+        length: el.length,
+        string: el
+        //        name: null
+      }))
+    };
+  }
+}
+
 class NthFilter extends BaseGenerator1<number> {
   constructor(private readonly args: ArgList) {
     super(args.args[0]);
@@ -982,6 +1015,23 @@ const isTrue = (e: unknown) => {
   return e !== false && e !== undefined && e !== null;
 };
 
+class CatchFilter extends BaseGenerator {
+  constructor(
+    private readonly body: Generator,
+    private readonly catchBody: Generator
+  ) {
+    super([body]);
+  }
+
+  *handleInput(e: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
+    try {
+      yield* this.body.iterable([e], bindings);
+    } catch (e) {
+      yield* this.catchBody.iterable([e], bindings);
+    }
+  }
+}
+
 class IfFilter extends BaseGenerator {
   constructor(
     condition: Generator,
@@ -1039,6 +1089,13 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     } else if (tok.s === '$') {
       tokenizer.next();
       return new VariableExpansion('$' + tokenizer.next().s);
+    } else if (tok.s === 'try') {
+      tokenizer.next();
+      const body = parseExpression(tokenizer, functions);
+      return new CatchFilter(
+        body,
+        tokenizer.accept('catch') ? parseExpression(tokenizer, functions) : new EmptyFilter()
+      );
     } else if (tok.s === 'if') {
       tokenizer.next();
 

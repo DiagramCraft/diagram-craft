@@ -543,6 +543,77 @@ describe('comment', () => {
   });
 });
 
+describe('try.-catch', () => {
+  test('try .a catch ". is not an object"', () => {
+    expect(query('try .a catch ". is not an object"', [true])).toEqual(['. is not an object']);
+  });
+
+  test('[.[]|try .a]', () => {
+    expect(query('[.[]|try .a]', [[{}, true, { a: 1 }]])).toEqual([[undefined, 1]]);
+  });
+});
+
+describe('regexp', () => {
+  test('test("foo")', () => {
+    expect(query('test("foo")', ['foo'])).toEqual([true]);
+  });
+
+  test('.[] | test("a b c # spaces are ignored"; "ix")', () => {
+    expect(query('.[] | test("abc"; "i")', [['xabcd', 'ABC']])).toEqual([true, true]);
+  });
+
+  test('match("(abc)+"; "g")', () => {
+    expect(query('match("(abc)+"; "g")', ['abc abc'])).toEqual([
+      {
+        offset: 0,
+        length: 3,
+        string: 'abc',
+        captures: [{ /*offset: 0, */ length: 3, string: 'abc' /*name: null*/ }]
+      },
+      {
+        offset: 4,
+        length: 3,
+        string: 'abc',
+        captures: [{ /*offset: 4, */ length: 3, string: 'abc' /*name: null*/ }]
+      }
+    ]);
+  });
+
+  test('match("foo")', () => {
+    expect(query('match("foo")', ['foo bar foo'])).toEqual([
+      { offset: 0, length: 3, string: 'foo', captures: [] }
+    ]);
+  });
+
+  test('match("foo"; "ig")', () => {
+    expect(query('match("foo"; "ig")', ['foo bar FOO'])).toEqual([
+      { offset: 0, length: 3, string: 'foo', captures: [] },
+      { offset: 8, length: 3, string: 'FOO', captures: [] }
+    ]);
+  });
+
+  test.skip('match("foo (?<bar123>bar)? ?foo"; "ig")', () => {
+    expect(query('match("foo (?<bar123>bar)? ?foo"; "ig")', ['foo bar foo foo foo'])).toEqual([
+      {
+        offset: 0,
+        length: 11,
+        string: 'foo bar foo',
+        captures: [{ offset: 4, length: 3, string: 'bar', name: 'bar123' }]
+      },
+      {
+        offset: 12,
+        length: 8,
+        string: 'foo foo',
+        captures: [{ offset: -1, length: 0, string: null, name: 'bar123' }]
+      }
+    ]);
+  });
+
+  test('[ match("."; "g")] | length', () => {
+    expect(query('[ match("."; "g")] | length', ['abc'])).toEqual([3]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
     expect(query('range(0,1;3,4)', [undefined])).toEqual([0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]);
