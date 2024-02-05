@@ -142,24 +142,35 @@ class Tokenizer {
     }
   }
 
-  next() {
+  next(strip = true) {
     const s = this.peek();
     this.head = this.head.slice(s.s.length);
+    if (strip) this.strip();
     return s;
   }
 
-  expect(s: string) {
-    if (this.peek().s === s) return this.next();
+  expect(s: string, strip = true) {
+    if (this.peek().s === s) return this.next(strip);
     else throw new Error(`Expected: ${s}, found ${this.peek().s}`);
   }
 
   strip() {
-    if (this.peek().type !== 'sep') return;
+    if (this.peek().type !== 'sep') return this;
     this.head = this.head.slice(this.peek().s.length);
+    return this;
   }
 
   accept(s: string) {
     return this.peek().s === s && this.next();
+  }
+
+  keepWhitespace() {
+    return {
+      next: () => this.next(false),
+      expect: (s: string) => this.expect(s, false),
+      accept: (s: string) => this.peek().s === s && this.next(false),
+      peek: () => this.peek()
+    };
   }
 }
 
@@ -234,8 +245,6 @@ class OObject {
     let currentKey: OLiteral | Generator | undefined = undefined;
 
     while (s.peek().s !== '}') {
-      s.strip();
-
       if (s.peek().type === 'id') {
         currentKey = new OLiteral(s.next().s);
 
@@ -262,7 +271,6 @@ class OObject {
       }
     }
 
-    s.strip();
     s.expect('}');
 
     return obj;
@@ -305,7 +313,6 @@ class OArray {
     const arr = new OArray();
 
     while (s.peek().s !== ']') {
-      s.strip();
       arr.value.push(OObjects.parseNext(s));
       if (!s.accept(',')) break;
     }
@@ -954,30 +961,31 @@ const parsePathExpression = (
 ): Generator => {
   let left: Generator = new IdentityOp();
 
-  tokenizer.accept('.');
+  const wsTokenizer = tokenizer.keepWhitespace();
+  wsTokenizer.accept('.');
 
-  let token = tokenizer.peek();
+  let token = wsTokenizer.peek();
 
   return boundLoop(() => {
     if (token.type === 'id' || token.type === 'str') {
-      tokenizer.next();
+      wsTokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
-      const strict = !tokenizer.accept('?');
+      const strict = !wsTokenizer.accept('?');
       left = new PathExpression(left, new PropertyLookupOp(new Literal(s), strict));
     } else if (token.s === '[') {
-      tokenizer.next();
-      if (tokenizer.peek().s === ']') {
-        tokenizer.next();
+      wsTokenizer.next();
+      if (wsTokenizer.peek().s === ']') {
+        wsTokenizer.next();
         left = new PathExpression(left, new ArrayGenerator());
       } else {
-        const e1 = parseExpression(tokenizer, undefined, functions);
-        if (tokenizer.peek().s === ':') {
-          tokenizer.next();
-          const e2 = parseExpression(tokenizer, undefined, functions);
-          tokenizer.expect(']');
+        const e1 = parseExpression(tokenizer.strip(), undefined, functions);
+        if (wsTokenizer.peek().s === ':') {
+          wsTokenizer.next();
+          const e2 = parseExpression(tokenizer.strip(), undefined, functions);
+          wsTokenizer.expect(']');
           left = new PathExpression(left, new ArraySliceOp(e1, e2));
         } else {
-          tokenizer.expect(']');
+          wsTokenizer.expect(']');
           if (e1 instanceof Literal && typeof e1.value === 'string') {
             left = new PathExpression(left, new PropertyLookupOp(e1, true));
           } else {
@@ -986,12 +994,12 @@ const parsePathExpression = (
         }
       }
     } else if (token.s === '.') {
-      tokenizer.next();
+      wsTokenizer.next();
     } else {
       return left;
     }
 
-    token = tokenizer.peek();
+    token = wsTokenizer.peek();
   });
 };
 
@@ -1037,134 +1045,132 @@ class IfFilter implements Generator {
 }
 
 const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): Generator => {
-  const tok = tokenizer.peek();
-  if (tok.s === '[') {
-    tokenizer.next();
-    const inner =
-      tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, undefined, functions);
-    tokenizer.expect(']');
+  try {
+    const tok = tokenizer.peek();
+    if (tok.s === '[') {
+      tokenizer.next();
+      const inner =
+        tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, undefined, functions);
+      tokenizer.expect(']');
 
-    return new ArrayConstructor(inner);
-  } else if (tok.s === '(') {
-    tokenizer.next();
-    const inner = parseExpression(tokenizer, undefined, functions);
-    tokenizer.expect(')');
-    return new ParenExpression(inner);
-  } else if (tok.s === '.') {
-    return parsePathExpression(tokenizer, functions);
-  } else if (tok.s === '$') {
-    tokenizer.next();
-    return new VariableExpansion('$' + tokenizer.next().s);
-  } else if (tok.s === 'if') {
-    tokenizer.next();
-    tokenizer.strip();
+      return new ArrayConstructor(inner);
+    } else if (tok.s === '(') {
+      tokenizer.next();
+      const inner = parseExpression(tokenizer, undefined, functions);
+      tokenizer.expect(')');
+      return new ParenExpression(inner);
+    } else if (tok.s === '.') {
+      return parsePathExpression(tokenizer, functions);
+    } else if (tok.s === '$') {
+      tokenizer.next();
+      return new VariableExpansion('$' + tokenizer.next().s);
+    } else if (tok.s === 'if') {
+      tokenizer.next();
 
-    const condition = parseExpression(tokenizer, undefined, functions);
-    tokenizer.strip();
+      const condition = parseExpression(tokenizer, undefined, functions);
 
-    tokenizer.expect('then');
-    const ifConsequent = parseExpression(tokenizer, undefined, functions);
-    tokenizer.strip();
+      tokenizer.expect('then');
+      const ifConsequent = parseExpression(tokenizer, undefined, functions);
 
-    const elifs: [Generator, Generator][] = [];
+      const elifs: [Generator, Generator][] = [];
 
-    return boundLoop(() => {
-      if (tokenizer.accept('else')) {
-        const elseConsequent = parseExpression(tokenizer, undefined, functions);
-        tokenizer.expect('end');
-        return new IfFilter(condition, ifConsequent, elifs, elseConsequent);
-      } else if (tokenizer.accept('elif')) {
-        const elifCondition = parseExpression(tokenizer, undefined, functions);
-        tokenizer.strip();
-        tokenizer.expect('then');
-        const elifConsequent = parseExpression(tokenizer, undefined, functions);
-        elifs.push([elifCondition, elifConsequent]);
-      } else {
-        tokenizer.expect('end');
-        return new IfFilter(condition, ifConsequent, []);
-      }
-    });
-  } else if (tok.s === 'def') {
-    tokenizer.next();
-    tokenizer.strip();
-
-    const name = tokenizer.next();
-
-    const args: string[] = [];
-    if (tokenizer.peek().s === '(') {
-      tokenizer.expect('(');
-      boundLoop(() => {
-        args.push(tokenizer.next().s);
-        tokenizer.strip();
-        if (!tokenizer.accept(';')) return true;
+      return boundLoop(() => {
+        if (tokenizer.accept('else')) {
+          const elseConsequent = parseExpression(tokenizer, undefined, functions);
+          tokenizer.expect('end');
+          return new IfFilter(condition, ifConsequent, elifs, elseConsequent);
+        } else if (tokenizer.accept('elif')) {
+          const elifCondition = parseExpression(tokenizer, undefined, functions);
+          tokenizer.expect('then');
+          const elifConsequent = parseExpression(tokenizer, undefined, functions);
+          elifs.push([elifCondition, elifConsequent]);
+        } else {
+          tokenizer.expect('end');
+          return new IfFilter(condition, ifConsequent, []);
+        }
       });
-      tokenizer.expect(')');
-    }
+    } else if (tok.s === 'def') {
+      tokenizer.next();
 
-    tokenizer.expect(':');
+      const name = tokenizer.next();
 
-    const innerFunctions = { ...functions, [name.s]: args.length };
-    args.forEach(e => (innerFunctions[e] = 0));
-    const body = parseExpression(tokenizer, undefined, innerFunctions);
-
-    functions[name.s] = args.length;
-
-    tokenizer.accept(';');
-
-    return new FunctionDef(name.s, args, body);
-
-    /* LITERALS ************************************************************************** */
-  } else if (tok.type === 'num') {
-    return new Literal(Number(tokenizer.next().s));
-  } else if (tok.s === '{') {
-    const res = OObjects.parse(tokenizer);
-    if (res.val.__generators) {
-      return new ObjectTemplate(res.val);
-    } else {
-      return new Literal(res.val);
-    }
-  } else if (tok.type === 'str') {
-    return new Literal(tokenizer.next().s.slice(1, -1));
-  } else if (tok.s === 'null') {
-    tokenizer.next();
-    return new Literal(null);
-  } else if (tok.s === 'false' || tok.s === 'true') {
-    tokenizer.next();
-    return new Literal(tok.s === 'true');
-
-    /* FUNCTIONS ************************************************************************** */
-  } else if (tok.type === 'id') {
-    const op = tok.s;
-    tokenizer.next();
-
-    if (op in FN_REGISTRY) {
-      const reg = FN_REGISTRY[op];
-
-      if (!('args' in reg)) {
-        return reg.fn();
-      } else if (reg.args === '0&1' && tokenizer.peek().s !== '(') {
-        return reg.fn(undefined);
+      const args: string[] = [];
+      if (tokenizer.peek().s === '(') {
+        tokenizer.expect('(');
+        boundLoop(() => {
+          args.push(tokenizer.next().s);
+          if (!tokenizer.accept(';')) return true;
+        });
+        tokenizer.expect(')');
       }
 
-      tokenizer.expect('(');
-      const inner = parseArgList(tokenizer, functions);
-      tokenizer.expect(')');
+      tokenizer.expect(':');
 
-      return reg.fn(inner);
-    } else if (op in functions) {
-      const argCount = functions[op];
-      if (argCount === 0) {
-        return new FunctionCall(op);
+      const innerFunctions = { ...functions, [name.s]: args.length };
+      args.forEach(e => (innerFunctions[e] = 0));
+      const body = parseExpression(tokenizer, undefined, innerFunctions);
+
+      functions[name.s] = args.length;
+
+      tokenizer.accept(';');
+
+      return new FunctionDef(name.s, args, body);
+
+      /* LITERALS ************************************************************************** */
+    } else if (tok.type === 'num') {
+      return new Literal(Number(tokenizer.next().s));
+    } else if (tok.s === '{') {
+      const res = OObjects.parse(tokenizer);
+      if (res.val.__generators) {
+        return new ObjectTemplate(res.val);
       } else {
+        return new Literal(res.val);
+      }
+    } else if (tok.type === 'str') {
+      return new Literal(tokenizer.next().s.slice(1, -1));
+    } else if (tok.s === 'null') {
+      tokenizer.next();
+      return new Literal(null);
+    } else if (tok.s === 'false' || tok.s === 'true') {
+      tokenizer.next();
+      return new Literal(tok.s === 'true');
+
+      /* FUNCTIONS ************************************************************************** */
+    } else if (tok.type === 'id') {
+      const op = tok.s;
+      tokenizer.next();
+
+      if (op in FN_REGISTRY) {
+        const reg = FN_REGISTRY[op];
+
+        if (!('args' in reg)) {
+          return reg.fn();
+        } else if (reg.args === '0&1' && tokenizer.peek().s !== '(') {
+          return reg.fn(undefined);
+        }
+
         tokenizer.expect('(');
-        const arg = parseArgList(tokenizer, functions);
+        const inner = parseArgList(tokenizer, functions);
         tokenizer.expect(')');
 
-        return new FunctionCall(op, arg);
+        return reg.fn(inner);
+      } else if (op in functions) {
+        const argCount = functions[op];
+        if (argCount === 0) {
+          return new FunctionCall(op);
+        } else {
+          tokenizer.expect('(');
+          const arg = parseArgList(tokenizer, functions);
+          tokenizer.expect(')');
+
+          return new FunctionCall(op, arg);
+        }
+      } else {
+        throw new Error('Unknown function: ' + op);
       }
-    } else {
-      throw new Error('Unknown function: ' + op);
     }
+  } finally {
+    tokenizer.strip();
   }
 
   throw new Error('Parse operand: ' + tokenizer.head);
@@ -1175,13 +1181,9 @@ const parseExpression = (
   lastOp: string | undefined,
   functions: Record<string, number>
 ): Generator => {
-  tokenizer.strip();
-
   let left = parseOperand(tokenizer, functions);
 
   return boundLoop(() => {
-    tokenizer.strip();
-
     const tok = tokenizer.peek().s;
     if (tok === ';') return left;
 
@@ -1200,7 +1202,6 @@ const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): 
   const op = [];
   while (tokenizer.peek().s !== ')') {
     op.push(parseExpression(tokenizer, undefined, functions));
-    tokenizer.strip();
     if (!tokenizer.accept(';')) break;
   }
   return new ArgList(op);
