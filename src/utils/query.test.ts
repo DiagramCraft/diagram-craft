@@ -507,7 +507,7 @@ describe('variable binding', () => {
 });
 
 describe('if', () => {
-  test.only('if . == 0 then "zero" elif . == 1 then "one" else "many" end', () => {
+  test('if . == 0 then "zero" elif . == 1 then "one" else "many" end', () => {
     expect(query('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [0])).toEqual([
       'zero'
     ]);
@@ -520,9 +520,32 @@ describe('if', () => {
   });
 });
 
+describe('empty', () => {
+  test('1, empty, 2', () => {
+    expect(query('1, empty, 2', [undefined])).toEqual([1, 2]);
+  });
+
+  test('[1,2,empty,3]', () => {
+    expect(query('[1,2,empty,3]', [undefined])).toEqual([[1, 2, 3]]);
+  });
+});
+
+describe('comment', () => {
+  test('1, # empty, 2', () => {
+    expect(
+      query(
+        `4,
+    # 3, 
+    2`,
+        [undefined]
+      )
+    ).toEqual([4, 2]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
-    expect(query('range(0,1;3,4)', [undefined])).toEqual([[0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]]);
+    expect(query('range(0,1;3,4)', [undefined])).toEqual([0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]);
   });
 
   test('.elements[] | select(.id == "2" or .id == "4")', () => {

@@ -6,7 +6,6 @@ import { newid } from './id.ts';
 TODO:
   try/catch
   regexp
-  comments
   string interpolation
 */
 
@@ -137,7 +136,10 @@ class Tokenizer {
 
   peek(): Token {
     let m;
-    if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?/))) {
+
+    if ((m = this.head.match(/^#.*/))) {
+      return { s: m[0], type: 'sep' };
+    } else if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?/))) {
       return { s: m[0], type: 'num' };
     } else if ((m = this.head.match(/^"[^"]*"/))) {
       return { s: m[0], type: 'str' };
@@ -171,8 +173,9 @@ class Tokenizer {
   }
 
   strip() {
-    if (this.peek().type !== 'sep') return this;
-    this.head = this.head.slice(this.peek().s.length);
+    while (this.peek().type === 'sep') {
+      this.head = this.head.slice(this.peek().s.length);
+    }
     return this;
   }
 
