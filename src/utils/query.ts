@@ -2,6 +2,13 @@
 import { isTaggedType, tag, TaggedType } from './types.ts';
 import { newid } from './id.ts';
 
+const BACKTRACK_ERROR = Symbol('backtrack');
+
+const handleError = (e: unknown) => {
+  if (e === BACKTRACK_ERROR) return;
+  throw e;
+};
+
 const isObj = (x: unknown): x is Record<string, unknown> =>
   typeof x === 'object' && !Array.isArray(x);
 
@@ -57,7 +64,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   cos: { fn: () => new MathFilter(Math.cos) },
   sin: { fn: () => new MathFilter(Math.sin) },
   sqrt: { fn: () => new MathFilter(Math.sqrt) },
-  add: { fn: () => new ArrayFilter(new IdentityOp(), Array_Add) }
+  add: { fn: () => new ArrayFilter(new IdentityOp(), Array_Add) },
+  empty: { fn: () => new EmptyFilter() }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -184,8 +192,12 @@ abstract class BaseGenerator<T extends Array<any> = unknown[]> implements Genera
   constructor(protected readonly generators: Generator[] = []) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    for (const e of input) {
-      yield* this.handleInput(e, bindings);
+    try {
+      for (const e of input) {
+        yield* this.handleInput(e, bindings);
+      }
+    } catch (e) {
+      handleError(e);
     }
   }
 
@@ -365,7 +377,11 @@ class PipeGenerator implements Generator {
   ) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    yield* this.right.iterable(this.left.iterable(input, bindings), bindings);
+    try {
+      yield* this.right.iterable(this.left.iterable(input, bindings), bindings);
+    } catch (e) {
+      handleError(e);
+    }
   }
 }
 
@@ -600,10 +616,14 @@ class ArgList implements Generator {
   constructor(public readonly args: Generator[]) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    if (this.args.length === 1) {
-      yield* this.args[0].iterable(input, bindings);
-    } else {
-      yield* iterateAll(this.args, 0, input, [], bindings);
+    try {
+      if (this.args.length === 1) {
+        yield* this.args[0].iterable(input, bindings);
+      } else {
+        yield* iterateAll(this.args, 0, input, [], bindings);
+      }
+    } catch (e) {
+      handleError(e);
     }
   }
 }
@@ -866,15 +886,17 @@ class FunctionCall extends BaseGenerator0 {
   }
 }
 
-class FunctionDef implements Generator {
+class FunctionDef extends BaseGenerator0 {
   constructor(
     public readonly identifier: string,
     public readonly arg: string[],
     public readonly body: Generator
-  ) {}
+  ) {
+    super();
+  }
 
   // eslint-disable-next-line require-yield
-  *iterable(_input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+  *handle(_input: Iterable<unknown>, _: [], bindings: Record<string, unknown>) {
     bindings[this.identifier] = {
       arg: this.arg,
       body: this.body
@@ -895,6 +917,12 @@ class RangeGenerator extends BaseGenerator {
 }
 
 class Noop extends BaseGenerator0 {}
+class EmptyFilter extends BaseGenerator0 {
+  // eslint-disable-next-line require-yield
+  *handle(_e: unknown) {
+    throw BACKTRACK_ERROR;
+  }
+}
 
 class LimitGenerator extends BaseGenerator1 {
   constructor(private readonly node: ArgList) {
@@ -969,38 +997,39 @@ const isTrue = (e: unknown) => {
   return e !== false && e !== undefined && e !== null;
 };
 
-class IfFilter implements Generator {
+class IfFilter extends BaseGenerator {
   constructor(
-    private readonly condition: Generator,
+    condition: Generator,
     private readonly ifConsequent: Generator,
     private readonly elifs: [Generator, Generator][],
     private readonly elseConsequent?: Generator
-  ) {}
+  ) {
+    super([condition, ...elifs.map(e => e[0])]);
+  }
 
-  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    for (const e of input) {
-      const conditions = [this.condition, ...this.elifs.map(e => e[0])];
-      for (const [ifCond, ...elifConds] of iterateAll(conditions, 0, [e], [], bindings)) {
-        if (isTrue(ifCond)) {
-          yield* this.ifConsequent.iterable([e], bindings);
-        } else {
-          let elifMatch = false;
-          for (let idx = 0; idx < elifConds.length; idx++) {
-            if (isTrue(elifConds[idx])) {
-              yield* this.elifs![idx][1].iterable([e], bindings);
-              elifMatch = true;
-              break;
-            }
-          }
-
-          if (elifMatch) continue;
-
-          if (this.elseConsequent) {
-            yield* this.elseConsequent.iterable([e], bindings);
-          } else {
-            yield e;
-          }
+  *handle(
+    e: unknown,
+    [ifCond, ...elifConds]: unknown[],
+    bindings: Record<string, unknown>
+  ): Iterable<unknown> {
+    if (isTrue(ifCond)) {
+      yield* this.ifConsequent.iterable([e], bindings);
+    } else {
+      let elifMatch = false;
+      for (let idx = 0; idx < elifConds.length; idx++) {
+        if (isTrue(elifConds[idx])) {
+          yield* this.elifs![idx][1].iterable([e], bindings);
+          elifMatch = true;
+          break;
         }
+      }
+
+      if (elifMatch) return;
+
+      if (this.elseConsequent) {
+        yield* this.elseConsequent.iterable([e], bindings);
+      } else {
+        yield e;
       }
     }
   }

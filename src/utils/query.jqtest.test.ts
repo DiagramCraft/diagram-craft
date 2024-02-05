@@ -311,6 +311,10 @@ describe('jqtest', () => {
     );
   });
 
+  test('[1,2,empty,3,empty,4]', () => {
+    expect(query('[1,2,empty,3,empty,4]', [undefined])).toEqual([[1, 2, 3, 4]]);
+  });
+
   test('map(add)', () => {
     expect(
       query('map(add)', [
@@ -491,9 +495,8 @@ describe('jqtest', () => {
     expect(query('[if 1,null,2 then 3 else 4 end]', [undefined])).toEqual([[3, 4, 3]]);
   });
 
-  // TODO: Fix this
-  test.skip('[if empty then 3 else 4 end]', () => {
-    expect(query('[if empty then 3 else 4 end]', [[]])).toEqual([3]);
+  test('[if empty then 3 else 4 end]', () => {
+    expect(query('[if empty then 3 else 4 end]', [[]])).toEqual([[]]);
   });
 
   test('[if 1 then 3,4 else 5 end]', () => {
