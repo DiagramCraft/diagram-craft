@@ -1003,30 +1003,35 @@ class IfFilter implements Generator {
   constructor(
     private readonly condition: Generator,
     private readonly ifConsequent: Generator,
-    private readonly elifs?: [Generator, Generator][],
+    private readonly elifs: [Generator, Generator][],
     private readonly elseConsequent?: Generator
   ) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
-    outer: for (const e of input) {
-      if (isTrue(exactOne(this.condition.iterable([e], bindings)))) {
-        yield* this.ifConsequent.iterable([e], bindings);
-        continue;
-      }
+    for (const e of input) {
+      const conditions = [this.condition, ...this.elifs.map(e => e[0])];
+      for (const [ifCond, ...elifConds] of iterateAll(conditions, 0, [e], [], bindings)) {
+        if (isTrue(ifCond)) {
+          yield* this.ifConsequent.iterable([e], bindings);
+        } else {
+          let elifMatch = false;
+          for (let idx = 0; idx < elifConds.length; idx++) {
+            if (isTrue(elifConds[idx])) {
+              yield* this.elifs![idx][1].iterable([e], bindings);
+              elifMatch = true;
+              break;
+            }
+          }
 
-      for (const [c, b] of this.elifs ?? []) {
-        if (isTrue(exactOne(c.iterable([e], bindings)))) {
-          yield* b.iterable([e], bindings);
-          continue outer;
+          if (elifMatch) continue;
+
+          if (this.elseConsequent) {
+            yield* this.elseConsequent.iterable([e], bindings);
+          } else {
+            yield e;
+          }
         }
       }
-
-      if (this.elseConsequent) {
-        yield* this.elseConsequent.iterable([e], bindings);
-        continue;
-      }
-
-      yield e;
     }
   }
 }
@@ -1076,7 +1081,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         elifs.push([elifCondition, elifConsequent]);
       } else {
         tokenizer.expect('end');
-        return new IfFilter(condition, ifConsequent);
+        return new IfFilter(condition, ifConsequent, []);
       }
     });
   } else if (tok.s === 'def') {

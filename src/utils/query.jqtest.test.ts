@@ -487,9 +487,8 @@ describe('jqtest', () => {
     ).toEqual([['yep', 'yep', 'yep', 'yep', 'nope', 'nope', 'yep', 'nope']]);
   });
 
-  // TODO: Fix this
-  test.skip('[if 1,null,2 then 3 else 4 end]', () => {
-    expect(query('[if 1,null,2 then 3 else 4 end]', [undefined])).toEqual([3, 4, 3]);
+  test('[if 1,null,2 then 3 else 4 end]', () => {
+    expect(query('[if 1,null,2 then 3 else 4 end]', [undefined])).toEqual([[3, 4, 3]]);
   });
 
   // TODO: Fix this
