@@ -2,6 +2,14 @@
 import { isTaggedType, tag, TaggedType } from './types.ts';
 import { newid } from './id.ts';
 
+/*
+TODO:
+  try/catch
+  regexp
+  comments
+  string interpolation
+*/
+
 const BACKTRACK_ERROR = Symbol('backtrack');
 
 const handleError = (e: unknown) => {
@@ -69,14 +77,14 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
-  '+': (l, r) => new AdditionBinaryOp(l, r),
-  '-': (l, r) => new SubtractionBinaryOp(l, r),
-  '%': (l, r) => new BinaryOp(l, r, (a, b) => safeNum(a) % safeNum(b)),
-  '*': (l, r) => new BinaryOp(l, r, (a, b) => safeNum(a) * safeNum(b)),
-  '/': (l, r) => new BinaryOp(l, r, (a, b) => safeNum(a) / safeNum(b)),
+  '+': (l, r) => new BinaryOp(l, r, add),
+  '-': (l, r) => new BinaryOp(l, r, subtract),
+  '%': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) % (b as number)),
+  '*': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) * (b as number)),
+  '/': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) / (b as number)),
   '//': (l, r) => new BinaryOp(l, r, (a, b) => a ?? b),
-  '==': (l, r) => new EqualsBinaryOp(l, r, false),
-  '!=': (l, r) => new EqualsBinaryOp(l, r, true),
+  '==': (l, r) => new BinaryOp(l, r, isEqual),
+  '!=': (l, r) => new BinaryOp(l, r, isNotEqual),
   '>=': (l, r) => new BinaryOp(l, r, (a: any, b: any) => a >= b),
   '>': (l, r) => new BinaryOp(l, r, (a: any, b: any) => a > b),
   '<=': (l, r) => new BinaryOp(l, r, (a: any, b: any) => a <= b),
@@ -385,12 +393,6 @@ class PipeGenerator implements Generator {
   }
 }
 
-class PathExpression extends PipeGenerator {
-  constructor(left: Generator, right: Generator) {
-    super(left, right);
-  }
-}
-
 class MathFilter extends BaseGenerator0 {
   constructor(private readonly fn: (a: number) => number) {
     super();
@@ -510,27 +512,15 @@ const add = (lvs: unknown, rvs: unknown) => {
   }
 };
 
-class AdditionBinaryOp extends BinaryOp {
-  constructor(left: Generator, right: Generator) {
-    super(left, right, (a, b) => add(a, b));
+const subtract = (lvs: unknown, rvs: unknown) => {
+  if (Array.isArray(lvs) && Array.isArray(rvs)) {
+    return lvs.filter(e => !rvs.includes(e));
+  } else if (isObj(lvs) && isObj(rvs)) {
+    return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
+  } else {
+    return safeNum(lvs) - safeNum(rvs);
   }
-}
-
-class SubtractionBinaryOp extends BinaryOp {
-  constructor(left: Generator, right: Generator) {
-    super(left, right, (lvs, rvs) => {
-      if (Array.isArray(lvs) && Array.isArray(rvs)) {
-        return lvs.filter(e => !rvs.includes(e));
-      } else if (isObj(lvs) && isObj(rvs)) {
-        return Object.fromEntries(
-          Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k))
-        );
-      } else {
-        return safeNum(lvs) - safeNum(rvs);
-      }
-    });
-  }
-}
+};
 
 class Literal implements Generator {
   constructor(public readonly value: unknown) {}
@@ -580,23 +570,15 @@ class SelectFn extends BaseGenerator1<boolean> {
   }
 }
 
-class EqualsBinaryOp extends BinaryOp {
-  constructor(
-    left: Generator,
-    right: Generator,
-    private readonly negate: boolean
-  ) {
-    super(left, right, (lvs, rvs) => {
-      if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
-        return this.negate
-          ? JSON.stringify(lvs) !== JSON.stringify(rvs)
-          : JSON.stringify(lvs) === JSON.stringify(rvs);
-      } else {
-        return this.negate ? lvs !== rvs : lvs === rvs;
-      }
-    });
+const isEqual = (lvs: unknown, rvs: unknown) => {
+  if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
+    return JSON.stringify(lvs) === JSON.stringify(rvs);
+  } else {
+    return lvs === rvs;
   }
-}
+};
+
+const isNotEqual = (lvs: unknown, rvs: unknown) => !isEqual(lvs, rvs);
 
 class VarBindingOp extends BaseGenerator1 {
   constructor(
@@ -961,25 +943,25 @@ const parsePathExpression = (
       wsTokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
       const strict = !wsTokenizer.accept('?');
-      left = new PathExpression(left, new PropertyLookupOp(new Literal(s), strict));
+      left = new PipeGenerator(left, new PropertyLookupOp(new Literal(s), strict));
     } else if (token.s === '[') {
       wsTokenizer.next();
       if (wsTokenizer.peek().s === ']') {
         wsTokenizer.next();
-        left = new PathExpression(left, new ArrayGenerator());
+        left = new PipeGenerator(left, new ArrayGenerator());
       } else {
-        const e1 = parseExpression(tokenizer.strip(), undefined, functions);
+        const e1 = parseExpression(tokenizer.strip(), functions);
         if (wsTokenizer.peek().s === ':') {
           wsTokenizer.next();
-          const e2 = parseExpression(tokenizer.strip(), undefined, functions);
+          const e2 = parseExpression(tokenizer.strip(), functions);
           wsTokenizer.expect(']');
-          left = new PathExpression(left, new ArraySliceOp(e1, e2));
+          left = new PipeGenerator(left, new ArraySliceOp(e1, e2));
         } else {
           wsTokenizer.expect(']');
           if (e1 instanceof Literal && typeof e1.value === 'string') {
-            left = new PathExpression(left, new PropertyLookupOp(e1, true));
+            left = new PipeGenerator(left, new PropertyLookupOp(e1, true));
           } else {
-            left = new PathExpression(left, new ArrayIndexOp(e1));
+            left = new PipeGenerator(left, new ArrayIndexOp(e1));
           }
         }
       }
@@ -1040,14 +1022,13 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     const tok = tokenizer.peek();
     if (tok.s === '[') {
       tokenizer.next();
-      const inner =
-        tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, undefined, functions);
+      const inner = tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, functions);
       tokenizer.expect(']');
 
       return new ArrayConstructor(inner);
     } else if (tok.s === '(') {
       tokenizer.next();
-      const inner = parseExpression(tokenizer, undefined, functions);
+      const inner = parseExpression(tokenizer, functions);
       tokenizer.expect(')');
       return new ParenExpression(inner);
     } else if (tok.s === '.') {
@@ -1058,22 +1039,22 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
     } else if (tok.s === 'if') {
       tokenizer.next();
 
-      const condition = parseExpression(tokenizer, undefined, functions);
-
+      const condition = parseExpression(tokenizer, functions);
       tokenizer.expect('then');
-      const ifConsequent = parseExpression(tokenizer, undefined, functions);
+
+      const ifConsequent = parseExpression(tokenizer, functions);
 
       const elifs: [Generator, Generator][] = [];
 
       return boundLoop(() => {
         if (tokenizer.accept('else')) {
-          const elseConsequent = parseExpression(tokenizer, undefined, functions);
+          const elseConsequent = parseExpression(tokenizer, functions);
           tokenizer.expect('end');
           return new IfFilter(condition, ifConsequent, elifs, elseConsequent);
         } else if (tokenizer.accept('elif')) {
-          const elifCondition = parseExpression(tokenizer, undefined, functions);
+          const elifCondition = parseExpression(tokenizer, functions);
           tokenizer.expect('then');
-          const elifConsequent = parseExpression(tokenizer, undefined, functions);
+          const elifConsequent = parseExpression(tokenizer, functions);
           elifs.push([elifCondition, elifConsequent]);
         } else {
           tokenizer.expect('end');
@@ -1088,20 +1069,20 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       const args: string[] = [];
       if (tokenizer.peek().s === '(') {
         tokenizer.expect('(');
-        boundLoop(() => {
+        while (tokenizer.peek().s !== ')') {
           args.push(tokenizer.next().s);
-          if (!tokenizer.accept(';')) return true;
-        });
+          if (!tokenizer.accept(';')) break;
+        }
         tokenizer.expect(')');
       }
 
       tokenizer.expect(':');
 
-      const innerFunctions = { ...functions, [name.s]: args.length };
-      args.forEach(e => (innerFunctions[e] = 0));
-      const body = parseExpression(tokenizer, undefined, innerFunctions);
-
       functions[name.s] = args.length;
+
+      const innerFunctions = { ...functions };
+      args.forEach(e => (innerFunctions[e] = 0));
+      const body = parseExpression(tokenizer, innerFunctions, undefined);
 
       tokenizer.accept(';');
 
@@ -1140,22 +1121,12 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
           return reg.fn(undefined);
         }
 
-        tokenizer.expect('(');
-        const inner = parseArgList(tokenizer, functions);
-        tokenizer.expect(')');
-
-        return reg.fn(inner);
+        return reg.fn(parseArgList(tokenizer, functions));
       } else if (op in functions) {
-        const argCount = functions[op];
-        if (argCount === 0) {
-          return new FunctionCall(op);
-        } else {
-          tokenizer.expect('(');
-          const arg = parseArgList(tokenizer, functions);
-          tokenizer.expect(')');
-
-          return new FunctionCall(op, arg);
-        }
+        return new FunctionCall(
+          op,
+          functions[op] === 0 ? undefined : parseArgList(tokenizer, functions)
+        );
       } else {
         throw new Error('Unknown function: ' + op);
       }
@@ -1169,8 +1140,8 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
 const parseExpression = (
   tokenizer: Tokenizer,
-  lastOp: string | undefined,
-  functions: Record<string, number>
+  functions: Record<string, number>,
+  lastOp?: string
 ): Generator => {
   let left = parseOperand(tokenizer, functions);
 
@@ -1181,7 +1152,7 @@ const parseExpression = (
     if (!!BINOP_REGISTRY[tok] && (BINOP_ORDERING[tok] ?? 0) > (BINOP_ORDERING[lastOp ?? ''] ?? 0)) {
       const op = tokenizer.next().s;
 
-      const right = parseExpression(tokenizer, op, functions);
+      const right = parseExpression(tokenizer, functions, op);
       left = BINOP_REGISTRY[op](left, right);
     } else {
       return left;
@@ -1190,11 +1161,13 @@ const parseExpression = (
 };
 
 const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): ArgList => {
+  tokenizer.expect('(');
   const op = [];
   while (tokenizer.peek().s !== ')') {
-    op.push(parseExpression(tokenizer, undefined, functions));
+    op.push(parseExpression(tokenizer, functions));
     if (!tokenizer.accept(';')) break;
   }
+  tokenizer.expect(')');
   return new ArgList(op);
 };
 
@@ -1204,7 +1177,7 @@ export const parse = (query: string): Generator => {
   const functions = {};
   const op = [];
   while (tokenizer.peek().type !== 'end') {
-    op.push(parseExpression(tokenizer, undefined, functions));
+    op.push(parseExpression(tokenizer, functions));
   }
 
   return op.reduceRight((a, b) => new ConcatenationGenerator(b, a));
