@@ -439,12 +439,90 @@ describe('jqtest', () => {
     ).toEqual([[33, 101]]);
   });
 
+  test('def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]', () => {
+    expect(
+      query('def fac: if . == 1 then 1 else . * (. - 1 | fac) end; [.[] | fac]', [[1, 2, 3, 4]])
+    ).toEqual([[1, 2, 6, 24]]);
+  });
+
   test('[any,all]', () => {
     expect(query('[any,all]', [[]])).toEqual([[false, true]]);
     expect(query('[any,all]', [[true]])).toEqual([[true, true]]);
     expect(query('[any,all]', [[false]])).toEqual([[false, false]]);
     expect(query('[any,all]', [[true, false]])).toEqual([[true, false]]);
     expect(query('[any,all]', [[undefined, undefined, true]])).toEqual([[true, false]]);
+  });
+
+  test('[.[] | if .foo then "yep" else "nope" end]', () => {
+    expect(
+      query('[.[] | if .foo then "yep" else "nope" end]', [
+        [
+          { foo: 0 },
+          { foo: 1 },
+          { foo: [] },
+          { foo: true },
+          { foo: false },
+          { foo: null },
+          { foo: 'foo' },
+          {}
+        ]
+      ])
+    ).toEqual([['yep', 'yep', 'yep', 'yep', 'nope', 'nope', 'yep', 'nope']]);
+  });
+
+  test('[.[] | if .baz then "strange" elif .foo then "yep" else "nope" end]', () => {
+    expect(
+      query('[.[] | if .baz then "strange" elif .foo then "yep" else "nope" end]', [
+        [
+          { foo: 0 },
+          { foo: 1 },
+          { foo: [] },
+          { foo: true },
+          { foo: false },
+          { foo: null },
+          { foo: 'foo' },
+          {}
+        ]
+      ])
+    ).toEqual([['yep', 'yep', 'yep', 'yep', 'nope', 'nope', 'yep', 'nope']]);
+  });
+
+  // TODO: Fix this
+  test.skip('[if 1,null,2 then 3 else 4 end]', () => {
+    expect(query('[if 1,null,2 then 3 else 4 end]', [undefined])).toEqual([3, 4, 3]);
+  });
+
+  // TODO: Fix this
+  test.skip('[if empty then 3 else 4 end]', () => {
+    expect(query('[if empty then 3 else 4 end]', [[]])).toEqual([3]);
+  });
+
+  test('[if 1 then 3,4 else 5 end]', () => {
+    expect(query('[if 1 then 3,4 else 5 end]', [undefined])).toEqual([[3, 4]]);
+  });
+
+  test('[if null then 3 else 5,6 end]', () => {
+    expect(query('[if null then 3 else 5,6 end]', [undefined])).toEqual([[5, 6]]);
+  });
+
+  test('[if true then 3 end]', () => {
+    expect(query('[if true then 3 end]', [7])).toEqual([[3]]);
+  });
+
+  test('[if false then 3 end]', () => {
+    expect(query('[if false then 3 end]', [7])).toEqual([[7]]);
+  });
+
+  test('[if false then 3 else . end]', () => {
+    expect(query('[if false then 3 else . end]', [7])).toEqual([[7]]);
+  });
+
+  test('[if false then 3 elif false then 4 end]', () => {
+    expect(query('[if false then 3 elif false then 4 end]', [7])).toEqual([[7]]);
+  });
+
+  test('[if false then 3 elif false then 4 else . end]', () => {
+    expect(query('[if false then 3 elif false then 4 else . end]', [7])).toEqual([[7]]);
   });
 
   // TODO: Fix
@@ -725,8 +803,7 @@ describe('jqtest', () => {
     expect(query('[range(10)] | .[1.7:-4294967296]', [undefined])).toEqual([[]]);
   });
 
-  // TODO: Fix
-  test.skip('[[range(10)] | .[1.1,1.5,1.7]]', () => {
+  test('[[range(10)] | .[1.1,1.5,1.7]]', () => {
     expect(query('[[range(10)] | .[1.1,1.5,1.7]]', [undefined])).toEqual([[1, 1, 1]]);
   });
 });

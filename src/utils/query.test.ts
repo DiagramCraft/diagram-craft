@@ -506,6 +506,20 @@ describe('variable binding', () => {
   });
 });
 
+describe('if', () => {
+  test.only('if . == 0 then "zero" elif . == 1 then "one" else "many" end', () => {
+    expect(query('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [0])).toEqual([
+      'zero'
+    ]);
+    expect(query('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [1])).toEqual([
+      'one'
+    ]);
+    expect(query('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [2])).toEqual([
+      'many'
+    ]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
     const data = {

@@ -995,6 +995,42 @@ const parsePathExpression = (
   });
 };
 
+const isTrue = (e: unknown) => {
+  return e !== false && e !== undefined && e !== null;
+};
+
+class IfFilter implements Generator {
+  constructor(
+    private readonly condition: Generator,
+    private readonly ifConsequent: Generator,
+    private readonly elifs?: [Generator, Generator][],
+    private readonly elseConsequent?: Generator
+  ) {}
+
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    outer: for (const e of input) {
+      if (isTrue(exactOne(this.condition.iterable([e], bindings)))) {
+        yield* this.ifConsequent.iterable([e], bindings);
+        continue;
+      }
+
+      for (const [c, b] of this.elifs ?? []) {
+        if (isTrue(exactOne(c.iterable([e], bindings)))) {
+          yield* b.iterable([e], bindings);
+          continue outer;
+        }
+      }
+
+      if (this.elseConsequent) {
+        yield* this.elseConsequent.iterable([e], bindings);
+        continue;
+      }
+
+      yield e;
+    }
+  }
+}
+
 const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): Generator => {
   const tok = tokenizer.peek();
   if (tok.s === '[') {
@@ -1014,6 +1050,35 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
   } else if (tok.s === '$') {
     tokenizer.next();
     return new VariableExpansion('$' + tokenizer.next().s);
+  } else if (tok.s === 'if') {
+    tokenizer.next();
+    tokenizer.strip();
+
+    const condition = parseExpression(tokenizer, undefined, functions);
+    tokenizer.strip();
+
+    tokenizer.expect('then');
+    const ifConsequent = parseExpression(tokenizer, undefined, functions);
+    tokenizer.strip();
+
+    const elifs: [Generator, Generator][] = [];
+
+    return boundLoop(() => {
+      if (tokenizer.accept('else')) {
+        const elseConsequent = parseExpression(tokenizer, undefined, functions);
+        tokenizer.expect('end');
+        return new IfFilter(condition, ifConsequent, elifs, elseConsequent);
+      } else if (tokenizer.accept('elif')) {
+        const elifCondition = parseExpression(tokenizer, undefined, functions);
+        tokenizer.strip();
+        tokenizer.expect('then');
+        const elifConsequent = parseExpression(tokenizer, undefined, functions);
+        elifs.push([elifCondition, elifConsequent]);
+      } else {
+        tokenizer.expect('end');
+        return new IfFilter(condition, ifConsequent);
+      }
+    });
   } else if (tok.s === 'def') {
     tokenizer.next();
     tokenizer.strip();
