@@ -7,6 +7,48 @@ TODO:
   string interpolation
 */
 
+/** Utils ****************************************************************************** */
+
+// To ensure no infinite loops
+const boundLoop = <T>(fn: () => T) => {
+  let i = 0;
+  while (i++ < 1000) {
+    const res = fn();
+    if (res !== undefined) return res;
+  }
+  throw error(100);
+};
+
+const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
+
+function* iterateAll(
+  generators: Generator[],
+  idx: number,
+  input: Iterable<unknown>,
+  arr: unknown[],
+  bindings: Record<string, unknown>
+): Iterable<unknown[]> {
+  for (const a of generators[idx].iterable(input, bindings)) {
+    const nc = [...arr, a];
+    if (idx === generators.length - 1) {
+      yield nc;
+    } else {
+      yield* iterateAll(generators, idx + 1, input, nc, bindings);
+    }
+  }
+}
+
+const exactOne = (it: Iterable<unknown>) => {
+  const arr = [...it];
+  if (arr.length !== 1) throw new Error();
+  return arr[0];
+};
+
+const isObj = (x: unknown): x is Record<string, unknown> =>
+  typeof x === 'object' && !Array.isArray(x);
+
+/** Error handling ********************************************************************* */
+
 const BACKTRACK_ERROR = Symbol('backtrack');
 
 const handleError = (e: unknown) => {
@@ -27,65 +69,101 @@ const error = (code: keyof Errors, ...params: string[]) => {
   throw new Error(`Error ${code}: ${params}`);
 };
 
-const isObj = (x: unknown): x is Record<string, unknown> =>
-  typeof x === 'object' && !Array.isArray(x);
+/** Data types ************************************************************************* */
+
+const add = (lvs: unknown, rvs: unknown) => {
+  if (Array.isArray(lvs) && Array.isArray(rvs)) {
+    return [...lvs, ...rvs];
+  } else if (typeof lvs === 'string' && typeof rvs === 'string') {
+    return lvs + rvs;
+  } else if (isObj(lvs) && isObj(rvs)) {
+    return { ...lvs, ...rvs };
+  } else {
+    return safeNum(lvs) + safeNum(rvs);
+  }
+};
+
+const subtract = (lvs: unknown, rvs: unknown) => {
+  if (Array.isArray(lvs) && Array.isArray(rvs)) {
+    return lvs.filter(e => !rvs.includes(e));
+  } else if (isObj(lvs) && isObj(rvs)) {
+    return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
+  } else {
+    return safeNum(lvs) - safeNum(rvs);
+  }
+};
+
+const isEqual = (lvs: unknown, rvs: unknown) => {
+  if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
+    return JSON.stringify(lvs) === JSON.stringify(rvs);
+  } else {
+    return lvs === rvs;
+  }
+};
+
+const isNotEqual = (lvs: unknown, rvs: unknown) => !isEqual(lvs, rvs);
+
+const isTrue = (e: unknown) => e !== false && e !== undefined && e !== null;
+
+/** Functions ************************************************************************** */
 
 type FnRegistration =
   | { fn: () => Generator }
-  | { args: '1'; fn: (arg: ArgList) => Generator }
-  | { args: '0&1'; fn: (arg: ArgList | undefined) => Generator };
+  | { args: '1'; fn: (arg: ArgListOp) => Generator }
+  | { args: '0&1'; fn: (arg: ArgListOp | undefined) => Generator };
 type BinaryOpRegistration = (l: Generator, r: Generator) => Generator;
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
-  '..': { fn: () => new RecursiveDescentGenerator() },
-  not: { fn: () => new NotFilter() },
-  length: { fn: () => new LengthFilter() },
-  has: { args: '1', fn: a => new HasFn(a) },
-  in: { args: '1', fn: a => new InFn(a) },
-  map: { args: '1', fn: a => new ArrayConstructor(new PipeGenerator(new ArrayGenerator(), a)) },
-  map_values: { args: '1', fn: a => new MapValuesFn(a) },
-  select: { args: '1', fn: a => new SelectFn(a) },
-  any: { fn: () => new AnyFilter() },
-  all: { fn: () => new AllFilter() },
-  unique_by: { args: '1', fn: a => new ArrayFilter(a, Array_Unique) },
-  unique: { fn: () => new ArrayFilter(new IdentityOp(), Array_Unique) },
-  min_by: { args: '1', fn: a => new ArrayFilter(a, Array_Min) },
-  min: { fn: () => new ArrayFilter(new IdentityOp(), Array_Min) },
-  max_by: { args: '1', fn: a => new ArrayFilter(a, Array_Max) },
-  max: { fn: () => new ArrayFilter(new IdentityOp(), Array_Max) },
-  group_by: { args: '1', fn: a => new ArrayFilter(a, Array_GroupBy) },
-  startswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.startsWith(b)) },
-  endswith: { args: '1', fn: a => new StringFn(a, (a, b) => a.endsWith(b)) },
-  abs: { fn: () => new AbsFilter() },
-  keys: { fn: () => new KeysFilter() },
-  split: { args: '1', fn: a => new StringFn(a, (a, b) => a.split(b)) },
-  join: { args: '1', fn: a => new JoinFn(a) },
-  contains: { args: '1', fn: a => new ContainsFn(a) },
-  range: { args: '1', fn: a => new RangeGenerator(a.args) },
-  limit: { args: '1', fn: a => new LimitGenerator(a) },
+  '..': { fn: () => new RecursiveDescentOp() },
+  not: { fn: () => new NotOp() },
+  length: { fn: () => new LengthOp() },
+  has: { args: '1', fn: a => new HasOp(a) },
+  in: { args: '1', fn: a => new InOp(a) },
+  map: { args: '1', fn: a => new ArrayConstructionOp(new PipeOp(new ArrayOp(), a)) },
+  map_values: { args: '1', fn: a => new MapValuesOp(a) },
+  select: { args: '1', fn: a => new SelectOp(a) },
+  any: { fn: () => new AnyOp() },
+  all: { fn: () => new AllOp() },
+  unique_by: { args: '1', fn: a => new BaseArrayOp(Array_Unique, a) },
+  unique: { fn: () => new BaseArrayOp(Array_Unique) },
+  min_by: { args: '1', fn: a => new BaseArrayOp(Array_Min, a) },
+  min: { fn: () => new BaseArrayOp(Array_Min) },
+  max_by: { args: '1', fn: a => new BaseArrayOp(Array_Max, a) },
+  max: { fn: () => new BaseArrayOp(Array_Max) },
+  group_by: { args: '1', fn: a => new BaseArrayOp(Array_GroupBy, a) },
+  startswith: { args: '1', fn: a => new StringOp(a, (a, b) => a.startsWith(b)) },
+  endswith: { args: '1', fn: a => new StringOp(a, (a, b) => a.endsWith(b)) },
+  abs: { fn: () => new AbsOp() },
+  keys: { fn: () => new KeysOp() },
+  split: { args: '1', fn: a => new StringOp(a, (a, b) => a.split(b)) },
+  join: { args: '1', fn: a => new JoinOp(a) },
+  contains: { args: '1', fn: a => new ContainsOp(a) },
+  range: { args: '1', fn: a => new RangeOp(a.args) },
+  limit: { args: '1', fn: a => new LimitOp(a) },
   first: {
     args: '0&1',
-    fn: a => new NthFilter(a ? (a.args.unshift(new Literal(0)), a) : new ArgList([new Literal(0)]))
+    fn: a =>
+      new NthOp(a ? (a.args.unshift(new LiteralOp(0)), a) : new ArgListOp([new LiteralOp(0)]))
   },
   last: {
     args: '0&1',
     fn: a =>
-      new NthFilter(a ? (a.args.unshift(new Literal(-1)), a) : new ArgList([new Literal(-1)]))
+      new NthOp(a ? (a.args.unshift(new LiteralOp(-1)), a) : new ArgListOp([new LiteralOp(-1)]))
   },
   flatten: {
     args: '0&1',
-    fn: a => new FlattenFilter(a ?? new ArgList([new Literal(100)]))
+    fn: a => new FlattenOp(a ?? new ArgListOp([new LiteralOp(100)]))
   },
-  nth: { args: '1', fn: a => new NthFilter(a) },
-  floor: { fn: () => new MathFilter(Math.floor) },
-  atan: { fn: () => new MathFilter(Math.atan) },
-  cos: { fn: () => new MathFilter(Math.cos) },
-  sin: { fn: () => new MathFilter(Math.sin) },
-  sqrt: { fn: () => new MathFilter(Math.sqrt) },
-  add: { fn: () => new ArrayFilter(new IdentityOp(), Array_Add) },
-  empty: { fn: () => new EmptyFilter() },
-  test: { args: '1', fn: a => new MatchFilter(a, true) },
-  match: { args: '1', fn: a => new MatchFilter(a) }
+  nth: { args: '1', fn: a => new NthOp(a) },
+  floor: { fn: () => new MathOp(Math.floor) },
+  atan: { fn: () => new MathOp(Math.atan) },
+  cos: { fn: () => new MathOp(Math.cos) },
+  sin: { fn: () => new MathOp(Math.sin) },
+  sqrt: { fn: () => new MathOp(Math.sqrt) },
+  add: { fn: () => new BaseArrayOp(Array_Add) },
+  empty: { fn: () => new EmptyOp() },
+  test: { args: '1', fn: a => new MatchOp(a, true) },
+  match: { args: '1', fn: a => new MatchOp(a) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -103,9 +181,9 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '<': (l, r) => new BinaryOp(l, r, (a: any, b: any) => a < b),
   and: (l, r) => new BinaryOp(l, r, (a, b) => !!(a && b)),
   or: (l, r) => new BinaryOp(l, r, (a, b) => !!(a || b)),
-  '|': (l, r) => new PipeGenerator(l, r),
-  ',': (l, r) => new ConcatenationGenerator(l, r),
-  ';': (l, r) => new ConcatenationGenerator(l, r),
+  '|': (l, r) => new PipeOp(l, r),
+  ',': (l, r) => new ConcatenationOp(l, r),
+  ';': (l, r) => new ConcatenationOp(l, r),
   as: (l, r) => new VarBindingOp(l, r)
 };
 
@@ -123,17 +201,7 @@ const BINOP_ORDERING = Object.fromEntries(
   ].flatMap((e, idx) => e.map(a => [a, idx * 10])) as [string, number][]
 );
 
-// To ensure no infinite loops
-const boundLoop = <T>(fn: () => T) => {
-  let i = 0;
-  while (i++ < 1000) {
-    const res = fn();
-    if (res !== undefined) return res;
-  }
-  throw error(100);
-};
-
-const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
+/** Tokenizer ********************************************************************* */
 
 type Token = {
   s: string;
@@ -206,6 +274,15 @@ class Tokenizer {
   }
 }
 
+/** Base generators ********************************************************************* */
+
+type ArrayFn = (arr: [unknown, unknown][]) => [unknown, unknown][] | TaggedType<'single', unknown>;
+
+type FnDef = {
+  arg?: string[];
+  body: Generator;
+};
+
 const isGenerator = (o: unknown): o is Generator => 'iterable' in (o as any);
 
 interface Generator {
@@ -260,6 +337,8 @@ abstract class BaseGenerator2<A = unknown, B = unknown> extends BaseGenerator<[A
     super([a, b]);
   }
 }
+
+/** Object literal parser ********************************************************************* */
 
 type OObjects = OObject | OLiteral | OArray | Generator;
 
@@ -394,7 +473,9 @@ class OArray {
   }
 }
 
-class PipeGenerator implements Generator {
+/** Generators ********************************************************************* */
+
+class PipeOp implements Generator {
   constructor(
     private readonly left: Generator,
     private readonly right: Generator
@@ -409,7 +490,7 @@ class PipeGenerator implements Generator {
   }
 }
 
-class MathFilter extends BaseGenerator0 {
+class MathOp extends BaseGenerator0 {
   constructor(private readonly fn: (a: number) => number) {
     super();
   }
@@ -463,27 +544,27 @@ class ArraySliceOp extends BaseGenerator2<number, number> {
   }
 }
 
-class ArrayGenerator extends BaseGenerator0 {
+class ArrayOp extends BaseGenerator0 {
   *handleInput(e: unknown): Iterable<unknown> {
     if (e === undefined || !Array.isArray(e)) throw error(201);
     yield* e;
   }
 }
 
-class ConcatenationGenerator extends BaseGenerator2 {
+class ConcatenationOp extends BaseGenerator2 {
   *handleInput(e: unknown, bindings: Record<string, unknown>) {
     yield* this.a.iterable([e], bindings);
     yield* this.b.iterable([e], bindings);
   }
 }
 
-class ArrayConstructor extends BaseGenerator1 {
+class ArrayConstructionOp extends BaseGenerator1 {
   *handleInput(e: unknown, bindings: Record<string, unknown>) {
     yield [...this.a.iterable([e], bindings)];
   }
 }
 
-class RecursiveDescentGenerator extends BaseGenerator0 {
+class RecursiveDescentOp extends BaseGenerator0 {
   *handleInput(e: unknown) {
     const dest: unknown[] = [];
     this.recurse(e, dest);
@@ -516,29 +597,7 @@ class BinaryOp extends BaseGenerator2 {
   }
 }
 
-const add = (lvs: unknown, rvs: unknown) => {
-  if (Array.isArray(lvs) && Array.isArray(rvs)) {
-    return [...lvs, ...rvs];
-  } else if (typeof lvs === 'string' && typeof rvs === 'string') {
-    return lvs + rvs;
-  } else if (isObj(lvs) && isObj(rvs)) {
-    return { ...lvs, ...rvs };
-  } else {
-    return safeNum(lvs) + safeNum(rvs);
-  }
-};
-
-const subtract = (lvs: unknown, rvs: unknown) => {
-  if (Array.isArray(lvs) && Array.isArray(rvs)) {
-    return lvs.filter(e => !rvs.includes(e));
-  } else if (isObj(lvs) && isObj(rvs)) {
-    return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
-  } else {
-    return safeNum(lvs) - safeNum(rvs);
-  }
-};
-
-class Literal implements Generator {
+class LiteralOp implements Generator {
   constructor(public readonly value: unknown) {}
 
   iterable() {
@@ -546,7 +605,7 @@ class Literal implements Generator {
   }
 }
 
-class LengthFilter extends BaseGenerator0 {
+class LengthOp extends BaseGenerator0 {
   *handleInput(e: unknown) {
     if (e === undefined || e === null) {
       yield 0;
@@ -560,41 +619,31 @@ class LengthFilter extends BaseGenerator0 {
   }
 }
 
-class NotFilter extends BaseGenerator0 {
+class NotOp extends BaseGenerator0 {
   *handleInput(e: unknown) {
-    yield e === false || e === null || e === undefined;
+    yield !isTrue(e);
   }
 }
 
-class HasFn extends BaseGenerator1<any> {
+class HasOp extends BaseGenerator1<any> {
   *handle(e: unknown, [arg]: [any]) {
     yield arg in (e as any);
   }
 }
 
-class InFn extends BaseGenerator1<any> {
+class InOp extends BaseGenerator1<any> {
   *handle(e: unknown, [arg]: [any]) {
     yield (e as any) in arg;
   }
 }
 
-class SelectFn extends BaseGenerator1<boolean> {
+class SelectOp extends BaseGenerator1<boolean> {
   *handle(e: unknown, [r]: [boolean]) {
     if (r) {
       yield e;
     }
   }
 }
-
-const isEqual = (lvs: unknown, rvs: unknown) => {
-  if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
-    return JSON.stringify(lvs) === JSON.stringify(rvs);
-  } else {
-    return lvs === rvs;
-  }
-};
-
-const isNotEqual = (lvs: unknown, rvs: unknown) => !isEqual(lvs, rvs);
 
 class VarBindingOp extends BaseGenerator1 {
   constructor(
@@ -605,12 +654,12 @@ class VarBindingOp extends BaseGenerator1 {
   }
 
   *handle(e: unknown, [v]: [unknown], bindings: Record<string, unknown>) {
-    bindings[(this.identifier as VariableExpansion).identifier] = v;
+    bindings[(this.identifier as VariableExpansionOp).identifier] = v;
     yield e;
   }
 }
 
-class ArgList implements Generator {
+class ArgListOp implements Generator {
   constructor(public readonly args: Generator[]) {}
 
   *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
@@ -626,115 +675,32 @@ class ArgList implements Generator {
   }
 }
 
-function* iterateAll(
-  generators: Generator[],
-  idx: number,
-  input: Iterable<unknown>,
-  arr: unknown[],
-  bindings: Record<string, unknown>
-): Iterable<unknown[]> {
-  for (const a of generators[idx].iterable(input, bindings)) {
-    const nc = [...arr, a];
-    if (idx === generators.length - 1) {
-      yield nc;
-    } else {
-      yield* iterateAll(generators, idx + 1, input, nc, bindings);
-    }
-  }
-}
-
-class AnyFilter extends BaseGenerator0 {
+class AnyOp extends BaseGenerator0 {
   *handle(e: unknown) {
     yield Array.isArray(e) && e.some(a => !!a);
   }
 }
 
-class AllFilter extends BaseGenerator0 {
+class AllOp extends BaseGenerator0 {
   *handle(e: unknown) {
     yield Array.isArray(e) && e.every(a => !!a);
   }
 }
 
-type ArrayFn = (arr: [unknown, unknown][]) => [unknown, unknown][] | TaggedType<'single', unknown>;
-
-const exactOne = (it: Iterable<unknown>) => {
-  const arr = [...it];
-  if (arr.length !== 1) throw new Error();
-  return arr[0];
-};
-
-class ArrayFilter extends BaseGenerator1 {
+class BaseArrayOp extends BaseGenerator1 {
   constructor(
-    node: Generator,
-    private readonly fn: ArrayFn
+    private readonly fn: ArrayFn,
+    node: Generator = new IdentityOp()
   ) {
     super(node);
   }
 
   *handleInput(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
-    if (Array.isArray(el)) {
-      const res = this.fn(el.map(e => [e, exactOne(this.a.iterable([e], bindings))]));
-      if (isTaggedType(res, 'single')) yield res._val;
-      else if (Array.isArray(res)) {
-        return yield (this.fn(res) as [unknown, unknown][]).map(a => a[0]);
-      } else yield res;
-    } else {
-      yield el;
-    }
-  }
-}
+    if (!Array.isArray(el)) return yield el;
+    const res = this.fn(el.map(e => [e, exactOne(this.a.iterable([e], bindings))]));
+    if (isTaggedType(res, 'single')) return yield res._val;
 
-class MatchFilter extends BaseGenerator2<string, string | undefined> {
-  constructor(
-    args: ArgList,
-    private readonly onlyTest = false
-  ) {
-    super(args.args[0], args.args[1] ?? new Literal(''));
-  }
-
-  *handle(el: unknown, [re, flags]: [string, string | undefined]) {
-    if (flags?.includes('g') && !this.onlyTest) {
-      yield* [...(el as string).matchAll(new RegExp(re, flags))]!.map(e => this.mapMatch(e));
-    } else {
-      const a = (el as string).match(new RegExp(re, flags ?? ''));
-      yield this.onlyTest ? a !== null : this.mapMatch(a!);
-    }
-  }
-
-  private mapMatch(e: RegExpMatchArray) {
-    return {
-      offset: e.index,
-      length: e[0].length,
-      string: e[0],
-      captures: e.slice(1).map(el => ({
-        //offset: e.index,
-        length: el.length,
-        string: el
-        //        name: null
-      }))
-    };
-  }
-}
-
-class NthFilter extends BaseGenerator1<number> {
-  constructor(private readonly args: ArgList) {
-    super(args.args[0]);
-  }
-
-  *handle(el: unknown, [index]: [number], bindings: Record<string, unknown>) {
-    const idx = safeNum(index);
-    if (this.args.args.length === 1 && Array.isArray(el)) {
-      yield el.at(idx);
-    } else if (this.args.args.length === 2) {
-      yield [...this.args.args[1].iterable([el], bindings)].at(idx);
-    }
-  }
-}
-
-class FlattenFilter extends BaseGenerator1<number> {
-  *handle(el: unknown, [arg]: [number]) {
-    if (Array.isArray(el)) yield el.flat(arg);
-    else yield el;
+    return yield Array.isArray(res) ? (this.fn(res) as [unknown, unknown][]).map(a => a[0]) : res;
   }
 }
 
@@ -767,7 +733,60 @@ const Array_GroupBy: ArrayFn = arr => {
   return tag('single', Object.values(dest));
 };
 
-class ObjectTemplate extends BaseGenerator0 {
+class MatchOp extends BaseGenerator2<string, string | undefined> {
+  constructor(
+    args: ArgListOp,
+    private readonly onlyTest = false
+  ) {
+    super(args.args[0], args.args[1] ?? new LiteralOp(''));
+  }
+
+  *handle(el: string, [re, flags]: [string, string | undefined]) {
+    if (flags?.includes('g') && !this.onlyTest) {
+      yield* [...el.matchAll(new RegExp(re, flags))]!.map(e => this.mapMatch(e));
+    } else {
+      const a = el.match(new RegExp(re, flags ?? ''));
+      yield this.onlyTest ? !!a : this.mapMatch(a!);
+    }
+  }
+
+  private mapMatch(e: RegExpMatchArray) {
+    return {
+      offset: e.index,
+      length: e[0].length,
+      string: e[0],
+      captures: e.slice(1).map(el => ({
+        //offset: e.index,
+        length: el.length,
+        string: el
+        //        name: null
+      }))
+    };
+  }
+}
+
+class NthOp extends BaseGenerator1<number> {
+  constructor(private readonly args: ArgListOp) {
+    super(args.args[0]);
+  }
+
+  *handle(el: unknown, [index]: [number], bindings: Record<string, unknown>) {
+    const idx = safeNum(index);
+    if (this.args.args.length === 1 && Array.isArray(el)) {
+      yield el.at(idx);
+    } else if (this.args.args.length === 2) {
+      yield [...this.args.args[1].iterable([el], bindings)].at(idx);
+    }
+  }
+}
+
+class FlattenOp extends BaseGenerator1<number> {
+  *handle(el: unknown, [arg]: [number]) {
+    yield Array.isArray(el) ? el.flat(arg) : el;
+  }
+}
+
+class ObjectTemplateOp extends BaseGenerator0 {
   constructor(private readonly template: any) {
     super();
   }
@@ -806,7 +825,7 @@ class ObjectTemplate extends BaseGenerator0 {
   }
 }
 
-class StringFn extends BaseGenerator1<string> {
+class StringOp extends BaseGenerator1<string> {
   constructor(
     node: Generator,
     private readonly fn: (a: string, b: string) => unknown
@@ -823,21 +842,19 @@ class StringFn extends BaseGenerator1<string> {
   }
 }
 
-class JoinFn extends BaseGenerator1<string> {
+class JoinOp extends BaseGenerator1<string> {
   *handle(el: unknown, [r]: [string]) {
-    if (Array.isArray(el)) yield el.join(r as string);
-    else yield el;
+    yield Array.isArray(el) ? el.join(r as string) : el;
   }
 }
 
-class AbsFilter extends BaseGenerator0 {
+class AbsOp extends BaseGenerator0 {
   *handle(el: unknown) {
-    if (typeof el === 'number') yield Math.abs(el);
-    else yield el;
+    yield typeof el === 'number' ? Math.abs(el) : el;
   }
 }
 
-class KeysFilter extends BaseGenerator0 {
+class KeysOp extends BaseGenerator0 {
   *handle(el: unknown) {
     if (el && typeof el === 'object')
       yield Object.keys(el)
@@ -847,7 +864,7 @@ class KeysFilter extends BaseGenerator0 {
   }
 }
 
-class MapValuesFn extends BaseGenerator1 {
+class MapValuesOp extends BaseGenerator1 {
   *handleInput(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (isObj(el)) {
       yield Object.fromEntries(
@@ -861,11 +878,9 @@ class MapValuesFn extends BaseGenerator1 {
   }
 }
 
-class ContainsFn extends BaseGenerator1 {
+class ContainsOp extends BaseGenerator1 {
   *handleInput(el: unknown, bindings: Record<string, unknown>) {
-    const cv = this.a.iterable([undefined], bindings);
-
-    for (const a of cv) {
+    for (const a of this.a.iterable([undefined], bindings)) {
       if (typeof a === 'string') {
         yield typeof el === 'string' ? el.includes(a) : false;
       } else if (Array.isArray(a)) {
@@ -879,7 +894,7 @@ class ContainsFn extends BaseGenerator1 {
   }
 }
 
-class VariableExpansion extends BaseGenerator0 {
+class VariableExpansionOp extends BaseGenerator0 {
   constructor(public readonly identifier: string) {
     super();
   }
@@ -889,15 +904,10 @@ class VariableExpansion extends BaseGenerator0 {
   }
 }
 
-type FnDef = {
-  arg?: string[];
-  body: Generator;
-};
-
-class FunctionCall extends BaseGenerator0 {
+class FunctionCallOp extends BaseGenerator0 {
   constructor(
     public readonly identifier: string,
-    public readonly arg?: ArgList
+    public readonly arg?: ArgListOp
   ) {
     super();
   }
@@ -916,7 +926,7 @@ class FunctionCall extends BaseGenerator0 {
   }
 }
 
-class FunctionDef extends BaseGenerator0 {
+class FunctionDefOp extends BaseGenerator0 {
   constructor(
     public readonly identifier: string,
     public readonly arg: string[],
@@ -934,7 +944,7 @@ class FunctionDef extends BaseGenerator0 {
   }
 }
 
-class RangeGenerator extends BaseGenerator {
+class RangeOp extends BaseGenerator {
   *handle(_el: unknown, args: unknown[]): Iterable<unknown> {
     const from = (args.length === 1 ? 0 : args[0]) as number;
     const to = (args.length === 1 ? args[0] : args[1]) as number;
@@ -947,87 +957,35 @@ class RangeGenerator extends BaseGenerator {
 }
 
 class Noop extends BaseGenerator0 {}
-class EmptyFilter extends BaseGenerator0 {
+
+class EmptyOp extends BaseGenerator0 {
   // eslint-disable-next-line require-yield
   *handle(_e: unknown) {
     throw BACKTRACK_ERROR;
   }
 }
 
-class LimitGenerator extends BaseGenerator1 {
-  constructor(private readonly node: ArgList) {
+class LimitOp extends BaseGenerator1 {
+  constructor(private readonly node: ArgListOp) {
     super(node.args[0]);
   }
 
   *handle(el: unknown, [M]: unknown[], bindings: Record<string, unknown>) {
-    let m = safeNum(M);
+    let limit = safeNum(M);
     for (const e of this.node.args[1].iterable([el], bindings)) {
-      if (m === 0) break;
+      if (limit-- === 0) break;
       yield e;
-      m--;
     }
   }
 }
 
-class ParenExpression extends BaseGenerator1 {
+class ParenExpressionOp extends BaseGenerator1 {
   *handleInput(e: unknown, bindings: Record<string, unknown>) {
     yield* this.a.iterable([e], { ...bindings });
   }
 }
 
-const parsePathExpression = (
-  tokenizer: Tokenizer,
-  functions: Record<string, number>
-): Generator => {
-  let left: Generator = new IdentityOp();
-
-  const wsTokenizer = tokenizer.keepWhitespace();
-  wsTokenizer.accept('.');
-
-  let token = wsTokenizer.peek();
-
-  return boundLoop(() => {
-    if (token.type === 'id' || token.type === 'str') {
-      wsTokenizer.next();
-      const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
-      const strict = !wsTokenizer.accept('?');
-      left = new PipeGenerator(left, new PropertyLookupOp(new Literal(s), strict));
-    } else if (token.s === '[') {
-      wsTokenizer.next();
-      if (wsTokenizer.peek().s === ']') {
-        wsTokenizer.next();
-        left = new PipeGenerator(left, new ArrayGenerator());
-      } else {
-        const e1 = parseExpression(tokenizer.strip(), functions);
-        if (wsTokenizer.peek().s === ':') {
-          wsTokenizer.next();
-          const e2 = parseExpression(tokenizer.strip(), functions);
-          wsTokenizer.expect(']');
-          left = new PipeGenerator(left, new ArraySliceOp(e1, e2));
-        } else {
-          wsTokenizer.expect(']');
-          if (e1 instanceof Literal && typeof e1.value === 'string') {
-            left = new PipeGenerator(left, new PropertyLookupOp(e1, true));
-          } else {
-            left = new PipeGenerator(left, new ArrayIndexOp(e1));
-          }
-        }
-      }
-    } else if (token.s === '.') {
-      wsTokenizer.next();
-    } else {
-      return left;
-    }
-
-    token = wsTokenizer.peek();
-  });
-};
-
-const isTrue = (e: unknown) => {
-  return e !== false && e !== undefined && e !== null;
-};
-
-class CatchFilter extends BaseGenerator {
+class TryCatchOp extends BaseGenerator {
   constructor(
     private readonly body: Generator,
     private readonly catchBody: Generator
@@ -1044,7 +1002,7 @@ class CatchFilter extends BaseGenerator {
   }
 }
 
-class IfFilter extends BaseGenerator {
+class IfOp extends BaseGenerator {
   constructor(
     condition: Generator,
     private readonly ifConsequent: Generator,
@@ -1062,16 +1020,11 @@ class IfFilter extends BaseGenerator {
     if (isTrue(ifCond)) {
       yield* this.ifConsequent.iterable([e], bindings);
     } else {
-      let elifMatch = false;
       for (let idx = 0; idx < elifConds.length; idx++) {
         if (isTrue(elifConds[idx])) {
-          yield* this.elifs![idx][1].iterable([e], bindings);
-          elifMatch = true;
-          break;
+          return yield* this.elifs![idx][1].iterable([e], bindings);
         }
       }
-
-      if (elifMatch) return;
 
       if (this.elseConsequent) {
         yield* this.elseConsequent.iterable([e], bindings);
@@ -1082,6 +1035,56 @@ class IfFilter extends BaseGenerator {
   }
 }
 
+/** Parser ************************************************************************** */
+
+const parsePathExpression = (
+  tokenizer: Tokenizer,
+  functions: Record<string, number>
+): Generator => {
+  let left: Generator = new IdentityOp();
+
+  const wsTokenizer = tokenizer.keepWhitespace();
+  wsTokenizer.accept('.');
+
+  let token = wsTokenizer.peek();
+
+  return boundLoop(() => {
+    if (token.type === 'id' || token.type === 'str') {
+      wsTokenizer.next();
+      const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
+      const strict = !wsTokenizer.accept('?');
+      left = new PipeOp(left, new PropertyLookupOp(new LiteralOp(s), strict));
+    } else if (token.s === '[') {
+      wsTokenizer.next();
+      if (wsTokenizer.peek().s === ']') {
+        wsTokenizer.next();
+        left = new PipeOp(left, new ArrayOp());
+      } else {
+        const e1 = parseExpression(tokenizer.strip(), functions);
+        if (wsTokenizer.peek().s === ':') {
+          wsTokenizer.next();
+          const e2 = parseExpression(tokenizer.strip(), functions);
+          wsTokenizer.expect(']');
+          left = new PipeOp(left, new ArraySliceOp(e1, e2));
+        } else {
+          wsTokenizer.expect(']');
+          if (e1 instanceof LiteralOp && typeof e1.value === 'string') {
+            left = new PipeOp(left, new PropertyLookupOp(e1, true));
+          } else {
+            left = new PipeOp(left, new ArrayIndexOp(e1));
+          }
+        }
+      }
+    } else if (token.s === '.') {
+      wsTokenizer.next();
+    } else {
+      return left;
+    }
+
+    token = wsTokenizer.peek();
+  });
+};
+
 const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): Generator => {
   try {
     const tok = tokenizer.peek();
@@ -1090,23 +1093,23 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       const inner = tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, functions);
       tokenizer.expect(']');
 
-      return new ArrayConstructor(inner);
+      return new ArrayConstructionOp(inner);
     } else if (tok.s === '(') {
       tokenizer.next();
       const inner = parseExpression(tokenizer, functions);
       tokenizer.expect(')');
-      return new ParenExpression(inner);
+      return new ParenExpressionOp(inner);
     } else if (tok.s === '.') {
       return parsePathExpression(tokenizer, functions);
     } else if (tok.s === '$') {
       tokenizer.next();
-      return new VariableExpansion('$' + tokenizer.next().s);
+      return new VariableExpansionOp('$' + tokenizer.next().s);
     } else if (tok.s === 'try') {
       tokenizer.next();
       const body = parseExpression(tokenizer, functions);
-      return new CatchFilter(
+      return new TryCatchOp(
         body,
-        tokenizer.accept('catch') ? parseExpression(tokenizer, functions) : new EmptyFilter()
+        tokenizer.accept('catch') ? parseExpression(tokenizer, functions) : new EmptyOp()
       );
     } else if (tok.s === 'if') {
       tokenizer.next();
@@ -1122,7 +1125,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         if (tokenizer.accept('else')) {
           const elseConsequent = parseExpression(tokenizer, functions);
           tokenizer.expect('end');
-          return new IfFilter(condition, ifConsequent, elifs, elseConsequent);
+          return new IfOp(condition, ifConsequent, elifs, elseConsequent);
         } else if (tokenizer.accept('elif')) {
           const elifCondition = parseExpression(tokenizer, functions);
           tokenizer.expect('then');
@@ -1130,7 +1133,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
           elifs.push([elifCondition, elifConsequent]);
         } else {
           tokenizer.expect('end');
-          return new IfFilter(condition, ifConsequent, []);
+          return new IfOp(condition, ifConsequent, []);
         }
       });
     } else if (tok.s === 'def') {
@@ -1158,26 +1161,26 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
       tokenizer.accept(';');
 
-      return new FunctionDef(name.s, args, body);
+      return new FunctionDefOp(name.s, args, body);
 
       /* LITERALS ************************************************************************** */
     } else if (tok.type === 'num') {
-      return new Literal(Number(tokenizer.next().s));
+      return new LiteralOp(Number(tokenizer.next().s));
     } else if (tok.s === '{') {
       const res = OObjects.parse(tokenizer);
       if (res.val.__generators) {
-        return new ObjectTemplate(res.val);
+        return new ObjectTemplateOp(res.val);
       } else {
-        return new Literal(res.val);
+        return new LiteralOp(res.val);
       }
     } else if (tok.type === 'str') {
-      return new Literal(tokenizer.next().s.slice(1, -1));
+      return new LiteralOp(tokenizer.next().s.slice(1, -1));
     } else if (tok.s === 'null') {
       tokenizer.next();
-      return new Literal(null);
+      return new LiteralOp(null);
     } else if (tok.s === 'false' || tok.s === 'true') {
       tokenizer.next();
-      return new Literal(tok.s === 'true');
+      return new LiteralOp(tok.s === 'true');
 
       /* FUNCTIONS ************************************************************************** */
     } else if (tok.type === 'id') {
@@ -1195,7 +1198,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
         return reg.fn(parseArgList(tokenizer, functions));
       } else if (op in functions) {
-        return new FunctionCall(
+        return new FunctionCallOp(
           op,
           functions[op] === 0 ? undefined : parseArgList(tokenizer, functions)
         );
@@ -1232,7 +1235,7 @@ const parseExpression = (
   });
 };
 
-const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): ArgList => {
+const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): ArgListOp => {
   tokenizer.expect('(');
   const op = [];
   while (tokenizer.peek().s !== ')') {
@@ -1240,7 +1243,7 @@ const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): 
     if (!tokenizer.accept(';')) break;
   }
   tokenizer.expect(')');
-  return new ArgList(op);
+  return new ArgListOp(op);
 };
 
 export const parse = (query: string): Generator => {
@@ -1252,7 +1255,7 @@ export const parse = (query: string): Generator => {
     op.push(parseExpression(tokenizer, functions));
   }
 
-  return op.reduceRight((a, b) => new ConcatenationGenerator(b, a));
+  return op.reduceRight((a, b) => new ConcatenationOp(b, a));
 };
 
 export const query = (query: string, input: unknown[], bindings?: Record<string, unknown>) => {
