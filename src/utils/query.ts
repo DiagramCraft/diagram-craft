@@ -11,8 +11,7 @@ TODO:
 
 // To ensure no infinite loops
 const boundLoop = <T>(fn: () => T) => {
-  let i = 0;
-  while (i++ < 1000) {
+  for (let i = 0; i < 1000; i++) {
     const res = fn();
     if (res !== undefined) return res;
   }
@@ -28,18 +27,18 @@ function* iterateAll(
   arr: unknown[],
   bindings: Record<string, unknown>
 ): Iterable<unknown[]> {
-  for (const a of generators[idx].iterable(input, bindings)) {
-    const nc = [...arr, a];
+  for (const item of generators[idx].iterable(input, bindings)) {
+    const newArray = [...arr, item];
     if (idx === generators.length - 1) {
-      yield nc;
+      yield newArray;
     } else {
-      yield* iterateAll(generators, idx + 1, input, nc, bindings);
+      yield* iterateAll(generators, idx + 1, input, newArray, bindings);
     }
   }
 }
 
 const exactOne = (it: Iterable<unknown>) => {
-  const arr = [...it];
+  const arr = Array.from(it);
   if (arr.length !== 1) throw new Error();
   return arr[0];
 };
@@ -52,8 +51,7 @@ const isObj = (x: unknown): x is Record<string, unknown> =>
 const BACKTRACK_ERROR = Symbol('backtrack');
 
 const handleError = (e: unknown) => {
-  if (e === BACKTRACK_ERROR) return;
-  throw e;
+  if (e !== BACKTRACK_ERROR) throw e;
 };
 
 type Errors = {
@@ -72,33 +70,30 @@ const error = (code: keyof Errors, ...params: string[]) => {
 /** Data types ************************************************************************* */
 
 const add = (lvs: unknown, rvs: unknown) => {
-  if (Array.isArray(lvs) && Array.isArray(rvs)) {
-    return [...lvs, ...rvs];
-  } else if (typeof lvs === 'string' && typeof rvs === 'string') {
-    return lvs + rvs;
-  } else if (isObj(lvs) && isObj(rvs)) {
-    return { ...lvs, ...rvs };
-  } else {
-    return safeNum(lvs) + safeNum(rvs);
-  }
+  if (Array.isArray(lvs) && Array.isArray(rvs)) return [...lvs, ...rvs];
+  if (typeof lvs === 'string' && typeof rvs === 'string') return lvs + rvs;
+  if (isObj(lvs) && isObj(rvs)) return { ...lvs, ...rvs };
+  return safeNum(lvs) + safeNum(rvs);
 };
 
 const subtract = (lvs: unknown, rvs: unknown) => {
   if (Array.isArray(lvs) && Array.isArray(rvs)) {
-    return lvs.filter(e => !rvs.includes(e));
-  } else if (isObj(lvs) && isObj(rvs)) {
-    return Object.fromEntries(Object.entries(lvs).filter(([k]) => !Object.keys(rvs).includes(k)));
-  } else {
-    return safeNum(lvs) - safeNum(rvs);
+    return lvs.filter(element => !rvs.includes(element));
   }
+
+  if (isObj(lvs) && isObj(rvs)) {
+    const rvsKeys = Object.keys(rvs);
+    return Object.fromEntries(Object.entries(lvs).filter(([key]) => !rvsKeys.includes(key)));
+  }
+
+  return safeNum(lvs) - safeNum(rvs);
 };
 
 const isEqual = (lvs: unknown, rvs: unknown) => {
   if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
     return JSON.stringify(lvs) === JSON.stringify(rvs);
-  } else {
-    return lvs === rvs;
   }
+  return lvs === rvs;
 };
 
 const isNotEqual = (lvs: unknown, rvs: unknown) => !isEqual(lvs, rvs);
@@ -236,9 +231,9 @@ class Tokenizer {
       return { s: m[0], type: 'sep' };
     } else if (this.head === '') {
       return { s: '', type: 'end' };
-    } else {
-      throw error(101, this.head);
     }
+
+    throw error(101, this.head);
   }
 
   next(strip = true) {
@@ -522,11 +517,7 @@ class PropertyLookupOp extends BaseGenerator1<string> {
       return;
     }
 
-    if (e instanceof Map) {
-      yield e.get(identifier);
-    } else {
-      yield (e as any)?.[identifier];
-    }
+    yield e instanceof Map ? e.get(identifier) : (e as any)?.[identifier];
   }
 }
 
@@ -833,18 +824,14 @@ class StringOp extends BaseGenerator1<string> {
     super(node);
   }
 
-  *handle(el: unknown, [arg]: [string]) {
-    if (Array.isArray(el)) {
-      yield el.map(e => this.fn(e as string, arg));
-    } else {
-      yield this.fn(el as string, arg);
-    }
+  *handle(el: string | string[], [arg]: [string]) {
+    yield Array.isArray(el) ? el.map(e => this.fn(e, arg)) : this.fn(el, arg);
   }
 }
 
 class JoinOp extends BaseGenerator1<string> {
   *handle(el: unknown, [r]: [string]) {
-    yield Array.isArray(el) ? el.join(r as string) : el;
+    yield Array.isArray(el) ? el.join(r) : el;
   }
 }
 
@@ -1046,9 +1033,8 @@ const parsePathExpression = (
   const wsTokenizer = tokenizer.keepWhitespace();
   wsTokenizer.accept('.');
 
-  let token = wsTokenizer.peek();
-
   return boundLoop(() => {
+    const token = wsTokenizer.peek();
     if (token.type === 'id' || token.type === 'str') {
       wsTokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
@@ -1080,8 +1066,6 @@ const parsePathExpression = (
     } else {
       return left;
     }
-
-    token = wsTokenizer.peek();
   });
 };
 
@@ -1157,7 +1141,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
       const innerFunctions = { ...functions };
       args.forEach(e => (innerFunctions[e] = 0));
-      const body = parseExpression(tokenizer, innerFunctions, undefined);
+      const body = parseExpression(tokenizer, innerFunctions);
 
       tokenizer.accept(';');
 
@@ -1216,19 +1200,21 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 const parseExpression = (
   tokenizer: Tokenizer,
   functions: Record<string, number>,
-  lastOp?: string
+  lastOp: string = ''
 ): Generator => {
   let left = parseOperand(tokenizer, functions);
 
   return boundLoop(() => {
     const tok = tokenizer.peek().s;
-    if (tok === ';') return left;
 
-    if (!!BINOP_REGISTRY[tok] && (BINOP_ORDERING[tok] ?? 0) > (BINOP_ORDERING[lastOp ?? ''] ?? 0)) {
+    if (
+      tok !== ';' &&
+      !!BINOP_REGISTRY[tok] &&
+      BINOP_ORDERING[tok] > (BINOP_ORDERING[lastOp] ?? 0)
+    ) {
       const op = tokenizer.next().s;
 
-      const right = parseExpression(tokenizer, functions, op);
-      left = BINOP_REGISTRY[op](left, right);
+      left = BINOP_REGISTRY[op](left, parseExpression(tokenizer, functions, op));
     } else {
       return left;
     }
@@ -1258,6 +1244,10 @@ export const parse = (query: string): Generator => {
   return op.reduceRight((a, b) => new ConcatenationOp(b, a));
 };
 
-export const query = (query: string, input: unknown[], bindings?: Record<string, unknown>) => {
-  return [...parse(query).iterable(input, bindings ?? {})];
+export const parseAndQuery = (q: string, input: unknown[], bindings?: Record<string, unknown>) => {
+  return [...query(parse(q), input, bindings)];
+};
+
+export const query = (query: Generator, input: unknown[], bindings?: Record<string, unknown>) => {
+  return query.iterable(input, bindings ?? {});
 };

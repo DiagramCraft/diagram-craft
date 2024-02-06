@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { OObjects, query } from './query.ts';
+import { OObjects, parseAndQuery } from './query.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const queryOne = (q: string, input: any) => {
-  const res = query(q, [input]);
+  const res = parseAndQuery(q, [input]);
   if (res.length > 1) throw new Error();
   return res[0];
 };
@@ -91,12 +91,12 @@ describe('.[], .[0], .[0:2]', () => {
   });
 
   test('.[]', () => {
-    expect(query('.[]', [[1, 2, 3]])).toEqual([1, 2, 3]);
-    expect(query('.[]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2, 3]);
-    expect(query('.[]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2, 3]);
-    expect(query('.[]', [[]])).toEqual([]);
-    expect(() => query('.[]', ['lorem'])).toThrowError();
-    expect(() => query('.[]', [123])).toThrowError();
+    expect(parseAndQuery('.[]', [[1, 2, 3]])).toEqual([1, 2, 3]);
+    expect(parseAndQuery('.[]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2, 3]);
+    expect(parseAndQuery('.[]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2, 3]);
+    expect(parseAndQuery('.[]', [[]])).toEqual([]);
+    expect(() => parseAndQuery('.[]', ['lorem'])).toThrowError();
+    expect(() => parseAndQuery('.[]', [123])).toThrowError();
   });
 });
 
@@ -111,15 +111,15 @@ describe('.["<string>"]', () => {
 
 describe(',', () => {
   test('.[0],.[1]', () => {
-    expect(query('.[0],.[1]', [[1, 2, 3]])).toEqual([1, 2]);
-    expect(query('.[0],.[1]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2]);
-    expect(query('.[0],.[1]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2]);
-    expect(query('.[0],.[1]', ['lorem'])).toEqual([]);
+    expect(parseAndQuery('.[0],.[1]', [[1, 2, 3]])).toEqual([1, 2]);
+    expect(parseAndQuery('.[0],.[1]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2]);
+    expect(parseAndQuery('.[0],.[1]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2]);
+    expect(parseAndQuery('.[0],.[1]', ['lorem'])).toEqual([]);
   });
 
   test('.user, .projects[]', () => {
     expect(
-      query('.user, .projects[]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
+      parseAndQuery('.user, .projects[]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
     ).toEqual(['stedolan', 'jq', 'wikiflow']);
   });
 });
@@ -127,7 +127,7 @@ describe(',', () => {
 describe('|', () => {
   test('.[] | .name', () => {
     expect(
-      query('.[] | .name', [
+      parseAndQuery('.[] | .name', [
         [
           { name: 'JSON', good: true },
           { name: 'XML', good: false }
@@ -140,14 +140,14 @@ describe('|', () => {
 describe('[...]', () => {
   test('[.user, .projects[]]', () => {
     expect(
-      query('[.user, .projects[]]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
+      parseAndQuery('[.user, .projects[]]', [{ user: 'stedolan', projects: ['jq', 'wikiflow'] }])
     ).toEqual([['stedolan', 'jq', 'wikiflow']]);
   });
 });
 
 describe('..', () => {
   test('query: .. | .a?', () => {
-    expect(query('.. | .a?', [[[{ a: 1 }]]])).toEqual([1]);
+    expect(parseAndQuery('.. | .a?', [[[{ a: 1 }]]])).toEqual([1]);
   });
 });
 
@@ -187,7 +187,7 @@ describe('-', () => {
 
 describe('length', () => {
   test('query: .[] | length', () => {
-    expect(query('.[] | length', [[[1, 2], 'string', { a: 2 }, null, -5]])).toEqual([
+    expect(parseAndQuery('.[] | length', [[[1, 2], 'string', { a: 2 }, null, -5]])).toEqual([
       2, 6, 1, 0, 5
     ]);
   });
@@ -195,49 +195,49 @@ describe('length', () => {
 
 describe('has()', () => {
   test('query: has("foo")', () => {
-    expect(query('has("foo")', [{ foo: 1, bar: 2 }, { bar: 3 }])).toEqual([true, false]);
+    expect(parseAndQuery('has("foo")', [{ foo: 1, bar: 2 }, { bar: 3 }])).toEqual([true, false]);
   });
 });
 
 describe('in()', () => {
   test('query: .[] | in({"foo": 42})', () => {
-    expect(query('.[] | in({"foo": 42})', [['foo', 'bar']])).toEqual([true, false]);
+    expect(parseAndQuery('.[] | in({"foo": 42})', [['foo', 'bar']])).toEqual([true, false]);
   });
 });
 
 describe('map()', () => {
   test('query: map(. + 1)', () => {
-    expect(query('map(. + 1)', [[1, 2, 3]])).toEqual([[2, 3, 4]]);
+    expect(parseAndQuery('map(. + 1)', [[1, 2, 3]])).toEqual([[2, 3, 4]]);
   });
   test('query: map(., .)', () => {
-    expect(query('map(., .)', [[1, 2]])).toEqual([[1, 1, 2, 2]]);
+    expect(parseAndQuery('map(., .)', [[1, 2]])).toEqual([[1, 1, 2, 2]]);
   });
 });
 
 describe('select()', () => {
   test('.[] | select(.id == "second")', () => {
-    expect(query('.[] | select(.id == "second")', [[{ id: 'first' }, { id: 'second' }]])).toEqual([
-      { id: 'second' }
-    ]);
+    expect(
+      parseAndQuery('.[] | select(.id == "second")', [[{ id: 'first' }, { id: 'second' }]])
+    ).toEqual([{ id: 'second' }]);
   });
   test('map(select(. >= 2))', () => {
-    expect(query('map(select(. >= 2))', [[1, 2, 3]])).toEqual([[2, 3]]);
+    expect(parseAndQuery('map(select(. >= 2))', [[1, 2, 3]])).toEqual([[2, 3]]);
   });
 });
 
 describe('any', () => {
   test('any', () => {
-    expect(query('any', [[true, true, false]])).toEqual([true]);
-    expect(query('any', [[false, false, false]])).toEqual([false]);
-    expect(query('any', [[]])).toEqual([false]);
+    expect(parseAndQuery('any', [[true, true, false]])).toEqual([true]);
+    expect(parseAndQuery('any', [[false, false, false]])).toEqual([false]);
+    expect(parseAndQuery('any', [[]])).toEqual([false]);
   });
 });
 
 describe('all', () => {
   test('all', () => {
-    expect(query('all', [[true, true, false]])).toEqual([false]);
-    expect(query('all', [[true, true, true]])).toEqual([true]);
-    expect(query('all', [[]])).toEqual([true]);
+    expect(parseAndQuery('all', [[true, true, false]])).toEqual([false]);
+    expect(parseAndQuery('all', [[true, true, true]])).toEqual([true]);
+    expect(parseAndQuery('all', [[]])).toEqual([true]);
   });
 });
 
@@ -260,17 +260,17 @@ describe('not', () => {
   });
 
   test('[true, false | not]', () => {
-    expect(query('[true, false | not]', [null])).toEqual([[true, true]]);
+    expect(parseAndQuery('[true, false | not]', [null])).toEqual([[true, true]]);
   });
 });
 
 describe('unique', () => {
   test('unique', () => {
-    expect(query('unique', [[1, 2, 3, 2, 1]])).toEqual([[1, 2, 3]]);
+    expect(parseAndQuery('unique', [[1, 2, 3, 2, 1]])).toEqual([[1, 2, 3]]);
   });
 
   test('unique_by(.a)', () => {
-    expect(query('unique_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([
+    expect(parseAndQuery('unique_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([
       [{ a: 1 }, { a: 2 }]
     ]);
   });
@@ -278,27 +278,27 @@ describe('unique', () => {
 
 describe('max', () => {
   test('max', () => {
-    expect(query('max', [[1, 2, 3, 2, 1]])).toEqual([3]);
+    expect(parseAndQuery('max', [[1, 2, 3, 2, 1]])).toEqual([3]);
   });
 
   test('max_by(.a)', () => {
-    expect(query('max_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 2 }]);
+    expect(parseAndQuery('max_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 2 }]);
   });
 });
 
 describe('min', () => {
   test('min', () => {
-    expect(query('min', [[1, 2, 3, 2, 1]])).toEqual([1]);
+    expect(parseAndQuery('min', [[1, 2, 3, 2, 1]])).toEqual([1]);
   });
 
   test('min_by(.a)', () => {
-    expect(query('min_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 1 }]);
+    expect(parseAndQuery('min_by(.a)', [[{ a: 1 }, { a: 2 }, { a: 1 }]])).toEqual([{ a: 1 }]);
   });
 });
 
 describe('group_by', () => {
   test('group_by(.a)', () => {
-    expect(query('group_by(.a)', [[{ a: 1, c: 2 }, { a: 2 }, { a: 1, c: 3 }]])).toEqual([
+    expect(parseAndQuery('group_by(.a)', [[{ a: 1, c: 2 }, { a: 2 }, { a: 1, c: 3 }]])).toEqual([
       [
         [
           { a: 1, c: 2 },
@@ -312,37 +312,39 @@ describe('group_by', () => {
 
 describe('flatten', () => {
   test('flatten', () => {
-    expect(query('flatten', [[1, [2, [3, 5]], 4, [5, 6]]])).toEqual([[1, 2, 3, 5, 4, 5, 6]]);
+    expect(parseAndQuery('flatten', [[1, [2, [3, 5]], 4, [5, 6]]])).toEqual([
+      [1, 2, 3, 5, 4, 5, 6]
+    ]);
   });
 });
 
 describe('startswith()', () => {
   test('startswith("foo")', () => {
-    expect(query('startswith("foo")', [['foo', 'bar']])).toEqual([[true, false]]);
+    expect(parseAndQuery('startswith("foo")', [['foo', 'bar']])).toEqual([[true, false]]);
   });
   test('[.[] | startswith("foo")]', () => {
     expect(
-      query('[.[] | startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
+      parseAndQuery('[.[] | startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
     ).toEqual([[false, true, false, true, false]]);
   });
 });
 
 describe('abs', () => {
   test('map(abs)', () => {
-    expect(query('map(abs)', [[-1, 2, -3]])).toEqual([[1, 2, 3]]);
+    expect(parseAndQuery('map(abs)', [[-1, 2, -3]])).toEqual([[1, 2, 3]]);
   });
 });
 
 describe('keys', () => {
   test('query: keys', () => {
-    expect(query('keys', [{ a: 1, b: 2 }])).toEqual([['a', 'b']]);
-    expect(query('keys', [{ b: 2, a: 1 }])).toEqual([['a', 'b']]);
+    expect(parseAndQuery('keys', [{ a: 1, b: 2 }])).toEqual([['a', 'b']]);
+    expect(parseAndQuery('keys', [{ b: 2, a: 1 }])).toEqual([['a', 'b']]);
   });
 });
 
 describe('map_values()', () => {
   test('map_values(.+1)', () => {
-    expect(query('map_values(.+1)', [{ a: 1, b: 2 }])).toEqual([
+    expect(parseAndQuery('map_values(.+1)', [{ a: 1, b: 2 }])).toEqual([
       {
         a: 2,
         b: 3
@@ -369,31 +371,35 @@ describe('//', () => {
 
 describe('split()', () => {
   test('split(",")', () => {
-    expect(query('split(",")', ['a,b,c'])).toEqual([['a', 'b', 'c']]);
+    expect(parseAndQuery('split(",")', ['a,b,c'])).toEqual([['a', 'b', 'c']]);
   });
 });
 
 describe('join()', () => {
   test('join(",")', () => {
-    expect(query('join(",")', [['a', 'b', 'c']])).toEqual(['a,b,c']);
+    expect(parseAndQuery('join(",")', [['a', 'b', 'c']])).toEqual(['a,b,c']);
   });
 });
 
 describe('contains()', () => {
   test('contains("foo")', () => {
-    expect(query('contains("foo")', ['foobar'])).toEqual([true]);
+    expect(parseAndQuery('contains("foo")', ['foobar'])).toEqual([true]);
   });
 
   test('contains(["baz", "bar"])', () => {
-    expect(query('contains(["baz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([true]);
-    expect(query('contains(["bazzzzz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([false]);
+    expect(parseAndQuery('contains(["baz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([
+      true
+    ]);
+    expect(parseAndQuery('contains(["bazzzzz", "bar"])', [['foobar', 'foobaz', 'blarp']])).toEqual([
+      false
+    ]);
   });
 });
 
 describe('object construction', () => {
   test('{user: .user, title: .titles[]}', () => {
     expect(
-      query('{user: .user, title: .titles[]}', [
+      parseAndQuery('{user: .user, title: .titles[]}', [
         { user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }
       ])
     ).toEqual([
@@ -404,7 +410,9 @@ describe('object construction', () => {
 
   test('{user, title: .titles[]}', () => {
     expect(
-      query('{user, title: .titles[]}', [{ user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }])
+      parseAndQuery('{user, title: .titles[]}', [
+        { user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }
+      ])
     ).toEqual([
       { user: 'stedolan', title: 'JQ Primer' },
       { user: 'stedolan', title: 'More JQ' }
@@ -413,41 +421,41 @@ describe('object construction', () => {
 
   test('{(.user): .titles}', () => {
     expect(
-      query('{(.user): .titles}', [{ user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }])
+      parseAndQuery('{(.user): .titles}', [{ user: 'stedolan', titles: ['JQ Primer', 'More JQ'] }])
     ).toEqual([{ stedolan: ['JQ Primer', 'More JQ'] }]);
   });
 });
 
 describe('variable expansion', () => {
   test('$foo', () => {
-    expect(query('$foo', [undefined], { $foo: 1 })).toEqual([1]);
+    expect(parseAndQuery('$foo', [undefined], { $foo: 1 })).toEqual([1]);
   });
 });
 
 describe('def', () => {
   test('def foo: .test; .|foo', () => {
-    expect(query('def foo: .test; .|foo', [{ test: 'abc' }])).toEqual(['abc']);
+    expect(parseAndQuery('def foo: .test; .|foo', [{ test: 'abc' }])).toEqual(['abc']);
   });
 
   test('def foo(f): 7; 5|foo(3)', () => {
-    expect(query('def foo(f): 7; 5|foo(3)', [undefined])).toEqual([7]);
+    expect(parseAndQuery('def foo(f): 7; 5|foo(3)', [undefined])).toEqual([7]);
   });
 
   test('def foo(f): 7+f; 5|foo(3)', () => {
-    expect(query('def foo(f): 7+f; 5|foo(3)', [undefined])).toEqual([10]);
+    expect(parseAndQuery('def foo(f): 7+f; 5|foo(3)', [undefined])).toEqual([10]);
   });
 
   test('def foo(f): 7|f; 5|foo(.+1)', () => {
-    expect(query('def foo(f): 7|f; 5|foo(.+1)', [undefined])).toEqual([8]);
+    expect(parseAndQuery('def foo(f): 7|f; 5|foo(.+1)', [undefined])).toEqual([8]);
   });
 
   test('def foo(f): f|f; 5|foo(.+2)', () => {
-    expect(query('def foo(f): f|f; 5|foo(.+2)', [undefined])).toEqual([9]);
+    expect(parseAndQuery('def foo(f): f|f; 5|foo(.+2)', [undefined])).toEqual([9]);
   });
 
   test('def addvalue(f): . + [f]; map(addvalue(.[0]))', () => {
     expect(
-      query('def addvalue(f): . + [f]; map(addvalue(.[0]))', [
+      parseAndQuery('def addvalue(f): . + [f]; map(addvalue(.[0]))', [
         [
           [1, 2],
           [10, 20]
@@ -464,76 +472,78 @@ describe('def', () => {
 
 describe('range', () => {
   test('range(2)', () => {
-    expect(query('range(2)', [undefined])).toEqual([0, 1]);
+    expect(parseAndQuery('range(2)', [undefined])).toEqual([0, 1]);
   });
 
   test('[range(0;5)]', () => {
-    expect(query('[range(0;5)]', [undefined])).toEqual([[0, 1, 2, 3, 4]]);
+    expect(parseAndQuery('[range(0;5)]', [undefined])).toEqual([[0, 1, 2, 3, 4]]);
   });
 
   test('[range(0,1;3,4)]', () => {
-    expect(query('[range(0,1;3,4)]', [undefined])).toEqual([[0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]]);
+    expect(parseAndQuery('[range(0,1;3,4)]', [undefined])).toEqual([
+      [0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]
+    ]);
   });
 });
 
 describe('limit', () => {
   test('[limit(3;.[])]', () => {
-    expect(query('[limit(3;.[])]', [[0, 1, 2, 3, 4, 5]])).toEqual([[0, 1, 2]]);
+    expect(parseAndQuery('[limit(3;.[])]', [[0, 1, 2, 3, 4, 5]])).toEqual([[0, 1, 2]]);
   });
 });
 
 describe('first and last', () => {
   test('first, last, nth', () => {
-    expect(query('.|first', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([0]);
-    expect(query('.|last', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([6]);
-    expect(query('.|nth(5)', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([5]);
+    expect(parseAndQuery('.|first', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([0]);
+    expect(parseAndQuery('.|last', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([6]);
+    expect(parseAndQuery('.|nth(5)', [[0, 1, 2, 3, 4, 5, 6]])).toEqual([5]);
   });
 
   test('first(), last(), nth()', () => {
-    expect(query('first(range(.))', [10])).toEqual([0]);
-    expect(query('last(range(.))', [10])).toEqual([9]);
-    expect(query('nth(. - 2; range(.))', [10])).toEqual([8]);
+    expect(parseAndQuery('first(range(.))', [10])).toEqual([0]);
+    expect(parseAndQuery('last(range(.))', [10])).toEqual([9]);
+    expect(parseAndQuery('nth(. - 2; range(.))', [10])).toEqual([8]);
   });
 });
 
 describe('variable binding', () => {
   test('.bar as $x | .foo | . + $x', () => {
-    expect(query('.bar as $x | .foo | . + $x', [{ foo: 10, bar: 200 }])).toEqual([210]);
+    expect(parseAndQuery('.bar as $x | .foo | . + $x', [{ foo: 10, bar: 200 }])).toEqual([210]);
   });
 
   test('. as $i|[(. + 2|. as $i| $i), $i]', () => {
-    expect(query('. as $i|[(. + 2|. as $i| $i), $i]', [5])).toEqual([[7, 5]]);
+    expect(parseAndQuery('. as $i|[(. + 2|. as $i| $i), $i]', [5])).toEqual([[7, 5]]);
   });
 });
 
 describe('if', () => {
   test('if . == 0 then "zero" elif . == 1 then "one" else "many" end', () => {
-    expect(query('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [0])).toEqual([
-      'zero'
-    ]);
-    expect(query('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [1])).toEqual([
-      'one'
-    ]);
-    expect(query('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [2])).toEqual([
-      'many'
-    ]);
+    expect(
+      parseAndQuery('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [0])
+    ).toEqual(['zero']);
+    expect(
+      parseAndQuery('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [1])
+    ).toEqual(['one']);
+    expect(
+      parseAndQuery('if . == 0 then "zero" elif . == 1 then "one" else "many" end', [2])
+    ).toEqual(['many']);
   });
 });
 
 describe('empty', () => {
   test('1, empty, 2', () => {
-    expect(query('1, empty, 2', [undefined])).toEqual([1, 2]);
+    expect(parseAndQuery('1, empty, 2', [undefined])).toEqual([1, 2]);
   });
 
   test('[1,2,empty,3]', () => {
-    expect(query('[1,2,empty,3]', [undefined])).toEqual([[1, 2, 3]]);
+    expect(parseAndQuery('[1,2,empty,3]', [undefined])).toEqual([[1, 2, 3]]);
   });
 });
 
 describe('comment', () => {
   test('1, # empty, 2', () => {
     expect(
-      query(
+      parseAndQuery(
         `4,
     # 3, 
     2`,
@@ -545,25 +555,27 @@ describe('comment', () => {
 
 describe('try.-catch', () => {
   test('try .a catch ". is not an object"', () => {
-    expect(query('try .a catch ". is not an object"', [true])).toEqual(['. is not an object']);
+    expect(parseAndQuery('try .a catch ". is not an object"', [true])).toEqual([
+      '. is not an object'
+    ]);
   });
 
   test('[.[]|try .a]', () => {
-    expect(query('[.[]|try .a]', [[{}, true, { a: 1 }]])).toEqual([[undefined, 1]]);
+    expect(parseAndQuery('[.[]|try .a]', [[{}, true, { a: 1 }]])).toEqual([[undefined, 1]]);
   });
 });
 
 describe('regexp', () => {
   test('test("foo")', () => {
-    expect(query('test("foo")', ['foo'])).toEqual([true]);
+    expect(parseAndQuery('test("foo")', ['foo'])).toEqual([true]);
   });
 
   test('.[] | test("abc"; "i")', () => {
-    expect(query('.[] | test("abc"; "i")', [['xabcd', 'ABC']])).toEqual([true, true]);
+    expect(parseAndQuery('.[] | test("abc"; "i")', [['xabcd', 'ABC']])).toEqual([true, true]);
   });
 
   test('match("(abc)+"; "g")', () => {
-    expect(query('match("(abc)+"; "g")', ['abc abc'])).toEqual([
+    expect(parseAndQuery('match("(abc)+"; "g")', ['abc abc'])).toEqual([
       {
         offset: 0,
         length: 3,
@@ -580,20 +592,22 @@ describe('regexp', () => {
   });
 
   test('match("foo")', () => {
-    expect(query('match("foo")', ['foo bar foo'])).toEqual([
+    expect(parseAndQuery('match("foo")', ['foo bar foo'])).toEqual([
       { offset: 0, length: 3, string: 'foo', captures: [] }
     ]);
   });
 
   test('match("foo"; "ig")', () => {
-    expect(query('match("foo"; "ig")', ['foo bar FOO'])).toEqual([
+    expect(parseAndQuery('match("foo"; "ig")', ['foo bar FOO'])).toEqual([
       { offset: 0, length: 3, string: 'foo', captures: [] },
       { offset: 8, length: 3, string: 'FOO', captures: [] }
     ]);
   });
 
   test.skip('match("foo (?<bar123>bar)? ?foo"; "ig")', () => {
-    expect(query('match("foo (?<bar123>bar)? ?foo"; "ig")', ['foo bar foo foo foo'])).toEqual([
+    expect(
+      parseAndQuery('match("foo (?<bar123>bar)? ?foo"; "ig")', ['foo bar foo foo foo'])
+    ).toEqual([
       {
         offset: 0,
         length: 11,
@@ -610,13 +624,15 @@ describe('regexp', () => {
   });
 
   test('[ match("."; "g")] | length', () => {
-    expect(query('[ match("."; "g")] | length', ['abc'])).toEqual([3]);
+    expect(parseAndQuery('[ match("."; "g")] | length', ['abc'])).toEqual([3]);
   });
 });
 
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
-    expect(query('range(0,1;3,4)', [undefined])).toEqual([0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3]);
+    expect(parseAndQuery('range(0,1;3,4)', [undefined])).toEqual([
+      0, 1, 2, 0, 1, 2, 3, 1, 2, 1, 2, 3
+    ]);
   });
 
   test('.elements[] | select(.id == "2" or .id == "4")', () => {
@@ -624,7 +640,7 @@ describe('complex use-cases', () => {
       elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
     };
 
-    expect(query('.elements[] | select(.id == "2" or .id == "4")', [data])).toEqual([
+    expect(parseAndQuery('.elements[] | select(.id == "2" or .id == "4")', [data])).toEqual([
       { id: '2' },
       { id: '4' }
     ]);
@@ -635,7 +651,7 @@ describe('complex use-cases', () => {
       elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
     };
 
-    expect(query('.elements[] | select(.id == ("2" , "4"))', [data])).toEqual([
+    expect(parseAndQuery('.elements[] | select(.id == ("2" , "4"))', [data])).toEqual([
       { id: '2' },
       { id: '4' }
     ]);
@@ -646,7 +662,7 @@ describe('complex use-cases', () => {
       elements: [{ id: '2', test: '123' }, { id: '3', type: 'abc' }, { id: '4' }]
     };
 
-    expect(query('.elements[] | { id, type }', [data])).toEqual([
+    expect(parseAndQuery('.elements[] | { id, type }', [data])).toEqual([
       { id: '2' },
       { id: '3', type: 'abc' },
       { id: '4' }
@@ -654,9 +670,9 @@ describe('complex use-cases', () => {
   });
 
   test('. | { id, type, _drilldown: ["a"] }', () => {
-    expect(query('. | { id, type, _drilldown: ["a"] }', [{ id: '2', type: 'abc' }])).toEqual([
-      { id: '2', type: 'abc', _drilldown: ['a'] }
-    ]);
+    expect(
+      parseAndQuery('. | { id, type, _drilldown: ["a"] }', [{ id: '2', type: 'abc' }])
+    ).toEqual([{ id: '2', type: 'abc', _drilldown: ['a'] }]);
   });
 
   // TODO: Add support for this somehow
@@ -665,13 +681,13 @@ describe('complex use-cases', () => {
       elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
     };
 
-    expect(query('.elements[] | select(.id == ["2", "4"][])', [data])).toEqual([
+    expect(parseAndQuery('.elements[] | select(.id == ["2", "4"][])', [data])).toEqual([
       { id: '2' },
       { id: '4' }
     ]);
   });
 
   test('dummy', () => {
-    console.log(query('["a", "b"] | .[]', [undefined]));
+    console.log(parseAndQuery('["a", "b"] | .[]', [undefined]));
   });
 });

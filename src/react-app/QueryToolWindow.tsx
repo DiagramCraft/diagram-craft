@@ -1,7 +1,7 @@
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
-import { query } from '../utils/query.ts';
+import { parseAndQuery } from '../utils/query.ts';
 import { useDiagram } from './context/DiagramContext.tsx';
 import { useRef, useState } from 'react';
 import {
@@ -80,7 +80,7 @@ export const QueryToolWindow = () => {
     const q = queries[queryIdx].q;
     const input = queryIdx === 0 ? getSource(source, diagram) : queryInput;
 
-    res = query(q, [input]);
+    res = parseAndQuery(q, [input]);
 
     diagram.document.props.query ??= {};
     diagram.document.props.query.history ??= [];
