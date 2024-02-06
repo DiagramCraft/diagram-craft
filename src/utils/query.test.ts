@@ -558,7 +558,7 @@ describe('regexp', () => {
     expect(query('test("foo")', ['foo'])).toEqual([true]);
   });
 
-  test('.[] | test("a b c # spaces are ignored"; "ix")', () => {
+  test('.[] | test("abc"; "i")', () => {
     expect(query('.[] | test("abc"; "i")', [['xabcd', 'ABC']])).toEqual([true, true]);
   });
 

@@ -5,7 +5,6 @@ import { newid } from './id.ts';
 /*
 TODO:
   string interpolation
-  error handling
 */
 
 const BACKTRACK_ERROR = Symbol('backtrack');
@@ -13,6 +12,19 @@ const BACKTRACK_ERROR = Symbol('backtrack');
 const handleError = (e: unknown) => {
   if (e === BACKTRACK_ERROR) return;
   throw e;
+};
+
+type Errors = {
+  100: 'Inifinite loop';
+  101: 'Unknown token';
+  102: 'Unexpected token';
+  103: 'Cannot parse token';
+  201: 'Expected array';
+  210: 'Unknown function';
+};
+
+const error = (code: keyof Errors, ...params: string[]) => {
+  throw new Error(`Error ${code}: ${params}`);
 };
 
 const isObj = (x: unknown): x is Record<string, unknown> =>
@@ -118,7 +130,7 @@ const boundLoop = <T>(fn: () => T) => {
     const res = fn();
     if (res !== undefined) return res;
   }
-  throw new Error();
+  throw error(100);
 };
 
 const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
@@ -157,7 +169,7 @@ class Tokenizer {
     } else if (this.head === '') {
       return { s: '', type: 'end' };
     } else {
-      throw new Error('Unexpected token: ' + this.head);
+      throw error(101, this.head);
     }
   }
 
@@ -170,7 +182,7 @@ class Tokenizer {
 
   expect(s: string, strip = true) {
     if (this.peek().s === s) return this.next(strip);
-    else throw new Error(`Expected: ${s}, found ${this.peek().s}`);
+    else throw error(102, s, this.peek().s);
   }
 
   strip() {
@@ -281,7 +293,7 @@ export const OObjects = {
       return new OLiteral(tok.s === 'true');
     }
 
-    throw new Error(`Cannot parse: ${tokenizer.head}`);
+    throw error(102, tokenizer.head);
   }
 };
 
@@ -453,7 +465,7 @@ class ArraySliceOp extends BaseGenerator2<number, number> {
 
 class ArrayGenerator extends BaseGenerator0 {
   *handleInput(e: unknown): Iterable<unknown> {
-    if (e === undefined || !Array.isArray(e)) throw new Error('Not an array');
+    if (e === undefined || !Array.isArray(e)) throw error(201);
     yield* e;
   }
 }
@@ -1188,14 +1200,14 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
           functions[op] === 0 ? undefined : parseArgList(tokenizer, functions)
         );
       } else {
-        throw new Error('Unknown function: ' + op);
+        throw error(210, op);
       }
     }
   } finally {
     tokenizer.strip();
   }
 
-  throw new Error('Parse operand: ' + tokenizer.head);
+  throw error(103, tokenizer.head);
 };
 
 const parseExpression = (
