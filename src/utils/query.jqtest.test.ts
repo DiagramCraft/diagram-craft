@@ -826,6 +826,8 @@ describe('jqtest', () => {
 
   // TODO: Fix
   test.skip('.foo[.baz]', () => {
+    // .baz as $_1 | .foo[$_1]
+
     console.dir(parse('.foo[.baz]'), { depth: 10 });
     expect(parseAndQuery('.foo[.baz]', [{ foo: { bar: 4 }, baz: 'bar' }])).toEqual([4]);
   });

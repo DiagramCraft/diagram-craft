@@ -492,7 +492,14 @@ class PipeOp implements Generator {
   }
 }
 
-class PathExp extends PipeOp {}
+class PathExp implements Generator {
+  constructor(private readonly generators: Generator[]) {}
+
+  *iterable(input: Iterable<unknown>, bindings: Record<string, unknown>): Iterable<unknown> {
+    const pipeOp = this.generators.reduceRight((a, b) => new PipeOp(b, a));
+    yield* pipeOp.iterable(input, bindings);
+  }
+}
 
 class MathOp extends BaseGenerator0 {
   constructor(private readonly fn: (a: number) => number) {
@@ -1038,7 +1045,7 @@ const parsePathExpression = (
   tokenizer: Tokenizer,
   functions: Record<string, number>
 ): Generator => {
-  let left: Generator = new IdentityOp();
+  const generators: Generator[] = [new IdentityOp()];
 
   const wsTokenizer = tokenizer.keepWhitespace();
   wsTokenizer.accept('.');
@@ -1049,23 +1056,22 @@ const parsePathExpression = (
       wsTokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
       const strict = !wsTokenizer.accept('?');
-      left = new PathExp(left, new PropertyLookupOp(new LiteralOp(s), strict));
+      generators.push(new PropertyLookupOp(new LiteralOp(s), strict));
     } else if (token.s === '[') {
       wsTokenizer.next();
       if (wsTokenizer.peek().s === ']') {
         wsTokenizer.next();
-        left = new PathExp(left, new ArrayOp());
+        generators.push(new ArrayOp());
       } else {
         const e1 = parseExpression(tokenizer.strip(), functions);
         if (wsTokenizer.peek().s === ':') {
           wsTokenizer.next();
           const e2 = parseExpression(tokenizer.strip(), functions);
           wsTokenizer.expect(']');
-          left = new PathExp(left, new ArraySliceOp(e1, e2));
+          generators.push(new ArraySliceOp(e1, e2));
         } else {
           wsTokenizer.expect(']');
-          left = new PathExp(
-            left,
+          generators.push(
             new PropertyLookupOp(e1, e1 instanceof LiteralOp && typeof e1.value === 'string')
           );
         }
@@ -1073,7 +1079,7 @@ const parsePathExpression = (
     } else if (token.s === '.') {
       wsTokenizer.next();
     } else {
-      return left;
+      return new PathExp(generators);
     }
   });
 };
