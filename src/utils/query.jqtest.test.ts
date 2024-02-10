@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseAndQuery } from './query.ts';
+import { parse, parseAndQuery } from './query.ts';
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -182,6 +182,17 @@ describe('jqtest', () => {
     ]);
   });
 
+  test('[first(range(.)), last(range(.))]', () => {
+    expect(parseAndQuery('[first(range(.)), last(range(.))]', [10])).toEqual([[0, 9]]);
+  });
+
+  // TODO: This could be fixed
+  test.skip('[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]', () => {
+    expect(
+      parseAndQuery('[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch "error"]', [10])
+    ).toEqual([[0, 5, 9, 'error']]);
+  });
+
   test('[limit(5,7; range(9))]', () => {
     expect(parseAndQuery('[limit(5,7; range(9))]', [undefined])).toEqual([
       [0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 5, 6]
@@ -211,6 +222,29 @@ describe('jqtest', () => {
       ['', '', 'a', 'aa']
     ]);
   });
+
+  test('flatten(3,2,1)', () => {
+    expect(parseAndQuery('flatten(3,2,1)', [[0, [1], [[2]], [[[3]]]]])).toEqual([
+      [0, 1, 2, 3],
+      [0, 1, 2, [3]],
+      [0, 1, [2], [[3]]]
+    ]);
+  });
+
+  // TODO: Could be fixed
+  test.skip('[.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]', () => {
+    expect(
+      parseAndQuery('[.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]', [
+        [0, 1, 2, 3, 4, 5, 6]
+      ])
+    ).toEqual([[[], [2, 3], [0, 1, 2, 3, 4], [5, 6], [], []]]);
+  });
+
+  /*
+    [.[3:2], .[-5:4], .[:-2], .[-2:], .[3:3][1:], .[10:]]
+    "abcdefghi"
+    ["","","abcdefg","hi","",""]
+   */
 
   test('1 as $x | 2 as $y | [$x,$y,$x]', () => {
     expect(parseAndQuery('1 as $x | 2 as $y | [$x,$y,$x]', [undefined])).toEqual([[1, 2, 1]]);
@@ -461,6 +495,18 @@ describe('jqtest', () => {
     ).toEqual([[1, 2, 6, 24]]);
   });
 
+  // TODO: Need to support any(expr)
+  test.skip('any(not)', () => {
+    expect(parseAndQuery('any(not)', [[]])).toEqual([false]);
+    expect(parseAndQuery('any(not)', [[false]])).toEqual([true]);
+  });
+
+  // TODO: Need to support all(expr)
+  test.skip('all(not)', () => {
+    expect(parseAndQuery('all(not)', [[]])).toEqual([true]);
+    expect(parseAndQuery('all(not)', [[false]])).toEqual([true]);
+  });
+
   test('[any,all]', () => {
     expect(parseAndQuery('[any,all]', [[]])).toEqual([[false, true]]);
     expect(parseAndQuery('[any,all]', [[true]])).toEqual([[true, true]]);
@@ -641,6 +687,20 @@ describe('jqtest', () => {
     ).toEqual([[true, true, false]]);
   });
 
+  test('[.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]', () => {
+    const res = parseAndQuery(
+      '[.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]',
+      [[0, 1, 2, 3]]
+    ) as unknown[][];
+    expect(res[0]![0]).toEqual('foo');
+    expect(res[0]![1]).toBeInstanceOf(Error);
+    expect(res[0]![2]).toEqual(3);
+  });
+
+  test.skip('.[] | try error catch .', () => {
+    expect(parseAndQuery('.[] | try error catch .', [[1, null, 2]])).toEqual([1, null, 2]);
+  });
+
   test('[.[]|startswith("foo")]', () => {
     expect(
       parseAndQuery('[.[]|startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
@@ -766,6 +826,7 @@ describe('jqtest', () => {
 
   // TODO: Fix
   test.skip('.foo[.baz]', () => {
+    console.dir(parse('.foo[.baz]'), { depth: 10 });
     expect(parseAndQuery('.foo[.baz]', [{ foo: { bar: 4 }, baz: 'bar' }])).toEqual([4]);
   });
 

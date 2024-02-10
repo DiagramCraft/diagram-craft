@@ -89,6 +89,15 @@ const subtract = (lvs: unknown, rvs: unknown) => {
   return safeNum(lvs) - safeNum(rvs);
 };
 
+const prop = (lvs: unknown, idx: unknown) => {
+  if (Array.isArray(lvs) && typeof idx === 'number') return lvs.at(idx);
+  if (isObj(lvs)) {
+    if (idx === '__proto__' || idx === 'constructor') throw new Error();
+    return lvs instanceof Map ? lvs.get(idx) : lvs[idx as string];
+  }
+  throw new Error();
+};
+
 const isEqual = (lvs: unknown, rvs: unknown) => {
   if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
     return JSON.stringify(lvs) === JSON.stringify(rvs);
@@ -112,6 +121,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   '..': { fn: () => new RecursiveDescentOp() },
   not: { fn: () => new NotOp() },
   length: { fn: () => new LengthOp() },
+  error: { args: '1', fn: a => new ErrorOp(a) },
   has: { args: '1', fn: a => new HasOp(a) },
   in: { args: '1', fn: a => new InOp(a) },
   map: { args: '1', fn: a => new ArrayConstructionOp(new PipeOp(new ArrayOp(), a)) },
@@ -319,16 +329,13 @@ abstract class BaseGenerator0 extends BaseGenerator<[]> {
 }
 
 abstract class BaseGenerator1<T = unknown> extends BaseGenerator<T[]> {
-  constructor(protected readonly a: Generator) {
+  constructor(a: Generator) {
     super([a]);
   }
 }
 
 abstract class BaseGenerator2<A = unknown, B = unknown> extends BaseGenerator<[A, B]> {
-  constructor(
-    protected readonly a: Generator,
-    protected readonly b: Generator
-  ) {
+  constructor(a: Generator, b: Generator) {
     super([a, b]);
   }
 }
@@ -485,6 +492,8 @@ class PipeOp implements Generator {
   }
 }
 
+class PathExp extends PipeOp {}
+
 class MathOp extends BaseGenerator0 {
   constructor(private readonly fn: (a: number) => number) {
     super();
@@ -510,21 +519,12 @@ class PropertyLookupOp extends BaseGenerator1<string> {
   }
 
   *handle(e: unknown, [identifier]: [string]): Iterable<unknown> {
-    if (identifier === '__proto__' || identifier === 'constructor') throw new Error();
-
-    if (!isObj(e) && e !== undefined) {
-      if (this.strict) throw new Error();
-      return;
+    try {
+      yield prop(e, identifier);
+    } catch (err) {
+      if (this.strict) throw err;
+      if (e === undefined) yield undefined;
     }
-
-    yield e instanceof Map ? e.get(identifier) : (e as any)?.[identifier];
-  }
-}
-
-class ArrayIndexOp extends BaseGenerator1<number> {
-  *handle(e: unknown, index: [number]) {
-    if (e === undefined || !Array.isArray(e)) return;
-    yield e.at(index[0]);
   }
 }
 
@@ -544,14 +544,14 @@ class ArrayOp extends BaseGenerator0 {
 
 class ConcatenationOp extends BaseGenerator2 {
   *handleInput(e: unknown, bindings: Record<string, unknown>) {
-    yield* this.a.iterable([e], bindings);
-    yield* this.b.iterable([e], bindings);
+    yield* this.generators[0].iterable([e], bindings);
+    yield* this.generators[1].iterable([e], bindings);
   }
 }
 
 class ArrayConstructionOp extends BaseGenerator1 {
   *handleInput(e: unknown, bindings: Record<string, unknown>) {
-    yield [...this.a.iterable([e], bindings)];
+    yield [...this.generators[0].iterable([e], bindings)];
   }
 }
 
@@ -613,6 +613,13 @@ class LengthOp extends BaseGenerator0 {
 class NotOp extends BaseGenerator0 {
   *handleInput(e: unknown) {
     yield !isTrue(e);
+  }
+}
+
+class ErrorOp extends BaseGenerator1<any> {
+  // eslint-disable-next-line require-yield
+  *handle(_e: unknown, [arg]: [any]) {
+    throw arg;
   }
 }
 
@@ -688,7 +695,7 @@ class BaseArrayOp extends BaseGenerator1 {
 
   *handleInput(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (!Array.isArray(el)) return yield el;
-    const res = this.fn(el.map(e => [e, exactOne(this.a.iterable([e], bindings))]));
+    const res = this.fn(el.map(e => [e, exactOne(this.generators[0].iterable([e], bindings))]));
     if (isTaggedType(res, 'single')) return yield res._val;
 
     return yield Array.isArray(res) ? (this.fn(res) as [unknown, unknown][]).map(a => a[0]) : res;
@@ -855,10 +862,13 @@ class MapValuesOp extends BaseGenerator1 {
   *handleInput(el: unknown, bindings: Record<string, unknown>): Iterable<unknown> {
     if (isObj(el)) {
       yield Object.fromEntries(
-        Object.entries(el).map(([k, v]) => [k, exactOne(this.a.iterable([v], bindings))])
+        Object.entries(el).map(([k, v]) => [
+          k,
+          exactOne(this.generators[0].iterable([v], bindings))
+        ])
       );
     } else if (Array.isArray(el)) {
-      yield el.map(e => exactOne(this.a.iterable([e], bindings)));
+      yield el.map(e => exactOne(this.generators[0].iterable([e], bindings)));
     } else {
       yield el;
     }
@@ -867,7 +877,7 @@ class MapValuesOp extends BaseGenerator1 {
 
 class ContainsOp extends BaseGenerator1 {
   *handleInput(el: unknown, bindings: Record<string, unknown>) {
-    for (const a of this.a.iterable([undefined], bindings)) {
+    for (const a of this.generators[0].iterable([undefined], bindings)) {
       if (typeof a === 'string') {
         yield typeof el === 'string' ? el.includes(a) : false;
       } else if (Array.isArray(a)) {
@@ -968,7 +978,7 @@ class LimitOp extends BaseGenerator1 {
 
 class ParenExpressionOp extends BaseGenerator1 {
   *handleInput(e: unknown, bindings: Record<string, unknown>) {
-    yield* this.a.iterable([e], { ...bindings });
+    yield* this.generators[0].iterable([e], { ...bindings });
   }
 }
 
@@ -1039,26 +1049,25 @@ const parsePathExpression = (
       wsTokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
       const strict = !wsTokenizer.accept('?');
-      left = new PipeOp(left, new PropertyLookupOp(new LiteralOp(s), strict));
+      left = new PathExp(left, new PropertyLookupOp(new LiteralOp(s), strict));
     } else if (token.s === '[') {
       wsTokenizer.next();
       if (wsTokenizer.peek().s === ']') {
         wsTokenizer.next();
-        left = new PipeOp(left, new ArrayOp());
+        left = new PathExp(left, new ArrayOp());
       } else {
         const e1 = parseExpression(tokenizer.strip(), functions);
         if (wsTokenizer.peek().s === ':') {
           wsTokenizer.next();
           const e2 = parseExpression(tokenizer.strip(), functions);
           wsTokenizer.expect(']');
-          left = new PipeOp(left, new ArraySliceOp(e1, e2));
+          left = new PathExp(left, new ArraySliceOp(e1, e2));
         } else {
           wsTokenizer.expect(']');
-          if (e1 instanceof LiteralOp && typeof e1.value === 'string') {
-            left = new PipeOp(left, new PropertyLookupOp(e1, true));
-          } else {
-            left = new PipeOp(left, new ArrayIndexOp(e1));
-          }
+          left = new PathExp(
+            left,
+            new PropertyLookupOp(e1, e1 instanceof LiteralOp && typeof e1.value === 'string')
+          );
         }
       }
     } else if (token.s === '.') {
