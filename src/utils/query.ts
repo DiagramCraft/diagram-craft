@@ -544,12 +544,12 @@ class PropertyLookupOp extends BaseGenerator1<string> {
     super(node);
   }
 
-  *handle(e: Value, [identifier]: [Value<string>]) {
+  *handle(e: Value, [identifier]: [Value<string>]): Iterable<Value> {
     try {
       yield valueWithPath(e, prop(e.val, identifier.val), identifier.val);
     } catch (err) {
+      if (e.val === undefined) return yield valueWithPath(e, undefined, identifier.val);
       if (this.strict) throw err;
-      if (e.val === undefined) yield value(undefined);
     }
   }
 }
@@ -658,7 +658,7 @@ class NotOp extends BaseGenerator0 {
 class ErrorOp extends BaseGenerator1 {
   // eslint-disable-next-line require-yield
   *handle(_e: Value, [arg]: [Value]) {
-    throw arg;
+    throw arg.val;
   }
 }
 

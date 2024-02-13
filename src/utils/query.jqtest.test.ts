@@ -687,9 +687,6 @@ describe('jqtest', () => {
     ).toEqual([[true, true, false]]);
   });
 
-  /* TODO: Fix this
-
-
   test('[.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]', () => {
     const res = parseAndQuery(
       '[.[]|try if . == 0 then error("foo") elif . == 1 then .a elif . == 2 then empty else . end catch .]',
@@ -699,8 +696,6 @@ describe('jqtest', () => {
     expect(res[0]![1]).toBeInstanceOf(Error);
     expect(res[0]![2]).toEqual(3);
   });
-
-   */
 
   test.skip('.[] | try error catch .', () => {
     expect(parseAndQuery('.[] | try error catch .', [[1, null, 2]])).toEqual([1, null, 2]);
