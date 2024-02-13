@@ -628,6 +628,48 @@ describe('regexp', () => {
   });
 });
 
+describe('path', () => {
+  test('path(.a)', () => {
+    expect(parseAndQuery('path(.a)', [{ a: 1 }])).toEqual([['a']]);
+  });
+  test('path(.a.b)', () => {
+    expect(parseAndQuery('path(.a.b)', [{ a: { b: 2 } }])).toEqual([['a', 'b']]);
+
+    // TODO: This should work
+    // expect(parseAndQuery('path(.a.b)', [{ c: 3 }])).toEqual([['a', 'b']]);
+  });
+  test('path(.a.b, .a.c)', () => {
+    expect(parseAndQuery('path(.a.b, .a.c)', [{ a: { b: 2, c: 4 } }])).toEqual([
+      ['a', 'b'],
+      ['a', 'c']
+    ]);
+  });
+  test('path(.a[].b)', () => {
+    expect(parseAndQuery('path(.a[].b)', [{ a: [{ b: 2 }, { b: 4 }] }])).toEqual([
+      ['a', 0, 'b'],
+      ['a', 1, 'b']
+    ]);
+  });
+
+  test('path(.a[1:3])', () => {
+    expect(parseAndQuery('path(.a[1:3])', [{ a: [1, 2, 3, 4] }])).toEqual([
+      [
+        'a',
+        {
+          start: 1,
+          end: 3
+        }
+      ]
+    ]);
+  });
+
+  test('[path(..)]', () => {
+    expect(parseAndQuery('[path(..)]', [{ a: [{ b: 1 }] }])).toEqual([
+      [[], ['a'], ['a', 0], ['a', 0, 'b']]
+    ]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
     expect(parseAndQuery('range(0,1;3,4)', [undefined])).toEqual([
