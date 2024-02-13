@@ -7,6 +7,10 @@ TODO:
   string interpolation
 */
 
+/** Builtins *************************************************************************** */
+
+const builtins = ['def paths: path(..)|select(length > 0)', 'def map(f): [.[]|f]'];
+
 /** Utils ****************************************************************************** */
 
 // To ensure no infinite loops
@@ -124,7 +128,6 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   error: { args: '1', fn: a => new ErrorOp(a) },
   has: { args: '1', fn: a => new HasOp(a) },
   in: { args: '1', fn: a => new InOp(a) },
-  map: { args: '1', fn: a => new ArrayConstructionOp(new PipeOp(new ArrayOp(), a)) },
   map_values: { args: '1', fn: a => new MapValuesOp(a) },
   select: { args: '1', fn: a => new SelectOp(a) },
   any: { fn: () => new AnyOp() },
@@ -532,7 +535,7 @@ class MathOp extends BaseGenerator0 {
 
 class IdentityOp extends BaseGenerator0 {
   *handle(e: Value) {
-    yield e;
+    yield { val: e.val, path: e.path ?? [] };
   }
 }
 
@@ -1288,10 +1291,10 @@ const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): 
 };
 
 export const parse = (query: string): Generator => {
-  const tokenizer = new Tokenizer(query);
-
   const functions = {};
-  const op = [];
+  const op = builtins.map(b => parseExpression(new Tokenizer(b), functions));
+
+  const tokenizer = new Tokenizer(query);
   while (tokenizer.peek().type !== 'end') {
     op.push(parseExpression(tokenizer, functions));
   }

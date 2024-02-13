@@ -515,6 +515,31 @@ describe('jqtest', () => {
     expect(parseAndQuery('[any,all]', [[undefined, undefined, true]])).toEqual([[true, false]]);
   });
 
+  test('path(.foo[0,1])', () => {
+    expect(parseAndQuery('path(.foo[0,1])', [undefined])).toEqual([
+      ['foo', 0],
+      ['foo', 1]
+    ]);
+  });
+
+  test('path(.[] | select(.>3))', () => {
+    expect(parseAndQuery('path(.[] | select(.>3))', [[1, 5, 3]])).toEqual([[1]]);
+  });
+
+  test('path(.)', () => {
+    expect(parseAndQuery('path(.)', [42])).toEqual([[]]);
+  });
+
+  test.skip('path(.a[path(.b)[0]])', () => {
+    expect(parseAndQuery('path(.a[path(.b)[0]])', [{ a: { b: 0 } }])).toEqual([['a', 'b']]);
+  });
+
+  test('[paths]', () => {
+    expect(parseAndQuery('[paths]', [[1, [[], { a: 2 }]]])).toEqual([
+      [[0], [1], [1, 0], [1, 1], [1, 1, 'a']]
+    ]);
+  });
+
   test('[.[] | if .foo then "yep" else "nope" end]', () => {
     expect(
       parseAndQuery('[.[] | if .foo then "yep" else "nope" end]', [
