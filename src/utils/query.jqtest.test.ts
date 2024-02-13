@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parse, parseAndQuery } from './query.ts';
+import { parseAndQuery } from './query.ts';
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -849,11 +849,7 @@ describe('jqtest', () => {
     ]);
   });
 
-  // TODO: Fix
-  test.skip('.foo[.baz]', () => {
-    // .baz as $_1 | .foo[$_1]
-
-    console.dir(parse('.foo[.baz]'), { depth: 10 });
+  test('.foo[.baz]', () => {
     expect(parseAndQuery('.foo[.baz]', [{ foo: { bar: 4 }, baz: 'bar' }])).toEqual([4]);
   });
 

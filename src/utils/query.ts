@@ -193,7 +193,7 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '|': (l, r) => new PipeOp(l, r),
   ',': (l, r) => new ConcatenationOp(l, r),
   ';': (l, r) => new ConcatenationOp(l, r),
-  as: (l, r) => new VarBindingOp(l, r)
+  as: (l, r) => new VarBindingOp(r, l)
 };
 
 const BINOP_ORDERING = Object.fromEntries(
@@ -687,14 +687,14 @@ class SelectOp extends BaseGenerator1<boolean> {
 
 class VarBindingOp extends BaseGenerator1 {
   constructor(
-    node: Generator,
-    private readonly identifier: Generator
+    private readonly id: Generator | string,
+    node: Generator
   ) {
     super(node);
   }
 
   *handle(e: Value, [v]: [Value], context: Context) {
-    context.bindings[(this.identifier as VariableExpansionOp).identifier] = v;
+    context.bindings[typeof this.id === 'string' ? this.id : (this.id as VarRefOp).identifier] = v;
     yield e;
   }
 }
@@ -940,7 +940,7 @@ class ContainsOp extends BaseGenerator1 {
   }
 }
 
-class VariableExpansionOp extends BaseGenerator0 {
+class VarRefOp extends BaseGenerator0 {
   constructor(public readonly identifier: string) {
     super();
   }
@@ -1088,6 +1088,7 @@ const parsePathExpression = (
   tokenizer: Tokenizer,
   functions: Record<string, number>
 ): Generator => {
+  const vars: Generator[] = [];
   const generators: Generator[] = [new IdentityOp()];
 
   const wsTokenizer = tokenizer.keepWhitespace();
@@ -1107,22 +1108,30 @@ const parsePathExpression = (
         generators.push(new ArrayOp());
       } else {
         const e1 = parseExpression(tokenizer.strip(), functions);
+        const e1Id = newid();
+        vars.push(new VarBindingOp(e1Id, e1));
+
         if (wsTokenizer.peek().s === ':') {
           wsTokenizer.next();
-          const e2 = parseExpression(tokenizer.strip(), functions);
+          const e2Id = newid();
+          vars.push(new VarBindingOp(e2Id, parseExpression(tokenizer.strip(), functions)));
+
           wsTokenizer.expect(']');
-          generators.push(new ArraySliceOp(e1, e2));
+          generators.push(new ArraySliceOp(new VarRefOp(e1Id), new VarRefOp(e2Id)));
         } else {
           wsTokenizer.expect(']');
           generators.push(
-            new PropertyLookupOp(e1, e1 instanceof LiteralOp && typeof e1.value === 'string')
+            new PropertyLookupOp(
+              new VarRefOp(e1Id),
+              e1 instanceof LiteralOp && typeof e1.value === 'string'
+            )
           );
         }
       }
     } else if (token.s === '.') {
       wsTokenizer.next();
     } else {
-      return new PathExp(generators);
+      return new PathExp([...vars, ...generators]);
     }
   });
 };
@@ -1145,7 +1154,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       return parsePathExpression(tokenizer, functions);
     } else if (tok.s === '$') {
       tokenizer.next();
-      return new VariableExpansionOp('$' + tokenizer.next().s);
+      return new VarRefOp('$' + tokenizer.next().s);
     } else if (tok.s === 'try') {
       tokenizer.next();
       const body = parseExpression(tokenizer, functions);
