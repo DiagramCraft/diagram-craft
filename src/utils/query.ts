@@ -38,6 +38,17 @@ const error = (code: keyof Errors, ...params: string[]) => {
 let lastId = 0;
 const newid = () => `__${++lastId}`;
 
+const iterNth = <T>(iterable: Iterable<T>, n: number): T | undefined => {
+  if (n < 0) return [...iterable].at(n);
+  const iterator = iterable[Symbol.iterator]();
+
+  // eslint-disable-next-line no-constant-condition
+  while (n-- > 0) {
+    if (iterator.next().done) return undefined;
+  }
+  return iterator.next().value;
+};
+
 // To ensure no infinite loops
 const boundLoop = <T>(fn: () => T) => {
   for (let i = 0; i < 1000; i++) {
@@ -960,7 +971,7 @@ class NthOp extends BaseGenerator1<number> {
     if (this.args.args.length === 1 && Array.isArray(el)) {
       yield value(el.at(idx));
     } else if (this.args.args.length === 2) {
-      yield [...this.args.args[1].iterable([value(el)], context)].at(idx) ?? value(undefined);
+      yield iterNth(this.args.args[1].iterable([value(el)], context), idx) ?? value(undefined);
     }
   }
 }
@@ -1157,9 +1168,11 @@ class LimitOp extends BaseGenerator1 {
 
   *handle(el: Value, [M]: Value[], context: Context) {
     let limit = safeNum(M.val);
-    for (const e of this.node.args[1].iterable([el], context)) {
-      if (limit-- === 0) break;
-      yield e;
+    if (limit > 0) {
+      for (const e of this.node.args[1].iterable([el], context)) {
+        yield e;
+        if (--limit === 0) break;
+      }
     }
   }
 }

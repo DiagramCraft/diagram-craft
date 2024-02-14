@@ -340,12 +340,11 @@ describe('jqtest', () => {
       ]);
     });
 
-    // TODO: These two should be quite simple to fix
-    test.skip('[limit(0; error)]', () => {
+    test('[limit(0; error)]', () => {
       expect(parseAndQuery('[limit(0; error)]', ['badness'])).toEqual([[]]);
     });
 
-    test.skip('[limit(1; 1, error)]', () => {
+    test('[limit(1; 1, error)]', () => {
       expect(parseAndQuery('[limit(1; 1, error)]', ['badness'])).toEqual([[1]]);
     });
 
@@ -360,9 +359,8 @@ describe('jqtest', () => {
       ).toEqual([[0, 5, 9, 'error']]);
     });
 
-    // TODO: Should be an easy fix
-    test.skip('first(1, error("foo")', () => {
-      expect(parseAndQuery('first(1, error("foo"))', [undefined])).toEqual([[1]]);
+    test('first(1, error("foo")', () => {
+      expect(parseAndQuery('first(1, error("foo"))', [undefined])).toEqual([1]);
     });
 
     test('[limit(5,7; range(9))]', () => {
@@ -674,6 +672,7 @@ describe('jqtest', () => {
     });
   });
 
+  // L641
   describe('User-defined functions', () => {
     // TODO: Fix
     test.skip('def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g', () => {
@@ -897,6 +896,7 @@ describe('jqtest', () => {
     });
   });
 
+  // L956
   describe('Paths', () => {
     test('path(.foo[0,1])', () => {
       expect(parseAndQuery('path(.foo[0,1])', [undefined])).toEqual([
@@ -1151,6 +1151,7 @@ describe('jqtest', () => {
     });
   });
 
+  // L1152
   describe('Conditionals', () => {
     test('[.[] | if .foo then "yep" else "nope" end]', () => {
       expect(
@@ -1375,6 +1376,16 @@ describe('jqtest', () => {
       expect(res[0]![0]).toEqual('foo');
       expect(res[0]![1]).toBeInstanceOf(Error);
       expect(res[0]![2]).toEqual(3);
+    });
+
+    test.skip('[.[]|(.a, .a)?]', () => {
+      expect(parseAndQuery('[.[]|(.a, .a)?]', [[null, true, { a: 1 }]])).toEqual([
+        [null, null, 1, 1]
+      ]);
+    });
+
+    test.skip('[[.[]|[.a,.a]]?]', () => {
+      expect(parseAndQuery('[[.[]|[.a,.a]]?]', [[null, true, { a: 1 }]])).toEqual([[]]);
     });
   });
 
