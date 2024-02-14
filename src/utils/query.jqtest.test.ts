@@ -600,6 +600,16 @@ describe('jqtest', () => {
     ).toEqual([[0, 3, 5, 6, 9]]);
   });
 
+  test('.message = "goodbye"', () => {
+    expect(parseAndQuery('.message = "goodbye"', [{ message: 'hello' }])).toEqual([
+      { message: 'goodbye' }
+    ]);
+  });
+
+  test('.foo = .bar', () => {
+    expect(parseAndQuery('.foo = .bar', [{ bar: 42 }])).toEqual([{ foo: 42, bar: 42 }]);
+  });
+
   test('.foo |= .+1', () => {
     expect(parseAndQuery('.foo |= .+1', [{ foo: 42 }])).toEqual([{ foo: 43 }]);
   });

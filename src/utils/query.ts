@@ -53,6 +53,10 @@ const exactOne = <T>(it: Iterable<T>): T => {
   return arr[0];
 };
 
+const one = <T>(it: Iterable<T>): T => {
+  return Array.from(it)[0];
+};
+
 const isObj = (x: unknown): x is Record<string, unknown> =>
   typeof x === 'object' && !Array.isArray(x);
 
@@ -244,7 +248,8 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   ',': (l, r) => new ConcatenationOp(l, r),
   ';': (l, r) => new ConcatenationOp(l, r),
   as: (l, r) => new VarBindingOp(r, l),
-  '|=': (l, r) => new UpdateAssignmentOp(l, r)
+  '|=': (l, r) => new UpdateAssignmentOp(l, r),
+  '=': (l, r) => new AssignmentOp(l, r)
 };
 
 const BINOP_ORDERING = Object.fromEntries(
@@ -255,7 +260,7 @@ const BINOP_ORDERING = Object.fromEntries(
     ['as'],
     ['//'],
     ['and', 'or'],
-    ['==', '!=', '>=', '>', '<=', '<', '|='],
+    ['==', '!=', '>=', '>', '<=', '<', '|=', '='],
     ['+', '-'],
     ['*', '/', '%']
   ].flatMap((e, idx) => e.map(a => [a, idx * 10])) as [string, number][]
@@ -288,7 +293,7 @@ class Tokenizer {
       return { s: m[0], type: 'id' };
     } else if (
       (m = this.head.match(
-        /^(\|\||\|=|&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|;|\$|{|}|\*|\/|\?|\|)/
+        /^(\|\||\|=|&&|==|!=|>=|<=|>|<|=|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|;|\$|{|}|\*|\/|\?|\|)/
       ))
     ) {
       return { s: m[0], type: 'op' };
@@ -754,15 +759,29 @@ class VarBindingOp extends BaseGenerator1 {
 
 class UpdateAssignmentOp extends BaseGenerator2 {
   *handleInput(e: Value, context: Context) {
-    const dest = e.val;
+    const dest = e.val ?? {};
     const lh = [...this.generators[0].iterable([e], context)];
     for (const lhe of lh) {
       const parent = evalPath((lhe.path ?? []).slice(0, -1), dest, true);
 
-      const r = exactOne(this.generators[1].iterable([lhe], context));
+      const r = one(this.generators[1].iterable([lhe], context));
       setProp(parent, lhe.path!.at(-1), r.val);
     }
     yield { val: dest };
+  }
+}
+
+class AssignmentOp extends BaseGenerator2 {
+  *handleInput(e: Value, context: Context) {
+    const lh = [...this.generators[0].iterable([e], context)];
+    for (const r of this.generators[1].iterable([e], context)) {
+      const dest = e.val ?? {};
+      for (const lhe of lh) {
+        const parent = evalPath((lhe.path ?? []).slice(0, -1), dest, true);
+        setProp(parent, lhe.path!.at(-1), r.val);
+      }
+      yield { val: dest };
+    }
   }
 }
 

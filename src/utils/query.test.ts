@@ -672,6 +672,28 @@ describe('path', () => {
   });
 });
 
+describe('assignment', () => {
+  test('.a = .b', () => {
+    expect(parseAndQuery('.a = .b', [{ a: { b: 10 }, b: 20 }])).toEqual([{ a: 20, b: 20 }]);
+  });
+
+  test('.a |= .b', () => {
+    expect(parseAndQuery('.a |= .b', [{ a: { b: 10 }, b: 20 }])).toEqual([{ a: 10, b: 20 }]);
+  });
+
+  test('(.a, .b) = range(3)', () => {
+    expect(parseAndQuery('(.a, .b) = range(3)', [undefined])).toEqual([
+      { a: 0, b: 0 },
+      { a: 1, b: 1 },
+      { a: 2, b: 2 }
+    ]);
+  });
+
+  test('(.a, .b) |= range(3)', () => {
+    expect(parseAndQuery('(.a, .b) |= range(3)', [undefined])).toEqual([{ a: 0, b: 0 }]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
     expect(parseAndQuery('range(0,1;3,4)', [undefined])).toEqual([
