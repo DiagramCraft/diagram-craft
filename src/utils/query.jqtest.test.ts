@@ -614,6 +614,28 @@ describe('jqtest', () => {
     expect(parseAndQuery('.foo |= .+1', [{ foo: 42 }])).toEqual([{ foo: 43 }]);
   });
 
+  test('.[] += 2, .[] *= 2, .[] -= 2, .[] /= 2, .[] %=2', () => {
+    expect(parseAndQuery('.[] += 2, .[] *= 2, .[] -= 2, .[] /= 2, .[] %=2', [[1, 3, 5]])).toEqual([
+      [3, 5, 7],
+      [2, 6, 10],
+      [-1, 1, 3],
+      [0.5, 1.5, 2.5],
+      [1, 1, 1]
+    ]);
+  });
+
+  test('[.[] % 7]', () => {
+    expect(
+      parseAndQuery('[.[] % 7]', [[-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7]])
+    ).toEqual([[-0, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 0]]);
+
+    // TODO: This should start with 0 and not -0
+  });
+
+  test.skip('.foo += .foo', () => {
+    expect(parseAndQuery('.foo += .foo', [{ foo: 2 }])).toEqual([{ foo: 4 }]);
+  });
+
   test.skip('.[0].a |= {"old":., "new":(.+1)}', () => {
     expect(parseAndQuery('.[0].a |= {"old":., "new":(.+1)}', [[{ a: 1, b: 2 }]])).toEqual([
       [{ a: { old: 1, new: 2 }, b: 2 }]
