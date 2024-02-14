@@ -636,7 +636,7 @@ describe('jqtest', () => {
     expect(parseAndQuery('.foo += .foo', [{ foo: 2 }])).toEqual([{ foo: 4 }]);
   });
 
-  test.skip('.[0].a |= {"old":., "new":(.+1)}', () => {
+  test('.[0].a |= {"old":., "new":(.+1)}', () => {
     expect(parseAndQuery('.[0].a |= {"old":., "new":(.+1)}', [[{ a: 1, b: 2 }]])).toEqual([
       [{ a: { old: 1, new: 2 }, b: 2 }]
     ]);
@@ -657,6 +657,40 @@ describe('jqtest', () => {
         { a: 3, b: 4 },
         { a: 8, b: 8 }
       ]
+    ]);
+  });
+
+  test('(.[] | select(. >= 2)) |= empty', () => {
+    expect(parseAndQuery('(.[] | select(. >= 2)) |= empty', [[1, 5, 3, 0, 7]])).toEqual([[1, 0]]);
+  });
+
+  test('.[] |= select(. % 2 == 0)', () => {
+    expect(parseAndQuery('.[] |= select(. % 2 == 0)', [[0, 1, 2, 3, 4, 5]])).toEqual([[0, 2, 4]]);
+  });
+
+  test('.foo[1,4,2,3] |= empty', () => {
+    expect(parseAndQuery('.foo[1,4,2,3] |= empty', [{ foo: [0, 1, 2, 3, 4, 5] }])).toEqual([
+      { foo: [0, 5] }
+    ]);
+  });
+
+  test.skip('.[2][3] = 1', () => {
+    expect(parseAndQuery('.[2][3] = 1', [[4]])).toEqual([[4, null, [null, null, null, 1]]]);
+  });
+
+  test.skip('.foo[2].bar = 1', () => {
+    expect(parseAndQuery('.foo[2].bar = 1', [{ foo: [11], bar: 42 }])).toEqual([
+      { foo: [11, undefined, { bar: 1 }], bar: 42 }
+    ]);
+  });
+
+  test('def x: .[1,2]; x=10', () => {
+    expect(parseAndQuery('def x: .[1,2]; x=10', [[0, 1, 2]])).toEqual([[0, 10, 10]]);
+  });
+
+  test('.[] = 1', () => {
+    expect(parseAndQuery('.[] = 1', [[1, null, Infinity, -Infinity, NaN, -NaN]])).toEqual([
+      [1, 1, 1, 1, 1, 1]
     ]);
   });
 

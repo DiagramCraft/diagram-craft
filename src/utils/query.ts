@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isTaggedType, tag, TaggedType } from './types.ts';
-import { newid } from './id.ts';
-
-/*
-TODO:
-  string interpolation
-*/
 
 /** Builtins *************************************************************************** */
 
@@ -15,7 +9,34 @@ const builtins = [
   'def del(f): delpaths([path(f)])'
 ];
 
+/** Error handling ********************************************************************* */
+
+const BACKTRACK_ERROR = Symbol('backtrack');
+
+const handleError = (e: unknown) => {
+  if (e !== BACKTRACK_ERROR) throw e;
+};
+
+type Errors = {
+  100: 'Inifinite loop';
+  101: 'Unknown token';
+  102: 'Unexpected token';
+  103: 'Cannot parse token';
+  201: 'Expected array';
+  202: 'Invalid index';
+  203: 'Expected indexable object';
+  210: 'Unknown function';
+  301: 'Expected exactly one';
+};
+
+const error = (code: keyof Errors, ...params: string[]) => {
+  throw new Error(`${code}: ${params}`);
+};
+
 /** Utils ****************************************************************************** */
+
+let lastId = 0;
+const newid = () => `__${++lastId}`;
 
 // To ensure no infinite loops
 const boundLoop = <T>(fn: () => T) => {
@@ -49,37 +70,14 @@ function* iterateAll(
 
 const exactOne = <T>(it: Iterable<T>): T => {
   const arr = Array.from(it);
-  if (arr.length !== 1) throw new Error();
+  if (arr.length !== 1) error(301);
   return arr[0];
 };
 
-const one = <T>(it: Iterable<T>): T => {
-  return Array.from(it)[0];
-};
+const one = <T>(it: Iterable<T>): T | undefined => Array.from(it)[0];
 
 const isObj = (x: unknown): x is Record<string, unknown> =>
   typeof x === 'object' && !Array.isArray(x);
-
-/** Error handling ********************************************************************* */
-
-const BACKTRACK_ERROR = Symbol('backtrack');
-
-const handleError = (e: unknown) => {
-  if (e !== BACKTRACK_ERROR) throw e;
-};
-
-type Errors = {
-  100: 'Inifinite loop';
-  101: 'Unknown token';
-  102: 'Unexpected token';
-  103: 'Cannot parse token';
-  201: 'Expected array';
-  210: 'Unknown function';
-};
-
-const error = (code: keyof Errors, ...params: string[]) => {
-  throw new Error(`Error ${code}: ${params}`);
-};
 
 /** Data types ************************************************************************* */
 
@@ -103,27 +101,29 @@ const subtract = (lvs: unknown, rvs: unknown) => {
   return safeNum(lvs) - safeNum(rvs);
 };
 
-const checkValidIdx = (idx: string) => {
-  if (idx === '__proto__' || idx === 'constructor') throw new Error();
+const checkValidIdx = (idx: unknown) => {
+  if (idx === '__proto__' || idx === 'constructor') error(202);
 };
 
 const prop = (lvs: unknown, idx: unknown) => {
+  checkValidIdx(idx);
+
   if (Array.isArray(lvs) && typeof idx === 'number') return lvs.at(idx);
   if (isObj(lvs)) {
-    checkValidIdx(idx as string);
     return lvs instanceof Map ? lvs.get(idx) : lvs[idx as string];
   }
-  throw new Error();
+  error(203);
 };
 
 const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
+  checkValidIdx(idx);
+
   if (Array.isArray(lvs) && typeof idx === 'number') {
     lvs[idx] = rvs;
   } else if (isObj(lvs)) {
-    checkValidIdx(idx as string);
     lvs instanceof Map ? lvs.set(idx, rvs) : (lvs[idx as string] = rvs);
   } else {
-    throw new Error();
+    error(203);
   }
 };
 
@@ -134,20 +134,21 @@ const propAndClone = (lvs: unknown, idx: unknown) => {
 };
 
 const deleteProp = (lvs: unknown, idx: unknown) => {
+  checkValidIdx(idx);
+
   if (Array.isArray(lvs) && typeof idx === 'number') {
     lvs.splice(idx, 1);
   } else if (isObj(lvs)) {
-    checkValidIdx(idx as string);
     lvs instanceof Map ? lvs.delete(idx) : delete lvs[idx as string];
   } else {
-    throw new Error();
+    error(203);
   }
 };
 
-const evalPath = (path: PathElement[], obj: unknown, clone = false) => {
+const evalPath = (path: PathElement[], obj: unknown) => {
   let dest = obj;
   for (const e of path) {
-    dest = clone ? propAndClone(dest, e) : prop(dest, e);
+    dest = propAndClone(dest, e);
     if (dest === undefined) return undefined;
   }
   return dest;
@@ -163,6 +164,41 @@ const isEqual = (lvs: unknown, rvs: unknown) => {
 const isNotEqual = (lvs: unknown, rvs: unknown) => !isEqual(lvs, rvs);
 
 const isTrue = (e: unknown) => e !== false && e !== undefined && e !== null;
+
+class Modification {
+  private dels: Map<string, { path: PathElement[]; idxs: unknown[] }> = new Map();
+  private mods: Array<{ path: PathElement[]; val: unknown }> = [];
+
+  constructor(private target: unknown) {}
+
+  set(path: PathElement[], val: unknown) {
+    this.mods.push({ path, val });
+  }
+
+  del(path: PathElement[], idx: unknown) {
+    const key = path.join(',');
+    (this.dels.get(key) ?? this.dels.set(key, { path, idxs: [] }).get(key)!).idxs.push(idx);
+  }
+
+  apply() {
+    for (const mod of this.mods) {
+      const arr = evalPath(mod.path.slice(0, -1), this.target);
+      if (!arr) continue;
+      setProp(arr, mod.path.at(-1), mod.val);
+    }
+
+    for (const { path: p, idxs } of this.dels.values()) {
+      const arr = evalPath(p, this.target);
+      if (!arr) continue;
+
+      for (const idx of idxs.sort().reverse()) {
+        deleteProp(arr, idx);
+      }
+    }
+
+    return this.target;
+  }
+}
 
 /** Functions ************************************************************************** */
 
@@ -272,6 +308,15 @@ const BINOP_ORDERING = Object.fromEntries(
   ].flatMap((e, idx) => e.map(a => [a, idx * 10])) as [string, number][]
 );
 
+const BINOP_RE = new RegExp(
+  '^(' +
+    [...Object.keys(BINOP_ORDERING), ...':[]().${}?'.split('')]
+      .sort((a, b) => b.length - a.length)
+      .map(a => a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|') +
+    ')'
+);
+
 /** Tokenizer ********************************************************************* */
 
 type Token = {
@@ -291,21 +336,29 @@ class Tokenizer {
 
     if ((m = this.head.match(/^#.*/))) {
       return { s: m[0], type: 'sep' };
-    } else if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?/))) {
+    }
+
+    if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?/))) {
       return { s: m[0], type: 'num' };
-    } else if ((m = this.head.match(/^"[^"]*"/))) {
+    }
+
+    if ((m = this.head.match(/^"[^"]*"/))) {
       return { s: m[0], type: 'str' };
-    } else if ((m = this.head.match(/^([a-zA-Z_][\w]*|\.\.)/))) {
+    }
+
+    if ((m = this.head.match(/^([a-zA-Z_][\w]*|\.\.)/))) {
       return { s: m[0], type: 'id' };
-    } else if (
-      (m = this.head.match(
-        /^(\|\||\|=|\+=|-=|\*=|\/=|%=|\/\/=|&&|==|!=|>=|<=|>|<|=|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|;|\$|{|}|\*|\/|\?|\|)/
-      ))
-    ) {
+    }
+
+    if ((m = this.head.match(BINOP_RE))) {
       return { s: m[0], type: 'op' };
-    } else if ((m = this.head.match(/^(\s+)/))) {
+    }
+
+    if ((m = this.head.match(/^(\s+)/))) {
       return { s: m[0], type: 'sep' };
-    } else if (this.head === '') {
+    }
+
+    if (this.head === '') {
       return { s: '', type: 'end' };
     }
 
@@ -450,7 +503,7 @@ export const OObjects = {
     } else if (tok.s === '{') {
       return OObject.parse(tokenizer);
     } else if (tok.s === '(') {
-      const e = OObjects.parseNext(tokenizer);
+      const e = parseExpression(tokenizer, {});
       tokenizer.expect(')');
       return e;
     } else if (tok.s === '[') {
@@ -765,15 +818,19 @@ class VarBindingOp extends BaseGenerator1 {
 
 class UpdateAssignmentOp extends BaseGenerator2 {
   *handleInput(e: Value, context: Context) {
-    const dest = shallowClone(e.val ?? {});
+    const mod = new Modification(shallowClone(e.val ?? {}));
+
     const lh = [...this.generators[0].iterable([e], context)];
     for (const lhe of lh) {
-      const parent = evalPath((lhe.path ?? []).slice(0, -1), dest, true);
-
       const r = one(this.generators[1].iterable([lhe], context));
-      setProp(parent, lhe.path!.at(-1), r.val);
+      if (r === undefined) {
+        mod.del(lhe.path!.slice(0, -1), lhe.path!.at(-1));
+      } else {
+        mod.set(lhe.path!, r.val);
+      }
     }
-    yield { val: dest };
+
+    yield value(mod.apply());
   }
 }
 
@@ -781,12 +838,11 @@ class AssignmentOp extends BaseGenerator2 {
   *handleInput(e: Value, context: Context) {
     const lh = [...this.generators[0].iterable([e], context)];
     for (const r of this.generators[1].iterable([e], context)) {
-      const dest = e.val ?? {};
+      const mod = new Modification(shallowClone(e.val ?? {}));
       for (const lhe of lh) {
-        const parent = evalPath((lhe.path ?? []).slice(0, -1), dest, true);
-        setProp(parent, lhe.path!.at(-1), r.val);
+        mod.set(lhe.path!, r.val);
       }
-      yield { val: dest };
+      yield value(mod.apply());
     }
   }
 }
@@ -1165,11 +1221,7 @@ class IfOp extends BaseGenerator {
         }
       }
 
-      if (this.elseConsequent) {
-        yield* this.elseConsequent.iterable([e], context);
-      } else {
-        yield e;
-      }
+      yield* this.elseConsequent?.iterable([e], context) ?? [e];
     }
   }
 }
@@ -1182,38 +1234,14 @@ class GetPathOp extends BaseGenerator1<PathElement[]> {
 
 class DelPathsOp extends BaseGenerator1<PathElement[][]> {
   *handle(input: Value, [paths]: [Value<PathElement[][]>], _context: Context): Iterable<Value> {
-    const arrs: Map<string, { path: PathElement[]; idxs: number[] }> = new Map();
-    const root = shallowClone(input.val);
+    const mod = new Modification(shallowClone(input.val));
 
     for (const path of paths.val) {
       if (path.length === 0) return yield value(undefined);
-
-      const dest = evalPath(path.slice(0, -1), root, true);
-      if (dest === undefined) continue;
-
-      if (Array.isArray(dest)) {
-        const pathToArray = path.slice(0, -1);
-        const key = pathToArray.join(',');
-        if (!arrs.has(key)) {
-          arrs.set(key, { path: pathToArray, idxs: [] });
-        }
-        arrs.get(key)!.idxs.push(Number(path[path.length - 1]));
-      } else {
-        deleteProp(dest, path[path.length - 1]);
-      }
+      mod.del(path.slice(0, -1), path.at(-1));
     }
 
-    // Need to handle arrays at the end to handle out of order array index paths
-    for (const { path: p, idxs } of arrs.values()) {
-      const arr = evalPath(p, root);
-      if (!arr) continue;
-
-      for (const idx of idxs.sort().reverse()) {
-        deleteProp(arr, idx);
-      }
-    }
-
-    yield value(root);
+    yield value(mod.apply());
   }
 }
 
@@ -1223,10 +1251,9 @@ class SetPathOp extends BaseGenerator2<PathElement[]> {
   }
 
   *handle(input: Value, [path, v]: [Value<PathElement[]>, Value], _context: Context) {
-    const root = shallowClone(input.val);
-    const dest = evalPath(path.val.slice(0, -1), root, true);
-    setProp(dest, path.val[path.val.length - 1], v.val);
-    yield value(root);
+    const mod = new Modification(shallowClone(input.val));
+    mod.set(path.val, v.val);
+    yield value(mod.apply());
   }
 }
 
