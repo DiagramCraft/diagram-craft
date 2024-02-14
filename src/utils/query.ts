@@ -119,7 +119,7 @@ const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
   checkValidIdx(idx);
 
   if (Array.isArray(lvs) && typeof idx === 'number') {
-    lvs[idx] = rvs;
+    lvs[idx < 0 ? lvs.length + idx : idx] = rvs;
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.set(idx, rvs) : (lvs[idx as string] = rvs);
   } else {
@@ -210,15 +210,15 @@ type BinaryOpRegistration = (l: Generator, r: Generator) => Generator;
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
   '..': { fn: () => new RecursiveDescentOp() },
-  not: { fn: () => new NotOp() },
+  not: { fn: () => new FnOp(a => !isTrue(a)) },
   length: { fn: () => new LengthOp() },
-  error: { args: '1', fn: a => new ErrorOp(a) },
+  error: { args: '0&1', fn: a => new ErrorOp(a ?? new LiteralOp('')) },
   has: { args: '1', fn: a => new HasOp(a) },
   in: { args: '1', fn: a => new InOp(a) },
   map_values: { args: '1', fn: a => new MapValuesOp(a) },
   select: { args: '1', fn: a => new SelectOp(a) },
-  any: { fn: () => new AnyOp() },
-  all: { fn: () => new AllOp() },
+  any: { fn: () => new FnOp(a => Array.isArray(a) && a.some(b => !!b)) },
+  all: { fn: () => new FnOp(a => Array.isArray(a) && a.every(b => !!b)) },
   unique_by: { args: '1', fn: a => new BaseArrayOp(Array_Unique, a) },
   unique: { fn: () => new BaseArrayOp(Array_Unique) },
   min_by: { args: '1', fn: a => new BaseArrayOp(Array_Min, a) },
@@ -228,7 +228,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   group_by: { args: '1', fn: a => new BaseArrayOp(Array_GroupBy, a) },
   startswith: { args: '1', fn: a => new StringOp(a, (a, b) => a.startsWith(b)) },
   endswith: { args: '1', fn: a => new StringOp(a, (a, b) => a.endsWith(b)) },
-  abs: { fn: () => new AbsOp() },
+  abs: { fn: () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)) },
   keys: { fn: () => new KeysOp() },
   split: { args: '1', fn: a => new StringOp(a, (a, b) => a.split(b)) },
   join: { args: '1', fn: a => new JoinOp(a) },
@@ -256,13 +256,15 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   sin: { fn: () => new MathOp(Math.sin) },
   sqrt: { fn: () => new MathOp(Math.sqrt) },
   add: { fn: () => new BaseArrayOp(Array_Add) },
-  empty: { fn: () => new EmptyOp() },
+  empty: { fn: () => mkEmptyOp() },
   test: { args: '1', fn: a => new MatchOp(a, true) },
   match: { args: '1', fn: a => new MatchOp(a) },
   path: { args: '1', fn: a => new PathOp(a) },
   getpath: { args: '1', fn: a => new GetPathOp(a) },
   delpaths: { args: '1', fn: a => new DelPathsOp(a) },
-  setpath: { args: '1', fn: a => new SetPathOp(a) }
+  setpath: { args: '1', fn: a => new SetPathOp(a) },
+  tojson: { fn: () => new FnOp(a => JSON.stringify(a)) },
+  fromjson: { fn: () => new FnOp(a => JSON.parse(a as string)) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -650,6 +652,16 @@ class MathOp extends BaseGenerator0 {
   }
 }
 
+class FnOp extends BaseGenerator0 {
+  constructor(private readonly fn: (a: unknown) => unknown) {
+    super();
+  }
+
+  *handle({ val: v }: Value) {
+    yield value(this.fn(v));
+  }
+}
+
 class IdentityOp extends BaseGenerator0 {
   *handle(e: Value) {
     yield { val: e.val, path: e.path ?? [] };
@@ -769,12 +781,6 @@ class LengthOp extends BaseGenerator0 {
   }
 }
 
-class NotOp extends BaseGenerator0 {
-  *handleInput({ val: e }: Value) {
-    yield value(!isTrue(e));
-  }
-}
-
 class ErrorOp extends BaseGenerator1 {
   // eslint-disable-next-line require-yield
   *handle(_e: Value, [arg]: [Value]) {
@@ -860,18 +866,6 @@ class ArgListOp implements Generator {
     } catch (e) {
       handleError(e);
     }
-  }
-}
-
-class AnyOp extends BaseGenerator0 {
-  *handle({ val: v }: Value) {
-    yield value(Array.isArray(v) && v.some(a => !!a));
-  }
-}
-
-class AllOp extends BaseGenerator0 {
-  *handle({ val: v }: Value) {
-    yield value(Array.isArray(v) && v.every(a => !!a));
   }
 }
 
@@ -1031,12 +1025,6 @@ class JoinOp extends BaseGenerator1<string> {
   }
 }
 
-class AbsOp extends BaseGenerator0 {
-  *handle({ val: v }: Value) {
-    yield value(typeof v === 'number' ? Math.abs(v) : v);
-  }
-}
-
 class KeysOp extends BaseGenerator0 {
   *handle({ val: el }: Value) {
     if (el && typeof el === 'object')
@@ -1157,12 +1145,10 @@ class RangeOp extends BaseGenerator {
 
 class Noop extends BaseGenerator0 {}
 
-class EmptyOp extends BaseGenerator0 {
-  // eslint-disable-next-line require-yield
-  *handle(_e: Value) {
+const mkEmptyOp = () =>
+  new FnOp(() => {
     throw BACKTRACK_ERROR;
-  }
-}
+  });
 
 class LimitOp extends BaseGenerator1 {
   constructor(private readonly node: ArgListOp) {
@@ -1335,7 +1321,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       const body = parseExpression(tokenizer, functions);
       return new TryCatchOp(
         body,
-        tokenizer.accept('catch') ? parseExpression(tokenizer, functions) : new EmptyOp()
+        tokenizer.accept('catch') ? parseExpression(tokenizer, functions) : mkEmptyOp()
       );
     } else if (tok.s === 'if') {
       tokenizer.next();
