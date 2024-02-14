@@ -243,7 +243,8 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '|': (l, r) => new PipeOp(l, r),
   ',': (l, r) => new ConcatenationOp(l, r),
   ';': (l, r) => new ConcatenationOp(l, r),
-  as: (l, r) => new VarBindingOp(r, l)
+  as: (l, r) => new VarBindingOp(r, l),
+  '|=': (l, r) => new UpdateAssignmentOp(l, r)
 };
 
 const BINOP_ORDERING = Object.fromEntries(
@@ -254,7 +255,7 @@ const BINOP_ORDERING = Object.fromEntries(
     ['as'],
     ['//'],
     ['and', 'or'],
-    ['==', '!=', '>=', '>', '<=', '<'],
+    ['==', '!=', '>=', '>', '<=', '<', '|='],
     ['+', '-'],
     ['*', '/', '%']
   ].flatMap((e, idx) => e.map(a => [a, idx * 10])) as [string, number][]
@@ -287,7 +288,7 @@ class Tokenizer {
       return { s: m[0], type: 'id' };
     } else if (
       (m = this.head.match(
-        /^(\|\||&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|;|\$|{|}|\*|\/|\?|\|)/
+        /^(\|\||\|=|&&|==|!=|>=|<=|>|<|\+|-|%|\/\/|\.|\[|\]|\(|\)|,|:|;|\$|{|}|\*|\/|\?|\|)/
       ))
     ) {
       return { s: m[0], type: 'op' };
@@ -309,7 +310,7 @@ class Tokenizer {
 
   expect(s: string, strip = true) {
     if (this.peek().s === s) return this.next(strip);
-    else throw error(102, s, this.peek().s);
+    else throw error(102, s, this.peek().s, this.head);
   }
 
   strip() {
@@ -751,6 +752,20 @@ class VarBindingOp extends BaseGenerator1 {
   }
 }
 
+class UpdateAssignmentOp extends BaseGenerator2 {
+  *handleInput(e: Value, context: Context) {
+    const dest = e.val;
+    const lh = [...this.generators[0].iterable([e], context)];
+    for (const lhe of lh) {
+      const parent = evalPath((lhe.path ?? []).slice(0, -1), dest, true);
+
+      const r = exactOne(this.generators[1].iterable([lhe], context));
+      setProp(parent, lhe.path!.at(-1), r.val);
+    }
+    yield { val: dest };
+  }
+}
+
 class ArgListOp implements Generator {
   constructor(public readonly args: Generator[]) {}
 
@@ -1136,7 +1151,7 @@ class IfOp extends BaseGenerator {
 
 class GetPathOp extends BaseGenerator1<PathElement[]> {
   *handle(input: Value, [path]: [Value<PathElement[]>], _context: Context): Iterable<Value> {
-    yield value(evalPath(input.val as PathElement[], path.val));
+    yield value(evalPath(path.val, input.val as PathElement[]));
   }
 }
 
@@ -1184,7 +1199,7 @@ class SetPathOp extends BaseGenerator2<PathElement[]> {
 
   *handle(input: Value, [path, v]: [Value<PathElement[]>, Value], _context: Context) {
     const root = shallowClone(input.val);
-    const dest = evalPath(path.val, root, true);
+    const dest = evalPath(path.val.slice(0, -1), root, true);
     setProp(dest, path.val[path.val.length - 1], v.val);
     yield value(root);
   }

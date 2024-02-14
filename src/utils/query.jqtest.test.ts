@@ -580,7 +580,7 @@ describe('jqtest', () => {
     expect(parseAndQuery('delpaths([[-200]])', [[1, 2, 3]])).toEqual([[1, 2, 3]]);
   });
 
-  test.only('del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)', () => {
+  test('del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)', () => {
     expect(
       parseAndQuery(
         'del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)',
@@ -598,6 +598,34 @@ describe('jqtest', () => {
     expect(
       parseAndQuery('del(.[1], .[-6], .[2], .[-3:9])', [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]])
     ).toEqual([[0, 3, 5, 6, 9]]);
+  });
+
+  test('.foo |= .+1', () => {
+    expect(parseAndQuery('.foo |= .+1', [{ foo: 42 }])).toEqual([{ foo: 43 }]);
+  });
+
+  test.skip('.[0].a |= {"old":., "new":(.+1)}', () => {
+    expect(parseAndQuery('.[0].a |= {"old":., "new":(.+1)}', [[{ a: 1, b: 2 }]])).toEqual([
+      [{ a: { old: 1, new: 2 }, b: 2 }]
+    ]);
+  });
+
+  test('def inc(x): x |= .+1; inc(.[].a)', () => {
+    expect(
+      parseAndQuery('def inc(x): x |= .+1; inc(.[].a)', [
+        [
+          { a: 1, b: 2 },
+          { a: 2, b: 4 },
+          { a: 7, b: 8 }
+        ]
+      ])
+    ).toEqual([
+      [
+        { a: 2, b: 2 },
+        { a: 3, b: 4 },
+        { a: 8, b: 8 }
+      ]
+    ]);
   });
 
   test('[.[] | if .foo then "yep" else "nope" end]', () => {
