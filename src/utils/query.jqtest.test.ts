@@ -540,6 +540,66 @@ describe('jqtest', () => {
     ]);
   });
 
+  test('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', () => {
+    expect(
+      parseAndQuery('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', [
+        { bar: 42, foo: ['a', 'b', 'c', 'd'] }
+      ])
+    ).toEqual(['b', { bar: 42, foo: ['a', 20, 'c', 'd'] }, { bar: 42, foo: ['a', 'c', 'd'] }]);
+  });
+
+  test('map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))', () => {
+    expect(
+      parseAndQuery('map(getpath([2])), map(setpath([2]; 42)), map(delpaths([[2]]))', [
+        [[0], [0, 1], [0, 1, 2]]
+      ])
+    ).toEqual([
+      [undefined, undefined, 2],
+      [
+        [0, undefined, 42],
+        [0, 1, 42],
+        [0, 1, 42]
+      ],
+      [[0], [0, 1], [0, 1]]
+    ]);
+  });
+
+  test('map(delpaths([[0,"foo"]]))', () => {
+    expect(
+      parseAndQuery('map(delpaths([[0,"foo"]]))', [[[{ foo: 2, x: 1 }], [{ bar: 2 }]]])
+    ).toEqual([[[{ x: 1 }], [{ bar: 2 }]]]);
+  });
+
+  test.skip('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', () => {
+    expect(
+      parseAndQuery('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', [[1, 2, 3]])
+    ).toEqual([undefined, { bar: false, foo: [undefined, 20] }, { bar: false }]);
+  });
+
+  test.skip('delpaths([[-200]])', () => {
+    expect(parseAndQuery('delpaths([[-200]])', [[1, 2, 3]])).toEqual([[1, 2, 3]]);
+  });
+
+  test.only('del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)', () => {
+    expect(
+      parseAndQuery(
+        'del(.), del(empty), del((.foo,.bar,.baz) | .[2,3,0]), del(.foo[0], .bar[0], .foo, .baz.bar[0].x)',
+        [{ foo: [0, 1, 2, 3, 4], bar: [0, 1] }]
+      )
+    ).toEqual([
+      undefined,
+      { foo: [0, 1, 2, 3, 4], bar: [0, 1] },
+      { foo: [1, 4], bar: [1] },
+      { bar: [1] }
+    ]);
+  });
+
+  test.skip('del(.[1], .[-6], .[2], .[-3:9])', () => {
+    expect(
+      parseAndQuery('del(.[1], .[-6], .[2], .[-3:9])', [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]])
+    ).toEqual([[0, 3, 5, 6, 9]]);
+  });
+
   test('[.[] | if .foo then "yep" else "nope" end]', () => {
     expect(
       parseAndQuery('[.[] | if .foo then "yep" else "nope" end]', [

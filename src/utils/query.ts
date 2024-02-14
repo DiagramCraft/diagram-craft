@@ -9,7 +9,11 @@ TODO:
 
 /** Builtins *************************************************************************** */
 
-const builtins = ['def paths: path(..)|select(length > 0)', 'def map(f): [.[]|f]'];
+const builtins = [
+  'def paths: path(..)|select(length > 0)',
+  'def map(f): [.[]|f]',
+  'def del(f): delpaths([path(f)])'
+];
 
 /** Utils ****************************************************************************** */
 
@@ -23,6 +27,8 @@ const boundLoop = <T>(fn: () => T) => {
 };
 
 const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
+
+const shallowClone = (v: unknown) => (Array.isArray(v) ? [...v] : isObj(v) ? { ...v } : v);
 
 function* iterateAll(
   generators: Generator[],
@@ -93,13 +99,54 @@ const subtract = (lvs: unknown, rvs: unknown) => {
   return safeNum(lvs) - safeNum(rvs);
 };
 
+const checkValidIdx = (idx: string) => {
+  if (idx === '__proto__' || idx === 'constructor') throw new Error();
+};
+
 const prop = (lvs: unknown, idx: unknown) => {
   if (Array.isArray(lvs) && typeof idx === 'number') return lvs.at(idx);
   if (isObj(lvs)) {
-    if (idx === '__proto__' || idx === 'constructor') throw new Error();
+    checkValidIdx(idx as string);
     return lvs instanceof Map ? lvs.get(idx) : lvs[idx as string];
   }
   throw new Error();
+};
+
+const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
+  if (Array.isArray(lvs) && typeof idx === 'number') {
+    lvs[idx] = rvs;
+  } else if (isObj(lvs)) {
+    checkValidIdx(idx as string);
+    lvs instanceof Map ? lvs.set(idx, rvs) : (lvs[idx as string] = rvs);
+  } else {
+    throw new Error();
+  }
+};
+
+const propAndClone = (lvs: unknown, idx: unknown) => {
+  const next = shallowClone(prop(lvs, idx));
+  if (next !== undefined) setProp(lvs, idx, next);
+  return next;
+};
+
+const deleteProp = (lvs: unknown, idx: unknown) => {
+  if (Array.isArray(lvs) && typeof idx === 'number') {
+    lvs.splice(idx, 1);
+  } else if (isObj(lvs)) {
+    checkValidIdx(idx as string);
+    lvs instanceof Map ? lvs.delete(idx) : delete lvs[idx as string];
+  } else {
+    throw new Error();
+  }
+};
+
+const evalPath = (path: PathElement[], obj: unknown, clone = false) => {
+  let dest = obj;
+  for (const e of path) {
+    dest = clone ? propAndClone(dest, e) : prop(dest, e);
+    if (dest === undefined) return undefined;
+  }
+  return dest;
 };
 
 const isEqual = (lvs: unknown, rvs: unknown) => {
@@ -172,7 +219,10 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   empty: { fn: () => new EmptyOp() },
   test: { args: '1', fn: a => new MatchOp(a, true) },
   match: { args: '1', fn: a => new MatchOp(a) },
-  path: { args: '1', fn: a => new PathOp(a) }
+  path: { args: '1', fn: a => new PathOp(a) },
+  getpath: { args: '1', fn: a => new GetPathOp(a) },
+  delpaths: { args: '1', fn: a => new DelPathsOp(a) },
+  setpath: { args: '1', fn: a => new SetPathOp(a) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -299,12 +349,14 @@ type Context = {
   bindings: Bindings;
 };
 
+type PathElement = string | number | { start: number; end: number };
+
 type Value<T = unknown> = {
   val: T;
-  path?: any[];
+  path?: PathElement[];
 };
 
-const valueWithPath = (p: Value, v: unknown, pe: unknown) => {
+const valueWithPath = (p: Value, v: unknown, pe: PathElement) => {
   return { val: v, path: [...(p.path ?? []), pe] };
 };
 
@@ -1079,6 +1131,62 @@ class IfOp extends BaseGenerator {
         yield e;
       }
     }
+  }
+}
+
+class GetPathOp extends BaseGenerator1<PathElement[]> {
+  *handle(input: Value, [path]: [Value<PathElement[]>], _context: Context): Iterable<Value> {
+    yield value(evalPath(input.val as PathElement[], path.val));
+  }
+}
+
+class DelPathsOp extends BaseGenerator1<PathElement[][]> {
+  *handle(input: Value, [paths]: [Value<PathElement[][]>], _context: Context): Iterable<Value> {
+    const arrs: Map<string, { path: PathElement[]; idxs: number[] }> = new Map();
+    const root = shallowClone(input.val);
+
+    for (const path of paths.val) {
+      if (path.length === 0) return yield value(undefined);
+
+      const dest = evalPath(path.slice(0, -1), root, true);
+      if (dest === undefined) continue;
+
+      if (Array.isArray(dest)) {
+        const pathToArray = path.slice(0, -1);
+        const key = pathToArray.join(',');
+        if (!arrs.has(key)) {
+          arrs.set(key, { path: pathToArray, idxs: [] });
+        }
+        arrs.get(key)!.idxs.push(Number(path[path.length - 1]));
+      } else {
+        deleteProp(dest, path[path.length - 1]);
+      }
+    }
+
+    // Need to handle arrays at the end to handle out of order array index paths
+    for (const { path: p, idxs } of arrs.values()) {
+      const arr = evalPath(p, root);
+      if (!arr) continue;
+
+      for (const idx of idxs.sort().reverse()) {
+        deleteProp(arr, idx);
+      }
+    }
+
+    yield value(root);
+  }
+}
+
+class SetPathOp extends BaseGenerator2<PathElement[]> {
+  constructor(n: ArgListOp) {
+    super(n.args[0], n.args[1]);
+  }
+
+  *handle(input: Value, [path, v]: [Value<PathElement[]>, Value], _context: Context) {
+    const root = shallowClone(input.val);
+    const dest = evalPath(path.val, root, true);
+    setProp(dest, path.val[path.val.length - 1], v.val);
+    yield value(root);
   }
 }
 
