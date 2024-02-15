@@ -1390,37 +1390,70 @@ describe('jqtest', () => {
     test.skip('[[.[]|[.a,.a]]?]', () => {
       expect(parseAndQuery('[[.[]|[.a,.a]]?]', [[null, true, { a: 1 }]])).toEqual([[]]);
     });
+
+    test.skip('.[] | try error catch .', () => {
+      expect(parseAndQuery('.[] | try error catch .', [[1, null, 2]])).toEqual([1, undefined, 2]);
+    });
+
+    test.skip('try error("\\($__loc__)") catch .', () => {
+      expect(parseAndQuery('try error("\\($__loc__)") catch .', [undefined])).toEqual([
+        '{"file":"<top-level>","line":1}'
+      ]);
+    });
   });
 
-  test.skip('.[] | try error catch .', () => {
-    expect(parseAndQuery('.[] | try error catch .', [[1, null, 2]])).toEqual([1, null, 2]);
-  });
+  // L1299
+  describe('string operations', () => {
+    test('[.[]|startswith("foo")]', () => {
+      expect(
+        parseAndQuery('[.[]|startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
+      ).toEqual([[false, true, false, true, false]]);
+    });
 
-  test('[.[]|startswith("foo")]', () => {
-    expect(
-      parseAndQuery('[.[]|startswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
-    ).toEqual([[false, true, false, true, false]]);
-  });
+    test('[.[]|endswith("foo")]', () => {
+      expect(
+        parseAndQuery('[.[]|endswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
+      ).toEqual([[false, true, true, false, false]]);
+    });
 
-  test('[.[]|endswith("foo")]', () => {
-    expect(
-      parseAndQuery('[.[]|endswith("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'barfoob']])
-    ).toEqual([[false, true, true, false, false]]);
-  });
+    test('[.[] | split(", ")]', () => {
+      expect(
+        parseAndQuery('[.[] | split(", ")]', [['a,b, c, d, e,f', ', a,b, c, d, e,f, ']])
+      ).toEqual([
+        [
+          ['a,b', 'c', 'd', 'e,f'],
+          ['', 'a,b', 'c', 'd', 'e,f', '']
+        ]
+      ]);
+    });
 
-  test('[.[] | split(", ")]', () => {
-    expect(
-      parseAndQuery('[.[] | split(", ")]', [['a,b, c, d, e,f', ', a,b, c, d, e,f, ']])
-    ).toEqual([
-      [
-        ['a,b', 'c', 'd', 'e,f'],
-        ['', 'a,b', 'c', 'd', 'e,f', '']
-      ]
-    ]);
-  });
+    test('split("")', () => {
+      expect(parseAndQuery('split("")', ['abc'])).toEqual([['a', 'b', 'c']]);
+    });
 
-  test('split("")', () => {
-    expect(parseAndQuery('split("")', ['abc'])).toEqual([['a', 'b', 'c']]);
+    test('[.[]|ltrimstr("foo")]', () => {
+      expect(
+        parseAndQuery('[.[]|ltrimstr("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'afoo']])
+      ).toEqual([['fo', '', 'barfoo', 'bar', 'afoo']]);
+    });
+
+    test('[.[]|rtrimstr("foo")]', () => {
+      expect(
+        parseAndQuery('[.[]|rtrimstr("foo")]', [['fo', 'foo', 'barfoo', 'foobar', 'foob']])
+      ).toEqual([['fo', '', 'bar', 'foobar', 'foob']]);
+    });
+
+    test('[(index(","), rindex(",")), indices(",")]', () => {
+      expect(
+        parseAndQuery('[(index(","), rindex(",")), indices(",")]', ['a,bc,def,ghij,klmno'])
+      ).toEqual([[1, 13, [1, 4, 8, 13]]]);
+    });
+
+    test('[ index("aba"), rindex("aba"), indices("aba") ]', () => {
+      expect(
+        parseAndQuery('[ index("aba"), rindex("aba"), indices("aba") ]', ['xababababax'])
+      ).toEqual([[1, 7, [1, 3, 5, 7]]]);
+    });
   });
 
   test('[.[]|split(",")]', () => {

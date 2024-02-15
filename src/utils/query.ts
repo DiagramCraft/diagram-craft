@@ -267,12 +267,23 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
   'has/1': a => new HasOp(a),
   'in/1': a => new InOp(a),
+  'indices/1': a =>
+    new StringOp(a, (a, b) => {
+      const res = [];
+      let idx = -1;
+      while ((idx = a.indexOf(b, idx + 1)) !== -1) {
+        res.push(idx);
+      }
+      return res;
+    }),
+  'index/1': a => new StringOp(a, (a, b) => a.indexOf(b)),
   'join/1': a => new JoinOp(a),
   'keys/0': () => new KeysOp(),
   'last/0': () => new NthOp([literal(-1)]),
   'last/1': a => new NthOp([literal(-1), ...a.args]),
   'length/0': () => new LengthOp(),
   'limit/2': a => new LimitOp(a),
+  'ltrimstr/1': a => new StringOp(a, (a, b) => (a.startsWith(b) ? a.slice(b.length) : a)),
   'map_values/1': a => new MapValuesOp(a),
   'match/1': a => new MatchOp(a),
   'match/2': a => new MatchOp(a),
@@ -288,6 +299,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'range/1': a => new RangeOp([literal(0), a.args[0], literal(1)]),
   'range/2': a => new RangeOp([...a.args, literal(1)]),
   'range/3': a => new RangeOp(a.args),
+  'rindex/1': a => new StringOp(a, (a, b) => a.lastIndexOf(b)),
+  'rtrimstr/1': a => new StringOp(a, (a, b) => (a.endsWith(b) ? a.slice(0, -b.length) : a)),
   'select/1': a => new SelectOp(a),
   'setpath/2': a => new SetPathOp(a),
   'sin/0': () => new MathOp(Math.sin),
