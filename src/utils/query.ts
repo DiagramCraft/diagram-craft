@@ -69,7 +69,7 @@ const boundLoop = <T>(fn: () => T) => {
 
 const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
 
-const shallowClone = (v: unknown) => (Array.isArray(v) ? [...v] : isObj(v) ? { ...v } : v);
+const shallowClone = (v: unknown) => (isArray(v) ? [...v] : isObj(v) ? { ...v } : v);
 
 function* iterateAll(
   generators: Generator[],
@@ -96,20 +96,21 @@ const exactOne = <T>(it: Iterable<T>): T => {
 
 const one = <T>(it: Iterable<T>): T | undefined => Array.from(it)[0];
 
-const isObj = (x: unknown): x is Record<string, unknown> =>
-  typeof x === 'object' && !Array.isArray(x);
+const isArray = Array.isArray;
+
+const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && !isArray(x);
 
 /** Data types ************************************************************************* */
 
 const add = (lvs: unknown, rvs: unknown) => {
-  if (Array.isArray(lvs) && Array.isArray(rvs)) return [...lvs, ...rvs];
+  if (isArray(lvs) && isArray(rvs)) return [...lvs, ...rvs];
   if (typeof lvs === 'string' && typeof rvs === 'string') return lvs + rvs;
   if (isObj(lvs) && isObj(rvs)) return { ...lvs, ...rvs };
   return safeNum(lvs) + safeNum(rvs);
 };
 
 const subtract = (lvs: unknown, rvs: unknown) => {
-  if (Array.isArray(lvs) && Array.isArray(rvs)) {
+  if (isArray(lvs) && isArray(rvs)) {
     return lvs.filter(element => !rvs.includes(element));
   }
 
@@ -128,7 +129,7 @@ const checkValidIdx = (idx: unknown) => {
 const prop = (lvs: unknown, idx: unknown) => {
   checkValidIdx(idx);
 
-  if (Array.isArray(lvs) && typeof idx === 'number') return lvs.at(idx);
+  if (isArray(lvs) && typeof idx === 'number') return lvs.at(idx);
   if (isObj(lvs)) {
     return lvs instanceof Map ? lvs.get(idx) : lvs[idx as string];
   }
@@ -138,7 +139,7 @@ const prop = (lvs: unknown, idx: unknown) => {
 const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
   checkValidIdx(idx);
 
-  if (Array.isArray(lvs) && typeof idx === 'number') {
+  if (isArray(lvs) && typeof idx === 'number') {
     lvs[idx < 0 ? lvs.length + idx : idx] = rvs;
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.set(idx, rvs) : (lvs[idx as string] = rvs);
@@ -156,7 +157,7 @@ const propAndClone = (lvs: unknown, idx: unknown) => {
 const deleteProp = (lvs: unknown, idx: unknown) => {
   checkValidIdx(idx);
 
-  if (Array.isArray(lvs) && typeof idx === 'number') {
+  if (isArray(lvs) && typeof idx === 'number') {
     lvs.splice(idx, 1);
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.delete(idx) : delete lvs[idx as string];
@@ -192,7 +193,7 @@ const setPath = (base: any | undefined, path: PathElement[], val: unknown): unkn
 };
 
 const isEqual = (lvs: unknown, rvs: unknown) => {
-  if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
+  if ((isArray(lvs) && isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
     return JSON.stringify(lvs) === JSON.stringify(rvs);
   }
   return lvs === rvs;
@@ -239,70 +240,65 @@ class Modification {
 
 /** Functions ************************************************************************** */
 
-type FnRegistration =
-  | { fn: () => Generator }
-  | { args: '1'; fn: (arg: ArgListOp) => Generator }
-  | { args: '0&1'; fn: (arg: ArgListOp | undefined) => Generator };
+type FnRegistration = (arg: ArgListOp) => Generator;
 type BinaryOpRegistration = (l: Generator, r: Generator) => Generator;
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
-  '..': { fn: () => new RecursiveDescentOp() },
-  not: { fn: () => new FnOp(a => !isTrue(a)) },
-  length: { fn: () => new LengthOp() },
-  error: { args: '0&1', fn: a => new ErrorOp(a ?? new LiteralOp('')) },
-  has: { args: '1', fn: a => new HasOp(a) },
-  in: { args: '1', fn: a => new InOp(a) },
-  map_values: { args: '1', fn: a => new MapValuesOp(a) },
-  select: { args: '1', fn: a => new SelectOp(a) },
-  any: { fn: () => new FnOp(a => Array.isArray(a) && a.some(b => !!b)) },
-  all: { fn: () => new FnOp(a => Array.isArray(a) && a.every(b => !!b)) },
-  unique_by: { args: '1', fn: a => new BaseArrayOp(Array_Unique, a) },
-  unique: { fn: () => new BaseArrayOp(Array_Unique) },
-  min_by: { args: '1', fn: a => new BaseArrayOp(Array_Min, a) },
-  min: { fn: () => new BaseArrayOp(Array_Min) },
-  max_by: { args: '1', fn: a => new BaseArrayOp(Array_Max, a) },
-  max: { fn: () => new BaseArrayOp(Array_Max) },
-  group_by: { args: '1', fn: a => new BaseArrayOp(Array_GroupBy, a) },
-  startswith: { args: '1', fn: a => new StringOp(a, (a, b) => a.startsWith(b)) },
-  endswith: { args: '1', fn: a => new StringOp(a, (a, b) => a.endsWith(b)) },
-  abs: { fn: () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)) },
-  keys: { fn: () => new KeysOp() },
-  split: { args: '1', fn: a => new StringOp(a, (a, b) => a.split(b)) },
-  join: { args: '1', fn: a => new JoinOp(a) },
-  contains: { args: '1', fn: a => new ContainsOp(a) },
-  range: { args: '1', fn: a => new RangeOp(a.args) },
-  limit: { args: '1', fn: a => new LimitOp(a) },
-  first: {
-    args: '0&1',
-    fn: a =>
-      new NthOp(a ? (a.args.unshift(new LiteralOp(0)), a) : new ArgListOp([new LiteralOp(0)]))
-  },
-  last: {
-    args: '0&1',
-    fn: a =>
-      new NthOp(a ? (a.args.unshift(new LiteralOp(-1)), a) : new ArgListOp([new LiteralOp(-1)]))
-  },
-  flatten: {
-    args: '0&1',
-    fn: a => new FlattenOp(a ?? new ArgListOp([new LiteralOp(100)]))
-  },
-  nth: { args: '1', fn: a => new NthOp(a) },
-  floor: { fn: () => new MathOp(Math.floor) },
-  atan: { fn: () => new MathOp(Math.atan) },
-  cos: { fn: () => new MathOp(Math.cos) },
-  sin: { fn: () => new MathOp(Math.sin) },
-  sqrt: { fn: () => new MathOp(Math.sqrt) },
-  add: { fn: () => new BaseArrayOp(Array_Add) },
-  empty: { fn: () => mkEmptyOp() },
-  test: { args: '1', fn: a => new MatchOp(a, true) },
-  match: { args: '1', fn: a => new MatchOp(a) },
-  path: { args: '1', fn: a => new PathOp(a) },
-  getpath: { args: '1', fn: a => new GetPathOp(a) },
-  delpaths: { args: '1', fn: a => new DelPathsOp(a) },
-  setpath: { args: '1', fn: a => new SetPathOp(a) },
-  tojson: { fn: () => new FnOp(a => JSON.stringify(a)) },
-  fromjson: { fn: () => new FnOp(a => JSON.parse(a as string)) },
-  pick: { args: '1', fn: a => new PickOp(a) }
+  '../0': () => new RecursiveDescentOp(),
+  'abs/0': () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)),
+  'add/0': () => new BaseArrayOp(Array_Add),
+  'all/0': () => new FnOp(a => isArray(a) && a.every(b => !!b)),
+  'any/0': () => new FnOp(a => isArray(a) && a.some(b => !!b)),
+  'atan/0': () => new MathOp(Math.atan),
+  'contains/1': a => new ContainsOp(a),
+  'cos/0': () => new MathOp(Math.cos),
+  'delpaths/1': a => new DelPathsOp(a),
+  'empty/0': () => mkEmptyOp(),
+  'endswith/1': a => new StringOp(a, (a, b) => a.endsWith(b)),
+  'error/0': () => new ErrorOp(literal('')),
+  'error/1': a => new ErrorOp(a),
+  'first/0': () => new NthOp([literal(0)]),
+  'first/1': a => new NthOp([literal(0), ...a.args]),
+  'flatten/0': () => new FlattenOp(literal(100)),
+  'flatten/1': a => new FlattenOp(a),
+  'floor/0': () => new MathOp(Math.floor),
+  'fromjson/0': () => new FnOp(a => JSON.parse(a as string)),
+  'getpath/1': a => new GetPathOp(a),
+  'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
+  'has/1': a => new HasOp(a),
+  'in/1': a => new InOp(a),
+  'join/1': a => new JoinOp(a),
+  'keys/0': () => new KeysOp(),
+  'last/0': () => new NthOp([literal(-1)]),
+  'last/1': a => new NthOp([literal(-1), ...a.args]),
+  'length/0': () => new LengthOp(),
+  'limit/2': a => new LimitOp(a),
+  'map_values/1': a => new MapValuesOp(a),
+  'match/1': a => new MatchOp(a),
+  'match/2': a => new MatchOp(a),
+  'max/0': () => new BaseArrayOp(Array_Max),
+  'max_by/1': a => new BaseArrayOp(Array_Max, a),
+  'min/0': () => new BaseArrayOp(Array_Min),
+  'min_by/1': a => new BaseArrayOp(Array_Min, a),
+  'not/0': () => new FnOp(a => !isTrue(a)),
+  'nth/1': a => new NthOp(a.args),
+  'nth/2': a => new NthOp(a.args),
+  'path/1': a => new PathOp(a),
+  'pick/1': a => new PickOp(a),
+  'range/1': a => new RangeOp([literal(0), a.args[0], literal(1)]),
+  'range/2': a => new RangeOp([...a.args, literal(1)]),
+  'range/3': a => new RangeOp(a.args),
+  'select/1': a => new SelectOp(a),
+  'setpath/2': a => new SetPathOp(a),
+  'sin/0': () => new MathOp(Math.sin),
+  'split/1': a => new StringOp(a, (a, b) => a.split(b)),
+  'sqrt/0': () => new MathOp(Math.sqrt),
+  'startswith/1': a => new StringOp(a, (a, b) => a.startsWith(b)),
+  'test/1': a => new MatchOp(a, true),
+  'test/2': a => new MatchOp(a, true),
+  'tojson/0': () => new FnOp(a => JSON.stringify(a)),
+  'unique/0': () => new BaseArrayOp(Array_Unique),
+  'unique_by/1': a => new BaseArrayOp(Array_Unique, a)
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -498,7 +494,7 @@ abstract class BaseGenerator<T extends Array<Value> = Value[]> implements Genera
 
 abstract class BaseGenerator0 extends BaseGenerator<[]> {
   constructor() {
-    super([]);
+    super();
   }
 
   *handleInput(e: Value, context: Context): Iterable<Value> {
@@ -727,7 +723,7 @@ class PropertyLookupOp extends BaseGenerator1<string> {
 class ArraySliceOp extends BaseGenerator2<number, number> {
   *handle(e: Value, [f, t]: [Value<number>, Value<number>]) {
     const v = e.val;
-    if (v === undefined || !Array.isArray(v)) return;
+    if (v === undefined || !isArray(v)) return;
     const pe = { start: Math.floor(f.val), end: Math.ceil(t.val) };
     yield valueWithPath(e, v.slice(pe.start, pe.end), pe);
   }
@@ -736,7 +732,7 @@ class ArraySliceOp extends BaseGenerator2<number, number> {
 class ArrayOp extends BaseGenerator0 {
   *handleInput(e: Value) {
     const v = e.val;
-    if (v === undefined || !Array.isArray(v)) throw error(201);
+    if (v === undefined || !isArray(v)) throw error(201);
     for (let i = 0; i < v.length; i++) {
       yield valueWithPath(e, v[i], i);
     }
@@ -773,7 +769,7 @@ class RecursiveDescentOp extends BaseGenerator0 {
 
   private recurse(input: unknown, dest: Value[], path: any[]) {
     dest.push({ val: input, path: [...path] });
-    if (Array.isArray(input)) {
+    if (isArray(input)) {
       input.map((e, idx) => this.recurse(e, dest, [...path, idx]));
     } else if (isObj(input)) {
       for (const key in input) {
@@ -797,6 +793,8 @@ class BinaryOp extends BaseGenerator2 {
   }
 }
 
+const literal = (a: unknown) => new LiteralOp(a);
+
 class LiteralOp implements Generator {
   constructor(public readonly value: unknown) {}
 
@@ -809,7 +807,7 @@ class LengthOp extends BaseGenerator0 {
   *handleInput({ val: e }: Value) {
     if (e === undefined || e === null) {
       yield value(0);
-    } else if (Array.isArray(e) || typeof e === 'string') {
+    } else if (isArray(e) || typeof e === 'string') {
       yield value(e.length);
     } else if (!isNaN(Number(e))) {
       yield value(Math.abs(Number(e)));
@@ -920,16 +918,14 @@ class BaseArrayOp extends BaseGenerator1 {
   }
 
   *handleInput(el: Value, context: Context): Iterable<Value> {
-    if (!Array.isArray(el.val)) return yield el;
+    if (!isArray(el.val)) return yield el;
     const res = this.fn(
       el.val.map(e => [e, exactOne(this.generators[0].iterable([value(e)], context)).val])
     );
 
     if (isTaggedType(res, 'single')) return yield value(res._val);
 
-    return yield value(
-      Array.isArray(res) ? (this.fn(res) as [unknown, unknown][]).map(a => a[0]) : res
-    );
+    return yield value(isArray(res) ? (this.fn(res) as [unknown, unknown][]).map(a => a[0]) : res);
   }
 }
 
@@ -967,7 +963,7 @@ class MatchOp extends BaseGenerator2<string, string | undefined> {
     args: ArgListOp,
     private readonly onlyTest = false
   ) {
-    super(args.args[0], args.args[1] ?? new LiteralOp(''));
+    super(args.args[0], args.args[1] ?? literal(''));
   }
 
   *handle({ val: v }: Value<string>, [re, flags]: [Value<string>, Value<string | undefined>]) {
@@ -993,23 +989,23 @@ class MatchOp extends BaseGenerator2<string, string | undefined> {
 }
 
 class NthOp extends BaseGenerator1<number> {
-  constructor(private readonly args: ArgListOp) {
-    super(args.args[0]);
+  constructor(private readonly args: Generator[]) {
+    super(args[0]);
   }
 
   *handle(val: Value, [index]: [Value<number>], context: Context) {
     const idx = safeNum(index.val);
-    if (this.args.args.length === 1 && Array.isArray(val.val)) {
+    if (this.args.length === 1 && isArray(val.val)) {
       yield valueWithPath(val, val.val.at(idx), idx);
-    } else if (this.args.args.length === 2) {
-      yield iterNth(this.args.args[1].iterable([value(val.val)], context), idx) ?? value(undefined);
+    } else if (this.args.length === 2) {
+      yield iterNth(this.args[1].iterable([value(val.val)], context), idx) ?? value(undefined);
     }
   }
 }
 
 class FlattenOp extends BaseGenerator1<number> {
   *handle({ val: v }: Value, [arg]: [Value<number>]) {
-    yield value(Array.isArray(v) ? v.flat(arg.val) : v);
+    yield value(isArray(v) ? v.flat(arg.val) : v);
   }
 }
 
@@ -1057,13 +1053,13 @@ class StringOp extends BaseGenerator1<string> {
   }
 
   *handle({ val: v }: Value<string | string[]>, [{ val: arg }]: [Value<string>]) {
-    yield value(Array.isArray(v) ? v.map(e => this.fn(e, arg)) : this.fn(v, arg));
+    yield value(isArray(v) ? v.map(e => this.fn(e, arg)) : this.fn(v, arg));
   }
 }
 
 class JoinOp extends BaseGenerator1<string> {
   *handle({ val: v }: Value, [r]: [Value<string>]) {
-    yield value(Array.isArray(v) ? v.join(r.val) : v);
+    yield value(isArray(v) ? v.join(r.val) : v);
   }
 }
 
@@ -1073,7 +1069,7 @@ class KeysOp extends BaseGenerator0 {
       yield value(
         Object.keys(el)
           .sort()
-          .map(e => (Array.isArray(el) ? Number(e) : e))
+          .map(e => (isArray(el) ? Number(e) : e))
       );
     else yield value(el);
   }
@@ -1090,7 +1086,7 @@ class MapValuesOp extends BaseGenerator1 {
           ])
         )
       );
-    } else if (Array.isArray(v)) {
+    } else if (isArray(v)) {
       yield value(v.map(e => exactOne(this.generators[0].iterable([value(e)], context)).val));
     } else {
       yield value(v);
@@ -1103,9 +1099,9 @@ class ContainsOp extends BaseGenerator1 {
     for (const a of this.generators[0].iterable([value(undefined)], context)) {
       if (typeof a.val === 'string') {
         yield value(typeof v === 'string' ? v.includes(a.val) : false);
-      } else if (Array.isArray(a.val)) {
+      } else if (isArray(a.val)) {
         yield value(
-          Array.isArray(v)
+          isArray(v)
             ? a.val.every(e =>
                 (v as unknown[]).some(v => v === e || (typeof v === 'string' && v.includes(e)))
               )
@@ -1175,9 +1171,9 @@ class FunctionDefOp extends BaseGenerator0 {
 
 class RangeOp extends BaseGenerator {
   *handle(_el: Value, args: Value[]): Iterable<Value> {
-    const from = (args.length === 1 ? 0 : args[0].val) as number;
-    const to = (args.length === 1 ? args[0].val : args[1].val) as number;
-    const step = (args[2]?.val ?? 1) as number;
+    const from = args[0].val as number;
+    const to = args[1].val as number;
+    const step = args[2].val as number;
 
     for (let i = from; step > 0 ? i < to : i > to; i += step) {
       yield value(i);
@@ -1338,7 +1334,7 @@ const parsePathExpression = (
       wsTokenizer.next();
       const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
       const strict = !wsTokenizer.accept('?');
-      generators.push(new PropertyLookupOp(new LiteralOp(s), strict));
+      generators.push(new PropertyLookupOp(literal(s), strict));
     } else if (token.s === '[') {
       wsTokenizer.next();
       if (wsTokenizer.peek().s === ']') {
@@ -1457,51 +1453,44 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       const assignment = parseExpression(tokenizer, functions);
       verifyOpType(assignment, VarBindingOp);
 
-      const args = parseArgList(tokenizer, functions);
-      return new ReduceOp(assignment, args.args[0], args.args[1]);
+      const [arg1, arg2] = parseArgList(tokenizer, functions);
+      return new ReduceOp(assignment, arg1, arg2);
 
       /* LITERALS ************************************************************************** */
     } else if (tok.type === 'num') {
-      return new LiteralOp(Number(tokenizer.next().s));
+      return literal(Number(tokenizer.next().s));
     } else if (tok.s === '{') {
       const res = OObjects.parse(tokenizer);
       if (res.val.__generators) {
         return new ObjectTemplateOp(res.val);
       } else {
-        return new LiteralOp(res.val);
+        return literal(res.val);
       }
     } else if (tok.type === 'str') {
-      return new LiteralOp(tokenizer.next().s.slice(1, -1));
+      return literal(tokenizer.next().s.slice(1, -1));
     } else if (tok.s === 'null') {
       tokenizer.next();
-      return new LiteralOp(null);
+      return literal(null);
     } else if (tok.s === 'false' || tok.s === 'true') {
       tokenizer.next();
-      return new LiteralOp(tok.s === 'true');
+      return literal(tok.s === 'true');
 
       /* FUNCTIONS ************************************************************************** */
     } else if (tok.type === 'id') {
-      const op = tok.s;
       tokenizer.next();
 
-      if (op in FN_REGISTRY) {
-        const reg = FN_REGISTRY[op];
+      const argList = new ArgListOp(parseArgList(tokenizer, functions));
 
-        if (!('args' in reg)) {
-          return reg.fn();
-        } else if (reg.args === '0&1' && tokenizer.peek().s !== '(') {
-          return reg.fn(undefined);
-        }
+      const op = tok.s;
+      const qOp = op + '/' + argList.args.length;
 
-        return reg.fn(parseArgList(tokenizer, functions));
+      if (qOp in FN_REGISTRY) {
+        return FN_REGISTRY[qOp](argList);
       } else if (op in functions) {
-        return new FunctionCallOp(
-          op,
-          functions[op] === 0 ? undefined : parseArgList(tokenizer, functions)
-        );
-      } else {
-        throw error(210, op);
+        return new FunctionCallOp(op, argList);
       }
+
+      throw error(210, qOp);
     }
   } finally {
     tokenizer.strip();
@@ -1534,15 +1523,16 @@ const parseExpression = (
   });
 };
 
-const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): ArgListOp => {
-  tokenizer.expect('(');
+const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): Generator[] => {
+  if (!tokenizer.accept('(')) return [];
+  //tokenizer.expect('(');
   const op = [];
   while (tokenizer.peek().s !== ')') {
     op.push(parseExpression(tokenizer, functions));
     if (!tokenizer.accept(';')) break;
   }
   tokenizer.expect(')');
-  return new ArgListOp(op);
+  return op;
 };
 
 export const parse = (query: string): Generator => {
