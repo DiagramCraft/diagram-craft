@@ -25,13 +25,22 @@ type Errors = {
   201: 'Expected array';
   202: 'Invalid index';
   203: 'Expected indexable object';
+  204: 'Expected expression of type';
   210: 'Unknown function';
   301: 'Expected exactly one';
 };
 
 const error = (code: keyof Errors, ...params: string[]) => {
-  throw new Error(`${code}: ${params}`);
+  throw new Error(`${code}: ${params.join(', ')}`);
 };
+
+type ConstructorTypeOf<T> = new (...args: any[]) => T;
+function verifyOpType<T extends Generator>(
+  op: Generator,
+  type: ConstructorTypeOf<T>
+): asserts op is T {
+  if (!(op instanceof type)) error(204, type.name, op.constructor.name);
+}
 
 /** Utils ****************************************************************************** */
 
@@ -296,7 +305,7 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '|': (l, r) => new PipeOp(l, r),
   ',': (l, r) => new ConcatenationOp(l, r),
   ';': (l, r) => new ConcatenationOp(l, r),
-  as: (l, r) => new VarBindingOp(r, l),
+  as: (l, r) => new VarBindingOp(r as VarRefOp | string, l),
   '|=': (l, r) => new UpdateAssignmentOp(l, r),
   '=': (l, r) => new AssignmentOp(l, r),
   '+=': (l, r) => new UpdateAssignmentOp(l, new BinaryOp(new IdentityOp(), r, add)),
@@ -446,7 +455,7 @@ interface Generator {
 }
 
 abstract class BaseGenerator<T extends Array<Value> = Value[]> implements Generator {
-  constructor(protected readonly generators: Generator[] = []) {}
+  constructor(public readonly generators: Generator[] = []) {}
 
   *iterable(input: Iterable<Value>, context: Context): Iterable<Value> {
     try {
@@ -821,15 +830,19 @@ class SelectOp extends BaseGenerator1<boolean> {
 
 class VarBindingOp extends BaseGenerator1 {
   constructor(
-    private readonly id: Generator | string,
+    public readonly id: VarRefOp | string,
     node: Generator
   ) {
     super(node);
   }
 
   *handle(e: Value, [v]: [Value], context: Context) {
-    context.bindings[typeof this.id === 'string' ? this.id : (this.id as VarRefOp).identifier] = v;
+    context.bindings[this.getId()] = v;
     yield e;
+  }
+
+  public getId() {
+    return typeof this.id === 'string' ? this.id : this.id.identifier;
   }
 }
 
@@ -1256,6 +1269,29 @@ class SetPathOp extends BaseGenerator2<PathElement[]> {
   }
 }
 
+class ReduceOp extends BaseGenerator0 {
+  constructor(
+    private readonly sourceGen: VarBindingOp,
+    private readonly initGen: Generator,
+    private readonly opGen: Generator
+  ) {
+    super();
+  }
+
+  *handleInput(e: Value, context: Context): Iterable<Value> {
+    const id = this.sourceGen.getId();
+    const innerContext = { ...context, bindings: { ...context.bindings } };
+
+    let acc = exactOne(this.initGen.iterable([e], innerContext));
+    for (const s of this.sourceGen.generators[0].iterable([e], context)) {
+      innerContext.bindings[id] = s;
+      acc = exactOne(this.opGen.iterable([acc], innerContext));
+    }
+
+    yield acc;
+  }
+}
+
 /** Parser ************************************************************************** */
 
 const parsePathExpression = (
@@ -1387,6 +1423,14 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       tokenizer.accept(';');
 
       return new FunctionDefOp(name.s, args, body);
+    } else if (tok.s === 'reduce') {
+      tokenizer.next();
+
+      const assignment = parseExpression(tokenizer, functions);
+      verifyOpType(assignment, VarBindingOp);
+
+      const args = parseArgList(tokenizer, functions);
+      return new ReduceOp(assignment, args.args[0], args.args[1]);
 
       /* LITERALS ************************************************************************** */
     } else if (tok.type === 'num') {

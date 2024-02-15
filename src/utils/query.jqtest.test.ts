@@ -843,7 +843,11 @@ describe('jqtest', () => {
       ).toEqual([[1, 2, 6, 24]]);
     });
 
-    // A number of missing reduce/destructuing tests, L760-L892
+    test('reduce .[] as $x (0; . + $x)', () => {
+      expect(parseAndQuery('reduce .[] as $x (0; . + $x)', [[1, 2, 4]])).toEqual([7]);
+    });
+
+    // A number of missing reduce/destructuing tests, L764-L892
 
     test.skip('. as $dot|any($dot[];not)', () => {
       expect(

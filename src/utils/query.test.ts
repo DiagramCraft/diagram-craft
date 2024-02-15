@@ -694,6 +694,12 @@ describe('assignment', () => {
   });
 });
 
+describe('reduce', () => {
+  test('reduce .[] as $item (0; . + $item)', () => {
+    expect(parseAndQuery('reduce .[] as $item (0; . + $item)', [[1, 2, 3, 4, 5]])).toEqual([15]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
     expect(parseAndQuery('range(0,1;3,4)', [undefined])).toEqual([
