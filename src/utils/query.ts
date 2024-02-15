@@ -174,6 +174,23 @@ const evalPath = (path: PathElement[], obj: unknown) => {
   return dest;
 };
 
+const mkObj = (p: PathElement) => (typeof p === 'number' ? [] : {});
+
+// TODO: Do we need to add step by step cloning in here
+const setPath = (base: any | undefined, path: PathElement[], val: unknown): unknown => {
+  const dest = base ?? mkObj(path.at(0)!);
+  let parent: any = dest;
+  for (const [i, k] of path.entries()) {
+    if (i < path.length - 1) {
+      parent[k as any] ??= mkObj(path[i + 1]!);
+      parent = parent[k as any];
+    } else {
+      setProp(parent, k, val);
+    }
+  }
+  return dest;
+};
+
 const isEqual = (lvs: unknown, rvs: unknown) => {
   if ((Array.isArray(lvs) && Array.isArray(rvs)) || (isObj(lvs) && isObj(rvs))) {
     return JSON.stringify(lvs) === JSON.stringify(rvs);
@@ -411,7 +428,7 @@ class Tokenizer {
     return this.peek().s === s && this.next();
   }
 
-  keepWhitespace() {
+  keepWS() {
     return {
       next: () => this.next(false),
       expect: (s: string) => this.expect(s, false),
@@ -1294,31 +1311,11 @@ class ReduceOp extends BaseGenerator0 {
 }
 
 class PickOp extends BaseGenerator1 {
-  constructor(node: Generator) {
-    super(node);
-  }
-
   *handleInput(e: Value, context: Context) {
-    let dest: any | undefined = undefined;
-    for (const a of this.generators[0].iterable([e], context)) {
-      const p = a.path!;
-
-      // TODO: This is a bit of a hack... and breaks if first path element is number and second is string
-      if (dest === undefined) {
-        dest = typeof p[0] === 'number' ? [] : {};
-      }
-
-      let parent = dest;
-      for (const [i, k] of p.entries()) {
-        if (i < p.length - 1) {
-          parent[k as any] ??= typeof p[i + 1] === 'number' ? [] : {};
-          parent = parent[k as any];
-        } else {
-          setProp(parent, k, evalPath(p, e.val ?? {}));
-        }
-      }
+    let dest: unknown = undefined;
+    for (const { path: p } of this.generators[0].iterable([e], context)) {
+      dest = setPath(dest, p!, evalPath(p!, e.val ?? {}));
     }
-
     yield value(dest);
   }
 }
@@ -1332,7 +1329,7 @@ const parsePathExpression = (
   const vars: Generator[] = [];
   const generators: Generator[] = [new IdentityOp()];
 
-  const wsTokenizer = tokenizer.keepWhitespace();
+  const wsTokenizer = tokenizer.keepWS();
   wsTokenizer.accept('.');
 
   return boundLoop(() => {
