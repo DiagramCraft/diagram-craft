@@ -297,6 +297,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'test/1': a => new MatchOp(a, true),
   'test/2': a => new MatchOp(a, true),
   'tojson/0': () => new FnOp(a => JSON.stringify(a)),
+  'tonumber/0': () => new FnOp(a => Number(a)),
   'unique/0': () => new BaseArrayOp(Array_Unique),
   'unique_by/1': a => new BaseArrayOp(Array_Unique, a)
 };
@@ -333,8 +334,7 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
 const BINOP_ORDERING = Object.fromEntries(
   [
     [';'],
-    [','],
-    ['|'],
+    [',', '|'],
     ['as'],
     ['//'],
     ['and', 'or'],
@@ -374,7 +374,7 @@ class Tokenizer {
       return { s: m[0], type: 'sep' };
     }
 
-    if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?/))) {
+    if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?(e-?[\d]+)?/))) {
       return { s: m[0], type: 'num' };
     }
 

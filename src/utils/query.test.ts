@@ -260,7 +260,7 @@ describe('not', () => {
   });
 
   test('[true, false | not]', () => {
-    expect(parseAndQuery('[true, false | not]', [null])).toEqual([[true, true]]);
+    expect(parseAndQuery('[true, false | not]', [[]])).toEqual([[false, true]]);
   });
 });
 

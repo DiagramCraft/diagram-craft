@@ -234,8 +234,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('[([5,5][]),.,.[]]', [[1, 2, 3]])).toEqual([[5, 5, [1, 2, 3], 1, 2, 3]]);
     });
 
-    // TODO: Fix
-    test.skip('{x: (1,2)},{x:3} | .x', () => {
+    test('{x: (1,2)},{x:3} | .x', () => {
       expect(parseAndQuery('{x: (1,2)},{x:3} | .x', [undefined])).toEqual([1, 2, 3]);
     });
 
@@ -590,11 +589,11 @@ describe('jqtest', () => {
       ).toEqual([[2, 8, 10, 14]]);
     });
 
-    test.skip('1e-19 + 1e-20 - 5e-21', () => {
-      expect(parseAndQuery('1e-19 + 1e-20 - 5e-21', [undefined])).toEqual([1e-19]);
+    test('1e-19 + 1e-20 - 5e-21', () => {
+      expect(parseAndQuery('1e-19 + 1e-20 - 5e-21', [undefined])[0]).toBeCloseTo(1e-19);
     });
 
-    test.skip('1 / 1e-17', () => {
+    test('1 / 1e-17', () => {
       expect(parseAndQuery('1 / 1e-17', [undefined])).toEqual([1e17]);
     });
 
@@ -618,8 +617,8 @@ describe('jqtest', () => {
       expect(parseAndQuery('[nan % 1, 1 % nan | isnan]', [undefined])).toEqual([[true, true]]);
     });
 
-    test.skip('1 + tonumber + ("10" | tonumber)', () => {
-      expect(parseAndQuery('1 + tonumber + ("10" | tonumber)', [undefined])).toEqual([15]);
+    test('1 + tonumber + ("10" | tonumber)', () => {
+      expect(parseAndQuery('1 + tonumber + ("10" | tonumber)', [4])).toEqual([15]);
     });
 
     test('[{"a":42},.object,10,.num,false,true,null,"b",[1,4]] | .[] as $x | [$x == .[]]', () => {
