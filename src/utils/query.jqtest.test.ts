@@ -993,16 +993,16 @@ describe('jqtest', () => {
       expect(parseAndQuery('setpath([-1]; 1)', [[0]])).toEqual([[1]]);
     });
 
-    test.skip('pick(.a.b.c)', () => {
-      expect(parseAndQuery('pick(.a.b.c)', [undefined])).toEqual([{ a: { b: { c: null } } }]);
+    test('pick(.a.b.c)', () => {
+      expect(parseAndQuery('pick(.a.b.c)', [undefined])).toEqual([{ a: { b: { c: undefined } } }]);
     });
 
-    test.skip('pick(first)', () => {
+    test('pick(first)', () => {
       expect(parseAndQuery('pick(first)', [[1, 2]])).toEqual([[1]]);
     });
 
-    test.skip('pick(first|first)', () => {
-      expect(parseAndQuery('pick(first|first)', [[[10, 20], 30]])).toEqual([[10]]);
+    test('pick(first|first)', () => {
+      expect(parseAndQuery('pick(first|first)', [[[10, 20], 30]])).toEqual([[[10]]]);
     });
 
     test.skip('try pick(last) catch .', () => {

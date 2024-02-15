@@ -30,7 +30,7 @@ type Errors = {
   301: 'Expected exactly one';
 };
 
-const error = (code: keyof Errors, ...params: string[]) => {
+const error = (code: keyof Errors, ...params: unknown[]) => {
   throw new Error(`${code}: ${params.join(', ')}`);
 };
 
@@ -132,7 +132,7 @@ const prop = (lvs: unknown, idx: unknown) => {
   if (isObj(lvs)) {
     return lvs instanceof Map ? lvs.get(idx) : lvs[idx as string];
   }
-  error(203);
+  error(203, lvs);
 };
 
 const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
@@ -143,7 +143,7 @@ const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.set(idx, rvs) : (lvs[idx as string] = rvs);
   } else {
-    error(203);
+    error(203, lvs);
   }
 };
 
@@ -161,7 +161,7 @@ const deleteProp = (lvs: unknown, idx: unknown) => {
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.delete(idx) : delete lvs[idx as string];
   } else {
-    error(203);
+    error(203, lvs);
   }
 };
 
@@ -284,7 +284,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   delpaths: { args: '1', fn: a => new DelPathsOp(a) },
   setpath: { args: '1', fn: a => new SetPathOp(a) },
   tojson: { fn: () => new FnOp(a => JSON.stringify(a)) },
-  fromjson: { fn: () => new FnOp(a => JSON.parse(a as string)) }
+  fromjson: { fn: () => new FnOp(a => JSON.parse(a as string)) },
+  pick: { args: '1', fn: a => new PickOp(a) }
 };
 
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
@@ -979,12 +980,12 @@ class NthOp extends BaseGenerator1<number> {
     super(args.args[0]);
   }
 
-  *handle({ val: el }: Value, [index]: [Value<number>], context: Context) {
+  *handle(val: Value, [index]: [Value<number>], context: Context) {
     const idx = safeNum(index.val);
-    if (this.args.args.length === 1 && Array.isArray(el)) {
-      yield value(el.at(idx));
+    if (this.args.args.length === 1 && Array.isArray(val.val)) {
+      yield valueWithPath(val, val.val.at(idx), idx);
     } else if (this.args.args.length === 2) {
-      yield iterNth(this.args.args[1].iterable([value(el)], context), idx) ?? value(undefined);
+      yield iterNth(this.args.args[1].iterable([value(val.val)], context), idx) ?? value(undefined);
     }
   }
 }
@@ -1289,6 +1290,36 @@ class ReduceOp extends BaseGenerator0 {
     }
 
     yield acc;
+  }
+}
+
+class PickOp extends BaseGenerator1 {
+  constructor(node: Generator) {
+    super(node);
+  }
+
+  *handleInput(e: Value, context: Context) {
+    let dest: any | undefined = undefined;
+    for (const a of this.generators[0].iterable([e], context)) {
+      const p = a.path!;
+
+      // TODO: This is a bit of a hack... and breaks if first path element is number and second is string
+      if (dest === undefined) {
+        dest = typeof p[0] === 'number' ? [] : {};
+      }
+
+      let parent = dest;
+      for (const [i, k] of p.entries()) {
+        if (i < p.length - 1) {
+          parent[k as any] ??= typeof p[i + 1] === 'number' ? [] : {};
+          parent = parent[k as any];
+        } else {
+          setProp(parent, k, evalPath(p, e.val ?? {}));
+        }
+      }
+    }
+
+    yield value(dest);
   }
 }
 
