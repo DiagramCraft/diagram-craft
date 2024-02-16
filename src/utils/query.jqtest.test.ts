@@ -1454,6 +1454,24 @@ describe('jqtest', () => {
         parseAndQuery('[ index("aba"), rindex("aba"), indices("aba") ]', ['xababababax'])
       ).toEqual([[1, 7, [1, 3, 5, 7]]]);
     });
+
+    test('indices(1)', () => {
+      expect(parseAndQuery('indices(1)', [[0, 1, 1, 2, 3, 4, 1, 5]])).toEqual([[1, 2, 6]]);
+    });
+
+    test('indices([1,2])', () => {
+      expect(parseAndQuery('indices([1,2])', [[0, 1, 2, 3, 1, 4, 2, 5, 1, 2, 6, 7]])).toEqual([
+        [1, 8]
+      ]);
+    });
+
+    test('indices([1,2])', () => {
+      expect(parseAndQuery('indices([1,2])', [[1]])).toEqual([[]]);
+    });
+
+    test('indices(", ")', () => {
+      expect(parseAndQuery('indices(", ")', ['a,b, cd,e, fgh, ijkl'])).toEqual([[3, 9, 14]]);
+    });
   });
 
   test('[.[]|split(",")]', () => {

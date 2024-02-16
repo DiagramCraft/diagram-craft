@@ -26,6 +26,7 @@ type Errors = {
   202: 'Invalid index';
   203: 'Expected indexable object';
   204: 'Expected expression of type';
+  205: 'Expected array-like object';
   210: 'Unknown function';
   301: 'Expected exactly one';
 };
@@ -78,7 +79,7 @@ function* iterateAll(
   idx: number = 0,
   arr?: Value[]
 ): Iterable<Value<Value[]>> {
-  for (const item of generators[idx].iterable(input, context)) {
+  for (const item of generators[idx].iter(input, context)) {
     const newArray = [...(arr ?? []), item];
     if (idx === generators.length - 1) {
       yield value(newArray);
@@ -101,6 +102,40 @@ const isArray = Array.isArray;
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && !isArray(x);
 
 /** Data types ************************************************************************* */
+
+const asArray = (obj: unknown): unknown[] => {
+  if (isArray(obj)) return obj;
+  else if (typeof obj === 'string') return obj.split('');
+  else return error(205, obj);
+};
+
+const indices = (lvs: unknown, rvs: unknown) => {
+  let fn: (start: number) => number;
+  if (typeof lvs === 'string' && typeof rvs === 'string') {
+    fn = c => lvs.indexOf(rvs, c);
+  } else if (isArray(lvs) && !isArray(rvs)) {
+    fn = c => lvs.indexOf(rvs, c);
+  } else {
+    const arr = asArray(lvs);
+    const searchFor = asArray(rvs);
+    fn = c => {
+      for (let i = c; i < arr.length; i++) {
+        // TODO: This is quite slow :)
+        if (isEqual(arr.slice(i, i + searchFor.length), searchFor)) {
+          return i;
+        }
+      }
+      return -1;
+    };
+  }
+
+  const res = [];
+  let idx = -1;
+  while ((idx = fn(idx + 1)) !== -1) {
+    res.push(idx);
+  }
+  return res;
+};
 
 const add = (lvs: unknown, rvs: unknown) => {
   if (isArray(lvs) && isArray(rvs)) return [...lvs, ...rvs];
@@ -254,7 +289,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'cos/0': () => new MathOp(Math.cos),
   'delpaths/1': a => new DelPathsOp(a),
   'empty/0': () => mkEmptyOp(),
-  'endswith/1': a => new StringOp(a, (a, b) => a.endsWith(b)),
+  'endswith/1': a => new Fn1Op<string>(a, (a, b) => a.endsWith(b), true),
   'error/0': () => new ErrorOp(literal('')),
   'error/1': a => new ErrorOp(a),
   'first/0': () => new NthOp([literal(0)]),
@@ -267,23 +302,15 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
   'has/1': a => new HasOp(a),
   'in/1': a => new InOp(a),
-  'indices/1': a =>
-    new StringOp(a, (a, b) => {
-      const res = [];
-      let idx = -1;
-      while ((idx = a.indexOf(b, idx + 1)) !== -1) {
-        res.push(idx);
-      }
-      return res;
-    }),
-  'index/1': a => new StringOp(a, (a, b) => a.indexOf(b)),
+  'indices/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)),
+  'index/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)[0]),
   'join/1': a => new JoinOp(a),
   'keys/0': () => new KeysOp(),
   'last/0': () => new NthOp([literal(-1)]),
   'last/1': a => new NthOp([literal(-1), ...a.args]),
   'length/0': () => new LengthOp(),
   'limit/2': a => new LimitOp(a),
-  'ltrimstr/1': a => new StringOp(a, (a, b) => (a.startsWith(b) ? a.slice(b.length) : a)),
+  'ltrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.startsWith(b) ? a.slice(b.length) : a)),
   'map_values/1': a => new MapValuesOp(a),
   'match/1': a => new MatchOp(a),
   'match/2': a => new MatchOp(a),
@@ -299,14 +326,14 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'range/1': a => new RangeOp([literal(0), a.args[0], literal(1)]),
   'range/2': a => new RangeOp([...a.args, literal(1)]),
   'range/3': a => new RangeOp(a.args),
-  'rindex/1': a => new StringOp(a, (a, b) => a.lastIndexOf(b)),
-  'rtrimstr/1': a => new StringOp(a, (a, b) => (a.endsWith(b) ? a.slice(0, -b.length) : a)),
+  'rindex/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b).at(-1)),
+  'rtrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.endsWith(b) ? a.slice(0, -b.length) : a)),
   'select/1': a => new SelectOp(a),
   'setpath/2': a => new SetPathOp(a),
   'sin/0': () => new MathOp(Math.sin),
-  'split/1': a => new StringOp(a, (a, b) => a.split(b)),
+  'split/1': a => new Fn1Op<string>(a, (a, b) => a.split(b)),
   'sqrt/0': () => new MathOp(Math.sqrt),
-  'startswith/1': a => new StringOp(a, (a, b) => a.startsWith(b)),
+  'startswith/1': a => new Fn1Op<string>(a, (a, b) => a.startsWith(b), true),
   'test/1': a => new MatchOp(a, true),
   'test/2': a => new MatchOp(a, true),
   'tojson/0': () => new FnOp(a => JSON.stringify(a)),
@@ -456,7 +483,7 @@ type FnDef = {
   body: Generator;
 };
 
-const isGenerator = (o: unknown): o is Generator => 'iterable' in (o as any);
+const isGenerator = (o: unknown): o is Generator => 'iter' in (o as any);
 
 type Bindings = Record<string, Value>;
 type Context = {
@@ -478,29 +505,29 @@ const value = <T>(v: T): Value<T> => ({ val: v });
 const values = (v: unknown[]) => v.map(value);
 
 interface Generator {
-  iterable(input: Iterable<Value>, context: Context): Iterable<Value>;
+  iter(input: Iterable<Value>, context: Context): Iterable<Value>;
 }
 
 abstract class BaseGenerator<T extends Array<Value> = Value[]> implements Generator {
   constructor(public readonly generators: Generator[] = []) {}
 
-  *iterable(input: Iterable<Value>, context: Context): Iterable<Value> {
+  *iter(input: Iterable<Value>, context: Context): Iterable<Value> {
     try {
       for (const e of input) {
-        yield* this.handleInput(e, context);
+        yield* this.onInput(e, context);
       }
     } catch (e) {
       handleError(e);
     }
   }
 
-  *handleInput(e: Value, context: Context): Iterable<Value> {
+  *onInput(e: Value, context: Context): Iterable<Value> {
     for (const args of iterateAll(this.generators, [e], context)) {
-      yield* this.handle(e, args.val as T, context);
+      yield* this.onElement(e, args.val as T, context);
     }
   }
 
-  *handle(_e: Value, _args: T, _context: Context): Iterable<Value> {
+  *onElement(_e: Value, _args: T, _context: Context): Iterable<Value> {
     // Do nothing
   }
 }
@@ -510,8 +537,8 @@ abstract class BaseGenerator0 extends BaseGenerator<[]> {
     super();
   }
 
-  *handleInput(e: Value, context: Context): Iterable<Value> {
-    yield* this.handle(e, [], context);
+  *onInput(e: Value, context: Context): Iterable<Value> {
+    yield* this.onElement(e, [], context);
   }
 }
 
@@ -672,9 +699,9 @@ class PipeOp implements Generator {
     private readonly right: Generator
   ) {}
 
-  *iterable(input: Iterable<Value>, context: Context) {
+  *iter(input: Iterable<Value>, context: Context) {
     try {
-      yield* this.right.iterable(this.left.iterable(input, context), context);
+      yield* this.right.iter(this.left.iter(input, context), context);
     } catch (e) {
       handleError(e);
     }
@@ -684,8 +711,8 @@ class PipeOp implements Generator {
 class PathExp implements Generator {
   constructor(private readonly generators: Generator[]) {}
 
-  *iterable(input: Iterable<Value>, context: Context) {
-    yield* this.generators.reduceRight((a, b) => new PipeOp(b, a)).iterable(input, context);
+  *iter(input: Iterable<Value>, context: Context) {
+    yield* this.generators.reduceRight((a, b) => new PipeOp(b, a)).iter(input, context);
   }
 }
 
@@ -694,7 +721,7 @@ class MathOp extends BaseGenerator0 {
     super();
   }
 
-  *handle({ val: v }: Value) {
+  *onElement({ val: v }: Value) {
     yield value(this.fn(safeNum(v)));
   }
 }
@@ -704,13 +731,29 @@ class FnOp extends BaseGenerator0 {
     super();
   }
 
-  *handle({ val: v }: Value) {
+  *onElement({ val: v }: Value) {
     yield value(this.fn(v));
   }
 }
 
+class Fn1Op<A = unknown, B = A> extends BaseGenerator1<B> {
+  constructor(
+    node: Generator,
+    private readonly fn: (a: A, b: B) => unknown,
+    private processArray = false
+  ) {
+    super(node);
+  }
+
+  *onElement({ val: v }: Value<A | A[]>, [{ val: arg }]: [Value<B>]) {
+    yield value(
+      this.processArray && isArray(v) ? v.map(e => this.fn(e, arg)) : this.fn(v as A, arg)
+    );
+  }
+}
+
 class IdentityOp extends BaseGenerator0 {
-  *handle(e: Value) {
+  *onElement(e: Value) {
     yield { val: e.val, path: e.path ?? [] };
   }
 }
@@ -723,7 +766,7 @@ class PropertyLookupOp extends BaseGenerator1<string> {
     super(node);
   }
 
-  *handle(e: Value, [identifier]: [Value<string>]): Iterable<Value> {
+  *onElement(e: Value, [identifier]: [Value<string>]): Iterable<Value> {
     try {
       yield valueWithPath(e, prop(e.val, identifier.val), identifier.val);
     } catch (err) {
@@ -734,7 +777,7 @@ class PropertyLookupOp extends BaseGenerator1<string> {
 }
 
 class ArraySliceOp extends BaseGenerator2<number, number> {
-  *handle(e: Value, [f, t]: [Value<number>, Value<number>]) {
+  *onElement(e: Value, [f, t]: [Value<number>, Value<number>]) {
     const v = e.val;
     if (v === undefined || !isArray(v)) return;
     const pe = { start: Math.floor(f.val), end: Math.ceil(t.val) };
@@ -743,7 +786,7 @@ class ArraySliceOp extends BaseGenerator2<number, number> {
 }
 
 class ArrayOp extends BaseGenerator0 {
-  *handleInput(e: Value) {
+  *onInput(e: Value) {
     const v = e.val;
     if (v === undefined || !isArray(v)) throw error(201);
     for (let i = 0; i < v.length; i++) {
@@ -753,28 +796,28 @@ class ArrayOp extends BaseGenerator0 {
 }
 
 class ConcatenationOp extends BaseGenerator2 {
-  *handleInput(e: Value, context: Context) {
-    yield* this.generators[0].iterable([e], context);
-    yield* this.generators[1].iterable([e], context);
+  *onInput(e: Value, context: Context) {
+    yield* this.generators[0].iter([e], context);
+    yield* this.generators[1].iter([e], context);
   }
 }
 
 class ArrayConstructionOp extends BaseGenerator1 {
-  *handleInput(e: Value, context: Context) {
-    yield value([...this.generators[0].iterable([e], context)].map(k => k.val));
+  *onInput(e: Value, context: Context) {
+    yield value([...this.generators[0].iter([e], context)].map(k => k.val));
   }
 }
 
 class PathOp extends BaseGenerator1 {
-  *handleInput(e: Value, context: Context) {
-    for (const v of this.generators[0].iterable([e], context)) {
+  *onInput(e: Value, context: Context) {
+    for (const v of this.generators[0].iter([e], context)) {
       yield value(v.path);
     }
   }
 }
 
 class RecursiveDescentOp extends BaseGenerator0 {
-  *handleInput(e: Value) {
+  *onInput(e: Value) {
     const dest: Value[] = [];
     this.recurse(e.val, dest, [...(e.path ?? [])]);
     yield* dest;
@@ -801,7 +844,7 @@ class BinaryOp extends BaseGenerator2 {
     super(left, right);
   }
 
-  *handle(_e: Value, [{ val: l }, { val: r }]: [Value, Value]) {
+  *onElement(_e: Value, [{ val: l }, { val: r }]: [Value, Value]) {
     yield value(this.fn(l, r));
   }
 }
@@ -809,15 +852,15 @@ class BinaryOp extends BaseGenerator2 {
 const literal = (a: unknown) => new LiteralOp(a);
 
 class LiteralOp implements Generator {
-  constructor(public readonly value: unknown) {}
+  constructor(public readonly val: unknown) {}
 
-  *iterable() {
-    yield value(this.value);
+  *iter() {
+    yield value(this.val);
   }
 }
 
 class LengthOp extends BaseGenerator0 {
-  *handleInput({ val: e }: Value) {
+  *onInput({ val: e }: Value) {
     if (e === undefined || e === null) {
       yield value(0);
     } else if (isArray(e) || typeof e === 'string') {
@@ -832,25 +875,25 @@ class LengthOp extends BaseGenerator0 {
 
 class ErrorOp extends BaseGenerator1 {
   // eslint-disable-next-line require-yield
-  *handle(_e: Value, [arg]: [Value]) {
+  *onElement(_e: Value, [arg]: [Value]) {
     throw arg.val;
   }
 }
 
 class HasOp extends BaseGenerator1 {
-  *handle({ val: e }: Value, [arg]: [Value]) {
+  *onElement({ val: e }: Value, [arg]: [Value]) {
     yield value((arg.val as any) in (e as any));
   }
 }
 
 class InOp extends BaseGenerator1 {
-  *handle({ val: e }: Value, [arg]: [Value]) {
+  *onElement({ val: e }: Value, [arg]: [Value]) {
     yield value((e as any) in (arg.val as any));
   }
 }
 
 class SelectOp extends BaseGenerator1<boolean> {
-  *handle(e: Value, [r]: [Value<boolean>]) {
+  *onElement(e: Value, [r]: [Value<boolean>]) {
     if (r.val) {
       yield e;
     }
@@ -865,23 +908,23 @@ class VarBindingOp extends BaseGenerator1 {
     super(node);
   }
 
-  *handle(e: Value, [v]: [Value], context: Context) {
+  *onElement(e: Value, [v]: [Value], context: Context) {
     context.bindings[this.getId()] = v;
     yield e;
   }
 
   public getId() {
-    return typeof this.id === 'string' ? this.id : this.id.identifier;
+    return typeof this.id === 'string' ? this.id : this.id.id;
   }
 }
 
 class UpdateAssignmentOp extends BaseGenerator2 {
-  *handleInput(e: Value, context: Context) {
+  *onInput(e: Value, context: Context) {
     const mod = new Modification(shallowClone(e.val ?? {}));
 
-    const lh = [...this.generators[0].iterable([e], context)];
+    const lh = [...this.generators[0].iter([e], context)];
     for (const lhe of lh) {
-      const r = one(this.generators[1].iterable([lhe], context));
+      const r = one(this.generators[1].iter([lhe], context));
       if (r === undefined) {
         mod.del(lhe.path!.slice(0, -1), lhe.path!.at(-1));
       } else {
@@ -894,9 +937,9 @@ class UpdateAssignmentOp extends BaseGenerator2 {
 }
 
 class AssignmentOp extends BaseGenerator2 {
-  *handleInput(e: Value, context: Context) {
-    const lh = [...this.generators[0].iterable([e], context)];
-    for (const r of this.generators[1].iterable([e], context)) {
+  *onInput(e: Value, context: Context) {
+    const lh = [...this.generators[0].iter([e], context)];
+    for (const r of this.generators[1].iter([e], context)) {
       const mod = new Modification(shallowClone(e.val ?? {}));
       for (const lhe of lh) {
         mod.set(lhe.path!, r.val);
@@ -909,10 +952,10 @@ class AssignmentOp extends BaseGenerator2 {
 class ArgListOp implements Generator {
   constructor(public readonly args: Generator[]) {}
 
-  *iterable(input: Iterable<Value>, context: Context): Iterable<Value> {
+  *iter(input: Iterable<Value>, context: Context): Iterable<Value> {
     try {
       if (this.args.length === 1) {
-        yield* this.args[0].iterable(input, context);
+        yield* this.args[0].iter(input, context);
       } else {
         yield* iterateAll(this.args, input, context);
       }
@@ -930,10 +973,10 @@ class BaseArrayOp extends BaseGenerator1 {
     super(node);
   }
 
-  *handleInput(el: Value, context: Context): Iterable<Value> {
+  *onInput(el: Value, context: Context): Iterable<Value> {
     if (!isArray(el.val)) return yield el;
     const res = this.fn(
-      el.val.map(e => [e, exactOne(this.generators[0].iterable([value(e)], context)).val])
+      el.val.map(e => [e, exactOne(this.generators[0].iter([value(e)], context)).val])
     );
 
     if (isTaggedType(res, 'single')) return yield value(res._val);
@@ -979,7 +1022,7 @@ class MatchOp extends BaseGenerator2<string, string | undefined> {
     super(args.args[0], args.args[1] ?? literal(''));
   }
 
-  *handle({ val: v }: Value<string>, [re, flags]: [Value<string>, Value<string | undefined>]) {
+  *onElement({ val: v }: Value<string>, [re, flags]: [Value<string>, Value<string | undefined>]) {
     if (flags.val?.includes('g') && !this.onlyTest) {
       yield* values([...v.matchAll(new RegExp(re.val, flags.val))]!.map(e => this.mapMatch(e)));
     } else {
@@ -1006,35 +1049,35 @@ class NthOp extends BaseGenerator1<number> {
     super(args[0]);
   }
 
-  *handle(val: Value, [index]: [Value<number>], context: Context) {
+  *onElement(val: Value, [index]: [Value<number>], context: Context) {
     const idx = safeNum(index.val);
     if (this.args.length === 1 && isArray(val.val)) {
       yield valueWithPath(val, val.val.at(idx), idx);
     } else if (this.args.length === 2) {
-      yield iterNth(this.args[1].iterable([value(val.val)], context), idx) ?? value(undefined);
+      yield iterNth(this.args[1].iter([value(val.val)], context), idx) ?? value(undefined);
     }
   }
 }
 
 class FlattenOp extends BaseGenerator1<number> {
-  *handle({ val: v }: Value, [arg]: [Value<number>]) {
+  *onElement({ val: v }: Value, [arg]: [Value<number>]) {
     yield value(isArray(v) ? v.flat(arg.val) : v);
   }
 }
 
 class ObjectTemplateOp extends BaseGenerator0 {
-  constructor(private readonly template: any) {
+  constructor(private readonly tpl: any) {
     super();
   }
 
-  *handleInput(el: Value, context: Context): Iterable<Value> {
-    const generators = this.template.__generators as Map<string, Generator>;
+  *onInput(el: Value, context: Context): Iterable<Value> {
+    const generators = this.tpl.__generators as Map<string, Generator>;
     const iterables = [...generators.keys()];
 
     for (const a of iterateAll([...generators.values()], [el], context)) {
       const obj: Record<string, Value> = {};
       iterables.forEach((k, i) => (obj[k] = a.val[i]));
-      yield value(this.applyTemplate(this.template, obj));
+      yield value(this.applyTemplate(this.tpl, obj));
     }
   }
 
@@ -1057,27 +1100,14 @@ class ObjectTemplateOp extends BaseGenerator0 {
   }
 }
 
-class StringOp extends BaseGenerator1<string> {
-  constructor(
-    node: Generator,
-    private readonly fn: (a: string, b: string) => unknown
-  ) {
-    super(node);
-  }
-
-  *handle({ val: v }: Value<string | string[]>, [{ val: arg }]: [Value<string>]) {
-    yield value(isArray(v) ? v.map(e => this.fn(e, arg)) : this.fn(v, arg));
-  }
-}
-
 class JoinOp extends BaseGenerator1<string> {
-  *handle({ val: v }: Value, [r]: [Value<string>]) {
+  *onElement({ val: v }: Value, [r]: [Value<string>]) {
     yield value(isArray(v) ? v.join(r.val) : v);
   }
 }
 
 class KeysOp extends BaseGenerator0 {
-  *handle({ val: el }: Value) {
+  *onElement({ val: el }: Value) {
     if (el && typeof el === 'object')
       yield value(
         Object.keys(el)
@@ -1089,18 +1119,18 @@ class KeysOp extends BaseGenerator0 {
 }
 
 class MapValuesOp extends BaseGenerator1 {
-  *handleInput({ val: v }: Value, context: Context): Iterable<Value> {
+  *onInput({ val: v }: Value, context: Context): Iterable<Value> {
     if (isObj(v)) {
       yield value(
         Object.fromEntries(
           Object.entries(v).map(([k, v]) => [
             k,
-            exactOne(this.generators[0].iterable([value(v)], context)).val
+            exactOne(this.generators[0].iter([value(v)], context)).val
           ])
         )
       );
     } else if (isArray(v)) {
-      yield value(v.map(e => exactOne(this.generators[0].iterable([value(e)], context)).val));
+      yield value(v.map(e => exactOne(this.generators[0].iter([value(e)], context)).val));
     } else {
       yield value(v);
     }
@@ -1108,8 +1138,8 @@ class MapValuesOp extends BaseGenerator1 {
 }
 
 class ContainsOp extends BaseGenerator1 {
-  *handleInput({ val: v }: Value, context: Context) {
-    for (const a of this.generators[0].iterable([value(undefined)], context)) {
+  *onInput({ val: v }: Value, context: Context) {
+    for (const a of this.generators[0].iter([value(undefined)], context)) {
       if (typeof a.val === 'string') {
         yield value(typeof v === 'string' ? v.includes(a.val) : false);
       } else if (isArray(a.val)) {
@@ -1128,25 +1158,25 @@ class ContainsOp extends BaseGenerator1 {
 }
 
 class VarRefOp extends BaseGenerator0 {
-  constructor(public readonly identifier: string) {
+  constructor(public readonly id: string) {
     super();
   }
 
-  *handleInput(_el: Value, context: Context) {
-    yield context.bindings[this.identifier];
+  *onInput(_el: Value, context: Context) {
+    yield context.bindings[this.id];
   }
 }
 
 class FunctionCallOp extends BaseGenerator0 {
   constructor(
-    public readonly identifier: string,
+    public readonly id: string,
     public readonly arg?: ArgListOp
   ) {
     super();
   }
 
-  *handle(input: Value, _: unknown, context: Context): Iterable<Value> {
-    const fnDef = context.bindings[this.identifier].val as FnDef;
+  *onElement(input: Value, _: unknown, context: Context): Iterable<Value> {
+    const fnDef = context.bindings[this.id].val as FnDef;
 
     const newBindings = { ...context.bindings };
     (fnDef.arg ?? []).forEach((a, idx) => {
@@ -1157,7 +1187,7 @@ class FunctionCallOp extends BaseGenerator0 {
       };
     });
 
-    yield* fnDef.body.iterable([input], {
+    yield* fnDef.body.iter([input], {
       ...context,
       bindings: newBindings
     });
@@ -1166,7 +1196,7 @@ class FunctionCallOp extends BaseGenerator0 {
 
 class FunctionDefOp extends BaseGenerator0 {
   constructor(
-    public readonly identifier: string,
+    public readonly id: string,
     public readonly arg: string[],
     public readonly body: Generator
   ) {
@@ -1174,8 +1204,8 @@ class FunctionDefOp extends BaseGenerator0 {
   }
 
   // eslint-disable-next-line require-yield
-  *handle(_input: Value, _: [], context: Context) {
-    context.bindings[this.identifier] = value({
+  *onElement(_input: Value, _: [], context: Context) {
+    context.bindings[this.id] = value({
       arg: this.arg,
       body: this.body
     });
@@ -1183,7 +1213,7 @@ class FunctionDefOp extends BaseGenerator0 {
 }
 
 class RangeOp extends BaseGenerator {
-  *handle(_el: Value, args: Value[]): Iterable<Value> {
+  *onElement(_el: Value, args: Value[]): Iterable<Value> {
     const from = args[0].val as number;
     const to = args[1].val as number;
     const step = args[2].val as number;
@@ -1206,10 +1236,10 @@ class LimitOp extends BaseGenerator1 {
     super(node.args[0]);
   }
 
-  *handle(el: Value, [M]: Value[], context: Context) {
+  *onElement(el: Value, [M]: Value[], context: Context) {
     let limit = safeNum(M.val);
     if (limit > 0) {
-      for (const e of this.node.args[1].iterable([el], context)) {
+      for (const e of this.node.args[1].iter([el], context)) {
         yield e;
         if (--limit === 0) break;
       }
@@ -1218,8 +1248,8 @@ class LimitOp extends BaseGenerator1 {
 }
 
 class ParenExpressionOp extends BaseGenerator1 {
-  *handleInput(e: Value, context: Context) {
-    yield* this.generators[0].iterable([e], { ...context, bindings: { ...context.bindings } });
+  *onInput(e: Value, context: Context) {
+    yield* this.generators[0].iter([e], { ...context, bindings: { ...context.bindings } });
   }
 }
 
@@ -1231,11 +1261,11 @@ class TryCatchOp extends BaseGenerator {
     super([body]);
   }
 
-  *handleInput(e: Value, context: Context): Iterable<Value> {
+  *onInput(e: Value, context: Context): Iterable<Value> {
     try {
-      yield* this.body.iterable([e], context);
+      yield* this.body.iter([e], context);
     } catch (err) {
-      yield* this.catchBody.iterable([value(err)], context);
+      yield* this.catchBody.iter([value(err)], context);
     }
   }
 }
@@ -1243,36 +1273,36 @@ class TryCatchOp extends BaseGenerator {
 class IfOp extends BaseGenerator {
   constructor(
     condition: Generator,
-    private readonly ifConsequent: Generator,
+    private readonly ifBody: Generator,
     private readonly elifs: [Generator, Generator][],
-    private readonly elseConsequent?: Generator
+    private readonly elseBody?: Generator
   ) {
     super([condition, ...elifs.map(e => e[0])]);
   }
 
-  *handle(e: Value, [ifCond, ...elifConds]: Value[], context: Context): Iterable<Value> {
+  *onElement(e: Value, [ifCond, ...elifConds]: Value[], context: Context): Iterable<Value> {
     if (isTrue(ifCond.val)) {
-      yield* this.ifConsequent.iterable([e], context);
+      yield* this.ifBody.iter([e], context);
     } else {
       for (let idx = 0; idx < elifConds.length; idx++) {
         if (isTrue(elifConds[idx].val)) {
-          return yield* this.elifs![idx][1].iterable([e], context);
+          return yield* this.elifs![idx][1].iter([e], context);
         }
       }
 
-      yield* this.elseConsequent?.iterable([e], context) ?? [e];
+      yield* this.elseBody?.iter([e], context) ?? [e];
     }
   }
 }
 
 class GetPathOp extends BaseGenerator1<PathElement[]> {
-  *handle(input: Value, [path]: [Value<PathElement[]>], _context: Context): Iterable<Value> {
+  *onElement(input: Value, [path]: [Value<PathElement[]>], _context: Context): Iterable<Value> {
     yield value(evalPath(path.val, input.val as PathElement[]));
   }
 }
 
 class DelPathsOp extends BaseGenerator1<PathElement[][]> {
-  *handle(input: Value, [paths]: [Value<PathElement[][]>], _context: Context): Iterable<Value> {
+  *onElement(input: Value, [paths]: [Value<PathElement[][]>], _context: Context): Iterable<Value> {
     const mod = new Modification(shallowClone(input.val));
 
     for (const path of paths.val) {
@@ -1289,7 +1319,7 @@ class SetPathOp extends BaseGenerator2<PathElement[]> {
     super(n.args[0], n.args[1]);
   }
 
-  *handle(input: Value, [path, v]: [Value<PathElement[]>, Value], _context: Context) {
+  *onElement(input: Value, [path, v]: [Value<PathElement[]>, Value], _context: Context) {
     const mod = new Modification(shallowClone(input.val));
     mod.set(path.val, v.val);
     yield value(mod.apply());
@@ -1298,21 +1328,21 @@ class SetPathOp extends BaseGenerator2<PathElement[]> {
 
 class ReduceOp extends BaseGenerator0 {
   constructor(
-    private readonly sourceGen: VarBindingOp,
-    private readonly initGen: Generator,
-    private readonly opGen: Generator
+    private readonly source: VarBindingOp,
+    private readonly init: Generator,
+    private readonly op: Generator
   ) {
     super();
   }
 
-  *handleInput(e: Value, context: Context): Iterable<Value> {
-    const id = this.sourceGen.getId();
+  *onInput(e: Value, context: Context): Iterable<Value> {
+    const id = this.source.getId();
     const innerContext = { ...context, bindings: { ...context.bindings } };
 
-    let acc = exactOne(this.initGen.iterable([e], innerContext));
-    for (const s of this.sourceGen.generators[0].iterable([e], context)) {
+    let acc = exactOne(this.init.iter([e], innerContext));
+    for (const s of this.source.generators[0].iter([e], context)) {
       innerContext.bindings[id] = s;
-      acc = exactOne(this.opGen.iterable([acc], innerContext));
+      acc = exactOne(this.op.iter([acc], innerContext));
     }
 
     yield acc;
@@ -1320,9 +1350,9 @@ class ReduceOp extends BaseGenerator0 {
 }
 
 class PickOp extends BaseGenerator1 {
-  *handleInput(e: Value, context: Context) {
+  *onInput(e: Value, context: Context) {
     let dest: unknown = undefined;
-    for (const { path: p } of this.generators[0].iterable([e], context)) {
+    for (const { path: p } of this.generators[0].iter([e], context)) {
       dest = setPath(dest, p!, evalPath(p!, e.val ?? {}));
     }
     yield value(dest);
@@ -1370,7 +1400,7 @@ const parsePathExpression = (
           generators.push(
             new PropertyLookupOp(
               new VarRefOp(e1Id),
-              e1 instanceof LiteralOp && typeof e1.value === 'string'
+              e1 instanceof LiteralOp && typeof e1.val === 'string'
             )
           );
         }
@@ -1565,7 +1595,7 @@ export const parseAndQuery = (q: string, input: unknown[], bindings?: Record<str
 };
 
 export function* query(query: Generator, input: unknown[], bindings?: Record<string, unknown>) {
-  for (const e of query.iterable(input.map(value), {
+  for (const e of query.iter(input.map(value), {
     bindings: Object.fromEntries(Object.entries(bindings ?? {}).map(([k, v]) => [k, value(v)]))
   })) {
     yield e.val;
