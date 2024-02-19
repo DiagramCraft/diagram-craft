@@ -613,7 +613,7 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('[nan % 1, 1 % nan | isnan]', () => {
+    test('[nan % 1, 1 % nan | isnan]', () => {
       expect(parseAndQuery('[nan % 1, 1 % nan | isnan]', [undefined])).toEqual([[true, true]]);
     });
 
@@ -1472,142 +1472,372 @@ describe('jqtest', () => {
     test('indices(", ")', () => {
       expect(parseAndQuery('indices(", ")', ['a,b, cd,e, fgh, ijkl'])).toEqual([[3, 9, 14]]);
     });
-  });
 
-  test('[.[]|split(",")]', () => {
-    expect(
-      parseAndQuery('[.[]|split(",")]', [
-        ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
-      ])
-    ).toEqual([
-      [
-        ['a', ' bc', ' def', ' ghij', ' jklmn', ' a', 'b', ' c', 'd', ' e', 'f'],
-        ['a', 'b', 'c', 'd', ' e', 'f', 'g', 'h']
-      ]
-    ]);
-  });
-
-  test('[.[]|split(", ")]', () => {
-    expect(
-      parseAndQuery('[.[]|split(", ")]', [
-        ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
-      ])
-    ).toEqual([
-      [
-        ['a', 'bc', 'def', 'ghij', 'jklmn', 'a,b', 'c,d', 'e,f'],
-        ['a,b,c,d', 'e,f,g,h']
-      ]
-    ]);
-  });
-
-  test('map(.[1] as $needle | .[0] | contains($needle))', () => {
-    expect(
-      parseAndQuery('map(.[1] as $needle | .[0] | contains($needle))', [
+    test('[.[]|split(",")]', () => {
+      expect(
+        parseAndQuery('[.[]|split(",")]', [
+          ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
+        ])
+      ).toEqual([
         [
-          [[], []],
+          ['a', ' bc', ' def', ' ghij', ' jklmn', ' a', 'b', ' c', 'd', ' e', 'f'],
+          ['a', 'b', 'c', 'd', ' e', 'f', 'g', 'h']
+        ]
+      ]);
+    });
+
+    test('[.[]|split(", ")]', () => {
+      expect(
+        parseAndQuery('[.[]|split(", ")]', [
+          ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
+        ])
+      ).toEqual([
+        [
+          ['a', 'bc', 'def', 'ghij', 'jklmn', 'a,b', 'c,d', 'e,f'],
+          ['a,b,c,d', 'e,f,g,h']
+        ]
+      ]);
+    });
+
+    test.skip('[.[] * 3]', () => {
+      expect(parseAndQuery('[.[] * 3]', [['a', 'ab', 'abc']])).toEqual([
+        ['aaa', 'ababab', 'abcabcabc']
+      ]);
+    });
+
+    test.skip('[.[] * "abc"]', () => {
+      expect(parseAndQuery('[.[] * "abc"]', [[-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 3.7, 10.0]])).toEqual(
+        [undefined, undefined, '', '', 'abc', 'abc', 'abcabcabc', 'abcabcabcabcabcabcabcabcabcabc']
+      );
+    });
+
+    test.skip('[. * (nan,-nan)]', () => {
+      expect(parseAndQuery('[. * (nan,-nan)]', ['abc'])).toEqual([undefined, undefined]);
+    });
+
+    test.skip('[.[] / ","]', () => {
+      expect(
+        parseAndQuery('[.[] / ","]', [
+          ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
+        ])
+      ).toEqual([
+        [
           [
-            [1, 2, 3],
-            [1, 2]
-          ],
-          [
-            [1, 2, 3],
-            [3, 1]
-          ],
-          [[1, 2, 3], [4]],
-          [
-            [1, 2, 3],
-            [1, 4]
+            ['a', ' bc', ' def', ' ghij', ' jklmn', ' a', 'b', ' c', 'd', ' e', 'f'],
+            ['a', 'b', 'c', 'd', ' e', 'f', 'g', 'h']
           ]
         ]
-      ])
-    ).toEqual([[true, true, true, false, false]]);
+      ]);
+    });
 
-    expect(
-      parseAndQuery('map(.[1] as $needle | .[0] | contains($needle))', [
+    test.skip('[.[] / ", "]', () => {
+      expect(
+        parseAndQuery('[.[] / ", "]', [
+          ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
+        ])
+      ).toEqual([
         [
           [
-            ['foobar', 'foobaz'],
-            ['baz', 'bar']
-          ],
-          [['foobar', 'foobaz'], ['foo']],
-          [['foobar', 'foobaz'], ['blap']]
+            ['a', 'bc', 'def', 'ghij', 'jklmn', 'a,b', 'c,d', 'e,f'],
+            ['a,b,c,d', 'e,f,g,h']
+          ]
         ]
-      ])
-    ).toEqual([[true, true, false]]);
-  });
+      ]);
+    });
 
-  test('unique', () => {
-    expect(parseAndQuery('unique', [[1, 2, 5, 3, 5, 3, 1, 3]])).toEqual([[1, 2, 3, 5]]);
-    expect(parseAndQuery('unique', [[]])).toEqual([[]]);
-  });
+    test('map(.[1] as $needle | .[0] | contains($needle))', () => {
+      expect(
+        parseAndQuery('map(.[1] as $needle | .[0] | contains($needle))', [
+          [
+            [[], []],
+            [
+              [1, 2, 3],
+              [1, 2]
+            ],
+            [
+              [1, 2, 3],
+              [3, 1]
+            ],
+            [[1, 2, 3], [4]],
+            [
+              [1, 2, 3],
+              [1, 4]
+            ]
+          ]
+        ])
+      ).toEqual([[true, true, true, false, false]]);
 
-  // TODO: Fix
-  test.skip('[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]', () => {
-    expect(
-      parseAndQuery('[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]', [
+      expect(
+        parseAndQuery('map(.[1] as $needle | .[0] | contains($needle))', [
+          [
+            [
+              ['foobar', 'foobaz'],
+              ['baz', 'bar']
+            ],
+            [['foobar', 'foobaz'], ['foo']],
+            [['foobar', 'foobaz'], ['blap']]
+          ]
+        ])
+      ).toEqual([[true, true, false]]);
+    });
+
+    test.skip('[({foo: 12, bar:13} | contains({foo: 12})), ({foo: 12} | contains({})), ({foo: 12, bar:13} | contains({baz:14}))]', () => {
+      expect(
+        parseAndQuery(
+          '[({foo: 12, bar:13} | contains({foo: 12})), ({foo: 12} | contains({})), ({foo: 12, bar:13} | contains({baz:14}))]',
+          [{}]
+        )
+      ).toEqual([[true, true, false]]);
+    });
+
+    test.skip('{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {}}})', () => {
+      expect(
+        parseAndQuery(
+          '{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {}}})',
+          [{}]
+        )
+      ).toEqual([true]);
+    });
+
+    test('{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {bar: 14}}})', () => {
+      expect(
+        parseAndQuery(
+          '{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {bar: 14}}})',
+          [{}]
+        )
+      ).toEqual([false]);
+    });
+
+    test.skip('sort', () => {
+      expect(
+        parseAndQuery('sort', [
+          [
+            42,
+            [2, 5, 3, 11],
+            10,
+            { a: 42, b: 2 },
+            { a: 42 },
+            true,
+            2,
+            [2, 6],
+            'hello',
+            null,
+            [2, 5, 6],
+            { a: [], b: 1 },
+            'abc',
+            'ab',
+            [3, 10],
+            {},
+            false,
+            'abcd',
+            null
+          ]
+        ])
+      ).toEqual([
         [
+          null,
+          null,
+          false,
+          true,
+          2,
+          10,
+          42,
+          'ab',
+          'abc',
+          'abcd',
+          'hello',
+          [2, 5, 3, 11],
+          [2, 5, 6],
+          [2, 6],
+          [3, 10],
+          {},
+          { a: 42 },
+          { a: 42, b: 2 },
+          { a: [], b: 1 }
+        ]
+      ]);
+    });
+
+    test.skip('(sort_by(.b) | sort_by(.a)), sort_by(.a, .b), sort_by(.b, .c), group_by(.b), group_by(.a + .b - .c == 2)', () => {
+      expect(
+        parseAndQuery(
+          '(sort_by(.b) | sort_by(.a)), sort_by(.a, .b), sort_by(.b, .c), group_by(.b), group_by(.a + .b - .c == 2)',
+          [
+            [
+              { a: 1, b: 4, c: 14 },
+              { a: 4, b: 1, c: 3 },
+              { a: 1, b: 4, c: 3 },
+              { a: 0, b: 2, c: 43 }
+            ]
+          ]
+        )
+      ).toEqual([
+        [
+          { a: 0, b: 2, c: 43 },
+          { a: 1, b: 4, c: 14 },
+          { a: 1, b: 4, c: 3 },
+          { a: 4, b: 1, c: 3 }
+        ],
+        [
+          { a: 0, b: 2, c: 43 },
+          { a: 1, b: 4, c: 14 },
+          { a: 1, b: 4, c: 3 },
+          { a: 4, b: 1, c: 3 }
+        ],
+        [
+          { a: 4, b: 1, c: 3 },
+          { a: 0, b: 2, c: 43 },
+          { a: 1, b: 4, c: 3 },
+          { a: 1, b: 4, c: 14 }
+        ],
+        [
+          [{ a: 4, b: 1, c: 3 }],
+          [{ a: 0, b: 2, c: 43 }],
+          [
+            { a: 1, b: 4, c: 14 },
+            { a: 1, b: 4, c: 3 }
+          ]
+        ],
+        [
+          [
+            { a: 1, b: 4, c: 14 },
+            { a: 0, b: 2, c: 43 }
+          ],
+          [
+            { a: 4, b: 1, c: 3 },
+            { a: 1, b: 4, c: 3 }
+          ]
+        ]
+      ]);
+    });
+
+    test('unique', () => {
+      expect(parseAndQuery('unique', [[1, 2, 5, 3, 5, 3, 1, 3]])).toEqual([[1, 2, 3, 5]]);
+      expect(parseAndQuery('unique', [[]])).toEqual([[]]);
+    });
+
+    // TODO: Fix
+    test.skip('[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]', () => {
+      expect(
+        parseAndQuery('[min, max, min_by(.[1]), max_by(.[1]), min_by(.[2]), max_by(.[2])]', [
+          [
+            [4, 2, 'a'],
+            [3, 1, 'a'],
+            [2, 4, 'a'],
+            [1, 3, 'a']
+          ]
+        ])
+      ).toEqual([
+        [
+          [1, 3, 'a'],
           [4, 2, 'a'],
           [3, 1, 'a'],
           [2, 4, 'a'],
+          [4, 2, 'a'],
           [1, 3, 'a']
         ]
-      ])
-    ).toEqual([
-      [
-        [1, 3, 'a'],
-        [4, 2, 'a'],
-        [3, 1, 'a'],
-        [2, 4, 'a'],
-        [4, 2, 'a'],
-        [1, 3, 'a']
-      ]
-    ]);
-  });
+      ]);
+    });
 
-  test('[min,max,min_by(.),max_by(.)]', () => {
-    expect(parseAndQuery('[min,max,min_by(.),max_by(.)]', [[]])).toEqual([
-      [undefined, undefined, undefined, undefined]
-    ]);
-  });
+    test('[min,max,min_by(.),max_by(.)]', () => {
+      expect(parseAndQuery('[min,max,min_by(.),max_by(.)]', [[]])).toEqual([
+        [undefined, undefined, undefined, undefined]
+      ]);
+    });
 
-  test('.foo[.baz]', () => {
-    expect(parseAndQuery('.foo[.baz]', [{ foo: { bar: 4 }, baz: 'bar' }])).toEqual([4]);
-  });
+    test('.foo[.baz]', () => {
+      expect(parseAndQuery('.foo[.baz]', [{ foo: { bar: 4 }, baz: 'bar' }])).toEqual([4]);
+    });
 
-  test('map(has("foo"))', () => {
-    expect(parseAndQuery('map(has("foo"))', [[{ foo: 42 }, {}]])).toEqual([[true, false]]);
-  });
+    test.skip('.[] | .error = "no, it\'s OK"', () => {
+      expect(parseAndQuery('.[] | .error = "no, it\'s OK"', [[{ error: true }]])).toEqual([
+        { error: "no, it's OK" }
+      ]);
+    });
 
-  test('map(has(2))', () => {
-    expect(
-      parseAndQuery('map(has(2))', [
+    test.skip('[{a:1}] | .[] | .a=999', () => {
+      expect(parseAndQuery('[{a:1}] | .[] | .a=999', [undefined])).toEqual([{ a: 999 }]);
+    });
+
+    test('to_entries', () => {
+      expect(parseAndQuery('to_entries', [{ a: 1, b: 2 }])).toEqual([
         [
-          [0, 1],
-          ['a', 'b', 'c']
+          { key: 'a', value: 1 },
+          { key: 'b', value: 2 }
         ]
-      ])
-    ).toEqual([[false, true]]);
-  });
+      ]);
+    });
 
-  test('keys', () => {
-    expect(parseAndQuery('keys', [[42, 3, 35]])).toEqual([[0, 1, 2]]);
-  });
+    test('from_entries', () => {
+      expect(
+        parseAndQuery('from_entries', [
+          [
+            { key: 'a', value: 1 },
+            { Key: 'b', Value: 2 },
+            { name: 'c', value: 3 },
+            { Name: 'd', Value: 4 }
+          ]
+        ])
+      ).toEqual([{ a: 1, b: 2, c: 3, d: 4 }]);
+    });
 
-  test('flatten', () => {
-    expect(parseAndQuery('flatten', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, 1, 2, 3]]);
-  });
+    test.skip('with_entries(.key |= "KEY_" + .)', () => {
+      expect(parseAndQuery('with_entries(.key |= "KEY_" + .)', [{ a: 1, b: 2 }])).toEqual([
+        { KEY_a: 1, KEY_b: 2 }
+      ]);
+    });
 
-  test('flatten(0)', () => {
-    expect(parseAndQuery('flatten(0)', [[0, [1], [[2]], [[[3]]]]])).toEqual([
-      [0, [1], [[2]], [[[3]]]]
-    ]);
-  });
+    test('map(has("foo"))', () => {
+      expect(parseAndQuery('map(has("foo"))', [[{ foo: 42 }, {}]])).toEqual([[true, false]]);
+    });
 
-  test('flatten(2)', () => {
-    expect(parseAndQuery('flatten(2)', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, 1, 2, [3]]]);
-    expect(parseAndQuery('flatten(2)', [[0, [1, [2]], [1, [[3], 2]]]])).toEqual([
-      [0, 1, 2, 1, [3], 2]
-    ]);
+    test('map(has(2))', () => {
+      expect(
+        parseAndQuery('map(has(2))', [
+          [
+            [0, 1],
+            ['a', 'b', 'c']
+          ]
+        ])
+      ).toEqual([[false, true]]);
+    });
+
+    test('has(nan)', () => {
+      expect(parseAndQuery('has(nan)', [[1, 2, 3]])).toEqual([false]);
+    });
+
+    test('keys', () => {
+      expect(parseAndQuery('keys', [[42, 3, 35]])).toEqual([[0, 1, 2]]);
+    });
+
+    test.skip('[][.]', () => {
+      expect(parseAndQuery('[][.]', [1000000000000000000])).toEqual([undefined]);
+    });
+
+    // TODO: Missing object merge and type tests, L1468-L1516
+
+    test('flatten', () => {
+      expect(parseAndQuery('flatten', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, 1, 2, 3]]);
+    });
+
+    test('flatten(0)', () => {
+      expect(parseAndQuery('flatten(0)', [[0, [1], [[2]], [[[3]]]]])).toEqual([
+        [0, [1], [[2]], [[[3]]]]
+      ]);
+    });
+
+    test('flatten(2)', () => {
+      expect(parseAndQuery('flatten(2)', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, 1, 2, [3]]]);
+      expect(parseAndQuery('flatten(2)', [[0, [1, [2]], [1, [[3], 2]]]])).toEqual([
+        [0, 1, 2, 1, [3], 2]
+      ]);
+    });
+
+    test('try flatten(-1) catch .', () => {
+      expect(parseAndQuery('try flatten(-1) catch .', [[0, [1], [[2]], [[[3]]]]])).toEqual([
+        new Error('206: ')
+      ]);
+    });
   });
 
   test('abs', () => {

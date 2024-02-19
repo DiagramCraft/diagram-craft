@@ -6,7 +6,8 @@ import { isTaggedType, tag, TaggedType } from './types.ts';
 const builtins = [
   'def paths: path(..)|select(length > 0)',
   'def map(f): [.[]|f]',
-  'def del(f): delpaths([path(f)])'
+  'def del(f): delpaths([path(f)])',
+  'def with_entries(f): to_entries | map(f) | from_entries'
 ];
 
 /** Error handling ********************************************************************* */
@@ -27,6 +28,7 @@ type Errors = {
   203: 'Expected indexable object';
   204: 'Expected expression of type';
   205: 'Expected array-like object';
+  206: 'Index cannot be negative';
   210: 'Unknown function';
   301: 'Expected exactly one';
 };
@@ -297,6 +299,12 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'flatten/0': () => new FlattenOp(literal(100)),
   'flatten/1': a => new FlattenOp(a),
   'floor/0': () => new MathOp(Math.floor),
+  'from_entries/0': () =>
+    new FnOp(
+      a =>
+        isArray(a) &&
+        Object.fromEntries(a.map(e => [e.name ?? e.Name ?? e.key ?? e.Key, e.value ?? e.Value]))
+    ),
   'fromjson/0': () => new FnOp(a => JSON.parse(a as string)),
   'getpath/1': a => new GetPathOp(a),
   'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
@@ -304,6 +312,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'in/1': a => new InOp(a),
   'indices/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)),
   'index/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)[0]),
+  'isnan/0': () => new FnOp(a => isNaN(a as number)),
   'join/1': a => new JoinOp(a),
   'keys/0': () => new KeysOp(),
   'last/0': () => new NthOp([literal(-1)]),
@@ -336,6 +345,10 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'startswith/1': a => new Fn1Op<string>(a, (a, b) => a.startsWith(b), true),
   'test/1': a => new MatchOp(a, true),
   'test/2': a => new MatchOp(a, true),
+  'to_entries/0': () =>
+    new FnOp(a =>
+      Object.entries(a as Record<string, unknown>).map(([k, v]) => ({ key: k, value: v }))
+    ),
   'tojson/0': () => new FnOp(a => JSON.stringify(a)),
   'tonumber/0': () => new FnOp(a => Number(a)),
   'unique/0': () => new BaseArrayOp(Array_Unique),
@@ -414,7 +427,7 @@ class Tokenizer {
       return { s: m[0], type: 'sep' };
     }
 
-    if ((m = this.head.match(/^-?[\d]+(\.[\d]+)?(e-?[\d]+)?/))) {
+    if ((m = this.head.match(/^-?(nan|([\d]+(\.[\d]+)?(e-?[\d]+)?))/))) {
       return { s: m[0], type: 'num' };
     }
 
@@ -1061,6 +1074,7 @@ class NthOp extends BaseGenerator1<number> {
 
 class FlattenOp extends BaseGenerator1<number> {
   *onElement({ val: v }: Value, [arg]: [Value<number>]) {
+    if (arg.val < 0) error(206);
     yield value(isArray(v) ? v.flat(arg.val) : v);
   }
 }
