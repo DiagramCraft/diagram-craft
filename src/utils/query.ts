@@ -1535,7 +1535,32 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         return literal(res.val);
       }
     } else if (tok.type === 'str') {
-      return literal(tokenizer.next().s.slice(1, -1));
+      const value = tokenizer.next().s;
+
+      if (value.includes('\\(')) {
+        let r = value.slice(1) + tokenizer.head;
+
+        const d: Generator[] = [];
+
+        boundLoop(() => {
+          const idx = r.indexOf('\\(');
+          if (idx < 0) {
+            return d.push(literal(r.slice(0, r.indexOf('"'))));
+          }
+
+          d.push(literal(r.slice(0, idx)));
+          r = r.slice(idx + 2);
+
+          tokenizer.head = r;
+          d.push(parseExpression(tokenizer, functions));
+          r = tokenizer.head.slice(1);
+        });
+
+        tokenizer.head = r.slice(1);
+
+        return d.reduceRight((a, b) => new BinaryOp(b, a, add));
+      }
+      return literal(value.slice(1, -1));
     } else if (tok.s === 'null') {
       tokenizer.next();
       return literal(null);

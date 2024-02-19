@@ -50,8 +50,7 @@ describe('jqtest', () => {
       ]);
     });
 
-    // TODO: Fix
-    test.skip('"inter\\("pol" + "ation")"', () => {
+    test('"inter\\("pol" + "ation")"', () => {
       expect(parseAndQuery('"inter\\("pol" + "ation")"', [undefined])).toEqual(['interpolation']);
     });
 
