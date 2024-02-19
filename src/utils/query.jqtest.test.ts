@@ -2027,14 +2027,59 @@ describe('jqtest', () => {
         )
       ).toEqual([{ a: { b: 1 } }]);
     });
-  });
 
-  test('abs', () => {
-    expect(parseAndQuery('abs', ['abc'])).toEqual(['abc']);
-  });
+    // TODO: Some tests on L1782-L1829
 
-  test('map(abs)', () => {
-    expect(parseAndQuery('map(abs)', [[-0, 0, -10, -1.1]])).toEqual([[0, 0, 10, 1.1]]);
+    test('map(. == 1)', () => {
+      expect(parseAndQuery('map(. == 1)', [[1, 1.0, 1.0, 100e-2, 1, 0.0001e4]])).toEqual([
+        [true, true, true, true, true, true]
+      ]);
+    });
+
+    // TODO: Some tests related to big integers, L1839-L1877
+
+    test('abs', () => {
+      expect(parseAndQuery('abs', ['abc'])).toEqual(['abc']);
+    });
+
+    test('map(abs)', () => {
+      expect(parseAndQuery('map(abs)', [[-0, 0, -10, -1.1]])).toEqual([[0, 0, 10, 1.1]]);
+    });
+
+    test('map(fabs == length) | unique', () => {
+      expect(parseAndQuery('map(fabs == length) | unique', [[-10, -1.1, -1e-1]])).toEqual([[true]]);
+    });
+
+    // TODO: Keyword as value tests, L1899-L1917
+
+    test.skip('{ a, $__loc__, c }', () => {
+      expect(
+        parseAndQuery('{ a, $__loc__, c }', [{ a: [1, 2, 3], b: 'foo', c: { hi: 'hey' } }])
+      ).toEqual([{ a: [1, 2, 3], __loc__: { file: '<top-level>', line: 1 }, c: { hi: 'hey' } }]);
+    });
+
+    test.skip('1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }', () => {
+      expect(
+        parseAndQuery(
+          '1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }',
+          [{ as: 8 }]
+        )
+      ).toEqual([{ x: 1, as: 8, '2': 4, '3': 5, if: 6, foo: 7 }]);
+    });
+
+    test('fromjson | isnan', () => {
+      expect(parseAndQuery('fromjson | isnan', ['"nan"'])).toEqual([true]);
+    });
+
+    test('tojson | fromjson', () => {
+      expect(parseAndQuery('tojson | fromjson', [{ a: NaN }])).toEqual([{ a: null }]);
+    });
+
+    test('fromjson | isnan', () => {
+      expect(parseAndQuery('fromjson | isnan', ['"nan1234"'])).toEqual([true]);
+    });
+
+    // TODO: input tests L1949-L1955
   });
 
   test('[range(10)] | .[1.2:3.5]', () => {

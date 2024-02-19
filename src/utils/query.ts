@@ -320,6 +320,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'last/0': () => new NthOp([literal(-1)]),
   'last/1': a => new NthOp([literal(-1), ...a.args]),
   'length/0': () => new LengthOp(),
+  'fabs/0': () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)),
   'limit/2': a => new LimitOp(a),
   'ltrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.startsWith(b) ? a.slice(b.length) : a)),
   'map_values/1': a => new MapValuesOp(a),
@@ -1620,7 +1621,9 @@ export const parseAndQuery = (q: string, input: unknown[], bindings?: Record<str
 
 export function* query(query: Generator, input: unknown[], bindings?: Record<string, unknown>) {
   for (const e of query.iter(input.map(value), {
-    bindings: Object.fromEntries(Object.entries(bindings ?? {}).map(([k, v]) => [k, value(v)]))
+    bindings: {
+      ...Object.fromEntries(Object.entries(bindings ?? {}).map(([k, v]) => [k, value(v)]))
+    }
   })) {
     yield e.val;
   }
