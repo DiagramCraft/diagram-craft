@@ -310,6 +310,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
   'has/1': a => new HasOp(a),
   'in/1': a => new InOp(a),
+  'IN/1': a => new INOp(new IdentityOp(), a.args[0]),
+  'IN/2': a => new INOp(a.args[0], a.args[1]),
   'indices/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)),
   'index/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)[0]),
   'isnan/0': () => new FnOp(a => isNaN(a as number)),
@@ -902,6 +904,14 @@ class HasOp extends BaseGenerator1 {
 class InOp extends BaseGenerator1 {
   *onElement({ val: e }: Value, [arg]: [Value]) {
     yield value((e as any) in (arg.val as any));
+  }
+}
+
+class INOp extends BaseGenerator2 {
+  *onInput(val: Value, context: Context) {
+    const source = [...this.generators[0].iter([val], context)].map(e => e.val);
+    const arg = [...this.generators[1].iter([val], context)].map(e => e.val);
+    yield value(source.some(k => arg.includes(k)));
   }
 }
 

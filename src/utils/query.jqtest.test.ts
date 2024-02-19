@@ -1838,6 +1838,195 @@ describe('jqtest', () => {
         new Error('206: ')
       ]);
     });
+
+    test.skip('transpose', () => {
+      expect(parseAndQuery('transpose', [[[1], [2, 3]]])).toEqual([
+        [
+          [1, 2],
+          [null, 3]
+        ]
+      ]);
+    });
+
+    test.skip('transpose', () => {
+      expect(parseAndQuery('transpose', [[]])).toEqual([[]]);
+    });
+
+    // TODO: Missing tests, mostly module stuff L1546-L1663
+
+    test.skip('try -. catch .', () => {
+      expect(parseAndQuery('try -. catch .', ['very-long-string'])).toEqual([
+        'string ("very-long-...) cannot be negated'
+      ]);
+    });
+
+    test('join(",")', () => {
+      expect(parseAndQuery('join(",")', [['1', 2, true, false, 3.4]])).toEqual([
+        '1,2,true,false,3.4'
+      ]);
+    });
+
+    test('.[] | join(",")', () => {
+      expect(
+        parseAndQuery('.[] | join(",")', [[[], [null], [null, null], [null, null, null]]])
+      ).toEqual(['', '', ',', ',,']);
+    });
+
+    test('.[] | join(",")', () => {
+      expect(
+        parseAndQuery('.[] | join(",")', [
+          [
+            ['a', null],
+            [null, 'a']
+          ]
+        ])
+      ).toEqual(['a,', ',a']);
+    });
+
+    test.skip('try join(",") catch .', () => {
+      expect(parseAndQuery('try join(",") catch .', [['1', '2', { a: { b: { c: 33 } } }]])).toEqual(
+        ['string ("1,2,") and object ({"a":{"b":{...) cannot be added']
+      );
+
+      expect(parseAndQuery('try join(",") catch .', [['1', '2', [3, 4, 5]]])).toEqual([
+        'string ("1,2,") and array ([3,4,5]) cannot be added'
+      ]);
+    });
+
+    test('{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}', () => {
+      expect(
+        parseAndQuery(
+          '{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}',
+          [undefined]
+        )
+      ).toEqual([
+        {
+          if: 0,
+          and: 1,
+          or: 2,
+          then: 3,
+          else: 4,
+          elif: 5,
+          end: 6,
+          as: 7,
+          def: 8,
+          reduce: 9,
+          foreach: 10,
+          try: 11,
+          catch: 12,
+          label: 13,
+          import: 14,
+          include: 15,
+          module: 16
+        }
+      ]);
+    });
+
+    // TODO: Division by zero tests L1697-1715
+
+    test.skip('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', () => {
+      expect(
+        parseAndQuery('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', [
+          undefined
+        ])
+      ).toEqual([true]);
+    });
+
+    test.skip('[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)\n', () => {
+      expect(
+        parseAndQuery(
+          '[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)\n',
+          [undefined]
+        )
+      ).toEqual([]);
+    });
+
+    test.skip('(.[{}] = 0)?', () => {
+      expect(parseAndQuery('(.[{}] = 0)?', [undefined])).toEqual([]);
+    });
+
+    test.skip('INDEX(range(5)|[., "foo\\(.)"]; .[0])', () => {
+      expect(parseAndQuery('INDEX(range(5)|[., "foo\\(.)"]; .[0])', [undefined])).toEqual([
+        { '0': [0, 'foo0'], '1': [1, 'foo1'], '2': [2, 'foo2'], '3': [3, 'foo3'], '4': [4, 'foo4'] }
+      ]);
+    });
+
+    test.skip('JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)', () => {
+      expect(
+        parseAndQuery(
+          'JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)',
+          [
+            [
+              [5, 'foo'],
+              [3, 'bar'],
+              [1, 'foobar']
+            ]
+          ]
+        )
+      ).toEqual([
+        [
+          [[5, 'foo'], null],
+          [
+            [3, 'bar'],
+            [3, 'efg']
+          ],
+          [
+            [1, 'foobar'],
+            [1, 'bcd']
+          ]
+        ]
+      ]);
+    });
+
+    test('range(5;10)|IN(range(10))', () => {
+      expect(parseAndQuery('range(5;10)|IN(range(10))', [undefined])).toEqual([
+        true,
+        true,
+        true,
+        true,
+        true
+      ]);
+    });
+
+    test('range(5;13)|IN(range(0;10;3))', () => {
+      expect(parseAndQuery('range(5;13)|IN(range(0;10;3))', [undefined])).toEqual([
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ]);
+    });
+
+    test('range(10;12)|IN(range(10))', () => {
+      expect(parseAndQuery('range(10;12)|IN(range(10))', [undefined])).toEqual([false, false]);
+    });
+
+    test('IN(range(10;20); range(10))', () => {
+      expect(parseAndQuery('IN(range(10;20); range(10))', [undefined])).toEqual([false]);
+    });
+
+    test('IN(range(5;20); range(10))', () => {
+      expect(parseAndQuery('IN(range(5;20); range(10))', [undefined])).toEqual([true]);
+    });
+
+    test('(.a as $x | .b) = "b"', () => {
+      expect(parseAndQuery('(.a as $x | .b) = "b"', [{ a: undefined, b: undefined }])).toEqual([
+        { a: undefined, b: 'b' }
+      ]);
+    });
+
+    test.skip('(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]', () => {
+      expect(
+        parseAndQuery(
+          '(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]',
+          [{ a: { b: [1, { b: 3 }] } }]
+        )
+      ).toEqual([{ a: { b: 1 } }]);
+    });
   });
 
   test('abs', () => {
