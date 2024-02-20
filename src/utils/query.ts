@@ -592,6 +592,8 @@ export const OObjects = {
       return new OLiteral(tok.s.slice(1, -1));
     } else if (tok.s === '.') {
       return parsePathExpression(tokenizer, {});
+    } else if (tok.s === '$') {
+      return new VarRefOp(tokenizer.next().s);
     } else if (tok.s === '{') {
       return OObject.parse(tokenizer);
     } else if (tok.s === '(') {
@@ -604,6 +606,8 @@ export const OObjects = {
       return new OLiteral(Number(tok.s));
     } else if (tok.s === 'true' || tok.s === 'false') {
       return new OLiteral(tok.s === 'true');
+    } else if (tok.type === 'id') {
+      return new OLiteral(tok.s);
     }
 
     throw error(102, tokenizer.head);
@@ -623,29 +627,23 @@ class OObject {
     let currentKey: OLiteral | Generator | undefined = undefined;
 
     while (s.peek().s !== '}') {
-      if (s.peek().type === 'id') {
-        currentKey = new OLiteral(s.next().s);
+      const next = OObjects.parseNext(s);
 
-        // shorthand notation
-        if (!s.accept(':')) {
-          obj.entries.push([
-            currentKey,
-            parsePathExpression(new Tokenizer('.' + currentKey.val), {})
-          ]);
-          currentKey = undefined;
-          if (!s.accept(',')) break;
-        }
+      if (currentKey) {
+        obj.entries.push([currentKey, next]);
+
+        currentKey = undefined;
+        if (!s.accept(',')) break;
+      } else if (s.peek().s !== ':') {
+        obj.entries.push([
+          next instanceof VarRefOp ? new OLiteral(next.id) : next,
+          next instanceof OLiteral ? parsePathExpression(new Tokenizer('.' + next.val), {}) : next
+        ]);
+
+        if (!s.accept(',')) break;
       } else {
-        const next = OObjects.parseNext(s);
-
-        if (currentKey) {
-          obj.entries.push([currentKey, next]);
-          currentKey = undefined;
-          if (!s.accept(',')) break;
-        } else {
-          currentKey = next as OLiteral | Generator;
-          s.expect(':');
-        }
+        currentKey = next;
+        s.expect(':');
       }
     }
 
@@ -1628,9 +1626,9 @@ const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): 
   return op;
 };
 
-export const parse = (query: string): Generator => {
+export const parse = (query: string, includeBuiltins = true): Generator => {
   const functions = {};
-  const op = builtins.map(b => parseExpression(new Tokenizer(b), functions));
+  const op = includeBuiltins ? builtins.map(b => parseExpression(new Tokenizer(b), functions)) : [];
 
   const tokenizer = new Tokenizer(query);
   while (tokenizer.peek().type !== 'end') {

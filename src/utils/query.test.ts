@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { OObjects, parseAndQuery } from './query.ts';
+import { OObjects, parse, parseAndQuery } from './query.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const queryOne = (q: string, input: any) => {
@@ -764,6 +764,9 @@ describe('complex use-cases', () => {
   });
 
   test('dummy', () => {
-    console.log(parseAndQuery('["a", "b"] | .[]', [undefined]));
+    console.dir(parse('{ $a, $b }', false), { depth: 10 });
+    //console.dir(parse('{ k: [ $a, $b ] }', false), { depth: 10 });
+    //console.dir(parse('{(.user): .titles}', false), { depth: 20 });
+    //console.log(parseAndQuery('["a", "b"] | .[]', [undefined]));
   });
 });
