@@ -81,6 +81,7 @@ function* iterateAll(
   idx: number = 0,
   arr?: Value[]
 ): Iterable<Value<Value[]>> {
+  if (generators.length === 0) return yield value([]);
   for (const item of generators[idx].iter(input, context)) {
     const newArray = [...(arr ?? []), item];
     if (idx === generators.length - 1) {
@@ -215,8 +216,8 @@ const evalPath = (path: PathElement[], obj: unknown) => {
 const mkObj = (p: PathElement) => (typeof p === 'number' ? [] : {});
 
 // TODO: Do we need to add step by step cloning in here
-const setPath = (base: any | undefined, path: PathElement[], val: unknown): unknown => {
-  const dest = base ?? mkObj(path.at(0)!);
+const setPath = <T>(base: T | undefined, path: PathElement[], val: unknown): T => {
+  const dest = base ?? (mkObj(path.at(0)!) as T);
   let parent: any = dest;
   for (const [i, k] of path.entries()) {
     if (i < path.length - 1) {
@@ -499,7 +500,7 @@ type FnDef = {
   body: Generator;
 };
 
-const isGenerator = (o: unknown): o is Generator => 'iter' in (o as any);
+const isGenerator = (o: unknown): o is Generator => typeof o === 'object' && 'iter' in (o as any);
 
 type Bindings = Record<string, Value>;
 type Context = {
@@ -574,136 +575,85 @@ abstract class BaseGenerator2<A = unknown, B = unknown> extends BaseGenerator<
 
 /** Object literal parser ********************************************************************* */
 
-type OObjects = OObject | OLiteral | OArray | Generator;
+type PathAndValue = { path: PathElement[]; val: unknown };
 
 export const OObjects = {
-  parseString(s: string): OObjects & { val: unknown } {
-    return OObjects.parse(new Tokenizer(s));
-  },
+  parse: (tok: Tokenizer): PathAndValue[] => OObjects.parseNext(tok, []),
 
-  parse(tok: Tokenizer): OObjects & { val: unknown } {
-    return OObjects.parseNext(tok) as OObjects & { val: unknown };
-  },
+  parseString: (s: string): PathAndValue[] => OObjects.parse(new Tokenizer(s)),
 
-  parseNext(tokenizer: Tokenizer): OObjects {
+  parseNext(tokenizer: Tokenizer, path: PathElement[]): PathAndValue[] {
     const tok = tokenizer.next();
 
     if (tok.type === 'str') {
-      return new OLiteral(tok.s.slice(1, -1));
+      return [{ path, val: tok.s.slice(1, -1) }];
     } else if (tok.s === '.') {
-      return parsePathExpression(tokenizer, {});
+      return [{ path, val: parsePathExpression(tokenizer, {}) }];
     } else if (tok.s === '$') {
-      return new VarRefOp(tokenizer.next().s);
+      return [{ path, val: new VarRefOp(tokenizer.next().s) }];
     } else if (tok.s === '{') {
-      return OObject.parse(tokenizer);
+      return OObjects.parseObject(tokenizer, path);
     } else if (tok.s === '(') {
       const e = parseExpression(tokenizer, {});
       tokenizer.expect(')');
-      return e;
+      return [{ path, val: e }];
     } else if (tok.s === '[') {
-      return OArray.parse(tokenizer);
+      return OObjects.parseArray(tokenizer, path);
     } else if (tok.type === 'num') {
-      return new OLiteral(Number(tok.s));
+      return [{ path, val: Number(tok.s) }];
     } else if (tok.s === 'true' || tok.s === 'false') {
-      return new OLiteral(tok.s === 'true');
+      return [{ path, val: tok.s === 'true' }];
     } else if (tok.type === 'id') {
-      return new OLiteral(tok.s);
+      return [{ path, val: tok.s }];
     }
 
     throw error(102, tokenizer.head);
-  }
-};
+  },
 
-class OObject {
-  entries: [OLiteral | Generator, OObjects][] = [];
+  parseObject(s: Tokenizer, path: PathElement[]) {
+    const arr: PathAndValue[] = [];
 
-  constructor(entries?: [OLiteral | Generator, OObjects][]) {
-    this.entries = entries ?? [];
-  }
+    let currentKey: any = undefined;
 
-  static parse(s: Tokenizer) {
-    const obj = new OObject();
-
-    let currentKey: OLiteral | Generator | undefined = undefined;
-
-    while (s.peek().s !== '}') {
-      const next = OObjects.parseNext(s);
-
+    while (!s.accept('}')) {
       if (currentKey) {
-        obj.entries.push([currentKey, next]);
+        arr.push(...OObjects.parseNext(s, [...path, currentKey]));
 
+        s.accept(',');
         currentKey = undefined;
-        if (!s.accept(',')) break;
-      } else if (s.peek().s !== ':') {
-        obj.entries.push([
-          next instanceof VarRefOp ? new OLiteral(next.id) : next,
-          next instanceof OLiteral ? parsePathExpression(new Tokenizer('.' + next.val), {}) : next
-        ]);
-
-        if (!s.accept(',')) break;
       } else {
-        currentKey = next;
-        s.expect(':');
+        const tokenType = s.peek().type;
+        const next = OObjects.parseNext(s, []);
+        currentKey = (next[0].val instanceof VarRefOp ? next[0].val.id : next[0].val) as any;
+
+        if (!s.accept(':')) {
+          next.forEach(e =>
+            arr.push({
+              val: tokenType === 'id' ? parsePathExpression(new Tokenizer('.' + e.val), {}) : e.val,
+              path: [...path, currentKey, ...e.path]
+            })
+          );
+
+          s.accept(',');
+          currentKey = undefined;
+        }
       }
     }
 
-    s.expect('}');
+    return arr.length === 0 ? [{ path, val: {} }] : arr;
+  },
 
-    return obj;
-  }
+  parseArray(s: Tokenizer, path: PathElement[]): PathAndValue[] {
+    const arr: PathAndValue[] = [];
 
-  get val() {
-    const generators = new Map<string, Generator>();
-
-    const dest: any = {};
-    for (const [k, v] of this.entries) {
-      const key: string = isGenerator(k) ? '__' + newid() : k.val!.toString();
-      if (isGenerator(k)) generators.set(key, k);
-
-      const val: any = isGenerator(v) ? '__' + newid() : v.val;
-      if (isGenerator(v)) generators.set(val, v);
-
-      dest[key] = val;
+    while (!s.accept(']')) {
+      arr.push(...OObjects.parseNext(s, [...path, arr.length]));
+      s.accept(',');
     }
-
-    if (generators.size > 0) {
-      dest.__generators = generators;
-    }
-
-    return dest;
-  }
-}
-
-class OLiteral {
-  constructor(public val: unknown) {}
-}
-
-class OArray {
-  value: OObjects[] = [];
-
-  constructor(value?: OObjects[]) {
-    this.value = value ?? [];
-  }
-
-  static parse(s: Tokenizer) {
-    const arr = new OArray();
-
-    while (s.peek().s !== ']') {
-      arr.value.push(OObjects.parseNext(s));
-      if (!s.accept(',')) break;
-    }
-    s.expect(']');
 
     return arr;
   }
-
-  get val(): unknown[] {
-    return this.value.map(e => {
-      if (isGenerator(e)) throw new Error();
-      return e.val;
-    });
-  }
-}
+};
 
 /** Generators ********************************************************************* */
 
@@ -1088,38 +1038,29 @@ class FlattenOp extends BaseGenerator1<number> {
   }
 }
 
-class ObjectTemplateOp extends BaseGenerator0 {
-  constructor(private readonly tpl: any) {
+class ObjectLiteralOp extends BaseGenerator0 {
+  constructor(private readonly values: PathAndValue[]) {
     super();
   }
 
   *onInput(el: Value, context: Context): Iterable<Value> {
-    const generators = this.tpl.__generators as Map<string, Generator>;
-    const iterables = [...generators.keys()];
+    const resolvedValues = [...this.values];
 
-    for (const a of iterateAll([...generators.values()], [el], context)) {
-      const obj: Record<string, Value> = {};
-      iterables.forEach((k, i) => (obj[k] = a.val[i]));
-      yield value(this.applyTemplate(this.tpl, obj));
+    const generators: Generator[] = [];
+    for (const v of resolvedValues) {
+      v.path = v.path.map(e => (isGenerator(e) ? (one(e.iter([el], context))?.val as any) : e));
+
+      if (isGenerator(v.val)) generators.push(v.val);
     }
-  }
 
-  private applyTemplate(target: Record<string, unknown>, assignment: Record<string, Value>) {
-    const dest: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(target)) {
-      if (k === '__generators') continue;
-
-      const key = assignment[k]?.val === undefined ? k : (assignment[k].val as string);
-
-      if (typeof v === 'string') {
-        dest[key] = assignment[v].val;
-      } else if (isObj(v)) {
-        dest[key] = this.applyTemplate(v, assignment);
-      } else {
-        dest[key] = v;
-      }
+    for (const a of iterateAll(generators, [el], context)) {
+      yield value(
+        resolvedValues.reduce(
+          (dest, v) => setPath(dest, v.path, isGenerator(v.val) ? a.val.shift()!.val : v.val),
+          {}
+        )
+      );
     }
-    return dest;
   }
 }
 
@@ -1527,36 +1468,27 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       return literal(Number(tokenizer.next().s));
     } else if (tok.s === '{') {
       const res = OObjects.parse(tokenizer);
-      if (res.val.__generators) {
-        return new ObjectTemplateOp(res.val);
-      } else {
-        return literal(res.val);
-      }
+      return new ObjectLiteralOp(res);
     } else if (tok.type === 'str') {
       const value = tokenizer.next().s;
 
       if (value.includes('\\(')) {
         let r = value.slice(1) + tokenizer.head;
+        const dest: Generator[] = [];
 
-        const d: Generator[] = [];
-
-        boundLoop(() => {
+        while (r.includes('\\(')) {
           const idx = r.indexOf('\\(');
-          if (idx < 0) {
-            return d.push(literal(r.slice(0, r.indexOf('"'))));
-          }
-
-          d.push(literal(r.slice(0, idx)));
+          dest.push(literal(r.slice(0, idx)));
           r = r.slice(idx + 2);
-
           tokenizer.head = r;
-          d.push(parseExpression(tokenizer, functions));
+          dest.push(parseExpression(tokenizer, functions));
           r = tokenizer.head.slice(1);
-        });
+        }
 
+        dest.push(literal(r.slice(0, r.indexOf('"'))));
         tokenizer.head = r.slice(1);
 
-        return d.reduceRight((a, b) => new BinaryOp(b, a, add));
+        return dest.reduceRight((a, b) => new BinaryOp(b, a, add));
       }
       return literal(value.slice(1, -1));
     } else if (tok.s === 'null') {

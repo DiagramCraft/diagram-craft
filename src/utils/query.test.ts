@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { OObjects, parse, parseAndQuery } from './query.ts';
+import { OObjects, parseAndQuery } from './query.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const queryOne = (q: string, input: any) => {
@@ -10,34 +10,48 @@ const queryOne = (q: string, input: any) => {
 
 describe('OObject', () => {
   test('parse OString', () => {
-    expect(OObjects.parseString('"lorem"').val).toEqual('lorem');
+    expect(OObjects.parseString('"lorem"')).toEqual([{ path: [], val: 'lorem' }]);
   });
 
   test('parse ONumber', () => {
-    expect(OObjects.parseString('1234').val).toEqual(1234);
+    expect(OObjects.parseString('1234')).toEqual([{ path: [], val: 1234 }]);
   });
 
   test('parse OBoolean', () => {
-    expect(OObjects.parseString('true').val).toEqual(true);
-    expect(OObjects.parseString('false').val).toEqual(false);
+    expect(OObjects.parseString('true')).toEqual([{ path: [], val: true }]);
+    expect(OObjects.parseString('false')).toEqual([{ path: [], val: false }]);
   });
 
   test('parse OArray', () => {
-    expect(OObjects.parseString('[1, 2, 3]').val).toEqual([1, 2, 3]);
-    expect(OObjects.parseString('["a", "b"]').val).toEqual(['a', 'b']);
-    expect(OObjects.parseString('[1, "b"]').val).toEqual([1, 'b']);
+    expect(OObjects.parseString('[1, 2, 3]')).toEqual([
+      { path: [0], val: 1 },
+      { path: [1], val: 2 },
+      { path: [2], val: 3 }
+    ]);
+    expect(OObjects.parseString('["a", "b"]')).toEqual([
+      { path: [0], val: 'a' },
+      { path: [1], val: 'b' }
+    ]);
+    expect(OObjects.parseString('[1, "b"]')).toEqual([
+      { path: [0], val: 1 },
+      { path: [1], val: 'b' }
+    ]);
   });
 
   test('parse OObject', () => {
-    expect(OObjects.parseString('{ ab: 1, b: 2}').val).toEqual({ ab: 1, b: 2 });
-    expect(OObjects.parseString('{ ab: "test", b: 2}').val).toEqual({
-      ab: 'test',
-      b: 2
-    });
-    expect(OObjects.parseString('{ ab: [7, 8], b: 2}').val).toEqual({
-      ab: [7, 8],
-      b: 2
-    });
+    expect(OObjects.parseString('{ ab: 1, b: 2}')).toEqual([
+      { path: ['ab'], val: 1 },
+      { path: ['b'], val: 2 }
+    ]);
+    expect(OObjects.parseString('{ ab: "test", b: 2}')).toEqual([
+      { path: ['ab'], val: 'test' },
+      { path: ['b'], val: 2 }
+    ]);
+    expect(OObjects.parseString('{ ab: [7, 8], b: 2}')).toEqual([
+      { path: ['ab', 0], val: 7 },
+      { path: ['ab', 1], val: 8 },
+      { path: ['b'], val: 2 }
+    ]);
   });
 });
 
@@ -764,9 +778,41 @@ describe('complex use-cases', () => {
   });
 
   test('dummy', () => {
-    console.dir(parse('{ $a, $b }', false), { depth: 10 });
+    //console.dir(parse('{ $a, $b }', false), { depth: 10 });
     //console.dir(parse('{ k: [ $a, $b ] }', false), { depth: 10 });
     //console.dir(parse('{(.user): .titles}', false), { depth: 20 });
     //console.log(parseAndQuery('["a", "b"] | .[]', [undefined]));
+
+    console.dir(OObjects.parseString('{ $a, $b }'), { depth: 10 });
+
+    /*
+    expect(OObjects.parseString('"lorem"').val).toEqual('lorem');
+  });
+
+  test('parse ONumber', () => {
+    expect(OObjects.parseString('1234').val).toEqual(1234);
+  });
+
+  test('parse OBoolean', () => {
+    expect(OObjects.parseString('true').val).toEqual(true);
+    expect(OObjects.parseString('false').val).toEqual(false);
+  });
+
+  test('parse OArray', () => {
+    expect(OObjects.parseString('[1, 2, 3]').val).toEqual([1, 2, 3]);
+    expect(OObjects.parseString('["a", "b"]').val).toEqual(['a', 'b']);
+    expect(OObjects.parseString('[1, "b"]').val).toEqual([1, 'b']);
+  });
+
+  test('parse OObject', () => {
+    expect(OObjects.parseString('{ ab: 1, b: 2}').val).toEqual({ ab: 1, b: 2 });
+    expect(OObjects.parseString('{ ab: "test", b: 2}').val).toEqual({
+      ab: 'test',
+      b: 2
+    });
+    expect(OObjects.parseString('{ ab: [7, 8], b: 2}').val).toEqual({
+      ab: [7, 8],
+      b: 2
+    });*/
   });
 });
