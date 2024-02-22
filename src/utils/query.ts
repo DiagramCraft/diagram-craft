@@ -142,6 +142,25 @@ const indices = (lvs: unknown, rvs: unknown) => {
   return res;
 };
 
+const repeat = (rvs: number, lvs: string) => (rvs < 0 || isNaN(rvs) ? undefined : lvs.repeat(rvs));
+
+const multiply = (lvs: unknown, rvs: unknown) => {
+  if (typeof lvs === 'string' && typeof rvs === 'number') {
+    return repeat(rvs, lvs);
+  }
+  if (typeof lvs === 'number' && typeof rvs === 'string') {
+    return repeat(lvs, rvs);
+  }
+  return (lvs as number) * (rvs as number);
+};
+
+const divide = (lvs: unknown, rvs: unknown) => {
+  if (typeof lvs === 'string' && typeof rvs === 'string') {
+    return lvs.split(rvs);
+  }
+  return (lvs as number) / (rvs as number);
+};
+
 const add = (lvs: unknown, rvs: unknown) => {
   if (isArray(lvs) && isArray(rvs)) return [...lvs, ...rvs];
   if (typeof lvs === 'string' && typeof rvs === 'string') return lvs + rvs;
@@ -365,8 +384,8 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '+': (l, r) => new BinaryOp(l, r, add),
   '-': (l, r) => new BinaryOp(l, r, subtract),
   '%': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) % (b as number)),
-  '*': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) * (b as number)),
-  '/': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) / (b as number)),
+  '*': (l, r) => new BinaryOp(l, r, multiply),
+  '/': (l, r) => new BinaryOp(l, r, divide),
   '//': (l, r) => new BinaryOp(l, r, (a, b) => a ?? b),
   '==': (l, r) => new BinaryOp(l, r, isEqual),
   '!=': (l, r) => new BinaryOp(l, r, isNotEqual),

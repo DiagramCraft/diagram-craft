@@ -1530,48 +1530,55 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('[.[] * 3]', () => {
+    test('[.[] * 3]', () => {
       expect(parseAndQuery('[.[] * 3]', [['a', 'ab', 'abc']])).toEqual([
         ['aaa', 'ababab', 'abcabcabc']
       ]);
     });
 
-    test.skip('[.[] * "abc"]', () => {
+    test('[.[] * "abc"]', () => {
       expect(parseAndQuery('[.[] * "abc"]', [[-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 3.7, 10.0]])).toEqual(
-        [undefined, undefined, '', '', 'abc', 'abc', 'abcabcabc', 'abcabcabcabcabcabcabcabcabcabc']
+        [
+          [
+            undefined,
+            undefined,
+            '',
+            '',
+            'abc',
+            'abc',
+            'abcabcabc',
+            'abcabcabcabcabcabcabcabcabcabc'
+          ]
+        ]
       );
     });
 
-    test.skip('[. * (nan,-nan)]', () => {
-      expect(parseAndQuery('[. * (nan,-nan)]', ['abc'])).toEqual([undefined, undefined]);
+    test('[. * (nan,-nan)]', () => {
+      expect(parseAndQuery('[. * (nan,-nan)]', ['abc'])).toEqual([[undefined, undefined]]);
     });
 
-    test.skip('[.[] / ","]', () => {
+    test('[.[] / ","]', () => {
       expect(
         parseAndQuery('[.[] / ","]', [
           ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
         ])
       ).toEqual([
         [
-          [
-            ['a', ' bc', ' def', ' ghij', ' jklmn', ' a', 'b', ' c', 'd', ' e', 'f'],
-            ['a', 'b', 'c', 'd', ' e', 'f', 'g', 'h']
-          ]
+          ['a', ' bc', ' def', ' ghij', ' jklmn', ' a', 'b', ' c', 'd', ' e', 'f'],
+          ['a', 'b', 'c', 'd', ' e', 'f', 'g', 'h']
         ]
       ]);
     });
 
-    test.skip('[.[] / ", "]', () => {
+    test('[.[] / ", "]', () => {
       expect(
         parseAndQuery('[.[] / ", "]', [
           ['a, bc, def, ghij, jklmn, a,b, c,d, e,f', 'a,b,c,d, e,f,g,h']
         ])
       ).toEqual([
         [
-          [
-            ['a', 'bc', 'def', 'ghij', 'jklmn', 'a,b', 'c,d', 'e,f'],
-            ['a,b,c,d', 'e,f,g,h']
-          ]
+          ['a', 'bc', 'def', 'ghij', 'jklmn', 'a,b', 'c,d', 'e,f'],
+          ['a,b,c,d', 'e,f,g,h']
         ]
       ]);
     });
