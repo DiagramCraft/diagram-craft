@@ -1852,7 +1852,51 @@ describe('jqtest', () => {
       expect(parseAndQuery('[][.]', [1000000000000000000])).toEqual([undefined]);
     });
 
-    // TODO: Missing object merge and type tests, L1468-L1516
+    // TODO: Missing object merge and type tests, L1468-L1488
+
+    test('[.[]|arrays]', () => {
+      expect(
+        parseAndQuery('[.[]|arrays]', [[1, 2, 'foo', [], [3, []], {}, true, false, null]])
+      ).toEqual([[[], [3, []]]]);
+    });
+
+    test('[.[]|objects]', () => {
+      expect(
+        parseAndQuery('[.[]|objects]', [[1, 2, 'foo', [], [3, []], {}, true, false, null]])
+      ).toEqual([[{}]]);
+    });
+
+    test('[.[]|iterables]', () => {
+      expect(
+        parseAndQuery('[.[]|iterables]', [[1, 2, 'foo', [], [3, []], {}, true, false, null]])
+      ).toEqual([[[], [3, []], {}]]);
+    });
+
+    test('[.[]|scalars]', () => {
+      expect(
+        parseAndQuery('[.[]|scalars]', [[1, 2, 'foo', [], [3, []], {}, true, false, null]])
+      ).toEqual([[1, 2, 'foo', true, false, null]]);
+    });
+
+    // TODO: Check null vs undefined
+    test('[.[]|values]', () => {
+      expect(
+        parseAndQuery('[.[]|values]', [[1, 2, 'foo', [], [3, []], {}, true, false, undefined]])
+      ).toEqual([[1, 2, 'foo', [], [3, []], {}, true, false, undefined]]);
+    });
+
+    test('[.[]|booleans]', () => {
+      expect(
+        parseAndQuery('[.[]|booleans]', [[1, 2, 'foo', [], [3, []], {}, true, false, null]])
+      ).toEqual([[true, false]]);
+    });
+
+    // TODO: Check null vs undefined
+    test('[.[]|nulls]', () => {
+      expect(
+        parseAndQuery('[.[]|nulls]', [[1, 2, 'foo', [], [3, []], {}, true, false, null]])
+      ).toEqual([[null]]);
+    });
 
     test('flatten', () => {
       expect(parseAndQuery('flatten', [[0, [1], [[2]], [[[3]]]]])).toEqual([[0, 1, 2, 3]]);

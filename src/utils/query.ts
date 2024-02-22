@@ -4,10 +4,17 @@ import { isTaggedType, tag, TaggedType } from './types.ts';
 /** Builtins *************************************************************************** */
 
 const builtins = [
-  'def paths: path(..)|select(length > 0)',
-  'def map(f): [.[]|f]',
-  'def del(f): delpaths([path(f)])',
-  'def with_entries(f): to_entries | map(f) | from_entries'
+  'paths:path(..)|select(length > 0)',
+  'map(f):[.[]|f]',
+  'del(f):delpaths([path(f)])',
+  'with_entries(f):to_entries|map(f)|from_entries',
+  'arrays:select(type=="array")',
+  'objects:select(type=="object")',
+  'iterables:select(type|.=="array"or.=="object")',
+  'scalars:select(type|.!="array"and.!="object")',
+  'values:select(.!=null)',
+  'nulls:select(.==null)',
+  'booleans:select(type=="boolean")'
 ];
 
 /** Error handling ********************************************************************* */
@@ -376,6 +383,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
     ),
   'tojson/0': () => new FnOp(a => JSON.stringify(a)),
   'tonumber/0': () => new FnOp(a => Number(a)),
+  'type/0': () => new FnOp(a => (isArray(a) ? 'array' : a === null ? 'null' : typeof a)),
   'unique/0': () => new BaseArrayOp(Array_Unique),
   'unique_by/1': a => new BaseArrayOp(Array_Unique, a)
 };
@@ -1601,7 +1609,9 @@ const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
 export const parse = (query: string, includeBuiltins = true): Generator => {
   const functions = {};
-  const op = includeBuiltins ? builtins.map(b => parseExpression(new Tokenizer(b), functions)) : [];
+  const op = includeBuiltins
+    ? builtins.map(b => parseExpression(new Tokenizer(`def ` + b), functions))
+    : [];
 
   const tokenizer = new Tokenizer(query);
   while (tokenizer.peek().type !== 'end') {

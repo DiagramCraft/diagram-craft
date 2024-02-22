@@ -722,6 +722,14 @@ describe('destructuring', () => {
   });
 });
 
+describe('type', () => {
+  test('map(type)', () => {
+    expect(parseAndQuery('map(type)', [[0, false, [], {}, null, 'hello']])).toEqual([
+      ['number', 'boolean', 'array', 'object', 'null', 'string']
+    ]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
     expect(parseAndQuery('range(0,1;3,4)', [undefined])).toEqual([
