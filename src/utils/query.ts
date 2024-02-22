@@ -29,6 +29,8 @@ type Errors = {
   204: 'Expected expression of type';
   205: 'Expected array-like object';
   206: 'Index cannot be negative';
+  207: 'Expected var or destructable object';
+  208: 'Expected var';
   210: 'Unknown function';
   301: 'Expected exactly one';
 };
@@ -874,19 +876,35 @@ class SelectOp extends BaseGenerator1<boolean> {
 
 class VarBindingOp extends BaseGenerator1 {
   constructor(
-    public readonly id: VarRefOp | string,
+    public readonly target: Generator | string,
     node: Generator
   ) {
     super(node);
   }
 
-  *onElement(e: Value, [v]: [Value], context: Context) {
-    context.bindings[this.getId()] = v;
-    yield e;
+  *onElement(el: Value, [v]: [Value], context: Context) {
+    const id = this.getId();
+    if (id !== undefined) {
+      context.bindings[id] = v;
+    } else if (this.target instanceof ObjectLiteralOp) {
+      const resolvedValues = [...this.target.values];
+      for (const v of resolvedValues) {
+        v.path = v.path.map(e => (isGenerator(e) ? (one(e.iter([el], context))?.val as any) : e));
+      }
+
+      for (const pv of resolvedValues) {
+        if (!(pv.val instanceof VarRefOp)) error(208);
+        context.bindings['$' + (pv.val as VarRefOp).id] = value(evalPath(pv.path, v.val));
+      }
+    } else {
+      error(207);
+    }
+
+    yield el;
   }
 
-  public getId() {
-    return typeof this.id === 'string' ? this.id : this.id.id;
+  public getId(): string | undefined {
+    return typeof this.target === 'string' ? this.target : (this.target as VarRefOp).id;
   }
 }
 
@@ -1039,7 +1057,7 @@ class FlattenOp extends BaseGenerator1<number> {
 }
 
 class ObjectLiteralOp extends BaseGenerator0 {
-  constructor(private readonly values: PathAndValue[]) {
+  constructor(public readonly values: PathAndValue[]) {
     super();
   }
 
@@ -1305,7 +1323,7 @@ class ReduceOp extends BaseGenerator0 {
 
     let acc = exactOne(this.init.iter([e], innerContext));
     for (const s of this.source.generators[0].iter([e], context)) {
-      innerContext.bindings[id] = s;
+      innerContext.bindings[id!] = s;
       acc = exactOne(this.op.iter([acc], innerContext));
     }
 
@@ -1377,10 +1395,14 @@ const parsePathExpression = (
   });
 };
 
-const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): Generator => {
+const parseOperand = (
+  tokenizer: Tokenizer,
+  functions: Record<string, number>,
+  lastOp: string = ''
+): Generator => {
   try {
     const tok = tokenizer.peek();
-    if (tok.s === '[') {
+    if (tok.s === '[' && lastOp !== 'as') {
       tokenizer.next();
       const inner = tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, functions);
       tokenizer.expect(']');
@@ -1466,7 +1488,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
       /* LITERALS ************************************************************************** */
     } else if (tok.type === 'num') {
       return literal(Number(tokenizer.next().s));
-    } else if (tok.s === '{') {
+    } else if (tok.s === '{' || tok.s === '[') {
       const res = OObjects.parse(tokenizer);
       return new ObjectLiteralOp(res);
     } else if (tok.type === 'str') {
@@ -1527,7 +1549,7 @@ const parseExpression = (
   functions: Record<string, number>,
   lastOp: string = ''
 ): Generator => {
-  let left = parseOperand(tokenizer, functions);
+  let left = parseOperand(tokenizer, functions, lastOp);
 
   return boundLoop(() => {
     const tok = tokenizer.peek().s;

@@ -473,13 +473,13 @@ describe('jqtest', () => {
       expect(parseAndQuery('1 as $x | [$x,$x,$x as $x | $x]', [undefined])).toEqual([[1, 1, 1]]);
     });
 
-    test.skip('[1, {c:3, d:4}] as [$a, {c:$b, b:$c}] | $a, $b, $c', () => {
+    test('[1, {c:3, d:4}] as [$a, {c:$b, b:$c}] | $a, $b, $c', () => {
       expect(
         parseAndQuery('[1, {c:3, d:4}] as [$a, {c:$b, b:$c}] | $a, $b, $c', [undefined])
-      ).toEqual([[1, 3, undefined]]);
+      ).toEqual([1, 3, undefined]);
     });
 
-    test.skip('. as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]', () => {
+    test('. as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]', () => {
       expect(
         parseAndQuery('. as {as: $kw, "str": $str, ("e"+"x"+"p"): $exp} | [$kw, $str, $exp]', [
           { as: 1, str: 2, exp: 3 }
@@ -487,16 +487,14 @@ describe('jqtest', () => {
       ).toEqual([[1, 2, 3]]);
     });
 
-    test.skip('.[] as [$a, $b] | [$b, $a]', () => {
+    test('.[] as [$a, $b] | [$b, $a]', () => {
       expect(parseAndQuery('.[] as [$a, $b] | [$b, $a]', [[[1], [1, 2, 3]]])).toEqual([
-        [
-          [undefined, 1],
-          [2, 1]
-        ]
+        [undefined, 1],
+        [2, 1]
       ]);
     });
 
-    test.skip('. as $i | . as [$i] | $i', () => {
+    test('. as $i | . as [$i] | $i', () => {
       expect(parseAndQuery('. as $i | . as [$i] | $i', [[0]])).toEqual([0]);
     });
 
@@ -845,7 +843,41 @@ describe('jqtest', () => {
       expect(parseAndQuery('reduce .[] as $x (0; . + $x)', [[1, 2, 4]])).toEqual([7]);
     });
 
-    // A number of missing reduce/destructuing tests, L764-L892
+    test.skip('reduce .[] as [$i, {j:$j}] (0; . + $i - $j)', () => {
+      expect(
+        parseAndQuery('reduce .[] as [$i, {j:$j}] (0; . + $i - $j)', [
+          [
+            [2, { j: 1 }],
+            [5, { j: 3 }],
+            [6, { j: 4 }]
+          ]
+        ])
+      ).toEqual([5]);
+    });
+
+    test.skip('reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)', () => {
+      expect(
+        parseAndQuery('reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)', [undefined])
+      ).toEqual([14]);
+    });
+
+    test('reduce . as $n (.; .)', () => {
+      expect(parseAndQuery('reduce . as $n (.; .)', [undefined])).toEqual([undefined]);
+    });
+
+    test('. as {$a, b: [$c, {$d}]} | [$a, $c, $d]', () => {
+      expect(
+        parseAndQuery('. as {$a, b: [$c, {$d}]} | [$a, $c, $d]', [{ a: 1, b: [2, { d: 3 }] }])
+      ).toEqual([[1, 2, 3]]);
+    });
+
+    test.skip('. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]', () => {
+      expect(
+        parseAndQuery('. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]', [{ a: 1, b: [2, { d: 3 }] }])
+      ).toEqual([[1, [2, { d: 3 }], 2, { d: 3 }]]);
+    });
+
+    // A number of missing reduce/destructuing tests, L786-L892
 
     test.skip('. as $dot|any($dot[];not)', () => {
       expect(

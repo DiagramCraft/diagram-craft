@@ -714,6 +714,14 @@ describe('reduce', () => {
   });
 });
 
+describe('destructuring', () => {
+  test('. as [$a, $b, {c: $c}] | $a + $b + $c', () => {
+    expect(
+      parseAndQuery('. as [$a, $b, {c: $c}] | $a + $b + $c', [[2, 3, { c: 4, d: 5 }]])
+    ).toEqual([9]);
+  });
+});
+
 describe('complex use-cases', () => {
   test('range(0,1;3,4)', () => {
     expect(parseAndQuery('range(0,1;3,4)', [undefined])).toEqual([
