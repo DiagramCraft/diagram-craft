@@ -42,8 +42,8 @@ type Errors = {
   301: 'Expected exactly one';
 };
 
-const error = (code: keyof Errors, ...params: unknown[]) => {
-  throw new Error(`${code}: ${params.join(', ')}`);
+export const error = (code: keyof Errors, ...params: unknown[]) => {
+  return new Error(`${code}: ${params.join(', ')}`);
 };
 
 type ConstructorTypeOf<T> = new (...args: any[]) => T;
@@ -51,7 +51,7 @@ function verifyOpType<T extends Generator>(
   op: Generator,
   type: ConstructorTypeOf<T>
 ): asserts op is T {
-  if (!(op instanceof type)) error(204, type.name, op.constructor.name);
+  if (!(op instanceof type)) throw error(204, type.name, op.constructor.name);
 }
 
 /** Utils ****************************************************************************** */
@@ -102,7 +102,7 @@ function* iterateAll(
 
 const exactOne = <T>(it: Iterable<T>): T => {
   const arr = Array.from(it);
-  if (arr.length !== 1) error(301);
+  if (arr.length !== 1) throw error(301);
   return arr[0];
 };
 
@@ -117,7 +117,9 @@ const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object
 const asArray = (obj: unknown): unknown[] => {
   if (isArray(obj)) return obj;
   else if (typeof obj === 'string') return obj.split('');
-  else return error(205, obj);
+  else {
+    throw error(205, obj);
+  }
 };
 
 const indices = (lvs: unknown, rvs: unknown) => {
@@ -188,7 +190,7 @@ const subtract = (lvs: unknown, rvs: unknown) => {
 };
 
 const checkValidIdx = (idx: unknown) => {
-  if (idx === '__proto__' || idx === 'constructor') error(202);
+  if (idx === '__proto__' || idx === 'constructor') throw error(202);
 };
 
 const prop = (lvs: unknown, idx: unknown) => {
@@ -198,7 +200,7 @@ const prop = (lvs: unknown, idx: unknown) => {
   if (isObj(lvs)) {
     return lvs instanceof Map ? lvs.get(idx) : lvs[idx as string];
   }
-  error(203, lvs);
+  throw error(203, lvs);
 };
 
 const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
@@ -209,7 +211,7 @@ const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.set(idx, rvs) : (lvs[idx as string] = rvs);
   } else {
-    error(203, lvs);
+    throw error(203, lvs);
   }
 };
 
@@ -227,7 +229,7 @@ const deleteProp = (lvs: unknown, idx: unknown) => {
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.delete(idx) : delete lvs[idx as string];
   } else {
-    error(203, lvs);
+    throw error(203, lvs);
   }
 };
 
@@ -459,7 +461,7 @@ class Tokenizer {
       return { s: m[0], type: 'sep' };
     }
 
-    if ((m = this.head.match(/^-?(nan|([\d]+(\.[\d]+)?(e-?[\d]+)?))/))) {
+    if ((m = this.head.match(/^-?(nan|([\d]+(\.[\d]+)?(e-?\+?[\d]+)?))/))) {
       return { s: m[0], type: 'num' };
     }
 
@@ -773,18 +775,36 @@ class PropertyLookupOp extends BaseGenerator1<string> {
 }
 
 class ArraySliceOp extends BaseGenerator2<number, number> {
-  *onElement(e: Value, [f, t]: [Value<number>, Value<number>]) {
+  constructor(
+    r1: VarRefOp,
+    r2: VarRefOp,
+    private strict: boolean
+  ) {
+    super(r1, r2);
+  }
+
+  *onElement(e: Value, [f, t]: [Value<number>, Value<number>]): any {
     const v = e.val;
-    if (v === undefined || !isArray(v)) return;
+    if (!isArray(v) && typeof v !== 'string') {
+      if (this.strict) throw error(203);
+      return v === undefined ? yield value(undefined) : undefined;
+    }
     const pe = { start: Math.floor(f.val), end: Math.ceil(t.val) };
     yield valueWithPath(e, v.slice(pe.start, pe.end), pe);
   }
 }
 
 class ArrayOp extends BaseGenerator0 {
+  constructor(private readonly strict: boolean) {
+    super();
+  }
+
   *onInput(e: Value) {
     const v = e.val;
-    if (v === undefined || !isArray(v)) throw error(201);
+    if (!isArray(v)) {
+      if (this.strict) throw error(201);
+      return;
+    }
     for (let i = 0; i < v.length; i++) {
       yield valueWithPath(e, v[i], i);
     }
@@ -923,11 +943,11 @@ class VarBindingOp extends BaseGenerator1 {
       }
 
       for (const pv of resolvedValues) {
-        if (!(pv.val instanceof VarRefOp)) error(208);
+        if (!(pv.val instanceof VarRefOp)) throw error(208);
         context.bindings[(pv.val as VarRefOp).id] = value(evalPath(pv.path, v.val));
       }
     } else {
-      error(207);
+      throw error(207);
     }
 
     yield el;
@@ -1095,7 +1115,7 @@ class NthOp extends BaseGenerator1<number> {
 
 class FlattenOp extends BaseGenerator1<number> {
   *onElement({ val: v }: Value, [arg]: [Value<number>]) {
-    if (arg.val < 0) error(206);
+    if (arg.val < 0) throw error(206);
     yield value(isArray(v) ? v.flat(arg.val) : v);
   }
 }
@@ -1408,7 +1428,7 @@ const parsePathExpression = (
       wsTokenizer.next();
       if (wsTokenizer.peek().s === ']') {
         wsTokenizer.next();
-        generators.push(new ArrayOp());
+        generators.push(new ArrayOp(!wsTokenizer.accept('?')));
       } else {
         const e1 = parseExpression(tokenizer.strip(), functions);
         const e1Id = newid();
@@ -1420,7 +1440,9 @@ const parsePathExpression = (
           vars.push(new VarBindingOp(e2Id, parseExpression(tokenizer.strip(), functions)));
 
           wsTokenizer.expect(']');
-          generators.push(new ArraySliceOp(new VarRefOp(e1Id), new VarRefOp(e2Id)));
+          generators.push(
+            new ArraySliceOp(new VarRefOp(e1Id), new VarRefOp(e2Id), !wsTokenizer.accept('?'))
+          );
         } else {
           wsTokenizer.expect(']');
           generators.push(
@@ -1467,7 +1489,7 @@ const parseOperand = (
       const body = parseExpression(tokenizer, functions);
       return new TryCatchOp(
         body,
-        tokenizer.accept('catch') ? parseExpression(tokenizer, functions) : mkEmptyOp()
+        tokenizer.accept('catch') ? parseOperand(tokenizer, functions) : mkEmptyOp()
       );
     } else if (tok.s === 'if') {
       tokenizer.next();

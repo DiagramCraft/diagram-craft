@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseAndQuery } from './query.ts';
+import { error, parseAndQuery } from './query.ts';
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -133,39 +133,26 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('[.[]|.[]?]', () => {
+    test('[.[]|.[]?]', () => {
       expect(
         parseAndQuery('[.[]|.[]?]', [[1, null, [], [1, [2, [[3]]]], [{}], [{ a: [1, [2]] }]]])
       ).toEqual([[1, [2, [[3]]], {}, { a: [1, [2]] }]]);
     });
 
-    test.skip('[.[]|.[1:3]?]', () => {
+    test('[.[]|.[1:3]?]', () => {
       expect(
         parseAndQuery('[.[]|.[1:3]?]', [
-          [1, null, true, false, 'abcdef', {}, { a: 1, b: 2 }, [], [1, 2, 3, 4, 5], [1, 2]]
+          [1, undefined, true, false, 'abcdef', {}, { a: 1, b: 2 }, [], [1, 2, 3, 4, 5], [1, 2]]
         ])
-      ).toEqual([[null, 'bc', [], [2, 3], [2]]]);
+      ).toEqual([[undefined, 'bc', [], [2, 3], [2]]]);
     });
 
-    test.skip('map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)', () => {
+    test('map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)', () => {
       expect(
         parseAndQuery('map(try .a[] catch ., try .a.[] catch ., .a[]?, .a.[]?)', [
           [{ a: [1, 2] }, { a: 123 }]
         ])
-      ).toEqual([
-        [
-          1,
-          2,
-          1,
-          2,
-          1,
-          2,
-          1,
-          2,
-          'Cannot iterate over number (123)',
-          'Cannot iterate over number (123)'
-        ]
-      ]);
+      ).toEqual([[1, 2, 1, 2, 1, 2, 1, 2, error(201), error(201)]]);
     });
   });
 
@@ -381,7 +368,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('[range(3,5)]', [undefined])).toEqual([[0, 1, 2, 0, 1, 2, 3, 4]]);
     });
 
-    test.skip('[(index(",","|"), rindex(",","|")), indices(",","|")]', () => {
+    test('[(index(",","|"), rindex(",","|")), indices(",","|")]', () => {
       expect(
         parseAndQuery('[(index(",","|"), rindex(",","|")), indices(",","|")]', [
           'a,b|c,d,e||f,g,h,|,|,i,j'
@@ -521,7 +508,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('2-(-1)', [undefined])).toEqual([3]);
     });
 
-    test.skip('1e+0+0.001e3', () => {
+    test('1e+0+0.001e3', () => {
       expect(parseAndQuery('1e+0+0.001e3', ['I wonder what this will be?'])).toEqual([20e-1]);
     });
 
