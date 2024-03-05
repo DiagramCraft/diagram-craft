@@ -885,24 +885,20 @@ describe('jqtest', () => {
       expect(parseAndQuery('. as $dot|all($dot[];.)', [[1, 2, 3, 4, true]])).toEqual([true]);
     });
 
-    // TODO: Should be an easy fix
-    test.skip('any(true, error; .)', () => {
+    test('any(true, error; .)', () => {
       expect(parseAndQuery('any(true, error; .)', ['badness'])).toEqual([true]);
     });
 
-    // TODO: Should be an easy fix
-    test.skip('all(false, error; .)', () => {
+    test('all(false, error; .)', () => {
       expect(parseAndQuery('all(false, error; .)', ['badness'])).toEqual([false]);
     });
 
-    // TODO: Need to support any(expr)
-    test.skip('any(not)', () => {
+    test('any(not)', () => {
       expect(parseAndQuery('any(not)', [[]])).toEqual([false]);
       expect(parseAndQuery('any(not)', [[false]])).toEqual([true]);
     });
 
-    // TODO: Need to support all(expr)
-    test.skip('all(not)', () => {
+    test('all(not)', () => {
       expect(parseAndQuery('all(not)', [[]])).toEqual([true]);
       expect(parseAndQuery('all(not)', [[false]])).toEqual([true]);
     });

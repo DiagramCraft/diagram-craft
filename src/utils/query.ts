@@ -312,12 +312,19 @@ class Modification {
 type FnRegistration = (arg: ArgListOp) => Generator;
 type BinaryOpRegistration = (l: Generator, r: Generator) => Generator;
 
+const every = (a: unknown[]) => a.every(b => !!b);
+const some = (a: unknown[]) => a.some(b => !!b);
+
 const FN_REGISTRY: Record<string, FnRegistration> = {
   '../0': () => new RecursiveDescentOp(),
   'abs/0': () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)),
   'add/0': () => new BaseArrayOp(Array_Add),
-  'all/0': () => new FnOp(a => isArray(a) && a.every(b => !!b)),
-  'any/0': () => new FnOp(a => isArray(a) && a.some(b => !!b)),
+  'all/0': () => new AnyAllOp([], every),
+  'all/1': a => new AnyAllOp(a.args, every),
+  'all/2': a => new AnyAllOp(a.args, every),
+  'any/0': () => new AnyAllOp([], some),
+  'any/1': a => new AnyAllOp(a.args, some),
+  'any/2': a => new AnyAllOp(a.args, some),
   'atan/0': () => new MathOp(Math.atan),
   'contains/1': a => new ContainsOp(a),
   'cos/0': () => new MathOp(Math.cos),
@@ -733,6 +740,40 @@ class FnOp extends BaseGenerator0 {
 
   *onElement({ val: v }: Value) {
     yield value(this.fn(v));
+  }
+}
+
+class AnyAllOp extends BaseGenerator0 {
+  constructor(
+    private readonly args: Generator[],
+    private fn: (a: unknown[]) => boolean
+  ) {
+    super();
+  }
+
+  *onInput(e: Value, context: Context): any {
+    const arr: Value[] = [];
+
+    if (this.args.length <= 1) {
+      if (!isArray(e.val)) throw error(201);
+      arr.push(...e.val);
+    } else {
+      try {
+        for (const v of this.args[0].iter([e], context)) {
+          arr.push(v);
+        }
+      } catch (ex) {
+        arr.push(value(false));
+      }
+    }
+
+    return yield value(
+      this.fn(
+        arr.map(k =>
+          this.args.length === 0 ? k : exactOne(this.args.at(-1)!.iter([k], context)).val
+        )
+      )
+    );
   }
 }
 
