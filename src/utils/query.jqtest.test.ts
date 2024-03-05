@@ -337,8 +337,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('[first(range(.)), last(range(.))]', [10])).toEqual([[0, 9]]);
     });
 
-    // TODO: This could be fixed
-    test.skip('[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]', () => {
+    test('[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch .]', () => {
       expect(
         parseAndQuery('[nth(0,5,9,10,15; range(.)), try nth(-1; range(.)) catch "error"]', [10])
       ).toEqual([[0, 5, 9, 'error']]);

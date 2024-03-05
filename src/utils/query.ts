@@ -59,14 +59,16 @@ function verifyOpType<T extends Generator>(
 let lastId = 0;
 const newid = () => `__${++lastId}`;
 
-const iterNth = <T>(iterable: Iterable<T>, n: number): T | undefined => {
-  if (n < 0) return [...iterable].at(n);
+type Result<T> = { value?: T; done?: boolean };
+
+const iterNth = <T>(iterable: Iterable<T>, n: number): Result<T> | undefined => {
+  if (n < 0) return { value: [...iterable].at(n) };
   const iterator = iterable[Symbol.iterator]();
 
   while (n-- > 0) {
     if (iterator.next().done) return undefined;
   }
-  return iterator.next().value;
+  return iterator.next();
 };
 
 // To ensure no infinite loops
@@ -347,8 +349,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'isnan/0': () => new FnOp(a => isNaN(a as number)),
   'join/1': a => new JoinOp(a),
   'keys/0': () => new KeysOp(),
-  'last/0': () => new NthOp([literal(-1)]),
-  'last/1': a => new NthOp([literal(-1), ...a.args]),
+  'last/0': () => new NthOp([literal(-1)], true),
+  'last/1': a => new NthOp([literal(-1), ...a.args], true),
   'length/0': () => new LengthOp(),
   'fabs/0': () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)),
   'limit/2': a => new LimitOp(a),
@@ -1099,16 +1101,22 @@ class MatchOp extends BaseGenerator2<string, string | undefined> {
 }
 
 class NthOp extends BaseGenerator1<number> {
-  constructor(private readonly args: Generator[]) {
+  constructor(
+    private readonly args: Generator[],
+    private allowNegative: boolean = false
+  ) {
     super(args[0]);
   }
 
   *onElement(val: Value, [index]: [Value<number>], context: Context) {
     const idx = safeNum(index.val);
+    if (!this.allowNegative && idx < 0) throw error(206);
     if (this.args.length === 1 && isArray(val.val)) {
       yield valueWithPath(val, val.val.at(idx), idx);
     } else if (this.args.length === 2) {
-      yield iterNth(this.args[1].iter([value(val.val)], context), idx) ?? value(undefined);
+      const res = iterNth(this.args[1].iter([value(val.val)], context), idx);
+      if (!res || res.done) return;
+      yield res.value ?? value(undefined);
     }
   }
 }
