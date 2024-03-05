@@ -1793,7 +1793,7 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('[{a:1}] | .[] | .a=999', () => {
+    test('[{a:1}] | .[] | .a=999', () => {
       expect(parseAndQuery('[{a:1}] | .[] | .a=999', [undefined])).toEqual([{ a: 999 }]);
     });
 
@@ -2140,7 +2140,7 @@ describe('jqtest', () => {
       ).toEqual([{ a: [1, 2, 3], __loc__: { file: '<top-level>', line: 1 }, c: { hi: 'hey' } }]);
     });
 
-    test.skip('1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }', () => {
+    test('1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }', () => {
       expect(
         parseAndQuery(
           '1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }',

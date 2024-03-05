@@ -63,7 +63,6 @@ const iterNth = <T>(iterable: Iterable<T>, n: number): T | undefined => {
   if (n < 0) return [...iterable].at(n);
   const iterator = iterable[Symbol.iterator]();
 
-  // eslint-disable-next-line no-constant-condition
   while (n-- > 0) {
     if (iterator.next().done) return undefined;
   }
@@ -619,7 +618,7 @@ export const OObjects = {
     } else if (tok.s === '.') {
       return [{ path, val: parsePathExpression(tokenizer, {}) }];
     } else if (tok.s === '$') {
-      return [{ path, val: new VarRefOp(tokenizer.next().s) }];
+      return [{ path, val: new VarRefOp('$' + tokenizer.next().s) }];
     } else if (tok.s === '{') {
       return OObjects.parseObject(tokenizer, path);
     } else if (tok.s === '(') {
@@ -653,9 +652,13 @@ export const OObjects = {
       } else {
         const tokenType = s.peek().type;
         const next = OObjects.parseNext(s, []);
-        currentKey = (next[0].val instanceof VarRefOp ? next[0].val.id : next[0].val) as any;
+        currentKey = next[0].val;
 
         if (!s.accept(':')) {
+          currentKey = (
+            currentKey instanceof VarRefOp ? currentKey.id.slice(1) : currentKey
+          ) as any;
+
           next.forEach(e =>
             arr.push({
               val: tokenType === 'id' ? parsePathExpression(new Tokenizer('.' + e.val), {}) : e.val,
@@ -921,7 +924,7 @@ class VarBindingOp extends BaseGenerator1 {
 
       for (const pv of resolvedValues) {
         if (!(pv.val instanceof VarRefOp)) error(208);
-        context.bindings['$' + (pv.val as VarRefOp).id] = value(evalPath(pv.path, v.val));
+        context.bindings[(pv.val as VarRefOp).id] = value(evalPath(pv.path, v.val));
       }
     } else {
       error(207);
@@ -935,6 +938,20 @@ class VarBindingOp extends BaseGenerator1 {
   }
 }
 
+/*
+ To handle a situation like .[] | .a = 1
+ .[] will yield val with a path starting with a number
+ Similarly, evaluating .a in the context of this val, will also yield a path
+ starting with a number
+
+ TODO: Maybe there's a better way to handle this situation when evaluating the assignTo
+       in the context of the val
+*/
+const normalizePath = (val: Value, assignTo: Value) =>
+  typeof assignTo.path![0] === 'number' && val.path && typeof val.path![0] === 'number'
+    ? assignTo.path!.slice(1)
+    : assignTo.path!;
+
 class UpdateAssignmentOp extends BaseGenerator2 {
   *onInput(e: Value, context: Context) {
     const mod = new Modification(shallowClone(e.val ?? {}));
@@ -945,7 +962,7 @@ class UpdateAssignmentOp extends BaseGenerator2 {
       if (r === undefined) {
         mod.del(lhe.path!.slice(0, -1), lhe.path!.at(-1));
       } else {
-        mod.set(lhe.path!, r.val);
+        mod.set(normalizePath(e, lhe), r.val);
       }
     }
 
@@ -959,7 +976,7 @@ class AssignmentOp extends BaseGenerator2 {
     for (const r of this.generators[1].iter([e], context)) {
       const mod = new Modification(shallowClone(e.val ?? {}));
       for (const lhe of lh) {
-        mod.set(lhe.path!, r.val);
+        mod.set(normalizePath(e, lhe), r.val);
       }
       yield value(mod.apply());
     }
