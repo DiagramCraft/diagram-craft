@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { error, parseAndQuery } from './query.ts';
+import { error, parse, parseAndQuery } from './query.ts';
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -656,8 +656,7 @@ describe('jqtest', () => {
 
   // L641
   describe('User-defined functions', () => {
-    // TODO: Fix
-    test.skip('def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g', () => {
+    test('def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g', () => {
       expect(
         parseAndQuery('def f: . + 1; def g: def g: . + 100; f | g | f; (f | g), g', [3])
       ).toEqual([106, 105]);
@@ -675,8 +674,10 @@ describe('jqtest', () => {
       ).toEqual([[2, 2, 1, 1, 1, 1]]);
     });
 
-    // TODO: Fix
     test.skip('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]', () => {
+      console.dir(parse('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g', false), {
+        depth: 20
+      });
       expect(
         parseAndQuery(
           'def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]',

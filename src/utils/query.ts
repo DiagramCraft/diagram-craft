@@ -536,7 +536,7 @@ type ArrayFn = (arr: [unknown, unknown][]) => [unknown, unknown][] | TaggedType<
 
 type FnDef = {
   arg?: string[];
-  body: Generator;
+  body: Generator[];
 };
 
 const isGenerator = (o: unknown): o is Generator => typeof o === 'object' && 'iter' in (o as any);
@@ -1277,12 +1277,22 @@ class FunctionCallOp extends BaseGenerator0 {
     (fnDef.arg ?? []).forEach((a, idx) => {
       newBindings[a] = {
         val: {
-          body: this.arg!.args[idx]
+          body: [this.arg!.args[idx]]
         }
       };
     });
 
-    yield* fnDef.body.iter([input], {
+    for (const b of fnDef.body) {
+      if (b instanceof FunctionDefOp) {
+        newBindings[b.id] = {
+          val: {
+            body: b.body
+          }
+        };
+      }
+    }
+
+    yield* fnDef.body.at(-1)!.iter([input], {
       ...context,
       bindings: newBindings
     });
@@ -1293,7 +1303,7 @@ class FunctionDefOp extends BaseGenerator0 {
   constructor(
     public readonly id: string,
     public readonly arg: string[],
-    public readonly body: Generator
+    public readonly body: Generator[]
   ) {
     super();
   }
@@ -1586,9 +1596,12 @@ const parseOperand = (
 
       const innerFunctions = { ...functions };
       args.forEach(e => (innerFunctions[e] = 0));
-      const body = parseExpression(tokenizer, innerFunctions);
 
-      tokenizer.accept(';');
+      const body: Generator[] = [];
+      do {
+        body.push(parseExpression(tokenizer, innerFunctions));
+        tokenizer.accept(';');
+      } while (body.at(-1) instanceof FunctionDefOp);
 
       return new FunctionDefOp(name.s, args, body);
     } else if (tok.s === 'reduce') {
@@ -1669,11 +1682,7 @@ const parseExpression = (
   return boundLoop(() => {
     const tok = tokenizer.peek().s;
 
-    if (
-      tok !== ';' &&
-      !!BINOP_REGISTRY[tok] &&
-      BINOP_ORDERING[tok] > (BINOP_ORDERING[lastOp] ?? 0)
-    ) {
+    if (!!BINOP_REGISTRY[tok] && BINOP_ORDERING[tok] > (BINOP_ORDERING[lastOp] ?? 0)) {
       const op = tokenizer.next().s;
 
       left = BINOP_REGISTRY[op](left, parseExpression(tokenizer, functions, op));
