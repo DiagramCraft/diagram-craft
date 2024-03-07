@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { isTaggedType, tag, TaggedType } from './types.ts';
 
 /** Builtins *************************************************************************** */
 
@@ -169,6 +168,50 @@ const divide = (lvs: unknown, rvs: unknown) => {
     return lvs.split(rvs);
   }
   return (lvs as number) / (rvs as number);
+};
+
+const TYPE_ORDERING = ['false', 'true', 'number', 'string', 'array', 'object'];
+
+const sortType = (a: unknown): string => {
+  if (a === null || a === undefined) return 'null';
+  if (isArray(a)) return 'array';
+  return typeof a === 'boolean' ? a.toString() : typeof a;
+};
+
+const compare = (lvs: unknown, rvs: unknown): number => {
+  if (lvs === rvs) return 0;
+
+  const lvsType = sortType(lvs);
+  const rvsType = sortType(rvs);
+
+  if (lvsType === rvsType) {
+    if (lvsType === 'number') return (lvs as number) - (rvs as number);
+    if (lvsType === 'string') return (lvs as string).localeCompare(rvs as string);
+
+    if (lvsType === 'array') {
+      if ((lvs as unknown[]).length === 0 || (rvs as unknown[]).length === 0) {
+        return (lvs as unknown[]).length - (rvs as unknown[]).length;
+      }
+      return (
+        compare((lvs as unknown[])[0], (rvs as unknown[])[0]) ||
+        compare((lvs as unknown[]).slice(1), (rvs as unknown[]).slice(1))
+      );
+    }
+
+    if (lvsType === 'object') {
+      const lkeys = Object.keys(lvs as Record<string, unknown>).sort(compare);
+      const r = compare(lkeys, Object.keys(rvs as Record<string, unknown>).sort(compare));
+      if (r !== 0) return r;
+
+      for (const key of lkeys) {
+        const r = compare((lvs as any)[key], (rvs as any)[key]);
+        if (r !== 0) return r;
+      }
+      return 0;
+    }
+  }
+
+  return TYPE_ORDERING.indexOf(lvsType) - TYPE_ORDERING.indexOf(rvsType);
 };
 
 const add = (lvs: unknown, rvs: unknown) => {
@@ -391,6 +434,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'select/1': a => new SelectOp(a),
   'setpath/2': a => new SetPathOp(a),
   'sin/0': () => new MathOp(Math.sin),
+  'sort/0': () => new FnOp(a => (isArray(a) ? [...a].sort(compare) : a)),
+  'sort_by/1': a => new BaseArrayOp(Array_SortBy, a),
   'split/1': a => new Fn1Op<string>(a, (a, b) => a.split(b)),
   'sqrt/0': () => new MathOp(Math.sqrt),
   'startswith/1': a => new Fn1Op<string>(a, (a, b) => a.startsWith(b), true),
@@ -541,7 +586,12 @@ class Tokenizer {
 
 /** Base generators ********************************************************************* */
 
-type ArrayFn = (arr: [unknown, unknown][]) => [unknown, unknown][] | TaggedType<'single', unknown>;
+type ArrayFn<T = unknown, R = unknown[]> = (
+  arr: Array<{
+    val: T;
+    keys: unknown[];
+  }>
+) => R;
 
 type FnDef = {
   arg?: string[];
@@ -1082,43 +1132,44 @@ class BaseArrayOp extends BaseGenerator1 {
   *onInput(el: Value, context: Context): Iterable<Value> {
     if (!isArray(el.val)) return yield el;
     const res = this.fn(
-      el.val.map(e => [e, exactOne(this.generators[0].iter([value(e)], context)).val])
+      el.val.map(e => ({
+        val: e,
+        keys: [...this.generators[0].iter([value(e)], context)].map(e => e.val)
+      }))
     );
 
-    if (isTaggedType(res, 'single')) return yield value(res._val);
-
-    return yield value(isArray(res) ? (this.fn(res) as [unknown, unknown][]).map(a => a[0]) : res);
+    for (const e of res) yield value(e);
   }
 }
 
-const Array_Unique: ArrayFn = arr =>
+// TODO: Maybe repurpose in terms on sort
+const Array_Unique: ArrayFn = arr => [
   arr
-    .filter((e, i) => arr.findIndex(a => a[1] === e[1]) === i)
-    .sort((a, b) => (a[1] as number) - (b[1] as number));
+    .filter((e, i) => arr.findIndex(a => a.keys[0] === e.keys[0]) === i)
+    .sort((a, b) => (a.keys[0] as number) - (b.keys[0] as number))
+    .map(k => k.val)
+];
 
-const Array_Add: ArrayFn = arr =>
-  tag('single', arr.length === 0 ? undefined : arr.map(a => a[1]).reduce((a, b) => add(a, b)));
+const Array_Add: ArrayFn = arr => [
+  arr.length === 0 ? undefined : arr.map(a => a.val).reduce((a, b) => add(a, b))
+];
 
-const Array_Min: ArrayFn = arr => {
-  if (arr.length === 0) return tag('single', undefined);
-  const min = Math.min(...arr.map(a => Number(a[1])));
-  return tag('single', arr.find(a => a[1] === min)![0]);
-};
+const Array_Min: ArrayFn = arr => [Array_SortBy(arr)[0].at(0)];
 
-const Array_Max: ArrayFn = arr => {
-  if (arr.length === 0) return tag('single', undefined);
-  const max = Math.max(...arr.map(a => Number(a[1])));
-  return tag('single', arr.find(a => a[1] === max)![0]);
-};
+const Array_Max: ArrayFn = arr => [Array_SortBy(arr)[0].at(-1)];
 
 const Array_GroupBy: ArrayFn = arr => {
   const dest: Record<string, unknown[]> = {};
-  for (const [k, v] of arr) {
-    dest[v as any] ??= [];
-    dest[v as any].push(k);
+  for (const e of arr) {
+    dest[e.keys[0] as any] ??= [];
+    dest[e.keys[0] as any].push(e.val);
   }
-  return tag('single', Object.values(dest));
+  return [Object.values(dest)];
 };
+
+const Array_SortBy: ArrayFn<unknown, [unknown[]]> = arr => [
+  arr.sort((e1, e2) => compare(e1.keys, e2.keys)).map(e => e.val)
+];
 
 class MatchOp extends BaseGenerator2<string, string | undefined> {
   constructor(
