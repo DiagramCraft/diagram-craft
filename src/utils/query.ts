@@ -227,6 +227,7 @@ const deleteProp = (lvs: unknown, idx: unknown) => {
   checkValidIdx(idx);
 
   if (isArray(lvs) && typeof idx === 'number') {
+    if (Math.abs(idx) >= lvs.length) return;
     lvs.splice(idx, 1);
   } else if (isObj(lvs)) {
     lvs instanceof Map ? lvs.delete(idx) : delete lvs[idx as string];
@@ -289,9 +290,16 @@ class Modification {
 
   apply() {
     for (const mod of this.mods) {
-      const arr = evalPath(mod.path.slice(0, -1), this.target);
-      if (!arr) continue;
-      setProp(arr, mod.path.at(-1), mod.val);
+      const last = mod.path.at(-1);
+      let arr = evalPath(mod.path.slice(0, -1), this.target);
+      if (!arr) {
+        if (mod.path.length <= 1) continue;
+
+        arr = typeof last === 'number' ? [] : {};
+
+        setPath(this.target, mod.path.slice(0, -1), arr);
+      }
+      setProp(arr, last, mod.val);
     }
 
     for (const { path: p, idxs } of this.dels.values()) {
@@ -377,6 +385,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'range/1': a => new RangeOp([literal(0), a.args[0], literal(1)]),
   'range/2': a => new RangeOp([...a.args, literal(1)]),
   'range/3': a => new RangeOp(a.args),
+  'reverse/0': () => new FnOp(a => (isArray(a) ? [...a].reverse() : a)),
   'rindex/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b).at(-1)),
   'rtrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.endsWith(b) ? a.slice(0, -b.length) : a)),
   'select/1': a => new SelectOp(a),
@@ -1725,7 +1734,8 @@ export const parseAndQuery = (q: string, input: unknown[], bindings?: Record<str
 export function* query(query: Generator, input: unknown[], bindings?: Record<string, unknown>) {
   for (const e of query.iter(input.map(value), {
     bindings: {
-      ...Object.fromEntries(Object.entries(bindings ?? {}).map(([k, v]) => [k, value(v)]))
+      ...Object.fromEntries(Object.entries(bindings ?? {}).map(([k, v]) => [k, value(v)])),
+      $__loc__: value({ file: '<top-level>', line: 1 })
     }
   })) {
     yield e.val;

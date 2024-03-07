@@ -858,6 +858,7 @@ describe('jqtest', () => {
       ).toEqual([[1, 2, 3]]);
     });
 
+    // NOTE: This doesn't work as we currently dont support constructs such as $b:[$c, $d]
     test.skip('. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]', () => {
       expect(
         parseAndQuery('. as {$a, $b:[$c, $d]}| [$a, $b, $c, $d]', [{ a: 1, b: [2, { d: 3 }] }])
@@ -866,6 +867,7 @@ describe('jqtest', () => {
 
     // A number of missing reduce/destructuing tests, L786-L892
 
+    // NOTE: These don't work as we don't support $dot[]
     test.skip('. as $dot|any($dot[];not)', () => {
       expect(
         parseAndQuery('. as $dot|any($dot[];not)', [[1, 2, 3, 4, true, false, 1, 2, 3, 4, 5]])
@@ -972,13 +974,15 @@ describe('jqtest', () => {
       ).toEqual([[[{ x: 1 }], [{ bar: 2 }]]]);
     });
 
-    test.skip('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', () => {
+    test('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', () => {
       expect(
-        parseAndQuery('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', [[1, 2, 3]])
+        parseAndQuery('["foo",1] as $p | getpath($p), setpath($p; 20), delpaths([$p])', [
+          { bar: false }
+        ])
       ).toEqual([undefined, { bar: false, foo: [undefined, 20] }, { bar: false }]);
     });
 
-    test.skip('delpaths([[-200]])', () => {
+    test('delpaths([[-200]])', () => {
       expect(parseAndQuery('delpaths([[-200]])', [[1, 2, 3]])).toEqual([[1, 2, 3]]);
     });
 
@@ -996,6 +1000,7 @@ describe('jqtest', () => {
       ]);
     });
 
+    // NOTE: The issue here is we don't support del(.[-3:9])
     test.skip('del(.[1], .[-6], .[2], .[-3:9])', () => {
       expect(
         parseAndQuery('del(.[1], .[-6], .[2], .[-3:9])', [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]])
@@ -1061,6 +1066,7 @@ describe('jqtest', () => {
       // TODO: This should start with 0 and not -0
     });
 
+    // NOTE: Not sure exactly why this should work in the first place
     test.skip('.foo += .foo', () => {
       expect(parseAndQuery('.foo += .foo', [{ foo: 2 }])).toEqual([{ foo: 4 }]);
     });
@@ -1133,7 +1139,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('.[2][3] = 1', [[4]])).toEqual([[4, null, [null, null, null, 1]]]);
     });
 
-    test.skip('.foo[2].bar = 1', () => {
+    test('.foo[2].bar = 1', () => {
       expect(parseAndQuery('.foo[2].bar = 1', [{ foo: [11], bar: 42 }])).toEqual([
         { foo: [11, undefined, { bar: 1 }], bar: 42 }
       ]);
@@ -1155,6 +1161,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('def x: .[1,2]; x=10', [[0, 1, 2]])).toEqual([[0, 10, 10]]);
     });
 
+    // NOTE: Cannot be parsed properly
     test.skip('try (def x: reverse; x=10) catch .', () => {
       expect(parseAndQuery('try (def x: reverse; x=10) catch .', [[0, 1, 2]])).toEqual([
         'Invalid path expression with result [2,1,0]'
@@ -1770,7 +1777,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('.foo[.baz]', [{ foo: { bar: 4 }, baz: 'bar' }])).toEqual([4]);
     });
 
-    test.skip('.[] | .error = "no, it\'s OK"', () => {
+    test('.[] | .error = "no, it\'s OK"', () => {
       expect(parseAndQuery('.[] | .error = "no, it\'s OK"', [[{ error: true }]])).toEqual([
         { error: "no, it's OK" }
       ]);
@@ -1919,6 +1926,7 @@ describe('jqtest', () => {
 
     // TODO: Missing tests, mostly module stuff L1546-L1663
 
+    // NOTE: We don't seem to support unary negation
     test.skip('try -. catch .', () => {
       expect(parseAndQuery('try -. catch .', ['very-long-string'])).toEqual([
         'string ("very-long-...) cannot be negated'
@@ -2117,7 +2125,7 @@ describe('jqtest', () => {
 
     // TODO: Keyword as value tests, L1899-L1917
 
-    test.skip('{ a, $__loc__, c }', () => {
+    test('{ a, $__loc__, c }', () => {
       expect(
         parseAndQuery('{ a, $__loc__, c }', [{ a: [1, 2, 3], b: 'foo', c: { hi: 'hey' } }])
       ).toEqual([{ a: [1, 2, 3], __loc__: { file: '<top-level>', line: 1 }, c: { hi: 'hey' } }]);
