@@ -1687,9 +1687,15 @@ const parseExpression = (
   lastOp: string = ''
 ): Generator => {
   let left = parseOperand(tokenizer, functions, lastOp);
+  if (left instanceof FunctionDefOp) return left;
 
   return boundLoop(() => {
     const tok = tokenizer.peek().s;
+
+    if (tok === '[') {
+      tokenizer.head = '| .' + tokenizer.head;
+      return;
+    }
 
     if (!!BINOP_REGISTRY[tok] && BINOP_ORDERING[tok] > (BINOP_ORDERING[lastOp] ?? 0)) {
       const op = tokenizer.next().s;

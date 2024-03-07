@@ -215,8 +215,7 @@ describe('jqtest', () => {
       ]);
     });
 
-    // TODO: Fix
-    test.skip('[([5,5][]),.,.[]]', () => {
+    test('[([5,5][]),.,.[]]', () => {
       expect(parseAndQuery('[([5,5][]),.,.[]]', [[1, 2, 3]])).toEqual([[5, 5, [1, 2, 3], 1, 2, 3]]);
     });
 
@@ -443,7 +442,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('1 as $x | 2 as $y | [$x,$y,$x]', [undefined])).toEqual([[1, 2, 1]]);
     });
 
-    test.skip('[1,2,3][] as $x | [[4,5,6,7][$x]]', () => {
+    test('[1,2,3][] as $x | [[4,5,6,7][$x]]', () => {
       expect(parseAndQuery('[1,2,3][] as $x | [[4,5,6,7][$x]]', [undefined])).toEqual([
         [5],
         [6],
@@ -590,6 +589,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('49732 % 472', [undefined])).toEqual([172]);
     });
 
+    // NOTE: Not really worth fixing this
     test.skip('[(infinite, -infinite) % (1, -1, infinite)]', () => {
       expect(parseAndQuery('[(infinite, -infinite) % (1, -1, infinite)]', [undefined])).toEqual([
         [0, 0, 0, 0, 0, -1]
@@ -867,24 +867,23 @@ describe('jqtest', () => {
 
     // A number of missing reduce/destructuing tests, L786-L892
 
-    // NOTE: These don't work as we don't support $dot[]
-    test.skip('. as $dot|any($dot[];not)', () => {
+    test('. as $dot|any($dot[];not)', () => {
       expect(
         parseAndQuery('. as $dot|any($dot[];not)', [[1, 2, 3, 4, true, false, 1, 2, 3, 4, 5]])
       ).toEqual([true]);
     });
 
-    test.skip('. as $dot|any($dot[];not)', () => {
+    test('. as $dot|any($dot[];not)', () => {
       expect(parseAndQuery('. as $dot|any($dot[];not)', [[1, 2, 3, 4, true]])).toEqual([false]);
     });
 
-    test.skip('. as $dot|all($dot[];.)', () => {
+    test('. as $dot|all($dot[];.)', () => {
       expect(
         parseAndQuery('. as $dot|all($dot[];.)', [[1, 2, 3, 4, true, false, 1, 2, 3, 4, 5]])
       ).toEqual([false]);
     });
 
-    test.skip('. as $dot|all($dot[];.)', () => {
+    test('. as $dot|all($dot[];.)', () => {
       expect(parseAndQuery('. as $dot|all($dot[];.)', [[1, 2, 3, 4, true]])).toEqual([true]);
     });
 
@@ -934,7 +933,7 @@ describe('jqtest', () => {
 
     // A number of missing try/catch tests, L972-L986
 
-    test.skip('path(.a[path(.b)[0]])', () => {
+    test('path(.a[path(.b)[0]])', () => {
       expect(parseAndQuery('path(.a[path(.b)[0]])', [{ a: { b: 0 } }])).toEqual([['a', 'b']]);
     });
 
