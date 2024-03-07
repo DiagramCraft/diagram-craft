@@ -408,6 +408,22 @@ describe('contains()', () => {
       false
     ]);
   });
+
+  test('contains({foo: 12, bar: [{barp: 12}]})', () => {
+    expect(
+      parseAndQuery('contains({foo: 12, bar: [{barp: 12}]})', [
+        { foo: 12, bar: [1, 2, { barp: 12, blip: 13 }] }
+      ])
+    ).toEqual([true]);
+  });
+
+  test('contains({foo: 12, bar: [{barp: 15}]})', () => {
+    expect(
+      parseAndQuery('contains({foo: 12, bar: [{barp: 15}]})', [
+        { foo: 12, bar: [1, 2, { barp: 12, blip: 13 }] }
+      ])
+    ).toEqual([false]);
+  });
 });
 
 describe('object construction', () => {

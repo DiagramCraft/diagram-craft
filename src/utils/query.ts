@@ -217,6 +217,15 @@ const compare = (lvs: unknown, rvs: unknown): number => {
   return TYPE_ORDERING.indexOf(lvsType) - TYPE_ORDERING.indexOf(rvsType);
 };
 
+const contains = (a: unknown, b: unknown): boolean => {
+  if (typeof a === 'string' && typeof b === 'string') return a.includes(b);
+  if (isArray(a) && isArray(b)) return b.every(e => a.some(k => contains(k, e)));
+  if (isObj(a) && isObj(b)) {
+    return Object.entries(b).every(([key, val]) => contains(prop(a, key), val));
+  }
+  return a === b;
+};
+
 const add = (lvs: unknown, rvs: unknown) => {
   if (isArray(lvs) && isArray(rvs)) return [...lvs, ...rvs];
   if (typeof lvs === 'string' && typeof rvs === 'string') return lvs + rvs;
@@ -380,7 +389,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'any/1': a => new AnyAllOp(a.args, some),
   'any/2': a => new AnyAllOp(a.args, some),
   'atan/0': () => new MathOp(Math.atan),
-  'contains/1': a => new ContainsOp(a),
+  'contains/1': arg => new Fn1Op(arg, (a, b) => contains(a, b)),
   'cos/0': () => new MathOp(Math.cos),
   'delpaths/1': a => new DelPathsOp(a),
   'empty/0': () => mkEmptyOp(),
@@ -401,8 +410,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'fromjson/0': () => new FnOp(a => JSON.parse(a as string)),
   'getpath/1': a => new GetPathOp(a),
   'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
-  'has/1': a => new HasOp(a),
-  'in/1': a => new InOp(a),
+  'has/1': arg => new Fn1Op(arg, (a, b) => (b as any) in (a as any)),
+  'in/1': arg => new Fn1Op(arg, (a, b) => (a as any) in (b as any)),
   'IN/1': a => new INOp(new IdentityOp(), a.args[0]),
   'IN/2': a => new INOp(a.args[0], a.args[1]),
   'indices/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)),
@@ -1004,18 +1013,6 @@ class ErrorOp extends BaseGenerator1 {
   }
 }
 
-class HasOp extends BaseGenerator1 {
-  *onElement({ val: e }: Value, [arg]: [Value]) {
-    yield value((arg.val as any) in (e as any));
-  }
-}
-
-class InOp extends BaseGenerator1 {
-  *onElement({ val: e }: Value, [arg]: [Value]) {
-    yield value((e as any) in (arg.val as any));
-  }
-}
-
 class INOp extends BaseGenerator2 {
   *onInput(val: Value, context: Context) {
     const source = [...this.generators[0].iter([val], context)].map(e => e.val);
@@ -1294,26 +1291,6 @@ class MapValuesOp extends BaseGenerator1 {
       yield value(v.map(e => exactOne(this.generators[0].iter([value(e)], context)).val));
     } else {
       yield value(v);
-    }
-  }
-}
-
-class ContainsOp extends BaseGenerator1 {
-  *onInput({ val: v }: Value, context: Context) {
-    for (const a of this.generators[0].iter([value(undefined)], context)) {
-      if (typeof a.val === 'string') {
-        yield value(typeof v === 'string' ? v.includes(a.val) : false);
-      } else if (isArray(a.val)) {
-        yield value(
-          isArray(v)
-            ? a.val.every(e =>
-                (v as unknown[]).some(v => v === e || (typeof v === 'string' && v.includes(e)))
-              )
-            : false
-        );
-      } else {
-        yield value(false);
-      }
     }
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { error, parse, parseAndQuery } from './query.ts';
+import { error, parseAndQuery } from './query.ts';
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -674,9 +674,6 @@ describe('jqtest', () => {
     });
 
     test.skip('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]', () => {
-      console.dir(parse('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g', false), {
-        depth: 20
-      });
       expect(
         parseAndQuery(
           'def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]',
@@ -1607,7 +1604,7 @@ describe('jqtest', () => {
       ).toEqual([[true, true, false]]);
     });
 
-    test.skip('[({foo: 12, bar:13} | contains({foo: 12})), ({foo: 12} | contains({})), ({foo: 12, bar:13} | contains({baz:14}))]', () => {
+    test('[({foo: 12, bar:13} | contains({foo: 12})), ({foo: 12} | contains({})), ({foo: 12, bar:13} | contains({baz:14}))]', () => {
       expect(
         parseAndQuery(
           '[({foo: 12, bar:13} | contains({foo: 12})), ({foo: 12} | contains({})), ({foo: 12, bar:13} | contains({baz:14}))]',
@@ -1616,7 +1613,7 @@ describe('jqtest', () => {
       ).toEqual([[true, true, false]]);
     });
 
-    test.skip('{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {}}})', () => {
+    test('{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {}}})', () => {
       expect(
         parseAndQuery(
           '{foo: {baz: 12, blap: {bar: 13}}, bar: 14} | contains({bar: 14, foo: {blap: {}}})',
