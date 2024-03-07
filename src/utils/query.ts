@@ -894,7 +894,10 @@ class ArraySliceOp extends BaseGenerator2<number, number> {
       if (this.strict) throw error(203);
       return v === undefined ? yield value(undefined) : undefined;
     }
-    const pe = { start: Math.floor(f.val), end: Math.ceil(t.val) };
+    const pe = {
+      start: Math.floor(f.val),
+      end: t.val === undefined ? v.length : Math.ceil(t.val)
+    };
     yield valueWithPath(e, v.slice(pe.start, pe.end), pe);
   }
 }
@@ -1552,14 +1555,27 @@ const parsePathExpression = (
         wsTokenizer.next();
         generators.push(new ArrayOp(!wsTokenizer.accept('?')));
       } else {
-        const e1 = parseExpression(tokenizer.strip(), functions);
+        tokenizer.strip();
+        const e1 =
+          tokenizer.peek().s === ']' || tokenizer.peek().s === ':'
+            ? new LiteralOp(0)
+            : parseExpression(tokenizer, functions);
         const e1Id = newid();
         vars.push(new VarBindingOp(e1Id, e1));
 
         if (wsTokenizer.peek().s === ':') {
           wsTokenizer.next();
+          tokenizer.strip();
+
           const e2Id = newid();
-          vars.push(new VarBindingOp(e2Id, parseExpression(tokenizer.strip(), functions)));
+          vars.push(
+            new VarBindingOp(
+              e2Id,
+              tokenizer.peek().s === ']'
+                ? new LiteralOp(undefined)
+                : parseExpression(tokenizer, functions)
+            )
+          );
 
           wsTokenizer.expect(']');
           generators.push(
