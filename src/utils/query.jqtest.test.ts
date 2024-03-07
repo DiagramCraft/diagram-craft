@@ -257,7 +257,7 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('[while(.<100; .*2)]', () => {
+    test('[while(.<100; .*2)]', () => {
       expect(parseAndQuery('[while(.<100; .*2)]', [1])).toEqual([[1, 2, 4, 8, 16, 32, 64]]);
     });
 
@@ -277,7 +277,7 @@ describe('jqtest', () => {
       ).toEqual([[0, 'hi!']]);
     });
 
-    test.skip('[.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]', () => {
+    test('[.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]', () => {
       expect(
         parseAndQuery('[.[]|[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]]', [
           [1, 2, 3, 4, 5]
@@ -1909,16 +1909,16 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('transpose', () => {
+    test('transpose', () => {
       expect(parseAndQuery('transpose', [[[1], [2, 3]]])).toEqual([
         [
           [1, 2],
-          [null, 3]
+          [undefined, 3]
         ]
       ]);
     });
 
-    test.skip('transpose', () => {
+    test('transpose', () => {
       expect(parseAndQuery('transpose', [[]])).toEqual([[]]);
     });
 

@@ -13,7 +13,10 @@ const builtins = [
   'scalars:select(type|.!="array"and.!="object")',
   'values:select(.!=null)',
   'nulls:select(.==null)',
-  'booleans:select(type=="boolean")'
+  'booleans:select(type=="boolean")',
+  'while(c;u):def _i:if c then ., (u|_i) else empty end;_i',
+  'until(c;n):def _u:if c then . else (n|_u) end;_u',
+  'transpose:[range(0;map(length)|max//0) as $i|[.[][$i]]]'
 ];
 
 /** Error handling ********************************************************************* */
