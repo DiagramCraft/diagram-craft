@@ -1038,6 +1038,12 @@ class VarBindingOp extends BaseGenerator1 {
   }
 
   *onElement(el: Value, [v]: [Value], context: Context) {
+    this.getElement(context, v, el);
+
+    yield el;
+  }
+
+  getElement(context: Context, v: Value, el: Value) {
     const id = this.getId();
     if (id !== undefined) {
       context.bindings[id] = v;
@@ -1054,8 +1060,6 @@ class VarBindingOp extends BaseGenerator1 {
     } else {
       throw error(207);
     }
-
-    yield el;
   }
 
   public getId(): string | undefined {
@@ -1484,16 +1488,37 @@ class ReduceOp extends BaseGenerator0 {
   }
 
   *onInput(e: Value, context: Context): Iterable<Value> {
-    const id = this.source.getId();
     const innerContext = { ...context, bindings: { ...context.bindings } };
 
     let acc = exactOne(this.init.iter([e], innerContext));
     for (const s of this.source.generators[0].iter([e], context)) {
-      innerContext.bindings[id!] = s;
+      this.source.getElement(innerContext, s, e);
       acc = exactOne(this.op.iter([acc], innerContext));
     }
 
     yield acc;
+  }
+}
+
+class ForeachOp extends BaseGenerator0 {
+  constructor(
+    private readonly exp: VarBindingOp,
+    private readonly init: Generator,
+    private readonly update: Generator,
+    private readonly extract?: Generator
+  ) {
+    super();
+  }
+
+  *onInput(e: Value, context: Context): Iterable<Value> {
+    const innerContext = { ...context, bindings: { ...context.bindings } };
+
+    let acc = exactOne(this.init.iter([e], innerContext));
+    for (const s of this.exp.generators[0].iter([e], context)) {
+      this.exp.getElement(innerContext, s, e);
+      acc = exactOne(this.update.iter([acc], innerContext));
+      yield this.extract ? exactOne(this.extract.iter([acc], innerContext)) : acc;
+    }
   }
 }
 
@@ -1668,6 +1693,14 @@ const parseOperand = (
 
       const [arg1, arg2] = parseArgList(tokenizer, functions);
       return new ReduceOp(assignment, arg1, arg2);
+    } else if (tok.s === 'foreach') {
+      tokenizer.next();
+
+      const exp = parseExpression(tokenizer, functions);
+      verifyOpType(exp, VarBindingOp);
+
+      const [init, update, extract] = parseArgList(tokenizer, functions);
+      return new ForeachOp(exp, init, update, extract);
 
       /* LITERALS ************************************************************************** */
     } else if (tok.type === 'num') {

@@ -294,13 +294,13 @@ describe('jqtest', () => {
       ).toEqual([11, 22, 33]);
     });
 
-    test.skip('[foreach range(5) as $item (0; $item)]', () => {
+    test('[foreach range(5) as $item (0; $item)]', () => {
       expect(parseAndQuery('[foreach range(5) as $item (0; $item)]', [undefined])).toEqual([
-        0, 1, 2, 34
+        [0, 1, 2, 3, 4]
       ]);
     });
 
-    test.skip('[foreach .[] as [$i, $j] (0; . + $i - $j)]', () => {
+    test('[foreach .[] as [$i, $j] (0; . + $i - $j)]', () => {
       expect(
         parseAndQuery('[foreach .[] as [$i, $j] (0; . + $i - $j)]', [
           [
@@ -309,9 +309,10 @@ describe('jqtest', () => {
             [6, 4]
           ]
         ])
-      ).toEqual([1, 3, 5]);
+      ).toEqual([[1, 3, 5]]);
     });
 
+    // NOTE: This fails due to unary -
     test.skip('[foreach .[] as {a:$a} (0; . + $a; -.)', () => {
       expect(
         parseAndQuery('[foreach .[] as {a:$a} (0; . + $a; -.)', [[{ a: 1 }, { a: 2 }, { a: 3 }]])
