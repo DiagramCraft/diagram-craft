@@ -23,6 +23,10 @@ const builtins = [
 
 const BACKTRACK_ERROR = Symbol('backtrack');
 
+class Break {
+  constructor(public readonly label: string) {}
+}
+
 const handleError = (e: unknown) => {
   if (e !== BACKTRACK_ERROR) throw e;
 };
@@ -771,16 +775,25 @@ export const OObjects = {
 
 /** Generators ********************************************************************* */
 
+// TODO: Maybe there's a nicer way to make sure the PipeOp always branches to the right
 class PipeOp implements Generator {
   constructor(
-    private readonly left: Generator,
-    private readonly right: Generator
-  ) {}
+    private left: Generator,
+    private right: Generator
+  ) {
+    if (left instanceof PipeOp) {
+      this.left = left.left;
+      this.right = new PipeOp(left.right, right);
+    }
+  }
 
   *iter(input: Iterable<Value>, context: Context) {
     try {
       yield* this.right.iter(this.left.iter(input, context), context);
     } catch (e) {
+      if (e instanceof Break && this.left instanceof LabelOp && e.label === this.left.label) {
+        return;
+      }
       handleError(e);
     }
   }
@@ -1522,6 +1535,18 @@ class ForeachOp extends BaseGenerator0 {
   }
 }
 
+class LabelOp implements Generator {
+  constructor(
+    public readonly label: string,
+    private readonly br = false
+  ) {}
+
+  *iter(input: Iterable<Value>) {
+    if (this.br) throw new Break(this.label);
+    yield* input;
+  }
+}
+
 class PickOp extends BaseGenerator1 {
   *onInput(e: Value, context: Context) {
     let dest: unknown = undefined;
@@ -1701,6 +1726,12 @@ const parseOperand = (
 
       const [init, update, extract] = parseArgList(tokenizer, functions);
       return new ForeachOp(exp, init, update, extract);
+    } else if (tok.s === 'label') {
+      tokenizer.next();
+      return new LabelOp(tokenizer.next().s + tokenizer.next().s);
+    } else if (tok.s === 'break') {
+      tokenizer.next();
+      return new LabelOp(tokenizer.next().s + tokenizer.next().s, true);
 
       /* LITERALS ************************************************************************** */
     } else if (tok.type === 'num') {

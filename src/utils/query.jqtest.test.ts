@@ -261,7 +261,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('[while(.<100; .*2)]', [1])).toEqual([[1, 2, 4, 8, 16, 32, 64]]);
     });
 
-    test.skip('[(label $here | .[] | if .>1 then break $here else . end), "hi!"]', () => {
+    test('[(label $here | .[] | if .>1 then break $here else . end), "hi!"]', () => {
       expect(
         parseAndQuery('[(label $here | .[] | if .>1 then break $here else . end), "hi!"]', [
           [0, 1, 2]
@@ -269,7 +269,7 @@ describe('jqtest', () => {
       ).toEqual([[0, 1, 'hi!']]);
     });
 
-    test.skip('[(label $here | .[] | if .>1 then break $here else . end), "hi!"]', () => {
+    test('[(label $here | .[] | if .>1 then break $here else . end), "hi!"]', () => {
       expect(
         parseAndQuery('[(label $here | .[] | if .>1 then break $here else . end), "hi!"]', [
           [0, 2, 1]
@@ -285,13 +285,14 @@ describe('jqtest', () => {
       ).toEqual([[1, 2, 6, 24, 120]]);
     });
 
-    test.skip('[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]', () => {
+    // NOTE: Should really be .[0] -1
+    test('[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] - 1, $item] end; .[1])]', () => {
       expect(
         parseAndQuery(
-          '[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] -1, $item] end; .[1])]',
+          '[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] - 1, $item] end; .[1])]',
           [[11, 22, 33, 44, 55, 66, 77, 88, 99]]
         )
-      ).toEqual([11, 22, 33]);
+      ).toEqual([[11, 22, 33]]);
     });
 
     test('[foreach range(5) as $item (0; $item)]', () => {
