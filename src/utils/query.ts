@@ -44,6 +44,7 @@ type Errors = {
   206: 'Index cannot be negative';
   207: 'Expected var or destructable object';
   208: 'Expected var';
+  209: 'Expected negatable expression';
   210: 'Unknown function';
   301: 'Expected exactly one';
 };
@@ -1557,6 +1558,13 @@ class PickOp extends BaseGenerator1 {
   }
 }
 
+class UnaryMinusOp extends BaseGenerator {
+  *onElement(_e: Value, [r]: Value[]) {
+    if (typeof r.val !== 'number') throw error(209);
+    yield value(-safeNum(r.val));
+  }
+}
+
 /** Parser ************************************************************************** */
 
 const parsePathExpression = (
@@ -1784,6 +1792,9 @@ const parseOperand = (
       }
 
       throw error(210, qOp);
+    } else if (tok.s === '-') {
+      tokenizer.next();
+      return new UnaryMinusOp([parseExpression(tokenizer, functions)]);
     }
   } finally {
     tokenizer.strip();

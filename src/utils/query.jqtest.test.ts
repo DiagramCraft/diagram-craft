@@ -285,7 +285,7 @@ describe('jqtest', () => {
       ).toEqual([[1, 2, 6, 24, 120]]);
     });
 
-    // NOTE: Should really be .[0] -1
+    // TODO: Should really be .[0] -1
     test('[label $out | foreach .[] as $item ([3, null]; if .[0] < 1 then break $out else [.[0] - 1, $item] end; .[1])]', () => {
       expect(
         parseAndQuery(
@@ -313,11 +313,12 @@ describe('jqtest', () => {
       ).toEqual([[1, 3, 5]]);
     });
 
-    // NOTE: This fails due to unary -
-    test.skip('[foreach .[] as {a:$a} (0; . + $a; -.)', () => {
+    test('[foreach .[] as {a:$a} (0; . + $a; -.)]', () => {
       expect(
-        parseAndQuery('[foreach .[] as {a:$a} (0; . + $a; -.)', [[{ a: 1 }, { a: 2 }, { a: 3 }]])
-      ).toEqual([-1, -1, -4]);
+        parseAndQuery('[foreach .[] as {a:$a} (0; . + $a; -.)]', [
+          [{ a: 1 }, { b: 2 }, { a: 3, b: 4 }]
+        ])
+      ).toEqual([[-1, -1, -4]]);
     });
 
     test('[limit(3; .[])]', () => {
@@ -828,7 +829,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('reduce .[] as $x (0; . + $x)', [[1, 2, 4]])).toEqual([7]);
     });
 
-    test.skip('reduce .[] as [$i, {j:$j}] (0; . + $i - $j)', () => {
+    test('reduce .[] as [$i, {j:$j}] (0; . + $i - $j)', () => {
       expect(
         parseAndQuery('reduce .[] as [$i, {j:$j}] (0; . + $i - $j)', [
           [
@@ -1922,11 +1923,8 @@ describe('jqtest', () => {
 
     // TODO: Missing tests, mostly module stuff L1546-L1663
 
-    // NOTE: We don't seem to support unary negation
-    test.skip('try -. catch .', () => {
-      expect(parseAndQuery('try -. catch .', ['very-long-string'])).toEqual([
-        'string ("very-long-...) cannot be negated'
-      ]);
+    test('try -. catch .', () => {
+      expect(parseAndQuery('try -. catch .', ['very-long-string'])).toEqual([error(209)]);
     });
 
     test('join(",")', () => {
