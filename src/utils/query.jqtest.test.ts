@@ -1991,7 +1991,12 @@ describe('jqtest', () => {
 
     // TODO: Division by zero tests L1697-1715
 
-    test.skip('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', () => {
+    test('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', () => {
+      console.log(parseAndQuery('pow(2;.)', [4]));
+
+      console.log(
+        parseAndQuery('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round]', [undefined])
+      );
       expect(
         parseAndQuery('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', [
           undefined
@@ -1999,10 +2004,10 @@ describe('jqtest', () => {
       ).toEqual([true]);
     });
 
-    test.skip('[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)\n', () => {
+    test('[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>0.00005)\n', () => {
       expect(
         parseAndQuery(
-          '[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>.00005)\n',
+          '[range(-99/2;99/2;1)] as $orig | [$orig[]|pow(2;.)|log2] as $back | ($orig|keys)[]|. as $k | (($orig|.[$k])-($back|.[$k]))|if . < 0 then . * -1 else . end|select(.>0.00005)\n',
           [undefined]
         )
       ).toEqual([]);

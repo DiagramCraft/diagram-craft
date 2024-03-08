@@ -427,6 +427,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'last/0': () => new NthOp([literal(-1)], true),
   'last/1': a => new NthOp([literal(-1), ...a.args], true),
   'length/0': () => new LengthOp(),
+  'log2/0': () => new MathOp(Math.log2),
   'fabs/0': () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)),
   'limit/2': a => new LimitOp(a),
   'ltrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.startsWith(b) ? a.slice(b.length) : a)),
@@ -442,11 +443,13 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'nth/2': a => new NthOp(a.args),
   'path/1': a => new PathOp(a),
   'pick/1': a => new PickOp(a),
+  'pow/2': arg => new Fn1Op<unknown, Value<number>[]>(arg, (_a, b) => Math.pow(b[0].val, b[1].val)),
   'range/1': a => new RangeOp([literal(0), a.args[0], literal(1)]),
   'range/2': a => new RangeOp([...a.args, literal(1)]),
   'range/3': a => new RangeOp(a.args),
   'reverse/0': () => new FnOp(a => (isArray(a) ? [...a].reverse() : a)),
   'rindex/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b).at(-1)),
+  'round/0': () => new MathOp(Math.round),
   'rtrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.endsWith(b) ? a.slice(0, -b.length) : a)),
   'select/1': a => new SelectOp(a),
   'setpath/2': a => new SetPathOp(a),
@@ -871,7 +874,7 @@ class Fn1Op<A = unknown, B = A> extends BaseGenerator1<B> {
     super(node);
   }
 
-  *onElement({ val: v }: Value<A | A[]>, [{ val: arg }]: [Value<B>]) {
+  *onElement({ val: v }: Value<A | A[]>, [{ val: arg }]: Value<B>[]) {
     yield value(
       this.processArray && isArray(v) ? v.map(e => this.fn(e, arg)) : this.fn(v as A, arg)
     );
