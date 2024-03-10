@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { error, parseAndQuery } from './query.ts';
 
+// Missing:
+//   - undefined instead of null
+//   - ignore error operator (...?)
+//   - function arity
+
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
 describe('jqtest', () => {
@@ -772,14 +777,14 @@ describe('jqtest', () => {
       ]);
     });
 
-    // TODO: Fix
+    // TODO: Fix... this needs better handling of scope
     test.skip('def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]', () => {
       expect(
         parseAndQuery('def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]', [1])
       ).toEqual([[33, 101]]);
     });
 
-    test.skip('def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)', () => {
+    test('def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)', () => {
       expect(
         parseAndQuery(
           'def id(x):x; 2000 as $x | def f(x):1 as $x | id([$x, x, x]); def g(x): 100 as $x | f($x,$x+x); g($x)',
@@ -788,6 +793,7 @@ describe('jqtest', () => {
       ).toEqual([[1, 100, 2100.0, 100, 2100.0]]);
     });
 
+    // TODO: This needs handling of variables as arguments
     test.skip('def x(a;b): a as $a | b as $b | $a + $b; def y($a;$b): $a + $b; def check(a;b): [x(a;b)] == [y(a;b)]; check(.[];.[]*2)', () => {
       expect(
         parseAndQuery(
@@ -841,6 +847,7 @@ describe('jqtest', () => {
       ).toEqual([5]);
     });
 
+    // NOTE: This fails as [...][] parses as PipeOp instead of VarBindingOp
     test.skip('reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)', () => {
       expect(
         parseAndQuery('reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)', [undefined])
@@ -1806,7 +1813,7 @@ describe('jqtest', () => {
       ).toEqual([{ a: 1, b: 2, c: 3, d: 4 }]);
     });
 
-    test.skip('with_entries(.key |= "KEY_" + .)', () => {
+    test('with_entries(.key |= "KEY_" + .)', () => {
       expect(parseAndQuery('with_entries(.key |= "KEY_" + .)', [{ a: 1, b: 2 }])).toEqual([
         { KEY_a: 1, KEY_b: 2 }
       ]);
@@ -1992,11 +1999,6 @@ describe('jqtest', () => {
     // TODO: Division by zero tests L1697-1715
 
     test('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', () => {
-      console.log(parseAndQuery('pow(2;.)', [4]));
-
-      console.log(
-        parseAndQuery('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round]', [undefined])
-      );
       expect(
         parseAndQuery('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', [
           undefined

@@ -1335,20 +1335,22 @@ class FunctionCallOp extends BaseGenerator0 {
   }
 
   *onElement(input: Value, _: unknown, context: Context): Iterable<Value> {
-    const fnDef = context.bindings[this.id].val as FnDef;
+    const fnDef = context.bindings[this.id + '/' + (this.arg?.args.length ?? 0)].val as FnDef;
 
-    const newBindings = { ...context.bindings };
+    const newBindings = { ...context.bindings, ...((fnDef as any).context ?? {}).bindings };
+
     (fnDef.arg ?? []).forEach((a, idx) => {
-      newBindings[a] = {
+      newBindings[a + '/0'] = {
         val: {
-          body: [this.arg!.args[idx]]
+          body: [this.arg!.args[idx]],
+          context: context
         }
       };
     });
 
     for (const b of fnDef.body) {
       if (b instanceof FunctionDefOp) {
-        newBindings[b.id] = {
+        newBindings[b.id + '/0'] = {
           val: {
             body: b.body
           }
@@ -1374,7 +1376,7 @@ class FunctionDefOp extends BaseGenerator0 {
 
   // eslint-disable-next-line require-yield
   *onElement(_input: Value, _: [], context: Context) {
-    context.bindings[this.id] = value({
+    context.bindings[this.id + '/' + this.arg.length] = value({
       arg: this.arg,
       body: this.body
     });
@@ -1834,7 +1836,6 @@ const parseExpression = (
 
 const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): Generator[] => {
   if (!tokenizer.accept('(')) return [];
-  //tokenizer.expect('(');
   const op = [];
   while (tokenizer.peek().s !== ')') {
     op.push(parseExpression(tokenizer, functions));
