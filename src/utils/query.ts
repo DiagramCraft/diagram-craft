@@ -3,6 +3,7 @@
 /** Builtins *************************************************************************** */
 
 const builtins = [
+  'select(f): if f then . else empty end',
   'paths:path(..)|select(length > 0)',
   'map(f):[.[]|f]',
   'del(f):delpaths([path(f)])',
@@ -451,7 +452,6 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'rindex/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b).at(-1)),
   'round/0': () => new MathOp(Math.round),
   'rtrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.endsWith(b) ? a.slice(0, -b.length) : a)),
-  'select/1': a => new SelectOp(a),
   'setpath/2': a => new SetPathOp(a),
   'sin/0': () => new MathOp(Math.sin),
   'sort/0': () => new FnOp(a => (isArray(a) ? [...a].sort(compare) : a)),
@@ -1035,14 +1035,6 @@ class INOp extends BaseGenerator2 {
     const source = [...this.generators[0].iter([val], context)].map(e => e.val);
     const arg = [...this.generators[1].iter([val], context)].map(e => e.val);
     yield value(source.some(k => arg.includes(k)));
-  }
-}
-
-class SelectOp extends BaseGenerator1<boolean> {
-  *onElement(e: Value, [r]: [Value<boolean>]) {
-    if (r.val) {
-      yield e;
-    }
   }
 }
 
