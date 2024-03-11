@@ -4,7 +4,6 @@ import { error, parseAndQuery } from './query.ts';
 // Missing:
 //   - undefined instead of null
 //   - ignore error operator (...?)
-//   - function arity
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -1250,8 +1249,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('[if false then 3 elif false then 4 else . end]', [7])).toEqual([[7]]);
     });
 
-    // TODO: Fix
-    test.skip('[.[] | [.foo[] // .bar]]', () => {
+    test('[.[] | [.foo[] // .bar]]', () => {
       expect(
         parseAndQuery('[.[] | [.foo[] // .bar]]', [
           [

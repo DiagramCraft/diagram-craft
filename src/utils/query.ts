@@ -478,7 +478,7 @@ const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '%': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) % (b as number)),
   '*': (l, r) => new BinaryOp(l, r, multiply),
   '/': (l, r) => new BinaryOp(l, r, divide),
-  '//': (l, r) => new BinaryOp(l, r, (a, b) => a ?? b),
+  '//': (l, r) => new AlternativeOp(l, r),
   '==': (l, r) => new BinaryOp(l, r, isEqual),
   '!=': (l, r) => new BinaryOp(l, r, isNotEqual),
   '>=': (l, r) => new BinaryOp(l, r, (a, b) => a >= b),
@@ -1007,6 +1007,15 @@ class LiteralOp implements Generator {
 
   *iter() {
     yield value(this.val);
+  }
+}
+
+class AlternativeOp extends BaseGenerator2 {
+  *onInput(e: Value, context: Context) {
+    const res = [...this.generators[0].iter([e], context)];
+    if (res.every(k => !k.val)) {
+      yield* this.generators[1].iter([e], context);
+    } else yield* res.filter(k => !!k.val);
   }
 }
 
