@@ -777,8 +777,7 @@ describe('jqtest', () => {
       ]);
     });
 
-    // TODO: Fix... this needs better handling of scope
-    test.skip('def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]', () => {
+    test('def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]', () => {
       expect(
         parseAndQuery('def f: .+1; def g: f; def f: .+100; def f(a):a+.+11; [(g|f(20)), f]', [1])
       ).toEqual([[33, 101]]);
@@ -793,8 +792,7 @@ describe('jqtest', () => {
       ).toEqual([[1, 100, 2100.0, 100, 2100.0]]);
     });
 
-    // TODO: This needs handling of variables as arguments
-    test.skip('def x(a;b): a as $a | b as $b | $a + $b; def y($a;$b): $a + $b; def check(a;b): [x(a;b)] == [y(a;b)]; check(.[];.[]*2)', () => {
+    test('def x(a;b): a as $a | b as $b | $a + $b; def y($a;$b): $a + $b; def check(a;b): [x(a;b)] == [y(a;b)]; check(.[];.[]*2)', () => {
       expect(
         parseAndQuery(
           'def x(a;b): a as $a | b as $b | $a + $b; def y($a;$b): $a + $b; def check(a;b): [x(a;b)] == [y(a;b)]; check(.[];.[]*2)',

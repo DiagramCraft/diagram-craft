@@ -616,6 +616,7 @@ type ArrayFn<T = unknown, R = unknown[]> = (
 type FnDef = {
   arg?: string[];
   body: Generator[];
+  bindings?: Bindings;
 };
 
 const isGenerator = (o: unknown): o is Generator => typeof o === 'object' && 'iter' in (o as any);
@@ -1329,17 +1330,18 @@ class FunctionCallOp extends BaseGenerator0 {
   *onElement(input: Value, _: unknown, context: Context): Iterable<Value> {
     const fnDef = context.bindings[this.id + '/' + (this.arg?.args.length ?? 0)].val as FnDef;
 
-    const newBindings = { ...context.bindings, ...((fnDef as any).context ?? {}).bindings };
+    const newBindings = { ...context.bindings, ...(fnDef.bindings ?? {}) };
 
     (fnDef.arg ?? []).forEach((a, idx) => {
       newBindings[a + '/0'] = {
         val: {
           body: [this.arg!.args[idx]],
-          context: context
+          bindings: context.bindings
         }
       };
     });
 
+    // TODO: Why is this needed?
     for (const b of fnDef.body) {
       if (b instanceof FunctionDefOp) {
         newBindings[b.id + '/0'] = {
@@ -1360,17 +1362,29 @@ class FunctionCallOp extends BaseGenerator0 {
 class FunctionDefOp extends BaseGenerator0 {
   constructor(
     public readonly id: string,
-    public readonly arg: string[],
+    public readonly args: string[],
     public readonly body: Generator[]
   ) {
     super();
+
+    for (let i = args.length - 1; i >= 0; i--) {
+      const arg = args[i];
+      if (arg.startsWith('$')) {
+        args[i] = arg.slice(1);
+        body[body.length - 1] = new PipeOp(
+          new VarBindingOp(new VarRefOp(arg), new FunctionCallOp(arg.slice(1), new ArgListOp([]))),
+          body.at(-1)!
+        );
+      }
+    }
   }
 
   // eslint-disable-next-line require-yield
   *onElement(_input: Value, _: [], context: Context) {
-    context.bindings[this.id + '/' + this.arg.length] = value({
-      arg: this.arg,
-      body: this.body
+    context.bindings[this.id + '/' + this.args.length] = value({
+      arg: this.args,
+      body: this.body,
+      bindings: { ...context.bindings }
     });
   }
 }
@@ -1695,7 +1709,9 @@ const parseOperand = (
       if (tokenizer.peek().s === '(') {
         tokenizer.expect('(');
         while (tokenizer.peek().s !== ')') {
-          args.push(tokenizer.next().s);
+          let k = tokenizer.next().s;
+          if (k === '$') k += tokenizer.next().s;
+          args.push(k);
           if (!tokenizer.accept(';')) break;
         }
         tokenizer.expect(')');
