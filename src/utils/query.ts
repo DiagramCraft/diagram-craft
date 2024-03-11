@@ -23,6 +23,7 @@ const builtins = [
 /** Error handling ********************************************************************* */
 
 const BACKTRACK_ERROR = Symbol('backtrack');
+const ANONYMOUS_ERROR = Symbol('anonymous');
 
 class Break {
   constructor(public readonly label: string) {}
@@ -400,7 +401,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'delpaths/1': a => new DelPathsOp(a),
   'empty/0': () => mkEmptyOp(),
   'endswith/1': a => new Fn1Op<string>(a, (a, b) => a.endsWith(b), true),
-  'error/0': () => new ErrorOp(literal('')),
+  'error/0': () => new ErrorOp(literal(ANONYMOUS_ERROR)),
   'error/1': a => new ErrorOp(a),
   'first/0': () => new NthOp([literal(0)]),
   'first/1': a => new NthOp([literal(0), ...a.args]),
@@ -467,6 +468,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
     ),
   'tojson/0': () => new FnOp(a => JSON.stringify(a)),
   'tonumber/0': () => new FnOp(a => Number(a)),
+  'tostring/0': () => new FnOp(a => (typeof a === 'string' ? a : JSON.stringify(a))),
   'type/0': () => new FnOp(a => (isArray(a) ? 'array' : a === null ? 'null' : typeof a)),
   'unique/0': () => new BaseArrayOp(Array_Unique),
   'unique_by/1': a => new BaseArrayOp(Array_Unique, a)
@@ -1350,21 +1352,12 @@ class FunctionCallOp extends BaseGenerator0 {
       };
     });
 
-    // TODO: Why is this needed?
     for (const b of fnDef.body) {
-      if (b instanceof FunctionDefOp) {
-        newBindings[b.id + '/0'] = {
-          val: {
-            body: b.body
-          }
-        };
-      }
+      yield* b.iter([input], {
+        ...context,
+        bindings: newBindings
+      });
     }
-
-    yield* fnDef.body.at(-1)!.iter([input], {
-      ...context,
-      bindings: newBindings
-    });
   }
 }
 
@@ -1451,7 +1444,7 @@ class TryCatchOp extends BaseGenerator {
     try {
       yield* this.body.iter([e], context);
     } catch (err) {
-      yield* this.catchBody.iter([value(err)], context);
+      yield* this.catchBody.iter([err === ANONYMOUS_ERROR ? e : value(err)], context);
     }
   }
 }
@@ -1781,7 +1774,12 @@ const parseOperand = (
           dest.push(literal(r.slice(0, idx)));
           r = r.slice(idx + 2);
           tokenizer.head = r;
-          dest.push(parseExpression(tokenizer, functions));
+          dest.push(
+            new PipeOp(
+              parseExpression(tokenizer, functions),
+              new FnOp(a => (typeof a === 'string' ? a : JSON.stringify(a)))
+            )
+          );
           r = tokenizer.head.slice(1);
         }
 
@@ -1839,6 +1837,11 @@ const parseExpression = (
     if (tok === '[') {
       tokenizer.head = '| .' + tokenizer.head;
       return;
+    }
+
+    if (tok === '?') {
+      tokenizer.next();
+      left = new TryCatchOp(left, mkEmptyOp());
     }
 
     if (!!BINOP_REGISTRY[tok] && BINOP_ORDERING[tok] > (BINOP_ORDERING[lastOp] ?? 0)) {

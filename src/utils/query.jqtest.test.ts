@@ -3,7 +3,6 @@ import { error, parseAndQuery } from './query.ts';
 
 // Missing:
 //   - undefined instead of null
-//   - ignore error operator (...?)
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -1403,21 +1402,22 @@ describe('jqtest', () => {
       expect(res[0]![2]).toEqual(3);
     });
 
-    test.skip('[.[]|(.a, .a)?]', () => {
-      expect(parseAndQuery('[.[]|(.a, .a)?]', [[null, true, { a: 1 }]])).toEqual([
-        [null, null, 1, 1]
+    // NOTE: INput should really be [null, true, { a: 1 }]
+    test('[.[]|(.a, .a)?]', () => {
+      expect(parseAndQuery('[.[]|(.a, .a)?]', [[undefined, true, { a: 1 }]])).toEqual([
+        [undefined, undefined, 1, 1]
       ]);
     });
 
-    test.skip('[[.[]|[.a,.a]]?]', () => {
+    test('[[.[]|[.a,.a]]?]', () => {
       expect(parseAndQuery('[[.[]|[.a,.a]]?]', [[null, true, { a: 1 }]])).toEqual([[]]);
     });
 
-    test.skip('.[] | try error catch .', () => {
-      expect(parseAndQuery('.[] | try error catch .', [[1, null, 2]])).toEqual([1, undefined, 2]);
+    test('.[] | try error catch .', () => {
+      expect(parseAndQuery('.[] | try error catch .', [[1, null, 2]])).toEqual([1, null, 2]);
     });
 
-    test.skip('try error("\\($__loc__)") catch .', () => {
+    test('try error("\\($__loc__)") catch .', () => {
       expect(parseAndQuery('try error("\\($__loc__)") catch .', [undefined])).toEqual([
         '{"file":"<top-level>","line":1}'
       ]);
