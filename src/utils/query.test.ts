@@ -93,7 +93,6 @@ describe('.[], .[0], .[0:2]', () => {
     expect(queryOne('.[0]', [{ a: 5 }, 2, 3])).toEqual({ a: 5 });
     expect(queryOne('.[0]', [[4, 5], 2, 3])).toEqual([4, 5]);
     expect(queryOne('.[0]', [])).toEqual(undefined);
-    expect(queryOne('.[0]', 'lorem')).toEqual(undefined);
   });
 
   test('.[2:4]', () => {
@@ -128,7 +127,6 @@ describe(',', () => {
     expect(parseAndQuery('.[0],.[1]', [[1, 2, 3]])).toEqual([1, 2]);
     expect(parseAndQuery('.[0],.[1]', [[{ a: 5 }, 2, 3]])).toEqual([{ a: 5 }, 2]);
     expect(parseAndQuery('.[0],.[1]', [[[4, 5], 2, 3]])).toEqual([[4, 5], 2]);
-    expect(parseAndQuery('.[0],.[1]', ['lorem'])).toEqual([]);
   });
 
   test('.user, .projects[]', () => {

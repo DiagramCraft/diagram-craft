@@ -17,7 +17,14 @@ const builtins = [
   'booleans:select(type=="boolean")',
   'while(c;u):def _i:if c then ., (u|_i) else empty end;_i',
   'until(c;n):def _u:if c then . else (n|_u) end;_u',
-  'transpose:[range(0;map(length)|max//0) as $i|[.[][$i]]]'
+  'transpose:[range(0;map(length)|max//0) as $i|[.[][$i]]]',
+  'INDEX(stream;ie):reduce stream as $row ({};.[$row|ie|tostring] = $row)',
+  'INDEX(ie):INDEX(.[];ie)',
+  'JOIN($idx;ie):[.[]|[.,($idx[ie])]]',
+  'JOIN($idx;stream;ie):stream|[.,$idx[ie]]',
+  'JOIN($idx;stream;ie;join_expr):stream|[.,$idx[ie]]|join_expr',
+  'IN(s):any(s==.;.)',
+  'IN(src;s):any(src==s;.)'
 ];
 
 /** Error handling ********************************************************************* */
@@ -419,8 +426,6 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
   'has/1': arg => new Fn1Op(arg, (a, b) => (b as any) in (a as any)),
   'in/1': arg => new Fn1Op(arg, (a, b) => (a as any) in (b as any)),
-  'IN/1': a => new INOp(new IdentityOp(), a.args[0]),
-  'IN/2': a => new INOp(a.args[0], a.args[1]),
   'indices/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)),
   'index/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)[0]),
   'isnan/0': () => new FnOp(a => isNaN(a as number)),
@@ -539,6 +544,11 @@ class Tokenizer {
     this.head = query;
   }
 
+  unget(t: Token) {
+    this.head = t.s + this.head;
+    return this;
+  }
+
   peek(): Token {
     let m;
 
@@ -594,15 +604,6 @@ class Tokenizer {
 
   accept(s: string) {
     return this.peek().s === s && this.next();
-  }
-
-  keepWS() {
-    return {
-      next: () => this.next(false),
-      expect: (s: string) => this.expect(s, false),
-      accept: (s: string) => this.peek().s === s && this.next(false),
-      peek: () => this.peek()
-    };
   }
 }
 
@@ -709,15 +710,13 @@ export const OObjects = {
     if (tok.type === 'str') {
       return [{ path, val: tok.s.slice(1, -1) }];
     } else if (tok.s === '.') {
-      return [{ path, val: parsePathExpression(tokenizer, {}) }];
+      return [{ path, val: parseOperand(tokenizer.unget(tok), {}) }];
     } else if (tok.s === '$') {
       return [{ path, val: new VarRefOp('$' + tokenizer.next().s) }];
     } else if (tok.s === '{') {
       return OObjects.parseObject(tokenizer, path);
     } else if (tok.s === '(') {
-      const e = parseExpression(tokenizer, {});
-      tokenizer.expect(')');
-      return [{ path, val: e }];
+      return [{ path, val: parseTo(')', tokenizer, {}) }];
     } else if (tok.s === '[') {
       return OObjects.parseArray(tokenizer, path);
     } else if (tok.type === 'num') {
@@ -754,7 +753,7 @@ export const OObjects = {
 
           next.forEach(e =>
             arr.push({
-              val: tokenType === 'id' ? parsePathExpression(new Tokenizer('.' + e.val), {}) : e.val,
+              val: tokenType === 'id' ? parseOperand(new Tokenizer('.' + e.val), {}) : e.val,
               path: [...path, currentKey, ...e.path]
             })
           );
@@ -806,10 +805,11 @@ class PipeOp implements Generator {
   }
 }
 
-class PathExp implements Generator {
+class Operand implements Generator {
   constructor(private readonly generators: Generator[]) {}
 
   *iter(input: Iterable<Value>, context: Context) {
+    if (this.generators.length === 0) return;
     yield* this.generators.reduceRight((a, b) => new PipeOp(b, a)).iter(input, context);
   }
 }
@@ -891,19 +891,12 @@ class IdentityOp extends BaseGenerator0 {
 }
 
 class PropertyLookupOp extends BaseGenerator1<string> {
-  constructor(
-    node: Generator,
-    private readonly strict = true
-  ) {
-    super(node);
-  }
-
   *onElement(e: Value, [identifier]: [Value<string>]): Iterable<Value> {
     try {
       yield valueWithPath(e, prop(e.val, identifier.val), identifier.val);
     } catch (err) {
       if (e.val === undefined) return yield valueWithPath(e, undefined, identifier.val);
-      if (this.strict) throw err;
+      throw err;
     }
   }
 }
@@ -932,16 +925,10 @@ class ArraySliceOp extends BaseGenerator2<number, number> {
 }
 
 class ArrayOp extends BaseGenerator0 {
-  constructor(private readonly strict: boolean) {
-    super();
-  }
-
   *onInput(e: Value) {
     const v = e.val;
-    if (!isArray(v)) {
-      if (this.strict) throw error(201);
-      return;
-    }
+    if (!isArray(v)) throw error(201);
+
     for (let i = 0; i < v.length; i++) {
       yield valueWithPath(e, v[i], i);
     }
@@ -1039,14 +1026,6 @@ class ErrorOp extends BaseGenerator1 {
   // eslint-disable-next-line require-yield
   *onElement(_e: Value, [arg]: [Value]) {
     throw arg.val;
-  }
-}
-
-class INOp extends BaseGenerator2 {
-  *onInput(val: Value, context: Context) {
-    const source = [...this.generators[0].iter([val], context)].map(e => e.val);
-    const arg = [...this.generators[1].iter([val], context)].map(e => e.val);
-    yield value(source.some(k => arg.includes(k)));
   }
 }
 
@@ -1403,8 +1382,7 @@ class RangeOp extends BaseGenerator {
   }
 }
 
-class Noop extends BaseGenerator0 {}
-
+// TODO: Why is this a function?
 const mkEmptyOp = () =>
   new FnOp(() => {
     throw BACKTRACK_ERROR;
@@ -1580,247 +1558,231 @@ class UnaryMinusOp extends BaseGenerator {
 
 /** Parser ************************************************************************** */
 
-const parsePathExpression = (
-  tokenizer: Tokenizer,
-  functions: Record<string, number>
-): Generator => {
-  const vars: Generator[] = [];
-  const generators: Generator[] = [new IdentityOp()];
+const parseDestructionTarget = (tokenizer: Tokenizer): Generator => {
+  const tok = tokenizer.peek();
 
-  const wsTokenizer = tokenizer.keepWS();
-  wsTokenizer.accept('.');
-
-  return boundLoop(() => {
-    const token = wsTokenizer.peek();
-    if (token.type === 'id' || token.type === 'str') {
-      wsTokenizer.next();
-      const s = token.type === 'str' ? token.s.slice(1, -1) : token.s;
-      const strict = !wsTokenizer.accept('?');
-      generators.push(new PropertyLookupOp(literal(s), strict));
-    } else if (token.s === '[') {
-      wsTokenizer.next();
-      if (wsTokenizer.peek().s === ']') {
-        wsTokenizer.next();
-        generators.push(new ArrayOp(!wsTokenizer.accept('?')));
-      } else {
-        tokenizer.strip();
-        const e1 =
-          tokenizer.peek().s === ']' || tokenizer.peek().s === ':'
-            ? new LiteralOp(0)
-            : parseExpression(tokenizer, functions);
-        const e1Id = newid();
-        vars.push(new VarBindingOp(e1Id, e1));
-
-        if (wsTokenizer.peek().s === ':') {
-          wsTokenizer.next();
-          tokenizer.strip();
-
-          const e2Id = newid();
-          vars.push(
-            new VarBindingOp(
-              e2Id,
-              tokenizer.peek().s === ']'
-                ? new LiteralOp(undefined)
-                : parseExpression(tokenizer, functions)
-            )
-          );
-
-          wsTokenizer.expect(']');
-          generators.push(
-            new ArraySliceOp(new VarRefOp(e1Id), new VarRefOp(e2Id), !wsTokenizer.accept('?'))
-          );
-        } else {
-          wsTokenizer.expect(']');
-          generators.push(
-            new PropertyLookupOp(
-              new VarRefOp(e1Id),
-              e1 instanceof LiteralOp && typeof e1.val === 'string'
-            )
-          );
-        }
-      }
-    } else if (token.s === '.') {
-      wsTokenizer.next();
-    } else {
-      return new PathExp([...vars, ...generators]);
-    }
-  });
+  if (tok.s === '[' || tok.s === '{') {
+    return new ObjectLiteralOp(OObjects.parse(tokenizer));
+  } else if (tokenizer.accept('$')) {
+    return new VarRefOp('$' + tokenizer.next().s);
+  }
+  throw error(102, tokenizer.head);
 };
 
-const parseOperand = (
-  tokenizer: Tokenizer,
-  functions: Record<string, number>,
-  lastOp: string = ''
-): Generator => {
-  try {
-    const tok = tokenizer.peek();
-    if (tok.s === '[' && lastOp !== 'as') {
-      tokenizer.next();
-      const inner = tokenizer.peek().s === ']' ? new Noop() : parseExpression(tokenizer, functions);
-      tokenizer.expect(']');
+const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): Generator => {
+  const vars: Generator[] = [];
+  const gen: Generator[] = [];
 
-      return new ArrayConstructionOp(inner);
-    } else if (tok.s === '(') {
-      tokenizer.next();
-      const inner = parseExpression(tokenizer, functions);
-      tokenizer.expect(')');
-      return new ParenExpressionOp(inner);
-    } else if (tok.s === '.') {
-      return parsePathExpression(tokenizer, functions);
-    } else if (tok.s === '$') {
-      tokenizer.next();
-      return new VarRefOp('$' + tokenizer.next().s);
-    } else if (tok.s === 'try') {
-      tokenizer.next();
-      const body = parseExpression(tokenizer, functions);
-      return new TryCatchOp(
-        body,
-        tokenizer.accept('catch') ? parseOperand(tokenizer, functions) : mkEmptyOp()
-      );
-    } else if (tok.s === 'if') {
-      tokenizer.next();
+  const bind = (g: Generator) => {
+    const id = newid();
+    vars.push(new VarBindingOp(id, g));
+    return id;
+  };
 
-      const condition = parseExpression(tokenizer, functions);
-      tokenizer.expect('then');
+  boundLoop(() => {
+    try {
+      const tok = tokenizer.peek();
 
-      const ifConsequent = parseExpression(tokenizer, functions);
-
-      const elifs: [Generator, Generator][] = [];
-
-      return boundLoop(() => {
-        if (tokenizer.accept('else')) {
-          const elseConsequent = parseExpression(tokenizer, functions);
-          tokenizer.expect('end');
-          return new IfOp(condition, ifConsequent, elifs, elseConsequent);
-        } else if (tokenizer.accept('elif')) {
-          const elifCondition = parseExpression(tokenizer, functions);
-          tokenizer.expect('then');
-          const elifConsequent = parseExpression(tokenizer, functions);
-          elifs.push([elifCondition, elifConsequent]);
+      if (tokenizer.accept('[')) {
+        if (gen.length === 0) {
+          gen.push(new ArrayConstructionOp(parseTo(']', tokenizer, functions)));
+        } else if (tokenizer.accept(']')) {
+          gen.push(new ArrayOp());
         } else {
-          tokenizer.expect('end');
-          return new IfOp(condition, ifConsequent, []);
-        }
-      });
-    } else if (tok.s === 'def') {
-      tokenizer.next();
-
-      const name = tokenizer.next();
-
-      const args: string[] = [];
-      if (tokenizer.peek().s === '(') {
-        tokenizer.expect('(');
-        while (tokenizer.peek().s !== ')') {
-          let k = tokenizer.next().s;
-          if (k === '$') k += tokenizer.next().s;
-          args.push(k);
-          if (!tokenizer.accept(';')) break;
-        }
-        tokenizer.expect(')');
-      }
-
-      tokenizer.expect(':');
-
-      functions[name.s] = args.length;
-
-      const innerFunctions = { ...functions };
-      args.forEach(e => (innerFunctions[e] = 0));
-
-      const body: Generator[] = [];
-      do {
-        body.push(parseExpression(tokenizer, innerFunctions));
-        tokenizer.accept(';');
-      } while (body.at(-1) instanceof FunctionDefOp);
-
-      return new FunctionDefOp(name.s, args, body);
-    } else if (tok.s === 'reduce') {
-      tokenizer.next();
-
-      const assignment = parseExpression(tokenizer, functions);
-      verifyOpType(assignment, VarBindingOp);
-
-      const [arg1, arg2] = parseArgList(tokenizer, functions);
-      return new ReduceOp(assignment, arg1, arg2);
-    } else if (tok.s === 'foreach') {
-      tokenizer.next();
-
-      const exp = parseExpression(tokenizer, functions);
-      verifyOpType(exp, VarBindingOp);
-
-      const [init, update, extract] = parseArgList(tokenizer, functions);
-      return new ForeachOp(exp, init, update, extract);
-    } else if (tok.s === 'label') {
-      tokenizer.next();
-      return new LabelOp(tokenizer.next().s + tokenizer.next().s);
-    } else if (tok.s === 'break') {
-      tokenizer.next();
-      return new LabelOp(tokenizer.next().s + tokenizer.next().s, true);
-
-      /* LITERALS ************************************************************************** */
-    } else if (tok.type === 'num') {
-      return literal(Number(tokenizer.next().s));
-    } else if (tok.s === '{' || tok.s === '[') {
-      const res = OObjects.parse(tokenizer);
-      return new ObjectLiteralOp(res);
-    } else if (tok.type === 'str') {
-      const value = tokenizer.next().s;
-
-      if (value.includes('\\(')) {
-        let r = value.slice(1) + tokenizer.head;
-        const dest: Generator[] = [];
-
-        while (r.includes('\\(')) {
-          const idx = r.indexOf('\\(');
-          dest.push(literal(r.slice(0, idx)));
-          r = r.slice(idx + 2);
-          tokenizer.head = r;
-          dest.push(
-            new PipeOp(
-              parseExpression(tokenizer, functions),
-              new FnOp(a => (typeof a === 'string' ? a : JSON.stringify(a)))
-            )
+          const startId = bind(
+            tokenizer.peek().s === ':' ? literal(0) : parseExpression(tokenizer, functions)
           );
-          r = tokenizer.head.slice(1);
+
+          if (tokenizer.accept(':')) {
+            const endId = bind(
+              tokenizer.peek().s === ']'
+                ? literal(undefined)
+                : parseExpression(tokenizer, functions)
+            );
+
+            tokenizer.expect(']');
+            gen.push(
+              new ArraySliceOp(new VarRefOp(startId), new VarRefOp(endId), !tokenizer.accept('?'))
+            );
+          } else {
+            tokenizer.expect(']');
+            gen.push(new PropertyLookupOp(new VarRefOp(startId)));
+          }
+        }
+      } else if (tokenizer.accept('?')) {
+        gen[gen.length - 1] = new TryCatchOp(new Operand([gen.at(-1)!]), mkEmptyOp());
+      } else if (tokenizer.accept('(')) {
+        gen.push(new ParenExpressionOp(parseTo(')', tokenizer, functions)));
+      } else if (tok.s === '.') {
+        tokenizer.next(false);
+
+        const tok = tokenizer.peek();
+        if (tok.type === 'id' || tok.type === 'str') {
+          tokenizer.next();
+          gen.push(new PropertyLookupOp(literal(tok.type === 'str' ? tok.s.slice(1, -1) : tok.s)));
+        } else {
+          gen.push(new IdentityOp());
+        }
+      } else if (tokenizer.accept('$')) {
+        gen.push(new VarRefOp('$' + tokenizer.next().s));
+      } else if (tokenizer.accept('try')) {
+        const body = parseExpression(tokenizer, functions);
+        gen.push(
+          new TryCatchOp(
+            body,
+            tokenizer.accept('catch') ? parseOperand(tokenizer, functions) : mkEmptyOp()
+          )
+        );
+      } else if (tokenizer.accept('if')) {
+        const condition = parseTo('then', tokenizer, functions);
+
+        const ifConsequent = parseExpression(tokenizer, functions);
+
+        const elifs: [Generator, Generator][] = [];
+
+        boundLoop(() => {
+          if (tokenizer.accept('elif')) {
+            elifs.push([
+              parseTo('then', tokenizer, functions),
+              parseExpression(tokenizer, functions)
+            ]);
+          } else {
+            if (tokenizer.accept('else')) {
+              gen.push(
+                new IfOp(condition, ifConsequent, elifs, parseTo('end', tokenizer, functions))
+              );
+            } else {
+              tokenizer.expect('end');
+              gen.push(new IfOp(condition, ifConsequent, []));
+            }
+            return true;
+          }
+        });
+      } else if (tokenizer.accept('def')) {
+        const name = tokenizer.next();
+
+        const args: string[] = [];
+        if (tokenizer.peek().s === '(') {
+          tokenizer.expect('(');
+          while (tokenizer.peek().s !== ')') {
+            let k = tokenizer.next().s;
+            if (k === '$') k += tokenizer.next().s;
+            args.push(k);
+            if (!tokenizer.accept(';')) break;
+          }
+          tokenizer.expect(')');
         }
 
-        dest.push(literal(r.slice(0, r.indexOf('"'))));
-        tokenizer.head = r.slice(1);
+        tokenizer.expect(':');
 
-        return dest.reduceRight((a, b) => new BinaryOp(b, a, add));
+        functions[name.s] = args.length;
+
+        const innerFunctions = { ...functions };
+        args.forEach(e => (innerFunctions[e] = 0));
+
+        const body: Generator[] = [];
+        do {
+          body.push(parseExpression(tokenizer, innerFunctions));
+          tokenizer.accept(';');
+        } while (body.at(-1) instanceof FunctionDefOp);
+
+        gen.push(new FunctionDefOp(name.s, args, body));
+        return true;
+      } else if (tokenizer.accept('reduce')) {
+        const assignment = parseExpression(tokenizer, functions);
+        verifyOpType(assignment, VarBindingOp);
+
+        const [arg1, arg2] = parseArgList(tokenizer, functions);
+        gen.push(new ReduceOp(assignment, arg1, arg2));
+      } else if (tokenizer.accept('foreach')) {
+        const exp = parseExpression(tokenizer, functions);
+        verifyOpType(exp, VarBindingOp);
+
+        const [init, update, extract] = parseArgList(tokenizer, functions);
+        gen.push(new ForeachOp(exp, init, update, extract));
+      } else if (tokenizer.accept('label')) {
+        gen.push(new LabelOp(tokenizer.next().s + tokenizer.next().s));
+      } else if (tokenizer.accept('break')) {
+        gen.push(new LabelOp(tokenizer.next().s + tokenizer.next().s, true));
+
+        /* LITERALS ************************************************************************** */
+      } else if (tok.type === 'num') {
+        gen.push(literal(Number(tokenizer.next().s)));
+      } else if (tok.s === '{') {
+        gen.push(new ObjectLiteralOp(OObjects.parse(tokenizer)));
+      } else if (tok.type === 'str') {
+        const value = tokenizer.next().s;
+
+        if (value.includes('\\(')) {
+          let r = value.slice(1) + tokenizer.head;
+          const dest: Generator[] = [];
+
+          let idx = 0;
+          while ((idx = r.indexOf('\\(')) >= 0) {
+            dest.push(literal(r.slice(0, idx)));
+            r = r.slice(idx + 2);
+            tokenizer.head = r;
+            dest.push(
+              new PipeOp(
+                parseExpression(tokenizer, functions),
+                new FnOp(a => (typeof a === 'string' ? a : JSON.stringify(a)))
+              )
+            );
+            r = tokenizer.head.slice(1);
+          }
+
+          dest.push(literal(r.slice(0, r.indexOf('"'))));
+          tokenizer.head = r.slice(1);
+
+          gen.push(dest.reduceRight((a, b) => new BinaryOp(b, a, add)));
+        } else {
+          gen.push(literal(value.slice(1, -1)));
+        }
+      } else if (tokenizer.accept('null')) {
+        gen.push(literal(null));
+      } else if (tokenizer.accept('false')) {
+        gen.push(literal(false));
+      } else if (tokenizer.accept('true')) {
+        gen.push(literal(true));
+
+        /* FUNCTIONS ************************************************************************** */
+      } else if (tok.type === 'id') {
+        const origHead = tokenizer.head;
+        tokenizer.next();
+
+        const argList = new ArgListOp(parseArgList(tokenizer, functions));
+
+        const op = tok.s;
+        const qOp = op + '/' + argList.args.length;
+
+        if (qOp in FN_REGISTRY) {
+          gen.push(FN_REGISTRY[qOp](argList));
+        } else if (op in functions) {
+          gen.push(new FunctionCallOp(op, argList));
+        } else {
+          if (argList.args.length > 0 && op !== 'else') throw error(210, qOp);
+          tokenizer.head = origHead;
+          return true;
+        }
+      } else if (gen.length === 0 && tokenizer.accept('-')) {
+        gen.push(new UnaryMinusOp([parseExpression(tokenizer, functions)]));
+      } else {
+        return true;
       }
-      return literal(value.slice(1, -1));
-    } else if (tok.s === 'null') {
-      tokenizer.next();
-      return literal(null);
-    } else if (tok.s === 'false' || tok.s === 'true') {
-      tokenizer.next();
-      return literal(tok.s === 'true');
-
-      /* FUNCTIONS ************************************************************************** */
-    } else if (tok.type === 'id') {
-      tokenizer.next();
-
-      const argList = new ArgListOp(parseArgList(tokenizer, functions));
-
-      const op = tok.s;
-      const qOp = op + '/' + argList.args.length;
-
-      if (qOp in FN_REGISTRY) {
-        return FN_REGISTRY[qOp](argList);
-      } else if (op in functions) {
-        return new FunctionCallOp(op, argList);
-      }
-
-      throw error(210, qOp);
-    } else if (tok.s === '-') {
-      tokenizer.next();
-      return new UnaryMinusOp([parseExpression(tokenizer, functions)]);
+    } finally {
+      tokenizer.strip();
     }
-  } finally {
-    tokenizer.strip();
-  }
+  });
 
-  throw error(103, tokenizer.head);
+  if (vars.length === 0 && gen.length === 1) return gen[0];
+
+  return new Operand([...vars, ...gen]);
+};
+
+const parseTo = (s: string, tokenizer: Tokenizer, functions: Record<string, number>) => {
+  const d = parseExpression(tokenizer, functions);
+  tokenizer.expect(s);
+  return d;
 };
 
 const parseExpression = (
@@ -1828,29 +1790,21 @@ const parseExpression = (
   functions: Record<string, number>,
   lastOp: string = ''
 ): Generator => {
-  let left = parseOperand(tokenizer, functions, lastOp);
+  let left = parseOperand(tokenizer, functions);
   if (left instanceof FunctionDefOp) return left;
 
   return boundLoop(() => {
     const tok = tokenizer.peek().s;
 
-    if (tok === '[') {
-      tokenizer.head = '| .' + tokenizer.head;
-      return;
-    }
-
-    if (tok === '?') {
-      tokenizer.next();
-      left = new TryCatchOp(left, mkEmptyOp());
-    }
-
-    if (!!BINOP_REGISTRY[tok] && BINOP_ORDERING[tok] > (BINOP_ORDERING[lastOp] ?? 0)) {
-      const op = tokenizer.next().s;
-
-      left = BINOP_REGISTRY[op](left, parseExpression(tokenizer, functions, op));
-    } else {
+    if (!BINOP_REGISTRY[tok] || BINOP_ORDERING[tok] <= (BINOP_ORDERING[lastOp] ?? 0)) {
       return left;
     }
+
+    const op = tokenizer.next().s;
+    left = BINOP_REGISTRY[op](
+      left,
+      op === 'as' ? parseDestructionTarget(tokenizer) : parseExpression(tokenizer, functions, op)
+    );
   });
 };
 
@@ -1873,7 +1827,9 @@ export const parse = (query: string, includeBuiltins = true): Generator => {
 
   const tokenizer = new Tokenizer(query);
   while (tokenizer.peek().type !== 'end') {
+    const l = tokenizer.head.length;
     op.push(parseExpression(tokenizer, functions));
+    if (l === tokenizer.head.length) throw error(103, tokenizer.head);
   }
 
   return op.reduceRight((a, b) => new ConcatenationOp(b, a));

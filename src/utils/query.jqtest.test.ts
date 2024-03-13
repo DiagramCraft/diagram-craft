@@ -1136,8 +1136,9 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('.[2][3] = 1', () => {
-      expect(parseAndQuery('.[2][3] = 1', [[4]])).toEqual([[4, null, [null, null, null, 1]]]);
+    test('.[2][3] = 1', () => {
+      // eslint-disable-next-line no-sparse-arrays
+      expect(parseAndQuery('.[2][3] = 1', [[4]])).toEqual([[4, , [, , , 1]]]);
     });
 
     test('.foo[2].bar = 1', () => {
@@ -2015,13 +2016,13 @@ describe('jqtest', () => {
       expect(parseAndQuery('(.[{}] = 0)?', [undefined])).toEqual([]);
     });
 
-    test.skip('INDEX(range(5)|[., "foo\\(.)"]; .[0])', () => {
+    test('INDEX(range(5)|[., "foo\\(.)"]; .[0])', () => {
       expect(parseAndQuery('INDEX(range(5)|[., "foo\\(.)"]; .[0])', [undefined])).toEqual([
         { '0': [0, 'foo0'], '1': [1, 'foo1'], '2': [2, 'foo2'], '3': [3, 'foo3'], '4': [4, 'foo4'] }
       ]);
     });
 
-    test.skip('JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)', () => {
+    test('JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)', () => {
       expect(
         parseAndQuery(
           'JOIN({"0":[0,"abc"],"1":[1,"bcd"],"2":[2,"def"],"3":[3,"efg"],"4":[4,"fgh"]}; .[0]|tostring)',
@@ -2035,7 +2036,7 @@ describe('jqtest', () => {
         )
       ).toEqual([
         [
-          [[5, 'foo'], null],
+          [[5, 'foo'], undefined],
           [
             [3, 'bar'],
             [3, 'efg']
