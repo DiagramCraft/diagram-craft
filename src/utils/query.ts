@@ -1562,7 +1562,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
   const bind = (g: Generator) => {
     const id = newid();
     vars.push(new VarBindingOp(id, g));
-    return id;
+    return new VarRefOp(id);
   };
 
   boundLoop(() => {
@@ -1587,12 +1587,10 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
             );
 
             tokenizer.expect(']');
-            gen.push(
-              new ArraySliceOp(new VarRefOp(startId), new VarRefOp(endId), !tokenizer.accept('?'))
-            );
+            gen.push(new ArraySliceOp(startId, endId, !tokenizer.accept('?')));
           } else {
             tokenizer.expect(']');
-            gen.push(new PropertyLookupOp([new VarRefOp(startId)]));
+            gen.push(new PropertyLookupOp(startId));
           }
         }
       } else if (tokenizer.accept('?')) {
@@ -1650,12 +1648,10 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         const name = tokenizer.next();
 
         const args: string[] = [];
-        if (tokenizer.peek().s === '(') {
-          tokenizer.expect('(');
+        if (tokenizer.accept('(')) {
           while (tokenizer.peek().s !== ')') {
-            let k = tokenizer.next().s;
-            if (k === '$') k += tokenizer.next().s;
-            args.push(k);
+            const k = tokenizer.next().s;
+            args.push(k === '$' ? k + tokenizer.next().s : k);
             if (!tokenizer.accept(';')) break;
           }
           tokenizer.expect(')');
