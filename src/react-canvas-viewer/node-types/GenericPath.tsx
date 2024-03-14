@@ -13,6 +13,7 @@ import { ControlPointDrag } from '../../react-canvas-editor/tools/node/controlPo
 import { NodeDrag } from '../../react-canvas-editor/tools/node/nodeDrag.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { NodeWrapper } from '../NodeWrapper.tsx';
 
 declare global {
   interface NodeProps {
@@ -79,19 +80,22 @@ export const GenericPath = (props: Props) => {
         />
       )}
 
-      <path
-        d={svgPath}
-        x={props.node.bounds.x}
-        y={props.node.bounds.y}
-        width={props.node.bounds.w}
-        height={props.node.bounds.h}
-        {...propsUtils.filterSvgProperties(props)}
-        style={{
-          ...props.style,
-          pointerEvents: props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined
-        }}
-        onDoubleClick={props.tool?.type === 'node' ? onDoubleClick : undefined}
-      />
+      <NodeWrapper node={props.node} path={path}>
+        <path
+          d={svgPath}
+          x={props.node.bounds.x}
+          y={props.node.bounds.y}
+          width={props.node.bounds.w}
+          height={props.node.bounds.h}
+          {...propsUtils.filterSvgProperties(props)}
+          style={{
+            ...props.style,
+            pointerEvents:
+              props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined
+          }}
+          onDoubleClick={props.tool?.type === 'node' ? onDoubleClick : undefined}
+        />
+      </NodeWrapper>
 
       {props.isSingleSelected && props.tool?.type === 'node' && (
         <>

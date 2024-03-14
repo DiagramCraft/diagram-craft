@@ -168,6 +168,7 @@ declare global {
 
     effects?: {
       reflection?: boolean;
+      reflectionStrength?: number;
       blur?: number;
       opacity?: number;
     };

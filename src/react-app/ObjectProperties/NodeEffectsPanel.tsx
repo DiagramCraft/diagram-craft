@@ -13,6 +13,11 @@ export const NodeEffectsPanel = (props: Props) => {
   const defaults = useNodeDefaults();
 
   const reflection = useNodeProperty($d, 'effects.reflection', defaults.effects.reflection);
+  const reflectionStrength = useNodeProperty(
+    $d,
+    'effects.reflectionStrength',
+    defaults.effects.reflectionStrength
+  );
   const blur = useNodeProperty($d, 'effects.blur', defaults.effects.blur);
   const opacity = useNodeProperty($d, 'effects.opacity', defaults.effects.opacity);
 
@@ -34,6 +39,16 @@ export const NodeEffectsPanel = (props: Props) => {
               checked={reflection.val}
               onChange={() => {
                 reflection.set(!reflection.val);
+              }}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}></div>
+          <div className={'cmp-labeled-table__value'}>
+            <SliderAndNumberInput
+              value={round(reflectionStrength.val * 100)}
+              onChange={v => {
+                reflectionStrength.set(Number(v) / 100);
               }}
             />
           </div>

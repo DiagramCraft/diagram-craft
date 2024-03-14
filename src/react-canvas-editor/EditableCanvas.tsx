@@ -237,15 +237,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           <filter id={'reflection-filter'} filterUnits={'objectBoundingBox'}>
             <feGaussianBlur stdDeviation={0.5} />
           </filter>
-
-          <linearGradient id="reflection-grad" y2="1" x2="0">
-            <stop offset="0.65" stopColor="white" stopOpacity="0" />
-            <stop offset="1" stopColor="white" stopOpacity=".7" />
-          </linearGradient>
-
-          <mask id="reflection-mask" maskContentUnits="objectBoundingBox">
-            <rect width="1" height="1" fill="url(#reflection-grad)" />
-          </mask>
         </defs>
 
         <DocumentBounds />
