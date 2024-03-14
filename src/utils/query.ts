@@ -1,9 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+const isArray = Array.isArray;
+const isString = (s: unknown): s is string => typeof s === 'string';
+const isNumber = (s: unknown): s is number => typeof s === 'number';
+const isBoolean = (s: unknown): s is boolean => typeof s === 'boolean';
+const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && !isArray(x);
+
 /** Builtins *************************************************************************** */
 
 const builtins = [
-  'select(f): if f then . else empty end',
+  'select(f):if f then . else empty end',
   'paths:path(..)|select(length > 0)',
   'map(f):[.[]|f]',
   'del(f):delpaths([path(f)])',
@@ -15,16 +21,18 @@ const builtins = [
   'values:select(.!=null)',
   'nulls:select(.==null)',
   'booleans:select(type=="boolean")',
-  'while(c;u):def _i:if c then ., (u|_i) else empty end;_i',
+  'while(c;u):def _i:if c then .,(u|_i) else empty end;_i',
   'until(c;n):def _u:if c then . else (n|_u) end;_u',
   'transpose:[range(0;map(length)|max//0) as $i|[.[][$i]]]',
-  'INDEX(stream;ie):reduce stream as $row ({};.[$row|ie|tostring] = $row)',
+  'INDEX(s;ie):reduce s as $row ({};.[$row|ie|tostring] = $row)',
   'INDEX(ie):INDEX(.[];ie)',
   'JOIN($idx;ie):[.[]|[.,($idx[ie])]]',
   'JOIN($idx;stream;ie):stream|[.,$idx[ie]]',
-  'JOIN($idx;stream;ie;join_expr):stream|[.,$idx[ie]]|join_expr',
+  'JOIN($idx;stream;ie;je):stream|[.,$idx[ie]]|je',
   'IN(s):any(s==.;.)',
-  'IN(src;s):any(src==s;.)'
+  'IN(src;s):any(src==s;.)',
+  'join($x):reduce .[] as $i (null;(if .==null then "" else .+$x end)+($i|if type=="boolean" or type=="number" then tostring else .//"" end))//""',
+  'isempty(g):first((g|false),true)'
 ];
 
 /** Error handling ********************************************************************* */
@@ -55,15 +63,24 @@ type Errors = {
   208: 'Expected var';
   209: 'Expected negatable expression';
   210: 'Unknown function';
+  211: 'Cannot divide by zero';
+  212: 'Cannot set at index nan';
+  213: 'Invalid type';
+  214: 'Cannot index object by number';
+  215: 'Cannot add';
   301: 'Expected exactly one';
 };
 
-export const error = (code: keyof Errors, ...params: unknown[]) => {
-  return new Error(`${code}: ${params.join(', ')}`);
+export const error = (code: keyof Errors, ...params: unknown[]) =>
+  new Error(`${code}: ${params.join(', ')}`);
+
+const assertString = <T>(e: T): T => {
+  if (!isString(e)) throw error(213, e);
+  return e;
 };
 
 type ConstructorTypeOf<T> = new (...args: any[]) => T;
-function verifyOpType<T extends Generator>(
+function assertOpType<T extends Generator>(
   op: Generator,
   type: ConstructorTypeOf<T>
 ): asserts op is T {
@@ -78,7 +95,7 @@ const newid = () => `__${++lastId}`;
 type Result<T> = { value?: T; done?: boolean };
 
 const iterNth = <T>(iterable: Iterable<T>, n: number): Result<T> | undefined => {
-  if (n < 0) return { value: [...iterable].at(n) };
+  if (n < 0) return { value: Array.from(iterable).at(n) };
   const iterator = iterable[Symbol.iterator]();
 
   while (n-- > 0) {
@@ -89,14 +106,15 @@ const iterNth = <T>(iterable: Iterable<T>, n: number): Result<T> | undefined => 
 
 // To ensure no infinite loops
 const boundLoop = <T>(fn: () => T) => {
-  for (let i = 0; i < 1000; i++) {
+  let max = 1000;
+  while (max-- > 0) {
     const res = fn();
-    if (res !== undefined) return res;
+    if (res) return res;
   }
   throw error(100);
 };
 
-const safeNum = (s: any) => (isNaN(Number(s)) ? 0 : Number(s));
+const safeNum = (s: unknown) => (isNaN(Number(s)) ? 0 : Number(s));
 
 const shallowClone = (v: unknown) => (isArray(v) ? [...v] : isObj(v) ? { ...v } : v);
 
@@ -126,23 +144,17 @@ const exactOne = <T>(it: Iterable<T>): T => {
 
 const one = <T>(it: Iterable<T>): T | undefined => Array.from(it)[0];
 
-const isArray = Array.isArray;
-
-const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && !isArray(x);
-
 /** Data types ************************************************************************* */
 
 const asArray = (obj: unknown): unknown[] => {
   if (isArray(obj)) return obj;
-  else if (typeof obj === 'string') return obj.split('');
-  else {
-    throw error(205, obj);
-  }
+  else if (isString(obj)) return obj.split('');
+  else throw error(205, obj);
 };
 
 const indices = (lvs: unknown, rvs: unknown) => {
   let fn: (start: number) => number;
-  if (typeof lvs === 'string' && typeof rvs === 'string') {
+  if (isString(lvs) && isString(rvs)) {
     fn = c => lvs.indexOf(rvs, c);
   } else if (isArray(lvs) && !isArray(rvs)) {
     fn = c => lvs.indexOf(rvs, c);
@@ -171,20 +183,22 @@ const indices = (lvs: unknown, rvs: unknown) => {
 const repeat = (rvs: number, lvs: string) => (rvs < 0 || isNaN(rvs) ? undefined : lvs.repeat(rvs));
 
 const multiply = (lvs: unknown, rvs: unknown) => {
-  if (typeof lvs === 'string' && typeof rvs === 'number') {
-    return repeat(rvs, lvs);
-  }
-  if (typeof lvs === 'number' && typeof rvs === 'string') {
-    return repeat(lvs, rvs);
-  }
+  if (isString(lvs) && isNumber(rvs)) return repeat(rvs, lvs);
+  if (isNumber(lvs) && isString(rvs)) return repeat(lvs, rvs);
   return (lvs as number) * (rvs as number);
 };
 
 const divide = (lvs: unknown, rvs: unknown) => {
-  if (typeof lvs === 'string' && typeof rvs === 'string') {
+  if (isString(lvs) && isString(rvs)) {
     return lvs.split(rvs);
   }
+  if (rvs === 0) throw error(211);
   return (lvs as number) / (rvs as number);
+};
+
+const remainder = (a: unknown, b: unknown) => {
+  if (b === 0) throw error(211);
+  return (a as number) % (b as number);
 };
 
 const TYPE_ORDERING = ['false', 'true', 'number', 'string', 'array', 'object'];
@@ -192,7 +206,7 @@ const TYPE_ORDERING = ['false', 'true', 'number', 'string', 'array', 'object'];
 const sortType = (a: unknown): string => {
   if (a === null || a === undefined) return 'null';
   if (isArray(a)) return 'array';
-  return typeof a === 'boolean' ? a.toString() : typeof a;
+  return isBoolean(a) ? a.toString() : typeof a;
 };
 
 const compare = (lvs: unknown, rvs: unknown): number => {
@@ -232,7 +246,7 @@ const compare = (lvs: unknown, rvs: unknown): number => {
 };
 
 const contains = (a: unknown, b: unknown): boolean => {
-  if (typeof a === 'string' && typeof b === 'string') return a.includes(b);
+  if (isString(a) && isString(b)) return a.includes(b);
   if (isArray(a) && isArray(b)) return b.every(e => a.some(k => contains(k, e)));
   if (isObj(a) && isObj(b)) {
     return Object.entries(b).every(([key, val]) => contains(prop(a, key), val));
@@ -242,8 +256,13 @@ const contains = (a: unknown, b: unknown): boolean => {
 
 const add = (lvs: unknown, rvs: unknown) => {
   if (isArray(lvs) && isArray(rvs)) return [...lvs, ...rvs];
-  if (typeof lvs === 'string' && typeof rvs === 'string') return lvs + rvs;
+  if (isString(lvs) && isString(rvs)) return lvs + rvs;
   if (isObj(lvs) && isObj(rvs)) return { ...lvs, ...rvs };
+
+  // TODO: Can we simplify this logic
+  if ((lvs !== null && isObj(lvs)) || (rvs !== null && isObj(rvs)) || isArray(lvs) || isArray(rvs))
+    throw error(215);
+  if ((lvs === null || lvs === undefined) && (rvs === null || rvs === undefined)) return undefined;
   return safeNum(lvs) + safeNum(rvs);
 };
 
@@ -267,7 +286,7 @@ const checkValidIdx = (idx: unknown) => {
 const prop = (lvs: unknown, idx: unknown) => {
   checkValidIdx(idx);
 
-  if (isArray(lvs) && typeof idx === 'number') return lvs.at(idx);
+  if (isArray(lvs) && isNumber(idx)) return isNaN(idx) ? undefined : lvs.at(idx);
   if (isObj(lvs)) {
     return lvs instanceof Map ? lvs.get(idx) : lvs[idx as string];
   }
@@ -277,9 +296,12 @@ const prop = (lvs: unknown, idx: unknown) => {
 const setProp = (lvs: unknown, idx: unknown, rvs: unknown) => {
   checkValidIdx(idx);
 
-  if (isArray(lvs) && typeof idx === 'number') {
-    lvs[idx < 0 ? lvs.length + idx : idx] = rvs;
+  if (isArray(lvs) && isNumber(idx)) {
+    if (isNaN(idx)) throw error(212);
+    if (idx < 0 && lvs.length + idx < 0) throw error(202);
+    lvs[idx < 0 ? lvs.length + idx : Math.floor(idx)] = rvs;
   } else if (isObj(lvs)) {
+    if (isNumber(idx)) throw error(214);
     lvs instanceof Map ? lvs.set(idx, rvs) : (lvs[idx as string] = rvs);
   } else {
     throw error(203, lvs);
@@ -295,7 +317,7 @@ const propAndClone = (lvs: unknown, idx: unknown) => {
 const deleteProp = (lvs: unknown, idx: unknown) => {
   checkValidIdx(idx);
 
-  if (isArray(lvs) && typeof idx === 'number') {
+  if (isArray(lvs) && isNumber(idx)) {
     if (Math.abs(idx) >= lvs.length) return;
     lvs.splice(idx, 1);
   } else if (isObj(lvs)) {
@@ -314,7 +336,7 @@ const evalPath = (path: PathElement[], obj: unknown) => {
   return dest;
 };
 
-const mkObj = (p: PathElement) => (typeof p === 'number' ? [] : {});
+const mkObj = (p: PathElement) => (isNumber(p) ? [] : {});
 
 // TODO: Do we need to add step by step cloning in here
 const setPath = <T>(base: T | undefined, path: PathElement[], val: unknown): T => {
@@ -364,7 +386,7 @@ class Modification {
       if (!arr) {
         if (mod.path.length <= 1) continue;
 
-        arr = typeof last === 'number' ? [] : {};
+        arr = isNumber(last) ? [] : {};
 
         setPath(this.target, mod.path.slice(0, -1), arr);
       }
@@ -394,7 +416,7 @@ const some = (a: unknown[]) => a.some(b => !!b);
 
 const FN_REGISTRY: Record<string, FnRegistration> = {
   '../0': () => new RecursiveDescentOp(),
-  'abs/0': () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)),
+  'abs/0': () => new FnOp(a => (isNumber(a) ? Math.abs(a) : a)),
   'add/0': () => new BaseArrayOp(Array_Add),
   'all/0': () => new AnyAllOp([], every),
   'all/1': a => new AnyAllOp(a.args, every),
@@ -406,7 +428,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'contains/1': arg => new Fn1Op(arg, (a, b) => contains(a, b)),
   'cos/0': () => new MathOp(Math.cos),
   'delpaths/1': a => new DelPathsOp(a),
-  'empty/0': () => mkEmptyOp(),
+  'empty/0': () => new EmptyOp(),
   'endswith/1': a => new Fn1Op<string>(a, (a, b) => a.endsWith(b), true),
   'error/0': () => new ErrorOp(literal(ANONYMOUS_ERROR)),
   'error/1': a => new ErrorOp(a),
@@ -427,18 +449,20 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'has/1': arg => new Fn1Op(arg, (a, b) => (b as any) in (a as any)),
   'in/1': arg => new Fn1Op(arg, (a, b) => (a as any) in (b as any)),
   'indices/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)),
-  'index/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)[0]),
+  'index/1': a => new Fn1Op<string>(a, (a, b) => (a === '' ? undefined : indices(a, b)[0])),
   'isnan/0': () => new FnOp(a => isNaN(a as number)),
-  'join/1': a => new JoinOp(a),
   'keys/0': () => new KeysOp(),
   'last/0': () => new NthOp([literal(-1)], true),
   'last/1': a => new NthOp([literal(-1), ...a.args], true),
   'length/0': () => new LengthOp(),
   'log2/0': () => new MathOp(Math.log2),
-  'fabs/0': () => new FnOp(a => (typeof a === 'number' ? Math.abs(a) : a)),
+  'fabs/0': () => new FnOp(a => (isNumber(a) ? Math.abs(a) : a)),
   'limit/2': a => new LimitOp(a),
-  'ltrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.startsWith(b) ? a.slice(b.length) : a)),
-  'map_values/1': a => new MapValuesOp(a),
+  'ltrimstr/1': a =>
+    new Fn1Op<string>(a, (a, b) =>
+      assertString(a).startsWith(assertString(b)) ? a.slice(b.length) : a
+    ),
+  'map_values/1': a => new MapValuesOp([a]),
   'match/1': a => new MatchOp(a),
   'match/2': a => new MatchOp(a),
   'max/0': () => new BaseArrayOp(Array_Max),
@@ -448,8 +472,8 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'not/0': () => new FnOp(a => !isTrue(a)),
   'nth/1': a => new NthOp(a.args),
   'nth/2': a => new NthOp(a.args),
-  'path/1': a => new PathOp(a),
-  'pick/1': a => new PickOp(a),
+  'path/1': a => new PathOp([a]),
+  'pick/1': a => new PickOp([a]),
   'pow/2': arg => new Fn1Op<unknown, Value<number>[]>(arg, (_a, b) => Math.pow(b[0].val, b[1].val)),
   'range/1': a => new RangeOp([literal(0), a.args[0], literal(1)]),
   'range/2': a => new RangeOp([...a.args, literal(1)]),
@@ -457,8 +481,11 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'reverse/0': () => new FnOp(a => (isArray(a) ? [...a].reverse() : a)),
   'rindex/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b).at(-1)),
   'round/0': () => new MathOp(Math.round),
-  'rtrimstr/1': a => new Fn1Op<string>(a, (a, b) => (a.endsWith(b) ? a.slice(0, -b.length) : a)),
-  'setpath/2': a => new SetPathOp(a),
+  'rtrimstr/1': a =>
+    new Fn1Op<string>(a, (a, b) =>
+      assertString(a).endsWith(assertString(b)) ? a.slice(0, -b.length) : a
+    ),
+  'setpath/2': a => new SetPathOp(a.args),
   'sin/0': () => new MathOp(Math.sin),
   'sort/0': () => new FnOp(a => (isArray(a) ? [...a].sort(compare) : a)),
   'sort_by/1': a => new BaseArrayOp(Array_SortBy, a),
@@ -473,7 +500,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
     ),
   'tojson/0': () => new FnOp(a => JSON.stringify(a)),
   'tonumber/0': () => new FnOp(a => Number(a)),
-  'tostring/0': () => new FnOp(a => (typeof a === 'string' ? a : JSON.stringify(a))),
+  'tostring/0': () => new FnOp(a => (isString(a) ? a : JSON.stringify(a))),
   'type/0': () => new FnOp(a => (isArray(a) ? 'array' : a === null ? 'null' : typeof a)),
   'unique/0': () => new BaseArrayOp(Array_Unique),
   'unique_by/1': a => new BaseArrayOp(Array_Unique, a)
@@ -482,36 +509,36 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
 const BINOP_REGISTRY: Record<string, BinaryOpRegistration> = {
   '+': (l, r) => new BinaryOp(l, r, add),
   '-': (l, r) => new BinaryOp(l, r, subtract),
-  '%': (l, r) => new BinaryOp(l, r, (a, b) => (a as number) % (b as number)),
+  '%': (l, r) => new BinaryOp(l, r, remainder),
   '*': (l, r) => new BinaryOp(l, r, multiply),
   '/': (l, r) => new BinaryOp(l, r, divide),
-  '//': (l, r) => new AlternativeOp(l, r),
+  '//': (l, r) => new AlternativeOp([l, r]),
   '==': (l, r) => new BinaryOp(l, r, isEqual),
   '!=': (l, r) => new BinaryOp(l, r, isNotEqual),
   '>=': (l, r) => new BinaryOp(l, r, (a, b) => a >= b),
   '>': (l, r) => new BinaryOp(l, r, (a, b) => a > b),
   '<=': (l, r) => new BinaryOp(l, r, (a, b) => a <= b),
   '<': (l, r) => new BinaryOp(l, r, (a, b) => a < b),
-  and: (l, r) => new BinaryOp(l, r, (a, b) => !!(a && b)),
+  and: (l, r) => new AndOp([l, r]),
   or: (l, r) => new BinaryOp(l, r, (a, b) => !!(a || b)),
   '|': (l, r) => new PipeOp(l, r),
-  ',': (l, r) => new ConcatenationOp(l, r),
-  ';': (l, r) => new ConcatenationOp(l, r),
+  ',': (l, r) => new ConcatenationOp([l, r]),
   as: (l, r) => new VarBindingOp(r as VarRefOp | string, l),
-  '|=': (l, r) => new UpdateAssignmentOp(l, r),
-  '=': (l, r) => new AssignmentOp(l, r),
-  '+=': (l, r) => new UpdateAssignmentOp(l, new BinaryOp(new IdentityOp(), r, add)),
-  '-=': (l, r) => new UpdateAssignmentOp(l, new BinaryOp(new IdentityOp(), r, subtract)),
-  '*=': (l, r) => new UpdateAssignmentOp(l, new BinaryOp(new IdentityOp(), r, (a, b) => a * b)),
-  '/=': (l, r) => new UpdateAssignmentOp(l, new BinaryOp(new IdentityOp(), r, (a, b) => a / b)),
-  '%=': (l, r) => new UpdateAssignmentOp(l, new BinaryOp(new IdentityOp(), r, (a, b) => a % b)),
-  '//=': (l, r) => new UpdateAssignmentOp(l, new BinaryOp(new IdentityOp(), r, (a, b) => a ?? b))
+  '|=': (l, r) => new UpdateAssignmentOp([l, r]),
+  '=': (l, r) => new AssignmentOp([l, r]),
+  '+=': (l, r) => new UpdateAssignmentOp([l, new BinaryOp(new IdentityOp(), r, add)]),
+  '-=': (l, r) => new UpdateAssignmentOp([l, new BinaryOp(new IdentityOp(), r, subtract)]),
+  '*=': (l, r) => new UpdateAssignmentOp([l, new BinaryOp(new IdentityOp(), r, multiply)]),
+  '/=': (l, r) => new UpdateAssignmentOp([l, new BinaryOp(new IdentityOp(), r, divide)]),
+  '%=': (l, r) => new UpdateAssignmentOp([l, new BinaryOp(new IdentityOp(), r, remainder)]),
+  '//=': (l, r) => new UpdateAssignmentOp([l, new BinaryOp(new IdentityOp(), r, (a, b) => a ?? b)])
 };
 
 const BINOP_ORDERING = Object.fromEntries(
   [
     [';'],
-    [',', '|'],
+    ['|'],
+    [','],
     ['as'],
     ['//'],
     ['and', 'or'],
@@ -622,8 +649,6 @@ type FnDef = {
   bindings?: Bindings;
 };
 
-const isGenerator = (o: unknown): o is Generator => typeof o === 'object' && 'iter' in (o as any);
-
 type Bindings = Record<string, Value>;
 type Context = {
   bindings: Bindings;
@@ -636,19 +661,25 @@ type Value<T = unknown> = {
   path?: PathElement[];
 };
 
-const valueWithPath = (p: Value, v: unknown, pe: PathElement) => {
-  return { val: v, path: [...(p.path ?? []), pe] };
-};
-
 const value = <T>(v: T): Value<T> => ({ val: v });
+const valueWithPath = <T>(p: Value<T>, v: T, pe: PathElement) => ({
+  val: v,
+  path: [...(p.path ?? []), pe]
+});
 const values = (v: unknown[]) => v.map(value);
 
 interface Generator {
   iter(input: Iterable<Value>, context: Context): Iterable<Value>;
 }
 
+const isGenerator = (o: unknown): o is Generator => isObj(o) && 'iter' in (o as any);
+
 abstract class BaseGenerator<T extends Array<Value> = Value[]> implements Generator {
-  constructor(public readonly generators: Generator[] = []) {}
+  public readonly generators: Generator[];
+
+  constructor(generators: Generator | Generator[] = []) {
+    this.generators = isArray(generators) ? generators : [generators];
+  }
 
   *iter(input: Iterable<Value>, context: Context): Iterable<Value> {
     try {
@@ -668,30 +699,6 @@ abstract class BaseGenerator<T extends Array<Value> = Value[]> implements Genera
 
   *onElement(_e: Value, _args: T, _context: Context): Iterable<Value> {
     // Do nothing
-  }
-}
-
-abstract class BaseGenerator0 extends BaseGenerator<[]> {
-  constructor() {
-    super();
-  }
-
-  *onInput(e: Value, context: Context): Iterable<Value> {
-    yield* this.onElement(e, [], context);
-  }
-}
-
-abstract class BaseGenerator1<T = unknown> extends BaseGenerator<Value<T>[]> {
-  constructor(a: Generator) {
-    super([a]);
-  }
-}
-
-abstract class BaseGenerator2<A = unknown, B = unknown> extends BaseGenerator<
-  [Value<A>, Value<B>]
-> {
-  constructor(a: Generator, b: Generator) {
-    super([a, b]);
   }
 }
 
@@ -795,7 +802,9 @@ class PipeOp implements Generator {
 
   *iter(input: Iterable<Value>, context: Context) {
     try {
-      yield* this.right.iter(this.left.iter(input, context), context);
+      for (const e of this.left.iter(input, context)) {
+        yield* this.right.iter([e], context);
+      }
     } catch (e) {
       if (e instanceof Break && this.left instanceof LabelOp && e.label === this.left.label) {
         return;
@@ -814,43 +823,39 @@ class Operand implements Generator {
   }
 }
 
-class MathOp extends BaseGenerator0 {
-  constructor(private readonly fn: (a: number) => number) {
-    super();
-  }
-
-  *onElement({ val: v }: Value) {
-    yield value(this.fn(safeNum(v)));
-  }
-}
-
-class FnOp extends BaseGenerator0 {
+class FnOp extends BaseGenerator<[]> {
   constructor(private readonly fn: (a: unknown) => unknown) {
     super();
   }
 
-  *onElement({ val: v }: Value) {
-    yield value(this.fn(v));
+  *onElement(v: Value) {
+    yield value(this.fn(v.val));
   }
 }
 
-class AnyAllOp extends BaseGenerator0 {
+class MathOp extends FnOp {
+  constructor(fn: (a: number) => number) {
+    super(a => fn(safeNum(a)));
+  }
+}
+
+class AnyAllOp extends BaseGenerator {
   constructor(
-    private readonly args: Generator[],
+    args: Generator[],
     private fn: (a: unknown[]) => boolean
   ) {
-    super();
+    super(args);
   }
 
   *onInput(e: Value, context: Context): any {
     const arr: Value[] = [];
 
-    if (this.args.length <= 1) {
+    if (this.generators.length <= 1) {
       if (!isArray(e.val)) throw error(201);
       arr.push(...e.val);
     } else {
       try {
-        for (const v of this.args[0].iter([e], context)) {
+        for (const v of this.generators[0].iter([e], context)) {
           arr.push(v);
         }
       } catch (ex) {
@@ -861,70 +866,67 @@ class AnyAllOp extends BaseGenerator0 {
     return yield value(
       this.fn(
         arr.map(k =>
-          this.args.length === 0 ? k : exactOne(this.args.at(-1)!.iter([k], context)).val
+          this.generators.length === 0
+            ? k
+            : exactOne(this.generators.at(-1)!.iter([k], context)).val
         )
       )
     );
   }
 }
 
-class Fn1Op<A = unknown, B = A> extends BaseGenerator1<B> {
+class Fn1Op<A = unknown, B = A> extends BaseGenerator<[Value<B>]> {
   constructor(
     node: Generator,
     private readonly fn: (a: A, b: B) => unknown,
     private processArray = false
   ) {
-    super(node);
+    super([node]);
   }
 
-  *onElement({ val: v }: Value<A | A[]>, [{ val: arg }]: Value<B>[]) {
+  *onElement({ val: v }: Value<A | A[]>, [{ val: arg }]: [Value<B>]) {
     yield value(
       this.processArray && isArray(v) ? v.map(e => this.fn(e, arg)) : this.fn(v as A, arg)
     );
   }
 }
 
-class IdentityOp extends BaseGenerator0 {
+class IdentityOp extends BaseGenerator<[]> {
   *onElement(e: Value) {
     yield { val: e.val, path: e.path ?? [] };
   }
 }
 
-class PropertyLookupOp extends BaseGenerator1<string> {
-  *onElement(e: Value, [identifier]: [Value<string>]): Iterable<Value> {
-    try {
-      yield valueWithPath(e, prop(e.val, identifier.val), identifier.val);
-    } catch (err) {
-      if (e.val === undefined) return yield valueWithPath(e, undefined, identifier.val);
-      throw err;
-    }
+class PropertyLookupOp extends BaseGenerator<[Value<string>]> {
+  *onElement(e: Value, [{ val: identifier }]: [Value<string>]): Iterable<Value> {
+    yield valueWithPath(e, e.val === undefined ? undefined : prop(e.val, identifier), identifier);
   }
 }
 
-class ArraySliceOp extends BaseGenerator2<number, number> {
+class ArraySliceOp extends BaseGenerator<[Value<number>, Value<number>]> {
   constructor(
     r1: VarRefOp,
     r2: VarRefOp,
     private strict: boolean
   ) {
-    super(r1, r2);
+    super([r1, r2]);
   }
 
   *onElement(e: Value, [f, t]: [Value<number>, Value<number>]): any {
     const v = e.val;
-    if (!isArray(v) && typeof v !== 'string') {
+    if (!isArray(v) && !isString(v)) {
       if (this.strict) throw error(203);
       return v === undefined ? yield value(undefined) : undefined;
     }
     const pe = {
       start: Math.floor(f.val),
-      end: t.val === undefined ? v.length : Math.ceil(t.val)
+      end: t.val === undefined || isNaN(t.val) ? v.length : Math.ceil(t.val)
     };
     yield valueWithPath(e, v.slice(pe.start, pe.end), pe);
   }
 }
 
-class ArrayOp extends BaseGenerator0 {
+class ArrayOp extends BaseGenerator<[]> {
   *onInput(e: Value) {
     const v = e.val;
     if (!isArray(v)) throw error(201);
@@ -935,28 +937,26 @@ class ArrayOp extends BaseGenerator0 {
   }
 }
 
-class ConcatenationOp extends BaseGenerator2 {
+class ConcatenationOp extends BaseGenerator<[Value, Value]> {
   *onInput(e: Value, context: Context) {
     yield* this.generators[0].iter([e], context);
     yield* this.generators[1].iter([e], context);
   }
 }
 
-class ArrayConstructionOp extends BaseGenerator1 {
+class ArrayConstructionOp extends BaseGenerator<[Value]> {
   *onInput(e: Value, context: Context) {
-    yield value([...this.generators[0].iter([e], context)].map(k => k.val));
+    yield value(Array.from(this.generators[0].iter([e], context)).map(k => k.val));
   }
 }
 
-class PathOp extends BaseGenerator1 {
+class PathOp extends BaseGenerator<[Value]> {
   *onInput(e: Value, context: Context) {
-    for (const v of this.generators[0].iter([e], context)) {
-      yield value(v.path);
-    }
+    yield* Array.from(this.generators[0].iter([e], context)).map(k => value(k.path));
   }
 }
 
-class RecursiveDescentOp extends BaseGenerator0 {
+class RecursiveDescentOp extends BaseGenerator<[]> {
   *onInput(e: Value) {
     const dest: Value[] = [];
     this.recurse(e.val, dest, [...(e.path ?? [])]);
@@ -975,13 +975,24 @@ class RecursiveDescentOp extends BaseGenerator0 {
   }
 }
 
-class BinaryOp extends BaseGenerator2 {
+class AndOp extends BaseGenerator<[Value, Value]> {
+  *onInput(e: Value, context: Context): Iterable<Value> {
+    for (const left of this.generators[0].iter([e], context)) {
+      if (!isTrue(left.val)) return yield value(false);
+      for (const right of this.generators[1].iter([e], context)) {
+        return yield value(isTrue(right.val));
+      }
+    }
+  }
+}
+
+class BinaryOp extends BaseGenerator<[Value, Value]> {
   constructor(
     left: Generator,
     right: Generator,
     private readonly fn: (a: any, b: any) => any
   ) {
-    super(left, right);
+    super([left, right]);
   }
 
   *onElement(_e: Value, [{ val: l }, { val: r }]: [Value, Value]) {
@@ -999,7 +1010,7 @@ class LiteralOp implements Generator {
   }
 }
 
-class AlternativeOp extends BaseGenerator2 {
+class AlternativeOp extends BaseGenerator<[Value, Value]> {
   *onInput(e: Value, context: Context) {
     const res = [...this.generators[0].iter([e], context)];
     if (res.every(k => !k.val)) {
@@ -1008,11 +1019,11 @@ class AlternativeOp extends BaseGenerator2 {
   }
 }
 
-class LengthOp extends BaseGenerator0 {
+class LengthOp extends BaseGenerator<[]> {
   *onInput({ val: e }: Value) {
     if (e === undefined || e === null) {
       yield value(0);
-    } else if (isArray(e) || typeof e === 'string') {
+    } else if (isArray(e) || isString(e)) {
       yield value(e.length);
     } else if (!isNaN(Number(e))) {
       yield value(Math.abs(Number(e)));
@@ -1022,19 +1033,19 @@ class LengthOp extends BaseGenerator0 {
   }
 }
 
-class ErrorOp extends BaseGenerator1 {
+class ErrorOp extends BaseGenerator<[Value]> {
   // eslint-disable-next-line require-yield
   *onElement(_e: Value, [arg]: [Value]) {
     throw arg.val;
   }
 }
 
-class VarBindingOp extends BaseGenerator1 {
+class VarBindingOp extends BaseGenerator<[Value]> {
   constructor(
-    public readonly target: Generator | string,
+    public readonly target: VarRefOp | ObjectLiteralOp | string,
     node: Generator
   ) {
-    super(node);
+    super([node]);
   }
 
   *onElement(el: Value, [v]: [Value], context: Context) {
@@ -1055,7 +1066,7 @@ class VarBindingOp extends BaseGenerator1 {
 
       for (const pv of resolvedValues) {
         if (!(pv.val instanceof VarRefOp)) throw error(208);
-        context.bindings[(pv.val as VarRefOp).id] = value(evalPath(pv.path, v.val));
+        context.bindings[pv.val.id] = value(evalPath(pv.path, v.val));
       }
     } else {
       throw error(207);
@@ -1063,7 +1074,7 @@ class VarBindingOp extends BaseGenerator1 {
   }
 
   public getId(): string | undefined {
-    return typeof this.target === 'string' ? this.target : (this.target as VarRefOp).id;
+    return isString(this.target) ? this.target : (this.target as VarRefOp).id;
   }
 }
 
@@ -1077,11 +1088,11 @@ class VarBindingOp extends BaseGenerator1 {
        in the context of the val
 */
 const normalizePath = (val: Value, assignTo: Value) =>
-  typeof assignTo.path![0] === 'number' && val.path && typeof val.path![0] === 'number'
+  isNumber(assignTo.path![0]) && val.path && isNumber(val.path![0])
     ? assignTo.path!.slice(1)
     : assignTo.path!;
 
-class UpdateAssignmentOp extends BaseGenerator2 {
+class UpdateAssignmentOp extends BaseGenerator<[Value, Value]> {
   *onInput(e: Value, context: Context) {
     const mod = new Modification(shallowClone(e.val ?? {}));
 
@@ -1099,7 +1110,7 @@ class UpdateAssignmentOp extends BaseGenerator2 {
   }
 }
 
-class AssignmentOp extends BaseGenerator2 {
+class AssignmentOp extends BaseGenerator<[Value, Value]> {
   *onInput(e: Value, context: Context) {
     const lh = [...this.generators[0].iter([e], context)];
     for (const r of this.generators[1].iter([e], context)) {
@@ -1116,36 +1127,30 @@ class ArgListOp implements Generator {
   constructor(public readonly args: Generator[]) {}
 
   *iter(input: Iterable<Value>, context: Context): Iterable<Value> {
-    try {
-      if (this.args.length === 1) {
-        yield* this.args[0].iter(input, context);
-      } else {
-        yield* iterateAll(this.args, input, context);
-      }
-    } catch (e) {
-      handleError(e);
+    if (this.args.length === 1) {
+      yield* this.args[0].iter(input, context);
+    } else {
+      yield* iterateAll(this.args, input, context);
     }
   }
 }
 
-class BaseArrayOp extends BaseGenerator1 {
+class BaseArrayOp extends BaseGenerator<[Value]> {
   constructor(
     private readonly fn: ArrayFn,
     node: Generator = new IdentityOp()
   ) {
-    super(node);
+    super([node]);
   }
 
   *onInput(el: Value, context: Context): Iterable<Value> {
     if (!isArray(el.val)) return yield el;
-    const res = this.fn(
+    yield* this.fn(
       el.val.map(e => ({
         val: e,
         keys: [...this.generators[0].iter([value(e)], context)].map(e => e.val)
       }))
-    );
-
-    for (const e of res) yield value(e);
+    ).map(value);
   }
 }
 
@@ -1178,12 +1183,12 @@ const Array_SortBy: ArrayFn<unknown, [unknown[]]> = arr => [
   arr.sort((e1, e2) => compare(e1.keys, e2.keys)).map(e => e.val)
 ];
 
-class MatchOp extends BaseGenerator2<string, string | undefined> {
+class MatchOp extends BaseGenerator<[Value<string>, Value<string | undefined>]> {
   constructor(
     args: ArgListOp,
     private readonly onlyTest = false
   ) {
-    super(args.args[0], args.args[1] ?? literal(''));
+    super([args.args[0], args.args[1] ?? literal('')]);
   }
 
   *onElement({ val: v }: Value<string>, [re, flags]: [Value<string>, Value<string | undefined>]) {
@@ -1208,12 +1213,12 @@ class MatchOp extends BaseGenerator2<string, string | undefined> {
   }
 }
 
-class NthOp extends BaseGenerator1<number> {
+class NthOp extends BaseGenerator<[Value<number>]> {
   constructor(
     private readonly args: Generator[],
     private allowNegative: boolean = false
   ) {
-    super(args[0]);
+    super([args[0]]);
   }
 
   *onElement(val: Value, [index]: [Value<number>], context: Context) {
@@ -1229,14 +1234,14 @@ class NthOp extends BaseGenerator1<number> {
   }
 }
 
-class FlattenOp extends BaseGenerator1<number> {
+class FlattenOp extends BaseGenerator<[Value<number>]> {
   *onElement({ val: v }: Value, [arg]: [Value<number>]) {
     if (arg.val < 0) throw error(206);
     yield value(isArray(v) ? v.flat(arg.val) : v);
   }
 }
 
-class ObjectLiteralOp extends BaseGenerator0 {
+class ObjectLiteralOp extends BaseGenerator<[]> {
   constructor(public readonly values: PathAndValue[]) {
     super();
   }
@@ -1262,25 +1267,14 @@ class ObjectLiteralOp extends BaseGenerator0 {
   }
 }
 
-class JoinOp extends BaseGenerator1<string> {
-  *onElement({ val: v }: Value, [r]: [Value<string>]) {
-    yield value(isArray(v) ? v.join(r.val) : v);
-  }
-}
-
-class KeysOp extends BaseGenerator0 {
+class KeysOp extends BaseGenerator<[]> {
   *onElement({ val: el }: Value) {
-    if (el && typeof el === 'object')
-      yield value(
-        Object.keys(el)
-          .sort()
-          .map(e => (isArray(el) ? Number(e) : e))
-      );
-    else yield value(el);
+    const transform = (e: unknown) => (isArray(el) ? Number(e) : e);
+    yield el && typeof el === 'object' ? value(Object.keys(el).sort().map(transform)) : value(el);
   }
 }
 
-class MapValuesOp extends BaseGenerator1 {
+class MapValuesOp extends BaseGenerator<[Value]> {
   *onInput({ val: v }: Value, context: Context): Iterable<Value> {
     if (isObj(v)) {
       yield value(
@@ -1299,7 +1293,7 @@ class MapValuesOp extends BaseGenerator1 {
   }
 }
 
-class VarRefOp extends BaseGenerator0 {
+class VarRefOp extends BaseGenerator<[]> {
   constructor(public readonly id: string) {
     super();
   }
@@ -1309,7 +1303,7 @@ class VarRefOp extends BaseGenerator0 {
   }
 }
 
-class FunctionCallOp extends BaseGenerator0 {
+class FunctionCallOp extends BaseGenerator<[]> {
   constructor(
     public readonly id: string,
     public readonly arg?: ArgListOp
@@ -1340,7 +1334,7 @@ class FunctionCallOp extends BaseGenerator0 {
   }
 }
 
-class FunctionDefOp extends BaseGenerator0 {
+class FunctionDefOp extends BaseGenerator<[]> {
   constructor(
     public readonly id: string,
     public readonly args: string[],
@@ -1382,15 +1376,17 @@ class RangeOp extends BaseGenerator {
   }
 }
 
-// TODO: Why is this a function?
-const mkEmptyOp = () =>
-  new FnOp(() => {
-    throw BACKTRACK_ERROR;
-  });
+class EmptyOp extends FnOp {
+  constructor() {
+    super(() => {
+      throw BACKTRACK_ERROR;
+    });
+  }
+}
 
-class LimitOp extends BaseGenerator1 {
+class LimitOp extends BaseGenerator<[Value, Value]> {
   constructor(private readonly node: ArgListOp) {
-    super(node.args[0]);
+    super([node.args[0]]);
   }
 
   *onElement(el: Value, [M]: Value[], context: Context) {
@@ -1404,7 +1400,7 @@ class LimitOp extends BaseGenerator1 {
   }
 }
 
-class ParenExpressionOp extends BaseGenerator1 {
+class ParenExpressionOp extends BaseGenerator<[Value]> {
   *onInput(e: Value, context: Context) {
     yield* this.generators[0].iter([e], { ...context, bindings: { ...context.bindings } });
   }
@@ -1452,13 +1448,13 @@ class IfOp extends BaseGenerator {
   }
 }
 
-class GetPathOp extends BaseGenerator1<PathElement[]> {
+class GetPathOp extends BaseGenerator<[Value<PathElement[]>]> {
   *onElement(input: Value, [path]: [Value<PathElement[]>], _context: Context): Iterable<Value> {
     yield value(evalPath(path.val, input.val as PathElement[]));
   }
 }
 
-class DelPathsOp extends BaseGenerator1<PathElement[][]> {
+class DelPathsOp extends BaseGenerator<[Value<PathElement[][]>]> {
   *onElement(input: Value, [paths]: [Value<PathElement[][]>], _context: Context): Iterable<Value> {
     const mod = new Modification(shallowClone(input.val));
 
@@ -1471,11 +1467,7 @@ class DelPathsOp extends BaseGenerator1<PathElement[][]> {
   }
 }
 
-class SetPathOp extends BaseGenerator2<PathElement[]> {
-  constructor(n: ArgListOp) {
-    super(n.args[0], n.args[1]);
-  }
-
+class SetPathOp extends BaseGenerator<[Value<PathElement[]>, Value<PathElement[]>]> {
   *onElement(input: Value, [path, v]: [Value<PathElement[]>, Value], _context: Context) {
     const mod = new Modification(shallowClone(input.val));
     mod.set(path.val, v.val);
@@ -1483,7 +1475,7 @@ class SetPathOp extends BaseGenerator2<PathElement[]> {
   }
 }
 
-class ReduceOp extends BaseGenerator0 {
+class ReduceOp extends BaseGenerator<[]> {
   constructor(
     private readonly source: VarBindingOp,
     private readonly init: Generator,
@@ -1505,7 +1497,7 @@ class ReduceOp extends BaseGenerator0 {
   }
 }
 
-class ForeachOp extends BaseGenerator0 {
+class ForeachOp extends BaseGenerator<[]> {
   constructor(
     private readonly exp: VarBindingOp,
     private readonly init: Generator,
@@ -1539,7 +1531,7 @@ class LabelOp implements Generator {
   }
 }
 
-class PickOp extends BaseGenerator1 {
+class PickOp extends BaseGenerator<[Value]> {
   *onInput(e: Value, context: Context) {
     let dest: unknown = undefined;
     for (const { path: p } of this.generators[0].iter([e], context)) {
@@ -1551,7 +1543,7 @@ class PickOp extends BaseGenerator1 {
 
 class UnaryMinusOp extends BaseGenerator {
   *onElement(_e: Value, [r]: Value[]) {
-    if (typeof r.val !== 'number') throw error(209);
+    if (!isNumber(r.val)) throw error(209);
     yield value(-safeNum(r.val));
   }
 }
@@ -1585,7 +1577,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
 
       if (tokenizer.accept('[')) {
         if (gen.length === 0) {
-          gen.push(new ArrayConstructionOp(parseTo(']', tokenizer, functions)));
+          gen.push(new ArrayConstructionOp([parseTo(']', tokenizer, functions)]));
         } else if (tokenizer.accept(']')) {
           gen.push(new ArrayOp());
         } else {
@@ -1606,20 +1598,22 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
             );
           } else {
             tokenizer.expect(']');
-            gen.push(new PropertyLookupOp(new VarRefOp(startId)));
+            gen.push(new PropertyLookupOp([new VarRefOp(startId)]));
           }
         }
       } else if (tokenizer.accept('?')) {
-        gen[gen.length - 1] = new TryCatchOp(new Operand([gen.at(-1)!]), mkEmptyOp());
+        gen[gen.length - 1] = new TryCatchOp(new Operand([gen.at(-1)!]), new EmptyOp());
       } else if (tokenizer.accept('(')) {
-        gen.push(new ParenExpressionOp(parseTo(')', tokenizer, functions)));
+        gen.push(new ParenExpressionOp([parseTo(')', tokenizer, functions)]));
       } else if (tok.s === '.') {
         tokenizer.next(false);
 
         const tok = tokenizer.peek();
         if (tok.type === 'id' || tok.type === 'str') {
           tokenizer.next();
-          gen.push(new PropertyLookupOp(literal(tok.type === 'str' ? tok.s.slice(1, -1) : tok.s)));
+          gen.push(
+            new PropertyLookupOp([literal(tok.type === 'str' ? tok.s.slice(1, -1) : tok.s)])
+          );
         } else {
           gen.push(new IdentityOp());
         }
@@ -1630,7 +1624,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         gen.push(
           new TryCatchOp(
             body,
-            tokenizer.accept('catch') ? parseOperand(tokenizer, functions) : mkEmptyOp()
+            tokenizer.accept('catch') ? parseOperand(tokenizer, functions) : new EmptyOp()
           )
         );
       } else if (tokenizer.accept('if')) {
@@ -1690,13 +1684,13 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         return true;
       } else if (tokenizer.accept('reduce')) {
         const assignment = parseExpression(tokenizer, functions);
-        verifyOpType(assignment, VarBindingOp);
+        assertOpType(assignment, VarBindingOp);
 
         const [arg1, arg2] = parseArgList(tokenizer, functions);
         gen.push(new ReduceOp(assignment, arg1, arg2));
       } else if (tokenizer.accept('foreach')) {
         const exp = parseExpression(tokenizer, functions);
-        verifyOpType(exp, VarBindingOp);
+        assertOpType(exp, VarBindingOp);
 
         const [init, update, extract] = parseArgList(tokenizer, functions);
         gen.push(new ForeachOp(exp, init, update, extract));
@@ -1725,7 +1719,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
             dest.push(
               new PipeOp(
                 parseExpression(tokenizer, functions),
-                new FnOp(a => (typeof a === 'string' ? a : JSON.stringify(a)))
+                new FnOp(a => (isString(a) ? a : JSON.stringify(a)))
               )
             );
             r = tokenizer.head.slice(1);
@@ -1740,6 +1734,8 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         }
       } else if (tokenizer.accept('null')) {
         gen.push(literal(null));
+      } else if (tokenizer.accept('infinite')) {
+        gen.push(literal(Number.POSITIVE_INFINITY));
       } else if (tokenizer.accept('false')) {
         gen.push(literal(false));
       } else if (tokenizer.accept('true')) {
@@ -1748,7 +1744,7 @@ const parseOperand = (tokenizer: Tokenizer, functions: Record<string, number>): 
         /* FUNCTIONS ************************************************************************** */
       } else if (tok.type === 'id') {
         const origHead = tokenizer.head;
-        tokenizer.next();
+        tokenizer.next(false);
 
         const argList = new ArgListOp(parseArgList(tokenizer, functions));
 
@@ -1832,7 +1828,7 @@ export const parse = (query: string, includeBuiltins = true): Generator => {
     if (l === tokenizer.head.length) throw error(103, tokenizer.head);
   }
 
-  return op.reduceRight((a, b) => new ConcatenationOp(b, a));
+  return op.reduceRight((a, b) => new ConcatenationOp([b, a]));
 };
 
 export const parseAndQuery = (q: string, input: unknown[], bindings?: Record<string, unknown>) => {

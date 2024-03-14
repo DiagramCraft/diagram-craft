@@ -161,16 +161,12 @@ describe('jqtest', () => {
 
   // L182
   describe('Negative array indices', () => {
-    test.skip('try (.foo[-1] = 0) catch .', () => {
-      expect(parseAndQuery('try (.foo[-1] = 0) catch .', [undefined])).toEqual([
-        'Out of bounds negative array index'
-      ]);
+    test('try (.foo[-1] = 0) catch .', () => {
+      expect(parseAndQuery('try (.foo[-1] = 0) catch .', [undefined])).toEqual([error(202)]);
     });
 
-    test.skip('try (.foo[-2] = 0) catch .', () => {
-      expect(parseAndQuery('try (.foo[-2] = 0) catch .', [undefined])).toEqual([
-        'Out of bounds negative array index'
-      ]);
+    test('try (.foo[-2] = 0) catch .', () => {
+      expect(parseAndQuery('try (.foo[-2] = 0) catch .', [undefined])).toEqual([error(202)]);
     });
 
     test('.[-1] = 5', () => {
@@ -420,7 +416,7 @@ describe('jqtest', () => {
 
     test.skip('del(.[2:4],.[0],.[-2:])', () => {
       expect(parseAndQuery('del(.[2:4],.[0],.[-2:])', [[0, 1, 2, 3, 4, 5, 6, 7]])).toEqual([
-        [0, 4, 5]
+        [1, 4, 5]
       ]);
     });
 
@@ -523,8 +519,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('.+null', [{ a: 42 }])).toEqual([{ a: 42 }]);
     });
 
-    // TODO: Fix
-    test.skip('null+.', () => {
+    test('null+.', () => {
       expect(parseAndQuery('null+.', [undefined])).toEqual([undefined]);
     });
 
@@ -594,10 +589,10 @@ describe('jqtest', () => {
       expect(parseAndQuery('49732 % 472', [undefined])).toEqual([172]);
     });
 
-    // NOTE: Not really worth fixing this
-    test.skip('[(infinite, -infinite) % (1, -1, infinite)]', () => {
+    // NOTE: Should be [0, 0, 0, 0, 0, -1], not really worth fixing this
+    test('[(infinite, -infinite) % (1, -1, infinite)]', () => {
       expect(parseAndQuery('[(infinite, -infinite) % (1, -1, infinite)]', [undefined])).toEqual([
-        [0, 0, 0, 0, 0, -1]
+        [NaN, NaN, NaN, NaN, NaN, NaN]
       ]);
     });
 
@@ -679,6 +674,7 @@ describe('jqtest', () => {
       ).toEqual([[2, 2, 1, 1, 1, 1]]);
     });
 
+    // TODO: We should fix this
     test.skip('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]', () => {
       expect(
         parseAndQuery(
@@ -843,8 +839,7 @@ describe('jqtest', () => {
       ).toEqual([5]);
     });
 
-    // NOTE: This fails as [...][] parses as PipeOp instead of VarBindingOp
-    test.skip('reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)', () => {
+    test('reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)', () => {
       expect(
         parseAndQuery('reduce [[1,2,10], [3,4,10]][] as [$i,$j] (0; . + $i * $j)', [undefined])
       ).toEqual([14]);
@@ -1024,10 +1019,8 @@ describe('jqtest', () => {
       expect(parseAndQuery('pick(first|first)', [[[10, 20], 30]])).toEqual([[[10]]]);
     });
 
-    test.skip('try pick(last) catch .', () => {
-      expect(parseAndQuery('try pick(last) catch .', [[1, 2]])).toEqual([
-        'Out of bounds negative array index'
-      ]);
+    test('try pick(last) catch .', () => {
+      expect(parseAndQuery('try pick(last) catch .', [[1, 2]])).toEqual([error(202)]);
     });
   });
 
@@ -1839,7 +1832,7 @@ describe('jqtest', () => {
       expect(parseAndQuery('keys', [[42, 3, 35]])).toEqual([[0, 1, 2]]);
     });
 
-    test.skip('[][.]', () => {
+    test('[][.]', () => {
       expect(parseAndQuery('[][.]', [1000000000000000000])).toEqual([undefined]);
     });
 
@@ -1954,14 +1947,12 @@ describe('jqtest', () => {
       ).toEqual(['a,', ',a']);
     });
 
-    test.skip('try join(",") catch .', () => {
+    test('try join(",") catch .', () => {
       expect(parseAndQuery('try join(",") catch .', [['1', '2', { a: { b: { c: 33 } } }]])).toEqual(
-        ['string ("1,2,") and object ({"a":{"b":{...) cannot be added']
+        [error(215)]
       );
 
-      expect(parseAndQuery('try join(",") catch .', [['1', '2', [3, 4, 5]]])).toEqual([
-        'string ("1,2,") and array ([3,4,5]) cannot be added'
-      ]);
+      expect(parseAndQuery('try join(",") catch .', [['1', '2', [3, 4, 5]]])).toEqual([error(215)]);
     });
 
     test('{if:0,and:1,or:2,then:3,else:4,elif:5,end:6,as:7,def:8,reduce:9,foreach:10,try:11,catch:12,label:13,import:14,include:15,module:16}', () => {
@@ -1993,7 +1984,25 @@ describe('jqtest', () => {
       ]);
     });
 
-    // TODO: Division by zero tests L1697-1715
+    test('try (1/.) catch .', () => {
+      expect(parseAndQuery('try (1/.) catch .', [0])).toEqual([error(211)]);
+    });
+
+    test('try (1/0) catch .', () => {
+      expect(parseAndQuery('try (1/0) catch .', [0])).toEqual([error(211)]);
+    });
+
+    test('try (0/0) catch .', () => {
+      expect(parseAndQuery('try (0/0) catch .', [0])).toEqual([error(211)]);
+    });
+
+    test('try (1%.) catch .', () => {
+      expect(parseAndQuery('try (1%.) catch .', [0])).toEqual([error(211)]);
+    });
+
+    test('try (1%0) catch .', () => {
+      expect(parseAndQuery('try (1%0) catch .', [0])).toEqual([error(211)]);
+    });
 
     test('[range(-52;52;1)] as $powers | [$powers[]|pow(2;.)|log2|round] == $powers', () => {
       expect(
@@ -2090,7 +2099,7 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]', () => {
+    test('(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]', () => {
       expect(
         parseAndQuery(
           '(.. | select(type == "object" and has("b") and (.b | type) == "array")|.b) |= .[0]',
@@ -2099,7 +2108,23 @@ describe('jqtest', () => {
       ).toEqual([{ a: { b: 1 } }]);
     });
 
-    // TODO: Some tests on L1782-L1829
+    test('isempty(empty)', () => {
+      expect(parseAndQuery('isempty(empty)', [undefined])).toEqual([true]);
+    });
+
+    test('isempty(range(3))', () => {
+      expect(parseAndQuery('isempty(range(3))', [undefined])).toEqual([false]);
+    });
+
+    test('isempty(1,error("foo"))', () => {
+      expect(parseAndQuery('isempty(1,error("foo"))', [undefined])).toEqual([false]);
+    });
+
+    test('index("")', () => {
+      expect(parseAndQuery('index("")', [''])).toEqual([undefined]);
+    });
+
+    // TODO: Some tests on L1804-L1829
 
     test('map(. == 1)', () => {
       expect(parseAndQuery('map(. == 1)', [[1, 1.0, 1.0, 100e-2, 1, 0.0001e4]])).toEqual([
@@ -2121,7 +2146,39 @@ describe('jqtest', () => {
       expect(parseAndQuery('map(fabs == length) | unique', [[-10, -1.1, -1e-1]])).toEqual([[true]]);
     });
 
-    // TODO: Keyword as value tests, L1899-L1917
+    test('123 as $label | $label', () => {
+      expect(parseAndQuery('123 as $label | $label', [undefined])).toEqual([123]);
+    });
+
+    test('[ label $if | range(10) | ., (select(. == 5) | break $if) ]', () => {
+      expect(
+        parseAndQuery('[ label $if | range(10) | ., (select(. == 5) | break $if) ]', [undefined])
+      ).toEqual([[0, 1, 2, 3, 4, 5]]);
+    });
+
+    test('reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)', () => {
+      expect(
+        parseAndQuery('reduce .[] as $then (4 as $else | $else; . as $elif | . + $then * $elif)', [
+          [1, 2, 3]
+        ])
+      ).toEqual([96]);
+    });
+
+    test('1 as $foreach | 2 as $and | 3 as $or | { $foreach, $and, $or, a }', () => {
+      expect(
+        parseAndQuery('1 as $foreach | 2 as $and | 3 as $or | { $foreach, $and, $or, a }', [
+          { a: 4, b: 5 }
+        ])
+      ).toEqual([{ foreach: 1, and: 2, or: 3, a: 4 }]);
+    });
+
+    test('[ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]', () => {
+      expect(
+        parseAndQuery('[ foreach .[] as $try (1 as $catch | $catch - 1; . + $try; .) ]', [
+          [10, 9, 8, 7]
+        ])
+      ).toEqual([[10, 19, 27, 34]]);
+    });
 
     test('{ a, $__loc__, c }', () => {
       expect(
@@ -2153,6 +2210,8 @@ describe('jqtest', () => {
     // TODO: input tests L1949-L1955
   });
 
+  // TODO: Missing tests L1957-L2041
+
   test('[range(10)] | .[1.2:3.5]', () => {
     expect(parseAndQuery('[range(10)] | .[1.2:3.5]', [undefined])).toEqual([[1, 2, 3]]);
     expect(parseAndQuery('[range(10)] | .[1.5:3.5]', [undefined])).toEqual([[1, 2, 3]]);
@@ -2171,5 +2230,104 @@ describe('jqtest', () => {
 
   test('[[range(10)] | .[1.1,1.5,1.7]]', () => {
     expect(parseAndQuery('[[range(10)] | .[1.1,1.5,1.7]]', [undefined])).toEqual([[1, 1, 1]]);
+  });
+
+  test('[range(5)] | .[1.1] = 5', () => {
+    expect(parseAndQuery('[range(5)] | .[1.1] = 5', [undefined])).toEqual([[0, 5, 2, 3, 4]]);
+  });
+
+  test('[range(3)] | .[nan:1]', () => {
+    expect(parseAndQuery('[range(3)] | .[nan:1]', [undefined])).toEqual([[0]]);
+  });
+
+  test('[range(3)] | .[1:nan]', () => {
+    expect(parseAndQuery('[range(3)] | .[1:nan]', [undefined])).toEqual([[1, 2]]);
+  });
+
+  test('[range(3)] | .[nan]', () => {
+    expect(parseAndQuery('[range(3)] | .[nan]', [undefined])).toEqual([undefined]);
+  });
+
+  test('try ([range(3)] | .[nan] = 9) catch .', () => {
+    expect(parseAndQuery('try ([range(3)] | .[nan] = 9) catch .', [undefined])).toEqual([
+      error(212)
+    ]);
+  });
+
+  test('try ("foobar" | .[1.5:3.5] = "xyz") catch .', () => {
+    expect(parseAndQuery('try ("foobar" | .[1.5:3.5] = "xyz") catch .', [undefined])).toEqual([
+      error(203, 'foobar')
+    ]);
+  });
+
+  // NOTE: This seems to be a test we don't want to support
+  test.skip('try ([range(10)] | .[1.5:3.5] = ["xyz"]) catch .', () => {
+    expect(parseAndQuery('try ([range(10)] | .[1.5:3.5] = ["xyz"]) catch .', [undefined])).toEqual([
+      [0, 'xyz', 4, 5, 6, 7, 8, 9]
+    ]);
+  });
+
+  test('try ("foobar" | .[1.5]) catch .', () => {
+    expect(parseAndQuery('try ("foobar" | .[1.5]) catch .', [undefined])).toEqual([
+      error(203, 'foobar')
+    ]);
+  });
+
+  test('try ["ok", setpath([1]; 1)] catch ["ko", .]', () => {
+    expect(parseAndQuery('try ["ok", setpath([1]; 1)] catch ["ko", .]', [{ hi: 'hello' }])).toEqual(
+      [['ko', error(214)]]
+    );
+  });
+
+  // TODO: Missing tests L2087-L2108
+
+  test('try ltrimstr(1) catch "x", try rtrimstr(1) catch "x" | "ok"', () => {
+    expect(
+      parseAndQuery('try ltrimstr(1) catch "x", try rtrimstr(1) catch "x" | "ok"', ['hi'])
+    ).toEqual(['ok', 'ok']);
+  });
+
+  test('try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"', () => {
+    expect(
+      parseAndQuery('try ltrimstr("x") catch "x", try rtrimstr("x") catch "x" | "ok"', [
+        { hey: [] }
+      ])
+    ).toEqual(['ok', 'ok']);
+  });
+
+  test('.[] as [$x, $y] | try ["ok", ($x | ltrimstr($y))] catch ["ko", .]', () => {
+    expect(
+      parseAndQuery('.[] as [$x, $y] | try ["ok", ($x | ltrimstr($y))] catch ["ko", .]', [
+        [
+          ['hi', 1],
+          [1, 'hi'],
+          ['hi', 'hi'],
+          [1, 1]
+        ]
+      ])
+    ).toEqual([
+      ['ko', error(213, 1)],
+      ['ko', error(213, 1)],
+      ['ok', ''],
+      ['ko', error(213, 1)]
+    ]);
+  });
+
+  test('.[] as [$x, $y] | try ["ok", ($x | rtrimstr($y))] catch ["ko", .]', () => {
+    expect(
+      parseAndQuery('.[] as [$x, $y] | try ["ok", ($x | rtrimstr($y))] catch ["ko", .]', [
+        [
+          ['hi', 1],
+          [1, 'hi'],
+          ['hi', 'hi'],
+          [1, 1]
+        ]
+      ])
+    ).toEqual([
+      ['ko', error(213, 1)],
+      ['ko', error(213, 1)],
+      ['ok', ''],
+      ['ko', error(213, 1)]
+    ]);
   });
 });

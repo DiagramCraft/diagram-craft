@@ -791,8 +791,7 @@ describe('complex use-cases', () => {
     ).toEqual([{ id: '2', type: 'abc', _drilldown: ['a'] }]);
   });
 
-  // TODO: Add support for this somehow
-  test.skip('.elements[] | select(.id == ["2", "4"][])', () => {
+  test('.elements[] | select(.id == ["2", "4"][])', () => {
     const data = {
       elements: [{ id: '2' }, { id: '3' }, { id: '4' }]
     };
