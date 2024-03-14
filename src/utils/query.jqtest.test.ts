@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { error, parseAndQuery } from './query.ts';
 
-// Missing:
-//   - undefined instead of null
-
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
 describe('jqtest', () => {
@@ -674,7 +671,6 @@ describe('jqtest', () => {
       ).toEqual([[2, 2, 1, 1, 1, 1]]);
     });
 
-    // TODO: We should fix this
     test.skip('def f: 1; def g: f, def f: 2; def g: 3; f, def f: g; f, g; def f: 4; [f, def f: g; def g: 5; f, g]+[f,g]', () => {
       expect(
         parseAndQuery(
@@ -1089,14 +1085,14 @@ describe('jqtest', () => {
       ]);
     });
 
-    test.skip('.[] | try (getpath(["a",0,"b"]) |= 5) catch .', () => {
+    test('.[] | try (getpath(["a",0,"b"]) |= 5) catch .', () => {
       expect(
         parseAndQuery('.[] | try (getpath(["a",0,"b"]) |= 5) catch .', [
           [
-            null,
+            undefined,
             { b: 0 },
             { a: 0 },
-            { a: null },
+            { a: undefined },
             { a: [0, 1] },
             { a: { b: 1 } },
             { a: [{}] },
@@ -1106,10 +1102,10 @@ describe('jqtest', () => {
       ).toEqual([
         { a: [{ b: 5 }] },
         { b: 0, a: [{ b: 5 }] },
-        'Cannot index number with number',
+        error(203, 0),
         { a: [{ b: 5 }] },
-        'Cannot index number with string "b"',
-        'Cannot index object with number',
+        error(203, 0),
+        error(214),
         { a: [{ b: 5 }] },
         { a: [{ c: 3, b: 5 }] }
       ]);
@@ -1836,7 +1832,41 @@ describe('jqtest', () => {
       expect(parseAndQuery('[][.]', [1000000000000000000])).toEqual([undefined]);
     });
 
-    // TODO: Missing object merge and type tests, L1468-L1488
+    test('map([1,2][0:.])', () => {
+      expect(parseAndQuery('map([1,2][0:.])', [[-1, 1, 2, 3, 1000000000000000000]])).toEqual([
+        [[1], [1], [1, 2], [1, 2], [1, 2]]
+      ]);
+    });
+
+    test('{"k": {"a": 1, "b": 2}} * .', () => {
+      expect(parseAndQuery('{"k": {"a": 1, "b": 2}} * .', [{ k: { a: 0, c: 3 } }])).toEqual([
+        { k: { a: 0, b: 2, c: 3 } }
+      ]);
+    });
+
+    test('{"k": {"a": 1, "b": 2}, "hello": {"x": 1}} * .', () => {
+      expect(
+        parseAndQuery('{"k": {"a": 1, "b": 2}, "hello": {"x": 1}} * .', [
+          { k: { a: 0, c: 3 }, hello: 1 }
+        ])
+      ).toEqual([{ k: { a: 0, b: 2, c: 3 }, hello: 1 }]);
+    });
+
+    test('{"k": {"a": 1, "b": 2}, "hello": 1} * .', () => {
+      expect(
+        parseAndQuery('{"k": {"a": 1, "b": 2}, "hello": 1} * .', [
+          { k: { a: 0, c: 3 }, hello: { x: 1 } }
+        ])
+      ).toEqual([{ k: { a: 0, b: 2, c: 3 }, hello: { x: 1 } }]);
+    });
+
+    test('{"a": {"b": 1}, "c": {"d": 2}, "e": 5} * .', () => {
+      expect(
+        parseAndQuery('{"a": {"b": 1}, "c": {"d": 2}, "e": 5} * .', [
+          { a: { b: 2 }, c: { d: 3, f: 9 } }
+        ])
+      ).toEqual([{ a: { b: 2 }, c: { d: 3, f: 9 }, e: 5 }]);
+    });
 
     test('[.[]|arrays]', () => {
       expect(

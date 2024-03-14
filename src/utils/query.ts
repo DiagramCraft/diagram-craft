@@ -14,6 +14,7 @@ const builtins = [
   'map(f):[.[]|f]',
   'del(f):delpaths([path(f)])',
   'with_entries(f):to_entries|map(f)|from_entries',
+  'numbers:select(type=="number")',
   'arrays:select(type=="array")',
   'objects:select(type=="object")',
   'iterables:select(type|.=="array"or.=="object")',
@@ -32,7 +33,14 @@ const builtins = [
   'IN(s):any(s==.;.)',
   'IN(src;s):any(src==s;.)',
   'join($x):reduce .[] as $i (null;(if .==null then "" else .+$x end)+($i|if type=="boolean" or type=="number" then tostring else .//"" end))//""',
-  'isempty(g):first((g|false),true)'
+  'isempty(g):first((g|false),true)',
+  'inside(xs):. as $x|xs|contains($x)',
+  'combinations:if length == 0 then [] else .[0][] as $x|(.[1:]|combinations) as $y|[$x]+$y end',
+  'combinations(n):. as $dot|[range(n)|$dot]|combinations',
+  'recurse(f):def r:.,(f|r);r',
+  'recurse(f;cond):def r:.,(f|select(cond)|r);r',
+  'recurse:recurse(.[]?)',
+  'walk(f):def w:if type == "object" then map_values(w) elif type == "array" then map(w) else . end|f;w'
 ];
 
 /** Error handling ********************************************************************* */
@@ -74,7 +82,7 @@ type Errors = {
 export const error = (code: keyof Errors, ...params: unknown[]) =>
   new Error(`${code}: ${params.join(', ')}`);
 
-const assertString = <T>(e: T): T => {
+const assertString = <T>(e: T): string => {
   if (!isString(e)) throw error(213, e);
   return e;
 };
@@ -182,9 +190,29 @@ const indices = (lvs: unknown, rvs: unknown) => {
 
 const repeat = (rvs: number, lvs: string) => (rvs < 0 || isNaN(rvs) ? undefined : lvs.repeat(rvs));
 
+const deepMerge = (target: any, elm: any) => {
+  // eslint-disable-next-line
+  const result: any = target;
+
+  if (!isObj(result) || !isObj(elm)) return result;
+
+  for (const key of Object.keys(elm)) {
+    if (isObj(elm[key])) {
+      result[key] ??= {};
+      if (!isObj(result[key])) result[key] = elm[key];
+      else deepMerge(result[key], elm[key]);
+    } else if (elm[key] !== undefined) {
+      result[key] = elm[key];
+    }
+  }
+
+  return result;
+};
+
 const multiply = (lvs: unknown, rvs: unknown) => {
   if (isString(lvs) && isNumber(rvs)) return repeat(rvs, lvs);
   if (isNumber(lvs) && isString(rvs)) return repeat(lvs, rvs);
+  if (isObj(lvs) && isObj(rvs)) return deepMerge(lvs, rvs);
   return (lvs as number) * (rvs as number);
 };
 
@@ -329,6 +357,7 @@ const deleteProp = (lvs: unknown, idx: unknown) => {
 
 const evalPath = (path: PathElement[], obj: unknown) => {
   let dest = obj;
+  if (dest === undefined) return undefined;
   for (const e of path) {
     dest = propAndClone(dest, e);
     if (dest === undefined) return undefined;
@@ -432,6 +461,12 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'endswith/1': a => new Fn1Op<string>(a, (a, b) => a.endsWith(b), true),
   'error/0': () => new ErrorOp(literal(ANONYMOUS_ERROR)),
   'error/1': a => new ErrorOp(a),
+  'explode/0': () =>
+    new FnOp(a =>
+      assertString(a)
+        .split('')
+        .map(e => e.codePointAt(0))
+    ),
   'first/0': () => new NthOp([literal(0)]),
   'first/1': a => new NthOp([literal(0), ...a.args]),
   'flatten/0': () => new FlattenOp(literal(100)),
@@ -447,6 +482,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'getpath/1': a => new GetPathOp(a),
   'group_by/1': a => new BaseArrayOp(Array_GroupBy, a),
   'has/1': arg => new Fn1Op(arg, (a, b) => (b as any) in (a as any)),
+  'implode/0': () => new FnOp(a => String.fromCodePoint(...(a as number[]))),
   'in/1': arg => new Fn1Op(arg, (a, b) => (a as any) in (b as any)),
   'indices/1': a => new Fn1Op<string>(a, (a, b) => indices(a, b)),
   'index/1': a => new Fn1Op<string>(a, (a, b) => (a === '' ? undefined : indices(a, b)[0])),
@@ -455,6 +491,7 @@ const FN_REGISTRY: Record<string, FnRegistration> = {
   'last/0': () => new NthOp([literal(-1)], true),
   'last/1': a => new NthOp([literal(-1), ...a.args], true),
   'length/0': () => new LengthOp(),
+  'utf8bytelength/0': () => new FnOp(a => new TextEncoder().encode(assertString(a)).length),
   'log2/0': () => new MathOp(Math.log2),
   'fabs/0': () => new FnOp(a => (isNumber(a) ? Math.abs(a) : a)),
   'limit/2': a => new LimitOp(a),
@@ -617,9 +654,9 @@ class Tokenizer {
     return s;
   }
 
-  expect(s: string, strip = true) {
-    if (this.peek().s === s) return this.next(strip);
-    else throw error(102, s, this.peek().s, this.head);
+  expect(s: string) {
+    if (this.peek().s === s) return this.next(true);
+    throw error(102, s, this.peek().s, this.head);
   }
 
   strip() {
@@ -913,7 +950,7 @@ class ArraySliceOp extends BaseGenerator<[Value<number>, Value<number>]> {
     const v = e.val;
     if (!isArray(v) && !isString(v)) {
       if (this.strict) throw error(203);
-      return v === undefined ? yield value(undefined) : undefined;
+      return v === undefined && (yield value(undefined));
     }
     const pe = {
       start: Math.floor(f.val),
@@ -926,6 +963,7 @@ class ArraySliceOp extends BaseGenerator<[Value<number>, Value<number>]> {
 class ArrayOp extends BaseGenerator<[]> {
   *onInput(e: Value) {
     const v = e.val;
+    if (isObj(v)) return yield* Object.values(v).map(value);
     if (!isArray(v)) throw error(201);
 
     for (let i = 0; i < v.length; i++) {
@@ -1124,11 +1162,9 @@ class ArgListOp implements Generator {
   constructor(public readonly args: Generator[]) {}
 
   *iter(input: Iterable<Value>, context: Bindings): Iterable<Value> {
-    if (this.args.length === 1) {
-      yield* this.args[0].iter(input, context);
-    } else {
-      yield* iterateAll(this.args, input, context);
-    }
+    yield* this.args.length === 1
+      ? this.args[0].iter(input, context)
+      : iterateAll(this.args, input, context);
   }
 }
 
@@ -1444,7 +1480,10 @@ class IfOp extends BaseGenerator {
 
 class GetPathOp extends BaseGenerator<[Value<PathElement[]>]> {
   *onElement(input: Value, [path]: [Value<PathElement[]>]): Iterable<Value> {
-    yield value(evalPath(path.val, input.val as PathElement[]));
+    yield {
+      val: evalPath(path.val, input.val as PathElement[]),
+      path: [...(input.path ?? []), ...path.val]
+    };
   }
 }
 
@@ -1795,9 +1834,9 @@ const parseExpression = (
 };
 
 const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): Generator[] => {
-  if (!tokenizer.accept('(')) return [];
-  const op = [];
-  while (tokenizer.peek().s !== ')') {
+  const op: Generator[] = [];
+  if (!tokenizer.accept('(')) return op;
+  while (!tokenizer.accept(')')) {
     op.push(parseExpression(tokenizer, functions));
     if (!tokenizer.accept(';')) break;
   }
@@ -1805,11 +1844,20 @@ const parseArgList = (tokenizer: Tokenizer, functions: Record<string, number>): 
   return op;
 };
 
+let builtinsCache: Generator[] | undefined = undefined;
+const builtinsCacheFunctions: Record<string, any> = {};
+
+const initializeCache = () => {
+  builtinsCache = builtins.map(b =>
+    parseExpression(new Tokenizer(`def ${b}`), builtinsCacheFunctions)
+  );
+};
+
 export const parse = (query: string, includeBuiltins = true): Generator => {
-  const functions = {};
-  const op = includeBuiltins
-    ? builtins.map(b => parseExpression(new Tokenizer(`def ` + b), functions))
-    : [];
+  if (includeBuiltins && !builtinsCache) initializeCache();
+
+  const functions = includeBuiltins ? { ...builtinsCacheFunctions } : {};
+  const op = includeBuiltins ? [...builtinsCache!] : [];
 
   const tokenizer = new Tokenizer(query);
   while (tokenizer.peek().type !== 'end') {
@@ -1826,7 +1874,7 @@ export const parseAndQuery = (q: string, input: unknown[], bindings?: Record<str
 };
 
 export function* query(query: Generator, input: unknown[], bindings?: Record<string, unknown>) {
-  for (const e of query.iter(input.map(value), {
+  for (const e of query.iter(values(input), {
     ...Object.fromEntries(Object.entries(bindings ?? {}).map(([k, v]) => [k, value(v)])),
     $__loc__: value({ file: '<top-level>', line: 1 })
   })) {
