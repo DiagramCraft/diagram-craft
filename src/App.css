@@ -223,6 +223,9 @@ input::-webkit-input-placeholder {
   z-index: 10;
   display: none;
   overflow: auto;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 #right-buttons {
@@ -245,6 +248,9 @@ input::-webkit-input-placeholder {
   z-index: 10;
   display: none;
   overflow: auto;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 #canvas-area {
