@@ -78,6 +78,8 @@ export class DiagramEdge
 
     if (isConnected(start)) start.node._addEdge(start.anchor, this);
     if (isConnected(end)) end.node._addEdge(end.anchor, this);
+
+    this.#props.style ??= 'default-edge';
   }
 
   // TODO: This should use the EdgeDefinitionRegistry

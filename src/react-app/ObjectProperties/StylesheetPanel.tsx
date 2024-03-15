@@ -39,10 +39,13 @@ export const StylesheetPanel = (props: Props) => {
   const [modifyDialog, setModifyDialog] = useState<Stylesheet | undefined>(undefined);
   const [renameDialog, setRenameDialog] = useState<Stylesheet | undefined>(undefined);
 
-  const stylesheet = $d.document.styles.get($d.selectionState.elements[0].props.style!)!;
+  if ($d.selectionState.isEmpty()) return null;
+
+  const stylesheet = $d.document.styles.get($d.selectionState.elements[0].props.style!);
+
   const isDirty =
     !style.hasMultipleValues &&
-    $d.selectionState.elements.some(e => isPropsDirty(e.props, stylesheet.props));
+    $d.selectionState.elements.some(e => isPropsDirty(e.props, stylesheet?.props ?? {}));
 
   const styleList = $d.selectionState.isNodesOnly()
     ? $d.document.styles.nodeStyles

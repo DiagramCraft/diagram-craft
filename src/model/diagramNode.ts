@@ -61,6 +61,8 @@ export class DiagramNode
     if (!this.#anchors) {
       this.invalidateAnchors(UnitOfWork.throwaway(diagram));
     }
+
+    this.#props.style ??= this.nodeType === 'text' ? 'default-text' : 'default';
   }
 
   getDefinition() {

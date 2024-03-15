@@ -102,7 +102,7 @@ const DEFAULT_NODE_STYLES: Stylesheet<NodeProps>[] = [
 ];
 
 const DEFAULT_EDGE_STYLES: Stylesheet<EdgeProps>[] = [
-  new Stylesheet('edge', 'default', 'Default', {
+  new Stylesheet('edge', 'default-edge', 'Default', {
     stroke: {
       color: 'var(--canvas-fg)'
     }
