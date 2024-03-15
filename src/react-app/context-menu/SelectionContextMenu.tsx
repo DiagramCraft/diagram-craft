@@ -1,8 +1,17 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
 import { TbChevronRight } from 'react-icons/tb';
+import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useDiagram } from '../context/DiagramContext.tsx';
+import { useEventListener } from '../hooks/useEventListener.ts';
 
 export const SelectionContextMenu = () => {
+  const redraw = useRedraw();
+  const diagram = useDiagram();
+  const layers = diagram.layers.all.toReversed();
+
+  useEventListener(diagram, 'change', redraw);
+
   return (
     <>
       <ActionContextMenuItem action={'CLIPBOARD_CUT'}>Cut</ActionContextMenuItem>
@@ -61,6 +70,32 @@ export const SelectionContextMenu = () => {
             <ActionContextMenuItem action={'SELECTION_RESTACK_DOWN'}>
               Move backward
             </ActionContextMenuItem>
+          </ContextMenu.SubContent>
+        </ContextMenu.Portal>
+      </ContextMenu.Sub>
+
+      <ContextMenu.Sub>
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+          Move to
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </ContextMenu.SubTrigger>
+        <ContextMenu.Portal>
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            <ActionContextMenuItem action={'LAYER_SELECTION_MOVE_NEW'}>
+              Create new layer
+            </ActionContextMenuItem>
+            <ContextMenu.Separator className="cmp-context-menu__separator" />
+            {layers.map(layer => (
+              <ActionContextMenuItem
+                key={layer.id}
+                action={'LAYER_SELECTION_MOVE'}
+                context={{ id: layer.id }}
+              >
+                {layer.name}
+              </ActionContextMenuItem>
+            ))}
           </ContextMenu.SubContent>
         </ContextMenu.Portal>
       </ContextMenu.Sub>

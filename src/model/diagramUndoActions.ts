@@ -26,7 +26,7 @@ export class SnapshotUndoableAction implements UndoableAction {
   }
 
   undo(uow: UnitOfWork) {
-    // Let's keep these for now... aids in debugging
+    // TODO: Let's keep these for now... aids in debugging
     console.log('before', this.beforeSnapshot);
     console.log('after', this.afterSnapshot);
 

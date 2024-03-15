@@ -1,6 +1,6 @@
 import { Diagram } from '../../model/diagram.ts';
 import { State } from '../keyMap.ts';
-import { assert } from '../../utils/assert.ts';
+import { assert, precondition } from '../../utils/assert.ts';
 import {
   AbstractAction,
   AbstractToggleAction,
@@ -23,7 +23,9 @@ export const layerActions = (state: State) => ({
   LAYER_TOGGLE_LOCK: new LayerToggleLockedAction(state.diagram),
   LAYER_RENAME: new LayerRenameAction(state.diagram),
   LAYER_ADD: new LayerAddAction(state.diagram, 'layer'),
-  LAYER_ADD_ADJUSTMENT: new LayerAddAction(state.diagram, 'adjustment')
+  LAYER_ADD_ADJUSTMENT: new LayerAddAction(state.diagram, 'adjustment'),
+  LAYER_SELECTION_MOVE: new LayerSelectionMoveAction(state.diagram),
+  LAYER_SELECTION_MOVE_NEW: new LayerSelectionMoveNewAction(state.diagram)
 });
 
 declare global {
@@ -196,5 +198,46 @@ class LayerAddUndoableAction implements UndoableAction {
 
   redo(uow: UnitOfWork) {
     this.diagram.layers.add(this.layer, uow);
+  }
+}
+
+export class LayerSelectionMoveAction extends AbstractAction {
+  constructor(protected readonly diagram: Diagram) {
+    super();
+  }
+
+  execute(context: ActionContext): void {
+    precondition.is.present(context.id);
+
+    const uow = new UnitOfWork(this.diagram, true);
+
+    const layer = this.diagram.layers.byId(context.id!)!;
+    assert.present(layer);
+
+    this.diagram.moveElement(this.diagram.selectionState.elements, uow, layer!);
+    commitWithUndo(uow, 'Move to layer ' + layer.name);
+  }
+}
+
+export class LayerSelectionMoveNewAction extends AbstractAction {
+  constructor(protected readonly diagram: Diagram) {
+    super();
+  }
+
+  execute(): void {
+    const uow = new UnitOfWork(this.diagram, true);
+
+    const layer = new Layer(newid(), 'New Layer', [], this.diagram, 'layer');
+    this.diagram.layers.add(layer, uow);
+
+    this.diagram.moveElement(this.diagram.selectionState.elements, uow, layer!);
+
+    const snapshots = uow.commit();
+    uow.diagram.undoManager.add(
+      new CompoundUndoableAction([
+        new LayerAddUndoableAction(uow.diagram, layer!),
+        new SnapshotUndoableAction('Move to new layer', uow.diagram, snapshots)
+      ])
+    );
   }
 }
