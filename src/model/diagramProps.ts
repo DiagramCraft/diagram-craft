@@ -171,6 +171,9 @@ declare global {
       reflectionStrength?: number;
       blur?: number;
       opacity?: number;
+      sketch?: boolean;
+      sketchStrength?: number;
+      sketchFillType?: 'fill';
     };
   }
 }

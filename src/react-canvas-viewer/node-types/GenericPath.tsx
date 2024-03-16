@@ -14,6 +14,7 @@ import { NodeDrag } from '../../react-canvas-editor/tools/node/nodeDrag.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { NodeWrapper } from '../NodeWrapper.tsx';
+import { FilledPath } from '../FilledPath.tsx';
 
 declare global {
   interface NodeProps {
@@ -81,13 +82,9 @@ export const GenericPath = (props: Props) => {
       )}
 
       <NodeWrapper node={props.node} path={path}>
-        <path
-          d={svgPath}
-          x={props.node.bounds.x}
-          y={props.node.bounds.y}
-          width={props.node.bounds.w}
-          height={props.node.bounds.h}
-          {...propsUtils.filterSvgProperties(props)}
+        <FilledPath
+          p={path}
+          {...props}
           style={{
             ...props.style,
             pointerEvents:

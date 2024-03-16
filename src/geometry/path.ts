@@ -100,6 +100,13 @@ export class Path {
     return this.segmentList.segments;
   }
 
+  get normalizedSegments(): ReadonlyArray<PathSegment> {
+    return makeSegmentList(
+      this.#start,
+      this.segments.flatMap(e => e.raw())
+    ).segments;
+  }
+
   processSegments(fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {
     this.#segmentList = new SegmentList(fn(this.segmentList.segments));
     this.#path = this.#segmentList.segments.flatMap(e => e.raw());

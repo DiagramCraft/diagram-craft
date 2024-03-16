@@ -83,7 +83,10 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
     blur: 0,
     opacity: 1,
     reflection: false,
-    reflectionStrength: 0.7
+    reflectionStrength: 0.7,
+    sketch: false,
+    sketchFillType: 'fill',
+    sketchStrength: 0.1
   },
   highlight: []
 });

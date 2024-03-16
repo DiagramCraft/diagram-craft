@@ -1,23 +1,7 @@
 import { PerformanceTest, perftest } from '../utils/perftest.ts';
 import { CubicBezier } from './bezier.ts';
 import { Line } from './line.ts';
-
-class Random {
-  #seed: number;
-
-  constructor(seed: number) {
-    this.#seed = seed % 2147483647;
-    if (this.#seed <= 0) this.#seed += 2147483646;
-  }
-
-  next() {
-    return (this.#seed = (this.#seed * 16807) % 2147483647);
-  }
-
-  nextFloat() {
-    return (this.next() - 1) / 2147483646;
-  }
-}
+import { Random } from '../utils/random.ts';
 
 const r = new Random(123456);
 

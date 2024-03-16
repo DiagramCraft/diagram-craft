@@ -21,6 +21,13 @@ export const NodeEffectsPanel = (props: Props) => {
   const blur = useNodeProperty($d, 'effects.blur', defaults.effects.blur);
   const opacity = useNodeProperty($d, 'effects.opacity', defaults.effects.opacity);
 
+  const sketch = useNodeProperty($d, 'effects.sketch', defaults.effects.sketch);
+  const sketchStrength = useNodeProperty(
+    $d,
+    'effects.sketchStrength',
+    defaults.effects.sketchStrength
+  );
+
   useEventListener($d.selectionState, 'change', redraw);
 
   return (
@@ -70,6 +77,28 @@ export const NodeEffectsPanel = (props: Props) => {
               onChange={v => {
                 opacity.set(Number(v) / 100);
               }}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Sketch:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <input
+              type="checkbox"
+              checked={sketch.val}
+              onChange={() => {
+                sketch.set(!sketch.val);
+              }}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}></div>
+          <div className={'cmp-labeled-table__value'}>
+            <SliderAndNumberInput
+              value={round(sketchStrength.val * 100)}
+              onChange={v => {
+                sketchStrength.set(Number(v) / 100);
+              }}
+              max={25}
             />
           </div>
         </div>

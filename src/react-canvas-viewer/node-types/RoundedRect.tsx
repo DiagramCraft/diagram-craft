@@ -1,4 +1,3 @@
-import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
@@ -8,6 +7,7 @@ import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { NodeWrapper } from '../NodeWrapper.tsx';
+import { FilledPath } from '../FilledPath.tsx';
 
 declare global {
   interface NodeProps {
@@ -20,19 +20,11 @@ declare global {
 export const RoundedRect = (props: Props) => {
   const radius = props.node.props.roundedRect?.radius ?? 10;
   const path = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
-  const svgPath = path.asSvgPath();
 
   return (
     <>
       <NodeWrapper {...props} node={props.node} path={path}>
-        <path
-          d={svgPath}
-          x={props.node.bounds.x}
-          y={props.node.bounds.y}
-          width={props.node.bounds.w}
-          height={props.node.bounds.h}
-          {...propsUtils.filterSvgProperties(props)}
-        />
+        <FilledPath p={path} {...props} />
 
         <TextPart
           id={`text_1_${props.node.id}`}

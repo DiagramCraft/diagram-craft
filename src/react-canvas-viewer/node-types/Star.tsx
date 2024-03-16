@@ -1,5 +1,4 @@
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
@@ -11,6 +10,7 @@ import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.
 import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { NodeWrapper } from '../NodeWrapper.tsx';
+import { FilledPath } from '../FilledPath.tsx';
 
 declare global {
   interface NodeProps {
@@ -23,20 +23,11 @@ declare global {
 
 export const Star = (props: Props) => {
   const path = new StarNodeDefinition().getBoundingPathBuilder(props.node).getPath();
-  const svgPath = path.asSvgPath();
 
   return (
     <>
       <NodeWrapper {...props} node={props.node} path={path}>
-        <path
-          d={svgPath}
-          x={props.node.bounds.x}
-          y={props.node.bounds.y}
-          width={props.node.bounds.w}
-          height={props.node.bounds.h}
-          className={'svg-node__boundary svg-node'}
-          {...propsUtils.filterSvgProperties(props)}
-        />
+        <FilledPath p={path} {...props} />
 
         <TextPart
           id={`text_1_${props.node.id}`}

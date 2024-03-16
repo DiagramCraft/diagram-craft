@@ -1,9 +1,9 @@
-import { propsUtils } from '../utils/propsUtils.ts';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
+import { FilledPath } from '../FilledPath.tsx';
 
 declare global {
   interface NodeProps {}
@@ -11,19 +11,10 @@ declare global {
 
 export const Circle = (props: Props) => {
   const path = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPath();
-  const svgPath = path.asSvgPath();
 
   return (
     <>
-      <path
-        d={svgPath}
-        x={props.node.bounds.x}
-        y={props.node.bounds.y}
-        width={props.node.bounds.w}
-        height={props.node.bounds.h}
-        className={'svg-node__boundary svg-node'}
-        {...propsUtils.filterSvgProperties(props)}
-      />
+      <FilledPath p={path} {...props} />
 
       <TextPart
         id={`text_1_${props.node.id}`}

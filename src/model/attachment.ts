@@ -18,7 +18,7 @@ export class Attachment {
   }
 
   static async create(content: Blob) {
-    const hash = hash64(await content.arrayBuffer());
+    const hash = hash64(new Uint8Array(await content.arrayBuffer()));
     return new Attachment(hash, content);
   }
 
