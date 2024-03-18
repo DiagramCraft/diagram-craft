@@ -135,6 +135,11 @@ declare global {
       type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
       size?: number;
     };
+
+    effects?: {
+      sketch?: boolean;
+      sketchStrength?: number;
+    };
   }
 
   interface NodeProps extends ElementProps {

@@ -112,6 +112,10 @@ export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepReq
     lineHops: {
       type: 'none',
       size: 10
+    },
+    effects: {
+      sketch: false,
+      sketchStrength: 0.1
     }
   })
 );

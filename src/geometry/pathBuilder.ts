@@ -62,6 +62,8 @@ export class PathBuilder {
       const [t, ...params] = p.trim().split(' ');
       const pn = params.map(p => parseFloat(p));
 
+      // TODO: Support relative instructions
+      //       Support z
       if (t === 'M') d.moveTo({ x: pn[0], y: pn[1] });
       else if (t === 'L') d.lineTo({ x: pn[0], y: pn[1] });
       else if (t === 'C')

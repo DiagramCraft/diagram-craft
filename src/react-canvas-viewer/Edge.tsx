@@ -25,6 +25,8 @@ import { UnitOfWork } from '../model/unitOfWork.ts';
 import { useActions } from '../react-app/context/ActionsContext.tsx';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
 import { ControlPoints } from '../model/types.ts';
+import { asDistortedSvgPath } from './sketch.ts';
+import { hash } from '../utils/hash.ts';
 
 export type EdgeApi = {
   repaint: () => void;
@@ -94,7 +96,19 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
 
   if (basePath === undefined) return null;
 
-  const path = applyLineHops(basePath, props.def, startArrow, endArrow, props.def.intersections);
+  // TODO: Cleanup
+  const paths = applyLineHops(basePath, props.def, startArrow, endArrow, props.def.intersections);
+  const path = paths
+    .map(p =>
+      edgeProps.effects.sketch
+        ? asDistortedSvgPath(p, hash(new TextEncoder().encode(props.def.id)), {
+            passes: 2,
+            amount: edgeProps.effects.sketchStrength ?? 0.1,
+            unidirectional: true
+          })
+        : p.asSvgPath()
+    )
+    .join(', ');
 
   return (
     <g id={`edge-${props.def.id}`}>
@@ -104,6 +118,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         width={width}
         color={color}
         fillColor={fillColor}
+        sketch={edgeProps.effects.sketch}
       />
       <ArrowMarker
         id={`e_${props.def.id}`}
@@ -111,6 +126,7 @@ export const Edge = forwardRef<EdgeApi, Props>((props, ref) => {
         width={width}
         color={color}
         fillColor={fillColor}
+        sketch={edgeProps.effects.sketch}
       />
 
       <path

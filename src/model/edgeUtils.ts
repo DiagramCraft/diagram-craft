@@ -98,11 +98,11 @@ export const applyLineHops = (
   startArrow: ArrowShape | undefined,
   endArrow: ArrowShape | undefined,
   intersections: Intersection[]
-) => {
+): Path[] => {
   const thisType = edge.props.lineHops?.type ?? 'none';
   const gapSize = edge.props.lineHops?.size ?? 10;
 
-  if (intersections.length === 0 || thisType === 'none') return basePath.asSvgPath();
+  if (intersections.length === 0 || thisType === 'none') return [basePath];
 
   const length = basePath.length();
 
@@ -124,7 +124,7 @@ export const applyLineHops = (
     .map(i => i.intersection);
 
   // No need to proceed if there are no valid intersections
-  if (validIntersections.length === 0) return basePath.asSvgPath();
+  if (validIntersections.length === 0) return [basePath];
 
   const dest: Path[] = [];
   for (const intersection of validIntersections) {
@@ -156,9 +156,9 @@ export const applyLineHops = (
 
   // If none of the intersections implied drawing a line hop, dest will be empty and
   // we just return the base path
-  if (dest.length === 0) return basePath.asSvgPath();
+  if (dest.length === 0) return [basePath];
 
-  return dest.map(p => p.asSvgPath()).join(', ');
+  return dest;
 };
 
 const addLineHop = (dest: Path[], before: Path, after: Path, type: string, size: number) => {

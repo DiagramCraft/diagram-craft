@@ -16,6 +16,7 @@ import { useDiagram } from '../context/DiagramContext.tsx';
 import { LabelNodePanel } from './LabelNodePanel.tsx';
 import { NodeEffectsPanel } from './NodeEffectsPanel.tsx';
 import { StylesheetPanel } from './StylesheetPanel.tsx';
+import { EdgeEffectsPanel } from './EdgeEffectsPanel.tsx';
 
 export const ObjectToolWindow = () => {
   const diagram = useDiagram();
@@ -76,6 +77,7 @@ export const ObjectToolWindow = () => {
             <StylesheetPanel />
             <LinePanel />
             <ShadowPanel />
+            <EdgeEffectsPanel />
           </>
         )}
 

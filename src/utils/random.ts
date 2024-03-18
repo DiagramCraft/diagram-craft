@@ -17,4 +17,8 @@ export class Random {
   nextFloatInRange(min: number, max: number) {
     return min + this.nextFloat() * (max - min);
   }
+
+  nextBoolean() {
+    return this.next() % 2 === 0;
+  }
 }
