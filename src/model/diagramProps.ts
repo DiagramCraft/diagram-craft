@@ -178,7 +178,7 @@ declare global {
       opacity?: number;
       sketch?: boolean;
       sketchStrength?: number;
-      sketchFillType?: 'fill';
+      sketchFillType?: 'fill' | 'hachure';
     };
   }
 }

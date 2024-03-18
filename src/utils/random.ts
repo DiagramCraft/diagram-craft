@@ -1,17 +1,20 @@
 export class Random {
-  #seed: number;
+  #state: number;
 
   constructor(seed: number) {
-    this.#seed = seed % 2147483647;
-    if (this.#seed <= 0) this.#seed += 2147483646;
+    this.#state = seed + 0x6d2b79f5;
   }
 
-  next() {
-    return (this.#seed = (this.#seed * 16807) % 2147483647);
+  // See https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
+  private next() {
+    let t = (this.#state += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 
   nextFloat() {
-    return (this.next() - 1) / 2147483646;
+    return this.next();
   }
 
   nextFloatInRange(min: number, max: number) {
@@ -19,6 +22,6 @@ export class Random {
   }
 
   nextBoolean() {
-    return this.next() % 2 === 0;
+    return this.next() > 0.5;
   }
 }

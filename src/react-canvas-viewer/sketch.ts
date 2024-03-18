@@ -5,6 +5,49 @@ import { Point } from '../geometry/point.ts';
 import { Vector } from '../geometry/vector.ts';
 import { round } from '../utils/math.ts';
 import { BezierUtils } from '../geometry/bezier.ts';
+import { Box } from '../geometry/box.ts';
+import { Line } from '../geometry/line.ts';
+
+export const calculateHachureLines = (
+  bounds: Box,
+  path: Path,
+  hachureAngle: number,
+  hachureGap: number
+): Line[] => {
+  const hachureGapX = hachureGap;
+
+  const lines: Array<Line> = [];
+  for (
+    let x = bounds.x;
+    x < bounds.x + bounds.w + Math.cos(hachureAngle) * bounds.h;
+    x += hachureGapX
+  ) {
+    lines.push(
+      Line.of(
+        { x, y: bounds.y },
+        { x: x - Math.cos(hachureAngle) * bounds.h, y: bounds.y + bounds.h }
+      )
+    );
+  }
+
+  const dest: Line[] = [];
+  for (const line of lines) {
+    const intersections = path.intersections(new Path(line.from, [['L', line.to.x, line.to.y]]));
+    if (intersections.length > 0) {
+      const sortedIntersections = intersections.toSorted((a, b) => a.point.x - b.point.x);
+
+      let inside = false;
+      for (let i = 0; i < sortedIntersections.length; i++) {
+        if (inside) {
+          dest.push(Line.of(sortedIntersections[i - 1].point, sortedIntersections[i].point));
+        }
+        inside = !inside;
+      }
+    }
+  }
+
+  return dest;
+};
 
 // TODO: Add unit tests to make sure all of ARROW_SHAPES can be parsed
 export const parseArrowSvgPath = (path: string): Path => {

@@ -6,6 +6,7 @@ import { round } from '../../utils/math.ts';
 import { useNodeProperty } from './useProperty.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
+import { Select } from '../components/Select.tsx';
 
 export const NodeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();
@@ -26,6 +27,11 @@ export const NodeEffectsPanel = (props: Props) => {
     $d,
     'effects.sketchStrength',
     defaults.effects.sketchStrength
+  );
+  const sketchFillType = useNodeProperty(
+    $d,
+    'effects.sketchFillType',
+    defaults.effects.sketchFillType
   );
 
   useEventListener($d.selectionState, 'change', redraw);
@@ -99,6 +105,21 @@ export const NodeEffectsPanel = (props: Props) => {
                 sketchStrength.set(Number(v) / 100);
               }}
               max={25}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}></div>
+          <div className={'cmp-labeled-table__value'}>
+            <Select
+              onValueChange={v => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                sketchFillType.set(v as any);
+              }}
+              value={sketchFillType.val}
+              values={[
+                { label: 'Solid', value: 'fill' },
+                { label: 'Hachure', value: 'hachure' }
+              ]}
             />
           </div>
         </div>
