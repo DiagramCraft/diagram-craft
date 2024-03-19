@@ -7,11 +7,10 @@ export const ArrowMarker = ({ id, arrow, width, color, fillColor, sketch }: Prop
 
   let path = arrow.path;
   if (sketch) {
-    path = asDistortedSvgPath(parseArrowSvgPath(arrow.path), hash(new TextEncoder().encode(id)), {
-      unidirectional: false,
-      passes: 2,
-      amount: 0.1
-    });
+    const seed = hash(new TextEncoder().encode(id));
+    path = parseArrowSvgPath(arrow.path)
+      .map(p => asDistortedSvgPath(p, seed, { passes: 2 }))
+      .join(', ');
   }
 
   return (

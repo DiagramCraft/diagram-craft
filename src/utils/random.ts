@@ -17,7 +17,7 @@ export class Random {
     return this.next();
   }
 
-  nextFloatInRange(min: number, max: number) {
+  nextRange(min: number, max: number) {
     return min + this.nextFloat() * (max - min);
   }
 
