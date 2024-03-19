@@ -191,7 +191,6 @@ const indices = (lvs: unknown, rvs: unknown) => {
 const repeat = (rvs: number, lvs: string) => (rvs < 0 || isNaN(rvs) ? undefined : lvs.repeat(rvs));
 
 const deepMerge = (target: any, elm: any) => {
-  // eslint-disable-next-line
   const result: any = target;
 
   if (!isObj(result) || !isObj(elm)) return result;
