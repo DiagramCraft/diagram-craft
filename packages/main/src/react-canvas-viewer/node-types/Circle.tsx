@@ -4,6 +4,7 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { FilledPath } from '../FilledPath.tsx';
+import { NodeWrapper } from '../NodeWrapper.tsx';
 
 declare global {
   interface NodeProps {}
@@ -13,7 +14,7 @@ export const Circle = (props: Props) => {
   const path = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
   return (
-    <>
+    <NodeWrapper node={props.node} path={path}>
       <FilledPath p={path} {...props} />
 
       <TextPart
@@ -23,7 +24,7 @@ export const Circle = (props: Props) => {
         onChange={TextPart.defaultOnChange(props.node)}
         onMouseDown={props.onMouseDown!}
       />
-    </>
+    </NodeWrapper>
   );
 };
 

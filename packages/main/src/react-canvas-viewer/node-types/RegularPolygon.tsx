@@ -1,5 +1,4 @@
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { Point } from '../../geometry/point.ts';
 import { Box } from '../../geometry/box.ts';
@@ -9,6 +8,8 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { FilledPath } from '../FilledPath.tsx';
+import { NodeWrapper } from '../NodeWrapper.tsx';
 
 declare global {
   interface NodeProps {
@@ -20,19 +21,10 @@ declare global {
 
 export const RegularPolygon = (props: Props) => {
   const path = new RegularPolygonNodeDefinition().getBoundingPathBuilder(props.node).getPath();
-  const svgPath = path.asSvgPath();
 
   return (
-    <>
-      <path
-        d={svgPath}
-        x={props.node.bounds.x}
-        y={props.node.bounds.y}
-        width={props.node.bounds.w}
-        height={props.node.bounds.h}
-        className={'svg-node__boundary svg-node'}
-        {...propsUtils.filterSvgProperties(props)}
-      />
+    <NodeWrapper node={props.node} path={path}>
+      <FilledPath p={path} {...props} />
 
       <TextPart
         id={`text_1_${props.node.id}`}
@@ -60,7 +52,7 @@ export const RegularPolygon = (props: Props) => {
           }}
         />
       )}
-    </>
+    </NodeWrapper>
   );
 };
 

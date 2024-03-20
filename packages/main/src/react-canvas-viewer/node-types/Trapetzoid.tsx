@@ -1,4 +1,3 @@
-import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
@@ -7,6 +6,8 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { FilledPath } from '../FilledPath.tsx';
+import { NodeWrapper } from '../NodeWrapper.tsx';
 
 declare global {
   interface NodeProps {
@@ -21,18 +22,10 @@ export const Trapetzoid = (props: Props) => {
   const slantLeft = props.node.props.trapetzoid?.slantLeft ?? 5;
   const slantRight = props.node.props.trapetzoid?.slantRight ?? 5;
   const path = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPath();
-  const svgPath = path.asSvgPath();
 
   return (
-    <>
-      <path
-        d={svgPath}
-        x={props.node.bounds.x}
-        y={props.node.bounds.y}
-        width={props.node.bounds.w}
-        height={props.node.bounds.h}
-        {...propsUtils.filterSvgProperties(props)}
-      />
+    <NodeWrapper node={props.node} path={path}>
+      <FilledPath p={path} {...props} />
 
       <TextPart
         id={`text_1_${props.node.id}`}
@@ -76,7 +69,7 @@ export const Trapetzoid = (props: Props) => {
           />
         </>
       )}
-    </>
+    </NodeWrapper>
   );
 };
 

@@ -1,4 +1,3 @@
-import { propsUtils } from '../utils/propsUtils.ts';
 import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
 import { TextPart } from '../TextPart.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
@@ -7,6 +6,8 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { NodeWrapper } from '../NodeWrapper.tsx';
+import { FilledPath } from '../FilledPath.tsx';
 
 declare global {
   interface NodeProps {
@@ -19,18 +20,10 @@ declare global {
 export const Parallelogram = (props: Props) => {
   const slant = props.node.props.parallelogram?.slant ?? 5;
   const path = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
-  const svgPath = path.asSvgPath();
 
   return (
-    <>
-      <path
-        d={svgPath}
-        x={props.node.bounds.x}
-        y={props.node.bounds.y}
-        width={props.node.bounds.w}
-        height={props.node.bounds.h}
-        {...propsUtils.filterSvgProperties(props)}
-      />
+    <NodeWrapper node={props.node} path={path}>
+      <FilledPath p={path} {...props} />
 
       <TextPart
         id={`text_1_${props.node.id}`}
@@ -57,7 +50,7 @@ export const Parallelogram = (props: Props) => {
           }}
         />
       )}
-    </>
+    </NodeWrapper>
   );
 };
 
