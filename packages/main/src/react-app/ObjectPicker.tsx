@@ -1,5 +1,5 @@
 import { DiagramNode } from '../model/diagramNode.ts';
-import { useDiagram } from './context/DiagramContext.tsx';
+import { useDiagram } from './context/DiagramContext.ts';
 import { Diagram } from '../model/diagram.ts';
 import { Layer } from '../model/diagramLayer.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';

@@ -2,7 +2,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { Point } from '../geometry/point.ts';
 import { TbX } from 'react-icons/tb';
 import { Diagram } from '../model/diagram.ts';
-import { useDiagram } from './context/DiagramContext.tsx';
+import { useDiagram } from './context/DiagramContext.ts';
 import { Layer } from '../model/diagramLayer.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';

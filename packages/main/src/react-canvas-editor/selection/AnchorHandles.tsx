@@ -16,7 +16,7 @@ import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
 import { ApplicationTriggers } from '../EditableCanvas.tsx';
 import { VerifyNotReached } from '../../utils/assert.ts';
-import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 
 export type AnchorHandlesApi = {

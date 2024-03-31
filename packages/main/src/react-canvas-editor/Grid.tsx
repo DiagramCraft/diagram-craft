@@ -1,7 +1,7 @@
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 import React, { CSSProperties } from 'react';
-import { useDiagram } from '../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../react-app/context/DiagramContext.ts';
 
 type Type = 'major' | 'minor';
 

@@ -12,7 +12,7 @@ import { CanvasGuidesProperties } from './CanvasGuidesProperties.tsx';
 import { CanvasGridPanel } from './CanvasGridPanel.tsx';
 import { CanvasSnapPanel } from './CanvasSnapPanel.tsx';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { LabelNodePanel } from './LabelNodePanel.tsx';
 import { NodeEffectsPanel } from './NodeEffectsPanel.tsx';
 import { StylesheetPanel } from './StylesheetPanel.tsx';

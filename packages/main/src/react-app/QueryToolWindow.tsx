@@ -2,7 +2,7 @@ import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { parseAndQuery } from '@diagram-craft/query';
-import { useDiagram } from './context/DiagramContext.tsx';
+import { useDiagram } from './context/DiagramContext.ts';
 import { useRef, useState } from 'react';
 import {
   TbArrowDownRight,

@@ -29,7 +29,7 @@ import { NodeStrokeToolbarButton } from '../ObjectProperties/NodeStrokeToolbarBu
 import { ActionToggleButton } from './ActionToggleButton.tsx';
 import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton.tsx';
 import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { SelectionType } from '../../model/selectionState.ts';
 import { TextFontToolbarButton } from '../ObjectProperties/TextFontToolbarButton.tsx';
 import { TextFontSizeToolbarButton } from '../ObjectProperties/TextFontSizeToolbarButton.tsx';

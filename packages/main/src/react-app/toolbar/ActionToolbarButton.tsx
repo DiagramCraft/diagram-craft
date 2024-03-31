@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import * as Toolbar from '@radix-ui/react-toolbar';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { useActions } from '../context/ActionsContext.tsx';
+import { useActions } from '../context/ActionsContext.ts';
 import { ActionEvents } from '../../base-ui/action.ts';
 
 export const ActionToolbarButton = (props: Props) => {

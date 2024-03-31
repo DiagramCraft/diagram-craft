@@ -2,7 +2,7 @@ import { TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useEdgeProperty } from './useProperty.ts';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { useEdgeDefaults } from '../useDefaults.tsx';
 import { LinePanel } from './LinePanel.tsx';
 import { ArrowPreview } from './ArrowPreview.tsx';

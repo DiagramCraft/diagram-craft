@@ -1,7 +1,7 @@
 import { CSSProperties } from 'react';
 import { useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { useRedraw } from './useRedraw.tsx';
-import { useDiagram } from '../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../react-app/context/DiagramContext.ts';
 
 export const DocumentBounds = () => {
   const diagram = useDiagram();

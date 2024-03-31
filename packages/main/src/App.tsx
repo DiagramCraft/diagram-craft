@@ -37,11 +37,7 @@ import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
 import { defaultEdgeRegistry, defaultNodeRegistry } from './react-canvas-viewer/defaultRegistry.ts';
 import { SideBar } from './react-app/SideBar.tsx';
 import { SideBarPage } from './react-app/SideBarPage.tsx';
-import {
-  canvasDragOverHandler,
-  canvasDropHandler,
-  PickerToolWindow
-} from './react-app/PickerToolWindow.tsx';
+import { PickerToolWindow } from './react-app/PickerToolWindow.tsx';
 import { ObjectToolWindow } from './react-app/ObjectProperties/ObjectToolWindow.tsx';
 import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 import { useEventListener } from './react-app/hooks/useEventListener.ts';
@@ -53,9 +49,9 @@ import { DocumentTabs } from './react-app/DocumentTabs.tsx';
 import { UserState } from './base-ui/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
 import { Ruler } from './react-app/Ruler.tsx';
-import { ActionsContext, useActions } from './react-app/context/ActionsContext.tsx';
-import { DiagramContext } from './react-app/context/DiagramContext.tsx';
-import { ConfigurationContext } from './react-app/context/ConfigurationContext.tsx';
+import { ActionsContext, useActions } from './react-app/context/ActionsContext.ts';
+import { DiagramContext } from './react-app/context/DiagramContext.ts';
+import { ConfigurationContext } from './react-app/context/ConfigurationContext.ts';
 import { defaultPalette } from './react-app/ObjectProperties/palette.ts';
 import { edgeDefaults, nodeDefaults } from './model/diagramDefaults.ts';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
@@ -71,6 +67,7 @@ import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx
 import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog.tsx';
 import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
 import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
+import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

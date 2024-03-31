@@ -1,4 +1,4 @@
-import { useDiagram } from './context/DiagramContext.tsx';
+import { useDiagram } from './context/DiagramContext.ts';
 import * as Tree from './components/Tree.tsx';
 import { TbAdjustments, TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
 import { Diagram } from '../model/diagram.ts';

@@ -2,7 +2,7 @@ import { AccordionTrigger } from '../AccordionTrigger.tsx';
 import { AccordionContent } from '../AccordionContext.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { Select } from '../components/Select.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { useElementProperty } from '../ObjectProperties/useProperty.ts';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -23,7 +23,7 @@ import { MessageDialog, MessageDialogState } from '../components/MessageDialog.t
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 import { JSONDialog } from '../components/JSONDialog.tsx';
 
-export const makeTemplate = (): DataSchema => {
+const makeTemplate = (): DataSchema => {
   return {
     id: newid(),
     name: 'New schema',

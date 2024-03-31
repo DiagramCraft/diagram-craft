@@ -1,9 +1,9 @@
 import { TbAdjustments, TbCheck, TbEye, TbEyeOff, TbLock, TbStack2 } from 'react-icons/tb';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
-import { useDiagram } from './context/DiagramContext.tsx';
+import { useDiagram } from './context/DiagramContext.ts';
 import { useEventListener } from './hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useActions } from './context/ActionsContext.tsx';
+import { useActions } from './context/ActionsContext.ts';
 import { useState } from 'react';
 import { StringInputDialog, StringInputDialogState } from './components/StringInputDialog.tsx';
 import { ActionDropdownMenuItem } from './dropdown/ActionDropdownMenuItem.tsx';

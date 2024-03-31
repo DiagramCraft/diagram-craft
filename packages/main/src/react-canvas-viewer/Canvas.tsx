@@ -4,7 +4,7 @@ import { Edge } from './Edge.tsx';
 import { Node } from './Node.tsx';
 import { useCanvasZoomAndPan } from './useCanvasZoomAndPan.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
-import { useDiagram } from '../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../react-app/context/DiagramContext.ts';
 
 export const Canvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);

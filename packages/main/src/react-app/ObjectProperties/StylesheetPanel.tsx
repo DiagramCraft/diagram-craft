@@ -2,7 +2,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { Select } from '../components/Select.tsx';
 import { TbDots } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { useElementProperty } from './useProperty.ts';
 import { newid } from '../../utils/id.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';

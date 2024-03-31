@@ -4,7 +4,7 @@ import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Select } from '../components/Select.tsx';
 

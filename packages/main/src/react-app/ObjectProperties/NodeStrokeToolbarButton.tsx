@@ -3,7 +3,7 @@ import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useNodeProperty } from './useProperty.ts';
 import { NodeStrokePanel } from './NodeStrokePanel.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 
 export const NodeStrokeToolbarButton = () => {

@@ -6,11 +6,11 @@ import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { assertEdgeType } from '../../model/diagramProps.ts';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useEdgeDefaults } from '../useDefaults.tsx';
 import { Select } from '../components/Select.tsx';
-import { useConfiguration } from '../context/ConfigurationContext.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.ts';
 
 export const LinePanel = (props: Props) => {
   const $d = useDiagram();

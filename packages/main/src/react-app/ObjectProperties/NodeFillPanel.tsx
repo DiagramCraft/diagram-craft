@@ -2,13 +2,13 @@ import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { assertFillType } from '../../model/diagramProps.ts';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { round } from '../../utils/math.ts';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
 import { Collapsible } from '../components/Collapsible.tsx';
-import { useConfiguration } from '../context/ConfigurationContext.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.ts';
 import { Angle } from '../../geometry/angle.ts';
 
 const TEXTURES = [

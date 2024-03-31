@@ -4,7 +4,7 @@ import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
-import { useDiagram } from './context/DiagramContext.tsx';
+import { useDiagram } from './context/DiagramContext.ts';
 
 const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {

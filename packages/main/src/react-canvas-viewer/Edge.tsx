@@ -22,7 +22,7 @@ import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.t
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 import { ArrowMarker } from './ArrowMarker.tsx';
 import { UnitOfWork } from '../model/unitOfWork.ts';
-import { useActions } from '../react-app/context/ActionsContext.tsx';
+import { useActions } from '../react-app/context/ActionsContext.ts';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
 import { ControlPoints } from '../model/types.ts';
 import { asDistortedSvgPath } from './sketch.ts';

@@ -4,7 +4,7 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import { LayerList } from './LayerList.tsx';
-import { useDiagram } from './context/DiagramContext.tsx';
+import { useDiagram } from './context/DiagramContext.ts';
 
 export const LayerToolWindow = () => {
   const diagram = useDiagram();

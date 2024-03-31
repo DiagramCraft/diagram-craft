@@ -5,7 +5,7 @@ import { round } from '../../utils/math.ts';
 import { TbAspectRatio } from 'react-icons/tb';
 import { Point } from '../../geometry/point.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { $c } from '../../utils/classname.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';

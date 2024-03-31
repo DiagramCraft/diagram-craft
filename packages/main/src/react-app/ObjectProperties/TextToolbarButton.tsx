@@ -3,7 +3,7 @@ import { useNodeProperty } from './useProperty.ts';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TextPanel } from './TextPanel.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 
 export const TextToolbarButton = () => {

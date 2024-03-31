@@ -1,7 +1,7 @@
-import { useConfiguration } from '../context/ConfigurationContext.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { useNodeProperty } from './useProperty.ts';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { Select } from '../components/Select.tsx';
 
 export const TextFontToolbarButton = (_props: Props) => {

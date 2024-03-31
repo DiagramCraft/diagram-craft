@@ -4,10 +4,10 @@ import { useNodeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { PopoverButton } from '../components/PopoverButton.tsx';
-import { useConfiguration } from '../context/ConfigurationContext.tsx';
+import { useConfiguration } from '../context/ConfigurationContext.ts';
 
 export const NodeStrokePanel = (props: Props) => {
   const $d = useDiagram();

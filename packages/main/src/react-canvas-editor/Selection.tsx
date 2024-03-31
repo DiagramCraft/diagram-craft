@@ -10,7 +10,7 @@ import { RotationHandle } from './selection/RotationHandle.tsx';
 import { ResizeHandles } from './selection/ResizeHandles.tsx';
 import { EdgeSelection } from './selection/EdgeSelection.tsx';
 import { Box } from '../geometry/box.ts';
-import { useDiagram } from '../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../react-app/context/DiagramContext.ts';
 
 export type SelectionApi = {
   repaint: () => void;

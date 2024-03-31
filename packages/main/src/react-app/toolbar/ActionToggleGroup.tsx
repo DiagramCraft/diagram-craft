@@ -1,6 +1,6 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import React, { useState } from 'react';
-import { useActions } from '../context/ActionsContext.tsx';
+import { useActions } from '../context/ActionsContext.ts';
 import { ToggleAction } from '../../base-ui/action.ts';
 
 type ActionToggleGroupContextType = {

@@ -1,4 +1,4 @@
-import { useConfiguration } from './context/ConfigurationContext.tsx';
+import { useConfiguration } from './context/ConfigurationContext.ts';
 
 export const useNodeDefaults = () => {
   const config = useConfiguration();

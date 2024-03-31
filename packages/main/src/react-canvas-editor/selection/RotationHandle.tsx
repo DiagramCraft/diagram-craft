@@ -1,7 +1,7 @@
 import { Point } from '../../geometry/point.ts';
 import { RotateDrag } from '../../base-ui/drag/rotateDrag.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
-import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 
 export const RotationHandle = () => {
   const diagram = useDiagram();

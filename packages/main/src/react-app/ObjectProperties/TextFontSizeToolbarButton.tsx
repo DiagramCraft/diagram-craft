@@ -1,6 +1,6 @@
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { useNodeProperty } from './useProperty.ts';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { Select } from '../components/Select.tsx';
 
 const SIZES = {

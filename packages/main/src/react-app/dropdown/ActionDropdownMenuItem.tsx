@@ -1,7 +1,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { findKeyBindings, formatKeyBinding } from '../../base-ui/keyMap.ts';
 import React from 'react';
-import { useActions } from '../context/ActionsContext.tsx';
+import { useActions } from '../context/ActionsContext.ts';
 import { Action, ActionContext } from '../../base-ui/action.ts';
 
 export const ActionDropdownMenuItem = (props: Props) => {

@@ -23,8 +23,8 @@ import { useDomEventListener, useEventListener } from '../react-app/hooks/useEve
 import { useDragDrop } from '../react-canvas-viewer/DragDropManager.ts';
 import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { useDiagram } from '../react-app/context/DiagramContext.tsx';
-import { useActions } from '../react-app/context/ActionsContext.tsx';
+import { useDiagram } from '../react-app/context/DiagramContext.ts';
+import { useActions } from '../react-app/context/ActionsContext.ts';
 import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';

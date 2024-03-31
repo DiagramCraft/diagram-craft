@@ -4,7 +4,7 @@ import { ResizeDrag, ResizeType } from '../../base-ui/drag/resizeDrag.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { Box } from '../../geometry/box.ts';
-import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 
 const Handle = (props: {
   x: number;

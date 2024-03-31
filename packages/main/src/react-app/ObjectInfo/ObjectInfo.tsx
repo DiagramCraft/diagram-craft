@@ -5,7 +5,7 @@ import * as Accordion from '@radix-ui/react-accordion';
 import { SelectionInfoDetails } from './SelectionInfoDetails.tsx';
 import { NodeInfoDetails } from './NodeInfoDetails.tsx';
 import { EdgeInfoDetails } from './EdgeInfoDetails.tsx';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 
 export const ObjectInfo = () => {
   const diagram = useDiagram();

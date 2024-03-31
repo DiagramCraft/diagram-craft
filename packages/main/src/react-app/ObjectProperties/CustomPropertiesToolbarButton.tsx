@@ -3,7 +3,7 @@ import { ToolbarButtonWithPopover } from '../components/ToolbarButtonWithPopover
 import { CustomPropertiesPanel } from './CustomPropertiesPanel.tsx';
 import { useEffect, useState } from 'react';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 
 export const CustomPropertiesToolbarButton = () => {
   const diagram = useDiagram();

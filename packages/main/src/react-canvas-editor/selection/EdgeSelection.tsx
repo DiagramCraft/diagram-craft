@@ -4,7 +4,7 @@ import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts
 import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
 import { useState } from 'react';
 import { useEventListener } from '../../react-app/hooks/useEventListener.ts';
-import { useDiagram } from '../../react-app/context/DiagramContext.tsx';
+import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { isConnected } from '../../model/endpoint.ts';
 
 export const EdgeSelection = (props: Props) => {

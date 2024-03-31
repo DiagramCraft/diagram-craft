@@ -2,7 +2,7 @@ import * as Tree from '../components/Tree.tsx';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { useDiagram } from '../context/DiagramContext.tsx';
+import { useDiagram } from '../context/DiagramContext.ts';
 import { ObjectTreeNode } from '../ObjectTreeNode.tsx';
 
 export const EdgeInfoDetails = (props: Props) => {

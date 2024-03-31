@@ -1,7 +1,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { findKeyBindings, formatKeyBinding } from '../../base-ui/keyMap.ts';
 import React from 'react';
-import { useActions } from '../context/ActionsContext.tsx';
+import { useActions } from '../context/ActionsContext.ts';
 import { Action, ActionContext, ToggleAction } from '../../base-ui/action.ts';
 import { TbCheck } from 'react-icons/tb';
 import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
