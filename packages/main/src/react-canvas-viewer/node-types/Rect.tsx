@@ -8,7 +8,9 @@ export const Rect = (props: Props) => {
     style: props.style!,
     node: props.node,
     onMouseDown: props.onMouseDown!,
-    nodeProps: props.nodeProps
+    nodeProps: props.nodeProps,
+    isSingleSelected: props.isSingleSelected,
+    tool: props.tool
   });
 
   return <g ref={ref} />;

@@ -1,100 +1,19 @@
-import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
-import { TextPart } from '../TextPart.tsx';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
-import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { Point } from '../../geometry/point.ts';
-import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { NodeWrapper } from '../NodeWrapper.tsx';
-import { FilledPath } from '../FilledPath.tsx';
-
-declare global {
-  interface NodeProps {
-    parallelogram?: {
-      slant?: number;
-    };
-  }
-}
+import { ReactNodeProps } from '../reactNodeDefinition.ts';
+import { ParallelogramComponent } from './Parallelogram.nodeType.ts';
+import { useComponent } from '../temp/useComponent.temp.ts';
 
 export const Parallelogram = (props: Props) => {
-  const slant = props.node.props.parallelogram?.slant ?? 5;
-  const path = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+  const ref = useComponent(() => new ParallelogramComponent(), {
+    // @ts-ignore
+    style: props.style!,
+    node: props.node,
+    onMouseDown: props.onMouseDown!,
+    nodeProps: props.nodeProps,
+    isSingleSelected: props.isSingleSelected,
+    tool: props.tool
+  });
 
-  return (
-    <NodeWrapper node={props.node} path={path}>
-      <FilledPath p={path} {...props} />
-
-      <TextPart
-        id={`text_1_${props.node.id}`}
-        text={props.nodeProps.text}
-        bounds={props.node.bounds}
-        onChange={TextPart.defaultOnChange(props.node)}
-        onMouseDown={props.onMouseDown!}
-      />
-
-      {props.isSingleSelected && props.tool?.type === 'move' && (
-        <ShapeControlPoint
-          x={props.node.bounds.x + slant}
-          y={props.node.bounds.y}
-          def={props.node}
-          onDrag={(x, _y, uow) => {
-            const distance = Math.max(0, x - props.node.bounds.x);
-            if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-              props.node.updateProps(props => {
-                props.parallelogram ??= {};
-                props.parallelogram.slant = distance;
-              }, uow);
-            }
-            return `Slant: ${props.node.props.parallelogram!.slant}px`;
-          }}
-        />
-      )}
-    </NodeWrapper>
-  );
+  return <g ref={ref} />;
 };
-
-export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
-  constructor() {
-    super('parallelogram', 'Parallelogram');
-  }
-
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      slant: {
-        type: 'number',
-        label: 'Slant',
-        value: def.props.parallelogram?.slant ?? 5,
-        maxValue: 60,
-        unit: 'px',
-        onChange: (value: number, uow: UnitOfWork) => {
-          if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          def.updateProps(props => {
-            props.parallelogram ??= {};
-            props.parallelogram.slant = value;
-          }, uow);
-        }
-      }
-    };
-  }
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    const slant = def.props.parallelogram?.slant ?? 5;
-    const bnd = def.bounds;
-
-    const sr = slant / bnd.w;
-    const cds = sr * 2;
-
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-
-    pathBuilder.moveTo(Point.of(-1 + cds, 1));
-    pathBuilder.lineTo(Point.of(1, 1));
-    pathBuilder.lineTo(Point.of(1 - cds, -1));
-    pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(-1 + cds, 1));
-
-    return pathBuilder;
-  }
-}
 
 type Props = ReactNodeProps;

@@ -231,13 +231,17 @@ const applyUpdates = (
 export const apply = (oldElement: VNode, newElement: VNode) => {
   const insertQueue: VNode[] = [];
   const newRoot = applyUpdates(oldElement, newElement, undefined, insertQueue);
-  insertQueue.forEach(onInsert);
+  setTimeout(() => {
+    insertQueue.forEach(onInsert);
+  }, 0);
   return newRoot;
 };
 
 export const insert = (newElement: VNode) => {
   const insertQueue: VNode[] = [];
   createElement(newElement, insertQueue);
-  insertQueue.forEach(onInsert);
+  setTimeout(() => {
+    insertQueue.forEach(onInsert);
+  }, 0);
   return newElement;
 };

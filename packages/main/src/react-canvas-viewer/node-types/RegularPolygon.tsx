@@ -1,99 +1,19 @@
-import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { ShapeControlPoint } from '../ShapeControlPoint.tsx';
-import { Point } from '../../geometry/point.ts';
-import { Box } from '../../geometry/box.ts';
-import { Vector } from '../../geometry/vector.ts';
-import { TextPart } from '../TextPart.tsx';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
-import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { FilledPath } from '../FilledPath.tsx';
-import { NodeWrapper } from '../NodeWrapper.tsx';
-
-declare global {
-  interface NodeProps {
-    regularPolygon?: {
-      numberOfSides?: number;
-    };
-  }
-}
+import { ReactNodeProps } from '../reactNodeDefinition.ts';
+import { RegularPolygonComponent } from './RegularPolygon.nodeType.ts';
+import { useComponent } from '../temp/useComponent.temp.ts';
 
 export const RegularPolygon = (props: Props) => {
-  const path = new RegularPolygonNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+  const ref = useComponent(() => new RegularPolygonComponent(), {
+    // @ts-ignore
+    style: props.style!,
+    node: props.node,
+    onMouseDown: props.onMouseDown!,
+    nodeProps: props.nodeProps,
+    isSingleSelected: props.isSingleSelected,
+    tool: props.tool
+  });
 
-  return (
-    <NodeWrapper node={props.node} path={path}>
-      <FilledPath p={path} {...props} />
-
-      <TextPart
-        id={`text_1_${props.node.id}`}
-        text={props.nodeProps.text}
-        bounds={props.node.bounds}
-        onChange={TextPart.defaultOnChange(props.node)}
-        onMouseDown={props.onMouseDown!}
-      />
-
-      {props.isSingleSelected && props.tool?.type === 'move' && (
-        <ShapeControlPoint
-          x={path.segments[1].start.x}
-          y={path.segments[1].start.y}
-          def={props.node}
-          onDrag={(x, y, uow) => {
-            const angle =
-              Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
-            const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
-
-            props.node.updateProps(props => {
-              props.regularPolygon ??= {};
-              props.regularPolygon.numberOfSides = numberOfSides;
-            }, uow);
-            return `Sides: ${numberOfSides}`;
-          }}
-        />
-      )}
-    </NodeWrapper>
-  );
+  return <g ref={ref} />;
 };
-
-export class RegularPolygonNodeDefinition extends AbstractReactNodeDefinition {
-  constructor() {
-    super('regular-polygon', 'Regular Polygon');
-  }
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    const sides = def.props.regularPolygon?.numberOfSides ?? 5;
-
-    const theta = Math.PI / 2;
-    const dTheta = (2 * Math.PI) / sides;
-
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-    pathBuilder.moveTo(Point.of(0, 1));
-
-    for (let i = 0; i < sides; i++) {
-      const angle = theta - (i + 1) * dTheta;
-
-      pathBuilder.lineTo(Point.of(Math.cos(angle), Math.sin(angle)));
-    }
-
-    return pathBuilder;
-  }
-
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      numberOfSides: {
-        type: 'number',
-        label: 'Sides',
-        value: def.props.regularPolygon?.numberOfSides ?? 5,
-        onChange: (value: number, uow: UnitOfWork) => {
-          def.updateProps(props => {
-            props.regularPolygon ??= {};
-            props.regularPolygon.numberOfSides = value;
-          }, uow);
-        }
-      }
-    };
-  }
-}
 
 type Props = ReactNodeProps;

@@ -1,8 +1,8 @@
 import { DragDopManager } from '../base-ui/drag/dragDropManager.ts';
 
-const INSTANCE = new DragDopManager();
+export const DRAG_DROP_MANAGER = new DragDopManager();
 
 // TODO: Do we really need a hook for this?
 export const useDragDrop = () => {
-  return INSTANCE;
+  return DRAG_DROP_MANAGER;
 };

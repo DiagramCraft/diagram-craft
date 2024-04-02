@@ -2,7 +2,6 @@ import { Component } from '../../base-ui/component.ts';
 import { MouseEventHandler } from 'react';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './pathRenderer.temp.ts';
-import { TextPart } from '../TextPart.tsx';
 import { Extent } from '../../geometry/extent.ts';
 import { Box } from '../../geometry/box.ts';
 import { h, s, t, VNode } from '../../base-ui/vdom.ts';
@@ -10,6 +9,10 @@ import { Path } from '../../geometry/path.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { DeepReadonly } from '../../utils/types.ts';
 import { deepClone } from '../../utils/object.ts';
+import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Tool } from '../../react-canvas-editor/tools/types.ts';
+import { ShapeControlPointDrag } from '../../base-ui/drag/shapeControlDrag.ts';
+import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -27,6 +30,31 @@ const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
   return Object.entries(style!)
     .map(([key, value]) => `${toKebabCase(key)}: ${value}`)
     .join(';');
+};
+
+type ControlPointCallback = (x: number, y: number, uow: UnitOfWork) => string;
+
+type ControlPoint = {
+  x: number;
+  y: number;
+  cb: ControlPointCallback;
+};
+
+const makeControlPoint = (cp: ControlPoint, node: DiagramNode) => {
+  return s('circle.svg-shape-control-point', {
+    attrs: {
+      cx: cp.x.toString(),
+      cy: cp.y.toString(),
+      r: '4'
+    },
+    on: {
+      mousedown: (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        DRAG_DROP_MANAGER.initiate(new ShapeControlPointDrag(node, cp.cb));
+        e.stopPropagation();
+      }
+    }
+  });
 };
 
 type NodeWrapperComponentProps = {
@@ -174,15 +202,6 @@ export class TextComponent extends Component<Props> {
               $textNode.style.pointerEvents = 'auto';
               $textNode.focus();
             }
-          },
-          hooks: {
-            onInsert: (n: VNode) => {
-              if (!props.text?.text) return;
-              props.onSizeChange?.({
-                w: (n.el! as HTMLElement).offsetWidth,
-                h: (n.el! as HTMLElement).offsetHeight
-              });
-            }
           }
         },
         h(
@@ -220,6 +239,26 @@ export class TextComponent extends Component<Props> {
                   h: (e.target as HTMLElement).offsetHeight
                 });
               }
+            },
+            hooks: {
+              onInsert: (n: VNode) => {
+                if (!props.text?.text) return;
+                props.onSizeChange?.({
+                  w: (n.el! as HTMLElement).offsetWidth,
+                  h: (n.el! as HTMLElement).offsetHeight
+                });
+              },
+              onUpdate: (_o: VNode, n: VNode) => {
+                if (
+                  (n.el! as HTMLElement).offsetWidth !== this.width ||
+                  (n.el! as HTMLElement).offsetHeight !== this.height
+                ) {
+                  props.onSizeChange?.({
+                    w: (n.el! as HTMLElement).offsetWidth,
+                    h: (n.el! as HTMLElement).offsetHeight
+                  });
+                }
+              }
             }
           },
           t(props.text?.text ?? '')
@@ -229,13 +268,28 @@ export class TextComponent extends Component<Props> {
   }
 }
 
+const defaultOnChange = (node: DiagramNode) => (text: string) => {
+  UnitOfWork.execute(node.diagram, uow => {
+    node.updateProps(props => {
+      props.text ??= {};
+      props.text.text = text;
+    }, uow);
+  });
+};
+
 export class ShapeBuilder {
   children: VNode[] = [];
   boundary: Path | undefined = undefined;
+  controlPoints: ControlPoint[] = [];
 
   constructor(private readonly props: BaseShapeProps) {}
 
-  text(id: string = '1', text?: NodeProps['text'], bounds?: Box) {
+  text(
+    id: string = '1',
+    text?: NodeProps['text'],
+    bounds?: Box,
+    onSizeChange?: (size: Extent) => void
+  ) {
     const c = new TextComponent();
     this.children.push(
       c.render({
@@ -243,7 +297,8 @@ export class ShapeBuilder {
         text: text ?? this.props.nodeProps.text,
         bounds: bounds ?? this.props.node.bounds,
         onMouseDown: this.props.onMouseDown,
-        onChange: TextPart.defaultOnChange(this.props.node)
+        onChange: defaultOnChange(this.props.node),
+        onSizeChange: onSizeChange
       })
     );
   }
@@ -271,6 +326,10 @@ export class ShapeBuilder {
         .map(p => s('path', { attrs: p }))
     );
   }
+
+  controlPoint(x: number, y: number, cb: ControlPointCallback) {
+    this.controlPoints.push({ x, y, cb });
+  }
 }
 
 type Props = {
@@ -287,6 +346,9 @@ export type BaseShapeProps = {
   node: DiagramNode;
   nodeProps: DeepReadonly<NodeProps>;
   onMouseDown: MouseEventHandler<SVGGElement>;
+
+  isSingleSelected: boolean;
+  tool: Tool | undefined;
 };
 
 export abstract class BaseShape<P extends BaseShapeProps = BaseShapeProps> extends Component<P> {
@@ -294,15 +356,24 @@ export abstract class BaseShape<P extends BaseShapeProps = BaseShapeProps> exten
   // @ts-ignore
   build(props: P, shapeBuilder: ShapeBuilder) {}
 
+  // TODO: We should find a way to keep the TextComponent instance across renders
   render(props: P) {
     const shapeBuilder = new ShapeBuilder(props);
     this.build(props, shapeBuilder);
+
+    const children = [...shapeBuilder.children];
+
+    if (props.isSingleSelected && props.tool?.type === 'move') {
+      for (const cp of shapeBuilder.controlPoints) {
+        children.push(makeControlPoint(cp, props.node));
+      }
+    }
 
     return wrapComponent({
       node: props.node,
       path: shapeBuilder.boundary!,
       style: props.style,
-      children: [s('g', {}, ...shapeBuilder.children)]
+      children: [s('g', {}, ...children)]
     });
   }
 }

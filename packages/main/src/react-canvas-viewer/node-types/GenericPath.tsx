@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { propsUtils } from '../utils/propsUtils.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { AbstractReactNodeDefinition, ReactNodeProps } from '../reactNodeDefinition.ts';
+import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { useDragDrop } from '../DragDropManager.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import {
@@ -15,17 +13,7 @@ import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { NodeWrapper } from '../NodeWrapper.tsx';
 import { FilledPath } from '../FilledPath.tsx';
-
-declare global {
-  interface NodeProps {
-    genericPath?: {
-      path?: string;
-      waypointTypes?: EditableWaypointType[];
-    };
-  }
-}
-
-const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
+import { GenericPathNodeDefinition } from './GenericPath.nodeType.ts';
 
 const COLORS: Record<EditableWaypointType, string> = {
   corner: 'red',
@@ -186,18 +174,5 @@ export const GenericPath = (props: Props) => {
     </>
   );
 };
-
-export class GenericPathNodeDefinition extends AbstractReactNodeDefinition {
-  constructor(name = 'generic-path', displayName = 'Path') {
-    super(name, displayName);
-  }
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    return PathBuilder.fromString(
-      def.props.genericPath?.path ?? DEFAULT_PATH,
-      unitCoordinateSystem(def.bounds)
-    );
-  }
-}
 
 type Props = ReactNodeProps;
