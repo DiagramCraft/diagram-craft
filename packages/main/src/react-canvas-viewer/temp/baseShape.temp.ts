@@ -26,7 +26,8 @@ const toKebabCase = (key: string) => {
 
 const withPx = (n?: number) => (n ? n + 'px' : undefined);
 
-const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
+// TODO: Move to vdom.ts
+export const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
   return Object.entries(style!)
     .map(([key, value]) => `${toKebabCase(key)}: ${value}`)
     .join(';');
