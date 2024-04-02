@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 import { TextPart } from '../TextPart.tsx';
 import { propsUtils } from '../utils/propsUtils.ts';
 import { Extent } from '../../geometry/extent.ts';
-import { RectNodeDefinition } from './Rect.tsx';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
+import { RectNodeDefinition } from './Rect.nodeType.ts';
 
 export const Text = (props: Props) => {
   const sizeChangeCallback = useCallback(

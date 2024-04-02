@@ -1,5 +1,5 @@
 import { Star, StarNodeDefinition } from './node-types/Star.tsx';
-import { Rect, RectNodeDefinition } from './node-types/Rect.tsx';
+import { Rect } from './node-types/Rect.tsx';
 import { Text, TextNodeDefinition } from './node-types/Text.tsx';
 import { RoundedRect, RoundedRectNodeDefinition } from './node-types/RoundedRect.tsx';
 import { ReactNodeDefinition } from './reactNodeDefinition.ts';
@@ -15,6 +15,7 @@ import { Trapetzoid, TrapetzoidNodeDefinition } from './node-types/Trapetzoid.ts
 import { Group, GroupNodeDefinition } from './node-types/Group.tsx';
 import { Container, ContainerNodeDefinition } from './node-types/Container.tsx';
 import { GenericPath, GenericPathNodeDefinition } from './node-types/GenericPath.tsx';
+import { RectNodeDefinition } from './node-types/Rect.nodeType.ts';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();

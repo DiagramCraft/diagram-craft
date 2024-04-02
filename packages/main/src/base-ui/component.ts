@@ -1,25 +1,27 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const h = (tag: string, props: Record<string, any>, ...children: HTMLElement[]) => {
-  const el = document.createElement(tag);
-  Object.assign(el, props);
-  el.append(...children);
-  return el;
-};
+import { apply, DOMElement, insert, VNode } from './vdom.ts';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const s = (tag: string, props: Record<string, any>, ...children: SVGElement[]) => {
-  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  Object.assign(el, props);
-  el.append(...children);
-  return el;
-};
+export abstract class Component<P = Record<string, never>> {
+  private element: VNode | undefined = undefined;
 
-export abstract class Component {
-  abstract render(): HTMLElement | SVGElement;
-  abstract update(): void;
+  abstract render(props: P): VNode;
+
   detach() {}
-}
 
-export const render = (component: Component, parent: HTMLElement) => {
-  parent.append(component.render());
-};
+  attach(parent: HTMLElement | SVGElement, props: P) {
+    const newElement = this.render(props);
+
+    insert(newElement);
+
+    this.element = newElement;
+
+    parent.appendChild(this.element.el! as DOMElement);
+  }
+
+  update(props: P) {
+    this.element = apply(this.element!, this.render(props));
+  }
+
+  isRendered(): boolean {
+    return !!this.element?.el;
+  }
+}
