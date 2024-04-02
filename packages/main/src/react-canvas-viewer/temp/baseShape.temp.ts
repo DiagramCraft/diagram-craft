@@ -13,6 +13,9 @@ import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Tool } from '../../react-canvas-editor/tools/types.ts';
 import { ShapeControlPointDrag } from '../../base-ui/drag/shapeControlDrag.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
+import { Point } from '../../geometry/point.ts';
+import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
+import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -285,6 +288,10 @@ export class ShapeBuilder {
 
   constructor(private readonly props: BaseShapeProps) {}
 
+  add(vnode: VNode) {
+    this.children.push(vnode);
+  }
+
   text(
     id: string = '1',
     text?: NodeProps['text'],
@@ -304,7 +311,7 @@ export class ShapeBuilder {
     );
   }
 
-  boundaryPath(path: Path) {
+  boundaryPath(path: Path, map: (n: VNode) => VNode = a => a) {
     const pathRenderer: PathRenderer = this.props.node.props.effects?.sketch
       ? new SketchPathRenderer()
       : new DefaultPathRenderer();
@@ -324,7 +331,7 @@ export class ShapeBuilder {
           class: 'svg-node__boundary svg-node',
           style: toInlineCSS(path.style)
         }))
-        .map(p => s('path', { attrs: p }))
+        .map(p => map(s('path', { attrs: p })))
     );
   }
 
@@ -350,6 +357,12 @@ export type BaseShapeProps = {
 
   isSingleSelected: boolean;
   tool: Tool | undefined;
+  actionMap: Partial<ActionMap>;
+  childProps: {
+    onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
+    onDoubleClick?: (id: string, coord: Point) => void;
+    applicationTriggers: ApplicationTriggers;
+  };
 };
 
 export abstract class BaseShape<P extends BaseShapeProps = BaseShapeProps> extends Component<P> {
@@ -358,7 +371,7 @@ export abstract class BaseShape<P extends BaseShapeProps = BaseShapeProps> exten
   build(props: P, shapeBuilder: ShapeBuilder) {}
 
   // TODO: We should find a way to keep the TextComponent instance across renders
-  render(props: P) {
+  render(props: P): VNode {
     const shapeBuilder = new ShapeBuilder(props);
     this.build(props, shapeBuilder);
 

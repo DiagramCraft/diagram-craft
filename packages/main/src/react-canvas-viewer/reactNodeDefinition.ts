@@ -19,6 +19,7 @@ import { DiagramElement } from '../model/diagramElement.ts';
 import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
 import { DeepReadonly } from '../utils/types.ts';
+import { BaseShape } from './temp/baseShape.temp.ts';
 
 export type ReactNodeProps<E = SVGPathElement> = {
   node: DiagramNode;
@@ -119,7 +120,8 @@ export class ReactNodeDefinition implements NodeDefinition {
 
   constructor(
     readonly reactNode: ReactNode,
-    private readonly delegate: NodeDefinition
+    private readonly delegate: NodeDefinition,
+    readonly component: BaseShape | undefined
   ) {
     this.type = delegate.type;
     this.name = delegate.name;

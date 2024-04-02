@@ -47,7 +47,7 @@ describe('Diagram', () => {
   test('transform rotate', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
     nodeDefinitionRegistry.register(
-      new ReactNodeDefinition(Rect, new RectNodeDefinition('rect', 'Rectangle'))
+      new ReactNodeDefinition(Rect, new RectNodeDefinition('rect', 'Rectangle'), undefined)
     );
 
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());

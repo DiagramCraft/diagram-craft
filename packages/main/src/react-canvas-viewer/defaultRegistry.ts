@@ -15,35 +15,66 @@ import { Trapetzoid } from './node-types/Trapetzoid.tsx';
 import { Group } from './node-types/Group.tsx';
 import { Container } from './node-types/Container.tsx';
 import { GenericPath } from './node-types/GenericPath.tsx';
-import { RectNodeDefinition } from './node-types/Rect.nodeType.ts';
-import { CircleNodeDefinition } from './node-types/Circle.nodeType.ts';
-import { DiamondNodeDefinition } from './node-types/Diamond.nodeType.ts';
-import { ParallelogramNodeDefinition } from './node-types/Parallelogram.nodeType.ts';
-import { RegularPolygonNodeDefinition } from './node-types/RegularPolygon.nodeType.ts';
-import { RoundedRectNodeDefinition } from './node-types/RoundedRect.nodeType.ts';
-import { StarNodeDefinition } from './node-types/Star.nodeType.ts';
-import { TrapetzoidNodeDefinition } from './node-types/Trapetzoid.nodeType.ts';
-import { TextNodeDefinition } from './node-types/Text.nodeType.ts';
+import { RectComponent, RectNodeDefinition } from './node-types/Rect.nodeType.ts';
+import { CircleComponent, CircleNodeDefinition } from './node-types/Circle.nodeType.ts';
+import { DiamondComponent, DiamondNodeDefinition } from './node-types/Diamond.nodeType.ts';
+import {
+  ParallelogramComponent,
+  ParallelogramNodeDefinition
+} from './node-types/Parallelogram.nodeType.ts';
+import {
+  RegularPolygonComponent,
+  RegularPolygonNodeDefinition
+} from './node-types/RegularPolygon.nodeType.ts';
+import {
+  RoundedRectComponent,
+  RoundedRectNodeDefinition
+} from './node-types/RoundedRect.nodeType.ts';
+import { StarComponent, StarNodeDefinition } from './node-types/Star.nodeType.ts';
+import { TrapetzoidComponent, TrapetzoidNodeDefinition } from './node-types/Trapetzoid.nodeType.ts';
+import { TextComponent, TextNodeDefinition } from './node-types/Text.nodeType.ts';
 import { ContainerNodeDefinition } from './node-types/Container.nodeType.ts';
 import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType.ts';
 import { GroupNodeDefinition } from './node-types/Group.nodeType.ts';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
-  dest.register(new ReactNodeDefinition(Rect, new RectNodeDefinition()));
-  dest.register(new ReactNodeDefinition(RoundedRect, new RoundedRectNodeDefinition()));
-  dest.register(new ReactNodeDefinition(Circle, new CircleNodeDefinition()));
-  dest.register(new ReactNodeDefinition(Text, new TextNodeDefinition()));
-  dest.register(new ReactNodeDefinition(Star, new StarNodeDefinition()));
-  dest.register(new ReactNodeDefinition(RegularPolygon, new RegularPolygonNodeDefinition()));
-  dest.register(new ReactNodeDefinition(Parallelogram, new ParallelogramNodeDefinition()));
-  dest.register(new ReactNodeDefinition(Trapetzoid, new TrapetzoidNodeDefinition()));
-  dest.register(new ReactNodeDefinition(Diamond, new DiamondNodeDefinition()));
-  dest.register(new ReactNodeDefinition(GenericPath, new GenericPathNodeDefinition()));
-  dest.register(new ReactNodeDefinition(Container, new ContainerNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Rect, new RectNodeDefinition(), new RectComponent()));
+  dest.register(
+    new ReactNodeDefinition(
+      RoundedRect,
+      new RoundedRectNodeDefinition(),
+      new RoundedRectComponent()
+    )
+  );
+  dest.register(new ReactNodeDefinition(Circle, new CircleNodeDefinition(), new CircleComponent()));
+  dest.register(new ReactNodeDefinition(Text, new TextNodeDefinition(), new TextComponent()));
+  dest.register(new ReactNodeDefinition(Star, new StarNodeDefinition(), new StarComponent()));
+  dest.register(
+    new ReactNodeDefinition(
+      RegularPolygon,
+      new RegularPolygonNodeDefinition(),
+      new RegularPolygonComponent()
+    )
+  );
+  dest.register(
+    new ReactNodeDefinition(
+      Parallelogram,
+      new ParallelogramNodeDefinition(),
+      new ParallelogramComponent()
+    )
+  );
+  dest.register(
+    new ReactNodeDefinition(Trapetzoid, new TrapetzoidNodeDefinition(), new TrapetzoidComponent())
+  );
+  dest.register(
+    new ReactNodeDefinition(Diamond, new DiamondNodeDefinition(), new DiamondComponent())
+  );
+  dest.register(new ReactNodeDefinition(GenericPath, new GenericPathNodeDefinition(), undefined));
+  dest.register(new ReactNodeDefinition(Container, new ContainerNodeDefinition(), undefined));
 
   // Note: group must be the last element
-  dest.register(new ReactNodeDefinition(Group, new GroupNodeDefinition()));
+  dest.register(new ReactNodeDefinition(Group, new GroupNodeDefinition(), undefined));
 
   return dest;
 };
