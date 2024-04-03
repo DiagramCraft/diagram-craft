@@ -22,6 +22,9 @@ import { Diagram } from '../../model/diagram.ts';
 import { FillFilter, FillPattern } from './fill.temp.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import * as html from '../../base-ui/vdom-html.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { EdgeComponent } from '../EdgeComponent.temp.ts';
+import { ReactNodeDefinition } from '../reactNodeDefinition.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -550,6 +553,45 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
         },
         ...level1
       )
+    );
+  }
+
+  protected makeEdge(child: DiagramEdge, props: BaseShapeBuildProps) {
+    // TODO: Better id
+    return this.subComponent('edge', () => new EdgeComponent(), {
+      def: child,
+      diagram: child.diagram,
+      tool: props.tool,
+      onDoubleClick: props.childProps.onDoubleClick ?? (() => {}),
+      onMouseDown: props.childProps.onMouseDown,
+      applicationTriggers: props.childProps.applicationTriggers,
+      actionMap: props.actionMap
+    });
+  }
+
+  protected makeNode(child: DiagramNode, props: BaseShapeBuildProps) {
+    const nodeProps: BaseShapeProps = {
+      def: child as DiagramNode,
+      applicationTriggers: props.childProps.applicationTriggers,
+      diagram: child.diagram,
+      tool: props.tool,
+      onMouseDown: props.childProps.onMouseDown,
+      onDoubleClick: props.childProps.onDoubleClick ?? (() => {}),
+      actionMap: props.actionMap
+    };
+
+    // TODO: Better id
+    return this.subComponent(
+      'node',
+      (props.node.diagram.nodeDefinitions.get(child.nodeType) as ReactNodeDefinition).component!,
+      nodeProps
+    );
+  }
+
+  protected rotateBack(center: Point, angle: number, child: VNode) {
+    return svg.g(
+      { class: '__debug_rotate_back', transform: `rotate(${-angle} ${center.x} ${center.y})` },
+      child
     );
   }
 }

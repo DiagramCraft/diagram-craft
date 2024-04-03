@@ -7,6 +7,9 @@ import { Rotation, Scale, Transform, Translation } from '../../geometry/transfor
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { Box } from '../../geometry/box.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import * as svg from '../../base-ui/vdom-svg.ts';
+import { DiagramEdge } from '../../model/diagramEdge.ts';
 
 declare global {
   interface NodeProps {
@@ -196,5 +199,40 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
       const parentDef = node.parent.getDefinition();
       parentDef.onChildChanged(node.parent, uow);
     }
+  }
+}
+
+export class ContainerComponent extends BaseShape {
+  build(props: BaseShapeBuildProps, builder: ShapeBuilder) {
+    const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const svgPath = path.asSvgPath();
+
+    const center = Box.center(props.node.bounds);
+    builder.add(
+      svg.path({
+        'class': '__debug_node_container',
+        'd': svgPath,
+        'x': props.node.bounds.x,
+        'y': props.node.bounds.y,
+        'width': props.node.bounds.w,
+        'height': props.node.bounds.h,
+        'stroke': props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : '#d5d5d4',
+        'stroke-width': props.nodeProps.highlight?.includes('drop-target') ? 3 : 1,
+        'fill': 'transparent',
+        'on': {
+          mousedown: props.onMouseDown
+        }
+      })
+    );
+
+    props.node.children.forEach(child => {
+      builder.add(
+        this.rotateBack(
+          center,
+          props.node.bounds.r,
+          isNode(child) ? this.makeNode(child, props) : this.makeEdge(child as DiagramEdge, props)
+        )
+      );
+    });
   }
 }

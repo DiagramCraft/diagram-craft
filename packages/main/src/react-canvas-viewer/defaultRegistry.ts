@@ -33,7 +33,7 @@ import {
 import { StarComponent, StarNodeDefinition } from './node-types/Star.nodeType.ts';
 import { TrapetzoidComponent, TrapetzoidNodeDefinition } from './node-types/Trapetzoid.nodeType.ts';
 import { TextComponent, TextNodeDefinition } from './node-types/Text.nodeType.ts';
-import { ContainerNodeDefinition } from './node-types/Container.nodeType.ts';
+import { ContainerComponent, ContainerNodeDefinition } from './node-types/Container.nodeType.ts';
 import {
   GenericPathComponent,
   GenericPathNodeDefinition
@@ -86,7 +86,13 @@ export const defaultNodeRegistry = () => {
       () => new GenericPathComponent()
     )
   );
-  dest.register(new ReactNodeDefinition(Container, new ContainerNodeDefinition(), undefined));
+  dest.register(
+    new ReactNodeDefinition(
+      Container,
+      new ContainerNodeDefinition(),
+      () => new ContainerComponent()
+    )
+  );
 
   // Note: group must be the last element
   dest.register(
