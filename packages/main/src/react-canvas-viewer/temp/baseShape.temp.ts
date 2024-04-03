@@ -117,7 +117,8 @@ const wrapComponent = (props: NodeWrapperComponentProps) => {
 
   return svg.g(
     {
-      style: `filter: ${props.style.filter}`
+      style: `filter: ${props.style.filter ?? 'none'}`,
+      class: '__debug_node_wrapper'
     },
     ...reflection,
     ...props.children
@@ -514,6 +515,8 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
         node: props.def,
         path: shapeBuilder.boundary!,
         style: style,
+
+        // TODO: Do we really need to wrap this in a g
         children: [svg.g({}, ...children)]
       })
     );
@@ -535,7 +538,9 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     }
 
     return svg.g(
-      {},
+      {
+        class: '__debug_node_outer'
+      },
       ...outer,
       svg.g(
         {

@@ -38,7 +38,7 @@ import {
   GenericPathComponent,
   GenericPathNodeDefinition
 } from './node-types/GenericPath.nodeType.ts';
-import { GroupNodeDefinition } from './node-types/Group.nodeType.ts';
+import { GroupComponent, GroupNodeDefinition } from './node-types/Group.nodeType.ts';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -89,7 +89,9 @@ export const defaultNodeRegistry = () => {
   dest.register(new ReactNodeDefinition(Container, new ContainerNodeDefinition(), undefined));
 
   // Note: group must be the last element
-  dest.register(new ReactNodeDefinition(Group, new GroupNodeDefinition(), undefined));
+  dest.register(
+    new ReactNodeDefinition(Group, new GroupNodeDefinition(), () => new GroupComponent())
+  );
 
   return dest;
 };
