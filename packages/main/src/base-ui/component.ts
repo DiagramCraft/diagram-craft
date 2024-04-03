@@ -1,6 +1,6 @@
-import { apply, DOMElement, insert, VNode, VNodeProps } from './vdom.ts';
+import { apply, DOMElement, insert, VNode, VNodeData } from './vdom.ts';
 
-type ComponentVNodeProps<P, C extends Component<P>> = VNodeProps & {
+type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
   component: {
     instance: C | undefined;
     props: P;
@@ -9,6 +9,7 @@ type ComponentVNodeProps<P, C extends Component<P>> = VNodeProps & {
 
 export abstract class Component<P = Record<string, never>> {
   private element: VNode | undefined = undefined;
+  protected currentProps: P | undefined;
 
   abstract render(props: P): VNode;
 
@@ -20,6 +21,7 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   protected create(props: P) {
+    this.currentProps = props;
     const newElement = this.render(props);
 
     insert(newElement);
@@ -28,6 +30,7 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   update(props: P) {
+    this.currentProps = props;
     this.element = apply(this.element!, this.render(props));
   }
 
@@ -35,15 +38,23 @@ export abstract class Component<P = Record<string, never>> {
     return !!this.element?.el;
   }
 
+  replaceWith(newComponent: Component<P>) {
+    if (this.element?.el) {
+      newComponent.create(this.currentProps!);
+      this.element.el.replaceWith(newComponent.element!.el!);
+      this.detach();
+    }
+  }
+
   protected subComponent<P, C extends Component<P>>(
     id: string,
     component: () => C,
     props: P
-  ): VNode & { props: ComponentVNodeProps<P, C> } {
+  ): VNode & { data: ComponentVNodeData<P, C> } {
     return {
       type: 'c',
       tag: id,
-      props: {
+      data: {
         component: {
           props,
           instance: undefined
@@ -53,22 +64,22 @@ export abstract class Component<P = Record<string, never>> {
             const cmp = component();
             cmp.create(props);
             node.el = cmp.element?.el;
-            (node.props as ComponentVNodeProps<P, C>).component = {
+            (node.data as ComponentVNodeData<P, C>).component = {
               instance: cmp,
               props: props
             };
           },
           onUpdate: (oldNode, newNode) => {
-            const cmp = (oldNode.props as ComponentVNodeProps<P, C>).component.instance!;
-            cmp.update((newNode.props as ComponentVNodeProps<P, C>).component.props);
+            const cmp = (oldNode.data as ComponentVNodeData<P, C>).component.instance!;
+            cmp.update((newNode.data as ComponentVNodeData<P, C>).component.props);
             newNode.el = cmp.element?.el;
-            (newNode.props as ComponentVNodeProps<P, C>).component = {
+            (newNode.data as ComponentVNodeData<P, C>).component = {
               instance: cmp,
               props: props
             };
           },
           onRemove: node => {
-            const cmp = (node.props as ComponentVNodeProps<P, C>).component.instance!;
+            const cmp = (node.data as ComponentVNodeData<P, C>).component.instance!;
             cmp.detach();
           }
         }

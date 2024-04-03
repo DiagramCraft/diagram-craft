@@ -8,6 +8,13 @@ export const useComponent = <P extends BaseShapeProps, T extends BaseShape>(
   const cmpRef = useRef<T>(component());
   const parentRef = useRef<SVGGElement>(null);
 
+  const newComponent = component();
+  const isSameComponent = cmpRef.current.constructor === newComponent.constructor;
+  if (!isSameComponent) {
+    cmpRef.current.replaceWith(newComponent);
+    cmpRef.current = newComponent;
+  }
+
   if (parentRef.current) {
     setTimeout(() => {
       cmpRef.current.update(props);

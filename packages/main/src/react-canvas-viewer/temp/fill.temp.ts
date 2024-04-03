@@ -1,8 +1,9 @@
 import { Component } from '../../base-ui/component.ts';
-import { r, s, VNode } from '../../base-ui/vdom.ts';
+import { rawHTML, VNode } from '../../base-ui/vdom.ts';
 import { DeepReadonly, DeepRequired } from '../../utils/types.ts';
 import { getPatternProps } from '../NodePattern.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
+import * as svg from '../../base-ui/vdom-svg.ts';
 
 type FillProps = {
   patternId: string;
@@ -16,104 +17,86 @@ export class FillFilter extends Component<FillProps> {
 
     if (nodeProps.fill.image.tint !== '') {
       filterChildren.push(
-        s('feFlood', {
-          attrs: {
-            'result': 'fill',
-            'width': '100%',
-            'height': '100%',
-            'flood-color': nodeProps.fill.image.tint,
-            'flood-opacity': '1'
-          }
+        svg.feFlood({
+          'result': 'fill',
+          'width': '100%',
+          'height': '100%',
+          'flood-color': nodeProps.fill.image.tint,
+          'flood-opacity': '1'
         })
       );
       filterChildren.push(
-        s('feColorMatrix', {
-          attrs: {
-            in: 'SourceGraphic',
-            result: 'desaturate',
-            type: 'saturate',
-            values: '0'
-          }
+        svg.feColorMatrix({
+          in: 'SourceGraphic',
+          result: 'desaturate',
+          type: 'saturate',
+          values: '0'
         })
       );
       filterChildren.push(
-        s('feBlend', {
-          attrs: {
-            in2: 'desaturate',
-            in: 'fill',
-            mode: 'color',
-            result: 'blend'
-          }
+        svg.feBlend({
+          in2: 'desaturate',
+          in: 'fill',
+          mode: 'color',
+          result: 'blend'
         })
       );
       filterChildren.push(
-        s('feComposite', {
-          attrs: {
-            in: 'blend',
-            in2: 'SourceGraphic',
-            operator: 'arithmetic',
-            k1: '0',
-            k4: '0',
-            k2: nodeProps.fill.image.tintStrength,
-            k3: (1 - nodeProps.fill.image.tintStrength).toString()
-          }
+        svg.feComposite({
+          in: 'blend',
+          in2: 'SourceGraphic',
+          operator: 'arithmetic',
+          k1: '0',
+          k4: '0',
+          k2: nodeProps.fill.image.tintStrength,
+          k3: (1 - nodeProps.fill.image.tintStrength).toString()
         })
       );
     }
 
     if (nodeProps.fill.image.saturation !== 1) {
       filterChildren.push(
-        s('feColorMatrix', {
-          attrs: {
-            type: 'saturate',
-            values: nodeProps.fill.image.saturation?.toString()
-          }
+        svg.feColorMatrix({
+          type: 'saturate',
+          values: nodeProps.fill.image.saturation?.toString()
         })
       );
     }
 
     if (nodeProps.fill.image.brightness !== 1) {
       filterChildren.push(
-        s(
-          'feComponentTransfer',
+        svg.feComponentTransfer(
           {},
-          s('feFuncR', { attrs: { type: 'linear', slope: nodeProps.fill.image.brightness } }),
-          s('feFuncG', { attrs: { type: 'linear', slope: nodeProps.fill.image.brightness } }),
-          s('feFuncB', { attrs: { type: 'linear', slope: nodeProps.fill.image.brightness } })
+          svg.feFuncR({ type: 'linear', slope: nodeProps.fill.image.brightness }),
+          svg.feFuncG({ type: 'linear', slope: nodeProps.fill.image.brightness }),
+          svg.feFuncB({ type: 'linear', slope: nodeProps.fill.image.brightness })
         )
       );
     }
 
     if (nodeProps.fill.image.contrast !== 1) {
       filterChildren.push(
-        s(
-          'feComponentTransfer',
+        svg.feComponentTransfer(
           {},
-          s('feFuncR', {
-            attrs: {
-              type: 'linear',
-              slope: nodeProps.fill.image.contrast,
-              intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
-            }
+          svg.feFuncR({
+            type: 'linear',
+            slope: nodeProps.fill.image.contrast,
+            intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
           }),
-          s('feFuncG', {
-            attrs: {
-              type: 'linear',
-              slope: nodeProps.fill.image.contrast,
-              intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
-            }
+          svg.feFuncG({
+            type: 'linear',
+            slope: nodeProps.fill.image.contrast,
+            intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
           }),
-          s('feFuncB', {
-            attrs: {
-              type: 'linear',
-              slope: nodeProps.fill.image.contrast,
-              intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
-            }
+          svg.feFuncB({
+            type: 'linear',
+            slope: nodeProps.fill.image.contrast,
+            intercept: -(0.5 * nodeProps.fill.image.contrast) + 0.5
           })
         )
       );
     }
-    return s('filter', { attrs: { id: `${props.patternId}-filter` } }, ...filterChildren);
+    return svg.filter({ id: `${props.patternId}-filter` }, ...filterChildren);
   }
 }
 
@@ -125,7 +108,6 @@ type FillPatternProps = {
 
 export class FillPattern extends Component<FillPatternProps> {
   pattern: string = '';
-  private currentProps: FillPatternProps | undefined;
 
   setPattern = (pattern: string) => {
     this.pattern = pattern;
@@ -133,8 +115,6 @@ export class FillPattern extends Component<FillPatternProps> {
   };
 
   render(props: FillPatternProps) {
-    this.currentProps = props;
-
     const nodeProps = props.nodeProps;
 
     const patternProps = getPatternProps(nodeProps, props.def.bounds);
@@ -157,12 +137,10 @@ export class FillPattern extends Component<FillPatternProps> {
           }
         });
 
-      if (this.pattern === '') return s('defs', {});
+      if (this.pattern === '') return svg.defs();
 
-      return s(
-        'defs',
-        {},
-        r(
+      return svg.defs(
+        rawHTML(
           this.pattern
             .replace('#ID#', props.patternId)
             .replaceAll('#BG#', nodeProps.fill.color)
@@ -180,42 +158,33 @@ export class FillPattern extends Component<FillPatternProps> {
     const patternChildren: VNode[] = [];
 
     patternChildren.push(
-      s('rect', {
-        attrs: {
-          width: patternProps.imgWith.toString(),
-          height: patternProps.imgHeight.toString(),
-          fill: nodeProps.fill.color
-        }
+      svg.rect({
+        width: patternProps.imgWith.toString(),
+        height: patternProps.imgHeight.toString(),
+        fill: nodeProps.fill.color
       })
     );
 
     if (imageUrl !== '') {
       patternChildren.push(
-        s('image', {
-          attrs: {
-            href: imageUrl,
-            preserveAspectRatio: patternProps.preserveAspectRatio,
-            width: patternProps.imgWith.toString(),
-            height: patternProps.imgHeight.toString(),
-            filter: filterNeeded ? `url(#${props.patternId}-filter)` : ''
-          }
+        svg.image({
+          href: imageUrl,
+          preserveAspectRatio: patternProps.preserveAspectRatio,
+          width: patternProps.imgWith.toString(),
+          height: patternProps.imgHeight.toString(),
+          filter: filterNeeded ? `url(#${props.patternId}-filter)` : ''
         })
       );
     }
 
-    return s(
-      'defs',
-      {},
-      s(
-        'pattern',
+    return svg.defs(
+      svg.pattern(
         {
-          attrs: {
-            id: props.patternId,
-            patternUnits: patternProps.patternUnits,
-            patternContentUnits: patternProps.patternContentUnits,
-            width: patternProps.width,
-            height: patternProps.height
-          }
+          id: props.patternId,
+          patternUnits: patternProps.patternUnits,
+          patternContentUnits: patternProps.patternContentUnits,
+          width: patternProps.width,
+          height: patternProps.height
         },
         ...patternChildren
       )

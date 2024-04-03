@@ -1,15 +1,22 @@
 import { VerifyNotReached } from '../utils/assert.ts';
 
+const toKebabCase = (key: string) =>
+  key.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+
+export const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
+  return Object.entries(style!)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${toKebabCase(key)}: ${value}`)
+    .join(';');
+};
+
 type EventListenerMap = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [K in keyof HTMLElementEventMap]?: (this: Document, ev: DocumentEventMap[K]) => any;
 };
 
-export type VNodeProps = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  //props?: Record<string, any>;
-  attrs?: Record<string, string | number | boolean>;
-  //  style?: Partial<CSSStyleDeclaration>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface VNodeData extends Record<string, any> {
   on?: Partial<EventListenerMap>;
   hooks?: {
     onUpdate?: (oldVNode: VNode, newVNode: VNode) => void;
@@ -17,7 +24,7 @@ export type VNodeProps = {
     onCreate?: (node: VNode) => void;
     onRemove?: (node: VNode) => void;
   };
-};
+}
 
 export type DOMElement = HTMLElement | SVGElement;
 
@@ -25,21 +32,21 @@ export type VNode =
   | {
       type: 'h' | 's' | 'c';
       tag: string;
-      props: VNodeProps;
+      data: VNodeData;
       children: Array<VNode>;
       el: DOMElement | undefined;
     }
   | {
       type: 't';
       tag: '#text';
-      props: VNodeProps;
+      data: VNodeData;
       children: [string];
       el: Text | undefined;
     }
   | {
       type: 'r';
       tag: '#raw';
-      props: VNodeProps;
+      data: VNodeData;
       children: [string];
       el: DOMElement | undefined;
     };
@@ -47,65 +54,66 @@ export type VNode =
 const emptyVNode = (): VNode => ({
   type: 'h',
   tag: '',
-  props: {},
+  data: {},
   children: [],
   el: undefined
 });
 
-const parseTag = (rawTag: string) => {
-  const [tag, className] = rawTag.split('.');
-  return { tag, className: className };
+export const h = (tag: string, props: VNodeData, ...children: (VNode | null)[]): VNode => {
+  return {
+    type: 'h',
+    tag,
+    data: props,
+    children: children.filter(Boolean) as VNode[],
+    el: undefined
+  };
 };
 
-export const h = (rawTag: string, props: VNodeProps, ...children: (VNode | null)[]): VNode => {
-  const { tag, className } = parseTag(rawTag);
-  props.attrs ??= {};
-  props.attrs.class ??= className;
-  return { type: 'h', tag, props, children: children.filter(Boolean) as VNode[], el: undefined };
+export const s = (tag: string, props: VNodeData, ...children: (VNode | null)[]): VNode => {
+  return {
+    type: 's',
+    tag,
+    data: props,
+    children: children.filter(Boolean) as VNode[],
+    el: undefined
+  };
 };
 
-export const s = (rawTag: string, props: VNodeProps, ...children: (VNode | null)[]): VNode => {
-  const { tag, className } = parseTag(rawTag);
-  props.attrs ??= {};
-  props.attrs.class ??= className;
-  return { type: 's', tag, props, children: children.filter(Boolean) as VNode[], el: undefined };
+export const text = (text: string): VNode => {
+  return { type: 't', tag: '#text', data: {}, children: [text], el: undefined };
 };
 
-export const t = (text: string): VNode => {
-  return { type: 't', tag: '#text', props: {}, children: [text], el: undefined };
-};
-
-export const r = (text: string): VNode => {
-  return { type: 'r', tag: '#raw', props: {}, children: [text], el: undefined };
+export const rawHTML = (text: string): VNode => {
+  return { type: 'r', tag: '#raw', data: {}, children: [text], el: undefined };
 };
 
 const onUpdate = (oldVNode: VNode, newVNode: VNode, parentElement: VNode | undefined) => {
   updateAttrs(oldVNode, newVNode);
   updateEvents(oldVNode, newVNode);
 
-  if (oldVNode.type === 't' && newVNode.type === 't') {
+  if (newVNode.type === 't' || newVNode.type === 'r') {
     // TODO: Checking for contentEditable here is a bit of a hack
     //       It's because for some reason blur events from TextComponent is handled out of order
-    if (parentElement && (parentElement.el! as HTMLElement).contentEditable !== 'true') {
-      (parentElement.el! as HTMLElement).innerText = newVNode.children[0];
+    if (!parentElement || (parentElement.el! as HTMLElement).contentEditable === 'true') {
+      return;
     }
-  } else if (oldVNode.type === 'r' && newVNode.type === 'r') {
-    // TODO: Checking for contentEditable here is a bit of a hack
-    //       It's because for some reason blur events from TextComponent is handled out of order
-    if (parentElement && (parentElement.el! as HTMLElement).contentEditable !== 'true') {
+
+    if (newVNode.type === 't') {
+      (parentElement.el! as HTMLElement).innerText = newVNode.children[0];
+    } else if (newVNode.type === 'r') {
       (parentElement.el! as HTMLElement).innerHTML = newVNode.children[0];
     }
   }
 
-  newVNode.props.hooks?.onUpdate?.(oldVNode, newVNode);
+  newVNode.data.hooks?.onUpdate?.(oldVNode, newVNode);
 };
 
 const onInsert = (node: VNode) => {
-  node.props.hooks?.onInsert?.(node);
+  node.data.hooks?.onInsert?.(node);
 };
 
 const onCreate = (node: VNode) => {
-  node.props.hooks?.onCreate?.(node);
+  node.data.hooks?.onCreate?.(node);
 };
 
 const onRemove = (node: VNode) => {
@@ -114,14 +122,14 @@ const onRemove = (node: VNode) => {
     onRemove(child as VNode);
   }
 
-  node.props.hooks?.onRemove?.(node);
+  node.data.hooks?.onRemove?.(node);
 };
 
 const updateAttrs = (oldVNode: VNode, newVNode: VNode) => {
   if (oldVNode.type === 't' || newVNode.type === 't') return;
 
-  const oldAttrs = oldVNode.props.attrs ?? {};
-  const newAttrs = newVNode.props.attrs ?? {};
+  const oldAttrs = oldVNode.data ?? {};
+  const newAttrs = newVNode.data ?? {};
   const newNode = newVNode.el! as DOMElement;
 
   Object.entries(newAttrs).forEach(([key, value]) => {
@@ -134,8 +142,8 @@ const updateAttrs = (oldVNode: VNode, newVNode: VNode) => {
 const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
   if (oldVNode.type === 't' || newVNode.type === 't') return;
 
-  const oldEvents = oldVNode.props.on ?? {};
-  const newEvents = newVNode.props.on ?? {};
+  const oldEvents = oldVNode.data.on ?? {};
+  const newEvents = newVNode.data.on ?? {};
   const newNode = newVNode.el! as DOMElement;
   const oldNode = oldVNode.el! as DOMElement;
 
@@ -255,6 +263,7 @@ const applyUpdates = (
 
 export const apply = (oldElement: VNode, newElement: VNode) => {
   const insertQueue: VNode[] = [];
+  // TODO: Support replacing root element in case tag name has changed
   const newRoot = applyUpdates(oldElement, newElement, undefined, insertQueue);
   setTimeout(() => {
     insertQueue.forEach(onInsert);

@@ -1,5 +1,5 @@
 import { Component } from '../base-ui/component.ts';
-import { s, VNode } from '../base-ui/vdom.ts';
+import { toInlineCSS, VNode } from '../base-ui/vdom.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Diagram } from '../model/diagram.ts';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
@@ -14,12 +14,12 @@ import { EventHelper } from '../base-ui/eventHelper.ts';
 import { CSSProperties } from 'react';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
-import { toInlineCSS } from './temp/baseShape.temp.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
 import { ControlPoints } from '../model/types.ts';
+import * as svg from '../base-ui/vdom-svg.ts';
 
 const makeArrowMarker = ({
   id,
@@ -46,29 +46,24 @@ const makeArrowMarker = ({
       .join(', ');
   }
 
-  return s(
-    'marker',
+  return svg.marker(
     {
-      attrs: {
-        id: id,
-        viewBox: `${-width} ${-width} ${arrow.width + 1 + width} ${arrow.height + 1 + width}`,
-        refX: arrow.anchor.x,
-        refY: arrow.anchor.y,
-        markerUnits: 'userSpaceOnUse',
-        strokeLinejoin: 'round',
-        strokeLinecap: 'round',
-        markerWidth: arrow.width + 2,
-        markerHeight: arrow.height + 2,
-        orient: 'auto-start-reverse'
-      }
+      id: id,
+      viewBox: `${-width} ${-width} ${arrow.width + 1 + width} ${arrow.height + 1 + width}`,
+      refX: arrow.anchor.x,
+      refY: arrow.anchor.y,
+      markerUnits: 'userSpaceOnUse',
+      strokeLinejoin: 'round',
+      strokeLinecap: 'round',
+      markerWidth: arrow.width + 2,
+      markerHeight: arrow.height + 2,
+      orient: 'auto-start-reverse'
     },
-    s('path', {
-      attrs: {
-        d: path,
-        stroke: color,
-        strokeWidth: width,
-        fill: arrow.fill === 'fg' ? fillColor : arrow.fill === 'bg' ? 'white' : 'none'
-      }
+    svg.path({
+      'd': path,
+      'stroke': color,
+      'stroke-width': width,
+      'fill': arrow.fill === 'fg' ? fillColor : arrow.fill === 'bg' ? 'white' : 'none'
     })
   );
 };
@@ -139,7 +134,7 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
 
     const basePath = clipPath(props.def.path(), props.def, startArrow, endArrow);
 
-    if (basePath === undefined) return s('g', {});
+    if (basePath === undefined) return svg.g({});
 
     // TODO: Cleanup
     const paths = applyLineHops(basePath, props.def, startArrow, endArrow, props.def.intersections);
@@ -179,12 +174,11 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
     if (isSingleSelected && edgeProps.type !== 'curved') {
       for (const mp of firstEdge.midpoints) {
         points.push(
-          s('circle.svg-midpoint-handle', {
-            attrs: {
-              cx: mp.x,
-              cy: mp.y,
-              r: 3
-            },
+          svg.circle({
+            class: 'svg-midpoint-handle',
+            cx: mp.x,
+            cy: mp.y,
+            r: 3,
             on: {
               mousedown: (e: MouseEvent) => {
                 if (e.button !== 0) return;
@@ -210,22 +204,20 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
         if (edgeProps.type === 'bezier') {
           for (const [name, cp] of Object.entries(wp.controlPoints ?? {})) {
             points.push(
-              s('line.svg-bezier-handle-line', {
-                attrs: {
-                  x1: wp.point.x + cp.x,
-                  y1: wp.point.y + cp.y,
-                  x2: wp.point.x,
-                  y2: wp.point.y
-                }
+              svg.line({
+                class: 'svg-bezier-handle-line',
+                x1: wp.point.x + cp.x,
+                y1: wp.point.y + cp.y,
+                x2: wp.point.x,
+                y2: wp.point.y
               })
             );
             points.push(
-              s('circle.svg-bezier-handle', {
-                attrs: {
-                  cx: wp.point.x + cp.x,
-                  cy: wp.point.y + cp.y,
-                  r: 4
-                },
+              svg.circle({
+                class: 'svg-bezier-handle',
+                cx: wp.point.x + cp.x,
+                cy: wp.point.y + cp.y,
+                r: 4,
                 on: {
                   mousedown: (e: MouseEvent) => {
                     if (e.button !== 0) return;
@@ -241,12 +233,11 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
         }
 
         points.push(
-          s('circle.svg-waypoint-handle', {
-            attrs: {
-              cx: wp.point.x,
-              cy: wp.point.y,
-              r: 4
-            },
+          svg.circle({
+            class: 'svg-waypoint-handle',
+            cx: wp.point.x,
+            cy: wp.point.y,
+            r: 4,
             on: {
               dblclick: e => {
                 if (e.button !== 0) return;
@@ -269,31 +260,28 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
       });
     }
 
-    return s(
-      'g',
+    return svg.g(
       {},
       ...arrowMarkers,
-      s('path.svg-edge', {
-        attrs: {
-          d: path,
-          stroke: 'transparent',
-          'stroke-width': 15
-        },
-        on: {
+      svg.path({
+        'class': 'svg-edge',
+        'd': path,
+        'stroke': 'transparent',
+        'stroke-width': 15,
+        'on': {
           mousedown: onMouseDown,
           dblclick: e => props.onDoubleClick(props.def.id, EventHelper.point(e)),
           contextmenu: onContextMenu
         }
       }),
-      s('path.svg-edge', {
-        attrs: {
-          d: path,
-          // @ts-ignore
-          style: toInlineCSS(style),
-          'marker-start': startArrow ? `url(#s_${props.def.id})` : '',
-          'marker-end': endArrow ? `url(#e_${props.def.id})` : ''
-        },
-        on: {
+      svg.path({
+        'class': 'svg-edge',
+        'd': path,
+        // @ts-ignore
+        'style': toInlineCSS(style),
+        'marker-start': startArrow ? `url(#s_${props.def.id})` : '',
+        'marker-end': endArrow ? `url(#e_${props.def.id})` : '',
+        'on': {
           mousedown: onMouseDown,
           dblclick: e => props.onDoubleClick(props.def.id, EventHelper.point(e)),
           contextmenu: onContextMenu

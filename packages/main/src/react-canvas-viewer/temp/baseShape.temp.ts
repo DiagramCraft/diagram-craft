@@ -3,7 +3,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './pathRenderer.temp.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Box } from '../../geometry/box.ts';
-import { h, r, s, VNode } from '../../base-ui/vdom.ts';
+import { rawHTML, toInlineCSS, VNode } from '../../base-ui/vdom.ts';
 import { Path } from '../../geometry/path.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { DeepReadonly } from '../../utils/types.ts';
@@ -20,6 +20,8 @@ import { makeShadowFilter } from '../../base-ui/styleUtils.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { FillFilter, FillPattern } from './fill.temp.ts';
+import * as svg from '../../base-ui/vdom-svg.ts';
+import * as html from '../../base-ui/vdom-html.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -27,18 +29,7 @@ const VALIGN_TO_FLEX_JUSTIFY = {
   bottom: 'flex-end'
 };
 
-const toKebabCase = (key: string) => {
-  return key.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
-};
-
 const withPx = (n?: number) => (n ? n + 'px' : undefined);
-
-// TODO: Move to vdom.ts
-export const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
-  return Object.entries(style!)
-    .map(([key, value]) => `${toKebabCase(key)}: ${value}`)
-    .join(';');
-};
 
 type ControlPointCallback = (x: number, y: number, uow: UnitOfWork) => string;
 
@@ -49,12 +40,11 @@ type ControlPoint = {
 };
 
 const makeControlPoint = (cp: ControlPoint, node: DiagramNode) => {
-  return s('circle.svg-shape-control-point', {
-    attrs: {
-      cx: cp.x.toString(),
-      cy: cp.y.toString(),
-      r: '4'
-    },
+  return svg.circle({
+    class: 'svg-shape-control-point',
+    cx: cp.x,
+    cy: cp.y,
+    r: '4',
     on: {
       mousedown: (e: MouseEvent) => {
         if (e.button !== 0) return;
@@ -87,57 +77,47 @@ const wrapComponent = (props: NodeWrapperComponentProps) => {
   const strength = props.node.props.effects?.reflectionStrength?.toString() ?? '1';
   const reflection = props.node.props.effects?.reflection
     ? [
-        s(
-          'linearGradient',
+        svg.linearGradient(
           {
-            attrs: {
-              id: `reflection-grad-${props.node.id}`,
-              y2: '1',
-              x2: '0',
-              gradientUnits: 'objectBoundingBox',
-              gradientTransform: `rotate(${-Angle.toDeg(props.node.bounds.r)} 0.5 0.5)`
-            }
+            id: `reflection-grad-${props.node.id}`,
+            y2: '1',
+            x2: '0',
+            gradientUnits: 'objectBoundingBox',
+            gradientTransform: `rotate(${-Angle.toDeg(props.node.bounds.r)} 0.5 0.5)`
           },
-          s('stop', { attrs: { 'offset': '0.65', 'stop-color': 'white', 'stop-opacity': '0' } }),
-          s('stop', { attrs: { 'offset': '1', 'stop-color': 'white', 'stop-opacity': strength } })
+          svg.stop({ 'offset': '0.65', 'stop-color': 'white', 'stop-opacity': '0' }),
+          svg.stop({ 'offset': '1', 'stop-color': 'white', 'stop-opacity': strength })
         ),
-        s(
-          'mask',
+        svg.mask(
           {
-            attrs: {
-              id: `reflection-mask-${props.node.id}`,
-              maskContentUnits: 'objectBoundingBox'
-            }
+            id: `reflection-mask-${props.node.id}`,
+            maskContentUnits: 'objectBoundingBox'
           },
-          s('rect', {
-            attrs: { width: '1', height: '1', fill: `url(#reflection-grad-${props.node.id})` }
+          svg.rect({
+            width: '1',
+            height: '1',
+            fill: `url(#reflection-grad-${props.node.id})`
           })
         ),
-        s(
-          'g',
+        svg.g(
           {
-            attrs: {
-              transform: `
-                  rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
-                  scale(1 -1)
-                  translate(0 -${2 * (pathBounds!.y + pathBounds!.h)})
-                  rotate(${Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
-                `,
-              mask: `url(#reflection-mask-${props.node.id})`,
-              style: `filter: url(#reflection-filter); pointer-events: none`
-            }
+            transform: `
+              rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
+              scale(1 -1)
+              translate(0 -${2 * (pathBounds!.y + pathBounds!.h)})
+              rotate(${Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
+            `,
+            mask: `url(#reflection-mask-${props.node.id})`,
+            style: `filter: url(#reflection-filter); pointer-events: none`
           },
           ...props.children.map(e => deepClone(e))
         )
       ]
     : [];
 
-  return s(
-    'g',
+  return svg.g(
     {
-      attrs: {
-        style: `filter: ${props.style.filter}`
-      }
+      style: `filter: ${props.style.filter}`
     },
     ...reflection,
     ...props.children
@@ -174,35 +154,22 @@ export class TextComponent extends Component<Props> {
 
     const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
 
-    return s(
-      'foreignObject.svg-node__fo',
+    return svg.foreignObject(
       {
-        attrs: {
-          id: props.id,
-          x: props.bounds.x.toString(),
-          y: props.bounds.y.toString(),
-          width: props.bounds.w.toString(),
-          height: props.bounds.h.toString()
-        },
+        class: 'svg-node__fo',
+        id: props.id,
+        x: props.bounds.x.toString(),
+        y: props.bounds.y.toString(),
+        width: props.bounds.w.toString(),
+        height: props.bounds.h.toString(),
         on: {
-          mousedown: e =>
-            // TODO: This is a massive hack
-            // @ts-ignore
-            props.onMouseDown(e) /*{
-              button: e.button,
-              nativeEvent: e,
-              stopPropagation() {
-                e.stopPropagation();
-              }
-            })*/
+          mousedown: props.onMouseDown
         }
       },
-      h(
-        'div.svg-node__fo__inner',
+      html.div(
         {
-          attrs: {
-            style: `justify-content: ${valign}`
-          },
+          class: 'svg-node__fo__inner',
+          style: `justify-content: ${valign}`,
           on: {
             dblclick: (e: MouseEvent) => {
               const $textNode = (e.currentTarget as HTMLElement).firstChild as HTMLElement;
@@ -212,12 +179,10 @@ export class TextComponent extends Component<Props> {
             }
           }
         },
-        h(
-          'div.svg-node__text',
+        html.div(
           {
-            attrs: {
-              style: toInlineCSS(style)
-            },
+            class: 'svg-node__text',
+            style: toInlineCSS(style),
             on: {
               keydown: (e: KeyboardEvent) => {
                 const target = e.target as HTMLElement;
@@ -269,7 +234,7 @@ export class TextComponent extends Component<Props> {
               }
             }
           },
-          r(props.text?.text ?? '')
+          rawHTML(props.text?.text ?? '')
         )
       )
     );
@@ -335,7 +300,7 @@ export class ShapeBuilder {
           class: 'svg-node__boundary svg-node',
           style: toInlineCSS(path.style)
         }))
-        .map(p => map(s('path', { attrs: p })))
+        .map(p => map(svg.path(p)))
     );
   }
 
@@ -383,16 +348,11 @@ export type BaseShapeBuildProps = {
 };
 
 export abstract class BaseShape extends Component<BaseShapeProps> {
-  protected currentProps: BaseShapeProps | undefined;
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // @ts-ignore
   build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {}
 
   // TODO: We should find a way to keep the TextComponent instance across renders
   render(props: BaseShapeProps): VNode {
-    this.currentProps = props;
-
     const $d = props.def.diagram;
 
     const onMouseDown = (e: MouseEvent) => {
@@ -488,27 +448,18 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
 
     if (filterId) {
       outer.push(
-        s(
-          'filter',
+        svg.filter(
           {
-            attrs: {
-              id: filterId,
-              filterUnits: 'objectBoundingBox'
-            }
+            id: filterId,
+            filterUnits: 'objectBoundingBox'
           },
           nodeProps.effects.blur
-            ? s('feGaussianBlur', {
-                attrs: {
-                  stdDeviation: 5 * nodeProps.effects.blur
-                }
-              })
+            ? svg.feGaussianBlur({ stdDeviation: 5 * nodeProps.effects.blur })
             : null,
           nodeProps.effects.opacity !== 1
-            ? s('feColorMatrix', {
-                attrs: {
-                  type: 'matrix',
-                  values: `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${nodeProps.effects.opacity} 0`
-                }
+            ? svg.feColorMatrix({
+                type: 'matrix',
+                values: `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${nodeProps.effects.opacity} 0`
               })
             : null
         )
@@ -516,12 +467,6 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     }
 
     if (patternId) {
-      /*      const fillFilter = this.subComponent('fillFilter', () => new FillFilter());
-      outer.push(fillFilter.render({ patternId, nodeProps }));
-
-      const fillPattern = this.subComponent('fillPattern', () => new FillPattern());
-      outer.push(fillPattern.render({ patternId, nodeProps, def: props.def })); */
-
       outer.push(this.subComponent('fillFilter', () => new FillFilter(), { patternId, nodeProps }));
       outer.push(
         this.subComponent('fillPattern', () => new FillPattern(), {
@@ -534,25 +479,18 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
 
     if (nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'linear') {
       level1.push(
-        s(
-          'linearGradient',
+        svg.linearGradient(
           {
-            attrs: {
-              id: `node-${props.def.id}-gradient`,
-              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
-            }
+            id: `node-${props.def.id}-gradient`,
+            gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
           },
-          s('stop', {
-            attrs: {
-              'offset': '0%',
-              'stop-color': nodeProps.fill.color
-            }
+          svg.stop({
+            'offset': '0%',
+            'stop-color': nodeProps.fill.color
           }),
-          s('stop', {
-            attrs: {
-              'offset': '100%',
-              'stop-color': nodeProps.fill.color2
-            }
+          svg.stop({
+            'offset': '100%',
+            'stop-color': nodeProps.fill.color2
           })
         )
       );
@@ -560,26 +498,13 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
 
     if (nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'radial') {
       level1.push(
-        s(
-          'radialGradient',
+        svg.radialGradient(
           {
-            attrs: {
-              id: `node-${props.def.id}-gradient`,
-              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
-            }
+            id: `node-${props.def.id}-gradient`,
+            gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
           },
-          s('stop', {
-            attrs: {
-              'offset': '0%',
-              'stop-color': nodeProps.fill.color
-            }
-          }),
-          s('stop', {
-            attrs: {
-              'offset': '100%',
-              'stop-color': nodeProps.fill.color2
-            }
-          })
+          svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
+          svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
         )
       );
     }
@@ -589,45 +514,34 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
         node: props.def,
         path: shapeBuilder.boundary!,
         style: style,
-        children: [s('g', {}, ...children)]
+        children: [svg.g({}, ...children)]
       })
     );
 
     if (isEdgeConnect) {
       level1.push(
-        s(
-          'g',
-          {
-            attrs: {
-              transform: `rotate(${-Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`
-            }
-          },
+        svg.g(
+          { transform: `rotate(${-Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})` },
           ...props.def.anchors.map(anchor =>
-            s('circle', {
-              attrs: {
-                class: 'svg-node__anchor',
-                cx: props.def.bounds.x + anchor.point.x * props.def.bounds.w,
-                cy: props.def.bounds.y + anchor.point.y * props.def.bounds.h,
-                r: '5'
-              }
+            svg.circle({
+              class: 'svg-node__anchor',
+              cx: props.def.bounds.x + anchor.point.x * props.def.bounds.w,
+              cy: props.def.bounds.y + anchor.point.y * props.def.bounds.h,
+              r: '5'
             })
           )
         )
       );
     }
 
-    return s(
-      'g',
+    return svg.g(
       {},
       ...outer,
-      s(
-        'g',
+      svg.g(
         {
-          attrs: {
-            id: `node-${props.def.id}`,
-            class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
-            transform: `rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`
-          }
+          id: `node-${props.def.id}`,
+          class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
+          transform: `rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`
         },
         ...level1
       )

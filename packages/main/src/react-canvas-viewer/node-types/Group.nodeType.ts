@@ -6,10 +6,11 @@ import { Point } from '../../geometry/point.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Box } from '../../geometry/box.ts';
 import { BaseShape, BaseShapeBuildProps, BaseShapeProps } from '../temp/baseShape.temp.ts';
-import { s, VNode } from '../../base-ui/vdom.ts';
+import { VNode } from '../../base-ui/vdom.ts';
 import { isNode } from '../../model/diagramElement.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { EdgeComponent } from '../EdgeComponent.temp.ts';
+import * as svg from '../../base-ui/vdom-svg.ts';
 
 export class GroupNodeDefinition extends AbstractReactNodeDefinition {
   constructor() {
@@ -45,15 +46,7 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
 }
 
 const rotateBack = (center: Point, angle: number, child: VNode) => {
-  return s(
-    'g',
-    {
-      attrs: {
-        transform: `rotate(${-angle} ${center.x} ${center.y})`
-      }
-    },
-    child
-  );
+  return svg.g({ transform: `rotate(${-angle} ${center.x} ${center.y})` }, child);
 };
 
 // TODO: Implement
@@ -76,8 +69,7 @@ const edge = (child: DiagramEdge, props: BaseShapeBuildProps): VNode => {
 export class GroupComponent extends BaseShape {
   render(props: BaseShapeProps): VNode {
     const center = Box.center(props.def.bounds);
-    return s(
-      'g',
+    return svg.g(
       {},
       ...props.def.children.map(child =>
         rotateBack(
