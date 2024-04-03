@@ -1,6 +1,6 @@
 import { RectNodeDefinition } from './Rect.nodeType.ts';
 import { Extent } from '../../geometry/extent.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 
 export class TextNodeDefinition extends RectNodeDefinition {
@@ -36,7 +36,7 @@ export class TextNodeDefinition extends RectNodeDefinition {
 }
 
 export class TextComponent extends BaseShape {
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);

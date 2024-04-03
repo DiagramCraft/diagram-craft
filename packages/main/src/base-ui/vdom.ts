@@ -5,7 +5,7 @@ type EventListenerMap = {
   [K in keyof HTMLElementEventMap]?: (this: Document, ev: DocumentEventMap[K]) => any;
 };
 
-type Props = {
+export type VNodeProps = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   //props?: Record<string, any>;
   attrs?: Record<string, string | number | boolean>;
@@ -23,18 +23,25 @@ export type DOMElement = HTMLElement | SVGElement;
 
 export type VNode =
   | {
-      type: 'h' | 's';
+      type: 'h' | 's' | 'c';
       tag: string;
-      props: Props;
+      props: VNodeProps;
       children: Array<VNode>;
       el: DOMElement | undefined;
     }
   | {
       type: 't';
       tag: '#text';
-      props: Props;
+      props: VNodeProps;
       children: [string];
       el: Text | undefined;
+    }
+  | {
+      type: 'r';
+      tag: '#raw';
+      props: VNodeProps;
+      children: [string];
+      el: DOMElement | undefined;
     };
 
 const emptyVNode = (): VNode => ({
@@ -50,22 +57,26 @@ const parseTag = (rawTag: string) => {
   return { tag, className: className };
 };
 
-export const h = (rawTag: string, props: Props, ...children: VNode[]): VNode => {
+export const h = (rawTag: string, props: VNodeProps, ...children: (VNode | null)[]): VNode => {
   const { tag, className } = parseTag(rawTag);
   props.attrs ??= {};
   props.attrs.class ??= className;
-  return { type: 'h', tag, props, children, el: undefined };
+  return { type: 'h', tag, props, children: children.filter(Boolean) as VNode[], el: undefined };
 };
 
-export const s = (rawTag: string, props: Props, ...children: VNode[]): VNode => {
+export const s = (rawTag: string, props: VNodeProps, ...children: (VNode | null)[]): VNode => {
   const { tag, className } = parseTag(rawTag);
   props.attrs ??= {};
   props.attrs.class ??= className;
-  return { type: 's', tag, props, children, el: undefined };
+  return { type: 's', tag, props, children: children.filter(Boolean) as VNode[], el: undefined };
 };
 
 export const t = (text: string): VNode => {
   return { type: 't', tag: '#text', props: {}, children: [text], el: undefined };
+};
+
+export const r = (text: string): VNode => {
+  return { type: 'r', tag: '#raw', props: {}, children: [text], el: undefined };
 };
 
 const onUpdate = (oldVNode: VNode, newVNode: VNode, parentElement: VNode | undefined) => {
@@ -73,6 +84,12 @@ const onUpdate = (oldVNode: VNode, newVNode: VNode, parentElement: VNode | undef
   updateEvents(oldVNode, newVNode);
 
   if (oldVNode.type === 't' && newVNode.type === 't') {
+    // TODO: Checking for contentEditable here is a bit of a hack
+    //       It's because for some reason blur events from TextComponent is handled out of order
+    if (parentElement && (parentElement.el! as HTMLElement).contentEditable !== 'true') {
+      (parentElement.el! as HTMLElement).innerText = newVNode.children[0];
+    }
+  } else if (oldVNode.type === 'r' && newVNode.type === 'r') {
     // TODO: Checking for contentEditable here is a bit of a hack
     //       It's because for some reason blur events from TextComponent is handled out of order
     if (parentElement && (parentElement.el! as HTMLElement).contentEditable !== 'true') {
@@ -136,11 +153,19 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
   });
 };
 
-const createElement = (e: VNode, insertQueue: VNode[]) => {
+const createElement = (e: VNode, parentElement: VNode | undefined, insertQueue: VNode[]) => {
   insertQueue.push(e);
 
   if (e.type === 't') {
     e.el = document.createTextNode(e.children[0] as string);
+    onCreate(e);
+  } else if (e.type === 'r') {
+    (parentElement!.el as HTMLElement).innerHTML = e.children[0] as string;
+
+    // NOTE: Not very elegant
+    e.el = parentElement!.el! as DOMElement;
+    onCreate(e);
+  } else if (e.type === 'c') {
     onCreate(e);
   } else {
     const node =
@@ -154,8 +179,8 @@ const createElement = (e: VNode, insertQueue: VNode[]) => {
     onUpdate(emptyVNode(), e, undefined);
 
     e.children.forEach(child => {
-      createElement(child as VNode, insertQueue);
-      node.appendChild((child as VNode).el!);
+      createElement(child as VNode, e, insertQueue);
+      if ((child as VNode).type !== 'r') node.appendChild((child as VNode).el!);
     });
   }
 };
@@ -171,12 +196,12 @@ const applyUpdates = (
   // Diff props
   onUpdate(oldElement, newElement, parentElement);
 
-  if (oldElement.type === 't') {
-    if (newElement.type !== 't') throw new VerifyNotReached();
+  if (oldElement.type === 't' || oldElement.type === 'r') {
+    if (newElement.type !== oldElement.type) throw new VerifyNotReached();
     return newElement;
   }
 
-  if (newElement.type === 't') {
+  if (newElement.type === 't' || newElement.type === 'r') {
     throw new VerifyNotReached();
   }
 
@@ -202,7 +227,7 @@ const applyUpdates = (
       // New tag name
       onRemove(oldChild);
 
-      createElement(newChild, insertQueue);
+      createElement(newChild, newElement, insertQueue);
       oldChild.el?.replaceWith(newChild.el!);
     } else {
       // Only properties have changed
@@ -221,8 +246,8 @@ const applyUpdates = (
 
   for (; i < newChildren.length; i++) {
     const newChild = newChildren[i];
-    createElement(newChild, insertQueue);
-    newElement.el!.appendChild(newChild.el!);
+    createElement(newChild, newElement, insertQueue);
+    if (newChild.type !== 'r') newElement.el!.appendChild(newChild.el!);
   }
 
   return newElement;
@@ -239,7 +264,7 @@ export const apply = (oldElement: VNode, newElement: VNode) => {
 
 export const insert = (newElement: VNode) => {
   const insertQueue: VNode[] = [];
-  createElement(newElement, insertQueue);
+  createElement(newElement, undefined, insertQueue);
   setTimeout(() => {
     insertQueue.forEach(onInsert);
   }, 0);

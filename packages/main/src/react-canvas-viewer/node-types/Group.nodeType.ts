@@ -5,7 +5,7 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Box } from '../../geometry/box.ts';
-import { BaseShape, BaseShapeProps } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, BaseShapeProps } from '../temp/baseShape.temp.ts';
 import { s, VNode } from '../../base-ui/vdom.ts';
 import { isNode } from '../../model/diagramElement.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
@@ -60,7 +60,7 @@ const rotateBack = (center: Point, angle: number, child: VNode) => {
 // @ts-ignore
 const node = (child: DiagramNode, props: BaseShapeProps): VNode => {};
 
-const edge = (child: DiagramEdge, props: BaseShapeProps): VNode => {
+const edge = (child: DiagramEdge, props: BaseShapeBuildProps): VNode => {
   const ec = new EdgeComponent();
   return ec.render({
     def: child,
@@ -75,14 +75,16 @@ const edge = (child: DiagramEdge, props: BaseShapeProps): VNode => {
 
 export class GroupComponent extends BaseShape {
   render(props: BaseShapeProps): VNode {
-    const center = Box.center(props.node.bounds);
+    const center = Box.center(props.def.bounds);
     return s(
       'g',
       {},
-      ...props.node.children.map(child =>
+      ...props.def.children.map(child =>
         rotateBack(
           center,
-          props.node.bounds.r,
+          props.def.bounds.r,
+
+          // @ts-ignore
           isNode(child) ? node(child, props) : edge(child as DiagramEdge, props)
         )
       )

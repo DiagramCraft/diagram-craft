@@ -121,7 +121,7 @@ export class ReactNodeDefinition implements NodeDefinition {
   constructor(
     readonly reactNode: ReactNode,
     private readonly delegate: NodeDefinition,
-    readonly component: BaseShape | undefined
+    readonly component: (() => BaseShape) | undefined
   ) {
     this.type = delegate.type;
     this.name = delegate.name;

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { BaseShape, BaseShapeProps } from './baseShape.temp.ts';
 
-export const useComponent = <P extends BaseShapeProps, T extends BaseShape<P>>(
+export const useComponent = <P extends BaseShapeProps, T extends BaseShape>(
   component: () => T,
   props: P
 ) => {

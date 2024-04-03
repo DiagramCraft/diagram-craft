@@ -21,14 +21,33 @@ import { ApplicationTriggers } from '../react-canvas-editor/EditableCanvas.tsx';
 import { Tool } from '../react-canvas-editor/tools/types.ts';
 import { NodePattern } from './NodePattern.tsx';
 import { NodeFilter } from './NodeFilter.tsx';
+import { BaseShape, BaseShapeProps } from './temp/baseShape.temp.ts';
+import { useComponent } from './temp/useComponent.temp.ts';
+import { useActions } from '../react-app/context/ActionsContext.ts';
 
 export type NodeApi = {
   repaint: () => void;
 };
 
+const SimpleComponent = (props: BaseShapeProps & { component: () => BaseShape }) => {
+  const ref = useComponent(props.component, {
+    def: props.def,
+    applicationTriggers: props.applicationTriggers,
+    diagram: props.diagram,
+    tool: props.tool,
+    onMouseDown: props.onMouseDown,
+    onDoubleClick: props.onDoubleClick,
+    mode: props.mode,
+    actionMap: props.actionMap
+  });
+
+  return <g ref={ref} />;
+};
+
 export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   const $d = props.diagram;
   const redraw = useRedraw();
+  const { actionMap } = useActions();
 
   useImperativeHandle(ref, () => ({ repaint: redraw }));
 
@@ -49,6 +68,22 @@ export const Node = forwardRef<NodeApi, Props>((props, ref) => {
   );
 
   const nodeDef = $d.nodeDefinitions.get(props.def.nodeType);
+
+  if ((nodeDef as ReactNodeDefinition).component !== undefined) {
+    return (
+      <SimpleComponent
+        component={(nodeDef as ReactNodeDefinition).component!}
+        def={props.def}
+        onMouseDown={props.onMouseDown}
+        onDoubleClick={props.onDoubleClick}
+        applicationTriggers={props.applicationTriggers}
+        diagram={props.diagram}
+        tool={props.tool}
+        mode={props.mode}
+        actionMap={actionMap}
+      />
+    );
+  }
 
   const nodeProps = props.def.propsForRendering;
 

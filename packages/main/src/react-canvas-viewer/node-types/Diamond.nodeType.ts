@@ -2,7 +2,7 @@ import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 
 export class DiamondNodeDefinition extends AbstractReactNodeDefinition {
   constructor() {
@@ -22,7 +22,7 @@ export class DiamondNodeDefinition extends AbstractReactNodeDefinition {
 }
 
 export class DiamondComponent extends BaseShape {
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);

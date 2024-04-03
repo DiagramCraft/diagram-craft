@@ -3,7 +3,7 @@ import { Box } from '../geometry/box.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { useEffect, useState } from 'react';
 
-const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {
+export const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {
   if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {
     if (nodeProps.fill.image.fit === 'fill') {
       return {

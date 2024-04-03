@@ -4,7 +4,7 @@ import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 
 declare global {
   interface NodeProps {
@@ -58,7 +58,7 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
 }
 
 export class ParallelogramComponent extends BaseShape {
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const slant = props.nodeProps.parallelogram?.slant ?? 5;
     const boundary = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 

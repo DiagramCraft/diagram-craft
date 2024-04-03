@@ -3,7 +3,8 @@ const config = {
   proseWrap: 'always',
   singleQuote: true,
   trailingComma: 'none',
-  arrowParens: 'avoid'
+  arrowParens: 'avoid',
+  quoteProps: 'consistent'
 };
 
 export default config;

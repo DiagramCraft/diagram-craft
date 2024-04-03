@@ -5,7 +5,12 @@ import {
 import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder, toInlineCSS } from '../temp/baseShape.temp.ts';
+import {
+  BaseShape,
+  BaseShapeBuildProps,
+  ShapeBuilder,
+  toInlineCSS
+} from '../temp/baseShape.temp.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -52,16 +57,13 @@ export class GenericPathNodeDefinition extends AbstractReactNodeDefinition {
 
 export class GenericPathComponent extends BaseShape {
   selectedWaypoints: number[] = [];
-  private oldProps: BaseShapeProps | undefined;
 
   setSelectedWaypoints(selectedWaypoints: number[]) {
     this.selectedWaypoints = selectedWaypoints;
-    this.update(this.oldProps!);
+    this.update(this.currentProps!);
   }
 
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
-    this.oldProps = props;
-
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const drag = DRAG_DROP_MANAGER;
     const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
     const path = pathBuilder.getPath();
@@ -110,13 +112,7 @@ export class GenericPathComponent extends BaseShape {
       v.props.on.mousedown = e =>
         // TODO: This is a massive hack
         // @ts-ignore
-        props.onMouseDown({
-          button: e.button,
-          nativeEvent: e,
-          stopPropagation() {
-            e.stopPropagation();
-          }
-        });
+        props.onMouseDown(e);
 
       v.props.attrs ??= {};
       v.props.attrs.style ??= '';

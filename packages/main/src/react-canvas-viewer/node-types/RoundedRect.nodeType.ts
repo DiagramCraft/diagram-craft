@@ -4,7 +4,7 @@ import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 
 declare global {
   interface NodeProps {
@@ -65,7 +65,7 @@ export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
 }
 
 export class RoundedRectComponent extends BaseShape {
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const radius = props.nodeProps.roundedRect?.radius ?? 10;
     const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 

@@ -4,7 +4,7 @@ import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 
 declare global {
   interface NodeProps {
@@ -74,7 +74,7 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
 }
 
 export class TrapetzoidComponent extends BaseShape {
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const slantLeft = props.nodeProps.trapetzoid?.slantLeft ?? 5;
     const slantRight = props.nodeProps.trapetzoid?.slantRight ?? 5;
 

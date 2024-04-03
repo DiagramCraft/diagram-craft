@@ -4,7 +4,7 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { Vector } from '../../geometry/vector.ts';
 import { Box } from '../../geometry/box.ts';
 
@@ -57,7 +57,7 @@ export class RegularPolygonNodeDefinition extends AbstractReactNodeDefinition {
 }
 
 export class RegularPolygonComponent extends BaseShape {
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new RegularPolygonNodeDefinition()
       .getBoundingPathBuilder(props.node)
       .getPath();

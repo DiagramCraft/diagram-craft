@@ -7,6 +7,7 @@ export const GenericPath = (props: Props) => {
     // @ts-ignore
     style: props.style!,
     node: props.node,
+    // @ts-ignore
     onMouseDown: props.onMouseDown!,
     nodeProps: props.nodeProps,
     isSingleSelected: props.isSingleSelected,

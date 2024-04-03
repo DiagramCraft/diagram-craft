@@ -1,10 +1,9 @@
 import { Component } from '../../base-ui/component.ts';
-import { MouseEventHandler } from 'react';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './pathRenderer.temp.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { Box } from '../../geometry/box.ts';
-import { h, s, t, VNode } from '../../base-ui/vdom.ts';
+import { h, r, s, VNode } from '../../base-ui/vdom.ts';
 import { Path } from '../../geometry/path.ts';
 import { Angle } from '../../geometry/angle.ts';
 import { DeepReadonly } from '../../utils/types.ts';
@@ -16,6 +15,11 @@ import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { ApplicationTriggers } from '../../react-canvas-editor/EditableCanvas.tsx';
+import { DASH_PATTERNS } from '../../base-ui/dashPatterns.ts';
+import { makeShadowFilter } from '../../base-ui/styleUtils.ts';
+import { EventHelper } from '../../base-ui/eventHelper.ts';
+import { Diagram } from '../../model/diagram.ts';
+import { FillFilter, FillPattern } from './fill.temp.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -94,8 +98,8 @@ const wrapComponent = (props: NodeWrapperComponentProps) => {
               gradientTransform: `rotate(${-Angle.toDeg(props.node.bounds.r)} 0.5 0.5)`
             }
           },
-          s('stop', { attrs: { offset: '0.65', 'stop-color': 'white', 'stop-opacity': '0' } }),
-          s('stop', { attrs: { offset: '1', 'stop-color': 'white', 'stop-opacity': strength } })
+          s('stop', { attrs: { 'offset': '0.65', 'stop-color': 'white', 'stop-opacity': '0' } }),
+          s('stop', { attrs: { 'offset': '1', 'stop-color': 'white', 'stop-opacity': strength } })
         ),
         s(
           'mask',
@@ -184,13 +188,13 @@ export class TextComponent extends Component<Props> {
           mousedown: e =>
             // TODO: This is a massive hack
             // @ts-ignore
-            props.onMouseDown({
+            props.onMouseDown(e) /*{
               button: e.button,
               nativeEvent: e,
               stopPropagation() {
                 e.stopPropagation();
               }
-            })
+            })*/
         }
       },
       h(
@@ -265,7 +269,7 @@ export class TextComponent extends Component<Props> {
               }
             }
           },
-          t(props.text?.text ?? '')
+          r(props.text?.text ?? '')
         )
       )
     );
@@ -286,7 +290,7 @@ export class ShapeBuilder {
   boundary: Path | undefined = undefined;
   controlPoints: ControlPoint[] = [];
 
-  constructor(private readonly props: BaseShapeProps) {}
+  constructor(private readonly props: BaseShapeBuildProps) {}
 
   add(vnode: VNode) {
     this.children.push(vnode);
@@ -344,18 +348,31 @@ type Props = {
   id: string;
   text: NodeProps['text'];
   bounds: Box;
-  onMouseDown: MouseEventHandler;
+  onMouseDown: (e: MouseEvent) => void;
   onChange: (text: string) => void;
   onSizeChange?: (size: Extent) => void;
 };
 
 export type BaseShapeProps = {
-  style: Partial<CSSStyleDeclaration>;
-  node: DiagramNode;
-  nodeProps: DeepReadonly<NodeProps>;
-  onMouseDown: MouseEventHandler<SVGGElement>;
+  def: DiagramNode;
+  diagram: Diagram;
+  tool: Tool | undefined;
+  onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
+  onDoubleClick?: (id: string, coord: Point) => void;
+  mode?: 'picker' | 'canvas';
+  applicationTriggers: ApplicationTriggers;
 
+  actionMap: Partial<ActionMap>;
+};
+
+export type BaseShapeBuildProps = {
+  style: Partial<CSSStyleDeclaration>;
+  nodeProps: DeepReadonly<NodeProps>;
   isSingleSelected: boolean;
+
+  node: DiagramNode;
+  onMouseDown: (e: MouseEvent) => void;
+
   tool: Tool | undefined;
   actionMap: Partial<ActionMap>;
   childProps: {
@@ -365,29 +382,255 @@ export type BaseShapeProps = {
   };
 };
 
-export abstract class BaseShape<P extends BaseShapeProps = BaseShapeProps> extends Component<P> {
+export abstract class BaseShape extends Component<BaseShapeProps> {
+  protected currentProps: BaseShapeProps | undefined;
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // @ts-ignore
-  build(props: P, shapeBuilder: ShapeBuilder) {}
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {}
 
   // TODO: We should find a way to keep the TextComponent instance across renders
-  render(props: P): VNode {
-    const shapeBuilder = new ShapeBuilder(props);
-    this.build(props, shapeBuilder);
+  render(props: BaseShapeProps): VNode {
+    this.currentProps = props;
+
+    const $d = props.def.diagram;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+
+      const target = document.getElementById(`diagram-${$d.id}`) as HTMLElement | undefined;
+      if (!target) return;
+
+      props.onMouseDown(props.def.id, EventHelper.pointWithRespectTo(e, target), e);
+      e.stopPropagation();
+    };
+
+    const nodeProps = props.def.propsForRendering;
+
+    const center = Box.center(props.def.bounds);
+
+    const isSelected = $d.selectionState.elements.includes(props.def);
+    const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
+    const isEdgeConnect = nodeProps.highlight.includes('edge-connect');
+
+    const style: Partial<CSSStyleDeclaration> = {
+      fill: nodeProps.fill.color,
+      strokeWidth: nodeProps.stroke.width?.toString(),
+      stroke: isEdgeConnect ? 'red' : nodeProps.stroke.color
+    };
+
+    let patternId = undefined;
+
+    if (nodeProps.fill.type === 'gradient') {
+      style.fill = `url(#node-${props.def.id}-gradient)`;
+    } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
+      patternId = `node-${props.def.id}-pattern`;
+      style.fill = `url(#${patternId})`;
+    } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
+      patternId = `node-${props.def.id}-pattern`;
+      style.fill = `url(#${patternId})`;
+    }
+
+    if (nodeProps.stroke.pattern) {
+      style.strokeDasharray = DASH_PATTERNS[nodeProps.stroke.pattern]?.(
+        nodeProps.stroke.patternSize / 100,
+        nodeProps.stroke.patternSpacing / 100
+      );
+    }
+
+    if (nodeProps.shadow.enabled) {
+      style.filter = makeShadowFilter(nodeProps.shadow);
+    }
+
+    if (nodeProps.stroke.enabled === false) {
+      style.stroke = 'transparent';
+      style.strokeWidth = '0';
+    }
+
+    if (nodeProps.fill.enabled === false) {
+      style.fill = 'transparent';
+    }
+
+    let filterId = undefined;
+    if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
+      filterId = `node-${props.def.id}-filter`;
+      style.filter = `url(#${filterId})`;
+    }
+
+    const buildProps: BaseShapeBuildProps = {
+      node: props.def,
+      actionMap: props.actionMap,
+      tool: props.tool,
+      onMouseDown: onMouseDown,
+      style,
+      nodeProps,
+      isSingleSelected,
+      childProps: {
+        onMouseDown: props.onMouseDown,
+        onDoubleClick: props.onDoubleClick,
+        applicationTriggers: props.applicationTriggers
+      }
+    };
+
+    const shapeBuilder = new ShapeBuilder(buildProps);
+    this.build(buildProps, shapeBuilder);
 
     const children = [...shapeBuilder.children];
 
-    if (props.isSingleSelected && props.tool?.type === 'move') {
+    if (isSingleSelected && props.tool?.type === 'move') {
       for (const cp of shapeBuilder.controlPoints) {
-        children.push(makeControlPoint(cp, props.node));
+        children.push(makeControlPoint(cp, props.def));
       }
     }
 
-    return wrapComponent({
-      node: props.node,
-      path: shapeBuilder.boundary!,
-      style: props.style,
-      children: [s('g', {}, ...children)]
-    });
+    const outer: VNode[] = [];
+    const level1: VNode[] = [];
+
+    if (filterId) {
+      outer.push(
+        s(
+          'filter',
+          {
+            attrs: {
+              id: filterId,
+              filterUnits: 'objectBoundingBox'
+            }
+          },
+          nodeProps.effects.blur
+            ? s('feGaussianBlur', {
+                attrs: {
+                  stdDeviation: 5 * nodeProps.effects.blur
+                }
+              })
+            : null,
+          nodeProps.effects.opacity !== 1
+            ? s('feColorMatrix', {
+                attrs: {
+                  type: 'matrix',
+                  values: `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${nodeProps.effects.opacity} 0`
+                }
+              })
+            : null
+        )
+      );
+    }
+
+    if (patternId) {
+      /*      const fillFilter = this.subComponent('fillFilter', () => new FillFilter());
+      outer.push(fillFilter.render({ patternId, nodeProps }));
+
+      const fillPattern = this.subComponent('fillPattern', () => new FillPattern());
+      outer.push(fillPattern.render({ patternId, nodeProps, def: props.def })); */
+
+      outer.push(this.subComponent('fillFilter', () => new FillFilter(), { patternId, nodeProps }));
+      outer.push(
+        this.subComponent('fillPattern', () => new FillPattern(), {
+          patternId,
+          nodeProps,
+          def: props.def
+        })
+      );
+    }
+
+    if (nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'linear') {
+      level1.push(
+        s(
+          'linearGradient',
+          {
+            attrs: {
+              id: `node-${props.def.id}-gradient`,
+              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+            }
+          },
+          s('stop', {
+            attrs: {
+              'offset': '0%',
+              'stop-color': nodeProps.fill.color
+            }
+          }),
+          s('stop', {
+            attrs: {
+              'offset': '100%',
+              'stop-color': nodeProps.fill.color2
+            }
+          })
+        )
+      );
+    }
+
+    if (nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'radial') {
+      level1.push(
+        s(
+          'radialGradient',
+          {
+            attrs: {
+              id: `node-${props.def.id}-gradient`,
+              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+            }
+          },
+          s('stop', {
+            attrs: {
+              'offset': '0%',
+              'stop-color': nodeProps.fill.color
+            }
+          }),
+          s('stop', {
+            attrs: {
+              'offset': '100%',
+              'stop-color': nodeProps.fill.color2
+            }
+          })
+        )
+      );
+    }
+
+    level1.push(
+      wrapComponent({
+        node: props.def,
+        path: shapeBuilder.boundary!,
+        style: style,
+        children: [s('g', {}, ...children)]
+      })
+    );
+
+    if (isEdgeConnect) {
+      level1.push(
+        s(
+          'g',
+          {
+            attrs: {
+              transform: `rotate(${-Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`
+            }
+          },
+          ...props.def.anchors.map(anchor =>
+            s('circle', {
+              attrs: {
+                class: 'svg-node__anchor',
+                cx: props.def.bounds.x + anchor.point.x * props.def.bounds.w,
+                cy: props.def.bounds.y + anchor.point.y * props.def.bounds.h,
+                r: '5'
+              }
+            })
+          )
+        )
+      );
+    }
+
+    return s(
+      'g',
+      {},
+      ...outer,
+      s(
+        'g',
+        {
+          attrs: {
+            id: `node-${props.def.id}`,
+            class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
+            transform: `rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`
+          }
+        },
+        ...level1
+      )
+    );
   }
 }

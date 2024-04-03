@@ -2,7 +2,7 @@ import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
-import { BaseShape, BaseShapeProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 
 export class RectNodeDefinition extends AbstractReactNodeDefinition {
   constructor(name = 'rect', displayName = 'Rectangle') {
@@ -22,7 +22,7 @@ export class RectNodeDefinition extends AbstractReactNodeDefinition {
 }
 
 export class RectComponent extends BaseShape {
-  build(props: BaseShapeProps, shapeBuilder: ShapeBuilder) {
+  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
