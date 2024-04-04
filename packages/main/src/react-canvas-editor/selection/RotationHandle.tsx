@@ -1,17 +1,15 @@
 import { Point } from '../../geometry/point.ts';
 import { RotateDrag } from '../../base-ui/drag/rotateDrag.ts';
 import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
-import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
-import { useComponent } from '../../react-canvas-viewer/temp/useComponent.temp.ts';
 
 type Props = {
   diagram: Diagram;
 };
 
-class RotationHandleComponent extends Component<Props> {
+export class RotationHandleComponent extends Component<Props> {
   render(props: Props) {
     const diagram = props.diagram;
     const selection = diagram.selectionState;
@@ -51,6 +49,7 @@ class RotationHandleComponent extends Component<Props> {
   }
 }
 
+/*
 export const RotationHandle = () => {
   const diagram = useDiagram();
   const ref = useComponent<Props, RotationHandleComponent, SVGGElement>(
@@ -62,7 +61,7 @@ export const RotationHandle = () => {
 
   return <g ref={ref}></g>;
 
-  /*  const selection = diagram.selectionState;
+    const selection = diagram.selectionState;
   const drag = useDragDrop();
 
   const bounds = selection.bounds;
@@ -94,5 +93,5 @@ export const RotationHandle = () => {
         }}
       />
     </>
-  );*/
-};
+  );
+};*/

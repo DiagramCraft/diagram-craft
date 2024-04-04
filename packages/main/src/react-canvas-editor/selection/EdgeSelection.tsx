@@ -2,18 +2,16 @@ import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { $c } from '../../utils/classname.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
-import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { isConnected } from '../../model/endpoint.ts';
 import { Component } from '../../base-ui/component.ts';
 import { Diagram } from '../../model/diagram.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
-import { useComponent } from '../../react-canvas-viewer/temp/useComponent.temp.ts';
 
 type ComponentProps = Props & {
   diagram: Diagram;
 };
 
-class EdgeSelectionComponent extends Component<ComponentProps> {
+export class EdgeSelectionComponent extends Component<ComponentProps> {
   private dragging: boolean = false;
   private readonly onDragStart: () => void;
   private readonly onDragEnd: () => void;
@@ -79,62 +77,62 @@ class EdgeSelectionComponent extends Component<ComponentProps> {
   }
 }
 
+/*
 export const EdgeSelection = (props: Props) => {
-  const diagram = useDiagram();
-  const ref = useComponent<ComponentProps, EdgeSelectionComponent, SVGGElement>(
-    () => new EdgeSelectionComponent(),
-    {
-      ...props,
-      diagram
-    }
-  );
+const diagram = useDiagram();
+const ref = useComponent<ComponentProps, EdgeSelectionComponent, SVGGElement>(
+  () => new EdgeSelectionComponent(),
+  {
+    ...props,
+    diagram
+  }
+);
 
-  return <g ref={ref}></g>;
-  /*
+return <g ref={ref}></g>;
 
-  const drag = DRAG_DROP_MANAGER;
+const drag = DRAG_DROP_MANAGER;
 
-  const [isDragging, setIsDragging] = useState(!!drag.current());
+const [isDragging, setIsDragging] = useState(!!drag.current());
 
-  useEventListener(drag, 'dragStart', () => {
-    setIsDragging(true);
-  });
+useEventListener(drag, 'dragStart', () => {
+  setIsDragging(true);
+});
 
-  useEventListener(drag, 'dragEnd', () => {
-    setIsDragging(false);
-  });
+useEventListener(drag, 'dragEnd', () => {
+  setIsDragging(false);
+});
 
-  return (
-    <>
-      <circle
-        cx={props.edge.start.position.x}
-        cy={props.edge.start.position.y}
-        r="4"
-        className={$c('svg-selection__handle-edge', { connected: isConnected(props.edge.start) })}
-        onMouseDown={ev => {
-          if (ev.button !== 0) return;
-          drag.initiate(new EdgeEndpointMoveDrag(diagram, props.edge, 'start'));
-          ev.stopPropagation();
-        }}
-        style={{ pointerEvents: isDragging ? 'none' : undefined }}
-      />
-      <circle
-        cx={props.edge.end.position.x}
-        cy={props.edge.end.position.y}
-        r="4"
-        className={$c('svg-selection__handle-edge', { connected: isConnected(props.edge.end) })}
-        onMouseDown={ev => {
-          if (ev.button !== 0) return;
-          drag.initiate(new EdgeEndpointMoveDrag(diagram, props.edge, 'end'));
-          ev.stopPropagation();
-        }}
-        style={{ pointerEvents: isDragging ? 'none' : undefined }}
-      />
-    </>
-  );
+return (
+  <>
+    <circle
+      cx={props.edge.start.position.x}
+      cy={props.edge.start.position.y}
+      r="4"
+      className={$c('svg-selection__handle-edge', { connected: isConnected(props.edge.start) })}
+      onMouseDown={ev => {
+        if (ev.button !== 0) return;
+        drag.initiate(new EdgeEndpointMoveDrag(diagram, props.edge, 'start'));
+        ev.stopPropagation();
+      }}
+      style={{ pointerEvents: isDragging ? 'none' : undefined }}
+    />
+    <circle
+      cx={props.edge.end.position.x}
+      cy={props.edge.end.position.y}
+      r="4"
+      className={$c('svg-selection__handle-edge', { connected: isConnected(props.edge.end) })}
+      onMouseDown={ev => {
+        if (ev.button !== 0) return;
+        drag.initiate(new EdgeEndpointMoveDrag(diagram, props.edge, 'end'));
+        ev.stopPropagation();
+      }}
+      style={{ pointerEvents: isDragging ? 'none' : undefined }}
+    />
+  </>
+);
 
- */
 };
+*/
 
 type Props = {
   edge: DiagramEdge;

@@ -3,11 +3,9 @@ import { ResizeDrag, ResizeType } from '../../base-ui/drag/resizeDrag.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
 import { Box } from '../../geometry/box.ts';
-import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
-import { useComponent } from '../../react-canvas-viewer/temp/useComponent.temp.ts';
 
 type Props = {
   diagram: Diagram;
@@ -15,7 +13,7 @@ type Props = {
 
 const HANDLE_RADIUS = 6;
 
-class ResizeHandlesComponent extends Component<Props> {
+export class ResizeHandlesComponent extends Component<Props> {
   private makeHandle(
     point: Point,
     cursor: ResizeType,
@@ -100,6 +98,7 @@ const Handle = (props: {
 
  */
 
+/*
 export const ResizeHandles = () => {
   const diagram = useDiagram();
   const ref = useComponent<Props, ResizeHandlesComponent, SVGGElement>(
@@ -111,7 +110,7 @@ export const ResizeHandles = () => {
 
   return <g ref={ref}></g>;
 
-  /*  const diagram = useDiagram();
+  const diagram = useDiagram();
   const selection = diagram.selectionState;
   const drag = useDragDrop();
 
@@ -202,5 +201,7 @@ export const ResizeHandles = () => {
         onMouseDown={e => initiateDrag(e, 'w')}
       />
     </>
-  );*/
+  );
 };
+
+ */

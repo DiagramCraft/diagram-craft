@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { Node, NodeApi } from '../react-canvas-viewer/Node.tsx';
 import { Edge, EdgeApi } from '../react-canvas-viewer/Edge.tsx';
-import { Selection, SelectionApi } from './Selection.tsx';
+import { Selection } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
 import { SelectionMarquee } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
@@ -80,7 +80,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   // TODO: Change to Map
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
-  const selectionRef = useRef<SelectionApi | null>(null);
 
   const resetTool = () => (props.applicationState.tool = 'move');
 
@@ -276,7 +275,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
           });
         })}
 
-        {tool.type === 'move' && <Selection ref={selectionRef} />}
+        {tool.type === 'move' && <Selection />}
 
         <SelectionMarquee selection={selection} />
 
