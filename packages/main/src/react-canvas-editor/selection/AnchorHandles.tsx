@@ -1,9 +1,6 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
 import { ApplicationState } from '../../base-ui/ApplicationState.ts';
-import { useEventListener } from '../../react-app/hooks/useEventListener.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
-import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
@@ -18,10 +15,11 @@ import { ApplicationTriggers } from '../EditableCanvas.tsx';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
-
-export type AnchorHandlesApi = {
-  repaint: () => void;
-};
+import { Component, PropChangeManager } from '../../base-ui/component.ts';
+import { Diagram } from '../../model/diagram.ts';
+import * as svg from '../../base-ui/vdom-svg.ts';
+import { VNode } from '../../base-ui/vdom.ts';
+import { useComponent } from '../../react-canvas-viewer/temp/useComponent.temp.ts';
 
 class AnchorHandleDrag extends AbstractDrag {
   edge: DiagramEdge;
@@ -106,19 +104,172 @@ class AnchorHandleDrag extends AbstractDrag {
   }
 }
 
+type ComponentProps = Props & {
+  diagram: Diagram;
+};
+
 // TODO: All these timeouts are a bit ugly... should find a better way
 //       to describe the state machine - or somehow subscribe to mouse move events
 //       to trigger the hiding of the handles
-export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) => {
+//
+// TODO: This needs some refactoring :) state in the component, the listeners, state in
+//       the render function - all a bit of a mess
+class AnchorHandlesComponent extends Component<ComponentProps> {
+  private propChangeManager = new PropChangeManager();
+  private hoverNode: DiagramElement | undefined;
+  private state: 'background' | 'node' | 'handle' = 'background';
+  // eslint-disable-next-line
+  private timeout: any | undefined = undefined;
+  private shouldScale: boolean = false;
+  private diagram: Diagram | undefined = undefined;
+
+  onDetach() {
+    this.propChangeManager.cleanup();
+  }
+
+  setHoverNode(node: DiagramElement | undefined) {
+    this.hoverNode = node;
+    this.redraw();
+  }
+
+  render(props: ComponentProps) {
+    // TODO: Can we pass this in the constructor instead
+    this.diagram = props.diagram;
+
+    const drag = DRAG_DROP_MANAGER;
+
+    const selection = this.diagram.selectionState;
+    this.shouldScale = selection.nodes.length === 1 && selection.nodes[0] === this.hoverNode;
+
+    this.propChangeManager.when([props.applicationState], 'add-hover-listener', () => {
+      const cb = this.hoverElementChange.bind(this);
+      props.applicationState.on('hoverElementChange', cb);
+      return () => props.applicationState.off('hoverElementChange', cb);
+    });
+
+    this.propChangeManager.when([this.diagram.selectionState], 'change', () => {
+      const cb = this.selectionStateChange.bind(this);
+      this.diagram!.selectionState.on('change', cb);
+      return () => this.diagram!.selectionState.off('change', cb);
+    });
+
+    this.propChangeManager.when([this.diagram], 'elementRemove', () => {
+      const cb = this.elementRemove.bind(this);
+      this.diagram!.on('elementRemove', cb);
+      return () => this.diagram!.off('elementRemove', cb);
+    });
+
+    const scale = 4;
+
+    if (
+      this.hoverNode === undefined ||
+      !isNode(this.hoverNode) ||
+      (drag.current() && !(drag.current() instanceof MoveDrag))
+    ) {
+      return svg.g({});
+    }
+
+    const node = this.hoverNode;
+
+    if (this.shouldScale || selection.isDragging()) return svg.g({});
+
+    const scaledBounds = node.bounds;
+
+    const children: VNode[] = [];
+
+    node.anchors.forEach((a, idx) => {
+      if (a.clip) return;
+      children.push(
+        svg.g(
+          {
+            transform: `translate(${scaledBounds.x + a.point.x * scaledBounds.w} ${
+              scaledBounds.y + a.point.y * scaledBounds.h
+            })`,
+            on: {
+              mouseover: () => (this.state = 'handle'),
+              mouseout: () => {
+                this.state = 'background';
+                if (this.timeout) clearTimeout(this.timeout);
+                this.triggerMouseOut();
+              },
+              mousedown: e => {
+                drag.initiate(
+                  new AnchorHandleDrag(node, idx, EventHelper.point(e), props.applicationTriggers)
+                );
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }
+          },
+          svg.path({
+            class: 'svg-anchor-handle',
+            d: `M 0 -${scale}, L ${scale} 0, L 0 ${scale}, L -${scale} 0, L 0 -${scale}`
+          })
+        )
+      );
+    });
+
+    // TODO: Fix this
+    return svg.g({}, ...children);
+  }
+
+  private hoverElementChange({ element }: { element: string | undefined }) {
+    if (this.timeout) clearTimeout(this.timeout);
+    if (element === undefined) {
+      this.triggerMouseOut();
+    } else {
+      this.timeout = undefined;
+      this.state = 'node';
+      this.setHoverNode(this.diagram!.lookup(element));
+    }
+  }
+
+  private selectionStateChange() {
+    if (this.timeout) clearTimeout(this.timeout);
+    this.redraw();
+  }
+
+  private elementRemove({ element }: { element: DiagramElement }) {
+    if (this.timeout) clearTimeout(this.timeout);
+    if (element === this.hoverNode) {
+      this.state = 'background';
+      this.setHoverNode(undefined);
+    }
+  }
+
+  private triggerMouseOut() {
+    this.timeout = setTimeout(
+      () => {
+        if (this.state === 'handle') return;
+        this.state = 'background';
+        this.setHoverNode(undefined);
+      },
+      this.shouldScale ? 400 : 50
+    );
+  }
+}
+
+// TODO: All these timeouts are a bit ugly... should find a better way
+//       to describe the state machine - or somehow subscribe to mouse move events
+//       to trigger the hiding of the handles
+export const AnchorHandles = (props: Props) => {
   const diagram = useDiagram();
-  const drag = useDragDrop();
+  const ref = useComponent<ComponentProps, AnchorHandlesComponent, SVGGElement>(
+    () => new AnchorHandlesComponent(),
+    {
+      ...props,
+      diagram
+    }
+  );
+
+  return <g ref={ref}></g>;
+
+  /*
+  const diagram = useDiagram();
+  const drag = DRAG_DROP_MANAGER;
   const [hoverNode, setHoverNode] = useState<DiagramElement | undefined>(undefined);
   const redraw = useRedraw();
   const state = useRef<'background' | 'node' | 'handle'>('background');
-
-  useImperativeHandle(ref, () => {
-    return { repaint: redraw };
-  });
 
   const selection = diagram.selectionState;
   const shouldScale = selection.nodes.length === 1 && selection.nodes[0] === hoverNode;
@@ -214,7 +365,9 @@ export const AnchorHandles = forwardRef<AnchorHandlesApi, Props>((props, ref) =>
       )}
     </>
   );
-});
+
+   */
+};
 
 type Props = {
   applicationState: ApplicationState;

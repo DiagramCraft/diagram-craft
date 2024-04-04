@@ -14,8 +14,9 @@ class SelectionMarqueeComponent extends Component<Props> {
   render(props: Props) {
     // TODO: Is selection static, so we can pass it through the constructor
     this.propChangeManager.when([props.selection.marquee], 'add-marquee-change-listener', () => {
-      props.selection.marquee.on('change', () => this.redraw());
-      return () => props.selection.marquee.off('change', this.redraw);
+      const cb = this.redraw.bind(this);
+      props.selection.marquee.on('change', cb);
+      return () => props.selection.marquee.off('change', cb);
     });
 
     const bounds = props.selection.marquee.bounds;

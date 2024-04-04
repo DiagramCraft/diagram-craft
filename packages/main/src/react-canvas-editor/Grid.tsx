@@ -73,8 +73,9 @@ class GridComponent extends Component<Props> {
 
     // TODO: Should we really pass diagram as props and not in the constructor
     this.propChangeManager.when([diagram], 'add-diagram-change-listener', () => {
-      diagram.on('change', () => this.redraw());
-      return () => diagram.off('change', this.redraw);
+      const cb = this.redraw.bind(this);
+      diagram.on('change', () => cb);
+      return () => diagram.off('change', cb);
     });
 
     const { x, y, w, h } = diagram.canvas;
