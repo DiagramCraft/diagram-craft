@@ -1,4 +1,4 @@
-import { common, deepMerge, deepClone } from './object';
+import { common, deepMerge, deepClone, deepEquals } from './object';
 import { expect, describe, test } from 'vitest';
 import { UNSAFE } from './testUtils.ts';
 
@@ -86,5 +86,55 @@ describe('deepClone function', () => {
     expect(result.a).to.not.equal(complex.a);
     expect(result.a[2]).to.not.equal(complex.a[2]);
     expect(result).to.deep.equal(complex);
+  });
+});
+
+describe('deepEquals function', () => {
+  test('should return true for identical primitive values', () => {
+    expect(deepEquals(1, 1)).toBe(true);
+    expect(deepEquals('a', 'a')).toBe(true);
+    expect(deepEquals(true, true)).toBe(true);
+  });
+
+  test('should return false for different primitive values', () => {
+    expect(deepEquals(1, 2)).toBe(false);
+    expect(deepEquals('a', 'b')).toBe(false);
+    expect(deepEquals(true, false)).toBe(false);
+  });
+
+  test('should return true for identical objects', () => {
+    const obj1 = { a: 1, b: 2 };
+    const obj2 = { a: 1, b: 2 };
+    expect(deepEquals(obj1, obj2)).toBe(true);
+  });
+
+  test('should return false for different objects', () => {
+    const obj1 = { a: 1, b: 2 };
+    const obj2 = { a: 2, b: 2 };
+    expect(deepEquals(obj1, obj2)).toBe(false);
+  });
+
+  test('should return true for identical arrays', () => {
+    const arr1 = [1, 2, 3];
+    const arr2 = [1, 2, 3];
+    expect(deepEquals(arr1, arr2)).toBe(true);
+  });
+
+  test('should return false for different arrays', () => {
+    const arr1 = [1, 2, 3];
+    const arr2 = [1, 2, 4];
+    expect(deepEquals(arr1, arr2)).toBe(false);
+  });
+
+  test('should return true for identical nested structures', () => {
+    const obj1 = { a: 1, b: { c: 2, d: [3, 4] } };
+    const obj2 = { a: 1, b: { c: 2, d: [3, 4] } };
+    expect(deepEquals(obj1, obj2)).toBe(true);
+  });
+
+  test('should return false for different nested structures', () => {
+    const obj1 = { a: 1, b: { c: 2, d: [3, 4] } };
+    const obj2 = { a: 1, b: { c: 2, d: [3, 5] } };
+    expect(deepEquals(obj1, obj2)).toBe(false);
   });
 });

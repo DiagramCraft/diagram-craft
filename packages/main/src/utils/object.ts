@@ -110,3 +110,36 @@ export const deepClone = <T>(target: T): T => {
 
   return target;
 };
+
+/**
+ * Compares two objects and returns `true` if they are deeply equal, `false` otherwise.
+ *
+ * @param a - object 1
+ * @param b - object 2
+ *
+ * @returns `true` if the objects are deeply equal, `false` otherwise
+ *
+ * @example
+ * deepEquals({ a: 1, b: 2 }, { a: 1, b: 2 }); // returns true
+ *
+ * @example
+ * deepEquals({ a: 1, b: 2 }, { a: 1, b: 3 }); // returns false
+ *
+ */
+export const deepEquals = <T>(a: T, b: T): boolean => {
+  if (a === b) return true;
+
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return a === b;
+
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysA) {
+    // @ts-ignore
+    if (!Object.prototype.hasOwnProperty.call(b, key) || !deepEquals(a[key], b[key])) return false;
+  }
+
+  return true;
+};
