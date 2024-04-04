@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import {
   groupBy,
+  hasElements,
   hasSameElements,
+  isEmpty,
   largest,
   range,
   smallest,
@@ -147,5 +149,41 @@ describe('hasSameElements', () => {
 
   test('should return false for an empty array and a non-empty array', () => {
     expect(hasSameElements([], [1, 2, 3])).toBe(false);
+  });
+});
+
+describe('isEmpty', () => {
+  test('should return true for an empty array', () => {
+    expect(isEmpty([])).toBe(true);
+  });
+
+  test('should return false for a non-empty array', () => {
+    expect(isEmpty([1, 2, 3])).toBe(false);
+  });
+
+  test('should return true for null', () => {
+    expect(isEmpty(null)).toBe(true);
+  });
+
+  test('should return true for undefined', () => {
+    expect(isEmpty(undefined)).toBe(true);
+  });
+});
+
+describe('hasElements', () => {
+  test('should return true for a non-empty array', () => {
+    expect(hasElements([1, 2, 3])).toBe(true);
+  });
+
+  test('should return false for an empty array', () => {
+    expect(hasElements([])).toBe(false);
+  });
+
+  test('should return false for null', () => {
+    expect(hasElements(null)).toBe(false);
+  });
+
+  test('should return false for undefined', () => {
+    expect(hasElements(undefined)).toBe(false);
   });
 });

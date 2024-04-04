@@ -165,3 +165,55 @@ export const hasSameElements = <T>(a: T[], b: T[]) => {
 
   return true;
 };
+
+/**
+ * Checks if an array is empty.
+ *
+ * @param arr - the array to check
+ * @returns A boolean indicating whether the array is empty.
+ *
+ * @example
+ * // returns true
+ * isEmpty([]);
+ *
+ * @example
+ * // returns false
+ * isEmpty([1, 2, 3]);
+ *
+ * @example
+ * // returns true
+ * isEmpty(null);
+ *
+ * @example
+ * // returns true
+ * isEmpty(undefined);
+ */
+export const isEmpty = (arr: Array<unknown> | undefined | null) => {
+  return arr === undefined || arr == null || arr.length === 0;
+};
+
+/**
+ * Checks if an array has elements.
+ * @param arr - the array to check
+ * @returns A boolean indicating whether the array has elements.
+ *
+ * @example
+ * // returns true
+ * hasElements([1, 2, 3]);
+ *
+ * @example
+ * // returns false
+ * hasElements([]);
+ *
+ * @example
+ * // returns false
+ * hasElements(null);
+ *
+ * @example
+ * // returns false
+ * hasElements(undefined);
+ *
+ */
+export const hasElements = <T>(arr: Array<T> | undefined | null): arr is Array<T> & [T] => {
+  return !isEmpty(arr);
+};
