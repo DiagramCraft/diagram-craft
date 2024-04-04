@@ -63,6 +63,10 @@ const vline = (
 class GridComponent extends Component<Props> {
   private propChangeManager = new PropChangeManager();
 
+  onDetach() {
+    this.propChangeManager.cleanup();
+  }
+
   // TODO: This is rendered three times when we change selection, why
   render(props: Props) {
     const diagram = props.diagram;

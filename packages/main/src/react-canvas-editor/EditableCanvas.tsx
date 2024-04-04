@@ -10,7 +10,7 @@ import { Node, NodeApi } from '../react-canvas-viewer/Node.tsx';
 import { Edge, EdgeApi } from '../react-canvas-viewer/Edge.tsx';
 import { Selection, SelectionApi } from './Selection.tsx';
 import { Box } from '../geometry/box.ts';
-import { SelectionMarquee, SelectionMarqueeApi } from './SelectionMarquee.tsx';
+import { SelectionMarquee } from './SelectionMarquee.tsx';
 import { debounce } from '../utils/debounce.ts';
 import { Grid } from './Grid.tsx';
 import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
@@ -81,7 +81,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
   const nodeRefs = useRef<Record<string, NodeApi | null>>({});
   const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
   const selectionRef = useRef<SelectionApi | null>(null);
-  const selectionMarqueeRef = useRef<SelectionMarqueeApi | null>(null);
 
   const resetTool = () => (props.applicationState.tool = 'move');
 
@@ -279,7 +278,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
 
         {tool.type === 'move' && <Selection ref={selectionRef} />}
 
-        <SelectionMarquee ref={selectionMarqueeRef} selection={selection} />
+        <SelectionMarquee selection={selection} />
 
         {tool.type === 'move' && (
           <AnchorHandles

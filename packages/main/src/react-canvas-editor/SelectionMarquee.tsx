@@ -1,14 +1,60 @@
-import { forwardRef, useImperativeHandle } from 'react';
-import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
 import { Angle } from '../geometry/angle.ts';
 import { SelectionState } from '../model/selectionState.ts';
-import { useEventListener } from '../react-app/hooks/useEventListener.ts';
+import { Component, PropChangeManager } from '../base-ui/component.ts';
+import * as svg from '../base-ui/vdom-svg.ts';
+import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
 
-export type SelectionMarqueeApi = {
-  repaint: () => void;
-};
+class SelectionMarqueeComponent extends Component<Props> {
+  private propChangeManager = new PropChangeManager();
 
-export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, ref) => {
+  onDetach() {
+    this.propChangeManager.cleanup();
+  }
+
+  render(props: Props) {
+    // TODO: Is selection static, so we can pass it through the constructor
+    this.propChangeManager.when([props.selection.marquee], 'add-marquee-change-listener', () => {
+      props.selection.marquee.on('change', () => this.redraw());
+      return () => props.selection.marquee.off('change', this.redraw);
+    });
+
+    const bounds = props.selection.marquee.bounds;
+    if (!bounds) return svg.g({});
+
+    return svg.g(
+      {},
+      svg.rect({
+        class: 'svg-marquee',
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.w,
+        height: bounds.h
+      }),
+      ...(props.selection.marquee.pendingElements?.map(e =>
+        svg.rect({
+          class: 'svg-marquee__element',
+          x: e.bounds.x,
+          y: e.bounds.y,
+          width: e.bounds.w,
+          height: e.bounds.h,
+          transform: `rotate(${Angle.toDeg(e.bounds.r)} ${e.bounds.x + e.bounds.w / 2} ${
+            e.bounds.y + e.bounds.h / 2
+          })`
+        })
+      ) ?? [])
+    );
+  }
+}
+
+export const SelectionMarquee = (props: Props) => {
+  const ref = useComponent<Props, SelectionMarqueeComponent, SVGGElement>(
+    () => new SelectionMarqueeComponent(),
+    props
+  );
+
+  return <g ref={ref}></g>;
+  /*
+
   const redraw = useRedraw();
 
   useImperativeHandle(ref, () => {
@@ -48,8 +94,8 @@ export const SelectionMarquee = forwardRef<SelectionMarqueeApi, Props>((props, r
         />
       ))}
     </>
-  );
-});
+  );*/
+};
 
 type Props = {
   selection: SelectionState;

@@ -1,4 +1,4 @@
-import { s, VNode } from './vdom.ts';
+import { s, VNode, VNodeChildParam } from './vdom.ts';
 import { ElementAttributes, Attr } from './vdom-html.ts';
 
 type CommonPresentationAttributes = {
@@ -8,6 +8,7 @@ type CommonPresentationAttributes = {
   'marker-start'?: string;
   'marker-mid'?: string;
   'marker-end'?: string;
+  'transform'?: string;
 };
 
 export const circle = (
@@ -100,7 +101,7 @@ type GAttributes = ElementAttributes & {
   mask?: string;
 };
 
-export const g = (attrs: Attr<GAttributes>, ...children: VNode[]) => {
+export const g = (attrs: Attr<GAttributes>, ...children: VNodeChildParam[]) => {
   return s('g', attrs, ...children);
 };
 
