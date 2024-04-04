@@ -1,5 +1,41 @@
 import { apply, DOMElement, insert, VNode, VNodeData } from './vdom.ts';
 
+type Dependency = () => () => void;
+
+type Registration = {
+  cleanup: () => void;
+  deps: unknown[];
+};
+
+export class PropChangeManager {
+  private dependencies: Record<string, Registration> = {};
+
+  when(deps: unknown[], id: string, dependency: Dependency) {
+    if (
+      id in this.dependencies &&
+      this.dependencies[id].deps.length > 0 &&
+      deps.every((d, i) => d === this.dependencies[id].deps[i])
+    ) {
+      return;
+    }
+
+    if (id in this.dependencies) {
+      this.dependencies[id].cleanup();
+    }
+
+    this.dependencies[id] = {
+      cleanup: dependency(),
+      deps
+    };
+  }
+
+  cleanup() {
+    for (const id in this.dependencies) {
+      this.dependencies[id].cleanup();
+    }
+  }
+}
+
 type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
   component: {
     instance: C | undefined;

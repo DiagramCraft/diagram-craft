@@ -44,6 +44,8 @@ export const path = (
 export const rect = (
   attrs: Attr<
     {
+      x?: string | number;
+      y?: string | number;
       width?: string | number;
       height?: string | number;
     } & ElementAttributes &
