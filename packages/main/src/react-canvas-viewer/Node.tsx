@@ -30,7 +30,7 @@ export type NodeApi = {
 };
 
 const SimpleComponent = (props: BaseShapeProps & { component: () => BaseShape }) => {
-  const ref = useComponent(props.component, {
+  const ref = useComponent<BaseShapeProps, BaseShape>(props.component, {
     def: props.def,
     applicationTriggers: props.applicationTriggers,
     diagram: props.diagram,

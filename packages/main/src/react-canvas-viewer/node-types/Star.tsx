@@ -1,9 +1,10 @@
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { StarComponent } from './Star.nodeType.ts';
 import { useComponent } from '../temp/useComponent.temp.ts';
+import { BaseShape, BaseShapeProps } from '../temp/baseShape.temp.ts';
 
 export const Star = (props: Props) => {
-  const ref = useComponent(() => new StarComponent(), {
+  const ref = useComponent<BaseShapeProps, BaseShape>(() => new StarComponent(), {
     // @ts-ignore
     style: props.style!,
     node: props.node,

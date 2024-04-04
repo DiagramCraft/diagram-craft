@@ -183,63 +183,65 @@ export class TextComponent extends Component<Props> {
             }
           }
         },
-        html.div(
-          {
-            class: 'svg-node__text',
-            style: toInlineCSS(style),
-            on: {
-              keydown: (e: KeyboardEvent) => {
-                const target = e.target as HTMLElement;
-                if (e.key === 'Escape') {
-                  target.innerText = props.text?.text ?? '';
-                  target.blur();
-                } else if (e.key === 'Enter' && e.metaKey) {
-                  target.blur();
-                }
-
-                setTimeout(() => {
-                  const w = target.offsetWidth;
-                  const h = target.offsetHeight;
-                  if (w !== this.width || h !== this.height) {
-                    props.onSizeChange?.({ w, h });
-                    this.width = w;
-                    this.height = h;
+        [
+          html.div(
+            {
+              class: 'svg-node__text',
+              style: toInlineCSS(style),
+              on: {
+                keydown: (e: KeyboardEvent) => {
+                  const target = e.target as HTMLElement;
+                  if (e.key === 'Escape') {
+                    target.innerText = props.text?.text ?? '';
+                    target.blur();
+                  } else if (e.key === 'Enter' && e.metaKey) {
+                    target.blur();
                   }
-                }, 0);
+
+                  setTimeout(() => {
+                    const w = target.offsetWidth;
+                    const h = target.offsetHeight;
+                    if (w !== this.width || h !== this.height) {
+                      props.onSizeChange?.({ w, h });
+                      this.width = w;
+                      this.height = h;
+                    }
+                  }, 0);
+                },
+                blur: (e: FocusEvent) => {
+                  (e.target as HTMLElement).contentEditable = 'false';
+                  (e.target as HTMLElement).style.pointerEvents = 'none';
+                  props.onChange((e.target as HTMLElement).innerHTML);
+                  props.onSizeChange?.({
+                    w: (e.target as HTMLElement).offsetWidth,
+                    h: (e.target as HTMLElement).offsetHeight
+                  });
+                }
               },
-              blur: (e: FocusEvent) => {
-                (e.target as HTMLElement).contentEditable = 'false';
-                (e.target as HTMLElement).style.pointerEvents = 'none';
-                props.onChange((e.target as HTMLElement).innerHTML);
-                props.onSizeChange?.({
-                  w: (e.target as HTMLElement).offsetWidth,
-                  h: (e.target as HTMLElement).offsetHeight
-                });
-              }
-            },
-            hooks: {
-              onInsert: (n: VNode) => {
-                if (!props.text?.text) return;
-                props.onSizeChange?.({
-                  w: (n.el! as HTMLElement).offsetWidth,
-                  h: (n.el! as HTMLElement).offsetHeight
-                });
-              },
-              onUpdate: (_o: VNode, n: VNode) => {
-                if (
-                  (n.el! as HTMLElement).offsetWidth !== this.width ||
-                  (n.el! as HTMLElement).offsetHeight !== this.height
-                ) {
+              hooks: {
+                onInsert: (n: VNode) => {
+                  if (!props.text?.text) return;
                   props.onSizeChange?.({
                     w: (n.el! as HTMLElement).offsetWidth,
                     h: (n.el! as HTMLElement).offsetHeight
                   });
+                },
+                onUpdate: (_o: VNode, n: VNode) => {
+                  if (
+                    (n.el! as HTMLElement).offsetWidth !== this.width ||
+                    (n.el! as HTMLElement).offsetHeight !== this.height
+                  ) {
+                    props.onSizeChange?.({
+                      w: (n.el! as HTMLElement).offsetWidth,
+                      h: (n.el! as HTMLElement).offsetHeight
+                    });
+                  }
                 }
               }
-            }
-          },
-          rawHTML(props.text?.text ?? '')
-        )
+            },
+            [rawHTML(props.text?.text ?? '')]
+          )
+        ]
       )
     );
   }

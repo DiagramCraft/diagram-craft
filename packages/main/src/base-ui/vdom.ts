@@ -51,6 +51,8 @@ export type VNode =
       el: DOMElement | undefined;
     };
 
+export type VNodeChildParam = VNode | null | undefined | false;
+
 const emptyVNode = (): VNode => ({
   type: 'h',
   tag: '',
@@ -59,7 +61,7 @@ const emptyVNode = (): VNode => ({
   el: undefined
 });
 
-export const h = (tag: string, props: VNodeData, ...children: (VNode | null)[]): VNode => {
+export const h = (tag: string, props: VNodeData, ...children: VNodeChildParam[]): VNode => {
   return {
     type: 'h',
     tag,
@@ -69,7 +71,7 @@ export const h = (tag: string, props: VNodeData, ...children: (VNode | null)[]):
   };
 };
 
-export const s = (tag: string, props: VNodeData, ...children: (VNode | null)[]): VNode => {
+export const s = (tag: string, props: VNodeData, ...children: VNodeChildParam[]): VNode => {
   return {
     type: 's',
     tag,

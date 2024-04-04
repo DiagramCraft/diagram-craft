@@ -1,9 +1,10 @@
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { RoundedRectComponent } from './RoundedRect.nodeType.ts';
 import { useComponent } from '../temp/useComponent.temp.ts';
+import { BaseShape, BaseShapeProps } from '../temp/baseShape.temp.ts';
 
 export const RoundedRect = (props: Props) => {
-  const ref = useComponent(() => new RoundedRectComponent(), {
+  const ref = useComponent<BaseShapeProps, BaseShape>(() => new RoundedRectComponent(), {
     // @ts-ignore
     style: props.style!,
     node: props.node,

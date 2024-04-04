@@ -1,13 +1,14 @@
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { CircleComponent } from './Circle.nodeType.ts';
 import { useComponent } from '../temp/useComponent.temp.ts';
+import { BaseShapeProps } from '../temp/baseShape.temp.ts';
 
 declare global {
   interface NodeProps {}
 }
 
 export const Circle = (props: Props) => {
-  const ref = useComponent(() => new CircleComponent(), {
+  const ref = useComponent<BaseShapeProps, CircleComponent>(() => new CircleComponent(), {
     // @ts-ignore
     style: props.style!,
     node: props.node,

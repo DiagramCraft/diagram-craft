@@ -1,9 +1,10 @@
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { TrapetzoidComponent } from './Trapetzoid.nodeType.ts';
 import { useComponent } from '../temp/useComponent.temp.ts';
+import { BaseShape, BaseShapeProps } from '../temp/baseShape.temp.ts';
 
 export const Trapetzoid = (props: Props) => {
-  const ref = useComponent(() => new TrapetzoidComponent(), {
+  const ref = useComponent<BaseShapeProps, BaseShape>(() => new TrapetzoidComponent(), {
     // @ts-ignore
     style: props.style!,
     node: props.node,

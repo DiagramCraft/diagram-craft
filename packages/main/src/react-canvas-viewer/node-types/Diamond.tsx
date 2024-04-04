@@ -1,9 +1,10 @@
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { DiamondComponent } from './Diamond.nodeType.ts';
 import { useComponent } from '../temp/useComponent.temp.ts';
+import { BaseShapeProps } from '../temp/baseShape.temp.ts';
 
 export const Diamond = (props: Props) => {
-  const ref = useComponent(() => new DiamondComponent(), {
+  const ref = useComponent<BaseShapeProps, DiamondComponent>(() => new DiamondComponent(), {
     // @ts-ignore
     style: props.style!,
     node: props.node,

@@ -8,7 +8,10 @@ import { newid } from '../utils/id.ts';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { Rect } from '../react-canvas-viewer/node-types/Rect.tsx';
-import { RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.nodeType.ts';
+import {
+  RectComponent,
+  RectNodeDefinition
+} from '../react-canvas-viewer/node-types/Rect.nodeType.ts';
 
 const bounds = {
   x: 0,
@@ -47,7 +50,11 @@ describe('Diagram', () => {
   test('transform rotate', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
     nodeDefinitionRegistry.register(
-      new ReactNodeDefinition(Rect, new RectNodeDefinition('rect', 'Rectangle'), undefined)
+      new ReactNodeDefinition(
+        Rect,
+        new RectNodeDefinition('rect', 'Rectangle'),
+        () => new RectComponent()
+      )
     );
 
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());

@@ -1,9 +1,10 @@
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { useComponent } from '../temp/useComponent.temp.ts';
 import { RectComponent } from './Rect.nodeType.ts';
+import { BaseShape, BaseShapeProps } from '../temp/baseShape.temp.ts';
 
 export const Rect = (props: Props) => {
-  const ref = useComponent(() => new RectComponent(), {
+  const ref = useComponent<BaseShapeProps, BaseShape>(() => new RectComponent(), {
     // @ts-ignore
     style: props.style!,
     node: props.node,

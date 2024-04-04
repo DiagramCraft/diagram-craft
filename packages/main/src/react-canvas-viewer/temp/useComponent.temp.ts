@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { BaseShape, BaseShapeProps } from './baseShape.temp.ts';
+import { Component } from '../../base-ui/component.ts';
 
-export const useComponent = <P extends BaseShapeProps, T extends BaseShape>(
+export const useComponent = <P, T extends Component<P>, R = SVGGElement>(
   component: () => T,
   props: P
 ) => {
   const cmpRef = useRef<T>(component());
-  const parentRef = useRef<SVGGElement>(null);
+  const parentRef = useRef<R>(null);
 
   const newComponent = component();
   const isSameComponent = cmpRef.current.constructor === newComponent.constructor;
@@ -23,6 +23,7 @@ export const useComponent = <P extends BaseShapeProps, T extends BaseShape>(
 
   useEffect(() => {
     if (cmpRef.current.isRendered()) return;
+    // @ts-ignore
     cmpRef.current.attach(parentRef.current!, props);
   });
 

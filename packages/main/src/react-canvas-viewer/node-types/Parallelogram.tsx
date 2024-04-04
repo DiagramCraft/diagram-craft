@@ -1,9 +1,10 @@
 import { ReactNodeProps } from '../reactNodeDefinition.ts';
 import { ParallelogramComponent } from './Parallelogram.nodeType.ts';
 import { useComponent } from '../temp/useComponent.temp.ts';
+import { BaseShape, BaseShapeProps } from '../temp/baseShape.temp.ts';
 
 export const Parallelogram = (props: Props) => {
-  const ref = useComponent(() => new ParallelogramComponent(), {
+  const ref = useComponent<BaseShapeProps, BaseShape>(() => new ParallelogramComponent(), {
     // @ts-ignore
     style: props.style!,
     node: props.node,

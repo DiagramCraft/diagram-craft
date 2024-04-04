@@ -1,10 +1,14 @@
-import { h, VNode, VNodeData } from './vdom.ts';
+import { h, VNodeChildParam, VNodeData } from './vdom.ts';
+
+type DataAttributes = {
+  [key in `data-${string}`]?: string;
+};
 
 export type ElementAttributes = {
   id?: string;
   class?: string;
   style?: string;
-};
+} & DataAttributes;
 
 export type Attr<T = ElementAttributes> = T & {
   on?: VNodeData['on'];
@@ -13,6 +17,6 @@ export type Attr<T = ElementAttributes> = T & {
 
 type DivAttributes = ElementAttributes;
 
-export const div = (attrs: Attr<DivAttributes>, ...children: VNode[]) => {
-  return h('div', attrs, ...children);
+export const div = (attrs: Attr<DivAttributes>, children?: VNodeChildParam[]) => {
+  return h('div', attrs, ...(children ?? []));
 };

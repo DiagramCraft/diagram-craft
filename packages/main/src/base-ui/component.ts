@@ -8,30 +8,42 @@ type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
 };
 
 export abstract class Component<P = Record<string, never>> {
-  private element: VNode | undefined = undefined;
+  protected element: VNode | undefined = undefined;
   protected currentProps: P | undefined;
 
   abstract render(props: P): VNode;
 
-  detach() {}
+  onDetach() {}
+  onAttach() {}
+
+  detach() {
+    this.onDetach();
+    if (this.element?.el) this.element.el.remove();
+  }
 
   attach(parent: HTMLElement | SVGElement, props: P) {
     this.create(props);
     parent.appendChild(this.element!.el! as DOMElement);
+    this.onAttach();
   }
 
   protected create(props: P) {
-    this.currentProps = props;
     const newElement = this.render(props);
 
     insert(newElement);
 
     this.element = newElement;
+    this.currentProps = props;
+  }
+
+  redraw() {
+    if (!this.element) return;
+    this.update(this.currentProps!);
   }
 
   update(props: P) {
-    this.currentProps = props;
     this.element = apply(this.element!, this.render(props));
+    this.currentProps = props;
   }
 
   isRendered(): boolean {
@@ -60,6 +72,9 @@ export abstract class Component<P = Record<string, never>> {
           instance: undefined
         },
         hooks: {
+          onInsert: node => {
+            (node.data as ComponentVNodeData<P, C>).component?.instance?.onAttach();
+          },
           onCreate: node => {
             const cmp = component();
             cmp.create(props);
