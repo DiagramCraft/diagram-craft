@@ -11,6 +11,7 @@ class DragLabelComponent extends Component {
   private state: State | undefined = undefined;
 
   setState(state: State | undefined) {
+    // TODO: Maybe move this into the dragStateChange event emission - this way, it's only done once
     if (deepEquals(this.state, state)) return;
 
     this.state = state;

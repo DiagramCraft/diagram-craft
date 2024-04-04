@@ -19,7 +19,7 @@ export type Canvas = Omit<Box, 'r'>;
 
 export type DiagramEvents = {
   /* Diagram props, canvas have changed, or a large restructure of
-   * elements have occured (e.g. change of stacking order)
+   * elements have occurred (e.g. change of stacking order)
    */
   change: { diagram: Diagram };
 
