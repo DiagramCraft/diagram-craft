@@ -1,7 +1,55 @@
 import { Line } from '../../geometry/line.ts';
 import { Point } from '../../geometry/point.ts';
 import { newid } from '../../utils/id.ts';
+import * as svg from '../../base-ui/vdom-svg.ts';
+import { text, VNode } from '../../base-ui/vdom.ts';
 
+export const makeDistanceMarker = (props: Props): VNode[] => {
+  const l = Line.of(props.p1, props.p2);
+  const marker = `distance_marker_${newid()}`;
+  return [
+    svg.marker(
+      {
+        id: marker,
+        viewBox: '0 0 10 10',
+        refX: 10,
+        refY: 5,
+        markerWidth: 6,
+        markerHeight: 6,
+        orient: 'auto-start-reverse'
+      },
+      svg.path({ d: 'M 0 0 L 10 5 L 0 10 z', stroke: 'pink', fill: 'pink' })
+    ),
+    svg.line({
+      'class': 'svg-guide__distance-line',
+      'x1': props.p1.x,
+      'y1': props.p1.y,
+      'x2': props.p2.x,
+      'y2': props.p2.y,
+      'marker-end': `url(#${marker})`,
+      'marker-start': `url(#${marker})`
+    }),
+    svg.rect({
+      class: 'svg-guide__distance-label-bg',
+      x: Line.midpoint(l).x - props.label.length * 5,
+      y: Line.midpoint(l).y - 10,
+      rx: 5,
+      ry: 5,
+      width: props.label.length * 10,
+      height: 17
+    }),
+    svg.text(
+      {
+        x: Line.midpoint(l).x,
+        y: Line.midpoint(l).y,
+        class: 'svg-guide__distance-label'
+      },
+      text(props.label)
+    )
+  ];
+};
+
+/*
 export const DistanceMarker = (props: Props) => {
   const l = Line.of(props.p1, props.p2);
   const marker = `distance_marker_${newid()}`;
@@ -44,6 +92,8 @@ export const DistanceMarker = (props: Props) => {
   );
 };
 
+
+ */
 type Props = {
   p1: Point;
   p2: Point;

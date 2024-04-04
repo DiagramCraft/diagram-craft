@@ -47,6 +47,8 @@ export const rect = (
     {
       x?: string | number;
       y?: string | number;
+      rx?: string | number;
+      ry?: string | number;
       width?: string | number;
       height?: string | number;
     } & ElementAttributes &
@@ -70,6 +72,18 @@ export const line = (
   ...children: VNode[]
 ) => {
   return s('line', attrs, ...children);
+};
+
+export const text = (
+  attrs: Attr<
+    {
+      x?: string | number;
+      y?: string | number;
+    } & ElementAttributes
+  >,
+  ...children: VNode[]
+) => {
+  return s('text', attrs, ...children);
 };
 
 type MarkerAttributes = ElementAttributes & {
