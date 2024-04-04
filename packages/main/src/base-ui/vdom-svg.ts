@@ -9,6 +9,7 @@ type CommonPresentationAttributes = {
   'marker-mid'?: string;
   'marker-end'?: string;
   'transform'?: string;
+  'cursor'?: string;
 };
 
 export const circle = (
