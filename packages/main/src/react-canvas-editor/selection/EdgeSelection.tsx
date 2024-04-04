@@ -1,15 +1,98 @@
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { $c } from '../../utils/classname.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
-import { useDragDrop } from '../../react-canvas-viewer/DragDropManager.ts';
-import { useState } from 'react';
-import { useEventListener } from '../../react-app/hooks/useEventListener.ts';
+import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
 import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { isConnected } from '../../model/endpoint.ts';
+import { Component } from '../../base-ui/component.ts';
+import { Diagram } from '../../model/diagram.ts';
+import * as svg from '../../base-ui/vdom-svg.ts';
+import { useComponent } from '../../react-canvas-viewer/temp/useComponent.temp.ts';
+
+type ComponentProps = Props & {
+  diagram: Diagram;
+};
+
+class EdgeSelectionComponent extends Component<ComponentProps> {
+  private dragging: boolean = false;
+  private readonly onDragStart: () => void;
+  private readonly onDragEnd: () => void;
+
+  constructor() {
+    super();
+    this.onDragStart = () => this.setIsDragging(true);
+    this.onDragEnd = () => this.setIsDragging(false);
+  }
+
+  setIsDragging(state: boolean) {
+    this.dragging = state;
+    this.redraw();
+  }
+
+  onAttach() {
+    DRAG_DROP_MANAGER.on('dragStart', this.onDragStart);
+    DRAG_DROP_MANAGER.on('dragEnd', this.onDragEnd);
+  }
+
+  onDetach() {
+    DRAG_DROP_MANAGER.off('dragStart', this.onDragStart);
+    DRAG_DROP_MANAGER.off('dragEnd', this.onDragEnd);
+  }
+
+  render(props: ComponentProps) {
+    const diagram = props.diagram;
+    const drag = DRAG_DROP_MANAGER;
+
+    const edge = props.edge;
+
+    return svg.g(
+      {},
+      svg.circle({
+        class: $c('svg-selection__handle-edge', { connected: isConnected(edge.start) }),
+        cx: edge.start.position.x,
+        cy: edge.start.position.y,
+        r: 4,
+        on: {
+          mousedown: ev => {
+            if (ev.button !== 0) return;
+            drag.initiate(new EdgeEndpointMoveDrag(diagram, edge, 'start'));
+            ev.stopPropagation();
+          }
+        },
+        style: `pointer-events: ${this.dragging ? 'none' : undefined}`
+      }),
+      svg.circle({
+        class: $c('svg-selection__handle-edge', { connected: isConnected(edge.end) }),
+        cx: edge.end.position.x,
+        cy: edge.end.position.y,
+        r: 4,
+        on: {
+          mousedown: ev => {
+            if (ev.button !== 0) return;
+            drag.initiate(new EdgeEndpointMoveDrag(diagram, edge, 'end'));
+            ev.stopPropagation();
+          }
+        },
+        style: `pointer-events: ${this.dragging ? 'none' : undefined}`
+      })
+    );
+  }
+}
 
 export const EdgeSelection = (props: Props) => {
   const diagram = useDiagram();
-  const drag = useDragDrop();
+  const ref = useComponent<ComponentProps, EdgeSelectionComponent, SVGGElement>(
+    () => new EdgeSelectionComponent(),
+    {
+      ...props,
+      diagram
+    }
+  );
+
+  return <g ref={ref}></g>;
+  /*
+
+  const drag = DRAG_DROP_MANAGER;
 
   const [isDragging, setIsDragging] = useState(!!drag.current());
 
@@ -49,6 +132,8 @@ export const EdgeSelection = (props: Props) => {
       />
     </>
   );
+
+ */
 };
 
 type Props = {
