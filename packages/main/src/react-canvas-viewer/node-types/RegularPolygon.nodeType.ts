@@ -63,7 +63,7 @@ export class RegularPolygonComponent extends BaseShape {
       .getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
 
     shapeBuilder.controlPoint(
       boundary.segments[1].start.x,

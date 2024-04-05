@@ -1,6 +1,6 @@
 import { DRAG_DROP_MANAGER } from '../react-canvas-viewer/DragDropManager.ts';
 import { State } from '../base-ui/drag/dragDropManager.ts';
-import { Component } from '../base-ui/component.ts';
+import { Component, createEffect } from '../base-ui/component.ts';
 import * as html from '../base-ui/vdom-html.ts';
 import { text } from '../base-ui/vdom.ts';
 import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
@@ -18,32 +18,28 @@ export class DragLabelComponent extends Component {
     this.redraw();
   }
 
-  private dragStateChangeListener = () => {
-    this.setState(DRAG_DROP_MANAGER.current()?.state);
-  };
-
-  private dragEndListener = () => {
-    this.setState(undefined);
-  };
-
-  private mouseMoveListener = (e: MouseEvent) => {
-    (this.element!.el! as HTMLDivElement).style.setProperty('left', e.pageX + 20 + 'px');
-    (this.element!.el! as HTMLDivElement).style.setProperty('top', e.pageY + 20 + 'px');
-  };
-
-  onAttach() {
-    DRAG_DROP_MANAGER.on('dragStateChange', this.dragStateChangeListener);
-    DRAG_DROP_MANAGER.on('dragEnd', this.dragEndListener);
-    document.addEventListener('mousemove', this.mouseMoveListener);
-  }
-
-  onDetach() {
-    DRAG_DROP_MANAGER.off('dragStateChange', this.dragStateChangeListener);
-    DRAG_DROP_MANAGER.off('dragEnd', this.dragEndListener);
-    document.removeEventListener('mousemove', this.mouseMoveListener);
-  }
-
   render() {
+    createEffect(() => {
+      const cb = () => this.setState(DRAG_DROP_MANAGER.current()?.state);
+      DRAG_DROP_MANAGER.on('dragStateChange', cb);
+      return () => DRAG_DROP_MANAGER.off('dragStateChange', cb);
+    }, []);
+
+    createEffect(() => {
+      const cb = () => this.setState(undefined);
+      DRAG_DROP_MANAGER.on('dragEnd', cb);
+      return () => DRAG_DROP_MANAGER.off('dragEnd', cb);
+    }, []);
+
+    createEffect(() => {
+      const cb = (e: MouseEvent) => {
+        (this.element!.el! as HTMLDivElement).style.setProperty('left', e.pageX + 20 + 'px');
+        (this.element!.el! as HTMLDivElement).style.setProperty('top', e.pageY + 20 + 'px');
+      };
+      document.addEventListener('mousemove', cb);
+      return () => document.removeEventListener('mousemove', cb);
+    }, []);
+
     if (!this.state) return html.div({ style: 'display: none' });
 
     const s = this.state!;

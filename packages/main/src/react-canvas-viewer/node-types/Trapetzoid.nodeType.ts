@@ -81,7 +81,7 @@ export class TrapetzoidComponent extends BaseShape {
     const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
 
     shapeBuilder.controlPoint(
       props.node.bounds.x + slantLeft,

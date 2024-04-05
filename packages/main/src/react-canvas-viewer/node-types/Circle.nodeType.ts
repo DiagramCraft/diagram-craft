@@ -25,6 +25,6 @@ export class CircleComponent extends BaseShape {
     const boundary = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
   }
 }

@@ -80,7 +80,7 @@ export class StarComponent extends BaseShape {
     const boundary = new StarNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
 
     shapeBuilder.controlPoint(
       boundary.segments[1].start.x,

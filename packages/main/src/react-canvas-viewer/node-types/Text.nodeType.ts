@@ -40,7 +40,7 @@ export class TextComponent extends BaseShape {
     const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text('1', props.nodeProps.text, props.node.bounds, (size: Extent) => {
+    shapeBuilder.text(this, '1', props.nodeProps.text, props.node.bounds, (size: Extent) => {
       const width = size.w;
       const height = size.h;
 

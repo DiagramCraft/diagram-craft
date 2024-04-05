@@ -26,6 +26,6 @@ export class RectComponent extends BaseShape {
     const boundary = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
   }
 }

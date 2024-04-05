@@ -70,7 +70,7 @@ export class RoundedRectComponent extends BaseShape {
     const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
 
     shapeBuilder.controlPoint(props.node.bounds.x + radius, props.node.bounds.y, (x, _y, uow) => {
       const distance = Math.max(0, x - props.node.bounds.x);

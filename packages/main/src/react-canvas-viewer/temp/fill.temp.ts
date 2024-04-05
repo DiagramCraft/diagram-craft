@@ -111,7 +111,7 @@ export class FillPattern extends Component<FillPatternProps> {
 
   setPattern = (pattern: string) => {
     this.pattern = pattern;
-    this.update(this.currentProps!);
+    this.redraw();
   };
 
   render(props: FillPatternProps) {

@@ -36,7 +36,7 @@ import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
 import { AnchorHandles, AnchorHandlesComponent } from './selection/AnchorHandles.tsx';
 import { NodeTool } from './tools/node/nodeTool.ts';
 import { PenTool } from './tools/penTool.ts';
-import { Component } from '../base-ui/component.ts';
+import { Component, createEffect } from '../base-ui/component.ts';
 import { Diagram } from '../model/diagram.ts';
 import { UndoEvents } from '../model/undoManager.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
@@ -120,7 +120,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
 
     const resetTool = () => (props.applicationState.tool = 'move');
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = (s: { tool: ToolType }) => {
         this.setTool(
           new TOOLS[s.tool](
@@ -137,12 +137,9 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       return () => props.applicationState.off('toolChange', cb);
     }, [props.applicationState]);
 
-    //useImperativeHandle(ref, () => {
-    //  return svgRef.current!;
-    //});
-
     // ---> start useCanvasZoomAndPan
-    this.effectManager.add(() => {
+
+    createEffect(() => {
       const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
         this.svgRef.current!.setAttribute('viewBox', viewbox.svgViewboxString);
       };
@@ -150,7 +147,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       return () => diagram.viewBox.off('viewbox', cb);
     }, [diagram.viewBox]);
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       if (!this.svgRef.current) return;
 
       const cb = (e: WheelEvent) => {
@@ -170,7 +167,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       return () => this.svgRef.current!.removeEventListener('wheel', cb);
     }, [this.svgRef.current]);
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = () => this.adjustViewbox();
       window.addEventListener('resize', cb);
       return () => window.removeEventListener('resize', cb);
@@ -178,7 +175,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
 
     // ---> end useCanvasZoomAndPan
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = (e: KeyboardEvent) => {
         if (executeAction(e, {}, keyMap, actionMap)) {
           return;
@@ -189,7 +186,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       return () => document.removeEventListener('keydown', cb);
     }, []);
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = (e: KeyboardEvent) => this.tool?.onKeyUp(e);
       document.addEventListener('keyup', cb);
       return () => document.removeEventListener('keyup', cb);
@@ -197,7 +194,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
 
     const clearSelection = debounce(() => selection.clear());
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = (e: UndoEvents['execute']) => {
         if (e.type === 'undo') clearSelection();
       };
@@ -205,7 +202,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       return () => diagram.undoManager.off('execute', cb);
     }, [diagram.undoManager]);
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
         if (isNode(e.element)) {
           const nodeToRepaint = getTopMostNode(e.element);
@@ -221,17 +218,17 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       return () => diagram.off('elementChange', cb);
     }, [diagram]);
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = () => this.redraw();
       diagram.on('elementAdd', cb);
       return () => diagram.off('elementAdd', cb);
     }, [diagram]);
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = () => this.redraw();
       diagram.on('elementRemove', cb);
       return () => diagram.off('elementRemove', cb);
     }, [diagram]);
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = () => this.redraw();
       diagram.on('change', cb);
       return () => diagram.off('change', cb);
@@ -246,14 +243,14 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       }
     };
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
         redrawElement(e);
       selection.on('add', cb);
       return () => selection.off('add', cb);
     }, [selection]);
 
-    this.effectManager.add(() => {
+    createEffect(() => {
       const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
         redrawElement(e);
       selection.on('remove', cb);

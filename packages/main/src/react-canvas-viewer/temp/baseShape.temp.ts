@@ -132,10 +132,6 @@ export class TextComponent extends Component<Props> {
   private width: number = 0;
   private height: number = 0;
 
-  constructor() {
-    super();
-  }
-
   render(props: Props) {
     const style: Partial<CSSStyleDeclaration> = {
       color: props.text?.color ?? 'unset',
@@ -157,6 +153,13 @@ export class TextComponent extends Component<Props> {
     };
 
     const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
+
+    const updateBounds = (w: number, h: number) => {
+      if (w === this.width && h === this.height) return;
+      this.width = w;
+      this.height = h;
+      props.onSizeChange?.({ w, h });
+    };
 
     return svg.foreignObject(
       {
@@ -202,9 +205,10 @@ export class TextComponent extends Component<Props> {
                     const w = target.offsetWidth;
                     const h = target.offsetHeight;
                     if (w !== this.width || h !== this.height) {
-                      props.onSizeChange?.({ w, h });
-                      this.width = w;
-                      this.height = h;
+                      updateBounds(
+                        (e.target as HTMLElement).offsetWidth,
+                        (e.target as HTMLElement).offsetHeight
+                      );
                     }
                   }, 0);
                 },
@@ -212,30 +216,27 @@ export class TextComponent extends Component<Props> {
                   (e.target as HTMLElement).contentEditable = 'false';
                   (e.target as HTMLElement).style.pointerEvents = 'none';
                   props.onChange((e.target as HTMLElement).innerHTML);
-                  props.onSizeChange?.({
-                    w: (e.target as HTMLElement).offsetWidth,
-                    h: (e.target as HTMLElement).offsetHeight
-                  });
+
+                  updateBounds(
+                    (e.target as HTMLElement).offsetWidth,
+                    (e.target as HTMLElement).offsetHeight
+                  );
                 }
               },
               hooks: {
                 onInsert: (n: VNode) => {
                   if (!props.text?.text) return;
-                  props.onSizeChange?.({
-                    w: (n.el! as HTMLElement).offsetWidth,
-                    h: (n.el! as HTMLElement).offsetHeight
-                  });
+
+                  updateBounds(
+                    (n.el! as HTMLElement).offsetWidth,
+                    (n.el! as HTMLElement).offsetHeight
+                  );
                 },
                 onUpdate: (_o: VNode, n: VNode) => {
-                  if (
-                    (n.el! as HTMLElement).offsetWidth !== this.width ||
-                    (n.el! as HTMLElement).offsetHeight !== this.height
-                  ) {
-                    props.onSizeChange?.({
-                      w: (n.el! as HTMLElement).offsetWidth,
-                      h: (n.el! as HTMLElement).offsetHeight
-                    });
-                  }
+                  updateBounds(
+                    (n.el! as HTMLElement).offsetWidth,
+                    (n.el! as HTMLElement).offsetHeight
+                  );
                 }
               }
             },
@@ -267,15 +268,17 @@ export class ShapeBuilder {
     this.children.push(vnode);
   }
 
+  // TODO: Maybe we can pass Component<any> in the constructor instead
   text(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cmp: Component<any>,
     id: string = '1',
     text?: NodeProps['text'],
     bounds?: Box,
     onSizeChange?: (size: Extent) => void
   ) {
-    const c = new TextComponent();
     this.children.push(
-      c.render({
+      cmp.subComponent<Props, TextComponent>('text', () => new TextComponent(), {
         id: `text_${id}_${this.props.node.id}`,
         text: text ?? this.props.nodeProps.text,
         bounds: bounds ?? this.props.node.bounds,

@@ -26,6 +26,6 @@ export class DiamondComponent extends BaseShape {
     const boundary = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
   }
 }

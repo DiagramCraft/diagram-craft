@@ -7,6 +7,15 @@ type Registration = {
   deps: unknown[];
 };
 
+let CURRENT_EFFECT_MANAGER: EffectManager | undefined = undefined;
+
+export const createEffect = (dependency: Callback, deps: unknown[]) => {
+  if (!CURRENT_EFFECT_MANAGER) {
+    throw new Error('Effect must be run inside a component');
+  }
+  CURRENT_EFFECT_MANAGER!.add(dependency, deps);
+};
+
 export class EffectManager {
   private dependencies: Record<string, Registration> = {};
   private idx: number = 0;
@@ -43,9 +52,14 @@ export class EffectManager {
 
   _start() {
     this.idx = 0;
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    CURRENT_EFFECT_MANAGER = this;
   }
 
-  _stop() {}
+  _stop() {
+    CURRENT_EFFECT_MANAGER = undefined;
+  }
 }
 
 type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
@@ -117,7 +131,7 @@ export abstract class Component<P = Record<string, never>> {
     }
   }
 
-  protected subComponent<P, C extends Component<P>>(
+  subComponent<P, C extends Component<P>>(
     id: string,
     component: () => C,
     props: P,

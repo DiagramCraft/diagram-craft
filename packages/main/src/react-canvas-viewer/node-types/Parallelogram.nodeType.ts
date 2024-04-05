@@ -63,7 +63,7 @@ export class ParallelogramComponent extends BaseShape {
     const boundary = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text();
+    shapeBuilder.text(this);
 
     shapeBuilder.controlPoint(props.node.bounds.x + slant, props.node.bounds.y, (x, _y, uow) => {
       const distance = Math.max(0, x - props.node.bounds.x);

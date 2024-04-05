@@ -233,6 +233,7 @@ export class UnitOfWork {
       } else if (e instanceof Stylesheet) {
         this.#shouldUpdateDiagram = true;
       } else {
+        //if (e.type === 'node' && (e as DiagramNode).isLabelNode()) return;
         this.diagram.emit(s, { element: e });
       }
     };

@@ -13,28 +13,10 @@ type ComponentProps = Props & {
 
 export class EdgeSelectionComponent extends Component<ComponentProps> {
   private dragging: boolean = false;
-  private readonly onDragStart: () => void;
-  private readonly onDragEnd: () => void;
-
-  constructor() {
-    super();
-    this.onDragStart = () => this.setIsDragging(true);
-    this.onDragEnd = () => this.setIsDragging(false);
-  }
 
   setIsDragging(state: boolean) {
     this.dragging = state;
     this.redraw();
-  }
-
-  onAttach() {
-    DRAG_DROP_MANAGER.on('dragStart', this.onDragStart);
-    DRAG_DROP_MANAGER.on('dragEnd', this.onDragEnd);
-  }
-
-  onDetach() {
-    DRAG_DROP_MANAGER.off('dragStart', this.onDragStart);
-    DRAG_DROP_MANAGER.off('dragEnd', this.onDragEnd);
   }
 
   render(props: ComponentProps) {
@@ -42,6 +24,18 @@ export class EdgeSelectionComponent extends Component<ComponentProps> {
     const drag = DRAG_DROP_MANAGER;
 
     const edge = props.edge;
+
+    this.effectManager.add(() => {
+      const cb = () => this.setIsDragging(true);
+      drag.on('dragStart', cb);
+      return () => drag.off('dragStart', cb);
+    }, []);
+
+    this.effectManager.add(() => {
+      const cb = () => this.setIsDragging(false);
+      drag.on('dragEnd', cb);
+      return () => drag.off('dragEnd', cb);
+    }, []);
 
     return svg.g(
       {},

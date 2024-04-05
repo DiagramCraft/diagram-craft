@@ -67,7 +67,7 @@ export class GridComponent extends Component<Props> {
 
     // TODO: Should we really pass diagram as props and not in the constructor
     this.effectManager.add(() => {
-      const cb = this.redraw.bind(this);
+      const cb = () => this.redraw();
       diagram.on('change', () => cb);
       return () => diagram.off('change', cb);
     }, [diagram]);

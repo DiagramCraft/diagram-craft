@@ -9,7 +9,7 @@ import { EdgeSelectionComponent } from './selection/EdgeSelection.tsx';
 import { Box } from '../geometry/box.ts';
 import { useDiagram } from '../react-app/context/DiagramContext.ts';
 import { Diagram } from '../model/diagram.ts';
-import { Component } from '../base-ui/component.ts';
+import { Component, createEffect } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
 
@@ -22,8 +22,10 @@ export class SelectionComponent extends Component<Props> {
     const diagram = props.diagram;
     const selection = diagram.selectionState;
 
-    this.effectManager.add(() => {
-      const cb = this.redraw.bind(this);
+    createEffect(() => {
+      const cb = () => {
+        this.redraw();
+      };
       selection.on('change', cb);
       return () => selection.off('change', cb);
     }, [selection]);
