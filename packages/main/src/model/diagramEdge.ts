@@ -89,14 +89,31 @@ export class DiagramEdge
 
   /* Props *************************************************************************************************** */
 
+  // TODO: Maybe create a props cache helper
+  #propsCache: NodeProps | undefined = undefined;
+  #propsCacheStyle: NodeProps | undefined = undefined;
+
+  private clearPropsCache() {
+    this.#propsCache = undefined;
+  }
+
   get propsForEditing(): DeepReadonly<EdgeProps> {
-    return deepMerge(
+    const styleProps = this.diagram.document.styles.edgeStyles.find(
+      s => s.id === this.props.style
+    )?.props;
+
+    if (this.#propsCache && this.#propsCacheStyle === styleProps) return this.#propsCache;
+
+    this.#propsCacheStyle = styleProps;
+    this.#propsCache = deepMerge(
       {},
       edgeDefaults,
       {},
-      this.diagram.document.styles.edgeStyles.find(s => s.id === this.props.style)?.props ?? {},
+      styleProps ?? {},
       this.#props as EdgeProps
     ) as DeepRequired<EdgeProps>;
+
+    return this.#propsCache;
   }
 
   get propsForRendering(): DeepReadonly<DeepRequired<EdgeProps>> {
@@ -111,6 +128,8 @@ export class DiagramEdge
     uow.snapshot(this);
     callback(this.#props);
     uow.updateElement(this);
+
+    this.clearPropsCache();
   }
 
   /* Diagram/layer ******************************************************************************************* */

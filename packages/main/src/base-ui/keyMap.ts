@@ -89,7 +89,7 @@ export const defaultMacKeymap: KeyMap = {
   'M-KeyX': 'CLIPBOARD_CUT',
   'M-KeyV': 'CLIPBOARD_PASTE',
   'M-KeyD': 'DUPLICATE',
-  Backspace: 'SELECTION_DELETE',
+  'Backspace': 'SELECTION_DELETE',
   'M-Digit1': 'TOOL_MOVE',
   'M-Digit4': 'TOOL_TEXT',
   'M-Digit3': 'TOOL_EDGE',
@@ -135,7 +135,6 @@ export const executeAction = (
     return false;
 
   if (target.classList.contains('svg-node__text')) return false;
-
   const action = findAction(e, keyMap, actionMap);
   if (!action || !action.isEnabled) return false;
 

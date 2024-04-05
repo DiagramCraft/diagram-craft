@@ -135,6 +135,7 @@ const updateAttrs = (oldVNode: VNode, newVNode: VNode) => {
   const newNode = newVNode.el! as DOMElement;
 
   Object.entries(newAttrs).forEach(([key, value]) => {
+    if (key === 'on' || key === 'hooks' || key === 'component') return;
     if (oldAttrs[key] !== value) {
       newNode.setAttribute(key, value as string);
     }
@@ -235,10 +236,10 @@ const applyUpdates = (
       // Do nothing
     } else if (newChild.tag !== oldChild.tag) {
       // New tag name
-      onRemove(oldChild);
-
       createElement(newChild, newElement, insertQueue);
-      oldChild.el?.replaceWith(newChild.el!);
+      oldChild.el!.replaceWith(newChild.el!);
+
+      onRemove(oldChild);
     } else {
       // Only properties have changed
       newChild.el = oldChild.el;
@@ -247,6 +248,10 @@ const applyUpdates = (
     i++;
     j++;
   }
+
+  /*if (j < oldChildren.length) {
+    console.log('remove', newChildren, oldChildren);
+  }*/
 
   for (; j < oldChildren.length; j++) {
     const oldChild = oldChildren[j];
@@ -267,17 +272,18 @@ export const apply = (oldElement: VNode, newElement: VNode) => {
   const insertQueue: VNode[] = [];
   // TODO: Support replacing root element in case tag name has changed
   const newRoot = applyUpdates(oldElement, newElement, undefined, insertQueue);
-  setTimeout(() => {
+  // TODO: Not sure if queueMicrotask is the best way to do this
+  queueMicrotask(() => {
     insertQueue.forEach(onInsert);
-  }, 0);
+  });
   return newRoot;
 };
 
 export const insert = (newElement: VNode) => {
   const insertQueue: VNode[] = [];
   createElement(newElement, undefined, insertQueue);
-  setTimeout(() => {
+  queueMicrotask(() => {
     insertQueue.forEach(onInsert);
-  }, 0);
+  });
   return newElement;
 };

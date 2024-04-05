@@ -1,23 +1,17 @@
 import { Angle } from '../geometry/angle.ts';
 import { SelectionState } from '../model/selectionState.ts';
-import { Component, PropChangeManager } from '../base-ui/component.ts';
+import { Component } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
 
-class SelectionMarqueeComponent extends Component<Props> {
-  private propChangeManager = new PropChangeManager();
-
-  onDetach() {
-    this.propChangeManager.cleanup();
-  }
-
+export class SelectionMarqueeComponent extends Component<Props> {
   render(props: Props) {
     // TODO: Is selection static, so we can pass it through the constructor
-    this.propChangeManager.when([props.selection.marquee], 'add-marquee-change-listener', () => {
+    this.effectManager.add(() => {
       const cb = this.redraw.bind(this);
       props.selection.marquee.on('change', cb);
       return () => props.selection.marquee.off('change', cb);
-    });
+    }, [props.selection.marquee]);
 
     const bounds = props.selection.marquee.bounds;
     if (!bounds) return svg.g({});

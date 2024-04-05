@@ -1,6 +1,6 @@
 import { useDiagram } from '../react-app/context/DiagramContext.ts';
 import { Diagram } from '../model/diagram.ts';
-import { Component, PropChangeManager } from '../base-ui/component.ts';
+import { Component } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { toInlineCSS, VNode } from '../base-ui/vdom.ts';
 import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
@@ -60,23 +60,17 @@ const vline = (
   });
 };
 
-class GridComponent extends Component<Props> {
-  private propChangeManager = new PropChangeManager();
-
-  onDetach() {
-    this.propChangeManager.cleanup();
-  }
-
+export class GridComponent extends Component<Props> {
   // TODO: This is rendered three times when we change selection, why
   render(props: Props) {
     const diagram = props.diagram;
 
     // TODO: Should we really pass diagram as props and not in the constructor
-    this.propChangeManager.when([diagram], 'add-diagram-change-listener', () => {
+    this.effectManager.add(() => {
       const cb = this.redraw.bind(this);
       diagram.on('change', () => cb);
       return () => diagram.off('change', cb);
-    });
+    }, [diagram]);
 
     const { x, y, w, h } = diagram.canvas;
 

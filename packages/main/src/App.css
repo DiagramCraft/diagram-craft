@@ -257,7 +257,7 @@ input::-webkit-input-placeholder {
   grid-area: canvas-area;
   position: relative;
 
-  > .canvas {
+  .canvas {
     position: absolute;
     inset: 0;
     height: 100%;

@@ -9,7 +9,7 @@ import { EdgeSelectionComponent } from './selection/EdgeSelection.tsx';
 import { Box } from '../geometry/box.ts';
 import { useDiagram } from '../react-app/context/DiagramContext.ts';
 import { Diagram } from '../model/diagram.ts';
-import { Component, PropChangeManager } from '../base-ui/component.ts';
+import { Component } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
 
@@ -17,22 +17,16 @@ type Props = {
   diagram: Diagram;
 };
 
-class SelectionComponent extends Component<Props> {
-  private propChangeManager = new PropChangeManager();
-
-  onDetach() {
-    this.propChangeManager.cleanup();
-  }
-
+export class SelectionComponent extends Component<Props> {
   render(props: Props) {
     const diagram = props.diagram;
     const selection = diagram.selectionState;
 
-    this.propChangeManager.when([selection], 'selection-change-redraw', () => {
+    this.effectManager.add(() => {
       const cb = this.redraw.bind(this);
       selection.on('change', cb);
       return () => selection.off('change', cb);
-    });
+    }, [selection]);
 
     if (selection.isEmpty()) return svg.g({});
 

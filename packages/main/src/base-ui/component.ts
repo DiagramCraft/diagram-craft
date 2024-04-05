@@ -1,20 +1,22 @@
 import { apply, DOMElement, insert, VNode, VNodeData } from './vdom.ts';
 
-type Dependency = () => () => void;
+type Callback = () => void | (() => void);
 
 type Registration = {
   cleanup: () => void;
   deps: unknown[];
 };
 
-export class PropChangeManager {
+export class EffectManager {
   private dependencies: Record<string, Registration> = {};
+  private idx: number = 0;
 
-  when(deps: unknown[], id: string, dependency: Dependency) {
+  add(dependency: Callback, deps: unknown[]) {
+    const id = (this.idx++).toString();
     if (
       id in this.dependencies &&
-      this.dependencies[id].deps.length > 0 &&
-      deps.every((d, i) => d === this.dependencies[id].deps[i])
+      (this.dependencies[id].deps.length === 0 ||
+        deps.every((d, i) => d === this.dependencies[id].deps[i]))
     ) {
       return;
     }
@@ -23,10 +25,14 @@ export class PropChangeManager {
       this.dependencies[id].cleanup();
     }
 
-    this.dependencies[id] = {
-      cleanup: dependency(),
-      deps
-    };
+    //console.log('run effect');
+    const res = dependency();
+    if (res) {
+      this.dependencies[id] = {
+        cleanup: res,
+        deps
+      };
+    }
   }
 
   cleanup() {
@@ -34,6 +40,12 @@ export class PropChangeManager {
       this.dependencies[id].cleanup();
     }
   }
+
+  _start() {
+    this.idx = 0;
+  }
+
+  _stop() {}
 }
 
 type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
@@ -46,25 +58,36 @@ type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
 export abstract class Component<P = Record<string, never>> {
   protected element: VNode | undefined = undefined;
   protected currentProps: P | undefined;
+  protected effectManager = new EffectManager();
 
   abstract render(props: P): VNode;
 
-  onDetach() {}
-  onAttach() {}
+  private doRender(props: P): VNode {
+    this.effectManager._start();
+    try {
+      return this.render(props);
+    } finally {
+      this.effectManager._stop();
+    }
+  }
+
+  onDetach(_props: P) {}
+  onAttach(_props: P) {}
 
   detach() {
-    this.onDetach();
+    this.onDetach(this.currentProps!);
     if (this.element?.el) this.element.el.remove();
+    this.effectManager.cleanup();
   }
 
   attach(parent: HTMLElement | SVGElement, props: P) {
     this.create(props);
     parent.appendChild(this.element!.el! as DOMElement);
-    this.onAttach();
+    this.onAttach(props);
   }
 
   protected create(props: P) {
-    const newElement = this.render(props);
+    const newElement = this.doRender(props);
 
     insert(newElement);
 
@@ -78,7 +101,7 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   update(props: P) {
-    this.element = apply(this.element!, this.render(props));
+    this.element = apply(this.element!, this.doRender(props));
     this.currentProps = props;
   }
 
@@ -97,7 +120,8 @@ export abstract class Component<P = Record<string, never>> {
   protected subComponent<P, C extends Component<P>>(
     id: string,
     component: () => C,
-    props: P
+    props: P,
+    hooks?: VNodeData['hooks']
   ): VNode & { data: ComponentVNodeData<P, C> } {
     return {
       type: 'c',
@@ -109,7 +133,10 @@ export abstract class Component<P = Record<string, never>> {
         },
         hooks: {
           onInsert: node => {
-            (node.data as ComponentVNodeData<P, C>).component?.instance?.onAttach();
+            (node.data as ComponentVNodeData<P, C>).component.instance?.onAttach(
+              (node.data as ComponentVNodeData<P, C>).component!.instance!.currentProps!
+            );
+            hooks?.onInsert?.(node);
           },
           onCreate: node => {
             const cmp = component();
@@ -119,6 +146,7 @@ export abstract class Component<P = Record<string, never>> {
               instance: cmp,
               props: props
             };
+            hooks?.onCreate?.(node);
           },
           onUpdate: (oldNode, newNode) => {
             const cmp = (oldNode.data as ComponentVNodeData<P, C>).component.instance!;
@@ -128,10 +156,12 @@ export abstract class Component<P = Record<string, never>> {
               instance: cmp,
               props: props
             };
+            hooks?.onUpdate?.(oldNode, newNode);
           },
           onRemove: node => {
             const cmp = (node.data as ComponentVNodeData<P, C>).component.instance!;
             cmp.detach();
+            hooks?.onRemove?.(node);
           }
         }
       },

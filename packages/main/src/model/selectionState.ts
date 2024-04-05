@@ -80,6 +80,7 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
   }
 
   setDragging(dragging: boolean) {
+    if (this.#dragging === dragging) return;
     this.#dragging = dragging;
     this.emit('change', { selection: this });
   }

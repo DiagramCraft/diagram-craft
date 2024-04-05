@@ -75,16 +75,33 @@ export class DiagramNode
 
   /* Props *************************************************************************************************** */
 
+  // TODO: Maybe create a props cache helper
+  #propsCache: NodeProps | undefined = undefined;
+  #propsCacheStyle: NodeProps | undefined = undefined;
+
+  private clearPropsCache() {
+    this.#propsCache = undefined;
+  }
+
   get propsForEditing(): DeepReadonly<NodeProps> {
-    return deepMerge(
+    const styleProps = this.diagram.document.styles.nodeStyles.find(
+      s => s.id === this.props.style
+    )?.props;
+
+    if (this.#propsCache && this.#propsCacheStyle === styleProps) return this.#propsCache;
+
+    this.#propsCacheStyle = styleProps;
+    this.#propsCache = deepMerge(
       {},
       nodeDefaults,
       this.diagram.nodeDefinitions
         .get(this.nodeType)
         .getDefaultProps('canvas') as Partial<NodeProps>,
-      this.diagram.document.styles.nodeStyles.find(s => s.id === this.props.style)?.props ?? {},
+      styleProps ?? {},
       this.#props as NodeProps
     ) as DeepRequired<NodeProps>;
+
+    return this.#propsCache;
   }
 
   get propsForRendering(): DeepReadonly<DeepRequired<NodeProps>> {
@@ -99,6 +116,8 @@ export class DiagramNode
     uow.snapshot(this);
     callback(this.#props);
     uow.updateElement(this);
+
+    this.clearPropsCache();
   }
 
   /* Diagram/layer ******************************************************************************************* */

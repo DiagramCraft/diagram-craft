@@ -1,5 +1,5 @@
 import { useDiagram } from '../react-app/context/DiagramContext.ts';
-import { Component, PropChangeManager } from '../base-ui/component.ts';
+import { Component } from '../base-ui/component.ts';
 import { Diagram } from '../model/diagram.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { toInlineCSS } from '../base-ui/vdom.ts';
@@ -9,18 +9,16 @@ type Props = {
   diagram: Diagram;
 };
 
-class DocumentBoundsComponent extends Component<Props> {
-  private propChangeManager = new PropChangeManager();
-
+export class DocumentBoundsComponent extends Component<Props> {
   render(props: Props) {
     const diagram = props.diagram;
 
     // TODO: Should we really pass diagram as props and not in the constructor
-    this.propChangeManager.when([diagram], 'add-diagram-change-listener', () => {
+    this.effectManager.add(() => {
       const cb = this.redraw.bind(this);
       diagram.on('change', cb);
       return () => diagram.off('change', cb);
-    });
+    }, [diagram]);
 
     const style: Partial<CSSStyleDeclaration> = {};
 
@@ -36,10 +34,6 @@ class DocumentBoundsComponent extends Component<Props> {
       height: diagram.canvas.h,
       style: toInlineCSS(style)
     });
-  }
-
-  onDetach() {
-    this.propChangeManager.cleanup();
   }
 }
 

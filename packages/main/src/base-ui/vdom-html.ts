@@ -1,4 +1,4 @@
-import { h, VNodeChildParam, VNodeData } from './vdom.ts';
+import { h, s, VNodeChildParam, VNodeData } from './vdom.ts';
 
 type DataAttributes = {
   [key in `data-${string}`]?: string;
@@ -19,4 +19,19 @@ type DivAttributes = ElementAttributes;
 
 export const div = (attrs: Attr<DivAttributes>, children?: VNodeChildParam[]) => {
   return h('div', attrs, ...(children ?? []));
+};
+
+type TextareaAttributes = ElementAttributes;
+
+export const textarea = (attrs: Attr<TextareaAttributes>, children?: VNodeChildParam[]) => {
+  return h('textarea', attrs, ...(children ?? []));
+};
+
+type SVGAttributes = ElementAttributes & {
+  preserveAspectRatio?: string;
+  viewBox?: string;
+};
+
+export const svg = (attrs: Attr<SVGAttributes>, children?: VNodeChildParam[]) => {
+  return s('svg', attrs, ...(children ?? []));
 };

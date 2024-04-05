@@ -2,7 +2,7 @@ import React from 'react';
 import { assert } from '../../utils/assert.ts';
 import { KeyMap } from '../../base-ui/keyMap.ts';
 
-type ActionsContextType = {
+export type ActionsContextType = {
   actionMap: Partial<ActionMap>;
   keyMap: KeyMap;
 };

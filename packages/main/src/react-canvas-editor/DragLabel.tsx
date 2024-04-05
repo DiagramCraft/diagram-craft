@@ -7,7 +7,7 @@ import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
 import { deepEquals } from '../utils/object.ts';
 import { hasElements } from '../utils/array.ts';
 
-class DragLabelComponent extends Component {
+export class DragLabelComponent extends Component {
   private state: State | undefined = undefined;
 
   setState(state: State | undefined) {

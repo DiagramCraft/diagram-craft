@@ -261,7 +261,9 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
     }
 
     return svg.g(
-      {},
+      {
+        id: `edge-${props.def.id}`
+      },
       ...arrowMarkers,
       svg.path({
         'class': 'svg-edge',

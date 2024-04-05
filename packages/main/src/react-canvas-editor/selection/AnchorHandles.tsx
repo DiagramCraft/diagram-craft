@@ -15,7 +15,7 @@ import { ApplicationTriggers } from '../EditableCanvas.tsx';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { useDiagram } from '../../react-app/context/DiagramContext.ts';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
-import { Component, PropChangeManager } from '../../base-ui/component.ts';
+import { Component } from '../../base-ui/component.ts';
 import { Diagram } from '../../model/diagram.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { VNode } from '../../base-ui/vdom.ts';
@@ -114,18 +114,13 @@ type ComponentProps = Props & {
 //
 // TODO: This needs some refactoring :) state in the component, the listeners, state in
 //       the render function - all a bit of a mess
-class AnchorHandlesComponent extends Component<ComponentProps> {
-  private propChangeManager = new PropChangeManager();
+export class AnchorHandlesComponent extends Component<ComponentProps> {
   private hoverNode: DiagramElement | undefined;
   private state: 'background' | 'node' | 'handle' = 'background';
   // eslint-disable-next-line
   private timeout: any | undefined = undefined;
   private shouldScale: boolean = false;
   private diagram: Diagram | undefined = undefined;
-
-  onDetach() {
-    this.propChangeManager.cleanup();
-  }
 
   setHoverNode(node: DiagramElement | undefined) {
     this.hoverNode = node;
@@ -141,23 +136,23 @@ class AnchorHandlesComponent extends Component<ComponentProps> {
     const selection = this.diagram.selectionState;
     this.shouldScale = selection.nodes.length === 1 && selection.nodes[0] === this.hoverNode;
 
-    this.propChangeManager.when([props.applicationState], 'add-hover-listener', () => {
+    this.effectManager.add(() => {
       const cb = this.hoverElementChange.bind(this);
       props.applicationState.on('hoverElementChange', cb);
       return () => props.applicationState.off('hoverElementChange', cb);
-    });
+    }, [props.applicationState]);
 
-    this.propChangeManager.when([this.diagram.selectionState], 'change', () => {
+    this.effectManager.add(() => {
       const cb = this.selectionStateChange.bind(this);
       this.diagram!.selectionState.on('change', cb);
       return () => this.diagram!.selectionState.off('change', cb);
-    });
+    }, [this.diagram.selectionState]);
 
-    this.propChangeManager.when([this.diagram], 'elementRemove', () => {
+    this.effectManager.add(() => {
       const cb = this.elementRemove.bind(this);
       this.diagram!.on('elementRemove', cb);
       return () => this.diagram!.off('elementRemove', cb);
-    });
+    }, [this.diagram]);
 
     const scale = 4;
 
