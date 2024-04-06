@@ -402,7 +402,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
                   const nodeDef = diagram.nodeDefinitions.get(node.nodeType);
 
                   return this.subComponent(
-                    `node-${id}`,
+                    `node-${node.nodeType}-${id}`,
                     // @ts-ignore
                     (nodeDef as ReactNodeDefinition).component!,
                     {
