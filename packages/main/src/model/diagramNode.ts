@@ -158,6 +158,7 @@ export class DiagramNode
 
     this.#children = children;
     this.#children.forEach(c => {
+      uow.snapshot(c);
       c._setParent(this);
       if (isNode(c)) this.diagram.nodeLookup.set(c.id, c);
       else if (isEdge(c)) this.diagram.edgeLookup.set(c.id, c);
