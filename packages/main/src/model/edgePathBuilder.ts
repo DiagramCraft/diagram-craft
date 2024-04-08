@@ -163,14 +163,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
       if (wp.controlPoints) {
         controlPoints.push(wp.controlPoints);
       } else {
-        const before = i === 0 ? edge.start.position : edge.waypoints[i - 1].point;
-        const after =
-          i === edge.waypoints.length - 1 ? edge.end.position : edge.waypoints[i + 1].point;
-
-        controlPoints.push({
-          cp1: Vector.scale(Vector.from(after, before), 0.2),
-          cp2: Vector.scale(Vector.from(before, after), 0.2)
-        });
+        controlPoints.push(edge.inferControlPoints(i));
       }
     }
 

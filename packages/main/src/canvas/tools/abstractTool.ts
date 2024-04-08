@@ -9,6 +9,7 @@ import { ApplicationTriggers } from '../EditableCanvas.ts';
 export abstract class AbstractTool implements Tool {
   currentElement: string | undefined;
 
+  // TODO: Remove use of refs in here
   protected constructor(
     public readonly type: ToolType,
     protected readonly diagram: Diagram,

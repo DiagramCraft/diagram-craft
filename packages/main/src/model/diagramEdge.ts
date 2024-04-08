@@ -126,10 +126,33 @@ export class DiagramEdge
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
     uow.snapshot(this);
+
+    const oldType = this.#props.type;
     callback(this.#props);
+
+    if (this.#props.type === 'bezier' && oldType !== 'bezier') {
+      for (let i = 0; i < this.waypoints.length; i++) {
+        const wp = this.waypoints[i];
+        if (!wp.controlPoints) {
+          // TODO: Fix this
+          (wp as DeepWriteable<Waypoint>).controlPoints = this.inferControlPoints(i);
+        }
+      }
+    }
+
     uow.updateElement(this);
 
     this.clearPropsCache();
+  }
+
+  inferControlPoints(i: number) {
+    const before = i === 0 ? this.start.position : this.waypoints[i - 1].point;
+    const after = i === this.waypoints.length - 1 ? this.end.position : this.waypoints[i + 1].point;
+
+    return {
+      cp1: Vector.scale(Vector.from(after, before), 0.2),
+      cp2: Vector.scale(Vector.from(before, after), 0.2)
+    };
   }
 
   /* Diagram/layer ******************************************************************************************* */
