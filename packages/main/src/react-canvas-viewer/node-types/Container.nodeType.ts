@@ -1,4 +1,4 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { CustomPropertyDefinition, NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
@@ -27,9 +27,9 @@ type Entry = {
   newLocalBounds?: Box;
 };
 
-export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
+export class ContainerNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('container', 'Container');
+    super('container', 'Container', () => new ContainerComponent(this));
   }
 
   supports(capability: NodeCapability): boolean {
@@ -202,9 +202,9 @@ export class ContainerNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class ContainerComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, builder: ShapeBuilder) {
-    const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+class ContainerComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, builder: ShapeBuilder) {
+    const path = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
     const svgPath = path.asSvgPath();
 
     const center = Box.center(props.node.bounds);

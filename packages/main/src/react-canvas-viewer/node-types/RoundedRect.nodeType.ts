@@ -1,4 +1,4 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -14,9 +14,9 @@ declare global {
   }
 }
 
-export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
+export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('rounded-rect', 'Rounded Rectangle');
+    super('rounded-rect', 'Rounded Rectangle', () => new RoundedRectComponent(this));
   }
 
   getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
@@ -64,10 +64,10 @@ export class RoundedRectNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class RoundedRectComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+class RoundedRectComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const radius = props.nodeProps.roundedRect?.radius ?? 10;
-    const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

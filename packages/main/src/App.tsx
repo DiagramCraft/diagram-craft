@@ -41,7 +41,7 @@ import { PickerToolWindow } from './react-app/PickerToolWindow.tsx';
 import { ObjectToolWindow } from './react-app/ObjectProperties/ObjectToolWindow.tsx';
 import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 import { useEventListener } from './react-app/hooks/useEventListener.ts';
-import { useRedraw } from './react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from './react-app/useRedraw.tsx';
 import { defaultAppActions } from './react-app/appActionMap.ts';
 import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';

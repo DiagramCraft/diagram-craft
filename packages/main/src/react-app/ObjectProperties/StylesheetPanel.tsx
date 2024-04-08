@@ -17,7 +17,7 @@ import {
   Stylesheet
 } from '../../model/diagramStyles.ts';
 import { isNode } from '../../model/diagramElement.ts';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 import { StringInputDialog } from '../components/StringInputDialog.tsx';

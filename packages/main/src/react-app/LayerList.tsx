@@ -3,7 +3,7 @@ import * as Tree from './components/Tree.tsx';
 import { TbAdjustments, TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
 import { Diagram } from '../model/diagram.ts';
 import { Layer } from '../model/diagramLayer.ts';
-import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from './useRedraw.tsx';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { DiagramElement, isNode } from '../model/diagramElement.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';

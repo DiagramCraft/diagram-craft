@@ -4,8 +4,7 @@ import { Component } from '../base-ui/component.ts';
 import { Diagram } from '../model/diagram.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import * as html from '../base-ui/vdom-html.ts';
-import { EdgeComponent } from '../react-canvas-viewer/EdgeComponent.temp.ts';
-import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.ts';
+import { EdgeComponent } from '../react-canvas-viewer/EdgeComponent.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 
 type Ref<T> = { current: T };

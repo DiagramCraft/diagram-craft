@@ -141,7 +141,6 @@ export class Shear implements Transform {
         w: this.axis === 'x' ? b.w + b.h * this.amount : b.w,
         h: this.axis === 'y' ? b.h + b.w * this.amount : b.h
       };
-      return b;
     } else {
       return {
         x: this.axis === 'x' ? b.x + b.y * this.amount : b.x,

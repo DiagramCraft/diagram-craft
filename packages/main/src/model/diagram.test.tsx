@@ -1,16 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { Diagram } from './diagram.ts';
 import { TransformFactory } from '../geometry/transform.ts';
-import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { newid } from '../utils/id.ts';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import {
-  RectComponent,
-  RectNodeDefinition
-} from '../react-canvas-viewer/node-types/Rect.nodeType.ts';
+import { RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.nodeType.ts';
 
 const bounds = {
   x: 0,
@@ -48,12 +44,7 @@ describe('Diagram', () => {
 
   test('transform rotate', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
-    nodeDefinitionRegistry.register(
-      new ReactNodeDefinition(
-        new RectNodeDefinition('rect', 'Rectangle'),
-        () => new RectComponent()
-      )
-    );
+    nodeDefinitionRegistry.register(new RectNodeDefinition('rect', 'Rectangle'));
 
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());
     diagram.layers.add(new Layer('default', 'Default', [], diagram), new UnitOfWork(diagram));

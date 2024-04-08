@@ -15,7 +15,7 @@ import {
 import { Select } from './components/Select.tsx';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Diagram } from '../model/diagram.ts';
-import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from './useRedraw.tsx';
 
 const replacer = (_key: string, value: unknown) => {
   if (value instanceof Map) {

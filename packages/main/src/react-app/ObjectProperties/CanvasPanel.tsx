@@ -1,4 +1,4 @@
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { round } from '../../utils/math.ts';

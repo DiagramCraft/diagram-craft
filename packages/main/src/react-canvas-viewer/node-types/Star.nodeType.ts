@@ -1,4 +1,4 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
@@ -18,9 +18,9 @@ declare global {
   }
 }
 
-export class StarNodeDefinition extends AbstractReactNodeDefinition {
+export class StarNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('star', 'Star');
+    super('star', 'Star', () => new StarComponent(this));
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -75,9 +75,9 @@ export class StarNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class StarComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new StarNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+class StarComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

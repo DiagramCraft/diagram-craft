@@ -13,13 +13,13 @@ import { Point } from '../geometry/point.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from '../model/diagramElement.ts';
-import { DeepReadonly } from '../utils/types.ts';
 import { BaseShape } from './temp/baseShape.temp.ts';
 
-export abstract class AbstractReactNodeDefinition implements NodeDefinition {
+export abstract class ShapeNodeDefinition implements NodeDefinition {
   protected constructor(
     readonly type: string,
-    readonly name: string
+    readonly name: string,
+    readonly component: () => BaseShape
   ) {}
 
   supports(_capability: NodeCapability): boolean {
@@ -89,63 +89,4 @@ export abstract class AbstractReactNodeDefinition implements NodeDefinition {
   }
 
   onPropUpdate(_node: DiagramNode, _uow: UnitOfWork): void {}
-}
-
-export class ReactNodeDefinition implements NodeDefinition {
-  type: string;
-  name: string;
-
-  constructor(
-    private readonly delegate: NodeDefinition,
-    readonly component: () => BaseShape
-  ) {
-    this.type = delegate.type;
-    this.name = delegate.name;
-  }
-
-  supports(_capability: NodeCapability): boolean {
-    return this.delegate.supports(_capability);
-  }
-
-  getBoundingPath(node: DiagramNode): Path {
-    return this.delegate.getBoundingPath(node);
-  }
-
-  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return this.delegate.getCustomProperties(node);
-  }
-
-  getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps> {
-    return this.delegate.getDefaultProps(mode);
-  }
-
-  getInitialConfig(): { size: Extent } {
-    return this.delegate.getInitialConfig();
-  }
-
-  requestFocus(node: DiagramNode): void {
-    return this.delegate.requestFocus(node);
-  }
-
-  onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
-    this.delegate.onChildChanged(node, uow);
-  }
-
-  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void {
-    this.delegate.onTransform(transforms, node, uow);
-  }
-
-  onDrop(
-    coord: Point,
-    node: DiagramNode,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    operation: string
-  ) {
-    this.delegate.onDrop(coord, node, elements, uow, operation);
-  }
-
-  onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
-    return this.delegate.onPropUpdate(node, uow);
-  }
 }

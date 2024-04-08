@@ -23,8 +23,9 @@ import { FillFilter, FillPattern } from './fill.temp.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import * as html from '../../base-ui/vdom-html.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { EdgeComponent } from '../EdgeComponent.temp.ts';
-import { ReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { EdgeComponent } from '../EdgeComponent.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
+import { NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -356,8 +357,12 @@ export type BaseShapeBuildProps = {
 };
 
 export abstract class BaseShape extends Component<BaseShapeProps> {
+  constructor(protected readonly nodeDefinition: NodeDefinition) {
+    super();
+  }
+
   // @ts-ignore
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {}
+  abstract buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder);
 
   // TODO: We should find a way to keep the TextComponent instance across renders
   render(props: BaseShapeProps): VNode {
@@ -441,7 +446,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     };
 
     const shapeBuilder = new ShapeBuilder(buildProps);
-    this.build(buildProps, shapeBuilder);
+    this.buildShape(buildProps, shapeBuilder);
 
     const children = [...shapeBuilder.children];
 
@@ -557,8 +562,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
   }
 
   protected makeEdge(child: DiagramEdge, props: BaseShapeBuildProps) {
-    // TODO: Better id
-    return this.subComponent('edge', () => new EdgeComponent(), {
+    return this.subComponent(`edge-${child.id}`, () => new EdgeComponent(), {
       def: child,
       diagram: child.diagram,
       tool: props.tool,
@@ -580,10 +584,9 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       actionMap: props.actionMap
     };
 
-    // TODO: Better id
     return this.subComponent(
-      'node',
-      (props.node.diagram.nodeDefinitions.get(child.nodeType) as ReactNodeDefinition).component!,
+      `node-${child.id}`,
+      (props.node.diagram.nodeDefinitions.get(child.nodeType) as ShapeNodeDefinition).component!,
       nodeProps
     );
   }

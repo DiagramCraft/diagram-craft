@@ -1,4 +1,4 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -15,9 +15,9 @@ declare global {
   }
 }
 
-export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
+export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('trapetzoid', 'Trapetzoid');
+    super('trapetzoid', 'Trapetzoid', () => new TrapetzoidComponent(this));
   }
 
   getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
@@ -73,12 +73,12 @@ export class TrapetzoidNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class TrapetzoidComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+class TrapetzoidComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const slantLeft = props.nodeProps.trapetzoid?.slantLeft ?? 5;
     const slantRight = props.nodeProps.trapetzoid?.slantRight ?? 5;
 
-    const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

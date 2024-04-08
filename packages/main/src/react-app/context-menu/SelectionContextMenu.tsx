@@ -1,7 +1,7 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
 import { TbChevronRight } from 'react-icons/tb';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useEventListener } from '../hooks/useEventListener.ts';
 

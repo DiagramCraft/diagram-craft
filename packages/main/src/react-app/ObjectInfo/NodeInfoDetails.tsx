@@ -1,5 +1,5 @@
 import * as Tree from '../components/Tree.tsx';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { useDiagram } from '../context/DiagramContext.ts';

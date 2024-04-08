@@ -1,11 +1,25 @@
-import { RectNodeDefinition } from './Rect.nodeType.ts';
 import { Extent } from '../../geometry/extent.ts';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { DiagramNode } from '../../model/diagramNode.ts';
+import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
+import { Point } from '../../geometry/point.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 
-export class TextNodeDefinition extends RectNodeDefinition {
+export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('text', 'Test');
+    super('text', 'Test', () => new TextComponent(this));
+  }
+
+  getBoundingPathBuilder(def: DiagramNode) {
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(Point.of(-1, 1));
+    pathBuilder.lineTo(Point.of(1, 1));
+    pathBuilder.lineTo(Point.of(1, -1));
+    pathBuilder.lineTo(Point.of(-1, -1));
+    pathBuilder.lineTo(Point.of(-1, 1));
+
+    return pathBuilder;
   }
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
@@ -35,9 +49,9 @@ export class TextNodeDefinition extends RectNodeDefinition {
   }
 }
 
-export class TextComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+class TextComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this, '1', props.nodeProps.text, props.node.bounds, (size: Extent) => {

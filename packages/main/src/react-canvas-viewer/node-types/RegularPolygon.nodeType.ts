@@ -1,4 +1,4 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
@@ -16,9 +16,9 @@ declare global {
   }
 }
 
-export class RegularPolygonNodeDefinition extends AbstractReactNodeDefinition {
+export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('regular-polygon', 'Regular Polygon');
+    super('regular-polygon', 'Regular Polygon', () => new RegularPolygonComponent(this));
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -56,11 +56,9 @@ export class RegularPolygonNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class RegularPolygonComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new RegularPolygonNodeDefinition()
-      .getBoundingPathBuilder(props.node)
-      .getPath();
+class RegularPolygonComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

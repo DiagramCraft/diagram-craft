@@ -8,7 +8,7 @@ import React, { ChangeEvent, useCallback, useState } from 'react';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 import { unique } from '../../utils/array.ts';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';

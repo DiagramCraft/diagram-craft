@@ -1,12 +1,12 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { Point } from '../../geometry/point.ts';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 
-export class CircleNodeDefinition extends AbstractReactNodeDefinition {
+export class CircleNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('circle', 'Circle');
+    super('circle', 'Circle', () => new CircleComponent(this));
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -20,9 +20,9 @@ export class CircleNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class CircleComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+class CircleComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

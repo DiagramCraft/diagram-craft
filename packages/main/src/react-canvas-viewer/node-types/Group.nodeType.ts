@@ -1,4 +1,4 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
@@ -10,9 +10,9 @@ import { isNode } from '../../model/diagramElement.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 
-export class GroupNodeDefinition extends AbstractReactNodeDefinition {
+export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('group', 'Group');
+    super('group', 'Group', () => new GroupComponent(this));
   }
 
   supports(capability: NodeCapability): boolean {
@@ -43,8 +43,8 @@ export class GroupNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class GroupComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, builder: ShapeBuilder) {
+class GroupComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, builder: ShapeBuilder) {
     const center = Box.center(props.node.bounds);
     builder.add(
       svg.g(

@@ -1,4 +1,4 @@
-import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from './useRedraw.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';

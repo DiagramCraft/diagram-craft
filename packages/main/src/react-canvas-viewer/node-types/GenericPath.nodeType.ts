@@ -2,7 +2,7 @@ import {
   EditablePath,
   EditableWaypointType
 } from '../../react-canvas-editor/tools/node/editablePath.ts';
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
@@ -38,9 +38,9 @@ const NEXT_TYPE: Record<EditableWaypointType, EditableWaypointType> = {
   symmetric: 'corner'
 };
 
-export class GenericPathNodeDefinition extends AbstractReactNodeDefinition {
+export class GenericPathNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'generic-path', displayName = 'Path') {
-    super(name, displayName);
+    super(name, displayName, () => new GenericPathComponent(this));
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -51,7 +51,7 @@ export class GenericPathNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class GenericPathComponent extends BaseShape {
+class GenericPathComponent extends BaseShape {
   selectedWaypoints: number[] = [];
 
   setSelectedWaypoints(selectedWaypoints: number[]) {
@@ -59,9 +59,9 @@ export class GenericPathComponent extends BaseShape {
     this.update(this.currentProps!);
   }
 
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const drag = DRAG_DROP_MANAGER;
-    const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
+    const pathBuilder = this.nodeDefinition.getBoundingPathBuilder(props.node);
     const path = pathBuilder.getPath();
     const svgPath = path.asSvgPath();
 

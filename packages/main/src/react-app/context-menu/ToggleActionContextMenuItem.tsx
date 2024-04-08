@@ -4,7 +4,7 @@ import React from 'react';
 import { useActions } from '../context/ActionsContext.ts';
 import { Action, ActionContext, ToggleAction } from '../../base-ui/action.ts';
 import { TbCheck } from 'react-icons/tb';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 
 export const ToggleActionContextMenuItem = (props: Props) => {
   const redraw = useRedraw();

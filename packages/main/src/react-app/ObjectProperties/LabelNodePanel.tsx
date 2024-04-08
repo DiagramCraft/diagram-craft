@@ -1,7 +1,7 @@
 import { TbRestore } from 'react-icons/tb';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useRedraw } from '../../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { assert } from '../../utils/assert.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
@@ -11,13 +11,13 @@ import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
 
 const values = {
-  independent: 'Independent',
+  'independent': 'Independent',
   'parallel-readable': 'Parallel (readable)',
-  parallel: 'Parallel',
+  'parallel': 'Parallel',
   'perpendicular-readable': 'Perpendicular (readble)',
-  perpendicular: 'Perpendicular',
-  horizontal: 'Horizontal',
-  vertical: 'Vertical'
+  'perpendicular': 'Perpendicular',
+  'horizontal': 'Horizontal',
+  'vertical': 'Vertical'
 };
 
 export const LabelNodePanel = (props: Props) => {

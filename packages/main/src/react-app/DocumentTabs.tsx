@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import { DiagramDocument } from '../model/diagramDocument.ts';
-import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
+import { useRedraw } from './useRedraw.tsx';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { TbFiles, TbPlus } from 'react-icons/tb';
 import {

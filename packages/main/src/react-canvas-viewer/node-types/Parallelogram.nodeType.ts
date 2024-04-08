@@ -1,4 +1,4 @@
-import { AbstractReactNodeDefinition } from '../reactNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -14,9 +14,9 @@ declare global {
   }
 }
 
-export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
+export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('parallelogram', 'Parallelogram');
+    super('parallelogram', 'Parallelogram', () => new ParallelogramComponent(this));
   }
 
   getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
@@ -57,10 +57,10 @@ export class ParallelogramNodeDefinition extends AbstractReactNodeDefinition {
   }
 }
 
-export class ParallelogramComponent extends BaseShape {
-  build(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+class ParallelogramComponent extends BaseShape {
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const slant = props.nodeProps.parallelogram?.slant ?? 5;
-    const boundary = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);
