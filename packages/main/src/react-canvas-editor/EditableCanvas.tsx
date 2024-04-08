@@ -1,4 +1,11 @@
-import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState
+} from 'react';
 import { Node, NodeApi } from '../react-canvas-viewer/Node.tsx';
 import { Edge, EdgeApi } from '../react-canvas-viewer/Edge.tsx';
 import { Selection, SelectionComponent } from './Selection.tsx';
@@ -37,7 +44,6 @@ import * as html from '../base-ui/vdom-html.ts';
 import { EdgeComponent } from '../react-canvas-viewer/EdgeComponent.temp.ts';
 import { ReactNodeDefinition } from '../react-canvas-viewer/reactNodeDefinition.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
-import { useComponent } from '../react-canvas-viewer/temp/useComponent.temp.ts';
 import { ViewboxEvents } from '../model/viewBox.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
@@ -262,7 +268,6 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       this.subComponent('drag-label', () => new DragLabelComponent(), {}),
       html.svg(
         {
-          //          ...propsUtils.filterDomProperties(props),
           id: `diagram-${diagram.id}`,
           class: props.className ?? 'canvas',
           preserveAspectRatio: 'none',
@@ -274,7 +279,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
               this.adjustViewbox();
 
               // TODO: This is a bit of a hack until EffectManager runs onInsert
-              this.redraw();
+              //this.redraw();
             },
             onRemove: () => {
               // @ts-ignore
@@ -476,21 +481,39 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       h: Math.floor(this.svgRef.current!.getBoundingClientRect().height)
     };
   }
+
+  getSvgElement() {
+    // TODO: Make this a bit more robust - perhaps by searching by id instead
+    return (this.element!.el! as HTMLElement).getElementsByTagName('svg').item(0) as SVGSVGElement;
+  }
 }
 
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, _ref) => {
   const diagram = useDiagram();
   const { actionMap, keyMap } = useActions();
+  const [svg, setSvg] = useState<SVGSVGElement | undefined>(undefined);
 
-  const ref = useComponent<ComponentProps, EditableCanvasComponent, HTMLDivElement>(
-    () => new EditableCanvasComponent(),
-    {
-      ...props,
-      diagram,
-      actionMap,
-      keyMap
-    }
-  );
+  const ref = useRef<HTMLDivElement>(null);
+  const cmpRef = useRef<EditableCanvasComponent>(new EditableCanvasComponent());
+
+  const cmpProps = {
+    ...props,
+    diagram,
+    actionMap,
+    keyMap
+  };
+
+  if (ref.current) {
+    cmpRef.current.update(cmpProps);
+  }
+
+  useImperativeHandle(_ref, () => svg!, [svg]);
+
+  useEffect(() => {
+    if (cmpRef.current.isRendered()) return;
+    cmpRef.current.attach(ref.current!, cmpProps);
+    setSvg(cmpRef.current.getSvgElement());
+  });
 
   return <div ref={ref}></div>;
 });

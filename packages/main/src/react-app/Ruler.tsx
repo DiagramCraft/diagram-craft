@@ -64,15 +64,17 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
     const currentCanvas = canvasRef.current;
     currentCanvas?.addEventListener('mousemove', handler);
     return () => currentCanvas?.removeEventListener('mousemove', handler);
-  }, [diagram.props.ruler?.enabled, orientation, canvasRef, viewbox, updateCursorLine]);
+  }, [diagram.props.ruler?.enabled, orientation, canvasRef.current, viewbox, updateCursorLine]);
 
   if (diagram.props.ruler?.enabled === false) return null;
 
   const ticks: Tick[] = [];
 
   if (orientation === 'horizontal') {
-    for (let x = diagram.canvas.x; x <= diagram.canvas.x + diagram.canvas.w; x += 10) {
-      ticks.push({ pos: toScreenX(x), lbl: x.toString() });
+    if (diagram.viewBox.isInitialized()) {
+      for (let x = diagram.canvas.x; x <= diagram.canvas.x + diagram.canvas.w; x += 10) {
+        ticks.push({ pos: toScreenX(x), lbl: x.toString() });
+      }
     }
 
     return (
@@ -103,8 +105,10 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
       </div>
     );
   } else {
-    for (let y = diagram.canvas.y; y <= diagram.canvas.y + diagram.canvas.h; y += 10) {
-      ticks.push({ pos: toScreenY(y), lbl: y.toString() });
+    if (diagram.viewBox.isInitialized()) {
+      for (let y = diagram.canvas.y; y <= diagram.canvas.y + diagram.canvas.h; y += 10) {
+        ticks.push({ pos: toScreenY(y), lbl: y.toString() });
+      }
     }
 
     return (

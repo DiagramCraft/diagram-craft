@@ -13,6 +13,7 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
     x: 0,
     y: 0
   };
+  #initialized = false;
 
   zoomLevel = 1;
   windowSize: Extent;
@@ -21,6 +22,10 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
     super();
     this.#dimensions = size;
     this.windowSize = size;
+  }
+
+  isInitialized() {
+    return this.#initialized;
   }
 
   toDiagramPoint(point: Point) {
@@ -57,6 +62,7 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
 
   pan(point: Point) {
     this.#offset = point;
+    this.#initialized = true;
     this.emit('viewbox', { viewbox: this });
   }
 
@@ -66,6 +72,7 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
 
   set dimensions(d: Extent) {
     this.#dimensions = d;
+    this.#initialized = true;
     this.emit('viewbox', { viewbox: this });
   }
 

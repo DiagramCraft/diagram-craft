@@ -152,17 +152,17 @@ const App = () => {
               edge: edgeDefaults
             },
             fonts: {
-              Times: 'Times',
-              Arial: 'Arial',
+              'Times': 'Times',
+              'Arial': 'Arial',
               'Sans Serif': 'sans-serif',
-              Helvetica: 'Helvetica',
-              Verdana: 'Verdana',
-              Courier: 'Courier',
+              'Helvetica': 'Helvetica',
+              'Verdana': 'Verdana',
+              'Courier': 'Courier',
               'Comic Sans': 'Comic Sans MS',
-              Impact: 'Impact',
-              Tahoma: 'Tahoma',
-              Trebuchet: 'Trebuchet MS',
-              Georgia: 'Georgia'
+              'Impact': 'Impact',
+              'Tahoma': 'Tahoma',
+              'Trebuchet': 'Trebuchet MS',
+              'Georgia': 'Georgia'
             }
           }}
         >
@@ -273,9 +273,6 @@ const App = () => {
               </SideBar>
 
               <div id="canvas-area" className={'light-theme'}>
-                <Ruler orientation={'horizontal'} canvasRef={svgRef} />
-                <Ruler orientation={'vertical'} canvasRef={svgRef} />
-
                 <ContextMenu.Root>
                   <ContextMenu.Trigger asChild={true}>
                     <EditableCanvas
@@ -368,6 +365,9 @@ const App = () => {
                     </ContextMenu.Content>
                   </ContextMenu.Portal>
                 </ContextMenu.Root>
+
+                <Ruler orientation={'horizontal'} canvasRef={svgRef} />
+                <Ruler orientation={'vertical'} canvasRef={svgRef} />
 
                 <NodeTypePopup
                   {...popoverState}

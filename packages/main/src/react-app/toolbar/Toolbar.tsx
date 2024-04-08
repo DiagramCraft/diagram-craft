@@ -111,7 +111,7 @@ export const Toolbar = () => {
         <ReactToolbar.Separator className="cmp-toolbar__separator" />
       )}
 
-      {selectionType !== 'empty' && (
+      {selectionType !== 'empty' && selectionType !== undefined && (
         <>
           <ActionToolbarButton action={'ALIGN_TOP'}>
             <TbLayoutAlignTop />
