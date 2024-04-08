@@ -7,7 +7,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 
 export class TextTool extends AbstractTool {
   constructor(

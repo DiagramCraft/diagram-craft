@@ -8,7 +8,7 @@ import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { FreeEndpoint } from '../../model/endpoint.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 
 export class EdgeTool extends AbstractTool {
   constructor(

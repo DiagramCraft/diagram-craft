@@ -14,7 +14,7 @@ import { ShapeControlPointDrag } from '../../base-ui/drag/shapeControlDrag.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { DASH_PATTERNS } from '../../base-ui/dashPatterns.ts';
 import { makeShadowFilter } from '../../base-ui/styleUtils.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';

@@ -1,5 +1,4 @@
 import './App.css';
-import { EditableCanvas } from './canvas/EditableCanvas.tsx';
 import { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
@@ -68,6 +67,7 @@ import { MessageDialog, MessageDialogState } from './react-app/components/Messag
 import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
 import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
+import { EditableCanvas } from './react-canvas/EditableCanvas.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

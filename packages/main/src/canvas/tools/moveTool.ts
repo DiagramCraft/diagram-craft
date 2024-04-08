@@ -8,7 +8,7 @@ import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { MarqueeDrag } from '../../base-ui/drag/marqueeDrag.ts';
 import { getDiagramElementPath } from '../../model/diagramElement.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 
 export class MoveTool extends AbstractTool {
   constructor(

@@ -1,4 +1,3 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { SelectionComponent } from './Selection.ts';
 import { Box } from '../geometry/box.ts';
 import { SelectionMarqueeComponent } from './SelectionMarquee.ts';
@@ -10,7 +9,7 @@ import { DocumentBoundsComponent } from './DocumentBounds.ts';
 import { SelectionStateEvents } from '../model/selectionState.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { ActionsContextType, useActions } from '../react-app/context/ActionsContext.ts';
+import { ActionsContextType } from '../react-app/context/ActionsContext.ts';
 import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
@@ -60,7 +59,7 @@ type ComponentProps = Props & ActionsContextType & { diagram: Diagram };
 
 type Ref<T> = { current: T };
 
-class EditableCanvasComponent extends Component<ComponentProps> {
+export class EditableCanvasComponent extends Component<ComponentProps> {
   private deferedMouseAction: Ref<DeferedMouseAction | undefined> = { current: undefined };
   // @ts-ignore
   private svgRef: Ref<SVGSVGElement> = { current: undefined };
@@ -476,37 +475,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
   }
 }
 
-export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, _ref) => {
-  const diagram = props.diagram;
-  const { actionMap, keyMap } = useActions();
-  const svgRef = useRef<SVGSVGElement | null>(null);
-
-  const ref = useRef<HTMLDivElement>(null);
-  const cmpRef = useRef<EditableCanvasComponent>(new EditableCanvasComponent());
-
-  const cmpProps = {
-    ...props,
-    diagram,
-    actionMap,
-    keyMap
-  };
-
-  if (ref.current) {
-    cmpRef.current.update(cmpProps);
-  }
-
-  useImperativeHandle(_ref, () => svgRef.current!, [svgRef.current]);
-
-  useEffect(() => {
-    if (cmpRef.current.isRendered()) return;
-    cmpRef.current.attach(ref.current!, cmpProps);
-    svgRef.current = cmpRef.current.getSvgElement();
-  });
-
-  return <div ref={ref}></div>;
-});
-
-type Props = {
+export type Props = {
   applicationState: ApplicationState;
   applicationTriggers: ApplicationTriggers;
   className?: string;

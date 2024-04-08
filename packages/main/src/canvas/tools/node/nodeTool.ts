@@ -7,7 +7,7 @@ import { Point } from '../../../geometry/point.ts';
 import { isNode } from '../../../model/diagramElement.ts';
 import { addHighlight, removeHighlight } from '../../highlight.ts';
 import { UnitOfWork } from '../../../model/unitOfWork.ts';
-import { ApplicationTriggers } from '../../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../../EditableCanvas.ts';
 import { commitWithUndo } from '../../../model/diagramUndoActions.ts';
 
 export class NodeTool extends AbstractTool {

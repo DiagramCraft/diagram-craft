@@ -3,7 +3,7 @@ import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts
 import { MutableRefObject, RefObject } from 'react';
 import { Diagram } from '../../model/diagram.ts';
 import { ToolType } from '../../base-ui/ApplicationState.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 
 export interface Tool {
   type: ToolType;

@@ -4,7 +4,7 @@ import { Point } from '../../geometry/point.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { ToolType } from '../../base-ui/ApplicationState.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 
 export abstract class AbstractTool implements Tool {
   currentElement: string | undefined;

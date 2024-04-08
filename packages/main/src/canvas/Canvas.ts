@@ -1,4 +1,3 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { Point } from '../geometry/point.ts';
 import { Component } from '../base-ui/component.ts';
 import { Diagram } from '../model/diagram.ts';
@@ -10,7 +9,7 @@ import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 type Ref<T> = { current: T };
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
-class CanvasComponent extends Component<Props> {
+export class CanvasComponent extends Component<Props> {
   // @ts-ignore
   private svgRef: Ref<SVGSVGElement> = { current: undefined };
 
@@ -88,34 +87,7 @@ class CanvasComponent extends Component<Props> {
   }
 }
 
-export const Canvas = forwardRef<SVGSVGElement, Props>((props, _ref) => {
-  const diagram = props.diagram;
-  const svgRef = useRef<SVGSVGElement | null>(null);
-
-  const ref = useRef<HTMLDivElement>(null);
-  const cmpRef = useRef<CanvasComponent>(new CanvasComponent());
-
-  const cmpProps: Props = {
-    ...props,
-    diagram
-  };
-
-  if (ref.current) {
-    cmpRef.current.update(cmpProps);
-  }
-
-  useImperativeHandle(_ref, () => svgRef.current!, [svgRef.current]);
-
-  useEffect(() => {
-    if (cmpRef.current.isRendered()) return;
-    cmpRef.current.attach(ref.current!, cmpProps);
-    svgRef.current = cmpRef.current.getSvgElement();
-  });
-
-  return <div ref={ref}></div>;
-});
-
-type Props = {
+export type Props = {
   className?: string;
   diagram: Diagram;
   width?: string | number;

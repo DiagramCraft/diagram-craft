@@ -5,7 +5,7 @@ import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { Point } from '../../geometry/point.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '../../utils/id.ts';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';

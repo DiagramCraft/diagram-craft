@@ -11,7 +11,7 @@ import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
-import { ApplicationTriggers } from '../EditableCanvas.tsx';
+import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 import { Component, createEffect } from '../../base-ui/component.ts';

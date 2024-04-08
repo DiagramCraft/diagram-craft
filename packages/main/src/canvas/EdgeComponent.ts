@@ -3,7 +3,7 @@ import { toInlineCSS, VNode } from '../base-ui/vdom.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Diagram } from '../model/diagram.ts';
 import { Tool } from './tools/types.ts';
-import { ApplicationTriggers } from './EditableCanvas.tsx';
+import { ApplicationTriggers } from './EditableCanvas.ts';
 import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
