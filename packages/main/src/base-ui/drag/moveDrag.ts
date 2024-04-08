@@ -39,7 +39,8 @@ const disablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
 // TODO: We can/should make this configurable by platform
 const isConstraintDrag = (m: Modifiers) => m.shiftKey;
 const isFreeDrag = (m: Modifiers) => m.altKey;
-const isDuplicateDrag = (e: KeyboardEvent) => e.key === 'Meta';
+const isDuplicateDrag = (e: KeyboardEvent | Modifiers) =>
+  ('metaKey' in e && e.metaKey) || ('key' in e && e.key === 'Meta');
 
 export class MoveDrag extends AbstractDrag {
   #snapAngle?: Axis;
@@ -52,11 +53,15 @@ export class MoveDrag extends AbstractDrag {
 
   constructor(
     private readonly diagram: Diagram,
-    private readonly offset: Point
+    private readonly offset: Point,
+    private modifiers: Modifiers
   ) {
     super();
 
     this.uow = new UnitOfWork(this.diagram, true);
+    if (isDuplicateDrag(this.modifiers)) {
+      this.duplicate();
+    }
   }
 
   onDragEnter(id: string) {
