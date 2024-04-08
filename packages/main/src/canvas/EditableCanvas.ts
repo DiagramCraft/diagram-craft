@@ -244,9 +244,15 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       });
     };
 
+    const canvasState = {
+      applicationState: props.applicationState,
+      applicationTriggers: props.applicationTriggers,
+      diagram
+    };
+
     return html.div({}, [
       html.textarea({ id: 'clipboard', style: 'position: absolute; left: -4000px' }),
-      this.subComponent('drag-label', () => new DragLabelComponent(), {}),
+      this.subComponent('drag-label', () => new DragLabelComponent(), { ...canvasState }),
       html.svg(
         {
           ...(props.width ? { width: props.width } : {}),
@@ -346,12 +352,10 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           ),
 
           this.subComponent('document-bounds', () => new DocumentBoundsComponent(), {
-            diagram
+            ...canvasState
           }),
 
-          this.subComponent('grid', () => new GridComponent(), {
-            diagram
-          }),
+          this.subComponent('grid', () => new GridComponent(), { ...canvasState }),
 
           svg.g(
             {},
@@ -425,20 +429,16 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           ),
 
           this.tool.type === 'move'
-            ? this.subComponent('selection', () => new SelectionComponent(), {
-                diagram
-              })
+            ? this.subComponent('selection', () => new SelectionComponent(), { ...canvasState })
             : svg.g({}),
 
           this.subComponent('selection-marquee', () => new SelectionMarqueeComponent(), {
-            selection
+            ...canvasState
           }),
 
           this.tool.type === 'move'
             ? this.subComponent('anchor-handles', () => new AnchorHandlesComponent(), {
-                applicationState: props.applicationState,
-                applicationTriggers: props.applicationTriggers,
-                diagram
+                ...canvasState
               })
             : svg.g({})
         ]
@@ -483,4 +483,10 @@ export type Props = {
   onDrag?: (e: DragEvent) => void;
   onDragOver?: (e: DragEvent) => void;
   onContextMenu?: (e: MouseEvent) => void;
+};
+
+export type CanvasState = {
+  applicationState: ApplicationState;
+  applicationTriggers: ApplicationTriggers;
+  diagram: Diagram;
 };

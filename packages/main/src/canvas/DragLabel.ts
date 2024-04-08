@@ -5,8 +5,9 @@ import * as html from '../base-ui/vdom-html.ts';
 import { text } from '../base-ui/vdom.ts';
 import { deepEquals } from '../utils/object.ts';
 import { hasElements } from '../utils/array.ts';
+import { CanvasState } from './EditableCanvas.ts';
 
-export class DragLabelComponent extends Component {
+export class DragLabelComponent extends Component<CanvasState> {
   private state: State | undefined = undefined;
 
   setState(state: State | undefined) {

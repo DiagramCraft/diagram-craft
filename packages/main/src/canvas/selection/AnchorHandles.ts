@@ -1,4 +1,3 @@
-import { ApplicationState } from '../../base-ui/ApplicationState.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
@@ -11,11 +10,10 @@ import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
-import { ApplicationTriggers } from '../EditableCanvas.ts';
+import { ApplicationTriggers, CanvasState } from '../EditableCanvas.ts';
 import { VerifyNotReached } from '../../utils/assert.ts';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
 import { Component, createEffect } from '../../base-ui/component.ts';
-import { Diagram } from '../../model/diagram.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { VNode } from '../../base-ui/vdom.ts';
 
@@ -108,7 +106,7 @@ class AnchorHandleDrag extends AbstractDrag {
 //
 // TODO: This needs some refactoring :) state in the component, the listeners, state in
 //       the render function - all a bit of a mess
-export class AnchorHandlesComponent extends Component<Props> {
+export class AnchorHandlesComponent extends Component<CanvasState> {
   private hoverNode: DiagramElement | undefined;
   private state: 'background' | 'node' | 'handle' = 'background';
   private timeout: number | undefined = undefined;
@@ -119,7 +117,7 @@ export class AnchorHandlesComponent extends Component<Props> {
     this.redraw();
   }
 
-  render(props: Props) {
+  render(props: CanvasState) {
     const diagram = props.diagram;
 
     const selection = diagram.selectionState;
@@ -226,9 +224,3 @@ export class AnchorHandlesComponent extends Component<Props> {
     );
   }
 }
-
-type Props = {
-  diagram: Diagram;
-  applicationState: ApplicationState;
-  applicationTriggers: ApplicationTriggers;
-};

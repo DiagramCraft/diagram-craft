@@ -7,16 +7,12 @@ import { RotationHandleComponent } from './selection/RotationHandle.ts';
 import { ResizeHandlesComponent } from './selection/ResizeHandles.ts';
 import { EdgeSelectionComponent } from './selection/EdgeSelection.ts';
 import { Box } from '../geometry/box.ts';
-import { Diagram } from '../model/diagram.ts';
 import { Component, createEffect } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
+import { CanvasState } from './EditableCanvas.ts';
 
-type Props = {
-  diagram: Diagram;
-};
-
-export class SelectionComponent extends Component<Props> {
-  render(props: Props) {
+export class SelectionComponent extends Component<CanvasState> {
+  render(props: CanvasState) {
     const diagram = props.diagram;
     const selection = diagram.selectionState;
 

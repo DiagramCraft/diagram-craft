@@ -1,13 +1,9 @@
-import { Diagram } from '../model/diagram.ts';
 import { Component } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { toInlineCSS, VNode } from '../base-ui/vdom.ts';
+import { CanvasState } from './EditableCanvas.ts';
 
 type Type = 'major' | 'minor';
-
-type Props = {
-  diagram: Diagram;
-};
 
 const circleAt = (
   xCoord: number,
@@ -58,8 +54,8 @@ const vline = (
   });
 };
 
-export class GridComponent extends Component<Props> {
-  render(props: Props) {
+export class GridComponent extends Component<CanvasState> {
+  render(props: CanvasState) {
     const diagram = props.diagram;
 
     // Note: we don't need to listen to diagram change events here, because this is handled

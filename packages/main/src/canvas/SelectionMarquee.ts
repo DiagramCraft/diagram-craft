@@ -1,17 +1,19 @@
 import { Angle } from '../geometry/angle.ts';
-import { SelectionState } from '../model/selectionState.ts';
 import { Component, createEffect } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
+import { CanvasState } from './EditableCanvas.ts';
 
-export class SelectionMarqueeComponent extends Component<Props> {
-  render(props: Props) {
+export class SelectionMarqueeComponent extends Component<CanvasState> {
+  render(props: CanvasState) {
+    const selection = props.diagram.selectionState;
+
     createEffect(() => {
       const cb = () => this.redraw();
-      props.selection.marquee.on('change', cb);
-      return () => props.selection.marquee.off('change', cb);
-    }, [props.selection.marquee]);
+      selection.marquee.on('change', cb);
+      return () => selection.marquee.off('change', cb);
+    }, [selection.marquee]);
 
-    const bounds = props.selection.marquee.bounds;
+    const bounds = selection.marquee.bounds;
     if (!bounds) return svg.g({});
 
     return svg.g(
@@ -23,7 +25,7 @@ export class SelectionMarqueeComponent extends Component<Props> {
         width: bounds.w,
         height: bounds.h
       }),
-      ...(props.selection.marquee.pendingElements?.map(e =>
+      ...(selection.marquee.pendingElements?.map(e =>
         svg.rect({
           class: 'svg-marquee__element',
           x: e.bounds.x,
@@ -38,7 +40,3 @@ export class SelectionMarqueeComponent extends Component<Props> {
     );
   }
 }
-
-type Props = {
-  selection: SelectionState;
-};

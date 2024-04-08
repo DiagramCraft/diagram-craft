@@ -1,14 +1,10 @@
 import { Component } from '../base-ui/component.ts';
-import { Diagram } from '../model/diagram.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { toInlineCSS } from '../base-ui/vdom.ts';
+import { CanvasState } from './EditableCanvas.ts';
 
-type Props = {
-  diagram: Diagram;
-};
-
-export class DocumentBoundsComponent extends Component<Props> {
-  render(props: Props) {
+export class DocumentBoundsComponent extends Component<CanvasState> {
+  render(props: CanvasState) {
     const diagram = props.diagram;
 
     // Note: we don't need to listen to diagram change events here, because this is handled
