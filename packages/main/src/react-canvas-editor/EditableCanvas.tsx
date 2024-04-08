@@ -1,39 +1,26 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState
-} from 'react';
-import { Node, NodeApi } from '../react-canvas-viewer/Node.tsx';
-import { Edge, EdgeApi } from '../react-canvas-viewer/Edge.tsx';
-import { Selection, SelectionComponent } from './Selection.tsx';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { SelectionComponent } from './Selection.ts';
 import { Box } from '../geometry/box.ts';
-import { SelectionMarquee, SelectionMarqueeComponent } from './SelectionMarquee.tsx';
+import { SelectionMarqueeComponent } from './SelectionMarquee.ts';
 import { debounce } from '../utils/debounce.ts';
-import { Grid, GridComponent } from './Grid.tsx';
-import { useRedraw } from '../react-canvas-viewer/useRedraw.tsx';
+import { GridComponent } from './Grid.ts';
 import { executeAction } from '../base-ui/keyMap.ts';
 import { Point } from '../geometry/point.ts';
-import { DocumentBounds, DocumentBoundsComponent } from '../react-canvas-viewer/DocumentBounds.tsx';
-import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
+import { DocumentBoundsComponent } from '../react-canvas-viewer/DocumentBounds.tsx';
 import { SelectionStateEvents } from '../model/selectionState.ts';
-import { useDomEventListener, useEventListener } from '../react-app/hooks/useEventListener.ts';
 import { DRAG_DROP_MANAGER } from '../react-canvas-viewer/DragDropManager.ts';
-import { useCanvasZoomAndPan } from '../react-canvas-viewer/useCanvasZoomAndPan.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { useDiagram } from '../react-app/context/DiagramContext.ts';
 import { ActionsContextType, useActions } from '../react-app/context/ActionsContext.ts';
 import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
-import { DragLabel, DragLabelComponent } from './DragLabel.tsx';
+import { DragLabelComponent } from './DragLabel.ts';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
 import { getTopMostNode, isNode } from '../model/diagramElement.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
 import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
-import { AnchorHandles, AnchorHandlesComponent } from './selection/AnchorHandles.tsx';
+import { AnchorHandlesComponent } from './selection/AnchorHandles.ts';
 import { NodeTool } from './tools/node/nodeTool.ts';
 import { PenTool } from './tools/penTool.ts';
 import { Component, createEffect } from '../base-ui/component.ts';
@@ -514,243 +501,6 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, _ref) => 
   });
 
   return <div ref={ref}></div>;
-});
-
-export const OldEditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) => {
-  const redraw = useRedraw();
-
-  const diagram = useDiagram();
-  const { actionMap, keyMap } = useActions();
-
-  // State
-  const selection = diagram.selectionState;
-  const deferedMouseAction = useRef<DeferedMouseAction | undefined>(undefined);
-
-  const drag = DRAG_DROP_MANAGER;
-
-  // Component/node refs
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  // TODO: Change to Map
-  const nodeRefs = useRef<Record<string, NodeApi | null>>({});
-  const edgeRefs = useRef<Record<string, EdgeApi | null>>({});
-
-  const resetTool = () => (props.applicationState.tool = 'move');
-
-  const [tool, setTool] = useState<Tool>(
-    () =>
-      new MoveTool(diagram, drag, svgRef, deferedMouseAction, props.applicationTriggers, resetTool)
-  );
-
-  useEventListener(props.applicationState, 'toolChange', s => {
-    setTool(
-      new TOOLS[s.tool](
-        diagram,
-        drag,
-        svgRef,
-        deferedMouseAction,
-        props.applicationTriggers,
-        resetTool
-      )
-    );
-  });
-
-  useImperativeHandle(ref, () => {
-    return svgRef.current!;
-  });
-
-  useCanvasZoomAndPan(diagram, svgRef);
-
-  useDomEventListener(
-    'keydown',
-    e => {
-      if (executeAction(e, {}, keyMap, actionMap)) return;
-      tool.onKeyDown(e);
-    },
-    document
-  );
-  useDomEventListener('keyup', e => tool.onKeyUp(e), document);
-
-  const clearSelection = debounce(() => selection.clear());
-
-  useEventListener(diagram.undoManager, 'execute', e => {
-    if (e.type === 'undo') clearSelection();
-  });
-
-  useEventListener(diagram, 'elementChange', e => {
-    if (isNode(e.element)) {
-      const nodeToRepaint = getTopMostNode(e.element);
-      nodeRefs.current[nodeToRepaint.id]?.repaint();
-
-      for (const edge of nodeToRepaint.listEdges()) {
-        edgeRefs.current[edge.id]?.repaint();
-      }
-    } else {
-      edgeRefs.current[e.element.id]?.repaint();
-    }
-  });
-  useEventListener(diagram, 'elementAdd', redraw);
-  useEventListener(diagram, 'elementRemove', redraw);
-  useEventListener(diagram, 'change', redraw);
-
-  const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
-    if (isNode(e.element)) {
-      const nodeToRepaint = getTopMostNode(e.element);
-      nodeRefs.current[nodeToRepaint.id]?.repaint();
-    } else {
-      edgeRefs.current[e.element.id]?.repaint();
-    }
-  };
-
-  // This needs to stay in here for performance reasons
-  useEventListener(selection, 'add', redrawElement);
-  useEventListener(selection, 'remove', redrawElement);
-
-  const onDoubleClick = useCallback(
-    (id: string, coord: Point) => {
-      actionMap['EDGE_TEXT_ADD']?.execute({
-        point: diagram.viewBox.toDiagramPoint(coord),
-        id
-      });
-    },
-    [actionMap, diagram.viewBox]
-  );
-
-  return (
-    <>
-      <textarea id={'clipboard'} style={{ position: 'absolute', left: '-4000px' }}></textarea>
-      <DragLabel />
-      <svg
-        id={`diagram-${diagram.id}`}
-        ref={svgRef}
-        {...propsUtils.filterDomProperties(props)}
-        preserveAspectRatio="none"
-        viewBox={diagram.viewBox.svgViewboxString}
-        onMouseDown={e => {
-          if (e.button !== 0) return;
-          tool.onMouseDown(BACKGROUND, EventHelper.point(e.nativeEvent), e.nativeEvent);
-        }}
-        style={{ userSelect: 'none' }}
-        onMouseOver={e => {
-          const el = getAncestorDiagramElement(e.target as SVGElement);
-          if (!el) return;
-          // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
-          tool.onMouseOver(el.id, EventHelper.point(e.nativeEvent));
-          props.applicationState.hoverElement = el.id;
-        }}
-        onMouseOut={e => {
-          const el = getAncestorDiagramElement(e.target as SVGElement);
-          if (!el) return;
-          // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
-          tool.onMouseOut(el.id, EventHelper.point(e.nativeEvent));
-          props.applicationState.hoverElement = undefined;
-        }}
-        onMouseUp={e => tool.onMouseUp(EventHelper.point(e.nativeEvent))}
-        onMouseMove={e => {
-          const r = e.currentTarget.getBoundingClientRect();
-          tool.onMouseMove(
-            {
-              x: e.nativeEvent.clientX - r.x,
-              y: e.nativeEvent.clientY - r.y
-            },
-            e.nativeEvent
-          );
-        }}
-        onContextMenu={event => {
-          const e = event as React.MouseEvent<SVGSVGElement, MouseEvent>;
-
-          const bounds = svgRef.current!.getBoundingClientRect();
-          const point = {
-            x: e.nativeEvent.clientX - bounds.x,
-            y: e.nativeEvent.clientY - bounds.y
-          };
-
-          const isClickOnSelection = Box.contains(
-            selection.bounds,
-            diagram.viewBox.toDiagramPoint(point)
-          );
-
-          if (isClickOnSelection) {
-            props.applicationTriggers.showSelectionContextMenu?.(
-              diagram.viewBox.toDiagramPoint(point),
-              event.nativeEvent
-            );
-          } else {
-            props.applicationTriggers.showCanvasContextMenu?.(
-              diagram.viewBox.toDiagramPoint(point),
-              event.nativeEvent
-            );
-          }
-
-          props.onContextMenu?.(event.nativeEvent);
-        }}
-        onDrag={e => {
-          props.onDrag?.(e.nativeEvent);
-        }}
-        onDrop={e => {
-          props.onDrop?.(e.nativeEvent);
-        }}
-        onDragOver={e => {
-          props.onDragOver?.(e.nativeEvent);
-        }}
-      >
-        <defs>
-          <filter id={'reflection-filter'} filterUnits={'objectBoundingBox'}>
-            <feGaussianBlur stdDeviation={0.5} />
-          </filter>
-        </defs>
-
-        <DocumentBounds />
-        <Grid />
-
-        {diagram.layers.visible.flatMap(layer => {
-          return layer.elements.map(e => {
-            const id = e.id;
-            if (e.type === 'edge') {
-              const edge = diagram.edgeLookup.get(id)!;
-              return (
-                <Edge
-                  key={id}
-                  ref={(element: EdgeApi) => (edgeRefs.current[id] = element)}
-                  onDoubleClick={onDoubleClick}
-                  onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
-                  def={edge}
-                  diagram={diagram}
-                  applicationTriggers={props.applicationTriggers}
-                  tool={tool}
-                />
-              );
-            } else {
-              const node = diagram.nodeLookup.get(id)!;
-              return (
-                <Node
-                  key={id}
-                  ref={(element: NodeApi) => (nodeRefs.current[id] = element)}
-                  onMouseDown={(id, coord, modifiers) => tool.onMouseDown(id, coord, modifiers)}
-                  onDoubleClick={onDoubleClick}
-                  def={node}
-                  diagram={diagram}
-                  applicationTriggers={props.applicationTriggers}
-                  tool={tool}
-                />
-              );
-            }
-          });
-        })}
-
-        {tool.type === 'move' && <Selection />}
-
-        <SelectionMarquee selection={selection} />
-
-        {tool.type === 'move' && (
-          <AnchorHandles
-            applicationState={props.applicationState}
-            applicationTriggers={props.applicationTriggers}
-          />
-        )}
-      </svg>
-    </>
-  );
 });
 
 type Props = {

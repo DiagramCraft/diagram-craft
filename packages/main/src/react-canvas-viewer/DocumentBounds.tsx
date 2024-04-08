@@ -1,9 +1,7 @@
-import { useDiagram } from '../react-app/context/DiagramContext.ts';
 import { Component } from '../base-ui/component.ts';
 import { Diagram } from '../model/diagram.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { toInlineCSS } from '../base-ui/vdom.ts';
-import { useComponent } from './temp/useComponent.temp.ts';
 
 type Props = {
   diagram: Diagram;
@@ -32,30 +30,3 @@ export class DocumentBoundsComponent extends Component<Props> {
     });
   }
 }
-
-export const DocumentBounds = () => {
-  const diagram = useDiagram();
-
-  const ref = useComponent<Props, DocumentBoundsComponent, SVGGElement>(
-    () => new DocumentBoundsComponent(),
-    { diagram }
-  );
-
-  return <g ref={ref}></g>;
-
-  /*  const diagram = useDiagram();
-  const { x, y, w, h } = diagram.canvas;
-
-  const redraw = useRedraw();
-  useEventListener(diagram, 'change', redraw);
-
-  const style: CSSProperties = {};
-
-  if (diagram.props.background?.color) {
-    style.fill = diagram.props.background.color;
-  }
-
-  return <rect className="svg-doc-bounds" x={x} y={y} width={w} height={h} style={style} />;
-
- */
-};

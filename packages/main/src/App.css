@@ -533,6 +533,12 @@ input::-webkit-input-placeholder {
   display: flex;
   flex-direction: column;
   align-items: start;
+
+  /* Hide by default */
+  left: 0;
+  top: 0;
+  z-index: 1000;
+
   .cmp-drag-label__props {
     margin-top: 0.25rem;
     color: var(--secondary-fg);

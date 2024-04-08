@@ -7,7 +7,6 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { newid } from '../utils/id.ts';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { Rect } from '../react-canvas-viewer/node-types/Rect.tsx';
 import {
   RectComponent,
   RectNodeDefinition
@@ -51,7 +50,6 @@ describe('Diagram', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
     nodeDefinitionRegistry.register(
       new ReactNodeDefinition(
-        Rect,
         new RectNodeDefinition('rect', 'Rectangle'),
         () => new RectComponent()
       )
