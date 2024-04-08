@@ -42,6 +42,11 @@ declare global {
     extends Record<string, (Action<any> | ToggleAction<any>) & EventEmitter<ActionEvents>> {}
 }
 
+export type Actions = {
+  actionMap: Partial<ActionMap>;
+  keyMap: KeyMap;
+};
+
 export type ActionMapFactory = (state: AppState) => Partial<ActionMap>;
 
 export type ActionName = keyof ActionMap & string;

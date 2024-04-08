@@ -8,7 +8,6 @@ import { ControlPoints, Waypoint } from './types.ts';
 import { Line } from '../geometry/line.ts';
 import { CubicSegment, LineSegment, PathSegment } from '../geometry/pathSegment.ts';
 import { BezierUtils } from '../geometry/bezier.ts';
-import { Vector } from '../geometry/vector.ts';
 
 type Result = {
   startDirection: Direction;

@@ -67,7 +67,7 @@ import { MessageDialog, MessageDialogState } from './react-app/components/Messag
 import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
 import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
-import { EditableCanvas } from './react-canvas/EditableCanvas.tsx';
+import { EditableCanvas } from './canvas-react/EditableCanvas.tsx';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -279,6 +279,8 @@ const App = () => {
                       ref={svgRef}
                       diagram={$d}
                       key={$d.id}
+                      actionMap={actionMap}
+                      keyMap={keyMap}
                       applicationState={applicationState.current}
                       className={'canvas'}
                       onDrop={canvasDropHandler($d)}

@@ -1,10 +1,11 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { useActions } from '../react-app/context/ActionsContext.ts';
 import { EditableCanvasComponent, Props } from '../canvas/EditableCanvas.ts';
+import { Actions } from '../base-ui/keyMap.ts';
 
-export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, _ref) => {
+export const EditableCanvas = forwardRef<SVGSVGElement, Props & Actions>((props, _ref) => {
   const diagram = props.diagram;
-  const { actionMap, keyMap } = useActions();
+
+  const { actionMap, keyMap } = props;
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const ref = useRef<HTMLDivElement>(null);

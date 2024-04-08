@@ -3,13 +3,12 @@ import { Box } from '../geometry/box.ts';
 import { SelectionMarqueeComponent } from './SelectionMarquee.ts';
 import { debounce } from '../utils/debounce.ts';
 import { GridComponent } from './Grid.ts';
-import { executeAction } from '../base-ui/keyMap.ts';
+import { Actions, executeAction } from '../base-ui/keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBoundsComponent } from './DocumentBounds.ts';
 import { SelectionState, SelectionStateEvents } from '../model/selectionState.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { ActionsContextType } from '../react-app/context/ActionsContext.ts';
 import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
@@ -58,7 +57,7 @@ export interface ApplicationTriggers {
   ) => void;
 }
 
-type ComponentProps = Props & ActionsContextType & { diagram: Diagram };
+type ComponentProps = Props & Actions & { diagram: Diagram };
 
 type Ref<T> = { current: T };
 
