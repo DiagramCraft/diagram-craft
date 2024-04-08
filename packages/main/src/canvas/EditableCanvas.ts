@@ -6,7 +6,7 @@ import { GridComponent } from './Grid.ts';
 import { executeAction } from '../base-ui/keyMap.ts';
 import { Point } from '../geometry/point.ts';
 import { DocumentBoundsComponent } from './DocumentBounds.ts';
-import { SelectionStateEvents } from '../model/selectionState.ts';
+import { SelectionState, SelectionStateEvents } from '../model/selectionState.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { ActionsContextType } from '../react-app/context/ActionsContext.ts';
@@ -15,14 +15,14 @@ import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
 import { DragLabelComponent } from './DragLabel.ts';
 import { ApplicationState, ToolType } from '../base-ui/ApplicationState.ts';
-import { getTopMostNode, isNode } from '../model/diagramElement.ts';
+import { DiagramElement, getTopMostNode, isNode } from '../model/diagramElement.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
 import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
 import { AnchorHandlesComponent } from './selection/AnchorHandles.ts';
 import { NodeTool } from './tools/node/nodeTool.ts';
 import { PenTool } from './tools/penTool.ts';
-import { Component, createEffect } from '../base-ui/component.ts';
-import { Diagram } from '../model/diagram.ts';
+import { Component, ComponentVNodeData, createEffect } from '../base-ui/component.ts';
+import { Diagram, DiagramEvents } from '../model/diagram.ts';
 import { UndoEvents } from '../model/undoManager.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import * as html from '../base-ui/vdom-html.ts';
@@ -31,6 +31,7 @@ import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { ViewboxEvents } from '../model/viewBox.ts';
 import { ShapeNodeDefinition } from './shapeNodeDefinition.ts';
 import { BaseShape, BaseShapeProps } from './temp/baseShape.temp.ts';
+import { EventKey } from '../utils/event.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -63,13 +64,12 @@ type Ref<T> = { current: T };
 
 export class EditableCanvasComponent extends Component<ComponentProps> {
   private deferedMouseAction: Ref<DeferedMouseAction | undefined> = { current: undefined };
-  // @ts-ignore
-  private svgRef: Ref<SVGSVGElement> = { current: undefined };
+  private svgRef: Ref<SVGSVGElement | null> = { current: null };
   private tool: Tool | undefined;
 
   // TODO: Change to Map
-  private nodeRefs: Record<string, Component | null> = {};
-  private edgeRefs: Record<string, Component | null> = {};
+  private nodeRefs: Record<string, Component<unknown> | null> = {};
+  private edgeRefs: Record<string, Component<unknown> | null> = {};
 
   setTool(tool: Tool | undefined) {
     this.tool = tool;
@@ -157,10 +157,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
-        if (executeAction(e, {}, keyMap, actionMap)) {
-          return;
+        if (!executeAction(e, {}, keyMap, actionMap)) {
+          this.tool?.onKeyDown(e);
         }
-        this.tool?.onKeyDown(e);
       };
       document.addEventListener('keydown', cb);
       return () => document.removeEventListener('keydown', cb);
@@ -183,59 +182,16 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     }, [diagram.undoManager]);
 
     createEffect(() => {
-      const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
-        if (isNode(e.element)) {
-          const nodeToRepaint = getTopMostNode(e.element);
-          this.nodeRefs[nodeToRepaint.id]?.redraw();
-          for (const edge of nodeToRepaint.listEdges()) {
-            this.edgeRefs[edge.id]?.redraw();
-          }
-        } else {
-          this.edgeRefs[e.element.id]?.redraw();
-        }
-      };
+      const cb = (e: { element: DiagramElement }) => this.redrawElement(e);
       diagram.on('elementChange', cb);
       return () => diagram.off('elementChange', cb);
     }, [diagram]);
 
-    createEffect(() => {
-      const cb = () => this.redraw();
-      diagram.on('elementAdd', cb);
-      return () => diagram.off('elementAdd', cb);
-    }, [diagram]);
-    createEffect(() => {
-      const cb = () => this.redraw();
-      diagram.on('elementRemove', cb);
-      return () => diagram.off('elementRemove', cb);
-    }, [diagram]);
-    createEffect(() => {
-      const cb = () => this.redraw();
-      diagram.on('change', cb);
-      return () => diagram.off('change', cb);
-    }, [diagram]);
+    this.onDiagramRedraw('elementAdd', diagram);
+    this.onDiagramRedraw('elementRemove', diagram);
+    this.onDiagramRedraw('change', diagram);
 
-    const redrawElement = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) => {
-      if (isNode(e.element)) {
-        const nodeToRepaint = getTopMostNode(e.element);
-        this.nodeRefs[nodeToRepaint.id]?.redraw();
-      } else {
-        this.edgeRefs[e.element.id]?.redraw();
-      }
-    };
-
-    createEffect(() => {
-      const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
-        redrawElement(e);
-      selection.on('add', cb);
-      return () => selection.off('add', cb);
-    }, [selection]);
-
-    createEffect(() => {
-      const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
-        redrawElement(e);
-      selection.on('remove', cb);
-      return () => selection.off('remove', cb);
-    }, [selection]);
+    this.onSelectionRedrawElement(selection);
 
     const onDoubleClick = (id: string, coord: Point) => {
       actionMap['EDGE_TEXT_ADD']?.execute({
@@ -268,7 +224,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               this.adjustViewbox();
             },
             onRemove: () => {
-              // @ts-ignore
               this.svgRef.current = null;
             }
           },
@@ -376,16 +331,17 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                       applicationTriggers: props.applicationTriggers,
                       tool: this.tool
                     },
-                    // TODO: We should be able to clean this up a bit
                     {
-                      onCreate: element =>
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (this.edgeRefs[id] = (element.data as any).component.instance),
+                      onCreate: element => {
+                        this.edgeRefs[id] = (
+                          element.data as ComponentVNodeData<unknown, Component>
+                        ).component.instance!;
+                      },
                       onRemove: element => {
                         /* Note: Need to check if the instance is the same as the one we have stored,
                          *       as removes and adds can come out of order */
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        if (this.edgeRefs[id] === (element.data as any).component.instance) {
+                        const instance = element.data as ComponentVNodeData<unknown, Component>;
+                        if (this.edgeRefs[id] === instance.component.instance) {
                           this.edgeRefs[id] = null;
                         }
                       }
@@ -408,16 +364,19 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                       applicationTriggers: props.applicationTriggers,
                       actionMap
                     },
-                    // TODO: We should be able to clean this up a bit
                     {
-                      onCreate: element =>
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (this.nodeRefs[id] = (element.data as any).component.instance),
+                      onCreate: element => {
+                        this.nodeRefs[id] = (
+                          element.data as ComponentVNodeData<BaseShapeProps, BaseShape>
+                        ).component.instance!;
+                      },
                       onRemove: element => {
                         /* Note: Need to check if the instance is the same as the one we have stored,
                          *       as removes and adds can come out of order */
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        if (this.nodeRefs[id] === (element.data as any).component.instance) {
+                        const instance = (
+                          element.data as ComponentVNodeData<BaseShapeProps, BaseShape>
+                        ).component.instance;
+                        if (this.nodeRefs[id] === instance) {
                           this.nodeRefs[id] = null;
                         }
                       }
@@ -446,28 +405,67 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     ]);
   }
 
+  private redrawElement = (e: { element: DiagramElement }) => {
+    if (isNode(e.element)) {
+      const nodeToRepaint = getTopMostNode(e.element);
+      this.nodeRefs[nodeToRepaint.id]?.redraw();
+      for (const edge of nodeToRepaint.listEdges()) {
+        this.edgeRefs[edge.id]?.redraw();
+      }
+    } else {
+      this.edgeRefs[e.element.id]?.redraw();
+    }
+  };
+
+  private onDiagramRedraw(eventName: EventKey<DiagramEvents>, diagram: Diagram) {
+    createEffect(() => {
+      const cb = () => this.redraw();
+      diagram.on(eventName, cb);
+      return () => diagram.off(eventName, cb);
+    }, [diagram]);
+  }
+
+  private onSelectionRedrawElement(selection: SelectionState) {
+    createEffect(() => {
+      const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
+        this.redrawElement(e);
+      selection.on('add', cb);
+      return () => selection.off('add', cb);
+    }, [selection]);
+
+    createEffect(() => {
+      const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
+        this.redrawElement(e);
+      selection.on('remove', cb);
+      return () => selection.off('remove', cb);
+    }, [selection]);
+  }
+
   private adjustViewbox() {
     const diagram = this.currentProps!.diagram;
 
+    const rect = this.svgRef.current!.getBoundingClientRect();
+
     if (diagram.viewBox.zoomLevel === 1) {
       diagram.viewBox.pan({
-        x: Math.floor(-(this.svgRef.current!.getBoundingClientRect().width - diagram.canvas.w) / 2),
-        y: Math.floor(-(this.svgRef.current!.getBoundingClientRect().height - diagram.canvas.h) / 2)
+        x: Math.floor(-(rect.width - diagram.canvas.w) / 2),
+        y: Math.floor(-(rect.height - diagram.canvas.h) / 2)
       });
     }
     diagram.viewBox.dimensions = {
-      w: Math.floor(this.svgRef.current!.getBoundingClientRect().width * diagram.viewBox.zoomLevel),
-      h: Math.floor(this.svgRef.current!.getBoundingClientRect().height * diagram.viewBox.zoomLevel)
+      w: Math.floor(rect.width * diagram.viewBox.zoomLevel),
+      h: Math.floor(rect.height * diagram.viewBox.zoomLevel)
     };
     diagram.viewBox.windowSize = {
-      w: Math.floor(this.svgRef.current!.getBoundingClientRect().width),
-      h: Math.floor(this.svgRef.current!.getBoundingClientRect().height)
+      w: Math.floor(rect.width),
+      h: Math.floor(rect.height)
     };
   }
 
-  getSvgElement() {
-    // TODO: Make this a bit more robust - perhaps by searching by id instead
-    return (this.element!.el! as HTMLElement).getElementsByTagName('svg').item(0) as SVGSVGElement;
+  getSvgElement(): SVGSVGElement {
+    return document.getElementById(
+      `diagram-${this.currentProps?.diagram.id}`
+    )! as unknown as SVGSVGElement;
   }
 }
 

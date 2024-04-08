@@ -62,7 +62,7 @@ export class EffectManager {
   }
 }
 
-type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
+export type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
   component: {
     instance: C | undefined;
     props: P;
