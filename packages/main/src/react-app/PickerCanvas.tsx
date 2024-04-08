@@ -1,38 +1,22 @@
-import { propsUtils } from '../react-canvas-viewer/utils/propsUtils.ts';
-import { Node } from '../react-canvas-viewer/Node.tsx';
 import { Diagram } from '../model/diagram.ts';
-import { SVGProps } from 'react';
+import { Canvas } from '../react-canvas-editor/Canvas.tsx';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;
 
   return (
-    <svg {...propsUtils.filterDomProperties(props)} preserveAspectRatio="none">
-      {diagram.layers.active.elements.map(e => {
-        const id = e.id;
-        if (e.type === 'edge') {
-          return null;
-        } else {
-          const node = diagram.nodeLookup.get(id)!;
-          return (
-            <Node
-              key={id}
-              onMouseDown={() => {}}
-              def={node}
-              diagram={diagram}
-              applicationTriggers={{}}
-              tool={undefined}
-            />
-          );
-        }
-      })}
-    </svg>
+    <Canvas
+      width={props.width ?? 40}
+      height={props.height ?? 40}
+      onClick={props.onClick}
+      diagram={diagram}
+    />
   );
 };
 
 type PickerCanvasProps = {
   diagram: Diagram;
-} & Omit<
-  SVGProps<SVGSVGElement>,
-  'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'onContextMenu' | 'preserveAspectRatio'
->;
+  width?: string | number;
+  height?: string | number;
+  onClick?: (e: MouseEvent) => void;
+};

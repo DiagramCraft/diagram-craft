@@ -124,14 +124,6 @@ export abstract class Component<P = Record<string, never>> {
     return !!this.element?.el;
   }
 
-  replaceWith(newComponent: Component<P>) {
-    if (this.element?.el) {
-      newComponent.create(this.currentProps!);
-      this.element.el.replaceWith(newComponent.element!.el!);
-      this.detach();
-    }
-  }
-
   subComponent<P, C extends Component<P>>(
     id: string,
     component: () => C,

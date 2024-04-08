@@ -6,7 +6,7 @@ import * as svg from '../base-ui/vdom-svg.ts';
 export class SelectionMarqueeComponent extends Component<Props> {
   render(props: Props) {
     createEffect(() => {
-      const cb = this.redraw.bind(this);
+      const cb = () => this.redraw();
       props.selection.marquee.on('change', cb);
       return () => props.selection.marquee.off('change', cb);
     }, [props.selection.marquee]);

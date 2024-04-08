@@ -10,7 +10,6 @@ import { DocumentBoundsComponent } from '../react-canvas-viewer/DocumentBounds.t
 import { SelectionStateEvents } from '../model/selectionState.ts';
 import { DRAG_DROP_MANAGER } from '../react-canvas-viewer/DragDropManager.ts';
 import { EventHelper } from '../base-ui/eventHelper.ts';
-import { useDiagram } from '../react-app/context/DiagramContext.ts';
 import { ActionsContextType, useActions } from '../react-app/context/ActionsContext.ts';
 import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
@@ -253,6 +252,8 @@ class EditableCanvasComponent extends Component<ComponentProps> {
       this.subComponent('drag-label', () => new DragLabelComponent(), {}),
       html.svg(
         {
+          ...(props.width ? { width: props.width } : {}),
+          ...(props.height ? { height: props.height } : {}),
           id: `diagram-${diagram.id}`,
           class: props.className ?? 'canvas',
           preserveAspectRatio: 'none',
@@ -272,6 +273,9 @@ class EditableCanvasComponent extends Component<ComponentProps> {
             }
           },
           on: {
+            click: e => {
+              props?.onClick?.(e);
+            },
             mousedown: e => {
               if (e.button !== 0) return;
               this.tool!.onMouseDown(BACKGROUND, EventHelper.point(e), e);
@@ -474,7 +478,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
 }
 
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, _ref) => {
-  const diagram = useDiagram();
+  const diagram = props.diagram;
   const { actionMap, keyMap } = useActions();
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -507,6 +511,10 @@ type Props = {
   applicationState: ApplicationState;
   applicationTriggers: ApplicationTriggers;
   className?: string;
+  diagram: Diagram;
+  width?: string | number;
+  height?: string | number;
+  onClick?: (e: MouseEvent) => void;
   onDrop?: (e: DragEvent) => void;
   onDrag?: (e: DragEvent) => void;
   onDragOver?: (e: DragEvent) => void;

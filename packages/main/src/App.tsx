@@ -277,6 +277,7 @@ const App = () => {
                   <ContextMenu.Trigger asChild={true}>
                     <EditableCanvas
                       ref={svgRef}
+                      diagram={$d}
                       key={$d.id}
                       applicationState={applicationState.current}
                       className={'canvas'}
