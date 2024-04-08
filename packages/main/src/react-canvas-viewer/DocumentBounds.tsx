@@ -13,12 +13,8 @@ export class DocumentBoundsComponent extends Component<Props> {
   render(props: Props) {
     const diagram = props.diagram;
 
-    // TODO: Should we really pass diagram as props and not in the constructor
-    this.effectManager.add(() => {
-      const cb = this.redraw.bind(this);
-      diagram.on('change', cb);
-      return () => diagram.off('change', cb);
-    }, [diagram]);
+    // Note: we don't need to listen to diagram change events here, because this is handled
+    //       through a full redraw of EditableCanvas when diagram changes.
 
     const style: Partial<CSSStyleDeclaration> = {};
 

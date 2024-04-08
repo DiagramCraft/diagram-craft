@@ -77,6 +77,7 @@ export abstract class Component<P = Record<string, never>> {
   abstract render(props: P): VNode;
 
   private doRender(props: P): VNode {
+    //console.log('doRender', this.constructor.name, props);
     this.effectManager._start();
     try {
       return this.render(props);

@@ -522,9 +522,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
         node: props.def,
         path: shapeBuilder.boundary!,
         style: style,
-
-        // TODO: Do we really need to wrap this in a g
-        children: [svg.g({}, ...children)]
+        children
       })
     );
 

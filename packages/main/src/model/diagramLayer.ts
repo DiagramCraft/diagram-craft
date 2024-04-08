@@ -257,6 +257,7 @@ export class LayerManager implements UOWTrackable<LayersSnapshot> {
   }
 
   set active(layer: Layer) {
+    if (this.#activeLayer === layer) return;
     this.#activeLayer = layer;
     this.diagram.emit('change', { diagram: this.diagram });
   }

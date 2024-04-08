@@ -85,21 +85,6 @@ class EditableCanvasComponent extends Component<ComponentProps> {
   private nodeRefs: Record<string, Component | null> = {};
   private edgeRefs: Record<string, Component | null> = {};
 
-  onAttach(props: ComponentProps) {
-    const diagram = props.diagram;
-
-    this.tool = new MoveTool(
-      diagram,
-      DRAG_DROP_MANAGER,
-      this.svgRef,
-      this.deferedMouseAction,
-      props.applicationTriggers,
-      () => {
-        props.applicationState.tool = 'move';
-      }
-    );
-  }
-
   setTool(tool: Tool | undefined) {
     this.tool = tool;
     this.redraw();
@@ -108,6 +93,19 @@ class EditableCanvasComponent extends Component<ComponentProps> {
   render(props: ComponentProps) {
     const diagram = props.diagram;
     const { actionMap, keyMap } = props;
+
+    if (this.tool === undefined) {
+      this.tool = new MoveTool(
+        diagram,
+        DRAG_DROP_MANAGER,
+        this.svgRef,
+        this.deferedMouseAction,
+        props.applicationTriggers,
+        () => {
+          props.applicationState.tool = 'move';
+        }
+      );
+    }
 
     // State
     const selection = diagram.selectionState;
@@ -451,7 +449,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
             selection
           }),
 
-          this.tool?.type === 'move'
+          this.tool.type === 'move'
             ? this.subComponent('anchor-handles', () => new AnchorHandlesComponent(), {
                 applicationState: props.applicationState,
                 applicationTriggers: props.applicationTriggers,
@@ -491,7 +489,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
 export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, _ref) => {
   const diagram = useDiagram();
   const { actionMap, keyMap } = useActions();
-  const [svg, setSvg] = useState<SVGSVGElement | undefined>(undefined);
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
   const ref = useRef<HTMLDivElement>(null);
   const cmpRef = useRef<EditableCanvasComponent>(new EditableCanvasComponent());
@@ -507,12 +505,12 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props>((props, _ref) => 
     cmpRef.current.update(cmpProps);
   }
 
-  useImperativeHandle(_ref, () => svg!, [svg]);
+  useImperativeHandle(_ref, () => svgRef.current!, [svgRef.current]);
 
   useEffect(() => {
     if (cmpRef.current.isRendered()) return;
     cmpRef.current.attach(ref.current!, cmpProps);
-    setSvg(cmpRef.current.getSvgElement());
+    svgRef.current = cmpRef.current.getSvgElement();
   });
 
   return <div ref={ref}></div>;
