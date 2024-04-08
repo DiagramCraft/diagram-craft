@@ -210,7 +210,6 @@ export class ContainerComponent extends BaseShape {
     const center = Box.center(props.node.bounds);
     builder.add(
       svg.path({
-        'class': '__debug_node_container',
         'd': svgPath,
         'x': props.node.bounds.x,
         'y': props.node.bounds.y,

@@ -48,7 +48,7 @@ export class GroupComponent extends BaseShape {
     const center = Box.center(props.node.bounds);
     builder.add(
       svg.g(
-        { class: '__debug_node_group' },
+        {},
         ...props.node.children.map(child =>
           this.rotateBack(
             center,

@@ -120,8 +120,7 @@ const wrapComponent = (props: NodeWrapperComponentProps) => {
 
   return svg.g(
     {
-      style: `filter: ${props.style.filter ?? 'none'}`,
-      class: '__debug_node_wrapper'
+      style: `filter: ${props.style.filter ?? 'none'}`
     },
     ...reflection,
     ...props.children
@@ -546,9 +545,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     }
 
     return svg.g(
-      {
-        class: '__debug_node_outer'
-      },
+      {},
       ...outer,
       svg.g(
         {
@@ -594,9 +591,6 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
   }
 
   protected rotateBack(center: Point, angle: number, child: VNode) {
-    return svg.g(
-      { class: '__debug_rotate_back', transform: `rotate(${-angle} ${center.x} ${center.y})` },
-      child
-    );
+    return svg.g({ transform: `rotate(${-angle} ${center.x} ${center.y})` }, child);
   }
 }
