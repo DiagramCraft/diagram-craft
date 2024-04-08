@@ -4,7 +4,7 @@ import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts
 import { Point } from '../../geometry/point.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { round } from '../../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { Box } from '../../geometry/box.ts';
 import { Vector } from '../../geometry/vector.ts';

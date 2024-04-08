@@ -1,4 +1,4 @@
-import { VerifyNotReached } from '../../utils/assert.ts';
+import { VerifyNotReached } from '@diagram-craft/utils';
 import { Diagram } from '../diagram.ts';
 import { DiagramDocument } from '../diagramDocument.ts';
 import { Layer } from '../diagramLayer.ts';

@@ -1,4 +1,4 @@
-import { EventEmitter } from '../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 import { Extent } from '../geometry/extent.ts';
 import { Point } from '../geometry/point.ts';
 import { Transform, TransformFactory } from '../geometry/transform.ts';

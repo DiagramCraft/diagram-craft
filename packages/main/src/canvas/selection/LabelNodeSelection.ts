@@ -1,5 +1,5 @@
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { assert, precondition } from '../../utils/assert.ts';
+import { assert, precondition } from '@diagram-craft/utils';
 import { Box } from '../../geometry/box.ts';
 import { TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';

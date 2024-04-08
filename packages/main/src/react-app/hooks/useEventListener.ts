@@ -1,4 +1,4 @@
-import { EventEmitter, EventKey, EventMap, EventReceiver } from '../../utils/event.ts';
+import { EventEmitter, EventKey, EventMap, EventReceiver } from '@diagram-craft/utils';
 import { RefObject, useEffect } from 'react';
 
 export const useEventListener = <T extends EventMap, K extends EventKey<T> = EventKey<T>>(

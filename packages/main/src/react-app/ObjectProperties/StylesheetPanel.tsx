@@ -4,7 +4,7 @@ import { TbDots } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useElementProperty } from './useProperty.ts';
-import { newid } from '../../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
 import { useState } from 'react';

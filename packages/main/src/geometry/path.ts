@@ -7,7 +7,7 @@ import {
   QuadSegment,
   SegmentList
 } from './pathSegment.ts';
-import { VerifyNotReached } from '../utils/assert.ts';
+import { VerifyNotReached } from '@diagram-craft/utils';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -18,7 +18,7 @@ import {
 import { RawSegment } from './pathBuilder.ts';
 import { BezierUtils } from './bezier.ts';
 import { Box } from './box.ts';
-import { round } from '../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 
 export type Projection = { t: number; distance: number; point: Point };
 

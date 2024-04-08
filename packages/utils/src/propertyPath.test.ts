@@ -1,4 +1,4 @@
-import { DynamicAccessor } from './propertyPath';
+import { DynamicAccessor } from './propertyPath.ts';
 import { test, expect, describe } from 'vitest';
 import { UNSAFE } from './testUtils.ts';
 

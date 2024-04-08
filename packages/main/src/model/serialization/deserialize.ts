@@ -7,7 +7,7 @@ import { isConnected } from './serialize.ts';
 import { DiagramDocument } from '../diagramDocument.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramElement } from '../diagramElement.ts';
-import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import {
   SerializedDiagram,
   SerializedDiagramDocument,

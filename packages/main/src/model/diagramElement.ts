@@ -6,7 +6,7 @@ import { Box } from '../geometry/box.ts';
 import { Layer } from './diagramLayer.ts';
 import { Transform } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
-import { DeepReadonly, DeepRequired } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 
 // eslint-disable-next-line
 type Snapshot = any;

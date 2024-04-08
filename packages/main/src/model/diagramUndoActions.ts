@@ -3,8 +3,8 @@ import { Diagram } from './diagram.ts';
 import { Layer } from './diagramLayer.ts';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement } from './diagramElement.ts';
-import { assert } from '../utils/assert.ts';
-import { hasSameElements } from '../utils/array.ts';
+import { assert } from '@diagram-craft/utils';
+import { hasSameElements } from '@diagram-craft/utils';
 
 export const commitWithUndo = (uow: UnitOfWork, description: string) => {
   const snapshots = uow.commit();

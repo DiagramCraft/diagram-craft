@@ -1,4 +1,4 @@
-import { EventEmitter } from '../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 import { Transform } from '../geometry/transform.ts';
 import { Box } from '../geometry/box.ts';
 import { Viewbox } from './viewBox.ts';
@@ -10,7 +10,7 @@ import { SelectionState } from './selectionState.ts';
 import { UndoManager } from './undoManager.ts';
 import { SnapManager } from './snap/snapManager.ts';
 import { SnapManagerConfig } from './snap/snapManagerConfig.ts';
-import { assert } from '../utils/assert.ts';
+import { assert } from '@diagram-craft/utils';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';

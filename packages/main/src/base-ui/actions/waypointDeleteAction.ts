@@ -1,11 +1,11 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { precondition } from '../../utils/assert.ts';
+import { precondition } from '@diagram-craft/utils';
 import { PointOnPath } from '../../geometry/pathPosition.ts';
-import { smallest } from '../../utils/array.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { AbstractAction, ActionContext } from '../action.ts';
+import { smallest } from '@diagram-craft/utils';
 
 declare global {
   interface ActionMap {

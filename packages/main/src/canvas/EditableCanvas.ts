@@ -1,7 +1,7 @@
 import { SelectionComponent } from './Selection.ts';
 import { Box } from '../geometry/box.ts';
 import { SelectionMarqueeComponent } from './SelectionMarquee.ts';
-import { debounce } from '../utils/debounce.ts';
+import { debounce } from '@diagram-craft/utils';
 import { GridComponent } from './Grid.ts';
 import { Actions, executeAction } from '../base-ui/keyMap.ts';
 import { Point } from '../geometry/point.ts';
@@ -30,7 +30,7 @@ import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { ViewboxEvents } from '../model/viewBox.ts';
 import { ShapeNodeDefinition } from './shapeNodeDefinition.ts';
 import { BaseShape, BaseShapeProps } from './temp/baseShape.temp.ts';
-import { EventKey } from '../utils/event.ts';
+import { EventKey } from '@diagram-craft/utils';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,

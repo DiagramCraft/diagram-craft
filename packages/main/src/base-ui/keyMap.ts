@@ -23,7 +23,7 @@ import { groupActions } from './actions/groupAction.ts';
 import { saveActions } from './actions/saveAction.ts';
 import { Action, ActionContext, ActionEvents, ToggleAction } from './action.ts';
 import { layerActions } from './actions/layerActions.ts';
-import { EventEmitter } from '../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 
 export type State = {
   diagram: Diagram;

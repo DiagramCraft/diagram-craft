@@ -6,7 +6,7 @@ import { RawSegment } from './pathBuilder.ts';
 import { Projection } from './path.ts';
 import { LengthOffsetOnPath } from './pathPosition.ts';
 import { Box } from './box.ts';
-import { round } from '../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 
 export interface PathSegment {
   length(): number;

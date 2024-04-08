@@ -4,7 +4,7 @@ import { useRedraw } from './useRedraw.tsx';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { TbFiles, TbPlus } from 'react-icons/tb';
 import { defaultEdgeRegistry, defaultNodeRegistry } from '../canvas/defaultRegistry.ts';
-import { newid } from '../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { DocumentsContextMenu } from './DocumentsContextMenu.tsx';
 import { Diagram } from '../model/diagram.ts';
 import { Layer } from '../model/diagramLayer.ts';

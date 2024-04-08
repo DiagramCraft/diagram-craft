@@ -1,7 +1,7 @@
 import * as Popover from '@radix-ui/react-popover';
 import { TbChevronDown, TbDots, TbX } from 'react-icons/tb';
 import React, { useCallback, useRef } from 'react';
-import { range } from '../../utils/array.ts';
+import { range } from '@diagram-craft/utils';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]).map(colNumber =>

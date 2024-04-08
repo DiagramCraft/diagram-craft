@@ -1,4 +1,4 @@
-import { EventEmitter } from '../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 
 export type ToolType = 'move' | 'text' | 'edge' | 'node' | 'pen';
 

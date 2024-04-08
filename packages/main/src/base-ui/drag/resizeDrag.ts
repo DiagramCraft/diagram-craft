@@ -1,6 +1,6 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
-import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { LocalCoordinateSystem } from '../../geometry/lcs.ts';
 import { Box, WritableBox } from '../../geometry/box.ts';
 import { Direction } from '../../geometry/direction.ts';

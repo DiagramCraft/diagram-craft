@@ -1,5 +1,5 @@
 import { MagnetType } from './magnet.ts';
-import { EventEmitter } from '../../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 
 export interface SnapManagerConfigProps {
   threshold: number;

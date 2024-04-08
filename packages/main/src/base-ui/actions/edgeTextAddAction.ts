@@ -1,9 +1,9 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { precondition } from '../../utils/assert.ts';
+import { precondition } from '@diagram-craft/utils';
 import { LengthOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { newid } from '../../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 import {

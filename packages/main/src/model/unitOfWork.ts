@@ -1,8 +1,8 @@
 import { DiagramElement } from './diagramElement.ts';
 import { Diagram, DiagramEvents } from './diagram.ts';
-import { assert } from '../utils/assert.ts';
+import { assert } from '@diagram-craft/utils';
 import { Layer, LayerManager, LayerType } from './diagramLayer.ts';
-import { EventKey } from '../utils/event.ts';
+import { EventKey } from '@diagram-craft/utils';
 import { SerializedEdge, SerializedNode } from './serialization/types.ts';
 import { Stylesheet } from './diagramStyles.ts';
 import { AdjustmentRule } from './diagramAdjustmentLayer.ts';

@@ -1,7 +1,7 @@
 import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
-import { round } from '../../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { Box } from '../../geometry/box.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';

@@ -1,6 +1,6 @@
 import { Diagram } from '../model/diagram.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
-import { newid } from '../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { ElementAddUndoableAction } from '../model/diagramUndoActions.ts';
 

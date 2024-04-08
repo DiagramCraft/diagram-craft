@@ -1,7 +1,7 @@
 import { Point } from './point.ts';
 import { Range } from './range.ts';
 import { Vector } from './vector.ts';
-import { round } from '../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 
 export type Line = Readonly<{
   from: Point;

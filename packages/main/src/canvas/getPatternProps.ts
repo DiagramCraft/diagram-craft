@@ -1,4 +1,4 @@
-import { DeepReadonly, DeepRequired } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { Box } from '../geometry/box.ts';
 
 export const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {

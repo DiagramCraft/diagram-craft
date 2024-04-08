@@ -14,11 +14,11 @@ import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { largest } from '../../utils/array.ts';
-import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { addHighlight, removeHighlight } from '../../canvas/highlight.ts';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 import { SelectionState } from '../../model/selectionState.ts';
+import { largest } from '@diagram-craft/utils';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 

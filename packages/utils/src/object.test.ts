@@ -1,4 +1,4 @@
-import { common, deepMerge, deepClone, deepEquals } from './object';
+import { common, deepMerge, deepClone, deepEquals } from './object.ts';
 import { expect, describe, test } from 'vitest';
 import { UNSAFE } from './testUtils.ts';
 

@@ -1,4 +1,4 @@
-import { EventEmitter } from '../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 
 type UserStateEvents = {
   change: { after: UserState };

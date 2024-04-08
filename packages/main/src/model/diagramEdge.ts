@@ -8,17 +8,17 @@ import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
 import { PointOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
 import { Vector } from '../geometry/vector.ts';
-import { newid } from '../utils/id.ts';
-import { deepClone } from '../utils/object.ts';
+import { newid } from '@diagram-craft/utils';
+import { deepClone } from '@diagram-craft/utils';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge } from './diagramElement.ts';
-import { isDifferent } from '../utils/math.ts';
+import { isDifferent } from '@diagram-craft/utils';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode.ts';
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
-import { DeepReadonly, DeepRequired, DeepWriteable } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils';
 import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
-import { deepMerge } from '../utils/object.ts';
+import { deepMerge } from '@diagram-craft/utils';
 import { edgeDefaults } from './diagramDefaults.ts';
 
 export type ResolvedLabelNode = LabelNode & {

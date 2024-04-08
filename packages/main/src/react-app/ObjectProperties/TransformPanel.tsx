@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Box, WritableBox } from '../../geometry/box.ts';
 import { Angle } from '../../geometry/angle.ts';
-import { round } from '../../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { TbAspectRatio } from 'react-icons/tb';
 import { Point } from '../../geometry/point.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { $c } from '../../utils/classname.ts';
+import { $c } from '@diagram-craft/utils';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ToggleButton } from '../components/ToggleButton.tsx';
 

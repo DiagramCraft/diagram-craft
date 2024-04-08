@@ -2,6 +2,7 @@ import { useEventListener } from './hooks/useEventListener.ts';
 import { useRedraw } from './useRedraw.tsx';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { EventHelper } from '../base-ui/eventHelper.ts';
+
 import { useDiagram } from './context/DiagramContext.ts';
 
 type Tick = {

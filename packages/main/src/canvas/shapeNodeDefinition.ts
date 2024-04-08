@@ -1,6 +1,6 @@
 import { PathBuilder } from '../geometry/pathBuilder.ts';
 import { Path } from '../geometry/path.ts';
-import { round } from '../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { Box } from '../geometry/box.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import {

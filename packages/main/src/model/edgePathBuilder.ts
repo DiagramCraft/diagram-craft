@@ -1,5 +1,4 @@
 import { PathBuilder } from '../geometry/pathBuilder.ts';
-import { unique } from '../utils/array.ts';
 import { Direction } from '../geometry/direction.ts';
 import { Point } from '../geometry/point.ts';
 import { Path } from '../geometry/path.ts';
@@ -8,6 +7,7 @@ import { ControlPoints, Waypoint } from './types.ts';
 import { Line } from '../geometry/line.ts';
 import { CubicSegment, LineSegment, PathSegment } from '../geometry/pathSegment.ts';
 import { BezierUtils } from '../geometry/bezier.ts';
+import { unique } from '@diagram-craft/utils';
 
 type Result = {
   startDirection: Direction;

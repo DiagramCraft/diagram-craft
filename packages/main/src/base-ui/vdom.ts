@@ -1,4 +1,4 @@
-import { VerifyNotReached } from '../utils/assert.ts';
+import { VerifyNotReached } from '@diagram-craft/utils';
 
 const toKebabCase = (key: string) =>
   key.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();

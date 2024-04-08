@@ -1,6 +1,6 @@
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { $c } from '../../utils/classname.ts';
+import { $c } from '@diagram-craft/utils';
 import { propsUtils } from '../propsUtils.ts';
 
 const parse = (value: string) => {

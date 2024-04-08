@@ -1,5 +1,5 @@
 import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { $c } from '../../utils/classname.ts';
+import { $c } from '@diagram-craft/utils';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { isConnected } from '../../model/endpoint.ts';

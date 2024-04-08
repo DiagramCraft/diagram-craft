@@ -3,9 +3,9 @@ import { State } from '../base-ui/drag/dragDropManager.ts';
 import { Component, createEffect } from '../base-ui/component.ts';
 import * as html from '../base-ui/vdom-html.ts';
 import { text } from '../base-ui/vdom.ts';
-import { deepEquals } from '../utils/object.ts';
-import { hasElements } from '../utils/array.ts';
+import { deepEquals } from '@diagram-craft/utils';
 import { CanvasState } from './EditableCanvas.ts';
+import { hasElements } from '@diagram-craft/utils';
 
 export class DragLabelComponent extends Component<CanvasState> {
   private state: State | undefined = undefined;

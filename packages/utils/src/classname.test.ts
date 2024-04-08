@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { $c } from './classname';
+import { $c } from './classname.ts';
 
 describe('$c function', () => {
   test('should generate a BEM class name with no modifiers when none are provided', () => {

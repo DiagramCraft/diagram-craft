@@ -1,19 +1,19 @@
 import { Box } from '../geometry/box.ts';
-import { clamp, round } from '../utils/math.ts';
+import { clamp, round } from '@diagram-craft/utils';
 import { Transform } from '../geometry/transform.ts';
-import { deepClone } from '../utils/object.ts';
+import { deepClone } from '@diagram-craft/utils';
 import { Diagram } from './diagram.ts';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge.ts';
 import { AbstractNode, Anchor, LabelNode } from './types.ts';
 import { Layer } from './diagramLayer.ts';
-import { assert, VERIFY_NOT_REACHED } from '../utils/assert.ts';
-import { newid } from '../utils/id.ts';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils';
+import { newid } from '@diagram-craft/utils';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
-import { DeepReadonly, DeepRequired } from '../utils/types.ts';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { PathUtils } from '../geometry/pathUtils.ts';
-import { deepMerge } from '../utils/object.ts';
+import { deepMerge } from '@diagram-craft/utils';
 import { nodeDefaults } from './diagramDefaults.ts';
 
 export type DuplicationContext = {

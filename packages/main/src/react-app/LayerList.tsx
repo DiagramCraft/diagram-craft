@@ -7,7 +7,7 @@ import { useRedraw } from './useRedraw.tsx';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { DiagramElement, isNode } from '../model/diagramElement.ts';
 import { useDraggable, useDropTarget } from './dragAndDropHooks.ts';
-import { VERIFY_NOT_REACHED } from '../utils/assert.ts';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { commitWithUndo } from '../model/diagramUndoActions.ts';
 import { LayerContextMenu } from './LayerContextMenu.tsx';

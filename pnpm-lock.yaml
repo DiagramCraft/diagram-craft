@@ -35,6 +35,9 @@ importers:
       '@diagram-craft/query':
         specifier: workspace:^
         version: link:../query
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
       '@radix-ui/colors':
         specifier: ^3.0.0
         version: 3.0.0
@@ -131,6 +134,8 @@ importers:
         version: 0.34.7
 
   packages/query: {}
+
+  packages/utils: {}
 
 packages:
 

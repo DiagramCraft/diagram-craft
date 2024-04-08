@@ -1,5 +1,5 @@
 import { Angle } from '../geometry/angle.ts';
-import { $c } from '../utils/classname.ts';
+import { $c } from '@diagram-craft/utils';
 import { LabelNodeSelectionComponent } from './selection/LabelNodeSelection.ts';
 import { GroupBoundsComponent } from './selection/GroupBounds.ts';
 import { GuidesComponent } from './selection/Guides.ts';

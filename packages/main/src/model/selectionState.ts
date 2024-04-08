@@ -1,10 +1,10 @@
 import { Line } from '../geometry/line.ts';
-import { EventEmitter } from '../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 import { Box } from '../geometry/box.ts';
 import { Magnet } from './snap/magnet.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
-import { debounceMicrotask } from '../utils/debounce.ts';
+import { debounceMicrotask } from '@diagram-craft/utils';
 import { Marquee } from './marquee.ts';
 import { Diagram } from './diagram.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';

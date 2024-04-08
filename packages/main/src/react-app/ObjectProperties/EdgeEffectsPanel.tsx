@@ -2,7 +2,7 @@ import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { round } from '../../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { useEdgeProperty } from './useProperty.ts';
 import { useEdgeDefaults } from '../useDefaults.tsx';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';

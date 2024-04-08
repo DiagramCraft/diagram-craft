@@ -7,7 +7,7 @@ import {
 } from '../geometry/pathPosition.ts';
 import { DiagramEdge, Intersection } from './diagramEdge.ts';
 import { Point } from '../geometry/point.ts';
-import { VERIFY_NOT_REACHED, VerifyNotReached } from '../utils/assert.ts';
+import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils';
 import { ArrowShape } from '../base-ui/arrowShapes.ts';
 import { Diagram } from './diagram.ts';
 import { Vector } from '../geometry/vector.ts';

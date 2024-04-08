@@ -1,8 +1,8 @@
 import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
-import { common, isObj } from '../utils/object.ts';
-import { deepClone, deepMerge } from '../utils/object.ts';
+import { common, isObj } from '@diagram-craft/utils';
+import { deepClone, deepMerge } from '@diagram-craft/utils';
 import { UndoableAction } from './undoManager.ts';
 import { Diagram } from './diagram.ts';
 

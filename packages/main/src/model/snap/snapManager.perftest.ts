@@ -1,4 +1,4 @@
-import { PerformanceTest } from '../../utils/perftest.ts';
+import { PerformanceTest } from '@diagram-craft/utils';
 import { SnapManager } from './snapManager.ts';
 import { DiagramNode } from '../diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../elementDefinitionRegistry.ts';

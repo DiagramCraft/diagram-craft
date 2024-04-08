@@ -1,6 +1,6 @@
 import { Box } from '../geometry/box.ts';
 import { Point } from '../geometry/point.ts';
-import { DeepReadonly } from '../utils/types.ts';
+import { DeepReadonly } from '@diagram-craft/utils';
 
 export interface AbstractElement {
   id: string;

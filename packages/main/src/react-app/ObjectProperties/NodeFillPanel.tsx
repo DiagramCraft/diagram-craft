@@ -4,7 +4,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { assertFillType } from '../../model/diagramProps.ts';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
-import { round } from '../../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
 import { Collapsible } from '../components/Collapsible.tsx';

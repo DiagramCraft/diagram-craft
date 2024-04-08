@@ -1,13 +1,13 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { isConnected, serializeDiagramElement } from '../../model/serialization/serialize.ts';
-import { newid } from '../../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { Box } from '../../geometry/box.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
 import { Point } from '../../geometry/point.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { precondition } from '../../utils/assert.ts';
+import { precondition } from '@diagram-craft/utils';
 import { Layer } from '../../model/diagramLayer.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { SerializedElement } from '../../model/serialization/types.ts';

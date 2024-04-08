@@ -7,7 +7,7 @@ import { Point } from '../../geometry/point.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { newid } from '../../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
 import { PathUtils } from '../../geometry/pathUtils.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';

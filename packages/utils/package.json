@@ -1,0 +1,14 @@
+{
+  "name": "@diagram-craft/utils",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "Magnus Johansson",
+  "dependencies": {
+  }
+}

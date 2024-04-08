@@ -1,6 +1,6 @@
 import { Point } from './point.ts';
 import { Box } from './box.ts';
-import { precondition, VerifyNotReached } from '../utils/assert.ts';
+import { precondition, VerifyNotReached } from '@diagram-craft/utils';
 import { Path } from './path.ts';
 import { Angle } from './angle.ts';
 

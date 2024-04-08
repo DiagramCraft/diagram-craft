@@ -7,7 +7,6 @@ import { useElementProperty } from '../ObjectProperties/useProperty.ts';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
-import { unique } from '../../utils/array.ts';
 import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -18,10 +17,11 @@ import {
   DeleteSchemaUndoableAction,
   ModifySchemaUndoableAction
 } from '../../model/diagramDataSchemas.ts';
-import { newid } from '../../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { MessageDialog, MessageDialogState } from '../components/MessageDialog.tsx';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 import { JSONDialog } from '../components/JSONDialog.tsx';
+import { unique } from '@diagram-craft/utils';
 
 const makeTemplate = (): DataSchema => {
   return {

@@ -1,7 +1,7 @@
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useElementProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
-import { round } from '../../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';

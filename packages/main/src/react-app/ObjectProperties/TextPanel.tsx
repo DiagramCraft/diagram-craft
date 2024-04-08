@@ -20,7 +20,7 @@ import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { useConfiguration } from '../context/ConfigurationContext.ts';
 import { Collapsible } from '../components/Collapsible.tsx';
-import { round } from '../../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { Select } from '../components/Select.tsx';
 
 export const TextPanel = (props: Props) => {

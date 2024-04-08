@@ -1,5 +1,5 @@
-import { EventEmitter } from '../utils/event.ts';
-import { assert } from '../utils/assert.ts';
+import { EventEmitter } from '@diagram-craft/utils';
+import { assert } from '@diagram-craft/utils';
 import { UnitOfWork } from './unitOfWork.ts';
 import { Diagram } from './diagram.ts';
 

@@ -1,13 +1,13 @@
 import { Path } from '../geometry/path.ts';
-import { Random } from '../utils/random.ts';
+import { Random } from '@diagram-craft/utils';
 import { CubicSegment, LineSegment, PathSegment } from '../geometry/pathSegment.ts';
 import { Point } from '../geometry/point.ts';
 import { Vector } from '../geometry/vector.ts';
-import { round } from '../utils/math.ts';
+import { round } from '@diagram-craft/utils';
 import { BezierUtils } from '../geometry/bezier.ts';
 import { Box } from '../geometry/box.ts';
 import { Line } from '../geometry/line.ts';
-import { VerifyNotReached } from '../utils/assert.ts';
+import { VerifyNotReached } from '@diagram-craft/utils';
 
 export const calculateHachureLines = (
   bounds: Box,

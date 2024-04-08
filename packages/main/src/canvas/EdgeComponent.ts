@@ -9,7 +9,7 @@ import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
 import { applyLineHops, clipPath } from '../model/edgeUtils.ts';
 import { asDistortedSvgPath, parseArrowSvgPath } from './sketch.ts';
-import { hash } from '../utils/hash.ts';
+import { hash } from '@diagram-craft/utils';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { CSSProperties } from 'react';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';

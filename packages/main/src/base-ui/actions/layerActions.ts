@@ -1,6 +1,6 @@
 import { Diagram } from '../../model/diagram.ts';
 import { State } from '../keyMap.ts';
-import { assert, precondition } from '../../utils/assert.ts';
+import { assert, precondition } from '@diagram-craft/utils';
 import {
   AbstractAction,
   AbstractToggleAction,
@@ -15,7 +15,7 @@ import {
   ElementDeleteUndoableAction,
   SnapshotUndoableAction
 } from '../../model/diagramUndoActions.ts';
-import { newid } from '../../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 
 export const layerActions = (state: State) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(state.diagram),

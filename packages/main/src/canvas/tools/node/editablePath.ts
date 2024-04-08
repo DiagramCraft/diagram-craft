@@ -6,7 +6,7 @@ import { Vector } from '../../../geometry/vector.ts';
 import { inverseUnitCoordinateSystem, PathBuilder } from '../../../geometry/pathBuilder.ts';
 import { UnitOfWork } from '../../../model/unitOfWork.ts';
 import { CubicSegment, LineSegment, PathSegment } from '../../../geometry/pathSegment.ts';
-import { VerifyNotReached } from '../../../utils/assert.ts';
+import { VerifyNotReached } from '@diagram-craft/utils';
 import { GenericPathNodeDefinition } from '../../node-types/GenericPath.nodeType.ts';
 
 export type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };

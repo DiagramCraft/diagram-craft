@@ -7,9 +7,9 @@ import { Layer } from '../model/diagramLayer.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { PickerCanvas } from './PickerCanvas.tsx';
-import { assert } from '../utils/assert.ts';
+import { assert } from '@diagram-craft/utils';
 import { useCallback } from 'react';
-import { newid } from '../utils/id.ts';
+import { newid } from '@diagram-craft/utils';
 import { ConnectedEndpoint } from '../model/endpoint.ts';
 import { DiagramDocument } from '../model/diagramDocument.ts';
 

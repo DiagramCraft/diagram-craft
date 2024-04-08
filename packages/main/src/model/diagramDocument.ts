@@ -1,10 +1,10 @@
 import { Diagram } from './diagram.ts';
-import { EventEmitter } from '../utils/event.ts';
+import { EventEmitter } from '@diagram-craft/utils';
 import { AttachmentManager } from './attachment.ts';
-import { range } from '../utils/array.ts';
 import { DiagramPalette } from './diagramPalette.ts';
 import { DiagramStyles } from './diagramStyles.ts';
 import { DiagramDataSchemas } from './diagramDataSchemas.ts';
+import { range } from '@diagram-craft/utils';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };

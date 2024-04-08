@@ -1,7 +1,7 @@
 import { DiagramElement } from './diagramElement.ts';
 import { Diagram } from './diagram.ts';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork.ts';
-import { deepClone } from '../utils/object.ts';
+import { deepClone } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer.ts';
 
 export type AdjustmentRule = {
