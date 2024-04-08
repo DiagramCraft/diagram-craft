@@ -361,10 +361,8 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     super();
   }
 
-  // @ts-ignore
-  abstract buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder);
+  abstract buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder): void;
 
-  // TODO: We should find a way to keep the TextComponent instance across renders
   render(props: BaseShapeProps): VNode {
     const $d = props.def.diagram;
 

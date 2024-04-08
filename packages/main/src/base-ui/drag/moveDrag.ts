@@ -151,17 +151,19 @@ export class MoveDrag extends AbstractDrag {
     // This is to update the tooltip
     this.updateState(newBounds);
 
-    this.diagram.transformElements(
-      selection.elements,
-      [new Translation(Point.subtract(newBounds, selection.bounds))],
-      this.uow,
-      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
-    );
+    if (!Point.isEqual(Point.ORIGIN, Point.subtract(newBounds, selection.bounds))) {
+      this.diagram.transformElements(
+        selection.elements,
+        [new Translation(Point.subtract(newBounds, selection.bounds))],
+        this.uow,
+        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      );
 
-    // This is mainly a performance optimization and not strictly necessary
-    this.diagram.selectionState.recalculateBoundingBox();
+      // This is mainly a performance optimization and not strictly necessary
+      this.diagram.selectionState.recalculateBoundingBox();
 
-    this.uow.notify();
+      this.uow.notify();
+    }
   }
 
   onDragEnd(): void {

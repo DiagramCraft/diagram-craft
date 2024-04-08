@@ -29,6 +29,8 @@ import * as html from '../base-ui/vdom-html.ts';
 import { EdgeComponent } from './EdgeComponent.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { ViewboxEvents } from '../model/viewBox.ts';
+import { ShapeNodeDefinition } from './shapeNodeDefinition.ts';
+import { BaseShape, BaseShapeProps } from './temp/baseShape.temp.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -95,9 +97,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     const selection = diagram.selectionState;
 
     const drag = DRAG_DROP_MANAGER;
-
-    // Component/node refs
-    // const svgRef = useRef<SVGSVGElement>(null);
 
     const resetTool = () => (props.applicationState.tool = 'move');
 
@@ -261,9 +260,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             onInsert: node => {
               this.svgRef.current = node.el! as SVGSVGElement;
               this.adjustViewbox();
-
-              // TODO: This is a bit of a hack until EffectManager runs onInsert
-              //this.redraw();
             },
             onRemove: () => {
               // @ts-ignore
@@ -272,7 +268,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           },
           on: {
             click: e => {
-              props?.onClick?.(e);
+              props.onClick?.(e);
             },
             mousedown: e => {
               if (e.button !== 0) return;
@@ -395,18 +391,18 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                   const node = diagram.nodeLookup.get(id)!;
                   const nodeDef = diagram.nodeDefinitions.get(node.nodeType);
 
-                  return this.subComponent(
+                  return this.subComponent<BaseShapeProps, BaseShape>(
                     `node-${node.nodeType}-${id}`,
-                    // @ts-ignore
-                    (nodeDef as ReactNodeDefinition).component!,
+                    (nodeDef as ShapeNodeDefinition).component!,
                     {
+                      def: node,
+                      diagram,
+                      tool: this.tool,
                       onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
                         this.tool!.onMouseDown(id, coord, modifiers),
                       onDoubleClick,
-                      def: node,
-                      diagram,
                       applicationTriggers: props.applicationTriggers,
-                      tool: this.tool
+                      actionMap
                     },
                     // TODO: We should be able to clean this up a bit
                     {
@@ -428,7 +424,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             })
           ),
 
-          this.tool?.type === 'move'
+          this.tool.type === 'move'
             ? this.subComponent('selection', () => new SelectionComponent(), {
                 diagram
               })
