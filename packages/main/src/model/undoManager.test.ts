@@ -1,10 +1,7 @@
 import { expect, test, describe } from 'vitest';
 import { UndoManager } from './undoManager.ts';
 import { Diagram } from './diagram.ts';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '../react-canvas-viewer/defaultRegistry.ts';
+import { defaultEdgeRegistry, defaultNodeRegistry } from '../canvas/defaultRegistry.ts';
 
 describe('UndoManager', () => {
   test('add()', () => {

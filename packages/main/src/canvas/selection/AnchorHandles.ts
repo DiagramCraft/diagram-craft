@@ -1,6 +1,6 @@
 import { ApplicationState } from '../../base-ui/ApplicationState.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
-import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { Point } from '../../geometry/point.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';

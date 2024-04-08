@@ -4,7 +4,7 @@ import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from '../../model/endpoint.ts';
-import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
+import { addHighlight, removeHighlight } from '../../canvas/highlight.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { isNode } from '../../model/diagramElement.ts';
 

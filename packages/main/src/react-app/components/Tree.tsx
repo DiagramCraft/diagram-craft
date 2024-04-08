@@ -7,7 +7,7 @@ import React, {
   useState
 } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
-import { propsUtils } from '../../react-canvas-viewer/utils/propsUtils.ts';
+import { propsUtils } from '../propsUtils.ts';
 
 const isReactElement = (
   element: ReactNode

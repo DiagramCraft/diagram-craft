@@ -16,7 +16,7 @@ import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { largest } from '../../utils/array.ts';
 import { VERIFY_NOT_REACHED } from '../../utils/assert.ts';
-import { addHighlight, removeHighlight } from '../../react-canvas-editor/highlight.ts';
+import { addHighlight, removeHighlight } from '../../canvas/highlight.ts';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 import { SelectionState } from '../../model/selectionState.ts';
 

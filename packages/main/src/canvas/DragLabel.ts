@@ -1,4 +1,4 @@
-import { DRAG_DROP_MANAGER } from '../react-canvas-viewer/DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { State } from '../base-ui/drag/dragDropManager.ts';
 import { Component, createEffect } from '../base-ui/component.ts';
 import * as html from '../base-ui/vdom-html.ts';

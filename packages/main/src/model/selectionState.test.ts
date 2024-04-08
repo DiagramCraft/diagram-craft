@@ -7,7 +7,7 @@ import { Diagram } from './diagram.ts';
 import { Layer } from './diagramLayer.ts';
 import { FreeEndpoint } from './endpoint.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.nodeType.ts';
+import { RectNodeDefinition } from '../canvas/node-types/Rect.nodeType.ts';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(

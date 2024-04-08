@@ -3,10 +3,7 @@ import { DiagramDocument } from '../model/diagramDocument.ts';
 import { useRedraw } from './useRedraw.tsx';
 import { useEventListener } from './hooks/useEventListener.ts';
 import { TbFiles, TbPlus } from 'react-icons/tb';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '../react-canvas-viewer/defaultRegistry.ts';
+import { defaultEdgeRegistry, defaultNodeRegistry } from '../canvas/defaultRegistry.ts';
 import { newid } from '../utils/id.ts';
 import { DocumentsContextMenu } from './DocumentsContextMenu.tsx';
 import { Diagram } from '../model/diagram.ts';

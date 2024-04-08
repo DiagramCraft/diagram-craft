@@ -1,7 +1,7 @@
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { $c } from '../../utils/classname.ts';
 import { EdgeEndpointMoveDrag } from '../../base-ui/drag/edgeEndpointMoveDrag.ts';
-import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { isConnected } from '../../model/endpoint.ts';
 import { Component } from '../../base-ui/component.ts';
 import { Diagram } from '../../model/diagram.ts';

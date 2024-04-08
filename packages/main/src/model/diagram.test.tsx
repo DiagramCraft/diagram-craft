@@ -6,7 +6,7 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { newid } from '../utils/id.ts';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { RectNodeDefinition } from '../react-canvas-viewer/node-types/Rect.nodeType.ts';
+import { RectNodeDefinition } from '../canvas/node-types/Rect.nodeType.ts';
 
 const bounds = {
   x: 0,

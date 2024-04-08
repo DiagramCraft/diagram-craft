@@ -1,5 +1,5 @@
 import './App.css';
-import { EditableCanvas } from './react-canvas-editor/EditableCanvas.tsx';
+import { EditableCanvas } from './canvas/EditableCanvas.tsx';
 import { useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test.ts';
 import { simpleDiagram } from './sample/simple.ts';
@@ -34,7 +34,7 @@ import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu.ts
 import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher.tsx';
 import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu.tsx';
 import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
-import { defaultEdgeRegistry, defaultNodeRegistry } from './react-canvas-viewer/defaultRegistry.ts';
+import { defaultEdgeRegistry, defaultNodeRegistry } from './canvas/defaultRegistry.ts';
 import { SideBar } from './react-app/SideBar.tsx';
 import { SideBarPage } from './react-app/SideBarPage.tsx';
 import { PickerToolWindow } from './react-app/PickerToolWindow.tsx';

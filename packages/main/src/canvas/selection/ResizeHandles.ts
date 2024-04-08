@@ -1,7 +1,7 @@
 import { Point } from '../../geometry/point.ts';
 import { ResizeDrag, ResizeType } from '../../base-ui/drag/resizeDrag.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
-import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { Box } from '../../geometry/box.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { Component } from '../../base-ui/component.ts';

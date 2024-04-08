@@ -7,7 +7,7 @@ import { inverseUnitCoordinateSystem, PathBuilder } from '../../../geometry/path
 import { UnitOfWork } from '../../../model/unitOfWork.ts';
 import { CubicSegment, LineSegment, PathSegment } from '../../../geometry/pathSegment.ts';
 import { VerifyNotReached } from '../../../utils/assert.ts';
-import { GenericPathNodeDefinition } from '../../../react-canvas-viewer/node-types/GenericPath.nodeType.ts';
+import { GenericPathNodeDefinition } from '../../node-types/GenericPath.nodeType.ts';
 
 export type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };
 export type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';

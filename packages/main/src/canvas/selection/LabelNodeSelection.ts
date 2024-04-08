@@ -2,7 +2,7 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { assert, precondition } from '../../utils/assert.ts';
 import { Box } from '../../geometry/box.ts';
 import { TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
-import { DRAG_DROP_MANAGER } from '../../react-canvas-viewer/DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { AttachmentPointDrag } from '../../base-ui/drag/attachmentPointDrag.ts';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
