@@ -1,11 +1,4 @@
-import React, {
-  forwardRef,
-  SVGProps,
-  useCallback,
-  useImperativeHandle,
-  useRef,
-  useState
-} from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 import { Node, NodeApi } from '../react-canvas-viewer/Node.tsx';
 import { Edge, EdgeApi } from '../react-canvas-viewer/Edge.tsx';
 import { Selection, SelectionComponent } from './Selection.tsx';
@@ -271,7 +264,7 @@ class EditableCanvasComponent extends Component<ComponentProps> {
         {
           //          ...propsUtils.filterDomProperties(props),
           id: `diagram-${diagram.id}`,
-          class: 'canvas',
+          class: props.className ?? 'canvas',
           preserveAspectRatio: 'none',
           viewBox: diagram.viewBox.svgViewboxString,
           style: `user-select: none`,
@@ -342,8 +335,17 @@ class EditableCanvasComponent extends Component<ComponentProps> {
                 );
               }
 
-              // @ts-ignore
               props.onContextMenu?.(event);
+            },
+
+            drag: e => {
+              props.onDrag?.(e);
+            },
+            drop: e => {
+              props.onDrop?.(e);
+            },
+            dragover: e => {
+              props.onDragOver?.(e);
             }
           }
         },
@@ -659,7 +661,16 @@ export const OldEditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) =
             );
           }
 
-          props.onContextMenu?.(event);
+          props.onContextMenu?.(event.nativeEvent);
+        }}
+        onDrag={e => {
+          props.onDrag?.(e.nativeEvent);
+        }}
+        onDrop={e => {
+          props.onDrop?.(e.nativeEvent);
+        }}
+        onDragOver={e => {
+          props.onDragOver?.(e.nativeEvent);
         }}
       >
         <defs>
@@ -724,7 +735,9 @@ export const OldEditableCanvas = forwardRef<SVGSVGElement, Props>((props, ref) =
 type Props = {
   applicationState: ApplicationState;
   applicationTriggers: ApplicationTriggers;
-} & Omit<
-  SVGProps<SVGSVGElement>,
-  'viewBox' | 'onMouseDown' | 'onMouseUp' | 'onMouseMove' | 'preserveAspectRatio'
->;
+  className?: string;
+  onDrop?: (e: DragEvent) => void;
+  onDrag?: (e: DragEvent) => void;
+  onDragOver?: (e: DragEvent) => void;
+  onContextMenu?: (e: MouseEvent) => void;
+};
