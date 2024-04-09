@@ -3,12 +3,12 @@ import { DragDopManager, Modifiers } from '../../../base-ui/drag/dragDropManager
 import { BACKGROUND, DeferedMouseAction } from '../types.ts';
 import { AbstractTool } from '../abstractTool.ts';
 import { Diagram } from '../../../model/diagram.ts';
-import { Point } from '../../../geometry/point.ts';
 import { isNode } from '../../../model/diagramElement.ts';
 import { addHighlight, removeHighlight } from '../../highlight.ts';
 import { UnitOfWork } from '../../../model/unitOfWork.ts';
 import { ApplicationTriggers } from '../../EditableCanvas.ts';
 import { commitWithUndo } from '../../../model/diagramUndoActions.ts';
+import { Point } from '@diagram-craft/geometry';
 
 export class NodeTool extends AbstractTool {
   constructor(

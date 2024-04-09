@@ -1,9 +1,9 @@
-import { Point } from '../../geometry/point.ts';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { MutableRefObject, RefObject } from 'react';
 import { Diagram } from '../../model/diagram.ts';
 import { ToolType } from '../../base-ui/ApplicationState.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
+import { Point } from '@diagram-craft/geometry';
 
 export interface Tool {
   type: ToolType;

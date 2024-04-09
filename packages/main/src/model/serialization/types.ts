@@ -1,5 +1,5 @@
 import { AbstractEdge, AbstractNode } from '../types.ts';
-import { Point } from '../../geometry/point.ts';
+import { Point } from '@diagram-craft/geometry';
 
 interface Reference {
   id: string;

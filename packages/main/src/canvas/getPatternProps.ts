@@ -1,5 +1,5 @@
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
-import { Box } from '../geometry/box.ts';
+import { Box } from '@diagram-craft/geometry';
 
 export const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {
   if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {

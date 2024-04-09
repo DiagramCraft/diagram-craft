@@ -1,10 +1,9 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
-import { Point } from '../../geometry/point.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { Vector } from '../../geometry/vector.ts';
 import { ControlPoints } from '../../model/types.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { Point, Vector } from '@diagram-craft/geometry';
 
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 

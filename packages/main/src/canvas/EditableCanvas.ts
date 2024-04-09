@@ -1,10 +1,8 @@
 import { SelectionComponent } from './Selection.ts';
-import { Box } from '../geometry/box.ts';
 import { SelectionMarqueeComponent } from './SelectionMarquee.ts';
 import { debounce } from '@diagram-craft/utils';
 import { GridComponent } from './Grid.ts';
 import { Actions, executeAction } from '../base-ui/keyMap.ts';
-import { Point } from '../geometry/point.ts';
 import { DocumentBoundsComponent } from './DocumentBounds.ts';
 import { SelectionState, SelectionStateEvents } from '../model/selectionState.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
@@ -31,6 +29,7 @@ import { ViewboxEvents } from '../model/viewBox.ts';
 import { ShapeNodeDefinition } from './shapeNodeDefinition.ts';
 import { BaseShape, BaseShapeProps } from './temp/baseShape.temp.ts';
 import { EventKey } from '@diagram-craft/utils';
+import { Box, Point } from '@diagram-craft/geometry';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,

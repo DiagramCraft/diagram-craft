@@ -2,9 +2,7 @@ import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { isConnected, serializeDiagramElement } from '../../model/serialization/serialize.ts';
 import { newid } from '@diagram-craft/utils';
-import { Box } from '../../geometry/box.ts';
 import { DiagramElement } from '../../model/diagramElement.ts';
-import { Point } from '../../geometry/point.ts';
 import { UndoableAction } from '../../model/undoManager.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { precondition } from '@diagram-craft/utils';
@@ -13,6 +11,7 @@ import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { SerializedElement } from '../../model/serialization/types.ts';
 import { deserializeDiagramElements } from '../../model/serialization/deserialize.ts';
 import { AbstractAction, ActionContext } from '../action.ts';
+import { Box, Point } from '@diagram-craft/geometry';
 
 declare global {
   interface ActionMap {

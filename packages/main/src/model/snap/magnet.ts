@@ -1,10 +1,5 @@
-import { Box } from '../../geometry/box.ts';
-import { Line } from '../../geometry/line.ts';
-import { Direction } from '../../geometry/direction.ts';
-import { Point } from '../../geometry/point.ts';
-import { Range } from '../../geometry/range.ts';
-import { Axis } from '../../geometry/axis.ts';
 import { DiagramNode } from '../diagramNode.ts';
+import { Axis, Box, Direction, Line, Point, Range } from '@diagram-craft/geometry';
 
 type BaseMagnet = {
   line: Line;

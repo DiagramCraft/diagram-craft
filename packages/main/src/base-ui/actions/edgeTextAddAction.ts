@@ -1,7 +1,6 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { precondition } from '@diagram-craft/utils';
-import { LengthOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { newid } from '@diagram-craft/utils';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -11,6 +10,7 @@ import {
   SnapshotUndoableAction
 } from '../../model/diagramUndoActions.ts';
 import { AbstractAction, ActionContext } from '../action.ts';
+import { LengthOffsetOnPath } from '@diagram-craft/geometry';
 
 declare global {
   interface ActionMap {

@@ -1,10 +1,9 @@
 import { AbstractDrag } from './dragDropManager.ts';
 import { Diagram } from '../../model/diagram.ts';
-import { Point } from '../../geometry/point.ts';
-import { Box } from '../../geometry/box.ts';
 import { SelectionState } from '../../model/selectionState.ts';
 import { precondition } from '@diagram-craft/utils';
 import { DiagramElement } from '../../model/diagramElement.ts';
+import { Box, Point } from '@diagram-craft/geometry';
 
 export class MarqueeDrag extends AbstractDrag {
   constructor(

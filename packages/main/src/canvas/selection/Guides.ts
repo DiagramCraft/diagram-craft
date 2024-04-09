@@ -1,11 +1,10 @@
-import { Line } from '../../geometry/line.ts';
 import { round } from '@diagram-craft/utils';
 import { SelectionState } from '../../model/selectionState.ts';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { text, VNode } from '../../base-ui/vdom.ts';
 import { newid } from '@diagram-craft/utils';
-import { Point } from '../../geometry/point.ts';
+import { Line, Point } from '@diagram-craft/geometry';
 
 const makeDistanceMarker = (p1: Point, p2: Point, lbl: string): VNode[] => {
   const l = Line.of(p1, p2);

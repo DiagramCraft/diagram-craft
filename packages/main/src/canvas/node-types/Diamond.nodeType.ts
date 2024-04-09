@@ -1,8 +1,7 @@
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { Point } from '../../geometry/point.ts';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 
 export class DiamondNodeDefinition extends ShapeNodeDefinition {
   constructor() {

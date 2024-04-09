@@ -1,10 +1,8 @@
-import { Extent } from '../../geometry/extent.ts';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { Point } from '../../geometry/point.ts';
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
+import { Extent, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 
 export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {

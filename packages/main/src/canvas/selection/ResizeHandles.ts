@@ -1,11 +1,10 @@
-import { Point } from '../../geometry/point.ts';
 import { ResizeDrag, ResizeType } from '../../base-ui/drag/resizeDrag.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
-import { Box } from '../../geometry/box.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
+import { Box, Point } from '@diagram-craft/geometry';
 
 type Props = {
   diagram: Diagram;

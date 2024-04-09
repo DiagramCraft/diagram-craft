@@ -1,12 +1,9 @@
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { Point } from '../../geometry/point.ts';
 import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
-import { Vector } from '../../geometry/vector.ts';
-import { Box } from '../../geometry/box.ts';
+import { Box, PathBuilder, Point, unitCoordinateSystem, Vector } from '@diagram-craft/geometry';
 
 declare global {
   interface NodeProps {

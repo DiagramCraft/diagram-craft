@@ -1,6 +1,6 @@
-import { Point } from '../geometry/point.ts';
 import { Emitter, EventEmitter } from '@diagram-craft/utils';
 import { UndoableAction } from '../model/undoManager.ts';
+import { Point } from '@diagram-craft/geometry';
 
 export type ActionEvents = {
   actionchanged: { action: Action };

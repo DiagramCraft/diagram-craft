@@ -5,7 +5,6 @@ import { UnitOfWork } from '../unitOfWork.ts';
 import { Layer } from '../diagramLayer.ts';
 import { isConnected } from './serialize.ts';
 import { DiagramDocument } from '../diagramDocument.ts';
-import { Point } from '../../geometry/point.ts';
 import { DiagramElement } from '../diagramElement.ts';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import {
@@ -18,6 +17,7 @@ import {
 } from './types.ts';
 import { ConnectedEndpoint, FreeEndpoint } from '../endpoint.ts';
 import { Waypoint } from '../types.ts';
+import { Point } from '@diagram-craft/geometry';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';

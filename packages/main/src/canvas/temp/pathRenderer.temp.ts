@@ -1,7 +1,7 @@
-import { Path } from '../../geometry/path.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { asDistortedSvgPath, calculateHachureLines } from '../sketch.ts';
 import { hash } from '@diagram-craft/utils';
+import { Path } from '@diagram-craft/geometry';
 
 export type StyledPath = {
   path: Path;

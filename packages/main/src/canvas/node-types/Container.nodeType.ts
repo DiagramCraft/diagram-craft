@@ -1,15 +1,21 @@
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { CustomPropertyDefinition, NodeCapability } from '../../model/elementDefinitionRegistry.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
-import { PathBuilder, unitCoordinateSystem } from '../../geometry/pathBuilder.ts';
-import { Point } from '../../geometry/point.ts';
-import { Rotation, Scale, Transform, Translation } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
-import { Box } from '../../geometry/box.ts';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
+import {
+  Box,
+  PathBuilder,
+  Point,
+  Rotation,
+  Scale,
+  Transform,
+  Translation,
+  unitCoordinateSystem
+} from '@diagram-craft/geometry';
 
 declare global {
   interface NodeProps {

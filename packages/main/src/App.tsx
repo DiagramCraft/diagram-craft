@@ -61,13 +61,13 @@ import { LayerIndicator } from './react-app/LayerIndicator.tsx';
 import { testDiagram } from './sample/test.ts';
 import { SerializedDiagram } from './model/serialization/types.ts';
 import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
-import { Point } from './geometry/point.ts';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx';
 import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog.tsx';
 import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
 import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
 import { EditableCanvas } from './canvas-react/EditableCanvas.tsx';
+import { Point } from '@diagram-craft/geometry';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

@@ -1,13 +1,12 @@
 import { EdgeCapability, EdgeDefinition } from '../model/elementDefinitionRegistry.ts';
-import { Point } from '../geometry/point.ts';
 import { DiagramElement, isNode } from '../model/diagramElement.ts';
 import { UnitOfWork } from '../model/unitOfWork.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import { newid } from '@diagram-craft/utils';
 import { deepClone } from '@diagram-craft/utils';
-import { LengthOffsetOnPath } from '../geometry/pathPosition.ts';
 import { DiagramEdge } from '../model/diagramEdge.ts';
 import { ConnectedEndpoint } from '../model/endpoint.ts';
+import { LengthOffsetOnPath, Point } from '@diagram-craft/geometry';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
   public readonly id: string;

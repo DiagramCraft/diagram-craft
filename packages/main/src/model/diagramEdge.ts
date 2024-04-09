@@ -1,13 +1,7 @@
-import { Box } from '../geometry/box.ts';
-import { Transform } from '../geometry/transform.ts';
-import { Diagram } from './diagram.ts';
-import { Point } from '../geometry/point.ts';
 import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
 import { Layer } from './diagramLayer.ts';
 import { buildEdgePath } from './edgePathBuilder.ts';
-import { PointOnPath, TimeOffsetOnPath } from '../geometry/pathPosition.ts';
-import { Vector } from '../geometry/vector.ts';
 import { newid } from '@diagram-craft/utils';
 import { deepClone } from '@diagram-craft/utils';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
@@ -17,9 +11,19 @@ import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } fro
 import { BaseEdgeDefinition } from '../base-ui/baseEdgeDefinition.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils';
-import { CubicSegment, LineSegment } from '../geometry/pathSegment.ts';
 import { deepMerge } from '@diagram-craft/utils';
 import { edgeDefaults } from './diagramDefaults.ts';
+import {
+  Box,
+  CubicSegment,
+  LineSegment,
+  Point,
+  PointOnPath,
+  TimeOffsetOnPath,
+  Transform,
+  Vector
+} from '@diagram-craft/geometry';
+import { Diagram } from './diagram.ts';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;

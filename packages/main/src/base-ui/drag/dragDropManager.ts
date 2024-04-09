@@ -1,5 +1,5 @@
-import { Point } from '../../geometry/point.ts';
 import { EventEmitter } from '@diagram-craft/utils';
+import { Point } from '@diagram-craft/geometry';
 
 export type Modifiers = {
   shiftKey: boolean;

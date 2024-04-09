@@ -1,19 +1,14 @@
-import { Direction } from '../../geometry/direction.ts';
 import { Diagram } from '../diagram.ts';
 import { CanvasSnapProvider } from './canvasSnapProvider.ts';
 import { NodeSnapProvider } from './nodeSnapProvider.ts';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider.ts';
 import { VerifyNotReached } from '@diagram-craft/utils';
-import { Range } from '../../geometry/range.ts';
 import { GridSnapProvider } from './gridSnapProvider.ts';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider.ts';
-import { Point } from '../../geometry/point.ts';
-import { Box, WritableBox } from '../../geometry/box.ts';
-import { Line } from '../../geometry/line.ts';
 import { Guide } from '../selectionState.ts';
 import { Magnet, MagnetOfType, MagnetType } from './magnet.ts';
-import { Axis } from '../../geometry/axis.ts';
 import { largest, smallest } from '@diagram-craft/utils';
+import { Axis, Box, Direction, Line, Point, Range, WritableBox } from '@diagram-craft/geometry';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

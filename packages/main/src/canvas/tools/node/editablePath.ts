@@ -1,13 +1,18 @@
-import { Path } from '../../../geometry/path.ts';
 import { DiagramNode } from '../../../model/diagramNode.ts';
-import { Point } from '../../../geometry/point.ts';
-import { Box } from '../../../geometry/box.ts';
-import { Vector } from '../../../geometry/vector.ts';
-import { inverseUnitCoordinateSystem, PathBuilder } from '../../../geometry/pathBuilder.ts';
 import { UnitOfWork } from '../../../model/unitOfWork.ts';
-import { CubicSegment, LineSegment, PathSegment } from '../../../geometry/pathSegment.ts';
 import { VerifyNotReached } from '@diagram-craft/utils';
 import { GenericPathNodeDefinition } from '../../node-types/GenericPath.nodeType.ts';
+import {
+  Box,
+  CubicSegment,
+  inverseUnitCoordinateSystem,
+  LineSegment,
+  Path,
+  PathBuilder,
+  PathSegment,
+  Point,
+  Vector
+} from '@diagram-craft/geometry';
 
 export type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };
 export type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';

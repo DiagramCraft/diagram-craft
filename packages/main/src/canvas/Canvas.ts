@@ -1,10 +1,10 @@
-import { Point } from '../geometry/point.ts';
 import { Component } from '../base-ui/component.ts';
 import { Diagram } from '../model/diagram.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import * as html from '../base-ui/vdom-html.ts';
 import { EdgeComponent } from './EdgeComponent.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
+import { Point } from '@diagram-craft/geometry';
 
 type Ref<T> = { current: T };
 

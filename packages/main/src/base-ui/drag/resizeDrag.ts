@@ -1,13 +1,16 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
-import { Point } from '../../geometry/point.ts';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
-import { LocalCoordinateSystem } from '../../geometry/lcs.ts';
-import { Box, WritableBox } from '../../geometry/box.ts';
-import { Direction } from '../../geometry/direction.ts';
-import { TransformFactory } from '../../geometry/transform.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import {
+  Box,
+  Direction,
+  LocalCoordinateSystem,
+  Point,
+  TransformFactory,
+  WritableBox
+} from '@diagram-craft/geometry';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 

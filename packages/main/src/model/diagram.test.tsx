@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { Diagram } from './diagram.ts';
-import { TransformFactory } from '../geometry/transform.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
 import { newid } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { RectNodeDefinition } from '../canvas/node-types/Rect.nodeType.ts';
+import { TransformFactory } from '@diagram-craft/geometry';
 
 const bounds = {
   x: 0,

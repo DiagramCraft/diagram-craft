@@ -1,4 +1,4 @@
-import { Angle } from '../geometry/angle.ts';
+import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { Component, createEffect } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { CanvasState } from './EditableCanvas.ts';

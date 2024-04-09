@@ -1,7 +1,6 @@
 import { DiagramElement, isNode } from '../../model/diagramElement.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { AbstractDrag, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
-import { Point } from '../../geometry/point.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { newid } from '@diagram-craft/utils';
@@ -16,6 +15,7 @@ import { ConnectedEndpoint, FreeEndpoint, isConnected } from '../../model/endpoi
 import { Component, createEffect } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { VNode } from '../../base-ui/vdom.ts';
+import { Point } from '@diagram-craft/geometry';
 
 class AnchorHandleDrag extends AbstractDrag {
   edge: DiagramEdge;

@@ -4,7 +4,6 @@ import { DiagramEdge } from '../model/diagramEdge.ts';
 import { Diagram } from '../model/diagram.ts';
 import { Tool } from './tools/types.ts';
 import { ApplicationTriggers } from './EditableCanvas.ts';
-import { Point } from '../geometry/point.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
 import { applyLineHops, clipPath } from '../model/edgeUtils.ts';
@@ -20,6 +19,7 @@ import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
 import { ControlPoints } from '../model/types.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
+import { Point } from '@diagram-craft/geometry';
 
 const makeArrowMarker = ({
   id,

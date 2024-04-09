@@ -2,12 +2,12 @@ import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { round } from '@diagram-craft/utils';
-import { Box } from '../../geometry/box.ts';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useDiagramProperty } from './useProperty.ts';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useConfiguration } from '../context/ConfigurationContext.ts';
+import { Box } from '@diagram-craft/geometry';
 
 export const CanvasPanel = (props: Props) => {
   const $cfg = useConfiguration();

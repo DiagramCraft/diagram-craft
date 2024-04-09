@@ -1,4 +1,4 @@
-import { Point } from '../geometry/point.ts';
+import { Point } from '@diagram-craft/geometry';
 
 export type ArrowShape = {
   width: number;

@@ -1,7 +1,7 @@
-import { Point } from '../geometry/point.ts';
 import { SerializedEndpoint } from './serialization/types.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { Diagram } from './diagram.ts';
+import { Point } from '@diagram-craft/geometry';
 
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

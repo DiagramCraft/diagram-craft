@@ -1,14 +1,10 @@
 import { DiagramNode } from './diagramNode.ts';
-import { Path } from '../geometry/path.ts';
-import { Extent } from '../geometry/extent.ts';
 import { assert } from '@diagram-craft/utils';
 import { UnitOfWork } from './unitOfWork.ts';
-import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from './diagramElement.ts';
-import { Point } from '../geometry/point.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { DeepReadonly } from '@diagram-craft/utils';
-import { PathBuilder } from '../geometry/pathBuilder.ts';
+import { Extent, Path, PathBuilder, Point, Transform } from '@diagram-craft/geometry';
 
 export type NodeCapability = 'children';
 

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CubicBezier } from './bezier.ts';
+import { CubicBezier } from '@diagram-craft/geometry/src/bezier.ts';
 import React, { useState } from 'react';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

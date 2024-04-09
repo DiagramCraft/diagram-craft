@@ -1,14 +1,9 @@
-import { Direction } from '../../geometry/direction.ts';
 import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
-import { Point } from '../../geometry/point.ts';
-import { Box } from '../../geometry/box.ts';
-import { Line } from '../../geometry/line.ts';
-import { Extent } from '../../geometry/extent.ts';
 import { Guide } from '../selectionState.ts';
 import { MagnetOfType } from './magnet.ts';
-import { Axis } from '../../geometry/axis.ts';
 import { Diagram } from '../diagram.ts';
 import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider.ts';
+import { Axis, Box, Direction, Extent, Line, Point } from '@diagram-craft/geometry';
 
 const forward: Partial<Record<Direction, Direction>> = {
   n: 's',

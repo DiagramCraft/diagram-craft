@@ -1,5 +1,4 @@
 import * as Popover from '@radix-ui/react-popover';
-import { Point } from '../geometry/point.ts';
 import { TbX } from 'react-icons/tb';
 import { Diagram } from '../model/diagram.ts';
 import { useDiagram } from './context/DiagramContext.ts';
@@ -12,6 +11,7 @@ import { useCallback } from 'react';
 import { newid } from '@diagram-craft/utils';
 import { ConnectedEndpoint } from '../model/endpoint.ts';
 import { DiagramDocument } from '../model/diagramDocument.ts';
+import { Point } from '@diagram-craft/geometry';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();

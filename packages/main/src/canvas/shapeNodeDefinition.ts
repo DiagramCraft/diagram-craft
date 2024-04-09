@@ -1,19 +1,14 @@
-import { PathBuilder } from '../geometry/pathBuilder.ts';
-import { Path } from '../geometry/path.ts';
-import { round } from '@diagram-craft/utils';
-import { Box } from '../geometry/box.ts';
 import { DiagramNode } from '../model/diagramNode.ts';
 import {
   CustomPropertyDefinition,
   NodeCapability,
   NodeDefinition
 } from '../model/elementDefinitionRegistry.ts';
-import { Extent } from '../geometry/extent.ts';
-import { Point } from '../geometry/point.ts';
-import { UnitOfWork } from '../model/unitOfWork.ts';
-import { Transform } from '../geometry/transform.ts';
 import { DiagramElement } from '../model/diagramElement.ts';
 import { BaseShape } from './temp/baseShape.temp.ts';
+import { Box, Extent, Path, PathBuilder, Point, Transform } from '@diagram-craft/geometry';
+import { round } from '@diagram-craft/utils';
+import { UnitOfWork } from '../model/unitOfWork.ts';
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   protected constructor(

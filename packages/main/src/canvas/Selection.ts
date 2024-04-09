@@ -1,4 +1,4 @@
-import { Angle } from '../geometry/angle.ts';
+import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { $c } from '@diagram-craft/utils';
 import { LabelNodeSelectionComponent } from './selection/LabelNodeSelection.ts';
 import { GroupBoundsComponent } from './selection/GroupBounds.ts';
@@ -6,10 +6,10 @@ import { GuidesComponent } from './selection/Guides.ts';
 import { RotationHandleComponent } from './selection/RotationHandle.ts';
 import { ResizeHandlesComponent } from './selection/ResizeHandles.ts';
 import { EdgeSelectionComponent } from './selection/EdgeSelection.ts';
-import { Box } from '../geometry/box.ts';
 import { Component, createEffect } from '../base-ui/component.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { CanvasState } from './EditableCanvas.ts';
+import { Box } from '@diagram-craft/geometry';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {

@@ -3,8 +3,8 @@ import { DiagramNode } from '../../model/diagramNode.ts';
 import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { Translation } from '../../geometry/transform.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Translation } from '@diagram-craft/geometry';
 
 declare global {
   interface ActionMap {

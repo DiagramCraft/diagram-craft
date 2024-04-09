@@ -2,11 +2,10 @@ import { DiagramEdge } from './diagramEdge.ts';
 import { DiagramNode, DuplicationContext } from './diagramNode.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { AbstractElement } from './types.ts';
-import { Box } from '../geometry/box.ts';
 import { Layer } from './diagramLayer.ts';
-import { Transform } from '../geometry/transform.ts';
 import { Diagram } from './diagram.ts';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
+import { Box, Transform } from '@diagram-craft/geometry';
 
 // eslint-disable-next-line
 type Snapshot = any;

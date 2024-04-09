@@ -1,6 +1,4 @@
 import { EventEmitter } from '@diagram-craft/utils';
-import { Transform } from '../geometry/transform.ts';
-import { Box } from '../geometry/box.ts';
 import { Viewbox } from './viewBox.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
@@ -14,6 +12,7 @@ import { assert } from '@diagram-craft/utils';
 import { UnitOfWork } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { DiagramDocument } from './diagramDocument.ts';
+import { Box, Transform } from '@diagram-craft/geometry';
 
 export type Canvas = Omit<Box, 'r'>;
 

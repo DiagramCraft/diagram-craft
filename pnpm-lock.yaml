@@ -30,8 +30,17 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
 
+  packages/geometry:
+    dependencies:
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+
   packages/main:
     dependencies:
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
       '@diagram-craft/query':
         specifier: workspace:^
         version: link:../query

@@ -1,6 +1,4 @@
-import { Box } from '../geometry/box.ts';
 import { clamp, round } from '@diagram-craft/utils';
-import { Transform } from '../geometry/transform.ts';
 import { deepClone } from '@diagram-craft/utils';
 import { Diagram } from './diagram.ts';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge.ts';
@@ -12,9 +10,9 @@ import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint.ts';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
-import { PathUtils } from '../geometry/pathUtils.ts';
 import { deepMerge } from '@diagram-craft/utils';
 import { nodeDefaults } from './diagramDefaults.ts';
+import { Box, PathUtils, Transform } from '@diagram-craft/geometry';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

@@ -1,14 +1,10 @@
 import { Diagram } from '../diagram.ts';
-import { Line } from '../../geometry/line.ts';
 import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
-import { Range } from '../../geometry/range.ts';
-import { Point } from '../../geometry/point.ts';
-import { Box } from '../../geometry/box.ts';
 import { Guide } from '../selectionState.ts';
 import { Magnet, MagnetOfType } from './magnet.ts';
-import { Axis } from '../../geometry/axis.ts';
 import { isNode } from '../diagramElement.ts';
 import { unique } from '@diagram-craft/utils';
+import { Axis, Box, Line, Point, Range } from '@diagram-craft/geometry';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.x, b.x + b.w), N);

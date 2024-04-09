@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Box, WritableBox } from '../../geometry/box.ts';
-import { Angle } from '../../geometry/angle.ts';
+import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { round } from '@diagram-craft/utils';
 import { TbAspectRatio } from 'react-icons/tb';
-import { Point } from '../../geometry/point.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { $c } from '@diagram-craft/utils';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { ToggleButton } from '../components/ToggleButton.tsx';
+import { Box, Point, WritableBox } from '@diagram-craft/geometry';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },

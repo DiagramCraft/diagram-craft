@@ -1,10 +1,8 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
-import { Point } from '../../geometry/point.ts';
 import { DiagramEdge, ResolvedLabelNode } from '../../model/diagramEdge.ts';
-import { Path } from '../../geometry/path.ts';
-import { LengthOffsetOnPath, TimeOffsetOnPath } from '../../geometry/pathPosition.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { LengthOffsetOnPath, Path, Point, TimeOffsetOnPath } from '@diagram-craft/geometry';
 
 export class AttachmentPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;

@@ -1,9 +1,9 @@
-import { Box } from '../../geometry/box.ts';
 import { commitWithUndo } from '../../model/diagramUndoActions.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '../../model/diagram.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Box } from '@diagram-craft/geometry';
 
 declare global {
   interface ActionMap {

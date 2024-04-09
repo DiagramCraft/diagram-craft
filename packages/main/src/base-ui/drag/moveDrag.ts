@@ -1,16 +1,10 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
-import { Point } from '../../geometry/point.ts';
-import { Box, WritableBox } from '../../geometry/box.ts';
-import { Direction } from '../../geometry/direction.ts';
-import { Translation } from '../../geometry/transform.ts';
-import { Vector } from '../../geometry/vector.ts';
-import { Angle } from '../../geometry/angle.ts';
+import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { createResizeCanvasActionToFit } from '../../model/helpers/canvasResizeHelper.ts';
 import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
 } from '../../model/diagramUndoActions.ts';
-import { Axis } from '../../geometry/axis.ts';
 import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
 import { DiagramElement, isEdge, isNode } from '../../model/diagramElement.ts';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
@@ -19,6 +13,15 @@ import { addHighlight, removeHighlight } from '../../canvas/highlight.ts';
 import { CompoundUndoableAction } from '../../model/undoManager.ts';
 import { SelectionState } from '../../model/selectionState.ts';
 import { largest } from '@diagram-craft/utils';
+import {
+  Axis,
+  Box,
+  Direction,
+  Point,
+  Translation,
+  Vector,
+  WritableBox
+} from '@diagram-craft/geometry';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 

@@ -1,18 +1,14 @@
 import { Component } from '../../base-ui/component.ts';
 import { DiagramNode } from '../../model/diagramNode.ts';
 import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './pathRenderer.temp.ts';
-import { Extent } from '../../geometry/extent.ts';
-import { Box } from '../../geometry/box.ts';
 import { rawHTML, toInlineCSS, VNode } from '../../base-ui/vdom.ts';
-import { Path } from '../../geometry/path.ts';
-import { Angle } from '../../geometry/angle.ts';
+import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { DeepReadonly } from '@diagram-craft/utils';
 import { deepClone } from '@diagram-craft/utils';
 import { UnitOfWork } from '../../model/unitOfWork.ts';
 import { Tool } from '../tools/types.ts';
 import { ShapeControlPointDrag } from '../../base-ui/drag/shapeControlDrag.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
-import { Point } from '../../geometry/point.ts';
 import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { DASH_PATTERNS } from '../../base-ui/dashPatterns.ts';
@@ -26,6 +22,7 @@ import { DiagramEdge } from '../../model/diagramEdge.ts';
 import { EdgeComponent } from '../EdgeComponent.ts';
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { NodeDefinition } from '../../model/elementDefinitionRegistry.ts';
+import { Box, Extent, Path, Point } from '@diagram-craft/geometry';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
