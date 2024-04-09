@@ -1,13 +1,8 @@
 import { ToggleDarkModeAction } from './actions/toggleDarkMode.ts';
 import { ZoomAction } from './actions/zoomAction.ts';
 import { sidebarActions } from './actions/SidebarAction.tsx';
-import {
-  ActionMapFactory,
-  AppState,
-  defaultCanvasActions,
-  defaultMacKeymap,
-  KeyMap
-} from '@diagram-craft/canvas';
+import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas';
+import { defaultCanvasActions, defaultMacKeymap } from '@diagram-craft/canvas-app';
 
 export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...defaultCanvasActions(state),
