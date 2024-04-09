@@ -22,6 +22,7 @@ import { saveActions } from './actions/saveAction.ts';
 import { Action, ActionContext, ActionEvents, ToggleAction } from './action.ts';
 import { layerActions } from './actions/layerActions.ts';
 import { EventEmitter } from '@diagram-craft/utils';
+import { toolActions } from './actions/toolAction.ts';
 
 export type State = {
   diagram: Diagram;
@@ -68,7 +69,8 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...duplicateActions(state),
   ...groupActions(state),
   ...saveActions(state),
-  ...layerActions(state)
+  ...layerActions(state),
+  ...toolActions(state)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {

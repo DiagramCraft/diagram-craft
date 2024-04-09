@@ -1,5 +1,5 @@
 import { EventHelper } from '@diagram-craft/utils';
-import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
 import { Diagram } from '@diagram-craft/model';
 import { Component } from '../component/component.ts';
 import * as svg from '../component/vdom-svg.ts';

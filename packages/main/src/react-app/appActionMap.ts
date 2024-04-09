@@ -8,7 +8,6 @@ import {
   defaultMacKeymap,
   KeyMap
 } from '@diagram-craft/canvas';
-import { toolActions } from '@diagram-craft/canvas';
 
 export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...defaultCanvasActions(state),
@@ -16,7 +15,6 @@ export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ZOOM_IN: new ZoomAction(state.diagram, 'in'),
   ZOOM_OUT: new ZoomAction(state.diagram, 'out'),
 
-  ...toolActions(state),
   ...sidebarActions(state)
 });
 

@@ -1,35 +1,37 @@
-import { SelectionComponent } from './Selection.ts';
-import { SelectionMarqueeComponent } from './SelectionMarquee.ts';
-import { debounce } from '@diagram-craft/utils';
-import { GridComponent } from './Grid.ts';
+import { SelectionComponent } from './SelectionComponent.ts';
+import { SelectionMarqueeComponent } from './SelectionMarqueeComponent.ts';
+import { debounce, EventHelper, EventKey } from '@diagram-craft/utils';
+import { GridComponent } from './GridComponent.ts';
 import { Actions, executeAction } from './keyMap.ts';
-import { DocumentBoundsComponent } from './DocumentBounds.ts';
-import { SelectionState, SelectionStateEvents } from '@diagram-craft/model';
-import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
-import { EventHelper } from '@diagram-craft/utils';
-import { BACKGROUND, Tool, ToolContructor } from './tools/types.ts';
+import { DocumentBoundsComponent } from './DocumentBoundsComponent.ts';
+import {
+  Diagram,
+  DiagramElement,
+  DiagramEvents,
+  getTopMostNode,
+  isNode,
+  SelectionState,
+  SelectionStateEvents,
+  UndoEvents,
+  ViewboxEvents
+} from '@diagram-craft/model';
+import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager.ts';
+import { BACKGROUND, Tool, ToolContructor } from './tool.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
-import { DragLabelComponent } from './DragLabel.ts';
+import { DragLabelComponent } from './DragLabelComponent.ts';
 import { ApplicationState, ToolType } from './ApplicationState.ts';
-import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model';
 import { EdgeTool } from './tools/edgeTool.ts';
-import { getAncestorDiagramElement } from './utils/canvasDomUtils.ts';
-import { AnchorHandlesComponent } from './selection/AnchorHandles.ts';
-import { NodeTool } from './tools/node/nodeTool.ts';
+import { AnchorHandlesComponent } from './selection/AnchorHandlesComponent.ts';
+import { NodeTool } from './tools/nodeTool.ts';
 import { PenTool } from './tools/penTool.ts';
 import { Component, ComponentVNodeData, createEffect } from './component/component.ts';
-import { Diagram, DiagramEvents } from '@diagram-craft/model';
-import { UndoEvents } from '@diagram-craft/model';
 import * as svg from './component/vdom-svg.ts';
 import * as html from './component/vdom-html.ts';
 import { EdgeComponent } from './EdgeComponent.ts';
-import { ViewboxEvents } from '@diagram-craft/model';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition.ts';
 import { BaseShape, BaseShapeProps } from './shape/BaseShape.ts';
-import { EventKey } from '@diagram-craft/utils';
 import { Box, Point } from '@diagram-craft/geometry';
-import { Modifiers } from './drag/dragDropManager.ts';
 
 const TOOLS: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -37,6 +39,32 @@ const TOOLS: Record<ToolType, ToolContructor> = {
   edge: EdgeTool,
   node: NodeTool,
   pen: PenTool
+};
+
+const getAncestorDiagramElement = (
+  e: SVGElement | HTMLElement
+):
+  | {
+      id: string;
+      type: 'edge' | 'node';
+    }
+  | undefined => {
+  let element: SVGElement | HTMLElement | null = e;
+  while (element) {
+    if (element.id.startsWith('node-')) {
+      return {
+        id: element.id.slice('node-'.length),
+        type: 'node'
+      };
+    } else if (element.id.startsWith('edge-')) {
+      return {
+        id: element.id.slice('edge-'.length),
+        type: 'edge'
+      };
+    }
+    element = element.parentElement;
+  }
+  return undefined;
 };
 
 export interface ApplicationTriggers {
@@ -58,10 +86,8 @@ export interface ApplicationTriggers {
 
 type ComponentProps = Props & Actions & { diagram: Diagram };
 
-type Ref<T> = { current: T };
-
 export class EditableCanvasComponent extends Component<ComponentProps> {
-  private svgRef: Ref<SVGSVGElement | null> = { current: null };
+  private svgRef: SVGSVGElement | null = null;
   private tool: Tool | undefined;
 
   // TODO: Change to Map
@@ -81,7 +107,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       this.tool = new MoveTool(
         diagram,
         DRAG_DROP_MANAGER,
-        this.svgRef.current,
+        this.svgRef,
         props.applicationTriggers,
         () => {
           props.applicationState.tool = 'move';
@@ -99,13 +125,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     createEffect(() => {
       const cb = (s: { tool: ToolType }) => {
         this.setTool(
-          new TOOLS[s.tool](
-            diagram,
-            drag,
-            this.svgRef.current,
-            props.applicationTriggers,
-            resetTool
-          )
+          new TOOLS[s.tool](diagram, drag, this.svgRef, props.applicationTriggers, resetTool)
         );
       };
       props.applicationState.on('toolChange', cb);
@@ -116,14 +136,14 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     createEffect(() => {
       const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
-        this.svgRef.current!.setAttribute('viewBox', viewbox.svgViewboxString);
+        this.svgRef!.setAttribute('viewBox', viewbox.svgViewboxString);
       };
       diagram.viewBox.on('viewbox', cb);
       return () => diagram.viewBox.off('viewbox', cb);
     }, [diagram.viewBox]);
 
     createEffect(() => {
-      if (!this.svgRef.current) return;
+      if (!this.svgRef) return;
 
       const cb = (e: WheelEvent) => {
         e.preventDefault();
@@ -138,9 +158,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           });
         }
       };
-      this.svgRef.current!.addEventListener('wheel', cb);
-      return () => this.svgRef.current!.removeEventListener('wheel', cb);
-    }, [this.svgRef.current]);
+      this.svgRef!.addEventListener('wheel', cb);
+      return () => this.svgRef!.removeEventListener('wheel', cb);
+    }, [this.svgRef]);
 
     createEffect(() => {
       const cb = () => this.adjustViewbox();
@@ -215,11 +235,15 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           style: `user-select: none`,
           hooks: {
             onInsert: node => {
-              this.svgRef.current = node.el! as SVGSVGElement;
+              this.svgRef = node.el! as SVGSVGElement;
               this.adjustViewbox();
+
+              // Note: this causes an extra redraw, but it's necessary to ensure that
+              //       the wheel events (among others) are bound correctly
+              this.redraw();
             },
             onRemove: () => {
-              this.svgRef.current = null;
+              this.svgRef = null;
             }
           },
           on: {
@@ -256,7 +280,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               );
             },
             contextmenu: event => {
-              const bounds = this.svgRef.current!.getBoundingClientRect();
+              const bounds = this.svgRef!.getBoundingClientRect();
               const point = {
                 x: event.clientX - bounds.x,
                 y: event.clientY - bounds.y
@@ -439,7 +463,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
   private adjustViewbox() {
     const diagram = this.currentProps!.diagram;
 
-    const rect = this.svgRef.current!.getBoundingClientRect();
+    const rect = this.svgRef!.getBoundingClientRect();
 
     if (diagram.viewBox.zoomLevel === 1) {
       diagram.viewBox.pan({

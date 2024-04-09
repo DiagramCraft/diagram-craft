@@ -1,7 +1,7 @@
 import { Component } from './component/component.ts';
 import * as svg from './component/vdom-svg.ts';
 import { toInlineCSS, VNode } from './component/vdom.ts';
-import { CanvasState } from './EditableCanvas.ts';
+import { CanvasState } from './EditableCanvasComponent.ts';
 
 type Type = 'major' | 'minor';
 

@@ -28,7 +28,12 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@diagram-craft/query': path.join(__dirname, '../../packages/query/src')
+      '@diagram-craft/query': path.join(__dirname, '../../packages/query/src'),
+      '@diagram-craft/canvas': path.join(__dirname, '../../packages/canvas/src'),
+      '@diagram-craft/canvas-react': path.join(__dirname, '../../packages/canvas-react/src'),
+      '@diagram-craft/geometry': path.join(__dirname, '../../packages/geometry/src'),
+      '@diagram-craft/model': path.join(__dirname, '../../packages/model/src'),
+      '@diagram-craft/utils': path.join(__dirname, '../../packages/utils/src')
     }
   }
 });

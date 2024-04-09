@@ -1,10 +1,9 @@
-import { BACKGROUND } from '../types.ts';
-import { AbstractTool } from '../abstractTool.ts';
+import { AbstractTool, BACKGROUND } from '../tool.ts';
 import { commitWithUndo, Diagram, isNode, UnitOfWork } from '@diagram-craft/model';
-import { addHighlight, removeHighlight } from '../../highlight.ts';
-import { ApplicationTriggers } from '../../EditableCanvas.ts';
+import { addHighlight, removeHighlight } from '../highlight.ts';
+import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
 import { Point } from '@diagram-craft/geometry';
-import { DragDopManager, Modifiers } from '../../drag/dragDropManager.ts';
+import { DragDopManager, Modifiers } from '../dragDropManager.ts';
 
 export class NodeTool extends AbstractTool {
   constructor(

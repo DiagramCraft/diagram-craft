@@ -99,3 +99,5 @@ export class DragDopManager extends EventEmitter<DragDopEvents> {
     this.drag = undefined;
   }
 }
+
+export const DRAG_DROP_MANAGER = new DragDopManager();

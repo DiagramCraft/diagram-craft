@@ -2,7 +2,7 @@ import { EditablePath } from './editablePath.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
-import { AbstractDrag, Modifiers } from '../../drag/dragDropManager.ts';
+import { AbstractDrag, Modifiers } from '../../dragDropManager.ts';
 
 export class NodeDrag extends AbstractDrag {
   private startTime: number;

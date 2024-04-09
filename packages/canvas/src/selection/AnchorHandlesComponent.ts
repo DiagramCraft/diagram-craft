@@ -1,12 +1,12 @@
 import { DiagramElement, isNode } from '@diagram-craft/model';
-import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
 import { DiagramNode } from '@diagram-craft/model';
 import { DiagramEdge } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
 import { ElementAddUndoableAction } from '@diagram-craft/model';
 import { EventHelper } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
-import { ApplicationTriggers, CanvasState } from '../EditableCanvas.ts';
+import { ApplicationTriggers, CanvasState } from '../EditableCanvasComponent.ts';
 import { VerifyNotReached } from '@diagram-craft/utils';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '@diagram-craft/model';
 import { Component, createEffect } from '../component/component.ts';
@@ -14,7 +14,7 @@ import * as svg from '../component/vdom-svg.ts';
 import { VNode } from '../component/vdom.ts';
 import { Point } from '@diagram-craft/geometry';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag.ts';
-import { AbstractDrag, Modifiers } from '../drag/dragDropManager.ts';
+import { AbstractDrag, Modifiers } from '../dragDropManager.ts';
 import { MoveDrag } from '../drag/moveDrag.ts';
 
 class AnchorHandleDrag extends AbstractDrag {

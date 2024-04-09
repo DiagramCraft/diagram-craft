@@ -1,6 +1,6 @@
 import { DiagramEdge } from '@diagram-craft/model';
 import { $c } from '@diagram-craft/utils';
-import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
 import { isConnected } from '@diagram-craft/model';
 import { Component } from '../component/component.ts';
 import { Diagram } from '@diagram-craft/model';

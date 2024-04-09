@@ -1,9 +1,9 @@
-import { AbstractTool } from './abstractTool.ts';
+import { AbstractTool } from '../tool.ts';
 import { Diagram, DiagramNode, ElementAddUndoableAction } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
-import { ApplicationTriggers } from '../EditableCanvas.ts';
+import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
 import { Point } from '@diagram-craft/geometry';
-import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
+import { DragDopManager, Modifiers } from '../dragDropManager.ts';
 
 export class TextTool extends AbstractTool {
   constructor(

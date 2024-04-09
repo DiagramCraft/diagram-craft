@@ -1,9 +1,8 @@
-import { BACKGROUND } from './types.ts';
-import { AbstractTool } from './abstractTool.ts';
+import { AbstractTool, BACKGROUND } from '../tool.ts';
 import { Diagram, getDiagramElementPath } from '@diagram-craft/model';
-import { ApplicationTriggers } from '../EditableCanvas.ts';
+import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
 import { Box, Point } from '@diagram-craft/geometry';
-import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
+import { DragDopManager, Modifiers } from '../dragDropManager.ts';
 import { MarqueeDrag } from '../drag/marqueeDrag.ts';
 import { MoveDrag } from '../drag/moveDrag.ts';
 

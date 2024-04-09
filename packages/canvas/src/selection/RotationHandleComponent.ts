@@ -1,4 +1,4 @@
-import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
 import { Diagram } from '@diagram-craft/model';
 import { Component } from '../component/component.ts';
 import * as svg from '../component/vdom-svg.ts';
@@ -13,8 +13,6 @@ export class RotationHandleComponent extends Component<Props> {
   render(props: Props) {
     const diagram = props.diagram;
     const selection = diagram.selectionState;
-    const drag = DRAG_DROP_MANAGER;
-
     const bounds = selection.bounds;
 
     const north = Point.midpoint(bounds, {
@@ -40,7 +38,7 @@ export class RotationHandleComponent extends Component<Props> {
         on: {
           mousedown: e => {
             if (e.button !== 0) return;
-            drag.initiate(new RotateDrag(diagram));
+            DRAG_DROP_MANAGER.initiate(new RotateDrag(diagram));
             e.stopPropagation();
           }
         }

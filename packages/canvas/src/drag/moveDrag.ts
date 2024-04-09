@@ -1,5 +1,5 @@
-import { AbstractDrag, Modifiers } from './dragDropManager.ts';
-import { Angle } from '@diagram-craft/geometry/src/angle.ts';
+import { AbstractDrag, Modifiers } from '../dragDropManager.ts';
+import { Angle } from '@diagram-craft/geometry';
 import { ElementAddUndoableAction, SnapshotUndoableAction } from '@diagram-craft/model';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model';

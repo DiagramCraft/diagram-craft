@@ -1,10 +1,10 @@
 import { Component } from '../component/component.ts';
 import { Diagram, DiagramEdge, DiagramNode, NodeDefinition } from '@diagram-craft/model';
 import { VNode } from '../component/vdom.ts';
-import { Angle } from '@diagram-craft/geometry/src/angle.ts';
+import { Angle } from '@diagram-craft/geometry';
 import { deepClone, DeepReadonly } from '@diagram-craft/utils';
-import { Tool } from '../tools/types.ts';
-import { ApplicationTriggers } from '../EditableCanvas.ts';
+import { Tool } from '../tool.ts';
+import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
 import { DASH_PATTERNS } from '../dashPatterns.ts';
 import { makeShadowFilter } from '../styleUtils.ts';
 import { EventHelper } from '@diagram-craft/utils';
@@ -13,7 +13,7 @@ import * as svg from '../component/vdom-svg.ts';
 import { EdgeComponent } from '../EdgeComponent.ts';
 import { ShapeNodeDefinition } from './shapeNodeDefinition.ts';
 import { Box, Path, Point } from '@diagram-craft/geometry';
-import { Modifiers } from '../drag/dragDropManager.ts';
+import { Modifiers } from '../dragDropManager.ts';
 import { ShapeBuilder } from './ShapeBuilder.ts';
 import { makeControlPoint } from './ShapeControlPoint.ts';
 

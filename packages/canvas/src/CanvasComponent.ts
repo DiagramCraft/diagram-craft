@@ -4,14 +4,10 @@ import * as svg from './component/vdom-svg.ts';
 import * as html from './component/vdom-html.ts';
 import { EdgeComponent } from './EdgeComponent.ts';
 import { Point } from '@diagram-craft/geometry';
-import { Modifiers } from './drag/dragDropManager.ts';
-
-type Ref<T> = { current: T };
+import { Modifiers } from './dragDropManager.ts';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
-  private svgRef: Ref<SVGSVGElement | null> = { current: null };
-
   render(props: CanvasProps) {
     const diagram = props.diagram;
 
@@ -23,14 +19,6 @@ export class CanvasComponent extends Component<CanvasProps> {
         class: props.className ?? '',
         preserveAspectRatio: 'none',
         style: `user-select: none`,
-        hooks: {
-          onInsert: node => {
-            this.svgRef.current = node.el! as SVGSVGElement;
-          },
-          onRemove: () => {
-            this.svgRef.current = null;
-          }
-        },
         on: {
           click: e => props.onClick?.(e)
         }

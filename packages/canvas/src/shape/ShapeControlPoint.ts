@@ -1,6 +1,6 @@
 import { DiagramNode, UnitOfWork } from '@diagram-craft/model';
 import * as svg from '../component/vdom-svg.ts';
-import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
 import { ShapeControlPointDrag } from '../drag/shapeControlDrag.ts';
 
 export type ControlPointCallback = (x: number, y: number, uow: UnitOfWork) => string;

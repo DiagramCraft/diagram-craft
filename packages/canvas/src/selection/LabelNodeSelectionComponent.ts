@@ -1,6 +1,6 @@
 import { DiagramNode } from '@diagram-craft/model';
 import { assert, precondition } from '@diagram-craft/utils';
-import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
 import { Component } from '../component/component.ts';
 import * as svg from '../component/vdom-svg.ts';
 import { Box, TimeOffsetOnPath } from '@diagram-craft/geometry';

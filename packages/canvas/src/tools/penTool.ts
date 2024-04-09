@@ -1,9 +1,9 @@
-import { AbstractTool } from './abstractTool.ts';
+import { AbstractTool } from '../tool.ts';
 import { Diagram, DiagramNode, ElementAddUndoableAction, UnitOfWork } from '@diagram-craft/model';
-import { ApplicationTriggers } from '../EditableCanvas.ts';
+import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
 import { newid } from '@diagram-craft/utils';
 import { PathBuilder, PathUtils, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
-import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
+import { DragDopManager, Modifiers } from '../dragDropManager.ts';
 
 export class PenTool extends AbstractTool {
   private node: DiagramNode | undefined;

@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from './dragDropManager.ts';
+import { AbstractDrag, Modifiers } from '../dragDropManager.ts';
 import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';

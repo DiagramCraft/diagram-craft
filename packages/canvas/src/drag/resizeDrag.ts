@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from './dragDropManager.ts';
+import { AbstractDrag, Modifiers } from '../dragDropManager.ts';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';

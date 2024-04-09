@@ -1,7 +1,3 @@
-export type DashPattern = {
-  pattern: string;
-};
-
 type DashPatternFactory = (w: number, s: number) => string;
 
 export const DASH_PATTERNS: Partial<Record<string, DashPatternFactory>> = {
