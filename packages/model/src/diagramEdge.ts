@@ -8,7 +8,7 @@ import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './index.ts';
 import { DiagramElement, isEdge } from './index.ts';
 import { isDifferent } from '@diagram-craft/utils';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './index.ts';
-import { BaseEdgeDefinition } from '../../main/src/canvas/baseEdgeDefinition.ts';
+import { BaseEdgeDefinition } from './baseEdgeDefinition.ts';
 import { Endpoint, FreeEndpoint, isConnected } from './index.ts';
 import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils';
 import { deepMerge } from '@diagram-craft/utils';
