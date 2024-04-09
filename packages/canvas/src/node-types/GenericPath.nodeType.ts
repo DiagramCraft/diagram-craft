@@ -1,7 +1,7 @@
 import { EditablePath, EditableWaypointType } from '../tools/node/editablePath.ts';
-import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition.ts';
 import { DiagramNode } from '@diagram-craft/model';
-import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { EventHelper } from '../eventHelper.ts';
 import { UnitOfWork } from '@diagram-craft/model';
@@ -11,6 +11,7 @@ import { ControlPointDrag } from '../tools/node/controlPointDrag.ts';
 import { NodeDrag } from '../tools/node/nodeDrag.ts';
 import * as svg from '../component/vdom-svg.ts';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry';
+import { ShapeBuilder } from '../shape/ShapeBuilder.ts';
 
 declare global {
   interface NodeProps {

@@ -1,8 +1,9 @@
-import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
+import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { DiagramNode } from '@diagram-craft/model';
-import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition.ts';
 import { Extent, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
+import { ShapeBuilder } from '../shape/ShapeBuilder.ts';
 
 export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {

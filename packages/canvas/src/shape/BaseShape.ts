@@ -1,60 +1,21 @@
 import { Component } from '../component/component.ts';
-import { DiagramNode } from '@diagram-craft/model';
-import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './pathRenderer.temp.ts';
-import { rawHTML, toInlineCSS, VNode } from '../component/vdom.ts';
+import { Diagram, DiagramEdge, DiagramNode, NodeDefinition } from '@diagram-craft/model';
+import { VNode } from '../component/vdom.ts';
 import { Angle } from '@diagram-craft/geometry/src/angle.ts';
-import { DeepReadonly } from '@diagram-craft/utils';
-import { deepClone } from '@diagram-craft/utils';
-import { UnitOfWork } from '@diagram-craft/model';
+import { deepClone, DeepReadonly } from '@diagram-craft/utils';
 import { Tool } from '../tools/types.ts';
-import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { DASH_PATTERNS } from '../dashPatterns.ts';
 import { makeShadowFilter } from '../styleUtils.ts';
 import { EventHelper } from '../eventHelper.ts';
-import { Diagram } from '@diagram-craft/model';
-import { FillFilter, FillPattern } from './fill.temp.ts';
+import { FillFilter, FillPattern } from './shapeFill.ts';
 import * as svg from '../component/vdom-svg.ts';
-import * as html from '../component/vdom-html.ts';
-import { DiagramEdge } from '@diagram-craft/model';
 import { EdgeComponent } from '../EdgeComponent.ts';
-import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
-import { NodeDefinition } from '@diagram-craft/model';
-import { Box, Extent, Path, Point } from '@diagram-craft/geometry';
-import { ShapeControlPointDrag } from '../drag/shapeControlDrag.ts';
+import { ShapeNodeDefinition } from './shapeNodeDefinition.ts';
+import { Box, Path, Point } from '@diagram-craft/geometry';
 import { Modifiers } from '../drag/dragDropManager.ts';
-
-const VALIGN_TO_FLEX_JUSTIFY = {
-  top: 'flex-start',
-  middle: 'center',
-  bottom: 'flex-end'
-};
-
-const withPx = (n?: number) => (n ? n + 'px' : undefined);
-
-type ControlPointCallback = (x: number, y: number, uow: UnitOfWork) => string;
-
-type ControlPoint = {
-  x: number;
-  y: number;
-  cb: ControlPointCallback;
-};
-
-const makeControlPoint = (cp: ControlPoint, node: DiagramNode) => {
-  return svg.circle({
-    class: 'svg-shape-control-point',
-    cx: cp.x,
-    cy: cp.y,
-    r: '4',
-    on: {
-      mousedown: (e: MouseEvent) => {
-        if (e.button !== 0) return;
-        DRAG_DROP_MANAGER.initiate(new ShapeControlPointDrag(node, cp.cb));
-        e.stopPropagation();
-      }
-    }
-  });
-};
+import { ShapeBuilder } from './ShapeBuilder.ts';
+import { makeControlPoint } from './ShapeControlPoint.ts';
 
 type NodeWrapperComponentProps = {
   children: VNode[];
@@ -123,205 +84,6 @@ const wrapComponent = (props: NodeWrapperComponentProps) => {
     ...reflection,
     ...props.children
   );
-};
-
-export class TextComponent extends Component<Props> {
-  private width: number = 0;
-  private height: number = 0;
-
-  render(props: Props) {
-    const style: Partial<CSSStyleDeclaration> = {
-      color: props.text?.color ?? 'unset',
-      fontFamily: props.text?.font ?? 'unset',
-      fontSize: withPx(props.text?.fontSize) ?? 'unset',
-      fontWeight: props.text?.bold ? 'bold' : 'normal',
-      fontStyle: props.text?.italic ? 'italic' : 'normal',
-      lineHeight: `${1.2 * (props.text?.lineHeight ?? 1) * 100}%`,
-      minWidth: 'min-content',
-      textDecoration: props.text?.textDecoration
-        ? `${props.text.textDecoration} ${props.text.color ?? 'black'}`
-        : 'none',
-      textTransform: props.text?.textTransform ?? 'none',
-      textAlign: props.text?.align ?? 'unset',
-      paddingLeft: withPx(props.text?.left) ?? '0',
-      paddingRight: withPx(props.text?.right) ?? '0',
-      paddingTop: withPx(props.text?.top) ?? '0',
-      paddingBottom: withPx(props.text?.bottom) ?? '0'
-    };
-
-    const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
-
-    const updateBounds = (w: number, h: number) => {
-      if (w === this.width && h === this.height) return;
-      this.width = w;
-      this.height = h;
-      props.onSizeChange?.({ w, h });
-    };
-
-    return svg.foreignObject(
-      {
-        class: 'svg-node__fo',
-        id: props.id,
-        x: props.bounds.x.toString(),
-        y: props.bounds.y.toString(),
-        width: props.bounds.w.toString(),
-        height: props.bounds.h.toString(),
-        on: {
-          mousedown: props.onMouseDown
-        }
-      },
-      html.div(
-        {
-          class: 'svg-node__fo__inner',
-          style: `justify-content: ${valign}`,
-          on: {
-            dblclick: (e: MouseEvent) => {
-              const $textNode = (e.currentTarget as HTMLElement).firstChild as HTMLElement;
-              $textNode.contentEditable = 'true';
-              $textNode.style.pointerEvents = 'auto';
-              $textNode.focus();
-            }
-          }
-        },
-        [
-          html.div(
-            {
-              class: 'svg-node__text',
-              style: toInlineCSS(style),
-              on: {
-                keydown: (e: KeyboardEvent) => {
-                  const target = e.target as HTMLElement;
-                  if (e.key === 'Escape') {
-                    target.innerText = props.text?.text ?? '';
-                    target.blur();
-                  } else if (e.key === 'Enter' && e.metaKey) {
-                    target.blur();
-                  }
-
-                  setTimeout(() => {
-                    const w = target.offsetWidth;
-                    const h = target.offsetHeight;
-                    if (w !== this.width || h !== this.height) {
-                      updateBounds(
-                        (e.target as HTMLElement).offsetWidth,
-                        (e.target as HTMLElement).offsetHeight
-                      );
-                    }
-                  }, 0);
-                },
-                blur: (e: FocusEvent) => {
-                  (e.target as HTMLElement).contentEditable = 'false';
-                  (e.target as HTMLElement).style.pointerEvents = 'none';
-                  props.onChange((e.target as HTMLElement).innerHTML);
-
-                  updateBounds(
-                    (e.target as HTMLElement).offsetWidth,
-                    (e.target as HTMLElement).offsetHeight
-                  );
-                }
-              },
-              hooks: {
-                onInsert: (n: VNode) => {
-                  if (!props.text?.text) return;
-
-                  updateBounds(
-                    (n.el! as HTMLElement).offsetWidth,
-                    (n.el! as HTMLElement).offsetHeight
-                  );
-                },
-                onUpdate: (_o: VNode, n: VNode) => {
-                  updateBounds(
-                    (n.el! as HTMLElement).offsetWidth,
-                    (n.el! as HTMLElement).offsetHeight
-                  );
-                }
-              }
-            },
-            [rawHTML(props.text?.text ?? '')]
-          )
-        ]
-      )
-    );
-  }
-}
-
-const defaultOnChange = (node: DiagramNode) => (text: string) => {
-  UnitOfWork.execute(node.diagram, uow => {
-    node.updateProps(props => {
-      props.text ??= {};
-      props.text.text = text;
-    }, uow);
-  });
-};
-
-export class ShapeBuilder {
-  children: VNode[] = [];
-  boundary: Path | undefined = undefined;
-  controlPoints: ControlPoint[] = [];
-
-  constructor(private readonly props: BaseShapeBuildProps) {}
-
-  add(vnode: VNode) {
-    this.children.push(vnode);
-  }
-
-  // TODO: Maybe we can pass Component<any> in the constructor instead
-  text(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cmp: Component<any>,
-    id: string = '1',
-    text?: NodeProps['text'],
-    bounds?: Box,
-    onSizeChange?: (size: Extent) => void
-  ) {
-    this.children.push(
-      cmp.subComponent<Props, TextComponent>('text', () => new TextComponent(), {
-        id: `text_${id}_${this.props.node.id}`,
-        text: text ?? this.props.nodeProps.text,
-        bounds: bounds ?? this.props.node.bounds,
-        onMouseDown: this.props.onMouseDown,
-        onChange: defaultOnChange(this.props.node),
-        onSizeChange: onSizeChange
-      })
-    );
-  }
-
-  boundaryPath(path: Path, map: (n: VNode) => VNode = a => a) {
-    const pathRenderer: PathRenderer = this.props.node.props.effects?.sketch
-      ? new SketchPathRenderer()
-      : new DefaultPathRenderer();
-
-    const paths = pathRenderer.render(this.props.node, {
-      path: path,
-      style: this.props.style
-    });
-    this.children.push(
-      ...paths
-        .map(path => ({
-          d: path.path,
-          x: this.props.node.bounds.x.toString(),
-          y: this.props.node.bounds.y.toString(),
-          width: this.props.node.bounds.w.toString(),
-          height: this.props.node.bounds.h.toString(),
-          class: 'svg-node__boundary svg-node',
-          style: toInlineCSS(path.style)
-        }))
-        .map(p => map(svg.path(p)))
-    );
-  }
-
-  controlPoint(x: number, y: number, cb: ControlPointCallback) {
-    this.controlPoints.push({ x, y, cb });
-  }
-}
-
-type Props = {
-  id: string;
-  text: NodeProps['text'];
-  bounds: Box;
-  onMouseDown: (e: MouseEvent) => void;
-  onChange: (text: string) => void;
-  onSizeChange?: (size: Extent) => void;
 };
 
 export type BaseShapeProps = {
