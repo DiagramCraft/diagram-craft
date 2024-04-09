@@ -1,4 +1,4 @@
-import { EventHelper } from '../eventHelper.ts';
+import { EventHelper } from '@diagram-craft/utils';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { Diagram } from '@diagram-craft/model';
 import { Component } from '../component/component.ts';

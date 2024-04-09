@@ -4,7 +4,7 @@ import { DiagramNode } from '@diagram-craft/model';
 import { DiagramEdge } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
 import { ElementAddUndoableAction } from '@diagram-craft/model';
-import { EventHelper } from '../eventHelper.ts';
+import { EventHelper } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
 import { ApplicationTriggers, CanvasState } from '../EditableCanvas.ts';
 import { VerifyNotReached } from '@diagram-craft/utils';

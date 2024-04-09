@@ -6,7 +6,7 @@ import { Actions, executeAction } from './keyMap.ts';
 import { DocumentBoundsComponent } from './DocumentBounds.ts';
 import { SelectionState, SelectionStateEvents } from '@diagram-craft/model';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
-import { EventHelper } from './eventHelper.ts';
+import { EventHelper } from '@diagram-craft/utils';
 import { BACKGROUND, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';

@@ -12,7 +12,7 @@ import { Tool } from './tools/types.ts';
 import { ApplicationTriggers } from './EditableCanvas.ts';
 import { ARROW_SHAPES, ArrowShape } from './arrowShapes.ts';
 import { hash } from '@diagram-craft/utils';
-import { EventHelper } from './eventHelper.ts';
+import { EventHelper } from '@diagram-craft/utils';
 import { DASH_PATTERNS } from './dashPatterns.ts';
 import { makeShadowFilter } from './styleUtils.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';

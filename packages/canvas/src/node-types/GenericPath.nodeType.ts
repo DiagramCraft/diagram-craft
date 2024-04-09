@@ -3,7 +3,7 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition.ts';
 import { DiagramNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
-import { EventHelper } from '../eventHelper.ts';
+import { EventHelper } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
 import { toInlineCSS } from '../component/vdom.ts';

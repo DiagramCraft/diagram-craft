@@ -7,7 +7,7 @@ import { Tool } from '../tools/types.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { DASH_PATTERNS } from '../dashPatterns.ts';
 import { makeShadowFilter } from '../styleUtils.ts';
-import { EventHelper } from '../eventHelper.ts';
+import { EventHelper } from '@diagram-craft/utils';
 import { FillFilter, FillPattern } from './shapeFill.ts';
 import * as svg from '../component/vdom-svg.ts';
 import { EdgeComponent } from '../EdgeComponent.ts';

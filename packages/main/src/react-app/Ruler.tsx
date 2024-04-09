@@ -3,7 +3,7 @@ import { useRedraw } from './useRedraw.tsx';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { useDiagram } from './context/DiagramContext.ts';
-import { EventHelper } from '@diagram-craft/canvas';
+import { EventHelper } from '@diagram-craft/utils';
 
 type Tick = {
   pos: number;
