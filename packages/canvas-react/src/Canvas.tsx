@@ -17,7 +17,7 @@ export const Canvas = forwardRef<SVGSVGElement, CanvasProps>((props, _ref) => {
     cmpRef.current.update(cmpProps);
   }
 
-  useImperativeHandle(_ref, () => svgRef.current!, [svgRef.current]);
+  useImperativeHandle(_ref, () => svgRef.current!);
 
   useEffect(() => {
     if (cmpRef.current.isRendered()) return;

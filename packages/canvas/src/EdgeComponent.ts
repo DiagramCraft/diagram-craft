@@ -115,7 +115,7 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
           edgeProps.stroke.patternSize / 100,
           edgeProps.stroke.patternSpacing / 100
         ) ?? '',
-      strokeWidth: width?.toString(),
+      strokeWidth: width.toString(),
       stroke: color
     };
     if (edgeProps.shadow.enabled) {
@@ -281,7 +281,6 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
       svg.path({
         'class': 'svg-edge',
         'd': path,
-        // @ts-ignore
         'style': toInlineCSS(style),
         'marker-start': startArrow ? `url(#s_${props.def.id})` : '',
         'marker-end': endArrow ? `url(#e_${props.def.id})` : '',

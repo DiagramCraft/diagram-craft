@@ -10,8 +10,7 @@ type Ref<T> = { current: T };
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
-  // @ts-ignore
-  private svgRef: Ref<SVGSVGElement> = { current: undefined };
+  private svgRef: Ref<SVGSVGElement | null> = { current: null };
 
   render(props: CanvasProps) {
     const diagram = props.diagram;
@@ -29,12 +28,11 @@ export class CanvasComponent extends Component<CanvasProps> {
             this.svgRef.current = node.el! as SVGSVGElement;
           },
           onRemove: () => {
-            // @ts-ignore
             this.svgRef.current = null;
           }
         },
         on: {
-          click: e => props?.onClick?.(e)
+          click: e => props.onClick?.(e)
         }
       },
       [
