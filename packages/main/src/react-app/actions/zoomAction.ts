@@ -1,5 +1,5 @@
 import { Diagram } from '@diagram-craft/model';
-import { AbstractToggleAction } from '../../canvas/action.ts';
+import { AbstractToggleAction } from '@diagram-craft/canvas';
 
 declare global {
   interface ActionMap {

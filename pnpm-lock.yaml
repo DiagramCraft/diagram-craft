@@ -30,6 +30,34 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
 
+  packages/canvas:
+    dependencies:
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
+      react-icons:
+        specifier: ^4.12.0
+        version: 4.12.0(react@18.2.0)
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.67
+        version: 18.2.67
+      '@types/react-dom':
+        specifier: ^18.2.22
+        version: 18.2.22
+
   packages/geometry:
     dependencies:
       '@diagram-craft/utils':
@@ -38,6 +66,9 @@ importers:
 
   packages/main:
     dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
       '@diagram-craft/geometry':
         specifier: workspace:^
         version: link:../geometry

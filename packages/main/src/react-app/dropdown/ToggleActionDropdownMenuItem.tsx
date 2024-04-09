@@ -1,10 +1,10 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { findKeyBindings, formatKeyBinding } from '../../canvas/keyMap.ts';
 import React from 'react';
 import { useActions } from '../context/ActionsContext.ts';
-import { Action, ActionContext, ToggleAction } from '../../canvas/action.ts';
 import { TbCheck } from 'react-icons/tb';
 import { useRedraw } from '../useRedraw.tsx';
+import { findKeyBindings, formatKeyBinding } from '@diagram-craft/canvas';
+import { Action, ActionContext, ToggleAction } from '@diagram-craft/canvas';
 
 export const ToggleActionDropdownMenuItem = (props: Props) => {
   const redraw = useRedraw();

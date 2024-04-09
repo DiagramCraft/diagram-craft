@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as Toolbar from '@radix-ui/react-toolbar';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useActions } from '../context/ActionsContext.ts';
-import { ActionEvents } from '../../canvas/action.ts';
+import { ActionEvents } from '@diagram-craft/canvas';
 
 export const ActionToolbarButton = (props: Props) => {
   const { actionMap } = useActions();

@@ -1,14 +1,14 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { CanvasComponent, Props } from '../canvas/Canvas.ts';
+import { CanvasComponent, CanvasProps } from '@diagram-craft/canvas';
 
-export const Canvas = forwardRef<SVGSVGElement, Props>((props, _ref) => {
+export const Canvas = forwardRef<SVGSVGElement, CanvasProps>((props, _ref) => {
   const diagram = props.diagram;
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const ref = useRef<HTMLDivElement>(null);
   const cmpRef = useRef<CanvasComponent>(new CanvasComponent());
 
-  const cmpProps: Props = {
+  const cmpProps: CanvasProps = {
     ...props,
     diagram
   };

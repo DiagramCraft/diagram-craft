@@ -1,8 +1,8 @@
 import { Diagram } from '@diagram-craft/model';
 import { DiagramNode } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
-import { EventHelper } from '../canvas/eventHelper.ts';
 import { ElementAddUndoableAction } from '@diagram-craft/model';
+import { EventHelper } from '@diagram-craft/canvas';
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: DragEvent) => {

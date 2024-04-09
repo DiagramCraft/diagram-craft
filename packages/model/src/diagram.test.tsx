@@ -5,8 +5,8 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { newid } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { RectNodeDefinition } from '../../main/src/canvas/node-types/Rect.nodeType.ts';
 import { TransformFactory } from '@diagram-craft/geometry';
+import { TestNodeDefinition } from './TestNodeDefinition.ts';
 
 const bounds = {
   x: 0,
@@ -19,7 +19,7 @@ const bounds = {
 describe('Diagram', () => {
   test('visibleElements()', () => {
     const registry = new NodeDefinitionRegistry();
-    registry.register(new RectNodeDefinition());
+    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
     const diagram = new Diagram(newid(), 'Name', registry, new EdgeDefinitionRegistry());
     const layer1 = new Layer(newid(), 'Layer 1', [], diagram);
@@ -44,7 +44,7 @@ describe('Diagram', () => {
 
   test('transform rotate', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
-    nodeDefinitionRegistry.register(new RectNodeDefinition('rect', 'Rectangle'));
+    nodeDefinitionRegistry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
     const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());
     diagram.layers.add(new Layer('default', 'Default', [], diagram), new UnitOfWork(diagram));

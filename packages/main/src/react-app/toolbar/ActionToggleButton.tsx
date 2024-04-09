@@ -3,8 +3,8 @@ import React from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../useRedraw.tsx';
 import { useActions } from '../context/ActionsContext.ts';
-import { ToggleAction } from '../../canvas/action.ts';
-import { ActionName } from '../../canvas/keyMap.ts';
+import { ToggleAction } from '@diagram-craft/canvas';
+import { ActionName } from '@diagram-craft/canvas';
 
 export const ActionToggleButton = (props: Props) => {
   const { actionMap } = useActions();

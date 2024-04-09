@@ -7,7 +7,7 @@ import { Diagram } from './index.ts';
 import { Layer } from './index.ts';
 import { FreeEndpoint } from './index.ts';
 import { UnitOfWork } from './index.ts';
-import { RectNodeDefinition } from '../../main/src/canvas/node-types/Rect.nodeType.ts';
+import { TestNodeDefinition } from './TestNodeDefinition.ts';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(
@@ -37,7 +37,7 @@ const createEdge = (diagram: Diagram) =>
 
 function createDiagram() {
   const registry = new NodeDefinitionRegistry();
-  registry.register(new RectNodeDefinition());
+  registry.register(new TestNodeDefinition('rect', 'Rectangle'));
   const d = new Diagram('1', 'test', registry, new EdgeDefinitionRegistry());
   d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.throwaway(d));
   return d;

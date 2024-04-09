@@ -9,11 +9,11 @@ import { Modifiers } from './drag/dragDropManager.ts';
 type Ref<T> = { current: T };
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
-export class CanvasComponent extends Component<Props> {
+export class CanvasComponent extends Component<CanvasProps> {
   // @ts-ignore
   private svgRef: Ref<SVGSVGElement> = { current: undefined };
 
-  render(props: Props) {
+  render(props: CanvasProps) {
     const diagram = props.diagram;
 
     return html.svg(
@@ -87,7 +87,7 @@ export class CanvasComponent extends Component<Props> {
   }
 }
 
-export type Props = {
+export type CanvasProps = {
   className?: string;
   diagram: Diagram;
   width?: string | number;

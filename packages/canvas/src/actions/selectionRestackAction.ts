@@ -1,6 +1,6 @@
 import { Diagram } from '@diagram-craft/model';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { ActionMapFactory, State } from '../../canvas/keyMap.ts';
+import { ActionMapFactory, State } from '../keyMap.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
 

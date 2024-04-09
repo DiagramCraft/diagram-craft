@@ -31,6 +31,7 @@
       "@diagram-craft/utils": ["./packages/utils/src"],
       "@diagram-craft/geometry": ["./packages/geometry/src"],
       "@diagram-craft/model": ["./packages/model/src"],
+      "@diagram-craft/canvas": ["./packages/canvas/src"],
     },
   },
   "references": [{ "path": "./tsconfig.node.json"}]

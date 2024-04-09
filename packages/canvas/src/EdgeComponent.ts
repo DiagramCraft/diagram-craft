@@ -11,7 +11,6 @@ import {
 import { Tool } from './tools/types.ts';
 import { ApplicationTriggers } from './EditableCanvas.ts';
 import { ARROW_SHAPES, ArrowShape } from './arrowShapes.ts';
-import { asDistortedSvgPath, parseArrowSvgPath } from './sketch.ts';
 import { hash } from '@diagram-craft/utils';
 import { EventHelper } from './eventHelper.ts';
 import { CSSProperties } from 'react';
@@ -23,6 +22,7 @@ import { Point } from '@diagram-craft/geometry';
 import { Modifiers } from './drag/dragDropManager.ts';
 import { EdgeWaypointDrag } from './drag/edgeWaypointDrag.ts';
 import { BezierControlPointDrag } from './drag/bezierControlPointDrag.ts';
+import { asDistortedSvgPath, parseArrowSvgPath } from './sketch.ts';
 
 const makeArrowMarker = ({
   id,

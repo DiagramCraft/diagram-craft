@@ -1,11 +1,14 @@
 import { expect, test, describe } from 'vitest';
 import { UndoManager } from './undoManager.ts';
-import { Diagram } from './index.ts';
-import { defaultEdgeRegistry, defaultNodeRegistry } from '../../main/src/canvas/defaultRegistry.ts';
+import { Diagram, EdgeDefinitionRegistry, NodeDefinitionRegistry } from './index.ts';
+import { TestNodeDefinition } from './TestNodeDefinition.ts';
 
 describe('UndoManager', () => {
   test('add()', () => {
-    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const registry = new NodeDefinitionRegistry();
+    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
+
+    const d = new Diagram('id', 'name', registry, new EdgeDefinitionRegistry());
     const manager = new UndoManager(d);
     let x = 0;
 
@@ -25,7 +28,10 @@ describe('UndoManager', () => {
   });
 
   test('addAndExecute()', () => {
-    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const registry = new NodeDefinitionRegistry();
+    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
+
+    const d = new Diagram('id', 'name', registry, new EdgeDefinitionRegistry());
     const manager = new UndoManager(d);
     let x = 0;
 
@@ -44,7 +50,10 @@ describe('UndoManager', () => {
   });
 
   test('undo()', () => {
-    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const registry = new NodeDefinitionRegistry();
+    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
+
+    const d = new Diagram('id', 'name', registry, new EdgeDefinitionRegistry());
     const manager = new UndoManager(d);
     let x = 0;
 
@@ -65,7 +74,10 @@ describe('UndoManager', () => {
   });
 
   test('redo()', () => {
-    const d = new Diagram('id', 'name', defaultNodeRegistry(), defaultEdgeRegistry());
+    const registry = new NodeDefinitionRegistry();
+    registry.register(new TestNodeDefinition('rect', 'Rectangle'));
+
+    const d = new Diagram('id', 'name', registry, new EdgeDefinitionRegistry());
     const manager = new UndoManager(d);
     let x = 0;
 

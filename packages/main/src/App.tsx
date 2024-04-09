@@ -33,7 +33,6 @@ import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu.ts
 import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher.tsx';
 import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu.tsx';
 import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
-import { defaultEdgeRegistry, defaultNodeRegistry } from './canvas/defaultRegistry.ts';
 import { SideBar } from './react-app/SideBar.tsx';
 import { SideBarPage } from './react-app/SideBarPage.tsx';
 import { PickerToolWindow } from './react-app/PickerToolWindow.tsx';
@@ -42,10 +41,8 @@ import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 import { useEventListener } from './react-app/hooks/useEventListener.ts';
 import { useRedraw } from './react-app/useRedraw.tsx';
 import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap.ts';
-import { makeActionMap } from './canvas/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
 import { DocumentTabs } from './react-app/DocumentTabs.tsx';
-import { UserState } from './canvas/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
 import { Ruler } from './react-app/Ruler.tsx';
 import { ActionsContext, useActions } from './react-app/context/ActionsContext.ts';
@@ -60,7 +57,6 @@ import {
   SerializedDiagram
 } from '@diagram-craft/model';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
-import { ApplicationState } from './canvas/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
 import { LayerIndicator } from './react-app/LayerIndicator.tsx';
 import { testDiagram } from './sample/test.ts';
@@ -71,6 +67,10 @@ import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
 import { EditableCanvas } from './canvas-react/EditableCanvas.tsx';
 import { Point } from '@diagram-craft/geometry';
+import { defaultEdgeRegistry, defaultNodeRegistry } from '@diagram-craft/canvas';
+import { ApplicationState } from '@diagram-craft/canvas';
+import { UserState } from '@diagram-craft/canvas';
+import { makeActionMap } from '@diagram-craft/canvas';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

@@ -6,7 +6,7 @@ import { useDiagram } from '../context/DiagramContext.ts';
 import { useEdgeDefaults } from '../useDefaults.tsx';
 import { LinePanel } from './LinePanel.tsx';
 import { ArrowPreview } from './ArrowPreview.tsx';
-import { ARROW_SHAPES } from '../../canvas/arrowShapes.ts';
+import { ARROW_SHAPES } from '@diagram-craft/canvas';
 
 export const LineToolbarButton = () => {
   const diagram = useDiagram();
