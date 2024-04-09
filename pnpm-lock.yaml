@@ -42,6 +42,51 @@ importers:
         specifier: workspace:^
         version: link:../utils
 
+  packages/canvas-app:
+    dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+
+  packages/canvas-edges:
+    dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+
+  packages/canvas-nodes:
+    dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+
   packages/canvas-react:
     dependencies:
       '@diagram-craft/canvas':
@@ -75,6 +120,15 @@ importers:
       '@diagram-craft/canvas':
         specifier: workspace:^
         version: link:../canvas
+      '@diagram-craft/canvas-app':
+        specifier: workspace:^
+        version: link:../canvas-app
+      '@diagram-craft/canvas-edges':
+        specifier: workspace:^
+        version: link:../canvas-edges
+      '@diagram-craft/canvas-nodes':
+        specifier: workspace:^
+        version: link:../canvas-nodes
       '@diagram-craft/canvas-react':
         specifier: workspace:^
         version: link:../canvas-react
