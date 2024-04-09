@@ -11,7 +11,7 @@ import { VerifyNotReached } from '@diagram-craft/utils';
 import { ConnectedEndpoint, FreeEndpoint, isConnected } from '@diagram-craft/model';
 import { Component, createEffect } from '../component/component.ts';
 import * as svg from '../component/vdom-svg.ts';
-import { VNode } from '../vdom.ts';
+import { VNode } from '../component/vdom.ts';
 import { Point } from '@diagram-craft/geometry';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag.ts';
 import { AbstractDrag, Modifiers } from '../drag/dragDropManager.ts';

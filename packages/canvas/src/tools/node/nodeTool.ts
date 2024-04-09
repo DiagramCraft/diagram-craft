@@ -1,12 +1,8 @@
-import { MutableRefObject, RefObject } from 'react';
-import { BACKGROUND, DeferedMouseAction } from '../types.ts';
+import { BACKGROUND } from '../types.ts';
 import { AbstractTool } from '../abstractTool.ts';
-import { Diagram } from '@diagram-craft/model';
-import { isNode } from '@diagram-craft/model';
+import { commitWithUndo, Diagram, isNode, UnitOfWork } from '@diagram-craft/model';
 import { addHighlight, removeHighlight } from '../../highlight.ts';
-import { UnitOfWork } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../../EditableCanvas.ts';
-import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
 import { DragDopManager, Modifiers } from '../../drag/dragDropManager.ts';
 
@@ -14,13 +10,12 @@ export class NodeTool extends AbstractTool {
   constructor(
     protected readonly diagram: Diagram,
     protected readonly drag: DragDopManager,
-    protected readonly svgRef: RefObject<SVGSVGElement>,
-    protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly svg: SVGSVGElement | null,
     protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('node', diagram, drag, svgRef, deferedMouseAction, applicationTriggers, resetTool);
-    if (this.svgRef.current) this.svgRef.current!.style.cursor = 'default';
+    super('node', diagram, drag, svg, applicationTriggers, resetTool);
+    if (this.svg) this.svg.style.cursor = 'default';
 
     if (
       diagram.selectionState.getSelectionType() !== 'single-node' &&

@@ -1,5 +1,5 @@
 import { Component } from './component/component.ts';
-import { toInlineCSS, VNode } from './vdom.ts';
+import { toInlineCSS, VNode } from './component/vdom.ts';
 import {
   applyLineHops,
   clipPath,
@@ -13,7 +13,6 @@ import { ApplicationTriggers } from './EditableCanvas.ts';
 import { ARROW_SHAPES, ArrowShape } from './arrowShapes.ts';
 import { hash } from '@diagram-craft/utils';
 import { EventHelper } from './eventHelper.ts';
-import { CSSProperties } from 'react';
 import { DASH_PATTERNS } from './dashPatterns.ts';
 import { makeShadowFilter } from './styleUtils.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
@@ -110,13 +109,13 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
     const fillColor = edgeProps.fill.color;
     const width = edgeProps.stroke.width;
 
-    const style: CSSProperties = {
+    const style: Partial<CSSStyleDeclaration> = {
       strokeDasharray:
         DASH_PATTERNS[edgeProps.stroke.pattern]?.(
           edgeProps.stroke.patternSize / 100,
           edgeProps.stroke.patternSpacing / 100
         ) ?? '',
-      strokeWidth: width,
+      strokeWidth: width?.toString(),
       stroke: color
     };
     if (edgeProps.shadow.enabled) {
@@ -125,7 +124,7 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
 
     if (edgeProps.highlight.includes('drop-target')) {
       style.stroke = '#30A46C';
-      style.strokeWidth = 3;
+      style.strokeWidth = '3';
       style.strokeDasharray = '';
     }
 

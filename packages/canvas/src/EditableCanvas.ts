@@ -7,7 +7,7 @@ import { DocumentBoundsComponent } from './DocumentBounds.ts';
 import { SelectionState, SelectionStateEvents } from '@diagram-craft/model';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { EventHelper } from './eventHelper.ts';
-import { BACKGROUND, DeferedMouseAction, Tool, ToolContructor } from './tools/types.ts';
+import { BACKGROUND, Tool, ToolContructor } from './tools/types.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
 import { DragLabelComponent } from './DragLabel.ts';
@@ -61,7 +61,6 @@ type ComponentProps = Props & Actions & { diagram: Diagram };
 type Ref<T> = { current: T };
 
 export class EditableCanvasComponent extends Component<ComponentProps> {
-  private deferedMouseAction: Ref<DeferedMouseAction | undefined> = { current: undefined };
   private svgRef: Ref<SVGSVGElement | null> = { current: null };
   private tool: Tool | undefined;
 
@@ -82,8 +81,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       this.tool = new MoveTool(
         diagram,
         DRAG_DROP_MANAGER,
-        this.svgRef,
-        this.deferedMouseAction,
+        this.svgRef.current,
         props.applicationTriggers,
         () => {
           props.applicationState.tool = 'move';
@@ -104,8 +102,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           new TOOLS[s.tool](
             diagram,
             drag,
-            this.svgRef,
-            this.deferedMouseAction,
+            this.svgRef.current,
             props.applicationTriggers,
             resetTool
           )

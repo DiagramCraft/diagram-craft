@@ -1,7 +1,7 @@
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { Component, createEffect } from './component/component.ts';
 import * as html from './component/vdom-html.ts';
-import { text } from './vdom.ts';
+import { text } from './component/vdom.ts';
 import { deepEquals } from '@diagram-craft/utils';
 import { CanvasState } from './EditableCanvas.ts';
 import { hasElements } from '@diagram-craft/utils';

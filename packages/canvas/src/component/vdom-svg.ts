@@ -1,4 +1,4 @@
-import { s, VNode, VNodeChildParam } from '../vdom.ts';
+import { s, VNode, VNodeChildParam } from './vdom.ts';
 import { ElementAttributes, Attr } from './vdom-html.ts';
 
 type CommonPresentationAttributes = {

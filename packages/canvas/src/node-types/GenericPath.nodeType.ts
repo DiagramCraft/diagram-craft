@@ -6,7 +6,7 @@ import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { EventHelper } from '../eventHelper.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
-import { toInlineCSS } from '../vdom.ts';
+import { toInlineCSS } from '../component/vdom.ts';
 import { ControlPointDrag } from '../tools/node/controlPointDrag.ts';
 import { NodeDrag } from '../tools/node/nodeDrag.ts';
 import * as svg from '../component/vdom-svg.ts';

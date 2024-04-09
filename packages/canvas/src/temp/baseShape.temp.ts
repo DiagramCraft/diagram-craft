@@ -1,7 +1,7 @@
 import { Component } from '../component/component.ts';
 import { DiagramNode } from '@diagram-craft/model';
 import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './pathRenderer.temp.ts';
-import { rawHTML, toInlineCSS, VNode } from '../vdom.ts';
+import { rawHTML, toInlineCSS, VNode } from '../component/vdom.ts';
 import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { DeepReadonly } from '@diagram-craft/utils';
 import { deepClone } from '@diagram-craft/utils';

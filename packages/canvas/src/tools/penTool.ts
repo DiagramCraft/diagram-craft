@@ -1,12 +1,7 @@
-import { MutableRefObject, RefObject } from 'react';
-import { DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
-import { Diagram } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
+import { Diagram, DiagramNode, ElementAddUndoableAction, UnitOfWork } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
-import { DiagramNode } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
-import { ElementAddUndoableAction } from '@diagram-craft/model';
 import { PathBuilder, PathUtils, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
 
@@ -16,13 +11,12 @@ export class PenTool extends AbstractTool {
   constructor(
     protected readonly diagram: Diagram,
     protected readonly drag: DragDopManager,
-    protected readonly svgRef: RefObject<SVGSVGElement>,
-    protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly svg: SVGSVGElement | null,
     protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('node', diagram, drag, svgRef, deferedMouseAction, applicationTriggers, resetTool);
-    if (this.svgRef.current) this.svgRef.current!.style.cursor = 'default';
+    super('node', diagram, drag, svg, applicationTriggers, resetTool);
+    if (this.svg) this.svg.style.cursor = 'default';
   }
 
   onMouseOver(id: string, point: Point) {

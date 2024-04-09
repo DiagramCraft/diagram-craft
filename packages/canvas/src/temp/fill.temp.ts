@@ -1,5 +1,5 @@
 import { Component } from '../component/component.ts';
-import { rawHTML, VNode } from '../vdom.ts';
+import { rawHTML, VNode } from '../component/vdom.ts';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { getPatternProps } from '../getPatternProps.ts';
 import { DiagramNode } from '@diagram-craft/model';

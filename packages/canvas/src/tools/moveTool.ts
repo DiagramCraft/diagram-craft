@@ -1,25 +1,28 @@
-import { MutableRefObject, RefObject } from 'react';
-import { BACKGROUND, DeferedMouseAction } from './types.ts';
+import { BACKGROUND } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
-import { Diagram } from '@diagram-craft/model';
-import { getDiagramElementPath } from '@diagram-craft/model';
+import { Diagram, getDiagramElementPath } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { Box, Point } from '@diagram-craft/geometry';
 import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
 import { MarqueeDrag } from '../drag/marqueeDrag.ts';
 import { MoveDrag } from '../drag/moveDrag.ts';
 
+type DeferredMouseAction = {
+  callback: () => void;
+};
+
 export class MoveTool extends AbstractTool {
+  private deferredMouseAction: DeferredMouseAction | undefined;
+
   constructor(
     protected readonly diagram: Diagram,
     protected readonly drag: DragDopManager,
-    protected readonly svgRef: RefObject<SVGSVGElement>,
-    protected readonly deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    protected readonly svg: SVGSVGElement | null,
     protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('move', diagram, drag, svgRef, deferedMouseAction, applicationTriggers, resetTool);
-    if (this.svgRef.current) this.svgRef.current!.style.cursor = 'default';
+    super('move', diagram, drag, svg, applicationTriggers, resetTool);
+    if (this.svg) this.svg.style.cursor = 'default';
   }
 
   onMouseOver(id: string, _point: Point) {
@@ -60,7 +63,7 @@ export class MoveTool extends AbstractTool {
         }
       }
 
-      this.deferedMouseAction.current = {
+      this.deferredMouseAction = {
         callback: () => {
           if (!modifiers.shiftKey) selection.clear();
           if (!isClickOnBackground && element) {
@@ -116,10 +119,10 @@ export class MoveTool extends AbstractTool {
     const current = this.drag.current();
     try {
       current?.onDragEnd();
-      this.deferedMouseAction.current?.callback();
+      this.deferredMouseAction?.callback();
     } finally {
       this.drag.clear();
-      this.deferedMouseAction.current = undefined;
+      this.deferredMouseAction = undefined;
     }
   }
 
@@ -128,7 +131,7 @@ export class MoveTool extends AbstractTool {
     try {
       current?.onDrag(this.diagram.viewBox.toDiagramPoint(point), modifiers);
     } finally {
-      this.deferedMouseAction.current = undefined;
+      this.deferredMouseAction = undefined;
     }
   }
 

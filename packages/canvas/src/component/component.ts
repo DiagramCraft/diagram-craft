@@ -1,4 +1,4 @@
-import { apply, DOMElement, insert, VNode, VNodeData } from '../vdom.ts';
+import { apply, DOMElement, insert, VNode, VNodeData } from './vdom.ts';
 
 type Callback = () => void | (() => void);
 

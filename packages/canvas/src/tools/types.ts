@@ -1,4 +1,3 @@
-import { MutableRefObject, RefObject } from 'react';
 import { Diagram } from '@diagram-craft/model';
 import { ToolType } from '../ApplicationState.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
@@ -25,8 +24,7 @@ export type ToolContructor = {
   new (
     diagram: Diagram,
     drag: DragDopManager,
-    svgRef: RefObject<SVGSVGElement>,
-    deferedMouseAction: MutableRefObject<DeferedMouseAction | undefined>,
+    svg: SVGSVGElement | null,
     applicationTriggers: ApplicationTriggers,
     resetTool: () => void
   ): Tool;
@@ -34,8 +32,3 @@ export type ToolContructor = {
 
 // TODO: Move this constant somewhere else
 export const BACKGROUND = 'background';
-
-// TODO: Potentially move this to a more general place
-export type DeferedMouseAction = {
-  callback: () => void;
-};
