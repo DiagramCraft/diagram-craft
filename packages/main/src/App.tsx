@@ -41,21 +41,26 @@ import { ObjectToolWindow } from './react-app/ObjectProperties/ObjectToolWindow.
 import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
 import { useEventListener } from './react-app/hooks/useEventListener.ts';
 import { useRedraw } from './react-app/useRedraw.tsx';
-import { defaultAppActions } from './react-app/appActionMap.ts';
-import { defaultMacKeymap, makeActionMap } from './base-ui/keyMap.ts';
+import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap.ts';
+import { makeActionMap } from './canvas/keyMap.ts';
 import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
 import { DocumentTabs } from './react-app/DocumentTabs.tsx';
-import { UserState } from './base-ui/UserState.ts';
+import { UserState } from './canvas/UserState.ts';
 import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
 import { Ruler } from './react-app/Ruler.tsx';
 import { ActionsContext, useActions } from './react-app/context/ActionsContext.ts';
 import { DiagramContext } from './react-app/context/DiagramContext.ts';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext.ts';
 import { defaultPalette } from './react-app/ObjectProperties/palette.ts';
-import { edgeDefaults, nodeDefaults } from '@diagram-craft/model';
+import {
+  deserializeDiagramDocument,
+  Diagram,
+  edgeDefaults,
+  nodeDefaults,
+  SerializedDiagram
+} from '@diagram-craft/model';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
-import { Diagram } from '@diagram-craft/model';
-import { ApplicationState } from './base-ui/ApplicationState.ts';
+import { ApplicationState } from './canvas/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
 import { LayerIndicator } from './react-app/LayerIndicator.tsx';
 import { testDiagram } from './sample/test.ts';
@@ -66,7 +71,6 @@ import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
 import { EditableCanvas } from './canvas-react/EditableCanvas.tsx';
 import { Point } from '@diagram-craft/geometry';
-import { SerializedDiagram, deserializeDiagramDocument } from '@diagram-craft/model';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -137,7 +141,7 @@ const App = () => {
     userState: userState.current
   });
 
-  const keyMap = defaultMacKeymap;
+  const keyMap = defaultMacAppKeymap;
   return (
     <DiagramContext.Provider value={$d}>
       <ActionsContext.Provider value={{ actionMap, keyMap }}>

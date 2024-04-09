@@ -2,7 +2,7 @@ import { useEventListener } from './hooks/useEventListener.ts';
 import { useRedraw } from './useRedraw.tsx';
 import React, { useId } from 'react';
 import { useActions } from './context/ActionsContext.ts';
-import { ToggleAction } from '../base-ui/action.ts';
+import { ToggleAction } from '../canvas/action.ts';
 
 export const ActionCheckbox = (props: Props) => {
   const { actionMap } = useActions();

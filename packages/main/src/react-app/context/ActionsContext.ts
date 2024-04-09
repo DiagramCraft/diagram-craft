@@ -1,6 +1,6 @@
 import React from 'react';
 import { assert } from '@diagram-craft/utils';
-import { Actions } from '../../base-ui/keyMap.ts';
+import { Actions } from '../../canvas/keyMap.ts';
 
 export const ActionsContext = React.createContext<Actions | undefined>(undefined);
 

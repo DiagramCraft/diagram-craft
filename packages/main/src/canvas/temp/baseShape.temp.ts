@@ -1,28 +1,28 @@
-import { Component } from '../../base-ui/component.ts';
+import { Component } from '../component/component.ts';
 import { DiagramNode } from '@diagram-craft/model';
 import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './pathRenderer.temp.ts';
-import { rawHTML, toInlineCSS, VNode } from '../../base-ui/vdom.ts';
+import { rawHTML, toInlineCSS, VNode } from '../vdom.ts';
 import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { DeepReadonly } from '@diagram-craft/utils';
 import { deepClone } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
 import { Tool } from '../tools/types.ts';
-import { ShapeControlPointDrag } from '../../base-ui/drag/shapeControlDrag.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
-import { Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
-import { DASH_PATTERNS } from '../../base-ui/dashPatterns.ts';
-import { makeShadowFilter } from '../../base-ui/styleUtils.ts';
-import { EventHelper } from '../../base-ui/eventHelper.ts';
+import { DASH_PATTERNS } from '../dashPatterns.ts';
+import { makeShadowFilter } from '../styleUtils.ts';
+import { EventHelper } from '../eventHelper.ts';
 import { Diagram } from '@diagram-craft/model';
 import { FillFilter, FillPattern } from './fill.temp.ts';
-import * as svg from '../../base-ui/vdom-svg.ts';
-import * as html from '../../base-ui/vdom-html.ts';
+import * as svg from '../component/vdom-svg.ts';
+import * as html from '../component/vdom-html.ts';
 import { DiagramEdge } from '@diagram-craft/model';
 import { EdgeComponent } from '../EdgeComponent.ts';
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { NodeDefinition } from '@diagram-craft/model';
 import { Box, Extent, Path, Point } from '@diagram-craft/geometry';
+import { ShapeControlPointDrag } from '../drag/shapeControlDrag.ts';
+import { Modifiers } from '../drag/dragDropManager.ts';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',

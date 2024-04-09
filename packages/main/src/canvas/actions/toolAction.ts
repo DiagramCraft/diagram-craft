@@ -1,6 +1,6 @@
-import { ActionMapFactory, AppState } from '../../base-ui/keyMap.ts';
-import { ApplicationState, ToolType } from '../../base-ui/ApplicationState.ts';
-import { AbstractToggleAction } from '../../base-ui/action.ts';
+import { ActionMapFactory, AppState } from '../keyMap.ts';
+import { ApplicationState, ToolType } from '../ApplicationState.ts';
+import { AbstractToggleAction } from '../action.ts';
 
 declare global {
   interface ActionMap {

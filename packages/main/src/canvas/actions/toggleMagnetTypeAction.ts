@@ -1,6 +1,6 @@
-import { ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../../canvas/keyMap.ts';
 import { Diagram } from '@diagram-craft/model';
-import { AbstractToggleAction } from '../action.ts';
+import { AbstractToggleAction } from '../../canvas/action.ts';
 import { MagnetType } from '@diagram-craft/model';
 
 declare global {

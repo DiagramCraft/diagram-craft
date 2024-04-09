@@ -1,13 +1,13 @@
 import { MutableRefObject, RefObject } from 'react';
-import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
-import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
 import { BACKGROUND, DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '@diagram-craft/model';
-import { MarqueeDrag } from '../../base-ui/drag/marqueeDrag.ts';
 import { getDiagramElementPath } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { Box, Point } from '@diagram-craft/geometry';
+import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
+import { MarqueeDrag } from '../drag/marqueeDrag.ts';
+import { MoveDrag } from '../drag/moveDrag.ts';
 
 export class MoveTool extends AbstractTool {
   constructor(

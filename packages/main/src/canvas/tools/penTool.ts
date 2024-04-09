@@ -1,5 +1,4 @@
 import { MutableRefObject, RefObject } from 'react';
-import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { Diagram } from '@diagram-craft/model';
@@ -9,6 +8,7 @@ import { DiagramNode } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
 import { ElementAddUndoableAction } from '@diagram-craft/model';
 import { PathBuilder, PathUtils, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
+import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
 
 export class PenTool extends AbstractTool {
   private node: DiagramNode | undefined;

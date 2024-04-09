@@ -1,9 +1,9 @@
-import { ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../../canvas/keyMap.ts';
 import { Diagram } from '@diagram-craft/model';
 import { precondition } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
-import { AbstractAction, ActionContext } from '../action.ts';
+import { AbstractAction, ActionContext } from '../../canvas/action.ts';
 import { smallest } from '@diagram-craft/utils';
 import { PointOnPath } from '@diagram-craft/geometry';
 

@@ -1,6 +1,6 @@
-import { Component } from '../base-ui/component.ts';
-import * as svg from '../base-ui/vdom-svg.ts';
-import { toInlineCSS, VNode } from '../base-ui/vdom.ts';
+import { Component } from './component/component.ts';
+import * as svg from './component/vdom-svg.ts';
+import { toInlineCSS, VNode } from './vdom.ts';
 import { CanvasState } from './EditableCanvas.ts';
 
 type Type = 'major' | 'minor';

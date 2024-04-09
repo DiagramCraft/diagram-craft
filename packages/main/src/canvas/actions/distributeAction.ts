@@ -1,7 +1,7 @@
 import { commitWithUndo } from '@diagram-craft/model';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '@diagram-craft/model';
-import { ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../../canvas/keyMap.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { Box } from '@diagram-craft/geometry';
 

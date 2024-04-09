@@ -1,6 +1,6 @@
 import { ToolWindowButton } from './ToolWindowButton.tsx';
 import React, { useEffect, useState } from 'react';
-import { UserState } from '../base-ui/UserState.ts';
+import { UserState } from '../canvas/UserState.ts';
 import { useEventListener } from './hooks/useEventListener.ts';
 
 export const SideBar = (props: Props) => {

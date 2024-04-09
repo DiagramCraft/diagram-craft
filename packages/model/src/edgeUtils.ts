@@ -1,6 +1,6 @@
 import { DiagramEdge, Intersection } from './diagramEdge.ts';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils';
-import { ArrowShape } from '../../main/src/base-ui/arrowShapes.ts';
+import { ArrowShape } from '../../main/src/canvas/arrowShapes.ts';
 import { Diagram } from './index.ts';
 import { ConnectedEndpoint, isConnected } from './endpoint.ts';
 import {

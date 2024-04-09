@@ -3,13 +3,13 @@ import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { DiagramNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
-import { EventHelper } from '../../base-ui/eventHelper.ts';
+import { EventHelper } from '../eventHelper.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
-import { toInlineCSS } from '../../base-ui/vdom.ts';
+import { toInlineCSS } from '../vdom.ts';
 import { ControlPointDrag } from '../tools/node/controlPointDrag.ts';
 import { NodeDrag } from '../tools/node/nodeDrag.ts';
-import * as svg from '../../base-ui/vdom-svg.ts';
+import * as svg from '../component/vdom-svg.ts';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry';
 
 declare global {

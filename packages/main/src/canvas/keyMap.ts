@@ -15,10 +15,8 @@ import { edgeFlipActions } from './actions/edgeFlipAction.ts';
 import { duplicateActions } from './actions/duplicateAction.ts';
 import { Diagram } from '@diagram-craft/model';
 import { edgeTextAddActions } from './actions/edgeTextAddAction.ts';
-import { toolActions } from '../react-app/actions/toolAction.ts';
 import { ApplicationState } from './ApplicationState.ts';
 import { UserState } from './UserState.ts';
-import { sidebarActions } from '../react-app/actions/SidebarAction.tsx';
 import { groupActions } from './actions/groupAction.ts';
 import { saveActions } from './actions/saveAction.ts';
 import { Action, ActionContext, ActionEvents, ToggleAction } from './action.ts';
@@ -70,11 +68,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...duplicateActions(state),
   ...groupActions(state),
   ...saveActions(state),
-  ...layerActions(state),
-
-  // TODO: These should move to defaultAppActions
-  ...toolActions(state),
-  ...sidebarActions(state)
+  ...layerActions(state)
 });
 
 export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactory => {
@@ -101,16 +95,6 @@ export const defaultMacKeymap: KeyMap = {
   'M-Digit6': 'TOOL_PEN',
   'M-Digit7': 'TOOL_NODE',
   'M-KeyS': 'FILE_SAVE',
-
-  // TODO: These should move to something like defaultAppKeymap
-  'A-Digit1': 'SIDEBAR_SHAPES',
-  'A-Digit2': 'SIDEBAR_LAYERS',
-  'A-Digit3': 'SIDEBAR_SELECT',
-  'A-Digit4': 'SIDEBAR_DOCUMENT',
-  'A-Digit5': 'SIDEBAR_HISTORY',
-  'A-Digit6': 'SIDEBAR_STYLE',
-  'A-Digit7': 'SIDEBAR_INFO',
-  'A-Digit8': 'SIDEBAR_DATA',
 
   'M-KeyG': 'GROUP_GROUP',
   'MS-KeyG': 'GROUP_UNGROUP'

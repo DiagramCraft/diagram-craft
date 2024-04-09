@@ -1,9 +1,9 @@
-import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { MutableRefObject, RefObject } from 'react';
 import { Diagram } from '@diagram-craft/model';
-import { ToolType } from '../../base-ui/ApplicationState.ts';
+import { ToolType } from '../ApplicationState.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { Point } from '@diagram-craft/geometry';
+import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
 
 export interface Tool {
   type: ToolType;

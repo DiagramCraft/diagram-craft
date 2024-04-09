@@ -1,4 +1,4 @@
-import { ArrowShape } from '../../base-ui/arrowShapes.ts';
+import { ArrowShape } from '../../canvas/arrowShapes.ts';
 import { useId } from 'react';
 
 export const ArrowPreview = (props: Props) => {
@@ -23,8 +23,8 @@ export const ArrowPreview = (props: Props) => {
               props.start.fill === 'fg'
                 ? props.fg ?? 'var(--secondary-fg)'
                 : props.start.fill === 'bg'
-                ? props.bg
-                : 'none'
+                  ? props.bg
+                  : 'none'
             }
           />
         </marker>
@@ -47,8 +47,8 @@ export const ArrowPreview = (props: Props) => {
               props.end.fill === 'fg'
                 ? props.fg ?? 'var(--secondary-fg)'
                 : props.end.fill === 'bg'
-                ? props.bg
-                : 'none'
+                  ? props.bg
+                  : 'none'
             }
           />
         </marker>

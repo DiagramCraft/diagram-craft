@@ -1,8 +1,8 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { findKeyBindings, formatKeyBinding } from '../../base-ui/keyMap.ts';
+import { findKeyBindings, formatKeyBinding } from '../../canvas/keyMap.ts';
 import React from 'react';
 import { useActions } from '../context/ActionsContext.ts';
-import { Action, ActionContext, ToggleAction } from '../../base-ui/action.ts';
+import { Action, ActionContext, ToggleAction } from '../../canvas/action.ts';
 import { TbCheck } from 'react-icons/tb';
 import { useRedraw } from '../useRedraw.tsx';
 

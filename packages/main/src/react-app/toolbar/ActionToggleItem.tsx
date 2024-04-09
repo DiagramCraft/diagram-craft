@@ -3,8 +3,8 @@ import React, { useContext, useEffect } from 'react';
 import { ActionToggleGroupContext } from './ActionToggleGroup.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useActions } from '../context/ActionsContext.ts';
-import { ToggleAction } from '../../base-ui/action.ts';
-import { ActionName } from '../../base-ui/keyMap.ts';
+import { ToggleAction } from '../../canvas/action.ts';
+import { ActionName } from '../../canvas/keyMap.ts';
 
 export const ActionToggleItem = (props: Props) => {
   const { actionMap } = useActions();

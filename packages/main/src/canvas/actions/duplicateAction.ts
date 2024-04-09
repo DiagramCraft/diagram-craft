@@ -2,7 +2,7 @@ import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { DiagramNode } from '@diagram-craft/model';
 import { ElementAddUndoableAction } from '@diagram-craft/model';
 import { Diagram } from '@diagram-craft/model';
-import { ActionMapFactory, State } from '../keyMap.ts';
+import { ActionMapFactory, State } from '../../canvas/keyMap.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { Translation } from '@diagram-craft/geometry';
 

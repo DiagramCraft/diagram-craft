@@ -1,5 +1,5 @@
-import { Component } from '../base-ui/component.ts';
-import { toInlineCSS, VNode } from '../base-ui/vdom.ts';
+import { Component } from './component/component.ts';
+import { toInlineCSS, VNode } from './vdom.ts';
 import {
   applyLineHops,
   clipPath,
@@ -10,19 +10,19 @@ import {
 } from '@diagram-craft/model';
 import { Tool } from './tools/types.ts';
 import { ApplicationTriggers } from './EditableCanvas.ts';
-import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
-import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
+import { ARROW_SHAPES, ArrowShape } from './arrowShapes.ts';
 import { asDistortedSvgPath, parseArrowSvgPath } from './sketch.ts';
 import { hash } from '@diagram-craft/utils';
-import { EventHelper } from '../base-ui/eventHelper.ts';
+import { EventHelper } from './eventHelper.ts';
 import { CSSProperties } from 'react';
-import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
-import { makeShadowFilter } from '../base-ui/styleUtils.ts';
-import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
+import { DASH_PATTERNS } from './dashPatterns.ts';
+import { makeShadowFilter } from './styleUtils.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
-import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
-import * as svg from '../base-ui/vdom-svg.ts';
+import * as svg from './component/vdom-svg.ts';
 import { Point } from '@diagram-craft/geometry';
+import { Modifiers } from './drag/dragDropManager.ts';
+import { EdgeWaypointDrag } from './drag/edgeWaypointDrag.ts';
+import { BezierControlPointDrag } from './drag/bezierControlPointDrag.ts';
 
 const makeArrowMarker = ({
   id,

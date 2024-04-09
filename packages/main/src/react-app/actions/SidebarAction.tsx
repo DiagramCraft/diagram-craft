@@ -1,6 +1,6 @@
-import { UserState } from '../../base-ui/UserState.ts';
-import { ActionMapFactory, AppState } from '../../base-ui/keyMap.ts';
-import { AbstractToggleAction } from '../../base-ui/action.ts';
+import { UserState } from '../../canvas/UserState.ts';
+import { ActionMapFactory, AppState } from '../../canvas/keyMap.ts';
+import { AbstractToggleAction } from '../../canvas/action.ts';
 
 declare global {
   interface ActionMap {

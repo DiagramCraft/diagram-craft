@@ -4,7 +4,7 @@ import { DiagramNode } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { DiagramElement, isNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
-import * as svg from '../../base-ui/vdom-svg.ts';
+import * as svg from '../component/vdom-svg.ts';
 import { DiagramEdge } from '@diagram-craft/model';
 import {
   Box,

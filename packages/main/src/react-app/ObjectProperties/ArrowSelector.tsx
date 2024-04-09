@@ -1,6 +1,6 @@
 import * as Select from '@radix-ui/react-select';
 import { TbCheck, TbChevronDown } from 'react-icons/tb';
-import { ARROW_SHAPES } from '../../base-ui/arrowShapes.ts';
+import { ARROW_SHAPES } from '../../canvas/arrowShapes.ts';
 import { ArrowPreview } from './ArrowPreview.tsx';
 
 const PREVIEW_SCALE = 0.75;

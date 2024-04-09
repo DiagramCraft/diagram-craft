@@ -1,6 +1,6 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { Diagram } from '@diagram-craft/model';
-import { State } from '../keyMap.ts';
+import { State } from '../../canvas/keyMap.ts';
 import { UndoableAction } from '@diagram-craft/model';
 import { DiagramNode } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';

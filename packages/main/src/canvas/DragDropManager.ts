@@ -1,4 +1,4 @@
-import { DragDopManager } from '../base-ui/drag/dragDropManager.ts';
+import { DragDopManager } from './drag/dragDropManager.ts';
 
 export const DRAG_DROP_MANAGER = new DragDopManager();
 

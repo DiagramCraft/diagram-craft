@@ -1,12 +1,12 @@
 import { Diagram } from '@diagram-craft/model';
-import { State } from '../keyMap.ts';
+import { State } from '../../canvas/keyMap.ts';
 import { assert, precondition } from '@diagram-craft/utils';
 import {
   AbstractAction,
   AbstractToggleAction,
   ActionContext,
   ToggleActionUndoableAction
-} from '../action.ts';
+} from '../../canvas/action.ts';
 import { UnitOfWork } from '@diagram-craft/model';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model';
 import { Layer, LayerType } from '@diagram-craft/model';

@@ -1,6 +1,6 @@
 import { Angle } from '@diagram-craft/geometry/src/angle.ts';
-import { Component, createEffect } from '../base-ui/component.ts';
-import * as svg from '../base-ui/vdom-svg.ts';
+import { Component, createEffect } from './component/component.ts';
+import * as svg from './component/vdom-svg.ts';
 import { CanvasState } from './EditableCanvas.ts';
 
 export class SelectionMarqueeComponent extends Component<CanvasState> {

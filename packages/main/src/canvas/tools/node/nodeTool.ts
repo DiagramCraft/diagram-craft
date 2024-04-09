@@ -1,5 +1,4 @@
 import { MutableRefObject, RefObject } from 'react';
-import { DragDopManager, Modifiers } from '../../../base-ui/drag/dragDropManager.ts';
 import { BACKGROUND, DeferedMouseAction } from '../types.ts';
 import { AbstractTool } from '../abstractTool.ts';
 import { Diagram } from '@diagram-craft/model';
@@ -9,6 +8,7 @@ import { UnitOfWork } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../../EditableCanvas.ts';
 import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
+import { DragDopManager, Modifiers } from '../../drag/dragDropManager.ts';
 
 export class NodeTool extends AbstractTool {
   constructor(

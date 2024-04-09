@@ -6,8 +6,8 @@ import { GuidesComponent } from './selection/Guides.ts';
 import { RotationHandleComponent } from './selection/RotationHandle.ts';
 import { ResizeHandlesComponent } from './selection/ResizeHandles.ts';
 import { EdgeSelectionComponent } from './selection/EdgeSelection.ts';
-import { Component, createEffect } from '../base-ui/component.ts';
-import * as svg from '../base-ui/vdom-svg.ts';
+import { Component, createEffect } from './component/component.ts';
+import * as svg from './component/vdom-svg.ts';
 import { CanvasState } from './EditableCanvas.ts';
 import { Box } from '@diagram-craft/geometry';
 

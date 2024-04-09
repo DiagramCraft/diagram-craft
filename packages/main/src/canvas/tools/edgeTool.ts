@@ -1,6 +1,5 @@
 import { DeferedMouseAction } from './types.ts';
 import { MutableRefObject, RefObject } from 'react';
-import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { newid } from '@diagram-craft/utils';
 import { ElementAddUndoableAction } from '@diagram-craft/model';
@@ -9,6 +8,7 @@ import { DiagramEdge } from '@diagram-craft/model';
 import { FreeEndpoint } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { Point } from '@diagram-craft/geometry';
+import { DragDopManager, Modifiers } from '../drag/dragDropManager.ts';
 
 export class EdgeTool extends AbstractTool {
   constructor(
