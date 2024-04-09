@@ -52,15 +52,13 @@ import { ActionsContext, useActions } from './react-app/context/ActionsContext.t
 import { DiagramContext } from './react-app/context/DiagramContext.ts';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext.ts';
 import { defaultPalette } from './react-app/ObjectProperties/palette.ts';
-import { edgeDefaults, nodeDefaults } from './model/diagramDefaults.ts';
+import { edgeDefaults, nodeDefaults } from '@diagram-craft/model';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
-import { Diagram } from './model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { ApplicationState } from './base-ui/ApplicationState.ts';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
 import { LayerIndicator } from './react-app/LayerIndicator.tsx';
 import { testDiagram } from './sample/test.ts';
-import { SerializedDiagram } from './model/serialization/types.ts';
-import { deserializeDiagramDocument } from './model/serialization/deserialize.ts';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx';
 import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog.tsx';
 import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
@@ -68,6 +66,7 @@ import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
 import { EditableCanvas } from './canvas-react/EditableCanvas.tsx';
 import { Point } from '@diagram-craft/geometry';
+import { SerializedDiagram, deserializeDiagramDocument } from '@diagram-craft/model';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

@@ -1,7 +1,7 @@
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { CustomPropertyDefinition } from '../../model/elementDefinitionRegistry.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { DiagramNode } from '@diagram-craft/model';
+import { CustomPropertyDefinition } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import { useRedraw } from '../useRedraw.tsx';
 import { NumberInput } from '../components/NumberInput.tsx';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '@diagram-craft/model';
 import { Select } from '../components/Select.tsx';
 
 export const CustomPropertiesPanel = (props: Props) => {

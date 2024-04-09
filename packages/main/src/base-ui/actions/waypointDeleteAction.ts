@@ -1,8 +1,8 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { precondition } from '@diagram-craft/utils';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model';
 import { AbstractAction, ActionContext } from '../action.ts';
 import { smallest } from '@diagram-craft/utils';
 import { PointOnPath } from '@diagram-craft/geometry';

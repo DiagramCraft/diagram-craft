@@ -1,8 +1,8 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
-import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model';
 import {
   Box,
   Direction,

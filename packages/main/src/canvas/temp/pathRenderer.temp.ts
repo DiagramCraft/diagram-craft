@@ -1,4 +1,4 @@
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { asDistortedSvgPath, calculateHachureLines } from '../sketch.ts';
 import { hash } from '@diagram-craft/utils';
 import { Path } from '@diagram-craft/geometry';

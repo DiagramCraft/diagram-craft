@@ -1,7 +1,7 @@
 import { AbstractDrag } from './dragDropManager.ts';
-import { Diagram, excludeLabelNodes, includeAll } from '../../model/diagram.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model';
 import { Box, Point, TransformFactory, Vector } from '@diagram-craft/geometry';
 
 export class RotateDrag extends AbstractDrag {

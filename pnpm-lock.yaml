@@ -41,6 +41,9 @@ importers:
       '@diagram-craft/geometry':
         specifier: workspace:^
         version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
       '@diagram-craft/query':
         specifier: workspace:^
         version: link:../query
@@ -141,6 +144,15 @@ importers:
       vite-node:
         specifier: ^0.34.7
         version: 0.34.7
+
+  packages/model:
+    dependencies:
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
 
   packages/query: {}
 

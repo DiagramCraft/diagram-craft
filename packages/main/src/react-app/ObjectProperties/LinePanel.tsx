@@ -5,7 +5,7 @@ import { ColorPicker } from '../components/ColorPicker.tsx';
 import { DashSelector } from './DashSelector.tsx';
 import { useEdgeProperty } from './useProperty.ts';
 import { NumberInput } from '../components/NumberInput.tsx';
-import { assertEdgeType } from '../../model/diagramProps.ts';
+import { assertEdgeType } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useEdgeDefaults } from '../useDefaults.tsx';

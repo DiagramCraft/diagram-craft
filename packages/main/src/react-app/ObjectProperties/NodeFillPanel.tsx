@@ -1,7 +1,7 @@
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { useNodeProperty } from './useProperty.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { assertFillType } from '../../model/diagramProps.ts';
+import { assertFillType } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';
 import { round } from '@diagram-craft/utils';

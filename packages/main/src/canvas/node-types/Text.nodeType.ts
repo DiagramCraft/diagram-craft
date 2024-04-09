@@ -1,6 +1,6 @@
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { DiagramNode } from '@diagram-craft/model';
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
 import { Extent, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 

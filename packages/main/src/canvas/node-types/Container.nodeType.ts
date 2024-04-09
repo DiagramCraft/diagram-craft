@@ -1,11 +1,11 @@
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
-import { CustomPropertyDefinition, NodeCapability } from '../../model/elementDefinitionRegistry.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { DiagramElement, isNode } from '../../model/diagramElement.ts';
+import { CustomPropertyDefinition, NodeCapability } from '@diagram-craft/model';
+import { DiagramNode } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
+import { DiagramElement, isNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { DiagramEdge } from '@diagram-craft/model';
 import {
   Box,
   PathBuilder,

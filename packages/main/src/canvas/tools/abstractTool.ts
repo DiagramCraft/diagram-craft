@@ -1,6 +1,6 @@
 import { DeferedMouseAction, Tool } from './types.ts';
 import { MutableRefObject, RefObject } from 'react';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { ToolType } from '../../base-ui/ApplicationState.ts';
 import { ApplicationTriggers } from '../EditableCanvas.ts';

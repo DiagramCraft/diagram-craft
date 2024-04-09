@@ -1,23 +1,26 @@
 import { Component } from '../base-ui/component.ts';
 import { toInlineCSS, VNode } from '../base-ui/vdom.ts';
-import { DiagramEdge } from '../model/diagramEdge.ts';
-import { Diagram } from '../model/diagram.ts';
+import {
+  applyLineHops,
+  clipPath,
+  ControlPoints,
+  Diagram,
+  DiagramEdge,
+  UnitOfWork
+} from '@diagram-craft/model';
 import { Tool } from './tools/types.ts';
 import { ApplicationTriggers } from './EditableCanvas.ts';
 import { Modifiers } from '../base-ui/drag/dragDropManager.ts';
 import { ARROW_SHAPES, ArrowShape } from '../base-ui/arrowShapes.ts';
-import { applyLineHops, clipPath } from '../model/edgeUtils.ts';
 import { asDistortedSvgPath, parseArrowSvgPath } from './sketch.ts';
 import { hash } from '@diagram-craft/utils';
 import { EventHelper } from '../base-ui/eventHelper.ts';
 import { CSSProperties } from 'react';
 import { DASH_PATTERNS } from '../base-ui/dashPatterns.ts';
 import { makeShadowFilter } from '../base-ui/styleUtils.ts';
-import { UnitOfWork } from '../model/unitOfWork.ts';
 import { EdgeWaypointDrag } from '../base-ui/drag/edgeWaypointDrag.ts';
 import { DRAG_DROP_MANAGER } from './DragDropManager.ts';
 import { BezierControlPointDrag } from '../base-ui/drag/bezierControlPointDrag.ts';
-import { ControlPoints } from '../model/types.ts';
 import * as svg from '../base-ui/vdom-svg.ts';
 import { Point } from '@diagram-craft/geometry';
 

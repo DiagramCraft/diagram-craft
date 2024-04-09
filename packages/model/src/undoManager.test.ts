@@ -1,7 +1,7 @@
 import { expect, test, describe } from 'vitest';
 import { UndoManager } from './undoManager.ts';
-import { Diagram } from './diagram.ts';
-import { defaultEdgeRegistry, defaultNodeRegistry } from '../canvas/defaultRegistry.ts';
+import { Diagram } from './index.ts';
+import { defaultEdgeRegistry, defaultNodeRegistry } from '../../main/src/canvas/defaultRegistry.ts';
 
 describe('UndoManager', () => {
   test('add()', () => {

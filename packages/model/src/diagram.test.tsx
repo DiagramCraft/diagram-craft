@@ -5,7 +5,7 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { newid } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer.ts';
 import { UnitOfWork } from './unitOfWork.ts';
-import { RectNodeDefinition } from '../canvas/node-types/Rect.nodeType.ts';
+import { RectNodeDefinition } from '../../main/src/canvas/node-types/Rect.nodeType.ts';
 import { TransformFactory } from '@diagram-craft/geometry';
 
 const bounds = {

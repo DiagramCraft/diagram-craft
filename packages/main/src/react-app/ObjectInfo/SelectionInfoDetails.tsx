@@ -1,4 +1,4 @@
-import { SelectionState } from '../../model/selectionState.ts';
+import { SelectionState } from '@diagram-craft/model';
 import * as Tree from '../components/Tree.tsx';
 import { ObjectTreeNode } from '../ObjectTreeNode.tsx';
 

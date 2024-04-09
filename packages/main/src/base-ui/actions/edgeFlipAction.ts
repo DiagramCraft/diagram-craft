@@ -1,7 +1,7 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { Diagram } from '../../model/diagram.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { Diagram } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model';
 import { AbstractAction } from '../action.ts';
 
 declare global {

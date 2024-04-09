@@ -1,14 +1,11 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { precondition } from '@diagram-craft/utils';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { CompoundUndoableAction } from '../../model/undoManager.ts';
-import {
-  ElementAddUndoableAction,
-  SnapshotUndoableAction
-} from '../../model/diagramUndoActions.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { CompoundUndoableAction } from '@diagram-craft/model';
+import { ElementAddUndoableAction, SnapshotUndoableAction } from '@diagram-craft/model';
 import { AbstractAction, ActionContext } from '../action.ts';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry';
 

@@ -1,5 +1,5 @@
 import { Emitter, EventEmitter } from '@diagram-craft/utils';
-import { UndoableAction } from '../model/undoManager.ts';
+import { UndoableAction } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
 
 export type ActionEvents = {

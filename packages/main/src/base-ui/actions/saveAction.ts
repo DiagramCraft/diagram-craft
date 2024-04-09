@@ -1,7 +1,7 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { Diagram } from '../../model/diagram.ts';
-import { serializeDiagramDocument } from '../../model/serialization/serialize.ts';
+import { Diagram } from '@diagram-craft/model';
 import { AbstractAction } from '../action.ts';
+import { serializeDiagramDocument } from '@diagram-craft/model';
 
 declare global {
   interface ActionMap {

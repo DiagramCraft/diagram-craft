@@ -3,9 +3,9 @@ import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts
 import { MoveDrag } from '../../base-ui/drag/moveDrag.ts';
 import { BACKGROUND, DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { MarqueeDrag } from '../../base-ui/drag/marqueeDrag.ts';
-import { getDiagramElementPath } from '../../model/diagramElement.ts';
+import { getDiagramElementPath } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { Box, Point } from '@diagram-craft/geometry';
 

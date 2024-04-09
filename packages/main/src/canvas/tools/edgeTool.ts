@@ -3,10 +3,10 @@ import { MutableRefObject, RefObject } from 'react';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { AbstractTool } from './abstractTool.ts';
 import { newid } from '@diagram-craft/utils';
-import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
-import { Diagram } from '../../model/diagram.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
-import { FreeEndpoint } from '../../model/endpoint.ts';
+import { ElementAddUndoableAction } from '@diagram-craft/model';
+import { Diagram } from '@diagram-craft/model';
+import { DiagramEdge } from '@diagram-craft/model';
+import { FreeEndpoint } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
 import { Point } from '@diagram-craft/geometry';
 

@@ -1,9 +1,9 @@
 import { DiagramEdge } from './diagramEdge.ts';
 import { DiagramNode, DuplicationContext } from './diagramNode.ts';
-import { UnitOfWork } from './unitOfWork.ts';
+import { UnitOfWork } from './index.ts';
 import { AbstractElement } from './types.ts';
-import { Layer } from './diagramLayer.ts';
-import { Diagram } from './diagram.ts';
+import { Layer } from './index.ts';
+import { Diagram } from './index.ts';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { Box, Transform } from '@diagram-craft/geometry';
 

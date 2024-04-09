@@ -1,5 +1,5 @@
 import { DiagramElement } from './diagramElement.ts';
-import { Diagram } from './diagram.ts';
+import { Diagram } from './index.ts';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork.ts';
 import { deepClone } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer.ts';

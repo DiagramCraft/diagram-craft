@@ -3,8 +3,8 @@ import { Magnet } from './snap/magnet.ts';
 import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { debounceMicrotask } from '@diagram-craft/utils';
-import { Marquee } from './marquee.ts';
-import { Diagram } from './diagram.ts';
+import { Marquee } from './index.ts';
+import { Diagram } from './index.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
 import { Box, Line } from '@diagram-craft/geometry';
 

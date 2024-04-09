@@ -14,7 +14,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
 import { ColorPicker } from '../components/ColorPicker.tsx';
 import { NumberInput } from '../components/NumberInput.tsx';
-import { assertHAlign, assertVAlign } from '../../model/diagramProps.ts';
+import { assertHAlign, assertVAlign } from '@diagram-craft/model';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useNodeDefaults } from '../useDefaults.tsx';

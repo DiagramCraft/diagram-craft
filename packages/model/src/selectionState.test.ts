@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DiagramNode } from './diagramNode.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
-import { Diagram } from './diagram.ts';
-import { Layer } from './diagramLayer.ts';
-import { FreeEndpoint } from './endpoint.ts';
-import { UnitOfWork } from './unitOfWork.ts';
-import { RectNodeDefinition } from '../canvas/node-types/Rect.nodeType.ts';
+import { Diagram } from './index.ts';
+import { Layer } from './index.ts';
+import { FreeEndpoint } from './index.ts';
+import { UnitOfWork } from './index.ts';
+import { RectNodeDefinition } from '../../main/src/canvas/node-types/Rect.nodeType.ts';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(

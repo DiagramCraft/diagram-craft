@@ -28,6 +28,9 @@
     "paths": {
       "@diagram-craft/main": ["./packages/main/src"],
       "@diagram-craft/query": ["./packages/query/src"],
+      "@diagram-craft/utils": ["./packages/utils/src"],
+      "@diagram-craft/geometry": ["./packages/geometry/src"],
+      "@diagram-craft/model": ["./packages/model/src"],
     },
   },
   "references": [{ "path": "./tsconfig.node.json"}]

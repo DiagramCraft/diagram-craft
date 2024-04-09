@@ -1,6 +1,6 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './context-menu/ActionContextMenuItem.tsx';
-import { Layer } from '../model/diagramLayer.ts';
+import { Layer } from '@diagram-craft/model';
 import React, { useState } from 'react';
 import { ToggleActionContextMenuItem } from './context-menu/ToggleActionContextMenuItem.tsx';
 import { MessageDialog, MessageDialogState } from './components/MessageDialog.tsx';

@@ -1,5 +1,5 @@
-import { DiagramNode } from '../../../model/diagramNode.ts';
-import { UnitOfWork } from '../../../model/unitOfWork.ts';
+import { DiagramNode } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 import { VerifyNotReached } from '@diagram-craft/utils';
 import { GenericPathNodeDefinition } from '../../node-types/GenericPath.nodeType.ts';
 import {

@@ -14,7 +14,7 @@ import {
 } from 'react-icons/tb';
 import { Select } from './components/Select.tsx';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Diagram } from '../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { useRedraw } from './useRedraw.tsx';
 
 const replacer = (_key: string, value: unknown) => {

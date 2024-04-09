@@ -1,6 +1,6 @@
-import { Diagram } from './diagram.ts';
+import { Diagram } from './index.ts';
 import { EventEmitter } from '@diagram-craft/utils';
-import { AttachmentManager } from './attachment.ts';
+import { AttachmentManager } from './index.ts';
 import { DiagramPalette } from './diagramPalette.ts';
 import { DiagramStyles } from './diagramStyles.ts';
 import { DiagramDataSchemas } from './diagramDataSchemas.ts';

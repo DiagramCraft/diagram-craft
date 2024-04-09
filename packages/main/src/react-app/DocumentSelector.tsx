@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DiagramDocument } from '../model/diagramDocument.ts';
+import { DiagramDocument } from '@diagram-craft/model';
 import { Select } from './components/Select.tsx';
 
 export const DocumentSelector = (props: Props) => {

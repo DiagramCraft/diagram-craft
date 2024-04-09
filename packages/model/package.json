@@ -1,0 +1,16 @@
+{
+  "name": "@diagram-craft/model",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "Magnus Johansson",
+  "dependencies": {
+    "@diagram-craft/utils": "workspace:^",
+    "@diagram-craft/geometry": "workspace:^"
+  }
+}

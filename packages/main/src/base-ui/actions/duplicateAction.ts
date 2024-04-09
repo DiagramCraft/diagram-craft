@@ -1,9 +1,9 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { DiagramNode } from '@diagram-craft/model';
+import { ElementAddUndoableAction } from '@diagram-craft/model';
+import { Diagram } from '@diagram-craft/model';
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '@diagram-craft/model';
 import { Translation } from '@diagram-craft/geometry';
 
 declare global {

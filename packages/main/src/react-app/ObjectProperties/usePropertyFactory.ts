@@ -1,7 +1,7 @@
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils';
 import { useEffect, useState } from 'react';
-import { UndoableAction } from '../../model/undoManager.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { UndoableAction } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 import { DeepReadonly } from '@diagram-craft/utils';
 import { unique } from '@diagram-craft/utils';
 

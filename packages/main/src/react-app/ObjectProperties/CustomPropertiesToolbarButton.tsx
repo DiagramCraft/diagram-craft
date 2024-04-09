@@ -2,7 +2,7 @@ import { TbSettings } from 'react-icons/tb';
 import { ToolbarButtonWithPopover } from '../components/ToolbarButtonWithPopover.tsx';
 import { CustomPropertiesPanel } from './CustomPropertiesPanel.tsx';
 import { useEffect, useState } from 'react';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext.ts';
 
 export const CustomPropertiesToolbarButton = () => {

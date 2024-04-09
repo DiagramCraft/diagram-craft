@@ -1,7 +1,7 @@
 import { ResizeDrag, ResizeType } from '../../base-ui/drag/resizeDrag.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { Box, Point } from '@diagram-craft/geometry';

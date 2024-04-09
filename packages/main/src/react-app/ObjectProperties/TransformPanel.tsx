@@ -6,7 +6,7 @@ import { NumberInput } from '../components/NumberInput.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
 import { $c } from '@diagram-craft/utils';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '@diagram-craft/model';
 import { ToggleButton } from '../components/ToggleButton.tsx';
 import { Box, Point, WritableBox } from '@diagram-craft/geometry';
 

@@ -5,8 +5,8 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useElementProperty } from './useProperty.ts';
 import { newid } from '@diagram-craft/utils';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model';
 import { useState } from 'react';
 import { MessageDialog, MessageDialogState } from '../components/MessageDialog.tsx';
 import {
@@ -15,11 +15,11 @@ import {
   getCommonProps,
   isPropsDirty,
   Stylesheet
-} from '../../model/diagramStyles.ts';
-import { isNode } from '../../model/diagramElement.ts';
+} from '@diagram-craft/model';
+import { isNode } from '@diagram-craft/model';
 import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { CompoundUndoableAction } from '../../model/undoManager.ts';
+import { CompoundUndoableAction } from '@diagram-craft/model';
 import { StringInputDialog } from '../components/StringInputDialog.tsx';
 import { JSONDialog } from '../components/JSONDialog.tsx';
 

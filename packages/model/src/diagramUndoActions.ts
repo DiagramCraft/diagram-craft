@@ -1,7 +1,7 @@
-import { UndoableAction } from './undoManager.ts';
-import { Diagram } from './diagram.ts';
-import { Layer } from './diagramLayer.ts';
-import { ElementsSnapshot, UnitOfWork } from './unitOfWork.ts';
+import { UndoableAction } from './index.ts';
+import { Diagram } from './index.ts';
+import { Layer } from './index.ts';
+import { ElementsSnapshot, UnitOfWork } from './index.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { assert } from '@diagram-craft/utils';
 import { hasSameElements } from '@diagram-craft/utils';

@@ -6,7 +6,7 @@ import { useEventListener } from '../hooks/useEventListener.ts';
 import { assert } from '@diagram-craft/utils';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { round } from '@diagram-craft/utils';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '@diagram-craft/model';
 import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
 import { Select } from '../components/Select.tsx';
 

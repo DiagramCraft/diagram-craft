@@ -1,4 +1,4 @@
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { AbstractToggleAction } from '../../base-ui/action.ts';
 
 declare global {

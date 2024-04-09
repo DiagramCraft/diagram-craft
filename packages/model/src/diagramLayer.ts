@@ -1,5 +1,5 @@
 import { DiagramNode } from './diagramNode.ts';
-import { Diagram, StackPosition } from './diagram.ts';
+import { Diagram, StackPosition } from './index.ts';
 import { DiagramElement, isNode } from './diagramElement.ts';
 import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
 import { DiagramEdge } from './diagramEdge.ts';

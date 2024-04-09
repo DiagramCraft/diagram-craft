@@ -1,11 +1,11 @@
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
-import { NodeCapability } from '../../model/elementDefinitionRegistry.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { NodeCapability } from '@diagram-craft/model';
+import { DiagramNode } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
-import { isNode } from '../../model/diagramElement.ts';
+import { isNode } from '@diagram-craft/model';
 import * as svg from '../../base-ui/vdom-svg.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { DiagramEdge } from '@diagram-craft/model';
 import { Box, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {

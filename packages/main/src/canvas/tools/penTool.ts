@@ -2,12 +2,12 @@ import { MutableRefObject, RefObject } from 'react';
 import { DragDopManager, Modifiers } from '../../base-ui/drag/dragDropManager.ts';
 import { DeferedMouseAction } from './types.ts';
 import { AbstractTool } from './abstractTool.ts';
-import { Diagram } from '../../model/diagram.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { Diagram } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvas.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
-import { ElementAddUndoableAction } from '../../model/diagramUndoActions.ts';
+import { ElementAddUndoableAction } from '@diagram-craft/model';
 import { PathBuilder, PathUtils, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 
 export class PenTool extends AbstractTool {

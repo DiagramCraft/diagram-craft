@@ -1,6 +1,6 @@
+import { Box, Extent, Point } from '@diagram-craft/geometry';
 import { Canvas, Diagram } from '../diagram.ts';
 import { UndoableAction } from '../undoManager.ts';
-import { Box, Extent, Point } from '@diagram-craft/geometry';
 
 const AMOUNT_TO_GROW = 100;
 

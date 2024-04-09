@@ -1,4 +1,4 @@
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { assert, precondition } from '@diagram-craft/utils';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { AttachmentPointDrag } from '../../base-ui/drag/attachmentPointDrag.ts';

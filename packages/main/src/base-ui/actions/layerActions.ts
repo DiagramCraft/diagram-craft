@@ -1,4 +1,4 @@
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { State } from '../keyMap.ts';
 import { assert, precondition } from '@diagram-craft/utils';
 import {
@@ -7,14 +7,14 @@ import {
   ActionContext,
   ToggleActionUndoableAction
 } from '../action.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { CompoundUndoableAction, UndoableAction } from '../../model/undoManager.ts';
-import { Layer, LayerType } from '../../model/diagramLayer.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model';
+import { Layer, LayerType } from '@diagram-craft/model';
 import {
   commitWithUndo,
   ElementDeleteUndoableAction,
   SnapshotUndoableAction
-} from '../../model/diagramUndoActions.ts';
+} from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
 
 export const layerActions = (state: State) => ({

@@ -5,8 +5,8 @@ import { Select } from '../components/Select.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useElementProperty } from '../ObjectProperties/useProperty.ts';
 import React, { ChangeEvent, useCallback, useState } from 'react';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo, SnapshotUndoableAction } from '../../model/diagramUndoActions.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model';
 import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
@@ -16,10 +16,10 @@ import {
   DataSchema,
   DeleteSchemaUndoableAction,
   ModifySchemaUndoableAction
-} from '../../model/diagramDataSchemas.ts';
+} from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
 import { MessageDialog, MessageDialogState } from '../components/MessageDialog.tsx';
-import { CompoundUndoableAction } from '../../model/undoManager.ts';
+import { CompoundUndoableAction } from '@diagram-craft/model';
 import { JSONDialog } from '../components/JSONDialog.tsx';
 import { unique } from '@diagram-craft/utils';
 

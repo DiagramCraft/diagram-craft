@@ -14,7 +14,7 @@ import {
 } from './types.ts';
 import { ConnectedEndpoint } from '../endpoint.ts';
 
-export const isConnected = (
+export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint
 ): endpoint is SerializedConnectedEndpoint => 'node' in endpoint;
 
@@ -60,7 +60,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
     return {
       id: edge.id,
       type: 'edge',
-      start: isConnected(edge.start)
+      start: isSerializedEndpointConnected(edge.start)
         ? {
             anchor: (edge.start as ConnectedEndpoint).anchor,
             node: { id: (edge.start as ConnectedEndpoint).node.id },
@@ -69,7 +69,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
         : {
             position: edge.start.position
           },
-      end: isConnected(edge.end)
+      end: isSerializedEndpointConnected(edge.end)
         ? {
             anchor: (edge.end as ConnectedEndpoint).anchor,
             node: { id: (edge.end as ConnectedEndpoint).node.id },

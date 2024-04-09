@@ -1,5 +1,5 @@
-import { DiagramElement } from '../model/diagramElement.ts';
-import { UnitOfWork } from '../model/unitOfWork.ts';
+import { DiagramElement } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 
 export const addHighlight = (element: DiagramElement, highlight: string) => {
   UnitOfWork.execute(element.diagram, uow => {

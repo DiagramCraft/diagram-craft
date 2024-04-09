@@ -1,10 +1,10 @@
-import { DiagramNode } from '../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { useDiagram } from './context/DiagramContext.ts';
-import { Diagram } from '../model/diagram.ts';
-import { Layer } from '../model/diagramLayer.ts';
-import { UnitOfWork } from '../model/unitOfWork.ts';
+import { Diagram } from '@diagram-craft/model';
+import { Layer } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 import { PickerCanvas } from './PickerCanvas.tsx';
-import { DiagramDocument } from '../model/diagramDocument.ts';
+import { DiagramDocument } from '@diagram-craft/model';
 
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();

@@ -1,7 +1,7 @@
 import * as Tree from '../components/Tree.tsx';
 import { useRedraw } from '../useRedraw.tsx';
 import { useEventListener } from '../hooks/useEventListener.ts';
-import { DiagramEdge } from '../../model/diagramEdge.ts';
+import { DiagramEdge } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { ObjectTreeNode } from '../ObjectTreeNode.tsx';
 

@@ -1,15 +1,17 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { isConnected, serializeDiagramElement } from '../../model/serialization/serialize.ts';
-import { newid } from '@diagram-craft/utils';
-import { DiagramElement } from '../../model/diagramElement.ts';
-import { UndoableAction } from '../../model/undoManager.ts';
-import { Diagram } from '../../model/diagram.ts';
-import { precondition } from '@diagram-craft/utils';
-import { Layer } from '../../model/diagramLayer.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { SerializedElement } from '../../model/serialization/types.ts';
-import { deserializeDiagramElements } from '../../model/serialization/deserialize.ts';
+import { newid, precondition } from '@diagram-craft/utils';
+import {
+  deserializeDiagramElements,
+  Diagram,
+  DiagramElement,
+  isSerializedEndpointConnected,
+  Layer,
+  SerializedElement,
+  serializeDiagramElement,
+  UndoableAction,
+  UnitOfWork
+} from '@diagram-craft/model';
 import { AbstractAction, ActionContext } from '../action.ts';
 import { Box, Point } from '@diagram-craft/geometry';
 
@@ -93,10 +95,10 @@ abstract class AbstractClipboardPasteAction extends AbstractAction {
         };
       } else {
         e.id = newid();
-        if (!isConnected(e.start)) {
+        if (!isSerializedEndpointConnected(e.start)) {
           e.start.position = this.adjustPosition(e.start.position, context, bb);
         }
-        if (!isConnected(e.end)) {
+        if (!isSerializedEndpointConnected(e.end)) {
           e.end.position = this.adjustPosition(e.end.position, context, bb);
         }
       }

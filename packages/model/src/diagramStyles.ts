@@ -1,10 +1,10 @@
-import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
+import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './index.ts';
 import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
-import { DiagramDocument } from './diagramDocument.ts';
+import { DiagramDocument } from './index.ts';
 import { common, isObj } from '@diagram-craft/utils';
 import { deepClone, deepMerge } from '@diagram-craft/utils';
 import { UndoableAction } from './undoManager.ts';
-import { Diagram } from './diagram.ts';
+import { Diagram } from './index.ts';
 
 export class Stylesheet<P extends ElementProps = ElementProps>
   implements UOWTrackable<StylesheetSnapshot>

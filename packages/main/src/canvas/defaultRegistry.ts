@@ -1,7 +1,4 @@
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry
-} from '../model/elementDefinitionRegistry.ts';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '@diagram-craft/model';
 import { RectNodeDefinition } from './node-types/Rect.nodeType.ts';
 import { CircleNodeDefinition } from './node-types/Circle.nodeType.ts';
 import { DiamondNodeDefinition } from './node-types/Diamond.nodeType.ts';

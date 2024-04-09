@@ -1,11 +1,11 @@
 import { EditablePath, EditableWaypointType } from '../tools/node/editablePath.ts';
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { DRAG_DROP_MANAGER } from '../DragDropManager.ts';
 import { EventHelper } from '../../base-ui/eventHelper.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model';
 import { toInlineCSS } from '../../base-ui/vdom.ts';
 import { ControlPointDrag } from '../tools/node/controlPointDrag.ts';
 import { NodeDrag } from '../tools/node/nodeDrag.ts';

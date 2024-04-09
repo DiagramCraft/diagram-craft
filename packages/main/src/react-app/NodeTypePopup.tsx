@@ -1,16 +1,16 @@
 import * as Popover from '@radix-ui/react-popover';
 import { TbX } from 'react-icons/tb';
-import { Diagram } from '../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { useDiagram } from './context/DiagramContext.ts';
-import { Layer } from '../model/diagramLayer.ts';
-import { DiagramNode } from '../model/diagramNode.ts';
-import { UnitOfWork } from '../model/unitOfWork.ts';
+import { Layer } from '@diagram-craft/model';
+import { DiagramNode } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
 import { PickerCanvas } from './PickerCanvas.tsx';
 import { assert } from '@diagram-craft/utils';
 import { useCallback } from 'react';
 import { newid } from '@diagram-craft/utils';
-import { ConnectedEndpoint } from '../model/endpoint.ts';
-import { DiagramDocument } from '../model/diagramDocument.ts';
+import { ConnectedEndpoint } from '@diagram-craft/model';
+import { DiagramDocument } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
 
 export const NodeTypePopup = (props: Props) => {

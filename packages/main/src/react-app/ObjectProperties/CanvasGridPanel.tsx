@@ -6,7 +6,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbGrid3X3, TbGridDots } from 'react-icons/tb';
 import { NumberInput } from '../components/NumberInput.tsx';
 import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { assertGridType } from '../../model/diagramProps.ts';
+import { assertGridType } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext.ts';
 import { useConfiguration } from '../context/ConfigurationContext.ts';
 

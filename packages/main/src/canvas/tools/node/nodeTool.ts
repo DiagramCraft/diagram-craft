@@ -2,12 +2,12 @@ import { MutableRefObject, RefObject } from 'react';
 import { DragDopManager, Modifiers } from '../../../base-ui/drag/dragDropManager.ts';
 import { BACKGROUND, DeferedMouseAction } from '../types.ts';
 import { AbstractTool } from '../abstractTool.ts';
-import { Diagram } from '../../../model/diagram.ts';
-import { isNode } from '../../../model/diagramElement.ts';
+import { Diagram } from '@diagram-craft/model';
+import { isNode } from '@diagram-craft/model';
 import { addHighlight, removeHighlight } from '../../highlight.ts';
-import { UnitOfWork } from '../../../model/unitOfWork.ts';
+import { UnitOfWork } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../../EditableCanvas.ts';
-import { commitWithUndo } from '../../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
 
 export class NodeTool extends AbstractTool {

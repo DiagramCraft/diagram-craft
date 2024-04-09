@@ -1,7 +1,7 @@
 import { AbstractDrag, Modifiers } from '../../../base-ui/drag/dragDropManager.ts';
 import { EditablePath } from './editablePath.ts';
-import { UnitOfWork } from '../../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../../model/diagramUndoActions.ts';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
 
 export class NodeDrag extends AbstractDrag {

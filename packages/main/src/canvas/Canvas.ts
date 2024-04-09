@@ -1,5 +1,5 @@
 import { Component } from '../base-ui/component.ts';
-import { Diagram } from '../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import * as svg from '../base-ui/vdom-svg.ts';
 import * as html from '../base-ui/vdom-html.ts';
 import { EdgeComponent } from './EdgeComponent.ts';

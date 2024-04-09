@@ -1,6 +1,6 @@
 import { DiagramNode } from './diagramNode.ts';
 import { assert } from '@diagram-craft/utils';
-import { UnitOfWork } from './unitOfWork.ts';
+import { UnitOfWork } from './index.ts';
 import { DiagramElement } from './diagramElement.ts';
 import { DiagramEdge } from './diagramEdge.ts';
 import { DeepReadonly } from '@diagram-craft/utils';

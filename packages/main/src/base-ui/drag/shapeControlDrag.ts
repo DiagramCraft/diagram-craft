@@ -1,7 +1,7 @@
 import { AbstractDrag, Modifiers } from './dragDropManager.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { DiagramNode } from '@diagram-craft/model';
+import { UnitOfWork } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';
 
 export class ShapeControlPointDrag extends AbstractDrag {

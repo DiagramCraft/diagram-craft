@@ -30,7 +30,7 @@ import { ActionToggleButton } from './ActionToggleButton.tsx';
 import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton.tsx';
 import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton.tsx';
 import { useDiagram } from '../context/DiagramContext.ts';
-import { SelectionType } from '../../model/selectionState.ts';
+import { SelectionType } from '@diagram-craft/model';
 import { TextFontToolbarButton } from '../ObjectProperties/TextFontToolbarButton.tsx';
 import { TextFontSizeToolbarButton } from '../ObjectProperties/TextFontSizeToolbarButton.tsx';
 import { LineToolbarButton } from '../ObjectProperties/LineToolbarButton.tsx';

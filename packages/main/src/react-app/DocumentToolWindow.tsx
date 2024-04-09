@@ -1,9 +1,9 @@
-import { DiagramDocument } from '../model/diagramDocument.ts';
+import { DiagramDocument } from '@diagram-craft/model';
 import { AccordionTrigger } from './AccordionTrigger.tsx';
 import { AccordionContent } from './AccordionContext.tsx';
 import * as Accordion from '@radix-ui/react-accordion';
 import * as Tree from './components/Tree.tsx';
-import { Diagram } from '../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 
 const DiagramLabel = (props: { diagram: Diagram } & Pick<Props, 'onValueChange'>) => {
   return (

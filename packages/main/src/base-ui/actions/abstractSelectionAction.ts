@@ -1,4 +1,4 @@
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { AbstractAction } from '../action.ts';
 
 export abstract class AbstractSelectionAction extends AbstractAction {

@@ -1,7 +1,7 @@
 import { DiagramDocument } from './diagramDocument.ts';
 import { UnitOfWork } from './unitOfWork.ts';
 import { UndoableAction } from './undoManager.ts';
-import { Diagram } from './diagram.ts';
+import { Diagram } from './index.ts';
 import { deepClone } from '@diagram-craft/utils';
 
 type DataSchemaField = {

@@ -1,7 +1,7 @@
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { MagnetType } from '../../model/snap/magnet.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { AbstractToggleAction } from '../action.ts';
+import { MagnetType } from '@diagram-craft/model';
 
 declare global {
   interface ActionMap {

@@ -2,7 +2,7 @@ import { Component } from '../../base-ui/component.ts';
 import { rawHTML, VNode } from '../../base-ui/vdom.ts';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { getPatternProps } from '../getPatternProps.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import * as svg from '../../base-ui/vdom-svg.ts';
 
 type FillProps = {

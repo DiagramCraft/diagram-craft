@@ -13,7 +13,7 @@ import { clipboardActions } from './actions/clipboardAction.ts';
 import { textActions } from './actions/textActions.ts';
 import { edgeFlipActions } from './actions/edgeFlipAction.ts';
 import { duplicateActions } from './actions/duplicateAction.ts';
-import { Diagram } from '../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { edgeTextAddActions } from './actions/edgeTextAddAction.ts';
 import { toolActions } from '../react-app/actions/toolAction.ts';
 import { ApplicationState } from './ApplicationState.ts';

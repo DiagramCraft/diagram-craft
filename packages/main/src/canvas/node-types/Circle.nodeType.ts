@@ -1,5 +1,5 @@
 import { ShapeNodeDefinition } from '../shapeNodeDefinition.ts';
-import { DiagramNode } from '../../model/diagramNode.ts';
+import { DiagramNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps, ShapeBuilder } from '../temp/baseShape.temp.ts';
 import { PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 

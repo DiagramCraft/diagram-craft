@@ -1,5 +1,5 @@
 import { round } from '@diagram-craft/utils';
-import { SelectionState } from '../../model/selectionState.ts';
+import { SelectionState } from '@diagram-craft/model';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';
 import { text, VNode } from '../../base-ui/vdom.ts';

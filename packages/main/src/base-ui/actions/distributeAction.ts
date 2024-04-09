@@ -1,8 +1,8 @@
-import { commitWithUndo } from '../../model/diagramUndoActions.ts';
+import { commitWithUndo } from '@diagram-craft/model';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { Diagram } from '../../model/diagram.ts';
+import { Diagram } from '@diagram-craft/model';
 import { ActionMapFactory, State } from '../keyMap.ts';
-import { UnitOfWork } from '../../model/unitOfWork.ts';
+import { UnitOfWork } from '@diagram-craft/model';
 import { Box } from '@diagram-craft/geometry';
 
 declare global {

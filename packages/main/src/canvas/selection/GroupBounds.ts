@@ -1,4 +1,4 @@
-import { SelectionState } from '../../model/selectionState.ts';
+import { SelectionState } from '@diagram-craft/model';
 import { Angle } from '@diagram-craft/geometry/src/angle.ts';
 import { Component } from '../../base-ui/component.ts';
 import * as svg from '../../base-ui/vdom-svg.ts';

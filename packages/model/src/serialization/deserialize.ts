@@ -3,7 +3,7 @@ import { DiagramNode } from '../diagramNode.ts';
 import { DiagramEdge } from '../diagramEdge.ts';
 import { UnitOfWork } from '../unitOfWork.ts';
 import { Layer } from '../diagramLayer.ts';
-import { isConnected } from './serialize.ts';
+import { isSerializedEndpointConnected } from './serialize.ts';
 import { DiagramDocument } from '../diagramDocument.ts';
 import { DiagramElement } from '../diagramElement.ts';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
@@ -107,10 +107,10 @@ export const deserializeDiagramElements = (
 
     const edge = new DiagramEdge(
       e.id,
-      isConnected(start)
+      isSerializedEndpointConnected(start)
         ? new ConnectedEndpoint(start.anchor, nodeLookup[start.node.id])
         : new FreeEndpoint(start.position),
-      isConnected(end)
+      isSerializedEndpointConnected(end)
         ? new ConnectedEndpoint(end.anchor, nodeLookup[end.node.id])
         : new FreeEndpoint(end.position),
       {
@@ -122,12 +122,12 @@ export const deserializeDiagramElements = (
       layer
     );
 
-    if (isConnected(start)) {
+    if (isSerializedEndpointConnected(start)) {
       const startNode = nodeLookup[start.node.id];
       startNode.edges.set(start.anchor, [...(startNode.edges.get(start.anchor) ?? []), edge]);
     }
 
-    if (isConnected(end)) {
+    if (isSerializedEndpointConnected(end)) {
       const endNode = nodeLookup[end.node.id];
       endNode.edges.set(end.anchor, [...(endNode.edges.get(end.anchor) ?? []), edge]);
     }
