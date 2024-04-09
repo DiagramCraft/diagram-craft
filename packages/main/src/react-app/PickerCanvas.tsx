@@ -1,5 +1,5 @@
 import { Diagram } from '@diagram-craft/model';
-import { Canvas } from '../canvas-react/Canvas.tsx';
+import { Canvas } from '@diagram-craft/canvas-react';
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;
