@@ -1,5 +1,5 @@
-import { deepMerge } from '@diagram-craft/utils';
-import { DeepPartial, DeepRequired } from '@diagram-craft/utils';
+import { DeepPartial, DeepRequired } from '@diagram-craft/utils/types';
+import { deepMerge } from '@diagram-craft/utils/object';
 
 export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: string): T =>
   new Proxy<T>(target as T, {

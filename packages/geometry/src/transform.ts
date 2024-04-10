@@ -1,7 +1,7 @@
 import { Vector } from './vector';
 import { Point } from './point';
 import { Box } from './box';
-import { round } from '@diagram-craft/utils';
+import { round } from '@diagram-craft/utils/math';
 
 export interface Transform {
   apply(b: Box): Box;

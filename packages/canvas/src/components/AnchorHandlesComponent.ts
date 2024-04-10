@@ -1,5 +1,4 @@
 import { AbstractDrag, DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
-import { EventHelper, newid, VerifyNotReached } from '@diagram-craft/utils';
 import { ApplicationTriggers, CanvasState } from '../EditableCanvasComponent';
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
@@ -13,6 +12,9 @@ import { ConnectedEndpoint, FreeEndpoint, isConnected } from '@diagram-craft/mod
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { newid } from '@diagram-craft/utils/id';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 
 class AnchorHandleDrag extends AbstractDrag {
   edge: DiagramEdge;

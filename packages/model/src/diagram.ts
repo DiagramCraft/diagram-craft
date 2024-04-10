@@ -1,4 +1,3 @@
-import { EventEmitter } from '@diagram-craft/utils';
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
@@ -8,12 +7,13 @@ import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
 import { SnapManagerConfig } from './snap/snapManagerConfig';
-import { assert } from '@diagram-craft/utils';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
+import { EventEmitter } from '@diagram-craft/utils/event';
+import { assert } from '@diagram-craft/utils/assert';
 
 export type Canvas = Omit<Box, 'r'>;
 

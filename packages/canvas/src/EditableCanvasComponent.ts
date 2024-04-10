@@ -1,6 +1,5 @@
 import { SelectionComponent } from './components/SelectionComponent';
 import { SelectionMarqueeComponent } from './components/SelectionMarqueeComponent';
-import { debounce, EventHelper, EventKey } from '@diagram-craft/utils';
 import { GridComponent } from './components/GridComponent';
 import { Actions, executeAction } from './keyMap';
 import { DocumentBoundsComponent } from './components/DocumentBoundsComponent';
@@ -22,6 +21,9 @@ import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 import { UndoEvents } from '@diagram-craft/model/undoManager';
 import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model/diagramElement';
 import { SelectionState, SelectionStateEvents } from '@diagram-craft/model/selectionState';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { debounce } from '@diagram-craft/utils/debounce';
+import { EventKey } from '@diagram-craft/utils/event';
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement

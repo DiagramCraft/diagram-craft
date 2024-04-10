@@ -6,7 +6,7 @@ import { Layer } from '../diagramLayer';
 import { isSerializedEndpointConnected } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
 import { DiagramElement } from '../diagramElement';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import {
   SerializedDiagram,
   SerializedDiagramDocument,

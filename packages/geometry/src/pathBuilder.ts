@@ -1,8 +1,8 @@
 import { Point } from './point';
 import { Box } from './box';
-import { precondition, VerifyNotReached } from '@diagram-craft/utils';
 import { Path } from './path';
 import { Angle } from './angle';
+import { precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];

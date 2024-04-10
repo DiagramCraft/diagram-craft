@@ -1,6 +1,7 @@
-import { PerformanceTest, perftest, Random } from '@diagram-craft/utils';
 import { CubicBezier } from './bezier';
 import { Line } from './line';
+import { PerformanceTest, perftest } from '@diagram-craft/utils/perftest';
+import { Random } from '@diagram-craft/utils/random';
 
 const r = new Random(123456);
 

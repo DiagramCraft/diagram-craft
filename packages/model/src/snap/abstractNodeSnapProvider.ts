@@ -1,6 +1,6 @@
 import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { isNode } from '../diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 import { Direction } from '@diagram-craft/geometry/direction';

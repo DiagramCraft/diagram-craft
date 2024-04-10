@@ -2,11 +2,11 @@ import { useDiagram } from '../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useRedraw } from '../useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
-import { round } from '@diagram-craft/utils';
 import { useNodeProperty } from './useProperty';
 import { useNodeDefaults } from '../useDefaults';
 import { SliderAndNumberInput } from '../SliderAndNumberInput';
 import { Select } from '../components/Select';
+import { round } from '@diagram-craft/utils/math';
 
 export const NodeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();

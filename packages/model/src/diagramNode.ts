@@ -1,14 +1,3 @@
-import {
-  assert,
-  clamp,
-  deepClone,
-  deepMerge,
-  DeepReadonly,
-  DeepRequired,
-  newid,
-  round,
-  VERIFY_NOT_REACHED
-} from '@diagram-craft/utils';
 import { AbstractNode, Anchor, LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { PathUtils } from '@diagram-craft/geometry/pathUtils';
@@ -20,6 +9,11 @@ import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { nodeDefaults } from './diagramDefaults';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { deepClone, deepMerge } from '@diagram-craft/utils/object';
+import { VERIFY_NOT_REACHED, assert } from '@diagram-craft/utils/assert';
+import { newid } from '@diagram-craft/utils/id';
+import { clamp, round } from '@diagram-craft/utils/math';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

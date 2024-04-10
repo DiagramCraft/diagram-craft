@@ -1,4 +1,4 @@
-import { EventEmitter } from '@diagram-craft/utils';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 declare global {
   interface Tools {}

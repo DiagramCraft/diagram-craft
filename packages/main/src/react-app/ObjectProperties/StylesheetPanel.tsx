@@ -4,7 +4,6 @@ import { TbDots } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDiagram } from '../context/DiagramContext';
 import { useElementProperty } from './useProperty';
-import { newid } from '@diagram-craft/utils';
 import { useState } from 'react';
 import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
 import { useRedraw } from '../useRedraw';
@@ -22,6 +21,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { isNode } from '@diagram-craft/model/diagramElement';
+import { newid } from '@diagram-craft/utils/id';
 
 export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();

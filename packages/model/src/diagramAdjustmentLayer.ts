@@ -1,8 +1,8 @@
 import { DiagramElement } from './diagramElement';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
-import { deepClone } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
+import { deepClone } from '@diagram-craft/utils/object';
 
 export type AdjustmentRule = {
   props: ElementProps;

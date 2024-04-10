@@ -9,7 +9,6 @@ import { useRedraw } from '../useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
-import { newid, unique } from '@diagram-craft/utils';
 import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
 import { JSONDialog } from '../components/JSONDialog';
 import {
@@ -21,6 +20,8 @@ import {
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { newid } from '@diagram-craft/utils/id';
+import { unique } from '@diagram-craft/utils/array';
 
 const makeTemplate = (): DataSchema => {
   return {

@@ -1,6 +1,3 @@
-import { hash, Random } from '@diagram-craft/utils/index';
-import { round } from '@diagram-craft/utils/index';
-import { VerifyNotReached } from '@diagram-craft/utils/index';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   PathRenderer,
@@ -14,6 +11,10 @@ import { Point } from '@diagram-craft/geometry/point';
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { BezierUtils } from '@diagram-craft/geometry/bezier';
 import { Vector } from '@diagram-craft/geometry/vector';
+import { hash } from '@diagram-craft/utils/hash';
+import { Random } from '@diagram-craft/utils/random';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { round } from '@diagram-craft/utils/math';
 
 export class SketchPathRenderer implements PathRenderer {
   render(node: DiagramNode, path: StyledPath): RenderedStyledPath[] {

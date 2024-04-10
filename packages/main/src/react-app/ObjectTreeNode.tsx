@@ -1,5 +1,5 @@
 import * as Tree from './components/Tree';
-import { round } from '@diagram-craft/utils';
+import { round } from '@diagram-craft/utils/math';
 
 export const ObjectTreeNode = (props: Props) => {
   return Object.keys(props.obj).map(key => {

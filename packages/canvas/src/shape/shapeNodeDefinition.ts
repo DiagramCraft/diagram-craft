@@ -1,5 +1,4 @@
 import { BaseShape } from './BaseShape';
-import { round } from '@diagram-craft/utils';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
@@ -14,6 +13,7 @@ import {
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { round } from '@diagram-craft/utils/math';
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   protected constructor(

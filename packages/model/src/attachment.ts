@@ -1,6 +1,6 @@
 import { DiagramDocument } from './diagramDocument';
 import { isEdge, isNode } from './diagramElement';
-import { hash64 } from '@diagram-craft/utils';
+import { hash64 } from '@diagram-craft/utils/hash';
 
 export class Attachment {
   hash: string;

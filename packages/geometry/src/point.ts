@@ -1,5 +1,5 @@
 import { Vector } from './vector';
-import { isSame, round } from '@diagram-craft/utils';
+import { isSame, round } from '@diagram-craft/utils/math';
 
 export type Point = Readonly<{
   x: number;

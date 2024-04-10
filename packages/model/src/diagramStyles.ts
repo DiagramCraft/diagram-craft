@@ -1,10 +1,9 @@
 import { DiagramElement, isEdge, isNode } from './diagramElement';
-import { common, isObj } from '@diagram-craft/utils';
-import { deepClone, deepMerge } from '@diagram-craft/utils';
 import { UndoableAction } from './undoManager';
 import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
+import { common, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 
 export class Stylesheet<P extends ElementProps = ElementProps>
   implements UOWTrackable<StylesheetSnapshot>

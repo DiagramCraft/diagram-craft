@@ -1,4 +1,4 @@
-import { assert, precondition } from '@diagram-craft/utils';
+import { assert, precondition } from '@diagram-craft/utils/assert';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';

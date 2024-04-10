@@ -1,14 +1,5 @@
 import { DiagramNode, DuplicationContext } from './diagramNode';
 import { AbstractEdge, LabelNode, Waypoint } from './types';
-import {
-  deepClone,
-  deepMerge,
-  DeepReadonly,
-  DeepRequired,
-  DeepWriteable,
-  isDifferent,
-  newid
-} from '@diagram-craft/utils';
 import { BaseEdgeDefinition } from './baseEdgeDefinition';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
@@ -24,6 +15,10 @@ import { Endpoint, FreeEndpoint, isConnected } from './endpoint';
 import { edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
+import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils/types';
+import { deepClone, deepMerge } from '@diagram-craft/utils/object';
+import { newid } from '@diagram-craft/utils/id';
+import { isDifferent } from '@diagram-craft/utils/math';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;

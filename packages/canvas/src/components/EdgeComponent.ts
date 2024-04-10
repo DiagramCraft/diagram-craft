@@ -3,8 +3,6 @@ import { toInlineCSS, VNode } from '../component/vdom';
 import { Tool } from '../tool';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
-import { hash } from '@diagram-craft/utils/index';
-import { EventHelper } from '@diagram-craft/utils/index';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { makeShadowFilter } from '../effects/shadow';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
@@ -19,6 +17,8 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ControlPoints } from '@diagram-craft/model/types';
+import { hash } from '@diagram-craft/utils/hash';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 
 const makeArrowMarker = ({
   id,

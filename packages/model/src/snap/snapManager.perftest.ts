@@ -1,10 +1,10 @@
-import { PerformanceTest } from '@diagram-craft/utils';
 import { SnapManager } from './snapManager';
 import { DiagramNode } from '../diagramNode';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../elementDefinitionRegistry';
 import { Diagram } from '../diagram';
 import { Layer } from '../diagramLayer';
 import { UnitOfWork } from '../unitOfWork';
+import { PerformanceTest } from '@diagram-craft/utils/perftest';
 
 export class SnapManagerPerftest implements PerformanceTest {
   private snapManager: SnapManager | undefined;

@@ -1,4 +1,4 @@
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/index';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { AbstractSelectionAction } from './abstractSelectionAction';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';

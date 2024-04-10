@@ -2,7 +2,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { TbX } from 'react-icons/tb';
 import { useDiagram } from './context/DiagramContext';
 import { PickerCanvas } from './PickerCanvas';
-import { assert, newid } from '@diagram-craft/utils';
+import { assert } from '@diagram-craft/utils/assert';
 import { useCallback } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -11,6 +11,7 @@ import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { newid } from '@diagram-craft/utils/id';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();

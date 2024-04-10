@@ -2,18 +2,18 @@ import { Diagram } from '../diagram';
 import { CanvasSnapProvider } from './canvasSnapProvider';
 import { NodeSnapProvider } from './nodeSnapProvider';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
-import { VerifyNotReached } from '@diagram-craft/utils';
 import { GridSnapProvider } from './gridSnapProvider';
 import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
 import { Guide } from '../selectionState';
 import { Magnet, MagnetOfType, MagnetType } from './magnet';
-import { largest, smallest } from '@diagram-craft/utils';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import { Direction } from '@diagram-craft/geometry/direction';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { largest, smallest } from '@diagram-craft/utils/array';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

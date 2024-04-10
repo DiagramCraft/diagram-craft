@@ -1,5 +1,4 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
@@ -8,6 +7,7 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 

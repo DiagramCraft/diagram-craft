@@ -1,4 +1,4 @@
-import { round } from '@diagram-craft/utils';
+import { round } from '@diagram-craft/utils/math';
 
 export const Angle = {
   toDeg: (radians: number) => (radians * (180 / Math.PI)) % 360,

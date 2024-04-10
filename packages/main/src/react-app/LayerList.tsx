@@ -4,7 +4,7 @@ import { TbAdjustments, TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/t
 import { useRedraw } from './useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { useDraggable, useDropTarget } from './dragAndDropHooks';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { LayerContextMenu } from './LayerContextMenu';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';

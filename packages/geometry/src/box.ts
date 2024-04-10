@@ -3,8 +3,8 @@ import { Polygon } from './polygon';
 import { Direction } from './direction';
 import { Line } from './line';
 import { Extent } from './extent';
-import { round } from '@diagram-craft/utils';
-import { DeepWriteable } from '@diagram-craft/utils';
+import { DeepWriteable } from '@diagram-craft/utils/types';
+import { round } from '@diagram-craft/utils/math';
 
 export type Box = Point & Extent & Readonly<{ r: number; _discriminator?: 'ro' }>;
 

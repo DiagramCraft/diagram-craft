@@ -1,8 +1,8 @@
-import { EventEmitter } from '@diagram-craft/utils';
 import { DiagramElement } from './diagramElement';
-import { precondition } from '@diagram-craft/utils';
 import { SelectionState } from './selectionState';
 import { Box } from '@diagram-craft/geometry/box';
+import { EventEmitter } from '@diagram-craft/utils/event';
+import { precondition } from '@diagram-craft/utils/assert';
 
 export type MarqueeEvents = {
   change: { marquee: Marquee };

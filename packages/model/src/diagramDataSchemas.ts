@@ -1,8 +1,8 @@
 import { DiagramDocument } from './diagramDocument';
 import { UnitOfWork } from './unitOfWork';
 import { UndoableAction } from './undoManager';
-import { deepClone } from '@diagram-craft/utils';
 import { Diagram } from './diagram';
+import { deepClone } from '@diagram-craft/utils/object';
 
 type DataSchemaField = {
   id: string;

@@ -1,12 +1,12 @@
 import { DiagramEdge } from './diagramEdge';
 import { DiagramNode, DuplicationContext } from './diagramNode';
 import { AbstractElement } from './types';
-import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
+import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 
 // eslint-disable-next-line
 type Snapshot = any;

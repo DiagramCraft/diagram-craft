@@ -1,5 +1,4 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { newid, precondition } from '@diagram-craft/utils/index';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Point } from '@diagram-craft/geometry/point';
@@ -15,6 +14,8 @@ import {
   serializeDiagramElement
 } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
+import { precondition } from '@diagram-craft/utils/assert';
+import { newid } from '@diagram-craft/utils/id';
 
 declare global {
   interface ActionMap {

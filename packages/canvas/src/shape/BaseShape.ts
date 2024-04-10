@@ -1,11 +1,9 @@
 import { Component } from '../component/component';
 import { VNode } from '../component/vdom';
-import { deepClone, DeepReadonly } from '@diagram-craft/utils';
 import { Tool } from '../tool';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { makeShadowFilter } from '../effects/shadow';
-import { EventHelper } from '@diagram-craft/utils';
 import { FillFilter, FillPattern } from './shapeFill';
 import * as svg from '../component/vdom-svg';
 import { EdgeComponent } from '../components/EdgeComponent';
@@ -21,6 +19,9 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { deepClone } from '@diagram-craft/utils/object';
+import { DeepReadonly } from '@diagram-craft/utils/types';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 
 type NodeWrapperComponentProps = {
   children: VNode[];

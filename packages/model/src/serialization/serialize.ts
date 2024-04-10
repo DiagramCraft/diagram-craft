@@ -1,4 +1,3 @@
-import { VerifyNotReached } from '@diagram-craft/utils';
 import { Diagram } from '../diagram';
 import { DiagramDocument } from '../diagramDocument';
 import { Layer } from '../diagramLayer';
@@ -13,6 +12,7 @@ import {
   SerializedNode
 } from './types';
 import { ConnectedEndpoint } from '../endpoint';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint

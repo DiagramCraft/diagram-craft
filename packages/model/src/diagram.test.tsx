@@ -2,11 +2,11 @@ import { describe, expect, test } from 'vitest';
 import { Diagram } from './diagram';
 import { DiagramNode } from './diagramNode';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { newid } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer';
 import { UnitOfWork } from './unitOfWork';
 import { TestNodeDefinition } from './TestNodeDefinition';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { newid } from '@diagram-craft/utils/id';
 
 const bounds = {
   x: 0,

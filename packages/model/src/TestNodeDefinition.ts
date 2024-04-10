@@ -4,7 +4,6 @@ import {
   NodeDefinition
 } from './elementDefinitionRegistry';
 import { DiagramNode } from './diagramNode';
-import { DeepReadonly, round } from '@diagram-craft/utils';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramElement } from './diagramElement';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
@@ -13,6 +12,8 @@ import { Path } from '@diagram-craft/geometry/path';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Transform } from '@diagram-craft/geometry/transform';
+import { round } from '@diagram-craft/utils/math';
+import { DeepReadonly } from '@diagram-craft/utils/types';
 
 export class TestNodeDefinition implements NodeDefinition {
   constructor(

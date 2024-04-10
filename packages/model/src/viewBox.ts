@@ -1,4 +1,4 @@
-import { EventEmitter } from '@diagram-craft/utils';
+import { EventEmitter } from '@diagram-craft/utils/event';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';

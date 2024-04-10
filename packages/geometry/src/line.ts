@@ -1,7 +1,7 @@
 import { Point } from './point';
 import { Range } from './range';
 import { Vector } from './vector';
-import { round } from '@diagram-craft/utils';
+import { round } from '@diagram-craft/utils/math';
 
 export type Line = Readonly<{
   from: Point;

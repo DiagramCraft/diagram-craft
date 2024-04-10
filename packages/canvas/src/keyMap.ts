@@ -1,7 +1,7 @@
 import { ApplicationState } from './ApplicationState';
 import { UserState } from './UserState';
 import { Action, ActionContext, ActionEvents, ToggleAction } from './action';
-import { EventEmitter } from '@diagram-craft/utils';
+import { EventEmitter } from '@diagram-craft/utils/event';
 import { Diagram } from '@diagram-craft/model/diagram';
 
 export type State = {

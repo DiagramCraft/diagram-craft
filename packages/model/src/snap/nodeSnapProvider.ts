@@ -3,12 +3,12 @@ import { MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Guide } from '../selectionState';
 import { Magnet, MagnetOfType } from './magnet';
 import { isNode } from '../diagramElement';
-import { unique } from '@diagram-craft/utils';
 import { Box } from '@diagram-craft/geometry/box';
 import { Range } from '@diagram-craft/geometry/range';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import { Point } from '@diagram-craft/geometry/point';
+import { unique } from '@diagram-craft/utils/array';
 
 const N = Infinity;
 const minX = (...bs: Box[]) => bs.reduce((p, b) => Math.min(p, b.x, b.x + b.w), N);

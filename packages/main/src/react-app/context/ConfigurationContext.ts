@@ -1,6 +1,6 @@
 import React from 'react';
-import { assert } from '@diagram-craft/utils';
-import { DeepRequired } from '@diagram-craft/utils';
+import { DeepRequired } from '@diagram-craft/utils/types';
+import { assert } from '@diagram-craft/utils/assert';
 
 type ConfigurationContextType = {
   palette: {

@@ -19,9 +19,9 @@ import { useDiagram } from '../context/DiagramContext';
 import { useNodeDefaults } from '../useDefaults';
 import { useConfiguration } from '../context/ConfigurationContext';
 import { Collapsible } from '../components/Collapsible';
-import { round } from '@diagram-craft/utils';
 import { Select } from '../components/Select';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
+import { round } from '@diagram-craft/utils/math';
 
 export const TextPanel = (props: Props) => {
   const $d = useDiagram();

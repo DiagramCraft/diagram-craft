@@ -1,4 +1,3 @@
-import { EventHelper } from '@diagram-craft/utils';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
@@ -6,6 +5,7 @@ import { ResizeDrag, ResizeType } from '../drag/resizeDrag';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 
 type Props = {
   diagram: Diagram;

@@ -1,4 +1,3 @@
-import { VerifyNotReached } from '@diagram-craft/utils/index';
 import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
@@ -8,6 +7,7 @@ import { inverseUnitCoordinateSystem, PathBuilder } from '@diagram-craft/geometr
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 export type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };
 export type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';

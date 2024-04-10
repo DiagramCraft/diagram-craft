@@ -1,5 +1,5 @@
 import { AbstractDrag } from '../dragDropManager';
-import { precondition } from '@diagram-craft/utils';
+import { precondition } from '@diagram-craft/utils/assert';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';

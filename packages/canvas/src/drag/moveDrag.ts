@@ -1,5 +1,4 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { largest, VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { addHighlight, removeHighlight } from '../highlight';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Point } from '@diagram-craft/geometry/point';
@@ -18,6 +17,8 @@ import {
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
 import { SelectionState } from '@diagram-craft/model/selectionState';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { largest } from '@diagram-craft/utils/array';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 

@@ -1,4 +1,3 @@
-import { deepClone, newid } from '@diagram-craft/utils';
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { EdgeCapability, EdgeDefinition } from './elementDefinitionRegistry';
@@ -7,6 +6,8 @@ import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
 import { ConnectedEndpoint } from './endpoint';
+import { newid } from '@diagram-craft/utils/id';
+import { deepClone } from '@diagram-craft/utils/object';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
   public readonly id: string;
