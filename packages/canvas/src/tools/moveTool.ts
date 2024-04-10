@@ -10,6 +10,12 @@ type DeferredMouseAction = {
   callback: () => void;
 };
 
+declare global {
+  interface Tools {
+    move: MoveTool;
+  }
+}
+
 export class MoveTool extends AbstractTool {
   private deferredMouseAction: DeferredMouseAction | undefined;
 

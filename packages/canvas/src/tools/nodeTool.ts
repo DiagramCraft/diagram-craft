@@ -5,6 +5,12 @@ import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
 import { Point } from '@diagram-craft/geometry';
 import { DragDopManager, Modifiers } from '../dragDropManager.ts';
 
+declare global {
+  interface Tools {
+    node: NodeTool;
+  }
+}
+
 export class NodeTool extends AbstractTool {
   constructor(
     protected readonly diagram: Diagram,

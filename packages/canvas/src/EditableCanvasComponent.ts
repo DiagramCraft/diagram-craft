@@ -17,14 +17,9 @@ import {
 } from '@diagram-craft/model';
 import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager.ts';
 import { BACKGROUND, Tool, ToolContructor } from './tool.ts';
-import { MoveTool } from './tools/moveTool.ts';
-import { TextTool } from './tools/textTool.ts';
 import { DragLabelComponent } from './components/DragLabelComponent.ts';
 import { ApplicationState, ToolType } from './ApplicationState.ts';
-import { EdgeTool } from './tools/edgeTool.ts';
 import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent.ts';
-import { NodeTool } from './tools/nodeTool.ts';
-import { PenTool } from './tools/penTool.ts';
 import { Component, ComponentVNodeData, createEffect } from './component/component.ts';
 import * as svg from './component/vdom-svg.ts';
 import * as html from './component/vdom-html.ts';
@@ -32,14 +27,6 @@ import { EdgeComponent } from './components/EdgeComponent.ts';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition.ts';
 import { BaseShape, BaseShapeProps } from './shape/BaseShape.ts';
 import { Box, Point } from '@diagram-craft/geometry';
-
-const TOOLS: Record<ToolType, ToolContructor> = {
-  move: MoveTool,
-  text: TextTool,
-  edge: EdgeTool,
-  node: NodeTool,
-  pen: PenTool
-};
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement
@@ -105,9 +92,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     // State
     const selection = diagram.selectionState;
-    const resetTool = () => (props.applicationState.tool = 'move');
+    const resetTool = () => (props.applicationState.tool = props.initialTool ?? 'move');
 
-    this.tool ??= new TOOLS[props.applicationState.tool](
+    this.tool ??= new props.tools[props.applicationState.tool]!(
       diagram,
       DRAG_DROP_MANAGER,
       this.svgRef,
@@ -118,7 +105,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     createEffect(() => {
       const cb = (s: { tool: ToolType }) => {
         this.setTool(
-          new TOOLS[s.tool](
+          new props.tools[s.tool]!(
             diagram,
             DRAG_DROP_MANAGER,
             this.svgRef,
@@ -492,6 +479,8 @@ export type Props = {
   applicationTriggers: ApplicationTriggers;
   className?: string;
   diagram: Diagram;
+  tools: Partial<Record<ToolType, ToolContructor>>;
+  initialTool?: ToolType;
   width?: string | number;
   height?: string | number;
   onClick?: (e: MouseEvent) => void;

@@ -1,6 +1,10 @@
 import { EventEmitter } from '@diagram-craft/utils';
 
-export type ToolType = 'move' | 'text' | 'edge' | 'node' | 'pen';
+declare global {
+  interface Tools {}
+}
+
+export type ToolType = keyof Tools;
 
 type ApplicationStateEvents = {
   toolChange: { tool: ToolType };
