@@ -1,4 +1,4 @@
-import { round } from '@diagram-craft/utils';
+import { round } from '@diagram-craft/utils/index.ts';
 
 export const makeShadowFilter = (edgeProps: {
   x?: number;

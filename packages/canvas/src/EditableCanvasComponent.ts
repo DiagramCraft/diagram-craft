@@ -1,9 +1,9 @@
-import { SelectionComponent } from './SelectionComponent.ts';
-import { SelectionMarqueeComponent } from './SelectionMarqueeComponent.ts';
+import { SelectionComponent } from './components/SelectionComponent.ts';
+import { SelectionMarqueeComponent } from './components/SelectionMarqueeComponent.ts';
 import { debounce, EventHelper, EventKey } from '@diagram-craft/utils';
-import { GridComponent } from './GridComponent.ts';
+import { GridComponent } from './components/GridComponent.ts';
 import { Actions, executeAction } from './keyMap.ts';
-import { DocumentBoundsComponent } from './DocumentBoundsComponent.ts';
+import { DocumentBoundsComponent } from './components/DocumentBoundsComponent.ts';
 import {
   Diagram,
   DiagramElement,
@@ -19,16 +19,16 @@ import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager.ts';
 import { BACKGROUND, Tool, ToolContructor } from './tool.ts';
 import { MoveTool } from './tools/moveTool.ts';
 import { TextTool } from './tools/textTool.ts';
-import { DragLabelComponent } from './DragLabelComponent.ts';
+import { DragLabelComponent } from './components/DragLabelComponent.ts';
 import { ApplicationState, ToolType } from './ApplicationState.ts';
 import { EdgeTool } from './tools/edgeTool.ts';
-import { AnchorHandlesComponent } from './selection/AnchorHandlesComponent.ts';
+import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent.ts';
 import { NodeTool } from './tools/nodeTool.ts';
 import { PenTool } from './tools/penTool.ts';
 import { Component, ComponentVNodeData, createEffect } from './component/component.ts';
 import * as svg from './component/vdom-svg.ts';
 import * as html from './component/vdom-html.ts';
-import { EdgeComponent } from './EdgeComponent.ts';
+import { EdgeComponent } from './components/EdgeComponent.ts';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition.ts';
 import { BaseShape, BaseShapeProps } from './shape/BaseShape.ts';
 import { Box, Point } from '@diagram-craft/geometry';

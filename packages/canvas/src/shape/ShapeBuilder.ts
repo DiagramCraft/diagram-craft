@@ -2,11 +2,12 @@ import { toInlineCSS, VNode } from '../component/vdom.ts';
 import { Box, Extent, Path } from '@diagram-craft/geometry';
 import { Component } from '../component/component.ts';
 import { ShapeText, ShapeTextProps } from './ShapeText.ts';
-import { DefaultPathRenderer, PathRenderer, SketchPathRenderer } from './PathRenderer.ts';
+import { DefaultPathRenderer, PathRenderer } from './PathRenderer.ts';
 import * as svg from '../component/vdom-svg.ts';
 import { BaseShapeBuildProps } from './BaseShape.ts';
 import { DiagramNode, UnitOfWork } from '@diagram-craft/model';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint.ts';
+import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch.ts';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {

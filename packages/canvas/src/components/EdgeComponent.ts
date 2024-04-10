@@ -1,5 +1,5 @@
-import { Component } from './component/component.ts';
-import { toInlineCSS, VNode } from './component/vdom.ts';
+import { Component } from '../component/component.ts';
+import { toInlineCSS, VNode } from '../component/vdom.ts';
 import {
   applyLineHops,
   clipPath,
@@ -7,21 +7,21 @@ import {
   Diagram,
   DiagramEdge,
   UnitOfWork
-} from '@diagram-craft/model';
-import { Tool } from './tool.ts';
-import { ApplicationTriggers } from './EditableCanvasComponent.ts';
-import { ARROW_SHAPES, ArrowShape } from './arrowShapes.ts';
-import { hash } from '@diagram-craft/utils';
-import { EventHelper } from '@diagram-craft/utils';
-import { DASH_PATTERNS } from './dashPatterns.ts';
-import { makeShadowFilter } from './styleUtils.ts';
-import { DRAG_DROP_MANAGER } from './dragDropManager.ts';
-import * as svg from './component/vdom-svg.ts';
-import { Point } from '@diagram-craft/geometry';
-import { Modifiers } from './dragDropManager.ts';
-import { EdgeWaypointDrag } from './drag/edgeWaypointDrag.ts';
-import { BezierControlPointDrag } from './drag/bezierControlPointDrag.ts';
-import { asDistortedSvgPath, parseArrowSvgPath } from './sketch.ts';
+} from '@diagram-craft/model/index.ts';
+import { Tool } from '../tool.ts';
+import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
+import { ARROW_SHAPES, ArrowShape } from '../arrowShapes.ts';
+import { hash } from '@diagram-craft/utils/index.ts';
+import { EventHelper } from '@diagram-craft/utils/index.ts';
+import { DASH_PATTERNS } from '../dashPatterns.ts';
+import { makeShadowFilter } from '../effects/shadow.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
+import * as svg from '../component/vdom-svg.ts';
+import { Point } from '@diagram-craft/geometry/index.ts';
+import { Modifiers } from '../dragDropManager.ts';
+import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag.ts';
+import { BezierControlPointDrag } from '../drag/bezierControlPointDrag.ts';
+import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch.ts';
 
 const makeArrowMarker = ({
   id,

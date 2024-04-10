@@ -1,15 +1,15 @@
-import { Angle } from '@diagram-craft/geometry';
-import { $c } from '@diagram-craft/utils';
-import { LabelNodeSelectionComponent } from './selection/LabelNodeSelectionComponent.ts';
-import { GroupBoundsComponent } from './selection/GroupBoundsComponent.ts';
-import { GuidesComponent } from './selection/GuidesComponent.ts';
-import { RotationHandleComponent } from './selection/RotationHandleComponent.ts';
-import { ResizeHandlesComponent } from './selection/ResizeHandlesComponent.ts';
-import { EdgeSelectionComponent } from './selection/EdgeSelectionComponent.ts';
-import { Component, createEffect } from './component/component.ts';
-import * as svg from './component/vdom-svg.ts';
-import { CanvasState } from './EditableCanvasComponent.ts';
-import { Box } from '@diagram-craft/geometry';
+import { Angle } from '@diagram-craft/geometry/index.ts';
+import { $c } from '@diagram-craft/utils/index.ts';
+import { LabelNodeSelectionComponent } from '@diagram-craft/canvas/components/LabelNodeSelectionComponent.ts';
+import { GroupBoundsComponent } from '@diagram-craft/canvas/components/GroupBoundsComponent.ts';
+import { GuidesComponent } from '@diagram-craft/canvas/components/GuidesComponent.ts';
+import { RotationHandleComponent } from '@diagram-craft/canvas/components/RotationHandleComponent.ts';
+import { ResizeHandlesComponent } from '@diagram-craft/canvas/components/ResizeHandlesComponent.ts';
+import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSelectionComponent.ts';
+import { Component, createEffect } from '../component/component.ts';
+import * as svg from '../component/vdom-svg.ts';
+import { CanvasState } from '../EditableCanvasComponent.ts';
+import { Box } from '@diagram-craft/geometry/index.ts';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
