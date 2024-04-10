@@ -11,6 +11,7 @@
   "author": "Magnus Johansson",
   "dependencies": {
     "@diagram-craft/canvas": "workspace:^",
+    "@diagram-craft/canvas-nodes": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/model": "workspace:^"

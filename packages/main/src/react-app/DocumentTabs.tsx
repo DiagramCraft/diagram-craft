@@ -1,14 +1,17 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import { DiagramDocument } from '@diagram-craft/model';
-import { useRedraw } from './useRedraw.tsx';
-import { useEventListener } from './hooks/useEventListener.ts';
+import { useRedraw } from './useRedraw';
+import { useEventListener } from './hooks/useEventListener';
 import { TbFiles, TbPlus } from 'react-icons/tb';
 import { newid } from '@diagram-craft/utils';
-import { DocumentsContextMenu } from './DocumentsContextMenu.tsx';
+import { DocumentsContextMenu } from './DocumentsContextMenu';
 import { Diagram } from '@diagram-craft/model';
 import { Layer } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
-import { defaultEdgeRegistry, defaultNodeRegistry } from '@diagram-craft/canvas';
+import {
+  defaultEdgeRegistry,
+  defaultNodeRegistry
+} from '@diagram-craft/canvas-app/defaultRegistry';
 
 export const DocumentTabs = (props: Props) => {
   const redraw = useRedraw();

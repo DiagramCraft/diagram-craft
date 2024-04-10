@@ -5,5 +5,4 @@ export * from './UserState';
 export * from './action';
 export * from './arrowShapes';
 export * from './dashPatterns';
-export * from './defaultRegistry';
 export * from './keyMap';

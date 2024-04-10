@@ -66,7 +66,7 @@ import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
 import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
 import { Point } from '@diagram-craft/geometry';
-import { defaultEdgeRegistry, defaultNodeRegistry, ToolType } from '@diagram-craft/canvas';
+import { ToolType } from '@diagram-craft/canvas';
 import { ApplicationState } from '@diagram-craft/canvas';
 import { UserState } from '@diagram-craft/canvas';
 import { makeActionMap } from '@diagram-craft/canvas';
@@ -77,6 +77,10 @@ import { TextTool } from '@diagram-craft/canvas-app/tools/textTool.ts';
 import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool.ts';
 import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool.ts';
 import { PenTool } from '@diagram-craft/canvas-app/tools/penTool.ts';
+import {
+  defaultEdgeRegistry,
+  defaultNodeRegistry
+} from '@diagram-craft/canvas-app/defaultRegistry.ts';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
