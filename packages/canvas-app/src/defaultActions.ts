@@ -1,24 +1,24 @@
 import { edgeTextAddActions } from '@diagram-craft/canvas/actions/edgeTextAddAction';
-import { clipboardActions } from '@diagram-craft/canvas/actions/clipboardAction';
-import { undoActions } from '@diagram-craft/canvas/actions/undoAction';
-import { redoActions } from '@diagram-craft/canvas/actions/redoAction';
-import { selectAllActions } from '@diagram-craft/canvas/actions/selectAllAction';
-import { selectionDeleteActions } from '@diagram-craft/canvas/actions/selectionDeleteAction';
-import { selectionRestackActions } from '@diagram-craft/canvas/actions/selectionRestackAction';
-import { alignActions } from '@diagram-craft/canvas/actions/alignAction';
-import { toggleMagnetTypeActions } from '@diagram-craft/canvas/actions/toggleMagnetTypeAction';
-import { distributeActions } from '@diagram-craft/canvas/actions/distributeAction';
-import { waypointAddActions } from '@diagram-craft/canvas/actions/waypointAddAction';
+import { clipboardActions } from './actions/clipboardAction.ts';
+import { undoActions } from './actions/undoAction.ts';
+import { redoActions } from './actions/redoAction.ts';
+import { selectAllActions } from './actions/selectAllAction.ts';
+import { selectionDeleteActions } from './actions/selectionDeleteAction.ts';
+import { selectionRestackActions } from './actions/selectionRestackAction.ts';
+import { alignActions } from './actions/alignAction.ts';
+import { toggleMagnetTypeActions } from './actions/toggleMagnetTypeAction.ts';
+import { distributeActions } from './actions/distributeAction.ts';
+import { waypointAddActions } from './actions/waypointAddAction.ts';
 import { waypointDeleteActions } from '@diagram-craft/canvas/actions/waypointDeleteAction';
-import { toggleRulerActions } from '@diagram-craft/canvas/actions/toggleRulerAction';
-import { textActions } from '@diagram-craft/canvas/actions/textActions';
-import { edgeFlipActions } from '@diagram-craft/canvas/actions/edgeFlipAction';
-import { duplicateActions } from '@diagram-craft/canvas/actions/duplicateAction';
-import { saveActions } from '@diagram-craft/canvas/actions/saveAction';
-import { layerActions } from '@diagram-craft/canvas/actions/layerActions';
-import { toolActions } from '@diagram-craft/canvas/actions/toolAction';
+import { toggleRulerActions } from './actions/toggleRulerAction.ts';
+import { textActions } from './actions/textActions.ts';
+import { edgeFlipActions } from './actions/edgeFlipAction.ts';
+import { duplicateActions } from './actions/duplicateAction.ts';
+import { saveActions } from './actions/saveAction.ts';
+import { layerActions } from './actions/layerActions.ts';
+import { toolActions } from './actions/toolAction.ts';
 import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas/src/keyMap';
-import { groupActions } from '@diagram-craft/canvas/actions/groupAction';
+import { groupActions } from './actions/groupAction.ts';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),

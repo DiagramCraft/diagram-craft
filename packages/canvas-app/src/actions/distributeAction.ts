@@ -1,9 +1,9 @@
-import { commitWithUndo } from '@diagram-craft/model';
+import { commitWithUndo } from '@diagram-craft/model/index.ts';
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { Diagram } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
-import { Box } from '@diagram-craft/geometry';
-import { ActionMapFactory, State } from '../keyMap.ts';
+import { Diagram } from '@diagram-craft/model/index.ts';
+import { UnitOfWork } from '@diagram-craft/model/index.ts';
+import { Box } from '@diagram-craft/geometry/index.ts';
+import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap.ts';
 
 declare global {
   interface ActionMap {

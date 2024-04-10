@@ -1,5 +1,5 @@
 import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { newid, precondition } from '@diagram-craft/utils';
+import { newid, precondition } from '@diagram-craft/utils/index.ts';
 import {
   deserializeDiagramElements,
   Diagram,
@@ -10,10 +10,10 @@ import {
   serializeDiagramElement,
   UndoableAction,
   UnitOfWork
-} from '@diagram-craft/model';
-import { Box, Point } from '@diagram-craft/geometry';
-import { ActionMapFactory, State } from '../keyMap.ts';
-import { AbstractAction, ActionContext } from '../action.ts';
+} from '@diagram-craft/model/index.ts';
+import { Box, Point } from '@diagram-craft/geometry/index.ts';
+import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap.ts';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action.ts';
 
 declare global {
   interface ActionMap {
