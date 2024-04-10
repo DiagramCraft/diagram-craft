@@ -103,29 +103,28 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     const diagram = props.diagram;
     const { actionMap, keyMap } = props;
 
-    if (this.tool === undefined) {
-      this.tool = new MoveTool(
-        diagram,
-        DRAG_DROP_MANAGER,
-        this.svgRef,
-        props.applicationTriggers,
-        () => {
-          props.applicationState.tool = 'move';
-        }
-      );
-    }
-
     // State
     const selection = diagram.selectionState;
-
-    const drag = DRAG_DROP_MANAGER;
-
     const resetTool = () => (props.applicationState.tool = 'move');
+
+    this.tool ??= new TOOLS[props.applicationState.tool](
+      diagram,
+      DRAG_DROP_MANAGER,
+      this.svgRef,
+      props.applicationTriggers,
+      resetTool
+    );
 
     createEffect(() => {
       const cb = (s: { tool: ToolType }) => {
         this.setTool(
-          new TOOLS[s.tool](diagram, drag, this.svgRef, props.applicationTriggers, resetTool)
+          new TOOLS[s.tool](
+            diagram,
+            DRAG_DROP_MANAGER,
+            this.svgRef,
+            props.applicationTriggers,
+            resetTool
+          )
         );
       };
       props.applicationState.on('toolChange', cb);

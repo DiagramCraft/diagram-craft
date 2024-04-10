@@ -1,4 +1,4 @@
-import { EditablePath, EditableWaypointType } from '../tools/node/editablePath.ts';
+import { EditablePath, EditableWaypointType } from '../editablePath.ts';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition.ts';
 import { DiagramNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape.ts';
@@ -7,8 +7,8 @@ import { EventHelper } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
 import { toInlineCSS } from '../component/vdom.ts';
-import { ControlPointDrag } from '../tools/node/controlPointDrag.ts';
-import { NodeDrag } from '../tools/node/nodeDrag.ts';
+import { ControlPointDrag } from '../drag/controlPointDrag.ts';
+import { NodeDrag } from '../drag/nodeDrag.ts';
 import * as svg from '../component/vdom-svg.ts';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry';
 import { ShapeBuilder } from '../shape/ShapeBuilder.ts';
