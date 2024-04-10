@@ -1,7 +1,7 @@
 import { AccordionTrigger } from './AccordionTrigger';
 import { AccordionContent } from './AccordionContext';
 import * as Accordion from '@radix-ui/react-accordion';
-import { parseAndQuery } from '@diagram-craft/query';
+import { parseAndQuery } from '@diagram-craft/query/query';
 import { useDiagram } from './context/DiagramContext';
 import { useRef, useState } from 'react';
 import {
