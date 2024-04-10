@@ -1,8 +1,8 @@
 import { EditablePath } from '../editablePath';
 import { UnitOfWork } from '@diagram-craft/model/index';
 import { commitWithUndo } from '@diagram-craft/model/index';
-import { Point } from '@diagram-craft/geometry/index';
 import { AbstractDrag, Modifiers } from '../dragDropManager';
+import { Point } from '@diagram-craft/geometry/point';
 
 export class NodeDrag extends AbstractDrag {
   private startTime: number;

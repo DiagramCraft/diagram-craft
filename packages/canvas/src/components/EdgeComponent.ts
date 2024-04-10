@@ -17,11 +17,11 @@ import { DASH_PATTERNS } from '../dashPatterns';
 import { makeShadowFilter } from '../effects/shadow';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import * as svg from '../component/vdom-svg';
-import { Point } from '@diagram-craft/geometry/index';
 import { Modifiers } from '../dragDropManager';
 import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
 import { BezierControlPointDrag } from '../drag/bezierControlPointDrag';
 import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
+import { Point } from '@diagram-craft/geometry/point';
 
 const makeArrowMarker = ({
   id,

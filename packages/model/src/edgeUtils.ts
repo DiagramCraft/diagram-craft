@@ -5,12 +5,12 @@ import { ConnectedEndpoint, isConnected } from './endpoint';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
-  Path,
-  Point,
   PointOnPath,
-  TimeOffsetOnSegment,
-  Vector
-} from '@diagram-craft/geometry';
+  TimeOffsetOnSegment
+} from '@diagram-craft/geometry/pathPosition';
+import { Path } from '@diagram-craft/geometry/path';
+import { Point } from '@diagram-craft/geometry/point';
+import { Vector } from '@diagram-craft/geometry/vector';
 
 type ArrowShape = {
   height: number;

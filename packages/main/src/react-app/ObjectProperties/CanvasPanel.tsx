@@ -7,7 +7,7 @@ import { useDiagramProperty } from './useProperty';
 import { useDiagram } from '../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useConfiguration } from '../context/ConfigurationContext';
-import { Box } from '@diagram-craft/geometry';
+import { Box } from '@diagram-craft/geometry/box';
 
 export const CanvasPanel = (props: Props) => {
   const $cfg = useConfiguration();

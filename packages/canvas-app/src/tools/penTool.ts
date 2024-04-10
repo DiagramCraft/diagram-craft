@@ -7,8 +7,10 @@ import {
 } from '@diagram-craft/model/index';
 import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { newid } from '@diagram-craft/utils/index';
-import { PathBuilder, PathUtils, Point, unitCoordinateSystem } from '@diagram-craft/geometry/index';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
+import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathUtils } from '@diagram-craft/geometry/pathUtils';
 
 declare global {
   interface Tools {

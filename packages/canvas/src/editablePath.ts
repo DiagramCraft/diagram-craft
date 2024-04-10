@@ -2,17 +2,12 @@ import { DiagramNode } from '@diagram-craft/model/index';
 import { UnitOfWork } from '@diagram-craft/model/index';
 import { VerifyNotReached } from '@diagram-craft/utils/index';
 import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType';
-import {
-  Box,
-  CubicSegment,
-  inverseUnitCoordinateSystem,
-  LineSegment,
-  Path,
-  PathBuilder,
-  PathSegment,
-  Point,
-  Vector
-} from '@diagram-craft/geometry/index';
+import { Point } from '@diagram-craft/geometry/point';
+import { Path } from '@diagram-craft/geometry/path';
+import { Box } from '@diagram-craft/geometry/box';
+import { Vector } from '@diagram-craft/geometry/vector';
+import { inverseUnitCoordinateSystem, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 
 export type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };
 export type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';

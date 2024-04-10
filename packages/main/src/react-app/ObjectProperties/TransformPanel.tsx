@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Angle, Box, Point, WritableBox } from '@diagram-craft/geometry';
 import { $c, round } from '@diagram-craft/utils';
 import { TbAspectRatio } from 'react-icons/tb';
 import { NumberInput } from '../components/NumberInput';
@@ -7,6 +6,9 @@ import { useDiagram } from '../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { UnitOfWork } from '@diagram-craft/model';
 import { ToggleButton } from '../components/ToggleButton';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box, WritableBox } from '@diagram-craft/geometry/box';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },

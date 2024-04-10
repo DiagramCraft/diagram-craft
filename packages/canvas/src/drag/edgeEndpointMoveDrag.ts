@@ -6,7 +6,7 @@ import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from '@diagram
 import { addHighlight, removeHighlight } from '../highlight';
 import { commitWithUndo } from '@diagram-craft/model';
 import { isNode } from '@diagram-craft/model';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 
 const EDGE_HIGHLIGHT = 'edge-connect';
 

@@ -5,8 +5,8 @@ import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinit
 import { newid } from '@diagram-craft/utils';
 import { Layer } from './diagramLayer';
 import { UnitOfWork } from './unitOfWork';
-import { TransformFactory } from '@diagram-craft/geometry';
 import { TestNodeDefinition } from './TestNodeDefinition';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 const bounds = {
   x: 0,

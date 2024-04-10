@@ -2,9 +2,14 @@ import { DiagramNode } from '@diagram-craft/model';
 import { CustomPropertyDefinition, NodeCapability, NodeDefinition } from '@diagram-craft/model';
 import { DiagramElement } from '@diagram-craft/model';
 import { BaseShape } from './BaseShape';
-import { Box, Extent, Path, PathBuilder, Point, Transform } from '@diagram-craft/geometry';
 import { round } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
+import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { Path } from '@diagram-craft/geometry/path';
+import { Box } from '@diagram-craft/geometry/box';
+import { Extent } from '@diagram-craft/geometry/extent';
+import { Transform } from '@diagram-craft/geometry/transform';
+import { Point } from '@diagram-craft/geometry/point';
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   protected constructor(

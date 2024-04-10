@@ -1,5 +1,6 @@
 import { DeepReadonly } from '@diagram-craft/utils';
-import { Box, Point } from '@diagram-craft/geometry';
+import { Box } from '@diagram-craft/geometry/box';
+import { Point } from '@diagram-craft/geometry/point';
 
 export interface AbstractElement {
   id: string;

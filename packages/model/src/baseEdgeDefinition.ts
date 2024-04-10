@@ -6,7 +6,8 @@ import { newid } from '@diagram-craft/utils';
 import { deepClone } from '@diagram-craft/utils';
 import { DiagramEdge } from './index';
 import { ConnectedEndpoint } from './index';
-import { LengthOffsetOnPath, Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
+import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
   public readonly id: string;

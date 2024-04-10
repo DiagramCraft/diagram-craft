@@ -2,7 +2,7 @@ import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { DiagramNode } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 
 export class ShapeControlPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;

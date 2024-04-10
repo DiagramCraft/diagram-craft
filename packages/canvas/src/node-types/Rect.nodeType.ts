@@ -1,8 +1,9 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { DiagramNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
-import { PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { Point } from '@diagram-craft/geometry/point';
 
 export class RectNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'rect', displayName = 'Rectangle') {

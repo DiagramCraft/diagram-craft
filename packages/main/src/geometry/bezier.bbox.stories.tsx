@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CubicBezier } from '@diagram-craft/geometry';
-import { Point } from '@diagram-craft/geometry';
 import React, { useState } from 'react';
+import { CubicBezier } from '@diagram-craft/geometry/bezier';
+import { Point } from '@diagram-craft/geometry/point';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

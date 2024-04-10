@@ -1,4 +1,3 @@
-import { Angle } from '@diagram-craft/geometry/index';
 import { $c } from '@diagram-craft/utils/index';
 import { LabelNodeSelectionComponent } from '@diagram-craft/canvas/components/LabelNodeSelectionComponent';
 import { GroupBoundsComponent } from '@diagram-craft/canvas/components/GroupBoundsComponent';
@@ -9,7 +8,8 @@ import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSel
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { CanvasState } from '../EditableCanvasComponent';
-import { Box } from '@diagram-craft/geometry/index';
+import { Box } from '@diagram-craft/geometry/box';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {

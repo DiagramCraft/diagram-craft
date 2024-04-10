@@ -1,5 +1,7 @@
 import { EventEmitter } from '@diagram-craft/utils';
-import { Extent, Point, Transform, TransformFactory } from '@diagram-craft/geometry';
+import { Extent } from '@diagram-craft/geometry/extent';
+import { Point } from '@diagram-craft/geometry/point';
+import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 
 export type ViewboxEvents = {
   viewbox: { viewbox: Viewbox };

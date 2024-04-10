@@ -1,8 +1,8 @@
 import { SelectionState } from '@diagram-craft/model';
-import { Angle } from '@diagram-craft/geometry';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { Box } from '@diagram-craft/geometry';
+import { Angle } from '@diagram-craft/geometry/angle';
+import { Box } from '@diagram-craft/geometry/box';
 
 export class GroupBoundsComponent extends Component<Props> {
   render(props: Props) {

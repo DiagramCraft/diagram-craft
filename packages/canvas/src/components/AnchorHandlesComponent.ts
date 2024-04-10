@@ -12,7 +12,7 @@ import { ConnectedEndpoint, FreeEndpoint, isConnected } from '@diagram-craft/mod
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { VNode } from '../component/vdom';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { MoveDrag } from '../drag/moveDrag';

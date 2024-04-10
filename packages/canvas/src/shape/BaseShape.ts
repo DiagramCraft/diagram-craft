@@ -1,7 +1,6 @@
 import { Component } from '../component/component';
 import { Diagram, DiagramEdge, DiagramNode, NodeDefinition } from '@diagram-craft/model';
 import { VNode } from '../component/vdom';
-import { Angle } from '@diagram-craft/geometry';
 import { deepClone, DeepReadonly } from '@diagram-craft/utils';
 import { Tool } from '../tool';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
@@ -12,10 +11,13 @@ import { FillFilter, FillPattern } from './shapeFill';
 import * as svg from '../component/vdom-svg';
 import { EdgeComponent } from '../components/EdgeComponent';
 import { ShapeNodeDefinition } from './shapeNodeDefinition';
-import { Box, Path, Point } from '@diagram-craft/geometry';
 import { Modifiers } from '../dragDropManager';
 import { ShapeBuilder } from './ShapeBuilder';
 import { makeControlPoint } from './ShapeControlPoint';
+import { Path } from '@diagram-craft/geometry/path';
+import { Box } from '@diagram-craft/geometry/box';
+import { Angle } from '@diagram-craft/geometry/angle';
+import { Point } from '@diagram-craft/geometry/point';
 
 type NodeWrapperComponentProps = {
   children: VNode[];

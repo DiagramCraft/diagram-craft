@@ -6,7 +6,7 @@ import { DiagramNode } from '@diagram-craft/model/index';
 import { newid } from '@diagram-craft/utils/index';
 import { DiagramElement } from '@diagram-craft/model/index';
 import { UnitOfWork } from '@diagram-craft/model/index';
-import { Box } from '@diagram-craft/geometry/index';
+import { Box } from '@diagram-craft/geometry/box';
 
 export const groupActions = (state: State) => ({
   GROUP_GROUP: new GroupAction(state.diagram, 'group'),

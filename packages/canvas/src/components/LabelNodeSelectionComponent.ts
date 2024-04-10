@@ -3,8 +3,9 @@ import { assert, precondition } from '@diagram-craft/utils';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { Box, TimeOffsetOnPath } from '@diagram-craft/geometry';
 import { AttachmentPointDrag } from '../drag/attachmentPointDrag';
+import { Box } from '@diagram-craft/geometry/box';
+import { TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 
 export class LabelNodeSelectionComponent extends Component<Props> {
   render(props: Props) {

@@ -26,7 +26,8 @@ import * as html from './component/vdom-html';
 import { EdgeComponent } from './components/EdgeComponent';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
 import { BaseShape, BaseShapeProps } from './shape/BaseShape';
-import { Box, Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement

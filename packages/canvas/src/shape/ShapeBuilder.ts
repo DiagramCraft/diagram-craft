@@ -1,5 +1,4 @@
 import { toInlineCSS, VNode } from '../component/vdom';
-import { Box, Extent, Path } from '@diagram-craft/geometry';
 import { Component } from '../component/component';
 import { ShapeText, ShapeTextProps } from './ShapeText';
 import { DefaultPathRenderer, PathRenderer } from './PathRenderer';
@@ -8,6 +7,9 @@ import { BaseShapeBuildProps } from './BaseShape';
 import { DiagramNode, UnitOfWork } from '@diagram-craft/model';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
 import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
+import { Path } from '@diagram-craft/geometry/path';
+import { Box } from '@diagram-craft/geometry/box';
+import { Extent } from '@diagram-craft/geometry/extent';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {

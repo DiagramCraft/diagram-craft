@@ -1,5 +1,4 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { Angle } from '@diagram-craft/geometry';
 import { ElementAddUndoableAction, SnapshotUndoableAction } from '@diagram-craft/model';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model';
@@ -9,16 +8,14 @@ import { addHighlight, removeHighlight } from '../highlight';
 import { CompoundUndoableAction } from '@diagram-craft/model';
 import { SelectionState } from '@diagram-craft/model';
 import { largest } from '@diagram-craft/utils';
-import {
-  Axis,
-  Box,
-  Direction,
-  Point,
-  Translation,
-  Vector,
-  WritableBox
-} from '@diagram-craft/geometry';
 import { createResizeCanvasActionToFit } from '@diagram-craft/model';
+import { Axis } from '@diagram-craft/geometry/axis';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box, WritableBox } from '@diagram-craft/geometry/box';
+import { Direction } from '@diagram-craft/geometry/direction';
+import { Translation } from '@diagram-craft/geometry/transform';
+import { Vector } from '@diagram-craft/geometry/vector';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 

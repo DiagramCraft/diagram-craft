@@ -3,7 +3,7 @@ import { Diagram } from '@diagram-craft/model';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
 import { EdgeComponent } from './components/EdgeComponent';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from './dragDropManager';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent

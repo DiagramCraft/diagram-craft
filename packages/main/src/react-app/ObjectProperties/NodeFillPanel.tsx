@@ -9,7 +9,7 @@ import { SliderAndNumberInput } from '../SliderAndNumberInput';
 import { Select } from '../components/Select';
 import { Collapsible } from '../components/Collapsible';
 import { useConfiguration } from '../context/ConfigurationContext';
-import { Angle } from '@diagram-craft/geometry';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 const TEXTURES = [
   'bubbles1.jpeg',

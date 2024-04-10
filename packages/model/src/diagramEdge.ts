@@ -13,17 +13,13 @@ import { Endpoint, FreeEndpoint, isConnected } from './index';
 import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils';
 import { deepMerge } from '@diagram-craft/utils';
 import { edgeDefaults } from './index';
-import {
-  Box,
-  CubicSegment,
-  LineSegment,
-  Point,
-  PointOnPath,
-  TimeOffsetOnPath,
-  Transform,
-  Vector
-} from '@diagram-craft/geometry';
 import { Diagram } from './index';
+import { Point } from '@diagram-craft/geometry/point';
+import { Vector } from '@diagram-craft/geometry/vector';
+import { Box } from '@diagram-craft/geometry/box';
+import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
+import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
+import { Transform } from '@diagram-craft/geometry/transform';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;

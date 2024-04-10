@@ -4,7 +4,11 @@ import { UnitOfWork } from './index';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
 import { DeepReadonly } from '@diagram-craft/utils';
-import { Extent, Path, PathBuilder, Point, Transform } from '@diagram-craft/geometry';
+import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { Path } from '@diagram-craft/geometry/path';
+import { Extent } from '@diagram-craft/geometry/extent';
+import { Transform } from '@diagram-craft/geometry/transform';
+import { Point } from '@diagram-craft/geometry/point';
 
 export type NodeCapability = 'children';
 

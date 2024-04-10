@@ -3,14 +3,11 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
-import {
-  Box,
-  Direction,
-  LocalCoordinateSystem,
-  Point,
-  TransformFactory,
-  WritableBox
-} from '@diagram-craft/geometry';
+import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
+import { Box, WritableBox } from '@diagram-craft/geometry/box';
+import { Point } from '@diagram-craft/geometry/point';
+import { Direction } from '@diagram-craft/geometry/direction';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 

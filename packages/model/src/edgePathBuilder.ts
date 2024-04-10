@@ -1,17 +1,13 @@
 import { DiagramEdge } from './diagramEdge';
 import { ControlPoints, Waypoint } from './types';
 import { unique } from '@diagram-craft/utils';
-import {
-  BezierUtils,
-  CubicSegment,
-  Direction,
-  Line,
-  LineSegment,
-  Path,
-  PathBuilder,
-  PathSegment,
-  Point
-} from '@diagram-craft/geometry';
+import { Direction } from '@diagram-craft/geometry/direction';
+import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { BezierUtils } from '@diagram-craft/geometry/bezier';
+import { Point } from '@diagram-craft/geometry/point';
+import { Path } from '@diagram-craft/geometry/path';
+import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
+import { Line } from '@diagram-craft/geometry/line';
 
 type Result = {
   startDirection: Direction;

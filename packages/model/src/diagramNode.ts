@@ -12,7 +12,9 @@ import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './index'
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { deepMerge } from '@diagram-craft/utils';
 import { nodeDefaults } from './index';
-import { Box, PathUtils, Transform } from '@diagram-craft/geometry';
+import { Box } from '@diagram-craft/geometry/box';
+import { PathUtils } from '@diagram-craft/geometry/pathUtils';
+import { Transform } from '@diagram-craft/geometry/transform';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

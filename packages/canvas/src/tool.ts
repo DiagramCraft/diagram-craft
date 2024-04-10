@@ -1,7 +1,7 @@
 import { Diagram } from '@diagram-craft/model';
 import { ToolType } from './ApplicationState';
 import { ApplicationTriggers } from './EditableCanvasComponent';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from './dragDropManager';
 
 export interface Tool {

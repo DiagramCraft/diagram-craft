@@ -2,7 +2,7 @@ import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 import { RotateDrag } from '../drag/rotateDrag';
 
 type Props = {

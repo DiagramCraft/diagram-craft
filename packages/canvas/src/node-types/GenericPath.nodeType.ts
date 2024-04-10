@@ -10,8 +10,8 @@ import { toInlineCSS } from '../component/vdom';
 import { ControlPointDrag } from '../drag/controlPointDrag';
 import { NodeDrag } from '../drag/nodeDrag';
 import * as svg from '../component/vdom-svg';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 
 declare global {
   interface NodeProps {

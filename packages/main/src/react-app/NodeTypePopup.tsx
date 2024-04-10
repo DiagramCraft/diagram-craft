@@ -11,7 +11,7 @@ import { useCallback } from 'react';
 import { newid } from '@diagram-craft/utils';
 import { ConnectedEndpoint } from '@diagram-craft/model';
 import { DiagramDocument } from '@diagram-craft/model';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();

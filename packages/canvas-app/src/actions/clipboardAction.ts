@@ -11,9 +11,10 @@ import {
   UndoableAction,
   UnitOfWork
 } from '@diagram-craft/model/index';
-import { Box, Point } from '@diagram-craft/geometry/index';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 
 declare global {
   interface ActionMap {

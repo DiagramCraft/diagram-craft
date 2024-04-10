@@ -12,7 +12,8 @@ import { assert } from '@diagram-craft/utils';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramDocument } from './diagramDocument';
-import { Box, Transform } from '@diagram-craft/geometry';
+import { Box } from '@diagram-craft/geometry/box';
+import { Transform } from '@diagram-craft/geometry/transform';
 
 export type Canvas = Omit<Box, 'r'>;
 

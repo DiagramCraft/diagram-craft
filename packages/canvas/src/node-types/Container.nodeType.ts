@@ -6,17 +6,11 @@ import { DiagramElement, isNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
 import * as svg from '../component/vdom-svg';
 import { DiagramEdge } from '@diagram-craft/model';
-import {
-  Box,
-  PathBuilder,
-  Point,
-  Rotation,
-  Scale,
-  Transform,
-  Translation,
-  unitCoordinateSystem
-} from '@diagram-craft/geometry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { Box } from '@diagram-craft/geometry/box';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { Point } from '@diagram-craft/geometry/point';
+import { Rotation, Scale, Transform, Translation } from '@diagram-craft/geometry/transform';
 
 declare global {
   interface NodeProps {

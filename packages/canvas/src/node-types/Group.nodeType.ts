@@ -6,8 +6,10 @@ import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
 import { isNode } from '@diagram-craft/model';
 import * as svg from '../component/vdom-svg';
 import { DiagramEdge } from '@diagram-craft/model';
-import { Box, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {

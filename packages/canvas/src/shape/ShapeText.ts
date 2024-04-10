@@ -2,7 +2,8 @@ import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import * as html from '../component/vdom-html';
 import { rawHTML, toInlineCSS, VNode } from '../component/vdom';
-import { Box, Extent } from '@diagram-craft/geometry';
+import { Extent } from '@diagram-craft/geometry/extent';
+import { Box } from '@diagram-craft/geometry/box';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',

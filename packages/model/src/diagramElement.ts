@@ -5,7 +5,8 @@ import { AbstractElement } from './types';
 import { Layer } from './index';
 import { Diagram } from './index';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
-import { Box, Transform } from '@diagram-craft/geometry';
+import { Transform } from '@diagram-craft/geometry/transform';
+import { Box } from '@diagram-craft/geometry/box';
 
 // eslint-disable-next-line
 type Snapshot = any;

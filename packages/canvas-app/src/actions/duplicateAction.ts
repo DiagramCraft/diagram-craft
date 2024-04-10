@@ -4,7 +4,7 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/index';
 import { Diagram } from '@diagram-craft/model/index';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { UnitOfWork } from '@diagram-craft/model/index';
-import { Translation } from '@diagram-craft/geometry/index';
+import { Translation } from '@diagram-craft/geometry/transform';
 
 declare global {
   interface ActionMap {

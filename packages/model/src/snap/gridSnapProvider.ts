@@ -2,7 +2,10 @@ import { MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Guide } from '../selectionState';
 import { Diagram } from '../diagram';
 import { MagnetOfType } from './magnet';
-import { Axis, Box, Line, Point } from '@diagram-craft/geometry';
+import { Box } from '@diagram-craft/geometry/box';
+import { Line } from '@diagram-craft/geometry/line';
+import { Axis } from '@diagram-craft/geometry/axis';
+import { Point } from '@diagram-craft/geometry/point';
 
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: Diagram) {}

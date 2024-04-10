@@ -4,7 +4,8 @@ import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { text, VNode } from '../component/vdom';
 import { newid } from '@diagram-craft/utils';
-import { Line, Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
+import { Line } from '@diagram-craft/geometry/line';
 
 const makeDistanceMarker = (p1: Point, p2: Point, lbl: string): VNode[] => {
   const l = Line.of(p1, p2);

@@ -2,7 +2,10 @@ import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { isNode } from '../diagramElement';
-import { Axis, Box, Direction, Range } from '@diagram-craft/geometry';
+import { Box } from '@diagram-craft/geometry/box';
+import { Direction } from '@diagram-craft/geometry/direction';
+import { Axis } from '@diagram-craft/geometry/axis';
+import { Range } from '@diagram-craft/geometry/range';
 
 export abstract class AbstractNodeSnapProvider {
   protected constructor(

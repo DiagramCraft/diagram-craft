@@ -65,7 +65,7 @@ import { MessageDialog, MessageDialogState } from './react-app/components/Messag
 import { ObjectData } from './react-app/ObjectData/ObjectData';
 import { QueryToolWindow } from './react-app/QueryToolWindow';
 import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 import { ToolContructor } from '@diagram-craft/canvas/tool';
 import { MoveTool } from '@diagram-craft/canvas/tools/moveTool';
 import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';

@@ -7,7 +7,7 @@ import {
   FreeEndpoint
 } from '@diagram-craft/model/index';
 import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
-import { Point } from '@diagram-craft/geometry/index';
+import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 
 declare global {

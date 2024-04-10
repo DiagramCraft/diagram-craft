@@ -3,7 +3,8 @@ import { DiagramEdge } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { ControlPoints } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
-import { Point, Vector } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
+import { Vector } from '@diagram-craft/geometry/vector';
 
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 

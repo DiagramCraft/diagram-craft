@@ -2,7 +2,7 @@ import { AbstractTool, BACKGROUND } from '../tool';
 import { commitWithUndo, Diagram, isNode, UnitOfWork } from '@diagram-craft/model';
 import { addHighlight, removeHighlight } from '../highlight';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 
 declare global {

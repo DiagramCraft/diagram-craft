@@ -3,8 +3,9 @@ import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { Box, Point } from '@diagram-craft/geometry';
 import { ResizeDrag, ResizeType } from '../drag/resizeDrag';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 
 type Props = {
   diagram: Diagram;

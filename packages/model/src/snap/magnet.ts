@@ -1,5 +1,10 @@
 import { DiagramNode } from '../diagramNode';
-import { Axis, Box, Direction, Line, Point, Range } from '@diagram-craft/geometry';
+import { Line } from '@diagram-craft/geometry/line';
+import { Axis } from '@diagram-craft/geometry/axis';
+import { Direction } from '@diagram-craft/geometry/direction';
+import { Range } from '@diagram-craft/geometry/range';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 
 type BaseMagnet = {
   line: Line;

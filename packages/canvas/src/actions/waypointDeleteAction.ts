@@ -5,7 +5,7 @@ import { UnitOfWork } from '@diagram-craft/model/index';
 import { commitWithUndo } from '@diagram-craft/model/index';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { smallest } from '@diagram-craft/utils/index';
-import { PointOnPath } from '@diagram-craft/geometry/index';
+import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 
 declare global {
   interface ActionMap {

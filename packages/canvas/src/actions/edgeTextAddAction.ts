@@ -7,7 +7,7 @@ import { UnitOfWork } from '@diagram-craft/model/index';
 import { CompoundUndoableAction } from '@diagram-craft/model/index';
 import { ElementAddUndoableAction, SnapshotUndoableAction } from '@diagram-craft/model/index';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
-import { LengthOffsetOnPath } from '@diagram-craft/geometry/index';
+import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 
 declare global {
   interface ActionMap {

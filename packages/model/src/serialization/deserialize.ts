@@ -17,7 +17,7 @@ import {
 } from './types';
 import { ConnectedEndpoint, FreeEndpoint } from '../endpoint';
 import { Waypoint } from '../types';
-import { Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';

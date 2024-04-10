@@ -3,7 +3,8 @@ import { Diagram } from '@diagram-craft/model';
 import { SelectionState } from '@diagram-craft/model';
 import { precondition } from '@diagram-craft/utils';
 import { DiagramElement } from '@diagram-craft/model';
-import { Box, Point } from '@diagram-craft/geometry';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 
 export class MarqueeDrag extends AbstractDrag {
   constructor(
