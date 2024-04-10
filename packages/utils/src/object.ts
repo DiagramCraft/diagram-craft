@@ -1,4 +1,4 @@
-import { DeepPartial } from './types.ts';
+import { DeepPartial } from './types';
 
 // eslint-disable-next-line
 type Props = Record<string, any>;

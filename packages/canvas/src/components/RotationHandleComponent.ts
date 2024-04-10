@@ -1,9 +1,9 @@
-import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model';
-import { Component } from '../component/component.ts';
-import * as svg from '../component/vdom-svg.ts';
+import { Component } from '../component/component';
+import * as svg from '../component/vdom-svg';
 import { Point } from '@diagram-craft/geometry';
-import { RotateDrag } from '../drag/rotateDrag.ts';
+import { RotateDrag } from '../drag/rotateDrag';
 
 type Props = {
   diagram: Diagram;

@@ -1,9 +1,9 @@
 import { DiagramNode } from '@diagram-craft/model';
-import { useDiagram } from './context/DiagramContext.ts';
+import { useDiagram } from './context/DiagramContext';
 import { Diagram } from '@diagram-craft/model';
 import { Layer } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
-import { PickerCanvas } from './PickerCanvas.tsx';
+import { PickerCanvas } from './PickerCanvas';
 import { DiagramDocument } from '@diagram-craft/model';
 
 export const ObjectPicker = (props: Props) => {

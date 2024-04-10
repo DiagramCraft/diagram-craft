@@ -1,11 +1,11 @@
-import { DiagramElement } from './diagramElement.ts';
-import { Diagram, DiagramEvents } from './index.ts';
+import { DiagramElement } from './diagramElement';
+import { Diagram, DiagramEvents } from './index';
 import { assert } from '@diagram-craft/utils';
-import { Layer, LayerManager, LayerType } from './index.ts';
+import { Layer, LayerManager, LayerType } from './index';
 import { EventKey } from '@diagram-craft/utils';
-import { SerializedEdge, SerializedNode } from './serialization/types.ts';
-import { Stylesheet } from './diagramStyles.ts';
-import { AdjustmentRule } from './index.ts';
+import { SerializedEdge, SerializedNode } from './serialization/types';
+import { Stylesheet } from './diagramStyles';
+import { AdjustmentRule } from './index';
 
 type ActionCallback = () => void;
 

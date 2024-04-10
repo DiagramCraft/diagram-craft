@@ -1,7 +1,7 @@
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
+import { useDiagram } from '../context/DiagramContext';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 
 export const CanvasGuidesProperties = () => {
   const diagram = useDiagram();

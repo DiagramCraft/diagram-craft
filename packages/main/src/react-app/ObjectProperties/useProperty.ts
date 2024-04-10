@@ -1,4 +1,4 @@
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useEventListener } from '../hooks/useEventListener';
 import { DiagramEdge, SnapManagerConfigProps } from '@diagram-craft/model';
 import { DiagramNode } from '@diagram-craft/model';
 import {
@@ -8,7 +8,7 @@ import {
   PropertyArrayUndoableAction,
   PropertyHook,
   PropertyUndoableAction
-} from './usePropertyFactory.ts';
+} from './usePropertyFactory';
 import { Diagram } from '@diagram-craft/model';
 import { DiagramElement } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';

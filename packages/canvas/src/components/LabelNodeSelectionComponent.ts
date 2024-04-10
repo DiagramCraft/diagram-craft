@@ -1,10 +1,10 @@
 import { DiagramNode } from '@diagram-craft/model';
 import { assert, precondition } from '@diagram-craft/utils';
-import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
-import { Component } from '../component/component.ts';
-import * as svg from '../component/vdom-svg.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
+import { Component } from '../component/component';
+import * as svg from '../component/vdom-svg';
 import { Box, TimeOffsetOnPath } from '@diagram-craft/geometry';
-import { AttachmentPointDrag } from '../drag/attachmentPointDrag.ts';
+import { AttachmentPointDrag } from '../drag/attachmentPointDrag';
 
 export class LabelNodeSelectionComponent extends Component<Props> {
   render(props: Props) {

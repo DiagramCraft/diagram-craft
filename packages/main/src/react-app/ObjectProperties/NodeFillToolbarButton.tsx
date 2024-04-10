@@ -1,10 +1,10 @@
 import { TbPaint, TbX } from 'react-icons/tb';
-import { NodeFillPanel } from './NodeFillPanel.tsx';
+import { NodeFillPanel } from './NodeFillPanel';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { useNodeProperty } from './useProperty.ts';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
+import { useNodeProperty } from './useProperty';
+import { useDiagram } from '../context/DiagramContext';
+import { useNodeDefaults } from '../useDefaults';
 
 // TODO: Make this disable if selection includes edges
 export const NodeFillToolbarButton = () => {

@@ -1,13 +1,13 @@
-import { toInlineCSS, VNode } from '../component/vdom.ts';
+import { toInlineCSS, VNode } from '../component/vdom';
 import { Box, Extent, Path } from '@diagram-craft/geometry';
-import { Component } from '../component/component.ts';
-import { ShapeText, ShapeTextProps } from './ShapeText.ts';
-import { DefaultPathRenderer, PathRenderer } from './PathRenderer.ts';
-import * as svg from '../component/vdom-svg.ts';
-import { BaseShapeBuildProps } from './BaseShape.ts';
+import { Component } from '../component/component';
+import { ShapeText, ShapeTextProps } from './ShapeText';
+import { DefaultPathRenderer, PathRenderer } from './PathRenderer';
+import * as svg from '../component/vdom-svg';
+import { BaseShapeBuildProps } from './BaseShape';
 import { DiagramNode, UnitOfWork } from '@diagram-craft/model';
-import { ControlPoint, ControlPointCallback } from './ShapeControlPoint.ts';
-import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch.ts';
+import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
+import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {

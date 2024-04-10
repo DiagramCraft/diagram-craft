@@ -1,10 +1,10 @@
 import { EventHelper } from '@diagram-craft/utils';
-import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model';
-import { Component } from '../component/component.ts';
-import * as svg from '../component/vdom-svg.ts';
+import { Component } from '../component/component';
+import * as svg from '../component/vdom-svg';
 import { Box, Point } from '@diagram-craft/geometry';
-import { ResizeDrag, ResizeType } from '../drag/resizeDrag.ts';
+import { ResizeDrag, ResizeType } from '../drag/resizeDrag';
 
 type Props = {
   diagram: Diagram;

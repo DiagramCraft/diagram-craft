@@ -1,4 +1,4 @@
-import { debounceMicrotask } from './debounce.ts';
+import { debounceMicrotask } from './debounce';
 
 export type EventMap = Record<string, unknown>;
 export type EventKey<T> = string & keyof T;

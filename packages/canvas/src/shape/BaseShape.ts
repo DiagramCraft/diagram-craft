@@ -1,21 +1,21 @@
-import { Component } from '../component/component.ts';
+import { Component } from '../component/component';
 import { Diagram, DiagramEdge, DiagramNode, NodeDefinition } from '@diagram-craft/model';
-import { VNode } from '../component/vdom.ts';
+import { VNode } from '../component/vdom';
 import { Angle } from '@diagram-craft/geometry';
 import { deepClone, DeepReadonly } from '@diagram-craft/utils';
-import { Tool } from '../tool.ts';
-import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
-import { DASH_PATTERNS } from '../dashPatterns.ts';
-import { makeShadowFilter } from '../effects/shadow.ts';
+import { Tool } from '../tool';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { DASH_PATTERNS } from '../dashPatterns';
+import { makeShadowFilter } from '../effects/shadow';
 import { EventHelper } from '@diagram-craft/utils';
-import { FillFilter, FillPattern } from './shapeFill.ts';
-import * as svg from '../component/vdom-svg.ts';
-import { EdgeComponent } from '../components/EdgeComponent.ts';
-import { ShapeNodeDefinition } from './shapeNodeDefinition.ts';
+import { FillFilter, FillPattern } from './shapeFill';
+import * as svg from '../component/vdom-svg';
+import { EdgeComponent } from '../components/EdgeComponent';
+import { ShapeNodeDefinition } from './shapeNodeDefinition';
 import { Box, Path, Point } from '@diagram-craft/geometry';
-import { Modifiers } from '../dragDropManager.ts';
-import { ShapeBuilder } from './ShapeBuilder.ts';
-import { makeControlPoint } from './ShapeControlPoint.ts';
+import { Modifiers } from '../dragDropManager';
+import { ShapeBuilder } from './ShapeBuilder';
+import { makeControlPoint } from './ShapeControlPoint';
 
 type NodeWrapperComponentProps = {
   children: VNode[];

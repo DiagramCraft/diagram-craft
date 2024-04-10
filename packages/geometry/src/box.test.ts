@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Box } from './box.ts';
+import { Box } from './box';
 
 describe('Box', () => {
   test('calculates center', () => {

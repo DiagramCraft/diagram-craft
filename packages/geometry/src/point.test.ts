@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Point } from './point.ts';
+import { Point } from './point';
 
 describe('Point', () => {
   test('of', () => {

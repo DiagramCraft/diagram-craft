@@ -1,9 +1,9 @@
-import { AbstractDrag } from '../dragDropManager.ts';
+import { AbstractDrag } from '../dragDropManager';
 import { DiagramEdge } from '@diagram-craft/model';
 import { Diagram } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from '@diagram-craft/model';
-import { addHighlight, removeHighlight } from '../highlight.ts';
+import { addHighlight, removeHighlight } from '../highlight';
 import { commitWithUndo } from '@diagram-craft/model';
 import { isNode } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry';

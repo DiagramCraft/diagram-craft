@@ -1,5 +1,5 @@
 import { ComponentProps, useEffect, useRef, useState } from 'react';
-import { Dialog } from './Dialog.tsx';
+import { Dialog } from './Dialog';
 
 export function JSONDialog<T>(
   props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {

@@ -1,7 +1,7 @@
-import { Diagram } from '../diagram.ts';
-import { DiagramNode } from '../diagramNode.ts';
+import { Diagram } from '../diagram';
+import { DiagramNode } from '../diagramNode';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
-import { isNode } from '../diagramElement.ts';
+import { isNode } from '../diagramElement';
 import { Axis, Box, Direction, Range } from '@diagram-craft/geometry';
 
 export abstract class AbstractNodeSnapProvider {

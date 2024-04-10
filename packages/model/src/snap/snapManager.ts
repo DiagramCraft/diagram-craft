@@ -1,12 +1,12 @@
-import { Diagram } from '../diagram.ts';
-import { CanvasSnapProvider } from './canvasSnapProvider.ts';
-import { NodeSnapProvider } from './nodeSnapProvider.ts';
-import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider.ts';
+import { Diagram } from '../diagram';
+import { CanvasSnapProvider } from './canvasSnapProvider';
+import { NodeSnapProvider } from './nodeSnapProvider';
+import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
 import { VerifyNotReached } from '@diagram-craft/utils';
-import { GridSnapProvider } from './gridSnapProvider.ts';
-import { NodeSizeSnapProvider } from './nodeSizeSnapProvider.ts';
-import { Guide } from '../selectionState.ts';
-import { Magnet, MagnetOfType, MagnetType } from './magnet.ts';
+import { GridSnapProvider } from './gridSnapProvider';
+import { NodeSizeSnapProvider } from './nodeSizeSnapProvider';
+import { Guide } from '../selectionState';
+import { Magnet, MagnetOfType, MagnetType } from './magnet';
 import { largest, smallest } from '@diagram-craft/utils';
 import { Axis, Box, Direction, Line, Point, Range, WritableBox } from '@diagram-craft/geometry';
 

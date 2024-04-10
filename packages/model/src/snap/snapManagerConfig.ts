@@ -1,4 +1,4 @@
-import { MagnetType } from './magnet.ts';
+import { MagnetType } from './magnet';
 import { EventEmitter } from '@diagram-craft/utils';
 
 export interface SnapManagerConfigProps {

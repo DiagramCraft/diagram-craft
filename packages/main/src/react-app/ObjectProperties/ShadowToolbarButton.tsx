@@ -1,9 +1,9 @@
 import { TbStackBackward } from 'react-icons/tb';
-import { ToolbarToggleItemWithPopover } from '../components/ToolbarToggleItemWithPopover.tsx';
-import { ShadowPanel } from './ShadowPanel.tsx';
-import { useElementProperty } from './useProperty.ts';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
+import { ToolbarToggleItemWithPopover } from '../components/ToolbarToggleItemWithPopover';
+import { ShadowPanel } from './ShadowPanel';
+import { useElementProperty } from './useProperty';
+import { useDiagram } from '../context/DiagramContext';
+import { useNodeDefaults } from '../useDefaults';
 
 export const ShadowToolbarButton = () => {
   const $d = useDiagram();

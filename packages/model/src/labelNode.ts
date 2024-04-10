@@ -1,4 +1,4 @@
-import { LabelNodeType } from './types.ts';
+import { LabelNodeType } from './types';
 
 export const isParallel = (s: LabelNodeType) => s === 'parallel' || s === 'parallel-readable';
 

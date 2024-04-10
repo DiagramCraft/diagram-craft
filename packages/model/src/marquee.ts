@@ -1,7 +1,7 @@
 import { EventEmitter } from '@diagram-craft/utils';
-import { DiagramElement } from './diagramElement.ts';
+import { DiagramElement } from './diagramElement';
 import { precondition } from '@diagram-craft/utils';
-import { SelectionState } from './selectionState.ts';
+import { SelectionState } from './selectionState';
 import { Box } from '@diagram-craft/geometry';
 
 export type MarqueeEvents = {

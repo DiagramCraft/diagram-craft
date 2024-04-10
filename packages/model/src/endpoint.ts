@@ -1,6 +1,6 @@
-import { SerializedEndpoint } from './serialization/types.ts';
-import { DiagramNode } from './diagramNode.ts';
-import { Diagram } from './index.ts';
+import { SerializedEndpoint } from './serialization/types';
+import { DiagramNode } from './diagramNode';
+import { Diagram } from './index';
 import { Point } from '@diagram-craft/geometry';
 
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>

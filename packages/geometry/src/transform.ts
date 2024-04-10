@@ -1,6 +1,6 @@
-import { Vector } from './vector.ts';
-import { Point } from './point.ts';
-import { Box } from './box.ts';
+import { Vector } from './vector';
+import { Point } from './point';
+import { Box } from './box';
 import { round } from '@diagram-craft/utils';
 
 export interface Transform {

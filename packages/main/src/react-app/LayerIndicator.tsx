@@ -1,13 +1,13 @@
 import { TbAdjustments, TbCheck, TbEye, TbEyeOff, TbLock, TbStack2 } from 'react-icons/tb';
-import { useRedraw } from './useRedraw.tsx';
-import { useDiagram } from './context/DiagramContext.ts';
-import { useEventListener } from './hooks/useEventListener.ts';
+import { useRedraw } from './useRedraw';
+import { useDiagram } from './context/DiagramContext';
+import { useEventListener } from './hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useActions } from './context/ActionsContext.ts';
+import { useActions } from './context/ActionsContext';
 import { useState } from 'react';
-import { StringInputDialog, StringInputDialogState } from './components/StringInputDialog.tsx';
-import { ActionDropdownMenuItem } from './dropdown/ActionDropdownMenuItem.tsx';
-import { ToggleActionDropdownMenuItem } from './dropdown/ToggleActionDropdownMenuItem.tsx';
+import { StringInputDialog, StringInputDialogState } from './components/StringInputDialog';
+import { ActionDropdownMenuItem } from './dropdown/ActionDropdownMenuItem';
+import { ToggleActionDropdownMenuItem } from './dropdown/ToggleActionDropdownMenuItem';
 
 export const LayerIndicator = () => {
   const redraw = useRedraw();

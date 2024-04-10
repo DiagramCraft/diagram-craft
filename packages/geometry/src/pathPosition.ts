@@ -1,5 +1,5 @@
-import { Point } from './point.ts';
-import { Path } from './path.ts';
+import { Point } from './point';
+import { Path } from './path';
 
 export type WithSegment<T> = {
   segment: number;

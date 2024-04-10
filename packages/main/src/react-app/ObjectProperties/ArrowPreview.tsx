@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { ArrowShape } from '@diagram-craft/canvas';
+import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
 
 export const ArrowPreview = (props: Props) => {
   const id = useId();

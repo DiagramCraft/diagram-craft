@@ -2,12 +2,12 @@ import {
   CustomPropertyDefinition,
   NodeCapability,
   NodeDefinition
-} from './elementDefinitionRegistry.ts';
-import { DiagramNode } from './diagramNode.ts';
+} from './elementDefinitionRegistry';
+import { DiagramNode } from './diagramNode';
 import { Box, Extent, Path, PathBuilder, Point, Transform } from '@diagram-craft/geometry';
 import { DeepReadonly, round } from '@diagram-craft/utils';
-import { UnitOfWork } from './unitOfWork.ts';
-import { DiagramElement } from './diagramElement.ts';
+import { UnitOfWork } from './unitOfWork';
+import { DiagramElement } from './diagramElement';
 
 export class TestNodeDefinition implements NodeDefinition {
   constructor(

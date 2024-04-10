@@ -1,8 +1,8 @@
-import { NumberInput } from '../components/NumberInput.tsx';
-import { ActionCheckbox } from '../ActionCheckbox.tsx';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useSnapManagerProperty } from './useProperty.ts';
-import { useDiagram } from '../context/DiagramContext.ts';
+import { NumberInput } from '../components/NumberInput';
+import { ActionCheckbox } from '../ActionCheckbox';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useSnapManagerProperty } from './useProperty';
+import { useDiagram } from '../context/DiagramContext';
 
 export const CanvasSnapPanel = (props: Props) => {
   const diagram = useDiagram();

@@ -1,10 +1,10 @@
-import { AbstractTool, BACKGROUND } from '../tool.ts';
+import { AbstractTool, BACKGROUND } from '../tool';
 import { Diagram, getDiagramElementPath } from '@diagram-craft/model';
-import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { Box, Point } from '@diagram-craft/geometry';
-import { DragDopManager, Modifiers } from '../dragDropManager.ts';
-import { MarqueeDrag } from '../drag/marqueeDrag.ts';
-import { MoveDrag } from '../drag/moveDrag.ts';
+import { DragDopManager, Modifiers } from '../dragDropManager';
+import { MarqueeDrag } from '../drag/marqueeDrag';
+import { MoveDrag } from '../drag/moveDrag';
 
 type DeferredMouseAction = {
   callback: () => void;

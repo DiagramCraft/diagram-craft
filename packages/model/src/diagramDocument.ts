@@ -1,9 +1,9 @@
-import { Diagram } from './index.ts';
+import { Diagram } from './index';
 import { EventEmitter } from '@diagram-craft/utils';
-import { AttachmentManager } from './index.ts';
-import { DiagramPalette } from './diagramPalette.ts';
-import { DiagramStyles } from './diagramStyles.ts';
-import { DiagramDataSchemas } from './diagramDataSchemas.ts';
+import { AttachmentManager } from './index';
+import { DiagramPalette } from './diagramPalette';
+import { DiagramStyles } from './diagramStyles';
+import { DiagramDataSchemas } from './diagramDataSchemas';
 import { range } from '@diagram-craft/utils';
 
 export type DocumentEvents = {

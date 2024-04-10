@@ -1,10 +1,10 @@
 import { TbBorderStyle2, TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { useNodeProperty } from './useProperty.ts';
-import { NodeStrokePanel } from './NodeStrokePanel.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
+import { useNodeProperty } from './useProperty';
+import { NodeStrokePanel } from './NodeStrokePanel';
+import { useDiagram } from '../context/DiagramContext';
+import { useNodeDefaults } from '../useDefaults';
 
 export const NodeStrokeToolbarButton = () => {
   const diagram = useDiagram();

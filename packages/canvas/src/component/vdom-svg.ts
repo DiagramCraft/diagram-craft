@@ -1,5 +1,5 @@
-import { s, VNode, VNodeChildParam } from './vdom.ts';
-import { ElementAttributes, Attr } from './vdom-html.ts';
+import { s, VNode, VNodeChildParam } from './vdom';
+import { ElementAttributes, Attr } from './vdom-html';
 
 type CommonPresentationAttributes = {
   'stroke'?: string;

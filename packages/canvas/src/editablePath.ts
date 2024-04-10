@@ -1,7 +1,7 @@
-import { DiagramNode } from '@diagram-craft/model/index.ts';
-import { UnitOfWork } from '@diagram-craft/model/index.ts';
-import { VerifyNotReached } from '@diagram-craft/utils/index.ts';
-import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType.ts';
+import { DiagramNode } from '@diagram-craft/model/index';
+import { UnitOfWork } from '@diagram-craft/model/index';
+import { VerifyNotReached } from '@diagram-craft/utils/index';
+import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType';
 import {
   Box,
   CubicSegment,
@@ -12,7 +12,7 @@ import {
   PathSegment,
   Point,
   Vector
-} from '@diagram-craft/geometry/index.ts';
+} from '@diagram-craft/geometry/index';
 
 export type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };
 export type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';

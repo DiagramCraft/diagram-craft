@@ -1,5 +1,5 @@
-import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
-import { ContextMenuTarget } from '../../App.tsx';
+import { ActionContextMenuItem } from './ActionContextMenuItem';
+import { ContextMenuTarget } from '../../App';
 
 export const EdgeContextMenu = (props: Props) => {
   return (

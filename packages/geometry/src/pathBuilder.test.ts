@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { inverseUnitCoordinateSystem, unitCoordinateSystem } from './pathBuilder.ts';
+import { inverseUnitCoordinateSystem, unitCoordinateSystem } from './pathBuilder';
 
 describe('unitCoordinateSystem', () => {
   test('all', () => {

@@ -1,7 +1,7 @@
-import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { Diagram } from '@diagram-craft/model/index.ts';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap.ts';
-import { ElementDeleteUndoableAction } from '@diagram-craft/model/index.ts';
+import { AbstractSelectionAction } from './abstractSelectionAction';
+import { Diagram } from '@diagram-craft/model/index';
+import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { ElementDeleteUndoableAction } from '@diagram-craft/model/index';
 
 declare global {
   interface ActionMap {

@@ -1,7 +1,7 @@
 import { EventEmitter } from '@diagram-craft/utils';
 import { assert } from '@diagram-craft/utils';
-import { UnitOfWork } from './index.ts';
-import { Diagram } from './index.ts';
+import { UnitOfWork } from './index';
+import { Diagram } from './index';
 
 export type UndoableAction = {
   undo: (uow: UnitOfWork) => void;

@@ -1,18 +1,18 @@
-import { DiagramNode, DuplicationContext } from './diagramNode.ts';
-import { AbstractEdge, LabelNode, Waypoint } from './types.ts';
-import { Layer } from './index.ts';
-import { buildEdgePath } from './index.ts';
+import { DiagramNode, DuplicationContext } from './diagramNode';
+import { AbstractEdge, LabelNode, Waypoint } from './types';
+import { Layer } from './index';
+import { buildEdgePath } from './index';
 import { newid } from '@diagram-craft/utils';
 import { deepClone } from '@diagram-craft/utils';
-import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './index.ts';
-import { DiagramElement, isEdge } from './index.ts';
+import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './index';
+import { DiagramElement, isEdge } from './index';
 import { isDifferent } from '@diagram-craft/utils';
-import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './index.ts';
-import { BaseEdgeDefinition } from './baseEdgeDefinition.ts';
-import { Endpoint, FreeEndpoint, isConnected } from './index.ts';
+import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './index';
+import { BaseEdgeDefinition } from './baseEdgeDefinition';
+import { Endpoint, FreeEndpoint, isConnected } from './index';
 import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils';
 import { deepMerge } from '@diagram-craft/utils';
-import { edgeDefaults } from './index.ts';
+import { edgeDefaults } from './index';
 import {
   Box,
   CubicSegment,
@@ -23,7 +23,7 @@ import {
   Transform,
   Vector
 } from '@diagram-craft/geometry';
-import { Diagram } from './index.ts';
+import { Diagram } from './index';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;

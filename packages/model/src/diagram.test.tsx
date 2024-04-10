@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import { Diagram } from './diagram.ts';
-import { DiagramNode } from './diagramNode.ts';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
+import { Diagram } from './diagram';
+import { DiagramNode } from './diagramNode';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { newid } from '@diagram-craft/utils';
-import { Layer } from './diagramLayer.ts';
-import { UnitOfWork } from './unitOfWork.ts';
+import { Layer } from './diagramLayer';
+import { UnitOfWork } from './unitOfWork';
 import { TransformFactory } from '@diagram-craft/geometry';
-import { TestNodeDefinition } from './TestNodeDefinition.ts';
+import { TestNodeDefinition } from './TestNodeDefinition';
 
 const bounds = {
   x: 0,

@@ -1,6 +1,6 @@
-import { hash, Random } from '@diagram-craft/utils/index.ts';
-import { round } from '@diagram-craft/utils/index.ts';
-import { VerifyNotReached } from '@diagram-craft/utils/index.ts';
+import { hash, Random } from '@diagram-craft/utils/index';
+import { round } from '@diagram-craft/utils/index';
+import { VerifyNotReached } from '@diagram-craft/utils/index';
 import {
   BezierUtils,
   Box,
@@ -11,13 +11,13 @@ import {
   PathSegment,
   Point,
   Vector
-} from '@diagram-craft/geometry/index.ts';
-import { DiagramNode } from '@diagram-craft/model/diagramNode.ts';
+} from '@diagram-craft/geometry/index';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   PathRenderer,
   RenderedStyledPath,
   StyledPath
-} from '@diagram-craft/canvas/shape/PathRenderer.ts';
+} from '@diagram-craft/canvas/shape/PathRenderer';
 
 export class SketchPathRenderer implements PathRenderer {
   render(node: DiagramNode, path: StyledPath): RenderedStyledPath[] {

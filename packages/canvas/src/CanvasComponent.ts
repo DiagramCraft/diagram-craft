@@ -1,10 +1,10 @@
-import { Component } from './component/component.ts';
+import { Component } from './component/component';
 import { Diagram } from '@diagram-craft/model';
-import * as svg from './component/vdom-svg.ts';
-import * as html from './component/vdom-html.ts';
-import { EdgeComponent } from './components/EdgeComponent.ts';
+import * as svg from './component/vdom-svg';
+import * as html from './component/vdom-html';
+import { EdgeComponent } from './components/EdgeComponent';
 import { Point } from '@diagram-craft/geometry';
-import { Modifiers } from './dragDropManager.ts';
+import { Modifiers } from './dragDropManager';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {

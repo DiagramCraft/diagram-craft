@@ -1,17 +1,17 @@
-import { EditablePath, EditableWaypointType } from '../editablePath.ts';
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition.ts';
+import { EditablePath, EditableWaypointType } from '../editablePath';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { DiagramNode } from '@diagram-craft/model';
-import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape.ts';
-import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
+import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { EventHelper } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';
-import { toInlineCSS } from '../component/vdom.ts';
-import { ControlPointDrag } from '../drag/controlPointDrag.ts';
-import { NodeDrag } from '../drag/nodeDrag.ts';
-import * as svg from '../component/vdom-svg.ts';
+import { toInlineCSS } from '../component/vdom';
+import { ControlPointDrag } from '../drag/controlPointDrag';
+import { NodeDrag } from '../drag/nodeDrag';
+import * as svg from '../component/vdom-svg';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry';
-import { ShapeBuilder } from '../shape/ShapeBuilder.ts';
+import { ShapeBuilder } from '../shape/ShapeBuilder';
 
 declare global {
   interface NodeProps {

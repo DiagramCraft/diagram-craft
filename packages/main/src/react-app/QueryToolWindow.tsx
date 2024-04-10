@@ -1,8 +1,8 @@
-import { AccordionTrigger } from './AccordionTrigger.tsx';
-import { AccordionContent } from './AccordionContext.tsx';
+import { AccordionTrigger } from './AccordionTrigger';
+import { AccordionContent } from './AccordionContext';
 import * as Accordion from '@radix-ui/react-accordion';
 import { parseAndQuery } from '@diagram-craft/query';
-import { useDiagram } from './context/DiagramContext.ts';
+import { useDiagram } from './context/DiagramContext';
 import { useRef, useState } from 'react';
 import {
   TbArrowDownRight,
@@ -12,10 +12,10 @@ import {
   TbFile,
   TbHistory
 } from 'react-icons/tb';
-import { Select } from './components/Select.tsx';
+import { Select } from './components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Diagram } from '@diagram-craft/model';
-import { useRedraw } from './useRedraw.tsx';
+import { useRedraw } from './useRedraw';
 
 const replacer = (_key: string, value: unknown) => {
   if (value instanceof Map) {

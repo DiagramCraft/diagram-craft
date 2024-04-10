@@ -1,4 +1,4 @@
-import { h, s, VNodeChildParam, VNodeData } from './vdom.ts';
+import { h, s, VNodeChildParam, VNodeData } from './vdom';
 
 type DataAttributes = {
   [key in `data-${string}`]?: string;

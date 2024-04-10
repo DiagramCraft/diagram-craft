@@ -1,7 +1,7 @@
-import { ToolWindowButton } from './ToolWindowButton.tsx';
+import { ToolWindowButton } from './ToolWindowButton';
 import React, { useEffect, useState } from 'react';
-import { useEventListener } from './hooks/useEventListener.ts';
-import { UserState } from '@diagram-craft/canvas';
+import { useEventListener } from './hooks/useEventListener';
+import { UserState } from '@diagram-craft/canvas/UserState';
 
 export const SideBar = (props: Props) => {
   const propName = props.side === 'left' ? 'panelLeft' : 'panelRight';

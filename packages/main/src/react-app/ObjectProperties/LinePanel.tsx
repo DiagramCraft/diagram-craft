@@ -1,16 +1,16 @@
 import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { ArrowSelector } from './ArrowSelector.tsx';
-import { ColorPicker } from '../components/ColorPicker.tsx';
-import { DashSelector } from './DashSelector.tsx';
-import { useEdgeProperty } from './useProperty.ts';
-import { NumberInput } from '../components/NumberInput.tsx';
+import { ArrowSelector } from './ArrowSelector';
+import { ColorPicker } from '../components/ColorPicker';
+import { DashSelector } from './DashSelector';
+import { useEdgeProperty } from './useProperty';
+import { NumberInput } from '../components/NumberInput';
 import { assertEdgeType } from '@diagram-craft/model';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useEdgeDefaults } from '../useDefaults.tsx';
-import { Select } from '../components/Select.tsx';
-import { useConfiguration } from '../context/ConfigurationContext.ts';
+import { useDiagram } from '../context/DiagramContext';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useEdgeDefaults } from '../useDefaults';
+import { Select } from '../components/Select';
+import { useConfiguration } from '../context/ConfigurationContext';
 
 export const LinePanel = (props: Props) => {
   const $d = useDiagram();

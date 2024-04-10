@@ -1,4 +1,4 @@
-import { Vector } from './vector.ts';
+import { Vector } from './vector';
 import { isSame, round } from '@diagram-craft/utils';
 
 export type Point = Readonly<{

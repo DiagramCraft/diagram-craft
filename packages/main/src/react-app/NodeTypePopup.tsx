@@ -1,11 +1,11 @@
 import * as Popover from '@radix-ui/react-popover';
 import { TbX } from 'react-icons/tb';
 import { Diagram } from '@diagram-craft/model';
-import { useDiagram } from './context/DiagramContext.ts';
+import { useDiagram } from './context/DiagramContext';
 import { Layer } from '@diagram-craft/model';
 import { DiagramNode } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
-import { PickerCanvas } from './PickerCanvas.tsx';
+import { PickerCanvas } from './PickerCanvas';
 import { assert } from '@diagram-craft/utils';
 import { useCallback } from 'react';
 import { newid } from '@diagram-craft/utils';

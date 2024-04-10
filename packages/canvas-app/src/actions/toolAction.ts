@@ -1,6 +1,6 @@
-import { ActionMapFactory, AppState } from '@diagram-craft/canvas/keyMap.ts';
-import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationState.ts';
-import { AbstractToggleAction } from '@diagram-craft/canvas/action.ts';
+import { ActionMapFactory, AppState } from '@diagram-craft/canvas/keyMap';
+import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationState';
+import { AbstractToggleAction } from '@diagram-craft/canvas/action';
 
 declare global {
   interface ActionMap {

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AccordionTrigger } from '../AccordionTrigger.tsx';
-import { AccordionContent } from '../AccordionContext.tsx';
+import { AccordionTrigger } from '../AccordionTrigger';
+import { AccordionContent } from '../AccordionContext';
 import * as Accordion from '@radix-ui/react-accordion';
-import { SelectionInfoDetails } from './SelectionInfoDetails.tsx';
-import { NodeInfoDetails } from './NodeInfoDetails.tsx';
-import { EdgeInfoDetails } from './EdgeInfoDetails.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
+import { SelectionInfoDetails } from './SelectionInfoDetails';
+import { NodeInfoDetails } from './NodeInfoDetails';
+import { EdgeInfoDetails } from './EdgeInfoDetails';
+import { useDiagram } from '../context/DiagramContext';
 
 export const ObjectInfo = () => {
   const diagram = useDiagram();

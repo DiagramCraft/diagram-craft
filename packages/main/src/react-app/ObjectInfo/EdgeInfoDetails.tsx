@@ -1,9 +1,9 @@
-import * as Tree from '../components/Tree.tsx';
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import * as Tree from '../components/Tree';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
 import { DiagramEdge } from '@diagram-craft/model';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { ObjectTreeNode } from '../ObjectTreeNode.tsx';
+import { useDiagram } from '../context/DiagramContext';
+import { ObjectTreeNode } from '../ObjectTreeNode';
 
 export const EdgeInfoDetails = (props: Props) => {
   const diagram = useDiagram();

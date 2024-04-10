@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { clamp, isDifferent, isSame, round } from './math.ts';
+import { clamp, isDifferent, isSame, round } from './math';
 
 describe('round', () => {
   test('rounds a number to 2 decimal places', () => {

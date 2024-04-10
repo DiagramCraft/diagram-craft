@@ -1,14 +1,14 @@
-import { ColorPicker } from '../components/ColorPicker.tsx';
-import { useNodeProperty } from './useProperty.ts';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
+import { ColorPicker } from '../components/ColorPicker';
+import { useNodeProperty } from './useProperty';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 import { assertFillType } from '@diagram-craft/model';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
+import { useDiagram } from '../context/DiagramContext';
+import { useNodeDefaults } from '../useDefaults';
 import { round } from '@diagram-craft/utils';
-import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
-import { Select } from '../components/Select.tsx';
-import { Collapsible } from '../components/Collapsible.tsx';
-import { useConfiguration } from '../context/ConfigurationContext.ts';
+import { SliderAndNumberInput } from '../SliderAndNumberInput';
+import { Select } from '../components/Select';
+import { Collapsible } from '../components/Collapsible';
+import { useConfiguration } from '../context/ConfigurationContext';
 import { Angle } from '@diagram-craft/geometry';
 
 const TEXTURES = [

@@ -1,16 +1,16 @@
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '@diagram-craft/model/index.ts';
-import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType.ts';
-import { CircleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Circle.nodeType.ts';
-import { DiamondNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Diamond.nodeType.ts';
-import { ParallelogramNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Parallelogram.nodeType.ts';
-import { RegularPolygonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RegularPolygon.nodeType.ts';
-import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType.ts';
-import { StarNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Star.nodeType.ts';
-import { TrapetzoidNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Trapetzoid.nodeType.ts';
-import { TextNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Text.nodeType.ts';
-import { ContainerNodeDefinition } from '@diagram-craft/canvas/node-types/Container.nodeType.ts';
-import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/GenericPath.nodeType.ts';
-import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.nodeType.ts';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '@diagram-craft/model/index';
+import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
+import { CircleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Circle.nodeType';
+import { DiamondNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Diamond.nodeType';
+import { ParallelogramNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Parallelogram.nodeType';
+import { RegularPolygonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RegularPolygon.nodeType';
+import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
+import { StarNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Star.nodeType';
+import { TrapetzoidNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Trapetzoid.nodeType';
+import { TextNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Text.nodeType';
+import { ContainerNodeDefinition } from '@diagram-craft/canvas/node-types/Container.nodeType';
+import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/GenericPath.nodeType';
+import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();

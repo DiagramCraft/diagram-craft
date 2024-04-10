@@ -1,7 +1,7 @@
 import { DiagramNode } from '@diagram-craft/model';
 import { CustomPropertyDefinition, NodeCapability, NodeDefinition } from '@diagram-craft/model';
 import { DiagramElement } from '@diagram-craft/model';
-import { BaseShape } from './BaseShape.ts';
+import { BaseShape } from './BaseShape';
 import { Box, Extent, Path, PathBuilder, Point, Transform } from '@diagram-craft/geometry';
 import { round } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';

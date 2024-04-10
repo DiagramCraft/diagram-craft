@@ -1,14 +1,14 @@
-import { AccordionTrigger } from '../AccordionTrigger.tsx';
-import { AccordionContent } from '../AccordionContext.tsx';
+import { AccordionTrigger } from '../AccordionTrigger';
+import { AccordionContent } from '../AccordionContext';
 import * as Accordion from '@radix-ui/react-accordion';
-import { Select } from '../components/Select.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useElementProperty } from '../ObjectProperties/useProperty.ts';
+import { Select } from '../components/Select';
+import { useDiagram } from '../context/DiagramContext';
+import { useElementProperty } from '../ObjectProperties/useProperty';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model';
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
 import {
@@ -18,9 +18,9 @@ import {
   ModifySchemaUndoableAction
 } from '@diagram-craft/model';
 import { newid } from '@diagram-craft/utils';
-import { MessageDialog, MessageDialogState } from '../components/MessageDialog.tsx';
+import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
 import { CompoundUndoableAction } from '@diagram-craft/model';
-import { JSONDialog } from '../components/JSONDialog.tsx';
+import { JSONDialog } from '../components/JSONDialog';
 import { unique } from '@diagram-craft/utils';
 
 const makeTemplate = (): DataSchema => {

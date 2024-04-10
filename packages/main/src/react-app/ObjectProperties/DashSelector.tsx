@@ -1,6 +1,6 @@
 import * as Select from '@radix-ui/react-select';
 import { TbCheck, TbChevronDown } from 'react-icons/tb';
-import { DASH_PATTERNS } from '@diagram-craft/canvas';
+import { DASH_PATTERNS } from '@diagram-craft/canvas/dashPatterns';
 
 const DashPatternPreview = (props: { type: string; pattern?: string; width?: number }) => (
   <svg width={props.width ?? 30} height={10}>

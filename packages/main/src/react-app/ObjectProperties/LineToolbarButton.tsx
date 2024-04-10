@@ -1,12 +1,12 @@
 import { TbX } from 'react-icons/tb';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { useEdgeProperty } from './useProperty.ts';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useEdgeDefaults } from '../useDefaults.tsx';
-import { LinePanel } from './LinePanel.tsx';
-import { ArrowPreview } from './ArrowPreview.tsx';
-import { ARROW_SHAPES } from '@diagram-craft/canvas';
+import { useEdgeProperty } from './useProperty';
+import { useDiagram } from '../context/DiagramContext';
+import { useEdgeDefaults } from '../useDefaults';
+import { LinePanel } from './LinePanel';
+import { ArrowPreview } from './ArrowPreview';
+import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 
 export const LineToolbarButton = () => {
   const diagram = useDiagram();

@@ -1,9 +1,9 @@
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/index.ts';
-import { commitWithUndo } from '@diagram-craft/model/index.ts';
-import { AbstractSelectionAction } from './abstractSelectionAction.ts';
-import { Diagram } from '@diagram-craft/model/index.ts';
-import { UnitOfWork } from '@diagram-craft/model/index.ts';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap.ts';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/index';
+import { commitWithUndo } from '@diagram-craft/model/index';
+import { AbstractSelectionAction } from './abstractSelectionAction';
+import { Diagram } from '@diagram-craft/model/index';
+import { UnitOfWork } from '@diagram-craft/model/index';
+import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 
 declare global {
   interface ActionMap {

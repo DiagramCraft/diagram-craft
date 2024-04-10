@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Line } from './line.ts';
+import { Line } from './line';
 
 describe('Line', () => {
   test('extend', () => {

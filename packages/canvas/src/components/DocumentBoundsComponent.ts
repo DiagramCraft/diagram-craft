@@ -1,7 +1,7 @@
-import { Component } from '../component/component.ts';
-import * as svg from '../component/vdom-svg.ts';
-import { toInlineCSS } from '../component/vdom.ts';
-import { CanvasState } from '../EditableCanvasComponent.ts';
+import { Component } from '../component/component';
+import * as svg from '../component/vdom-svg';
+import { toInlineCSS } from '../component/vdom';
+import { CanvasState } from '../EditableCanvasComponent';
 
 export class DocumentBoundsComponent extends Component<CanvasState> {
   render(props: CanvasState) {

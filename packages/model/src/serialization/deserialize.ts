@@ -1,11 +1,11 @@
-import { Diagram } from '../diagram.ts';
-import { DiagramNode } from '../diagramNode.ts';
-import { DiagramEdge } from '../diagramEdge.ts';
-import { UnitOfWork } from '../unitOfWork.ts';
-import { Layer } from '../diagramLayer.ts';
-import { isSerializedEndpointConnected } from './serialize.ts';
-import { DiagramDocument } from '../diagramDocument.ts';
-import { DiagramElement } from '../diagramElement.ts';
+import { Diagram } from '../diagram';
+import { DiagramNode } from '../diagramNode';
+import { DiagramEdge } from '../diagramEdge';
+import { UnitOfWork } from '../unitOfWork';
+import { Layer } from '../diagramLayer';
+import { isSerializedEndpointConnected } from './serialize';
+import { DiagramDocument } from '../diagramDocument';
+import { DiagramElement } from '../diagramElement';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import {
   SerializedDiagram,
@@ -14,9 +14,9 @@ import {
   SerializedElement,
   SerializedLayer,
   SerializedNode
-} from './types.ts';
-import { ConnectedEndpoint, FreeEndpoint } from '../endpoint.ts';
-import { Waypoint } from '../types.ts';
+} from './types';
+import { ConnectedEndpoint, FreeEndpoint } from '../endpoint';
+import { Waypoint } from '../types';
 import { Point } from '@diagram-craft/geometry';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>

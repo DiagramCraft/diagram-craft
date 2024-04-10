@@ -1,4 +1,4 @@
-import { Point } from './point.ts';
+import { Point } from './point';
 
 export type Vector = Point;
 

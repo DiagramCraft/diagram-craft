@@ -1,8 +1,8 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import React from 'react';
-import { useActions } from '../context/ActionsContext.ts';
-import { Action, ActionContext } from '@diagram-craft/canvas';
-import { findKeyBindings, formatKeyBinding } from '@diagram-craft/canvas';
+import { useActions } from '../context/ActionsContext';
+import { Action, ActionContext } from '@diagram-craft/canvas/action';
+import { findKeyBindings, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 
 export const ActionContextMenuItem = (props: Props) => {
   const { actionMap, keyMap } = useActions();

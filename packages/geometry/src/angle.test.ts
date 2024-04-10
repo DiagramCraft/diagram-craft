@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Angle } from './angle.ts';
+import { Angle } from './angle';
 
 describe('Angle', () => {
   test('toDeg', () => {

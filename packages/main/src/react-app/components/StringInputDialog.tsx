@@ -1,5 +1,5 @@
 import { ComponentProps, useEffect, useRef } from 'react';
-import { Dialog } from './Dialog.tsx';
+import { Dialog } from './Dialog';
 
 export const StringInputDialog = (
   props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {

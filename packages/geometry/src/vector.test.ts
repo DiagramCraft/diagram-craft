@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Vector } from './vector.ts';
+import { Vector } from './vector';
 
 describe('Vector', () => {
   test('normalize', () => {

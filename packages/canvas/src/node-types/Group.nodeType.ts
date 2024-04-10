@@ -1,13 +1,13 @@
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { NodeCapability } from '@diagram-craft/model';
 import { DiagramNode } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
-import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape.ts';
+import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
 import { isNode } from '@diagram-craft/model';
-import * as svg from '../component/vdom-svg.ts';
+import * as svg from '../component/vdom-svg';
 import { DiagramEdge } from '@diagram-craft/model';
 import { Box, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry';
-import { ShapeBuilder } from '../shape/ShapeBuilder.ts';
+import { ShapeBuilder } from '../shape/ShapeBuilder';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {

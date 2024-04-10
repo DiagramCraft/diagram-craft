@@ -1,13 +1,13 @@
-import { Guide, SelectionState } from './selectionState.ts';
+import { Guide, SelectionState } from './selectionState';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { DiagramNode } from './diagramNode.ts';
-import { DiagramEdge } from './diagramEdge.ts';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry.ts';
-import { Diagram } from './index.ts';
-import { Layer } from './index.ts';
-import { FreeEndpoint } from './index.ts';
-import { UnitOfWork } from './index.ts';
-import { TestNodeDefinition } from './TestNodeDefinition.ts';
+import { DiagramNode } from './diagramNode';
+import { DiagramEdge } from './diagramEdge';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
+import { Diagram } from './index';
+import { Layer } from './index';
+import { FreeEndpoint } from './index';
+import { UnitOfWork } from './index';
+import { TestNodeDefinition } from './TestNodeDefinition';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(

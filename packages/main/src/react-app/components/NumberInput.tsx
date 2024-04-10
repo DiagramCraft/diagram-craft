@@ -1,7 +1,7 @@
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { $c } from '@diagram-craft/utils';
-import { propsUtils } from '../propsUtils.ts';
+import { propsUtils } from '../propsUtils';
 
 const parse = (value: string) => {
   const m = value.match(/^ ?(-?\d+\.?\d*) ?([^ ]*)$/);

@@ -1,9 +1,9 @@
 import './App.css';
 import { useRef, useState } from 'react';
-import { snapTestDiagram } from './sample/snap-test.ts';
-import { simpleDiagram } from './sample/simple.ts';
-import { LayerToolWindow } from './react-app/LayerToolWindow.tsx';
-import { DocumentSelector } from './react-app/DocumentSelector.tsx';
+import { snapTestDiagram } from './sample/snap-test';
+import { simpleDiagram } from './sample/simple';
+import { LayerToolWindow } from './react-app/LayerToolWindow';
+import { DocumentSelector } from './react-app/DocumentSelector';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import {
@@ -29,26 +29,26 @@ import {
   TbZoomIn,
   TbZoomOut
 } from 'react-icons/tb';
-import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu.tsx';
-import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher.tsx';
-import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu.tsx';
-import { Toolbar } from './react-app/toolbar/Toolbar.tsx';
-import { SideBar } from './react-app/SideBar.tsx';
-import { SideBarPage } from './react-app/SideBarPage.tsx';
-import { PickerToolWindow } from './react-app/PickerToolWindow.tsx';
-import { ObjectToolWindow } from './react-app/ObjectProperties/ObjectToolWindow.tsx';
-import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu.tsx';
-import { useEventListener } from './react-app/hooks/useEventListener.ts';
-import { useRedraw } from './react-app/useRedraw.tsx';
-import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap.ts';
-import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo.tsx';
-import { DocumentTabs } from './react-app/DocumentTabs.tsx';
-import { HistoryToolWindow } from './react-app/HistoryToolWindow.tsx';
-import { Ruler } from './react-app/Ruler.tsx';
-import { ActionsContext, useActions } from './react-app/context/ActionsContext.ts';
-import { DiagramContext } from './react-app/context/DiagramContext.ts';
-import { ConfigurationContext } from './react-app/context/ConfigurationContext.ts';
-import { defaultPalette } from './react-app/ObjectProperties/palette.ts';
+import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu';
+import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher';
+import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu';
+import { Toolbar } from './react-app/toolbar/Toolbar';
+import { SideBar } from './react-app/SideBar';
+import { SideBarPage } from './react-app/SideBarPage';
+import { PickerToolWindow } from './react-app/PickerToolWindow';
+import { ObjectToolWindow } from './react-app/ObjectProperties/ObjectToolWindow';
+import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu';
+import { useEventListener } from './react-app/hooks/useEventListener';
+import { useRedraw } from './react-app/useRedraw';
+import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap';
+import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo';
+import { DocumentTabs } from './react-app/DocumentTabs';
+import { HistoryToolWindow } from './react-app/HistoryToolWindow';
+import { Ruler } from './react-app/Ruler';
+import { ActionsContext, useActions } from './react-app/context/ActionsContext';
+import { DiagramContext } from './react-app/context/DiagramContext';
+import { ConfigurationContext } from './react-app/context/ConfigurationContext';
+import { defaultPalette } from './react-app/ObjectProperties/palette';
 import {
   deserializeDiagramDocument,
   Diagram,
@@ -56,31 +56,30 @@ import {
   nodeDefaults,
   SerializedDiagram
 } from '@diagram-craft/model';
-import { DocumentToolWindow } from './react-app/DocumentToolWindow.tsx';
-import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton.tsx';
-import { LayerIndicator } from './react-app/LayerIndicator.tsx';
-import { testDiagram } from './sample/test.ts';
-import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup.tsx';
-import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog.tsx';
-import { ObjectData } from './react-app/ObjectData/ObjectData.tsx';
-import { QueryToolWindow } from './react-app/QueryToolWindow.tsx';
-import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers.ts';
+import { DocumentToolWindow } from './react-app/DocumentToolWindow';
+import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton';
+import { LayerIndicator } from './react-app/LayerIndicator';
+import { testDiagram } from './sample/test';
+import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup';
+import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog';
+import { ObjectData } from './react-app/ObjectData/ObjectData';
+import { QueryToolWindow } from './react-app/QueryToolWindow';
+import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers';
 import { Point } from '@diagram-craft/geometry';
-import { ToolType } from '@diagram-craft/canvas';
-import { ApplicationState } from '@diagram-craft/canvas';
-import { UserState } from '@diagram-craft/canvas';
-import { makeActionMap } from '@diagram-craft/canvas';
 import { EditableCanvas } from '@diagram-craft/canvas-react';
-import { ToolContructor } from '@diagram-craft/canvas/tool.ts';
-import { MoveTool } from '@diagram-craft/canvas/tools/moveTool.ts';
-import { TextTool } from '@diagram-craft/canvas-app/tools/textTool.ts';
-import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool.ts';
-import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool.ts';
-import { PenTool } from '@diagram-craft/canvas-app/tools/penTool.ts';
+import { ToolContructor } from '@diagram-craft/canvas/tool';
+import { MoveTool } from '@diagram-craft/canvas/tools/moveTool';
+import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';
+import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
+import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
+import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry.ts';
+} from '@diagram-craft/canvas-app/defaultRegistry';
+import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationState';
+import { UserState } from '@diagram-craft/canvas/UserState';
+import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

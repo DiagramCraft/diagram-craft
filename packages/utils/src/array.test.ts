@@ -9,7 +9,7 @@ import {
   smallest,
   smallestIndex,
   unique
-} from './array.ts';
+} from './array';
 
 describe('smallest', () => {
   test('should return the smallest number in an array', () => {

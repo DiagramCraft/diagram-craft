@@ -1,7 +1,7 @@
-import { DiagramEdge, Intersection } from './diagramEdge.ts';
+import { DiagramEdge, Intersection } from './diagramEdge';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils';
-import { Diagram } from './index.ts';
-import { ConnectedEndpoint, isConnected } from './endpoint.ts';
+import { Diagram } from './index';
+import { ConnectedEndpoint, isConnected } from './endpoint';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,

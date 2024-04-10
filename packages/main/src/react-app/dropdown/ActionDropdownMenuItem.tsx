@@ -1,8 +1,8 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import React from 'react';
-import { useActions } from '../context/ActionsContext.ts';
-import { Action, ActionContext } from '@diagram-craft/canvas';
-import { findKeyBindings, formatKeyBinding } from '@diagram-craft/canvas';
+import { useActions } from '../context/ActionsContext';
+import { Action, ActionContext } from '@diagram-craft/canvas/action';
+import { findKeyBindings, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 
 export const ActionDropdownMenuItem = (props: Props) => {
   const { actionMap, keyMap } = useActions();

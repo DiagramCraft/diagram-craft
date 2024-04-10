@@ -1,8 +1,8 @@
-import { Diagram } from '../diagram.ts';
-import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
-import { Guide } from '../selectionState.ts';
-import { Magnet, MagnetOfType } from './magnet.ts';
-import { isNode } from '../diagramElement.ts';
+import { Diagram } from '../diagram';
+import { MatchingMagnetPair, SnapProvider } from './snapManager';
+import { Guide } from '../selectionState';
+import { Magnet, MagnetOfType } from './magnet';
+import { isNode } from '../diagramElement';
 import { unique } from '@diagram-craft/utils';
 import { Axis, Box, Line, Point, Range } from '@diagram-craft/geometry';
 

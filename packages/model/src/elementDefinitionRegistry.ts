@@ -1,8 +1,8 @@
-import { DiagramNode } from './diagramNode.ts';
+import { DiagramNode } from './diagramNode';
 import { assert } from '@diagram-craft/utils';
-import { UnitOfWork } from './index.ts';
-import { DiagramElement } from './diagramElement.ts';
-import { DiagramEdge } from './diagramEdge.ts';
+import { UnitOfWork } from './index';
+import { DiagramElement } from './diagramElement';
+import { DiagramEdge } from './diagramEdge';
 import { DeepReadonly } from '@diagram-craft/utils';
 import { Extent, Path, PathBuilder, Point, Transform } from '@diagram-craft/geometry';
 

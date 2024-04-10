@@ -1,4 +1,4 @@
-import { AbstractDrag } from '../dragDropManager.ts';
+import { AbstractDrag } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model';
 import { SelectionState } from '@diagram-craft/model';
 import { precondition } from '@diagram-craft/utils';

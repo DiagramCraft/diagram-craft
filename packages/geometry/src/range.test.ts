@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Range } from './range.ts';
+import { Range } from './range';
 
 describe('Range', () => {
   test('overlaps', () => {

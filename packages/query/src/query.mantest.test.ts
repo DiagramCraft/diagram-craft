@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseAndQuery } from './query.ts';
+import { parseAndQuery } from './query';
 
 // See https://github.com/jqlang/jq/blob/master/tests/man.test
 

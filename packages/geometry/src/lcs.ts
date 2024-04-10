@@ -1,6 +1,6 @@
-import { Box } from './box.ts';
-import { Rotation, Transform, Translation } from './transform.ts';
-import { Point } from './point.ts';
+import { Box } from './box';
+import { Rotation, Transform, Translation } from './transform';
+import { Point } from './point';
 
 // Note, this provides an "unscaled" local coordinate system.
 export class LocalCoordinateSystem {

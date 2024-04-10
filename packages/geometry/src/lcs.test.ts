@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { LocalCoordinateSystem } from './lcs.ts';
+import { LocalCoordinateSystem } from './lcs';
 
 describe('LocalCoordinateSystem', () => {
   describe('only rotation', () => {

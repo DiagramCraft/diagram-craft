@@ -1,7 +1,7 @@
 import { SelectionState } from '@diagram-craft/model';
 import { Angle } from '@diagram-craft/geometry';
-import { Component } from '../component/component.ts';
-import * as svg from '../component/vdom-svg.ts';
+import { Component } from '../component/component';
+import * as svg from '../component/vdom-svg';
 import { Box } from '@diagram-craft/geometry';
 
 export class GroupBoundsComponent extends Component<Props> {

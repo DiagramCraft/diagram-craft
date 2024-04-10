@@ -1,7 +1,7 @@
 import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from './AccordionTrigger.tsx';
-import { AccordionContent } from './AccordionContext.tsx';
-import { ObjectPicker } from './ObjectPicker.tsx';
+import { AccordionTrigger } from './AccordionTrigger';
+import { AccordionContent } from './AccordionContext';
+import { ObjectPicker } from './ObjectPicker';
 
 export const PickerToolWindow = () => {
   return (

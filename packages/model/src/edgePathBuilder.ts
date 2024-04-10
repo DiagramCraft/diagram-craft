@@ -1,5 +1,5 @@
-import { DiagramEdge } from './diagramEdge.ts';
-import { ControlPoints, Waypoint } from './types.ts';
+import { DiagramEdge } from './diagramEdge';
+import { ControlPoints, Waypoint } from './types';
 import { unique } from '@diagram-craft/utils';
 import {
   BezierUtils,

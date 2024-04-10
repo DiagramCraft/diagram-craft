@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { OObjects, parseAndQuery } from './query.ts';
+import { OObjects, parseAndQuery } from './query';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const queryOne = (q: string, input: any) => {

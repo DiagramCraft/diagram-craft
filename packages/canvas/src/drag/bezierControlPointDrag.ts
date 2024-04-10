@@ -1,4 +1,4 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager.ts';
+import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { DiagramEdge } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { ControlPoints } from '@diagram-craft/model';

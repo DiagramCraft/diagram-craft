@@ -1,7 +1,7 @@
-import { Component } from '../component/component.ts';
-import * as svg from '../component/vdom-svg.ts';
-import * as html from '../component/vdom-html.ts';
-import { rawHTML, toInlineCSS, VNode } from '../component/vdom.ts';
+import { Component } from '../component/component';
+import * as svg from '../component/vdom-svg';
+import * as html from '../component/vdom-html';
+import { rawHTML, toInlineCSS, VNode } from '../component/vdom';
 import { Box, Extent } from '@diagram-craft/geometry';
 
 const VALIGN_TO_FLEX_JUSTIFY = {

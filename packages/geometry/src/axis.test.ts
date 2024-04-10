@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Axis } from './axis.ts';
+import { Axis } from './axis';
 
 describe('Axis', () => {
   test('orthogonal', () => {

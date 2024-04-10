@@ -1,14 +1,14 @@
-import { AbstractTool } from '@diagram-craft/canvas/tool.ts';
-import { newid } from '@diagram-craft/utils/index.ts';
+import { AbstractTool } from '@diagram-craft/canvas/tool';
+import { newid } from '@diagram-craft/utils/index';
 import {
   Diagram,
   DiagramEdge,
   ElementAddUndoableAction,
   FreeEndpoint
-} from '@diagram-craft/model/index.ts';
-import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent.ts';
-import { Point } from '@diagram-craft/geometry/index.ts';
-import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager.ts';
+} from '@diagram-craft/model/index';
+import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
+import { Point } from '@diagram-craft/geometry/index';
+import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 
 declare global {
   interface Tools {

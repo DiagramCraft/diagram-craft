@@ -1,8 +1,8 @@
-import { Component } from '../component/component.ts';
-import { rawHTML, VNode } from '../component/vdom.ts';
+import { Component } from '../component/component';
+import { rawHTML, VNode } from '../component/vdom';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
 import { DiagramNode } from '@diagram-craft/model';
-import * as svg from '../component/vdom-svg.ts';
+import * as svg from '../component/vdom-svg';
 import { Box } from '@diagram-craft/geometry';
 
 const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {

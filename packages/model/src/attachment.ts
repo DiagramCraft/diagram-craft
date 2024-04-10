@@ -1,5 +1,5 @@
-import { DiagramDocument } from './diagramDocument.ts';
-import { isEdge, isNode } from './diagramElement.ts';
+import { DiagramDocument } from './diagramDocument';
+import { isEdge, isNode } from './diagramElement';
 import { hash64 } from '@diagram-craft/utils';
 
 export class Attachment {

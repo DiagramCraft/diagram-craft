@@ -1,4 +1,4 @@
-import * as Tree from './components/Tree.tsx';
+import * as Tree from './components/Tree';
 import { round } from '@diagram-craft/utils';
 
 export const ObjectTreeNode = (props: Props) => {

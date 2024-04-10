@@ -1,11 +1,11 @@
-import { Point } from './point.ts';
-import { Vector } from './vector.ts';
-import { Line } from './line.ts';
-import { CubicBezier } from './bezier.ts';
-import { RawSegment } from './pathBuilder.ts';
-import { Projection } from './path.ts';
-import { LengthOffsetOnPath } from './pathPosition.ts';
-import { Box } from './box.ts';
+import { Point } from './point';
+import { Vector } from './vector';
+import { Line } from './line';
+import { CubicBezier } from './bezier';
+import { RawSegment } from './pathBuilder';
+import { Projection } from './path';
+import { LengthOffsetOnPath } from './pathPosition';
+import { Box } from './box';
 import { round } from '@diagram-craft/utils';
 
 export interface PathSegment {

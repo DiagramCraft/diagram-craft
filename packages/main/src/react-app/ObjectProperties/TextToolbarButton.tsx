@@ -1,10 +1,10 @@
 import { TbTextSize, TbX } from 'react-icons/tb';
-import { useNodeProperty } from './useProperty.ts';
+import { useNodeProperty } from './useProperty';
 import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { TextPanel } from './TextPanel.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
+import { TextPanel } from './TextPanel';
+import { useDiagram } from '../context/DiagramContext';
+import { useNodeDefaults } from '../useDefaults';
 
 export const TextToolbarButton = () => {
   const diagram = useDiagram();

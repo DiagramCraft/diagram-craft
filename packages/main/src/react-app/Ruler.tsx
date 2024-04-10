@@ -1,8 +1,8 @@
-import { useEventListener } from './hooks/useEventListener.ts';
-import { useRedraw } from './useRedraw.tsx';
+import { useEventListener } from './hooks/useEventListener';
+import { useRedraw } from './useRedraw';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import { useDiagram } from './context/DiagramContext.ts';
+import { useDiagram } from './context/DiagramContext';
 import { EventHelper } from '@diagram-craft/utils';
 
 type Tick = {

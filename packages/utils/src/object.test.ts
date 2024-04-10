@@ -1,6 +1,6 @@
-import { common, deepMerge, deepClone, deepEquals } from './object.ts';
+import { common, deepMerge, deepClone, deepEquals } from './object';
 import { expect, describe, test } from 'vitest';
-import { UNSAFE } from './testUtils.ts';
+import { UNSAFE } from './testUtils';
 
 describe('common function', () => {
   test('should return an object with common properties', () => {

@@ -1,6 +1,6 @@
 import { SelectionState } from '@diagram-craft/model';
-import * as Tree from '../components/Tree.tsx';
-import { ObjectTreeNode } from '../ObjectTreeNode.tsx';
+import * as Tree from '../components/Tree';
+import { ObjectTreeNode } from '../ObjectTreeNode';
 
 export const SelectionInfoDetails = (props: { obj: SelectionState }) => {
   return (

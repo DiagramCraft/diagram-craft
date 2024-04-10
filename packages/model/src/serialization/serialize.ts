@@ -1,8 +1,8 @@
 import { VerifyNotReached } from '@diagram-craft/utils';
-import { Diagram } from '../diagram.ts';
-import { DiagramDocument } from '../diagramDocument.ts';
-import { Layer } from '../diagramLayer.ts';
-import { DiagramElement, isEdge, isNode } from '../diagramElement.ts';
+import { Diagram } from '../diagram';
+import { DiagramDocument } from '../diagramDocument';
+import { Layer } from '../diagramLayer';
+import { DiagramElement, isEdge, isNode } from '../diagramElement';
 import {
   SerializedConnectedEndpoint,
   SerializedDiagram,
@@ -11,8 +11,8 @@ import {
   SerializedEndpoint,
   SerializedLayer,
   SerializedNode
-} from './types.ts';
-import { ConnectedEndpoint } from '../endpoint.ts';
+} from './types';
+import { ConnectedEndpoint } from '../endpoint';
 
 export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint

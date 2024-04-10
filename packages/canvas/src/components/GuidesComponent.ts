@@ -1,8 +1,8 @@
 import { round } from '@diagram-craft/utils';
 import { SelectionState } from '@diagram-craft/model';
-import { Component } from '../component/component.ts';
-import * as svg from '../component/vdom-svg.ts';
-import { text, VNode } from '../component/vdom.ts';
+import { Component } from '../component/component';
+import * as svg from '../component/vdom-svg';
+import { text, VNode } from '../component/vdom';
 import { newid } from '@diagram-craft/utils';
 import { Line, Point } from '@diagram-craft/geometry';
 

@@ -1,12 +1,12 @@
-import { useDiagram } from '../context/DiagramContext.ts';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useDiagram } from '../context/DiagramContext';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
 import { round } from '@diagram-craft/utils';
-import { useNodeProperty } from './useProperty.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
-import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
-import { Select } from '../components/Select.tsx';
+import { useNodeProperty } from './useProperty';
+import { useNodeDefaults } from '../useDefaults';
+import { SliderAndNumberInput } from '../SliderAndNumberInput';
+import { Select } from '../components/Select';
 
 export const NodeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();

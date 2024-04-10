@@ -1,11 +1,11 @@
-import { AbstractDrag, Modifiers } from '../dragDropManager.ts';
+import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Angle } from '@diagram-craft/geometry';
 import { ElementAddUndoableAction, SnapshotUndoableAction } from '@diagram-craft/model';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
-import { addHighlight, removeHighlight } from '../highlight.ts';
+import { addHighlight, removeHighlight } from '../highlight';
 import { CompoundUndoableAction } from '@diagram-craft/model';
 import { SelectionState } from '@diagram-craft/model';
 import { largest } from '@diagram-craft/utils';

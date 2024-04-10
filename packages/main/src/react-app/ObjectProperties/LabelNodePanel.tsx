@@ -1,14 +1,14 @@
 import { TbRestore } from 'react-icons/tb';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useDiagram } from '../context/DiagramContext';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
 import { assert } from '@diagram-craft/utils';
-import { NumberInput } from '../components/NumberInput.tsx';
+import { NumberInput } from '../components/NumberInput';
 import { round } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
-import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
-import { Select } from '../components/Select.tsx';
+import { SliderAndNumberInput } from '../SliderAndNumberInput';
+import { Select } from '../components/Select';
 
 const values = {
   'independent': 'Independent',

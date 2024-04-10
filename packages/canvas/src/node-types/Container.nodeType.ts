@@ -1,10 +1,10 @@
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition.ts';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { CustomPropertyDefinition, NodeCapability } from '@diagram-craft/model';
 import { DiagramNode } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { DiagramElement, isNode } from '@diagram-craft/model';
-import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape.ts';
-import * as svg from '../component/vdom-svg.ts';
+import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
+import * as svg from '../component/vdom-svg';
 import { DiagramEdge } from '@diagram-craft/model';
 import {
   Box,
@@ -16,7 +16,7 @@ import {
   Translation,
   unitCoordinateSystem
 } from '@diagram-craft/geometry';
-import { ShapeBuilder } from '../shape/ShapeBuilder.ts';
+import { ShapeBuilder } from '../shape/ShapeBuilder';
 
 declare global {
   interface NodeProps {

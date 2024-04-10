@@ -1,1 +1,1 @@
-export * from './defaultActions.ts';
+export * from './defaultActions';

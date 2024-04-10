@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { BezierUtils } from './bezier.ts';
+import { BezierUtils } from './bezier';
 
 describe('BezierUtils', () => {
   test('calculates center', () => {

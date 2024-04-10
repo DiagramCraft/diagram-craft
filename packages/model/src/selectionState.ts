@@ -1,11 +1,11 @@
 import { EventEmitter } from '@diagram-craft/utils';
-import { Magnet } from './snap/magnet.ts';
-import { DiagramNode } from './diagramNode.ts';
-import { DiagramEdge } from './diagramEdge.ts';
+import { Magnet } from './snap/magnet';
+import { DiagramNode } from './diagramNode';
+import { DiagramEdge } from './diagramEdge';
 import { debounceMicrotask } from '@diagram-craft/utils';
-import { Marquee } from './index.ts';
-import { Diagram } from './index.ts';
-import { DiagramElement, isEdge, isNode } from './diagramElement.ts';
+import { Marquee } from './index';
+import { Diagram } from './index';
+import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { Box, Line } from '@diagram-craft/geometry';
 
 const EMPTY_BOX: Box = {

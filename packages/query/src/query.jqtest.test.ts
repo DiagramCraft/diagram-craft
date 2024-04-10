@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { error, parseAndQuery } from './query.ts';
+import { error, parseAndQuery } from './query';
 
 // See https://github.com/jqlang/jq/blob/master/tests/jq.test
 
@@ -2222,7 +2222,7 @@ describe('jqtest', () => {
           '1 as $x | "2" as $y | "3" as $z | { $x, as, $y: 4, ($z): 5, if: 6, foo: 7 }',
           [{ as: 8 }]
         )
-      ).toEqual([{ x: 1, as: 8, '2': 4, '3': 5, if: 6, foo: 7 }]);
+      ).toEqual([{ 'x': 1, 'as': 8, '2': 4, '3': 5, 'if': 6, 'foo': 7 }]);
     });
 
     test('fromjson | isnan', () => {

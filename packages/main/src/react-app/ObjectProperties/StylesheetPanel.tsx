@@ -1,14 +1,14 @@
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { Select } from '../components/Select.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { Select } from '../components/Select';
 import { TbDots } from 'react-icons/tb';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useElementProperty } from './useProperty.ts';
+import { useDiagram } from '../context/DiagramContext';
+import { useElementProperty } from './useProperty';
 import { newid } from '@diagram-craft/utils';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model';
 import { useState } from 'react';
-import { MessageDialog, MessageDialogState } from '../components/MessageDialog.tsx';
+import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
 import {
   AddStylesheetUndoableAction,
   DeleteStylesheetUndoableAction,
@@ -17,11 +17,11 @@ import {
   Stylesheet
 } from '@diagram-craft/model';
 import { isNode } from '@diagram-craft/model';
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
 import { CompoundUndoableAction } from '@diagram-craft/model';
-import { StringInputDialog } from '../components/StringInputDialog.tsx';
-import { JSONDialog } from '../components/JSONDialog.tsx';
+import { StringInputDialog } from '../components/StringInputDialog';
+import { JSONDialog } from '../components/JSONDialog';
 
 export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();

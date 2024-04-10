@@ -1,6 +1,6 @@
-import { DynamicAccessor } from './propertyPath.ts';
+import { DynamicAccessor } from './propertyPath';
 import { test, expect, describe } from 'vitest';
-import { UNSAFE } from './testUtils.ts';
+import { UNSAFE } from './testUtils';
 
 describe('DynamicAccessor', () => {
   test('get returns the correct value for a given path', () => {

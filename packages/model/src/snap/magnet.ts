@@ -1,4 +1,4 @@
-import { DiagramNode } from '../diagramNode.ts';
+import { DiagramNode } from '../diagramNode';
 import { Axis, Box, Direction, Line, Point, Range } from '@diagram-craft/geometry';
 
 type BaseMagnet = {

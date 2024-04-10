@@ -28,7 +28,6 @@ export class ApplicationState extends EventEmitter<ApplicationStateEvents> {
     return this.#tool;
   }
 
-  // TODO: Remove hoveElement - doesn't seem to be used
   set hoverElement(element: string | undefined) {
     this.#hoverElement = element;
     this.emit('hoverElementChange', { element });

@@ -1,8 +1,8 @@
 import { Diagram } from '@diagram-craft/model';
-import { ToolType } from './ApplicationState.ts';
-import { ApplicationTriggers } from './EditableCanvasComponent.ts';
+import { ToolType } from './ApplicationState';
+import { ApplicationTriggers } from './EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry';
-import { DragDopManager, Modifiers } from './dragDropManager.ts';
+import { DragDopManager, Modifiers } from './dragDropManager';
 
 export interface Tool {
   type: ToolType;

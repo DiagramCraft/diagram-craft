@@ -1,8 +1,8 @@
-import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
-import { Guide } from '../selectionState.ts';
-import { Diagram } from '../diagram.ts';
-import { DistancePairWithRange, MagnetOfType } from './magnet.ts';
-import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider.ts';
+import { MatchingMagnetPair, SnapProvider } from './snapManager';
+import { Guide } from '../selectionState';
+import { Diagram } from '../diagram';
+import { DistancePairWithRange, MagnetOfType } from './magnet';
+import { AbstractNodeSnapProvider } from './abstractNodeSnapProvider';
 import { Axis, Box, Direction, Line, Point, Range } from '@diagram-craft/geometry';
 
 const directions: Record<

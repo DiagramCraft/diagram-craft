@@ -1,7 +1,7 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import React, { useState } from 'react';
-import { useActions } from '../context/ActionsContext.ts';
-import { ToggleAction } from '@diagram-craft/canvas';
+import { useActions } from '../context/ActionsContext';
+import { ToggleAction } from '@diagram-craft/canvas/action';
 
 type ActionToggleGroupContextType = {
   setActionState(action: keyof ActionMap, state: boolean): void;

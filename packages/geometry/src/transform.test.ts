@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { Box } from './box.ts';
-import { Rotation, Transform, TransformFactory } from './transform.ts';
-import { Point } from './point.ts';
+import { Box } from './box';
+import { Rotation, Transform, TransformFactory } from './transform';
+import { Point } from './point';
 
 describe('TransformationFactory', () => {
   test('rotate', () => {

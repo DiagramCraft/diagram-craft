@@ -1,10 +1,10 @@
-import { useRedraw } from './useRedraw.tsx';
+import { useRedraw } from './useRedraw';
 import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from './AccordionTrigger.tsx';
-import { AccordionContent } from './AccordionContext.tsx';
-import { useEventListener } from './hooks/useEventListener.ts';
+import { AccordionTrigger } from './AccordionTrigger';
+import { AccordionContent } from './AccordionContext';
+import { useEventListener } from './hooks/useEventListener';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
-import { useDiagram } from './context/DiagramContext.ts';
+import { useDiagram } from './context/DiagramContext';
 
 const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {

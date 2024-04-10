@@ -1,5 +1,5 @@
-import { Component } from '../component/component.ts';
-import { toInlineCSS, VNode } from '../component/vdom.ts';
+import { Component } from '../component/component';
+import { toInlineCSS, VNode } from '../component/vdom';
 import {
   applyLineHops,
   clipPath,
@@ -7,21 +7,21 @@ import {
   Diagram,
   DiagramEdge,
   UnitOfWork
-} from '@diagram-craft/model/index.ts';
-import { Tool } from '../tool.ts';
-import { ApplicationTriggers } from '../EditableCanvasComponent.ts';
-import { ARROW_SHAPES, ArrowShape } from '../arrowShapes.ts';
-import { hash } from '@diagram-craft/utils/index.ts';
-import { EventHelper } from '@diagram-craft/utils/index.ts';
-import { DASH_PATTERNS } from '../dashPatterns.ts';
-import { makeShadowFilter } from '../effects/shadow.ts';
-import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
-import * as svg from '../component/vdom-svg.ts';
-import { Point } from '@diagram-craft/geometry/index.ts';
-import { Modifiers } from '../dragDropManager.ts';
-import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag.ts';
-import { BezierControlPointDrag } from '../drag/bezierControlPointDrag.ts';
-import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch.ts';
+} from '@diagram-craft/model/index';
+import { Tool } from '../tool';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
+import { hash } from '@diagram-craft/utils/index';
+import { EventHelper } from '@diagram-craft/utils/index';
+import { DASH_PATTERNS } from '../dashPatterns';
+import { makeShadowFilter } from '../effects/shadow';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
+import * as svg from '../component/vdom-svg';
+import { Point } from '@diagram-craft/geometry/index';
+import { Modifiers } from '../dragDropManager';
+import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
+import { BezierControlPointDrag } from '../drag/bezierControlPointDrag';
+import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
 
 const makeArrowMarker = ({
   id,

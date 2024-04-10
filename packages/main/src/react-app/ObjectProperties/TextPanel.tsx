@@ -1,4 +1,4 @@
-import { useElementProperty } from './useProperty.ts';
+import { useElementProperty } from './useProperty';
 import {
   TbAlignCenter,
   TbAlignLeft,
@@ -12,16 +12,16 @@ import {
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
-import { ColorPicker } from '../components/ColorPicker.tsx';
-import { NumberInput } from '../components/NumberInput.tsx';
+import { ColorPicker } from '../components/ColorPicker';
+import { NumberInput } from '../components/NumberInput';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
-import { useConfiguration } from '../context/ConfigurationContext.ts';
-import { Collapsible } from '../components/Collapsible.tsx';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useDiagram } from '../context/DiagramContext';
+import { useNodeDefaults } from '../useDefaults';
+import { useConfiguration } from '../context/ConfigurationContext';
+import { Collapsible } from '../components/Collapsible';
 import { round } from '@diagram-craft/utils';
-import { Select } from '../components/Select.tsx';
+import { Select } from '../components/Select';
 
 export const TextPanel = (props: Props) => {
   const $d = useDiagram();

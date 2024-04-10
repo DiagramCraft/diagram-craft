@@ -1,11 +1,11 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap.ts';
-import { Diagram } from '@diagram-craft/model/index.ts';
-import { precondition } from '@diagram-craft/utils/index.ts';
-import { UnitOfWork } from '@diagram-craft/model/index.ts';
-import { commitWithUndo } from '@diagram-craft/model/index.ts';
-import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action.ts';
-import { smallest } from '@diagram-craft/utils/index.ts';
-import { PointOnPath } from '@diagram-craft/geometry/index.ts';
+import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { Diagram } from '@diagram-craft/model/index';
+import { precondition } from '@diagram-craft/utils/index';
+import { UnitOfWork } from '@diagram-craft/model/index';
+import { commitWithUndo } from '@diagram-craft/model/index';
+import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { smallest } from '@diagram-craft/utils/index';
+import { PointOnPath } from '@diagram-craft/geometry/index';
 
 declare global {
   interface ActionMap {

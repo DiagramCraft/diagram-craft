@@ -1,7 +1,7 @@
-import { MatchingMagnetPair, SnapProvider } from './snapManager.ts';
-import { Guide } from '../selectionState.ts';
-import { Diagram } from '../diagram.ts';
-import { MagnetOfType } from './magnet.ts';
+import { MatchingMagnetPair, SnapProvider } from './snapManager';
+import { Guide } from '../selectionState';
+import { Diagram } from '../diagram';
+import { MagnetOfType } from './magnet';
 import { Axis, Box, Line, Point } from '@diagram-craft/geometry';
 
 export class CanvasSnapProvider implements SnapProvider<'canvas'> {

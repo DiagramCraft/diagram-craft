@@ -1,4 +1,4 @@
-import { Button, Dialog } from './Dialog.tsx';
+import { Button, Dialog } from './Dialog';
 
 export const MessageDialog = (props: Props) => {
   return (

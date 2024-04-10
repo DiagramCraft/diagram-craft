@@ -1,9 +1,9 @@
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape.ts';
-import { UnitOfWork } from '@diagram-craft/model/index.ts';
-import { DiagramNode } from '@diagram-craft/model/index.ts';
-import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition.ts';
-import { Extent, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry/index.ts';
-import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder.ts';
+import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
+import { UnitOfWork } from '@diagram-craft/model/index';
+import { DiagramNode } from '@diagram-craft/model/index';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import { Extent, PathBuilder, Point, unitCoordinateSystem } from '@diagram-craft/geometry/index';
+import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {

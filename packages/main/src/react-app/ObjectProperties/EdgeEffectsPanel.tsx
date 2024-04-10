@@ -1,11 +1,11 @@
-import { useDiagram } from '../context/DiagramContext.ts';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useDiagram } from '../context/DiagramContext';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
 import { round } from '@diagram-craft/utils';
-import { useEdgeProperty } from './useProperty.ts';
-import { useEdgeDefaults } from '../useDefaults.tsx';
-import { SliderAndNumberInput } from '../SliderAndNumberInput.tsx';
+import { useEdgeProperty } from './useProperty';
+import { useEdgeDefaults } from '../useDefaults';
+import { SliderAndNumberInput } from '../SliderAndNumberInput';
 
 // TODO: We should merge this with NodeEffectsPanel
 //       ... only sketch is common between the two

@@ -1,13 +1,13 @@
-import { ColorPicker } from '../components/ColorPicker.tsx';
-import { DashSelector } from './DashSelector.tsx';
-import { useNodeProperty } from './useProperty.ts';
-import { NumberInput } from '../components/NumberInput.tsx';
+import { ColorPicker } from '../components/ColorPicker';
+import { DashSelector } from './DashSelector';
+import { useNodeProperty } from './useProperty';
+import { NumberInput } from '../components/NumberInput';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useNodeDefaults } from '../useDefaults.tsx';
-import { PopoverButton } from '../components/PopoverButton.tsx';
-import { useConfiguration } from '../context/ConfigurationContext.ts';
+import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useDiagram } from '../context/DiagramContext';
+import { useNodeDefaults } from '../useDefaults';
+import { PopoverButton } from '../components/PopoverButton';
+import { useConfiguration } from '../context/ConfigurationContext';
 
 export const NodeStrokePanel = (props: Props) => {
   const $d = useDiagram();

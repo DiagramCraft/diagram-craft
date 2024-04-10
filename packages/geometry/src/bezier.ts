@@ -1,11 +1,11 @@
-import { Point } from './point.ts';
-import { RawCubicSegment } from './pathBuilder.ts';
-import { Box } from './box.ts';
-import { Line } from './line.ts';
+import { Point } from './point';
+import { RawCubicSegment } from './pathBuilder';
+import { Box } from './box';
+import { Line } from './line';
 import { round } from '@diagram-craft/utils';
-import { Vector } from './vector.ts';
+import { Vector } from './vector';
 import { smallestIndex } from '@diagram-craft/utils';
-import { Angle } from './angle.ts';
+import { Angle } from './angle';
 
 const PI = Math.PI;
 const PI_2 = Math.PI * 2;

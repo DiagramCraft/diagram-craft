@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Extent } from './extent.ts';
+import { Extent } from './extent';
 
 describe('Extent', () => {
   test('isEqual', () => {

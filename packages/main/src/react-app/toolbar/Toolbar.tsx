@@ -18,22 +18,22 @@ import {
   TbUnderline
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
-import { ActionToolbarButton } from './ActionToolbarButton.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { ActionToolbarButton } from './ActionToolbarButton';
+import { useEventListener } from '../hooks/useEventListener';
 import { useCallback, useEffect, useState } from 'react';
-import { CanvasGridToolbarButton } from '../ObjectProperties/CanvasGridToolbarButton.tsx';
-import { CanvasSnapToolbarButton } from '../ObjectProperties/CanvasSnapToolbarButton.tsx';
-import { NodeFillToolbarButton } from '../ObjectProperties/NodeFillToolbarButton.tsx';
-import { ShadowToolbarButton } from '../ObjectProperties/ShadowToolbarButton.tsx';
-import { NodeStrokeToolbarButton } from '../ObjectProperties/NodeStrokeToolbarButton.tsx';
-import { ActionToggleButton } from './ActionToggleButton.tsx';
-import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton.tsx';
-import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
+import { CanvasGridToolbarButton } from '../ObjectProperties/CanvasGridToolbarButton';
+import { CanvasSnapToolbarButton } from '../ObjectProperties/CanvasSnapToolbarButton';
+import { NodeFillToolbarButton } from '../ObjectProperties/NodeFillToolbarButton';
+import { ShadowToolbarButton } from '../ObjectProperties/ShadowToolbarButton';
+import { NodeStrokeToolbarButton } from '../ObjectProperties/NodeStrokeToolbarButton';
+import { ActionToggleButton } from './ActionToggleButton';
+import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton';
+import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton';
+import { useDiagram } from '../context/DiagramContext';
 import { SelectionType } from '@diagram-craft/model';
-import { TextFontToolbarButton } from '../ObjectProperties/TextFontToolbarButton.tsx';
-import { TextFontSizeToolbarButton } from '../ObjectProperties/TextFontSizeToolbarButton.tsx';
-import { LineToolbarButton } from '../ObjectProperties/LineToolbarButton.tsx';
+import { TextFontToolbarButton } from '../ObjectProperties/TextFontToolbarButton';
+import { TextFontSizeToolbarButton } from '../ObjectProperties/TextFontSizeToolbarButton';
+import { LineToolbarButton } from '../ObjectProperties/LineToolbarButton';
 
 export const Toolbar = () => {
   const diagram = useDiagram();

@@ -1,4 +1,4 @@
-import { newid } from './id.ts';
+import { newid } from './id';
 import { describe, test, expect } from 'vitest';
 
 describe('newid', () => {

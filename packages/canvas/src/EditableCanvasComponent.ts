@@ -1,9 +1,9 @@
-import { SelectionComponent } from './components/SelectionComponent.ts';
-import { SelectionMarqueeComponent } from './components/SelectionMarqueeComponent.ts';
+import { SelectionComponent } from './components/SelectionComponent';
+import { SelectionMarqueeComponent } from './components/SelectionMarqueeComponent';
 import { debounce, EventHelper, EventKey } from '@diagram-craft/utils';
-import { GridComponent } from './components/GridComponent.ts';
-import { Actions, executeAction } from './keyMap.ts';
-import { DocumentBoundsComponent } from './components/DocumentBoundsComponent.ts';
+import { GridComponent } from './components/GridComponent';
+import { Actions, executeAction } from './keyMap';
+import { DocumentBoundsComponent } from './components/DocumentBoundsComponent';
 import {
   Diagram,
   DiagramElement,
@@ -15,17 +15,17 @@ import {
   UndoEvents,
   ViewboxEvents
 } from '@diagram-craft/model';
-import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager.ts';
-import { BACKGROUND, Tool, ToolContructor } from './tool.ts';
-import { DragLabelComponent } from './components/DragLabelComponent.ts';
-import { ApplicationState, ToolType } from './ApplicationState.ts';
-import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent.ts';
-import { Component, ComponentVNodeData, createEffect } from './component/component.ts';
-import * as svg from './component/vdom-svg.ts';
-import * as html from './component/vdom-html.ts';
-import { EdgeComponent } from './components/EdgeComponent.ts';
-import { ShapeNodeDefinition } from './shape/shapeNodeDefinition.ts';
-import { BaseShape, BaseShapeProps } from './shape/BaseShape.ts';
+import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager';
+import { BACKGROUND, Tool, ToolContructor } from './tool';
+import { DragLabelComponent } from './components/DragLabelComponent';
+import { ApplicationState, ToolType } from './ApplicationState';
+import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
+import { Component, ComponentVNodeData, createEffect } from './component/component';
+import * as svg from './component/vdom-svg';
+import * as html from './component/vdom-html';
+import { EdgeComponent } from './components/EdgeComponent';
+import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
+import { BaseShape, BaseShapeProps } from './shape/BaseShape';
 import { Box, Point } from '@diagram-craft/geometry';
 
 const getAncestorDiagramElement = (

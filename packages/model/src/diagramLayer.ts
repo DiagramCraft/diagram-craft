@@ -1,8 +1,8 @@
-import { DiagramNode } from './diagramNode.ts';
-import { Diagram, StackPosition } from './index.ts';
-import { DiagramElement, isNode } from './diagramElement.ts';
-import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork.ts';
-import { DiagramEdge } from './diagramEdge.ts';
+import { DiagramNode } from './diagramNode';
+import { Diagram, StackPosition } from './index';
+import { DiagramElement, isNode } from './diagramElement';
+import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { DiagramEdge } from './diagramEdge';
 import { groupBy } from '@diagram-craft/utils';
 
 export type LayerType = 'layer' | 'adjustment';

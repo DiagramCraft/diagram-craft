@@ -1,4 +1,4 @@
-import { AbstractDrag } from '../dragDropManager.ts';
+import { AbstractDrag } from '../dragDropManager';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
 import { UnitOfWork } from '@diagram-craft/model';
 import { commitWithUndo } from '@diagram-craft/model';

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import { useRedraw } from './useRedraw.tsx';
+import { useRedraw } from './useRedraw';
 import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from './AccordionTrigger.tsx';
-import { AccordionContent } from './AccordionContext.tsx';
-import { LayerList } from './LayerList.tsx';
-import { useDiagram } from './context/DiagramContext.ts';
+import { AccordionTrigger } from './AccordionTrigger';
+import { AccordionContent } from './AccordionContext';
+import { LayerList } from './LayerList';
+import { useDiagram } from './context/DiagramContext';
 
 export const LayerToolWindow = () => {
   const diagram = useDiagram();

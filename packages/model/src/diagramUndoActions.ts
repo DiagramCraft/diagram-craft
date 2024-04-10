@@ -1,8 +1,8 @@
-import { UndoableAction } from './index.ts';
-import { Diagram } from './index.ts';
-import { Layer } from './index.ts';
-import { ElementsSnapshot, UnitOfWork } from './index.ts';
-import { DiagramElement } from './diagramElement.ts';
+import { UndoableAction } from './index';
+import { Diagram } from './index';
+import { Layer } from './index';
+import { ElementsSnapshot, UnitOfWork } from './index';
+import { DiagramElement } from './diagramElement';
 import { assert } from '@diagram-craft/utils';
 import { hasSameElements } from '@diagram-craft/utils';
 

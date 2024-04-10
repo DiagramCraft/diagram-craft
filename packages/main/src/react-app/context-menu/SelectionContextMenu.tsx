@@ -1,9 +1,9 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { ActionContextMenuItem } from './ActionContextMenuItem.tsx';
+import { ActionContextMenuItem } from './ActionContextMenuItem';
 import { TbChevronRight } from 'react-icons/tb';
-import { useRedraw } from '../useRedraw.tsx';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useEventListener } from '../hooks/useEventListener.ts';
+import { useRedraw } from '../useRedraw';
+import { useDiagram } from '../context/DiagramContext';
+import { useEventListener } from '../hooks/useEventListener';
 
 export const SelectionContextMenu = () => {
   const redraw = useRedraw();

@@ -1,21 +1,21 @@
-import { Diagram } from '@diagram-craft/model/index.ts';
-import { State } from '@diagram-craft/canvas/keyMap.ts';
-import { assert, precondition } from '@diagram-craft/utils/index.ts';
+import { Diagram } from '@diagram-craft/model/index';
+import { State } from '@diagram-craft/canvas/keyMap';
+import { assert, precondition } from '@diagram-craft/utils/index';
 import {
   AbstractAction,
   AbstractToggleAction,
   ActionContext,
   ToggleActionUndoableAction
-} from '@diagram-craft/canvas/action.ts';
-import { UnitOfWork } from '@diagram-craft/model/index.ts';
-import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/index.ts';
-import { Layer, LayerType } from '@diagram-craft/model/index.ts';
+} from '@diagram-craft/canvas/action';
+import { UnitOfWork } from '@diagram-craft/model/index';
+import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/index';
+import { Layer, LayerType } from '@diagram-craft/model/index';
 import {
   commitWithUndo,
   ElementDeleteUndoableAction,
   SnapshotUndoableAction
-} from '@diagram-craft/model/index.ts';
-import { newid } from '@diagram-craft/utils/index.ts';
+} from '@diagram-craft/model/index';
+import { newid } from '@diagram-craft/utils/index';
 
 export const layerActions = (state: State) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(state.diagram),

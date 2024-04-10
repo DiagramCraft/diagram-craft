@@ -1,5 +1,5 @@
-import { Point } from './point.ts';
-import { Vector } from './vector.ts';
+import { Point } from './point';
+import { Vector } from './vector';
 
 export type Polygon = {
   points: Point[];

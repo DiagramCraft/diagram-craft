@@ -1,8 +1,8 @@
-import { Point } from './point.ts';
-import { Polygon } from './polygon.ts';
-import { Direction } from './direction.ts';
-import { Line } from './line.ts';
-import { Extent } from './extent.ts';
+import { Point } from './point';
+import { Polygon } from './polygon';
+import { Direction } from './direction';
+import { Line } from './line';
+import { Extent } from './extent';
 import { round } from '@diagram-craft/utils';
 import { DeepWriteable } from '@diagram-craft/utils';
 

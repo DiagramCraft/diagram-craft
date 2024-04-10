@@ -1,11 +1,11 @@
-import { DRAG_DROP_MANAGER } from '../dragDropManager.ts';
-import { Component, createEffect } from '../component/component.ts';
-import * as html from '../component/vdom-html.ts';
-import { text } from '../component/vdom.ts';
-import { deepEquals } from '@diagram-craft/utils/index.ts';
-import { CanvasState } from '../EditableCanvasComponent.ts';
-import { hasElements } from '@diagram-craft/utils/index.ts';
-import { State } from '../dragDropManager.ts';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
+import { Component, createEffect } from '../component/component';
+import * as html from '../component/vdom-html';
+import { text } from '../component/vdom';
+import { deepEquals } from '@diagram-craft/utils/index';
+import { CanvasState } from '../EditableCanvasComponent';
+import { hasElements } from '@diagram-craft/utils/index';
+import { State } from '../dragDropManager';
 
 export class DragLabelComponent extends Component<CanvasState> {
   private state: State | undefined = undefined;

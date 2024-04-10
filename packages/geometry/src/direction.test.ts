@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { Direction } from './direction.ts';
+import { Direction } from './direction';
 
 describe('Direction', () => {
   test('opposite', () => {

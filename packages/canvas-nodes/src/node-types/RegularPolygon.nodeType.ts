@@ -1,16 +1,16 @@
-import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition.ts';
-import { DiagramNode } from '@diagram-craft/model/index.ts';
-import { CustomPropertyDefinition } from '@diagram-craft/model/index.ts';
-import { UnitOfWork } from '@diagram-craft/model/index.ts';
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape.ts';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import { DiagramNode } from '@diagram-craft/model/index';
+import { CustomPropertyDefinition } from '@diagram-craft/model/index';
+import { UnitOfWork } from '@diagram-craft/model/index';
+import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
 import {
   Box,
   PathBuilder,
   Point,
   unitCoordinateSystem,
   Vector
-} from '@diagram-craft/geometry/index.ts';
-import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder.ts';
+} from '@diagram-craft/geometry/index';
+import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 declare global {
   interface NodeProps {

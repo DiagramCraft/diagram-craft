@@ -1,14 +1,14 @@
-import { useRedraw } from '../useRedraw.tsx';
-import { useEventListener } from '../hooks/useEventListener.ts';
-import { ColorPicker } from '../components/ColorPicker.tsx';
-import { useDiagramProperty } from './useProperty.ts';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
+import { ColorPicker } from '../components/ColorPicker';
+import { useDiagramProperty } from './useProperty';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbGrid3X3, TbGridDots } from 'react-icons/tb';
-import { NumberInput } from '../components/NumberInput.tsx';
-import { ToolWindowPanel } from '../ToolWindowPanel.tsx';
+import { NumberInput } from '../components/NumberInput';
+import { ToolWindowPanel } from '../ToolWindowPanel';
 import { assertGridType } from '@diagram-craft/model';
-import { useDiagram } from '../context/DiagramContext.ts';
-import { useConfiguration } from '../context/ConfigurationContext.ts';
+import { useDiagram } from '../context/DiagramContext';
+import { useConfiguration } from '../context/ConfigurationContext';
 
 export const CanvasGridPanel = (props: Props) => {
   const $d = useDiagram();
