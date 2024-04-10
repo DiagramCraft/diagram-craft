@@ -1,5 +1,5 @@
-import { DiagramNode } from '@diagram-craft/model';
 import { Path } from '@diagram-craft/geometry/path';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export type StyledPath = {
   path: Path;

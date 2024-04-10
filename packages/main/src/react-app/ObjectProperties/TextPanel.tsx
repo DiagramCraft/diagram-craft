@@ -14,7 +14,6 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
 import { ColorPicker } from '../components/ColorPicker';
 import { NumberInput } from '../components/NumberInput';
-import { assertHAlign, assertVAlign } from '@diagram-craft/model';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../context/DiagramContext';
 import { useNodeDefaults } from '../useDefaults';
@@ -22,6 +21,7 @@ import { useConfiguration } from '../context/ConfigurationContext';
 import { Collapsible } from '../components/Collapsible';
 import { round } from '@diagram-craft/utils';
 import { Select } from '../components/Select';
+import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 
 export const TextPanel = (props: Props) => {
   const $d = useDiagram();

@@ -1,13 +1,5 @@
 import { Component } from '../component/component';
 import { toInlineCSS, VNode } from '../component/vdom';
-import {
-  applyLineHops,
-  clipPath,
-  ControlPoints,
-  Diagram,
-  DiagramEdge,
-  UnitOfWork
-} from '@diagram-craft/model/index';
 import { Tool } from '../tool';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
@@ -22,6 +14,11 @@ import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
 import { BezierControlPointDrag } from '../drag/bezierControlPointDrag';
 import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
 import { Point } from '@diagram-craft/geometry/point';
+import { applyLineHops, clipPath } from '@diagram-craft/model/edgeUtils';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { ControlPoints } from '@diagram-craft/model/types';
 
 const makeArrowMarker = ({
   id,

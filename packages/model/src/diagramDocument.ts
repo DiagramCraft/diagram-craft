@@ -1,10 +1,10 @@
-import { Diagram } from './index';
 import { EventEmitter } from '@diagram-craft/utils';
-import { AttachmentManager } from './index';
 import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
 import { DiagramDataSchemas } from './diagramDataSchemas';
 import { range } from '@diagram-craft/utils';
+import { Diagram } from './diagram';
+import { AttachmentManager } from './attachment';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };

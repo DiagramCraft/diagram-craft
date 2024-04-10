@@ -1,11 +1,11 @@
 import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
-import { UnitOfWork } from '@diagram-craft/model/index';
-import { DiagramNode } from '@diagram-craft/model/index';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Extent } from '@diagram-craft/geometry/extent';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {

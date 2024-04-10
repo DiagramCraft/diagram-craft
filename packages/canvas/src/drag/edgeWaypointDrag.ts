@@ -1,8 +1,8 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { DiagramEdge } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
-import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry/point';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 export class EdgeWaypointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;

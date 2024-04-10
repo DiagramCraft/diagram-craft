@@ -1,6 +1,6 @@
 import React from 'react';
 import { assert } from '@diagram-craft/utils';
-import { Diagram } from '@diagram-craft/model';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 export const DiagramContext = React.createContext<Diagram | undefined>(undefined);
 

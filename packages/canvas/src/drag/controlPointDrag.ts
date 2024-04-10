@@ -1,8 +1,8 @@
 import { EditablePath } from '../editablePath';
-import { UnitOfWork } from '@diagram-craft/model/index';
-import { commitWithUndo } from '@diagram-craft/model/index';
 import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 export class ControlPointDrag extends AbstractDrag {
   private uow: UnitOfWork;

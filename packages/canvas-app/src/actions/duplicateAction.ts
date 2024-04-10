@@ -1,10 +1,10 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { DiagramNode } from '@diagram-craft/model/index';
-import { ElementAddUndoableAction } from '@diagram-craft/model/index';
-import { Diagram } from '@diagram-craft/model/index';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { UnitOfWork } from '@diagram-craft/model/index';
 import { Translation } from '@diagram-craft/geometry/transform';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
   interface ActionMap {

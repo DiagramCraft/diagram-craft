@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { DiagramDocument } from '@diagram-craft/model';
 import { Select } from './components/Select';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 
 export const DocumentSelector = (props: Props) => {
   const [selectedDiagram, setSelectedDiagram] = useState(props.defaultValue);

@@ -1,10 +1,10 @@
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { ActionContextMenuItem } from './context-menu/ActionContextMenuItem';
-import { Layer } from '@diagram-craft/model';
 import React, { useState } from 'react';
 import { ToggleActionContextMenuItem } from './context-menu/ToggleActionContextMenuItem';
 import { MessageDialog, MessageDialogState } from './components/MessageDialog';
 import { StringInputDialog, StringInputDialogState } from './components/StringInputDialog';
+import { Layer } from '@diagram-craft/model/diagramLayer';
 
 export const LayerContextMenu = (props: Props) => {
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(

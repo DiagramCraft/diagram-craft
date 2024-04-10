@@ -1,20 +1,20 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
 import { newid, precondition } from '@diagram-craft/utils/index';
-import {
-  deserializeDiagramElements,
-  Diagram,
-  DiagramElement,
-  isSerializedEndpointConnected,
-  Layer,
-  SerializedElement,
-  serializeDiagramElement,
-  UndoableAction,
-  UnitOfWork
-} from '@diagram-craft/model/index';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
+import { UndoableAction } from '@diagram-craft/model/undoManager';
+import { Layer } from '@diagram-craft/model/diagramLayer';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { SerializedElement } from '@diagram-craft/model/serialization/types';
+import {
+  isSerializedEndpointConnected,
+  serializeDiagramElement
+} from '@diagram-craft/model/serialization/serialize';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 
 declare global {
   interface ActionMap {

@@ -1,6 +1,5 @@
 import { DiagramNode } from './diagramNode';
 import { assert } from '@diagram-craft/utils';
-import { UnitOfWork } from './index';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
 import { DeepReadonly } from '@diagram-craft/utils';
@@ -9,6 +8,7 @@ import { Path } from '@diagram-craft/geometry/path';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
+import { UnitOfWork } from './unitOfWork';
 
 export type NodeCapability = 'children';
 

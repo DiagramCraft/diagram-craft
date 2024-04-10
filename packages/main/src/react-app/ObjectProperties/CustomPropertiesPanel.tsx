@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
 import { useRedraw } from '../useRedraw';
 import { NumberInput } from '../components/NumberInput';
-import { DiagramNode } from '@diagram-craft/model';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../context/DiagramContext';
-import { UnitOfWork } from '@diagram-craft/model';
 import { Select } from '../components/Select';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const CustomPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();

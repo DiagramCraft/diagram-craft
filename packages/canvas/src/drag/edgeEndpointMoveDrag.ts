@@ -1,12 +1,17 @@
 import { AbstractDrag } from '../dragDropManager';
-import { DiagramEdge } from '@diagram-craft/model';
-import { Diagram } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
-import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from '@diagram-craft/model';
 import { addHighlight, removeHighlight } from '../highlight';
-import { commitWithUndo } from '@diagram-craft/model';
-import { isNode } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry/point';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import {
+  ConnectedEndpoint,
+  Endpoint,
+  FreeEndpoint,
+  isConnected
+} from '@diagram-craft/model/endpoint';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 const EDGE_HIGHLIGHT = 'edge-connect';
 

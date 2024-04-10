@@ -1,11 +1,11 @@
 import { AbstractDrag } from '../dragDropManager';
-import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
-import { commitWithUndo } from '@diagram-craft/model';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model/diagram';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 export class RotateDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;

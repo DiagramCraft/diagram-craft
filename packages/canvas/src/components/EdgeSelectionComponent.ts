@@ -1,11 +1,11 @@
-import { DiagramEdge } from '@diagram-craft/model';
 import { $c } from '@diagram-craft/utils';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
-import { isConnected } from '@diagram-craft/model';
 import { Component } from '../component/component';
-import { Diagram } from '@diagram-craft/model';
 import * as svg from '../component/vdom-svg';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
+import { isConnected } from '@diagram-craft/model/endpoint';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 export class EdgeSelectionComponent extends Component<Props> {
   private dragging: boolean = false;

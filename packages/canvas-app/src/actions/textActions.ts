@@ -1,8 +1,8 @@
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/index';
-import { UnitOfWork } from '@diagram-craft/model/index';
-import { commitWithUndo } from '@diagram-craft/model/index';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
   interface ActionMap {

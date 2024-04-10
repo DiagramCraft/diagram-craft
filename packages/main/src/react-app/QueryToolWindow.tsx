@@ -14,8 +14,8 @@ import {
 } from 'react-icons/tb';
 import { Select } from './components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Diagram } from '@diagram-craft/model';
 import { useRedraw } from './useRedraw';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 const replacer = (_key: string, value: unknown) => {
   if (value instanceof Map) {

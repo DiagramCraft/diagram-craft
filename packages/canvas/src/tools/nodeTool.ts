@@ -1,9 +1,12 @@
 import { AbstractTool, BACKGROUND } from '../tool';
-import { commitWithUndo, Diagram, isNode, UnitOfWork } from '@diagram-craft/model';
 import { addHighlight, removeHighlight } from '../highlight';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '../dragDropManager';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
   interface Tools {

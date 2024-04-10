@@ -5,12 +5,12 @@ import { ColorPicker } from '../components/ColorPicker';
 import { DashSelector } from './DashSelector';
 import { useEdgeProperty } from './useProperty';
 import { NumberInput } from '../components/NumberInput';
-import { assertEdgeType } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useEdgeDefaults } from '../useDefaults';
 import { Select } from '../components/Select';
 import { useConfiguration } from '../context/ConfigurationContext';
+import { assertEdgeType } from '@diagram-craft/model/diagramProps';
 
 export const LinePanel = (props: Props) => {
   const $d = useDiagram();

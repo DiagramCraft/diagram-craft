@@ -1,6 +1,6 @@
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/index';
 import { AbstractAction } from '@diagram-craft/canvas/action';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
   interface ActionMap {

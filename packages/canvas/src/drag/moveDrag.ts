@@ -1,14 +1,6 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { ElementAddUndoableAction, SnapshotUndoableAction } from '@diagram-craft/model';
-import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model';
-import { DiagramElement, isEdge, isNode } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
+import { largest, VERIFY_NOT_REACHED } from '@diagram-craft/utils';
 import { addHighlight, removeHighlight } from '../highlight';
-import { CompoundUndoableAction } from '@diagram-craft/model';
-import { SelectionState } from '@diagram-craft/model';
-import { largest } from '@diagram-craft/utils';
-import { createResizeCanvasActionToFit } from '@diagram-craft/model';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
@@ -16,6 +8,16 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model/diagram';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canvasResizeHelper';
+import {
+  ElementAddUndoableAction,
+  SnapshotUndoableAction
+} from '@diagram-craft/model/diagramUndoActions';
+import { SelectionState } from '@diagram-craft/model/selectionState';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 

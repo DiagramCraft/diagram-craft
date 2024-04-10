@@ -5,23 +5,23 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useDiagram } from '../context/DiagramContext';
 import { useElementProperty } from './useProperty';
 import { newid } from '@diagram-craft/utils';
-import { UnitOfWork } from '@diagram-craft/model';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model';
 import { useState } from 'react';
 import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
+import { useRedraw } from '../useRedraw';
+import { useEventListener } from '../hooks/useEventListener';
+import { StringInputDialog } from '../components/StringInputDialog';
+import { JSONDialog } from '../components/JSONDialog';
 import {
   AddStylesheetUndoableAction,
   DeleteStylesheetUndoableAction,
   getCommonProps,
   isPropsDirty,
   Stylesheet
-} from '@diagram-craft/model';
-import { isNode } from '@diagram-craft/model';
-import { useRedraw } from '../useRedraw';
-import { useEventListener } from '../hooks/useEventListener';
-import { CompoundUndoableAction } from '@diagram-craft/model';
-import { StringInputDialog } from '../components/StringInputDialog';
-import { JSONDialog } from '../components/JSONDialog';
+} from '@diagram-craft/model/diagramStyles';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 export const StylesheetPanel = (props: Props) => {
   const $d = useDiagram();

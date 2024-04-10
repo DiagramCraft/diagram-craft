@@ -1,6 +1,4 @@
 import { useEventListener } from '../hooks/useEventListener';
-import { DiagramEdge, SnapManagerConfigProps } from '@diagram-craft/model';
-import { DiagramNode } from '@diagram-craft/model';
 import {
   makePropertyArrayHook,
   makePropertyHook,
@@ -9,9 +7,12 @@ import {
   PropertyHook,
   PropertyUndoableAction
 } from './usePropertyFactory';
-import { Diagram } from '@diagram-craft/model';
-import { DiagramElement } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { SnapManagerConfigProps } from '@diagram-craft/model/snap/snapManagerConfig';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePropertyHook<
   Diagram,

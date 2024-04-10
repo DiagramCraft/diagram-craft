@@ -1,9 +1,9 @@
 import * as Tree from '../components/Tree';
 import { useRedraw } from '../useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
-import { DiagramEdge } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext';
 import { ObjectTreeNode } from '../ObjectTreeNode';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 export const EdgeInfoDetails = (props: Props) => {
   const diagram = useDiagram();

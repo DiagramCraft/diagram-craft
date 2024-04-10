@@ -4,12 +4,13 @@ import { ShapeText, ShapeTextProps } from './ShapeText';
 import { DefaultPathRenderer, PathRenderer } from './PathRenderer';
 import * as svg from '../component/vdom-svg';
 import { BaseShapeBuildProps } from './BaseShape';
-import { DiagramNode, UnitOfWork } from '@diagram-craft/model';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
 import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
 import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {

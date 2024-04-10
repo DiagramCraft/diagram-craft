@@ -6,9 +6,9 @@ import { useEventListener } from '../hooks/useEventListener';
 import { assert } from '@diagram-craft/utils';
 import { NumberInput } from '../components/NumberInput';
 import { round } from '@diagram-craft/utils';
-import { UnitOfWork } from '@diagram-craft/model';
 import { SliderAndNumberInput } from '../SliderAndNumberInput';
 import { Select } from '../components/Select';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const values = {
   'independent': 'Independent',

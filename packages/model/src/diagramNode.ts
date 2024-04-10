@@ -1,20 +1,25 @@
-import { clamp, round } from '@diagram-craft/utils';
-import { deepClone } from '@diagram-craft/utils';
-import { Diagram } from './index';
-import { DiagramEdge, ResolvedLabelNode } from './index';
+import {
+  assert,
+  clamp,
+  deepClone,
+  deepMerge,
+  DeepReadonly,
+  DeepRequired,
+  newid,
+  round,
+  VERIFY_NOT_REACHED
+} from '@diagram-craft/utils';
 import { AbstractNode, Anchor, LabelNode } from './types';
-import { Layer } from './index';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils';
-import { newid } from '@diagram-craft/utils';
-import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './index';
-import { DiagramElement, isEdge, isNode } from './index';
-import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './index';
-import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
-import { deepMerge } from '@diagram-craft/utils';
-import { nodeDefaults } from './index';
 import { Box } from '@diagram-craft/geometry/box';
 import { PathUtils } from '@diagram-craft/geometry/pathUtils';
 import { Transform } from '@diagram-craft/geometry/transform';
+import { DiagramElement, isEdge, isNode } from './diagramElement';
+import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
+import { Diagram } from './diagram';
+import { Layer } from './diagramLayer';
+import { nodeDefaults } from './diagramDefaults';
+import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

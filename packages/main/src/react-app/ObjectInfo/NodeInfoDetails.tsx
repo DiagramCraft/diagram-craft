@@ -1,9 +1,9 @@
 import * as Tree from '../components/Tree';
 import { useRedraw } from '../useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
-import { DiagramNode } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext';
 import { ObjectTreeNode } from '../ObjectTreeNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export const NodeInfoDetails = (props: Props) => {
   const diagram = useDiagram();

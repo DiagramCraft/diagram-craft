@@ -1,15 +1,15 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { NodeCapability } from '@diagram-craft/model';
-import { DiagramNode } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
-import { isNode } from '@diagram-craft/model';
 import * as svg from '../component/vdom-svg';
-import { DiagramEdge } from '@diagram-craft/model';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
+import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {

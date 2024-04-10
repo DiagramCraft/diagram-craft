@@ -4,11 +4,11 @@ import { TbAspectRatio } from 'react-icons/tb';
 import { NumberInput } from '../components/NumberInput';
 import { useDiagram } from '../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { UnitOfWork } from '@diagram-craft/model';
 import { ToggleButton } from '../components/ToggleButton';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },

@@ -5,23 +5,22 @@ import { Select } from '../components/Select';
 import { useDiagram } from '../context/DiagramContext';
 import { useElementProperty } from '../ObjectProperties/useProperty';
 import React, { ChangeEvent, useCallback, useState } from 'react';
-import { UnitOfWork } from '@diagram-craft/model';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model';
 import { useRedraw } from '../useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
+import { newid, unique } from '@diagram-craft/utils';
+import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
+import { JSONDialog } from '../components/JSONDialog';
 import {
   AddSchemaUndoableAction,
   DataSchema,
   DeleteSchemaUndoableAction,
   ModifySchemaUndoableAction
-} from '@diagram-craft/model';
-import { newid } from '@diagram-craft/utils';
-import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
-import { CompoundUndoableAction } from '@diagram-craft/model';
-import { JSONDialog } from '../components/JSONDialog';
-import { unique } from '@diagram-craft/utils';
+} from '@diagram-craft/model/diagramDataSchemas';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 
 const makeTemplate = (): DataSchema => {
   return {

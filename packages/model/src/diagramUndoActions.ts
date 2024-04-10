@@ -1,10 +1,10 @@
-import { UndoableAction } from './index';
-import { Diagram } from './index';
-import { Layer } from './index';
-import { ElementsSnapshot, UnitOfWork } from './index';
 import { DiagramElement } from './diagramElement';
 import { assert } from '@diagram-craft/utils';
 import { hasSameElements } from '@diagram-craft/utils';
+import { ElementsSnapshot, UnitOfWork } from './unitOfWork';
+import { UndoableAction } from './undoManager';
+import { Diagram } from './diagram';
+import { Layer } from './diagramLayer';
 
 export const commitWithUndo = (uow: UnitOfWork, description: string) => {
   const snapshots = uow.commit();

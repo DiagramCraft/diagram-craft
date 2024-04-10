@@ -1,5 +1,5 @@
-import { Diagram } from '@diagram-craft/model/index';
 import { AbstractAction } from '@diagram-craft/canvas/action';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 export abstract class AbstractSelectionAction extends AbstractAction {
   protected constructor(

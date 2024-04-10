@@ -1,9 +1,9 @@
 import { DiagramNode } from './diagramNode';
-import { Diagram, StackPosition } from './index';
 import { DiagramElement, isNode } from './diagramElement';
 import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge } from './diagramEdge';
 import { groupBy } from '@diagram-craft/utils';
+import { Diagram, StackPosition } from './diagram';
 
 export type LayerType = 'layer' | 'adjustment';
 

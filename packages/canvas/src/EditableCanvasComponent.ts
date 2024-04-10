@@ -4,17 +4,6 @@ import { debounce, EventHelper, EventKey } from '@diagram-craft/utils';
 import { GridComponent } from './components/GridComponent';
 import { Actions, executeAction } from './keyMap';
 import { DocumentBoundsComponent } from './components/DocumentBoundsComponent';
-import {
-  Diagram,
-  DiagramElement,
-  DiagramEvents,
-  getTopMostNode,
-  isNode,
-  SelectionState,
-  SelectionStateEvents,
-  UndoEvents,
-  ViewboxEvents
-} from '@diagram-craft/model';
 import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager';
 import { BACKGROUND, Tool, ToolContructor } from './tool';
 import { DragLabelComponent } from './components/DragLabelComponent';
@@ -28,6 +17,11 @@ import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
 import { BaseShape, BaseShapeProps } from './shape/BaseShape';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
+import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
+import { ViewboxEvents } from '@diagram-craft/model/viewBox';
+import { UndoEvents } from '@diagram-craft/model/undoManager';
+import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model/diagramElement';
+import { SelectionState, SelectionStateEvents } from '@diagram-craft/model/selectionState';
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement

@@ -1,7 +1,6 @@
 import { ColorPicker } from '../components/ColorPicker';
 import { useNodeProperty } from './useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { assertFillType } from '@diagram-craft/model';
 import { useDiagram } from '../context/DiagramContext';
 import { useNodeDefaults } from '../useDefaults';
 import { round } from '@diagram-craft/utils';
@@ -10,6 +9,7 @@ import { Select } from '../components/Select';
 import { Collapsible } from '../components/Collapsible';
 import { useConfiguration } from '../context/ConfigurationContext';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { assertFillType } from '@diagram-craft/model/diagramProps';
 
 const TEXTURES = [
   'bubbles1.jpeg',

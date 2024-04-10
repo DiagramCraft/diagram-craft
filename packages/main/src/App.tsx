@@ -49,13 +49,6 @@ import { ActionsContext, useActions } from './react-app/context/ActionsContext';
 import { DiagramContext } from './react-app/context/DiagramContext';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/ObjectProperties/palette';
-import {
-  deserializeDiagramDocument,
-  Diagram,
-  edgeDefaults,
-  nodeDefaults,
-  SerializedDiagram
-} from '@diagram-craft/model';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton';
 import { LayerIndicator } from './react-app/LayerIndicator';
@@ -80,6 +73,10 @@ import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationSta
 import { UserState } from '@diagram-craft/canvas/UserState';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
+import { SerializedDiagram } from '@diagram-craft/model/serialization/types';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
+import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

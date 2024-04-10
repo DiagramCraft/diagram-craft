@@ -1,7 +1,4 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { DiagramNode } from '@diagram-craft/model/index';
-import { CustomPropertyDefinition } from '@diagram-craft/model/index';
-import { UnitOfWork } from '@diagram-craft/model/index';
 import { round } from '@diagram-craft/utils/index';
 import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
@@ -9,6 +6,9 @@ import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathB
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   interface NodeProps {

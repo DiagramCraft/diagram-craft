@@ -3,11 +3,11 @@ import { Magnet } from './snap/magnet';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
 import { debounceMicrotask } from '@diagram-craft/utils';
-import { Marquee } from './index';
-import { Diagram } from './index';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 import { Line } from '@diagram-craft/geometry/line';
+import { Marquee } from './marquee';
+import { Diagram } from './diagram';
 
 const EMPTY_BOX: Box = {
   x: Number.MIN_SAFE_INTEGER,

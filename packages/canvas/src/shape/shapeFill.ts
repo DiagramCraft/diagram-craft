@@ -1,9 +1,9 @@
 import { Component } from '../component/component';
 import { rawHTML, VNode } from '../component/vdom';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils';
-import { DiagramNode } from '@diagram-craft/model';
 import * as svg from '../component/vdom-svg';
 import { Box } from '@diagram-craft/geometry/box';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {
   if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {

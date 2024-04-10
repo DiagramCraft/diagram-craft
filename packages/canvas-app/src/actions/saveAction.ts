@@ -1,7 +1,7 @@
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/index';
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { serializeDiagramDocument } from '@diagram-craft/model/index';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 
 declare global {
   interface ActionMap {

@@ -1,11 +1,12 @@
 import { AbstractTool, BACKGROUND } from '../tool';
-import { Diagram, getDiagramElementPath } from '@diagram-craft/model';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { MarqueeDrag } from '../drag/marqueeDrag';
 import { MoveDrag } from '../drag/moveDrag';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { getDiagramElementPath } from '@diagram-craft/model/diagramElement';
 
 type DeferredMouseAction = {
   callback: () => void;

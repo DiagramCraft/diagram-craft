@@ -30,10 +30,10 @@ import { ActionToggleButton } from './ActionToggleButton';
 import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton';
 import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton';
 import { useDiagram } from '../context/DiagramContext';
-import { SelectionType } from '@diagram-craft/model';
 import { TextFontToolbarButton } from '../ObjectProperties/TextFontToolbarButton';
 import { TextFontSizeToolbarButton } from '../ObjectProperties/TextFontSizeToolbarButton';
 import { LineToolbarButton } from '../ObjectProperties/LineToolbarButton';
+import { SelectionType } from '@diagram-craft/model/selectionState';
 
 export const Toolbar = () => {
   const diagram = useDiagram();

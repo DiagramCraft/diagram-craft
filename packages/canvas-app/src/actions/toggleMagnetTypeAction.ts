@@ -1,7 +1,7 @@
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/index';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
-import { MagnetType } from '@diagram-craft/model/index';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { MagnetType } from '@diagram-craft/model/snap/magnet';
 
 declare global {
   interface ActionMap {

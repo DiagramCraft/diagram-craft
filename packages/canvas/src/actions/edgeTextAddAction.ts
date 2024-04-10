@@ -1,13 +1,16 @@
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { Diagram } from '@diagram-craft/model/index';
-import { precondition } from '@diagram-craft/utils/index';
-import { DiagramNode } from '@diagram-craft/model/index';
-import { newid } from '@diagram-craft/utils/index';
-import { UnitOfWork } from '@diagram-craft/model/index';
-import { CompoundUndoableAction } from '@diagram-craft/model/index';
-import { ElementAddUndoableAction, SnapshotUndoableAction } from '@diagram-craft/model/index';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
+import { precondition } from '@diagram-craft/utils/assert';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { newid } from '@diagram-craft/utils/id';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import {
+  ElementAddUndoableAction,
+  SnapshotUndoableAction
+} from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
   interface ActionMap {

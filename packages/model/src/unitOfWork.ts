@@ -1,11 +1,11 @@
 import { DiagramElement } from './diagramElement';
-import { Diagram, DiagramEvents } from './index';
 import { assert } from '@diagram-craft/utils';
-import { Layer, LayerManager, LayerType } from './index';
 import { EventKey } from '@diagram-craft/utils';
 import { SerializedEdge, SerializedNode } from './serialization/types';
 import { Stylesheet } from './diagramStyles';
-import { AdjustmentRule } from './index';
+import { Layer, LayerManager, LayerType } from './diagramLayer';
+import { AdjustmentRule } from './diagramAdjustmentLayer';
+import { Diagram, DiagramEvents } from './diagram';
 
 type ActionCallback = () => void;
 

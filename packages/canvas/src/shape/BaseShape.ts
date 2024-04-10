@@ -1,5 +1,4 @@
 import { Component } from '../component/component';
-import { Diagram, DiagramEdge, DiagramNode, NodeDefinition } from '@diagram-craft/model';
 import { VNode } from '../component/vdom';
 import { deepClone, DeepReadonly } from '@diagram-craft/utils';
 import { Tool } from '../tool';
@@ -18,6 +17,10 @@ import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { Point } from '@diagram-craft/geometry/point';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 type NodeWrapperComponentProps = {
   children: VNode[];

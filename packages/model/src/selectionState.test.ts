@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { Diagram } from './index';
-import { Layer } from './index';
-import { FreeEndpoint } from './index';
-import { UnitOfWork } from './index';
 import { TestNodeDefinition } from './TestNodeDefinition';
+import { Diagram } from './diagram';
+import { FreeEndpoint } from './endpoint';
+import { Layer } from './diagramLayer';
+import { UnitOfWork } from './unitOfWork';
 
 const createNode = (diagram: Diagram) =>
   new DiagramNode(

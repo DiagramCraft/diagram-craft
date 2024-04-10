@@ -1,7 +1,8 @@
 import { expect, test, describe } from 'vitest';
 import { UndoManager } from './undoManager';
-import { Diagram, EdgeDefinitionRegistry, NodeDefinitionRegistry } from './index';
 import { TestNodeDefinition } from './TestNodeDefinition';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
+import { Diagram } from './diagram';
 
 describe('UndoManager', () => {
   test('add()', () => {

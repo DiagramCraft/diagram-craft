@@ -1,17 +1,17 @@
 import { EditablePath, EditableWaypointType } from '../editablePath';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { DiagramNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { EventHelper } from '@diagram-craft/utils';
-import { UnitOfWork } from '@diagram-craft/model';
-import { commitWithUndo } from '@diagram-craft/model';
 import { toInlineCSS } from '../component/vdom';
 import { ControlPointDrag } from '../drag/controlPointDrag';
 import { NodeDrag } from '../drag/nodeDrag';
 import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
   interface NodeProps {

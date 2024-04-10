@@ -1,16 +1,16 @@
 import { useDiagram } from './context/DiagramContext';
 import * as Tree from './components/Tree';
 import { TbAdjustments, TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
-import { Diagram } from '@diagram-craft/model';
-import { Layer } from '@diagram-craft/model';
 import { useRedraw } from './useRedraw';
 import { useEventListener } from './hooks/useEventListener';
-import { DiagramElement, isNode } from '@diagram-craft/model';
 import { useDraggable, useDropTarget } from './dragAndDropHooks';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils';
-import { UnitOfWork } from '@diagram-craft/model';
-import { commitWithUndo } from '@diagram-craft/model';
 import { LayerContextMenu } from './LayerContextMenu';
+import { Layer } from '@diagram-craft/model/diagramLayer';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';

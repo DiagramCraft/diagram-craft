@@ -1,12 +1,12 @@
 import { AbstractSelectionAction } from './abstractSelectionAction';
-import { Diagram } from '@diagram-craft/model/index';
 import { State } from '@diagram-craft/canvas/keyMap';
-import { UndoableAction } from '@diagram-craft/model/index';
-import { DiagramNode } from '@diagram-craft/model/index';
 import { newid } from '@diagram-craft/utils/index';
-import { DiagramElement } from '@diagram-craft/model/index';
-import { UnitOfWork } from '@diagram-craft/model/index';
 import { Box } from '@diagram-craft/geometry/box';
+import { UndoableAction } from '@diagram-craft/model/undoManager';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const groupActions = (state: State) => ({
   GROUP_GROUP: new GroupAction(state.diagram, 'group'),

@@ -1,16 +1,19 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { CustomPropertyDefinition, NodeCapability } from '@diagram-craft/model';
-import { DiagramNode } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
-import { DiagramElement, isNode } from '@diagram-craft/model';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
 import * as svg from '../component/vdom-svg';
-import { DiagramEdge } from '@diagram-craft/model';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Rotation, Scale, Transform, Translation } from '@diagram-craft/geometry/transform';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import {
+  CustomPropertyDefinition,
+  NodeCapability
+} from '@diagram-craft/model/elementDefinitionRegistry';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 declare global {
   interface NodeProps {

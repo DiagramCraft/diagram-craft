@@ -1,14 +1,12 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { newid } from '@diagram-craft/utils/index';
-import {
-  Diagram,
-  DiagramEdge,
-  ElementAddUndoableAction,
-  FreeEndpoint
-} from '@diagram-craft/model/index';
 import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
   interface Tools {

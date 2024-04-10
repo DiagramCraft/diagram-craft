@@ -1,10 +1,10 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model';
-import { UnitOfWork } from '@diagram-craft/model';
-import { commitWithUndo } from '@diagram-craft/model';
 import { Path } from '@diagram-craft/geometry/path';
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 export class AttachmentPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;

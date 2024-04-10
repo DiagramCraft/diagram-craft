@@ -1,4 +1,3 @@
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '@diagram-craft/model/index';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { CircleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Circle.nodeType';
 import { DiamondNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Diamond.nodeType';
@@ -11,6 +10,10 @@ import { TextNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Text.
 import { ContainerNodeDefinition } from '@diagram-craft/canvas/node-types/Container.nodeType';
 import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/GenericPath.nodeType';
 import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.nodeType';
+import {
+  EdgeDefinitionRegistry,
+  NodeDefinitionRegistry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();

@@ -1,6 +1,5 @@
 import { DiagramEdge, Intersection } from './diagramEdge';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils';
-import { Diagram } from './index';
 import { ConnectedEndpoint, isConnected } from './endpoint';
 import {
   LengthOffsetOnPath,
@@ -11,6 +10,7 @@ import {
 import { Path } from '@diagram-craft/geometry/path';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
+import { Diagram } from './diagram';
 
 type ArrowShape = {
   height: number;
