@@ -42,12 +42,7 @@ export class EdgeTextAddAction extends AbstractAction {
     const textNode = new DiagramNode(
       newid(),
       'text',
-      {
-        ...projection.point,
-        r: 0,
-        w: 100,
-        h: 10
-      },
+      { ...projection.point, r: 0, w: 100, h: 10 },
       this.diagram,
       this.diagram.layers.active,
       {
@@ -60,9 +55,11 @@ export class EdgeTextAddAction extends AbstractAction {
       }
     );
 
+    // Add text node to any parent group
     if (edge.parent) {
       edge.parent.setChildren([...edge.parent.children, textNode], uow);
     }
+
     edge.layer.addElement(textNode, uow);
 
     edge.addLabelNode(
@@ -86,6 +83,7 @@ export class EdgeTextAddAction extends AbstractAction {
       ])
     );
 
+    // Setting focus must be done after the element has been successfully rendered
     setTimeout(() => {
       this.diagram.nodeDefinitions.get('text').requestFocus(textNode);
     }, 10);

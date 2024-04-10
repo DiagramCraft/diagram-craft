@@ -5,52 +5,35 @@ import { CanvasState } from '../EditableCanvasComponent';
 
 type Type = 'major' | 'minor';
 
-const circleAt = (
-  xCoord: number,
-  yCoord: number,
-  type: Type,
-  style: Partial<CSSStyleDeclaration>
-) => {
+const circleAt = (xCoord: number, yCoord: number, type: Type, style: string) => {
   return svg.circle({
     class: `svg-grid svg-grid--${type}`,
     cx: xCoord,
     cy: yCoord,
     r: 1,
-    style: toInlineCSS(style)
+    style
   });
 };
 
-const hline = (
-  xCoord: number,
-  yCoord: number,
-  w: number,
-  type: Type,
-  style: Partial<CSSStyleDeclaration>
-) => {
+const hLine = (xCoord: number, yCoord: number, w: number, type: Type, style: string) => {
   return svg.line({
     class: `svg-grid svg-grid--${type}`,
     x1: xCoord + 1,
     y1: yCoord,
     x2: xCoord + w - 1,
     y2: yCoord,
-    style: toInlineCSS(style)
+    style
   });
 };
 
-const vline = (
-  xCoord: number,
-  yCoord: number,
-  h: number,
-  type: Type,
-  style: Partial<CSSStyleDeclaration>
-) => {
+const vLine = (xCoord: number, yCoord: number, h: number, type: Type, style: string) => {
   return svg.line({
     class: `svg-grid svg-grid--${type}`,
     x1: xCoord,
     y1: yCoord + 1,
     x2: xCoord,
     y2: yCoord + h - 1,
-    style: toInlineCSS(style)
+    style
   });
 };
 
@@ -71,8 +54,6 @@ export class GridComponent extends Component<CanvasState> {
     const rows = Math.floor(h / dy);
     const cols = Math.floor(w / dx);
 
-    const dest: VNode[] = [];
-
     if (diagram.props.grid?.enabled === false) {
       return svg.g({});
     }
@@ -92,13 +73,18 @@ export class GridComponent extends Component<CanvasState> {
     const majorType = diagram.props.grid?.majorType ?? 'lines';
     const type = diagram.props.grid?.type ?? 'lines';
 
+    const minorStyleAsString = toInlineCSS(minorStyle);
+    const majorStyleAsString = toInlineCSS(majorStyle);
+
+    const dest: VNode[] = [];
+
     if (type === 'lines') {
       for (let i = 0; i < rows; i++) {
         const yCoord = i * dy + dy + y;
         if (yCoord >= y + h - 1) continue;
 
         if (i % majorCount !== 0 || majorType !== 'lines') {
-          dest.push(hline(x, yCoord, w, 'minor', minorStyle));
+          dest.push(hLine(x, yCoord, w, 'minor', minorStyleAsString));
         }
       }
 
@@ -107,7 +93,7 @@ export class GridComponent extends Component<CanvasState> {
         if (xCoord >= x + w - 1) continue;
 
         if (i % majorCount !== 0 || majorType !== 'lines') {
-          dest.push(vline(xCoord, y, h, 'minor', minorStyle));
+          dest.push(vLine(xCoord, y, h, 'minor', minorStyleAsString));
         }
       }
     } else if (type === 'dots') {
@@ -118,7 +104,7 @@ export class GridComponent extends Component<CanvasState> {
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
-          dest.push(circleAt(xCoord, yCoord, 'minor', minorStyle));
+          dest.push(circleAt(xCoord, yCoord, 'minor', minorStyleAsString));
         }
       }
     }
@@ -129,7 +115,7 @@ export class GridComponent extends Component<CanvasState> {
         if (yCoord >= y + h - 1) continue;
 
         if (i % majorCount === 0) {
-          dest.push(hline(x, yCoord, w, 'major', majorStyle));
+          dest.push(hLine(x, yCoord, w, 'major', majorStyleAsString));
         }
       }
 
@@ -138,7 +124,7 @@ export class GridComponent extends Component<CanvasState> {
         if (xCoord >= x + w - 1) continue;
 
         if (i % majorCount === 0) {
-          dest.push(vline(xCoord, y, h, 'major', majorStyle));
+          dest.push(vLine(xCoord, y, h, 'major', majorStyleAsString));
         }
       }
     } else if (majorType === 'dots') {
@@ -151,7 +137,7 @@ export class GridComponent extends Component<CanvasState> {
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
-          dest.push(circleAt(xCoord, yCoord, 'major', majorStyle));
+          dest.push(circleAt(xCoord, yCoord, 'major', majorStyleAsString));
         }
       }
     }

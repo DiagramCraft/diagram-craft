@@ -11,7 +11,7 @@ const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 const isSmoothDrag = (modifiers: Modifiers) => modifiers.metaKey;
 const isCornerDrag = (modifiers: Modifiers) => modifiers.altKey;
 
-export class BezierControlPointDrag extends AbstractDrag {
+export class EdgeControlPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
 
   constructor(

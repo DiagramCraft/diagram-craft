@@ -9,7 +9,7 @@ import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import * as svg from '../component/vdom-svg';
 import { Modifiers } from '../dragDropManager';
 import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
-import { BezierControlPointDrag } from '../drag/bezierControlPointDrag';
+import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
 import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
 import { Point } from '@diagram-craft/geometry/point';
 import { applyLineHops, clipPath } from '@diagram-craft/model/edgeUtils';
@@ -221,7 +221,7 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
                   mousedown: (e: MouseEvent) => {
                     if (e.button !== 0) return;
                     DRAG_DROP_MANAGER.initiate(
-                      new BezierControlPointDrag(props.def, idx, name as keyof ControlPoints)
+                      new EdgeControlPointDrag(props.def, idx, name as keyof ControlPoints)
                     );
                     e.stopPropagation();
                   }

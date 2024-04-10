@@ -3,7 +3,7 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { toInlineCSS } from '../component/vdom';
-import { ControlPointDrag } from '../drag/controlPointDrag';
+import { GenericPathControlPointDrag } from '../drag/genericPathControlPointDrag';
 import { NodeDrag } from '../drag/nodeDrag';
 import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
@@ -138,7 +138,7 @@ class GenericPathComponent extends BaseShape {
               on: {
                 mousedown: e => {
                   if (e.button !== 0) return;
-                  drag.initiate(new ControlPointDrag(editablePath, idx, 'p1'));
+                  drag.initiate(new GenericPathControlPointDrag(editablePath, idx, 'p1'));
                   e.stopPropagation();
                 }
               }
@@ -165,7 +165,7 @@ class GenericPathComponent extends BaseShape {
               on: {
                 mousedown: e => {
                   if (e.button !== 0) return;
-                  drag.initiate(new ControlPointDrag(editablePath, idx, 'p2'));
+                  drag.initiate(new GenericPathControlPointDrag(editablePath, idx, 'p2'));
                   e.stopPropagation();
                 }
               }

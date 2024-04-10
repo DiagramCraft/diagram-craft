@@ -1,5 +1,7 @@
 import { s, VNode, VNodeChildParam } from './vdom';
 import { ElementAttributes, Attr } from './vdom-html';
+import { Box } from '@diagram-craft/geometry/box';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 type CommonPresentationAttributes = {
   'stroke'?: string;
@@ -59,6 +61,30 @@ export const rect = (
   ...children: VNode[]
 ) => {
   return s('rect', attrs, ...children);
+};
+
+export const rectFromBox = (
+  b: Box,
+  attrs: Attr<
+    {
+      rx?: string | number;
+      ry?: string | number;
+    } & ElementAttributes &
+      CommonPresentationAttributes
+  >,
+  ...children: VNode[]
+) => {
+  return s(
+    'rect',
+    {
+      x: b.x,
+      y: b.y,
+      width: b.w,
+      height: b.h,
+      ...attrs
+    },
+    ...children
+  );
 };
 
 export const line = (
@@ -277,4 +303,11 @@ type ForeignObjectAttributes = ElementAttributes & {
 
 export const foreignObject = (attrs: Attr<ForeignObjectAttributes>, ...children: VNode[]) => {
   return s('foreignObject', attrs, ...children);
+};
+
+export const Transform = {
+  rotate: (b: Box) => {
+    const center = Box.center(b);
+    return `rotate(${Angle.toDeg(b.r)} ${center.x} ${center.y})`;
+  }
 };

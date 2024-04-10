@@ -2,21 +2,28 @@ import { apply, DOMElement, insert, VNode, VNodeData } from './vdom';
 
 type Callback = () => void | (() => void);
 
+let CURRENT_EFFECT_MANAGER: EffectManager | undefined = undefined;
+
+/**
+ * Create an effect that will run the dependency function whenever the deps change.
+ * Similar to React.useEffect
+ *
+ * @param callback
+ * @param deps dependencies that will trigger the effect. An empty array will run the effect only once.
+ */
+export const createEffect = (callback: Callback, deps: unknown[]) => {
+  if (!CURRENT_EFFECT_MANAGER) {
+    throw new Error('Effect must be run inside a component');
+  }
+  CURRENT_EFFECT_MANAGER!.add(callback, deps);
+};
+
 type Registration = {
   cleanup: () => void;
   deps: unknown[];
 };
 
-let CURRENT_EFFECT_MANAGER: EffectManager | undefined = undefined;
-
-export const createEffect = (dependency: Callback, deps: unknown[]) => {
-  if (!CURRENT_EFFECT_MANAGER) {
-    throw new Error('Effect must be run inside a component');
-  }
-  CURRENT_EFFECT_MANAGER!.add(dependency, deps);
-};
-
-export class EffectManager {
+class EffectManager {
   private dependencies: Record<string, Registration> = {};
   private idx: number = 0;
 
@@ -34,7 +41,6 @@ export class EffectManager {
       this.dependencies[id].cleanup();
     }
 
-    //console.log('run effect');
     const res = dependency();
     if (res) {
       this.dependencies[id] = {

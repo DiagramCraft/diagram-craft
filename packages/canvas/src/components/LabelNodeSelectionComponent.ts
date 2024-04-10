@@ -2,7 +2,7 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { AttachmentPointDrag } from '../drag/attachmentPointDrag';
+import { LabelAttachmentPointDrag } from '../drag/labelAttachmentPointDrag';
 import { Box } from '@diagram-craft/geometry/box';
 import { TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -39,7 +39,7 @@ export class LabelNodeSelectionComponent extends Component<Props> {
         on: {
           mousedown: e => {
             if (e.button !== 0) return;
-            DRAG_DROP_MANAGER.initiate(new AttachmentPointDrag(labelNode, edge, path));
+            DRAG_DROP_MANAGER.initiate(new LabelAttachmentPointDrag(labelNode, edge, path));
             e.stopPropagation();
           }
         }

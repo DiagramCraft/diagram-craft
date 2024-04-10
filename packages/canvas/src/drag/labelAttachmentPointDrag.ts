@@ -6,7 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
-export class AttachmentPointDrag extends AbstractDrag {
+export class LabelAttachmentPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
 
   constructor(

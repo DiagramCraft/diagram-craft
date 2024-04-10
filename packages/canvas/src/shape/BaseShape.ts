@@ -22,6 +22,7 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { deepClone } from '@diagram-craft/utils/object';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 type NodeWrapperComponentProps = {
   children: VNode[];
@@ -157,8 +158,9 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
 
     let patternId = undefined;
 
+    const gradientId = `node-${props.def.id}-gradient`;
     if (nodeProps.fill.type === 'gradient') {
-      style.fill = `url(#node-${props.def.id}-gradient)`;
+      style.fill = `url(#${gradientId})`;
     } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
       patternId = `node-${props.def.id}-pattern`;
       style.fill = `url(#${patternId})`;
@@ -223,7 +225,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     const level1: VNode[] = [];
 
     if (filterId) {
-      outer.push(
+      level1.push(
         svg.filter(
           {
             id: filterId,
@@ -253,36 +255,32 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       );
     }
 
-    if (nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'linear') {
-      level1.push(
-        svg.linearGradient(
-          {
-            id: `node-${props.def.id}-gradient`,
-            gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
-          },
-          svg.stop({
-            'offset': '0%',
-            'stop-color': nodeProps.fill.color
-          }),
-          svg.stop({
-            'offset': '100%',
-            'stop-color': nodeProps.fill.color2
-          })
-        )
-      );
-    }
-
-    if (nodeProps.fill.type === 'gradient' && nodeProps.fill.gradient.type === 'radial') {
-      level1.push(
-        svg.radialGradient(
-          {
-            id: `node-${props.def.id}-gradient`,
-            gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
-          },
-          svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
-          svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
-        )
-      );
+    if (nodeProps.fill.type === 'gradient') {
+      if (nodeProps.fill.gradient.type === 'linear') {
+        level1.push(
+          svg.linearGradient(
+            {
+              id: gradientId,
+              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+            },
+            svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
+            svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
+          )
+        );
+      } else if (nodeProps.fill.gradient.type === 'radial') {
+        level1.push(
+          svg.radialGradient(
+            {
+              id: gradientId,
+              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+            },
+            svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
+            svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
+          )
+        );
+      } else {
+        VERIFY_NOT_REACHED();
+      }
     }
 
     level1.push(

@@ -11,7 +11,8 @@ type Props = {
 
 export class RotationHandleComponent extends Component<Props> {
   render(props: Props) {
-    const diagram = props.diagram;
+    const { diagram } = props;
+
     const selection = diagram.selectionState;
     const bounds = selection.bounds;
 

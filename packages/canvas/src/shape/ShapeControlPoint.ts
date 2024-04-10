@@ -1,6 +1,6 @@
 import * as svg from '../component/vdom-svg';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
-import { ShapeControlPointDrag } from '../drag/shapeControlDrag';
+import { ShapeControlPointDrag } from '../drag/shapeControlPointDrag';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 

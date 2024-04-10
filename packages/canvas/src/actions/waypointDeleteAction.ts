@@ -39,6 +39,7 @@ export class WaypointDeleteAction extends AbstractAction {
 
     const projection = path.projectPoint(context.point);
 
+    // Find the waypoint that is closest to the point which was originally clicked
     const closestWaypointIndex = smallest(
       wpDistances.map(wp => ({ ...wp, d: Math.abs(projection.pathD - wp.pathD) })),
       (a, b) => a.d - b.d

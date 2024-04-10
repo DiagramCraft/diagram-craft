@@ -11,12 +11,10 @@ export const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
 };
 
 type EventListenerMap = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [K in keyof HTMLElementEventMap]?: (this: Document, ev: DocumentEventMap[K]) => any;
+  [K in keyof HTMLElementEventMap]?: (this: Document, ev: DocumentEventMap[K]) => unknown;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface VNodeData extends Record<string, any> {
+export interface VNodeData extends Record<string, unknown> {
   on?: Partial<EventListenerMap>;
   hooks?: {
     onUpdate?: (oldVNode: VNode, newVNode: VNode) => void;
@@ -151,15 +149,12 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
   const oldNode = oldVNode.el! as DOMElement;
 
   Object.entries(oldEvents).forEach(([key, value]) => {
-    // @ts-ignore
-    oldNode.removeEventListener(key, value!);
+    oldNode.removeEventListener(key, value! as EventListener);
   });
 
   Object.entries(newEvents).forEach(([key, value]) => {
-    // @ts-ignore
-    if (oldEvents[key] !== value) {
-      // @ts-ignore
-      newNode.addEventListener(key, value);
+    if (oldEvents[key as keyof EventListenerMap] !== value) {
+      newNode.addEventListener(key, value as EventListener);
     }
   });
 };
@@ -248,10 +243,6 @@ const applyUpdates = (
     i++;
     j++;
   }
-
-  /*if (j < oldChildren.length) {
-    console.log('remove', newChildren, oldChildren);
-  }*/
 
   for (; j < oldChildren.length; j++) {
     const oldChild = oldChildren[j];

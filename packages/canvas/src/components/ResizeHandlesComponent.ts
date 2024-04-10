@@ -35,10 +35,9 @@ export class ResizeHandlesComponent extends Component<Props> {
   }
 
   render(props: Props) {
-    const diagram = props.diagram;
-    const selection = diagram.selectionState;
-    const drag = DRAG_DROP_MANAGER;
+    const { diagram } = props;
 
+    const selection = diagram.selectionState;
     const bounds = selection.bounds;
 
     const points: Point[] = Box.corners({ ...bounds, r: 0 });
@@ -50,7 +49,7 @@ export class ResizeHandlesComponent extends Component<Props> {
 
     const makeDragInitiation = (type: ResizeType) => (e: MouseEvent) => {
       if (e.button !== 0) return;
-      drag.initiate(
+      DRAG_DROP_MANAGER.initiate(
         new ResizeDrag(diagram, type, diagram.viewBox.toDiagramPoint(EventHelper.point(e)))
       );
       e.stopPropagation();

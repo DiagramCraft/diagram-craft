@@ -6,9 +6,8 @@ import { ResizeHandlesComponent } from '@diagram-craft/canvas/components/ResizeH
 import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSelectionComponent';
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
+import { Transform } from '../component/vdom-svg';
 import { CanvasState } from '../EditableCanvasComponent';
-import { Box } from '@diagram-craft/geometry/box';
-import { Angle } from '@diagram-craft/geometry/angle';
 import { $c } from '@diagram-craft/utils/classname';
 
 export class SelectionComponent extends Component<CanvasState> {
@@ -17,9 +16,8 @@ export class SelectionComponent extends Component<CanvasState> {
     const selection = diagram.selectionState;
 
     createEffect(() => {
-      const cb = () => {
-        this.redraw();
-      };
+      const cb = () => this.redraw();
+
       selection.on('change', cb);
       return () => selection.off('change', cb);
     }, [selection]);
@@ -35,8 +33,6 @@ export class SelectionComponent extends Component<CanvasState> {
         ? selection.nodes[0].labelNode()!
         : undefined;
     const shouldHaveRotation = !(labelNode && labelNode.type !== 'independent');
-
-    const center = Box.center(bounds);
 
     return svg.g(
       {},
@@ -54,13 +50,9 @@ export class SelectionComponent extends Component<CanvasState> {
             }),
             svg.g(
               {
-                transform: `rotate(${Angle.toDeg(bounds.r)} ${center.x} ${center.y})`
+                transform: Transform.rotate(bounds)
               },
-              svg.rect({
-                'x': bounds.x,
-                'y': bounds.y,
-                'width': bounds.w,
-                'height': bounds.h,
+              svg.rectFromBox(bounds, {
                 'class': $c('svg-selection__bb', {
                   'only-edges': isOnlyEdges,
                   'dragging': selection.isDragging()

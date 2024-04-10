@@ -4,8 +4,8 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
-export class ControlPointDrag extends AbstractDrag {
-  private uow: UnitOfWork;
+export class GenericPathControlPointDrag extends AbstractDrag {
+  private readonly uow: UnitOfWork;
 
   constructor(
     private readonly editablePath: EditablePath,
