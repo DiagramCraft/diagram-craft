@@ -12,7 +12,7 @@ import {
 } from './shapeFill';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { EdgeComponent } from '../components/EdgeComponent';
+import { EdgeComponent, EdgeComponentProps } from '../components/EdgeComponent';
 import { ShapeNodeDefinition } from './shapeNodeDefinition';
 import { Modifiers } from '../dragDropManager';
 import { ShapeBuilder } from './ShapeBuilder';
@@ -20,14 +20,13 @@ import { makeControlPoint } from './ShapeControlPoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { makeReflection } from '../effects/reflection';
 import { makeBlur } from '../effects/blur';
 import { makeOpacity } from '../effects/opacity';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 export type BaseShapeProps = {
   def: DiagramNode;
@@ -59,7 +58,7 @@ export type BaseShapeBuildProps = {
 };
 
 export abstract class BaseShape extends Component<BaseShapeProps> {
-  constructor(protected readonly nodeDefinition: NodeDefinition) {
+  constructor() {
     super();
   }
 
@@ -116,6 +115,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       const gradientId = `node-${props.def.id}-gradient`;
       style.fill = `url(#${gradientId})`;
 
+      /* For a gradient we need to add its definition */
       if (nodeProps.fill.gradient.type === 'linear') {
         children.push(makeLinearGradient(gradientId, nodeProps));
       } else if (nodeProps.fill.gradient.type === 'radial') {
@@ -127,30 +127,14 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       const patternId = `node-${props.def.id}-pattern`;
       style.fill = `url(#${patternId})`;
 
-      children.push(
-        this.subComponent('PatternFillColorAdjustment', () => new PatternFillColorAdjustment(), {
-          patternId,
-          nodeProps
-        })
-      );
-      children.push(
-        this.subComponent('FillPattern', () => new FillPattern(), {
-          patternId,
-          nodeProps,
-          def: props.def
-        })
-      );
+      /* An image based fill has both color adjustments and the fill itself */
+      children.push(this.subComponent(PatternFillColorAdjustment, { patternId, nodeProps }));
+      children.push(this.subComponent(FillPattern, { patternId, nodeProps, def: props.def }));
     } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
       const patternId = `node-${props.def.id}-pattern`;
       style.fill = `url(#${patternId})`;
 
-      children.push(
-        this.subComponent('FillPattern', () => new FillPattern(), {
-          patternId,
-          nodeProps,
-          def: props.def
-        })
-      );
+      children.push(this.subComponent(FillPattern, { patternId, nodeProps, def: props.def }));
     }
 
     /* Build shape ******************************************************************* */
@@ -235,8 +219,10 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     );
   }
 
-  protected makeEdge(child: DiagramEdge, props: BaseShapeBuildProps) {
-    return this.subComponent(`edge-${child.id}`, () => new EdgeComponent(), {
+  protected makeElement(child: DiagramElement, props: BaseShapeBuildProps) {
+    const p: BaseShapeProps & EdgeComponentProps = {
+      key: isNode(child) ? `node-${child.id}` : `edge-${child.id}`,
+      // @ts-expect-error - this is fine as child is either node or edge
       def: child,
       diagram: child.diagram,
       tool: props.tool,
@@ -244,24 +230,15 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       onMouseDown: props.childProps.onMouseDown,
       applicationTriggers: props.childProps.applicationTriggers,
       actionMap: props.actionMap
-    });
-  }
-
-  protected makeNode(child: DiagramNode, props: BaseShapeBuildProps) {
-    const nodeProps: BaseShapeProps = {
-      def: child as DiagramNode,
-      applicationTriggers: props.childProps.applicationTriggers,
-      diagram: child.diagram,
-      tool: props.tool,
-      onMouseDown: props.childProps.onMouseDown,
-      onDoubleClick: props.childProps.onDoubleClick ?? (() => {}),
-      actionMap: props.actionMap
     };
 
-    return this.subComponent(
-      `node-${child.id}`,
-      (props.node.diagram.nodeDefinitions.get(child.nodeType) as ShapeNodeDefinition).component!,
-      nodeProps
-    );
+    if (isNode(child)) {
+      const nodeComponent = (
+        props.node.diagram.nodeDefinitions.get(child.nodeType) as ShapeNodeDefinition
+      ).component!;
+      return this.subComponent(nodeComponent, p);
+    } else {
+      return this.subComponent(EdgeComponent, p);
+    }
   }
 }

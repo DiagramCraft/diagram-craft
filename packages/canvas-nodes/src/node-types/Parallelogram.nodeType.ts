@@ -17,7 +17,7 @@ declare global {
 
 export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('parallelogram', 'Parallelogram', () => new ParallelogramComponent(this));
+    super('parallelogram', 'Parallelogram', ParallelogramComponent);
   }
 
   getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
@@ -61,7 +61,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
 class ParallelogramComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const slant = props.nodeProps.parallelogram?.slant ?? 5;
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

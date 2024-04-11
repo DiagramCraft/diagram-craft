@@ -19,7 +19,7 @@ declare global {
 
 export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('regular-polygon', 'Regular Polygon', () => new RegularPolygonComponent(this));
+    super('regular-polygon', 'Regular Polygon', RegularPolygonComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -59,7 +59,9 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
 
 class RegularPolygonComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new RegularPolygonNodeDefinition()
+      .getBoundingPathBuilder(props.node)
+      .getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

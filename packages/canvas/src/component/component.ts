@@ -68,11 +68,15 @@ class EffectManager {
   }
 }
 
-export type ComponentVNodeData<P, C extends Component<P>> = VNodeData & {
+export type ComponentVNodeData<P> = VNodeData & {
   component: {
-    instance: C | undefined;
+    instance: Component<P> | undefined;
     props: P;
   };
+};
+
+type ComponentContstructor<T> = {
+  new (): Component<T>;
 };
 
 export abstract class Component<P = Record<string, never>> {
@@ -129,49 +133,45 @@ export abstract class Component<P = Record<string, never>> {
     return !!this.element?.el;
   }
 
-  subComponent<P, C extends Component<P>>(
-    id: string,
-    component: () => C,
-    props: P,
+  subComponent<P>(
+    component: ComponentContstructor<P>,
+    props: P & { key?: string },
     hooks?: VNodeData['hooks']
-  ): VNode & { data: ComponentVNodeData<P, C> } {
+  ): VNode & { data: ComponentVNodeData<P> } {
     return {
       type: 'c',
-      tag: id,
+      tag: props.key ?? component.name,
       data: {
-        component: {
-          props,
-          instance: undefined
-        },
+        component: { props, instance: undefined },
         hooks: {
           onInsert: node => {
-            (node.data as ComponentVNodeData<P, C>).component.instance?.onAttach(
-              (node.data as ComponentVNodeData<P, C>).component!.instance!.currentProps!
+            (node.data as ComponentVNodeData<P>).component.instance?.onAttach(
+              (node.data as ComponentVNodeData<P>).component!.instance!.currentProps!
             );
             hooks?.onInsert?.(node);
           },
           onCreate: node => {
-            const cmp = component();
+            const cmp = new component();
             cmp.create(props);
             node.el = cmp.element?.el;
-            (node.data as ComponentVNodeData<P, C>).component = {
+            (node.data as ComponentVNodeData<P>).component = {
               instance: cmp,
               props: props
             };
             hooks?.onCreate?.(node);
           },
           onUpdate: (oldNode, newNode) => {
-            const cmp = (oldNode.data as ComponentVNodeData<P, C>).component.instance!;
-            cmp.update((newNode.data as ComponentVNodeData<P, C>).component.props);
+            const cmp = (oldNode.data as ComponentVNodeData<P>).component.instance!;
+            cmp.update((newNode.data as ComponentVNodeData<P>).component.props);
             newNode.el = cmp.element?.el;
-            (newNode.data as ComponentVNodeData<P, C>).component = {
+            (newNode.data as ComponentVNodeData<P>).component = {
               instance: cmp,
               props: props
             };
             hooks?.onUpdate?.(oldNode, newNode);
           },
           onRemove: node => {
-            const cmp = (node.data as ComponentVNodeData<P, C>).component.instance!;
+            const cmp = (node.data as ComponentVNodeData<P>).component.instance!;
             cmp.detach();
             hooks?.onRemove?.(node);
           }

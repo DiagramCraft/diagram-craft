@@ -38,7 +38,7 @@ const NEXT_TYPE: Record<EditableWaypointType, EditableWaypointType> = {
 
 export class GenericPathNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'generic-path', displayName = 'Path') {
-    super(name, displayName, () => new GenericPathComponent(this));
+    super(name, displayName, GenericPathComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -59,7 +59,7 @@ class GenericPathComponent extends BaseShape {
 
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const drag = DRAG_DROP_MANAGER;
-    const pathBuilder = this.nodeDefinition.getBoundingPathBuilder(props.node);
+    const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
     const path = pathBuilder.getPath();
     const svgPath = path.asSvgPath();
 

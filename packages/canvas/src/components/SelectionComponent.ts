@@ -36,18 +36,13 @@ export class SelectionComponent extends Component<CanvasState> {
 
     return svg.g(
       {},
-      !isOnlyEdges &&
-        this.subComponent('guides', () => new GuidesComponent(), {
-          selection
-        }),
+      !isOnlyEdges && this.subComponent(GuidesComponent, { selection }),
       svg.g(
         { class: 'svg-selection' },
         !isOnlyEdges &&
           svg.g(
             {},
-            this.subComponent('group-bounds', () => new GroupBoundsComponent(), {
-              selection
-            }),
+            this.subComponent(GroupBoundsComponent, { selection }),
             svg.g(
               {
                 transform: Transforms.rotate(bounds)
@@ -62,18 +57,14 @@ export class SelectionComponent extends Component<CanvasState> {
               !selection.isDragging() &&
                 svg.g(
                   {},
-                  shouldHaveRotation &&
-                    this.subComponent('rotation-handle', () => new RotationHandleComponent(), {
-                      diagram
-                    }),
-                  this.subComponent('resize-handles', () => new ResizeHandlesComponent(), {
-                    diagram
-                  })
+                  shouldHaveRotation && this.subComponent(RotationHandleComponent, { diagram }),
+                  this.subComponent(ResizeHandlesComponent, { diagram })
                 )
             )
           ),
         ...selection.edges.map(e =>
-          this.subComponent(`edge-selection-${e.id}`, () => new EdgeSelectionComponent(), {
+          this.subComponent(EdgeSelectionComponent, {
+            key: `edge-selection-${e.id}`,
             edge: e,
             diagram
           })
@@ -81,11 +72,10 @@ export class SelectionComponent extends Component<CanvasState> {
         ...selection.nodes
           .filter(n => !!n.labelEdge())
           .map(n =>
-            this.subComponent(
-              `label-node-selection-${n.id}`,
-              () => new LabelNodeSelectionComponent(),
-              { node: n }
-            )
+            this.subComponent(LabelNodeSelectionComponent, {
+              key: `label-node-selection-${n.id}`,
+              node: n
+            })
           )
       )
     );

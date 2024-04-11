@@ -42,7 +42,8 @@ export class ShapeBuilder {
     onSizeChange?: (size: Extent) => void
   ) {
     this.nodes.push(
-      cmp.subComponent<ShapeTextProps, ShapeText>('text', () => new ShapeText(), {
+      cmp.subComponent<ShapeTextProps>(ShapeText, {
+        key: `text_${id}_${this.props.node.id}`,
         id: `text_${id}_${this.props.node.id}`,
         text: text ?? this.props.nodeProps.text,
         bounds: bounds ?? this.props.node.bounds,

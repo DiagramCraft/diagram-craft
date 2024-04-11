@@ -7,7 +7,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export class RectNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'rect', displayName = 'Rectangle') {
-    super(name, displayName, () => new RectComponent(this));
+    super(name, displayName, RectComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -24,7 +24,7 @@ export class RectNodeDefinition extends ShapeNodeDefinition {
 
 class RectComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

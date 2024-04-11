@@ -18,7 +18,7 @@ declare global {
 
 export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('trapetzoid', 'Trapetzoid', () => new TrapetzoidComponent(this));
+    super('trapetzoid', 'Trapetzoid', TrapetzoidComponent);
   }
 
   getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
@@ -79,7 +79,7 @@ class TrapetzoidComponent extends BaseShape {
     const slantLeft = props.nodeProps.trapetzoid?.slantLeft ?? 5;
     const slantRight = props.nodeProps.trapetzoid?.slantRight ?? 5;
 
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

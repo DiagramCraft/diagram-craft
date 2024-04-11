@@ -7,7 +7,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export class CircleNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('circle', 'Circle', () => new CircleComponent(this));
+    super('circle', 'Circle', CircleComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -23,7 +23,7 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
 
 class CircleComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

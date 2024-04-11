@@ -1,6 +1,7 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
 import * as svg from '../component/vdom-svg';
+import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
@@ -13,8 +14,6 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { Transforms } from '../component/vdom-svg';
 
 declare global {
   interface NodeProps {
@@ -34,7 +33,7 @@ type Entry = {
 
 export class ContainerNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('container', 'Container', () => new ContainerComponent(this));
+    super('container', 'Container', ContainerComponent);
   }
 
   supports(capability: NodeCapability): boolean {
@@ -209,7 +208,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
 class ContainerComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, builder: ShapeBuilder) {
-    const path = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
     const svgPath = path.asSvgPath();
 
     builder.add(
@@ -232,7 +231,7 @@ class ContainerComponent extends BaseShape {
       builder.add(
         svg.g(
           { transform: Transforms.rotateBack(props.node.bounds) },
-          isNode(child) ? this.makeNode(child, props) : this.makeEdge(child as DiagramEdge, props)
+          this.makeElement(child, props)
         )
       );
     });

@@ -9,7 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('text', 'Test', () => new TextComponent(this));
+    super('text', 'Test', TextComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -52,7 +52,7 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
 
 class TextComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this, '1', props.nodeProps.text, props.node.bounds, (size: Extent) => {

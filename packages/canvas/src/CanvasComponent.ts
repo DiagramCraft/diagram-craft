@@ -5,6 +5,7 @@ import { EdgeComponent } from './components/EdgeComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from './dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
@@ -38,7 +39,8 @@ export class CanvasComponent extends Component<CanvasProps> {
               const id = e.id;
               if (e.type === 'edge') {
                 const edge = diagram.edgeLookup.get(id)!;
-                return this.subComponent(`edge-${id}`, () => new EdgeComponent(), {
+                /* @ts-ignore */
+                return this.subComponent(`edge-${id}`, EdgeComponent, {
                   def: edge,
                   diagram,
                   applicationTriggers: {},
@@ -49,10 +51,10 @@ export class CanvasComponent extends Component<CanvasProps> {
                 const nodeDef = diagram.nodeDefinitions.get(node.nodeType);
 
                 return this.subComponent(
-                  `node-${node.nodeType}-${id}`,
+                  (nodeDef as ShapeNodeDefinition).component!,
                   // @ts-ignore
-                  (nodeDef as ReactNodeDefinition).component!,
                   {
+                    key: `node-${node.nodeType}-${id}`,
                     def: node,
                     diagram,
                     applicationTriggers: {},

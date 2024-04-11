@@ -21,7 +21,7 @@ declare global {
 
 export class StarNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('star', 'Star', () => new StarComponent(this));
+    super('star', 'Star', StarComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -78,7 +78,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
 
 class StarComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new StarNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

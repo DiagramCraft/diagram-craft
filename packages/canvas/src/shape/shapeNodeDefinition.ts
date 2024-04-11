@@ -15,11 +15,15 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 
+type ShapeConstructorContstructor = {
+  new (): BaseShape;
+};
+
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   protected constructor(
     readonly type: string,
     readonly name: string,
-    readonly component: () => BaseShape
+    readonly component: ShapeConstructorContstructor
   ) {}
 
   supports(_capability: NodeCapability): boolean {

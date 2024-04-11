@@ -17,7 +17,7 @@ declare global {
 
 export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('rounded-rect', 'Rounded Rectangle', () => new RoundedRectComponent(this));
+    super('rounded-rect', 'Rounded Rectangle', RoundedRectComponent);
   }
 
   getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
@@ -68,7 +68,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 class RoundedRectComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const radius = props.nodeProps.roundedRect?.radius ?? 10;
-    const boundary = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);
