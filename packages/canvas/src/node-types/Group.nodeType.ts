@@ -10,6 +10,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { Transforms } from '../component/vdom-svg';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -46,14 +47,14 @@ export class GroupNodeDefinition extends ShapeNodeDefinition {
 
 class GroupComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, builder: ShapeBuilder) {
-    const center = Box.center(props.node.bounds);
     builder.add(
       svg.g(
         {},
         ...props.node.children.map(child =>
-          this.rotateBack(
-            center,
-            props.node.bounds.r,
+          svg.g(
+            {
+              transform: Transforms.rotateBack(props.node.bounds)
+            },
             isNode(child) ? this.makeNode(child, props) : this.makeEdge(child as DiagramEdge, props)
           )
         )

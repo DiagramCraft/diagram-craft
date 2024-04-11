@@ -6,7 +6,7 @@ import { ResizeHandlesComponent } from '@diagram-craft/canvas/components/ResizeH
 import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSelectionComponent';
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { Transform } from '../component/vdom-svg';
+import { Transforms } from '../component/vdom-svg';
 import { CanvasState } from '../EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
 
@@ -50,7 +50,7 @@ export class SelectionComponent extends Component<CanvasState> {
             }),
             svg.g(
               {
-                transform: Transform.rotate(bounds)
+                transform: Transforms.rotate(bounds)
               },
               svg.rectFromBox(bounds, {
                 'class': $c('svg-selection__bb', {

@@ -14,6 +14,7 @@ import {
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { Transforms } from '../component/vdom-svg';
 
 declare global {
   interface NodeProps {
@@ -211,7 +212,6 @@ class ContainerComponent extends BaseShape {
     const path = this.nodeDefinition.getBoundingPathBuilder(props.node).getPath();
     const svgPath = path.asSvgPath();
 
-    const center = Box.center(props.node.bounds);
     builder.add(
       svg.path({
         'd': svgPath,
@@ -230,9 +230,8 @@ class ContainerComponent extends BaseShape {
 
     props.node.children.forEach(child => {
       builder.add(
-        this.rotateBack(
-          center,
-          props.node.bounds.r,
+        svg.g(
+          { transform: Transforms.rotateBack(props.node.bounds) },
           isNode(child) ? this.makeNode(child, props) : this.makeEdge(child as DiagramEdge, props)
         )
       );

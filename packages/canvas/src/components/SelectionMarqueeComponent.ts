@@ -1,6 +1,6 @@
 import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { Transform } from '../component/vdom-svg';
+import { Transforms } from '../component/vdom-svg';
 import { CanvasState } from '../EditableCanvasComponent';
 
 export class SelectionMarqueeComponent extends Component<CanvasState> {
@@ -23,7 +23,7 @@ export class SelectionMarqueeComponent extends Component<CanvasState> {
       ...(selection.marquee.pendingElements?.map(e =>
         svg.rectFromBox(e.bounds, {
           class: 'svg-marquee__element',
-          transform: Transform.rotate(e.bounds)
+          transform: Transforms.rotate(e.bounds)
         })
       ) ?? [])
     );

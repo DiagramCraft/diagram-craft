@@ -305,9 +305,13 @@ export const foreignObject = (attrs: Attr<ForeignObjectAttributes>, ...children:
   return s('foreignObject', attrs, ...children);
 };
 
-export const Transform = {
+export const Transforms = {
   rotate: (b: Box) => {
     const center = Box.center(b);
     return `rotate(${Angle.toDeg(b.r)} ${center.x} ${center.y})`;
+  },
+  rotateBack: (b: Box) => {
+    const center = Box.center(b);
+    return `rotate(${-Angle.toDeg(b.r)} ${center.x} ${center.y})`;
   }
 };

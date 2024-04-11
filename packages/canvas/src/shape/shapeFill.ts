@@ -4,9 +4,10 @@ import * as svg from '../component/vdom-svg';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {
-  if (nodeProps.fill.image && nodeProps.fill.image.url !== '') {
+  if (nodeProps.fill.image) {
     if (nodeProps.fill.image.fit === 'fill') {
       return {
         patternUnits: 'objectBoundingBox',
@@ -76,7 +77,7 @@ type FillProps = {
   nodeProps: DeepRequired<DeepReadonly<NodeProps>>;
 };
 
-export class FillFilter extends Component<FillProps> {
+export class PatternFillColorAdjustment extends Component<FillProps> {
   render(props: FillProps) {
     const nodeProps = props.nodeProps;
     const filterChildren: VNode[] = [];
@@ -257,3 +258,31 @@ export class FillPattern extends Component<FillPatternProps> {
     );
   }
 }
+
+export const makeLinearGradient = (
+  gradientId: string,
+  nodeProps: DeepReadonly<DeepRequired<NodeProps>>
+) => {
+  return svg.linearGradient(
+    {
+      id: gradientId,
+      gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+    },
+    svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
+    svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
+  );
+};
+
+export const makeRadialGradient = (
+  gradientId: string,
+  nodeProps: DeepReadonly<DeepRequired<NodeProps>>
+) => {
+  return svg.radialGradient(
+    {
+      id: gradientId,
+      gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
+    },
+    svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
+    svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
+  );
+};

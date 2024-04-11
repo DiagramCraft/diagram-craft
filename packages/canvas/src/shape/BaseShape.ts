@@ -4,94 +4,30 @@ import { Tool } from '../tool';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { makeShadowFilter } from '../effects/shadow';
-import { FillFilter, FillPattern } from './shapeFill';
+import {
+  FillPattern,
+  makeLinearGradient,
+  makeRadialGradient,
+  PatternFillColorAdjustment
+} from './shapeFill';
 import * as svg from '../component/vdom-svg';
+import { Transforms } from '../component/vdom-svg';
 import { EdgeComponent } from '../components/EdgeComponent';
 import { ShapeNodeDefinition } from './shapeNodeDefinition';
 import { Modifiers } from '../dragDropManager';
 import { ShapeBuilder } from './ShapeBuilder';
 import { makeControlPoint } from './ShapeControlPoint';
-import { Path } from '@diagram-craft/geometry/path';
-import { Box } from '@diagram-craft/geometry/box';
-import { Angle } from '@diagram-craft/geometry/angle';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { deepClone } from '@diagram-craft/utils/object';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-
-type NodeWrapperComponentProps = {
-  children: VNode[];
-  node: DiagramNode;
-  path: Path;
-  style: Partial<CSSStyleDeclaration>;
-};
-
-const wrapComponent = (props: NodeWrapperComponentProps) => {
-  const center = Box.center(props.node.bounds);
-
-  let pathBounds: Box | undefined = undefined;
-  if (props.node.props.effects?.reflection) {
-    const path = props.node.diagram.nodeDefinitions
-      .get(props.node.nodeType)
-      .getBoundingPath(props.node);
-
-    pathBounds = path.bounds();
-  }
-
-  const strength = props.node.props.effects?.reflectionStrength?.toString() ?? '1';
-  const reflection = props.node.props.effects?.reflection
-    ? [
-        svg.linearGradient(
-          {
-            id: `reflection-grad-${props.node.id}`,
-            y2: '1',
-            x2: '0',
-            gradientUnits: 'objectBoundingBox',
-            gradientTransform: `rotate(${-Angle.toDeg(props.node.bounds.r)} 0.5 0.5)`
-          },
-          svg.stop({ 'offset': '0.65', 'stop-color': 'white', 'stop-opacity': '0' }),
-          svg.stop({ 'offset': '1', 'stop-color': 'white', 'stop-opacity': strength })
-        ),
-        svg.mask(
-          {
-            id: `reflection-mask-${props.node.id}`,
-            maskContentUnits: 'objectBoundingBox'
-          },
-          svg.rect({
-            width: '1',
-            height: '1',
-            fill: `url(#reflection-grad-${props.node.id})`
-          })
-        ),
-        svg.g(
-          {
-            transform: `
-              rotate(${-Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
-              scale(1 -1)
-              translate(0 -${2 * (pathBounds!.y + pathBounds!.h)})
-              rotate(${Angle.toDeg(props.node.bounds.r)} ${center.x} ${center.y})
-            `,
-            mask: `url(#reflection-mask-${props.node.id})`,
-            style: `filter: url(#reflection-filter); pointer-events: none`
-          },
-          ...props.children.map(e => deepClone(e))
-        )
-      ]
-    : [];
-
-  return svg.g(
-    {
-      style: `filter: ${props.style.filter ?? 'none'}`
-    },
-    ...reflection,
-    ...props.children
-  );
-};
+import { makeReflection } from '../effects/reflection';
+import { makeBlur } from '../effects/blur';
+import { makeOpacity } from '../effects/opacity';
 
 export type BaseShapeProps = {
   def: DiagramNode;
@@ -144,30 +80,17 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
 
     const nodeProps = props.def.propsForRendering;
 
-    const center = Box.center(props.def.bounds);
-
     const isSelected = $d.selectionState.elements.includes(props.def);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
     const isEdgeConnect = nodeProps.highlight.includes('edge-connect');
+    const children: VNode[] = [];
 
-    const style: Partial<CSSStyleDeclaration> = {
-      fill: nodeProps.fill.color,
-      strokeWidth: nodeProps.stroke.width?.toString(),
-      stroke: isEdgeConnect ? 'red' : nodeProps.stroke.color
-    };
+    const style: Partial<CSSStyleDeclaration> = {};
 
-    let patternId = undefined;
+    /* Handle strokes **************************************************************** */
 
-    const gradientId = `node-${props.def.id}-gradient`;
-    if (nodeProps.fill.type === 'gradient') {
-      style.fill = `url(#${gradientId})`;
-    } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
-      patternId = `node-${props.def.id}-pattern`;
-      style.fill = `url(#${patternId})`;
-    } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
-      patternId = `node-${props.def.id}-pattern`;
-      style.fill = `url(#${patternId})`;
-    }
+    style.strokeWidth = nodeProps.stroke.width?.toString();
+    style.stroke = isEdgeConnect ? 'red' : nodeProps.stroke.color;
 
     if (nodeProps.stroke.pattern) {
       style.strokeDasharray = DASH_PATTERNS[nodeProps.stroke.pattern]?.(
@@ -176,30 +99,67 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       );
     }
 
-    if (nodeProps.shadow.enabled) {
-      style.filter = makeShadowFilter(nodeProps.shadow);
-    }
-
     if (nodeProps.stroke.enabled === false) {
       style.stroke = 'transparent';
       style.strokeWidth = '0';
     }
 
+    /* Handle fills ****************************************************************** */
+
     if (nodeProps.fill.enabled === false) {
       style.fill = 'transparent';
+    } else {
+      style.fill = nodeProps.fill.color;
     }
 
-    let filterId = undefined;
-    if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
-      filterId = `node-${props.def.id}-filter`;
-      style.filter = `url(#${filterId})`;
+    if (nodeProps.fill.type === 'gradient') {
+      const gradientId = `node-${props.def.id}-gradient`;
+      style.fill = `url(#${gradientId})`;
+
+      if (nodeProps.fill.gradient.type === 'linear') {
+        children.push(makeLinearGradient(gradientId, nodeProps));
+      } else if (nodeProps.fill.gradient.type === 'radial') {
+        children.push(makeRadialGradient(gradientId, nodeProps));
+      } else {
+        VERIFY_NOT_REACHED();
+      }
+    } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
+      const patternId = `node-${props.def.id}-pattern`;
+      style.fill = `url(#${patternId})`;
+
+      children.push(
+        this.subComponent('PatternFillColorAdjustment', () => new PatternFillColorAdjustment(), {
+          patternId,
+          nodeProps
+        })
+      );
+      children.push(
+        this.subComponent('FillPattern', () => new FillPattern(), {
+          patternId,
+          nodeProps,
+          def: props.def
+        })
+      );
+    } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
+      const patternId = `node-${props.def.id}-pattern`;
+      style.fill = `url(#${patternId})`;
+
+      children.push(
+        this.subComponent('FillPattern', () => new FillPattern(), {
+          patternId,
+          nodeProps,
+          def: props.def
+        })
+      );
     }
+
+    /* Build shape ******************************************************************* */
 
     const buildProps: BaseShapeBuildProps = {
       node: props.def,
       actionMap: props.actionMap,
       tool: props.tool,
-      onMouseDown: onMouseDown,
+      onMouseDown,
       style,
       nodeProps,
       isSingleSelected,
@@ -213,89 +173,45 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     const shapeBuilder = new ShapeBuilder(buildProps);
     this.buildShape(buildProps, shapeBuilder);
 
-    const children = [...shapeBuilder.children];
+    const shapeVNodes = [...shapeBuilder.nodes];
 
     if (isSingleSelected && props.tool?.type === 'move') {
       for (const cp of shapeBuilder.controlPoints) {
-        children.push(makeControlPoint(cp, props.def));
+        shapeVNodes.push(makeControlPoint(cp, props.def));
       }
     }
 
-    const outer: VNode[] = [];
-    const level1: VNode[] = [];
+    /* Handle all effects ************************************************************ */
 
-    if (filterId) {
-      level1.push(
+    if (nodeProps.shadow.enabled) {
+      style.filter = makeShadowFilter(nodeProps.shadow);
+    }
+
+    if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
+      const filterId = `node-${props.def.id}-filter`;
+      style.filter = (style.filter ?? '') + ` url(#${filterId})`;
+
+      children.push(
         svg.filter(
-          {
-            id: filterId,
-            filterUnits: 'objectBoundingBox'
-          },
-          nodeProps.effects.blur
-            ? svg.feGaussianBlur({ stdDeviation: 5 * nodeProps.effects.blur })
-            : null,
-          nodeProps.effects.opacity !== 1
-            ? svg.feColorMatrix({
-                type: 'matrix',
-                values: `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${nodeProps.effects.opacity} 0`
-              })
-            : null
+          { id: filterId, filterUnits: 'objectBoundingBox' },
+          nodeProps.effects.blur ? makeBlur(nodeProps.effects.blur) : null,
+          nodeProps.effects.opacity !== 1 ? makeOpacity(nodeProps.effects.opacity) : null
         )
       );
     }
 
-    if (patternId) {
-      outer.push(this.subComponent('fillFilter', () => new FillFilter(), { patternId, nodeProps }));
-      outer.push(
-        this.subComponent('fillPattern', () => new FillPattern(), {
-          patternId,
-          nodeProps,
-          def: props.def
-        })
-      );
+    if (nodeProps.effects.reflection) {
+      children.push(svg.g({}, ...makeReflection(props.def, shapeVNodes), ...shapeVNodes));
+    } else {
+      children.push(...shapeVNodes);
     }
 
-    if (nodeProps.fill.type === 'gradient') {
-      if (nodeProps.fill.gradient.type === 'linear') {
-        level1.push(
-          svg.linearGradient(
-            {
-              id: gradientId,
-              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
-            },
-            svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
-            svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
-          )
-        );
-      } else if (nodeProps.fill.gradient.type === 'radial') {
-        level1.push(
-          svg.radialGradient(
-            {
-              id: gradientId,
-              gradientTransform: `rotate(${Angle.toDeg(nodeProps.fill.gradient.direction)} 0.5 0.5)`
-            },
-            svg.stop({ 'offset': '0%', 'stop-color': nodeProps.fill.color }),
-            svg.stop({ 'offset': '100%', 'stop-color': nodeProps.fill.color2 })
-          )
-        );
-      } else {
-        VERIFY_NOT_REACHED();
-      }
-    }
-
-    level1.push(
-      wrapComponent({
-        node: props.def,
-        path: shapeBuilder.boundary!,
-        style: style,
-        children
-      })
-    );
+    /* Add anchors ******************************************************************* */
 
     if (isEdgeConnect) {
-      level1.push(
+      children.push(
         svg.g(
-          { transform: `rotate(${-Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})` },
+          { transform: Transforms.rotateBack(props.def.bounds) },
           ...props.def.anchors.map(anchor =>
             svg.circle({
               class: 'svg-node__anchor',
@@ -309,16 +225,13 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     }
 
     return svg.g(
-      {},
-      ...outer,
-      svg.g(
-        {
-          id: `node-${props.def.id}`,
-          class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
-          transform: `rotate(${Angle.toDeg(props.def.bounds.r)} ${center.x} ${center.y})`
-        },
-        ...level1
-      )
+      {
+        id: `node-${props.def.id}`,
+        class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
+        transform: Transforms.rotate(props.def.bounds),
+        style: `filter: ${style.filter ?? 'none'}`
+      },
+      ...children
     );
   }
 
@@ -350,9 +263,5 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       (props.node.diagram.nodeDefinitions.get(child.nodeType) as ShapeNodeDefinition).component!,
       nodeProps
     );
-  }
-
-  protected rotateBack(center: Point, angle: number, child: VNode) {
-    return svg.g({ transform: `rotate(${-angle} ${center.x} ${center.y})` }, child);
   }
 }

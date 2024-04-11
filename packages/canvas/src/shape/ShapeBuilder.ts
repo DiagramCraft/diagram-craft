@@ -22,14 +22,14 @@ const defaultOnChange = (node: DiagramNode) => (text: string) => {
 };
 
 export class ShapeBuilder {
-  children: VNode[] = [];
+  nodes: VNode[] = [];
   boundary: Path | undefined = undefined;
   controlPoints: ControlPoint[] = [];
 
   constructor(private readonly props: BaseShapeBuildProps) {}
 
   add(vnode: VNode) {
-    this.children.push(vnode);
+    this.nodes.push(vnode);
   }
 
   // TODO: Maybe we can pass Component<any> in the constructor instead
@@ -41,7 +41,7 @@ export class ShapeBuilder {
     bounds?: Box,
     onSizeChange?: (size: Extent) => void
   ) {
-    this.children.push(
+    this.nodes.push(
       cmp.subComponent<ShapeTextProps, ShapeText>('text', () => new ShapeText(), {
         id: `text_${id}_${this.props.node.id}`,
         text: text ?? this.props.nodeProps.text,
@@ -62,7 +62,7 @@ export class ShapeBuilder {
       path: path,
       style: this.props.style
     });
-    this.children.push(
+    this.nodes.push(
       ...paths
         .map(path => ({
           d: path.path,
