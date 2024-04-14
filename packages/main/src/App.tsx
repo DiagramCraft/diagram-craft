@@ -77,6 +77,8 @@ import { SerializedDiagram } from '@diagram-craft/model/serialization/types';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { debounce } from '@diagram-craft/utils/debounce';
+import { Autosave } from './Autosave';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -139,8 +141,8 @@ export type ContextMenuTarget = { pos: Point } & (
 
 const App = () => {
   const defaultDiagram = 2;
-  const [doc, setDoc] = useState(diagrams[defaultDiagram].document);
-  const [$d, setDiagram] = useState(diagrams[defaultDiagram].document.diagrams[0]);
+  const [doc, setDoc] = useState(Autosave.load(factory) ?? diagrams[defaultDiagram].document);
+  const [$d, setDiagram] = useState(doc.diagrams[0]);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   const [dialogState, setDialogState] = useState<MessageDialogState>(MessageDialog.INITIAL_STATE);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
@@ -154,6 +156,16 @@ const App = () => {
     applicationState: applicationState.current,
     userState: userState.current
   });
+
+  const autosave = debounce(() => Autosave.save(doc), 1000);
+
+  useEventListener($d, 'change', autosave);
+  useEventListener($d, 'elementAdd', autosave);
+  useEventListener($d, 'elementChange', autosave);
+  useEventListener($d, 'elementRemove', autosave);
+  useEventListener(doc, 'diagramremoved', autosave);
+  useEventListener(doc, 'diagramadded', autosave);
+  useEventListener(doc, 'diagramchanged', autosave);
 
   const keyMap = defaultMacAppKeymap;
   return (
@@ -224,6 +236,7 @@ const App = () => {
                   onChange={d => {
                     setDoc(d);
                     setDiagram(d.diagrams[0]);
+                    Autosave.clear();
                   }}
                 />
               </div>

@@ -117,6 +117,7 @@ export class DiagramNode
     uow.updateElement(this);
 
     this.clearPropsCache();
+    this.getDefinition().onPropUpdate(this, uow);
   }
 
   /* Diagram/layer ******************************************************************************************* */
