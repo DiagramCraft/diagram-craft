@@ -153,9 +153,9 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
   });
 
   Object.entries(newEvents).forEach(([key, value]) => {
-    if (oldEvents[key as keyof EventListenerMap] !== value) {
-      newNode.addEventListener(key, value as EventListener);
-    }
+    //if (oldEvents[key as keyof EventListenerMap] !== value) {
+    newNode.addEventListener(key, value as EventListener);
+    //}
   });
 };
 

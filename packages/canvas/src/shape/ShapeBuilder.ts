@@ -47,9 +47,11 @@ export class ShapeBuilder {
         id: `text_${id}_${this.props.node.id}`,
         text: text ?? this.props.nodeProps.text,
         bounds: bounds ?? this.props.node.bounds,
+        tool: this.props.tool,
         onMouseDown: this.props.onMouseDown,
         onChange: defaultOnChange(this.props.node),
-        onSizeChange: onSizeChange
+        onSizeChange: onSizeChange,
+        isSingleSelected: this.props.isSingleSelected
       })
     );
   }

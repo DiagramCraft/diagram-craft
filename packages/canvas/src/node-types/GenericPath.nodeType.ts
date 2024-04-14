@@ -93,28 +93,28 @@ class GenericPathComponent extends BaseShape {
             strokeLinecap: 'square'
           }),
           on: {
-            dblclick: props.tool?.type === 'node' ? onDoubleClick : undefined
+            dblclick: onDoubleClick,
+            mousedown: e => e.stopPropagation(),
+            mouseup: e => e.stopPropagation()
           }
         })
       );
     }
+
     shapeBuilder.boundaryPath(path, v => {
       v.data.on ??= {};
       v.data.on.dblclick = props.tool?.type === 'node' ? onDoubleClick : undefined;
-      v.data.on.mousedown = e =>
-        // TODO: This is a massive hack
-        // @ts-ignore
-        props.onMouseDown(e);
-
+      v.data.on.mousedown = props.onMouseDown;
       v.data.style ??= '';
       v.data.style +=
         v.data.style +
+        '; ' +
         toInlineCSS({
-          pointerEvents: props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined
+          /*pointerEvents: props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined*/
         });
       return v;
     });
-    //shapeBuilder.text();
+    shapeBuilder.text(this);
 
     if (props.isSingleSelected && props.tool?.type === 'node') {
       editablePath.waypoints.map((wp, idx) => {
