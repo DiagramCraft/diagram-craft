@@ -217,6 +217,9 @@ const deserializeDiagrams = <T extends Diagram>(
 
       layer.elements.forEach(e => e.invalidate(uow));
     }
+    if ($d.canvas) {
+      newDiagram.canvas = $d.canvas;
+    }
     dest.push(newDiagram);
 
     newDiagram.diagrams = deserializeDiagrams($d.diagrams, factory);

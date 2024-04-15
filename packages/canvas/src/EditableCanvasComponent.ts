@@ -444,8 +444,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     if (diagram.viewBox.zoomLevel === 1) {
       diagram.viewBox.pan({
-        x: Math.floor(-(rect.width - diagram.canvas.w) / 2),
-        y: Math.floor(-(rect.height - diagram.canvas.h) / 2)
+        x: Math.floor(-(rect.width - diagram.canvas.w) / 2 + diagram.canvas.x),
+        y: Math.floor(-(rect.height - diagram.canvas.h) / 2 + diagram.canvas.y)
       });
     }
     diagram.viewBox.dimensions = {

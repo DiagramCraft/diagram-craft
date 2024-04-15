@@ -1,5 +1,6 @@
 import { AbstractEdge, AbstractNode } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
+import { Canvas } from '../diagram';
 
 interface Reference {
   id: string;
@@ -18,6 +19,7 @@ export type SerializedDiagram = {
   name: string;
   layers: ReadonlyArray<SerializedLayer>;
   diagrams: ReadonlyArray<SerializedDiagram>;
+  canvas?: Canvas;
 };
 
 export interface SerializedDiagramDocument {

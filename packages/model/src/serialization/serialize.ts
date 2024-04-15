@@ -53,7 +53,8 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
     id: diagram.id,
     name: diagram.name,
     layers: diagram.layers.all.map(l => serializeLayer(l)),
-    diagrams: diagram.diagrams.map(d => serializeDiagram(d))
+    diagrams: diagram.diagrams.map(d => serializeDiagram(d)),
+    canvas: diagram.canvas
   };
 };
 
