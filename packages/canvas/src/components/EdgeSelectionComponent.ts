@@ -8,25 +8,18 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { $c } from '@diagram-craft/utils/classname';
 
 export class EdgeSelectionComponent extends Component<Props> {
-  private dragging: boolean = false;
-
-  setIsDragging(state: boolean) {
-    this.dragging = state;
-    this.redraw();
-  }
-
   render(props: Props) {
     const { diagram, edge } = props;
 
     createEffect(() => {
-      const cb = () => this.setIsDragging(true);
+      const cb = () => this.redraw();
 
       DRAG_DROP_MANAGER.on('dragStart', cb);
       return () => DRAG_DROP_MANAGER.off('dragStart', cb);
     }, []);
 
     createEffect(() => {
-      const cb = () => this.setIsDragging(false);
+      const cb = () => this.redraw();
 
       DRAG_DROP_MANAGER.on('dragEnd', cb);
       return () => DRAG_DROP_MANAGER.off('dragEnd', cb);
@@ -46,7 +39,7 @@ export class EdgeSelectionComponent extends Component<Props> {
             ev.stopPropagation();
           }
         },
-        style: `pointer-events: ${this.dragging ? 'none' : 'unset'}`
+        style: `pointer-events: ${DRAG_DROP_MANAGER.isDragging() ? 'none' : 'unset'}`
       }),
       svg.circle({
         class: $c('svg-selection__handle-edge', { connected: isConnected(edge.end) }),
@@ -60,7 +53,7 @@ export class EdgeSelectionComponent extends Component<Props> {
             ev.stopPropagation();
           }
         },
-        style: `pointer-events: ${this.dragging ? 'none' : 'unset'}`
+        style: `pointer-events: ${DRAG_DROP_MANAGER.isDragging() ? 'none' : 'unset'}`
       })
     );
   }

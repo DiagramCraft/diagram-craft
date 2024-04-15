@@ -90,6 +90,10 @@ export class DragDopManager extends EventEmitter<DragDopEvents> {
     });
   }
 
+  isDragging() {
+    return !!this.drag;
+  }
+
   current() {
     return this.drag;
   }
