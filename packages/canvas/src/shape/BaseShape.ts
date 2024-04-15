@@ -201,7 +201,8 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
               class: 'svg-node__anchor',
               cx: props.def.bounds.x + anchor.point.x * props.def.bounds.w,
               cy: props.def.bounds.y + anchor.point.y * props.def.bounds.h,
-              r: '5'
+              r: '5',
+              style: `pointer-events: none;`
             })
           )
         )

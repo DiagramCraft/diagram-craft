@@ -27,6 +27,9 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   ) {
     super();
     this.uow = new UnitOfWork(this.edge.diagram, true);
+
+    // TODO: Make a helper for this ... as well as getting edges and nodes from ids
+    document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'move';
   }
 
   onDragEnter(id: string): void {
@@ -77,6 +80,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     }
 
     commitWithUndo(this.uow, 'Move edge endpoint');
+    document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'unset';
   }
 
   private attachToClosestAnchor(coord: Point) {

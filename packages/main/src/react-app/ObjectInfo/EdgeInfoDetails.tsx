@@ -9,6 +9,8 @@ export const EdgeInfoDetails = (props: Props) => {
   const diagram = useDiagram();
   const redraw = useRedraw();
   useEventListener(diagram, 'elementChange', redraw);
+
+  if (!props.obj) return null;
   return (
     <div style={{ margin: '-10px' }}>
       <Tree.Root>
