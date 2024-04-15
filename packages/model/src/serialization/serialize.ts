@@ -78,6 +78,12 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
         : {
             position: edge.end.position
           },
+      labelNodes: edge.labelNodes?.map(e => ({
+        id: e.id,
+        type: e.type,
+        offset: e.offset,
+        timeOffset: e.timeOffset
+      })),
       waypoints: edge.waypoints,
       props: edge.props
     };
