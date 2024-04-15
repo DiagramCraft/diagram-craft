@@ -301,11 +301,15 @@ input::-webkit-input-placeholder {
   background: var(--canvas-bg);
 
   [contenteditable] {
-    outline: 0px solid transparent;
+    outline: 0 solid transparent;
     border-radius: 3px;
 
-    &::selection      { background: rgba(175,210,255,0.5); }
-    &::-moz-selection { background: rgba(175,210,255,0.5); }
+    &::selection, div::selection {
+      background: rgba(175,210,255,0.5);
+    }
+    &::-moz-selection, div::-moz-selection {
+      background: rgba(175,210,255,0.5);
+    }
   }
 
   [contenteditable]:not(:focus) {

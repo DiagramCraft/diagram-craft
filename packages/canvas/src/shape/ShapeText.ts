@@ -66,29 +66,12 @@ export class ShapeText extends Component<ShapeTextProps> {
         y: props.bounds.y.toString(),
         width: props.bounds.w.toString(),
         height: props.bounds.h.toString(),
-        on: {
-          mousedown:
-            props.isSingleSelected && props.tool?.type === 'node' ? undefined : props.onMouseDown
-        },
-        style: toInlineCSS({
-          pointerEvents: props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined
-        })
+        style: toInlineCSS({ pointerEvents: 'none' })
       },
       html.div(
         {
           class: 'svg-node__fo__inner',
-          style: `justify-content: ${valign}`,
-          on: {
-            dblclick:
-              props.isSingleSelected && props.tool?.type === 'node'
-                ? undefined
-                : (e: MouseEvent) => {
-                    const $textNode = (e.currentTarget as HTMLElement).firstChild as HTMLElement;
-                    $textNode.contentEditable = 'true';
-                    $textNode.style.pointerEvents = 'auto';
-                    $textNode.focus();
-                  }
-          }
+          style: `justify-content: ${valign}`
         },
         [
           html.div(
@@ -105,42 +88,27 @@ export class ShapeText extends Component<ShapeTextProps> {
                     target.blur();
                   }
 
-                  setTimeout(() => {
-                    const w = target.offsetWidth;
-                    const h = target.offsetHeight;
-                    if (w !== this.width || h !== this.height) {
-                      updateBounds(
-                        (e.target as HTMLElement).offsetWidth,
-                        (e.target as HTMLElement).offsetHeight
-                      );
-                    }
-                  }, 0);
+                  setTimeout(() => updateBounds(target.offsetWidth, target.offsetHeight), 0);
                 },
                 blur: (e: FocusEvent) => {
-                  (e.target as HTMLElement).contentEditable = 'false';
-                  (e.target as HTMLElement).style.pointerEvents = 'none';
-                  props.onChange((e.target as HTMLElement).innerHTML);
+                  const target = e.target as HTMLElement;
+                  target.contentEditable = 'false';
+                  target.style.pointerEvents = 'none';
+                  props.onChange(target.innerHTML);
 
-                  updateBounds(
-                    (e.target as HTMLElement).offsetWidth,
-                    (e.target as HTMLElement).offsetHeight
-                  );
+                  updateBounds(target.offsetWidth, target.offsetHeight);
                 }
               },
               hooks: {
                 onInsert: (n: VNode) => {
                   if (!props.text?.text) return;
 
-                  updateBounds(
-                    (n.el! as HTMLElement).offsetWidth,
-                    (n.el! as HTMLElement).offsetHeight
-                  );
+                  const target = n.el! as HTMLElement;
+                  updateBounds(target.offsetWidth, target.offsetHeight);
                 },
                 onUpdate: (_o: VNode, n: VNode) => {
-                  updateBounds(
-                    (n.el! as HTMLElement).offsetWidth,
-                    (n.el! as HTMLElement).offsetHeight
-                  );
+                  const target = n.el! as HTMLElement;
+                  updateBounds(target.offsetWidth, target.offsetHeight);
                 }
               }
             },

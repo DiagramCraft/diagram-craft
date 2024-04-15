@@ -56,7 +56,7 @@ export class ShapeBuilder {
     );
   }
 
-  boundaryPath(path: Path, map: (n: VNode) => VNode = a => a) {
+  boundaryPath(path: Path, textId: undefined | string = '1', map: (n: VNode) => VNode = a => a) {
     const pathRenderer: PathRenderer = this.props.node.props.effects?.sketch
       ? new SketchPathRenderer()
       : new DefaultPathRenderer();
@@ -74,7 +74,11 @@ export class ShapeBuilder {
           width: this.props.node.bounds.w.toString(),
           height: this.props.node.bounds.h.toString(),
           class: 'svg-node__boundary svg-node',
-          style: toInlineCSS(path.style)
+          style: toInlineCSS(path.style),
+          on: {
+            mousedown: this.props.onMouseDown,
+            ...(textId ? { dblclick: this.makeOnDblclickHandle(textId) } : {})
+          }
         }))
         .map(p => map(svg.path(p)))
     );
@@ -82,5 +86,51 @@ export class ShapeBuilder {
 
   controlPoint(x: number, y: number, cb: ControlPointCallback) {
     this.controlPoints.push({ x, y, cb });
+  }
+
+  makeOnMouseDownHandle(textId: string | undefined = '1') {
+    return (e: MouseEvent) => {
+      const editable = this.getTextElement(textId);
+
+      if (!editable) {
+        this.props.onMouseDown(e);
+        return;
+      }
+
+      console.log('contentEditable', editable.contentEditable);
+      if (editable.contentEditable === 'true') {
+        e.stopPropagation();
+        return;
+      }
+
+      this.props.onMouseDown(e);
+    };
+  }
+
+  makeOnDblclickHandle(textId: string | undefined = '1') {
+    return () => {
+      const editable = this.getTextElement(textId);
+      if (!editable) return;
+
+      editable.contentEditable = 'true';
+      editable.style.pointerEvents = 'auto';
+      editable.onmousedown = (e: MouseEvent) => {
+        if (editable.contentEditable === 'true') {
+          e.stopPropagation();
+        }
+      };
+      editable.focus();
+
+      setTimeout(() => {
+        document.execCommand('selectAll', false, undefined);
+      }, 0);
+    };
+  }
+
+  private getTextElement(textId: string | undefined) {
+    return document
+      .getElementById(`text_${textId}_${this.props.node.id}`)
+      ?.getElementsByClassName('svg-node__text')
+      .item(0) as HTMLDivElement | undefined | null;
   }
 }

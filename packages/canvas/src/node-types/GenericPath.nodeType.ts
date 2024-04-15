@@ -101,17 +101,11 @@ class GenericPathComponent extends BaseShape {
       );
     }
 
-    shapeBuilder.boundaryPath(path, v => {
+    shapeBuilder.boundaryPath(path, undefined, v => {
       v.data.on ??= {};
-      v.data.on.dblclick = props.tool?.type === 'node' ? onDoubleClick : undefined;
-      v.data.on.mousedown = props.onMouseDown;
+      v.data.on.dblclick =
+        props.tool?.type === 'node' ? onDoubleClick : shapeBuilder.makeOnDblclickHandle();
       v.data.style ??= '';
-      v.data.style +=
-        v.data.style +
-        '; ' +
-        toInlineCSS({
-          /*pointerEvents: props.isSingleSelected && props.tool?.type === 'node' ? 'none' : undefined*/
-        });
       return v;
     });
     shapeBuilder.text(this);
