@@ -185,6 +185,11 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       return () => diagram.off('elementChange', cb);
     }, [diagram]);
 
+    createEffect(() => {
+      if (!this.svgRef) return;
+      this.adjustViewbox();
+    }, [diagram]);
+
     this.onDiagramRedraw('elementAdd', diagram);
     this.onDiagramRedraw('elementRemove', diagram);
     this.onDiagramRedraw('change', diagram);

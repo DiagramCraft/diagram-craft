@@ -48,8 +48,8 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
     selRect.style.visibility = diagram.selectionState.isEmpty() ? 'hidden' : 'visible';
   }, [diagram.selectionState, orientation, toScreenX, toScreenY, viewbox.zoomLevel]);
 
-  useEventListener(diagram, 'change', redraw);
-  useEventListener(diagram.viewBox, 'viewbox', redraw);
+  useEventListener(diagram, 'change', () => queueMicrotask(() => redraw()));
+  useEventListener(diagram.viewBox, 'viewbox', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.selectionState, 'change', updateSelection);
 
   useEffect(() => {
