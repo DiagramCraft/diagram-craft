@@ -18,6 +18,8 @@ export class SaveAction extends AbstractAction {
   }
 
   execute(): void {
-    console.log(JSON.stringify(serializeDiagramDocument(this.diagram.document!), undefined, '  '));
+    serializeDiagramDocument(this.diagram.document!).then(e => {
+      console.log(JSON.stringify(e, undefined, '  '));
+    });
   }
 }

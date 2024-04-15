@@ -4,10 +4,11 @@ import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitO
 import { DiagramEdge } from './diagramEdge';
 import { Diagram, StackPosition } from './diagram';
 import { groupBy } from '@diagram-craft/utils/array';
+import { AttachmentConsumer } from './attachment';
 
 export type LayerType = 'layer' | 'adjustment';
 
-export class Layer implements UOWTrackable<LayerSnapshot> {
+export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
   #elements: Array<DiagramElement> = [];
   #locked = false;
   #name: string;
@@ -191,9 +192,13 @@ export class Layer implements UOWTrackable<LayerSnapshot> {
       this.#diagram.edgeLookup.set(e.id, e as DiagramEdge);
     }
   }
+
+  getAttachmentsInUse() {
+    return this.elements.flatMap(e => e.getAttachmentsInUse());
+  }
 }
 
-export class LayerManager implements UOWTrackable<LayersSnapshot> {
+export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentConsumer {
   id = 'layers';
   #layers: Array<Layer> = [];
   #activeLayer: Layer;
@@ -310,5 +315,9 @@ export class LayerManager implements UOWTrackable<LayersSnapshot> {
       activeLayers: this.#activeLayer,
       visibleLayers: this.#visibleLayers
     };
+  }
+
+  getAttachmentsInUse() {
+    return this.#layers.flatMap(e => e.getAttachmentsInUse());
   }
 }

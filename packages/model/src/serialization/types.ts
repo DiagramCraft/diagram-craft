@@ -22,6 +22,7 @@ export type SerializedDiagram = {
 
 export interface SerializedDiagramDocument {
   diagrams: ReadonlyArray<SerializedDiagram>;
+  attachments?: Record<string, string>;
 }
 
 export interface SerializedNode extends AbstractNode {

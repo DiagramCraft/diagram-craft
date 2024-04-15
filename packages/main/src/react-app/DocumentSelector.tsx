@@ -20,8 +20,8 @@ export const DocumentSelector = (props: Props) => {
 type Props = {
   diagrams: {
     name: string;
-    document: DiagramDocument;
+    document: Promise<DiagramDocument>;
   }[];
   defaultValue: number;
-  onChange: (document: DiagramDocument) => void;
+  onChange: (document: Promise<DiagramDocument>) => void;
 };

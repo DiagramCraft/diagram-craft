@@ -14,6 +14,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
+import { AttachmentConsumer } from './attachment';
 
 export type Canvas = Omit<Box, 'r'>;
 
@@ -39,7 +40,7 @@ export const excludeLabelNodes = (n: DiagramElement) => !(isNode(n) && n.props.l
 
 export const includeAll = () => true;
 
-export class Diagram extends EventEmitter<DiagramEvents> {
+export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
   #canvas: Canvas = {
     x: 0,
     y: 0,
@@ -247,5 +248,9 @@ export class Diagram extends EventEmitter<DiagramEvents> {
       name: this.name,
       layers: this.layers
     };
+  }
+
+  getAttachmentsInUse() {
+    return this.layers.getAttachmentsInUse();
   }
 }

@@ -2,7 +2,7 @@ import { DiagramPalette } from './diagramPalette';
 import { DiagramStyles } from './diagramStyles';
 import { DiagramDataSchemas } from './diagramDataSchemas';
 import { Diagram } from './diagram';
-import { AttachmentManager } from './attachment';
+import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { range } from '@diagram-craft/utils/array';
 
@@ -12,7 +12,7 @@ export type DocumentEvents = {
   diagramremoved: { node: Diagram };
 };
 
-export class DiagramDocument extends EventEmitter<DocumentEvents> {
+export class DiagramDocument extends EventEmitter<DocumentEvents> implements AttachmentConsumer {
   attachments = new AttachmentManager(this);
   customPalette = new DiagramPalette(range(0, 14).map(() => '#000000'));
   styles = new DiagramStyles(this);
@@ -84,5 +84,9 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> {
       props: this.props,
       customPalette: this.customPalette
     };
+  }
+
+  getAttachmentsInUse() {
+    return this.diagrams.flatMap(e => e.getAttachmentsInUse());
   }
 }

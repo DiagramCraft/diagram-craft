@@ -1,5 +1,4 @@
 import { DiagramDocument } from './diagramDocument';
-import { isEdge, isNode } from './diagramElement';
 import { hash64 } from '@diagram-craft/utils/hash';
 
 export class Attachment {
@@ -31,11 +30,19 @@ export class Attachment {
   }*/
 }
 
+export interface AttachmentConsumer {
+  getAttachmentsInUse(): Array<string>;
+}
+
 export class AttachmentManager {
   // TODO: Maybe we can make this a weak hashmap?
   #attachments: Map<string, Attachment> = new Map();
+  #consumers: Array<AttachmentConsumer> = [];
 
-  public constructor(private readonly diagramDocument: DiagramDocument) {}
+  // @ts-ignore
+  public constructor(private readonly diagramDocument: DiagramDocument) {
+    this.#consumers.push(diagramDocument);
+  }
 
   async addAttachment(content: Blob): Promise<Attachment> {
     const att = await Attachment.create(content);
@@ -48,30 +55,18 @@ export class AttachmentManager {
     return att;
   }
 
+  get attachments() {
+    return this.#attachments.entries();
+  }
+
   getAttachment(hash: string) {
     return this.#attachments.get(hash);
   }
 
-  // TODO: Also need to check it's not part of the undo stack
-  //       ... or find some other way to handle that
   pruneAttachments() {
-    const used = new Set<string | undefined>();
-    for (const diagram of this.diagramDocument.diagrams) {
-      for (const layer of diagram.layers.all) {
-        for (const element of layer.elements) {
-          if (isNode(element)) {
-            const props = element.props;
-            used.add(props.fill?.image?.url);
-            used.add(props.fill?.pattern);
-          } else if (isEdge(element)) {
-            // No attachments possible for edges
-          }
-        }
-      }
-    }
+    const used = new Set([...this.#consumers.flatMap(c => c.getAttachmentsInUse())]);
 
     for (const hash of this.#attachments.keys()) {
-      // The inuse flag is used to prevent unused attachments from being saved
       this.#attachments.get(hash)!.inUse = used.has(hash);
     }
   }

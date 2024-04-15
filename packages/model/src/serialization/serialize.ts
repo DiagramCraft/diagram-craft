@@ -13,15 +13,39 @@ import {
 } from './types';
 import { ConnectedEndpoint } from '../endpoint';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { AttachmentManager } from '../attachment';
 
 export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint
 ): endpoint is SerializedConnectedEndpoint => 'node' in endpoint;
 
-export const serializeDiagramDocument = (document: DiagramDocument): SerializedDiagramDocument => {
+export const serializeDiagramDocument = async (
+  document: DiagramDocument
+): Promise<SerializedDiagramDocument> => {
   return {
-    diagrams: document.diagrams.map(serializeDiagram)
+    diagrams: document.diagrams.map(serializeDiagram),
+    attachments: await serializeAttachments(document.attachments)
   };
+};
+
+const serializeAttachments = async (
+  attachments: AttachmentManager
+): Promise<Record<string, string>> => {
+  attachments.pruneAttachments();
+
+  const dest: Record<string, string> = {};
+  for (const [hash, attachment] of attachments.attachments) {
+    if (attachment.inUse) {
+      const buf = await attachment.content.arrayBuffer();
+      dest[hash] = btoa(
+        Array.from(new Uint8Array(buf))
+          .map(b => String.fromCharCode(b))
+          .join('')
+      );
+    }
+  }
+
+  return dest;
 };
 
 export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {

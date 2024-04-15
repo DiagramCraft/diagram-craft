@@ -583,4 +583,8 @@ export class DiagramNode
   private getNestedElements(): DiagramElement[] {
     return [this, ...this.children.flatMap(c => (isNode(c) ? c.getNestedElements() : c))];
   }
+
+  getAttachmentsInUse() {
+    return [this.propsForRendering.fill?.image?.id, this.propsForRendering.fill?.pattern];
+  }
 }

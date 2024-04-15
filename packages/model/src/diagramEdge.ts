@@ -635,4 +635,8 @@ export class DiagramEdge
       }
     }
   }
+
+  getAttachmentsInUse(): Array<string> {
+    return [];
+  }
 }

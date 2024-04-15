@@ -159,14 +159,23 @@ export const deserializeDiagramElements = (
   return elements;
 };
 
-export const deserializeDiagramDocument = <T extends Diagram>(
+export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,
   factory: (d: SerializedDiagram) => T
-): DiagramDocument => {
+): Promise<DiagramDocument> => {
   const diagrams = document.diagrams;
   const dest = deserializeDiagrams(diagrams, factory);
 
-  return new DiagramDocument(dest);
+  const doc = new DiagramDocument(dest);
+
+  if (document.attachments) {
+    for (const val of Object.values(document.attachments)) {
+      const buf = Uint8Array.from(atob(val), c => c.charCodeAt(0));
+      await doc.attachments.addAttachment(new Blob([buf]));
+    }
+  }
+
+  return doc;
 };
 
 const deserializeDiagrams = <T extends Diagram>(

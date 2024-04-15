@@ -5,14 +5,14 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 
 export const Autosave = {
-  load: (factory: (d: SerializedDiagram) => Diagram) =>
+  load: async (factory: (d: SerializedDiagram) => Diagram) =>
     localStorage.getItem('autosave')
-      ? deserializeDiagramDocument(JSON.parse(localStorage.getItem('autosave')!), factory)
+      ? await deserializeDiagramDocument(JSON.parse(localStorage.getItem('autosave')!), factory)
       : undefined,
 
   clear: () => localStorage.removeItem('autosave'),
 
-  save: (doc: DiagramDocument) => {
-    localStorage.setItem('autosave', JSON.stringify(serializeDiagramDocument(doc)));
+  save: async (doc: DiagramDocument) => {
+    localStorage.setItem('autosave', JSON.stringify(await serializeDiagramDocument(doc)));
   }
 };

@@ -1,5 +1,5 @@
 import './App.css';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { snapTestDiagram } from './sample/snap-test';
 import { simpleDiagram } from './sample/simple';
 import { LayerToolWindow } from './react-app/LayerToolWindow';
@@ -79,6 +79,7 @@ import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/d
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -139,9 +140,10 @@ export type ContextMenuTarget = { pos: Point } & (
   | { type: 'selection' }
 );
 
-const App = () => {
-  const defaultDiagram = 2;
-  const [doc, setDoc] = useState(Autosave.load(factory) ?? diagrams[defaultDiagram].document);
+const defaultDiagram = 2;
+
+const Document = (props: { doc: DiagramDocument }) => {
+  const [doc, setDoc] = useState<DiagramDocument>(props.doc);
   const [$d, setDiagram] = useState(doc.diagrams[0]);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   const [dialogState, setDialogState] = useState<MessageDialogState>(MessageDialog.INITIAL_STATE);
@@ -233,9 +235,10 @@ const App = () => {
                 <DocumentSelector
                   diagrams={diagrams}
                   defaultValue={defaultDiagram}
-                  onChange={d => {
-                    setDoc(d);
-                    setDiagram(d.diagrams[0]);
+                  onChange={async d => {
+                    const doc = await d;
+                    setDoc(doc);
+                    setDiagram(doc.diagrams[0]);
                     Autosave.clear();
                   }}
                 />
@@ -431,6 +434,21 @@ const App = () => {
       </ActionsContext.Provider>
     </DiagramContext.Provider>
   );
+};
+
+const App = () => {
+  const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
+
+  useEffect(() => {
+    Promise.all([Autosave.load(factory), diagrams[defaultDiagram].document]).then(
+      ([autosaved, defDiagram]) => {
+        setDoc(autosaved ?? defDiagram);
+      }
+    );
+  }, []);
+
+  if (doc) return <Document doc={doc} />;
+  else return null;
 };
 
 export default App;

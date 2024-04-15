@@ -7,11 +7,12 @@ import { UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { AttachmentConsumer } from './attachment';
 
 // eslint-disable-next-line
 type Snapshot = any;
 
-export interface DiagramElement extends AbstractElement {
+export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   invalidate(uow: UnitOfWork): void;
   detach(uow: UnitOfWork): void;
   duplicate(ctx?: DuplicationContext): DiagramElement;
