@@ -11,6 +11,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { Path } from '@diagram-craft/geometry/path';
 
+/*
 const s = `<shape h="100" w="100" aspect="variable" strokewidth="inherit">
   <connections>
     <constraint x="0" y="0" perimeter="1" />
@@ -33,6 +34,8 @@ const s = `<shape h="100" w="100" aspect="variable" strokewidth="inherit">
 </shape>
 `;
 
+ */
+
 const makeShapeTransform =
   (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {
     if (_type === 'distance') {
@@ -51,25 +54,27 @@ const xNum = (el: Element, name: string) => {
   return Number(el.getAttribute(name));
 };
 
-const parser = new DOMParser();
-const doc = parser.parseFromString(s, 'application/xml');
+/*const parser = new DOMParser();
+const doc = parser.parseFromString(s, 'application/xml');*/
 
 // TODO: Parse constraints as well
 
 export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
-  constructor() {
-    super('diamond', 'DrawioShape', DrawioShapeComponent);
+  constructor(
+    id: string,
+    name: string,
+    public readonly shape: Element
+  ) {
+    super(id, name, DrawioShapeComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const shape = doc.querySelector('shape')!;
-
-    const h = xNum(shape, 'h');
-    const w = xNum(shape, 'w');
+    const h = xNum(this.shape, 'h');
+    const w = xNum(this.shape, 'w');
 
     const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, def.bounds));
 
-    const background = doc.querySelector('background');
+    const background = this.shape.querySelector('background');
 
     if (!background) {
       PathBuilderHelper.rect({ x: 0, y: 0, w, h, r: 0 }, pathBuilder);
@@ -98,9 +103,11 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 
 class DrawioShapeComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new DrawioShapeNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const shapeNodeDefinition = this.shapeNodeDefinition as DrawioShapeNodeDefinition;
 
-    const $shape = doc.querySelector('shape')!;
+    const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPath();
+
+    const $shape = shapeNodeDefinition.shape!;
 
     const w = xNum($shape, 'w');
     const h = xNum($shape, 'h');
@@ -125,7 +132,7 @@ class DrawioShapeComponent extends BaseShape {
       backgroundDrawn = true;
     };
 
-    const $foreground = doc.querySelector('foreground')!;
+    const $foreground = $shape.querySelector('foreground')!;
     const $outlines = $foreground.childNodes;
     for (let i = 0; i < $outlines.length; i++) {
       const $node = $outlines.item(i);

@@ -8,7 +8,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
-  const nodes = diagram.nodeDefinitions.getAll();
+  const nodes = diagram.nodeDefinitions.getForGroup(props.group);
 
   const diagrams = nodes
     .filter(n => n.type !== 'group')
@@ -58,4 +58,5 @@ export const ObjectPicker = (props: Props) => {
 
 type Props = {
   size: number;
+  group?: string | undefined;
 };

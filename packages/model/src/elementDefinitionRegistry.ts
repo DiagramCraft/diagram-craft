@@ -9,6 +9,7 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
 import { DeepReadonly } from '@diagram-craft/utils/types';
+import { unique } from '@diagram-craft/utils/array';
 
 export type NodeCapability = 'children';
 
@@ -70,15 +71,36 @@ export interface NodeDefinition {
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
+  private grouping = new Map<string, string>();
 
-  register(node: NodeDefinition) {
+  register(node: NodeDefinition, group?: string) {
     this.nodes.set(node.type, node);
+    if (group) {
+      this.grouping.set(node.type, group);
+    }
   }
 
   get(type: string): NodeDefinition {
     const r = this.nodes.get(type);
     assert.present(r, 'Not found: ' + type);
     return r;
+  }
+
+  getGroups() {
+    return unique([...this.grouping.values()]);
+  }
+
+  getForGroup(group: string | undefined) {
+    if (!group) {
+      const dest: NodeDefinition[] = [];
+      for (const [k, v] of this.nodes) {
+        if (this.grouping.has(k)) continue;
+        dest.push(v);
+      }
+      return dest;
+    }
+    const nodes = [...this.grouping.entries()].filter(([, v]) => v === group).map(([k]) => k);
+    return nodes.map(n => this.get(n));
   }
 
   getAll() {

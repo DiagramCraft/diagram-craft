@@ -80,6 +80,8 @@ import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
+import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -436,8 +438,34 @@ const Document = (props: { doc: DiagramDocument }) => {
   );
 };
 
+type Stencil = { def: NodeDefinition; group: string };
+
 const App = () => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
+  const [stencils, setStencils] = useState<undefined | Array<Stencil>>();
+  const redraw = useRedraw();
+
+  useEffect(() => {
+    fetch('/public/stencils/kubernetes.xml')
+      .then(res => res.text())
+      .then(r => {
+        const parser = new DOMParser();
+        const $doc = parser.parseFromString(r, 'application/xml');
+
+        const newStencils: Array<Stencil> = [];
+
+        const $shapes = $doc.getElementsByTagName('shape');
+        for (let i = 0; i < $shapes.length; i++) {
+          let name = $shapes[i].getAttribute('name')!;
+          newStencils.push({
+            def: new DrawioShapeNodeDefinition(`drawio-${name}`, name, $shapes[i]),
+            group: 'test'
+          });
+        }
+
+        setStencils(newStencils);
+      });
+  }, []);
 
   useEffect(() => {
     Promise.all([Autosave.load(factory), diagrams[defaultDiagram].document]).then(
@@ -446,6 +474,15 @@ const App = () => {
       }
     );
   }, []);
+
+  useEffect(() => {
+    if (stencils && doc) {
+      stencils.forEach(stencil => {
+        doc.diagrams[0].nodeDefinitions.register(stencil.def, stencil.group);
+      });
+      redraw();
+    }
+  }, [doc, stencils]);
 
   if (doc) return <Document doc={doc} />;
   else return null;

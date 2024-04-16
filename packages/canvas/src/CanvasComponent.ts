@@ -51,7 +51,8 @@ export class CanvasComponent extends Component<CanvasProps> {
                 const nodeDef = diagram.nodeDefinitions.get(node.nodeType);
 
                 return this.subComponent(
-                  (nodeDef as ShapeNodeDefinition).component!,
+                  () =>
+                    new (nodeDef as ShapeNodeDefinition).component!(nodeDef as ShapeNodeDefinition),
                   // @ts-ignore
                   {
                     key: `node-${node.nodeType}-${id}`,

@@ -16,7 +16,7 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 
 type ShapeConstructorContstructor = {
-  new (): BaseShape;
+  new (shapeNodeDefinition: ShapeNodeDefinition): BaseShape;
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {

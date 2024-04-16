@@ -4,7 +4,7 @@ import { GuidesComponent } from '@diagram-craft/canvas/components/GuidesComponen
 import { RotationHandleComponent } from '@diagram-craft/canvas/components/RotationHandleComponent';
 import { ResizeHandlesComponent } from '@diagram-craft/canvas/components/ResizeHandlesComponent';
 import { EdgeSelectionComponent } from '@diagram-craft/canvas/components/EdgeSelectionComponent';
-import { Component, createEffect } from '../component/component';
+import { $cmp, Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CanvasState } from '../EditableCanvasComponent';
@@ -36,13 +36,13 @@ export class SelectionComponent extends Component<CanvasState> {
 
     return svg.g(
       {},
-      !isOnlyEdges && this.subComponent(GuidesComponent, { selection }),
+      !isOnlyEdges && this.subComponent($cmp(GuidesComponent), { selection }),
       svg.g(
         { class: 'svg-selection' },
         !isOnlyEdges &&
           svg.g(
             {},
-            this.subComponent(GroupBoundsComponent, { selection }),
+            this.subComponent(() => new GroupBoundsComponent(), { selection }),
             svg.g(
               {
                 transform: Transforms.rotate(bounds)
@@ -57,13 +57,14 @@ export class SelectionComponent extends Component<CanvasState> {
               !selection.isDragging() &&
                 svg.g(
                   {},
-                  shouldHaveRotation && this.subComponent(RotationHandleComponent, { diagram }),
-                  this.subComponent(ResizeHandlesComponent, { diagram })
+                  shouldHaveRotation &&
+                    this.subComponent($cmp(RotationHandleComponent), { diagram }),
+                  this.subComponent($cmp(ResizeHandlesComponent), { diagram })
                 )
             )
           ),
         ...selection.edges.map(e =>
-          this.subComponent(EdgeSelectionComponent, {
+          this.subComponent($cmp(EdgeSelectionComponent), {
             key: `edge-selection-${e.id}`,
             edge: e,
             diagram
@@ -72,7 +73,7 @@ export class SelectionComponent extends Component<CanvasState> {
         ...selection.nodes
           .filter(n => !!n.labelEdge())
           .map(n =>
-            this.subComponent(LabelNodeSelectionComponent, {
+            this.subComponent($cmp(LabelNodeSelectionComponent), {
               key: `label-node-selection-${n.id}`,
               node: n
             })

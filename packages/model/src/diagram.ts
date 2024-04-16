@@ -71,7 +71,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   constructor(
     readonly id: string,
     readonly name: string,
-    readonly nodeDefinitions: NodeDefinitionRegistry,
+    public readonly nodeDefinitions: NodeDefinitionRegistry,
     readonly edgeDefinitions: EdgeDefinitionRegistry
   ) {
     super();

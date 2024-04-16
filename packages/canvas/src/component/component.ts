@@ -79,6 +79,10 @@ type ComponentContstructor<T> = {
   new (): Component<T>;
 };
 
+export const $cmp = <T>(cmp: ComponentContstructor<T>) => {
+  return () => new cmp();
+};
+
 export abstract class Component<P = Record<string, never>> {
   protected element: VNode | undefined = undefined;
   protected currentProps: P | undefined;
@@ -134,7 +138,7 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   subComponent<P>(
-    component: ComponentContstructor<P>,
+    component: () => Component<P>,
     props: P & { key?: string },
     hooks?: VNodeData['hooks']
   ): VNode & { data: ComponentVNodeData<P> } {
@@ -151,7 +155,7 @@ export abstract class Component<P = Record<string, never>> {
             hooks?.onInsert?.(node);
           },
           onCreate: node => {
-            const cmp = new component();
+            const cmp = component();
             cmp.create(props);
             node.el = cmp.element?.el;
             (node.data as ComponentVNodeData<P>).component = {

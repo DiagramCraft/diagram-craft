@@ -8,7 +8,7 @@ import { BACKGROUND, Tool, ToolContructor } from './tool';
 import { DragLabelComponent } from './components/DragLabelComponent';
 import { ApplicationState, ToolType } from './ApplicationState';
 import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorHandlesComponent';
-import { Component, ComponentVNodeData, createEffect } from './component/component';
+import { $cmp, Component, ComponentVNodeData, createEffect } from './component/component';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
 import { EdgeComponent } from './components/EdgeComponent';
@@ -211,7 +211,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     return html.div({}, [
       html.textarea({ id: 'clipboard', style: 'position: absolute; left: -4000px' }),
-      this.subComponent(DragLabelComponent, { ...canvasState }),
+      this.subComponent($cmp(DragLabelComponent), { ...canvasState }),
       html.svg(
         {
           ...(props.width ? { width: props.width } : {}),
@@ -313,9 +313,9 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             )
           ),
 
-          this.subComponent(DocumentBoundsComponent, { ...canvasState }),
+          this.subComponent($cmp(DocumentBoundsComponent), { ...canvasState }),
 
-          this.subComponent(GridComponent, { ...canvasState }),
+          this.subComponent($cmp(GridComponent), { ...canvasState }),
 
           svg.g(
             {},
@@ -325,7 +325,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                 if (e.type === 'edge') {
                   const edge = diagram.edgeLookup.get(id)!;
                   return this.subComponent(
-                    EdgeComponent,
+                    () => new EdgeComponent(),
                     {
                       key: `edge-${id}`,
                       onDoubleClick,
@@ -358,7 +358,10 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                   const nodeDef = diagram.nodeDefinitions.get(node.nodeType);
 
                   return this.subComponent<BaseShapeProps>(
-                    (nodeDef as ShapeNodeDefinition).component!,
+                    () =>
+                      new (nodeDef as ShapeNodeDefinition).component!(
+                        nodeDef as ShapeNodeDefinition
+                      ),
                     {
                       key: `node-${node.nodeType}-${id}`,
                       def: node,
@@ -393,13 +396,13 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           ),
 
           this.tool.type === 'move'
-            ? this.subComponent(SelectionComponent, { ...canvasState })
+            ? this.subComponent($cmp(SelectionComponent), { ...canvasState })
             : svg.g({}),
 
-          this.subComponent(SelectionMarqueeComponent, { ...canvasState }),
+          this.subComponent($cmp(SelectionMarqueeComponent), { ...canvasState }),
 
           this.tool.type === 'move'
-            ? this.subComponent(AnchorHandlesComponent, { ...canvasState })
+            ? this.subComponent($cmp(AnchorHandlesComponent), { ...canvasState })
             : svg.g({})
         ]
       )

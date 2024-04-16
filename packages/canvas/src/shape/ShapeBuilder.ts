@@ -1,5 +1,5 @@
 import { toInlineCSS, VNode } from '../component/vdom';
-import { Component } from '../component/component';
+import { $cmp, Component } from '../component/component';
 import { ShapeText, ShapeTextProps } from './ShapeText';
 import { DefaultPathRenderer, PathRenderer } from './PathRenderer';
 import * as svg from '../component/vdom-svg';
@@ -42,7 +42,7 @@ export class ShapeBuilder {
     onSizeChange?: (size: Extent) => void
   ) {
     this.nodes.push(
-      cmp.subComponent<ShapeTextProps>(ShapeText, {
+      cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
         key: `text_${id}_${this.props.node.id}`,
         id: `text_${id}_${this.props.node.id}`,
         text: text ?? this.props.nodeProps.text,

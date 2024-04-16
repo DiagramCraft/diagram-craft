@@ -1,4 +1,4 @@
-import { Component } from '../component/component';
+import { $cmp, Component } from '../component/component';
 import { VNode } from '../component/vdom';
 import { Tool } from '../tool';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
@@ -58,7 +58,7 @@ export type BaseShapeBuildProps = {
 };
 
 export abstract class BaseShape extends Component<BaseShapeProps> {
-  constructor() {
+  constructor(protected readonly shapeNodeDefinition: ShapeNodeDefinition) {
     super();
   }
 
@@ -128,13 +128,13 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       style.fill = `url(#${patternId})`;
 
       /* An image based fill has both color adjustments and the fill itself */
-      children.push(this.subComponent(PatternFillColorAdjustment, { patternId, nodeProps }));
-      children.push(this.subComponent(FillPattern, { patternId, nodeProps, def: props.def }));
+      children.push(this.subComponent($cmp(PatternFillColorAdjustment), { patternId, nodeProps }));
+      children.push(this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.def }));
     } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
       const patternId = `node-${props.def.id}-pattern`;
       style.fill = `url(#${patternId})`;
 
-      children.push(this.subComponent(FillPattern, { patternId, nodeProps, def: props.def }));
+      children.push(this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.def }));
     }
 
     /* Build shape ******************************************************************* */
@@ -234,12 +234,13 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     };
 
     if (isNode(child)) {
-      const nodeComponent = (
-        props.node.diagram.nodeDefinitions.get(child.nodeType) as ShapeNodeDefinition
-      ).component!;
-      return this.subComponent(nodeComponent, p);
+      let nodeDefinition = props.node.diagram.nodeDefinitions.get(
+        child.nodeType
+      ) as ShapeNodeDefinition;
+      const nodeComponent = nodeDefinition.component!;
+      return this.subComponent(() => new nodeComponent(nodeDefinition), p);
     } else {
-      return this.subComponent(EdgeComponent, p);
+      return this.subComponent($cmp(EdgeComponent), p);
     }
   }
 }

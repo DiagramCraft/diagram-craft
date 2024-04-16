@@ -14,7 +14,6 @@ import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -29,8 +28,6 @@ export const defaultNodeRegistry = () => {
   dest.register(new DiamondNodeDefinition());
   dest.register(new GenericPathNodeDefinition());
   dest.register(new ContainerNodeDefinition());
-
-  dest.register(new DrawioShapeNodeDefinition());
 
   // Note: group must be the last element
   dest.register(new GroupNodeDefinition());
