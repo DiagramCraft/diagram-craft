@@ -88,6 +88,11 @@ export class PathBuilder {
     this.path.push(['L', tp.x, tp.y]);
   }
 
+  close() {
+    precondition.is.present(this.start);
+    this.path.push(['L', this.start.x, this.start.y]);
+  }
+
   arcTo(
     p: Point,
     rx: number,
@@ -98,6 +103,7 @@ export class PathBuilder {
   ) {
     const tp = this.transform(p);
     const tr = this.transform({ x: rx, y: ry }, 'distance');
+
     this.path.push(['A', tr.x, tr.y, angle, large_arc_flag, sweep_flag, tp.x, tp.y]);
   }
 
@@ -135,6 +141,10 @@ export class PathBuilder {
       Point.ofTuple(this.applyPointRotationArray(this.start ?? Point.ORIGIN)),
       this.applyPathRotation(this.path)
     );
+  }
+
+  isEmpty() {
+    return this.path.length === 0;
   }
 
   private applyPointRotationArray(point: Point): [number, number] {
@@ -179,3 +189,13 @@ export class PathBuilder {
     });
   }
 }
+
+export const PathBuilderHelper = {
+  rect: (box: Box, b: PathBuilder) => {
+    b.moveTo(Point.of(box.x, box.y));
+    b.lineTo(Point.of(box.x + box.w, box.y));
+    b.lineTo(Point.of(box.x + box.w, box.y + box.h));
+    b.lineTo(Point.of(box.x, box.y + box.h));
+    b.close();
+  }
+};

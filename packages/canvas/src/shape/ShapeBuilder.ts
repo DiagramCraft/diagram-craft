@@ -56,14 +56,21 @@ export class ShapeBuilder {
     );
   }
 
-  boundaryPath(path: Path, textId: undefined | string = '1', map: (n: VNode) => VNode = a => a) {
-    const pathRenderer: PathRenderer = this.props.node.props.effects?.sketch
+  boundaryPath(
+    path: Path,
+    props: NodeProps | undefined = undefined,
+    textId: undefined | string = '1',
+    map: (n: VNode) => VNode = a => a
+  ) {
+    const propsInEffect = props ?? (this.props.node.propsForRendering as NodeProps);
+
+    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
       ? new SketchPathRenderer()
       : new DefaultPathRenderer();
 
     const paths = pathRenderer.render(this.props.node, {
       path: path,
-      style: this.props.style
+      style: props ? this.makeStyle(props) : this.props.style
     });
     this.nodes.push(
       ...paths
@@ -79,6 +86,38 @@ export class ShapeBuilder {
             mousedown: this.props.onMouseDown,
             ...(textId ? { dblclick: this.makeOnDblclickHandle(textId) } : {})
           }
+        }))
+        .map(p => map(svg.path(p)))
+    );
+  }
+
+  path(paths: Path[], props: NodeProps | undefined = undefined, map: (n: VNode) => VNode = a => a) {
+    const propsInEffect = props ?? (this.props.node.propsForRendering as NodeProps);
+    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
+      ? new SketchPathRenderer()
+      : new DefaultPathRenderer();
+
+    const style = this.makeStyle(propsInEffect);
+
+    const renderedPaths = paths.map(p => pathRenderer.render(this.props.node, { path: p, style }));
+
+    const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
+    for (let i = 0; i < renderedPaths[0].length; i++) {
+      joinedPaths.push({
+        path: renderedPaths.map(p => p[i].path).join(' '),
+        style: renderedPaths[0][i].style
+      });
+    }
+
+    this.nodes.push(
+      ...joinedPaths
+        .map(p => ({
+          d: p.path,
+          x: this.props.node.bounds.x.toString(),
+          y: this.props.node.bounds.y.toString(),
+          width: this.props.node.bounds.w.toString(),
+          height: this.props.node.bounds.h.toString(),
+          style: toInlineCSS(p.style) + '; pointer-events: none;'
         }))
         .map(p => map(svg.path(p)))
     );
@@ -132,5 +171,14 @@ export class ShapeBuilder {
       .getElementById(`text_${textId}_${this.props.node.id}`)
       ?.getElementsByClassName('svg-node__text')
       .item(0) as HTMLDivElement | undefined | null;
+  }
+
+  private makeStyle(nodeProps: NodeProps): Partial<CSSStyleDeclaration> {
+    const style: Partial<CSSStyleDeclaration> = {};
+    style.strokeWidth = nodeProps.stroke!.width?.toString();
+    style.stroke = nodeProps.stroke!.color;
+    style.fill = nodeProps.fill!.color;
+
+    return style;
   }
 }

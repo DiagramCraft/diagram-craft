@@ -1,17 +1,17 @@
 export class VerifyNotReached extends Error {
   constructor(msg?: string) {
-    super(msg ?? 'Should not be reached');
+    super('Should not be reached ' + (msg ?? ''));
   }
 }
 
 export class NotImplementedYet extends Error {
   constructor(msg?: string) {
-    super(msg ?? 'Not implemented yet');
+    super('Not implemented yet ' + (msg ?? ''));
   }
 }
 
-export const VERIFY_NOT_REACHED = (): never => {
-  throw new VerifyNotReached();
+export const VERIFY_NOT_REACHED = (s?: string): never => {
+  throw new VerifyNotReached(s);
 };
 
 export const NOT_IMPLEMENTED_YET = (): never => {

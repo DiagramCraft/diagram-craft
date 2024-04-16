@@ -101,7 +101,7 @@ class GenericPathComponent extends BaseShape {
       );
     }
 
-    shapeBuilder.boundaryPath(path, undefined, v => {
+    shapeBuilder.boundaryPath(path, undefined, undefined, v => {
       v.data.on ??= {};
       v.data.on.dblclick =
         props.tool?.type === 'node' ? onDoubleClick : shapeBuilder.makeOnDblclickHandle();
