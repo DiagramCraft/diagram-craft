@@ -216,6 +216,11 @@ class DrawioShapeComponent extends BaseShape {
               Point.of(xNum($pce, 'x1'), xNum($pce, 'y1')),
               Point.of(xNum($pce, 'x2'), xNum($pce, 'y2'))
             );
+          } else if ($pc.nodeName === 'quad') {
+            pathBuilder.quadTo(
+              Point.of(xNum($pce, 'x2'), xNum($pce, 'y2')),
+              Point.of(xNum($pce, 'x1'), xNum($pce, 'y1'))
+            );
           } else if ($pc.nodeName === 'arc') {
             pathBuilder.arcTo(
               Point.of(xNum($pce, 'x'), xNum($pce, 'y')),
