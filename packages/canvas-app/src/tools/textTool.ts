@@ -27,7 +27,7 @@ export class TextTool extends AbstractTool {
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
     const nodeType = 'text';
-    const nodeDef = this.diagram.nodeDefinitions.get(nodeType);
+    const nodeDef = this.diagram.document.nodeDefinitions.get(nodeType);
 
     const nd = new DiagramNode(
       newid(),
@@ -50,7 +50,7 @@ export class TextTool extends AbstractTool {
     this.diagram.selectionState.toggle(nd);
 
     setTimeout(() => {
-      this.diagram.nodeDefinitions.get(nodeType).requestFocus(nd);
+      this.diagram.document.nodeDefinitions.get(nodeType).requestFocus(nd);
     }, 10);
 
     this.resetTool();

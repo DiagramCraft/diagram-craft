@@ -1,16 +1,24 @@
 import { SnapManager } from './snapManager';
 import { DiagramNode } from '../diagramNode';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../elementDefinitionRegistry';
 import { Diagram } from '../diagram';
 import { Layer } from '../diagramLayer';
 import { UnitOfWork } from '../unitOfWork';
 import { PerformanceTest } from '@diagram-craft/utils/perftest';
+import { DiagramDocument } from '../diagramDocument';
+import {
+  defaultEdgeRegistry,
+  defaultNodeRegistry
+} from '@diagram-craft/canvas-app/defaultRegistry';
 
 export class SnapManagerPerftest implements PerformanceTest {
   private snapManager: SnapManager | undefined;
 
   setup(): void {
-    const d = new Diagram('1', '1', new NodeDefinitionRegistry(), new EdgeDefinitionRegistry());
+    const d = new Diagram(
+      '1',
+      '1',
+      new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry())
+    );
     d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.throwaway(d));
 
     UnitOfWork.execute(d, uow => {

@@ -7,7 +7,7 @@ import { newid } from '@diagram-craft/utils/id';
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: DragEvent) => {
     const nodeType = e.dataTransfer!.getData('application/x-diagram-craft-node-type');
-    const nodeDef = $d.nodeDefinitions.get(nodeType);
+    const nodeDef = $d.document.nodeDefinitions.get(nodeType);
 
     const nd = new DiagramNode(
       newid(),
@@ -29,7 +29,7 @@ export const canvasDropHandler = ($d: Diagram) => {
 
     if (nodeType === 'text') {
       setTimeout(() => {
-        $d.nodeDefinitions.get(nodeType).requestFocus(nd);
+        $d.document.nodeDefinitions.get(nodeType).requestFocus(nd);
       }, 10);
     }
   };

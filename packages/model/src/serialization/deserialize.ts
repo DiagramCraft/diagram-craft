@@ -159,14 +159,19 @@ export const deserializeDiagramElements = (
   return elements;
 };
 
+export type DocumentFactory = () => DiagramDocument;
+export type DiagramFactory<T extends Diagram> = (d: SerializedDiagram, doc: DiagramDocument) => T;
+
 export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,
-  factory: (d: SerializedDiagram) => T
+  documentFactory: DocumentFactory,
+  diagramFactory: DiagramFactory<T>
 ): Promise<DiagramDocument> => {
   const diagrams = document.diagrams;
-  const dest = deserializeDiagrams(diagrams, factory);
 
-  const doc = new DiagramDocument(dest);
+  const doc = documentFactory();
+  const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
+  dest.forEach(d => doc.addDiagram(d));
 
   if (document.attachments) {
     for (const val of Object.values(document.attachments)) {
@@ -179,8 +184,9 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 };
 
 const deserializeDiagrams = <T extends Diagram>(
+  doc: DiagramDocument,
   diagrams: ReadonlyArray<SerializedDiagram>,
-  factory: (d: SerializedDiagram) => T
+  diagramFactory: DiagramFactory<T>
 ) => {
   const dest: T[] = [];
   for (const $d of diagrams) {
@@ -198,7 +204,8 @@ const deserializeDiagrams = <T extends Diagram>(
       }
     }
 
-    const newDiagram = factory($d);
+    const newDiagram = diagramFactory($d, doc);
+
     const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {
       const layer = new Layer(l.id, l.name, [], newDiagram);
@@ -222,7 +229,7 @@ const deserializeDiagrams = <T extends Diagram>(
     }
     dest.push(newDiagram);
 
-    newDiagram.diagrams = deserializeDiagrams($d.diagrams, factory);
+    newDiagram.diagrams = deserializeDiagrams(doc, $d.diagrams, diagramFactory);
   }
 
   return dest;

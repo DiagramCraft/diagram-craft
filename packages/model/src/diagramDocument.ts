@@ -5,6 +5,8 @@ import { Diagram } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { range } from '@diagram-craft/utils/array';
+import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
+import { precondition } from '@diagram-craft/utils/assert';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -47,9 +49,13 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     }
   };
 
-  constructor(public readonly diagrams: Array<Diagram>) {
+  diagrams: Diagram[] = [];
+
+  constructor(
+    public readonly nodeDefinitions: NodeDefinitionRegistry,
+    public readonly edgeDefinitions: EdgeDefinitionRegistry
+  ) {
     super();
-    this.diagrams.forEach(d => (d.document = this));
   }
 
   getById(id: string) {
@@ -60,6 +66,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   }
 
   addDiagram(diagram: Diagram) {
+    precondition.is.false(!!this.diagrams.find(d => d.id === diagram.id));
+
     this.diagrams.push(diagram);
     diagram.document = this;
     this.emit('diagramadded', { node: diagram });

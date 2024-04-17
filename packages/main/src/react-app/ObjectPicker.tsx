@@ -8,7 +8,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
-  const nodes = diagram.nodeDefinitions.getForGroup(props.group);
+  const nodes = diagram.document.nodeDefinitions.getForGroup(props.group);
 
   const diagrams = nodes
     .filter(n => n.type !== 'group')
@@ -26,14 +26,16 @@ export const ObjectPicker = (props: Props) => {
       const x = (maxWidth - w) / 2 + margin;
       const y = (maxHeight - h) / 2 + margin;
 
-      const dest = new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions);
+      const dest = new Diagram(
+        n.type,
+        n.type,
+        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+      );
       dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.throwaway(dest));
       dest.layers.active.addElement(
         new DiagramNode(n.type, n.type, { x, y, w, h, r: 0 }, dest, dest.layers.active),
         new UnitOfWork(dest)
       );
-
-      dest.document = new DiagramDocument([dest]);
 
       return dest;
     });

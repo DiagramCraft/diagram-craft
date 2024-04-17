@@ -44,7 +44,7 @@ const intersectWithNode = (
   diagram: Diagram
 ): PointOnPath => {
   const anchor = endpoint.node.getAnchor(endpoint.anchor);
-  const nodeDefinition = diagram.nodeDefinitions.get(endpoint.node.nodeType);
+  const nodeDefinition = diagram.document.nodeDefinitions.get(endpoint.node.nodeType);
 
   // TODO: [896F9523] Support multiple paths
   const endIntersections = path.intersections(

@@ -65,10 +65,6 @@ import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';
 import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
 import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
 import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
 import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationState';
 import { UserState } from '@diagram-craft/canvas/UserState';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
@@ -82,6 +78,10 @@ import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  defaultEdgeRegistry,
+  defaultNodeRegistry
+} from '@diagram-craft/canvas-app/defaultRegistry';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -91,22 +91,26 @@ const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   (e as any)._triggered = true;
 };
 
-const factory = (d: SerializedDiagram) => {
-  return new Diagram(d.id, d.name, defaultNodeRegistry(), defaultEdgeRegistry());
+const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
+  return new Diagram(d.id, d.name, doc);
+};
+
+const documentFactory = () => {
+  return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
 };
 
 const diagrams = [
   {
     name: 'Snap test',
-    document: deserializeDiagramDocument(snapTestDiagram, factory)
+    document: deserializeDiagramDocument(snapTestDiagram, documentFactory, diagramFactory)
   },
   {
     name: 'Test',
-    document: deserializeDiagramDocument(testDiagram, factory)
+    document: deserializeDiagramDocument(testDiagram, documentFactory, diagramFactory)
   },
   {
     name: 'Simple',
-    document: deserializeDiagramDocument(simpleDiagram, factory)
+    document: deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
   }
 ];
 
@@ -446,7 +450,7 @@ const App = () => {
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/stencils/eip.xml')
+    fetch('/stencils/basic.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();
@@ -468,17 +472,18 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    Promise.all([Autosave.load(factory), diagrams[defaultDiagram].document]).then(
-      ([autosaved, defDiagram]) => {
-        setDoc(autosaved ?? defDiagram);
-      }
-    );
+    Promise.all([
+      Autosave.load(documentFactory, diagramFactory),
+      diagrams[defaultDiagram].document
+    ]).then(([autosaved, defDiagram]) => {
+      setDoc(autosaved ?? defDiagram);
+    });
   }, []);
 
   useEffect(() => {
     if (stencils && doc) {
       stencils.forEach(stencil => {
-        doc.diagrams[0].nodeDefinitions.register(stencil.def, stencil.group);
+        doc.nodeDefinitions.register(stencil.def, stencil.group);
       });
       redraw();
     }

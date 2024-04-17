@@ -4,7 +4,6 @@ import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuil
 import { Point } from '@diagram-craft/geometry/point';
 import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
@@ -78,7 +77,8 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
       if (isShapeElement($el)) {
         parseShapeElement($el, pathBuilder);
       } else {
-        VERIFY_NOT_REACHED($el.nodeName);
+        console.log(`No support for ${$el.nodeName}`);
+        //VERIFY_NOT_REACHED();
       }
     }
 

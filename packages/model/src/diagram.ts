@@ -1,7 +1,6 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { Layer, LayerManager } from './diagramLayer';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
@@ -71,10 +70,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   constructor(
     readonly id: string,
     readonly name: string,
-    public readonly nodeDefinitions: NodeDefinitionRegistry,
-    readonly edgeDefinitions: EdgeDefinitionRegistry
+    document: DiagramDocument
   ) {
     super();
+
+    this.#document = document;
 
     // TODO: We should be able to remove this
     const toggleMustCalculateIntersections = () => {

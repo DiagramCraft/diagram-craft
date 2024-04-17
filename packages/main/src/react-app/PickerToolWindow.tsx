@@ -6,7 +6,7 @@ import { useDiagram } from './context/DiagramContext';
 
 export const PickerToolWindow = () => {
   const diagram = useDiagram();
-  const groups = diagram.nodeDefinitions.getGroups();
+  const groups = diagram.document.nodeDefinitions.getGroups();
 
   // TODO: Handle folding... must be done manually most likely
   return (

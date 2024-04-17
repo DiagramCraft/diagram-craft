@@ -85,7 +85,7 @@ export class EdgeTextAddAction extends AbstractAction {
 
     // Setting focus must be done after the element has been successfully rendered
     setTimeout(() => {
-      this.diagram.nodeDefinitions.get('text').requestFocus(textNode);
+      this.diagram.document.nodeDefinitions.get('text').requestFocus(textNode);
     }, 10);
   }
 }

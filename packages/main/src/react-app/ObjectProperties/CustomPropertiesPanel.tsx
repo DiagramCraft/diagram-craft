@@ -36,7 +36,7 @@ export const CustomPropertiesPanel = (props: Props) => {
     return <div></div>;
   }
 
-  const def = diagram.nodeDefinitions.get(node.nodeType)!;
+  const def = diagram.document.nodeDefinitions.get(node.nodeType)!;
   const customProperties = def.getCustomProperties(node);
   if (Object.keys(customProperties).length === 0) {
     return <div></div>;

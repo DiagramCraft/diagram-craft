@@ -355,7 +355,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                   );
                 } else {
                   const node = diagram.nodeLookup.get(id)!;
-                  const nodeDef = diagram.nodeDefinitions.get(node.nodeType);
+                  const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
 
                   return this.subComponent<BaseShapeProps>(
                     () =>

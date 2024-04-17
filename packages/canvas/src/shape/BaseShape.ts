@@ -234,7 +234,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
     };
 
     if (isNode(child)) {
-      let nodeDefinition = props.node.diagram.nodeDefinitions.get(
+      const nodeDefinition = props.node.diagram.document.nodeDefinitions.get(
         child.nodeType
       ) as ShapeNodeDefinition;
       const nodeComponent = nodeDefinition.component!;

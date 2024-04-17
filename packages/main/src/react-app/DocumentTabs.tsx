@@ -3,10 +3,6 @@ import { useRedraw } from './useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { TbFiles, TbPlus } from 'react-icons/tb';
 import { DocumentsContextMenu } from './DocumentsContextMenu';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -59,8 +55,7 @@ export const DocumentTabs = (props: Props) => {
             const diagram = new Diagram(
               id,
               'Sheet ' + (props.document.diagrams.length + 1).toString(),
-              defaultNodeRegistry(),
-              defaultEdgeRegistry()
+              props.document
             );
             diagram.layers.add(
               new Layer('default', 'Default', [], diagram),

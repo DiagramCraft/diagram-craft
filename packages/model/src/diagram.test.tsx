@@ -7,6 +7,7 @@ import { UnitOfWork } from './unitOfWork';
 import { TestNodeDefinition } from './TestNodeDefinition';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { newid } from '@diagram-craft/utils/id';
+import { DiagramDocument } from './diagramDocument';
 
 const bounds = {
   x: 0,
@@ -21,7 +22,12 @@ describe('Diagram', () => {
     const registry = new NodeDefinitionRegistry();
     registry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
-    const diagram = new Diagram(newid(), 'Name', registry, new EdgeDefinitionRegistry());
+    const diagram = new Diagram(
+      newid(),
+      'Name',
+      new DiagramDocument(registry, new EdgeDefinitionRegistry())
+    );
+
     const layer1 = new Layer(newid(), 'Layer 1', [], diagram);
     diagram.layers.add(layer1, new UnitOfWork(diagram));
 
@@ -46,7 +52,11 @@ describe('Diagram', () => {
     const nodeDefinitionRegistry = new NodeDefinitionRegistry();
     nodeDefinitionRegistry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
-    const diagram = new Diagram('1', '1', nodeDefinitionRegistry, new EdgeDefinitionRegistry());
+    const diagram = new Diagram(
+      '1',
+      '1',
+      new DiagramDocument(nodeDefinitionRegistry, new EdgeDefinitionRegistry())
+    );
     diagram.layers.add(new Layer('default', 'Default', [], diagram), new UnitOfWork(diagram));
 
     const uow = new UnitOfWork(diagram);

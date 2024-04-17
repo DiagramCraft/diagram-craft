@@ -14,7 +14,7 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
 
   let pathBounds: Box | undefined = undefined;
   if (props.effects?.reflection) {
-    const paths = node.diagram.nodeDefinitions.get(node.nodeType).getBoundingPath(node);
+    const paths = node.diagram.document.nodeDefinitions.get(node.nodeType).getBoundingPath(node);
 
     // TODO: [896F9523] Support multiple paths
     pathBounds = paths.singularPath().bounds();

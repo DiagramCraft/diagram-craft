@@ -15,7 +15,7 @@ import { newid } from '@diagram-craft/utils/id';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
-  const nodes = diagram.nodeDefinitions.getAll();
+  const nodes = diagram.document.nodeDefinitions.getAll();
 
   const addNode = useCallback(
     (nodeType: string) => {
@@ -67,7 +67,11 @@ export const NodeTypePopup = (props: Props) => {
   const diagrams = nodes
     .filter(n => n.type !== 'group')
     .map(n => {
-      const dest = new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions);
+      const dest = new Diagram(
+        n.type,
+        n.type,
+        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+      );
       dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.throwaway(dest));
       dest.layers.active.addElement(
         new DiagramNode(
@@ -85,7 +89,6 @@ export const NodeTypePopup = (props: Props) => {
         ),
         new UnitOfWork(dest)
       );
-      dest.document = new DiagramDocument([dest]);
       return dest;
     });
 

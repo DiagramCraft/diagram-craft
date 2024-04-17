@@ -48,7 +48,7 @@ export class CanvasComponent extends Component<CanvasProps> {
                 });
               } else {
                 const node = diagram.nodeLookup.get(id)!;
-                const nodeDef = diagram.nodeDefinitions.get(node.nodeType);
+                const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
 
                 return this.subComponent(
                   () =>

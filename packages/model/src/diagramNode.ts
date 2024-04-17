@@ -65,7 +65,7 @@ export class DiagramNode
   }
 
   getDefinition() {
-    return this.diagram.nodeDefinitions.get(this.#nodeType);
+    return this.diagram.document.nodeDefinitions.get(this.#nodeType);
   }
 
   get nodeType() {
@@ -93,7 +93,7 @@ export class DiagramNode
     this.#propsCache = deepMerge(
       {},
       nodeDefaults,
-      this.diagram.nodeDefinitions
+      this.diagram.document.nodeDefinitions
         .get(this.nodeType)
         .getDefaultProps('canvas') as Partial<NodeProps>,
       styleProps ?? {},
@@ -571,7 +571,7 @@ export class DiagramNode
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
 
-    const def = this.diagram.nodeDefinitions.get(this.nodeType);
+    const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
 
     const paths = def.getBoundingPath(this);
 
