@@ -446,7 +446,7 @@ const App = () => {
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/stencils/kubernetes.xml')
+    fetch('/stencils/eip.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();

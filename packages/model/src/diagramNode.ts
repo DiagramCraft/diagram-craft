@@ -575,15 +575,14 @@ export class DiagramNode
 
     const paths = def.getBoundingPath(this);
 
-    // TODO: [896F9523] Support multiple paths
-    const path = paths.singularPath();
+    for (const path of paths.all()) {
+      for (const p of path.segments) {
+        const { x, y } = p.point(0.5);
+        const lx = round((x - this.bounds.x) / this.bounds.w);
+        const ly = round((y - this.bounds.y) / this.bounds.h);
 
-    for (const p of path.segments) {
-      const { x, y } = p.point(0.5);
-      const lx = round((x - this.bounds.x) / this.bounds.w);
-      const ly = round((y - this.bounds.y) / this.bounds.h);
-
-      newAnchors.push({ point: { x: lx, y: ly }, clip: false });
+        newAnchors.push({ point: { x: lx, y: ly }, clip: false });
+      }
     }
 
     this.#anchors = newAnchors;

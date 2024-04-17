@@ -66,7 +66,7 @@ export class PathBuilder {
   private rotation: number = 0;
   private centerOfRotation: Point = Point.ORIGIN;
 
-  private paths: Array<Path> = [];
+  private paths: Path[] = [];
 
   constructor(private readonly transform: PathBuilderTransform = p => p) {}
 
@@ -94,11 +94,7 @@ export class PathBuilder {
   }
 
   moveTo(p: Point) {
-    if (this.start) {
-      this.flushPath();
-    }
-
-    //precondition.is.notPresent(this.start);
+    if (this.start) this.flushPath();
     this.start = this.transform(p);
   }
 
@@ -160,10 +156,6 @@ export class PathBuilder {
     return new CompoundPath(this.paths);
   }
 
-  isEmpty() {
-    return this.path.length === 0;
-  }
-
   private flushPath() {
     if (!this.start) return;
 
@@ -175,6 +167,7 @@ export class PathBuilder {
     );
 
     this.start = undefined;
+    this.path = [];
   }
 
   private applyPointRotationArray(point: Point): [number, number] {
