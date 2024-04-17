@@ -450,7 +450,7 @@ const App = () => {
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/stencils/basic.xml')
+    fetch('/stencils/sitemap.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();

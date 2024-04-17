@@ -217,6 +217,9 @@ class DrawioShapeComponent extends BaseShape {
       } else if ($el.nodeName === 'fillcolor') {
         style.fill!.color = $el.getAttribute('color')!;
         style.fill!.type = 'solid';
+      } else if ($el.nodeName === 'alpha') {
+        style.fill!.color = `color(from ${style.fill!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+        style.fill!.type = 'solid';
       } else if ($el.nodeName === 'strokewidth') {
         style.stroke!.width = xNum($el, 'width');
       } else if (isShapeElement($el)) {
