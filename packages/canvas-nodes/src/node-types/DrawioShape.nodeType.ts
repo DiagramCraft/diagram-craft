@@ -40,12 +40,20 @@ function isShapeElement($el: Element) {
 }
 
 export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
+  private defaultAspectRatio: number;
+
   constructor(
     id: string,
     name: string,
     public readonly shape: Element
   ) {
     super(id, name, DrawioShapeComponent);
+
+    this.defaultAspectRatio = xNum(this.shape, 'w') / xNum(this.shape, 'h');
+  }
+
+  getDefaultAspectRatio() {
+    return this.defaultAspectRatio;
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

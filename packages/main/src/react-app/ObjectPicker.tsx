@@ -13,22 +13,23 @@ export const ObjectPicker = (props: Props) => {
   const diagrams = nodes
     .filter(n => n.type !== 'group')
     .map(n => {
+      const ar = n.getDefaultAspectRatio();
+
+      const margin = 1;
+
+      const maxWidth = props.size - 2 * margin;
+      const maxHeight = props.size - 2 * margin;
+
+      const w = ar < 1 ? maxWidth * ar : maxWidth;
+      const h = ar < 1 ? maxHeight : maxHeight / ar;
+
+      const x = (maxWidth - w) / 2 + margin;
+      const y = (maxHeight - h) / 2 + margin;
+
       const dest = new Diagram(n.type, n.type, diagram.nodeDefinitions, diagram.edgeDefinitions);
       dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.throwaway(dest));
       dest.layers.active.addElement(
-        new DiagramNode(
-          n.type,
-          n.type,
-          {
-            x: 1,
-            y: 1,
-            w: props.size - 2,
-            h: props.size - 2,
-            r: 0
-          },
-          dest,
-          dest.layers.active
-        ),
+        new DiagramNode(n.type, n.type, { x, y, w, h, r: 0 }, dest, dest.layers.active),
         new UnitOfWork(dest)
       );
 

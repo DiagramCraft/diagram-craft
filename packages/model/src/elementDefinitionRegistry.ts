@@ -51,6 +51,8 @@ export interface NodeDefinition {
 
   getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;
 
+  getDefaultAspectRatio(): number;
+
   // TODO: This should support adding children and more than just the size
   getInitialConfig(): { size: Extent };
 

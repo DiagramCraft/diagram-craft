@@ -31,6 +31,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   abstract getBoundingPathBuilder(node: DiagramNode): PathBuilder;
 
+  getDefaultAspectRatio() {
+    return 1;
+  }
+
   getBoundingPath(node: DiagramNode): CompoundPath {
     const bnd = node.bounds;
 
@@ -52,7 +56,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getInitialConfig(): { size: Extent } {
-    return { size: { w: 100, h: 100 } };
+    return { size: { w: 100 * this.getDefaultAspectRatio(), h: 100 } };
   }
 
   requestFocus(node: DiagramNode): void {

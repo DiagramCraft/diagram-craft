@@ -29,6 +29,10 @@ export class TestNodeDefinition implements NodeDefinition {
     return pb.getPaths();
   }
 
+  getDefaultAspectRatio() {
+    return 1;
+  }
+
   getBoundingPathBuilder(_node: DiagramNode): PathBuilder {
     return new PathBuilder();
   }
@@ -42,7 +46,7 @@ export class TestNodeDefinition implements NodeDefinition {
   }
 
   getInitialConfig(): { size: Extent } {
-    return { size: { w: 100, h: 100 } };
+    return { size: { w: 100 * this.getDefaultAspectRatio(), h: 100 } };
   }
 
   onChildChanged(_node: DiagramNode, _uow: UnitOfWork): void {}
