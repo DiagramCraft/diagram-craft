@@ -44,7 +44,8 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   constructor(
     id: string,
     name: string,
-    public readonly shape: Element
+    public readonly shape: Element,
+    private readonly defaultNodeProps?: NodeProps
   ) {
     super(id, name, DrawioShapeComponent);
 
@@ -83,6 +84,10 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     }
 
     return pathBuilder;
+  }
+
+  getDefaultProps(): NodeProps {
+    return this.defaultNodeProps ?? {};
   }
 }
 

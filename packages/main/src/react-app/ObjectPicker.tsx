@@ -33,7 +33,14 @@ export const ObjectPicker = (props: Props) => {
       );
       dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.throwaway(dest));
       dest.layers.active.addElement(
-        new DiagramNode(n.type, n.type, { x, y, w, h, r: 0 }, dest, dest.layers.active),
+        new DiagramNode(
+          n.type,
+          n.type,
+          { x, y, w, h, r: 0 },
+          dest,
+          dest.layers.active,
+          n.getDefaultProps('picker')
+        ),
         new UnitOfWork(dest)
       );
 

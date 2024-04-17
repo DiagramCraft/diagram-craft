@@ -462,7 +462,14 @@ const App = () => {
         for (let i = 0; i < $shapes.length; i++) {
           const name = $shapes[i].getAttribute('name')!;
           newStencils.push({
-            def: new DrawioShapeNodeDefinition(`drawio-${name}`, name, $shapes[i]),
+            def: new DrawioShapeNodeDefinition(`drawio-${name}`, name, $shapes[i], {
+              fill: {
+                color: 'var(--blue-7)'
+              },
+              stroke: {
+                color: 'var(--blue-7)'
+              }
+            }),
             group: 'test'
           });
         }

@@ -85,7 +85,8 @@ export const NodeTypePopup = (props: Props) => {
             r: 0
           },
           dest,
-          dest.layers.active
+          dest.layers.active,
+          n.getDefaultProps('picker')
         ),
         new UnitOfWork(dest)
       );
