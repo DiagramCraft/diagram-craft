@@ -2,8 +2,7 @@ import { DiagramNode } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
-import { Path } from '@diagram-craft/geometry/path';
+import { CompoundPath, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
@@ -47,7 +46,7 @@ export interface NodeDefinition {
   supports(capability: NodeCapability): boolean;
 
   getBoundingPathBuilder(node: DiagramNode): PathBuilder;
-  getBoundingPath(node: DiagramNode): Path;
+  getBoundingPath(node: DiagramNode): CompoundPath;
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
 
   getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;

@@ -61,25 +61,23 @@ class RegularPolygonComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new RegularPolygonNodeDefinition()
       .getBoundingPathBuilder(props.node)
-      .getPath();
+      .getPaths();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);
 
-    shapeBuilder.controlPoint(
-      boundary.segments[1].start.x,
-      boundary.segments[1].start.y,
-      (x, y, uow) => {
-        const angle =
-          Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
-        const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
+    const path = boundary.singularPath();
 
-        props.node.updateProps(props => {
-          props.regularPolygon ??= {};
-          props.regularPolygon.numberOfSides = numberOfSides;
-        }, uow);
-        return `Sides: ${numberOfSides}`;
-      }
-    );
+    shapeBuilder.controlPoint(path.segments[1].start.x, path.segments[1].start.y, (x, y, uow) => {
+      const angle =
+        Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
+      const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
+
+      props.node.updateProps(props => {
+        props.regularPolygon ??= {};
+        props.regularPolygon.numberOfSides = numberOfSides;
+      }, uow);
+      return `Sides: ${numberOfSides}`;
+    });
   }
 }

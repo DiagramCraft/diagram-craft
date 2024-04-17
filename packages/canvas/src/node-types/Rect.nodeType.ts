@@ -24,7 +24,7 @@ export class RectNodeDefinition extends ShapeNodeDefinition {
 
 class RectComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

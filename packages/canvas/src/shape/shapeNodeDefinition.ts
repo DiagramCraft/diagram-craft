@@ -1,6 +1,5 @@
 import { BaseShape } from './BaseShape';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
-import { Path } from '@diagram-craft/geometry/path';
+import { CompoundPath, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
@@ -32,14 +31,14 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   abstract getBoundingPathBuilder(node: DiagramNode): PathBuilder;
 
-  getBoundingPath(node: DiagramNode): Path {
+  getBoundingPath(node: DiagramNode): CompoundPath {
     const bnd = node.bounds;
 
     const pb = this.getBoundingPathBuilder(node);
     if (round(bnd.r) !== 0) {
       pb.setRotation(bnd.r, Box.center(bnd));
     }
-    return pb.getPath();
+    return pb.getPaths();
   }
 
   getCustomProperties(_node: DiagramNode): Record<string, CustomPropertyDefinition> {

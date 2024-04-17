@@ -130,20 +130,28 @@ export class EditablePath {
         );
       }
     }
-    return pb.getPath();
+
+    return pb.getPaths().singularPath();
   }
 
   resizePathToUnitLCS(): { path: Path; bounds: Box } {
     const rot = this.node.bounds.r;
 
-    const nodePath = new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPath();
+    // TODO: [896F9523] Support multiple paths
+    const nodePath = new GenericPathNodeDefinition()
+      .getBoundingPathBuilder(this.node)
+      .getPaths()
+      .singularPath();
     const nodePathBounds = nodePath.bounds();
 
+    // TODO: [896F9523] Support multiple paths
     // Raw path and raw bounds represent the path in the original unit coordinate system,
     // but since waypoints have been moved, some points may lie outside the [-1, 1] range
     const rawPath = PathBuilder.fromString(
       this.node.props.genericPath?.path ?? this.originalSvgPath
-    ).getPath();
+    )
+      .getPaths()
+      .singularPath();
     const rawBounds = rawPath.bounds();
 
     // Need to adjust the position of the bounds to account for the rotation and the shifted
@@ -153,11 +161,14 @@ export class EditablePath {
     const startPointAfter = Point.rotateAround(nodePath.start, rot, Box.center(nodePathBounds));
     const diff = Point.subtract(startPointAfter, startPointBefore);
 
+    // TODO: [896F9523] Support multiple paths
     return {
       path: PathBuilder.fromString(
         rawPath.asSvgPath(),
         inverseUnitCoordinateSystem(rawBounds, false)
-      ).getPath(),
+      )
+        .getPaths()
+        .singularPath(),
       bounds: {
         ...nodePathBounds,
         x: nodePathBounds.x - diff.x,

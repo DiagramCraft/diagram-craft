@@ -113,7 +113,7 @@ const buildOrthogonalEdgePath = (
     endResult.find(r => r.endDirection === preferedEndDirection)?.path ?? endResult[0].path
   );
 
-  return path;
+  return path.getPaths().singularPath();
 };
 
 const buildCurvedEdgePath = (edge: DiagramEdge) => {
@@ -144,7 +144,7 @@ const buildCurvedEdgePath = (edge: DiagramEdge) => {
     path.curveTo(em);
   }
 
-  return path;
+  return path.getPaths().singularPath();
 };
 
 const buildBezierEdgePath = (edge: DiagramEdge) => {
@@ -182,7 +182,7 @@ const buildBezierEdgePath = (edge: DiagramEdge) => {
     path.quadTo(edge.end.position, Point.add(controlPoints.at(-1)!.cp2, last.point));
   }
 
-  return path;
+  return path.getPaths().singularPath();
 };
 
 const buildStraightEdgePath = (edge: DiagramEdge) => {
@@ -193,7 +193,8 @@ const buildStraightEdgePath = (edge: DiagramEdge) => {
     path.lineTo(wp.point);
   });
   path.lineTo(edge.end.position);
-  return path;
+
+  return path.getPaths().singularPath();
 };
 
 export const buildEdgePath = (
@@ -204,21 +205,17 @@ export const buildEdgePath = (
 ): Path => {
   switch (edge.props.type) {
     case 'orthogonal': {
-      const r = buildOrthogonalEdgePath(
-        edge,
-        preferedStartDirection,
-        preferedEndDirection
-      ).getPath();
+      const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
       if (rounding > 0) r.processSegments(applyRounding(rounding));
       return r;
     }
     case 'curved':
-      return buildCurvedEdgePath(edge).getPath();
+      return buildCurvedEdgePath(edge);
     case 'bezier':
-      return buildBezierEdgePath(edge).getPath();
+      return buildBezierEdgePath(edge);
 
     default: {
-      const r = buildStraightEdgePath(edge).getPath();
+      const r = buildStraightEdgePath(edge);
       if (rounding > 0) r.processSegments(applyRounding(rounding));
       return r;
     }

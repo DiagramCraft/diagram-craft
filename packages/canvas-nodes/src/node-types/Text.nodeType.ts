@@ -52,7 +52,7 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
 
 class TextComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this, '1', props.nodeProps.text, props.node.bounds, (size: Extent) => {

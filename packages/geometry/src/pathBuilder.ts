@@ -2,7 +2,7 @@ import { Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
 import { Angle } from './angle';
-import { precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];
@@ -45,6 +45,19 @@ export const inverseUnitCoordinateSystem = (b: Box, invert = true) => {
   };
 };
 
+export class CompoundPath {
+  constructor(private readonly paths: Path[]) {}
+
+  singularPath() {
+    assert.true(this.paths.length === 1, 'Expected a single path');
+    return this.paths[0];
+  }
+
+  all() {
+    return this.paths;
+  }
+}
+
 type PathBuilderTransform = (p: Point, type?: 'point' | 'distance') => Point;
 
 export class PathBuilder {
@@ -52,6 +65,8 @@ export class PathBuilder {
   private path: RawSegment[] = [];
   private rotation: number = 0;
   private centerOfRotation: Point = Point.ORIGIN;
+
+  private paths: Array<Path> = [];
 
   constructor(private readonly transform: PathBuilderTransform = p => p) {}
 
@@ -79,7 +94,11 @@ export class PathBuilder {
   }
 
   moveTo(p: Point) {
-    precondition.is.notPresent(this.start);
+    if (this.start) {
+      this.flushPath();
+    }
+
+    //precondition.is.notPresent(this.start);
     this.start = this.transform(p);
   }
 
@@ -136,15 +155,26 @@ export class PathBuilder {
     this.centerOfRotation = centerOfRotation;
   }
 
-  getPath() {
-    return new Path(
-      Point.ofTuple(this.applyPointRotationArray(this.start ?? Point.ORIGIN)),
-      this.applyPathRotation(this.path)
-    );
+  getPaths() {
+    this.flushPath();
+    return new CompoundPath(this.paths);
   }
 
   isEmpty() {
     return this.path.length === 0;
+  }
+
+  private flushPath() {
+    if (!this.start) return;
+
+    this.paths.push(
+      new Path(
+        Point.ofTuple(this.applyPointRotationArray(this.start ?? Point.ORIGIN)),
+        this.applyPathRotation(this.path)
+      )
+    );
+
+    this.start = undefined;
   }
 
   private applyPointRotationArray(point: Point): [number, number] {

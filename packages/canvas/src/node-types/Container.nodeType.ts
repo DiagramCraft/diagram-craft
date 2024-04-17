@@ -208,7 +208,9 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
 class ContainerComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, builder: ShapeBuilder) {
-    const path = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const paths = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
+
+    const path = paths.singularPath();
     const svgPath = path.asSvgPath();
 
     builder.add(

@@ -80,7 +80,7 @@ class DrawioShapeComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const shapeNodeDefinition = this.shapeNodeDefinition as DrawioShapeNodeDefinition;
 
-    const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPath();
+    const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
 
     const $shape = shapeNodeDefinition.shape!;
 
@@ -151,7 +151,7 @@ class DrawioShapeComponent extends BaseShape {
             r: 0
           });
 
-          paths.push(pathBuilder.getPath());
+          paths.push(...pathBuilder.getPaths().all());
         } else if ($el.nodeName === 'ellipse') {
           const cx = xNum($el, 'x');
           const cy = xNum($el, 'y');
@@ -164,7 +164,7 @@ class DrawioShapeComponent extends BaseShape {
           pathBuilder.arcTo(Point.of(cx, cy + ch / 2), cw / 2, ch / 2, 0, 0, 1);
           pathBuilder.arcTo(Point.of(cx + cw / 2, cy), cw / 2, ch / 2, 0, 0, 1);
 
-          paths.push(pathBuilder.getPath());
+          paths.push(...pathBuilder.getPaths().all());
         } else if ($el.nodeName === 'path') {
           for (const $pc of $el.childNodes) {
             if ($pc.nodeType !== Node.ELEMENT_NODE) continue;
@@ -172,7 +172,7 @@ class DrawioShapeComponent extends BaseShape {
             const $pce = $pc as Element;
             if ($pc.nodeName === 'move') {
               if (!pathBuilder.isEmpty()) {
-                paths.push(pathBuilder.getPath());
+                paths.push(...pathBuilder.getPaths().all());
                 pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, props.node.bounds));
               }
 
@@ -207,7 +207,7 @@ class DrawioShapeComponent extends BaseShape {
           }
 
           if (!pathBuilder.isEmpty()) {
-            paths.push(pathBuilder.getPath());
+            paths.push(...pathBuilder.getPaths().all());
           }
         }
 

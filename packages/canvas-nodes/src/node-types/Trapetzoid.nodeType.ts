@@ -79,7 +79,7 @@ class TrapetzoidComponent extends BaseShape {
     const slantLeft = props.nodeProps.trapetzoid?.slantLeft ?? 5;
     const slantRight = props.nodeProps.trapetzoid?.slantRight ?? 5;
 
-    const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

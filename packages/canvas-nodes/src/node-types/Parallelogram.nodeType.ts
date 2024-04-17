@@ -61,7 +61,9 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
 class ParallelogramComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const slant = props.nodeProps.parallelogram?.slant ?? 5;
-    const boundary = new ParallelogramNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = new ParallelogramNodeDefinition()
+      .getBoundingPathBuilder(props.node)
+      .getPaths();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

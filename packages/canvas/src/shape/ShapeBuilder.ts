@@ -11,6 +11,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {
@@ -57,7 +58,7 @@ export class ShapeBuilder {
   }
 
   boundaryPath(
-    path: Path,
+    paths: CompoundPath,
     props: NodeProps | undefined = undefined,
     textId: undefined | string = '1',
     map: (n: VNode) => VNode = a => a
@@ -68,20 +69,30 @@ export class ShapeBuilder {
       ? new SketchPathRenderer()
       : new DefaultPathRenderer();
 
-    const paths = pathRenderer.render(this.props.node, {
-      path: path,
-      style: props ? this.makeStyle(props) : this.props.style
-    });
+    const style = props ? this.makeStyle(props) : this.props.style;
+
+    const renderedPaths = paths
+      .all()
+      .map(p => pathRenderer.render(this.props.node, { path: p, style }));
+
+    const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
+    for (let i = 0; i < renderedPaths[0].length; i++) {
+      joinedPaths.push({
+        path: renderedPaths.map(p => p[i].path).join(' '),
+        style: renderedPaths[0][i].style
+      });
+    }
+
     this.nodes.push(
-      ...paths
-        .map(path => ({
-          d: path.path,
+      ...joinedPaths
+        .map(d => ({
+          d: d.path,
           x: this.props.node.bounds.x.toString(),
           y: this.props.node.bounds.y.toString(),
           width: this.props.node.bounds.w.toString(),
           height: this.props.node.bounds.h.toString(),
           class: 'svg-node__boundary svg-node',
-          style: toInlineCSS(path.style),
+          style: toInlineCSS(d.style),
           on: {
             mousedown: this.props.onMouseDown,
             ...(textId ? { dblclick: this.makeOnDblclickHandle(textId) } : {})

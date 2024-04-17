@@ -23,7 +23,7 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
 
 class CircleComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

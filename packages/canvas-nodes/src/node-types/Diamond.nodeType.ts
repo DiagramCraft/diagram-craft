@@ -24,7 +24,7 @@ export class DiamondNodeDefinition extends ShapeNodeDefinition {
 
 class DiamondComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPath();
+    const boundary = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);

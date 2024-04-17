@@ -60,7 +60,11 @@ class GenericPathComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const drag = DRAG_DROP_MANAGER;
     const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
-    const path = pathBuilder.getPath();
+    const paths = pathBuilder.getPaths();
+
+    // TODO: [896F9523] We should support generic paths with multiple paths
+    const path = paths.singularPath();
+
     const svgPath = path.asSvgPath();
 
     const editablePath = new EditablePath(path, props.node);
@@ -101,7 +105,7 @@ class GenericPathComponent extends BaseShape {
       );
     }
 
-    shapeBuilder.boundaryPath(path, undefined, undefined, v => {
+    shapeBuilder.boundaryPath(paths, undefined, undefined, v => {
       v.data.on ??= {};
       v.data.on.dblclick =
         props.tool?.type === 'node' ? onDoubleClick : shapeBuilder.makeOnDblclickHandle();

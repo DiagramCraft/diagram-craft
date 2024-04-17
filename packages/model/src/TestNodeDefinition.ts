@@ -8,7 +8,6 @@ import { UnitOfWork } from './unitOfWork';
 import { DiagramElement } from './diagramElement';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
-import { Path } from '@diagram-craft/geometry/path';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Transform } from '@diagram-craft/geometry/transform';
@@ -21,13 +20,13 @@ export class TestNodeDefinition implements NodeDefinition {
     public name: string
   ) {}
 
-  getBoundingPath(node: DiagramNode): Path {
+  getBoundingPath(node: DiagramNode) {
     const bnd = node.bounds;
     const pb = this.getBoundingPathBuilder(node);
     if (round(bnd.r) !== 0) {
       pb.setRotation(bnd.r, Box.center(bnd));
     }
-    return pb.getPath();
+    return pb.getPaths();
   }
 
   getBoundingPathBuilder(_node: DiagramNode): PathBuilder {

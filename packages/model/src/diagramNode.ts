@@ -289,8 +289,16 @@ export class DiagramNode
   convertToPath(uow: UnitOfWork) {
     uow.snapshot(this);
 
-    const path = this.getDefinition().getBoundingPath(this);
-    const scaledPath = PathUtils.scalePath(path, this.bounds, { x: -1, y: 1, w: 2, h: -2, r: 0 });
+    const paths = this.getDefinition().getBoundingPath(this);
+
+    // TODO: [896F9523] Need to support multiple paths
+    const scaledPath = PathUtils.scalePath(paths.singularPath(), this.bounds, {
+      x: -1,
+      y: 1,
+      w: 2,
+      h: -2,
+      r: 0
+    });
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {
@@ -565,7 +573,10 @@ export class DiagramNode
 
     const def = this.diagram.nodeDefinitions.get(this.nodeType);
 
-    const path = def.getBoundingPath(this);
+    const paths = def.getBoundingPath(this);
+
+    // TODO: [896F9523] Support multiple paths
+    const path = paths.singularPath();
 
     for (const p of path.segments) {
       const { x, y } = p.point(0.5);

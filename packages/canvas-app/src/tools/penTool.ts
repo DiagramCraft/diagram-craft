@@ -65,10 +65,13 @@ export class PenTool extends AbstractTool {
   private addPoint(diagramPoint: Point, deleteOld = false) {
     const uow = new UnitOfWork(this.diagram);
 
+    // TODO: [896F9523] Support multiple paths
     const currentPath = PathBuilder.fromString(
       this.node!.props.genericPath!.path!,
       unitCoordinateSystem(this.node!.bounds, true)
-    ).getPath();
+    )
+      .getPaths()
+      .singularPath();
 
     const svgPath = currentPath.asSvgPath();
     const svgPathPrefix =
@@ -83,7 +86,8 @@ export class PenTool extends AbstractTool {
       svgPathPrefix +
       `, L ${diagramPoint.x} ${diagramPoint.y}, L ${currentPath.start.x} ${currentPath.start.y}`;
 
-    const path = PathBuilder.fromString(newPathSpec).getPath();
+    // TODO: [896F9523] Support multiple paths
+    const path = PathBuilder.fromString(newPathSpec).getPaths().singularPath();
 
     const bounds = path.bounds();
 
