@@ -29,6 +29,10 @@ export class TestNodeDefinition implements NodeDefinition {
     return pb.getPaths();
   }
 
+  getAnchors() {
+    return [];
+  }
+
   getDefaultAspectRatio() {
     return 1;
   }
@@ -45,7 +49,7 @@ export class TestNodeDefinition implements NodeDefinition {
     return {};
   }
 
-  getInitialConfig(): { size: Extent } {
+  getDefaultConfig(): { size: Extent } {
     return { size: { w: 100 * this.getDefaultAspectRatio(), h: 100 } };
   }
 

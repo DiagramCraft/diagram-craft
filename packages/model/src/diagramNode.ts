@@ -11,9 +11,9 @@ import { nodeDefaults } from './diagramDefaults';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { VERIFY_NOT_REACHED, assert } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
-import { clamp, round } from '@diagram-craft/utils/math';
+import { clamp } from '@diagram-craft/utils/math';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -566,26 +566,9 @@ export class DiagramNode
   }
 
   // TODO: Need to make sure this is called when e.g. props are changed
-  // TODO: Delegate to NodeDefinition
   private invalidateAnchors(uow: UnitOfWork) {
-    const newAnchors: Array<Anchor> = [];
-    newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
-
     const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
-
-    const paths = def.getBoundingPath(this);
-
-    for (const path of paths.all()) {
-      for (const p of path.segments) {
-        const { x, y } = p.point(0.5);
-        const lx = round((x - this.bounds.x) / this.bounds.w);
-        const ly = round((y - this.bounds.y) / this.bounds.h);
-
-        newAnchors.push({ point: { x: lx, y: ly }, clip: false });
-      }
-    }
-
-    this.#anchors = newAnchors;
+    this.#anchors = def.getAnchors(this);
 
     uow.updateElement(this);
   }

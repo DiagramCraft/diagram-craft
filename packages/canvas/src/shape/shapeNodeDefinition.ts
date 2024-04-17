@@ -13,6 +13,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
+import { Anchor } from '@diagram-craft/model/types';
 
 type ShapeConstructorContstructor = {
   new (shapeNodeDefinition: ShapeNodeDefinition): BaseShape;
@@ -30,6 +31,25 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   abstract getBoundingPathBuilder(node: DiagramNode): PathBuilder;
+
+  getAnchors(node: DiagramNode) {
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
+
+    const paths = this.getBoundingPath(node);
+
+    for (const path of paths.all()) {
+      for (const p of path.segments) {
+        const { x, y } = p.point(0.5);
+        const lx = round((x - node.bounds.x) / node.bounds.w);
+        const ly = round((y - node.bounds.y) / node.bounds.h);
+
+        newAnchors.push({ point: { x: lx, y: ly }, clip: false });
+      }
+    }
+
+    return newAnchors;
+  }
 
   getDefaultAspectRatio() {
     return 1;
@@ -55,7 +75,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     };
   }
 
-  getInitialConfig(): { size: Extent } {
+  getDefaultConfig(): { size: Extent } {
     return { size: { w: 100 * this.getDefaultAspectRatio(), h: 100 } };
   }
 

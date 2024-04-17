@@ -14,7 +14,7 @@ export const canvasDropHandler = ($d: Diagram) => {
       nodeType,
       {
         ...$d.viewBox.toDiagramPoint(EventHelper.point(e)),
-        ...nodeDef.getInitialConfig().size,
+        ...nodeDef.getDefaultConfig().size,
         r: 0
       },
       $d,

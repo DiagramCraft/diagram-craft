@@ -33,7 +33,7 @@ export class TextTool extends AbstractTool {
       newid(),
       nodeType,
       {
-        ...nodeDef.getInitialConfig().size,
+        ...nodeDef.getDefaultConfig().size,
         ...this.diagram.viewBox.toDiagramPoint(point),
         r: 0
       },

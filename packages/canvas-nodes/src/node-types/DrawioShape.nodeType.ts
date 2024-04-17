@@ -8,6 +8,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
+import { Anchor } from '@diagram-craft/model/types';
 
 const makeShapeTransform =
   (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {
@@ -88,6 +89,23 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 
   getDefaultProps(): NodeProps {
     return this.defaultNodeProps ?? {};
+  }
+
+  getAnchors(_node: DiagramNode) {
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
+
+    const $constraints = this.shape.getElementsByTagName('constraint');
+    for (let i = 0; i < $constraints.length; i++) {
+      const $constraint = $constraints.item(i)!;
+      if ($constraint.nodeType !== Node.ELEMENT_NODE) continue;
+
+      const x = xNum($constraint, 'x');
+      const y = xNum($constraint, 'y');
+      newAnchors.push({ point: Point.of(x, y), clip: false });
+    }
+
+    return newAnchors;
   }
 }
 

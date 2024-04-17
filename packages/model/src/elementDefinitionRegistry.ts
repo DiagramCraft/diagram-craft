@@ -9,6 +9,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique } from '@diagram-craft/utils/array';
+import { Anchor } from './types';
 
 export type NodeCapability = 'children';
 
@@ -50,11 +51,10 @@ export interface NodeDefinition {
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
 
   getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;
-
   getDefaultAspectRatio(): number;
+  getDefaultConfig(): { size: Extent };
 
-  // TODO: This should support adding children and more than just the size
-  getInitialConfig(): { size: Extent };
+  getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
   onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void;
