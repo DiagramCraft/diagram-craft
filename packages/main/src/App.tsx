@@ -446,7 +446,7 @@ const App = () => {
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/public/stencils/kubernetes.xml')
+    fetch('/stencils/kubernetes.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();
@@ -456,7 +456,7 @@ const App = () => {
 
         const $shapes = $doc.getElementsByTagName('shape');
         for (let i = 0; i < $shapes.length; i++) {
-          let name = $shapes[i].getAttribute('name')!;
+          const name = $shapes[i].getAttribute('name')!;
           newStencils.push({
             def: new DrawioShapeNodeDefinition(`drawio-${name}`, name, $shapes[i]),
             group: 'test'
