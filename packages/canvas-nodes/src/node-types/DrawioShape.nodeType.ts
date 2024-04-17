@@ -79,8 +79,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 }
 
 function parseShapeElement($el: Element, pathBuilder: PathBuilder) {
-  if ($el.nodeName === 'rect' || $el.nodeName === 'roundrect') {
-    // arcsize
+  if ($el.nodeName === 'rect') {
     PathBuilderHelper.rect(pathBuilder, {
       x: xNum($el, 'x'),
       y: xNum($el, 'y'),
@@ -88,6 +87,21 @@ function parseShapeElement($el: Element, pathBuilder: PathBuilder) {
       h: xNum($el, 'h'),
       r: 0
     });
+  } else if ($el.nodeName === 'roundrect') {
+    const [x, y, w, h, r] = ['x', 'y', 'w', 'h', 'arcsize'].map(attr => xNum($el, attr));
+    const [dw, dh] = [w, h].map(dim => dim - 2 * r);
+
+    pathBuilder.moveTo(Point.of(x + r, y));
+    pathBuilder.lineTo(Point.of(x + r + dw, y));
+    pathBuilder.arcTo(Point.of(x + w, y + r), r, r, 0, 0, 1);
+    pathBuilder.lineTo(Point.of(x + w, y + r + dh));
+    pathBuilder.arcTo(Point.of(x + r + dw, y + h), r, r, 0, 0, 1);
+    pathBuilder.lineTo(Point.of(x + r, y + h));
+    pathBuilder.arcTo(Point.of(x, y + r + dh), r, r, 0, 0, 1);
+    pathBuilder.lineTo(Point.of(x, y + r));
+    pathBuilder.arcTo(Point.of(x + r, y), r, r, 0, 0, 1);
+
+    return pathBuilder;
   } else if ($el.nodeName === 'ellipse') {
     const cx = xNum($el, 'x');
     const cy = xNum($el, 'y');
