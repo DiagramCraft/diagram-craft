@@ -10,6 +10,14 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { Anchor } from '@diagram-craft/model/types';
 
+declare global {
+  interface NodeProps {
+    drawio?: {
+      shape?: string;
+    };
+  }
+}
+
 const makeShapeTransform =
   (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {
     if (_type === 'distance') {
@@ -28,8 +36,6 @@ const xNum = (el: Element, name: string) => {
   return Number(el.getAttribute(name));
 };
 
-// TODO: Parse constraints as well
-
 function isShapeElement($el: Element) {
   return (
     $el.nodeName === 'rect' ||
@@ -39,31 +45,38 @@ function isShapeElement($el: Element) {
   );
 }
 
+const parse = (def: DiagramNode): Element => {
+  if (def.cache.has('element')) return def.cache.get('element') as Element;
+
+  const parser = new DOMParser();
+  const $shape = parser.parseFromString(
+    atob(def.propsForRendering.drawio.shape),
+    'application/xml'
+  );
+  def.cache.set('element', $shape.documentElement);
+  return def.cache.get('element') as Element;
+};
+
 export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
-  private defaultAspectRatio: number;
-
-  constructor(
-    id: string,
-    name: string,
-    public readonly shape: Element,
-    private readonly defaultNodeProps?: NodeProps
-  ) {
+  constructor(id: string, name: string) {
     super(id, name, DrawioShapeComponent);
-
-    this.defaultAspectRatio = xNum(this.shape, 'w') / xNum(this.shape, 'h');
   }
 
-  getDefaultAspectRatio() {
-    return this.defaultAspectRatio;
+  getDefaultAspectRatio(def: DiagramNode) {
+    const shape = parse(def);
+
+    return xNum(shape, 'w') / xNum(shape, 'h');
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const h = xNum(this.shape, 'h');
-    const w = xNum(this.shape, 'w');
+    const shape = parse(def);
+
+    const h = xNum(shape, 'h');
+    const w = xNum(shape, 'w');
 
     const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, def.bounds));
 
-    const background = this.shape.querySelector('background');
+    const background = shape.querySelector('background');
 
     if (!background) {
       PathBuilderHelper.rect(pathBuilder, { x: 0, y: 0, w, h, r: 0 });
@@ -87,15 +100,13 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getDefaultProps(): NodeProps {
-    return this.defaultNodeProps ?? {};
-  }
+  getAnchors(def: DiagramNode) {
+    const shape = parse(def);
 
-  getAnchors(_node: DiagramNode) {
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
 
-    const $constraints = this.shape.getElementsByTagName('constraint');
+    const $constraints = shape.getElementsByTagName('constraint');
     for (let i = 0; i < $constraints.length; i++) {
       const $constraint = $constraints.item(i)!;
       if ($constraint.nodeType !== Node.ELEMENT_NODE) continue;
@@ -188,7 +199,7 @@ class DrawioShapeComponent extends BaseShape {
 
     const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
 
-    const $shape = shapeNodeDefinition.shape!;
+    const $shape = parse(props.node);
 
     const w = xNum($shape, 'w');
     const h = xNum($shape, 'h');
