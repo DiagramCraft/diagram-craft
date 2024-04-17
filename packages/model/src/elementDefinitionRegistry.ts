@@ -50,9 +50,11 @@ export interface NodeDefinition {
   getBoundingPath(node: DiagramNode): CompoundPath;
   getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
 
+  // TODO: These are a bit weird, considering we allow for multiple registrations
+  //       of the same definition
   getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;
-  getDefaultAspectRatio(): number;
-  getDefaultConfig(): { size: Extent };
+  getDefaultAspectRatio(node: DiagramNode): number;
+  getDefaultConfig(node: DiagramNode): { size: Extent };
 
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
@@ -70,52 +72,79 @@ export interface NodeDefinition {
   requestFocus(node: DiagramNode): void;
 }
 
-type RegistrationOpts = {
+export type RegistrationOpts = {
   group?: string;
   hidden?: boolean;
+  props?: NodeProps;
+  key?: string;
 };
 
-type Registration = RegistrationOpts & {
+export type Registration = RegistrationOpts & {
   node: NodeDefinition;
 };
 
+const addRegistration = (id: string, reg: Registration, dest: Map<string, Registration[]>) => {
+  if (!dest.has(id)) {
+    dest.set(id, []);
+  }
+
+  const arr = dest.get(id)!;
+  if (reg.key && arr.find(e => e.key === reg.key)) {
+    arr.splice(
+      arr.findIndex(e => e.key === reg.key),
+      1,
+      reg
+    );
+  } else {
+    arr.push(reg);
+  }
+};
+
 export class NodeDefinitionRegistry {
-  private nodes = new Map<string, Registration>();
-  private grouping = new Map<string, string>();
+  private nodes = new Map<string, Registration[]>();
+  private grouping = new Map<string, Registration[]>();
 
   register(node: NodeDefinition, opts: RegistrationOpts = {}) {
-    this.nodes.set(node.type, { ...opts, node });
+    addRegistration(node.type, { ...opts, node }, this.nodes);
+
     if (opts.group) {
-      this.grouping.set(node.type, opts.group);
+      addRegistration(opts.group, { ...opts, node }, this.grouping);
     }
   }
 
   get(type: string): NodeDefinition {
     const r = this.nodes.get(type);
+
     assert.present(r, 'Not found: ' + type);
-    return r.node;
+    return r[0].node;
+  }
+
+  getRegistrations(type: string): Registration[] {
+    return this.nodes.get(type) ?? [];
   }
 
   getGroups() {
-    return unique([...this.grouping.values()]);
+    return unique([...this.grouping.keys()]);
   }
 
   getForGroup(group: string | undefined) {
     if (!group) {
-      const dest: NodeDefinition[] = [];
-      for (const [k, v] of this.nodes) {
-        if (this.grouping.has(k)) continue;
-        if (v.hidden) continue;
-        dest.push(v.node);
+      const dest: Registration[] = [];
+      for (const v of this.nodes.values()) {
+        for (const r of v) {
+          if (r.hidden) continue;
+          if (r.group) continue;
+          dest.push(r);
+        }
       }
       return dest;
+    } else {
+      return this.grouping.get(group)!.filter(e => !e.hidden);
     }
-    const nodes = [...this.grouping.entries()].filter(([, v]) => v === group).map(([k]) => k);
-    return nodes.filter(n => !this.nodes.get(n)?.hidden).map(n => this.get(n));
   }
 
   getAll() {
-    return [...this.nodes.values()].map(e => e.node);
+    return [...this.nodes.values()].flat().map(e => e.node);
   }
 }
 

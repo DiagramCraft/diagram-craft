@@ -51,7 +51,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return newAnchors;
   }
 
-  getDefaultAspectRatio() {
+  getDefaultAspectRatio(_node: DiagramNode) {
     return 1;
   }
 
@@ -75,8 +75,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     };
   }
 
-  getDefaultConfig(): { size: Extent } {
-    return { size: { w: 100 * this.getDefaultAspectRatio(), h: 100 } };
+  getDefaultConfig(node: DiagramNode): { size: Extent } {
+    return { size: { w: 100 * this.getDefaultAspectRatio(node), h: 100 } };
   }
 
   requestFocus(node: DiagramNode): void {

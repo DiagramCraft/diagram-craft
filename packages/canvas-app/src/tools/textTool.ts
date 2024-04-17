@@ -6,6 +6,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   interface Tools {
@@ -33,13 +34,22 @@ export class TextTool extends AbstractTool {
       newid(),
       nodeType,
       {
-        ...nodeDef.getDefaultConfig().size,
+        w: 10,
+        h: 10,
         ...this.diagram.viewBox.toDiagramPoint(point),
         r: 0
       },
       this.diagram,
       this.diagram.layers.active,
       nodeDef.getDefaultProps('canvas')
+    );
+
+    nd.setBounds(
+      {
+        ...nd.bounds,
+        ...nodeDef.getDefaultConfig(nd).size
+      },
+      UnitOfWork.throwaway(this.diagram)
     );
 
     this.diagram.undoManager.addAndExecute(

@@ -27,6 +27,8 @@ export class DiagramNode
   readonly id: string;
   readonly edges: Map<number, DiagramEdge[]> = new Map<number, DiagramEdge[]>();
 
+  #cache: Map<string, unknown> | undefined = undefined;
+
   #nodeType: 'group' | string;
   #diagram: Diagram;
   #layer: Layer;
@@ -72,6 +74,13 @@ export class DiagramNode
     return this.#nodeType;
   }
 
+  get cache() {
+    if (!this.#cache) {
+      this.#cache = new Map<string, unknown>();
+    }
+    return this.#cache;
+  }
+
   /* Props *************************************************************************************************** */
 
   // TODO: Maybe create a props cache helper
@@ -93,9 +102,6 @@ export class DiagramNode
     this.#propsCache = deepMerge(
       {},
       nodeDefaults,
-      this.diagram.document.nodeDefinitions
-        .get(this.nodeType)
-        .getDefaultProps('canvas') as Partial<NodeProps>,
       styleProps ?? {},
       this.#props as NodeProps
     ) as DeepRequired<NodeProps>;
@@ -116,7 +122,9 @@ export class DiagramNode
     callback(this.#props);
     uow.updateElement(this);
 
+    // TODO: Maybe we can move the propsCache to the cache
     this.clearPropsCache();
+    this.#cache?.clear();
     this.getDefinition().onPropUpdate(this, uow);
   }
 

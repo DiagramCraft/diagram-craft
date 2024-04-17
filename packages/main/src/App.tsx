@@ -77,7 +77,7 @@ import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
-import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registration } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
@@ -442,35 +442,38 @@ const Document = (props: { doc: DiagramDocument }) => {
   );
 };
 
-type Stencil = { def: NodeDefinition; group: string };
-
 const App = () => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
-  const [stencils, setStencils] = useState<undefined | Array<Stencil>>();
+  const [stencils, setStencils] = useState<undefined | Array<Registration>>();
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/stencils/cisco19.xml')
+    fetch('/stencils/eip.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();
         const $doc = parser.parseFromString(r, 'application/xml');
 
-        const newStencils: Array<Stencil> = [];
+        const newStencils: Array<Registration> = [];
 
         const $shapes = $doc.getElementsByTagName('shape');
         for (let i = 0; i < $shapes.length; i++) {
           const name = $shapes[i].getAttribute('name')!;
           newStencils.push({
-            def: new DrawioShapeNodeDefinition(`drawio-${name}`, name, $shapes[i], {
+            node: new DrawioShapeNodeDefinition(`drawio`, name),
+            group: 'test',
+            key: name,
+            props: {
               fill: {
-                color: 'var(--blue-7)'
+                color: '#ffffcc' // var(--blue-7)'
               },
               stroke: {
-                color: 'var(--blue-7)'
+                color: '#666666' // var(--blue-7)'
+              },
+              drawio: {
+                shape: btoa(new XMLSerializer().serializeToString($shapes[i]))
               }
-            }),
-            group: 'test'
+            }
           });
         }
 
@@ -490,15 +493,13 @@ const App = () => {
   useEffect(() => {
     if (stencils && doc) {
       stencils.forEach(stencil => {
-        doc.nodeDefinitions.register(stencil.def, {
-          group: stencil.group
-        });
+        doc.nodeDefinitions.register(stencil.node, stencil);
       });
       redraw();
     }
   }, [doc, stencils]);
 
-  if (doc) return <Document doc={doc} />;
+  if (doc && stencils) return <Document doc={doc} />;
   else return null;
 };
 

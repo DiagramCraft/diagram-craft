@@ -62,6 +62,9 @@ export const NodeTypePopup = (props: Props) => {
 
   const size = 20;
 
+  // TODO: Fix this
+  return undefined;
+
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
   const diagrams = nodes
