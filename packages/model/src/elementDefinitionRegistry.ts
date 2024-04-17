@@ -70,21 +70,30 @@ export interface NodeDefinition {
   requestFocus(node: DiagramNode): void;
 }
 
+type RegistrationOpts = {
+  group?: string;
+  hidden?: boolean;
+};
+
+type Registration = RegistrationOpts & {
+  node: NodeDefinition;
+};
+
 export class NodeDefinitionRegistry {
-  private nodes = new Map<string, NodeDefinition>();
+  private nodes = new Map<string, Registration>();
   private grouping = new Map<string, string>();
 
-  register(node: NodeDefinition, group?: string) {
-    this.nodes.set(node.type, node);
-    if (group) {
-      this.grouping.set(node.type, group);
+  register(node: NodeDefinition, opts: RegistrationOpts = {}) {
+    this.nodes.set(node.type, { ...opts, node });
+    if (opts.group) {
+      this.grouping.set(node.type, opts.group);
     }
   }
 
   get(type: string): NodeDefinition {
     const r = this.nodes.get(type);
     assert.present(r, 'Not found: ' + type);
-    return r;
+    return r.node;
   }
 
   getGroups() {
@@ -96,16 +105,17 @@ export class NodeDefinitionRegistry {
       const dest: NodeDefinition[] = [];
       for (const [k, v] of this.nodes) {
         if (this.grouping.has(k)) continue;
-        dest.push(v);
+        if (v.hidden) continue;
+        dest.push(v.node);
       }
       return dest;
     }
     const nodes = [...this.grouping.entries()].filter(([, v]) => v === group).map(([k]) => k);
-    return nodes.map(n => this.get(n));
+    return nodes.filter(n => !this.nodes.get(n)?.hidden).map(n => this.get(n));
   }
 
   getAll() {
-    return [...this.nodes.values()];
+    return [...this.nodes.values()].map(e => e.node);
   }
 }
 

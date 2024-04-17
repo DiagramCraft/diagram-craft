@@ -450,7 +450,7 @@ const App = () => {
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/stencils/sitemap.xml')
+    fetch('/stencils/cisco19.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();
@@ -490,7 +490,9 @@ const App = () => {
   useEffect(() => {
     if (stencils && doc) {
       stencils.forEach(stencil => {
-        doc.nodeDefinitions.register(stencil.def, stencil.group);
+        doc.nodeDefinitions.register(stencil.def, {
+          group: stencil.group
+        });
       });
       redraw();
     }

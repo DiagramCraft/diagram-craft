@@ -17,6 +17,8 @@ import {
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
+  dest.register(new GroupNodeDefinition(), { hidden: true });
+
   dest.register(new RectNodeDefinition());
   dest.register(new RoundedRectNodeDefinition());
   dest.register(new CircleNodeDefinition());
@@ -28,9 +30,6 @@ export const defaultNodeRegistry = () => {
   dest.register(new DiamondNodeDefinition());
   dest.register(new GenericPathNodeDefinition());
   dest.register(new ContainerNodeDefinition());
-
-  // Note: group must be the last element
-  dest.register(new GroupNodeDefinition());
 
   return dest;
 };
