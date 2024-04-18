@@ -77,7 +77,7 @@ import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
-import { Registration } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
@@ -444,7 +444,7 @@ const Document = (props: { doc: DiagramDocument }) => {
 
 const App = () => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
-  const [stencils, setStencils] = useState<undefined | Array<Registration>>();
+  const [stencils, setStencils] = useState<undefined | Array<Stencil>>();
   const redraw = useRedraw();
 
   useEffect(() => {
@@ -454,7 +454,7 @@ const App = () => {
         const parser = new DOMParser();
         const $doc = parser.parseFromString(r, 'application/xml');
 
-        const newStencils: Array<Registration> = [];
+        const newStencils: Array<Stencil> = [];
 
         const $shapes = $doc.getElementsByTagName('shape');
         for (let i = 0; i < $shapes.length; i++) {

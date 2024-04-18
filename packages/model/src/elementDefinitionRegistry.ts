@@ -74,18 +74,19 @@ export interface NodeDefinition {
   requestFocus(node: DiagramNode): void;
 }
 
-export type RegistrationOpts = {
+export type StencilOpts = {
   group?: string;
   hidden?: boolean;
   props?: NodeProps;
   key?: string;
 };
 
-export type Registration = RegistrationOpts & {
+// TODO: Change from NodeDefinition to Diagram
+export type Stencil = StencilOpts & {
   node: NodeDefinition;
 };
 
-const addRegistration = (id: string, reg: Registration, dest: Map<string, Registration[]>) => {
+const addRegistration = (id: string, reg: Stencil, dest: Map<string, Stencil[]>) => {
   if (!dest.has(id)) {
     dest.set(id, []);
   }
@@ -103,10 +104,10 @@ const addRegistration = (id: string, reg: Registration, dest: Map<string, Regist
 };
 
 export class NodeDefinitionRegistry {
-  private nodes = new Map<string, Registration[]>();
-  private grouping = new Map<string, Registration[]>();
+  private nodes = new Map<string, Stencil[]>();
+  private grouping = new Map<string, Stencil[]>();
 
-  register(node: NodeDefinition, opts: RegistrationOpts = {}) {
+  register(node: NodeDefinition, opts: StencilOpts = {}) {
     addRegistration(node.type, { ...opts, node }, this.nodes);
 
     if (opts.group) {
@@ -121,7 +122,7 @@ export class NodeDefinitionRegistry {
     return r[0].node;
   }
 
-  getRegistrations(type: string): Registration[] {
+  getRegistrations(type: string): Stencil[] {
     return this.nodes.get(type) ?? [];
   }
 
@@ -131,7 +132,7 @@ export class NodeDefinitionRegistry {
 
   getForGroup(group: string | undefined) {
     if (!group) {
-      const dest: Registration[] = [];
+      const dest: Stencil[] = [];
       for (const v of this.nodes.values()) {
         for (const r of v) {
           if (r.hidden) continue;
@@ -143,10 +144,6 @@ export class NodeDefinitionRegistry {
     } else {
       return this.grouping.get(group)!.filter(e => !e.hidden);
     }
-  }
-
-  getAll() {
-    return [...this.nodes.values()].flat().map(e => e.node);
   }
 }
 

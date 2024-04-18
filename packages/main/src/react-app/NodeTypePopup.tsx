@@ -12,13 +12,13 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
+import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
-  const nodes = diagram.document.nodeDefinitions.getAll();
 
   const addNode = useCallback(
-    (nodeType: string) => {
+    (registration: Stencil) => {
       const diagramPosition = diagram.viewBox.toDiagramPoint(props.position);
 
       const dimension = 50;
@@ -27,7 +27,7 @@ export const NodeTypePopup = (props: Props) => {
       UnitOfWork.execute(diagram, uow => {
         const node = new DiagramNode(
           newid(),
-          nodeType,
+          registration.node.type,
           {
             x: nodePosition.x,
             y: nodePosition.y,
@@ -62,13 +62,14 @@ export const NodeTypePopup = (props: Props) => {
 
   const size = 20;
 
-  // TODO: Fix this
-  return undefined;
+  // TODO: Support aspect ratio
 
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
+  const nodes = diagram.document.nodeDefinitions.getForGroup(undefined);
   const diagrams = nodes
-    .filter(n => n.type !== 'group')
+    .filter(r => !r.hidden)
+    .map(r => r.node)
     .map(n => {
       const dest = new Diagram(
         n.type,
@@ -131,7 +132,7 @@ export const NodeTypePopup = (props: Props) => {
                   width={size}
                   height={size}
                   diagram={d}
-                  onClick={() => addNode(nodes[idx].type)}
+                  onClick={() => addNode(nodes[idx])}
                 />
               </div>
             ))}
