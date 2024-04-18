@@ -1,52 +1,63 @@
 import { Diagram } from '@diagram-craft/model/diagram';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { newid } from '@diagram-craft/utils/id';
-import { deepMerge } from '@diagram-craft/utils/object';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Box } from '@diagram-craft/geometry/box';
+import { SerializedElement } from '@diagram-craft/model/serialization/types';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
+import { Extent } from '@diagram-craft/geometry/extent';
+import { newid } from '@diagram-craft/utils/id';
+
+type ElementsDraggable = {
+  elements: Array<SerializedElement>;
+  attachments: Record<string, string>;
+  dimensions: Extent;
+};
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: DragEvent) => {
-    const nodeType = e.dataTransfer!.getData('application/x-diagram-craft-node-type');
-    const nodeDef = $d.document.nodeDefinitions.get(nodeType);
-    const registration = $d.document.nodeDefinitions
-      .getRegistrations(nodeType)
-      .find(r => r.key === e.dataTransfer!.getData('application/x-diagram-craft-node-key'));
+    const draggable = JSON.parse(
+      e.dataTransfer!.getData('application/x-diagram-craft-elements')
+    ) as ElementsDraggable;
 
-    const nd = new DiagramNode(
-      newid(),
-      nodeType,
-      {
-        ...$d.viewBox.toDiagramPoint(EventHelper.point(e)),
-        w: 10,
-        h: 10,
-        r: 0
-      },
+    // TODO: Merge any attachments
+
+    const droppedElements = deserializeDiagramElements(
+      draggable.elements,
       $d,
       $d.layers.active,
-
-      deepMerge(nodeDef.getDefaultProps('canvas'), registration?.props ?? {})
+      {},
+      {}
     );
 
-    nd.setBounds(
-      {
-        ...nd.bounds,
-        ...nodeDef.getDefaultConfig(nd).size
-      },
-      UnitOfWork.throwaway($d)
-    );
+    // Change the ids of all dropped elements
+    for (const e of droppedElements) {
+      e.id = newid();
+    }
 
-    $d.undoManager.addAndExecute(new ElementAddUndoableAction([nd], $d));
+    const bounds = Box.boundingBox(droppedElements.map(e => e.bounds));
+
+    const scaleX = draggable.dimensions.w / bounds.w;
+    const scaleY = draggable.dimensions.h / bounds.h;
+
+    const point = $d.viewBox.toDiagramPoint(EventHelper.point(e));
+    for (const e of droppedElements) {
+      e.setBounds(
+        {
+          x: (e.bounds.x - bounds.x) * scaleX + point.x,
+          y: (e.bounds.y - bounds.y) * scaleY + point.y,
+          w: e.bounds.w * scaleX,
+          h: e.bounds.h * scaleY,
+          r: e.bounds.r
+        },
+        UnitOfWork.throwaway($d)
+      );
+    }
+
+    $d.undoManager.addAndExecute(new ElementAddUndoableAction(droppedElements, $d));
 
     $d.selectionState.clear();
-    $d.selectionState.toggle(nd);
-
-    if (nodeType === 'text') {
-      setTimeout(() => {
-        $d.document.nodeDefinitions.get(nodeType).requestFocus(nd);
-      }, 10);
-    }
+    $d.selectionState.setElements(droppedElements);
   };
 };
 

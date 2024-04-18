@@ -54,6 +54,8 @@ export interface NodeDefinition {
   //       of the same definition
   getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;
   getDefaultAspectRatio(node: DiagramNode): number;
+
+  // TODO: Remove this perhaps
   getDefaultConfig(node: DiagramNode): { size: Extent };
 
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;

@@ -91,11 +91,11 @@ const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   (e as any)._triggered = true;
 };
 
-const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
+export const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
   return new Diagram(d.id, d.name, doc);
 };
 
-const documentFactory = () => {
+export const documentFactory = () => {
   return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
 };
 
