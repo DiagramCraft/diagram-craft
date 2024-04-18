@@ -46,10 +46,10 @@ const intersectWithNode = (
   const anchor = endpoint.node.getAnchor(endpoint.anchor);
   const nodeDefinition = diagram.document.nodeDefinitions.get(endpoint.node.nodeType);
 
-  // TODO: [896F9523] Support multiple paths
-  const endIntersections = path.intersections(
-    nodeDefinition.getBoundingPath(endpoint.node).singularPath()
-  );
+  const endIntersections = nodeDefinition
+    .getBoundingPath(endpoint.node)
+    .all()
+    .flatMap(p => path.intersections(p));
 
   if (anchor.clip) {
     // TODO: Handle multiple intersections
