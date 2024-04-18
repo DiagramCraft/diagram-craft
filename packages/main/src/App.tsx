@@ -448,7 +448,7 @@ const App = () => {
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/stencils/eip.xml')
+    fetch('/stencils/gcp2.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();
@@ -460,19 +460,13 @@ const App = () => {
         for (let i = 0; i < $shapes.length; i++) {
           const name = $shapes[i].getAttribute('name')!;
           newStencils.push({
-            node: new DrawioShapeNodeDefinition(`drawio`, name),
-            group: 'test',
+            node: new DrawioShapeNodeDefinition(),
+            group: 'Stencils',
             key: name,
             props: {
-              fill: {
-                color: '#ffffcc' // var(--blue-7)'
-              },
-              stroke: {
-                color: '#666666' // var(--blue-7)'
-              },
-              drawio: {
-                shape: btoa(new XMLSerializer().serializeToString($shapes[i]))
-              }
+              fill: { color: 'var(--blue-11)' },
+              stroke: { color: 'var(--blue-7)' },
+              drawio: { shape: btoa(new XMLSerializer().serializeToString($shapes[i])) }
             }
           });
         }

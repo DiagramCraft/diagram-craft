@@ -58,8 +58,8 @@ const parse = (def: DiagramNode): Element => {
 };
 
 export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
-  constructor(id: string, name: string) {
-    super(id, name, DrawioShapeComponent);
+  constructor() {
+    super('drawio', 'Drawio Shape', DrawioShapeComponent);
   }
 
   getDefaultAspectRatio(def: DiagramNode) {

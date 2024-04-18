@@ -13,7 +13,7 @@ export const PickerToolWindow = () => {
     <Accordion.Root
       className="cmp-accordion"
       type="multiple"
-      defaultValue={['basic-shapes', 'test']}
+      defaultValue={['basic-shapes', 'Stencils']}
     >
       <Accordion.Item className="cmp-accordion__item" value="basic-shapes">
         <AccordionTrigger>Basic shapes</AccordionTrigger>
