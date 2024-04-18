@@ -56,7 +56,10 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
         mask: `url(#reflection-mask-${id})`,
         style: `filter: url(#reflection-filter); pointer-events: none`
       },
-      ...children.map(e => deepClone(e))
+
+      // TODO: This means text is not reflected, but if we don't filter it out
+      //       there's an infinite recursion
+      ...children.filter(e => !e.tag.startsWith('text_')).map(e => deepClone(e))
     )
   ];
 };
