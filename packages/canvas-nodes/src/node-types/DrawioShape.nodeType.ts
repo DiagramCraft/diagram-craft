@@ -204,7 +204,8 @@ class DrawioShapeComponent extends BaseShape {
     const w = xNum($shape, 'w');
     const h = xNum($shape, 'h');
 
-    const style = deepClone(props.nodeProps as DeepWriteable<NodeProps>);
+    let style = deepClone(props.nodeProps as DeepWriteable<NodeProps>);
+    let savedStyle = style;
 
     let currentShape: (p: NodeProps) => void = p => {
       shapeBuilder.boundaryPath(boundary, p);
@@ -246,6 +247,10 @@ class DrawioShapeComponent extends BaseShape {
         currentShape(style);
         style.fill!.color = old;
         backgroundDrawn = true;
+      } else if ($el.nodeName === 'save') {
+        savedStyle = deepClone(style);
+      } else if ($el.nodeName === 'restore') {
+        style = deepClone(savedStyle);
       } else if ($el.nodeName === 'strokecolor') {
         style.stroke!.color = $el.getAttribute('color')!;
       } else if ($el.nodeName === 'fillcolor') {
