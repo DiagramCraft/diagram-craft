@@ -464,8 +464,8 @@ const App = () => {
             group: 'Stencils',
             key: name,
             props: {
-              fill: { color: 'var(--blue-11)' },
-              stroke: { color: 'var(--blue-7)' },
+              fill: { color: '#0072de' },
+              stroke: { color: '#0072de' },
               drawio: { shape: btoa(new XMLSerializer().serializeToString($shapes[i])) }
             }
           });
