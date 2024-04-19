@@ -3,6 +3,8 @@ import { Box } from './box';
 import { Path } from './path';
 import { Angle } from './angle';
 import { assert, precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { Transform, TransformFactory } from './transform';
+import { PathUtils } from './pathUtils';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];
@@ -62,7 +64,26 @@ export class CompoundPath {
   }
 
   asSvgPath() {
-    return this.paths.map(p => p.asSvgPath()).join(' ');
+    return this.paths.map(p => p.asSvgPath()).join(', ');
+  }
+
+  segments() {
+    return this.paths.flatMap(p => p.segments);
+  }
+
+  scale(targetBounds: Box) {
+    const bounds = this.bounds();
+
+    const t = TransformFactory.fromTo(bounds, targetBounds);
+
+    const dest: Path[] = [];
+    for (const p of this.paths) {
+      const source = p.bounds();
+      const target = Transform.box(source, ...t);
+      dest.push(PathUtils.scalePath(p, source, target));
+    }
+
+    return new CompoundPath(dest);
   }
 }
 

@@ -1,6 +1,5 @@
 import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType';
 import { Point } from '@diagram-craft/geometry/point';
-import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import {
@@ -27,10 +26,10 @@ export class EditablePath {
   private originalSvgPath: string;
 
   constructor(
-    path: Path,
+    path: CompoundPath,
     private readonly node: DiagramNode
   ) {
-    this.buildFromPath(path.segments);
+    this.buildFromPath(path.segments());
     this.originalSvgPath = path.asSvgPath();
 
     const gpProps = node.props.genericPath ?? {};
