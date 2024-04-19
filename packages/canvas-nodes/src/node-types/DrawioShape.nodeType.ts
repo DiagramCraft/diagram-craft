@@ -57,70 +57,7 @@ const parse = (def: DiagramNode): Element => {
   return def.cache.get('element') as Element;
 };
 
-export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
-  constructor() {
-    super('drawio', 'Drawio Shape', DrawioShapeComponent);
-  }
-
-  getDefaultAspectRatio(def: DiagramNode) {
-    const shape = parse(def);
-
-    return xNum(shape, 'w') / xNum(shape, 'h');
-  }
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    const shape = parse(def);
-
-    const h = xNum(shape, 'h');
-    const w = xNum(shape, 'w');
-
-    const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, def.bounds));
-
-    const background = shape.querySelector('background');
-
-    if (!background) {
-      PathBuilderHelper.rect(pathBuilder, { x: 0, y: 0, w, h, r: 0 });
-      return pathBuilder;
-    }
-
-    const outlines = background.childNodes;
-    for (let i = 0; i < outlines.length; i++) {
-      const node = outlines.item(i);
-      if (node.nodeType !== Node.ELEMENT_NODE) continue;
-
-      const $el = node as Element;
-      if (isShapeElement($el)) {
-        parseShapeElement($el, pathBuilder);
-      } else {
-        console.log(`No support for ${$el.nodeName}`);
-        //VERIFY_NOT_REACHED();
-      }
-    }
-
-    return pathBuilder;
-  }
-
-  getAnchors(def: DiagramNode) {
-    const shape = parse(def);
-
-    const newAnchors: Array<Anchor> = [];
-    newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
-
-    const $constraints = shape.getElementsByTagName('constraint');
-    for (let i = 0; i < $constraints.length; i++) {
-      const $constraint = $constraints.item(i)!;
-      if ($constraint.nodeType !== Node.ELEMENT_NODE) continue;
-
-      const x = xNum($constraint, 'x');
-      const y = xNum($constraint, 'y');
-      newAnchors.push({ point: Point.of(x, y), clip: false });
-    }
-
-    return newAnchors;
-  }
-}
-
-function parseShapeElement($el: Element, pathBuilder: PathBuilder) {
+const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
   if ($el.nodeName === 'rect') {
     PathBuilderHelper.rect(pathBuilder, {
       x: xNum($el, 'x'),
@@ -190,6 +127,65 @@ function parseShapeElement($el: Element, pathBuilder: PathBuilder) {
         console.log(`No support for path.` + $pc.nodeName);
       }
     }
+  }
+};
+
+export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
+  constructor() {
+    super('drawio', 'Drawio Shape', DrawioShapeComponent);
+  }
+
+  getDefaultAspectRatio(def: DiagramNode) {
+    const shape = parse(def);
+
+    return xNum(shape, 'w') / xNum(shape, 'h');
+  }
+
+  getBoundingPathBuilder(def: DiagramNode) {
+    const shape = parse(def);
+
+    const h = xNum(shape, 'h');
+    const w = xNum(shape, 'w');
+
+    const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, def.bounds));
+
+    const background = shape.querySelector('background');
+    const foreground = shape.querySelector('foreground');
+
+    const outlines = (background ?? foreground)!.childNodes;
+    for (let i = 0; i < outlines.length; i++) {
+      const node = outlines.item(i);
+      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+      const $el = node as Element;
+      if (isShapeElement($el)) {
+        parseShapeElement($el, pathBuilder);
+      } else {
+        //console.log(`No support for ${$el.nodeName}`);
+        //VERIFY_NOT_REACHED();
+      }
+    }
+
+    return pathBuilder;
+  }
+
+  getAnchors(def: DiagramNode) {
+    const shape = parse(def);
+
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
+
+    const $constraints = shape.getElementsByTagName('constraint');
+    for (let i = 0; i < $constraints.length; i++) {
+      const $constraint = $constraints.item(i)!;
+      if ($constraint.nodeType !== Node.ELEMENT_NODE) continue;
+
+      const x = xNum($constraint, 'x');
+      const y = xNum($constraint, 'y');
+      newAnchors.push({ point: Point.of(x, y), clip: false });
+    }
+
+    return newAnchors;
   }
 }
 
