@@ -78,7 +78,7 @@ export class ShapeBuilder {
     const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
     for (let i = 0; i < renderedPaths[0].length; i++) {
       joinedPaths.push({
-        path: renderedPaths.map(p => p[i].path).join(' '),
+        path: renderedPaths.map(p => p[i].path).join(', '),
         style: renderedPaths[0][i].style
       });
     }

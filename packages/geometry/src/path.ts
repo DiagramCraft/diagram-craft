@@ -232,7 +232,7 @@ export class Path {
     return (
       `M ${round(this.#start.x)} ${round(this.#start.y)}` +
       (normalizedPath.length > 0 ? ', ' : '') +
-      normalizedPath.map(e => e.join(' ')).join(', ')
+      normalizedPath.map(r => this.rawSegmentAsSvgPath(r)).join(', ')
     );
   }
 
@@ -243,5 +243,14 @@ export class Path {
 
   hash() {
     return this.asSvgPath();
+  }
+
+  private rawSegmentAsSvgPath(r: RawSegment) {
+    // We know the first element of a raw segment is the command, followed
+    // by a number of numbers
+    const [command, ...numbers] = r;
+
+    const roundedNumbers = numbers.map(e => round(e));
+    return `${command} ${roundedNumbers.join(' ')}`;
   }
 }

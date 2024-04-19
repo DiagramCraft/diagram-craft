@@ -1,6 +1,5 @@
 import { AbstractNode, Anchor, LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
-import { PathUtils } from '@diagram-craft/geometry/pathUtils';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
@@ -299,14 +298,7 @@ export class DiagramNode
 
     const paths = this.getDefinition().getBoundingPath(this);
 
-    // TODO: [896F9523] Need to support multiple paths
-    const scaledPath = PathUtils.scalePath(paths.singularPath(), this.bounds, {
-      x: -1,
-      y: 1,
-      w: 2,
-      h: -2,
-      r: 0
-    });
+    const scaledPath = paths.scale({ x: -1, y: 1, w: 2, h: -2, r: 0 });
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {

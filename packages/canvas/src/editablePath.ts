@@ -1,6 +1,5 @@
 import { GenericPathNodeDefinition } from './node-types/GenericPath.nodeType';
 import { Point } from '@diagram-craft/geometry/point';
-import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import {
@@ -11,9 +10,13 @@ import {
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 
-export type EditableSegment = { type: 'cubic' | 'line'; controlPoints: { p1: Point; p2: Point } };
+export type EditableSegment = {
+  type: 'cubic' | 'line' | 'move';
+  point: Point;
+  controlPoints: { p1: Point; p2: Point };
+};
 export type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';
 export type EditableWaypoint = {
   point: Point;
@@ -23,14 +26,14 @@ export type EditableWaypoint = {
 
 export class EditablePath {
   waypoints: EditableWaypoint[] = [];
-  segments: EditableSegment[] = [];
+  private segments: EditableSegment[] = [];
   private originalSvgPath: string;
 
   constructor(
-    path: Path,
+    path: CompoundPath,
     private readonly node: DiagramNode
   ) {
-    this.buildFromPath(path.segments);
+    this.buildFromPath(path.segments());
     this.originalSvgPath = path.asSvgPath();
 
     const gpProps = node.props.genericPath ?? {};
@@ -62,7 +65,7 @@ export class EditablePath {
     const path = this.getPath('as-displayed');
     const [pre, post] = path.split(path.projectPoint(p));
 
-    const all = [...pre.segments, ...post.segments];
+    const all = [...pre.segments(), ...post.segments()];
 
     const originalWaypoints = this.waypoints;
 
@@ -112,7 +115,7 @@ export class EditablePath {
     }
   }
 
-  getPath(type: 'as-stored' | 'as-displayed') {
+  private getPath(type: 'as-stored' | 'as-displayed') {
     const bounds = this.node.bounds;
     const pb =
       type === 'as-displayed'
@@ -124,18 +127,26 @@ export class EditablePath {
     const segCount = this.segments.length;
     for (let i = 0; i < segCount; i++) {
       const nextWp = this.waypoints[(i + 1) % segCount];
-      if (this.segments[i].type === 'line') {
-        pb.lineTo(nextWp.point);
-      } else {
-        pb.cubicTo(
-          nextWp.point,
-          Point.add(this.waypoints[i].point, this.waypoints[i].controlPoints.p2),
-          Point.add(nextWp.point, nextWp.controlPoints.p1)
-        );
+      switch (this.segments[i].type) {
+        case 'line':
+          pb.lineTo(nextWp.point);
+          break;
+        case 'cubic':
+          pb.cubicTo(
+            nextWp.point,
+            Point.add(this.waypoints[i].point, this.waypoints[i].controlPoints.p2),
+            Point.add(nextWp.point, nextWp.controlPoints.p1)
+          );
+          break;
+        case 'move':
+          pb.moveTo(nextWp.point);
+          break;
+        default:
+          VERIFY_NOT_REACHED();
       }
     }
 
-    return pb.getPaths().singularPath();
+    return pb.getPaths();
   }
 
   private resizePathToUnitLCS(): { path: CompoundPath; bounds: Box } {
@@ -190,33 +201,49 @@ export class EditablePath {
   }
 
   private buildFromPath(segments: ReadonlyArray<PathSegment>) {
-    this.segments = segments.map(s => {
+    this.segments = [];
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i];
       if (s instanceof LineSegment) {
-        return {
+        this.segments.push({
           type: 'line',
+          point: s.start,
           controlPoints: {
             p1: Vector.scale(Vector.from(s.start, s.end), 0.25),
             p2: Vector.scale(Vector.from(s.end, s.start), 0.25)
           }
-        };
+        });
       } else if (s instanceof CubicSegment) {
-        return {
+        this.segments.push({
           type: 'cubic',
+          point: s.start,
           controlPoints: { p1: Point.subtract(s.p1, s.start), p2: Point.subtract(s.p2, s.end) }
-        };
+        });
       } else {
-        throw new VerifyNotReached();
+        throw new VerifyNotReached(`Unknown type ${typeof s}`);
       }
-    });
+
+      if (i < segments.length - 1 && !Point.isEqual(s.end, segments[i + 1].start)) {
+        this.segments.push({
+          type: 'move',
+          point: segments[i + 1].start,
+          controlPoints: { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } }
+        });
+      }
+    }
 
     const segCount = this.segments.length;
-    this.waypoints = segments.map((s, idx) => ({
-      point: s.start,
-      type: 'corner',
-      controlPoints: {
-        p1: this.segments[idx === 0 ? segCount - 1 : idx - 1].controlPoints.p2,
-        p2: this.segments[idx].controlPoints.p1
-      }
-    }));
+    this.waypoints = [];
+    for (let idx = 0; idx < this.segments.length; idx++) {
+      const s = this.segments[idx];
+      this.waypoints.push({
+        point: s.point,
+        type: 'corner',
+        controlPoints: {
+          p1: this.segments[idx === 0 ? segCount - 1 : idx - 1].controlPoints.p2,
+          p2: this.segments[idx].controlPoints.p1
+        }
+      });
+    }
   }
 }

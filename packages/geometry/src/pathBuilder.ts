@@ -3,6 +3,9 @@ import { Box } from './box';
 import { Path } from './path';
 import { Angle } from './angle';
 import { assert, precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { Transform, TransformFactory } from './transform';
+import { PathUtils } from './pathUtils';
+import { TimeOffsetOnSegment } from './pathPosition';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];
@@ -62,7 +65,53 @@ export class CompoundPath {
   }
 
   asSvgPath() {
-    return this.paths.map(p => p.asSvgPath()).join(' ');
+    return this.paths.map(p => p.asSvgPath()).join(', ');
+  }
+
+  segments() {
+    return this.paths.flatMap(p => p.segments);
+  }
+
+  scale(targetBounds: Box) {
+    const bounds = this.bounds();
+
+    const t = TransformFactory.fromTo(bounds, targetBounds);
+
+    const dest: Path[] = [];
+    for (const p of this.paths) {
+      const source = p.bounds();
+      const target = Transform.box(source, ...t);
+      dest.push(PathUtils.scalePath(p, source, target));
+    }
+
+    return new CompoundPath(dest);
+  }
+
+  projectPoint(p: Point): { pathIdx: number; offset: TimeOffsetOnSegment } {
+    let best: { point: Point; pathIdx: number; offset: TimeOffsetOnSegment } | undefined =
+      undefined;
+    for (let idx = 0; idx < this.paths.length; idx++) {
+      const path = this.paths[idx];
+      const bp = path.projectPoint(p);
+      if (best === undefined || Point.distance(p, bp.point) < Point.distance(p, best.point)) {
+        best = {
+          point: bp.point,
+          pathIdx: idx,
+          offset: bp
+        };
+      }
+    }
+
+    return best!;
+  }
+
+  split(p: { pathIdx: number; offset: TimeOffsetOnSegment }): [CompoundPath, CompoundPath] {
+    const [before, after] = this.paths[p.pathIdx].split(p.offset);
+
+    return [
+      new CompoundPath([...this.paths.slice(0, p.pathIdx), before]),
+      new CompoundPath([after, ...this.paths.slice(p.pathIdx + 1)])
+    ];
   }
 }
 

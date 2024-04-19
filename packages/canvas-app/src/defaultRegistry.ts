@@ -29,7 +29,7 @@ export const defaultNodeRegistry = () => {
   dest.register(new ParallelogramNodeDefinition());
   dest.register(new TrapetzoidNodeDefinition());
   dest.register(new DiamondNodeDefinition());
-  dest.register(new GenericPathNodeDefinition());
+  dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
 
   dest.register(new DrawioShapeNodeDefinition(), { hidden: true });

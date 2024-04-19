@@ -62,12 +62,9 @@ class GenericPathComponent extends BaseShape {
     const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
     const paths = pathBuilder.getPaths();
 
-    // TODO: [896F9523] We should support generic paths with multiple paths
-    const path = paths.singularPath();
+    const svgPath = paths.asSvgPath();
 
-    const svgPath = path.asSvgPath();
-
-    const editablePath = new EditablePath(path, props.node);
+    const editablePath = new EditablePath(paths, props.node);
 
     const onDoubleClick = (e: MouseEvent) => {
       const domPoint = EventHelper.point(e);
