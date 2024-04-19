@@ -56,6 +56,14 @@ export class CompoundPath {
   all() {
     return this.paths;
   }
+
+  bounds() {
+    return Box.boundingBox(this.paths.map(p => p.bounds()));
+  }
+
+  asSvgPath() {
+    return this.paths.map(p => p.asSvgPath()).join(' ');
+  }
 }
 
 type PathBuilderTransform = (p: Point, type?: 'point' | 'distance') => Point;

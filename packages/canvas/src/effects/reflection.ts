@@ -16,7 +16,7 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
   if (props.effects?.reflection) {
     const paths = node.diagram.document.nodeDefinitions.get(node.nodeType).getBoundingPath(node);
 
-    pathBounds = Box.boundingBox(paths.all().map(p => p.bounds()));
+    pathBounds = paths.bounds();
   }
 
   const strength = node.props.effects?.reflectionStrength?.toString() ?? '1';

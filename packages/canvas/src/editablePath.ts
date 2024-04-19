@@ -3,7 +3,11 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
-import { inverseUnitCoordinateSystem, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import {
+  CompoundPath,
+  inverseUnitCoordinateSystem,
+  PathBuilder
+} from '@diagram-craft/geometry/pathBuilder';
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -134,41 +138,30 @@ export class EditablePath {
     return pb.getPaths().singularPath();
   }
 
-  resizePathToUnitLCS(): { path: Path; bounds: Box } {
+  private resizePathToUnitLCS(): { path: CompoundPath; bounds: Box } {
     const rot = this.node.bounds.r;
 
-    // TODO: [896F9523] Support multiple paths
-    const nodePath = new GenericPathNodeDefinition()
-      .getBoundingPathBuilder(this.node)
-      .getPaths()
-      .singularPath();
+    const nodePath = new GenericPathNodeDefinition().getBoundingPathBuilder(this.node).getPaths();
     const nodePathBounds = nodePath.bounds();
 
-    // TODO: [896F9523] Support multiple paths
     // Raw path and raw bounds represent the path in the original unit coordinate system,
     // but since waypoints have been moved, some points may lie outside the [-1, 1] range
     const rawPath = PathBuilder.fromString(
       this.node.props.genericPath?.path ?? this.originalSvgPath
-    )
-      .getPaths()
-      .singularPath();
+    ).getPaths();
     const rawBounds = rawPath.bounds();
 
     // Need to adjust the position of the bounds to account for the rotation and the shifted
-    // center of rotation
-    // Could probably be done analytically, but this works for now
-    const startPointBefore = Point.rotateAround(nodePath.start, rot, Box.center(this.node.bounds));
-    const startPointAfter = Point.rotateAround(nodePath.start, rot, Box.center(nodePathBounds));
+    // center of rotation. could probably be done analytically, but this works for now
+    const startPointBefore = Point.rotateAround(nodePathBounds, rot, Box.center(this.node.bounds));
+    const startPointAfter = Point.rotateAround(nodePathBounds, rot, Box.center(nodePathBounds));
     const diff = Point.subtract(startPointAfter, startPointBefore);
 
-    // TODO: [896F9523] Support multiple paths
     return {
       path: PathBuilder.fromString(
         rawPath.asSvgPath(),
         inverseUnitCoordinateSystem(rawBounds, false)
-      )
-        .getPaths()
-        .singularPath(),
+      ).getPaths(),
       bounds: {
         ...nodePathBounds,
         x: nodePathBounds.x - diff.x,
