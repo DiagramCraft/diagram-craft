@@ -10,19 +10,99 @@ import {
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 
 export type EditableSegment = {
   type: 'cubic' | 'line' | 'move';
-  point: Point;
+  start: Point;
+  end: Point;
   controlPoints: { p1: Point; p2: Point };
 };
+
 export type EditableWaypointType = 'corner' | 'smooth' | 'symmetric';
-export type EditableWaypoint = {
-  point: Point;
+
+export class EditableWaypoint {
+  #point: Point;
+  #controlPoints: { p1: Point; p2: Point };
+  #preSegment: EditableSegment | undefined;
+  #postSegment: EditableSegment | undefined;
+
   type: EditableWaypointType;
-  controlPoints: { p1: Point; p2: Point };
-};
+
+  constructor(point: Point, type: EditableWaypointType) {
+    this.#point = point;
+    this.type = type;
+    this.#controlPoints = { p1: Point.ORIGIN, p2: Point.ORIGIN };
+  }
+
+  get point() {
+    return this.#point;
+  }
+
+  set point(p: Point) {
+    this.#point = p;
+    this.#preSegment!.end = p;
+    this.#postSegment!.start = p;
+  }
+
+  get controlPoints() {
+    return this.#controlPoints;
+  }
+
+  get preSegment() {
+    return this.#preSegment;
+  }
+
+  set preSegment(segment: EditableSegment | undefined) {
+    this.#preSegment = segment;
+    if (segment) this.#controlPoints.p1 = segment.controlPoints.p2;
+  }
+
+  get postSegment() {
+    return this.#postSegment;
+  }
+
+  set postSegment(segment: EditableSegment | undefined) {
+    this.#postSegment = segment;
+    if (segment) this.#controlPoints.p2 = segment.controlPoints.p1;
+  }
+
+  updateControlPoint(
+    cp: 'p1' | 'p2',
+    absolutePoint: Point,
+    type: EditableWaypointType | undefined = undefined
+  ) {
+    this.#controlPoints[cp] = Point.subtract(absolutePoint, this.#point);
+
+    assert.present(this.#postSegment);
+    assert.present(this.#preSegment);
+
+    assert.present(this.#controlPoints.p1);
+    assert.present(this.#controlPoints.p2);
+
+    // TODO: We don't need to change both segments here - it depends on which control point is
+    //       being changed
+    this.#postSegment.type = 'cubic';
+    this.#preSegment.type = 'cubic';
+
+    const otherCP = cp === 'p1' ? 'p2' : 'p1';
+    const typeInUse = type ?? this.type;
+    if (typeInUse === 'smooth') {
+      const otherLength = Vector.length(this.#controlPoints[otherCP]);
+      const angle = Vector.angle(this.#controlPoints[cp]);
+      const otherAngle = angle + Math.PI;
+      this.#controlPoints[otherCP] = Vector.fromPolar(otherAngle, otherLength);
+    } else if (typeInUse === 'symmetric') {
+      this.#controlPoints[otherCP] = {
+        x: -1 * this.#controlPoints[cp].x,
+        y: -1 * this.#controlPoints[cp].y
+      };
+    }
+
+    this.#preSegment!.controlPoints.p2 = this.#controlPoints.p1;
+    this.#postSegment!.controlPoints.p1 = this.#controlPoints.p2;
+  }
+}
 
 export class EditablePath {
   waypoints: EditableWaypoint[] = [];
@@ -31,7 +111,7 @@ export class EditablePath {
 
   constructor(
     path: CompoundPath,
-    private readonly node: DiagramNode
+    public readonly node: DiagramNode
   ) {
     this.buildFromPath(path.segments());
     this.originalSvgPath = path.asSvgPath();
@@ -44,21 +124,14 @@ export class EditablePath {
     }
   }
 
-  get diagram() {
-    return this.node.diagram;
-  }
-
   toLocalCoordinate(coord: Point) {
     return Point.rotateAround(coord, -this.node.bounds.r, Box.center(this.node.bounds));
   }
 
-  deleteWaypoint(idx: number) {
+  deleteWaypoint(wp: EditableWaypoint) {
+    const idx = this.waypoints.indexOf(wp);
     this.waypoints = this.waypoints.toSpliced(idx, 1);
     this.segments = this.segments.toSpliced(idx, 1);
-  }
-
-  updateWaypoint(idx: number, point: Partial<EditableWaypoint>) {
-    this.waypoints[idx] = { ...this.waypoints[idx], ...point };
   }
 
   split(p: Point): number {
@@ -80,66 +153,41 @@ export class EditablePath {
       }
     }
 
-    return pre.segments.length;
-  }
-
-  updateControlPoint(
-    idx: number,
-    cp: 'p1' | 'p2',
-    absolutePoint: Point,
-    type: EditableWaypointType | undefined = undefined
-  ) {
-    const wp = this.waypoints[idx];
-    wp.controlPoints[cp] = Point.subtract(absolutePoint, wp.point);
-
-    // TODO: We don't need to change both segments here - it depends on which control point is
-    //       being changed
-    const nextSegment = this.segments[idx];
-    nextSegment.type = 'cubic';
-
-    const previousSegment = this.segments[idx === 0 ? this.segments.length - 1 : idx - 1];
-    previousSegment.type = 'cubic';
-
-    const otherCP = cp === 'p1' ? 'p2' : 'p1';
-    const typeInUse = type ?? wp.type;
-    if (typeInUse === 'smooth') {
-      const otherLength = Vector.length(wp.controlPoints[otherCP]);
-      const angle = Vector.angle(wp.controlPoints[cp]);
-      const otherAngle = angle + Math.PI;
-      wp.controlPoints[otherCP] = Vector.fromPolar(otherAngle, otherLength);
-    } else if (typeInUse === 'symmetric') {
-      wp.controlPoints[otherCP] = {
-        x: -1 * wp.controlPoints[cp].x,
-        y: -1 * wp.controlPoints[cp].y
-      };
-    }
+    return pre.segments().length;
   }
 
   private getPath(type: 'as-stored' | 'as-displayed') {
     const bounds = this.node.bounds;
-    const pb =
-      type === 'as-displayed'
-        ? new PathBuilder()
-        : new PathBuilder(inverseUnitCoordinateSystem(bounds));
+    const pb = new PathBuilder(
+      type === 'as-displayed' ? p => p : inverseUnitCoordinateSystem(bounds)
+    );
 
     pb.moveTo(this.waypoints[0].point);
 
     const segCount = this.segments.length;
     for (let i = 0; i < segCount; i++) {
-      const nextWp = this.waypoints[(i + 1) % segCount];
-      switch (this.segments[i].type) {
+      const segment = this.segments[i];
+
+      switch (segment.type) {
         case 'line':
-          pb.lineTo(nextWp.point);
+          pb.lineTo(segment.end);
           break;
-        case 'cubic':
+        case 'cubic': {
+          const startWp = this.waypoints.find(wp => wp.postSegment === segment);
+          const endWp = this.waypoints.find(wp => wp.preSegment === segment);
+
+          assert.present(startWp);
+          assert.present(endWp);
+
           pb.cubicTo(
-            nextWp.point,
-            Point.add(this.waypoints[i].point, this.waypoints[i].controlPoints.p2),
-            Point.add(nextWp.point, nextWp.controlPoints.p1)
+            segment.end,
+            Point.add(startWp.point, startWp.controlPoints.p2!),
+            Point.add(endWp.point, endWp.controlPoints.p1!)
           );
           break;
+        }
         case 'move':
-          pb.moveTo(nextWp.point);
+          pb.moveTo(segment.end);
           break;
         default:
           VERIFY_NOT_REACHED();
@@ -202,12 +250,17 @@ export class EditablePath {
 
   private buildFromPath(segments: ReadonlyArray<PathSegment>) {
     this.segments = [];
+    this.waypoints = [];
+
+    let waypointsInSegment: EditableWaypoint[] = [];
+
     for (let i = 0; i < segments.length; i++) {
       const s = segments[i];
       if (s instanceof LineSegment) {
         this.segments.push({
           type: 'line',
-          point: s.start,
+          start: s.start,
+          end: s.end,
           controlPoints: {
             p1: Vector.scale(Vector.from(s.start, s.end), 0.25),
             p2: Vector.scale(Vector.from(s.end, s.start), 0.25)
@@ -216,34 +269,42 @@ export class EditablePath {
       } else if (s instanceof CubicSegment) {
         this.segments.push({
           type: 'cubic',
-          point: s.start,
+          start: s.start,
+          end: s.end,
           controlPoints: { p1: Point.subtract(s.p1, s.start), p2: Point.subtract(s.p2, s.end) }
         });
       } else {
         throw new VerifyNotReached(`Unknown type ${typeof s}`);
       }
 
+      const wp = new EditableWaypoint(this.segments.at(-1)!.start, 'corner');
+      wp.postSegment = this.segments.at(-1)!;
+      if (this.segments.length >= 2) {
+        wp.preSegment = this.segments.at(-2)!;
+      }
+
+      waypointsInSegment.push(wp);
+
       if (i < segments.length - 1 && !Point.isEqual(s.end, segments[i + 1].start)) {
+        // TODO: We should only do this if the segments connect
+        waypointsInSegment[0].preSegment = this.segments.at(-1)!;
+        this.waypoints.push(...waypointsInSegment);
+
+        waypointsInSegment = [];
+
         this.segments.push({
           type: 'move',
-          point: segments[i + 1].start,
+          start: segments[i].end,
+          end: segments[i + 1].start,
           controlPoints: { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } }
         });
       }
     }
 
-    const segCount = this.segments.length;
-    this.waypoints = [];
-    for (let idx = 0; idx < this.segments.length; idx++) {
-      const s = this.segments[idx];
-      this.waypoints.push({
-        point: s.point,
-        type: 'corner',
-        controlPoints: {
-          p1: this.segments[idx === 0 ? segCount - 1 : idx - 1].controlPoints.p2,
-          p2: this.segments[idx].controlPoints.p1
-        }
-      });
+    if (waypointsInSegment.length > 0) {
+      // TODO: We should only do this if the segments connect
+      waypointsInSegment[0].preSegment = this.segments.at(-1)!;
+      this.waypoints.push(...waypointsInSegment);
     }
   }
 }

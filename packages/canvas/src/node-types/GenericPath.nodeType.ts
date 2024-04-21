@@ -195,12 +195,14 @@ class GenericPathComponent extends BaseShape {
               },
               dblclick: e => {
                 const uow = new UnitOfWork(props.node.diagram, true);
+
+                const wp = editablePath.waypoints[idx];
                 if (e.metaKey) {
-                  editablePath.deleteWaypoint(idx);
+                  editablePath.deleteWaypoint(wp);
                   editablePath.commitToNode(uow);
                   commitWithUndo(uow, 'Delete waypoint');
                 } else {
-                  editablePath.updateWaypoint(idx, { type: NEXT_TYPE[wp.type] });
+                  wp.type = NEXT_TYPE[wp.type];
                   editablePath.commitToNode(uow);
                   commitWithUndo(uow, 'Change waypoint type');
                 }

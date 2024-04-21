@@ -18,7 +18,7 @@ import { RawSegment } from './pathBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
-import { round } from '@diagram-craft/utils/math';
+import { round, roundHighPrecision } from '@diagram-craft/utils/math';
 
 export type Projection = { t: number; distance: number; point: Point };
 
@@ -250,7 +250,7 @@ export class Path {
     // by a number of numbers
     const [command, ...numbers] = r;
 
-    const roundedNumbers = numbers.map(e => round(e));
+    const roundedNumbers = numbers.map(e => roundHighPrecision(e));
     return `${command} ${roundedNumbers.join(' ')}`;
   }
 }

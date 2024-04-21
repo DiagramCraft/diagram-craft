@@ -13,12 +13,12 @@ export class GenericPathControlPointDrag extends AbstractDrag {
     private readonly controlPoint: 'p1' | 'p2'
   ) {
     super();
-    this.uow = new UnitOfWork(this.editablePath.diagram, true);
+    this.uow = new UnitOfWork(this.editablePath.node.diagram, true);
   }
 
   onDrag(coord: Point, modifiers: Modifiers) {
-    this.editablePath.updateControlPoint(
-      this.waypointIdx,
+    const wp = this.editablePath.waypoints[this.waypointIdx];
+    wp.updateControlPoint(
       this.controlPoint,
       this.editablePath.toLocalCoordinate(coord),
       modifiers.metaKey ? 'symmetric' : modifiers.altKey ? 'corner' : undefined

@@ -8,6 +8,14 @@ export const round = (n: number) => {
   return res;
 };
 
+// TODO: Merge this with round - and add a second parameter indicating precision
+export const roundHighPrecision = (n: number) => {
+  const res = Math.round(n * 10000) / 10000;
+  // To ensure -0 === 0
+  if (res === 0) return 0;
+  return res;
+};
+
 /**
  * Returns a number whose value is limited to the given range.
  *

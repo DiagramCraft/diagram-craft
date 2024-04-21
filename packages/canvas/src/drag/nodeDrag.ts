@@ -16,15 +16,14 @@ export class NodeDrag extends AbstractDrag {
   ) {
     super();
     this.startTime = new Date().getTime();
-    this.uow = new UnitOfWork(this.editablePath.diagram, true);
+    this.uow = new UnitOfWork(this.editablePath.node.diagram, true);
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
     this.lastPoint = coord;
-    this.editablePath.updateWaypoint(this.waypointIdx, {
-      point: this.editablePath.toLocalCoordinate(coord)
-    });
 
+    const wp = this.editablePath.waypoints[this.waypointIdx];
+    wp.point = this.editablePath.toLocalCoordinate(coord);
     this.editablePath.commitToNode(this.uow);
     this.uow.notify();
   }
