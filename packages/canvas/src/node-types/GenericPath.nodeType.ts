@@ -69,13 +69,22 @@ class GenericPathComponent extends BaseShape {
     const onDoubleClick = (e: MouseEvent) => {
       const domPoint = EventHelper.point(e);
       const dp = props.node.diagram.viewBox.toDiagramPoint(domPoint);
-      const idx = editablePath.split(editablePath.toLocalCoordinate(dp));
 
-      const uow = new UnitOfWork(props.node.diagram, true);
-      editablePath.commitToNode(uow);
-      commitWithUndo(uow, 'Add waypoint');
+      if (e.metaKey) {
+        editablePath.straighten(dp);
 
-      this.setSelectedWaypoints([idx]);
+        const uow = new UnitOfWork(props.node.diagram, true);
+        editablePath.commitToNode(uow);
+        commitWithUndo(uow, 'Convert to line');
+      } else {
+        const idx = editablePath.split(editablePath.toLocalCoordinate(dp));
+
+        const uow = new UnitOfWork(props.node.diagram, true);
+        editablePath.commitToNode(uow);
+        commitWithUndo(uow, 'Add waypoint');
+
+        this.setSelectedWaypoints([idx]);
+      }
     };
 
     if (props.isSingleSelected && props.tool?.type === 'node') {

@@ -134,6 +134,36 @@ export class EditablePath {
     this.segments = this.segments.toSpliced(idx, 1);
   }
 
+  project(p: Point) {
+    const path = this.getPath('as-displayed');
+    return path.projectPoint(p);
+  }
+
+  straighten(p: Point) {
+    const path = this.getPath('as-displayed');
+    const projection = path.projectPoint(p);
+
+    const segment = this.segments[projection.pathIdx];
+    segment.type = 'line';
+
+    const startWp = this.waypoints.find(wp => wp.postSegment === segment);
+    const endWp = this.waypoints.find(wp => wp.preSegment === segment);
+
+    assert.present(startWp);
+    assert.present(endWp);
+
+    startWp.updateControlPoint(
+      'p2',
+      Point.add(segment.start, Vector.scale(Vector.from(segment.start, segment.end), 0.25)),
+      'corner'
+    );
+    endWp.updateControlPoint(
+      'p1',
+      Point.add(segment.end, Vector.scale(Vector.from(segment.end, segment.start), 0.25)),
+      'corner'
+    );
+  }
+
   split(p: Point): number {
     const path = this.getPath('as-displayed');
     const [pre, post] = path.split(path.projectPoint(p));
