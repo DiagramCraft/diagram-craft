@@ -187,19 +187,19 @@ class GenericPathComponent extends BaseShape {
             on: {
               mousedown: e => {
                 if (e.button !== 0) return;
-                drag.initiate(
-                  new NodeDrag(
-                    editablePath,
-                    idx,
-                    props.node.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
-                  )
-                );
 
                 if (e.shiftKey) {
-                  this.setSelectedWaypoints([...this.selectedWaypoints, idx]);
+                  if (this.selectedWaypoints.includes(idx)) {
+                    this.setSelectedWaypoints(this.selectedWaypoints.filter(i => i !== idx));
+                  } else {
+                    this.setSelectedWaypoints([...this.selectedWaypoints, idx]);
+                  }
                 } else {
                   this.setSelectedWaypoints([idx]);
                 }
+
+                drag.initiate(new NodeDrag(editablePath, this.selectedWaypoints));
+
                 e.stopPropagation();
               },
               dblclick: e => {
