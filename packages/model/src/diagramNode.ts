@@ -298,7 +298,7 @@ export class DiagramNode
 
     const paths = this.getDefinition().getBoundingPath(this);
 
-    const scaledPath = paths.scale({ x: -1, y: 1, w: 2, h: -2, r: 0 });
+    const scaledPath = paths.scale({ x: -1, y: 1, w: 2, h: -2, r: 0 }, this.bounds);
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {

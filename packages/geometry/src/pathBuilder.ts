@@ -72,8 +72,8 @@ export class CompoundPath {
     return this.paths.flatMap(p => p.segments);
   }
 
-  scale(targetBounds: Box) {
-    const bounds = this.bounds();
+  scale(targetBounds: Box, referenceBounds?: Box) {
+    const bounds = referenceBounds ?? this.bounds();
 
     const t = TransformFactory.fromTo(bounds, targetBounds);
 
