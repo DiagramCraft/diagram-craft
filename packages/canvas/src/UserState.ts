@@ -7,12 +7,14 @@ type UserStateEvents = {
 export class UserState extends EventEmitter<UserStateEvents> {
   #panelLeft?: number;
   #panelRight?: number;
+  #showHelp: boolean = true;
 
   constructor() {
     super();
     const state = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}');
     this.#panelLeft = state.panelLeft;
     this.#panelRight = state.panelRight;
+    this.#showHelp = state.showHelp;
   }
 
   set panelLeft(panelLeft: number | undefined) {
@@ -33,12 +35,22 @@ export class UserState extends EventEmitter<UserStateEvents> {
     return this.#panelRight;
   }
 
+  set showHelp(showHelp: boolean) {
+    this.#showHelp = showHelp;
+    this.triggerChange();
+  }
+
+  get showHelp(): boolean {
+    return this.#showHelp;
+  }
+
   private triggerChange() {
     localStorage.setItem(
       'diagram-craft.user-state',
       JSON.stringify({
         panelLeft: this.#panelLeft,
-        panelRight: this.#panelRight
+        panelRight: this.#panelRight,
+        showHelp: this.#showHelp
       })
     );
     this.emit('change', { after: this });

@@ -139,6 +139,7 @@ input::-webkit-input-placeholder {
 }
 
 #status {
+  opacity: 0;
   position: absolute;
   left: calc(16rem + 2rem + 3rem);
   bottom: 3rem;
@@ -152,6 +153,8 @@ input::-webkit-input-placeholder {
   color: var(--secondary-fg);
   display: flex;
   align-items: center;
+
+  transition: opacity 0.25s;
 }
 
 

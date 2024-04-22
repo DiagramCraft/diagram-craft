@@ -1,4 +1,5 @@
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
+import { AppState } from '@diagram-craft/canvas/keyMap';
 
 declare global {
   interface ActionMap {
@@ -7,22 +8,26 @@ declare global {
 }
 
 export class ToggleHelpAction extends AbstractToggleAction {
-  constructor() {
+  constructor(private readonly appState: AppState) {
     super();
+
+    this.state = appState.userState.showHelp;
+
     setTimeout(() => {
-      this.state = document.getElementById('status')!.style.visibility !== 'hidden' ? true : false;
-      this.emit('actionchanged', { action: this });
-    }, 1000);
+      document.getElementById('status')!.style.opacity = this.state ? '100' : '0';
+    }, 200);
   }
 
   execute(): void {
     if (this.state) {
-      document.getElementById('status')!.style.visibility = 'hidden';
+      document.getElementById('status')!.style.opacity = '0';
       this.state = false;
     } else {
-      document.getElementById('status')!.style.visibility = 'visible';
+      document.getElementById('status')!.style.opacity = '100';
       this.state = true;
     }
+
+    this.appState.userState.showHelp = this.state;
     this.emit('actionchanged', { action: this });
   }
 }
