@@ -83,7 +83,7 @@ import {
   defaultEdgeRegistry,
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
-import { StatusBar } from './react-app/components/StatusBar';
+import { HelpMessage } from './react-app/components/HelpMessage';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -465,7 +465,7 @@ const Document = (props: { doc: DiagramDocument }) => {
               </div>
             </div>
 
-            <StatusBar applicationState={applicationState.current} />
+            <HelpMessage applicationState={applicationState.current} actionMap={actionMap} />
           </div>
         </ConfigurationContext.Provider>
       </ActionsContext.Provider>

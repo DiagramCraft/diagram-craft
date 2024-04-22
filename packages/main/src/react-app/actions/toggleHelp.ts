@@ -14,16 +14,16 @@ export class ToggleHelpAction extends AbstractToggleAction {
     this.state = appState.userState.showHelp;
 
     setTimeout(() => {
-      document.getElementById('status')!.style.opacity = this.state ? '100' : '0';
+      document.getElementById('help')!.style.opacity = this.state ? '100' : '0';
     }, 200);
   }
 
   execute(): void {
     if (this.state) {
-      document.getElementById('status')!.style.opacity = '0';
+      document.getElementById('help')!.style.opacity = '0';
       this.state = false;
     } else {
-      document.getElementById('status')!.style.opacity = '100';
+      document.getElementById('help')!.style.opacity = '100';
       this.state = true;
     }
 
