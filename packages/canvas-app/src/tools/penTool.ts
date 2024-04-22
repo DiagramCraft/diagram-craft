@@ -28,6 +28,8 @@ export class PenTool extends AbstractTool {
   ) {
     super('node', diagram, drag, svg, applicationTriggers, resetTool);
     if (this.svg) this.svg.style.cursor = 'default';
+
+    applicationTriggers.setHelp?.('Draw shape');
   }
 
   onMouseOver(id: string, point: Point) {

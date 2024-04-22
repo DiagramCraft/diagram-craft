@@ -67,7 +67,8 @@ export class SelectionComponent extends Component<CanvasState> {
           this.subComponent($cmp(EdgeSelectionComponent), {
             key: `edge-selection-${e.id}`,
             edge: e,
-            diagram
+            diagram,
+            applicationTriggers: props.applicationTriggers
           })
         ),
         ...selection.nodes

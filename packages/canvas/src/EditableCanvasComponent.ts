@@ -66,6 +66,10 @@ export interface ApplicationTriggers {
     cancelLabel: string,
     onClick: () => void
   ) => void;
+
+  setHelp?: (message: string) => void;
+  pushHelp?: (id: string, message: string) => void;
+  popHelp?: (id: string) => void;
 }
 
 type ComponentProps = Props & Actions & { diagram: Diagram };

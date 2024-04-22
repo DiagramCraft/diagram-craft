@@ -6,6 +6,7 @@ import { isConnected } from '@diagram-craft/model/endpoint';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { $c } from '@diagram-craft/utils/classname';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
 
 export class EdgeSelectionComponent extends Component<Props> {
   render(props: Props) {
@@ -35,7 +36,9 @@ export class EdgeSelectionComponent extends Component<Props> {
         on: {
           mousedown: ev => {
             if (ev.button !== 0) return;
-            DRAG_DROP_MANAGER.initiate(new EdgeEndpointMoveDrag(diagram, edge, 'start'));
+            DRAG_DROP_MANAGER.initiate(
+              new EdgeEndpointMoveDrag(diagram, edge, 'start', props.applicationTriggers)
+            );
             ev.stopPropagation();
           }
         },
@@ -49,7 +52,9 @@ export class EdgeSelectionComponent extends Component<Props> {
         on: {
           mousedown: ev => {
             if (ev.button !== 0) return;
-            DRAG_DROP_MANAGER.initiate(new EdgeEndpointMoveDrag(diagram, edge, 'end'));
+            DRAG_DROP_MANAGER.initiate(
+              new EdgeEndpointMoveDrag(diagram, edge, 'end', props.applicationTriggers)
+            );
             ev.stopPropagation();
           }
         },
@@ -62,4 +67,5 @@ export class EdgeSelectionComponent extends Component<Props> {
 type Props = {
   diagram: Diagram;
   edge: DiagramEdge;
+  applicationTriggers: ApplicationTriggers;
 };

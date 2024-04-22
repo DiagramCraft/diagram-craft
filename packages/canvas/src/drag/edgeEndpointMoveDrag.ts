@@ -12,6 +12,7 @@ import {
 } from '@diagram-craft/model/endpoint';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
 
 const EDGE_HIGHLIGHT = 'edge-connect';
 
@@ -23,13 +24,16 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   constructor(
     private readonly diagram: Diagram,
     private readonly edge: DiagramEdge,
-    private readonly type: 'start' | 'end'
+    private readonly type: 'start' | 'end',
+    private applicationTriggers: ApplicationTriggers
   ) {
     super();
     this.uow = new UnitOfWork(this.edge.diagram, true);
 
     // TODO: Make a helper for this ... as well as getting edges and nodes from ids
     document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'move';
+
+    this.applicationTriggers.pushHelp?.('EdgeEndpointMoveDrag', 'Move waypoint');
   }
 
   onDragEnter(id: string): void {
@@ -81,6 +85,8 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
     commitWithUndo(this.uow, 'Move edge endpoint');
     document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'unset';
+
+    this.applicationTriggers.popHelp?.('EdgeEndpointMoveDrag');
   }
 
   private attachToClosestAnchor(coord: Point) {

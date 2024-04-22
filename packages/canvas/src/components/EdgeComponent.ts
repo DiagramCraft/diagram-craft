@@ -188,7 +188,9 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
                 );
                 uow.commit();
 
-                DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.def, idx));
+                DRAG_DROP_MANAGER.initiate(
+                  new EdgeWaypointDrag(props.def, idx, props.applicationTriggers)
+                );
                 e.stopPropagation();
               },
               contextmenu: onContextMenu
@@ -221,7 +223,12 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
                   mousedown: (e: MouseEvent) => {
                     if (e.button !== 0) return;
                     DRAG_DROP_MANAGER.initiate(
-                      new EdgeControlPointDrag(props.def, idx, name as keyof ControlPoints)
+                      new EdgeControlPointDrag(
+                        props.def,
+                        idx,
+                        name as keyof ControlPoints,
+                        props.applicationTriggers
+                      )
                     );
                     e.stopPropagation();
                   }
@@ -249,7 +256,9 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
               },
               mousedown: e => {
                 if (e.button !== 0) return;
-                DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.def, idx));
+                DRAG_DROP_MANAGER.initiate(
+                  new EdgeWaypointDrag(props.def, idx, props.applicationTriggers)
+                );
                 e.stopPropagation();
               },
               contextmenu: onContextMenu

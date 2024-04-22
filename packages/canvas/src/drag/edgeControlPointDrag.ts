@@ -5,6 +5,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ControlPoints } from '@diagram-craft/model/types';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
 
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 
@@ -17,10 +18,16 @@ export class EdgeControlPointDrag extends AbstractDrag {
   constructor(
     private readonly edge: DiagramEdge,
     private readonly waypointIdx: number,
-    private readonly controlPointIdx: keyof ControlPoints
+    private readonly controlPointIdx: keyof ControlPoints,
+    private readonly applicationTriggers: ApplicationTriggers
   ) {
     super();
     this.uow = new UnitOfWork(this.edge.diagram, true);
+
+    this.applicationTriggers.pushHelp?.(
+      'EdgeControlPointDrag',
+      'Move control point. Cmd-drag - smooth, Alt-drag - corner'
+    );
   }
 
   onDrag(coord: Point, modifiers: Modifiers) {
@@ -54,5 +61,7 @@ export class EdgeControlPointDrag extends AbstractDrag {
 
   onDragEnd(): void {
     commitWithUndo(this.uow, 'Move Control point');
+
+    this.applicationTriggers.popHelp?.('EdgeControlPointDrag');
   }
 }

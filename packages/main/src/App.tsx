@@ -82,6 +82,7 @@ import {
   defaultEdgeRegistry,
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
+import { StatusBar } from './react-app/components/StatusBar';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -157,13 +158,15 @@ const Document = (props: { doc: DiagramDocument }) => {
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
 
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  const actionMap = makeActionMap(defaultAppActions)({
-    diagram: $d,
-    applicationState: applicationState.current,
-    userState: userState.current
+  const [actionMap] = useState(() => {
+    return makeActionMap(defaultAppActions)({
+      diagram: $d,
+      applicationState: applicationState.current,
+      userState: userState.current
+    });
   });
+
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const autosave = debounce(() => Autosave.save(doc), 1000);
 
@@ -326,6 +329,19 @@ const Document = (props: { doc: DiagramDocument }) => {
                       onDrop={canvasDropHandler($d)}
                       onDragOver={canvasDragOverHandler()}
                       applicationTriggers={{
+                        pushHelp: (id: string, message: string) => {
+                          const help = applicationState.current.help;
+                          if (help && help.id === id && help.message === message) return;
+                          queueMicrotask(() => {
+                            applicationState.current.pushHelp({ id, message });
+                          });
+                        },
+                        popHelp: (id: string) => {
+                          applicationState.current.popHelp(id);
+                        },
+                        setHelp: (message: string) => {
+                          applicationState.current.setHelp({ id: 'default', message });
+                        },
                         showCanvasContextMenu: (point: Point, mouseEvent: MouseEvent) => {
                           oncePerEvent(mouseEvent, () => {
                             contextMenuTarget.current = { type: 'canvas', pos: point };
@@ -435,6 +451,8 @@ const Document = (props: { doc: DiagramDocument }) => {
                 <LayerIndicator />
               </div>
             </div>
+
+            <StatusBar applicationState={applicationState.current} />
           </div>
         </ConfigurationContext.Provider>
       </ActionsContext.Provider>

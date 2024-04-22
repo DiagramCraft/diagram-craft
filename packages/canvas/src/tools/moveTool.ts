@@ -30,6 +30,8 @@ export class MoveTool extends AbstractTool {
   ) {
     super('move', diagram, drag, svg, applicationTriggers, resetTool);
     if (this.svg) this.svg.style.cursor = 'default';
+
+    applicationTriggers.setHelp?.('Select elements. Shift+click - add');
   }
 
   onMouseOver(id: string, _point: Point) {
@@ -80,7 +82,13 @@ export class MoveTool extends AbstractTool {
       };
     } else if (isClickOnBackground) {
       if (!modifiers.shiftKey) selection.clear();
-      this.drag.initiate(new MarqueeDrag(this.diagram, this.diagram.viewBox.toDiagramPoint(point)));
+      this.drag.initiate(
+        new MarqueeDrag(
+          this.diagram,
+          this.diagram.viewBox.toDiagramPoint(point),
+          this.applicationTriggers
+        )
+      );
       return;
     } else {
       if (!modifiers.shiftKey) selection.clear();
@@ -116,7 +124,8 @@ export class MoveTool extends AbstractTool {
         new MoveDrag(
           this.diagram,
           Point.subtract(this.diagram.viewBox.toDiagramPoint(point), selection.bounds),
-          modifiers
+          modifiers,
+          this.applicationTriggers
         )
       );
     }

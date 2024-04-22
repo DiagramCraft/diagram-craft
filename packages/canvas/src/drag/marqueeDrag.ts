@@ -5,13 +5,19 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { SelectionState } from '@diagram-craft/model/selectionState';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
 
 export class MarqueeDrag extends AbstractDrag {
   constructor(
     private readonly diagram: Diagram,
-    private readonly offset: Point
+    private readonly offset: Point,
+    private readonly applicationTriggers: ApplicationTriggers
   ) {
     super();
+    this.applicationTriggers.pushHelp?.(
+      'MarqueeDrag',
+      'Select multiple elements by dragging a rectangle around them. Shift+drag - add.'
+    );
   }
 
   onDrag(coord: Point) {
@@ -29,6 +35,8 @@ export class MarqueeDrag extends AbstractDrag {
     if (this.diagram.selectionState.marquee.pendingElements) {
       this.diagram.selectionState.marquee.commitSelection();
     }
+
+    this.applicationTriggers.popHelp?.('MarqueeDrag');
   }
 
   private updatePendingElements(selection: SelectionState, diagram: Diagram) {

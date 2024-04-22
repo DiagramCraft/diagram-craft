@@ -24,6 +24,8 @@ export class EdgeTool extends AbstractTool {
   ) {
     super('edge', diagram, drag, svg, applicationTriggers, resetTool);
     if (this.svg) this.svg.style.cursor = 'crosshair';
+
+    applicationTriggers.setHelp?.('Click to add edge');
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {

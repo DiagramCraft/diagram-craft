@@ -43,7 +43,7 @@ export class AnchorHandleDrag extends AbstractDrag {
     diagram.selectionState.setElements([this.edge]);
 
     // TODO: This is the wrong this.element to use
-    this.delegate = new EdgeEndpointMoveDrag(diagram, this.edge, 'end');
+    this.delegate = new EdgeEndpointMoveDrag(diagram, this.edge, 'end', applicationTriggers);
   }
 
   onDragEnd() {

@@ -31,6 +31,8 @@ export class NodeTool extends AbstractTool {
     ) {
       diagram.selectionState.clear();
     }
+
+    applicationTriggers.setHelp?.('Select element');
   }
 
   onMouseOver(id: string, point: Point) {

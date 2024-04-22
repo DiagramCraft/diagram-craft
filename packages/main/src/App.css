@@ -121,9 +121,9 @@ input::-webkit-input-placeholder {
   inset: 0;
 
   display: grid;
-  grid-template-areas: "menu" "main";
+  grid-template-areas: "menu" "main" "status";
   grid-template-columns: 1fr;
-  grid-template-rows: 45px 1fr;
+  grid-template-rows: 45px 1fr 20px;
 }
 
 #window-area {
@@ -138,9 +138,20 @@ input::-webkit-input-placeholder {
   grid-template-columns: 40px 5fr 40px;
 }
 
+#status {
+  grid-area: status;
+  background: var(--primary-bg);
+  border-top: 2px solid var(--slate-1);
+  font-size: 10px;
+  text-align: left;
+  padding-left: 1rem;
+  color: var(--secondary-fg);
+  display: flex;
+  align-items: center;
+}
+
 
 #menu {
-  display: flex;
   align-items: center;
   grid-area: menu;
   background: var(--primary-bg);
@@ -689,7 +700,8 @@ input::-webkit-input-placeholder {
 /* TODO: Perhaps rename as document tabs */
 .cmp-document-tabs {
   display: flex;
-  flex-direction: rows;
+  flex-direction: row;
+  height: 100%;
   background-color: var(--primary-bg);
   .cmp-document-tabs__add {
     background-color: transparent;

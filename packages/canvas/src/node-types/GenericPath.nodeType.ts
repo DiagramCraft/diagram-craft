@@ -88,6 +88,10 @@ class GenericPathComponent extends BaseShape {
     };
 
     if (props.isSingleSelected && props.tool?.type === 'node') {
+      props.applicationTriggers.pushHelp?.(
+        'GenericPathComponent',
+        'Edge Dbl-click - add waypoint, Edge Cmd-Dbl-Click - straighten, Waypoint Click - select, Waypoint Shift-Click - multi-select, Waypoint Dbl-Click - change type, Waypoint Cmd-Dbl-Click - delete'
+      );
       shapeBuilder.add(
         svg.path({
           d: svgPath,
@@ -109,6 +113,8 @@ class GenericPathComponent extends BaseShape {
           }
         })
       );
+    } else {
+      props.applicationTriggers.popHelp?.('GenericPathComponent');
     }
 
     shapeBuilder.boundaryPath(paths, undefined, undefined, v => {
@@ -142,7 +148,14 @@ class GenericPathComponent extends BaseShape {
               on: {
                 mousedown: e => {
                   if (e.button !== 0) return;
-                  drag.initiate(new GenericPathControlPointDrag(editablePath, idx, 'p1'));
+                  drag.initiate(
+                    new GenericPathControlPointDrag(
+                      editablePath,
+                      idx,
+                      'p1',
+                      props.applicationTriggers
+                    )
+                  );
                   e.stopPropagation();
                 }
               }
@@ -169,7 +182,14 @@ class GenericPathComponent extends BaseShape {
               on: {
                 mousedown: e => {
                   if (e.button !== 0) return;
-                  drag.initiate(new GenericPathControlPointDrag(editablePath, idx, 'p2'));
+                  drag.initiate(
+                    new GenericPathControlPointDrag(
+                      editablePath,
+                      idx,
+                      'p2',
+                      props.applicationTriggers
+                    )
+                  );
                   e.stopPropagation();
                 }
               }
@@ -198,7 +218,9 @@ class GenericPathComponent extends BaseShape {
                   this.setSelectedWaypoints([idx]);
                 }
 
-                drag.initiate(new NodeDrag(editablePath, this.selectedWaypoints));
+                drag.initiate(
+                  new NodeDrag(editablePath, this.selectedWaypoints, props.applicationTriggers)
+                );
 
                 e.stopPropagation();
               },

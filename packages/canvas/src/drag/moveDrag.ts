@@ -19,6 +19,7 @@ import {
 import { SelectionState } from '@diagram-craft/model/selectionState';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 
@@ -54,7 +55,8 @@ export class MoveDrag extends AbstractDrag {
   constructor(
     private readonly diagram: Diagram,
     private readonly offset: Point,
-    private modifiers: Modifiers
+    private modifiers: Modifiers,
+    private applicationTriggers: ApplicationTriggers
   ) {
     super();
 
@@ -62,6 +64,11 @@ export class MoveDrag extends AbstractDrag {
     if (isDuplicateDrag(this.modifiers)) {
       this.duplicate();
     }
+
+    this.applicationTriggers.pushHelp?.(
+      'MoveDrag',
+      'Move elements. Shift+Click - add, Shift - constrain, Option - free, Cmd - duplicate'
+    );
   }
 
   onDragEnter(id: string) {
@@ -240,6 +247,8 @@ export class MoveDrag extends AbstractDrag {
 
     this.uow.commit();
     selection.rebaseline();
+
+    this.applicationTriggers.popHelp?.('MoveDrag');
   }
 
   private constrainDrag(selection: SelectionState, coord: Point) {

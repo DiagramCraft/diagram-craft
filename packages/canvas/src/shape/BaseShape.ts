@@ -47,6 +47,7 @@ export type BaseShapeBuildProps = {
 
   node: DiagramNode;
   onMouseDown: (e: MouseEvent) => void;
+  applicationTriggers: ApplicationTriggers;
 
   tool: Tool | undefined;
   actionMap: Partial<ActionMap>;
@@ -143,6 +144,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       node: props.def,
       actionMap: props.actionMap,
       tool: props.tool,
+      applicationTriggers: props.applicationTriggers,
       onMouseDown,
       style,
       nodeProps,
