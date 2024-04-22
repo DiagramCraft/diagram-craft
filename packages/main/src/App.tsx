@@ -11,6 +11,7 @@ import {
   TbDatabaseEdit,
   TbDropletSearch,
   TbFiles,
+  TbHelpSquare,
   TbHistory,
   TbInfoCircle,
   TbLayoutGridAdd,
@@ -255,6 +256,18 @@ const Document = (props: { doc: DiagramDocument }) => {
 
               <div className={'_extra-tools'}>
                 <div className={'cmp-toolbar'}>
+                  <ReactToolbar.Root>
+                    <ActionToggleButton action={'TOGGLE_HELP'}>
+                      <TbHelpSquare size={'1.1rem'} />
+                    </ActionToggleButton>
+                  </ReactToolbar.Root>
+
+                  <button
+                    className={'cmp-toolbar__button'}
+                    onClick={() => actionMap['ZOOM_IN']?.execute()}
+                  >
+                    <TbZoomOut size={'1.1rem'} />
+                  </button>
                   <button
                     className={'cmp-toolbar__button'}
                     onClick={() => actionMap['ZOOM_IN']?.execute()}
