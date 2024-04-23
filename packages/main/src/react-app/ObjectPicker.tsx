@@ -77,6 +77,7 @@ export const ObjectPicker = (props: Props) => {
             diagramWidth={d.viewBox.dimensions.w}
             diagramHeight={d.viewBox.dimensions.h}
             diagram={d}
+            name={nodes[idx].key ?? nodes[idx].node.name}
           />
         </div>
       ))}

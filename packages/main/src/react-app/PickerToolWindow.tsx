@@ -3,18 +3,15 @@ import { AccordionTrigger } from './AccordionTrigger';
 import { AccordionContent } from './AccordionContext';
 import { ObjectPicker } from './ObjectPicker';
 import { useDiagram } from './context/DiagramContext';
+import { useState } from 'react';
 
 export const PickerToolWindow = () => {
   const diagram = useDiagram();
   const groups = diagram.document.nodeDefinitions.getGroups();
+  const [open, setOpen] = useState(['basic-shapes']);
 
-  // TODO: Handle folding... must be done manually most likely
   return (
-    <Accordion.Root
-      className="cmp-accordion"
-      type="multiple"
-      defaultValue={['basic-shapes', 'Stencils']}
-    >
+    <Accordion.Root className="cmp-accordion" type="multiple" value={open} onValueChange={setOpen}>
       <Accordion.Item className="cmp-accordion__item" value="basic-shapes">
         <AccordionTrigger>Basic shapes</AccordionTrigger>
         <AccordionContent>

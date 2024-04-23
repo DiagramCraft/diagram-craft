@@ -78,7 +78,7 @@ import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
@@ -473,37 +473,92 @@ const Document = (props: { doc: DiagramDocument }) => {
   );
 };
 
+const stencilRegistry = [
+  {
+    name: 'GCP',
+    url: '/stencils/gcp2.xml',
+    foreground: '#3b8df1',
+    background: '#3b8df1'
+  },
+  {
+    name: 'AWS',
+    url: '/stencils/aws3.xml',
+    foreground: '#ff9900',
+    background: '#ff9900'
+  },
+  {
+    name: 'Azure',
+    url: '/stencils/azure.xml',
+    foreground: '#00abf0',
+    background: '#00abf0'
+  },
+  {
+    name: 'Fluid Power',
+    url: '/stencils/fluid_power.xml',
+    foreground: '#ffffff',
+    background: '#ffffff'
+  },
+  {
+    name: 'IBM',
+    url: '/stencils/ibm.xml',
+    foreground: '#000000',
+    background: 'transparent'
+  },
+  {
+    name: 'Web Logos',
+    url: '/stencils/weblogos.xml',
+    foreground: 'blue',
+    background: '#ffffff'
+  },
+  {
+    name: 'Web Icons',
+    url: '/stencils/webicons.xml',
+    foreground: 'blue',
+    background: '#000000'
+  }
+];
+
 const App = () => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
-  const [stencils, setStencils] = useState<undefined | Array<Stencil>>();
+  const [stencils, setStencils] = useState<undefined | Array<StencilPackage>>();
   const redraw = useRedraw();
 
   useEffect(() => {
-    fetch('/stencils/gcp2.xml')
-      .then(res => res.text())
-      .then(r => {
-        const parser = new DOMParser();
-        const $doc = parser.parseFromString(r, 'application/xml');
+    for (const activeStencil of stencilRegistry) {
+      fetch(activeStencil.url)
+        .then(res => res.text())
+        .then(r => {
+          const parser = new DOMParser();
+          const $doc = parser.parseFromString(r, 'application/xml');
 
-        const newStencils: Array<Stencil> = [];
+          const newStencils: Array<Stencil> = [];
 
-        const $shapes = $doc.getElementsByTagName('shape');
-        for (let i = 0; i < $shapes.length; i++) {
-          const name = $shapes[i].getAttribute('name')!;
-          newStencils.push({
-            node: new DrawioShapeNodeDefinition(),
-            group: 'Stencils',
-            key: name,
-            props: {
-              fill: { color: '#0072de' },
-              stroke: { color: '#ffffff' },
-              drawio: { shape: btoa(new XMLSerializer().serializeToString($shapes[i])) }
-            }
+          const $shapes = $doc.getElementsByTagName('shape');
+          for (let i = 0; i < $shapes.length; i++) {
+            const name = $shapes[i].getAttribute('name')!;
+            newStencils.push({
+              node: new DrawioShapeNodeDefinition(),
+              group: activeStencil.name,
+              key: name,
+              props: {
+                fill: { color: activeStencil.background },
+                stroke: { color: activeStencil.foreground },
+                drawio: { shape: btoa(new XMLSerializer().serializeToString($shapes[i])) }
+              }
+            });
+          }
+
+          setStencils(arr => {
+            return [
+              ...(arr ?? []),
+              {
+                name: activeStencil.name,
+                stencils: newStencils
+              }
+            ].sort((a, b) => a.name.localeCompare(b.name));
           });
-        }
-
-        setStencils(newStencils);
-      });
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -517,8 +572,10 @@ const App = () => {
 
   useEffect(() => {
     if (stencils && doc) {
-      stencils.forEach(stencil => {
-        doc.nodeDefinitions.register(stencil.node, stencil);
+      stencils.forEach(pkg => {
+        pkg.stencils.forEach(stencil => {
+          doc.nodeDefinitions.register(stencil.node, stencil);
+        });
       });
       redraw();
     }

@@ -86,6 +86,11 @@ export type Stencil = StencilOpts & {
   node: NodeDefinition;
 };
 
+export type StencilPackage = {
+  name: string;
+  stencils: Array<Stencil>;
+};
+
 const addRegistration = (id: string, reg: Stencil, dest: Map<string, Stencil[]>) => {
   if (!dest.has(id)) {
     dest.set(id, []);

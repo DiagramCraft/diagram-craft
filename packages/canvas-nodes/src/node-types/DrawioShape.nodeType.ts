@@ -338,18 +338,6 @@ class DrawioShapeComponent extends BaseShape {
             r: 0
           }
         );
-
-        /*
-          x and y - the decimal location (x,y) of the text element, required.
-          align - the horizontal alignment of the text element, either "left", "center" or "right". Optional, default is "left".
-          valign- the vertical alignment of the text element, either "top", "middle" or "bottom". Optional, default is "top".
-          localized - 0 or 1. If 1 then the "str" actually contains a key used to fetch the value out of mxResources. Optional, default is 0, currently unused in draw.io.
-          vertical - 0 or 1. If 1 then the label is rendered vertically (rotated by 90 degrees). Optional, default is 0.
-          rotation - angle in degrees (0 to 360). The angle to rotate the text by. Optional, default is 0.
-          align-shape - 0 or 1. If 0 then the rotation of the shape is ignored when setting the text rotation. Optional, default is 1.
-          placeholders - 0 or 1. If 1 then placeholders of the form %name% will be replaced with their values. Optional, default is 0.
-         */
-
         backgroundDrawn = true;
       } else if ($el.nodeName === 'save') {
         savedStyle = deepClone(style);

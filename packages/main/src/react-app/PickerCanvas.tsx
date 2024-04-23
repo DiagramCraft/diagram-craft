@@ -39,14 +39,19 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               left: hover.x + 40,
               top: hover.y,
               width: 100,
-              height: 100,
+              height: 110,
               zIndex: 200,
               background: 'var(--canvas-bg)',
               borderRadius: '4px',
               lineHeight: '0',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'top',
+              color: 'var(--canvas-fg)',
+              fontSize: '11px',
+              paddingTop: '0.75rem',
+              gap: '1rem',
               boxShadow:
                 'hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px'
             }}
@@ -58,6 +63,8 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               diagram={diagram}
               viewBox={`0 0 ${props.diagramWidth} ${props.diagramHeight}`}
             />
+
+            <div>{props.name}</div>
           </div>
         </Portal.Root>
       )}
@@ -80,4 +87,5 @@ type PickerCanvasProps = {
   onClick?: (e: MouseEvent) => void;
   diagramWidth?: number;
   diagramHeight?: number;
+  name?: string;
 };
