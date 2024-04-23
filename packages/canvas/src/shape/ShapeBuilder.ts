@@ -190,6 +190,10 @@ export class ShapeBuilder {
     style.stroke = nodeProps.stroke!.color;
     style.fill = nodeProps.fill!.color;
 
+    if (nodeProps.stroke!.pattern !== 'SOLID') {
+      style.strokeDasharray = nodeProps.stroke!.pattern;
+    }
+
     return style;
   }
 }

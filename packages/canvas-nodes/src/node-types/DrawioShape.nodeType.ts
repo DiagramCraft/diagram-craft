@@ -9,6 +9,7 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { Anchor } from '@diagram-craft/model/types';
+import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 
 declare global {
   interface NodeProps {
@@ -260,6 +261,10 @@ class DrawioShapeComponent extends BaseShape {
           savedStyle = deepClone(style);
         } else if ($el.nodeName === 'restore') {
           style = deepClone(savedStyle);
+        } else if ($el.nodeName === 'fontcolor') {
+          style.text!.color = $el.getAttribute('color')!;
+        } else if ($el.nodeName === 'fontsize') {
+          style.text!.fontSize = xNum($el, 'size')!;
         } else if ($el.nodeName === 'strokecolor') {
           style.stroke!.color = $el.getAttribute('color')!;
         } else if ($el.nodeName === 'fillcolor') {
@@ -273,9 +278,17 @@ class DrawioShapeComponent extends BaseShape {
           style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
         } else if ($el.nodeName === 'strokewidth') {
           style.stroke!.width = xNum($el, 'width');
+        } else if ($el.nodeName === 'dashpattern') {
+          style.stroke!.pattern = $el.getAttribute('pattern')!;
+        } else if ($el.nodeName === 'dashed') {
+          if ($el.getAttribute('dashed') === '0') {
+            style.stroke!.pattern = undefined;
+          }
         }
       }
     }
+
+    let textId = 1;
 
     const $outlines = $shape.querySelector('foreground')!.childNodes;
     for (let i = 0; i < $outlines.length; i++) {
@@ -298,12 +311,56 @@ class DrawioShapeComponent extends BaseShape {
         currentShape(style);
         style.fill!.color = old;
         backgroundDrawn = true;
+      } else if ($el.nodeName === 'text') {
+        if (!backgroundDrawn) drawBackground();
+
+        const align = $el.getAttribute('align') ?? 'center';
+        assertHAlign(align);
+
+        const valign = $el.getAttribute('valign') ?? 'middle';
+        assertVAlign(valign);
+
+        shapeBuilder.text(
+          this,
+          (++textId).toString(),
+          {
+            text: $el.getAttribute('str')!,
+            align: align,
+            valign: valign,
+            color: style.text?.color ?? style.fill?.color,
+            fontSize: (style.text?.fontSize ?? 12) * (props.node.bounds.h / xNum($shape, 'h'))
+          },
+          {
+            x: props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
+            y: props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
+            w: 60,
+            h: 40,
+            r: 0
+          }
+        );
+
+        /*
+          x and y - the decimal location (x,y) of the text element, required.
+          align - the horizontal alignment of the text element, either "left", "center" or "right". Optional, default is "left".
+          valign- the vertical alignment of the text element, either "top", "middle" or "bottom". Optional, default is "top".
+          localized - 0 or 1. If 1 then the "str" actually contains a key used to fetch the value out of mxResources. Optional, default is 0, currently unused in draw.io.
+          vertical - 0 or 1. If 1 then the label is rendered vertically (rotated by 90 degrees). Optional, default is 0.
+          rotation - angle in degrees (0 to 360). The angle to rotate the text by. Optional, default is 0.
+          align-shape - 0 or 1. If 0 then the rotation of the shape is ignored when setting the text rotation. Optional, default is 1.
+          placeholders - 0 or 1. If 1 then placeholders of the form %name% will be replaced with their values. Optional, default is 0.
+         */
+
+        backgroundDrawn = true;
       } else if ($el.nodeName === 'save') {
         savedStyle = deepClone(style);
       } else if ($el.nodeName === 'restore') {
         style = deepClone(savedStyle);
       } else if ($el.nodeName === 'strokecolor') {
         style.stroke!.color = $el.getAttribute('color')!;
+      } else if ($el.nodeName === 'fontcolor') {
+        style.text!.color = $el.getAttribute('color')!;
+      } else if ($el.nodeName === 'fontsize') {
+        style.text!.fontSize = xNum($el, 'size')!;
       } else if ($el.nodeName === 'fillcolor') {
         style.fill!.color = $el.getAttribute('color')!;
       } else if ($el.nodeName === 'fillalpha') {
@@ -315,6 +372,12 @@ class DrawioShapeComponent extends BaseShape {
         style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
       } else if ($el.nodeName === 'strokewidth') {
         style.stroke!.width = xNum($el, 'width');
+      } else if ($el.nodeName === 'dashpattern') {
+        style.stroke!.pattern = $el.getAttribute('pattern')!;
+      } else if ($el.nodeName === 'dashed') {
+        if ($el.getAttribute('dashed') === '0') {
+          style.stroke!.pattern = undefined;
+        }
       } else if (isShapeElement($el)) {
         if (!backgroundDrawn) drawBackground();
 

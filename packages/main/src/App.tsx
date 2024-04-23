@@ -478,14 +478,8 @@ const App = () => {
   const [stencils, setStencils] = useState<undefined | Array<Stencil>>();
   const redraw = useRedraw();
 
-  // TODO: Not working:
-  //   [x] citrix
-  //   [ ] floorplan
-  //   [x] flowchart
-  //   [x] fluid_power
-
   useEffect(() => {
-    fetch('/stencils/floorplan.xml')
+    fetch('/stencils/gcp2.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();
