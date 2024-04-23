@@ -13,6 +13,10 @@ export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
   const nodes = diagram.document.nodeDefinitions.getForGroup(props.group);
 
+  const scale = nodes
+    .map(n => n.node.getPickerScalingFactor())
+    .reduce((acc, cur) => Math.max(acc, cur), 1);
+
   const diagrams = nodes.map(n => {
     const uow = UnitOfWork.throwaway(diagram);
 
@@ -39,8 +43,8 @@ export const ObjectPicker = (props: Props) => {
 
     const margin = 1;
 
-    const maxWidth = props.size - 2 * margin;
-    const maxHeight = props.size - 2 * margin;
+    const maxWidth = props.size * scale - 2 * margin;
+    const maxHeight = props.size * scale - 2 * margin;
 
     const w = ar < 1 ? maxWidth * ar : maxWidth;
     const h = ar < 1 ? maxHeight : maxHeight / ar;
@@ -78,7 +82,13 @@ export const ObjectPicker = (props: Props) => {
           }}
           style={{ background: 'transparent' }}
         >
-          <PickerCanvas width={props.size} height={props.size} diagram={d} />
+          <PickerCanvas
+            width={props.size}
+            height={props.size}
+            diagramWidth={props.size * scale}
+            diagramHeight={props.size * scale}
+            diagram={d}
+          />
         </div>
       ))}
     </div>

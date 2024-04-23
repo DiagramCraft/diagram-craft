@@ -20,6 +20,7 @@ export class CanvasComponent extends Component<CanvasProps> {
         class: props.className ?? '',
         preserveAspectRatio: 'none',
         style: `user-select: none`,
+        ...(props.viewBox ? { viewBox: props.viewBox } : {}),
         on: {
           click: e => props.onClick?.(e)
         }
@@ -82,4 +83,5 @@ export type CanvasProps = {
   width?: string | number;
   height?: string | number;
   onClick?: (e: MouseEvent) => void;
+  viewBox?: string;
 };

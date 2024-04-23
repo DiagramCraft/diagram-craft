@@ -308,7 +308,7 @@ input::-webkit-input-placeholder {
   top: 0px;
   left: var(--left-indent);
   bottom: 0;
-  z-index: 100;
+  z-index: 2;
   &:after {
     content: '';
     position: absolute;
@@ -638,9 +638,6 @@ input::-webkit-input-placeholder {
     margin: 0.2rem;
     display: block;
     cursor: pointer;
-  }
-  .svg-node {
-    shape-rendering: crispEdges;
   }
 }
 

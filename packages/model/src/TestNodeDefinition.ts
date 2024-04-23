@@ -20,6 +20,10 @@ export class TestNodeDefinition implements NodeDefinition {
     public name: string
   ) {}
 
+  getPickerScalingFactor(): number {
+    return 1;
+  }
+
   getBoundingPath(node: DiagramNode) {
     const bnd = node.bounds;
     const pb = this.getBoundingPathBuilder(node);

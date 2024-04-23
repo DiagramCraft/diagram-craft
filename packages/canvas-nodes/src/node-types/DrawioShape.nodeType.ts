@@ -144,6 +144,10 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     super('drawio', 'Drawio Shape', DrawioShapeComponent);
   }
 
+  getPickerScalingFactor(): number {
+    return 5;
+  }
+
   getDefaultAspectRatio(def: DiagramNode) {
     const shape = parse(def);
 
