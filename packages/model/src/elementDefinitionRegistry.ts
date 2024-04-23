@@ -112,6 +112,10 @@ export class NodeDefinitionRegistry {
   private nodes = new Map<string, Stencil[]>();
   private grouping = new Map<string, Stencil[]>();
 
+  addGroup(group: string) {
+    this.grouping.set(group, []);
+  }
+
   register(node: NodeDefinition, opts: StencilOpts = {}) {
     addRegistration(node.type, { ...opts, node }, this.nodes);
 

@@ -520,7 +520,11 @@ const stencilRegistry = [
 
 const App = () => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
-  const [stencils, setStencils] = useState<undefined | Array<StencilPackage>>();
+  const [stencils, setStencils] = useState<Array<StencilPackage>>(
+    stencilRegistry
+      .map(s => ({ name: s.name, stencils: [] }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  );
   const redraw = useRedraw();
 
   useEffect(() => {
@@ -549,13 +553,14 @@ const App = () => {
           }
 
           setStencils(arr => {
-            return [
-              ...(arr ?? []),
-              {
-                name: activeStencil.name,
-                stencils: newStencils
-              }
-            ].sort((a, b) => a.name.localeCompare(b.name));
+            return arr.map(a =>
+              a.name === activeStencil.name
+                ? {
+                    name: activeStencil.name,
+                    stencils: newStencils
+                  }
+                : a
+            );
           });
         });
     }
@@ -571,14 +576,17 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (stencils && doc) {
-      stencils.forEach(pkg => {
-        pkg.stencils.forEach(stencil => {
-          doc.nodeDefinitions.register(stencil.node, stencil);
-        });
+    if (!doc) return;
+
+    stencils.forEach(pkg => {
+      doc.nodeDefinitions.addGroup(pkg.name);
+      pkg.stencils.forEach(stencil => {
+        doc.nodeDefinitions.register(stencil.node, stencil);
       });
-      redraw();
-    }
+    });
+
+    // TODO: Can we avoid explicit redraw here, and instead have a listener on the nodeDefinition
+    redraw();
   }, [doc, stencils]);
 
   if (doc && stencils) return <Document doc={doc} />;
