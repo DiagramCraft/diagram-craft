@@ -248,8 +248,36 @@ class DrawioShapeComponent extends BaseShape {
       backgroundDrawn = true;
     };
 
-    const $foreground = $shape.querySelector('foreground')!;
-    const $outlines = $foreground.childNodes;
+    // TODO: This is partially repeated below
+    const $styles = $shape.querySelector('background')?.childNodes;
+    if ($styles) {
+      for (let i = 0; i < $styles.length; i++) {
+        const $node = $styles.item(i);
+        if ($node.nodeType !== Node.ELEMENT_NODE) continue;
+
+        const $el = $node as Element;
+        if ($el.nodeName === 'save') {
+          savedStyle = deepClone(style);
+        } else if ($el.nodeName === 'restore') {
+          style = deepClone(savedStyle);
+        } else if ($el.nodeName === 'strokecolor') {
+          style.stroke!.color = $el.getAttribute('color')!;
+        } else if ($el.nodeName === 'fillcolor') {
+          style.fill!.color = $el.getAttribute('color')!;
+        } else if ($el.nodeName === 'fillalpha') {
+          style.fill!.color = `color(from ${style.fill!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+        } else if ($el.nodeName === 'strokealpha') {
+          style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+        } else if ($el.nodeName === 'alpha') {
+          style.fill!.color = `color(from ${style.fill!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+          style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+        } else if ($el.nodeName === 'strokewidth') {
+          style.stroke!.width = xNum($el, 'width');
+        }
+      }
+    }
+
+    const $outlines = $shape.querySelector('foreground')!.childNodes;
     for (let i = 0; i < $outlines.length; i++) {
       const $node = $outlines.item(i);
       if ($node.nodeType !== Node.ELEMENT_NODE) continue;
