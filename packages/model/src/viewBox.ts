@@ -80,6 +80,12 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
     return this.#offset;
   }
 
+  set offset(o: Point) {
+    this.#offset = o;
+    this.#initialized = true;
+    this.emit('viewbox', { viewbox: this });
+  }
+
   get svgViewboxString() {
     return `${this.#offset.x} ${this.#offset.y} ${this.#dimensions.w} ${this.#dimensions.h}`;
   }

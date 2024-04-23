@@ -59,15 +59,6 @@ const parse = (def: DiagramNode): Element => {
 
 const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
   if ($el.nodeName === 'rect') {
-    /*if (
-      !$el.hasAttribute('x') ||
-      !$el.hasAttribute('y') ||
-      !$el.hasAttribute('w') ||
-      !$el.hasAttribute('h')
-    ) {
-      return;
-    }*/
-
     PathBuilderHelper.rect(pathBuilder, {
       x: xNum($el, 'x'),
       y: xNum($el, 'y'),
@@ -151,8 +142,15 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     super('drawio', 'Drawio Shape', DrawioShapeComponent);
   }
 
-  getPickerScalingFactor(): number {
-    return 5;
+  getDefaultConfig(node: DiagramNode): { size: Extent } {
+    const shape = parse(node);
+
+    return {
+      size: {
+        w: xNum(shape, 'w', 100),
+        h: xNum(shape, 'h', 100)
+      }
+    };
   }
 
   getDefaultAspectRatio(def: DiagramNode) {

@@ -46,7 +46,7 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
   }
 
   getDefaultConfig(): { size: Extent } {
-    return { size: { w: 100, h: 10 } };
+    return { size: { w: 25, h: 10 } };
   }
 }
 

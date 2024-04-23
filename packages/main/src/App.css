@@ -641,6 +641,9 @@ input::-webkit-input-placeholder {
 
     .svg-node {
       vector-effect: non-scaling-stroke;
+      path {
+        vector-effect: non-scaling-stroke;
+      }
     }
   }
 }

@@ -13,10 +13,6 @@ export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
   const nodes = diagram.document.nodeDefinitions.getForGroup(props.group);
 
-  const scale = nodes
-    .map(n => n.node.getPickerScalingFactor())
-    .reduce((acc, cur) => Math.max(acc, cur), 1);
-
   const diagrams = nodes.map(n => {
     const uow = UnitOfWork.throwaway(diagram);
 
@@ -38,21 +34,13 @@ export const ObjectPicker = (props: Props) => {
     );
     dest.layers.active.addElement(node, uow);
 
-    // Adjust size
-    const ar = n.node.getDefaultAspectRatio(node);
+    const { size } = n.node.getDefaultConfig(node);
 
-    const margin = 1;
+    const w = size.w;
+    const h = size.h;
 
-    const maxWidth = props.size * scale - 2 * margin;
-    const maxHeight = props.size * scale - 2 * margin;
-
-    const w = ar < 1 ? maxWidth * ar : maxWidth;
-    const h = ar < 1 ? maxHeight : maxHeight / ar;
-
-    const x = (maxWidth - w) / 2 + margin;
-    const y = (maxHeight - h) / 2 + margin;
-
-    node.setBounds({ x, y, w, h, r: 0 }, uow);
+    node.setBounds({ x: 0, y: 0, w, h, r: 0 }, uow);
+    dest.viewBox.dimensions = { w, h };
 
     return dest;
   });
@@ -81,12 +69,13 @@ export const ObjectPicker = (props: Props) => {
             );
           }}
           style={{ background: 'transparent' }}
+          data-width={d.viewBox.dimensions.w}
         >
           <PickerCanvas
             width={props.size}
             height={props.size}
-            diagramWidth={props.size * scale}
-            diagramHeight={props.size * scale}
+            diagramWidth={d.viewBox.dimensions.w}
+            diagramHeight={d.viewBox.dimensions.h}
             diagram={d}
           />
         </div>

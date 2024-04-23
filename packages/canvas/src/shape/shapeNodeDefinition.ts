@@ -32,10 +32,6 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   abstract getBoundingPathBuilder(node: DiagramNode): PathBuilder;
 
-  getPickerScalingFactor(): number {
-    return 1;
-  }
-
   getAnchors(node: DiagramNode) {
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });

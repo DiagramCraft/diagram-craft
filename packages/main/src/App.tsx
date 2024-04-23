@@ -482,10 +482,10 @@ const App = () => {
   //   [x] citrix
   //   [ ] floorplan
   //   [x] flowchart
-  //   [ ] fluid_power
+  //   [x] fluid_power
 
   useEffect(() => {
-    fetch('/stencils/flowchart.xml')
+    fetch('/stencils/floorplan.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();

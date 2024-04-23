@@ -55,8 +55,6 @@ export interface NodeDefinition {
   getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;
   getDefaultAspectRatio(node: DiagramNode): number;
 
-  getPickerScalingFactor(): number;
-
   // TODO: Remove this perhaps
   getDefaultConfig(node: DiagramNode): { size: Extent };
 
