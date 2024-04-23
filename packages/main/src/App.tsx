@@ -478,6 +478,12 @@ const App = () => {
   const [stencils, setStencils] = useState<undefined | Array<Stencil>>();
   const redraw = useRedraw();
 
+  // TODO: Not working:
+  //   [x] citrix
+  //   [ ] floorplan
+  //   [ ] flowchart
+  //   [ ] fluid_power
+
   useEffect(() => {
     fetch('/stencils/gcp2.xml')
       .then(res => res.text())
@@ -496,7 +502,7 @@ const App = () => {
             key: name,
             props: {
               fill: { color: '#0072de' },
-              stroke: { color: '#0072de' },
+              stroke: { color: '#ffffff' },
               drawio: { shape: btoa(new XMLSerializer().serializeToString($shapes[i])) }
             }
           });

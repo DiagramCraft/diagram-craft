@@ -163,9 +163,20 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, def.bounds));
 
     const background = shape.querySelector('background');
-    const foreground = shape.querySelector('foreground');
+    this.parseElement(background, pathBuilder);
 
-    const outlines = (background ?? foreground)!.childNodes;
+    if (pathBuilder.getPaths().all().length === 0) {
+      const foreground = shape.querySelector('foreground');
+      this.parseElement(foreground, pathBuilder);
+    }
+
+    return pathBuilder;
+  }
+
+  private parseElement(element: Element | null, pathBuilder: PathBuilder) {
+    if (!element) return;
+
+    const outlines = element!.childNodes;
     for (let i = 0; i < outlines.length; i++) {
       const node = outlines.item(i);
       if (node.nodeType !== Node.ELEMENT_NODE) continue;
@@ -178,8 +189,6 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
         //VERIFY_NOT_REACHED();
       }
     }
-
-    return pathBuilder;
   }
 
   getAnchors(def: DiagramNode) {
@@ -217,7 +226,7 @@ class DrawioShapeComponent extends BaseShape {
     let savedStyle = style;
 
     let currentShape: (p: NodeProps) => void = p => {
-      shapeBuilder.boundaryPath(boundary, p);
+      return shapeBuilder.boundaryPath(boundary, p);
     };
 
     let backgroundDrawn = false;

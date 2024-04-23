@@ -638,6 +638,10 @@ input::-webkit-input-placeholder {
     margin: 0.2rem;
     display: block;
     cursor: pointer;
+
+    .svg-node {
+      vector-effect: non-scaling-stroke;
+    }
   }
 }
 
