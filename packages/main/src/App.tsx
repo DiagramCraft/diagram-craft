@@ -481,11 +481,11 @@ const App = () => {
   // TODO: Not working:
   //   [x] citrix
   //   [ ] floorplan
-  //   [ ] flowchart
+  //   [x] flowchart
   //   [ ] fluid_power
 
   useEffect(() => {
-    fetch('/stencils/floorplan.xml')
+    fetch('/stencils/flowchart.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();

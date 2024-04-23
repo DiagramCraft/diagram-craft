@@ -32,8 +32,8 @@ const makeShapeTransform =
     };
   };
 
-const xNum = (el: Element, name: string) => {
-  return Number(el.getAttribute(name));
+const xNum = (el: Element, name: string, def = 0) => {
+  return Number(el.getAttribute(name) ?? def);
 };
 
 function isShapeElement($el: Element) {
@@ -158,14 +158,14 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   getDefaultAspectRatio(def: DiagramNode) {
     const shape = parse(def);
 
-    return xNum(shape, 'w') / xNum(shape, 'h');
+    return xNum(shape, 'w', 100) / xNum(shape, 'h', 100);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
     const shape = parse(def);
 
-    const h = xNum(shape, 'h');
-    const w = xNum(shape, 'w');
+    const h = xNum(shape, 'h', 100);
+    const w = xNum(shape, 'w', 100);
 
     const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, def.bounds));
 
