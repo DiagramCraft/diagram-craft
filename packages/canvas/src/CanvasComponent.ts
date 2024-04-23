@@ -18,7 +18,7 @@ export class CanvasComponent extends Component<CanvasProps> {
         ...(props.height ? { height: props.height } : {}),
         id: `diagram-${diagram.id}`,
         class: props.className ?? '',
-        preserveAspectRatio: 'xMaxYMid',
+        preserveAspectRatio: 'xMidYMid',
         style: `user-select: none`,
         ...(props.viewBox ? { viewBox: props.viewBox } : {}),
         on: {
