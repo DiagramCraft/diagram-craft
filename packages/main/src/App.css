@@ -505,6 +505,9 @@ input::-webkit-input-placeholder {
 
   .svg-node {
     cursor: move;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
     .svg-node__anchor {
       stroke: red;
       fill: transparent;
@@ -637,9 +640,7 @@ input::-webkit-input-placeholder {
     cursor: pointer;
   }
   .svg-node {
-    shape-rendering: geometricprecision;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    shape-rendering: crispEdges;
   }
 }
 

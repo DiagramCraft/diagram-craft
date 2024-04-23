@@ -59,6 +59,15 @@ const parse = (def: DiagramNode): Element => {
 
 const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
   if ($el.nodeName === 'rect') {
+    /*if (
+      !$el.hasAttribute('x') ||
+      !$el.hasAttribute('y') ||
+      !$el.hasAttribute('w') ||
+      !$el.hasAttribute('h')
+    ) {
+      return;
+    }*/
+
     PathBuilderHelper.rect(pathBuilder, {
       x: xNum($el, 'x'),
       y: xNum($el, 'y'),
@@ -265,6 +274,8 @@ class DrawioShapeComponent extends BaseShape {
 
         const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, props.node.bounds));
         parseShapeElement($el, pathBuilder);
+
+        if (pathBuilder.getPaths().all().length === 0) continue;
 
         currentShape = (p: NodeProps) => {
           shapeBuilder.path(pathBuilder.getPaths().all(), p);
