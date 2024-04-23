@@ -76,8 +76,15 @@ const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
       r: 0
     });
   } else if ($el.nodeName === 'roundrect') {
-    const [x, y, w, h, r] = ['x', 'y', 'w', 'h', 'arcsize'].map(attr => xNum($el, attr));
-    const [dw, dh] = [w, h].map(dim => dim - 2 * r);
+    const [x, y, w, h, arcsize] = ['x', 'y', 'w', 'h', 'arcsize'].map(attr => xNum($el, attr));
+
+    const rx = (arcsize / 100) * w;
+    const ry = (arcsize / 100) * h;
+
+    const r = Math.min(rx, ry);
+
+    const dw = w - 2 * r;
+    const dh = h - 2 * r;
 
     pathBuilder.moveTo(Point.of(x + r, y));
     pathBuilder.lineTo(Point.of(x + r + dw, y));

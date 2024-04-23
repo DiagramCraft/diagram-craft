@@ -485,7 +485,7 @@ const App = () => {
   //   [ ] fluid_power
 
   useEffect(() => {
-    fetch('/stencils/gcp2.xml')
+    fetch('/stencils/floorplan.xml')
       .then(res => res.text())
       .then(r => {
         const parser = new DOMParser();
