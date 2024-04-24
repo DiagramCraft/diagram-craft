@@ -1,7 +1,5 @@
 import './App.css';
-import { useEffect, useRef, useState } from 'react';
-import { snapTestDiagram } from './sample/snap-test';
-import { simpleDiagram } from './sample/simple';
+import { useRef, useState } from 'react';
 import { LayerToolWindow } from './react-app/LayerToolWindow';
 import { DocumentSelector } from './react-app/DocumentSelector';
 import * as ContextMenu from '@radix-ui/react-context-menu';
@@ -53,7 +51,6 @@ import { defaultPalette } from './react-app/ObjectProperties/palette';
 import { DocumentToolWindow } from './react-app/DocumentToolWindow';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton';
 import { LayerIndicator } from './react-app/LayerIndicator';
-import { testDiagram } from './sample/test';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup';
 import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog';
 import { ObjectData } from './react-app/ObjectData/ObjectData';
@@ -70,19 +67,10 @@ import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationSta
 import { UserState } from '@diagram-craft/canvas/UserState';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
-import { SerializedDiagram } from '@diagram-craft/model/serialization/types';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
-import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
 import { HelpMessage } from './react-app/components/HelpMessage';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
@@ -92,29 +80,6 @@ const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
   (e as any)._triggered = true;
 };
-
-export const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {
-  return new Diagram(d.id, d.name, doc);
-};
-
-export const documentFactory = () => {
-  return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
-};
-
-const diagrams = [
-  {
-    name: 'Snap test',
-    document: deserializeDiagramDocument(snapTestDiagram, documentFactory, diagramFactory)
-  },
-  {
-    name: 'Test',
-    document: deserializeDiagramDocument(testDiagram, documentFactory, diagramFactory)
-  },
-  {
-    name: 'Simple',
-    document: deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
-  }
-];
 
 const tools: Record<ToolType, ToolContructor> = {
   move: MoveTool,
@@ -148,9 +113,16 @@ export type ContextMenuTarget = { pos: Point } & (
   | { type: 'selection' }
 );
 
-const defaultDiagram = 2;
+export type DiagramRef = {
+  name: string;
+  document: () => Promise<DiagramDocument>;
+};
 
-const Document = (props: { doc: DiagramDocument }) => {
+export const App = (props: {
+  doc: DiagramDocument;
+
+  recent: Array<DiagramRef>;
+}) => {
   const [doc, setDoc] = useState<DiagramDocument>(props.doc);
   const [$d, setDiagram] = useState(doc.diagrams[0]);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
@@ -243,8 +215,8 @@ const Document = (props: { doc: DiagramDocument }) => {
 
               <div className={'_document'}>
                 <DocumentSelector
-                  diagrams={diagrams}
-                  defaultValue={defaultDiagram}
+                  diagrams={props.recent}
+                  defaultValue={0}
                   onChange={async d => {
                     const doc = await d;
                     setDoc(doc);
@@ -472,143 +444,3 @@ const Document = (props: { doc: DiagramDocument }) => {
     </DiagramContext.Provider>
   );
 };
-
-const stencilRegistry = [
-  {
-    name: 'GCP',
-    url: '/stencils/gcp2.xml',
-    foreground: '#3b8df1',
-    background: '#3b8df1'
-  },
-  {
-    name: 'AWS',
-    url: '/stencils/aws3.xml',
-    foreground: '#ff9900',
-    background: '#ff9900'
-  },
-  {
-    name: 'Azure',
-    url: '/stencils/azure.xml',
-    foreground: '#00abf0',
-    background: '#00abf0'
-  },
-  {
-    name: 'Fluid Power',
-    url: '/stencils/fluid_power.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'var(--canvas-fg)'
-  },
-  {
-    name: 'IBM',
-    url: '/stencils/ibm.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'transparent'
-  },
-  {
-    name: 'Web Logos',
-    url: '/stencils/weblogos.xml',
-    foreground: 'blue',
-    background: '#ffffff'
-  },
-  {
-    name: 'Web Icons',
-    url: '/stencils/webicons.xml',
-    foreground: 'blue',
-    background: '#000000'
-  },
-  {
-    name: 'EIP',
-    url: '/stencils/eip.xml',
-    foreground: 'black',
-    background: '#c0f5a9'
-  },
-  {
-    name: 'Arrows',
-    url: '/stencils/arrows.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'transparent'
-  },
-  {
-    name: 'Basic',
-    url: '/stencils/basic.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'transparent'
-  }
-];
-
-const App = () => {
-  const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
-  const [stencils, setStencils] = useState<Array<StencilPackage>>(
-    stencilRegistry
-      .map(s => ({ name: s.name, stencils: [] }))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  );
-  const redraw = useRedraw();
-
-  useEffect(() => {
-    for (const activeStencil of stencilRegistry) {
-      fetch(activeStencil.url)
-        .then(res => res.text())
-        .then(r => {
-          const parser = new DOMParser();
-          const $doc = parser.parseFromString(r, 'application/xml');
-
-          const newStencils: Array<Stencil> = [];
-
-          const $shapes = $doc.getElementsByTagName('shape');
-          for (let i = 0; i < $shapes.length; i++) {
-            const name = $shapes[i].getAttribute('name')!;
-            newStencils.push({
-              node: new DrawioShapeNodeDefinition(),
-              group: activeStencil.name,
-              key: name,
-              props: {
-                fill: { color: activeStencil.background },
-                stroke: { color: activeStencil.foreground },
-                drawio: { shape: btoa(new XMLSerializer().serializeToString($shapes[i])) }
-              }
-            });
-          }
-
-          setStencils(arr => {
-            return arr.map(a =>
-              a.name === activeStencil.name
-                ? {
-                    name: activeStencil.name,
-                    stencils: newStencils
-                  }
-                : a
-            );
-          });
-        });
-    }
-  }, []);
-
-  useEffect(() => {
-    Promise.all([
-      Autosave.load(documentFactory, diagramFactory),
-      diagrams[defaultDiagram].document
-    ]).then(([autosaved, defDiagram]) => {
-      setDoc(autosaved ?? defDiagram);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!doc) return;
-
-    stencils.forEach(pkg => {
-      doc.nodeDefinitions.addGroup(pkg.name);
-      pkg.stencils.forEach(stencil => {
-        doc.nodeDefinitions.register(stencil.node, stencil);
-      });
-    });
-
-    // TODO: Can we avoid explicit redraw here, and instead have a listener on the nodeDefinition
-    redraw();
-  }, [doc, stencils]);
-
-  if (doc && stencils) return <Document doc={doc} />;
-  else return null;
-};
-
-export default App;

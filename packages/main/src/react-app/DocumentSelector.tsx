@@ -9,7 +9,7 @@ export const DocumentSelector = (props: Props) => {
     <Select
       onValueChange={v => {
         setSelectedDiagram(Number(v));
-        props.onChange(props.diagrams[Number(v)].document);
+        props.onChange(props.diagrams[Number(v)].document());
       }}
       value={selectedDiagram.toString()}
       values={props.diagrams.map((d, idx) => ({ value: idx.toString(), label: d.name }))}
@@ -20,7 +20,7 @@ export const DocumentSelector = (props: Props) => {
 type Props = {
   diagrams: {
     name: string;
-    document: Promise<DiagramDocument>;
+    document: () => Promise<DiagramDocument>;
   }[];
   defaultValue: number;
   onChange: (document: Promise<DiagramDocument>) => void;
