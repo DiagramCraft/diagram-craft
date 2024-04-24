@@ -188,12 +188,21 @@ export class DiagramEdge
 
   setBounds(b: Box, uow: UnitOfWork) {
     uow.snapshot(this);
+
+    const delta = Point.subtract(b, this.bounds);
+
     if (!isConnected(this.start)) {
-      this.#start = new FreeEndpoint({ x: b.x, y: b.y });
+      this.#start = new FreeEndpoint({
+        x: this.#start.position.x + delta.x,
+        y: this.#start.position.y + delta.y
+      });
       uow.updateElement(this);
     }
     if (!isConnected(this.end)) {
-      this.#end = new FreeEndpoint({ x: b.x + b.w, y: b.y + b.h });
+      this.#end = new FreeEndpoint({
+        x: this.#end.position.x + delta.x,
+        y: this.#end.position.y + delta.y
+      });
       uow.updateElement(this);
     }
   }
