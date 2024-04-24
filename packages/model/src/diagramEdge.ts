@@ -456,7 +456,10 @@ export class DiagramEdge
 
   path() {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
-    return buildEdgePath(this, this.props.routing?.rounding ?? 0);
+    return buildEdgePath(
+      this,
+      this.props.stroke?.lineJoin === 'round' ? this.props.routing?.rounding ?? 0 : 0
+    );
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {

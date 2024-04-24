@@ -91,6 +91,9 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
 
     style.strokeWidth = nodeProps.stroke.width?.toString();
     style.stroke = isEdgeConnect ? 'red' : nodeProps.stroke.color;
+    style.strokeLinecap = nodeProps.stroke.lineCap;
+    style.strokeLinejoin = nodeProps.stroke.lineJoin;
+    style.strokeMiterlimit = nodeProps.stroke.miterLimit.toString();
 
     if (nodeProps.stroke.pattern) {
       style.strokeDasharray = DASH_PATTERNS[nodeProps.stroke.pattern]?.(

@@ -9,7 +9,12 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { Anchor } from '@diagram-craft/model/types';
-import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
+import {
+  assertHAlign,
+  assertLineCap,
+  assertLineJoin,
+  assertVAlign
+} from '@diagram-craft/model/diagramProps';
 
 declare global {
   interface NodeProps {
@@ -284,6 +289,23 @@ class DrawioShapeComponent extends BaseShape {
           if ($el.getAttribute('dashed') === '0') {
             style.stroke!.pattern = undefined;
           }
+        } else if ($el.nodeName === 'miterlimit') {
+          style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
+        } else if ($el.nodeName === 'linecap') {
+          const lineCap =
+            $el.getAttribute('linecap') === 'flat' ? 'round' : $el.getAttribute('linecap');
+
+          if (!lineCap) continue;
+          assertLineCap(lineCap);
+
+          style.stroke!.lineCap = lineCap;
+        } else if ($el.nodeName === 'linejoin') {
+          const lineJoin = $el.getAttribute('linejoin');
+
+          if (!lineJoin) continue;
+          assertLineJoin(lineJoin);
+
+          style.stroke!.lineJoin = lineJoin;
         }
       }
     }
@@ -366,6 +388,23 @@ class DrawioShapeComponent extends BaseShape {
         if ($el.getAttribute('dashed') === '0') {
           style.stroke!.pattern = undefined;
         }
+      } else if ($el.nodeName === 'miterlimit') {
+        style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
+      } else if ($el.nodeName === 'linecap') {
+        const lineCap =
+          $el.getAttribute('linecap') === 'flat' ? 'round' : $el.getAttribute('linecap');
+
+        if (!lineCap) continue;
+        assertLineCap(lineCap);
+
+        style.stroke!.lineCap = lineCap;
+      } else if ($el.nodeName === 'linejoin') {
+        const lineJoin = $el.getAttribute('linejoin');
+
+        if (!lineJoin) continue;
+        assertLineJoin(lineJoin);
+
+        style.stroke!.lineJoin = lineJoin;
       } else if (isShapeElement($el)) {
         if (!backgroundDrawn) drawBackground();
 

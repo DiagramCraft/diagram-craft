@@ -53,7 +53,10 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
     pattern: 'SOLID',
     patternSize: 100,
     patternSpacing: 100,
-    enabled: true
+    enabled: true,
+    lineCap: 'round',
+    lineJoin: 'round',
+    miterLimit: 4
   },
   text: {
     color: 'var(--canvas-fg)',

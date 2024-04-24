@@ -113,7 +113,10 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
           edgeProps.stroke.patternSpacing / 100
         ) ?? '',
       strokeWidth: width.toString(),
-      stroke: color
+      stroke: color,
+      strokeLinecap: edgeProps.stroke.lineCap,
+      strokeLinejoin: edgeProps.stroke.lineJoin,
+      strokeMiterlimit: edgeProps.stroke.miterLimit.toString()
     };
     if (edgeProps.shadow.enabled) {
       style.filter = makeShadowFilter(edgeProps.shadow);

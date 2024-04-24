@@ -367,11 +367,11 @@
   z-index: 100;
   color: var(--secondary-fg);
   font-size: 12px;
+  margin-right: 0.2rem;
 
 
   &:focus {
-    box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px,
-    0 0 0 2px var(--blue-7);
+    box-shadow: hsl(206 22% 7% / 25%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px, 0 0 0 1px var(--blue-7);
   }
   &[data-state='open'][data-side='top'] {
     animation-name: slideDownAndFade;
@@ -388,6 +388,7 @@
 
   .cmp-popover__arrow {
     fill: var(--secondary-bg);
+    transform: translateX(-0.2rem);
   }
 
   .cmp-popover__close {

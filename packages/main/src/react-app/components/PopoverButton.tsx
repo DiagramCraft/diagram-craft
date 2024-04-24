@@ -12,7 +12,13 @@ export const PopoverButton = (props: Props) => {
           <button>{props.label}</button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content className="cmp-popover" sideOffset={5}>
+          <Popover.Content
+            className="cmp-popover"
+            sideOffset={5}
+            onOpenAutoFocus={e => {
+              e.preventDefault();
+            }}
+          >
             {props.children}
 
             <Popover.Close className="cmp-popover__close" aria-label="Close">

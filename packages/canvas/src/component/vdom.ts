@@ -5,7 +5,7 @@ const toKebabCase = (key: string) =>
 
 export const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
   return Object.entries(style!)
-    .filter(([, value]) => value !== undefined)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([key, value]) => `${toKebabCase(key)}: ${value}`)
     .join(';');
 };

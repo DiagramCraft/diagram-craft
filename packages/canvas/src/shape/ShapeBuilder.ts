@@ -189,6 +189,9 @@ export class ShapeBuilder {
     style.strokeWidth = nodeProps.stroke!.width?.toString();
     style.stroke = nodeProps.stroke!.color;
     style.fill = nodeProps.fill!.color;
+    style.strokeMiterlimit = nodeProps.stroke!.miterLimit?.toString();
+    style.strokeLinecap = nodeProps.stroke!.lineCap;
+    style.strokeLinejoin = nodeProps.stroke!.lineJoin;
 
     if (nodeProps.stroke!.pattern !== 'SOLID') {
       style.strokeDasharray = nodeProps.stroke!.pattern;

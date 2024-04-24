@@ -22,7 +22,7 @@ export const LinePanel = (props: Props) => {
   const fillColor = useEdgeProperty($d, 'fill.color', defaults.fill.color);
   const pattern = useEdgeProperty($d, 'stroke.pattern', defaults.stroke.pattern);
 
-  const strokSize = useEdgeProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
+  const strokeSize = useEdgeProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
   const strokeSpacing = useEdgeProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);
   const strokeWidth = useEdgeProperty($d, 'stroke.width', defaults.stroke.width);
 
@@ -37,6 +37,10 @@ export const LinePanel = (props: Props) => {
 
   const lineHopsSize = useEdgeProperty($d, 'lineHops.size', defaults.lineHops.size);
   const lineHopsType = useEdgeProperty($d, 'lineHops.type', defaults.lineHops.type);
+
+  const lineCap = useEdgeProperty($d, 'stroke.lineCap', defaults.stroke.lineCap);
+  const lineJoin = useEdgeProperty($d, 'stroke.lineJoin', defaults.stroke.lineJoin);
+  const miterLimit = useEdgeProperty($d, 'stroke.miterLimit', defaults.stroke.miterLimit);
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} id="line" title={'Line'} hasCheckbox={false}>
@@ -127,10 +131,10 @@ export const LinePanel = (props: Props) => {
             <DashSelector value={pattern.val} onValueChange={pattern.set} />
             <NumberInput
               defaultUnit={'%'}
-              value={strokSize.val}
+              value={strokeSize.val}
               min={1}
               style={{ width: '45px' }}
-              onChange={strokSize.set}
+              onChange={strokeSize.set}
             />
             <NumberInput
               defaultUnit={'%'}
@@ -138,17 +142,6 @@ export const LinePanel = (props: Props) => {
               min={1}
               style={{ width: '45px' }}
               onChange={strokeSpacing.set}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}>Rounding:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <NumberInput
-              defaultUnit={'px'}
-              value={rounding.val}
-              min={0}
-              style={{ width: '50px' }}
-              onChange={rounding.set}
             />
           </div>
 
@@ -178,6 +171,57 @@ export const LinePanel = (props: Props) => {
                 onChange={lineHopsSize.set}
               />
             </div>
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Line cap:</div>
+          <div className={'cmp-labeled-table__value util-hstack'}>
+            <Select
+              onValueChange={v => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                lineCap.set(v as any);
+              }}
+              value={lineCap.val}
+              values={[
+                { label: 'Butt', value: 'butt' },
+                { label: 'Round', value: 'round' },
+                { label: 'Square', value: 'square' }
+              ]}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Line join:</div>
+          <div className={'cmp-labeled-table__value util-hstack'}>
+            <Select
+              onValueChange={v => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                lineJoin.set(v as any);
+              }}
+              value={lineJoin.val}
+              values={[
+                { label: 'Miter', value: 'miter' },
+                { label: 'Round', value: 'round' },
+                { label: 'Bevel', value: 'bevel' }
+              ]}
+            />
+
+            {lineJoin.val === 'miter' && (
+              <NumberInput
+                value={miterLimit.val * 10}
+                min={0}
+                style={{ width: '50px' }}
+                onChange={v => miterLimit.set((v ?? 1) / 10)}
+              />
+            )}
+
+            {lineJoin.val === 'round' && (
+              <NumberInput
+                defaultUnit={'px'}
+                value={rounding.val}
+                min={0}
+                style={{ width: '50px' }}
+                onChange={rounding.set}
+              />
+            )}
           </div>
         </div>
       </div>
