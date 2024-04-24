@@ -567,6 +567,8 @@ export class DiagramEdge
     const path = this.path();
     const intersections: Intersection[] = [];
     for (const edge of this.diagram.visibleElements()) {
+      uow.snapshot(edge);
+
       if (edge === this) {
         currentEdgeHasBeenSeen = true;
         continue;
