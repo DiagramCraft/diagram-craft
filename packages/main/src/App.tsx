@@ -495,13 +495,13 @@ const stencilRegistry = [
   {
     name: 'Fluid Power',
     url: '/stencils/fluid_power.xml',
-    foreground: '#ffffff',
-    background: '#ffffff'
+    foreground: 'var(--canvas-fg)',
+    background: 'var(--canvas-fg)'
   },
   {
     name: 'IBM',
     url: '/stencils/ibm.xml',
-    foreground: '#000000',
+    foreground: 'var(--canvas-fg)',
     background: 'transparent'
   },
   {
@@ -515,6 +515,24 @@ const stencilRegistry = [
     url: '/stencils/webicons.xml',
     foreground: 'blue',
     background: '#000000'
+  },
+  {
+    name: 'EIP',
+    url: '/stencils/eip.xml',
+    foreground: 'black',
+    background: '#c0f5a9'
+  },
+  {
+    name: 'Arrows',
+    url: '/stencils/arrows.xml',
+    foreground: 'var(--canvas-fg)',
+    background: 'transparent'
+  },
+  {
+    name: 'Basic',
+    url: '/stencils/basic.xml',
+    foreground: 'var(--canvas-fg)',
+    background: 'transparent'
   }
 ];
 
