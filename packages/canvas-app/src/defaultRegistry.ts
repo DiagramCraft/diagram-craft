@@ -14,7 +14,7 @@ import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from './drawio/DrawioShape.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();

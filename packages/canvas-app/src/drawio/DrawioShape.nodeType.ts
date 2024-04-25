@@ -15,6 +15,7 @@ import {
   assertLineJoin,
   assertVAlign
 } from '@diagram-craft/model/diagramProps';
+import { xNum } from './utils';
 
 declare global {
   interface NodeProps {
@@ -38,18 +39,11 @@ const makeShapeTransform =
     };
   };
 
-const xNum = (el: Element, name: string, def = 0) => {
-  return Number(el.getAttribute(name) ?? def);
-};
-
-function isShapeElement($el: Element) {
-  return (
-    $el.nodeName === 'rect' ||
-    $el.nodeName === 'ellipse' ||
-    $el.nodeName === 'path' ||
-    $el.nodeName === 'roundrect'
-  );
-}
+const isShapeElement = ($el: Element) =>
+  $el.nodeName === 'rect' ||
+  $el.nodeName === 'ellipse' ||
+  $el.nodeName === 'path' ||
+  $el.nodeName === 'roundrect';
 
 const parse = (def: DiagramNode): Element => {
   if (def.cache.has('element')) return def.cache.get('element') as Element;
@@ -230,8 +224,8 @@ class DrawioShapeComponent extends BaseShape {
 
     const $shape = parse(props.node);
 
-    const w = xNum($shape, 'w');
-    const h = xNum($shape, 'h');
+    const w = xNum($shape, 'w', 100);
+    const h = xNum($shape, 'h', 100);
 
     let style = deepClone(props.nodeProps as DeepWriteable<NodeProps>);
     let savedStyle = style;
@@ -421,5 +415,7 @@ class DrawioShapeComponent extends BaseShape {
         //VERIFY_NOT_REACHED();
       }
     }
+
+    shapeBuilder.text(this);
   }
 }

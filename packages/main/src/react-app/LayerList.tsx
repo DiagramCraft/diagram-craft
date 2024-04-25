@@ -100,7 +100,6 @@ const LayerEntry = (props: { layer: Layer }) => {
         }}
       >
         <Tree.NodeLabel>{layer.name}</Tree.NodeLabel>
-        <Tree.NodeValue>{diagram.layers.active === layer ? 'Active' : ''}</Tree.NodeValue>
         <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
           {layer.type === 'adjustment' ? (
             <div style={{ color: 'var(--blue-11)' }}>
@@ -185,7 +184,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         diagram.selectionState.toggle(e);
       }}
     >
-      <Tree.NodeLabel>{isNode(e) ? e.nodeType : e.id}</Tree.NodeLabel>
+      <Tree.NodeLabel>{isNode(e) ? e.nodeType + ' [' + e.id + ']' : e.id}</Tree.NodeLabel>
 
       {childrenAllowed && (
         <Tree.Children>

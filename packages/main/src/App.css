@@ -659,11 +659,14 @@ input::-webkit-input-placeholder {
   .cmp-tree__node {
     position: relative;
 
+    grid-template-columns: 1fr min-content min-content;
+
     &:hover {
       color: var(--blue-11);
       background-color: var(--blue-4);
     }
   }
+
   .cmp-tree__node[data-depth="0"]:not(:first-child) {
     border-top: 1px dashed var(--slate-5);
   }

@@ -1,5 +1,5 @@
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-app/drawio/DrawioShape.nodeType';
 
 export const loadStencil = async (
   url: string,

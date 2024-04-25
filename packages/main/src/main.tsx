@@ -13,6 +13,7 @@ import {
   defaultEdgeRegistry,
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
+import { drawioReader } from '@diagram-craft/canvas-app/drawio/drawioReader';
 
 const stencilRegistry = [
   {
@@ -86,6 +87,17 @@ const documentFactory = () => {
 };
 
 const diagrams = [
+  {
+    name: 'Drawio',
+    document: async () => {
+      const res = await fetch('/diagrams/test.drawio');
+      const text = await res.text();
+
+      const doc = drawioReader(text, documentFactory, diagramFactory);
+      const r = await doc;
+      return r;
+    }
+  },
   {
     name: 'Simple',
     document: () => deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
