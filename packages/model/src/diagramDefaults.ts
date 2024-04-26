@@ -91,7 +91,11 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
     sketchFillType: 'fill',
     sketchStrength: 0.1
   },
-  highlight: []
+  highlight: [],
+  geometry: {
+    flipV: false,
+    flipH: false
+  }
 });
 
 export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepRequired<EdgeProps>>(

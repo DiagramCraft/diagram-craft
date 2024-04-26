@@ -313,5 +313,13 @@ export const Transforms = {
   rotateBack: (b: Box) => {
     const center = Box.center(b);
     return `rotate(${-Angle.toDeg(b.r)} ${center.x} ${center.y})`;
+  },
+
+  flipV: (b: Box) => {
+    return `scale(1, -1) translate(0, ${-2 * b.y - b.h}) `;
+  },
+
+  flipH: (b: Box) => {
+    return `scale(-1, 1) translate(${-2 * b.x - b.w}, 0) `;
   }
 };

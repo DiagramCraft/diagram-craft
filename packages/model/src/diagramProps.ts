@@ -124,6 +124,10 @@ declare global {
       data?: Record<string, string>;
       customData?: Record<string, string>;
     };
+    geometry?: {
+      flipV?: boolean;
+      flipH?: boolean;
+    };
   }
 
   interface EdgeProps extends ElementProps {

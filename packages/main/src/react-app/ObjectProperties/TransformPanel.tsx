@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TbAspectRatio } from 'react-icons/tb';
+import { TbAspectRatio, TbFlipHorizontal, TbFlipVertical } from 'react-icons/tb';
 import { NumberInput } from '../components/NumberInput';
 import { useDiagram } from '../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -10,6 +10,8 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { $c } from '@diagram-craft/utils/classname';
 import { round } from '@diagram-craft/utils/math';
+import { useNodeProperty } from './useProperty';
+import { useNodeDefaults } from '../useDefaults';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },
@@ -25,9 +27,14 @@ const origins: Record<string, Point> = {
 
 export const TransformPanel = (props: Props) => {
   const diagram = useDiagram();
+  const defaults = useNodeDefaults();
+
   const [bounds, setBounds] = useState<Box | undefined>(undefined);
   const [lockAspectRatio, setLockAspectRatio] = useState(false);
   const [origin, setOrigin] = useState('tl');
+
+  const flipV = useNodeProperty(diagram, 'geometry.flipV', defaults.geometry.flipV);
+  const flipH = useNodeProperty(diagram, 'geometry.flipH', defaults.geometry.flipH);
 
   const transformedBounds = {
     x: (bounds?.x ?? 0) + (bounds?.w ?? 1) * origins[origin].x,
@@ -182,6 +189,17 @@ export const TransformPanel = (props: Props) => {
                 <TbAspectRatio />
               </ToggleButton>
             </div>
+          </div>
+        </div>
+        <div className={'cmp-labeled-table__label'}>Flip</div>
+        <div className={'cmp-labeled-table__value'}>
+          <div className={'util-hstack'}>
+            <ToggleButton value={flipV.val} onChange={flipV.set}>
+              <TbFlipHorizontal />
+            </ToggleButton>
+            <ToggleButton value={flipH.val} onChange={flipH.set}>
+              <TbFlipVertical />
+            </ToggleButton>
           </div>
         </div>
       </div>

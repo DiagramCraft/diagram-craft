@@ -218,7 +218,7 @@ export abstract class BaseShape extends Component<BaseShapeProps> {
       {
         id: `node-${props.def.id}`,
         class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
-        transform: Transforms.rotate(props.def.bounds),
+        transform: `${Transforms.rotate(props.def.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.def.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.def.bounds) : ''}`,
         style: `filter: ${style.filter ?? 'none'}`
       },
       ...children

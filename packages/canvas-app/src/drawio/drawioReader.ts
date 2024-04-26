@@ -109,6 +109,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           blur: 3
         };
       }
+      props.geometry = {
+        flipH: style.flipH === '1',
+        flipV: style.flipV === '1'
+      };
 
       let node: DiagramNode | undefined = undefined;
 
