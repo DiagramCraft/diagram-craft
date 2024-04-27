@@ -24,6 +24,8 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   readonly diagram: Diagram;
   readonly parent?: DiagramNode;
 
+  readonly name: string;
+
   setBounds(bounds: Box, uow: UnitOfWork): void;
 
   props: DeepReadonly<NodeProps> | DeepReadonly<EdgeProps>;

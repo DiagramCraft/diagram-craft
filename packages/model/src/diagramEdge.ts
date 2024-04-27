@@ -154,6 +154,31 @@ export class DiagramEdge
     };
   }
 
+  /* Name **************************************************************************************************** */
+
+  get name() {
+    // First we use any label nodes
+    if (this.#labelNodes && this.#labelNodes.length > 0) {
+      return this.#labelNodes[0].node.name;
+    }
+
+    // ... otherwise we form the name based on connected nodes
+    if (isConnected(this.start) || isConnected(this.end)) {
+      let s = '';
+      if (isConnected(this.start)) {
+        s = this.start.node.name;
+      }
+      s += ' - ';
+      if (isConnected(this.end)) {
+        s += this.end.node.name;
+      }
+      return s;
+    }
+
+    // ... finally we use the id
+    return this.id;
+  }
+
   /* Diagram/layer ******************************************************************************************* */
 
   get diagram() {

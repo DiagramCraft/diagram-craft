@@ -127,6 +127,31 @@ export class DiagramNode
     this.getDefinition().onPropUpdate(this, uow);
   }
 
+  /* Name **************************************************************************************************** */
+
+  get name() {
+    if (this.#cache?.has('name')) return this.#cache.get('name') as string;
+
+    if (this.props.text?.text) {
+      if (this.props.text.text[0] === '<') {
+        try {
+          const d = new DOMParser().parseFromString(this.props.text.text, 'text/html');
+          const text = d.body.textContent;
+          if (text) {
+            this.#cache?.set('name', text);
+            return text;
+          }
+        } catch (e) {
+          // Ignore
+        }
+      }
+
+      this.#cache?.set('name', this.props.text.text);
+      return this.props.text.text;
+    }
+    return this.nodeType + ' / ' + this.id;
+  }
+
   /* Diagram/layer ******************************************************************************************* */
 
   get diagram() {

@@ -1,6 +1,14 @@
 import { useDiagram } from './context/DiagramContext';
 import * as Tree from './components/Tree';
-import { TbAdjustments, TbEye, TbEyeOff, TbLock, TbLockOff } from 'react-icons/tb';
+import {
+  TbAdjustments,
+  TbEye,
+  TbEyeOff,
+  TbLine,
+  TbLock,
+  TbLockOff,
+  TbRectangle
+} from 'react-icons/tb';
 import { useRedraw } from './useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { useDraggable, useDropTarget } from './dragAndDropHooks';
@@ -11,6 +19,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { shorten } from '@diagram-craft/utils/strings';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -184,7 +193,9 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         diagram.selectionState.toggle(e);
       }}
     >
-      <Tree.NodeLabel>{isNode(e) ? e.nodeType + ' [' + e.id + ']' : e.id}</Tree.NodeLabel>
+      <Tree.NodeLabel>
+        {isNode(e) ? <TbRectangle /> : <TbLine />} &nbsp;{shorten(e.name, 25)}
+      </Tree.NodeLabel>
 
       {childrenAllowed && (
         <Tree.Children>
