@@ -3,7 +3,7 @@ import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { Layer } from '../diagramLayer';
-import { isSerializedEndpointConnected } from './serialize';
+import { isSerializedEndpointConnected, isSerializedEndpointFixed } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
 import { DiagramElement } from '../diagramElement';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -15,7 +15,7 @@ import {
   SerializedLayer,
   SerializedNode
 } from './types';
-import { ConnectedEndpoint, FreeEndpoint } from '../endpoint';
+import { ConnectedEndpoint, FixedEndpoint, FreeEndpoint } from '../endpoint';
 import { Waypoint } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 
@@ -109,10 +109,14 @@ export const deserializeDiagramElements = (
       e.id,
       isSerializedEndpointConnected(start)
         ? new ConnectedEndpoint(start.anchor, nodeLookup[start.node.id])
-        : new FreeEndpoint(start.position),
+        : isSerializedEndpointFixed(start)
+          ? new FixedEndpoint(start.offset, nodeLookup[start.node.id])
+          : new FreeEndpoint(start.position),
       isSerializedEndpointConnected(end)
         ? new ConnectedEndpoint(end.anchor, nodeLookup[end.node.id])
-        : new FreeEndpoint(end.position),
+        : isSerializedEndpointFixed(end)
+          ? new FixedEndpoint(end.offset, nodeLookup[end.node.id])
+          : new FreeEndpoint(end.position),
       {
         style: 'default-edge',
         ...e.props

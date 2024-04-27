@@ -8,16 +8,27 @@ import {
   SerializedDiagramDocument,
   SerializedElement,
   SerializedEndpoint,
+  SerializedFixedEndpoint,
+  SerializedFreeEndpoint,
   SerializedLayer,
   SerializedNode
 } from './types';
-import { ConnectedEndpoint } from '../endpoint';
+import { ConnectedEndpoint, FixedEndpoint } from '../endpoint';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { AttachmentManager } from '../attachment';
 
 export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint
 ): endpoint is SerializedConnectedEndpoint => 'node' in endpoint;
+
+export const isSerializedEndpointFixed = (
+  endpoint: SerializedEndpoint
+): endpoint is SerializedFixedEndpoint => 'offset' in endpoint;
+
+export const isSerializedEndpointFree = (
+  endpoint: SerializedEndpoint
+): endpoint is SerializedFreeEndpoint =>
+  !isSerializedEndpointFixed(endpoint) && !isSerializedEndpointConnected(endpoint);
 
 export const serializeDiagramDocument = async (
   document: DiagramDocument
@@ -91,18 +102,30 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
             node: { id: (edge.start as ConnectedEndpoint).node.id },
             position: edge.start.position
           }
-        : {
-            position: edge.start.position
-          },
+        : isSerializedEndpointFixed(edge.start)
+          ? {
+              offset: (edge.start as FixedEndpoint).offset,
+              node: { id: (edge.start as FixedEndpoint).node.id },
+              position: edge.start.position
+            }
+          : {
+              position: edge.start.position
+            },
       end: isSerializedEndpointConnected(edge.end)
         ? {
             anchor: (edge.end as ConnectedEndpoint).anchor,
             node: { id: (edge.end as ConnectedEndpoint).node.id },
             position: edge.end.position
           }
-        : {
-            position: edge.end.position
-          },
+        : isSerializedEndpointFixed(edge.end)
+          ? {
+              offset: (edge.end as FixedEndpoint).offset,
+              node: { id: (edge.end as FixedEndpoint).node.id },
+              position: edge.end.position
+            }
+          : {
+              position: edge.end.position
+            },
       labelNodes: edge.labelNodes?.map(e => ({
         id: e.id,
         type: e.type,

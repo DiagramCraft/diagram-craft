@@ -10,7 +10,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { SerializedElement } from '@diagram-craft/model/serialization/types';
 import {
-  isSerializedEndpointConnected,
+  isSerializedEndpointFree,
   serializeDiagramElement
 } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -97,10 +97,10 @@ abstract class AbstractClipboardPasteAction extends AbstractAction {
         };
       } else {
         e.id = newid();
-        if (!isSerializedEndpointConnected(e.start)) {
+        if (isSerializedEndpointFree(e.start)) {
           e.start.position = this.adjustPosition(e.start.position, context, bb);
         }
-        if (!isSerializedEndpointConnected(e.end)) {
+        if (isSerializedEndpointFree(e.end)) {
           e.end.position = this.adjustPosition(e.end.position, context, bb);
         }
       }

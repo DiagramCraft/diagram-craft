@@ -41,6 +41,31 @@ export class ConnectedEndpoint implements Endpoint {
   }
 }
 
+export class FixedEndpoint implements Endpoint {
+  constructor(
+    public readonly offset: Point,
+    public readonly node: DiagramNode
+  ) {}
+
+  get position() {
+    const b = this.node.bounds;
+    const r = {
+      x: b.x + this.offset.x * b.w,
+      y: b.y + this.offset.y * b.h
+    };
+
+    return r;
+  }
+
+  serialize(): SerializedEndpoint {
+    return {
+      node: { id: this.node.id },
+      position: this.position,
+      offset: this.offset
+    };
+  }
+}
+
 export class FreeEndpoint implements Endpoint {
   readonly position: Point;
 

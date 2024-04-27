@@ -32,9 +32,14 @@ export interface SerializedNode extends AbstractNode {
   children: ReadonlyArray<SerializedElement>;
 }
 
+export type SerializedFixedEndpoint = { offset: Point; node: Reference; position?: Point };
 export type SerializedConnectedEndpoint = { anchor: number; node: Reference; position?: Point };
+export type SerializedFreeEndpoint = { position: Point };
 
-export type SerializedEndpoint = SerializedConnectedEndpoint | { position: Point };
+export type SerializedEndpoint =
+  | SerializedConnectedEndpoint
+  | SerializedFixedEndpoint
+  | SerializedFreeEndpoint;
 
 export interface SerializedEdge extends AbstractEdge {
   start: SerializedEndpoint;

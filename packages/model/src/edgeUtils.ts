@@ -1,5 +1,5 @@
 import { DiagramEdge, Intersection } from './diagramEdge';
-import { ConnectedEndpoint, isConnected } from './endpoint';
+import { ConnectedEndpoint, FixedEndpoint, isConnected } from './endpoint';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -38,12 +38,13 @@ const adjustForArrow = (
 };
 
 const intersectWithNode = (
-  endpoint: ConnectedEndpoint,
+  endpoint: ConnectedEndpoint | FixedEndpoint,
   endpointPosition: Point,
   path: Path,
   diagram: Diagram
 ): PointOnPath => {
-  const anchor = endpoint.node.getAnchor(endpoint.anchor);
+  const clip =
+    endpoint instanceof ConnectedEndpoint ? endpoint.node.getAnchor(endpoint.anchor).clip : true;
   const nodeDefinition = diagram.document.nodeDefinitions.get(endpoint.node.nodeType);
 
   const endIntersections = nodeDefinition
@@ -51,7 +52,7 @@ const intersectWithNode = (
     .all()
     .flatMap(p => path.intersections(p));
 
-  if (anchor.clip) {
+  if (clip) {
     // TODO: Handle multiple intersections
     return endIntersections[0] ?? { point: endpointPosition };
   } else {
