@@ -10,6 +10,7 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { FixedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
+import { assert } from '@diagram-craft/utils/assert';
 
 const parseStyle = (style: string) => {
   const parts = style.split(';');
@@ -64,12 +65,29 @@ const parseArrow = (t: 'start' | 'end', style: Record<string, string>, props: No
   }
 };
 
+const pointFromMxPoint = (offset: Element) => {
+  return Point.of(xNum(offset, 'x', 0), xNum(offset, 'y', 0));
+};
+
+const hasValue = (value: string) => {
+  if (value.startsWith('<')) {
+    try {
+      const d = new DOMParser().parseFromString(value, 'text/html');
+      const text = d.body.textContent;
+      return text && text.trim() !== '';
+    } catch (e) {
+      // Ignore
+    }
+  }
+  return true;
+};
+
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const uow = UnitOfWork.throwaway(diagram);
   const queue = new WorkQueue();
 
   const parentChild = new Map<string, string[]>();
-  const parents = new Map<string, Layer | DiagramNode>();
+  const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
 
   const $cells = $el.getElementsByTagName('root').item(0)!.getElementsByTagName('mxCell');
 
@@ -82,6 +100,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       if (!parentChild.has(parent)) {
         parentChild.set(parent, []);
       }
+      if ($cell.getAttribute('style')?.startsWith('edgeLabel;')) continue;
+
       parentChild.get(parent)!.push($cell.getAttribute('id')!);
     }
   }
@@ -213,8 +233,65 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         props.text.right = parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2);
         node = new DiagramNode(id, 'text', bounds, diagram, layer, props);
       } else if ($style.startsWith('edgeLabel;')) {
-        // TODO: Implement edge labels
-        // Ignore for now
+        // Find edge
+        const edgeId = $cell.getAttribute('parent')!;
+        const edge = diagram.edgeLookup.get(edgeId);
+
+        assert.present(edge);
+
+        const textNode = new DiagramNode(
+          id,
+          'text',
+          {
+            x: edge.bounds.x,
+            y: edge.bounds.w,
+            w: 5,
+            h: 100,
+            r: 0
+          },
+          diagram,
+          layer,
+          {
+            text: {
+              text: $cell.getAttribute('value') ?? '',
+              align: 'center',
+              fontSize: parseNum(style.fontSize, 12)
+            },
+            fill: {
+              enabled: true,
+              type: 'solid',
+              color: 'white'
+            }
+          }
+        );
+
+        // Add text node to any parent group
+        if (edge.parent) {
+          edge.parent.setChildren([...edge.parent.children, textNode], uow);
+        }
+
+        edge.layer.addElement(textNode, uow);
+
+        const xOffset = (xNum($geometry, 'x', 0) + 1) / 2;
+
+        const offset = Array.from($geometry.getElementsByTagName('mxPoint')).find(
+          e => e.getAttribute('as') === 'offset'
+        );
+        edge.addLabelNode(
+          {
+            id,
+            type: 'horizontal',
+            node: textNode,
+            offset: offset
+              ? Point.add(pointFromMxPoint(offset), {
+                  x: 0,
+                  y: xNum($geometry, 'y', 0)
+                })
+              : Point.ORIGIN,
+            timeOffset: xOffset
+          },
+          uow
+        );
       } else if ($geometry.getElementsByTagName('mxPoint').length > 0) {
         const points = Array.from($geometry.getElementsByTagName('mxPoint')).map($p => {
           return {
@@ -253,6 +330,65 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           diagram,
           layer
         );
+
+        const value = $cell.getAttribute('value');
+        if (value && value !== '' && hasValue(value)) {
+          const textNode = new DiagramNode(
+            id + '-label',
+            'text',
+            {
+              x: node.bounds.x,
+              y: node.bounds.w,
+              w: 5,
+              h: 100,
+              r: 0
+            },
+            diagram,
+            layer,
+            {
+              text: {
+                text: $cell.getAttribute('value') ?? '',
+                align: 'center',
+                fontSize: parseNum(style.fontSize, 12)
+              },
+              fill: {
+                enabled: true,
+                type: 'solid',
+                color: style.labelBackgroundColor ?? 'transparent'
+              }
+            }
+          );
+
+          // Add text node to any parent group
+          if (node.parent) {
+            node.parent.setChildren([...node.parent.children, textNode], uow);
+          }
+
+          queue.add(() => {
+            node!.layer.addElement(textNode, uow);
+          });
+
+          const xOffset = (xNum($geometry, 'x', 0) + 1) / 2;
+
+          const offset = Array.from($geometry.getElementsByTagName('mxPoint')).find(
+            e => e.getAttribute('as') === 'offset'
+          );
+          (node as DiagramEdge).addLabelNode(
+            {
+              id: id + '-label',
+              type: 'horizontal',
+              node: textNode,
+              offset: offset
+                ? Point.add(pointFromMxPoint(offset), {
+                    x: 0,
+                    y: xNum($geometry, 'y', 0)
+                  })
+                : Point.ORIGIN,
+              timeOffset: xOffset
+            },
+            uow
+          );
+        }
 
         queue.add(() => {
           if (source) {
@@ -294,7 +430,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           }
         });
 
-        // This is a path, ignore for now
+        parents.set(id, node as DiagramEdge);
       } else if (parentChild.has(id)) {
         node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
         parents.set(id, node as DiagramNode);
