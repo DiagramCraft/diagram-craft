@@ -12,6 +12,7 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
+import { DASH_PATTERNS } from '../dashPatterns';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {
@@ -194,7 +195,20 @@ export class ShapeBuilder {
     style.strokeLinejoin = nodeProps.stroke!.lineJoin;
 
     if (nodeProps.stroke!.pattern !== 'SOLID') {
-      style.strokeDasharray = nodeProps.stroke!.pattern;
+      const p = DASH_PATTERNS[nodeProps.stroke!.pattern as unknown as keyof typeof DASH_PATTERNS];
+      if (!p) {
+        style.strokeDasharray = nodeProps.stroke!.pattern;
+      } else {
+        style.strokeDasharray = p(
+          (nodeProps.stroke!.patternSize ?? 50) / 100,
+          (nodeProps.stroke!.patternSpacing ?? 50) / 100
+        );
+      }
+    }
+
+    if (nodeProps.fill?.type === 'gradient') {
+      const gradientId = `node-${this.props.node.id}-gradient`;
+      style.fill = `url(#${gradientId})`;
     }
 
     return style;

@@ -87,17 +87,17 @@ const documentFactory = () => {
 };
 
 const diagrams = [
-  /*{
+  {
     name: 'Drawio',
     document: async () => {
-      const res = await fetch('/diagrams/test.drawio');
+      const res = await fetch('/diagrams/test2.drawio');
       const text = await res.text();
 
       const doc = drawioReader(text, documentFactory, diagramFactory);
       const r = await doc;
       return r;
     }
-  },*/
+  },
   {
     name: 'Simple',
     document: () => deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)

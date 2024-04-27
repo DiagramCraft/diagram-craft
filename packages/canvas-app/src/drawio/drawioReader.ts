@@ -6,6 +6,10 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { parseNum, xNum } from './utils';
 import { Box } from '@diagram-craft/geometry/box';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { FixedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { Point } from '@diagram-craft/geometry/point';
 
 const parseStyle = (style: string) => {
   const parts = style.split(';');
@@ -22,8 +26,47 @@ const parseShape = (shape: string | undefined) => {
   return /^stencil\(([^)]+)\)$/.exec(shape)![1];
 };
 
+const angleFromDirection = (s: string) => {
+  if (s === 'north') return -Math.PI / 2;
+  if (s === 'south') return Math.PI / 2;
+  if (s === 'east') return 0;
+  if (s === 'west') return Math.PI;
+  return 0;
+};
+
+class WorkQueue {
+  queue: Array<() => void> = [];
+
+  add(work: () => void) {
+    this.queue.push(work);
+  }
+
+  run() {
+    for (const work of this.queue) {
+      work();
+    }
+  }
+}
+
+const parseArrow = (t: 'start' | 'end', style: Record<string, string>, props: NodeProps) => {
+  const type = style[`${t}Arrow`];
+  const size = style[`${t}Size`];
+  if (type && type !== 'none') {
+    if (type !== 'open') {
+      console.warn(`Arrow type ${type} not yet supported`);
+    }
+
+    (props as EdgeProps).arrow ??= {};
+    (props as EdgeProps).arrow!.end = {
+      type: 'SQUARE_STICK_ARROW',
+      size: parseNum(size, 3) * 15
+    };
+  }
+};
+
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const uow = UnitOfWork.throwaway(diagram);
+  const queue = new WorkQueue();
 
   const parentChild = new Map<string, string[]>();
   const parents = new Map<string, Layer | DiagramNode>();
@@ -51,12 +94,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
     const id = $cell.getAttribute('id')!;
 
     if (parent === '0') {
-      const layer = new Layer(
-        id,
-        $cell.getAttribute('value')! === '' ? 'Background' : $cell.getAttribute('value')!,
-        [],
-        diagram
-      );
+      const val = $cell.getAttribute('value');
+      const layer = new Layer(id, val! === '' || !val ? 'Background' : val!, [], diagram);
       diagram.layers.add(layer, uow);
       if ($cell.getAttribute('visible') === '0') {
         diagram.layers.toggleVisibility(layer);
@@ -71,7 +110,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
 
-      const style = parseStyle($cell.getAttribute('style')!);
+      const $style = $cell.getAttribute('style')!;
+      const style = parseStyle($style);
 
       const bounds = {
         x: xNum($geometry, 'x', 0),
@@ -87,19 +127,54 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       props.text = {
         text: value ? value : '',
-        top: parseNum(style.spacingTop, 7),
-        bottom: parseNum(style.spacingBottom, 7),
-        left: parseNum(style.spacingLeft, 0),
-        right: parseNum(style.spacingRight, 0),
+        fontSize: parseNum(style.fontSize, 12),
+        font: style.fontFamily,
+        color: style.fontColor,
+        top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
+        bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
+        left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
+        right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2),
         align: (style.align || 'center') as 'left' | 'center' | 'right',
         valign: (style.verticalAlign || 'middle') as 'top' | 'middle' | 'bottom'
       };
+
+      if (style.fontStyle === '1') {
+        props.text.bold = true;
+      } else if (style.fontStyle === '2') {
+        props.text.italic = true;
+      } else if (style.fontStyle === '3') {
+        props.text.bold = true;
+        props.text.italic = true;
+      }
+
       props.fill = {
         color: style.fillColor
       };
+
+      if (style.gradientColor && style.gradientColor !== 'none') {
+        props.fill.type = 'gradient';
+        props.fill.color2 = style.gradientColor;
+        props.fill.gradient = {
+          type: 'linear',
+          direction: angleFromDirection(style.gradientDirection ?? 'south')
+        };
+      }
+
+      if (style.opacity && style.opacity !== '100') {
+        props.effects ??= {};
+        props.effects.opacity = parseNum(style.opacity, 100) / 100;
+      }
+
       props.stroke = {
         color: style.strokeColor
       };
+
+      if (style.dashed === '1') {
+        props.stroke.pattern = 'DASHED';
+        props.stroke.patternSpacing = parseNum(style.dashPattern, 30);
+        props.stroke.patternSize = parseNum(style.dashPattern, 30);
+      }
+
       if (style.shadow === '1') {
         props.shadow = {
           enabled: true,
@@ -109,27 +184,120 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           blur: 3
         };
       }
+
       props.geometry = {
         flipH: style.flipH === '1',
         flipV: style.flipV === '1'
       };
 
-      let node: DiagramNode | undefined = undefined;
+      let node: DiagramElement | undefined = undefined;
 
-      const shape = parseShape(style.shape);
+      let shape: string | undefined = undefined;
+
+      if (style.shape === 'actor') {
+        shape = parseShape(
+          'stencil(tZPtDoIgFIavhv8IZv1tVveBSsm0cPjZ3QeCNlBytbU5tvc8x8N74ABwXOekogDBHOATQCiAUK5S944mdUXTRgc7IhhJSqpJ3Qhe0J5ljanBHjkVrFEUnwE8yhz14TghaXETvH1kDgDo4mVXLugKmHBF1LYLMOE771R3g3Zmenk6vcntP5RIW6FrBHYRIyOjB2RjI8MJY613E8c2/85DsLdNhI6JmdumfCZ+8nDAtgfHwoz/exAQbpwEdC4kcny8E9zAhpOS19SbNc60ZzblTLOy1M9mpcD462Lqx6h+rGPgBQ==)'
+        );
+      } else {
+        shape = parseShape(style.shape);
+      }
+
       if (shape) {
         const s = await decode(shape!);
-
-        props.drawio = {
-          shape: btoa(s)
-        };
-
+        props.drawio = { shape: btoa(s) };
         node = new DiagramNode(id, 'drawio', bounds, diagram, layer, props);
+      } else if ($style.startsWith('text;')) {
+        props.text.top = parseNum(style.spacingTop, 0) + parseNum(style.spacing, 2);
+        props.text.bottom = parseNum(style.spacingBottom, 0) + parseNum(style.spacing, 2);
+        props.text.left = parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2);
+        props.text.right = parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2);
+        node = new DiagramNode(id, 'text', bounds, diagram, layer, props);
+      } else if ($style.startsWith('edgeLabel;')) {
+        // TODO: Implement edge labels
+        // Ignore for now
+      } else if ($geometry.getElementsByTagName('mxPoint').length > 0) {
+        const points = Array.from($geometry.getElementsByTagName('mxPoint')).map($p => {
+          return {
+            x: xNum($p, 'x', 0),
+            y: xNum($p, 'y', 0),
+            as: $p.getAttribute('as')
+          };
+        });
+
+        parseArrow('start', style, props);
+        parseArrow('end', style, props);
+
+        const sourcePoint = points.find(p => p.as === 'sourcePoint');
+        const targetPoint = points.find(p => p.as === 'targetPoint');
+
+        const source = $cell.getAttribute('source')!;
+        const target = $cell.getAttribute('target')!;
+
+        const waypoints = Array.from(
+          $geometry.getElementsByTagName('Array').item(0)?.getElementsByTagName('mxPoint') ?? []
+        ).map($p => {
+          return {
+            point: {
+              x: xNum($p, 'x', 0),
+              y: xNum($p, 'y', 0)
+            }
+          };
+        });
+
+        node = new DiagramEdge(
+          id,
+          new FreeEndpoint(sourcePoint ?? Point.ORIGIN),
+          new FreeEndpoint(targetPoint ?? Point.ORIGIN),
+          props,
+          waypoints ?? [],
+          diagram,
+          layer
+        );
+
+        queue.add(() => {
+          if (source) {
+            const edge = node! as DiagramEdge;
+
+            const sourceNode = diagram.nodeLookup.get(source);
+            if (sourceNode) {
+              const exitX = Number(style.exitX ?? 0.5);
+              const exitY = Number(style.exitY ?? 0.5);
+
+              edge.setStart(
+                new FixedEndpoint(
+                  {
+                    x: exitX,
+                    y: exitY
+                  },
+                  sourceNode
+                ),
+                uow
+              );
+            }
+
+            const targetNode = diagram.nodeLookup.get(target);
+            if (targetNode) {
+              const entryX = Number(style.entryX ?? 0.5);
+              const entryY = Number(style.entryY ?? 0.5);
+
+              edge.setEnd(
+                new FixedEndpoint(
+                  {
+                    x: entryX,
+                    y: entryY
+                  },
+                  targetNode
+                ),
+                uow
+              );
+            }
+          }
+        });
+
+        // This is a path, ignore for now
       } else if (parentChild.has(id)) {
         node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
-        parents.set(id, node);
-      } else if ($geometry.getElementsByTagName('mxPoint').length > 0) {
-        // This is a path, ignore for now
+        parents.set(id, node as DiagramNode);
       } else {
         // Fallback on rect
 
@@ -140,24 +308,30 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (p instanceof DiagramNode) {
           // Need to offset the bounds according to the parent
 
-          node.setBounds(
-            {
-              x: bounds.x + p.bounds.x,
-              y: bounds.y + p.bounds.y,
-              w: bounds.w,
-              h: bounds.h,
-              r: 0
-            },
-            uow
-          );
+          const newBounds = {
+            x: node.bounds.x + p.bounds.x,
+            y: node.bounds.y + p.bounds.y,
+            w: node.bounds.w,
+            h: node.bounds.h,
+            r: 0
+          };
 
-          p.addChild(node, uow);
+          node.setBounds(newBounds, uow);
+
+          // This needs to be deferred as adding children changes the bounds of the group
+          // meaning adding additional children will have the wrong parent bounds to resolve
+          // the group local coordinates
+          queue.add(() => {
+            p.setChildren([...p.children, node], uow);
+          });
         } else {
           layer.addElement(node, uow);
         }
       }
     }
   }
+
+  queue.run();
 };
 
 async function decode(data: string) {
@@ -217,12 +391,22 @@ export const drawioReader = async (
 
   const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
 
-  diagram.canvas = {
-    w: Math.max(bounds.w + 40, xNum($mxGraphModel, 'pageWidth', 100)),
-    h: Math.max(bounds.h + 40, xNum($mxGraphModel, 'pageHeight', 100)),
+  const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
+  const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);
+
+  const canvasBounds = {
+    w: pageWidth,
+    h: pageHeight,
     x: 0,
     y: 0
   };
+
+  while (bounds.x < canvasBounds.x) canvasBounds.x -= pageWidth;
+  while (bounds.y < canvasBounds.y) canvasBounds.y -= pageHeight;
+  while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += pageWidth;
+  while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += pageHeight;
+
+  diagram.canvas = canvasBounds;
 
   diagram.viewBox.offset = { x: 0, y: 0 };
   diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);
