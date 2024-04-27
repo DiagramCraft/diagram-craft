@@ -82,6 +82,28 @@ const hasValue = (value: string) => {
   return true;
 };
 
+const makeLabelNodeResizer = (textNode: DiagramNode, value: string, uow: UnitOfWork) => () => {
+  const $el = document.createElement('div');
+  $el.style.visibility = 'hidden';
+  $el.style.position = 'absolute';
+  document.body.appendChild($el);
+
+  $el.innerHTML = value;
+
+  textNode.setBounds(
+    {
+      x: textNode.bounds.x,
+      y: textNode.bounds.y,
+      w: $el.offsetWidth + 1,
+      h: $el.offsetHeight,
+      r: 0
+    },
+    uow
+  );
+
+  document.body.removeChild($el);
+};
+
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const uow = UnitOfWork.throwaway(diagram);
   const queue = new WorkQueue();
@@ -292,6 +314,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           },
           uow
         );
+
+        // TODO: Need to add font size to make this work properly
+        // queue.add(makeLabelNodeResizer(textNode, value, uow));
       } else if ($geometry.getElementsByTagName('mxPoint').length > 0) {
         const points = Array.from($geometry.getElementsByTagName('mxPoint')).map($p => {
           return {
@@ -367,6 +392,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           queue.add(() => {
             node!.layer.addElement(textNode, uow);
           });
+          queue.add(makeLabelNodeResizer(textNode, value, uow));
 
           const xOffset = (xNum($geometry, 'x', 0) + 1) / 2;
 
@@ -511,6 +537,8 @@ export const drawioReader = async (
   documentFactory: DocumentFactory,
   diagramFactor: DiagramFactory<Diagram>
 ): Promise<DiagramDocument> => {
+  const start = new Date().getTime();
+
   const parser = new DOMParser();
   const $doc = parser.parseFromString(contents, 'application/xml');
 
@@ -546,6 +574,8 @@ export const drawioReader = async (
 
   diagram.viewBox.offset = { x: 0, y: 0 };
   diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);
+
+  console.log(`Duration: ${new Date().getTime() - start}`);
 
   return doc;
 };
