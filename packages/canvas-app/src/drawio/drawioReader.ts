@@ -50,10 +50,6 @@ const parseStyle = (style: string) => {
 const parseShape = (shape: string | undefined) => {
   if (shape === 'image') return undefined;
   if (shape === 'mxgraph.basic.rect') return undefined;
-  if (shape === 'curlyBracket') return undefined;
-  if (shape === 'process') return undefined;
-  if (shape === 'mxgraph.android.tab2') return undefined;
-  if (shape === 'datastore') return undefined;
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
@@ -453,9 +449,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       const nodes: DiagramElement[] = [];
 
-      // TODO: Hack
-      if (style.shape === 'mxgraph.arrows2.bendDoubleArrow') style.shape = 'actor';
-
       const shape = parseShape(drawioBuiltinShapes[style.shape!] ?? style.shape);
 
       if (shape) {
@@ -527,6 +520,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         props.fill!.type = 'image';
         props.text!.valign = 'top';
+        props.text!.align = 'center';
 
         if (!style.imageBorder) {
           props.stroke!.enabled = false;
@@ -553,9 +547,34 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       } else if ('ellipse' in style) {
         props.text!.align = (style.align ?? 'center') as HAlign;
         nodes.push(new DiagramNode(id, 'circle', bounds, diagram, layer, props));
+      } else if ('rhombus' in style) {
+        nodes.push(new DiagramNode(id, 'diamond', bounds, diagram, layer, props));
+      } else if (style.shape === 'parallelogram') {
+        props.parallelogram = {
+          slant: parseNum(style.size, 20)
+        };
+        nodes.push(new DiagramNode(id, 'parallelogram', bounds, diagram, layer, props));
+      } else if (style.shape === 'hexagon') {
+        props.regularPolygon = {
+          numberOfSides: 6
+        };
+        // TODO: The orientation of the hexagon is not correct
+        nodes.push(new DiagramNode(id, 'regular-polygon', bounds, diagram, layer, props));
+      } else if ('triangle' in style) {
+        props.regularPolygon = {
+          numberOfSides: 3
+        };
+        // TODO: The orientation of the triangle is not correct
+        nodes.push(new DiagramNode(id, 'regular-polygon', bounds, diagram, layer, props));
       } else {
-        // Fallback on rect
-        nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+        if (style.rounded === '1') {
+          props.roundedRect = {
+            radius: (parseNum(style.arcSize, 10) * Math.min(bounds.w, bounds.h)) / 100
+          };
+          nodes.push(new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props));
+        } else {
+          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+        }
       }
 
       // Attach all nodes created to their parent (group and/or layer)
@@ -623,6 +642,7 @@ async function decode(data: string) {
 export const drawioReader = async (
   contents: string,
   documentFactory: DocumentFactory,
+  // @ts-ignore
   diagramFactor: DiagramFactory<Diagram>
 ): Promise<DiagramDocument> => {
   const start = new Date().getTime();

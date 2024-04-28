@@ -15,7 +15,11 @@ export interface Endpoint {
 export const Endpoint = {
   deserialize: (endpoint: SerializedEndpoint, diagram: Diagram): Endpoint => {
     if ('node' in endpoint) {
-      return new ConnectedEndpoint(endpoint.anchor, diagram.nodeLookup.get(endpoint.node.id)!);
+      if ('anchor' in endpoint) {
+        return new ConnectedEndpoint(endpoint.anchor, diagram.nodeLookup.get(endpoint.node.id)!);
+      } else {
+        return new FixedEndpoint(endpoint.offset, diagram.nodeLookup.get(endpoint.node.id)!);
+      }
     } else {
       return new FreeEndpoint(endpoint.position);
     }
