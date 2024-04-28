@@ -13,6 +13,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
+import { clipPath } from '@diagram-craft/model/edgeUtils';
 
 const parseStyle = (style: string) => {
   const parts = style.split(';');
@@ -313,13 +314,23 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         queue.add(() => {
           const path = edge.path();
-          const lengthOffsetOnPath = TimeOffsetOnPath.toLengthOffsetOnPath(
+
+          const clippedPath = clipPath(path, edge, undefined, undefined)!;
+
+          const lengthOffsetOnClippedPath = TimeOffsetOnPath.toLengthOffsetOnPath(
             { pathT: xOffset },
-            path
+            clippedPath
           );
-          const tangent = path.tangentAt(lengthOffsetOnPath);
+          const anchorPoint = clippedPath.pointAt(lengthOffsetOnClippedPath);
+
+          const tangent = clippedPath.tangentAt(lengthOffsetOnClippedPath);
           const normal = Point.rotate(tangent, Math.PI / 2);
           const initialOffset = Vector.scale(normal, -xNum($geometry, 'y', 0));
+
+          const timeOffsetOnFullPath = LengthOffsetOnPath.toTimeOffsetOnPath(
+            path.projectPoint(anchorPoint),
+            path
+          );
 
           edge.addLabelNode(
             {
@@ -330,7 +341,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 ? // TODO: add or subtract here depends on the direction of the arrow at this point
                   Point.add(pointFromMxPoint(offset), initialOffset)
                 : Point.ORIGIN,
-              timeOffset: xOffset
+              timeOffset: timeOffsetOnFullPath.pathT
             },
             uow
           );
@@ -378,69 +389,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           layer
         );
 
-        const value = $cell.getAttribute('value');
-        if (value && value !== '' && hasValue(value)) {
-          const textNode = new DiagramNode(
-            id + '-label',
-            'text',
-            {
-              x: node.bounds.x,
-              y: node.bounds.w,
-              w: 5,
-              h: 100,
-              r: 0
-            },
-            diagram,
-            layer,
-            {
-              text: {
-                text: $cell.getAttribute('value') ?? '',
-                align: 'center',
-                fontSize: parseNum(style.fontSize, 12)
-              },
-              fill: {
-                enabled: true,
-                type: 'solid',
-                color: style.labelBackgroundColor ?? 'transparent'
-              }
-            }
-          );
-
-          // Add text node to any parent group
-          if (node.parent) {
-            node.parent.setChildren([...node.parent.children, textNode], uow);
-          }
-
-          queue.add(() => {
-            node!.layer.addElement(textNode, uow);
-          });
-          queue.add(makeLabelNodeResizer(style, textNode, value, uow));
-
-          const xOffset = (xNum($geometry, 'x', 0) + 1) / 2;
-
-          const offset = Array.from($geometry.getElementsByTagName('mxPoint')).find(
-            e => e.getAttribute('as') === 'offset'
-          );
-
-          const path = (node as DiagramEdge).path();
-          const tangent = path.tangentAt(
-            TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: xOffset }, path)
-          );
-          const normal = Point.rotate(tangent, Math.PI / 2);
-          const initialOffset = Vector.scale(normal, -xNum($geometry, 'y', 0));
-
-          (node as DiagramEdge).addLabelNode(
-            {
-              id: id + '-label',
-              type: 'horizontal',
-              node: textNode,
-              offset: offset ? Point.add(pointFromMxPoint(offset), initialOffset) : Point.ORIGIN,
-              timeOffset: xOffset
-            },
-            uow
-          );
-        }
-
         queue.add(() => {
           const edge = node! as DiagramEdge;
 
@@ -482,6 +430,82 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             }
           }
         });
+
+        const value = $cell.getAttribute('value');
+        if (value && value !== '' && hasValue(value)) {
+          const textNode = new DiagramNode(
+            id + '-label',
+            'text',
+            {
+              x: node.bounds.x,
+              y: node.bounds.w,
+              w: 5,
+              h: 100,
+              r: 0
+            },
+            diagram,
+            layer,
+            {
+              text: {
+                text: $cell.getAttribute('value') ?? '',
+                align: 'center',
+                fontSize: parseNum(style.fontSize, 12)
+              },
+              fill: {
+                enabled: true,
+                type: 'solid',
+                color: style.labelBackgroundColor ?? 'transparent'
+              }
+            }
+          );
+
+          // Add text node to any parent group
+          if (node.parent) {
+            node.parent.setChildren([...node.parent.children, textNode], uow);
+          }
+
+          queue.add(() => {
+            node!.layer.addElement(textNode, uow);
+          });
+          queue.add(makeLabelNodeResizer(style, textNode, value, uow));
+
+          queue.add(() => {
+            const xOffset = (xNum($geometry, 'x', 0) + 1) / 2;
+
+            const offset = Array.from($geometry.getElementsByTagName('mxPoint')).find(
+              e => e.getAttribute('as') === 'offset'
+            );
+
+            const path = (node as DiagramEdge).path();
+            const clippedPath = clipPath(path, node as DiagramEdge, undefined, undefined)!;
+
+            const lengthOffsetOnClippedPath = TimeOffsetOnPath.toLengthOffsetOnPath(
+              { pathT: xOffset },
+              clippedPath
+            );
+            const anchorPoint = clippedPath.pointAt(lengthOffsetOnClippedPath);
+
+            const tangent = clippedPath.tangentAt(lengthOffsetOnClippedPath);
+            const normal = Point.rotate(tangent, Math.PI / 2);
+            const initialOffset = Vector.scale(normal, -xNum($geometry, 'y', 0));
+
+            const timeOffsetOnFullPath = LengthOffsetOnPath.toTimeOffsetOnPath(
+              path.projectPoint(anchorPoint),
+              path
+            );
+
+            (node as DiagramEdge).addLabelNode(
+              {
+                id: id + '-label',
+                type: 'horizontal',
+                node: textNode,
+                offset: offset ? Point.add(pointFromMxPoint(offset), initialOffset) : Point.ORIGIN,
+                timeOffset: timeOffsetOnFullPath.pathT
+              },
+              uow
+            );
+          });
+        }
 
         parents.set(id, node as DiagramEdge);
       } else if (parentChild.has(id)) {
