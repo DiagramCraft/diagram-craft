@@ -11,6 +11,8 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { FixedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
+import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
+import { Vector } from '@diagram-craft/geometry/vector';
 
 const parseStyle = (style: string) => {
   const parts = style.split(';');
@@ -58,7 +60,7 @@ const parseArrow = (t: 'start' | 'end', style: Record<string, string>, props: No
     }
 
     (props as EdgeProps).arrow ??= {};
-    (props as EdgeProps).arrow!.end = {
+    (props as EdgeProps).arrow![t] = {
       type: 'SQUARE_STICK_ARROW',
       size: parseNum(size, 3) * 15
     };
@@ -95,7 +97,7 @@ const makeLabelNodeResizer =
     css.push('font-size: ' + parseNum(style.fontSize, 12) + 'px');
     css.push('font-family: ' + (style.fontFamily ?? 'sans-serif'));
     css.push('direction: ltr');
-    css.push('letter-spacing: 0px');
+    //css.push('letter-spacing: 0px');
     css.push('line-height: 120%');
     css.push('color: black');
 
@@ -105,7 +107,7 @@ const makeLabelNodeResizer =
       {
         x: textNode.bounds.x,
         y: textNode.bounds.y,
-        w: $el.offsetWidth + 1,
+        w: $el.offsetWidth + 8,
         h: $el.offsetHeight,
         r: 0
       },
@@ -308,26 +310,36 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const offset = Array.from($geometry.getElementsByTagName('mxPoint')).find(
           e => e.getAttribute('as') === 'offset'
         );
-        edge.addLabelNode(
-          {
-            id,
-            type: 'horizontal',
-            node: textNode,
-            offset: offset
-              ? // TODO: add or subtract here depends on the direction of the arrow at this point
-                Point.add(pointFromMxPoint(offset), {
-                  x: 0,
-                  y: xNum($geometry, 'y', 0)
-                })
-              : Point.ORIGIN,
-            timeOffset: xOffset
-          },
-          uow
-        );
 
-        // TODO: Need to add font size to make this work properly
+        queue.add(() => {
+          const path = edge.path();
+          const lengthOffsetOnPath = TimeOffsetOnPath.toLengthOffsetOnPath(
+            { pathT: xOffset },
+            path
+          );
+          const tangent = path.tangentAt(lengthOffsetOnPath);
+          const normal = Point.rotate(tangent, Math.PI / 2);
+          const initialOffset = Vector.scale(normal, -xNum($geometry, 'y', 0));
+
+          edge.addLabelNode(
+            {
+              id,
+              type: 'horizontal',
+              node: textNode,
+              offset: offset
+                ? // TODO: add or subtract here depends on the direction of the arrow at this point
+                  Point.add(pointFromMxPoint(offset), initialOffset)
+                : Point.ORIGIN,
+              timeOffset: xOffset
+            },
+            uow
+          );
+        });
+
         queue.add(makeLabelNodeResizer(style, textNode, value, uow));
       } else if ($geometry.getElementsByTagName('mxPoint').length > 0) {
+        // This is an edge
+
         const points = Array.from($geometry.getElementsByTagName('mxPoint')).map($p => {
           return {
             x: xNum($p, 'x', 0),
@@ -409,18 +421,20 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           const offset = Array.from($geometry.getElementsByTagName('mxPoint')).find(
             e => e.getAttribute('as') === 'offset'
           );
+
+          const path = (node as DiagramEdge).path();
+          const tangent = path.tangentAt(
+            TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: xOffset }, path)
+          );
+          const normal = Point.rotate(tangent, Math.PI / 2);
+          const initialOffset = Vector.scale(normal, -xNum($geometry, 'y', 0));
+
           (node as DiagramEdge).addLabelNode(
             {
               id: id + '-label',
               type: 'horizontal',
               node: textNode,
-              offset: offset
-                ? // TODO: add or subtract here depends on the direction of the arrow at this point
-                  Point.subtract(pointFromMxPoint(offset), {
-                    x: 0,
-                    y: xNum($geometry, 'y', 0)
-                  })
-                : Point.ORIGIN,
+              offset: offset ? Point.add(pointFromMxPoint(offset), initialOffset) : Point.ORIGIN,
               timeOffset: xOffset
             },
             uow
