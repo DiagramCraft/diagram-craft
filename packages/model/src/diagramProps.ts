@@ -30,13 +30,13 @@ export function assertFillType(s: string | undefined): asserts s is FillType | u
     throw new Error();
 }
 
-type HAlign = 'left' | 'center' | 'right';
+export type HAlign = 'left' | 'center' | 'right';
 
 export function assertHAlign(s: string | undefined): asserts s is HAlign | undefined {
   if (!(s === 'left' || s === 'center' || s === 'right' || s === undefined)) throw new Error();
 }
 
-type Valign = 'top' | 'middle' | 'bottom';
+export type Valign = 'top' | 'middle' | 'bottom';
 
 export function assertVAlign(s: string | undefined): asserts s is Valign | undefined {
   if (!(s === 'top' || s === 'middle' || s === 'bottom' || s === undefined)) throw new Error();

@@ -14,8 +14,9 @@ import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { clipPath } from '@diagram-craft/model/edgeUtils';
-import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
+import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -48,7 +49,18 @@ const parseStyle = (style: string) => {
 
 const parseShape = (shape: string | undefined) => {
   if (shape === 'image') return undefined;
+  if (shape === 'mxgraph.basic.rect') return undefined;
+  if (shape === 'curlyBracket') return undefined;
+  if (shape === 'process') return undefined;
+  if (shape === 'mxgraph.android.tab2') return undefined;
+  if (shape === 'datastore') return undefined;
   if (!shape) return undefined;
+
+  if (!shape.startsWith('stencil(')) {
+    console.warn(`Unsupported shape ${shape}`);
+    return undefined;
+  }
+
   return /^stencil\(([^)]+)\)$/.exec(shape)![1];
 };
 
@@ -62,7 +74,9 @@ const angleFromDirection = (s: string) => {
 
 const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   open: 'SQUARE_STICK_ARROW',
-  classic: 'SQUARE_ARROW_FILLED'
+  classic: 'SQUARE_ARROW_FILLED',
+  classicThin: 'SHARP_ARROW_FILLED',
+  oval: 'BALL_FILLED'
 };
 
 // Based on https://stackoverflow.com/questions/12168909/blob-from-dataurl
@@ -260,7 +274,7 @@ const attachLabelNode = (
 };
 
 const getNodeProps = (style: Style) => {
-  const align = style.align ?? 'center';
+  const align = style.align ?? 'left';
   assertHAlign(align);
 
   const valign = style.verticalAlign ?? 'middle';
@@ -314,6 +328,10 @@ const getNodeProps = (style: Style) => {
     color: style.strokeColor,
     width: parseNum(style.strokeWidth, 1)
   };
+
+  if (style.edgeStyle === 'orthogonalEdgeStyle') {
+    (props as EdgeProps).type = 'orthogonal';
+  }
 
   if (style.dashed === '1') {
     props.stroke.pattern = 'DASHED';
@@ -429,6 +447,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       const props = getNodeProps(style);
       props.text!.text = hasValue(value) ? value : '';
 
+      if ('rotation' in style) {
+        bounds.r = Angle.toRad(parseNum(style.rotation, 0));
+      }
+
       const nodes: DiagramElement[] = [];
 
       // TODO: Hack
@@ -528,6 +550,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         nodes.push(new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props));
+      } else if ('ellipse' in style) {
+        props.text!.align = (style.align ?? 'center') as HAlign;
+        nodes.push(new DiagramNode(id, 'circle', bounds, diagram, layer, props));
       } else {
         // Fallback on rect
         nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
