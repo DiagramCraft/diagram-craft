@@ -82,27 +82,36 @@ const hasValue = (value: string) => {
   return true;
 };
 
-const makeLabelNodeResizer = (textNode: DiagramNode, value: string, uow: UnitOfWork) => () => {
-  const $el = document.createElement('div');
-  $el.style.visibility = 'hidden';
-  $el.style.position = 'absolute';
-  document.body.appendChild($el);
+const makeLabelNodeResizer =
+  (style: Record<string, string>, textNode: DiagramNode, value: string, uow: UnitOfWork) => () => {
+    const $el = document.createElement('div');
+    $el.style.visibility = 'hidden';
+    $el.style.position = 'absolute';
+    $el.style.width = 'auto';
+    document.body.appendChild($el);
 
-  $el.innerHTML = value;
+    const css: string[] = [];
 
-  textNode.setBounds(
-    {
-      x: textNode.bounds.x,
-      y: textNode.bounds.y,
-      w: $el.offsetWidth + 1,
-      h: $el.offsetHeight,
-      r: 0
-    },
-    uow
-  );
+    css.push('font-size: ' + parseNum(style.fontSize, 12) + 'px');
+    css.push('font-family: ' + (style.fontFamily ?? 'sans-serif'));
+    css.push('direction: ltr');
+    css.push('letter-spacing: 0px');
+    css.push('line-height: 120%');
+    css.push('color: black');
 
-  document.body.removeChild($el);
-};
+    $el.innerHTML = `<span style="${css.join(';')}">${value}</span>`;
+
+    textNode.setBounds(
+      {
+        x: textNode.bounds.x,
+        y: textNode.bounds.y,
+        w: $el.offsetWidth + 1,
+        h: $el.offsetHeight,
+        r: 0
+      },
+      uow
+    );
+  };
 
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const uow = UnitOfWork.throwaway(diagram);
@@ -305,7 +314,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             type: 'horizontal',
             node: textNode,
             offset: offset
-              ? Point.add(pointFromMxPoint(offset), {
+              ? // TODO: add or subtract here depends on the direction of the arrow at this point
+                Point.add(pointFromMxPoint(offset), {
                   x: 0,
                   y: xNum($geometry, 'y', 0)
                 })
@@ -316,7 +326,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         );
 
         // TODO: Need to add font size to make this work properly
-        // queue.add(makeLabelNodeResizer(textNode, value, uow));
+        queue.add(makeLabelNodeResizer(style, textNode, value, uow));
       } else if ($geometry.getElementsByTagName('mxPoint').length > 0) {
         const points = Array.from($geometry.getElementsByTagName('mxPoint')).map($p => {
           return {
@@ -392,7 +402,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           queue.add(() => {
             node!.layer.addElement(textNode, uow);
           });
-          queue.add(makeLabelNodeResizer(textNode, value, uow));
+          queue.add(makeLabelNodeResizer(style, textNode, value, uow));
 
           const xOffset = (xNum($geometry, 'x', 0) + 1) / 2;
 
@@ -405,7 +415,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               type: 'horizontal',
               node: textNode,
               offset: offset
-                ? Point.add(pointFromMxPoint(offset), {
+                ? // TODO: add or subtract here depends on the direction of the arrow at this point
+                  Point.subtract(pointFromMxPoint(offset), {
                     x: 0,
                     y: xNum($geometry, 'y', 0)
                   })
@@ -417,9 +428,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         queue.add(() => {
-          if (source) {
-            const edge = node! as DiagramEdge;
+          const edge = node! as DiagramEdge;
 
+          if (source) {
             const sourceNode = diagram.nodeLookup.get(source);
             if (sourceNode) {
               const exitX = Number(style.exitX ?? 0.5);
@@ -436,7 +447,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 uow
               );
             }
+          }
 
+          if (target) {
             const targetNode = diagram.nodeLookup.get(target);
             if (targetNode) {
               const entryX = Number(style.entryX ?? 0.5);
