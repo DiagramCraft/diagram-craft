@@ -15,6 +15,7 @@ import {
   NodeDefinitionRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DrawioShapeNodeDefinition } from './drawio/DrawioShape.nodeType';
+import { DrawioImageNodeDefinition } from './drawio/DrawioImage.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -33,6 +34,7 @@ export const defaultNodeRegistry = () => {
   dest.register(new ContainerNodeDefinition());
 
   dest.register(new DrawioShapeNodeDefinition(), { hidden: true });
+  dest.register(new DrawioImageNodeDefinition(), { hidden: true });
 
   return dest;
 };

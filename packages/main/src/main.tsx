@@ -90,7 +90,7 @@ const diagrams = [
   {
     name: 'Drawio',
     document: async () => {
-      const res = await fetch('/diagrams/test2.drawio');
+      const res = await fetch('/diagrams/test3.drawio');
       const text = await res.text();
 
       const doc = drawioReader(text, documentFactory, diagramFactory);

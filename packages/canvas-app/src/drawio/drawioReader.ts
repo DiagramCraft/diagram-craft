@@ -15,6 +15,7 @@ import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pa
 import { Vector } from '@diagram-craft/geometry/vector';
 import { clipPath } from '@diagram-craft/model/edgeUtils';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
+import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -46,6 +47,7 @@ const parseStyle = (style: string) => {
 };
 
 const parseShape = (shape: string | undefined) => {
+  if (shape === 'image') return undefined;
   if (!shape) return undefined;
   return /^stencil\(([^)]+)\)$/.exec(shape)![1];
 };
@@ -58,19 +60,49 @@ const angleFromDirection = (s: string) => {
   return 0;
 };
 
+const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
+  open: 'SQUARE_STICK_ARROW',
+  classic: 'SQUARE_ARROW_FILLED'
+};
+
+// Based on https://stackoverflow.com/questions/12168909/blob-from-dataurl
+const dataURItoBlob = (dataURI: string) => {
+  // convert base64 to raw binary data held in a string
+  // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+  const byteString = atob(dataURI.split(',')[1]);
+
+  // separate out the mime component
+  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+  // write the bytes of the string to an ArrayBuffer
+  const ab = new ArrayBuffer(byteString.length);
+
+  // create a view into the buffer
+  const ia = new Uint8Array(ab);
+
+  // set the bytes of the buffer to the correct values
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+
+  // write the ArrayBuffer to a blob, and you're done
+  return new Blob([ab], { type: mimeString });
+};
+
 const parseArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
   const type = style[`${t}Arrow`];
   const size = style[`${t}Size`];
   if (type && type !== 'none') {
-    if (type !== 'open') {
+    if (!(type in arrows)) {
       console.warn(`Arrow type ${type} not yet supported`);
     }
 
     props.arrow ??= {};
     props.arrow![t] = {
-      type: 'SQUARE_STICK_ARROW',
-      size: parseNum(size, 3) * 15
+      type: arrows[type],
+      size: parseNum(size, 6) * 15
     };
+    props.fill!.color = props.stroke!.color;
   }
 };
 
@@ -238,7 +270,7 @@ const getNodeProps = (style: Style) => {
     text: {
       fontSize: parseNum(style.fontSize, 12),
       font: style.fontFamily,
-      color: style.fontColor,
+      color: style.fontColor ?? 'black',
       top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
       bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
       left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
@@ -247,7 +279,7 @@ const getNodeProps = (style: Style) => {
       valign: valign
     },
     fill: {
-      color: style.fillColor
+      color: style.fillColor ?? 'white'
     },
     geometry: {
       flipH: style.flipH === '1',
@@ -279,7 +311,8 @@ const getNodeProps = (style: Style) => {
   }
 
   props.stroke = {
-    color: style.strokeColor
+    color: style.strokeColor,
+    width: parseNum(style.strokeWidth, 1)
   };
 
   if (style.dashed === '1') {
@@ -335,6 +368,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
   const $cells = $el.getElementsByTagName('root').item(0)!.getElementsByTagName('mxCell');
 
+  const rootId = $cells.item(0)!.getAttribute('id')!;
+
   // Phase 1 - Determine parent child relationships
   for (let i = 0; i < $cells.length; i++) {
     const $cell = $cells.item(i)!;
@@ -362,10 +397,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
     const value = $cell.getAttribute('value')!;
 
     // Ignore the root
-    if (id === '0') continue;
+    if (id === rootId) continue;
 
     // is layer?
-    if (parent === '0') {
+    if (parent === rootId) {
       const layer = new Layer(id, value! === '' || !value ? 'Background' : value!, [], diagram);
       diagram.layers.add(layer, uow);
       if ($cell.getAttribute('visible') === '0') {
@@ -375,6 +410,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       parents.set(id, layer);
     } else {
       const p = parents.get(parent);
+      if (!p) {
+        console.warn(`Parent ${parent} not found for ${id}`);
+        continue;
+      }
+
       assert.present(p);
 
       const layer = p instanceof Layer ? p : p!.layer;
@@ -390,6 +430,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       props.text!.text = hasValue(value) ? value : '';
 
       const nodes: DiagramElement[] = [];
+
+      // TODO: Hack
+      if (style.shape === 'mxgraph.arrows2.bendDoubleArrow') style.shape = 'actor';
 
       const shape = parseShape(drawioBuiltinShapes[style.shape!] ?? style.shape);
 
@@ -457,6 +500,34 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
         nodes.push(node);
         parents.set(id, node);
+      } else if (style.shape === 'image' || 'image' in style) {
+        const image = style.image ?? '';
+
+        props.fill!.type = 'image';
+        props.text!.valign = 'top';
+
+        if (!style.imageBorder) {
+          props.stroke!.enabled = false;
+        } else {
+          props.stroke!.color = style.imageBorder;
+        }
+
+        if (image.startsWith('data:')) {
+          const blob = dataURItoBlob(image);
+          const attachment = await diagram.document.attachments.addAttachment(blob);
+
+          props.fill!.image = {
+            id: attachment.hash,
+            fit: 'contain'
+          };
+        } else {
+          props.fill!.image = {
+            url: image,
+            fit: 'contain'
+          };
+        }
+
+        nodes.push(new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props));
       } else {
         // Fallback on rect
         nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
@@ -531,41 +602,54 @@ export const drawioReader = async (
 ): Promise<DiagramDocument> => {
   const start = new Date().getTime();
 
+  const doc = documentFactory();
+
   const parser = new DOMParser();
   const $doc = parser.parseFromString(contents, 'application/xml');
 
-  const $diagram = $doc.getElementsByTagName('diagram').item(0)!;
+  const $diagrams = $doc.getElementsByTagName('diagram');
 
-  const s = await decode($diagram.textContent!);
-  const $mxGraphModel = parser.parseFromString(s, 'application/xml').documentElement;
+  for (let i = 0; i < $diagrams.length; i++) {
+    const $diagram = $diagrams.item(i)!;
 
-  const doc = documentFactory();
-  const diagram = new Diagram('1', $diagram.getAttribute('name')!, doc);
-  doc.addDiagram(diagram);
+    let $mxGraphModel: Element;
+    if (
+      $diagram.childNodes.length === 1 &&
+      $diagram.childNodes.item(0).nodeType === Node.TEXT_NODE
+    ) {
+      const s = await decode($diagram.textContent!);
+      $mxGraphModel = parser.parseFromString(s, 'application/xml').documentElement;
+    } else {
+      $mxGraphModel = $diagram.getElementsByTagName('mxGraphModel').item(0)!;
+    }
 
-  await parseMxGraphModel($mxGraphModel, diagram);
+    const diagram = new Diagram($diagram.getAttribute('id')!, $diagram.getAttribute('name')!, doc);
+    doc.addDiagram(diagram);
 
-  const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
+    await parseMxGraphModel($mxGraphModel, diagram);
 
-  const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
-  const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);
+    const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
 
-  const canvasBounds = {
-    w: pageWidth,
-    h: pageHeight,
-    x: 0,
-    y: 0
-  };
+    const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
+    const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);
 
-  while (bounds.x < canvasBounds.x) canvasBounds.x -= pageWidth;
-  while (bounds.y < canvasBounds.y) canvasBounds.y -= pageHeight;
-  while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += pageWidth;
-  while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += pageHeight;
+    const canvasBounds = {
+      w: pageWidth,
+      h: pageHeight,
+      x: 0,
+      y: 0
+    };
 
-  diagram.canvas = canvasBounds;
+    while (bounds.x < canvasBounds.x) canvasBounds.x -= pageWidth;
+    while (bounds.y < canvasBounds.y) canvasBounds.y -= pageHeight;
+    while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += pageWidth;
+    while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += pageHeight;
 
-  diagram.viewBox.offset = { x: 0, y: 0 };
-  diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);
+    diagram.canvas = canvasBounds;
+
+    diagram.viewBox.offset = { x: 0, y: 0 };
+    diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);
+  }
 
   console.log(`Duration: ${new Date().getTime() - start}`);
 
