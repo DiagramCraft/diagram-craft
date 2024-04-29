@@ -54,6 +54,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'parallelogram') return undefined;
   if (shape === 'process') return undefined;
   if (shape === 'mxgraph.arrows2.arrow') return undefined;
+  if (shape === 'ellipse') return undefined;
   if (shape === 'circle3') return undefined;
   if (!shape) return undefined;
 
@@ -369,8 +370,8 @@ const getNodeProps = (style: Style) => {
 
   if (style.dashed === '1') {
     props.stroke.pattern = 'DASHED';
-    props.stroke.patternSpacing = parseNum(style.dashPattern, 30);
-    props.stroke.patternSize = parseNum(style.dashPattern, 30);
+    props.stroke.patternSpacing = parseNum(style.dashPattern, 30 * parseNum(style.strokeWidth, 1));
+    props.stroke.patternSize = parseNum(style.dashPattern, 30 * parseNum(style.strokeWidth, 1));
   }
 
   if (style.shadow === '1') {
@@ -392,23 +393,23 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
   const source = $cell.getAttribute('source')!;
   if (source) {
     const sourceNode = diagram.nodeLookup.get(source);
-    assert.present(sourceNode);
+    if (sourceNode) {
+      const x = parseNum(style.exitX, 0.5);
+      const y = parseNum(style.exitY, 0.5);
 
-    const x = parseNum(style.exitX, 0.5);
-    const y = parseNum(style.exitY, 0.5);
-
-    edge.setStart(new FixedEndpoint({ x, y }, sourceNode), uow);
+      edge.setStart(new FixedEndpoint({ x, y }, sourceNode), uow);
+    }
   }
 
   const target = $cell.getAttribute('target')!;
   if (target) {
     const targetNode = diagram.nodeLookup.get(target);
-    assert.present(targetNode);
+    if (targetNode) {
+      const x = parseNum(style.entryX, 0.5);
+      const y = parseNum(style.entryY, 0.5);
 
-    const x = parseNum(style.entryX, 0.5);
-    const y = parseNum(style.entryY, 0.5);
-
-    edge.setEnd(new FixedEndpoint({ x, y }, targetNode), uow);
+      edge.setEnd(new FixedEndpoint({ x, y }, targetNode), uow);
+    }
   }
 };
 
@@ -582,7 +583,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         nodes.push(new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props));
-      } else if ('ellipse' in style) {
+      } else if ('ellipse' in style || style.shape === 'ellipse') {
         props.text!.align = (style.align ?? 'center') as HAlign;
         nodes.push(new DiagramNode(id, 'circle', bounds, diagram, layer, props));
       } else if ('rhombus' in style) {
