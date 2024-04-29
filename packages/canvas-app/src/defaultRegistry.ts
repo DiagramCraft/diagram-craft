@@ -16,6 +16,8 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DrawioShapeNodeDefinition } from './drawio/DrawioShape.nodeType';
 import { DrawioImageNodeDefinition } from './drawio/DrawioImage.nodeType';
+import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
+import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -30,6 +32,8 @@ export const defaultNodeRegistry = () => {
   dest.register(new ParallelogramNodeDefinition());
   dest.register(new TrapetzoidNodeDefinition());
   dest.register(new DiamondNodeDefinition());
+  dest.register(new HexagonNodeDefinition());
+  dest.register(new TriangleNodeDefinition());
   dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
 

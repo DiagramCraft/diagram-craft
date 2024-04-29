@@ -128,10 +128,11 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
       style.strokeDasharray = '';
     }
 
-    const startArrowSize = edgeProps.arrow.start.size / 100;
+    const startArrowSize =
+      (1 + (edgeProps.stroke.width - 1) * 10 + edgeProps.arrow.start.size) / 100;
     const startArrow = ARROW_SHAPES[edgeProps.arrow.start.type]?.(startArrowSize);
 
-    const endArrowSize = edgeProps.arrow.end.size / 100;
+    const endArrowSize = (1 + (edgeProps.stroke.width - 1) * 10 + edgeProps.arrow.end.size) / 100;
     const endArrow = ARROW_SHAPES[edgeProps.arrow.end.type]?.(endArrowSize);
 
     const basePath = clipPath(props.def.path(), props.def, startArrow, endArrow);

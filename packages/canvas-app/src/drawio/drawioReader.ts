@@ -50,6 +50,8 @@ const parseStyle = (style: string) => {
 const parseShape = (shape: string | undefined) => {
   if (shape === 'image') return undefined;
   if (shape === 'mxgraph.basic.rect') return undefined;
+  if (shape === 'hexagon') return undefined;
+  if (shape === 'parallelogram') return undefined;
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
@@ -69,10 +71,38 @@ const angleFromDirection = (s: string) => {
 };
 
 const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
-  open: 'SQUARE_STICK_ARROW',
-  classic: 'SQUARE_ARROW_FILLED',
-  classicThin: 'SHARP_ARROW_FILLED',
-  oval: 'BALL_FILLED'
+  'open': 'SQUARE_STICK_ARROW',
+  'classic': 'SHARP_ARROW_FILLED',
+  'classicThin': 'SHARP_ARROW_FILLED',
+  'oval': 'BALL_FILLED',
+  'doubleBlock': 'SQUARE_DOUBLE_ARROW_FILLED',
+  'doubleBlock-outline': 'SQUARE_DOUBLE_ARROW_OUTLINE',
+  'ERzeroToMany-outline': 'CROWS_FEET_BALL',
+  'ERzeroToOne-outline': 'BAR_BALL',
+  'ERoneToMany-outline': 'CROWS_FEET_BAR',
+  'ERmandOne-outline': 'BAR_DOUBLE',
+  'ERone-outline': 'BAR',
+  'baseDash-outline': 'BAR_END',
+  'halfCircle-outline': 'SOCKET',
+  'box-outline': 'BOX_OUTLINE',
+  'diamond-outline': 'DIAMOND_OUTLINE',
+  'diamondThin-outline': 'DIAMOND_OUTLINE',
+  'diamond': 'DIAMOND_FILLED',
+  'diamondThin': 'DIAMOND_FILLED',
+  'circle-outline': 'BALL_OUTLINE',
+  'circlePlus-outline': 'BALL_PLUS_OUTLINE',
+  'oval-outline': 'BALL_OUTLINE',
+  'block': 'SQUARE_ARROW_FILLED',
+  'blockThin': 'SQUARE_ARROW_FILLED',
+  'block-outline': 'SQUARE_ARROW_OUTLINE',
+  'open-outline': 'SQUARE_STICK_ARROW',
+  'openAsync-outline': 'SQUARE_STICK_ARROW_HALF_LEFT',
+  'async': 'SQUARE_STICK_ARROW_HALF_LEFT',
+  'classic-outline': 'SHARP_ARROW_OUTLINE',
+  'blockThin-outline': 'SQUARE_ARROW_OUTLINE',
+  'async-outline': 'SQUARE_STICK_ARROW_HALF_LEFT',
+  'dash-outline': 'SLASH',
+  'cross-outline': 'CROSS'
 };
 
 // Based on https://stackoverflow.com/questions/12168909/blob-from-dataurl
@@ -100,9 +130,14 @@ const dataURItoBlob = (dataURI: string) => {
 };
 
 const parseArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
-  const type = style[`${t}Arrow`];
+  let type = style[`${t}Arrow`];
   const size = style[`${t}Size`];
+  const fill = style[`${t}Fill`];
   if (type && type !== 'none') {
+    if (fill === '0') {
+      type += '-outline';
+    }
+
     if (!(type in arrows)) {
       console.warn(`Arrow type ${type} not yet supported`);
     }
@@ -555,17 +590,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         };
         nodes.push(new DiagramNode(id, 'parallelogram', bounds, diagram, layer, props));
       } else if (style.shape === 'hexagon') {
-        props.regularPolygon = {
-          numberOfSides: 6
-        };
-        // TODO: The orientation of the hexagon is not correct
-        nodes.push(new DiagramNode(id, 'regular-polygon', bounds, diagram, layer, props));
+        nodes.push(new DiagramNode(id, 'hexagon', bounds, diagram, layer, props));
       } else if ('triangle' in style) {
-        props.regularPolygon = {
-          numberOfSides: 3
-        };
-        // TODO: The orientation of the triangle is not correct
-        nodes.push(new DiagramNode(id, 'regular-polygon', bounds, diagram, layer, props));
+        nodes.push(new DiagramNode(id, 'triangle', bounds, diagram, layer, props));
       } else {
         if (style.rounded === '1') {
           props.roundedRect = {

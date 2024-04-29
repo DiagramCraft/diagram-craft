@@ -52,6 +52,23 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     ].join('\n'),
     fill: 'bg'
   }),
+  BALL_PLUS_OUTLINE: s => ({
+    width: s * 10,
+    height: s * 10,
+    anchor: { x: s * 10, y: s * 5 },
+    /* M cx cy m r, 0 a r,r 0 1,1 -(r * 2),0 a r,r 0 1,1  (r * 2),0 */
+    path: [
+      `M ${s * 5},${s * 5}`,
+      `m ${s * 5}, 0`,
+      `a ${s * 5},${s * 5} 0 1,1 -${s * 10},0`,
+      `a ${s * 5},${s * 5} 0 1,1 ${s * 10},0`,
+      `M ${s * 5},0`,
+      `L ${s * 5},${s * 10}`,
+      `M 0,${s * 5}`,
+      `L ${s * 10},${s * 5}`
+    ].join('\n'),
+    fill: 'bg'
+  }),
   SQUARE_DOUBLE_ARROW_FILLED: s => ({
     width: s * 20,
     height: s * 10,
@@ -169,7 +186,14 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
   BAR: s => ({
     width: s * 10,
     height: s * 10,
-    anchor: { x: s * 10, y: s * 5 },
+    anchor: { x: s * 8, y: s * 5 },
+    path: [`M 0 0`, `L 0 ${s * 10}`].join('\n'),
+    fill: 'transparent'
+  }),
+  BAR_END: s => ({
+    width: s * 10,
+    height: s * 10,
+    anchor: { x: 0, y: s * 5 },
     path: [`M 0 0`, `L 0 ${s * 10}`].join('\n'),
     fill: 'transparent'
   }),
@@ -181,17 +205,17 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     fill: 'transparent'
   }),
   SHARP_ARROW_FILLED: s => ({
-    width: s * 20,
+    width: s * 10,
     height: s * 10,
-    anchor: { x: s * 20, y: s * 5 },
-    path: [`M 0 0`, `L ${s * 20} ${s * 5}`, `L 0 ${s * 10}`, `L ${s * 7} ${s * 5}`, `Z`].join('\n'),
+    anchor: { x: s * 10, y: s * 5 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 5}`, `L 0 ${s * 10}`, `L ${s * 3} ${s * 5}`, `Z`].join('\n'),
     fill: 'fg'
   }),
   SHARP_ARROW_OUTLINE: s => ({
-    width: s * 20,
+    width: s * 10,
     height: s * 10,
-    anchor: { x: s * 20, y: s * 5 },
-    path: [`M 0 0`, `L ${s * 20} ${s * 5}`, `L 0 ${s * 10}`, `L ${s * 7} ${s * 5}`, `Z`].join('\n'),
+    anchor: { x: s * 10, y: s * 5 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 5}`, `L 0 ${s * 10}`, `L ${s * 3} ${s * 5}`, `Z`].join('\n'),
     fill: 'bg'
   }),
   CROWS_FEET: s => ({
@@ -245,7 +269,7 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
       `M ${s * 17} ${s * 5}`,
       `L ${s * 17} ${s * 15}`,
       `M ${s * 13} ${s * 10}`,
-      `L ${s * 30} ${s * 10}`,
+      `L ${s * 25} ${s * 10}`,
 
       /* M cx cy m r, 0 a r,r 0 1,1 -(r * 2),0 a r,r 0 1,1  (r * 2),0 */
       `M ${s * 9},${s * 10}`,
@@ -274,5 +298,20 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     anchor: { x: s * 10, y: s * 7.5 },
     path: [`M ${s * 15} ${s * 3}`, `A ${s * 6},${s * 8} 0 1,0 ${s * 15} ${s * 12}`].join('\n'),
     fill: 'bg'
+  }),
+  SLASH: s => ({
+    width: s * 10,
+    height: s * 10,
+    anchor: { x: s * 13, y: s * 5 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 10}`].join('\n'),
+    fill: 'transparent'
+  }),
+
+  CROSS: s => ({
+    width: s * 10,
+    height: s * 10,
+    anchor: { x: s * 13, y: s * 5 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 10}`, `M 0 ${s * 10}`, `L ${s * 10} 0`].join('\n'),
+    fill: 'transparent'
   })
 };
