@@ -53,6 +53,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'hexagon') return undefined;
   if (shape === 'parallelogram') return undefined;
   if (shape === 'process') return undefined;
+  if (shape === 'mxgraph.arrows2.arrow') return undefined;
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
@@ -602,6 +603,20 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         nodes.push(new DiagramNode(id, 'process', bounds, diagram, layer, props));
       } else if ('triangle' in style) {
         nodes.push(new DiagramNode(id, 'triangle', bounds, diagram, layer, props));
+      } else if (style.shape === 'mxgraph.arrows2.arrow') {
+        let type = 'arrow-right';
+        if (style.direction === 'north') {
+          type = 'arrow-up';
+        } else if (style.direction === 'south') {
+          type = 'arrow-down';
+        }
+
+        props.shapeArrow = {};
+        props.shapeArrow.notch = parseNum(style.notch, 0);
+        props.shapeArrow.y = parseNum(style.dy, 0.2) * 50;
+        props.shapeArrow.x = parseNum(style.dx, 20);
+
+        nodes.push(new DiagramNode(id, type, bounds, diagram, layer, props));
       } else {
         if (style.rounded === '1') {
           props.roundedRect = {

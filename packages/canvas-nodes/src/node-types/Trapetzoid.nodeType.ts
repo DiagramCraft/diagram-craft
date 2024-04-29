@@ -87,9 +87,8 @@ class TrapetzoidComponent extends BaseShape {
     shapeBuilder.text(this);
 
     shapeBuilder.controlPoint(
-      props.node.bounds.x + slantLeft,
-      props.node.bounds.y,
-      (x, _y, uow) => {
+      Point.of(props.node.bounds.x + slantLeft, props.node.bounds.y),
+      ({ x }, uow) => {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
           props.node.updateProps(props => {
@@ -102,9 +101,8 @@ class TrapetzoidComponent extends BaseShape {
     );
 
     shapeBuilder.controlPoint(
-      props.node.bounds.x + props.node.bounds.w - slantRight,
-      props.node.bounds.y,
-      (x, _y, uow) => {
+      Point.of(props.node.bounds.x + props.node.bounds.w - slantRight, props.node.bounds.y),
+      ({ x }, uow) => {
         const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
           props.node.updateProps(props => {

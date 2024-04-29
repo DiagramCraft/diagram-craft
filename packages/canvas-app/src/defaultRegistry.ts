@@ -19,6 +19,7 @@ import { DrawioImageNodeDefinition } from './drawio/DrawioImage.nodeType';
 import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
 import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
 import { ProcessNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Process.nodeType';
+import { ArrowNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Arrow.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -36,6 +37,12 @@ export const defaultNodeRegistry = () => {
   dest.register(new HexagonNodeDefinition());
   dest.register(new TriangleNodeDefinition());
   dest.register(new ProcessNodeDefinition());
+  dest.register(new ArrowNodeDefinition('arrow-right', 'Arrow Right', 0), { group: 'Arrow' });
+  dest.register(new ArrowNodeDefinition('arrow-up', 'Arrow Up', Math.PI / 2), { group: 'Arrow' });
+  dest.register(new ArrowNodeDefinition('arrow-down', 'Arrow Down', -Math.PI / 2), {
+    group: 'Arrow'
+  });
+  dest.register(new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI), { group: 'Arrow' });
   dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
 

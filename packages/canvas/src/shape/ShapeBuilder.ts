@@ -14,6 +14,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { DeepReadonly } from '@diagram-craft/utils/types';
+import { Point } from '@diagram-craft/geometry/point';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {
@@ -140,8 +141,8 @@ export class ShapeBuilder {
     );
   }
 
-  controlPoint(x: number, y: number, cb: ControlPointCallback) {
-    this.controlPoints.push({ x, y, cb });
+  controlPoint(p: Point, cb: ControlPointCallback) {
+    this.controlPoints.push({ ...p, cb });
   }
 
   makeOnMouseDownHandle(textId: string | undefined = '1') {

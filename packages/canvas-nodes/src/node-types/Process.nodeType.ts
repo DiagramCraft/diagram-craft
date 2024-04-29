@@ -68,13 +68,17 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.path(pathBuilder.getPaths().all(), props.nodeProps);
 
       // Draw all control points
-      shapeBuilder.controlPoint(bounds.x + sizePct * bounds.w, bounds.y, (x, _y, uow) => {
+      shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
         Size.set(newValue, props.node, uow);
         return `Size: ${Size.get(props.node.props.process)}%`;
       });
     }
   };
+
+  getDefaultConfig() {
+    return { size: { w: 100, h: 60 } };
+  }
 
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [Size.definition(node)];

@@ -69,15 +69,18 @@ class ParallelogramComponent extends BaseShape {
     shapeBuilder.boundaryPath(boundary);
     shapeBuilder.text(this);
 
-    shapeBuilder.controlPoint(props.node.bounds.x + slant, props.node.bounds.y, (x, _y, uow) => {
-      const distance = Math.max(0, x - props.node.bounds.x);
-      if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-        props.node.updateProps(props => {
-          props.parallelogram ??= {};
-          props.parallelogram.slant = distance;
-        }, uow);
+    shapeBuilder.controlPoint(
+      Point.of(props.node.bounds.x + slant, props.node.bounds.y),
+      ({ x }, uow) => {
+        const distance = Math.max(0, x - props.node.bounds.x);
+        if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
+          props.node.updateProps(props => {
+            props.parallelogram ??= {};
+            props.parallelogram.slant = distance;
+          }, uow);
+        }
+        return `Slant: ${props.node.props.parallelogram!.slant}px`;
       }
-      return `Slant: ${props.node.props.parallelogram!.slant}px`;
-    });
+    );
   }
 }

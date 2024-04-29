@@ -8,7 +8,7 @@ import { useState } from 'react';
 export const PickerToolWindow = () => {
   const diagram = useDiagram();
   const groups = diagram.document.nodeDefinitions.getGroups();
-  const [open, setOpen] = useState(['basic-shapes']);
+  const [open, setOpen] = useState(['basic-shapes', 'Arrow']);
 
   return (
     <Accordion.Root className="cmp-accordion" type="multiple" value={open} onValueChange={setOpen}>
