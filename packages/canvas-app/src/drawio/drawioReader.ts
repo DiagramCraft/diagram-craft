@@ -54,6 +54,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'parallelogram') return undefined;
   if (shape === 'process') return undefined;
   if (shape === 'mxgraph.arrows2.arrow') return undefined;
+  if (shape === 'circle3') return undefined;
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
@@ -596,6 +597,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           size: parseNum(style.size, 25)
         };
         nodes.push(new DiagramNode(id, 'hexagon', bounds, diagram, layer, props));
+      } else if (style.shape === 'cylinder3') {
+        props.shapeCylinder = {
+          size: parseNum(style.size, 50) * 2
+        };
+        nodes.push(new DiagramNode(id, 'cylinder', bounds, diagram, layer, props));
       } else if (style.shape === 'process') {
         props.process = {
           size: parseNum(style.size, 0.125) * 100
