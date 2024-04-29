@@ -13,6 +13,7 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
+import { Point } from '@diagram-craft/geometry/point';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -537,9 +538,13 @@ export class DiagramNode
   }
 
   _getAnchorPosition(anchor: number) {
+    return this._getPositionInBounds(this.getAnchor(anchor).point);
+  }
+
+  _getPositionInBounds(p: Point) {
     return {
-      x: this.bounds.x + this.bounds.w * this.getAnchor(anchor).point.x,
-      y: this.bounds.y + this.bounds.h * this.getAnchor(anchor).point.y
+      x: this.bounds.x + this.bounds.w * (this.propsForRendering.geometry.flipH ? 1 - p.x : p.x),
+      y: this.bounds.y + this.bounds.h * (this.propsForRendering.geometry.flipV ? 1 - p.y : p.y)
     };
   }
 

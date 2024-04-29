@@ -52,13 +52,7 @@ export class FixedEndpoint implements Endpoint {
   ) {}
 
   get position() {
-    const b = this.node.bounds;
-    const r = {
-      x: b.x + this.offset.x * b.w,
-      y: b.y + this.offset.y * b.h
-    };
-
-    return r;
+    return this.node!._getPositionInBounds(this.offset!);
   }
 
   serialize(): SerializedEndpoint {

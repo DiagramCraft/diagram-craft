@@ -87,12 +87,16 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
     node.anchors.forEach((a, idx) => {
       if (a.clip) return;
+
+      const x = node.propsForRendering.geometry.flipH ? 1 - a.point.x : a.point.x;
+      const y = node.propsForRendering.geometry.flipV ? 1 - a.point.y : a.point.y;
       children.push(
         svg.g(
           {
-            transform: `translate(${scaledBounds.x + a.point.x * scaledBounds.w} ${
-              scaledBounds.y + a.point.y * scaledBounds.h
-            })`,
+            transform: `translate(${scaledBounds.x + x * scaledBounds.w} ${
+              scaledBounds.y + y * scaledBounds.h
+            })
+            `,
             on: {
               mouseover: () => (this.state = 'handle'),
               mouseout: () => {
