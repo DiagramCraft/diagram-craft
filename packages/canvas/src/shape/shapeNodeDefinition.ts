@@ -1,5 +1,10 @@
 import { BaseShape } from './BaseShape';
-import { CompoundPath, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import {
+  CompoundPath,
+  PathBuilder,
+  PathBuilderHelper,
+  unitCoordinateSystem
+} from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
@@ -15,22 +20,28 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor } from '@diagram-craft/model/types';
 
-type ShapeConstructorContstructor = {
-  new (shapeNodeDefinition: ShapeNodeDefinition): BaseShape;
+type ShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
+  new (shapeNodeDefinition: T): BaseShape<T>;
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   protected constructor(
     readonly type: string,
     readonly name: string,
-    readonly component: ShapeConstructorContstructor
+
+    // @ts-ignore
+    readonly component: ShapeConstructor<this>
   ) {}
 
   supports(_capability: NodeCapability): boolean {
     return false;
   }
 
-  abstract getBoundingPathBuilder(node: DiagramNode): PathBuilder;
+  getBoundingPathBuilder(node: DiagramNode) {
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(node.bounds));
+    PathBuilderHelper.rect(pathBuilder, Box.unit());
+    return pathBuilder;
+  }
 
   getAnchors(node: DiagramNode) {
     const newAnchors: Array<Anchor> = [];
@@ -65,8 +76,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return pb.getPaths();
   }
 
-  getCustomProperties(_node: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {};
+  getCustomProperties(_node: DiagramNode): Array<CustomPropertyDefinition> {
+    return [];
   }
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {

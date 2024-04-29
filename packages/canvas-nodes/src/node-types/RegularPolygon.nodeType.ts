@@ -40,9 +40,10 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      numberOfSides: {
+  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
+      {
+        id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
         value: def.props.regularPolygon?.numberOfSides ?? 5,
@@ -53,7 +54,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       }
-    };
+    ];
   }
 }
 

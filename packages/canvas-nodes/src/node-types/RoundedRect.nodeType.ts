@@ -20,9 +20,10 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     super('rounded-rect', 'Rounded Rectangle', RoundedRectComponent);
   }
 
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      radius: {
+  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
+      {
+        id: 'radius',
         type: 'number',
         label: 'Radius',
         value: def.props.roundedRect?.radius ?? 5,
@@ -37,7 +38,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       }
-    };
+    ];
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

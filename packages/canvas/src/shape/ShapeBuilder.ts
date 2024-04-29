@@ -13,6 +13,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
 import { DASH_PATTERNS } from '../dashPatterns';
+import { DeepReadonly } from '@diagram-craft/utils/types';
 
 const defaultOnChange = (node: DiagramNode) => (text: string) => {
   UnitOfWork.execute(node.diagram, uow => {
@@ -103,7 +104,11 @@ export class ShapeBuilder {
     );
   }
 
-  path(paths: Path[], props: NodeProps | undefined = undefined, map: (n: VNode) => VNode = a => a) {
+  path(
+    paths: Path[],
+    props: NodeProps | DeepReadonly<NodeProps> | undefined = undefined,
+    map: (n: VNode) => VNode = a => a
+  ) {
     const propsInEffect = props ?? (this.props.node.propsForRendering as NodeProps);
     const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
       ? new SketchPathRenderer()
@@ -185,7 +190,7 @@ export class ShapeBuilder {
       .item(0) as HTMLDivElement | undefined | null;
   }
 
-  private makeStyle(nodeProps: NodeProps): Partial<CSSStyleDeclaration> {
+  private makeStyle(nodeProps: NodeProps | DeepReadonly<NodeProps>): Partial<CSSStyleDeclaration> {
     const style: Partial<CSSStyleDeclaration> = {};
     style.strokeWidth = nodeProps.stroke!.width?.toString();
     style.stroke = nodeProps.stroke!.color;

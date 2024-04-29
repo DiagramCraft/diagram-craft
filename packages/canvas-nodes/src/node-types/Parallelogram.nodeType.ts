@@ -20,9 +20,10 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
     super('parallelogram', 'Parallelogram', ParallelogramComponent);
   }
 
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      slant: {
+  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
+      {
+        id: 'slant',
         type: 'number',
         label: 'Slant',
         value: def.props.parallelogram?.slant ?? 5,
@@ -36,7 +37,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       }
-    };
+    ];
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

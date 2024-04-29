@@ -17,6 +17,8 @@ export const WritableBox = {
 };
 
 export const Box = {
+  unit: () => ({ x: -1, y: -1, w: 2, h: 2, r: 0 }),
+
   asReadWrite: (b: Box): WritableBox => {
     return { ...b, _discriminator: 'rw' };
   },

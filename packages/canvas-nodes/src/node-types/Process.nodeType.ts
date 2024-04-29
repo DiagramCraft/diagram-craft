@@ -6,87 +6,77 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DeepReadonly } from '@diagram-craft/utils/types';
+import { round } from '@diagram-craft/utils/math';
+
+// NodeProps extension for custom props *****************************************
+
+type ExtraProps = {
+  size?: number;
+};
 
 declare global {
   interface NodeProps {
-    process?: {
-      size?: number;
-    };
+    process?: ExtraProps;
   }
 }
 
-const DEFAULT_SIZE = 10;
+// Custom properties ************************************************************
+
+const Size = {
+  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+    id: 'size',
+    label: 'Size',
+    type: 'number',
+    value: Size.get(node.props.process),
+    maxValue: 50,
+    unit: '%',
+    onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
+  }),
+
+  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.size ?? 10,
+
+  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
+    if (value >= 50 || value <= 0) return;
+    node.updateProps(props => (props.process = { size: round(value) }), uow);
+  }
+};
+
+// NodeDefinition and Shape *****************************************************
 
 export class ProcessNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('process', 'Process', ProcessComponent);
+    super('process', 'Process', ProcessNodeDefinition.Shape);
   }
 
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      radius: {
-        type: 'number',
-        label: 'Size',
-        value: def.props.process?.size ?? DEFAULT_SIZE,
-        maxValue: 50,
-        unit: 'px',
-        onChange: (value: number, uow: UnitOfWork) => {
-          if (value >= 50 || value <= 0) return;
+  static Shape = class extends BaseShape<ProcessNodeDefinition> {
+    buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+      super.buildShape(props, shapeBuilder);
 
-          def.updateProps(props => {
-            props.process ??= {};
-            props.process.size = value;
-          }, uow);
-        }
-      }
-    };
-  }
+      const bounds = props.node.bounds;
+      const sizePct = Size.get(props.nodeProps.process) / 100;
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const size = def.props.process?.size ?? DEFAULT_SIZE;
+      // Draw additional shape details
+      const pathBuilder = new PathBuilder(unitCoordinateSystem(bounds));
 
-    const x1 = -1 + (size / 100) * 2;
-    const x2 = 1 - (size / 100) * 2;
+      const x1 = -1 + sizePct * 2;
+      const x2 = 1 - sizePct * 2;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+      pathBuilder.line(Point.of(x1, -1), Point.of(x1, 1));
+      pathBuilder.line(Point.of(x2, -1), Point.of(x2, 1));
 
-    pathBuilder.moveTo(Point.of(-1, 1));
-    pathBuilder.lineTo(Point.of(1, 1));
-    pathBuilder.lineTo(Point.of(1, -1));
-    pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(-1, 1));
+      shapeBuilder.path(pathBuilder.getPaths().all(), props.nodeProps);
 
-    pathBuilder.moveTo(Point.of(x1, -1));
-    pathBuilder.lineTo(Point.of(x1, 1));
+      // Draw all control points
+      shapeBuilder.controlPoint(bounds.x + sizePct * bounds.w, bounds.y, (x, _y, uow) => {
+        const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
+        Size.set(newValue, props.node, uow);
+        return `Size: ${Size.get(props.node.props.process)}%`;
+      });
+    }
+  };
 
-    pathBuilder.moveTo(Point.of(x2, -1));
-    pathBuilder.lineTo(Point.of(x2, 1));
-
-    return pathBuilder;
-  }
-}
-
-class ProcessComponent extends BaseShape {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new ProcessNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
-    shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text(this);
-
-    const size = props.nodeProps.process?.size ?? DEFAULT_SIZE;
-    const bounds = props.node.bounds;
-    shapeBuilder.controlPoint(
-      props.node.bounds.x + (size / 100) * props.node.bounds.w,
-      props.node.bounds.y,
-      (x, _y, uow) => {
-        const distance = Math.max(0, x - props.node.bounds.x);
-        if (distance < props.node.bounds.w / 2) {
-          props.node.updateProps(props => {
-            props.process ??= {};
-            props.process.size = (distance / bounds.w) * 100;
-          }, uow);
-        }
-        return `Size: ${props.node.props.process!.size}px`;
-      }
-    );
+  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+    return [Size.definition(node)];
   }
 }

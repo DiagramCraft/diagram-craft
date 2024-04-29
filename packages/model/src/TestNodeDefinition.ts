@@ -41,8 +41,8 @@ export class TestNodeDefinition implements NodeDefinition {
     return new PathBuilder();
   }
 
-  getCustomProperties(_node: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {};
+  getCustomProperties(_node: DiagramNode): Array<CustomPropertyDefinition> {
+    return [];
   }
 
   getDefaultProps(_mode: 'picker' | 'canvas'): DeepReadonly<NodeProps> {

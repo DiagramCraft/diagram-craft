@@ -46,9 +46,10 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      numberOfSides: {
+  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
+      {
+        id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
         value: def.props.star?.numberOfSides ?? 5,
@@ -59,7 +60,8 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       },
-      innerRadius: {
+      {
+        id: 'innerRadius',
         type: 'number',
         label: 'Radius',
         value: round((def.props.star?.innerRadius ?? 0.5) * 100),
@@ -72,7 +74,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       }
-    };
+    ];
   }
 }
 

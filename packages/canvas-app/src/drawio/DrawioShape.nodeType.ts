@@ -218,7 +218,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 
 class DrawioShapeComponent extends BaseShape {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const shapeNodeDefinition = this.shapeNodeDefinition as DrawioShapeNodeDefinition;
+    const shapeNodeDefinition = this.def as DrawioShapeNodeDefinition;
 
     const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
 

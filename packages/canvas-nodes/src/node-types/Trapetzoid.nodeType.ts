@@ -21,9 +21,10 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
     super('trapetzoid', 'Trapetzoid', TrapetzoidComponent);
   }
 
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      slantLeft: {
+  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
+      {
+        id: 'slantLeft',
         type: 'number',
         label: 'Slant (left)',
         value: def.props.trapetzoid?.slantLeft ?? 5,
@@ -37,7 +38,8 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       },
-      slantRight: {
+      {
+        id: 'slantRight',
         type: 'number',
         label: 'Slant (right)',
         value: def.props.trapetzoid?.slantRight ?? 5,
@@ -51,7 +53,7 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       }
-    };
+    ];
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

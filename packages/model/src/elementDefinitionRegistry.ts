@@ -16,6 +16,7 @@ export type NodeCapability = 'children';
 // TODO: Make make this into an interface in the global namespace we can extend
 // TODO: Should we change these callbacks to have a UOW parameter?
 export type CustomPropertyDefinition = {
+  id: string;
   label: string;
 } & (
   | {
@@ -48,7 +49,7 @@ export interface NodeDefinition {
 
   getBoundingPathBuilder(node: DiagramNode): PathBuilder;
   getBoundingPath(node: DiagramNode): CompoundPath;
-  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition>;
+  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition>;
 
   // TODO: These are a bit weird, considering we allow for multiple registrations
   //       of the same definition

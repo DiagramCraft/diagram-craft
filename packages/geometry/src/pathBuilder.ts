@@ -160,6 +160,11 @@ export class PathBuilder {
     this.path.push(['L', tp.x, tp.y]);
   }
 
+  line(p1: Point, p2: Point) {
+    this.moveTo(p1);
+    this.lineTo(p2);
+  }
+
   close() {
     precondition.is.present(this.start);
     this.path.push(['L', this.start.x, this.start.y]);

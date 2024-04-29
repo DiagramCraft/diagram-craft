@@ -6,47 +6,69 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DeepReadonly } from '@diagram-craft/utils/types';
+import { round } from '@diagram-craft/utils/math';
+
+// NodeProps extension for custom props *****************************************
+
+type ExtraProps = {
+  size?: number;
+};
 
 declare global {
   interface NodeProps {
-    hexagon?: {
-      size?: number;
-    };
+    hexagon?: ExtraProps;
   }
 }
 
-const DEFAULT_SIZE = 25;
+// Custom properties ************************************************************
+
+const Size = {
+  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+    id: 'size',
+    label: 'Size',
+    type: 'number',
+    value: Size.get(node.props.hexagon),
+    maxValue: 50,
+    unit: '%',
+    onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
+  }),
+
+  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.size ?? 25,
+
+  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
+    if (value >= 50 || value <= 0) return;
+    node.updateProps(props => (props.hexagon = { size: round(value) }), uow);
+  }
+};
+
+// NodeDefinition and Shape *****************************************************
 
 export class HexagonNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('hexagon', 'Hexagon', HexagonComponent);
+    super('hexagon', 'Hexagon', HexagonNodeDefinition.Shape);
   }
 
-  getCustomProperties(def: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      radius: {
-        type: 'number',
-        label: 'Size',
-        value: def.props.hexagon?.size ?? DEFAULT_SIZE,
-        maxValue: 50,
-        unit: 'px',
-        onChange: (value: number, uow: UnitOfWork) => {
-          if (value >= 50 || value <= 0) return;
+  static Shape = class extends BaseShape<HexagonNodeDefinition> {
+    buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+      super.buildShape(props, shapeBuilder);
 
-          def.updateProps(props => {
-            props.hexagon ??= {};
-            props.hexagon.size = value;
-          }, uow);
-        }
-      }
-    };
-  }
+      const bounds = props.node.bounds;
+      const sizePct = Size.get(props.nodeProps.hexagon) / 100;
+
+      shapeBuilder.controlPoint(bounds.x + sizePct * bounds.w, bounds.y, (x, _y, uow) => {
+        const distance = Math.max(0, x - bounds.x);
+        Size.set((distance / bounds.w) * 100, props.node, uow);
+        return `Size: ${Size.get(props.node.props.hexagon)}%`;
+      });
+    }
+  };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const size = def.props.hexagon?.size ?? DEFAULT_SIZE;
+    const sizePct = Size.get(def.props.hexagon) / 100;
 
-    const x1 = -1 + (size / 100) * 2;
-    const x2 = 1 - (size / 100) * 2;
+    const x1 = -1 + sizePct * 2;
+    const x2 = 1 - sizePct * 2;
 
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 
@@ -60,30 +82,8 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
 
     return pathBuilder;
   }
-}
 
-class HexagonComponent extends BaseShape {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-    const size = props.nodeProps.hexagon?.size ?? DEFAULT_SIZE;
-    const boundary = new HexagonNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
-
-    shapeBuilder.boundaryPath(boundary);
-    shapeBuilder.text(this);
-
-    const bounds = props.node.bounds;
-    shapeBuilder.controlPoint(
-      props.node.bounds.x + (size / 100) * props.node.bounds.w,
-      props.node.bounds.y,
-      (x, _y, uow) => {
-        const distance = Math.max(0, x - props.node.bounds.x);
-        if (distance < props.node.bounds.w / 2) {
-          props.node.updateProps(props => {
-            props.hexagon ??= {};
-            props.hexagon.size = (distance / bounds.w) * 100;
-          }, uow);
-        }
-        return `Size: ${props.node.props.hexagon!.size}px`;
-      }
-    );
+  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+    return [Size.definition(node)];
   }
 }

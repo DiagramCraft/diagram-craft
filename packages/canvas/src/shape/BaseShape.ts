@@ -58,12 +58,18 @@ export type BaseShapeBuildProps = {
   };
 };
 
-export abstract class BaseShape extends Component<BaseShapeProps> {
-  constructor(protected readonly shapeNodeDefinition: ShapeNodeDefinition) {
+export class BaseShape<
+  T extends ShapeNodeDefinition = ShapeNodeDefinition
+> extends Component<BaseShapeProps> {
+  constructor(protected readonly def: T) {
     super();
   }
 
-  abstract buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder): void;
+  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    shapeBuilder.boundaryPath(boundary);
+    shapeBuilder.text(this);
+  }
 
   render(props: BaseShapeProps): VNode {
     const $d = props.def.diagram;

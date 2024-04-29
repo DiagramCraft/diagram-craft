@@ -58,9 +58,10 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
-  getCustomProperties(node: DiagramNode): Record<string, CustomPropertyDefinition> {
-    return {
-      autoGrow: {
+  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
+      {
+        id: 'autoGrow',
         type: 'boolean',
         label: 'Grow',
         value: node.props.container?.autoGrow ?? false,
@@ -71,7 +72,8 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       },
-      layout: {
+      {
+        id: 'layout',
         type: 'select',
         label: 'Layout',
         value: node.props.container?.layout ?? 'manual',
@@ -88,7 +90,8 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       },
-      gap: {
+      {
+        id: 'gap',
         type: 'number',
         label: 'Gap',
         value: node.props.container?.gap ?? 0,
@@ -100,7 +103,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           }, uow);
         }
       }
-    };
+    ];
   }
 
   onDrop(
