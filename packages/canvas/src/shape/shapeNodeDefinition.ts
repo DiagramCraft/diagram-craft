@@ -34,7 +34,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   ) {}
 
   supports(_capability: NodeCapability): boolean {
-    return false;
+    return true;
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

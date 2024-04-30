@@ -13,19 +13,21 @@ export const NodeFillToolbarButton = () => {
 
   const fill = useNodeProperty(diagram, 'fill.color', defaults.fill.color);
 
+  const disabled = diagram.selectionState.nodes.every(n => !n.getDefinition().supports('fill'));
+
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
-        <ReactToolbar.Button className="cmp-toolbar__button">
+        <ReactToolbar.Button className="cmp-toolbar__button" disabled={disabled}>
           <TbPaint />
           <div
             style={{
               marginLeft: '5px',
               width: '30px',
               height: '12px',
-              backgroundColor: fill.val,
+              backgroundColor: disabled ? 'var(--slate-8)' : fill.val,
               marginRight: '3px',
-              border: '1px solid var(--primary-fg)',
+              border: `1px solid ${disabled ? 'var(--slate-8)' : 'var(--primary-fg)'}`,
               borderRadius: '3px'
             }}
           ></div>

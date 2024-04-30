@@ -164,6 +164,10 @@ export const NodeFillPanel = (props: Props) => {
   const gradientDirection = useNodeProperty($d, 'fill.gradient.direction', 0);
   const gradientType = useNodeProperty($d, 'fill.gradient.type', 'linear');
 
+  const panelDisabled = $d.selectionState.nodes.every(n => !n.getDefinition().supports('fill'));
+
+  if (panelDisabled) return null;
+
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}

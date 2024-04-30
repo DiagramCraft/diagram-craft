@@ -147,6 +147,10 @@ export class BaseShape<
       children.push(this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.def }));
     }
 
+    if (!this.def.supports('fill')) {
+      style.fill = 'none';
+    }
+
     /* Build shape ******************************************************************* */
 
     const buildProps: BaseShapeBuildProps = {
