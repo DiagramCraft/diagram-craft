@@ -500,7 +500,9 @@ export class DiagramEdge
 
     return buildEdgePath(
       this,
-      this.props.stroke?.lineJoin === 'round' ? this.props.routing?.rounding ?? 0 : 0,
+      !this.props.stroke?.lineJoin || this.props.stroke?.lineJoin === 'round'
+        ? this.props.routing?.rounding ?? 0
+        : 0,
       startDirection,
       endDirection ? Direction.opposite(endDirection) : undefined
     );
