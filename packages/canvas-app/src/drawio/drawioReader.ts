@@ -57,6 +57,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'ellipse') return undefined;
   if (shape === 'circle3') return undefined;
   if (shape === 'curlyBracket') return undefined;
+  if (shape === 'mxgraph.basic.partConcEllipse') return undefined;
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
@@ -614,6 +615,18 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           size: parseNum(style.size, 0.5) * 100
         };
         nodes.push(new DiagramNode(id, 'curlyBracket', bounds, diagram, layer, props));
+      } else if (style.shape === 'mxgraph.basic.partConcEllipse') {
+        props.shapeBlockArc = {
+          innerRadius: 100 - parseNum(style.arcWidth, 0.5) * 100,
+          startAngle: Angle.toDeg(Math.PI / 2 + 2 * Math.PI * (1 - parseNum(style.endAngle, 0.5))),
+          endAngle: Angle.toDeg(Math.PI / 2 + 2 * Math.PI * (1 - parseNum(style.startAngle, 0.3)))
+        };
+
+        if (props.shapeBlockArc.endAngle === 0) {
+          props.shapeBlockArc.endAngle = 359.999;
+        }
+
+        nodes.push(new DiagramNode(id, 'blockArc', bounds, diagram, layer, props));
       } else if ('triangle' in style) {
         nodes.push(new DiagramNode(id, 'triangle', bounds, diagram, layer, props));
       } else if (style.shape === 'mxgraph.arrows2.arrow') {
