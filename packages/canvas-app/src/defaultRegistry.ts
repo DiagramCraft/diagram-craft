@@ -21,6 +21,7 @@ import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/T
 import { ProcessNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Process.nodeType';
 import { ArrowNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Arrow.nodeType';
 import { CylinderNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cylinder.nodeType';
+import { CurlyBracketNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/CurlyBracket.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -45,6 +46,7 @@ export const defaultNodeRegistry = () => {
   });
   dest.register(new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI), { group: 'Arrow' });
   dest.register(new CylinderNodeDefinition());
+  dest.register(new CurlyBracketNodeDefinition());
   dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
 

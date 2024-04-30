@@ -11,7 +11,7 @@ import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique } from '@diagram-craft/utils/array';
 import { Anchor } from './types';
 
-export type NodeCapability = 'children';
+export type NodeCapability = 'children' | 'fill';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 // TODO: Should we change these callbacks to have a UOW parameter?
