@@ -327,10 +327,8 @@ const getNodeProps = (style: Style) => {
       color: style.fontColor ?? 'black',
       top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
       bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
-
-      // NOTE: test6.drawio suggests that spacing is default to 0
-      left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 0),
-      right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 0),
+      left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
+      right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2),
       align: align,
       valign: valign
     },
@@ -376,9 +374,13 @@ const getNodeProps = (style: Style) => {
   }
 
   if (style.dashed === '1') {
+    const pattern = style.dashPattern ?? '4 4';
+    const [baseSize, baseGap] = pattern.split(' ').map(s => parseNum(s, 4));
+    const strokeWidth = parseNum(style.strokeWidth, 1);
+
     props.stroke.pattern = 'DASHED';
-    props.stroke.patternSpacing = parseNum(style.dashPattern, 10 * parseNum(style.strokeWidth, 1));
-    props.stroke.patternSize = parseNum(style.dashPattern, 10 * parseNum(style.strokeWidth, 1));
+    props.stroke.patternSpacing = baseGap * 10 * strokeWidth;
+    props.stroke.patternSize = baseSize * 10 * strokeWidth;
     props.stroke.lineCap = 'butt';
   }
 
@@ -502,11 +504,18 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         props.drawio = { shape: btoa(await decode(shape)) };
         nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props));
       } else if ($style.startsWith('text;')) {
-        // Default spacing for text nodes are a bit different, so we need to adjust
-        props.text!.top = parseNum(style.spacingTop, 0) + parseNum(style.spacing, 2);
-        props.text!.bottom = parseNum(style.spacingBottom, 0) + parseNum(style.spacing, 2);
+        // Determine if we should use a rect or text shape based on the presence
+        // of a border or background
 
-        nodes.push(new DiagramNode(id, 'text', bounds, diagram, layer, props));
+        if (!style.strokeColor || style.strokeColor === 'none') {
+          props.stroke!.enabled = false;
+        }
+
+        if (!style.fillColor || style.fillColor === 'none') {
+          props.fill!.enabled = false;
+        }
+
+        nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
       } else if ($style.startsWith('edgeLabel;')) {
         // Handle free-standing edge labels
         const edge = diagram.edgeLookup.get(parent);

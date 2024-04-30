@@ -58,6 +58,10 @@ body {
   --left-indent: 0;
 }
 
+foreignObject {
+  overflow: inherit;
+}
+
 
 /* Base HTML element styling */
 input[type="checkbox"] {
@@ -522,6 +526,9 @@ input::-webkit-input-placeholder {
       .svg-node__text {
         cursor: move;
         pointer-events: none;
+        left: 50%;
+        transform: translateX(-50%);
+        position: relative;
       }
     }
   }
