@@ -88,6 +88,10 @@ const documentFactory = () => {
 
 const diagrams = [
   {
+    name: 'Simple',
+    document: () => deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
+  },
+  {
     name: 'Drawio',
     document: async () => {
       const res = await fetch('/diagrams/test5.drawio');
@@ -96,10 +100,6 @@ const diagrams = [
       const doc = drawioReader(text, documentFactory, diagramFactory);
       return await doc;
     }
-  },
-  {
-    name: 'Simple',
-    document: () => deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
   },
   {
     name: 'Snap test',
