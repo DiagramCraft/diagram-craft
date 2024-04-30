@@ -2,6 +2,7 @@ import { useDiagram } from './context/DiagramContext';
 import * as Tree from './components/Tree';
 import {
   TbAdjustments,
+  TbBoxMultiple,
   TbEye,
   TbEyeOff,
   TbLine,
@@ -18,7 +19,7 @@ import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
@@ -176,6 +177,13 @@ const ElementEntry = (props: { element: DiagramElement }) => {
     }
   );
 
+  let icon = <TbRectangle />;
+  if (isEdge(e)) {
+    icon = <TbLine />;
+  } else if (isNode(e) && e.nodeType === 'group') {
+    icon = <TbBoxMultiple />;
+  }
+
   return (
     <Tree.Node
       key={e.id}
@@ -194,7 +202,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
       }}
     >
       <Tree.NodeLabel>
-        {isNode(e) ? <TbRectangle /> : <TbLine />} &nbsp;{shorten(e.name, 25)}
+        {icon} &nbsp;{shorten(e.name, 25)}
       </Tree.NodeLabel>
 
       {childrenAllowed && (

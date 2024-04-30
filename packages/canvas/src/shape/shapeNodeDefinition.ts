@@ -33,8 +33,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     readonly component: ShapeConstructor<this>
   ) {}
 
-  supports(_capability: NodeCapability): boolean {
-    return true;
+  supports(capability: NodeCapability): boolean {
+    return capability !== 'children';
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

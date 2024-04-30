@@ -56,6 +56,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'mxgraph.arrows2.arrow') return undefined;
   if (shape === 'ellipse') return undefined;
   if (shape === 'circle3') return undefined;
+  if (shape === 'cylinder') return undefined;
   if (shape === 'cylinder3') return undefined;
   if (shape === 'curlyBracket') return undefined;
   if (shape === 'mxgraph.basic.partConcEllipse') return undefined;
@@ -204,7 +205,7 @@ const calculateLabelNodeActualSize = (
   const css: string[] = [];
 
   css.push('font-size: ' + parseNum(style.fontSize, 12) + 'px');
-  css.push('font-family: ' + (style.fontFamily ?? 'sans-serif'));
+  css.push('font-family: ' + (style.fontFamily ?? 'Helvetica'));
   css.push('direction: ltr');
   css.push('line-height: 120%');
   css.push('color: black');
@@ -312,7 +313,8 @@ const attachLabelNode = (
 };
 
 const getNodeProps = (style: Style) => {
-  const align = style.align ?? 'left';
+  // NOTE: test6.drawio suggests this should be center
+  const align = style.align ?? 'center';
   assertHAlign(align);
 
   const valign = style.verticalAlign ?? 'middle';
@@ -321,12 +323,14 @@ const getNodeProps = (style: Style) => {
   const props: NodeProps = {
     text: {
       fontSize: parseNum(style.fontSize, 12),
-      font: style.fontFamily,
+      font: style.fontFamily ?? 'Helvetica',
       color: style.fontColor ?? 'black',
       top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
       bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
-      left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
-      right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2),
+
+      // NOTE: test6.drawio suggests that spacing is default to 0
+      left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 0),
+      right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 0),
       align: align,
       valign: valign
     },
@@ -606,9 +610,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           size: parseNum(style.size, 25)
         };
         nodes.push(new DiagramNode(id, 'hexagon', bounds, diagram, layer, props));
-      } else if (style.shape === 'cylinder3') {
+      } else if (style.shape === 'cylinder3' || style.shape === 'cylinder') {
         props.shapeCylinder = {
-          size: parseNum(style.size, 50) * 2
+          size: parseNum(style.size, 8) * 2
         };
         nodes.push(new DiagramNode(id, 'cylinder', bounds, diagram, layer, props));
       } else if (style.shape === 'process') {

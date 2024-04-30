@@ -17,6 +17,8 @@ export default defineConfig({
         manualChunks: id => {
           if (id.includes('node_modules')) {
             return 'vendor';
+          } else if (id.includes('canvas-nodes/')) {
+            return 'shapes';
           } else if (id.includes('sample/')) {
             return 'sample-data';
           } else if (id.includes('query')) {
