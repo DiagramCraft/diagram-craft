@@ -486,6 +486,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       if ('rotation' in style) {
         bounds.r = Angle.toRad(parseNum(style.rotation, 0));
+        if (id === 'AS8r9Xt7kxpocLAO9WAU-214') console.log(bounds.r);
       }
 
       const nodes: DiagramElement[] = [];
@@ -664,7 +665,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             y: node.bounds.y + p.bounds.y,
             w: node.bounds.w,
             h: node.bounds.h,
-            r: 0
+            r: node.bounds.r
           };
 
           node.setBounds(newBounds, uow);
