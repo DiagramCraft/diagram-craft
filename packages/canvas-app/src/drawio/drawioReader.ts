@@ -56,6 +56,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'mxgraph.arrows2.arrow') return undefined;
   if (shape === 'ellipse') return undefined;
   if (shape === 'circle3') return undefined;
+  if (shape === 'cylinder3') return undefined;
   if (shape === 'curlyBracket') return undefined;
   if (shape === 'mxgraph.basic.partConcEllipse') return undefined;
   if (!shape) return undefined;
@@ -372,8 +373,9 @@ const getNodeProps = (style: Style) => {
 
   if (style.dashed === '1') {
     props.stroke.pattern = 'DASHED';
-    props.stroke.patternSpacing = parseNum(style.dashPattern, 30 * parseNum(style.strokeWidth, 1));
-    props.stroke.patternSize = parseNum(style.dashPattern, 30 * parseNum(style.strokeWidth, 1));
+    props.stroke.patternSpacing = parseNum(style.dashPattern, 10 * parseNum(style.strokeWidth, 1));
+    props.stroke.patternSize = parseNum(style.dashPattern, 10 * parseNum(style.strokeWidth, 1));
+    props.stroke.lineCap = 'butt';
   }
 
   if (style.shadow === '1') {
@@ -486,7 +488,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       if ('rotation' in style) {
         bounds.r = Angle.toRad(parseNum(style.rotation, 0));
-        if (id === 'AS8r9Xt7kxpocLAO9WAU-214') console.log(bounds.r);
       }
 
       const nodes: DiagramElement[] = [];
@@ -533,6 +534,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         parseArrow('start', style, props);
         parseArrow('end', style, props);
 
+        if (style.curved === '1') {
+          (props as EdgeProps).type = 'bezier';
+        }
+
         const edge = new DiagramEdge(id, source, target, props, waypoints, diagram, layer);
         nodes.push(edge);
         parents.set(id, edge);
@@ -552,7 +557,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
         }
-      } else if (parentChild.has(id)) {
+      } else if (parentChild.has(id) || 'group' in style) {
         // Handle groups
         const node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
         nodes.push(node);
@@ -629,6 +634,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         nodes.push(new DiagramNode(id, 'blockArc', bounds, diagram, layer, props));
       } else if ('triangle' in style) {
+        props.shapeTriangle = {
+          direction: (style.direction ?? 'east') as 'east' | 'north' | 'south' | 'west'
+        };
         nodes.push(new DiagramNode(id, 'triangle', bounds, diagram, layer, props));
       } else if (style.shape === 'mxgraph.arrows2.arrow') {
         let type = 'arrow-right';
@@ -669,6 +677,13 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           };
 
           node.setBounds(newBounds, uow);
+
+          if (node instanceof DiagramEdge) {
+            const edge = node as DiagramEdge;
+            edge.waypoints.forEach(wp => {
+              edge.moveWaypoint(wp, Point.add(p.bounds, wp.point), uow);
+            });
+          }
 
           // This needs to be deferred as adding children changes the bounds of the group
           // meaning adding additional children will have the wrong parent bounds to resolve
