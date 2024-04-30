@@ -145,7 +145,7 @@ export class PathBuilder {
       else if (t === 'T') d.curveTo({ x: pn[0], y: pn[1] });
       else if (t === 'A')
         d.arcTo({ x: pn[5], y: pn[6] }, pn[0], pn[1], pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
-      else throw new VerifyNotReached();
+      else throw new VerifyNotReached(`command ${t} not supported`);
     });
 
     return d;
@@ -217,6 +217,10 @@ export class PathBuilder {
   getPaths() {
     this.flushPath();
     return new CompoundPath(this.paths);
+  }
+
+  scaleTo(targetBounds: Box) {
+    this.paths = this.getPaths().scale(targetBounds).all();
   }
 
   private flushPath() {

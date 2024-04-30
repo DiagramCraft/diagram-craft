@@ -23,6 +23,7 @@ import { ArrowNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Arro
 import { CylinderNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cylinder.nodeType';
 import { CurlyBracketNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/CurlyBracket.nodeType';
 import { BlockArcNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/BlockArc.nodeType';
+import { CloudNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cloud.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -49,9 +50,9 @@ export const defaultNodeRegistry = () => {
   dest.register(new CylinderNodeDefinition());
   dest.register(new CurlyBracketNodeDefinition());
   dest.register(new BlockArcNodeDefinition());
+  dest.register(new CloudNodeDefinition());
   dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
-
   dest.register(new DrawioShapeNodeDefinition(), { hidden: true });
   dest.register(new DrawioImageNodeDefinition(), { hidden: true });
 

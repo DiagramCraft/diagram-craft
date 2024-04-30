@@ -56,6 +56,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'mxgraph.arrows2.arrow') return undefined;
   if (shape === 'ellipse') return undefined;
   if (shape === 'circle3') return undefined;
+  if (shape === 'cloud') return undefined;
   if (shape === 'cylinder') return undefined;
   if (shape === 'cylinder3') return undefined;
   if (shape === 'curlyBracket') return undefined;
@@ -604,6 +605,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         nodes.push(new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props));
+      } else if (style.shape === 'cloud') {
+        nodes.push(new DiagramNode(id, 'cloud', bounds, diagram, layer, props));
       } else if ('ellipse' in style || style.shape === 'ellipse') {
         props.text!.align = (style.align ?? 'center') as HAlign;
         nodes.push(new DiagramNode(id, 'circle', bounds, diagram, layer, props));
