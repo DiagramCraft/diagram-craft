@@ -98,6 +98,8 @@ export const clipPath = (
     throw new VerifyNotReached();
   }
 
+  basePath.clean();
+
   return basePath;
 };
 

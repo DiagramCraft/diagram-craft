@@ -1,3 +1,5 @@
+import { Point } from './point';
+
 export type Direction = 'n' | 's' | 'w' | 'e';
 
 export const Direction = {
@@ -15,5 +17,12 @@ export const Direction = {
   },
   all: (): ReadonlyArray<Direction> => {
     return ['n', 's', 'w', 'e'];
+  },
+  fromVector: (p: Point): Direction => {
+    if (Math.abs(p.x) > Math.abs(p.y)) {
+      return p.x > 0 ? 'w' : 'e';
+    } else {
+      return p.y > 0 ? 'n' : 's';
+    }
   }
 };

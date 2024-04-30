@@ -11,7 +11,7 @@ import { DiagramElement, isEdge } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
-import { Endpoint, FreeEndpoint, isConnected } from './endpoint';
+import { ConnectedEndpoint, Endpoint, FixedEndpoint, FreeEndpoint, isConnected } from './endpoint';
 import { edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
@@ -19,6 +19,7 @@ import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils/
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
+import { Direction } from '@diagram-craft/geometry/direction';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -490,10 +491,30 @@ export class DiagramEdge
 
   path() {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
+
+    const startNormal = isConnected(this.start) ? this._calculateNormal(this.start) : undefined;
+    const endNormal = isConnected(this.end) ? this._calculateNormal(this.end) : undefined;
+
+    const startDirection = startNormal ? Direction.fromVector(startNormal) : undefined;
+    const endDirection = endNormal ? Direction.fromVector(endNormal) : undefined;
+
     return buildEdgePath(
       this,
-      this.props.stroke?.lineJoin === 'round' ? this.props.routing?.rounding ?? 0 : 0
+      this.props.stroke?.lineJoin === 'round' ? this.props.routing?.rounding ?? 0 : 0,
+      startDirection,
+      endDirection ? Direction.opposite(endDirection) : undefined
     );
+  }
+
+  private _calculateNormal(endpoint: ConnectedEndpoint | FixedEndpoint) {
+    const startNode = endpoint.node;
+    const boundingPath = startNode.getDefinition().getBoundingPath(startNode);
+    const t = boundingPath.projectPoint(endpoint.position);
+
+    const paths = boundingPath.all();
+    const tangent = paths[t.pathIdx].tangentAt(t.offset);
+
+    return { x: -tangent.y, y: tangent.x };
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {

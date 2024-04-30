@@ -14,14 +14,14 @@ type Result = {
   endDirection: Direction;
   path: PathBuilder;
   availableDirections: ReadonlyArray<Direction>;
-  preferedDirection: ReadonlyArray<Direction>;
+  preferredDirection: ReadonlyArray<Direction>;
 };
 
 const addSegment = (
   prevWP: Waypoint,
   thisWP: Waypoint,
   availableDirections: ReadonlyArray<Direction>,
-  preferedDirection: ReadonlyArray<Direction>
+  preferredDirection: ReadonlyArray<Direction>
 ): Result[] => {
   const { x: px, y: py } = prevWP.point;
   const { x: x, y: y } = thisWP.point;
@@ -33,53 +33,64 @@ const addSegment = (
     return d === 'w' && x < px;
   };
   const dirInOrder = unique([
-    ...preferedDirection.filter(isAvailable),
+    ...preferredDirection.filter(isAvailable),
     ...availableDirections.filter(isAvailable),
     ...availableDirections
   ]);
 
-  return dirInOrder.map(direction => {
-    const p = new PathBuilder();
+  return dirInOrder
+    .flatMap(direction => {
+      const makeEntry = (p: PathBuilder, endDirection: Direction): Result => ({
+        startDirection: direction,
+        endDirection,
+        path: p,
+        availableDirections: [],
+        preferredDirection: []
+      });
 
-    const entry: Result = {
-      startDirection: direction,
-      endDirection: direction,
-      path: p,
-      availableDirections: [],
-      preferedDirection: []
-    };
+      switch (direction) {
+        case 'n':
+        case 's': {
+          const full = new PathBuilder();
+          full.lineTo({ x: px, y });
+          full.lineTo({ x, y });
 
-    if (direction === 's') {
-      p.lineTo({ x: px, y });
-      p.lineTo({ x, y });
-      entry.endDirection = x < px ? 'w' : 'e';
-    } else if (direction === 'n') {
-      p.lineTo({ x: px, y });
-      p.lineTo({ x, y });
-      entry.endDirection = x < px ? 'w' : 'e';
-    } else if (direction === 'e') {
-      p.lineTo({ x, y: py });
-      p.lineTo({ x, y });
-      entry.endDirection = y < py ? 'n' : 's';
-    } else if (direction === 'w') {
-      p.lineTo({ x, y: py });
-      p.lineTo({ x, y });
-      entry.endDirection = y < py ? 'n' : 's';
-    }
+          const half = new PathBuilder();
+          half.lineTo({ x: px, y: py + (y - py) / 2 });
+          half.lineTo({ x, y: py + (y - py) / 2 });
+          half.lineTo({ x, y });
 
-    entry.availableDirections = Direction.all().filter(
-      d => d !== Direction.opposite(entry.endDirection)
-    );
-    entry.preferedDirection = [entry.endDirection];
+          return [makeEntry(full, x < px ? 'w' : 'e'), makeEntry(half, y < py ? 'n' : 's')];
+        }
+        case 'e':
+        case 'w': {
+          const full = new PathBuilder();
+          full.lineTo({ x, y: py });
+          full.lineTo({ x, y });
 
-    return entry;
-  });
+          const half = new PathBuilder();
+          half.lineTo({ x: px + (x - px) / 2, y: py });
+          half.lineTo({ x: px + (x - px) / 2, y });
+          half.lineTo({ x, y });
+
+          return [makeEntry(full, y < py ? 'n' : 's'), makeEntry(half, x < px ? 'w' : 'e')];
+        }
+      }
+    })
+    .map(entry => {
+      // We need to make sure we are not going back the same way
+      // we entered the waypoint
+      const backDirection = Direction.opposite(entry.endDirection);
+      entry.availableDirections = Direction.all().filter(d => d !== backDirection);
+      entry.preferredDirection = [entry.endDirection];
+      return entry;
+    });
 };
 
 const buildOrthogonalEdgePath = (
   edge: DiagramEdge,
-  preferedStartDirection: Direction | undefined,
-  preferedEndDirection: Direction | undefined
+  preferredStartDirection: Direction | undefined,
+  preferredEndDirection: Direction | undefined
 ) => {
   const sm = edge.start.position;
   const em = edge.end.position;
@@ -88,15 +99,15 @@ const buildOrthogonalEdgePath = (
   path.moveTo(sm);
 
   let availableDirections = Direction.all();
-  let preferedDirections: ReadonlyArray<Direction> = preferedStartDirection
-    ? [preferedStartDirection]
+  let preferredDirections: ReadonlyArray<Direction> = preferredStartDirection
+    ? [preferredStartDirection]
     : [];
   let prevPosition: Waypoint = { point: sm };
   edge.waypoints.forEach(mp => {
-    const result = addSegment(prevPosition, mp, availableDirections, preferedDirections);
+    const result = addSegment(prevPosition, mp, availableDirections, preferredDirections);
 
     availableDirections = result[0].availableDirections;
-    preferedDirections = result[0].preferedDirection;
+    preferredDirections = result[0].preferredDirection;
 
     path.append(result[0].path);
 
@@ -107,11 +118,18 @@ const buildOrthogonalEdgePath = (
     prevPosition,
     { point: em },
     availableDirections,
-    preferedDirections
+    preferredDirections
   );
-  path.append(
-    endResult.find(r => r.endDirection === preferedEndDirection)?.path ?? endResult[0].path
-  );
+
+  const best =
+    endResult.find(r => r.endDirection === preferredEndDirection)?.path ??
+    endResult.toSorted((a, b) => {
+      const c1 = a.path.getPaths().all()[0]?.segmentCount ?? 100;
+      const c2 = b.path.getPaths().all()[0]?.segmentCount ?? 100;
+      return c1 - c2;
+    })[0].path;
+
+  path.append(best);
 
   return path.getPaths().singularPath();
 };

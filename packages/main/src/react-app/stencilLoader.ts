@@ -15,6 +15,8 @@ export const loadStencil = async (
 
   const newStencils: Array<Stencil> = [];
 
+  const xmlSerializer = new XMLSerializer();
+
   const $shapes = $doc.getElementsByTagName('shape');
   for (let i = 0; i < $shapes.length; i++) {
     const name = $shapes[i].getAttribute('name')!;
@@ -25,7 +27,7 @@ export const loadStencil = async (
       props: {
         fill: { color: background },
         stroke: { color: foreground },
-        drawio: { shape: btoa(new XMLSerializer().serializeToString($shapes[i])) }
+        drawio: { shape: btoa(xmlSerializer.serializeToString($shapes[i])) }
       }
     });
   }

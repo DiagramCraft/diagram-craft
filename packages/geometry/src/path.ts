@@ -96,6 +96,10 @@ export class Path {
     return this.#path;
   }
 
+  get segmentCount() {
+    return this.#segmentList ? this.#segmentList.length() : this.#path.length;
+  }
+
   get segments(): ReadonlyArray<PathSegment> {
     return this.segmentList.segments;
   }
@@ -252,5 +256,20 @@ export class Path {
 
     const roundedNumbers = numbers.map(e => roundHighPrecision(e));
     return `${command} ${roundedNumbers.join(' ')}`;
+  }
+
+  clean() {
+    // Remove any repeated segments
+    const dest: RawSegment[] = [this.#path[0]];
+    for (let i = 1; i < this.#path.length; i++) {
+      const current = this.#path[i];
+      const previous = this.#path[i - 1];
+
+      if (current.every((e, idx) => e === previous[idx])) continue;
+      dest.push(current);
+    }
+
+    this.#path = dest;
+    this.#segmentList = undefined;
   }
 }

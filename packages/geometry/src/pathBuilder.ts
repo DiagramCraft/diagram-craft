@@ -5,7 +5,7 @@ import { Angle } from './angle';
 import { assert, precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { Transform, TransformFactory } from './transform';
 import { PathUtils } from './pathUtils';
-import { TimeOffsetOnSegment } from './pathPosition';
+import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];
@@ -87,9 +87,10 @@ export class CompoundPath {
     return new CompoundPath(dest);
   }
 
-  projectPoint(p: Point): { pathIdx: number; offset: TimeOffsetOnSegment } {
-    let best: { point: Point; pathIdx: number; offset: TimeOffsetOnSegment } | undefined =
-      undefined;
+  projectPoint(p: Point): { pathIdx: number; offset: TimeOffsetOnSegment & LengthOffsetOnPath } {
+    let best:
+      | { point: Point; pathIdx: number; offset: TimeOffsetOnSegment & LengthOffsetOnPath }
+      | undefined = undefined;
     for (let idx = 0; idx < this.paths.length; idx++) {
       const path = this.paths[idx];
       const bp = path.projectPoint(p);

@@ -3,7 +3,7 @@ import { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from './diagram';
 
-export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
+export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint & FixedEndpoint =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (endpoint as any).node !== undefined;
 
