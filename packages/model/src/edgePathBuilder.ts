@@ -2,12 +2,17 @@ import { DiagramEdge } from './diagramEdge';
 import { ControlPoints, Waypoint } from './types';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
-import { BezierUtils } from '@diagram-craft/geometry/bezier';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
-import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
+import {
+  CubicSegment,
+  LineSegment,
+  PathSegment,
+  QuadSegment
+} from '@diagram-craft/geometry/pathSegment';
 import { Line } from '@diagram-craft/geometry/line';
 import { unique } from '@diagram-craft/utils/array';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 type Result = {
   startDirection: Direction;
@@ -134,37 +139,6 @@ const buildOrthogonalEdgePath = (
   return path.getPaths().singularPath();
 };
 
-const buildCurvedEdgePath = (edge: DiagramEdge) => {
-  const em = edge.end.position;
-
-  const path = new PathBuilder();
-
-  path.moveTo(edge.start.position);
-  if (edge.waypoints.length === 0) {
-    path.lineTo(em);
-  } else if (edge.waypoints.length === 1) {
-    path.quadTo(
-      em,
-      BezierUtils.qubicFromThreePoints(edge.start.position, edge.waypoints[0].point, em)
-    );
-  } else {
-    path.quadTo(
-      edge.waypoints[1].point,
-      BezierUtils.qubicFromThreePoints(
-        edge.start.position,
-        edge.waypoints[0].point,
-        edge.waypoints[1].point
-      )
-    );
-    for (let i = 2; i < edge.waypoints.length; i++) {
-      path.curveTo(edge.waypoints[i].point);
-    }
-    path.curveTo(em);
-  }
-
-  return path.getPaths().singularPath();
-};
-
 const buildBezierEdgePath = (edge: DiagramEdge) => {
   const path = new PathBuilder();
 
@@ -227,8 +201,12 @@ export const buildEdgePath = (
       if (rounding > 0) r.processSegments(applyRounding(rounding));
       return r;
     }
-    case 'curved':
-      return buildCurvedEdgePath(edge);
+    case 'curved': {
+      const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
+      r.clean();
+      r.processSegments(convertToCurves);
+      return r;
+    }
     case 'bezier':
       return buildBezierEdgePath(edge);
 
@@ -238,6 +216,34 @@ export const buildEdgePath = (
       return r;
     }
   }
+};
+
+const convertToCurves = (segments: ReadonlyArray<PathSegment>) => {
+  const dest: PathSegment[] = [];
+
+  // The idea here is to split every line in half (except the first and the last),
+  // and then form a QuadSegment for every pair of lines (with the end of the first
+  // as the control point)
+
+  let start = segments[0].start;
+  let cp = segments[0].end;
+  for (let i = 1; i < segments.length - 1; i++) {
+    const segment = segments[i];
+
+    // We know all segments are line segments (as we call this following
+    // buildOrthogonalEdgePath)
+    if (!(segment instanceof LineSegment)) throw VERIFY_NOT_REACHED();
+
+    const newEnd = Line.midpoint(Line.of(segment.start, segment.end));
+    dest.push(new QuadSegment(start, cp, newEnd));
+
+    start = newEnd;
+    cp = segment.end;
+  }
+
+  dest.push(new QuadSegment(start, cp, segments.at(-1)!.end));
+
+  return dest;
 };
 
 const applyRounding = (rounding: number) => (segments: ReadonlyArray<PathSegment>) => {

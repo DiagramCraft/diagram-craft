@@ -17,6 +17,8 @@ import { clipPath } from '@diagram-craft/model/edgeUtils';
 import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { Waypoint } from '@diagram-craft/model/types';
+import { Line } from '@diagram-craft/geometry/line';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -541,15 +543,62 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const source = new FreeEndpoint(points.find(p => p.as === 'sourcePoint') ?? Point.ORIGIN);
         const target = new FreeEndpoint(points.find(p => p.as === 'targetPoint') ?? Point.ORIGIN);
 
-        const waypoints = Array.from(
-          $geometry.getElementsByTagName('Array').item(0)?.getElementsByTagName('mxPoint') ?? []
-        ).map($p => ({ point: MxPoint.pointFrom($p) }));
-
         parseArrow('start', style, props);
+
+        // Note, apparently the lack of an arrow specified, means by default a
+        // classic end arrow is assumed
+        if (!style.endArrow) style.endArrow = 'classic';
         parseArrow('end', style, props);
 
+        const egdeProps = props as EdgeProps;
+        egdeProps.routing ??= {};
+        egdeProps.stroke!.lineJoin = 'round';
+
+        const isNonCurveEdgeStyle =
+          style.edgeStyle === 'orthogonalEdgeStyle' ||
+          style.edgeStyle === 'elbowEdgeStyle' ||
+          style.edgeStyle === 'isometricEdgeStyle' ||
+          style.edgeStyle === 'entityRelationEdgeStyle';
+
+        if (isNonCurveEdgeStyle) {
+          egdeProps.type = 'orthogonal';
+        }
+
         if (style.curved === '1') {
-          (props as EdgeProps).type = 'bezier';
+          if (isNonCurveEdgeStyle) {
+            egdeProps.type = 'curved';
+          } else {
+            egdeProps.type = 'bezier';
+          }
+        }
+
+        if (style.rounded === '1') {
+          egdeProps.routing!.rounding = 10;
+        }
+
+        const waypoints: Waypoint[] = [];
+        const wps = Array.from(
+          $geometry.getElementsByTagName('Array').item(0)?.getElementsByTagName('mxPoint') ?? []
+        ).map($p => MxPoint.pointFrom($p));
+        for (let i = 0; i < wps.length; i++) {
+          if (egdeProps.type === 'bezier') {
+            if (i === wps.length - 1) continue;
+
+            // TODO: Maybe we should apply BezierUtils.qubicFromThreePoints here
+            //       ...to smoothen the curve further
+
+            const next = wps[i + 1];
+            const midpoint = Line.midpoint(Line.of(wps[i], next));
+            waypoints.push({
+              point: midpoint,
+              controlPoints: {
+                cp1: Vector.scale(Point.subtract(wps[i], midpoint), 1),
+                cp2: Vector.scale(Point.subtract(wps[i + 1], midpoint), 1)
+              }
+            });
+          } else {
+            waypoints.push({ point: wps[i] });
+          }
         }
 
         const edge = new DiagramEdge(id, source, target, props, waypoints, diagram, layer);

@@ -6,7 +6,6 @@ import { loadStencil } from './react-app/stencilLoader';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
-import { Autosave } from './Autosave';
 
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
@@ -27,15 +26,12 @@ export const AppLoader = (props: Props) => {
     }
   }, [props.stencils]);
 
-  const disableAutosave = false;
   useEffect(() => {
     Promise.all([
-      disableAutosave
-        ? () => undefined
-        : Autosave.load(props.documentFactory, props.diagramFactory),
+      /*Autosave.load(props.documentFactory, props.diagramFactory),*/
       props.diagram.document()
-    ]).then(([autosaved, defDiagram]) => {
-      setDoc(autosaved ?? defDiagram);
+    ]).then(([/*autosaved, */ defDiagram]) => {
+      setDoc(/*autosaved ?? */ defDiagram);
     });
   }, [props.diagramFactory, props.recent, props.documentFactory]);
 
