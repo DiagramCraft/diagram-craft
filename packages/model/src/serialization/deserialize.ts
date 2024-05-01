@@ -8,10 +8,13 @@ import { DiagramDocument } from '../diagramDocument';
 import { DiagramElement } from '../diagramElement';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import {
+  SerializedConnectedEndpoint,
   SerializedDiagram,
   SerializedDiagramDocument,
   SerializedEdge,
   SerializedElement,
+  SerializedFixedEndpoint,
+  SerializedFreeEndpoint,
   SerializedLayer,
   SerializedNode
 } from './types';
@@ -39,6 +42,19 @@ const unfoldGroup = (node: SerializedNode) => {
     return [{ ...node }, ...recurse(node.children, node)];
   } else {
     return [{ ...node }];
+  }
+};
+
+const deserializeEndpoint = (
+  e: SerializedConnectedEndpoint | SerializedFixedEndpoint | SerializedFreeEndpoint,
+  nodeLookup: Record<string, DiagramNode>
+) => {
+  if (isSerializedEndpointConnected(e)) {
+    return new ConnectedEndpoint(e.anchor, nodeLookup[e.node.id]);
+  } else if (isSerializedEndpointFixed(e)) {
+    return new FixedEndpoint(e.offset, nodeLookup[e.node.id]);
+  } else {
+    return new FreeEndpoint(e.position);
   }
 };
 
@@ -105,18 +121,13 @@ export const deserializeDiagramElements = (
     const start = e.start;
     const end = e.end;
 
+    const startEndpoint = deserializeEndpoint(start, nodeLookup);
+    const endEndpoint = deserializeEndpoint(end, nodeLookup);
+
     const edge = new DiagramEdge(
       e.id,
-      isSerializedEndpointConnected(start)
-        ? new ConnectedEndpoint(start.anchor, nodeLookup[start.node.id])
-        : isSerializedEndpointFixed(start)
-          ? new FixedEndpoint(start.offset, nodeLookup[start.node.id])
-          : new FreeEndpoint(start.position),
-      isSerializedEndpointConnected(end)
-        ? new ConnectedEndpoint(end.anchor, nodeLookup[end.node.id])
-        : isSerializedEndpointFixed(end)
-          ? new FixedEndpoint(end.offset, nodeLookup[end.node.id])
-          : new FreeEndpoint(end.position),
+      startEndpoint,
+      endEndpoint,
       {
         style: 'default-edge',
         ...e.props

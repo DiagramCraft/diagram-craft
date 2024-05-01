@@ -19,7 +19,7 @@ import { AttachmentManager } from '../attachment';
 
 export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint
-): endpoint is SerializedConnectedEndpoint => 'node' in endpoint;
+): endpoint is SerializedConnectedEndpoint => 'node' in endpoint && 'anchor' in endpoint;
 
 export const isSerializedEndpointFixed = (
   endpoint: SerializedEndpoint
