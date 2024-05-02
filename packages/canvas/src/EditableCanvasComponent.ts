@@ -150,7 +150,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     }, [this.svgRef]);
 
     createEffect(() => {
-      const cb = () => this.adjustViewbox();
+      const cb = () => this.adjustViewbox(props.offset);
       window.addEventListener('resize', cb);
       return () => window.removeEventListener('resize', cb);
     }, [diagram]);
@@ -191,7 +191,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     createEffect(() => {
       if (!this.svgRef) return;
-      this.adjustViewbox();
+      this.adjustViewbox(props.offset);
     }, [diagram]);
 
     this.onDiagramRedraw('elementAdd', diagram);
@@ -228,7 +228,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           hooks: {
             onInsert: node => {
               this.svgRef = node.el! as SVGSVGElement;
-              this.adjustViewbox();
+              this.adjustViewbox(props.offset);
 
               // Note: this causes an extra redraw, but it's necessary to ensure that
               //       the wheel events (among others) are bound correctly
@@ -449,16 +449,24 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     }, [selection]);
   }
 
-  private adjustViewbox() {
+  private adjustViewbox(offset: Point) {
     const diagram = this.currentProps!.diagram;
 
     const rect = this.svgRef!.getBoundingClientRect();
 
     if (diagram.viewBox.zoomLevel === 1) {
-      diagram.viewBox.pan({
-        x: Math.floor(-(rect.width - diagram.canvas.w) / 2 + diagram.canvas.x),
-        y: Math.floor(-(rect.height - diagram.canvas.h) / 2 + diagram.canvas.y)
-      });
+      if (diagram.visibleElements().length === 0) {
+        diagram.viewBox.pan({
+          x: Math.floor(-(rect.width - diagram.canvas.w) / 2 + diagram.canvas.x),
+          y: Math.floor(-(rect.height - diagram.canvas.h) / 2 + diagram.canvas.y)
+        });
+      } else {
+        const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
+        diagram.viewBox.pan({
+          x: bounds.x - 50 - offset.x,
+          y: bounds.y - 50 - offset.y
+        });
+      }
     }
     diagram.viewBox.dimensions = {
       w: Math.floor(rect.width * diagram.viewBox.zoomLevel),
@@ -479,6 +487,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
 export type Props = {
   applicationState: ApplicationState;
+  offset: Point;
   applicationTriggers: ApplicationTriggers;
   className?: string;
   diagram: Diagram;

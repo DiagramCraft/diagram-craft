@@ -310,6 +310,14 @@ export const App = (props: {
                       tools={tools}
                       keyMap={keyMap}
                       applicationState={applicationState.current}
+                      offset={
+                        (userState.current.panelLeft ?? -1) >= 0
+                          ? {
+                              x: 250, // Corresponding to left panel width
+                              y: 0
+                            }
+                          : Point.ORIGIN
+                      }
                       className={'canvas'}
                       onDrop={canvasDropHandler($d)}
                       onDragOver={canvasDragOverHandler()}
