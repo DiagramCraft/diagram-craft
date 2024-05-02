@@ -42,12 +42,10 @@ class EffectManager {
     }
 
     const res = dependency();
-    if (res) {
-      this.dependencies[id] = {
-        cleanup: res,
-        deps
-      };
-    }
+    this.dependencies[id] = {
+      cleanup: res ? res : () => {},
+      deps
+    };
   }
 
   cleanup() {
