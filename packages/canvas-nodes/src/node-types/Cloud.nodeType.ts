@@ -1,5 +1,5 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { BaseShape } from '@diagram-craft/canvas/shape/BaseShape';
+import { BaseNodeComponent } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
@@ -10,7 +10,7 @@ export class CloudNodeDefinition extends ShapeNodeDefinition {
     super('cloud', 'Cloud', CloudNodeDefinition.Shape);
   }
 
-  static Shape = class extends BaseShape<CloudNodeDefinition> {};
+  static Shape = class extends BaseNodeComponent<CloudNodeDefinition> {};
 
   getBoundingPathBuilder(def: DiagramNode) {
     const pathBuilder = PathBuilder.fromString(`

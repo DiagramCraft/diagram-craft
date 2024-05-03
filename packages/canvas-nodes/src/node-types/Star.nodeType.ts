@@ -1,5 +1,8 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
+import {
+  BaseNodeComponent,
+  BaseShapeBuildProps
+} from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
@@ -78,7 +81,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class StarComponent extends BaseShape {
+class StarComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new StarNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 

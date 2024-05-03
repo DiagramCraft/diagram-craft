@@ -1,11 +1,11 @@
 import { Component } from './component/component';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
-import { EdgeComponent } from './components/EdgeComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from './dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
+import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
@@ -40,13 +40,19 @@ export class CanvasComponent extends Component<CanvasProps> {
               const id = e.id;
               if (e.type === 'edge') {
                 const edge = diagram.edgeLookup.get(id)!;
-                /* @ts-ignore */
-                return this.subComponent(`edge-${id}`, EdgeComponent, {
-                  def: edge,
-                  diagram,
-                  applicationTriggers: {},
-                  onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
-                });
+                const edgeDef = diagram.document.edgeDefinitions.get(edge.propsForRendering.shape);
+
+                return this.subComponent(
+                  () =>
+                    new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
+                  // @ts-ignore
+                  {
+                    def: edge,
+                    diagram,
+                    applicationTriggers: {},
+                    onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
+                  }
+                );
               } else {
                 const node = diagram.nodeLookup.get(id)!;
                 const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);

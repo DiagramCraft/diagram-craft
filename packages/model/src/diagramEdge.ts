@@ -1,6 +1,5 @@
 import { DiagramNode, DuplicationContext } from './diagramNode';
 import { AbstractEdge, LabelNode, Waypoint } from './types';
-import { BaseEdgeDefinition } from './baseEdgeDefinition';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Box } from '@diagram-craft/geometry/box';
@@ -83,9 +82,8 @@ export class DiagramEdge
     this.#props.style ??= 'default-edge';
   }
 
-  // TODO: This should use the EdgeDefinitionRegistry
   getDefinition(): EdgeDefinition {
-    return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
+    return this.diagram.document.edgeDefinitions.get(this.propsForRendering.shape);
   }
 
   /* Props *************************************************************************************************** */

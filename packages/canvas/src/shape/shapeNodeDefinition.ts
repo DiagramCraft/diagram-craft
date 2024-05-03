@@ -1,4 +1,4 @@
-import { BaseShape } from './BaseShape';
+import { BaseNodeComponent } from '../components/BaseNodeComponent';
 import {
   CompoundPath,
   PathBuilder,
@@ -20,8 +20,8 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor } from '@diagram-craft/model/types';
 
-type ShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
-  new (shapeNodeDefinition: T): BaseShape<T>;
+type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
+  new (shapeNodeDefinition: T): BaseNodeComponent<T>;
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
@@ -30,7 +30,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     readonly name: string,
 
     // @ts-ignore
-    readonly component: ShapeConstructor<this>
+    readonly component: NodeShapeConstructor<this>
   ) {}
 
   supports(capability: NodeCapability): boolean {

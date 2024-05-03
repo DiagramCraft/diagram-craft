@@ -176,12 +176,18 @@ export interface EdgeDefinition {
 export class EdgeDefinitionRegistry {
   private edges = new Map<string, EdgeDefinition>();
 
+  #defaultValue: EdgeDefinition | undefined = undefined;
+
+  set defaultValue(value: EdgeDefinition | undefined) {
+    this.#defaultValue = value;
+  }
+
   register(edge: EdgeDefinition) {
     this.edges.set(edge.type, edge);
   }
 
   get(type: string): EdgeDefinition {
-    const r = this.edges.get(type);
+    const r = this.edges.get(type) ?? this.#defaultValue;
     assert.present(r);
     return r;
   }

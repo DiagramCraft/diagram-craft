@@ -1,9 +1,9 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
-  BaseShape,
+  BaseNodeComponent,
   BaseShapeBuildProps,
   pointInBounds
-} from '@diagram-craft/canvas/shape/BaseShape';
+} from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
@@ -103,7 +103,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
     super(id, description, ArrowNodeDefinition.Shape);
   }
 
-  static Shape = class extends BaseShape<ArrowNodeDefinition> {
+  static Shape = class extends BaseNodeComponent<ArrowNodeDefinition> {
     buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);
 

@@ -1,6 +1,6 @@
 import { EditablePath, EditableWaypointType } from '../editablePath';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { BaseShape, BaseShapeBuildProps } from '../shape/BaseShape';
+import { BaseNodeComponent, BaseShapeBuildProps } from '../components/BaseNodeComponent';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { toInlineCSS } from '../component/vdom';
 import { GenericPathControlPointDrag } from '../drag/genericPathControlPointDrag';
@@ -49,7 +49,7 @@ export class GenericPathNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class GenericPathComponent extends BaseShape {
+class GenericPathComponent extends BaseNodeComponent {
   selectedWaypoints: number[] = [];
 
   setSelectedWaypoints(selectedWaypoints: number[]) {

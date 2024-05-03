@@ -1,5 +1,8 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
+import {
+  BaseNodeComponent,
+  BaseShapeBuildProps
+} from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
@@ -68,7 +71,7 @@ export class TriangleNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class TriangleComponent extends BaseShape {
+class TriangleComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new TriangleNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 

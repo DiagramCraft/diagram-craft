@@ -1,5 +1,8 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
+import {
+  BaseNodeComponent,
+  BaseShapeBuildProps
+} from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
@@ -59,7 +62,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class ParallelogramComponent extends BaseShape {
+class ParallelogramComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const slant = props.nodeProps.parallelogram?.slant ?? 5;
     const boundary = new ParallelogramNodeDefinition()

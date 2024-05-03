@@ -3,7 +3,7 @@ import { $cmp, Component } from '../component/component';
 import { ShapeText, ShapeTextProps } from './ShapeText';
 import { DefaultPathRenderer, PathRenderer } from './PathRenderer';
 import * as svg from '../component/vdom-svg';
-import { BaseShapeBuildProps } from './BaseShape';
+import { BaseShapeBuildProps } from '../components/BaseNodeComponent';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
 import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
 import { Path } from '@diagram-craft/geometry/path';

@@ -11,9 +11,8 @@ import { AnchorHandlesComponent } from '@diagram-craft/canvas/components/AnchorH
 import { $cmp, Component, ComponentVNodeData, createEffect } from './component/component';
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
-import { EdgeComponent } from './components/EdgeComponent';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
-import { BaseShapeProps } from './shape/BaseShape';
+import { BaseShapeProps } from './components/BaseNodeComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
@@ -24,6 +23,7 @@ import { SelectionState, SelectionStateEvents } from '@diagram-craft/model/selec
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { EventKey } from '@diagram-craft/utils/event';
+import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement
@@ -328,8 +328,15 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                 const id = e.id;
                 if (e.type === 'edge') {
                   const edge = diagram.edgeLookup.get(id)!;
+                  const edgeDef = diagram.document.edgeDefinitions.get(
+                    edge.propsForRendering.shape
+                  );
+
                   return this.subComponent(
-                    () => new EdgeComponent(),
+                    () =>
+                      new (edgeDef as ShapeEdgeDefinition).component!(
+                        edgeDef as ShapeEdgeDefinition
+                      ),
                     {
                       key: `edge-${id}`,
                       onDoubleClick,

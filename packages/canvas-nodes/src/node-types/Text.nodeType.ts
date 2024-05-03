@@ -1,4 +1,7 @@
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
+import {
+  BaseNodeComponent,
+  BaseShapeBuildProps
+} from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
@@ -50,7 +53,7 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class TextComponent extends BaseShape {
+class TextComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 

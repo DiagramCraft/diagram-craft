@@ -1,28 +1,27 @@
 import { Component } from '../component/component';
-import { toInlineCSS, VNode } from '../component/vdom';
-import { Tool } from '../tool';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
-import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
-import { DASH_PATTERNS } from '../dashPatterns';
-import { makeShadowFilter } from '../effects/shadow';
-import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
-import * as svg from '../component/vdom-svg';
-import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
-import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
-import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
-import { Point } from '@diagram-craft/geometry/point';
-import { applyLineHops, clipPath } from '@diagram-craft/model/edgeUtils';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ControlPoints } from '@diagram-craft/model/types';
-import { hash } from '@diagram-craft/utils/hash';
-import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { Path } from '@diagram-craft/geometry/path';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
-import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { Vector } from '@diagram-craft/geometry/vector';
-import { RawSegment } from '@diagram-craft/geometry/pathBuilder';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { DASH_PATTERNS } from '../dashPatterns';
+import { makeShadowFilter } from '../effects/shadow';
+import { applyLineHops, clipPath } from '@diagram-craft/model/edgeUtils';
+import * as svg from '../component/vdom-svg';
+import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
+import { hash } from '@diagram-craft/utils/hash';
+import { toInlineCSS, VNode } from '../component/vdom';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
+import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
+import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
+import { ControlPoints } from '@diagram-craft/model/types';
+import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { Tool } from '../tool';
+import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { Point } from '@diagram-craft/geometry/point';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 
 const makeArrowMarker = ({
   id,
@@ -91,87 +90,21 @@ declare global {
   }
 }
 
-const blockArrowMakePath = (path: Path, props: EdgeComponentProps) => {
-  const width = props.def.propsForRendering.shapeBlockArrow?.width ?? 20;
-  const arrowDepth = props.def.propsForRendering.shapeBlockArrow?.arrowDepth ?? 20;
-  const arrowWidth = props.def.propsForRendering.shapeBlockArrow?.arrowWidth ?? 50;
+export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
+  /*buildShape(path: Path, shapeBuilder: ShapeBuilder, props: EdgeComponentProps) {}
 
-  const offset1 = path.offset(width / 2);
-  const offset2 = path.offset(-width / 2);
+  getStyle(props: EdgeComponentProps): Partial<CSSStyleDeclaration> {
+    return {};
+  }*/
 
-  // Join the start of both paths
-  const start = new Path(offset2.start, [['L', offset1.start.x, offset1.start.y]]);
-
-  // Add arrow shape
-  const len1 = offset1.length();
-  const [shortened1] = offset1.split(
-    LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: len1 - arrowDepth }, offset1)
-  );
-
-  const len2 = offset2.length();
-  const [shortened2] = offset2.split(
-    LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: len2 - arrowDepth }, offset2)
-  );
-
-  const normal = Vector.tangentToNormal(offset1.tangentAt({ pathD: len1 - arrowDepth }));
-
-  const arrowWidthOffset = (arrowWidth - width) / 2;
-  const arrowShapeSegments: RawSegment[] = [
-    [
-      'L',
-      Point.add(shortened1.end, Vector.scale(normal, arrowWidthOffset)).x,
-      Point.add(shortened1.end, Vector.scale(normal, arrowWidthOffset)).y
-    ],
-    ['L', path.end.x, path.end.y],
-    [
-      'L',
-      Point.add(shortened2.end, Vector.scale(normal, -arrowWidthOffset)).x,
-      Point.add(shortened2.end, Vector.scale(normal, -arrowWidthOffset)).y
-    ],
-    ['L', shortened2.end.x, shortened2.end.y]
-  ];
-
-  return [
-    Path.join(start, shortened1, new Path(shortened1.end, arrowShapeSegments), shortened2.reverse())
-  ];
-};
-
-const simpleMakePath = (
-  path: Path,
-  props: EdgeComponentProps,
-  startArrow: ArrowShape | undefined,
-  endArrow: ArrowShape | undefined
-) => {
-  return applyLineHops(path, props.def, startArrow, endArrow, props.def.intersections);
-};
-
-export class EdgeComponent extends Component<EdgeComponentProps> {
-  getPaths(path: Path, props: EdgeComponentProps) {
-    if (props.def.propsForRendering.shape === 'BlockArrow') {
-      return blockArrowMakePath(path, props);
-    } else {
-      const startArrow = this.getArrow('start', props.def.propsForRendering);
-      const endArrow = this.getArrow('end', props.def.propsForRendering);
-
-      return simpleMakePath(path, props, startArrow, endArrow);
-    }
+  getPaths(_path: Path, _props: EdgeComponentProps): Path[] {
+    throw new VerifyNotReached();
   }
 
   processStyle(
-    style: Partial<CSSStyleDeclaration>,
+    _style: Partial<CSSStyleDeclaration>,
     edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
   ): DeepReadonly<DeepRequired<EdgeProps>> {
-    if (edgeProps.shape === 'BlockArrow') {
-      style.fill = edgeProps.fill.color ?? 'none';
-      style.opacity = (edgeProps.effects.opacity ?? 1).toString();
-      return {
-        ...edgeProps,
-        arrow: {
-          start: { type: 'NONE', size: 0 },
-          end: { type: 'NONE', size: 0 }
-        }
-      };
-    }
     return edgeProps;
   }
 
@@ -400,8 +333,20 @@ export class EdgeComponent extends Component<EdgeComponentProps> {
     );
   }
 
-  private getArrow(type: 'start' | 'end', edgeProps: DeepReadonly<DeepRequired<EdgeProps>>) {
+  protected getArrow(type: 'start' | 'end', edgeProps: DeepReadonly<DeepRequired<EdgeProps>>) {
     const size = (1 + (edgeProps.stroke.width - 1) * 10 + edgeProps.arrow[type].size) / 100;
     return ARROW_SHAPES[edgeProps.arrow[type].type]?.(size);
+  }
+}
+
+export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
+  constructor() {
+    super('Simple', 'Simple', SimpleEdgeComponent);
+  }
+}
+
+export class SimpleEdgeComponent extends BaseEdgeComponent {
+  getPaths(path: Path, props: EdgeComponentProps) {
+    return applyLineHops(path, props.def, undefined, undefined, props.def.intersections);
   }
 }

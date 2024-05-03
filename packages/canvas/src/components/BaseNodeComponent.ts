@@ -9,14 +9,13 @@ import {
   makeLinearGradient,
   makeRadialGradient,
   PatternFillColorAdjustment
-} from './shapeFill';
+} from '../shape/shapeFill';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { EdgeComponent, EdgeComponentProps } from '../components/EdgeComponent';
-import { ShapeNodeDefinition } from './shapeNodeDefinition';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { Modifiers } from '../dragDropManager';
-import { ShapeBuilder } from './ShapeBuilder';
-import { makeControlPoint } from './ShapeControlPoint';
+import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -28,6 +27,7 @@ import { makeBlur } from '../effects/blur';
 import { makeOpacity } from '../effects/opacity';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
+import { EdgeComponentProps, SimpleEdgeComponent } from './BaseEdgeComponent';
 
 export type BaseShapeProps = {
   def: DiagramNode;
@@ -76,7 +76,7 @@ export const pointInBounds = ({ x, y }: Point, b: Box) => {
   };
 };
 
-export class BaseShape<
+export class BaseNodeComponent<
   T extends ShapeNodeDefinition = ShapeNodeDefinition
 > extends Component<BaseShapeProps> {
   constructor(protected readonly def: T) {
@@ -271,7 +271,8 @@ export class BaseShape<
       const nodeComponent = nodeDefinition.component!;
       return this.subComponent(() => new nodeComponent(nodeDefinition), p);
     } else {
-      return this.subComponent($cmp(EdgeComponent), p);
+      // TODO: Get the right type from the edge definition
+      return this.subComponent($cmp(SimpleEdgeComponent), p);
     }
   }
 }

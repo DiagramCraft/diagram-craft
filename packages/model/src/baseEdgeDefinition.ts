@@ -10,12 +10,10 @@ import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 
 export class BaseEdgeDefinition implements EdgeDefinition {
-  public readonly id: string;
   public readonly name: string;
   public readonly type: string;
 
-  constructor(id: string, name: string, type: string) {
-    this.id = id;
+  constructor(name: string, type: string) {
     this.name = name;
     this.type = type;
   }
@@ -81,7 +79,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
       uow
     );
 
-    element.updateProps(props => (props.labelForEdgeId = this.id), uow);
+    element.updateProps(props => (props.labelForEdgeId = edge.id), uow);
 
     // TODO: Perhaps create a helper to add an element as a label edge
     // TODO: Maybe use detach here

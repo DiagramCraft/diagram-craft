@@ -2,7 +2,10 @@ import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefini
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
+import {
+  BaseNodeComponent,
+  BaseShapeBuildProps
+} from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
@@ -216,7 +219,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class DrawioShapeComponent extends BaseShape {
+class DrawioShapeComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const shapeNodeDefinition = this.def as DrawioShapeNodeDefinition;
 

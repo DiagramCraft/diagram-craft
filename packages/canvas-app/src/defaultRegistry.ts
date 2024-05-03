@@ -24,6 +24,8 @@ import { CylinderNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/C
 import { CurlyBracketNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/CurlyBracket.nodeType';
 import { BlockArcNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/BlockArc.nodeType';
 import { CloudNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cloud.nodeType';
+import { BlockArrowEdgeDefinition } from '@diagram-craft/canvas-nodes/edge-types/BlockArrow.edgeType';
+import { SimpleEdgeDefinition } from '@diagram-craft/canvas/components/BaseEdgeComponent';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -60,5 +62,8 @@ export const defaultNodeRegistry = () => {
 };
 
 export const defaultEdgeRegistry = () => {
-  return new EdgeDefinitionRegistry();
+  const dest = new EdgeDefinitionRegistry();
+  dest.defaultValue = new SimpleEdgeDefinition();
+  dest.register(new BlockArrowEdgeDefinition());
+  return dest;
 };

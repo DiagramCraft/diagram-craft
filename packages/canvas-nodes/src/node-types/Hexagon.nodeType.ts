@@ -1,5 +1,8 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { BaseShape, BaseShapeBuildProps } from '@diagram-craft/canvas/shape/BaseShape';
+import {
+  BaseNodeComponent,
+  BaseShapeBuildProps
+} from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
@@ -49,7 +52,7 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
     super('hexagon', 'Hexagon', HexagonNodeDefinition.Shape);
   }
 
-  static Shape = class extends BaseShape<HexagonNodeDefinition> {
+  static Shape = class extends BaseNodeComponent<HexagonNodeDefinition> {
     buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);
 
