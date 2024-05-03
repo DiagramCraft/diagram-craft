@@ -1,5 +1,5 @@
 import { ColorPicker } from '../components/ColorPicker';
-import { useNodeProperty } from './useProperty';
+import { useElementProperty } from './useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../context/DiagramContext';
 import { useNodeDefaults } from '../useDefaults';
@@ -134,37 +134,39 @@ export const NodeFillPanel = (props: Props) => {
   const $cfg = useConfiguration();
   const defaults = useNodeDefaults();
 
-  const color = useNodeProperty($d, 'fill.color', defaults.fill.color);
-  const pattern = useNodeProperty($d, 'fill.pattern', '');
-  const image = useNodeProperty($d, 'fill.image.id', '');
-  const imageFit = useNodeProperty($d, 'fill.image.fit', defaults.fill.image.fit);
-  const imageW = useNodeProperty($d, 'fill.image.w', defaults.fill.image.w);
-  const imageH = useNodeProperty($d, 'fill.image.h', defaults.fill.image.h);
-  const imageScale = useNodeProperty($d, 'fill.image.scale', defaults.fill.image.scale);
-  const imageTint = useNodeProperty($d, 'fill.image.tint', defaults.fill.image.tint);
-  const imageTintStrength = useNodeProperty(
+  const color = useElementProperty($d, 'fill.color', defaults.fill.color);
+  const pattern = useElementProperty($d, 'fill.pattern', '');
+  const image = useElementProperty($d, 'fill.image.id', '');
+  const imageFit = useElementProperty($d, 'fill.image.fit', defaults.fill.image.fit);
+  const imageW = useElementProperty($d, 'fill.image.w', defaults.fill.image.w);
+  const imageH = useElementProperty($d, 'fill.image.h', defaults.fill.image.h);
+  const imageScale = useElementProperty($d, 'fill.image.scale', defaults.fill.image.scale);
+  const imageTint = useElementProperty($d, 'fill.image.tint', defaults.fill.image.tint);
+  const imageTintStrength = useElementProperty(
     $d,
     'fill.image.tintStrength',
     defaults.fill.image.tintStrength
   );
-  const imageBrightness = useNodeProperty(
+  const imageBrightness = useElementProperty(
     $d,
     'fill.image.brightness',
     defaults.fill.image.brightness
   );
-  const imageContrast = useNodeProperty($d, 'fill.image.contrast', defaults.fill.image.contrast);
-  const imageSaturation = useNodeProperty(
+  const imageContrast = useElementProperty($d, 'fill.image.contrast', defaults.fill.image.contrast);
+  const imageSaturation = useElementProperty(
     $d,
     'fill.image.saturation',
     defaults.fill.image.saturation
   );
-  const color2 = useNodeProperty($d, 'fill.color2', defaults.fill.color2);
-  const type = useNodeProperty($d, 'fill.type', defaults.fill.type);
-  const enabled = useNodeProperty($d, 'fill.enabled', defaults.fill.enabled);
-  const gradientDirection = useNodeProperty($d, 'fill.gradient.direction', 0);
-  const gradientType = useNodeProperty($d, 'fill.gradient.type', 'linear');
+  const color2 = useElementProperty($d, 'fill.color2', defaults.fill.color2);
+  const type = useElementProperty($d, 'fill.type', defaults.fill.type);
+  const enabled = useElementProperty($d, 'fill.enabled', defaults.fill.enabled);
+  const gradientDirection = useElementProperty($d, 'fill.gradient.direction', 0);
+  const gradientType = useElementProperty($d, 'fill.gradient.type', 'linear');
 
-  const panelDisabled = $d.selectionState.nodes.every(n => !n.getDefinition().supports('fill'));
+  const panelDisabled =
+    $d.selectionState.nodes.every(n => !n.getDefinition().supports('fill')) &&
+    $d.selectionState.edges.every(n => !n.getDefinition().supports('fill'));
 
   if (panelDisabled) return null;
 

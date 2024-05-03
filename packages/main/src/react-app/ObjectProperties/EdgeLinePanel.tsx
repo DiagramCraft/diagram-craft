@@ -12,7 +12,7 @@ import { Select } from '../components/Select';
 import { useConfiguration } from '../context/ConfigurationContext';
 import { assertEdgeType } from '@diagram-craft/model/diagramProps';
 
-export const LinePanel = (props: Props) => {
+export const EdgeLinePanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
 
@@ -41,6 +41,18 @@ export const LinePanel = (props: Props) => {
   const lineCap = useEdgeProperty($d, 'stroke.lineCap', defaults.stroke.lineCap);
   const lineJoin = useEdgeProperty($d, 'stroke.lineJoin', defaults.stroke.lineJoin);
   const miterLimit = useEdgeProperty($d, 'stroke.miterLimit', defaults.stroke.miterLimit);
+
+  const supportsArrows =
+    !$d.selectionState.isEdgesOnly() ||
+    $d.selectionState.edges.some(e => e.getDefinition().supports('arrows'));
+
+  const supportsLineHops =
+    !$d.selectionState.isEdgesOnly() ||
+    $d.selectionState.edges.some(e => e.getDefinition().supports('line-hops'));
+
+  const supportsFill =
+    !$d.selectionState.isEdgesOnly() ||
+    $d.selectionState.edges.every(e => e.getDefinition().supports('fill'));
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} id="line" title={'Line'} hasCheckbox={false}>
@@ -73,29 +85,33 @@ export const LinePanel = (props: Props) => {
             </ReactToolbar.Root>
           </div>
 
-          <div className={'cmp-labeled-table__label'}>Line start:</div>
-          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-            <ArrowSelector value={startType.val} onValueChange={startType.set} />
-            <NumberInput
-              defaultUnit={'%'}
-              value={startSize.val}
-              min={1}
-              style={{ width: '50px' }}
-              onChange={startSize.set}
-            />
-          </div>
+          {supportsArrows && (
+            <>
+              <div className={'cmp-labeled-table__label'}>Line start:</div>
+              <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+                <ArrowSelector value={startType.val} onValueChange={startType.set} />
+                <NumberInput
+                  defaultUnit={'%'}
+                  value={startSize.val}
+                  min={1}
+                  style={{ width: '50px' }}
+                  onChange={startSize.set}
+                />
+              </div>
 
-          <div className={'cmp-labeled-table__label'}>Line end:</div>
-          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-            <ArrowSelector value={endType.val} onValueChange={endType.set} />
-            <NumberInput
-              defaultUnit={'%'}
-              value={endSize.val}
-              min={1}
-              style={{ width: '50px' }}
-              onChange={endSize.set}
-            />
-          </div>
+              <div className={'cmp-labeled-table__label'}>Line end:</div>
+              <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+                <ArrowSelector value={endType.val} onValueChange={endType.set} />
+                <NumberInput
+                  defaultUnit={'%'}
+                  value={endSize.val}
+                  min={1}
+                  style={{ width: '50px' }}
+                  onChange={endSize.set}
+                />
+              </div>
+            </>
+          )}
 
           <div className={'cmp-labeled-table__label'}>Color:</div>
           <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
@@ -106,13 +122,15 @@ export const LinePanel = (props: Props) => {
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
             />
-            <ColorPicker
-              palette={$cfg.palette.primary}
-              color={fillColor.val}
-              onChange={fillColor.set}
-              customPalette={$d.document.customPalette.colors}
-              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-            />
+            {!supportsFill && (
+              <ColorPicker
+                palette={$cfg.palette.primary}
+                color={fillColor.val}
+                onChange={fillColor.set}
+                customPalette={$d.document.customPalette.colors}
+                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              />
+            )}
           </div>
 
           <div className={'cmp-labeled-table__label'}>Width:</div>
@@ -145,33 +163,37 @@ export const LinePanel = (props: Props) => {
             />
           </div>
 
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Line hops:</div>
-          <div className={'cmp-labeled-table__value util-vcenter'}>
-            <div className={'util-vstack'} style={{ width: '100%' }}>
-              <Select
-                onValueChange={v => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  lineHopsType.set(v as any);
-                }}
-                value={lineHopsType.val}
-                values={[
-                  { label: 'None', value: 'none' },
-                  { label: 'Gap when below', value: 'below-hide' },
-                  { label: 'Gap with line when below', value: 'below-line' },
-                  { label: 'Arc when below', value: 'below-arc' },
-                  { label: 'Arc when above', value: 'above-arc' }
-                ]}
-              />
+          {supportsLineHops && (
+            <>
+              <div className={'cmp-labeled-table__label util-a-top-center'}>Line hops:</div>
+              <div className={'cmp-labeled-table__value util-vcenter'}>
+                <div className={'util-vstack'} style={{ width: '100%' }}>
+                  <Select
+                    onValueChange={v => {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      lineHopsType.set(v as any);
+                    }}
+                    value={lineHopsType.val}
+                    values={[
+                      { label: 'None', value: 'none' },
+                      { label: 'Gap when below', value: 'below-hide' },
+                      { label: 'Gap with line when below', value: 'below-line' },
+                      { label: 'Arc when below', value: 'below-arc' },
+                      { label: 'Arc when above', value: 'above-arc' }
+                    ]}
+                  />
 
-              <NumberInput
-                defaultUnit={'px'}
-                value={lineHopsSize.val}
-                min={0}
-                style={{ width: '50px' }}
-                onChange={lineHopsSize.set}
-              />
-            </div>
-          </div>
+                  <NumberInput
+                    defaultUnit={'px'}
+                    value={lineHopsSize.val}
+                    min={0}
+                    style={{ width: '50px' }}
+                    onChange={lineHopsSize.set}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div className={'cmp-labeled-table__label'}>Line cap:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>

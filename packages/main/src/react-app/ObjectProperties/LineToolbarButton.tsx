@@ -4,7 +4,7 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useEdgeProperty } from './useProperty';
 import { useDiagram } from '../context/DiagramContext';
 import { useEdgeDefaults } from '../useDefaults';
-import { LinePanel } from './LinePanel';
+import { EdgeLinePanel } from './EdgeLinePanel';
 import { ArrowPreview } from './ArrowPreview';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 
@@ -46,7 +46,7 @@ export const LineToolbarButton = () => {
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <LinePanel mode={'panel'} />
+          <EdgeLinePanel mode={'panel'} />
           <Popover.Close className="cmp-popover__close" aria-label="Close">
             <TbX />
           </Popover.Close>

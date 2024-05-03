@@ -157,7 +157,7 @@ export class NodeDefinitionRegistry {
   }
 }
 
-export type EdgeCapability = string;
+export type EdgeCapability = 'arrows' | 'fill' | 'line-hops';
 
 export interface EdgeDefinition {
   type: string;

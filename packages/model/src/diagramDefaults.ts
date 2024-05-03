@@ -30,6 +30,7 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
     type: 'solid',
     enabled: true,
     image: {
+      id: '',
       fit: 'fill',
       url: '',
       w: 0,
@@ -101,7 +102,28 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
 export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepRequired<EdgeProps>>(
   deepMerge<DeepRequired<EdgeProps>>({}, nodeDefaults, {
     fill: {
-      color: 'var(--canvas-fg)'
+      color: 'var(--canvas-fg)',
+      enabled: true,
+      color2: 'blue',
+      type: 'solid',
+      image: {
+        id: '',
+        fit: 'fill',
+        url: '',
+        w: 0,
+        h: 0,
+        scale: 1,
+        tint: '',
+        tintStrength: 1,
+        brightness: 1,
+        contrast: 1,
+        saturation: 1
+      },
+      pattern: '',
+      gradient: {
+        direction: 0,
+        type: 'linear'
+      }
     },
     arrow: {
       start: {

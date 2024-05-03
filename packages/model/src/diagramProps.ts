@@ -128,46 +128,6 @@ declare global {
       flipV?: boolean;
       flipH?: boolean;
     };
-  }
-
-  interface EdgeProps extends ElementProps {
-    highlight?: string[];
-
-    type?: EdgeType;
-    shape?: string;
-
-    arrow?: {
-      start?: {
-        type?: string;
-        size?: number;
-      };
-      end?: {
-        type?: string;
-        size?: number;
-      };
-    };
-    fill?: {
-      color?: string;
-    };
-    routing?: {
-      rounding?: number;
-    };
-    lineHops?: {
-      type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
-      size?: number;
-    };
-
-    effects?: {
-      sketch?: boolean;
-      sketchStrength?: number;
-      opacity?: number;
-    };
-  }
-
-  interface NodeProps extends ElementProps {
-    labelForEdgeId?: string;
-    highlight?: string[];
-
     fill?: {
       enabled?: boolean;
       image?: {
@@ -192,6 +152,42 @@ declare global {
         type?: 'linear' | 'radial';
       };
     };
+  }
+
+  interface EdgeProps extends ElementProps {
+    highlight?: string[];
+
+    type?: EdgeType;
+    shape?: string;
+
+    arrow?: {
+      start?: {
+        type?: string;
+        size?: number;
+      };
+      end?: {
+        type?: string;
+        size?: number;
+      };
+    };
+    routing?: {
+      rounding?: number;
+    };
+    lineHops?: {
+      type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
+      size?: number;
+    };
+
+    effects?: {
+      sketch?: boolean;
+      sketchStrength?: number;
+      opacity?: number;
+    };
+  }
+
+  interface NodeProps extends ElementProps {
+    labelForEdgeId?: string;
+    highlight?: string[];
 
     effects?: {
       reflection?: boolean;

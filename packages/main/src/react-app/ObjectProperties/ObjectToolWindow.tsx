@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
 import * as Accordion from '@radix-ui/react-accordion';
-import { LinePanel } from './LinePanel';
+import { EdgeLinePanel } from './EdgeLinePanel';
 import { NodeFillPanel } from './NodeFillPanel';
 import { TextPanel } from './TextPanel';
 import { TransformPanel } from './TransformPanel';
@@ -22,6 +22,7 @@ export const ObjectToolWindow = () => {
   const diagram = useDiagram();
 
   const [type, setType] = useState('none');
+  const [edgeSupportsFill, setEdgeSupportsFill] = useState(false);
 
   const callback = () => {
     if (diagram.selectionState.getSelectionType() === 'mixed') {
@@ -35,6 +36,11 @@ export const ObjectToolWindow = () => {
     } else {
       setType('none');
     }
+
+    setEdgeSupportsFill(
+      diagram.selectionState.isEdgesOnly() &&
+        diagram.selectionState.edges.every(e => e.getDefinition().supports('fill'))
+    );
   };
   useEventListener(diagram.selectionState, 'change', callback);
   useEffect(callback, [diagram.selectionState]);
@@ -75,7 +81,8 @@ export const ObjectToolWindow = () => {
         {type === 'edge' && (
           <>
             <StylesheetPanel />
-            <LinePanel />
+            {edgeSupportsFill && <NodeFillPanel />}
+            <EdgeLinePanel />
             <ShadowPanel />
             <EdgeEffectsPanel />
           </>

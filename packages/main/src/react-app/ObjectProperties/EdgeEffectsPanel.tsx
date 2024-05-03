@@ -15,6 +15,8 @@ export const EdgeEffectsPanel = (props: Props) => {
   const $d = useDiagram();
   const defaults = useEdgeDefaults();
 
+  const opacity = useEdgeProperty($d, 'effects.opacity', defaults.effects.opacity);
+
   const sketch = useEdgeProperty($d, 'effects.sketch', defaults.effects.sketch);
   const sketchStrength = useEdgeProperty(
     $d,
@@ -33,6 +35,16 @@ export const EdgeEffectsPanel = (props: Props) => {
     >
       <div>
         <div className={'cmp-labeled-table'}>
+          <div className={'cmp-labeled-table__label'}>Opacity:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <SliderAndNumberInput
+              value={round(opacity.val * 100)}
+              onChange={v => {
+                opacity.set(Number(v) / 100);
+              }}
+            />
+          </div>
+
           <div className={'cmp-labeled-table__label'}>Sketch:</div>
           <div className={'cmp-labeled-table__value'}>
             <input

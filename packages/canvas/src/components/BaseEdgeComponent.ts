@@ -22,6 +22,7 @@ import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
+import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const makeArrowMarker = ({
   id,
@@ -342,6 +343,10 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
   constructor() {
     super('Simple', 'Simple', SimpleEdgeComponent);
+  }
+
+  supports(capability: EdgeCapability): boolean {
+    return !['fill'].includes(capability);
   }
 }
 

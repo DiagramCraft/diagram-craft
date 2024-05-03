@@ -9,6 +9,7 @@ import { RawSegment } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';
+import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const blockArrowMakePath = (path: Path, props: EdgeComponentProps) => {
   const width = props.def.propsForRendering.shapeBlockArrow?.width ?? 20;
@@ -57,28 +58,32 @@ const blockArrowMakePath = (path: Path, props: EdgeComponentProps) => {
 
 export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
   constructor() {
-    super('Block Arrow', 'BlockArrow', BlockArrowEdgeType);
-  }
-}
-
-export class BlockArrowEdgeType extends BaseEdgeComponent {
-  getPaths(path: Path, props: EdgeComponentProps) {
-    return blockArrowMakePath(path, props);
+    super('Block Arrow', 'BlockArrow', BlockArrowEdgeDefinition.Shape);
   }
 
-  processStyle(
-    style: Partial<CSSStyleDeclaration>,
-    edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
-  ): DeepReadonly<DeepRequired<EdgeProps>> {
-    const p = super.processStyle(style, edgeProps);
-    style.fill = p.fill.color ?? 'none';
-    style.opacity = (p.effects.opacity ?? 1).toString();
-    return {
-      ...p,
-      arrow: {
-        start: { type: 'NONE', size: 0 },
-        end: { type: 'NONE', size: 0 }
-      }
-    };
+  static Shape = class extends BaseEdgeComponent {
+    getPaths(path: Path, props: EdgeComponentProps) {
+      return blockArrowMakePath(path, props);
+    }
+
+    processStyle(
+      style: Partial<CSSStyleDeclaration>,
+      edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
+    ): DeepReadonly<DeepRequired<EdgeProps>> {
+      const p = super.processStyle(style, edgeProps);
+      style.fill = p.fill.color ?? 'none';
+      style.opacity = (p.effects.opacity ?? 1).toString();
+      return {
+        ...p,
+        arrow: {
+          start: { type: 'NONE', size: 0 },
+          end: { type: 'NONE', size: 0 }
+        }
+      };
+    }
+  };
+
+  supports(capability: EdgeCapability): boolean {
+    return !['arrows', 'line-hops'].includes(capability);
   }
 }
