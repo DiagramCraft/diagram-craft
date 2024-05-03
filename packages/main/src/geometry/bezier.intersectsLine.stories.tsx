@@ -21,7 +21,7 @@ const BezierTest = () => {
 
   const b_2 = Line.of(start_2, end_2);
 
-  const intersections = b.intersectsLine(b_2);
+  const intersections = b.intersectsLine(b_2) ?? [];
 
   return (
     <svg

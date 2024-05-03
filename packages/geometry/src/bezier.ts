@@ -476,7 +476,7 @@ export class CubicBezier {
       d.push(results[i]);
     }
 
-    return d;
+    return d.length === 0 ? undefined : d;
   }
 
   intersectsLine(line: Line) {
@@ -532,7 +532,7 @@ export class CubicBezier {
       res.push(p);
     }
 
-    return res;
+    return res.length === 0 ? undefined : res;
   }
 
   projectPoint(p: Point): { distance: number; t: number; point: Point } {

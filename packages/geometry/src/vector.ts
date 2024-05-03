@@ -25,6 +25,9 @@ export const Vector = {
   negate: (c: Vector) => ({ x: -c.x, y: -c.y }),
   scale: (c: Vector, s: number) => {
     return { x: c.x * s, y: c.y * s };
+  },
+  tangentToNormal(v: Vector) {
+    return { x: -v.y, y: v.x };
   }
 
   /*

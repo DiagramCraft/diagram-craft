@@ -5,7 +5,6 @@ import './index.css';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { snapTestDiagram } from './sample/snap-test';
 import { testDiagram } from './sample/test';
-import { simpleDiagram } from './sample/simple';
 import { SerializedDiagram } from '@diagram-craft/model/serialization/types';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -87,14 +86,14 @@ const documentFactory = () => {
 };
 
 const diagrams = [
-  {
+  /*{
     name: 'Simple',
     document: () => deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
-  },
+  },*/
   {
     name: 'Drawio',
     document: async () => {
-      const res = await fetch('/diagrams/test5.drawio');
+      const res = await fetch('/diagrams/test6.drawio');
       const text = await res.text();
 
       const doc = drawioReader(text, documentFactory, diagramFactory);

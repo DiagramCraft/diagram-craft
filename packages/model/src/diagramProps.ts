@@ -134,6 +134,8 @@ declare global {
     highlight?: string[];
 
     type?: EdgeType;
+    shape?: string;
+
     arrow?: {
       start?: {
         type?: string;
@@ -158,6 +160,7 @@ declare global {
     effects?: {
       sketch?: boolean;
       sketchStrength?: number;
+      opacity?: number;
     };
   }
 

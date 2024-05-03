@@ -20,6 +20,7 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
+import { EdgeDefinition } from './elementDefinitionRegistry';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -83,7 +84,7 @@ export class DiagramEdge
   }
 
   // TODO: This should use the EdgeDefinitionRegistry
-  getDefinition() {
+  getDefinition(): EdgeDefinition {
     return new BaseEdgeDefinition(this.id, 'Edge', 'edge');
   }
 

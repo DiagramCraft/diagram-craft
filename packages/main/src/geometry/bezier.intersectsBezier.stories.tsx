@@ -22,7 +22,7 @@ const BezierTest = () => {
 
   const b_2 = new CubicBezier(start_2, cp1_2, cp2_2, end_2);
 
-  const intersections = b.intersectsBezier(b_2, 0.5);
+  const intersections = b.intersectsBezier(b_2, 0.5) ?? [];
 
   return (
     <svg

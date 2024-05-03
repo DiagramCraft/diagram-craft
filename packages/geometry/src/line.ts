@@ -43,7 +43,7 @@ export const Line = {
     return round(line.from.y) === round(line.to.y);
   },
 
-  intersection: (l1: Line, l2: Line) => {
+  intersection: (l1: Line, l2: Line, extend = false) => {
     const t =
       ((l1.from.x - l2.from.x) * (l2.from.y - l2.to.y) -
         (l1.from.y - l2.from.y) * (l2.from.x - l2.to.x)) /
@@ -56,8 +56,16 @@ export const Line = {
         (l1.from.y - l1.to.y) * (l2.from.x - l2.to.x));
 
     if (isNaN(t) || isNaN(u)) return undefined;
-    if (t < 0 || t > 1 || u < 0 || u > 1) return undefined;
+    if (!extend && (t < 0 || t > 1 || u < 0 || u > 1)) return undefined;
 
     return { x: l1.from.x + t * (l1.to.x - l1.from.x), y: l1.from.y + t * (l1.to.y - l1.from.y) };
+  },
+
+  offset(of: Line, n: number) {
+    const v = Vector.normalize(Vector.from(of.from, of.to));
+    return Line.of(
+      Point.add(of.from, Vector.scale(Vector.tangentToNormal(v), n)),
+      Point.add(of.to, Vector.scale(Vector.tangentToNormal(v), n))
+    );
   }
 };

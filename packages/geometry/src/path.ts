@@ -17,8 +17,10 @@ import {
 import { RawSegment } from './pathBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { round, roundHighPrecision } from '@diagram-craft/utils/math';
+import { Vector } from './vector';
+import { Line } from './line';
 
 export type Projection = { t: number; distance: number; point: Point };
 
@@ -80,6 +82,14 @@ export class Path {
     this.#start = start;
   }
 
+  static join(...paths: Path[]) {
+    const dest: RawSegment[] = [];
+    for (const path of paths) {
+      dest.push(...path.#path);
+    }
+    return new Path(paths[0].start, dest);
+  }
+
   // Note, we create the parsed segments lazily - as the path is created as edges are rerouted,
   //       but the actual segments are only needed when we want to do something with the path
   private get segmentList() {
@@ -90,6 +100,10 @@ export class Path {
 
   get start() {
     return this.#start;
+  }
+
+  get end() {
+    return this.segmentList.segments.at(-1)!.end;
   }
 
   get path() {
@@ -109,6 +123,26 @@ export class Path {
       this.#start,
       this.segments.flatMap(e => e.raw())
     ).segments;
+  }
+
+  reverse() {
+    const end = this.end;
+
+    const newSegmentList: PathSegment[] = [];
+    const segments = makeSegmentList(this.#start, this.#path).segments;
+    for (let i = segments.length - 1; i >= 0; i--) {
+      const s = segments[i];
+      const start = s.start;
+      const end = s.end;
+      s.end = start;
+      s.start = end;
+      newSegmentList.push(s);
+    }
+
+    return new Path(
+      end,
+      newSegmentList.flatMap(s => s.raw())
+    );
   }
 
   processSegments(fn: (segments: ReadonlyArray<PathSegment>) => PathSegment[]) {
@@ -139,14 +173,14 @@ export class Path {
     };
   }
 
-  intersections(other: Path): ReadonlyArray<WithSegment<PointOnPath>> {
+  intersections(other: Path, extend = false): ReadonlyArray<WithSegment<PointOnPath>> {
     const dest: WithSegment<PointOnPath>[] = [];
 
     const segments = this.segments;
     for (let idx = 0; idx < segments.length; idx++) {
       const segment = segments[idx];
       for (const otherSegment of other.segments) {
-        const intersections = segment.intersectionsWith(otherSegment);
+        const intersections = segment.intersectionsWith(otherSegment, extend);
         if (!intersections) continue;
         dest.push(
           ...intersections.map(i => ({
@@ -223,6 +257,77 @@ export class Path {
       dest.push(new Path(b.start, [...b.raw(), ...this.#path.slice(p1.segment + 1)]));
     }
     return dest;
+  }
+
+  offset(n: number) {
+    // Note: this is basically the Tiller-Hanson algorithm
+
+    // TODO: There's an opportunity to better remove cusps when offsetting
+    //       bezier curves... perhaps by splitting the curves under certain conditions
+
+    const entries: Array<{ type: 'L' | 'C'; line: Line }> = [];
+    for (const segment of this.segments) {
+      if (segment instanceof LineSegment) {
+        entries.push({ type: 'L', line: Line.of(segment.start, segment.end) });
+      } else if (segment instanceof CubicSegment) {
+        entries.push({ type: 'C', line: Line.of(segment.start, segment.p1) });
+        entries.push({ type: 'C', line: Line.of(segment.p1, segment.p2) });
+        entries.push({ type: 'C', line: Line.of(segment.p2, segment.end) });
+      } else {
+        VERIFY_NOT_REACHED();
+      }
+    }
+
+    // Offset all lines
+    for (const entry of entries) {
+      const v = Vector.normalize(Vector.from(entry.line.from, entry.line.to));
+      entry.line = Line.of(
+        Point.add(entry.line.from, Vector.scale(Vector.tangentToNormal(v), n)),
+        Point.add(entry.line.to, Vector.scale(Vector.tangentToNormal(v), n))
+      );
+    }
+
+    // Join all lines
+    const joinedEntries: Array<{ type: 'L' | 'C'; line: Line }> = [];
+    for (let i = 1; i < entries.length; i++) {
+      const prev = entries[i - 1];
+      const current = entries[i];
+
+      const intersection = Line.intersection(prev.line, current.line, true);
+      if (!intersection) {
+        joinedEntries.push(prev);
+      } else {
+        prev.line = Line.of(prev.line.from, intersection);
+        joinedEntries.push(prev);
+
+        if (!Point.isEqual(current.line.to, intersection)) {
+          current.line = Line.of(intersection, current.line.to);
+        }
+      }
+    }
+    joinedEntries.push(entries.at(-1)!);
+
+    // For segments from the lines
+    const dest: RawSegment[] = [];
+    for (let i = 0; i < joinedEntries.length; i++) {
+      const entry = joinedEntries[i];
+
+      if (entry.type === 'L') {
+        dest.push(['L', entry.line.to.x, entry.line.to.y]);
+      } else {
+        assert.true(joinedEntries[i + 1].type === 'C');
+        assert.true(joinedEntries[i + 2].type === 'C');
+
+        const p1 = joinedEntries[i].line.to;
+        const p2 = joinedEntries[i + 1].line.to;
+        const end = joinedEntries[i + 2].line.to;
+
+        dest.push(['C', p1.x, p1.y, p2.x, p2.y, end.x, end.y]);
+
+        i += 2;
+      }
+    }
+    return new Path(joinedEntries[0].line.from, dest);
   }
 
   asSvgPath() {

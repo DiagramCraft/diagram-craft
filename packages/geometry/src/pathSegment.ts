@@ -11,7 +11,7 @@ import { round } from '@diagram-craft/utils/math';
 export interface PathSegment {
   length(): number;
   point(t: number): Point;
-  intersectionsWith(other: PathSegment): Point[] | undefined;
+  intersectionsWith(other: PathSegment, extend?: boolean): Point[] | undefined;
   projectPoint(point: Point): Projection;
   raw(): RawSegment[];
   split(t: number): [PathSegment, PathSegment];

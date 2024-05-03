@@ -62,6 +62,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'cylinder') return undefined;
   if (shape === 'cylinder3') return undefined;
   if (shape === 'curlyBracket') return undefined;
+  if (shape === 'flexArrow') return undefined;
   if (shape === 'mxgraph.basic.partConcEllipse') return undefined;
   if (!shape) return undefined;
 
@@ -372,10 +373,6 @@ const getNodeProps = (style: Style) => {
     width: parseNum(style.strokeWidth, 1)
   };
 
-  if (style.edgeStyle === 'orthogonalEdgeStyle') {
-    (props as EdgeProps).type = 'orthogonal';
-  }
-
   if (style.dashed === '1') {
     const pattern = style.dashPattern ?? '4 4';
     const [baseSize, baseGap] = pattern.split(' ').map(s => parseNum(s, 4));
@@ -550,9 +547,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (!style.endArrow) style.endArrow = 'classic';
         parseArrow('end', style, props);
 
-        const egdeProps = props as EdgeProps;
-        egdeProps.routing ??= {};
-        egdeProps.stroke!.lineJoin = 'round';
+        const edgeProps = props as EdgeProps;
+        edgeProps.routing ??= {};
+        edgeProps.stroke!.lineJoin = 'round';
 
         const isNonCurveEdgeStyle =
           style.edgeStyle === 'orthogonalEdgeStyle' ||
@@ -561,19 +558,34 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           style.edgeStyle === 'entityRelationEdgeStyle';
 
         if (isNonCurveEdgeStyle) {
-          egdeProps.type = 'orthogonal';
+          edgeProps.type = 'orthogonal';
         }
 
         if (style.curved === '1') {
           if (isNonCurveEdgeStyle) {
-            egdeProps.type = 'curved';
+            edgeProps.type = 'curved';
           } else {
-            egdeProps.type = 'bezier';
+            edgeProps.type = 'bezier';
           }
         }
 
+        if (style.shape === 'flexArrow') {
+          edgeProps.shape = 'BlockArrow';
+          edgeProps.shapeBlockArrow = {
+            width: parseNum(style.width, 10),
+            arrowWidth: parseNum(style.width, 10) + parseNum(style.endWidth, 20),
+            arrowDepth: parseNum(style.endSize, 7) * 3
+          };
+          edgeProps.fill = {
+            color: style.fillColor ?? 'none'
+          };
+          edgeProps.effects = {
+            opacity: style.opacity ? parseNum(style.opacity, 100) / 100 : 1
+          };
+        }
+
         if (style.rounded === '1') {
-          egdeProps.routing!.rounding = 10;
+          edgeProps.routing!.rounding = 10;
         }
 
         const waypoints: Waypoint[] = [];
@@ -581,7 +593,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           $geometry.getElementsByTagName('Array').item(0)?.getElementsByTagName('mxPoint') ?? []
         ).map($p => MxPoint.pointFrom($p));
         for (let i = 0; i < wps.length; i++) {
-          if (egdeProps.type === 'bezier') {
+          if (edgeProps.type === 'bezier') {
             if (i === wps.length - 1) continue;
 
             // TODO: Maybe we should apply BezierUtils.qubicFromThreePoints here

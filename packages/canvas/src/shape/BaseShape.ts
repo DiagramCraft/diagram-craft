@@ -267,9 +267,7 @@ export class BaseShape<
     };
 
     if (isNode(child)) {
-      const nodeDefinition = props.node.diagram.document.nodeDefinitions.get(
-        child.nodeType
-      ) as ShapeNodeDefinition;
+      const nodeDefinition = child.getDefinition() as ShapeNodeDefinition;
       const nodeComponent = nodeDefinition.component!;
       return this.subComponent(() => new nodeComponent(nodeDefinition), p);
     } else {
