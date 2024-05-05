@@ -1,5 +1,5 @@
 import { Path } from '@diagram-craft/geometry/path';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export type StyledPath = {
   path: Path;
@@ -12,11 +12,11 @@ export type RenderedStyledPath = {
 };
 
 export interface PathRenderer {
-  render(node: DiagramNode, path: StyledPath): RenderedStyledPath[];
+  render(node: DiagramElement, path: StyledPath): RenderedStyledPath[];
 }
 
 export class DefaultPathRenderer implements PathRenderer {
-  render(_node: DiagramNode, path: StyledPath): RenderedStyledPath[] {
+  render(_node: DiagramElement, path: StyledPath): RenderedStyledPath[] {
     return [{ path: path.path.asSvgPath(), style: path.style }];
   }
 }

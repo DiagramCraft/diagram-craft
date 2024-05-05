@@ -187,7 +187,11 @@ export class BaseNodeComponent<
       }
     };
 
-    const shapeBuilder = new ShapeBuilder(buildProps);
+    const shapeBuilder = new ShapeBuilder({
+      ...buildProps,
+      element: props.def,
+      elementProps: nodeProps
+    });
     this.buildShape(buildProps, shapeBuilder);
 
     const shapeVNodes = [...shapeBuilder.nodes];

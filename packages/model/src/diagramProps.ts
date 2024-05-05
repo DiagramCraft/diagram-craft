@@ -152,6 +152,13 @@ declare global {
         type?: 'linear' | 'radial';
       };
     };
+    effects?: {
+      sketch?: boolean;
+      sketchStrength?: number;
+      sketchFillType?: 'fill' | 'hachure';
+
+      opacity?: number;
+    };
   }
 
   interface EdgeProps extends ElementProps {
@@ -177,12 +184,6 @@ declare global {
       type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
       size?: number;
     };
-
-    effects?: {
-      sketch?: boolean;
-      sketchStrength?: number;
-      opacity?: number;
-    };
   }
 
   interface NodeProps extends ElementProps {
@@ -193,10 +194,11 @@ declare global {
       reflection?: boolean;
       reflectionStrength?: number;
       blur?: number;
-      opacity?: number;
       sketch?: boolean;
       sketchStrength?: number;
       sketchFillType?: 'fill' | 'hachure';
+
+      opacity?: number;
     };
   }
 }

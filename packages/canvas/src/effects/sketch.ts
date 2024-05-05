@@ -1,4 +1,3 @@
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   PathRenderer,
   RenderedStyledPath,
@@ -15,9 +14,10 @@ import { hash } from '@diagram-craft/utils/hash';
 import { Random } from '@diagram-craft/utils/random';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { round } from '@diagram-craft/utils/math';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export class SketchPathRenderer implements PathRenderer {
-  render(node: DiagramNode, path: StyledPath): RenderedStyledPath[] {
+  render(node: DiagramElement, path: StyledPath): RenderedStyledPath[] {
     const svgPathOutline = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(node.id)), {
       passes: 2,
       amount: node.props.effects?.sketchStrength ?? 0.1

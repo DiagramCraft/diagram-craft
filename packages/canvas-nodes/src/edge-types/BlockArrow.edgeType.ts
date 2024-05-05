@@ -1,8 +1,5 @@
 import { Path } from '@diagram-craft/geometry/path';
-import {
-  BaseEdgeComponent,
-  EdgeComponentProps
-} from '@diagram-craft/canvas/components/BaseEdgeComponent';
+import { BaseEdgeComponent } from '@diagram-craft/canvas/components/BaseEdgeComponent';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { RawSegment } from '@diagram-craft/geometry/pathBuilder';
@@ -10,11 +7,14 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';
 import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
+import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
 
-const blockArrowMakePath = (path: Path, props: EdgeComponentProps) => {
-  const width = props.def.propsForRendering.shapeBlockArrow?.width ?? 20;
-  const arrowDepth = props.def.propsForRendering.shapeBlockArrow?.arrowDepth ?? 20;
-  const arrowWidth = props.def.propsForRendering.shapeBlockArrow?.arrowWidth ?? 50;
+const blockArrowMakePath = (path: Path, props: DeepReadonly<DeepRequired<EdgeProps>>) => {
+  const width = props.shapeBlockArrow?.width ?? 20;
+  const arrowDepth = props.shapeBlockArrow?.arrowDepth ?? 20;
+  const arrowWidth = props.shapeBlockArrow?.arrowWidth ?? 50;
 
   const offset1 = path.offset(width / 2);
   const offset2 = path.offset(-width / 2);
@@ -62,24 +62,25 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
   }
 
   static Shape = class extends BaseEdgeComponent {
-    getPaths(path: Path, props: EdgeComponentProps) {
-      return blockArrowMakePath(path, props);
+    buildShape(
+      path: Path,
+      shapeBuilder: ShapeBuilder,
+      _edge: DiagramEdge,
+      props: DeepReadonly<DeepRequired<EdgeProps>>
+    ) {
+      const paths = blockArrowMakePath(path, props);
+      const style = this.getStyle(props);
+      style.fill = props.fill.color ?? 'none';
+      style.opacity = (props.effects.opacity ?? 1).toString();
+
+      shapeBuilder.edge(paths, style, props);
     }
 
-    processStyle(
-      style: Partial<CSSStyleDeclaration>,
-      edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
-    ): DeepReadonly<DeepRequired<EdgeProps>> {
-      const p = super.processStyle(style, edgeProps);
-      style.fill = p.fill.color ?? 'none';
-      style.opacity = (p.effects.opacity ?? 1).toString();
-      return {
-        ...p,
-        arrow: {
-          start: { type: 'NONE', size: 0 },
-          end: { type: 'NONE', size: 0 }
-        }
-      };
+    protected getArrow(
+      _type: 'start' | 'end',
+      _edgeProps: DeepReadonly<DeepRequired<EdgeProps>>
+    ): ArrowShape | undefined {
+      return undefined;
     }
   };
 

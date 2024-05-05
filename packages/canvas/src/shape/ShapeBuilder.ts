@@ -3,34 +3,45 @@ import { $cmp, Component } from '../component/component';
 import { ShapeText, ShapeTextProps } from './ShapeText';
 import { DefaultPathRenderer, PathRenderer } from './PathRenderer';
 import * as svg from '../component/vdom-svg';
-import { BaseShapeBuildProps } from '../components/BaseNodeComponent';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
-import { SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
+import { asDistortedSvgPath, SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
 import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { Point } from '@diagram-craft/geometry/point';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { Tool } from '../tool';
+import { hash } from '@diagram-craft/utils/hash';
+import { ArrowShape } from '../arrowShapes';
 
-const defaultOnChange = (node: DiagramNode) => (text: string) => {
-  UnitOfWork.execute(node.diagram, uow => {
-    node.updateProps(props => {
+const defaultOnChange = (element: DiagramElement) => (text: string) => {
+  UnitOfWork.execute(element.diagram, uow => {
+    element.updateProps(props => {
       props.text ??= {};
       props.text.text = text;
     }, uow);
   });
 };
 
+type ShapeBuilderProps = {
+  element: DiagramElement;
+  elementProps: DeepReadonly<ElementProps>;
+  isSingleSelected: boolean;
+  onMouseDown: (e: MouseEvent) => void;
+  style: Partial<CSSStyleDeclaration>;
+
+  tool: Tool | undefined;
+};
+
 export class ShapeBuilder {
   nodes: VNode[] = [];
-  boundary: Path | undefined = undefined;
   controlPoints: ControlPoint[] = [];
 
-  constructor(private readonly props: BaseShapeBuildProps) {}
+  constructor(private readonly props: ShapeBuilderProps) {}
 
   add(vnode: VNode) {
     this.nodes.push(vnode);
@@ -47,13 +58,13 @@ export class ShapeBuilder {
   ) {
     this.nodes.push(
       cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
-        key: `text_${id}_${this.props.node.id}`,
-        id: `text_${id}_${this.props.node.id}`,
-        text: text ?? this.props.nodeProps.text,
-        bounds: bounds ?? this.props.node.bounds,
+        key: `text_${id}_${this.props.element.id}`,
+        id: `text_${id}_${this.props.element.id}`,
+        text: text ?? this.props.elementProps.text,
+        bounds: bounds ?? this.props.element.bounds,
         tool: this.props.tool,
         onMouseDown: this.props.onMouseDown,
-        onChange: defaultOnChange(this.props.node),
+        onChange: defaultOnChange(this.props.element),
         onSizeChange: onSizeChange,
         isSingleSelected: this.props.isSingleSelected
       })
@@ -64,9 +75,10 @@ export class ShapeBuilder {
     paths: CompoundPath,
     props: NodeProps | undefined = undefined,
     textId: undefined | string = '1',
-    map: (n: VNode) => VNode = a => a
+    map: (n: VNode) => VNode = a => a,
+    className = 'svg-node__boundary svg-node'
   ) {
-    const propsInEffect = props ?? (this.props.node.propsForRendering as NodeProps);
+    const propsInEffect = props ?? (this.props.element.propsForRendering as NodeProps);
 
     const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
       ? new SketchPathRenderer()
@@ -76,7 +88,7 @@ export class ShapeBuilder {
 
     const renderedPaths = paths
       .all()
-      .map(p => pathRenderer.render(this.props.node, { path: p, style }));
+      .map(p => pathRenderer.render(this.props.element, { path: p, style }));
 
     const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
     for (let i = 0; i < renderedPaths[0].length; i++) {
@@ -90,11 +102,11 @@ export class ShapeBuilder {
       ...joinedPaths
         .map(d => ({
           d: d.path,
-          x: this.props.node.bounds.x.toString(),
-          y: this.props.node.bounds.y.toString(),
-          width: this.props.node.bounds.w.toString(),
-          height: this.props.node.bounds.h.toString(),
-          class: 'svg-node__boundary svg-node',
+          x: this.props.element.bounds.x.toString(),
+          y: this.props.element.bounds.y.toString(),
+          width: this.props.element.bounds.w.toString(),
+          height: this.props.element.bounds.h.toString(),
+          class: className,
           style: toInlineCSS(d.style),
           on: {
             mousedown: this.props.onMouseDown,
@@ -107,17 +119,20 @@ export class ShapeBuilder {
 
   path(
     paths: Path[],
-    props: NodeProps | DeepReadonly<NodeProps> | undefined = undefined,
-    map: (n: VNode) => VNode = a => a
+    props: ElementProps | DeepReadonly<ElementProps> | undefined = undefined,
+    map: (n: VNode) => VNode = a => a,
+    className: string | undefined = undefined
   ) {
-    const propsInEffect = props ?? (this.props.node.propsForRendering as NodeProps);
+    const propsInEffect = props ?? (this.props.element.propsForRendering as NodeProps);
     const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
       ? new SketchPathRenderer()
       : new DefaultPathRenderer();
 
     const style = this.makeStyle(propsInEffect);
 
-    const renderedPaths = paths.map(p => pathRenderer.render(this.props.node, { path: p, style }));
+    const renderedPaths = paths.map(p =>
+      pathRenderer.render(this.props.element, { path: p, style })
+    );
 
     const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
     for (let i = 0; i < renderedPaths[0].length; i++) {
@@ -131,37 +146,58 @@ export class ShapeBuilder {
       ...joinedPaths
         .map(p => ({
           d: p.path,
-          x: this.props.node.bounds.x.toString(),
-          y: this.props.node.bounds.y.toString(),
-          width: this.props.node.bounds.w.toString(),
-          height: this.props.node.bounds.h.toString(),
+          class: className,
+          x: this.props.element.bounds.x.toString(),
+          y: this.props.element.bounds.y.toString(),
+          width: this.props.element.bounds.w.toString(),
+          height: this.props.element.bounds.h.toString(),
           style: toInlineCSS(p.style) + '; pointer-events: none;'
         }))
         .map(p => map(svg.path(p)))
     );
   }
 
-  controlPoint(p: Point, cb: ControlPointCallback) {
-    this.controlPoints.push({ ...p, cb });
+  edge(
+    paths: Path[],
+    style: Partial<CSSStyleDeclaration>,
+    props: ElementProps | DeepReadonly<ElementProps> | undefined = undefined,
+    startArrow: ArrowShape | undefined = undefined,
+    endArrow: ArrowShape | undefined = undefined
+  ) {
+    const seed = hash(new TextEncoder().encode(this.props.element.id));
+    const path = paths
+      .map(p =>
+        props?.effects?.sketch
+          ? asDistortedSvgPath(p, seed, {
+              passes: 2,
+              amount: props.effects.sketchStrength ?? 0.1,
+              unidirectional: true
+            })
+          : p.asSvgPath()
+      )
+      .join(', ');
+
+    this.nodes.push(
+      ...[
+        svg.path({
+          'class': 'svg-edge',
+          'd': path,
+          'stroke': 'transparent',
+          'stroke-width': 15
+        }),
+        svg.path({
+          'class': 'svg-edge',
+          'd': path,
+          'style': toInlineCSS(style),
+          'marker-start': startArrow ? `url(#s_${this.props.element.id})` : '',
+          'marker-end': endArrow ? `url(#e_${this.props.element.id})` : ''
+        })
+      ]
+    );
   }
 
-  makeOnMouseDownHandle(textId: string | undefined = '1') {
-    return (e: MouseEvent) => {
-      const editable = this.getTextElement(textId);
-
-      if (!editable) {
-        this.props.onMouseDown(e);
-        return;
-      }
-
-      console.log('contentEditable', editable.contentEditable);
-      if (editable.contentEditable === 'true') {
-        e.stopPropagation();
-        return;
-      }
-
-      this.props.onMouseDown(e);
-    };
+  controlPoint(p: Point, cb: ControlPointCallback) {
+    this.controlPoints.push({ ...p, cb });
   }
 
   makeOnDblclickHandle(textId: string | undefined = '1') {
@@ -186,7 +222,7 @@ export class ShapeBuilder {
 
   private getTextElement(textId: string | undefined) {
     return document
-      .getElementById(`text_${textId}_${this.props.node.id}`)
+      .getElementById(`text_${textId}_${this.props.element.id}`)
       ?.getElementsByClassName('svg-node__text')
       .item(0) as HTMLDivElement | undefined | null;
   }
@@ -213,7 +249,7 @@ export class ShapeBuilder {
     }
 
     if (nodeProps.fill?.type === 'gradient') {
-      const gradientId = `node-${this.props.node.id}-gradient`;
+      const gradientId = `node-${this.props.element.id}-gradient`;
       style.fill = `url(#${gradientId})`;
     }
 

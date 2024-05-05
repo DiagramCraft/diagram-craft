@@ -145,6 +145,7 @@ export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepReq
     effects: {
       sketch: false,
       sketchStrength: 0.1,
+      sketchFillType: 'fill',
       opacity: 1
     }
   })
