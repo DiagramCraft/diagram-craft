@@ -86,7 +86,7 @@ class TrapetzoidComponent extends BaseNodeComponent {
 
     const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    shapeBuilder.boundaryPath(boundary);
+    shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
 
     shapeBuilder.controlPoint(

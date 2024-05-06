@@ -117,12 +117,14 @@ class GenericPathComponent extends BaseNodeComponent {
       props.applicationTriggers.popHelp?.('GenericPathComponent');
     }
 
-    shapeBuilder.boundaryPath(paths, undefined, undefined, v => {
-      v.data.on ??= {};
-      v.data.on.dblclick =
-        props.tool?.type === 'node' ? onDoubleClick : shapeBuilder.makeOnDblclickHandle();
-      v.data.style ??= '';
-      return v;
+    shapeBuilder.boundaryPath(paths.all(), undefined, undefined, {
+      map: v => {
+        v.data.on ??= {};
+        v.data.on.dblclick =
+          props.tool?.type === 'node' ? onDoubleClick : shapeBuilder.makeOnDblclickHandle();
+        v.data.style ??= '';
+        return v;
+      }
     });
     shapeBuilder.text(this);
 

@@ -4,7 +4,6 @@ import * as html from '../component/vdom-html';
 import { rawHTML, toInlineCSS, VNode } from '../component/vdom';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
-import { Tool } from '../tool';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -21,7 +20,6 @@ export type ShapeTextProps = {
   onMouseDown: (e: MouseEvent) => void;
   onChange: (text: string) => void;
   onSizeChange?: (size: Extent) => void;
-  tool: Tool | undefined;
   isSingleSelected: boolean;
 };
 

@@ -542,6 +542,13 @@ input::-webkit-input-placeholder {
     cursor: move;
     fill: none;
   }
+  .svg-edge--highlight-drop-target {
+    .svg-edge {
+      stroke: #30A46C !important;
+      stroke-width: 3 !important;
+      stroke-dasharray: none !important;
+    }
+  }
   .svg-shape-control-point {
     cursor: crosshair;
     fill: white;

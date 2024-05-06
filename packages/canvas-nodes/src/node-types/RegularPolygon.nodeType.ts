@@ -67,7 +67,7 @@ class RegularPolygonComponent extends BaseNodeComponent {
       .getBoundingPathBuilder(props.node)
       .getPaths();
 
-    shapeBuilder.boundaryPath(boundary);
+    shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
 
     const path = boundary.singularPath();

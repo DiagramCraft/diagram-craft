@@ -57,7 +57,7 @@ class TextComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new TextNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    shapeBuilder.boundaryPath(boundary);
+    shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this, '1', props.nodeProps.text, props.node.bounds, (size: Extent) => {
       const width = size.w;
       const height = size.h;

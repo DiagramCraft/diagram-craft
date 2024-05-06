@@ -9,14 +9,14 @@ import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { Tool } from '../tool';
 import { hash } from '@diagram-craft/utils/hash';
 import { ArrowShape } from '../arrowShapes';
+import { deepMerge } from '@diagram-craft/utils/object';
+import { makeShadowFilter } from '../effects/shadow';
 
 const defaultOnChange = (element: DiagramElement) => (text: string) => {
   UnitOfWork.execute(element.diagram, uow => {
@@ -33,8 +33,12 @@ type ShapeBuilderProps = {
   isSingleSelected: boolean;
   onMouseDown: (e: MouseEvent) => void;
   style: Partial<CSSStyleDeclaration>;
+};
 
-  tool: Tool | undefined;
+type Opts = {
+  map?: (n: VNode) => VNode;
+  className?: string;
+  style?: Partial<CSSStyleDeclaration>;
 };
 
 export class ShapeBuilder {
@@ -62,7 +66,6 @@ export class ShapeBuilder {
         id: `text_${id}_${this.props.element.id}`,
         text: text ?? this.props.elementProps.text,
         bounds: bounds ?? this.props.element.bounds,
-        tool: this.props.tool,
         onMouseDown: this.props.onMouseDown,
         onChange: defaultOnChange(this.props.element),
         onSizeChange: onSizeChange,
@@ -72,98 +75,81 @@ export class ShapeBuilder {
   }
 
   boundaryPath(
-    paths: CompoundPath,
+    paths: Path[],
     props: NodeProps | undefined = undefined,
     textId: undefined | string = '1',
-    map: (n: VNode) => VNode = a => a,
-    className = 'svg-node__boundary svg-node'
+    opts?: Opts
   ) {
-    const propsInEffect = props ?? (this.props.element.propsForRendering as NodeProps);
+    opts ??= {};
+    opts.map ??= a => a;
+    opts.className ??= 'svg-node__boundary svg-node';
+    opts.style ??= {};
 
-    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
-      ? new SketchPathRenderer()
-      : new DefaultPathRenderer();
+    const bounds = this.props.element.bounds;
 
-    const style = props ? this.makeStyle(props) : this.props.style;
-
-    const renderedPaths = paths
-      .all()
-      .map(p => pathRenderer.render(this.props.element, { path: p, style }));
-
-    const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
-    for (let i = 0; i < renderedPaths[0].length; i++) {
-      joinedPaths.push({
-        path: renderedPaths.map(p => p[i].path).join(', '),
-        style: renderedPaths[0][i].style
-      });
-    }
+    const joinedPaths = this.processPath(props, opts, paths);
 
     this.nodes.push(
       ...joinedPaths
         .map(d => ({
           d: d.path,
-          x: this.props.element.bounds.x.toString(),
-          y: this.props.element.bounds.y.toString(),
-          width: this.props.element.bounds.w.toString(),
-          height: this.props.element.bounds.h.toString(),
-          class: className,
+          x: bounds.x.toString(),
+          y: bounds.y.toString(),
+          width: bounds.w.toString(),
+          height: bounds.h.toString(),
+          class: opts.className,
           style: toInlineCSS(d.style),
           on: {
             mousedown: this.props.onMouseDown,
             ...(textId ? { dblclick: this.makeOnDblclickHandle(textId) } : {})
           }
         }))
-        .map(p => map(svg.path(p)))
+        .map(p => opts.map!(svg.path(p)))
     );
   }
 
   path(
     paths: Path[],
     props: ElementProps | DeepReadonly<ElementProps> | undefined = undefined,
-    map: (n: VNode) => VNode = a => a,
-    className: string | undefined = undefined
+    opts?: Opts
   ) {
-    const propsInEffect = props ?? (this.props.element.propsForRendering as NodeProps);
-    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
-      ? new SketchPathRenderer()
-      : new DefaultPathRenderer();
+    opts ??= {};
+    opts.map ??= a => a;
+    opts.style ??= {};
 
-    const style = this.makeStyle(propsInEffect);
+    const bounds = this.props.element.bounds;
 
-    const renderedPaths = paths.map(p =>
-      pathRenderer.render(this.props.element, { path: p, style })
-    );
-
-    const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
-    for (let i = 0; i < renderedPaths[0].length; i++) {
-      joinedPaths.push({
-        path: renderedPaths.map(p => p[i].path).join(' '),
-        style: renderedPaths[0][i].style
-      });
-    }
+    const joinedPaths = this.processPath(props, opts, paths);
 
     this.nodes.push(
       ...joinedPaths
         .map(p => ({
           d: p.path,
-          class: className,
-          x: this.props.element.bounds.x.toString(),
-          y: this.props.element.bounds.y.toString(),
-          width: this.props.element.bounds.w.toString(),
-          height: this.props.element.bounds.h.toString(),
+          x: bounds.x.toString(),
+          y: bounds.y.toString(),
+          width: bounds.w.toString(),
+          height: bounds.h.toString(),
+          class: opts.className,
           style: toInlineCSS(p.style) + '; pointer-events: none;'
         }))
-        .map(p => map(svg.path(p)))
+        .map(p => opts.map!(svg.path(p)))
     );
   }
 
   edge(
     paths: Path[],
-    style: Partial<CSSStyleDeclaration>,
     props: ElementProps | DeepReadonly<ElementProps> | undefined = undefined,
     startArrow: ArrowShape | undefined = undefined,
-    endArrow: ArrowShape | undefined = undefined
+    endArrow: ArrowShape | undefined = undefined,
+    opts?: Opts
   ) {
+    opts ??= {};
+    opts.map ??= a => a;
+    opts.style ??= {};
+    opts.className ??= 'svg-edge';
+
+    const style = deepMerge({}, this.props.style, props ? this.makeStyle(props) : {}, opts.style);
+
     const seed = hash(new TextEncoder().encode(this.props.element.id));
     const path = paths
       .map(p =>
@@ -180,13 +166,13 @@ export class ShapeBuilder {
     this.nodes.push(
       ...[
         svg.path({
-          'class': 'svg-edge',
+          'class': opts.className,
           'd': path,
           'stroke': 'transparent',
           'stroke-width': 15
         }),
         svg.path({
-          'class': 'svg-edge',
+          'class': opts.className,
           'd': path,
           'style': toInlineCSS(style),
           'marker-start': startArrow ? `url(#s_${this.props.element.id})` : '',
@@ -227,32 +213,75 @@ export class ShapeBuilder {
       .item(0) as HTMLDivElement | undefined | null;
   }
 
-  private makeStyle(nodeProps: NodeProps | DeepReadonly<NodeProps>): Partial<CSSStyleDeclaration> {
+  private makeStyle(
+    props: ElementProps | DeepReadonly<ElementProps>
+  ): Partial<CSSStyleDeclaration> {
     const style: Partial<CSSStyleDeclaration> = {};
-    style.strokeWidth = nodeProps.stroke!.width?.toString();
-    style.stroke = nodeProps.stroke!.color;
-    style.fill = nodeProps.fill!.color;
-    style.strokeMiterlimit = nodeProps.stroke!.miterLimit?.toString();
-    style.strokeLinecap = nodeProps.stroke!.lineCap;
-    style.strokeLinejoin = nodeProps.stroke!.lineJoin;
+    style.strokeWidth = props.stroke!.width?.toString();
+    style.stroke = props.stroke!.color;
+    style.fill = props.fill!.color;
+    style.strokeMiterlimit = props.stroke!.miterLimit?.toString();
+    style.strokeLinecap = props.stroke!.lineCap;
+    style.strokeLinejoin = props.stroke!.lineJoin;
 
-    if (nodeProps.stroke!.pattern !== 'SOLID') {
-      const p = DASH_PATTERNS[nodeProps.stroke!.pattern as unknown as keyof typeof DASH_PATTERNS];
+    if (props.stroke!.pattern !== 'SOLID') {
+      const p = DASH_PATTERNS[props.stroke!.pattern as unknown as keyof typeof DASH_PATTERNS];
       if (!p) {
-        style.strokeDasharray = nodeProps.stroke!.pattern;
+        style.strokeDasharray = props.stroke!.pattern;
       } else {
         style.strokeDasharray = p(
-          (nodeProps.stroke!.patternSize ?? 50) / 100,
-          (nodeProps.stroke!.patternSpacing ?? 50) / 100
+          (props.stroke!.patternSize ?? 50) / 100,
+          (props.stroke!.patternSpacing ?? 50) / 100
         );
       }
     }
 
-    if (nodeProps.fill?.type === 'gradient') {
+    if (props.fill?.type === 'gradient') {
       const gradientId = `node-${this.props.element.id}-gradient`;
       style.fill = `url(#${gradientId})`;
     }
 
+    if (props.shadow?.enabled) {
+      style.filter = makeShadowFilter(props.shadow);
+    }
+
+    style.opacity = (props.effects?.opacity ?? 1).toString();
+
     return style;
+  }
+
+  private processPath(
+    props: NodeProps | undefined,
+    opts: {
+      map?: (n: VNode) => VNode;
+      className?: string;
+      style?: Partial<CSSStyleDeclaration>;
+    },
+    paths: Path[]
+  ) {
+    const propsInEffect = props ?? (this.props.element.propsForRendering as NodeProps);
+    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
+      ? new SketchPathRenderer()
+      : new DefaultPathRenderer();
+
+    const style = deepMerge(
+      {},
+      this.props.style,
+      props ? this.makeStyle(props) : {},
+      opts.style ?? {}
+    );
+
+    const renderedPaths = paths.map(p =>
+      pathRenderer.render(this.props.element, { path: p, style })
+    );
+
+    const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
+    for (let i = 0; i < renderedPaths[0].length; i++) {
+      joinedPaths.push({
+        path: renderedPaths.map(p => p[i].path).join(', '),
+        style: renderedPaths[0][i].style
+      });
+    }
+    return joinedPaths;
   }
 }

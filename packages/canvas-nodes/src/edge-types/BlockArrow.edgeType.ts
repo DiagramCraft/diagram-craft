@@ -11,7 +11,7 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
 
-const blockArrowMakePath = (path: Path, props: DeepReadonly<DeepRequired<EdgeProps>>) => {
+const blockArrowMakePath = (path: Path, props: DeepReadonly<EdgeProps>) => {
   const width = props.shapeBlockArrow?.width ?? 20;
   const arrowDepth = props.shapeBlockArrow?.arrowDepth ?? 20;
   const arrowWidth = props.shapeBlockArrow?.arrowWidth ?? 50;
@@ -66,16 +66,12 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
       path: Path,
       shapeBuilder: ShapeBuilder,
       _edge: DiagramEdge,
-      props: DeepReadonly<DeepRequired<EdgeProps>>
+      props: DeepReadonly<EdgeProps>
     ) {
-      const paths = blockArrowMakePath(path, props);
-      const style = this.getStyle(props);
-      style.fill = props.fill.color ?? 'none';
-      style.opacity = (props.effects.opacity ?? 1).toString();
-
-      shapeBuilder.edge(paths, style, props);
+      shapeBuilder.edge(blockArrowMakePath(path, props), props);
     }
 
+    // Note: Override getArrow to return undefined to disable arrows
     protected getArrow(
       _type: 'start' | 'end',
       _edgeProps: DeepReadonly<DeepRequired<EdgeProps>>

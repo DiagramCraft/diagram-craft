@@ -29,7 +29,7 @@ class DrawioImageComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new DrawioImageNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    shapeBuilder.boundaryPath(boundary);
+    shapeBuilder.boundaryPath(boundary.all());
 
     const bounds = props.node.bounds;
 

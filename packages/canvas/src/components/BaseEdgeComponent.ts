@@ -2,8 +2,6 @@ import { Component } from '../component/component';
 import { Path } from '@diagram-craft/geometry/path';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { DASH_PATTERNS } from '../dashPatterns';
-import { makeShadowFilter } from '../effects/shadow';
 import { applyLineHops, clipPath } from '@diagram-craft/model/edgeUtils';
 import * as svg from '../component/vdom-svg';
 import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
@@ -94,36 +92,6 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     _props: DeepReadonly<DeepRequired<EdgeProps>>
   ) {
     throw new VerifyNotReached();
-  }
-
-  getStyle(edgeProps: DeepReadonly<DeepRequired<EdgeProps>>): Partial<CSSStyleDeclaration> {
-    const width = edgeProps.stroke.width;
-    const color = edgeProps.stroke.color;
-
-    const style: Partial<CSSStyleDeclaration> = {
-      strokeDasharray:
-        DASH_PATTERNS[edgeProps.stroke.pattern]?.(
-          edgeProps.stroke.patternSize / 100,
-          edgeProps.stroke.patternSpacing / 100
-        ) ?? '',
-      strokeWidth: width.toString(),
-      stroke: color,
-      strokeLinecap: edgeProps.stroke.lineCap,
-      strokeLinejoin: edgeProps.stroke.lineJoin,
-      strokeMiterlimit: edgeProps.stroke.miterLimit.toString()
-    };
-
-    if (edgeProps.shadow.enabled) {
-      style.filter = makeShadowFilter(edgeProps.shadow);
-    }
-
-    if (edgeProps.highlight.includes('drop-target')) {
-      style.stroke = '#30A46C';
-      style.strokeWidth = '3';
-      style.strokeDasharray = '';
-    }
-
-    return style;
   }
 
   render(props: EdgeComponentProps) {
@@ -264,10 +232,9 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     const shapeBuilder = new ShapeBuilder({
       element: props.def,
       elementProps: edgeProps,
-      style: this.getStyle(edgeProps),
+      style: {},
       isSingleSelected,
-      onMouseDown: () => {},
-      tool: props.tool
+      onMouseDown: () => {}
     });
 
     this.buildShape(basePath, shapeBuilder, props.def, edgeProps);
@@ -275,6 +242,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     return svg.g(
       {
         id: `edge-${props.def.id}`,
+        class: `${edgeProps.highlight.map(h => `svg-edge--highlight-${h}`).join(' ')}`,
         on: {
           mousedown: onMouseDown,
           dblclick: e => props.onDoubleClick(props.def.id, EventHelper.point(e)),
@@ -295,28 +263,28 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
 export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
   constructor() {
-    super('Simple', 'Simple', SimpleEdgeComponent);
+    super('Simple', 'Simple', SimpleEdgeDefinition.Shape);
   }
+
+  static Shape = class extends BaseEdgeComponent {
+    buildShape(
+      path: Path,
+      shapeBuilder: ShapeBuilder,
+      edge: DiagramEdge,
+      props: DeepReadonly<DeepRequired<EdgeProps>>
+    ) {
+      const paths = applyLineHops(path, edge, undefined, undefined, edge.intersections);
+      shapeBuilder.edge(
+        paths,
+        edge.propsForRendering,
+        this.getArrow('start', props),
+        this.getArrow('end', props),
+        { style: { fill: 'none' } }
+      );
+    }
+  };
 
   supports(capability: EdgeCapability): boolean {
     return !['fill'].includes(capability);
-  }
-}
-
-export class SimpleEdgeComponent extends BaseEdgeComponent {
-  buildShape(
-    path: Path,
-    shapeBuilder: ShapeBuilder,
-    edge: DiagramEdge,
-    props: DeepReadonly<DeepRequired<EdgeProps>>
-  ) {
-    const paths = applyLineHops(path, edge, undefined, undefined, edge.intersections);
-    shapeBuilder.edge(
-      paths,
-      this.getStyle(props),
-      edge.propsForRendering,
-      this.getArrow('start', props),
-      this.getArrow('end', props)
-    );
   }
 }

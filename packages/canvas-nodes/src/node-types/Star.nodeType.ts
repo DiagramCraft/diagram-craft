@@ -85,7 +85,7 @@ class StarComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = new StarNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    shapeBuilder.boundaryPath(boundary);
+    shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
 
     const path = boundary.singularPath();

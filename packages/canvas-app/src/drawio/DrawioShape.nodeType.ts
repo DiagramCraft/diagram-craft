@@ -234,7 +234,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
     let savedStyle = style;
 
     let currentShape: (p: NodeProps) => void = p => {
-      return shapeBuilder.boundaryPath(boundary, p);
+      return shapeBuilder.boundaryPath(boundary.all(), p);
     };
 
     let backgroundDrawn = false;

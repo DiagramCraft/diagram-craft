@@ -25,9 +25,10 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { makeReflection } from '../effects/reflection';
 import { makeBlur } from '../effects/blur';
 import { makeOpacity } from '../effects/opacity';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
-import { EdgeComponentProps, SimpleEdgeComponent } from './BaseEdgeComponent';
+import { EdgeComponentProps } from './BaseEdgeComponent';
+import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 
 export type BaseShapeProps = {
   def: DiagramNode;
@@ -85,7 +86,7 @@ export class BaseNodeComponent<
 
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    shapeBuilder.boundaryPath(boundary);
+    shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
   }
 
@@ -274,9 +275,14 @@ export class BaseNodeComponent<
       const nodeDefinition = child.getDefinition() as ShapeNodeDefinition;
       const nodeComponent = nodeDefinition.component!;
       return this.subComponent(() => new nodeComponent(nodeDefinition), p);
-    } else {
+    } else if (isEdge(child)) {
+      const edgeDefinition = child.getDefinition() as ShapeEdgeDefinition;
+      const edgeComponent = edgeDefinition.component!;
+
       // TODO: Get the right type from the edge definition
-      return this.subComponent($cmp(SimpleEdgeComponent), p);
+      return this.subComponent(() => new edgeComponent(edgeDefinition), p);
+    } else {
+      VERIFY_NOT_REACHED();
     }
   }
 }
