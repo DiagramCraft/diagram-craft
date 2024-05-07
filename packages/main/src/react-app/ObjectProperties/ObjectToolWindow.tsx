@@ -85,6 +85,7 @@ export const ObjectToolWindow = () => {
             <EdgeLinePanel />
             <ShadowPanel />
             <EdgeEffectsPanel />
+            <CustomPropertiesPanel />
           </>
         )}
 

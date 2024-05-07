@@ -1,6 +1,10 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { EdgeCapability, EdgeDefinition } from './elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  EdgeCapability,
+  EdgeDefinition
+} from './elementDefinitionRegistry';
 import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
@@ -93,5 +97,9 @@ export class BaseEdgeDefinition implements EdgeDefinition {
 
     uow.updateElement(element);
     uow.updateElement(edge);
+  }
+
+  getCustomProperties(_edge: DiagramEdge): Array<CustomPropertyDefinition> {
+    return [];
   }
 }

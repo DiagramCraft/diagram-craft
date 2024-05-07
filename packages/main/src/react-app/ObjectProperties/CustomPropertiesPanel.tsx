@@ -5,21 +5,33 @@ import { NumberInput } from '../components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../context/DiagramContext';
 import { Select } from '../components/Select';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import {
+  CustomPropertyDefinition,
+  EdgeDefinition,
+  NodeDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 export const CustomPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
-  const [node, setNode] = useState<DiagramNode | undefined>(undefined);
+  const [element, setElement] = useState<DiagramElement | undefined>(undefined);
   const redraw = useRedraw();
 
   useEffect(() => {
     const callback = () => {
       const selectionType = diagram.selectionState.getSelectionType();
-      if (selectionType !== 'single-node' && selectionType !== 'single-label-node') {
-        setNode(undefined);
+      if (
+        selectionType !== 'single-node' &&
+        selectionType !== 'single-label-node' &&
+        selectionType !== 'single-edge'
+      ) {
+        setElement(undefined);
       } else {
-        setNode(diagram.selectionState.nodes[0]);
+        setElement(diagram.selectionState.elements[0]);
       }
     };
     callback();
@@ -32,12 +44,23 @@ export const CustomPropertiesPanel = (props: Props) => {
 
   useEventListener(diagram, 'elementChange', redraw);
 
-  if (!node) {
+  if (!element) {
     return <div></div>;
   }
 
-  const def = diagram.document.nodeDefinitions.get(node.nodeType)!;
-  const customProperties = def.getCustomProperties(node);
+  let def: EdgeDefinition | NodeDefinition;
+  let customProperties: Array<CustomPropertyDefinition>;
+
+  if (element instanceof DiagramNode) {
+    def = element.getDefinition();
+    customProperties = def.getCustomProperties(element);
+  } else if (element instanceof DiagramEdge) {
+    def = element.getDefinition();
+    customProperties = def.getCustomProperties(element);
+  } else {
+    throw new VerifyNotReached();
+  }
+
   if (Object.keys(customProperties).length === 0) {
     return <div></div>;
   }

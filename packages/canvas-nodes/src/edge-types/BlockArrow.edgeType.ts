@@ -38,12 +38,11 @@ const ArrowDepth = {
     label: 'Arrow Depth',
     type: 'number',
     value: ArrowDepth.get(edge.props.shapeBlockArrow),
-    maxValue: 50,
-    unit: '%',
+    unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowDepth.set(value, edge, uow)
   }),
 
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.arrowDepth ?? 20,
+  get: (props: DeepReadonly<ExtraProps> | undefined) => round(props?.arrowDepth ?? 20),
 
   set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value <= 0) return;
@@ -60,12 +59,11 @@ const ArrowWidth = {
     label: 'Arrow Width',
     type: 'number',
     value: ArrowWidth.get(edge.props.shapeBlockArrow),
-    maxValue: 50,
-    unit: '%',
+    unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowWidth.set(value, edge, uow)
   }),
 
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.arrowWidth ?? 50,
+  get: (props: DeepReadonly<ExtraProps> | undefined) => round(props?.arrowWidth ?? 50),
 
   set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value <= 0) return;
@@ -82,12 +80,11 @@ const Width = {
     label: 'Width',
     type: 'number',
     value: Width.get(edge.props.shapeBlockArrow),
-    maxValue: 50,
-    unit: '%',
+    unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Width.set(value, edge, uow)
   }),
 
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.width ?? 20,
+  get: (props: DeepReadonly<ExtraProps> | undefined) => round(props?.width ?? 20),
 
   set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value <= 0 || value >= ArrowWidth.get(edge.propsForEditing.shapeBlockArrow)) return;
@@ -210,5 +207,9 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
 
   supports(capability: EdgeCapability): boolean {
     return !['arrows', 'line-hops'].includes(capability);
+  }
+
+  getCustomProperties(edge: DiagramEdge): Array<CustomPropertyDefinition> {
+    return [Width.definition(edge), ArrowWidth.definition(edge), ArrowDepth.definition(edge)];
   }
 }

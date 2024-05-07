@@ -161,6 +161,7 @@ export type EdgeCapability = 'arrows' | 'fill' | 'line-hops';
 
 export interface EdgeDefinition {
   type: string;
+  name: string;
 
   supports(capability: EdgeCapability): boolean;
 
@@ -171,6 +172,8 @@ export interface EdgeDefinition {
     uow: UnitOfWork,
     operation: string
   ): void;
+
+  getCustomProperties(edge: DiagramEdge): Array<CustomPropertyDefinition>;
 }
 
 export class EdgeDefinitionRegistry {
