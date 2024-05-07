@@ -19,6 +19,7 @@ import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { Waypoint } from '@diagram-craft/model/types';
 import { Line } from '@diagram-craft/geometry/line';
+import { newid } from '@diagram-craft/utils/id';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -63,6 +64,7 @@ const parseShape = (shape: string | undefined) => {
   if (shape === 'cylinder3') return undefined;
   if (shape === 'curlyBracket') return undefined;
   if (shape === 'flexArrow') return undefined;
+  if (shape === 'step') return undefined;
   if (shape === 'mxgraph.basic.partConcEllipse') return undefined;
   if (!shape) return undefined;
 
@@ -423,6 +425,28 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
   }
 };
 
+const readMetadata = ($parent: HTMLElement) => {
+  const dest: Record<string, string> = {};
+  for (const n of $parent.getAttributeNames()) {
+    if (n === 'id' || n === 'label') continue;
+
+    const value = $parent.getAttribute(n);
+    if (value) {
+      dest[n] = value;
+    }
+  }
+  return dest;
+};
+
+const applyTemplate = (text: string, props: Metadata) => {
+  for (const match of text.matchAll(/%(\w+)%/g)) {
+    const key = match[1];
+    const value = props[key];
+    text = text.replace(match[0], value?.toString() ?? '');
+  }
+  return text;
+};
+
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const uow = UnitOfWork.throwaway(diagram);
   const queue = new WorkQueue();
@@ -455,8 +479,12 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
     const $cell = $cells.item(i)!;
     if ($cell.nodeType !== Node.ELEMENT_NODE) continue;
 
+    const $parent = $cell.parentElement!;
+    const isWrappedByObject = $parent!.tagName === 'object';
+
     const parent = $cell.getAttribute('parent')!;
-    const id = $cell.getAttribute('id')!;
+    const id =
+      $cell.getAttribute('id')! ?? (isWrappedByObject ? $parent.getAttribute('id') : newid());
     const value = $cell.getAttribute('value')!;
 
     // Ignore the root
@@ -491,6 +519,15 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       const props = getNodeProps(style);
       props.text!.text = hasValue(value) ? value : '';
+
+      if (isWrappedByObject) {
+        props.metadata = readMetadata($parent);
+
+        props.text!.text = $parent.getAttribute('label') ?? '';
+      }
+
+      // TODO: We should replace this as we add proper support for metadata and template vars
+      props.text!.text = applyTemplate(props.text!.text, props.metadata ?? {});
 
       if ('rotation' in style) {
         bounds.r = Angle.toRad(parseNum(style.rotation, 0));
@@ -683,6 +720,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           size: parseNum(style.size, 25)
         };
         nodes.push(new DiagramNode(id, 'hexagon', bounds, diagram, layer, props));
+      } else if (style.shape === 'step') {
+        props.step = {
+          size: parseNum(style.size, 25)
+        };
+        nodes.push(new DiagramNode(id, 'step', bounds, diagram, layer, props));
       } else if (style.shape === 'cylinder3' || style.shape === 'cylinder') {
         props.shapeCylinder = {
           size: parseNum(style.size, 8) * 2

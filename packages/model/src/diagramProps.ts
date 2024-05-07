@@ -80,6 +80,8 @@ declare global {
     };
   }
 
+  type Metadata = Record<string, string | number | boolean>;
+
   interface ElementProps {
     style?: string;
     stroke?: {
@@ -159,6 +161,7 @@ declare global {
 
       opacity?: number;
     };
+    metadata?: Metadata;
   }
 
   interface EdgeProps extends ElementProps {
