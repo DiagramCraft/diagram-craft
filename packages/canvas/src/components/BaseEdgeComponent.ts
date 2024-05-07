@@ -22,6 +22,7 @@ import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { makeControlPoint } from '../shape/ShapeControlPoint';
 
 const makeArrowMarker = (
   id: string,
@@ -73,16 +74,6 @@ export type EdgeComponentProps = {
   onDoubleClick: (id: string, coord: Point) => void;
   actionMap: Partial<ActionMap>;
 };
-
-declare global {
-  interface EdgeProps {
-    shapeBlockArrow?: {
-      arrowDepth?: number;
-      arrowWidth?: number;
-      width?: number;
-    };
-  }
-}
 
 export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
   buildShape(
@@ -239,6 +230,13 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
     this.buildShape(basePath, shapeBuilder, props.def, edgeProps);
 
+    const controlPoints: VNode[] = [];
+    if (isSingleSelected && props.tool?.type === 'move') {
+      for (const cp of shapeBuilder.controlPoints) {
+        controlPoints.push(makeControlPoint(cp, props.def));
+      }
+    }
+
     return svg.g(
       {
         id: `edge-${props.def.id}`,
@@ -251,7 +249,8 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       },
       ...arrowMarkers,
       ...shapeBuilder.nodes,
-      ...points
+      ...points,
+      ...controlPoints
     );
   }
 

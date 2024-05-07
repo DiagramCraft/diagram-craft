@@ -102,7 +102,7 @@ export class Path {
     return this.#start;
   }
 
-  get end() {
+  get end(): Point {
     return this.segmentList.segments.at(-1)!.end;
   }
 

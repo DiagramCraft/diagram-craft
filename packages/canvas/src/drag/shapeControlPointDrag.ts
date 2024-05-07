@@ -1,22 +1,22 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export class ShapeControlPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
   constructor(
-    private readonly node: DiagramNode,
+    private readonly element: DiagramElement,
     private readonly callback: (pos: Point, uow: UnitOfWork) => string
   ) {
     super();
-    this.uow = new UnitOfWork(this.node.diagram, true);
+    this.uow = new UnitOfWork(this.element.diagram, true);
   }
 
   onDrag(coord: Point, _modifiers: Modifiers) {
-    const bounds = this.node.bounds;
-    const nodeProps = this.node.propsForRendering;
+    const bounds = this.element.bounds;
+    const nodeProps = this.element.propsForRendering;
 
     const p = {
       x: (coord.x - bounds.x) / bounds.w,
