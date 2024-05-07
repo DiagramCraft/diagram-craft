@@ -14,19 +14,35 @@ import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { clipPath } from '@diagram-craft/model/edgeUtils';
-import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagramProps';
+import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { Waypoint } from '@diagram-craft/model/types';
 import { Line } from '@diagram-craft/geometry/line';
 import { newid } from '@diagram-craft/utils/id';
+import {
+  parseArrow,
+  parseBlockArc,
+  parseCloud,
+  parseCurlyBracket,
+  parseCylinder,
+  parseEllipse,
+  parseHexagon,
+  parseImage,
+  parseParallelogram,
+  parseProcess,
+  parseRhombus,
+  parseRoundedRect,
+  parseStep,
+  parseTriangle
+} from './shapes';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
     'stencil(tZPtDoIgFIavhv8IZv1tVveBSsm0cPjZ3QeCNlBytbU5tvc8x8N74ABwXOekogDBHOATQCiAUK5S944mdUXTRgc7IhhJSqpJ3Qhe0J5ljanBHjkVrFEUnwE8yhz14TghaXETvH1kDgDo4mVXLugKmHBF1LYLMOE771R3g3Zmenk6vcntP5RIW6FrBHYRIyOjB2RjI8MJY613E8c2/85DsLdNhI6JmdumfCZ+8nDAtgfHwoz/exAQbpwEdC4kcny8E9zAhpOS19SbNc60ZzblTLOy1M9mpcD462Lqx6h+rGPgBQ==)'
 };
 
-type Style = Partial<Record<string, string>>;
+export type Style = Partial<Record<string, string>>;
 
 class WorkQueue {
   queue: Array<() => void> = [];
@@ -40,6 +56,32 @@ class WorkQueue {
   }
 }
 
+type ShapeParser = (
+  id: string,
+  bounds: Box,
+  props: NodeProps,
+  style: Style,
+  diagram: Diagram,
+  layer: Layer
+) => Promise<DiagramNode>;
+
+const shapes: Record<string, ShapeParser> = {
+  'hexagon': parseHexagon,
+  'step': parseStep,
+  'cloud': parseCloud,
+  'rhombus': parseRhombus,
+  'parallelogram': parseParallelogram,
+  'cylinder': parseCylinder,
+  'cylinder3': parseCylinder,
+  'process': parseProcess,
+  'curlyBracket': parseCurlyBracket,
+  'mxgraph.basic.partConcEllipse': parseBlockArc,
+  'triangle': parseTriangle,
+  'mxgraph.arrows2.arrow': parseArrow,
+  'image': parseImage,
+  'ellipse': parseEllipse
+};
+
 const parseStyle = (style: string) => {
   const parts = style.split(';');
   const result: Style = {};
@@ -51,21 +93,11 @@ const parseStyle = (style: string) => {
 };
 
 const parseShape = (shape: string | undefined) => {
-  if (shape === 'image') return undefined;
+  if (shape! in shapes) return undefined;
+
   if (shape === 'mxgraph.basic.rect') return undefined;
-  if (shape === 'hexagon') return undefined;
-  if (shape === 'parallelogram') return undefined;
-  if (shape === 'process') return undefined;
-  if (shape === 'mxgraph.arrows2.arrow') return undefined;
-  if (shape === 'ellipse') return undefined;
   if (shape === 'circle3') return undefined;
-  if (shape === 'cloud') return undefined;
-  if (shape === 'cylinder') return undefined;
-  if (shape === 'cylinder3') return undefined;
-  if (shape === 'curlyBracket') return undefined;
   if (shape === 'flexArrow') return undefined;
-  if (shape === 'step') return undefined;
-  if (shape === 'mxgraph.basic.partConcEllipse') return undefined;
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
@@ -119,31 +151,7 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'cross-outline': 'CROSS'
 };
 
-// Based on https://stackoverflow.com/questions/12168909/blob-from-dataurl
-const dataURItoBlob = (dataURI: string) => {
-  // convert base64 to raw binary data held in a string
-  // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
-  const byteString = atob(dataURI.split(',')[1]);
-
-  // separate out the mime component
-  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-
-  // write the bytes of the string to an ArrayBuffer
-  const ab = new ArrayBuffer(byteString.length);
-
-  // create a view into the buffer
-  const ia = new Uint8Array(ab);
-
-  // set the bytes of the buffer to the correct values
-  for (let i = 0; i < byteString.length; i++) {
-    ia[i] = byteString.charCodeAt(i);
-  }
-
-  // write the ArrayBuffer to a blob, and you're done
-  return new Blob([ab], { type: mimeString });
-};
-
-const parseArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
+const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
   let type = style[`${t}Arrow`];
   const size = style[`${t}Size`];
   const fill = style[`${t}Fill`];
@@ -577,12 +585,12 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const source = new FreeEndpoint(points.find(p => p.as === 'sourcePoint') ?? Point.ORIGIN);
         const target = new FreeEndpoint(points.find(p => p.as === 'targetPoint') ?? Point.ORIGIN);
 
-        parseArrow('start', style, props);
+        parseEdgeArrow('start', style, props);
 
         // Note, apparently the lack of an arrow specified, means by default a
         // classic end arrow is assumed
         if (!style.endArrow) style.endArrow = 'classic';
-        parseArrow('end', style, props);
+        parseEdgeArrow('end', style, props);
 
         const edgeProps = props as EdgeProps;
         edgeProps.routing ??= {};
@@ -674,109 +682,17 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
         nodes.push(node);
         parents.set(id, node);
-      } else if (style.shape === 'image' || 'image' in style) {
-        const image = style.image ?? '';
-
-        props.fill!.type = 'image';
-        props.text!.valign = 'top';
-        props.text!.align = 'center';
-
-        if (!style.imageBorder) {
-          props.stroke!.enabled = false;
-        } else {
-          props.stroke!.color = style.imageBorder;
-        }
-
-        if (image.startsWith('data:')) {
-          const blob = dataURItoBlob(image);
-          const attachment = await diagram.document.attachments.addAttachment(blob);
-
-          props.fill!.image = {
-            id: attachment.hash,
-            fit: 'contain'
-          };
-        } else {
-          props.fill!.image = {
-            url: image,
-            fit: 'contain'
-          };
-        }
-
-        nodes.push(new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props));
-      } else if (style.shape === 'cloud') {
-        nodes.push(new DiagramNode(id, 'cloud', bounds, diagram, layer, props));
-      } else if ('ellipse' in style || style.shape === 'ellipse') {
-        props.text!.align = (style.align ?? 'center') as HAlign;
-        nodes.push(new DiagramNode(id, 'circle', bounds, diagram, layer, props));
-      } else if ('rhombus' in style) {
-        nodes.push(new DiagramNode(id, 'diamond', bounds, diagram, layer, props));
-      } else if (style.shape === 'parallelogram') {
-        props.parallelogram = {
-          slant: parseNum(style.size, 20)
-        };
-        nodes.push(new DiagramNode(id, 'parallelogram', bounds, diagram, layer, props));
-      } else if (style.shape === 'hexagon') {
-        props.hexagon = {
-          size: parseNum(style.size, 25)
-        };
-        nodes.push(new DiagramNode(id, 'hexagon', bounds, diagram, layer, props));
-      } else if (style.shape === 'step') {
-        props.step = {
-          size: parseNum(style.size, 25)
-        };
-        nodes.push(new DiagramNode(id, 'step', bounds, diagram, layer, props));
-      } else if (style.shape === 'cylinder3' || style.shape === 'cylinder') {
-        props.shapeCylinder = {
-          size: parseNum(style.size, 8) * 2
-        };
-        nodes.push(new DiagramNode(id, 'cylinder', bounds, diagram, layer, props));
-      } else if (style.shape === 'process') {
-        props.process = {
-          size: parseNum(style.size, 0.125) * 100
-        };
-        nodes.push(new DiagramNode(id, 'process', bounds, diagram, layer, props));
-      } else if (style.shape === 'curlyBracket') {
-        props.shapeCurlyBracket = {
-          size: parseNum(style.size, 0.5) * 100
-        };
-        nodes.push(new DiagramNode(id, 'curlyBracket', bounds, diagram, layer, props));
-      } else if (style.shape === 'mxgraph.basic.partConcEllipse') {
-        props.shapeBlockArc = {
-          innerRadius: 100 - parseNum(style.arcWidth, 0.5) * 100,
-          startAngle: Angle.toDeg(Math.PI / 2 + 2 * Math.PI * (1 - parseNum(style.endAngle, 0.5))),
-          endAngle: Angle.toDeg(Math.PI / 2 + 2 * Math.PI * (1 - parseNum(style.startAngle, 0.3)))
-        };
-
-        if (props.shapeBlockArc.endAngle === 0) {
-          props.shapeBlockArc.endAngle = 359.999;
-        }
-
-        nodes.push(new DiagramNode(id, 'blockArc', bounds, diagram, layer, props));
+      } else if (style.shape! in shapes) {
+        nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
       } else if ('triangle' in style) {
-        props.shapeTriangle = {
-          direction: (style.direction ?? 'east') as 'east' | 'north' | 'south' | 'west'
-        };
-        nodes.push(new DiagramNode(id, 'triangle', bounds, diagram, layer, props));
-      } else if (style.shape === 'mxgraph.arrows2.arrow') {
-        let type = 'arrow-right';
-        if (style.direction === 'north') {
-          type = 'arrow-up';
-        } else if (style.direction === 'south') {
-          type = 'arrow-down';
-        }
-
-        props.shapeArrow = {};
-        props.shapeArrow.notch = parseNum(style.notch, 0);
-        props.shapeArrow.y = parseNum(style.dy, 0.2) * 50;
-        props.shapeArrow.x = parseNum(style.dx, 20);
-
-        nodes.push(new DiagramNode(id, type, bounds, diagram, layer, props));
+        nodes.push(await parseTriangle(id, bounds, props, style, diagram, layer));
+      } else if ('image' in style) {
+        nodes.push(await parseImage(id, bounds, props, style, diagram, layer));
+      } else if ('ellipse' in style) {
+        nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
       } else {
         if (style.rounded === '1') {
-          props.roundedRect = {
-            radius: (parseNum(style.arcSize, 10) * Math.min(bounds.w, bounds.h)) / 100
-          };
-          nodes.push(new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props));
+          nodes.push(await parseRoundedRect(id, bounds, props, style, diagram, layer));
         } else {
           nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
         }
