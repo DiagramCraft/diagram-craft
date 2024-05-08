@@ -230,6 +230,14 @@ input::-webkit-input-placeholder {
   background: var(--secondary-bg);
   border-top: 2px solid var(--slate-1);
   display: flex;
+
+  /* TODO: This is a bit ugly... better way to overflow the tabs? */
+  max-width: 100%;
+  overflow: hidden;
+  > div:first-child {
+    max-width: calc(100% - 80px);
+    overflow: hidden;
+  }
 }
 
 

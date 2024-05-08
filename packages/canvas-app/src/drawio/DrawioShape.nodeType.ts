@@ -199,6 +199,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
+  // TODO: This needs to consider rotation
   getAnchors(def: DiagramNode) {
     const shape = parse(def);
 

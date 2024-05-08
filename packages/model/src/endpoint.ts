@@ -2,6 +2,7 @@ import { SerializedEndpoint } from './serialization/types';
 import { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from './diagram';
+import { Box } from '@diagram-craft/geometry/box';
 
 export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint & FixedEndpoint =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,7 +53,8 @@ export class FixedEndpoint implements Endpoint {
   ) {}
 
   get position() {
-    return this.node!._getPositionInBounds(this.offset!);
+    const point = this.node!._getPositionInBounds(this.offset!);
+    return Point.rotateAround(point, this.node.bounds.r, Box.center(this.node.bounds));
   }
 
   serialize(): SerializedEndpoint {

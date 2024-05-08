@@ -193,6 +193,7 @@ const hasValue = (value: string | undefined | null): value is string => {
   if (!value || value.trim() === '') return false;
 
   if (value.startsWith('<')) {
+    if (value.includes('<img')) return true;
     try {
       const d = new DOMParser().parseFromString(value, 'text/html');
       const text = d.body.textContent;
@@ -339,6 +340,7 @@ const getNodeProps = (style: Style) => {
       fontSize: parseNum(style.fontSize, 12),
       font: style.fontFamily ?? 'Helvetica',
       color: style.fontColor ?? 'black',
+      lineHeight: 0.97,
       top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
       bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
       left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
@@ -350,8 +352,10 @@ const getNodeProps = (style: Style) => {
       color: style.fillColor ?? 'white'
     },
     geometry: {
-      flipH: style.flipH === '1',
-      flipV: style.flipV === '1'
+      // Not sure checking if the object has a shape is correct
+      // This is a workaround as flipping a shape doesn't flip the text?
+      flipH: 'shape' in style && style.flipH === '1',
+      flipV: 'shape' in style && style.flipV === '1'
     }
   };
 
@@ -362,6 +366,8 @@ const getNodeProps = (style: Style) => {
   } else if (style.fontStyle === '3') {
     props.text!.bold = true;
     props.text!.italic = true;
+  } else if (style.fontStyle === '4') {
+    props.text!.textDecoration = 'underline';
   }
 
   if (style.gradientColor && style.gradientColor !== 'none') {
@@ -376,6 +382,12 @@ const getNodeProps = (style: Style) => {
   if (style.opacity && style.opacity !== '100') {
     props.effects ??= {};
     props.effects.opacity = parseNum(style.opacity, 100) / 100;
+  }
+
+  if (style.sketch === '1') {
+    props.effects ??= {};
+    props.effects.sketch = true;
+    props.effects.sketchFillType = 'hachure';
   }
 
   props.stroke = {
@@ -410,13 +422,18 @@ const getNodeProps = (style: Style) => {
 const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOfWork) => {
   const diagram = edge.diagram;
 
+  // TODO: Probably need a 4th type of endpoint that just connects to the closest point
+  //       on the shape (especially important for orthogonal connectors) - or we change
+  //       the orthogonal router to behave this way for (0.5, 0.5)
+
   const source = $cell.getAttribute('source')!;
   if (source) {
     const sourceNode = diagram.nodeLookup.get(source);
     if (sourceNode) {
-      const x = parseNum(style.exitX, 0.5);
-      const y = parseNum(style.exitY, 0.5);
+      const defaultPoint = Point.of(0.5, 0.5);
 
+      const x = parseNum(style.exitX, defaultPoint.x);
+      const y = parseNum(style.exitY, defaultPoint.y);
       edge.setStart(new FixedEndpoint({ x, y }, sourceNode), uow);
     }
   }
@@ -425,9 +442,10 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
   if (target) {
     const targetNode = diagram.nodeLookup.get(target);
     if (targetNode) {
-      const x = parseNum(style.entryX, 0.5);
-      const y = parseNum(style.entryY, 0.5);
+      const defaultPoint = Point.of(0.5, 0.5);
 
+      const x = parseNum(style.entryX, defaultPoint.x);
+      const y = parseNum(style.entryY, defaultPoint.y);
       edge.setEnd(new FixedEndpoint({ x, y }, targetNode), uow);
     }
   }
@@ -488,7 +506,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
     if ($cell.nodeType !== Node.ELEMENT_NODE) continue;
 
     const $parent = $cell.parentElement!;
-    const isWrappedByObject = $parent!.tagName === 'object';
+    const isWrappedByObject = $parent!.tagName === 'object' || $parent!.tagName === 'UserObject';
 
     const parent = $cell.getAttribute('parent')!;
     const id =
@@ -549,9 +567,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         props.drawio = { shape: btoa(await decode(shape)) };
         nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props));
       } else if ($style.startsWith('text;')) {
-        // Determine if we should use a rect or text shape based on the presence
-        // of a border or background
-
         if (!style.strokeColor || style.strokeColor === 'none') {
           props.stroke!.enabled = false;
         }
@@ -559,6 +574,16 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (!style.fillColor || style.fillColor === 'none') {
           props.fill!.enabled = false;
         }
+
+        // There are different defaults for align and valign for a text node
+
+        const align = style.align ?? 'left';
+        assertHAlign(align);
+        props.text!.align = align;
+
+        const valign = style.verticalAlign ?? 'top';
+        assertVAlign(valign);
+        props.text!.valign = valign;
 
         nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
       } else if ($style.startsWith('edgeLabel;')) {
@@ -801,27 +826,29 @@ export const drawioReader = async (
 
     await parseMxGraphModel($mxGraphModel, diagram);
 
-    const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
+    if (diagram.visibleElements().length > 0) {
+      const bounds = Box.boundingBox(diagram.visibleElements().map(e => e.bounds));
 
-    const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
-    const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);
+      const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
+      const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);
 
-    const canvasBounds = {
-      w: pageWidth,
-      h: pageHeight,
-      x: 0,
-      y: 0
-    };
+      const canvasBounds = {
+        w: pageWidth,
+        h: pageHeight,
+        x: 0,
+        y: 0
+      };
 
-    while (bounds.x < canvasBounds.x) canvasBounds.x -= pageWidth;
-    while (bounds.y < canvasBounds.y) canvasBounds.y -= pageHeight;
-    while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += pageWidth;
-    while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += pageHeight;
+      while (bounds.x < canvasBounds.x) canvasBounds.x -= pageWidth;
+      while (bounds.y < canvasBounds.y) canvasBounds.y -= pageHeight;
+      while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += pageWidth;
+      while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += pageHeight;
 
-    diagram.canvas = canvasBounds;
+      diagram.canvas = canvasBounds;
 
-    diagram.viewBox.offset = { x: 0, y: 0 };
-    diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);
+      diagram.viewBox.offset = { x: 0, y: 0 };
+      diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);
+    }
   }
 
   console.log(`Duration: ${new Date().getTime() - start}`);

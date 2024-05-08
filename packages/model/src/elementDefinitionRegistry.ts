@@ -59,6 +59,7 @@ export interface NodeDefinition {
   // TODO: Remove this perhaps
   getDefaultConfig(node: DiagramNode): { size: Extent };
 
+  // This returns anchors in diagram coordinates, i.e. rotated and translated
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;

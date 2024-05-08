@@ -118,6 +118,7 @@ export const parseImage = async (
   const image = style.image ?? '';
 
   props.fill!.type = 'image';
+  props.fill!.color = 'transparent';
   props.text!.valign = 'top';
   props.text!.align = 'center';
 
