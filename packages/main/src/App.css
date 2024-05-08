@@ -229,15 +229,9 @@ input::-webkit-input-placeholder {
   grid-area: tabs;
   background: var(--secondary-bg);
   border-top: 2px solid var(--slate-1);
-  display: flex;
 
-  /* TODO: This is a bit ugly... better way to overflow the tabs? */
-  max-width: 100%;
-  overflow: hidden;
-  > div:first-child {
-    max-width: calc(100% - 80px);
-    overflow: hidden;
-  }
+  display: grid;
+  grid-template-columns: 1fr 100px;
 }
 
 
@@ -745,44 +739,65 @@ input::-webkit-input-placeholder {
 
 /* TODO: Perhaps rename as document tabs */
 .cmp-document-tabs {
+  overflow: hidden;
   display: flex;
-  flex-direction: row;
-  height: 100%;
-  background-color: var(--primary-bg);
+  max-width: 100%;
+
+  > div:first-child {
+    max-width: calc(100% - 100px);
+    overflow: scroll;
+    scrollbar-width: none;
+  }
+
+  .cmp-document-tabs__tabs {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    background-color: var(--primary-bg);
+
+
+    .cmp-document-tabs__tab-trigger {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      color: var(--primary-fg);
+      background-color: transparent;
+      border: none;
+      border-right: 2px solid var(--slate-1);
+      min-width: max-content;
+      padding: 0;
+
+      &:last-child {
+        border-right-width: 0;
+      }
+
+      & > div {
+        padding: 1px 8px 2px 8px;
+        min-width: max-content;
+        display: flex;
+        align-items: center;
+      }
+
+      &:hover {
+        background-color: var(--slate-3);
+        color: var(--blue-11);
+      }
+
+      &[data-state='active'] {
+        background-color: var(--secondary-bg);
+        color: var(--blue-11);
+      }
+    }
+  }
+
   .cmp-document-tabs__add {
     background-color: transparent;
     border-right: 2px solid var(--slate-1);
+    border-left: 2px solid var(--slate-1);
     color: var(--primary-fg);
-    &:hover {
-      background-color: var(--slate-3);
-      color: var(--blue-11);
-    }
-  }
-  .cmp-document-tabs__tab-trigger {
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    color: var(--primary-fg);
-    background-color: transparent;
-    border: none;
-    border-right: 2px solid var(--slate-1);
-    min-width: max-content;
-    padding: 0;
-
-    & > div {
-      padding: 1px 8px 2px 8px;
-      min-width: max-content;
-      display: flex;
-      align-items: center;
-    }
 
     &:hover {
       background-color: var(--slate-3);
-      color: var(--blue-11);
-    }
-
-    &[data-state='active'] {
-      background-color: var(--secondary-bg);
       color: var(--blue-11);
     }
   }
