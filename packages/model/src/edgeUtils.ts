@@ -1,5 +1,5 @@
 import { DiagramEdge, Intersection } from './diagramEdge';
-import { ConnectedEndpoint, FixedEndpoint, isConnected } from './endpoint';
+import { ConnectedEndpoint, FixedEndpoint, isConnectedOrFixed } from './endpoint';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -72,12 +72,12 @@ export const clipPath = (
 ) => {
   const diagram = edge.diagram!;
 
-  const start = isConnected(edge.start)
+  const start = isConnectedOrFixed(edge.start)
     ? intersectWithNode(edge.start, edge.start.position, path, diagram)
     : undefined;
   const startOffset = adjustForArrow(start, startArrow, path, 1);
 
-  const end = isConnected(edge.end)
+  const end = isConnectedOrFixed(edge.end)
     ? intersectWithNode(edge.end, edge.end.position, path, diagram)
     : undefined;
   const endOffset = adjustForArrow(end, endArrow, path, -1);

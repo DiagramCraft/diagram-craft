@@ -4,9 +4,15 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from './diagram';
 import { Box } from '@diagram-craft/geometry/box';
 
-export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint & FixedEndpoint =>
+export const isConnectedOrFixed = (
+  endpoint: Endpoint
+): endpoint is ConnectedEndpoint & FixedEndpoint =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (endpoint as any).node !== undefined;
+
+export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (endpoint as any).anchor !== undefined && (endpoint as any).isMidpoint;
 
 export interface Endpoint {
   readonly position: Point;
@@ -33,6 +39,12 @@ export class ConnectedEndpoint implements Endpoint {
     public readonly node: DiagramNode
   ) {}
 
+  isMidpoint() {
+    const p = this.node!.getAnchor(this.anchor!)!.point;
+    if (!p) return false;
+    return p.x === 0.5 && p.y === 0.5;
+  }
+
   get position() {
     return this.node!._getAnchorPosition(this.anchor!);
   }
@@ -51,6 +63,11 @@ export class FixedEndpoint implements Endpoint {
     public readonly offset: Point,
     public readonly node: DiagramNode
   ) {}
+
+  isMidpoint() {
+    const p = this.offset;
+    return p.x === 0.5 && p.y === 0.5;
+  }
 
   get position() {
     const point = this.node!._getPositionInBounds(this.offset!);

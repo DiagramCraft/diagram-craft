@@ -13,6 +13,8 @@ import {
 import { Line } from '@diagram-craft/geometry/line';
 import { unique } from '@diagram-craft/utils/array';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { isConnectedOrFixed } from './endpoint';
+import { Box } from '@diagram-craft/geometry/box';
 
 type Result = {
   startDirection: Direction;
@@ -92,13 +94,42 @@ const addSegment = (
     });
 };
 
+/*
+ * In case an edge is connected to the central point of a node, orthogonal routed edges
+ * connects to the closest point on the bounding box of the node instead of the center
+ *
+ * This function adjusts the connection point to the closest point on the bounding box
+ */
+const readjustConnectionPoint = (p: Point, wp: Point, startBounds: Box) => {
+  if (wp.x >= startBounds.x && wp.x <= startBounds.x + startBounds.w) {
+    p = {
+      x: wp.x,
+      y: wp.y > startBounds.y + startBounds.h / 2 ? startBounds.y + startBounds.h : startBounds.y
+    };
+  } else if (wp.y >= startBounds.y && wp.y <= startBounds.y + startBounds.h) {
+    p = {
+      x: wp.x > startBounds.x + startBounds.w / 2 ? startBounds.x + startBounds.w : startBounds.x,
+      y: wp.y
+    };
+  }
+  return p;
+};
+
 const buildOrthogonalEdgePath = (
   edge: DiagramEdge,
   preferredStartDirection: Direction | undefined,
   preferredEndDirection: Direction | undefined
 ) => {
-  const sm = edge.start.position;
-  const em = edge.end.position;
+  let sm = edge.start.position;
+  let em = edge.end.position;
+
+  if (isConnectedOrFixed(edge.start) && edge.start.isMidpoint() && edge.waypoints.length > 0) {
+    sm = readjustConnectionPoint(sm, edge.waypoints[0].point, edge.start.node.bounds);
+  }
+
+  if (isConnectedOrFixed(edge.end) && edge.end.isMidpoint() && edge.waypoints.length > 0) {
+    em = readjustConnectionPoint(em, edge.waypoints.at(-1)!.point, edge.end.node.bounds);
+  }
 
   const path = new PathBuilder();
   path.moveTo(sm);

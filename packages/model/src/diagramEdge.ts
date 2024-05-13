@@ -10,7 +10,13 @@ import { DiagramElement, isEdge } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
-import { ConnectedEndpoint, Endpoint, FixedEndpoint, FreeEndpoint, isConnected } from './endpoint';
+import {
+  ConnectedEndpoint,
+  Endpoint,
+  FixedEndpoint,
+  FreeEndpoint,
+  isConnectedOrFixed
+} from './endpoint';
 import { edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
@@ -76,8 +82,8 @@ export class DiagramEdge
     this.#diagram = diagram;
     this.#layer = layer;
 
-    if (isConnected(start)) start.node._addEdge(start.anchor, this);
-    if (isConnected(end)) end.node._addEdge(end.anchor, this);
+    if (isConnectedOrFixed(start)) start.node._addEdge(start.anchor, this);
+    if (isConnectedOrFixed(end)) end.node._addEdge(end.anchor, this);
 
     this.#props.style ??= 'default-edge';
   }
@@ -163,13 +169,13 @@ export class DiagramEdge
     }
 
     // ... otherwise we form the name based on connected nodes
-    if (isConnected(this.start) || isConnected(this.end)) {
+    if (isConnectedOrFixed(this.start) || isConnectedOrFixed(this.end)) {
       let s = '';
-      if (isConnected(this.start)) {
+      if (isConnectedOrFixed(this.start)) {
         s = this.start.node.name;
       }
       s += ' - ';
-      if (isConnected(this.end)) {
+      if (isConnectedOrFixed(this.end)) {
         s += this.end.node.name;
       }
       return s;
@@ -216,14 +222,14 @@ export class DiagramEdge
 
     const delta = Point.subtract(b, this.bounds);
 
-    if (!isConnected(this.start)) {
+    if (!isConnectedOrFixed(this.start)) {
       this.#start = new FreeEndpoint({
         x: this.#start.position.x + delta.x,
         y: this.#start.position.y + delta.y
       });
       uow.updateElement(this);
     }
-    if (!isConnected(this.end)) {
+    if (!isConnectedOrFixed(this.end)) {
       this.#end = new FreeEndpoint({
         x: this.#end.position.x + delta.x,
         y: this.#end.position.y + delta.y
@@ -237,14 +243,14 @@ export class DiagramEdge
   setStart(start: Endpoint, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    if (isConnected(this.#start)) {
+    if (isConnectedOrFixed(this.#start)) {
       uow.snapshot(this.#start.node);
 
       this.#start.node._removeEdge(this.#start.anchor, this);
       uow.updateElement(this.#start.node);
     }
 
-    if (isConnected(start)) {
+    if (isConnectedOrFixed(start)) {
       uow.snapshot(start.node);
 
       start.node._addEdge(start.anchor, this);
@@ -263,14 +269,14 @@ export class DiagramEdge
   setEnd(end: Endpoint, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    if (isConnected(this.#end)) {
+    if (isConnectedOrFixed(this.#end)) {
       uow.snapshot(this.#end.node);
 
       this.#end.node._removeEdge(this.#end.anchor, this);
       uow.updateElement(this.#end.node);
     }
 
-    if (isConnected(end)) {
+    if (isConnectedOrFixed(end)) {
       uow.snapshot(end.node);
 
       end.node._addEdge(end.anchor, this);
@@ -287,7 +293,7 @@ export class DiagramEdge
   }
 
   isConnected() {
-    return isConnected(this.start) || isConnected(this.end);
+    return isConnectedOrFixed(this.start) || isConnectedOrFixed(this.end);
   }
 
   /* Label Nodes ******************************************************************************************** */
@@ -491,8 +497,10 @@ export class DiagramEdge
   path() {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
 
-    const startNormal = isConnected(this.start) ? this._calculateNormal(this.start) : undefined;
-    const endNormal = isConnected(this.end) ? this._calculateNormal(this.end) : undefined;
+    const startNormal = isConnectedOrFixed(this.start)
+      ? this._calculateNormal(this.start)
+      : undefined;
+    const endNormal = isConnectedOrFixed(this.end) ? this._calculateNormal(this.end) : undefined;
 
     const startDirection = startNormal ? Direction.fromVector(startNormal) : undefined;
     const endDirection = endNormal ? Direction.fromVector(endNormal) : undefined;

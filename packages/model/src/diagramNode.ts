@@ -7,7 +7,7 @@ import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { nodeDefaults } from './diagramDefaults';
-import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnected } from './endpoint';
+import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnectedOrFixed } from './endpoint';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -373,7 +373,7 @@ export class DiagramNode
         let newStart: Endpoint;
         let newEnd: Endpoint;
 
-        if (isConnected(e.start)) {
+        if (isConnectedOrFixed(e.start)) {
           const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
           if (newStartNode) {
             newStart = new ConnectedEndpoint(e.start.anchor, newStartNode as DiagramNode);
@@ -384,7 +384,7 @@ export class DiagramNode
           newStart = new FreeEndpoint(e.start.position);
         }
 
-        if (isConnected(e.end)) {
+        if (isConnectedOrFixed(e.end)) {
           const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
           if (newEndNode) {
             newEnd = new ConnectedEndpoint(e.end.anchor, newEndNode as DiagramNode);
@@ -458,11 +458,11 @@ export class DiagramNode
     for (const anchor of this.edges.keys()) {
       for (const edge of this.edges.get(anchor) ?? []) {
         let isChanged = false;
-        if (isConnected(edge.start) && edge.start.node === this) {
+        if (isConnectedOrFixed(edge.start) && edge.start.node === this) {
           edge.setStart(new FreeEndpoint(edge.start.position), uow);
           isChanged = true;
         }
-        if (isConnected(edge.end) && edge.end.node === this) {
+        if (isConnectedOrFixed(edge.end) && edge.end.node === this) {
           edge.setEnd(new FreeEndpoint(edge.end.position), uow);
           isChanged = true;
         }

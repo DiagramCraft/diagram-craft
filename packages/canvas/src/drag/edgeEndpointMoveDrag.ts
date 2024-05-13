@@ -8,7 +8,7 @@ import {
   ConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
-  isConnected
+  isConnectedOrFixed
 } from '@diagram-craft/model/endpoint';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -40,8 +40,10 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     const type = this.type;
 
     // Make sure we cannot connect to ourselves
-    if (type === 'start' && isConnected(this.edge.end) && this.edge.end.node.id === id) return;
-    if (type === 'end' && isConnected(this.edge.start) && this.edge.start.node.id === id) return;
+    if (type === 'start' && isConnectedOrFixed(this.edge.end) && this.edge.end.node.id === id)
+      return;
+    if (type === 'end' && isConnectedOrFixed(this.edge.start) && this.edge.start.node.id === id)
+      return;
 
     this.hoverElement = id;
 
