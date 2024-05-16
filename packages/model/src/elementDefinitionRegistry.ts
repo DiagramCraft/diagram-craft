@@ -86,6 +86,7 @@ export type StencilOpts = {
 // TODO: Change from NodeDefinition to Diagram
 export type Stencil = StencilOpts & {
   node: NodeDefinition;
+  dimensions?: Extent;
 };
 
 export type StencilPackage = {
@@ -110,6 +111,12 @@ const addRegistration = (id: string, reg: Stencil, dest: Map<string, Stencil[]>)
   }
 };
 
+const missing = new Set();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).dump_missing = () => {
+  console.log([...missing].join('\n'));
+};
+
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, Stencil[]>();
   private grouping = new Map<string, Stencil[]>();
@@ -129,8 +136,27 @@ export class NodeDefinitionRegistry {
   get(type: string): NodeDefinition {
     const r = this.nodes.get(type);
 
+    if (!r) {
+      missing.add(type);
+      console.warn(`Cannot find shape ${type}`);
+      return this.nodes.get('rect')![0].node;
+    }
+
     assert.present(r, 'Not found: ' + type);
     return r[0].node;
+  }
+
+  getRegistration(type: string): Stencil {
+    const r = this.nodes.get(type);
+
+    if (!r) {
+      missing.add(type);
+      console.warn(`Cannot find shape ${type}`);
+      return this.nodes.get('rect')![0];
+    }
+
+    assert.present(r, 'Not found: ' + type);
+    return r[0];
   }
 
   getRegistrations(type: string): Stencil[] {
@@ -155,6 +181,10 @@ export class NodeDefinitionRegistry {
     } else {
       return this.grouping.get(group)!.filter(e => !e.hidden);
     }
+  }
+
+  hasRegistration(type: string) {
+    return this.nodes.has(type);
   }
 }
 

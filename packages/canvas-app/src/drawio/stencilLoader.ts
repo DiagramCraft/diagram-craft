@@ -1,5 +1,6 @@
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '@diagram-craft/canvas-app/drawio/DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from './DrawioShape.nodeType';
+import { xNum } from './utils';
 
 export const loadStencil = async (
   url: string,
@@ -28,6 +29,10 @@ export const loadStencil = async (
         fill: { color: background },
         stroke: { color: foreground },
         drawio: { shape: btoa(xmlSerializer.serializeToString($shapes[i])) }
+      },
+      dimensions: {
+        w: xNum($shapes[i], 'w'),
+        h: xNum($shapes[i], 'h')
       }
     });
   }

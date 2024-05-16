@@ -36,6 +36,26 @@ import {
   parseStep,
   parseTriangle
 } from './shapes';
+import { registerAzureShapes } from './shapes/azure';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  registerOfficeCloudsShapes,
+  registerOfficeCommunicationsShapes,
+  registerOfficeConceptShapes,
+  registerOfficeDatabasesShapes,
+  registerOfficeDevicesShapes,
+  registerOfficeSecurityShapes,
+  registerOfficeServersShapes,
+  registerOfficeServicesShapes,
+  registerOfficeSitesShapes,
+  registerOfficeUsersShapes
+} from './shapes/office';
+import { registerCitrixShapes } from './shapes/citrix';
+import { registerVeeamShapes } from './shapes/veeam';
+import { registerVeeam3dShapes } from './shapes/veeam3d';
+import { registerVeeam2dShapes } from './shapes/veeam2d';
+import { parseCisco19Shapes, registerCisco19Shapes } from './shapes/cisco19';
+import { parseAWS4Shapes, registerAWS4Shapes } from './shapes/aws4';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -79,7 +99,49 @@ const shapes: Record<string, ShapeParser> = {
   'triangle': parseTriangle,
   'mxgraph.arrows2.arrow': parseArrow,
   'image': parseImage,
-  'ellipse': parseEllipse
+  'ellipse': parseEllipse,
+  'mxgraph.cisco19': parseCisco19Shapes,
+  'mxgraph.aws4': parseAWS4Shapes
+};
+
+const getParser = (shape: string | undefined): ShapeParser | undefined =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  shapes[shape as unknown as any] ??
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  shapes[shape?.split('.').slice(0, -1).join('.') as unknown as any];
+
+type Loader = (registry: NodeDefinitionRegistry) => Promise<void>;
+
+const loaders: Record<string, Loader> = {
+  'mxgraph.azure': registerAzureShapes,
+  'mxgraph.office.communications': registerOfficeCommunicationsShapes,
+  'mxgraph.office.concepts': registerOfficeConceptShapes,
+  'mxgraph.office.clouds': registerOfficeCloudsShapes,
+  'mxgraph.office.databases': registerOfficeDatabasesShapes,
+  'mxgraph.office.devices': registerOfficeDevicesShapes,
+  'mxgraph.office.security': registerOfficeSecurityShapes,
+  'mxgraph.office.servers': registerOfficeServersShapes,
+  'mxgraph.office.services': registerOfficeServicesShapes,
+  'mxgraph.office.sites': registerOfficeSitesShapes,
+  'mxgraph.office.users': registerOfficeUsersShapes,
+  'mxgraph.citrix': registerCitrixShapes,
+  'mxgraph.veeam2': registerVeeamShapes,
+  'mxgraph.veeam.2d': registerVeeam2dShapes,
+  'mxgraph.veeam.3d': registerVeeam3dShapes,
+  'mxgraph.cisco19': registerCisco19Shapes,
+  'mxgraph.aws4': registerAWS4Shapes
+};
+
+const getLoader = (shape: string | undefined): Loader | undefined =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  loaders[shape?.split('.').slice(0, -1).join('.') as unknown as any];
+
+const alreadyLoaded = new Set();
+
+const load = async (loader: Loader, registry: NodeDefinitionRegistry) => {
+  if (alreadyLoaded.has(loader)) return;
+  await loader(registry);
+  alreadyLoaded.add(loader);
 };
 
 const parseStyle = (style: string) => {
@@ -93,7 +155,9 @@ const parseStyle = (style: string) => {
 };
 
 const parseShape = (shape: string | undefined) => {
-  if (shape! in shapes) return undefined;
+  if (getParser(shape)) return undefined;
+
+  if (getLoader(shape)) return undefined;
 
   if (shape === 'mxgraph.basic.rect') return undefined;
   if (shape === 'circle3') return undefined;
@@ -148,7 +212,8 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'blockThin-outline': 'SQUARE_ARROW_OUTLINE',
   'async-outline': 'SQUARE_STICK_ARROW_HALF_LEFT',
   'dash-outline': 'SLASH',
-  'cross-outline': 'CROSS'
+  'cross-outline': 'CROSS',
+  'openThin-outline': 'SQUARE_STICK_ARROW'
 };
 
 const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
@@ -707,14 +772,34 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
         nodes.push(node);
         parents.set(id, node);
-      } else if (style.shape! in shapes) {
-        nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
       } else if ('triangle' in style) {
         nodes.push(await parseTriangle(id, bounds, props, style, diagram, layer));
       } else if ('image' in style) {
         nodes.push(await parseImage(id, bounds, props, style, diagram, layer));
       } else if ('ellipse' in style) {
         nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
+      } else if (style.shape! in shapes) {
+        nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
+      } else if (style.shape?.startsWith('mxgraph.')) {
+        const registry = diagram.document.nodeDefinitions;
+
+        const loader = getLoader(style.shape);
+        if (!loader) {
+          console.warn(`No loader found for ${style.shape}`);
+          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+          continue;
+        }
+
+        if (!registry.hasRegistration(style.shape)) {
+          await load(loader, registry);
+        }
+
+        const parser = getParser(style.shape!);
+        if (parser) {
+          nodes.push(await parser(id, bounds, props, style, diagram, layer));
+        } else {
+          nodes.push(new DiagramNode(id, style.shape!, bounds, diagram, layer, props));
+        }
       } else {
         if (style.rounded === '1') {
           nodes.push(await parseRoundedRect(id, bounds, props, style, diagram, layer));

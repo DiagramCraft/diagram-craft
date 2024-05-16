@@ -1,6 +1,10 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
+import {
+  PathBuilder,
+  PathBuilderHelper,
+  unitCoordinateSystem
+} from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   BaseNodeComponent,
@@ -19,11 +23,13 @@ import {
   assertVAlign
 } from '@diagram-craft/model/diagramProps';
 import { xNum } from './utils';
+import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   interface NodeProps {
     drawio?: {
       shape?: string;
+      textPosition?: 'center' | 'bottom';
     };
   }
 }
@@ -48,14 +54,17 @@ const isShapeElement = ($el: Element) =>
   $el.nodeName === 'path' ||
   $el.nodeName === 'roundrect';
 
-const parse = (def: DiagramNode): Element => {
+const parse = (def: DiagramNode, stencil: Stencil): Element | undefined => {
   if (def.cache.has('element')) return def.cache.get('element') as Element;
 
+  const data = def.propsForRendering?.drawio?.shape ?? stencil.props?.drawio?.shape;
+  if (!data) {
+    console.warn(`Cannot find shape for ${def.type} / ${def.name}`);
+    return undefined;
+  }
+
   const parser = new DOMParser();
-  const $shape = parser.parseFromString(
-    atob(def.propsForRendering.drawio.shape),
-    'application/xml'
-  );
+  const $shape = parser.parseFromString(atob(data), 'application/xml');
   def.cache.set('element', $shape.documentElement);
   return def.cache.get('element') as Element;
 };
@@ -146,7 +155,9 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getDefaultConfig(node: DiagramNode): { size: Extent } {
-    const shape = parse(node);
+    const shape = parse(node, node.diagram.document.nodeDefinitions.getRegistration(this.type));
+
+    if (!shape) return { size: { w: 100, h: 100 } };
 
     return {
       size: {
@@ -157,13 +168,17 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getDefaultAspectRatio(def: DiagramNode) {
-    const shape = parse(def);
+    const shape = parse(def, def.diagram.document.nodeDefinitions.getRegistration(this.type));
+
+    if (!shape) return 1;
 
     return xNum(shape, 'w', 100) / xNum(shape, 'h', 100);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const shape = parse(def);
+    const shape = parse(def, def.diagram.document.nodeDefinitions.getRegistration(this.type));
+
+    if (!shape) return new PathBuilder(unitCoordinateSystem(def.bounds));
 
     const h = xNum(shape, 'h', 100);
     const w = xNum(shape, 'w', 100);
@@ -201,7 +216,9 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 
   // TODO: This needs to consider rotation
   getAnchors(def: DiagramNode) {
-    const shape = parse(def);
+    const shape = parse(def, def.diagram.document.nodeDefinitions.getRegistration(this.type));
+
+    if (!shape) return super.getAnchors(def);
 
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
@@ -220,19 +237,34 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
+const setColor = (c: string, alpha: number) => {
+  if (alpha === 1.0) return c;
+  return `color(from ${c} srgb r g b / ${alpha})`;
+};
+
 class DrawioShapeComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
     const shapeNodeDefinition = this.def as DrawioShapeNodeDefinition;
 
     const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
 
-    const $shape = parse(props.node);
+    const $shape = parse(
+      props.node,
+      props.node.diagram.document.nodeDefinitions.getRegistration(this.def.type)
+    );
+
+    if (!$shape) return;
 
     const w = xNum($shape, 'w', 100);
     const h = xNum($shape, 'h', 100);
 
+    let strokeAlpha = 1;
+    let strokeColor = props.nodeProps.stroke?.color ?? 'transparent';
+    let fillAlpha = 1;
+    let fillColor = props.nodeProps.fill?.color ?? 'transparent';
+
     let style = deepClone(props.nodeProps as DeepWriteable<NodeProps>);
-    let savedStyle = style;
+    let savedStyle = { style, strokeAlpha, strokeColor, fillAlpha, fillColor };
 
     let currentShape: (p: NodeProps) => void = p => {
       return shapeBuilder.boundaryPath(boundary.all(), p);
@@ -261,24 +293,37 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
         const $el = $node as Element;
         if ($el.nodeName === 'save') {
-          savedStyle = deepClone(style);
+          savedStyle = deepClone({ style, strokeAlpha, strokeColor, fillAlpha, fillColor });
         } else if ($el.nodeName === 'restore') {
-          style = deepClone(savedStyle);
+          const restored = deepClone(savedStyle);
+          style = restored.style;
+          strokeAlpha = restored.strokeAlpha;
+          strokeColor = restored.strokeColor;
+          fillAlpha = restored.fillAlpha;
+          fillAlpha = restored.fillAlpha;
         } else if ($el.nodeName === 'fontcolor') {
           style.text!.color = $el.getAttribute('color')!;
         } else if ($el.nodeName === 'fontsize') {
           style.text!.fontSize = xNum($el, 'size')!;
         } else if ($el.nodeName === 'strokecolor') {
-          style.stroke!.color = $el.getAttribute('color')!;
+          strokeColor = $el.getAttribute('color')!;
+          style.stroke!.color = setColor(strokeColor, strokeAlpha);
         } else if ($el.nodeName === 'fillcolor') {
-          style.fill!.color = $el.getAttribute('color')!;
+          fillColor = $el.getAttribute('color')!;
+          style.fill!.color = setColor(fillColor, fillAlpha);
+          style.fill!.type = 'solid';
         } else if ($el.nodeName === 'fillalpha') {
-          style.fill!.color = `color(from ${style.fill!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+          fillAlpha = xNum($el, 'alpha')!;
+          style.fill!.color = setColor(fillColor, fillAlpha);
         } else if ($el.nodeName === 'strokealpha') {
-          style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+          strokeAlpha = xNum($el, 'alpha')!;
+          style.stroke!.color = setColor(strokeColor, strokeAlpha);
         } else if ($el.nodeName === 'alpha') {
-          style.fill!.color = `color(from ${style.fill!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
-          style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+          fillAlpha = xNum($el, 'alpha')!;
+          strokeAlpha = xNum($el, 'alpha')!;
+
+          style.fill!.color = setColor(fillColor, fillAlpha);
+          style.stroke!.color = setColor(strokeColor, strokeAlpha);
         } else if ($el.nodeName === 'strokewidth') {
           style.stroke!.width = xNum($el, 'width');
         } else if ($el.nodeName === 'dashpattern') {
@@ -352,7 +397,10 @@ class DrawioShapeComponent extends BaseNodeComponent {
           },
           {
             x: props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
-            y: props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
+            y:
+              props.nodeProps.drawio?.textPosition === 'bottom'
+                ? props.node.bounds.y + props.node.bounds.h
+                : props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
             w: 60,
             h: 40,
             r: 0
@@ -360,24 +408,37 @@ class DrawioShapeComponent extends BaseNodeComponent {
         );
         backgroundDrawn = true;
       } else if ($el.nodeName === 'save') {
-        savedStyle = deepClone(style);
+        savedStyle = deepClone({ style, strokeAlpha, strokeColor, fillAlpha, fillColor });
       } else if ($el.nodeName === 'restore') {
-        style = deepClone(savedStyle);
+        const restored = deepClone(savedStyle);
+        style = restored.style;
+        strokeAlpha = restored.strokeAlpha;
+        strokeColor = restored.strokeColor;
+        fillAlpha = restored.fillAlpha;
+        fillAlpha = restored.fillAlpha;
       } else if ($el.nodeName === 'strokecolor') {
-        style.stroke!.color = $el.getAttribute('color')!;
+        strokeColor = $el.getAttribute('color')!;
+        style.stroke!.color = setColor(strokeColor, strokeAlpha);
       } else if ($el.nodeName === 'fontcolor') {
         style.text!.color = $el.getAttribute('color')!;
       } else if ($el.nodeName === 'fontsize') {
         style.text!.fontSize = xNum($el, 'size')!;
       } else if ($el.nodeName === 'fillcolor') {
-        style.fill!.color = $el.getAttribute('color')!;
+        fillColor = $el.getAttribute('color')!;
+        style.fill!.color = setColor(fillColor, fillAlpha);
+        style.fill!.type = 'solid';
       } else if ($el.nodeName === 'fillalpha') {
-        style.fill!.color = `color(from ${style.fill!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+        fillAlpha = xNum($el, 'alpha')!;
+        style.fill!.color = setColor(fillColor, fillAlpha);
       } else if ($el.nodeName === 'strokealpha') {
-        style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+        strokeAlpha = xNum($el, 'alpha')!;
+        style.stroke!.color = setColor(strokeColor, strokeAlpha);
       } else if ($el.nodeName === 'alpha') {
-        style.fill!.color = `color(from ${style.fill!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
-        style.stroke!.color = `color(from ${style.stroke!.color} srgb r g b / ${$el.getAttribute('alpha')!})`;
+        fillAlpha = xNum($el, 'alpha')!;
+        strokeAlpha = xNum($el, 'alpha')!;
+
+        style.fill!.color = setColor(fillColor, fillAlpha);
+        style.stroke!.color = setColor(strokeColor, strokeAlpha);
       } else if ($el.nodeName === 'strokewidth') {
         style.stroke!.width = xNum($el, 'width');
       } else if ($el.nodeName === 'dashpattern') {
@@ -420,6 +481,12 @@ class DrawioShapeComponent extends BaseNodeComponent {
       }
     }
 
-    shapeBuilder.text(this);
+    shapeBuilder.text(this, '1', props.nodeProps.text, {
+      ...props.node.bounds,
+      y:
+        props.nodeProps.drawio?.textPosition === 'bottom'
+          ? props.node.bounds.y + props.node.bounds.h
+          : props.node.bounds.y
+    });
   }
 }
