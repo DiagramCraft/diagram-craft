@@ -37,13 +37,21 @@ class DrawioImageComponent extends BaseNodeComponent {
       this,
       '1',
       props.nodeProps.text,
-      {
-        x: bounds.x - 50,
-        y: bounds.y + bounds.h,
-        w: bounds.w + 100,
-        h: 100,
-        r: 0
-      },
+      props.nodeProps.drawio?.textPosition
+        ? {
+            x: props.nodeProps.drawio.textPosition === 'right' ? bounds.x + bounds.w : bounds.x,
+            y: props.nodeProps.drawio.textPosition === 'bottom' ? bounds.y + bounds.h : bounds.y,
+            w: props.nodeProps.drawio.textPosition === 'right' ? 200 : bounds.w,
+            h: bounds.h,
+            r: 0
+          }
+        : {
+            x: bounds.x - 50,
+            y: bounds.y + bounds.h,
+            w: bounds.w + 100,
+            h: 100,
+            r: 0
+          },
       undefined
     );
   }

@@ -29,7 +29,7 @@ declare global {
   interface NodeProps {
     drawio?: {
       shape?: string;
-      textPosition?: 'center' | 'bottom';
+      textPosition?: 'center' | 'bottom' | 'right';
     };
   }
 }
@@ -396,12 +396,15 @@ class DrawioShapeComponent extends BaseNodeComponent {
             fontSize: (style.text?.fontSize ?? 12) * (props.node.bounds.h / xNum($shape, 'h'))
           },
           {
-            x: props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
+            x:
+              props.nodeProps.drawio?.textPosition === 'right'
+                ? props.node.bounds.x + props.node.bounds.w
+                : props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
             y:
               props.nodeProps.drawio?.textPosition === 'bottom'
                 ? props.node.bounds.y + props.node.bounds.h
                 : props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
-            w: 60,
+            w: props.nodeProps.drawio?.textPosition === 'right' ? 200 : 60,
             h: 40,
             r: 0
           }
@@ -483,10 +486,15 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
     shapeBuilder.text(this, '1', props.nodeProps.text, {
       ...props.node.bounds,
+      x:
+        props.nodeProps.drawio?.textPosition === 'right'
+          ? props.node.bounds.x + props.node.bounds.w
+          : props.node.bounds.x,
       y:
         props.nodeProps.drawio?.textPosition === 'bottom'
           ? props.node.bounds.y + props.node.bounds.h
-          : props.node.bounds.y
+          : props.node.bounds.y,
+      w: props.nodeProps.drawio?.textPosition === 'right' ? 200 : props.node.bounds.w
     });
   }
 }

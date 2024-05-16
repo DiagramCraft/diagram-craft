@@ -56,6 +56,7 @@ import { registerVeeam3dShapes } from './shapes/veeam3d';
 import { registerVeeam2dShapes } from './shapes/veeam2d';
 import { parseCisco19Shapes, registerCisco19Shapes } from './shapes/cisco19';
 import { parseAWS4Shapes, registerAWS4Shapes } from './shapes/aws4';
+import { registerGCP2Shapes } from './shapes/gcp2';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -129,7 +130,8 @@ const loaders: Record<string, Loader> = {
   'mxgraph.veeam.2d': registerVeeam2dShapes,
   'mxgraph.veeam.3d': registerVeeam3dShapes,
   'mxgraph.cisco19': registerCisco19Shapes,
-  'mxgraph.aws4': registerAWS4Shapes
+  'mxgraph.aws4': registerAWS4Shapes,
+  'mxgraph.gcp2': registerGCP2Shapes
 };
 
 const getLoader = (shape: string | undefined): Loader | undefined =>
@@ -406,8 +408,9 @@ const getNodeProps = (style: Style) => {
       font: style.fontFamily ?? 'Helvetica',
       color: style.fontColor ?? 'black',
       lineHeight: 0.97,
-      top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
-      bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
+      // TODO: Default for top and bottom used to be 5 - not sure why and when
+      top: parseNum(style.spacingTop, 0) + parseNum(style.spacing, 2),
+      bottom: parseNum(style.spacingBottom, 0) + parseNum(style.spacing, 2),
       left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
       right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2),
       align: align,
@@ -423,6 +426,8 @@ const getNodeProps = (style: Style) => {
       flipV: 'shape' in style && style.flipV === '1'
     }
   };
+
+  if (props.text!.color === '#') props.text!.color = 'black';
 
   if (style.fontStyle === '1') {
     props.text!.bold = true;
@@ -479,6 +484,11 @@ const getNodeProps = (style: Style) => {
       y: 3,
       blur: 3
     };
+  }
+
+  if (style.labelPosition === 'right') {
+    props.drawio ??= {};
+    props.drawio.textPosition = 'right';
   }
 
   return props;
@@ -769,8 +779,45 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
       } else if (parentChild.has(id) || 'group' in style) {
         // Handle groups
+
         const node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
         nodes.push(node);
+
+        if (!('group' in style) && (style.fillColor || style.strokeColor)) {
+          // TODO: This is all a bit duplication - we should refactor this
+          let bgNode: DiagramNode;
+          if (style.shape! in shapes) {
+            bgNode = await shapes[style.shape!](newid(), bounds, props, style, diagram, layer);
+          } else if (style.shape?.startsWith('mxgraph.')) {
+            const registry = diagram.document.nodeDefinitions;
+
+            const loader = getLoader(style.shape);
+            if (!loader) {
+              console.warn(`No loader found for ${style.shape}`);
+              nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+              continue;
+            }
+
+            if (!registry.hasRegistration(style.shape)) {
+              await load(loader, registry);
+            }
+
+            const parser = getParser(style.shape!);
+            if (parser) {
+              bgNode = await parser(newid(), bounds, props, style, diagram, layer);
+            } else {
+              bgNode = new DiagramNode(newid(), style.shape!, bounds, diagram, layer, props);
+            }
+          } else {
+            bgNode = new DiagramNode(newid(), 'rect', { ...bounds }, diagram, layer, props);
+          }
+
+          node.addChild(bgNode, uow);
+          queue.add(() => {
+            bgNode.setBounds(node.bounds, uow);
+          });
+        }
+
         parents.set(id, node);
       } else if ('triangle' in style) {
         nodes.push(await parseTriangle(id, bounds, props, style, diagram, layer));
@@ -813,9 +860,20 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (p instanceof DiagramNode) {
           // Need to offset the bounds according to the parent
 
+          const offsetPoint = $geometry.querySelector('mxPoint[as=offset]');
+
+          // TODO: Unclear why the `&& offsetPoint` condition - needed by test6
+          const isRelative = $geometry.getAttribute('relative') === '1' && offsetPoint;
+
           const newBounds = {
-            x: node.bounds.x + p.bounds.x,
-            y: node.bounds.y + p.bounds.y,
+            x:
+              (isRelative ? node.bounds.x * p.bounds.w : node.bounds.x) +
+              p.bounds.x +
+              (offsetPoint ? xNum(offsetPoint, 'x', 0) : 0),
+            y:
+              (isRelative ? node.bounds.y * p.bounds.h : node.bounds.y) +
+              p.bounds.y +
+              (offsetPoint ? xNum(offsetPoint, 'y', 0) : 0),
             w: node.bounds.w,
             h: node.bounds.h,
             r: node.bounds.r

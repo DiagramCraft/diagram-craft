@@ -868,6 +868,18 @@
   .cmp-tree__node[data-depth="4"] > .cmp-tree__node__label {
     margin-left: 2rem;
   }
+  .cmp-tree__node[data-depth="5"] > .cmp-tree__node__label {
+    margin-left: 2.5rem;
+  }
+  .cmp-tree__node[data-depth="6"] > .cmp-tree__node__label {
+    margin-left: 3rem;
+  }
+  .cmp-tree__node[data-depth="7"] > .cmp-tree__node__label {
+    margin-left: 3.5rem;
+  }
+  .cmp-tree__node[data-depth="8"] > .cmp-tree__node__label {
+    margin-left: 4rem;
+  }
 
   .cmp-tree__node__label {
     display: flex;

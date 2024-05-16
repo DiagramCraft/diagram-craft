@@ -13,7 +13,11 @@ export class Attachment {
     this.content = content;
     this.inUse = true;
 
-    this.#url = URL.createObjectURL(new Blob([this.content]));
+    this.#url = URL.createObjectURL(
+      new Blob([this.content], {
+        type: this.content.type
+      })
+    );
   }
 
   static async create(content: Blob) {

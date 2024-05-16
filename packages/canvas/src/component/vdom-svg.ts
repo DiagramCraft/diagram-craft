@@ -150,6 +150,8 @@ export const g = (attrs: Attr<GAttributes>, ...children: VNodeChildParam[]) => {
 type ImageAttributes = ElementAttributes & {
   href?: string;
   preserveAspectRatio?: string;
+  x?: string | number;
+  y?: string | number;
   width?: string | number;
   height?: string | number;
   filter?: string;

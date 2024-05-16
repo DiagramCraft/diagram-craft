@@ -122,6 +122,11 @@ export const parseImage = async (
   props.text!.valign = 'top';
   props.text!.align = 'center';
 
+  if (props.drawio?.textPosition === 'right') {
+    props.text!.align = 'left';
+    props.text!.valign = 'middle';
+  }
+
   if (!style.imageBorder) {
     props.stroke!.enabled = false;
   } else {

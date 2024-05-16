@@ -110,7 +110,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 }
               }
             },
-            [rawHTML(props.text?.text ?? '')]
+            [rawHTML((props.text?.text ?? '').replaceAll('\n', '<br>'))]
           )
         ]
       )
