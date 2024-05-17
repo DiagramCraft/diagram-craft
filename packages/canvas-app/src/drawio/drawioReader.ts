@@ -57,6 +57,7 @@ import { registerVeeam2dShapes } from './shapes/veeam2d';
 import { parseCisco19Shapes, registerCisco19Shapes } from './shapes/cisco19';
 import { parseAWS4Shapes, registerAWS4Shapes } from './shapes/aws4';
 import { registerGCP2Shapes } from './shapes/gcp2';
+import { registerC4Shapes } from './shapes/c4';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -131,16 +132,19 @@ const loaders: Record<string, Loader> = {
   'mxgraph.veeam.3d': registerVeeam3dShapes,
   'mxgraph.cisco19': registerCisco19Shapes,
   'mxgraph.aws4': registerAWS4Shapes,
-  'mxgraph.gcp2': registerGCP2Shapes
+  'mxgraph.gcp2': registerGCP2Shapes,
+  'mxgraph.c4': registerC4Shapes
 };
 
 const getLoader = (shape: string | undefined): Loader | undefined =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   loaders[shape?.split('.').slice(0, -1).join('.') as unknown as any];
 
-const alreadyLoaded = new Set();
-
-const load = async (loader: Loader, registry: NodeDefinitionRegistry) => {
+const load = async (
+  loader: Loader,
+  registry: NodeDefinitionRegistry,
+  alreadyLoaded: Set<Loader>
+) => {
   if (alreadyLoaded.has(loader)) return;
   await loader(registry);
   alreadyLoaded.add(loader);
@@ -408,9 +412,12 @@ const getNodeProps = (style: Style) => {
       font: style.fontFamily ?? 'Helvetica',
       color: style.fontColor ?? 'black',
       lineHeight: 0.97,
-      // TODO: Default for top and bottom used to be 5 - not sure why and when
-      top: parseNum(style.spacingTop, 0) + parseNum(style.spacing, 2),
-      bottom: parseNum(style.spacingBottom, 0) + parseNum(style.spacing, 2),
+
+      // Note: It seems some needs a default spacing of 5 (e.g. aws2024 / groups)
+      //       ... and some need a spacing of 0 (need to get which one)
+      top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
+      bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
+
       left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
       right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2),
       align: align,
@@ -549,6 +556,8 @@ const applyTemplate = (text: string, props: Metadata) => {
 };
 
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
+  const alreadyLoaded = new Set<Loader>();
+
   const uow = UnitOfWork.throwaway(diagram);
   const queue = new WorkQueue();
 
@@ -799,7 +808,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             }
 
             if (!registry.hasRegistration(style.shape)) {
-              await load(loader, registry);
+              await load(loader, registry, alreadyLoaded);
             }
 
             const parser = getParser(style.shape!);
@@ -838,7 +847,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         if (!registry.hasRegistration(style.shape)) {
-          await load(loader, registry);
+          await load(loader, registry, alreadyLoaded);
         }
 
         const parser = getParser(style.shape!);

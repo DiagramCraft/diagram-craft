@@ -12,25 +12,51 @@ import { newid } from '@diagram-craft/utils/id';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Scale, Transform } from '@diagram-craft/geometry/transform';
+import { DeepReadonly } from '@diagram-craft/utils/types';
+import { assert } from '@diagram-craft/utils/assert';
+import { deepMerge } from '@diagram-craft/utils/object';
+
+type TypeOrPropsFn<T> = T | ((p: NodeProps | DeepReadonly<NodeProps>) => T);
+
+function getValue<T>(value: TypeOrPropsFn<T>, props: NodeProps | DeepReadonly<NodeProps>): T {
+  if (typeof value === 'function') {
+    return (value as (p: NodeProps | DeepReadonly<NodeProps>) => T)(props);
+  } else {
+    return value;
+  }
+}
+
+type TextConfig = {
+  id: string;
+  text?: NodeProps['text'];
+  bounds?: Box;
+};
 
 type FlexShapeNodeDefinitionConfig = {
   isGroup: boolean;
-  bounds: ShapeNodeDefinition;
+  boundary: ShapeNodeDefinition;
+  text?: TypeOrPropsFn<TextConfig>;
+  drawBoundary?: boolean;
+  components?: Array<{
+    id: string;
+    nodeType?: TypeOrPropsFn<string>;
+    bounds?: TypeOrPropsFn<Box>;
+    offset?: TypeOrPropsFn<Omit<Box, 'r'>>;
+    props?: TypeOrPropsFn<NodeProps>;
+    text?: TextConfig;
+  }>;
 };
 
 declare global {
   interface NodeProps {
     shapeFlex?: {
       components?: Array<{
-        nodeType: string;
-        bounds: Box;
-        behavior: {
-          w: 'scale' | 'fixed';
-          h: 'scale' | 'fixed';
-          x: 'scale' | 'fixed' | 'center';
-          y: 'scale' | 'fixed' | 'center';
-        };
-        props: NodeProps;
+        id?: string;
+        nodeType?: string;
+        bounds?: Box;
+        offset?: Omit<Box, 'r'>;
+        props?: NodeProps;
+        text?: TextConfig;
       }>;
     };
   }
@@ -56,7 +82,7 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
           'y': props.node.bounds.y,
           'width': props.node.bounds.w,
           'height': props.node.bounds.h,
-          'stroke': props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : '#d5d5d4',
+          'stroke': props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : 'none', // ''#d5d5d4',
           'stroke-width': props.nodeProps.highlight?.includes('drop-target') ? 3 : 1,
           'fill': 'transparent',
           'on': {
@@ -65,43 +91,61 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
         })
       );
 
-      builder.boundaryPath(boundary.all());
-      builder.text(this);
+      if (this.def.config.drawBoundary === undefined || this.def.config.drawBoundary) {
+        builder.boundaryPath(boundary.all());
+      }
 
-      for (const cmp of props.nodeProps.shapeFlex!.components!) {
+      if (this.def.config.text) {
+        const txtConfig = getValue(this.def.config.text, props.nodeProps);
+        builder.text(this, txtConfig.id, txtConfig.text, txtConfig.bounds);
+      }
+
+      for (const cmp of props.nodeProps.shapeFlex?.components ?? this.def.config.components!) {
+        const cmpDef = this.def.config.components?.find(c => c.id === cmp.id);
+
+        const cmpBounds = getValue(cmp.bounds ?? cmpDef?.bounds, props.nodeProps);
+        const cmpOffset = getValue(cmp.offset ?? cmpDef?.offset, props.nodeProps);
+        const cmpProps = deepMerge(
+          {},
+          getValue(cmpDef?.props, props.nodeProps) ?? {},
+          getValue(cmp.props ?? cmpDef?.props ?? {}, props.nodeProps)
+        );
+        const cmpNodeType = getValue(cmp.nodeType ?? cmpDef?.nodeType, props.nodeProps);
+
+        assert.present(cmpNodeType, 'nodeType must be specified in either def or component');
+
         const adjustedBounds = {
-          x:
-            cmp.behavior.x === 'scale'
-              ? props.node.bounds.x + cmp.bounds.x * props.node.bounds.w
-              : props.node.bounds.x + cmp.bounds.x,
-          y:
-            cmp.behavior.y === 'scale'
-              ? props.node.bounds.y + cmp.bounds.y * props.node.bounds.h
-              : props.node.bounds.y + cmp.bounds.y,
-          w: cmp.behavior.w === 'scale' ? cmp.bounds.w * props.node.bounds.w : cmp.bounds.w,
-          h: cmp.behavior.h === 'scale' ? cmp.bounds.h * props.node.bounds.h : cmp.bounds.h,
+          x: props.node.bounds.x + (cmpBounds?.x ?? 0) * props.node.bounds.w,
+          y: props.node.bounds.y + (cmpBounds?.y ?? 0) * props.node.bounds.h,
+          w: (cmpBounds?.w ?? 0) * props.node.bounds.w,
+          h: (cmpBounds?.h ?? 0) * props.node.bounds.h,
           r: 0
         };
 
-        if (cmp.behavior.x === 'center') {
-          adjustedBounds.x = props.node.bounds.x + props.node.bounds.w / 2 - adjustedBounds.w / 2;
-        }
-
-        if (cmp.behavior.y === 'center') {
-          adjustedBounds.y = props.node.bounds.y + props.node.bounds.h / 2 - adjustedBounds.h / 2;
+        if (cmpOffset) {
+          adjustedBounds.x += cmpOffset.x;
+          adjustedBounds.y += cmpOffset.y;
+          adjustedBounds.w += cmpOffset.w;
+          adjustedBounds.h += cmpOffset.h;
         }
 
         // Create a dummy node
         const node = new DiagramNode(
           newid(),
-          cmp.nodeType,
+          cmpNodeType,
           adjustedBounds,
           props.node.diagram,
           props.node.layer,
-          cmp.props
+          cmpProps
         );
 
         builder.add(svg.g({}, this.makeElement(node, props)));
+
+        const txtConfig =
+          getValue(cmp.text, props.nodeProps) ?? getValue(cmpDef?.text, props.nodeProps);
+        if (txtConfig) {
+          builder.text(this, txtConfig.id, txtConfig.text, txtConfig.bounds ?? node.bounds);
+        }
       }
 
       if (this.def.config.isGroup) {
@@ -146,7 +190,7 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode): PathBuilder {
-    return this.config.bounds.getBoundingPathBuilder(node);
+    return this.config.boundary.getBoundingPathBuilder(node);
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork) {
