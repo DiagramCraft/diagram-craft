@@ -24,7 +24,7 @@ const makeShape = (type: string, setProps: (s: Style, p: NodeProps) => void = ()
 
 export const parseHexagon = makeShape('hexagon', (style, props) => {
   props.hexagon = {
-    size: parseNum(style.size, 25)
+    size: parseNum(style.size, 50) / 2
   };
 });
 
@@ -160,7 +160,10 @@ export const parseRoundedRect = async (
   layer: Layer
 ) => {
   props.roundedRect = {
-    radius: (parseNum(style.arcSize, 10) * Math.min(bounds.w, bounds.h)) / 100
+    radius:
+      style.absoluteArcSize === '1'
+        ? parseNum(style.arcSize, 10) / 2
+        : (parseNum(style.arcSize, 10) * Math.min(bounds.w, bounds.h)) / 100
   };
   return new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props);
 };

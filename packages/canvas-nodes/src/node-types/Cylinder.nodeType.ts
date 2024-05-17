@@ -16,6 +16,7 @@ import { round } from '@diagram-craft/utils/math';
 
 type ExtraProps = {
   size?: number;
+  direction?: 'north' | 'south' | 'east' | 'west';
 };
 
 declare global {
@@ -45,6 +46,29 @@ const Size = {
   }
 };
 
+const Direction = {
+  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+    id: 'direction',
+    label: 'Direction',
+    type: 'select',
+    options: [
+      { value: 'north', label: 'North' },
+      { value: 'south', label: 'South' },
+      { value: 'east', label: 'East' },
+      { value: 'west', label: 'West' }
+    ],
+    value: Direction.get(node.props.shapeCylinder),
+    onChange: (value: string, uow: UnitOfWork) => Direction.set(value, node, uow)
+  }),
+
+  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.direction ?? 'north',
+
+  set: (value: string, node: DiagramNode, uow: UnitOfWork) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    node.updateProps(props => (props.shapeCylinder = { direction: value as any }), uow);
+  }
+};
+
 // NodeDefinition and Shape *****************************************************
 
 export class CylinderNodeDefinition extends ShapeNodeDefinition {
@@ -54,10 +78,19 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
 
   static Shape = class extends BaseNodeComponent<CylinderNodeDefinition> {
     buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
-      super.buildShape(props, shapeBuilder);
+      const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+      shapeBuilder.boundaryPath(boundary.all());
 
       const bounds = props.node.bounds;
       const size = Size.get(props.nodeProps.shapeCylinder);
+
+      shapeBuilder.text(this, '1', props.nodeProps.text, {
+        x: bounds.x,
+        y: bounds.y + size,
+        w: bounds.w,
+        h: bounds.h - size,
+        r: bounds.r
+      });
 
       shapeBuilder.controlPoint(Point.of(bounds.x, bounds.y + size / 2), ({ y }, uow) => {
         const distance = Math.max(0, y - bounds.y);
@@ -86,6 +119,6 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
-    return [Size.definition(node)];
+    return [Size.definition(node), Direction.definition(node)];
   }
 }

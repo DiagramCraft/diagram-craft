@@ -53,21 +53,13 @@ export const parseAWS4Shapes = async (
     props.shapeFlex ??= {};
     props.shapeFlex.components = [
       {
+        id: 'icon',
         nodeType: style!.resIcon!,
         bounds: fgBounds,
-        behavior: {
-          w: 'scale',
-          h: 'scale',
-          x: 'scale',
-          y: 'scale'
-        },
         props: {
           fill: {
             color: fg,
             type: 'solid'
-          },
-          stroke: {
-            enabled: false
           }
         }
       }
@@ -82,33 +74,18 @@ export const parseAWS4Shapes = async (
     props.shapeFlex ??= {};
     props.shapeFlex.components = [
       {
+        id: 'icon',
         nodeType: style!.grIcon!,
-        bounds: {
-          w: 25,
-          h: 25,
-          x: style.shape === 'mxgraph.aws4.groupCenter' ? 0.5 : 0,
-          y: 0,
-          r: 0
-        },
-        behavior: {
-          w: 'fixed',
-          h: 'fixed',
-          x: style.shape === 'mxgraph.aws4.groupCenter' ? 'center' : 'scale',
-          y: 'scale'
-        },
         props: {
           fill: {
             color: fg,
             type: 'solid'
-          },
-          stroke: {
-            enabled: false
           }
         }
       }
     ];
 
-    return new DiagramNode(id, 'mxgraph.aws4.group', bounds, diagram, layer, props);
+    return new DiagramNode(id, style.shape, bounds, diagram, layer, props);
   }
 
   if (style.shape?.includes('illustration')) {
@@ -126,21 +103,78 @@ export const registerAWS4Shapes = async (r: NodeDefinitionRegistry) => {
   r.register(
     new FlexShapeNodeDefinition('mxgraph.aws4.resourceIcon', 'AWS Resource Icon', {
       isGroup: false,
-      bounds: new RectNodeDefinition()
+      boundary: new RectNodeDefinition(),
+      components: [
+        {
+          id: 'icon',
+          props: {
+            stroke: {
+              enabled: false
+            }
+          }
+        }
+      ]
     }),
     { hidden: true }
   );
   r.register(
     new FlexShapeNodeDefinition('mxgraph.aws4.group', 'AWS Group', {
       isGroup: true,
-      bounds: new RectNodeDefinition()
+      boundary: new RectNodeDefinition(),
+      text: {
+        id: '1'
+      },
+      components: [
+        {
+          id: 'icon',
+          bounds: {
+            w: 0,
+            h: 0,
+            x: 0,
+            y: 0,
+            r: 0
+          },
+          offset: {
+            x: 0,
+            y: 0,
+            w: 25,
+            h: 25
+          }
+        }
+      ]
     }),
     { hidden: true }
   );
   r.register(
     new FlexShapeNodeDefinition('mxgraph.aws4.groupCenter', 'AWS Group Center', {
       isGroup: true,
-      bounds: new RectNodeDefinition()
+      boundary: new RectNodeDefinition(),
+      text: {
+        id: '1'
+      },
+      components: [
+        {
+          id: 'icon',
+          bounds: {
+            w: 0,
+            h: 0,
+            x: 0.5,
+            y: 0,
+            r: 0
+          },
+          offset: {
+            x: -12.5,
+            y: 0,
+            w: 25,
+            h: 25
+          },
+          props: {
+            stroke: {
+              enabled: false
+            }
+          }
+        }
+      ]
     }),
     { hidden: true }
   );
