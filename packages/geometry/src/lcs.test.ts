@@ -39,4 +39,64 @@ describe('LocalCoordinateSystem', () => {
       expect(lcs.toGlobal({ x: 1, y: 1 }).y).toBeCloseTo(16);
     });
   });
+
+  describe('scale', () => {
+    test('toGlobal', () => {
+      const lcs = new LocalCoordinateSystem(
+        { x: 10, y: 15, w: 20, h: 30, r: 0 },
+        [0, 1],
+        [0, 1],
+        false
+      );
+      expect(lcs.toGlobal({ x: 1, y: 0 }).y).toBeCloseTo(15);
+      expect(lcs.toGlobal({ x: 1, y: 1 }).y).toBeCloseTo(45);
+
+      expect(lcs.toGlobal({ x: 0, y: 1 }).x).toBeCloseTo(10);
+      expect(lcs.toGlobal({ x: 1, y: 1 }).x).toBeCloseTo(30);
+    });
+
+    test('toLocal', () => {
+      const lcs = new LocalCoordinateSystem(
+        { x: 10, y: 15, w: 20, h: 30, r: 0 },
+        [0, 1],
+        [0, 1],
+        false
+      );
+      expect(lcs.toLocal({ x: 10, y: 15 }).x).toBeCloseTo(0);
+      expect(lcs.toLocal({ x: 10, y: 15 }).y).toBeCloseTo(0);
+
+      expect(lcs.toLocal({ x: 30, y: 45 }).x).toBeCloseTo(1);
+      expect(lcs.toLocal({ x: 30, y: 45 }).y).toBeCloseTo(1);
+    });
+  });
+
+  describe('invert', () => {
+    test('toGlobal', () => {
+      const lcs = new LocalCoordinateSystem(
+        { x: 10, y: 15, w: 20, h: 30, r: 0 },
+        [0, 1],
+        [0, 1],
+        true
+      );
+      expect(lcs.toGlobal({ x: 1, y: 0 }).y).toBeCloseTo(45);
+      expect(lcs.toGlobal({ x: 1, y: 1 }).y).toBeCloseTo(15);
+
+      expect(lcs.toGlobal({ x: 0, y: 1 }).x).toBeCloseTo(10);
+      expect(lcs.toGlobal({ x: 1, y: 1 }).x).toBeCloseTo(30);
+    });
+
+    test('toLocal', () => {
+      const lcs = new LocalCoordinateSystem(
+        { x: 10, y: 15, w: 20, h: 30, r: 0 },
+        [0, 1],
+        [0, 1],
+        true
+      );
+      expect(lcs.toLocal({ x: 10, y: 15 }).x).toBeCloseTo(0);
+      expect(lcs.toLocal({ x: 10, y: 45 }).y).toBeCloseTo(0);
+
+      expect(lcs.toLocal({ x: 30, y: 45 }).x).toBeCloseTo(1);
+      expect(lcs.toLocal({ x: 30, y: 15 }).y).toBeCloseTo(1);
+    });
+  });
 });

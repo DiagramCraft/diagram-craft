@@ -112,10 +112,12 @@ const addRegistration = (id: string, reg: Stencil, dest: Map<string, Stencil[]>)
 };
 
 const missing = new Set();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(window as any).dump_missing = () => {
-  console.log([...missing].join('\n'));
-};
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).dump_missing = () => {
+    console.log([...missing].join('\n'));
+  };
+}
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, Stencil[]>();
