@@ -48,10 +48,10 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     const radius = def.props.roundedRect?.radius ?? 5;
     const bnd = def.bounds;
 
-    const xr = radius / bnd.w;
-    const yr = radius / bnd.h;
-    const cdx = 1 - 2 * xr;
-    const cdy = 1 - 2 * yr;
+    const xr = (2 * radius) / bnd.w;
+    const yr = (2 * radius) / bnd.h;
+    const cdx = 1 - xr;
+    const cdy = 1 - yr;
 
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 

@@ -16,10 +16,10 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const b = new PathBuilder(unitCoordinateSystem(def.bounds));
     b.moveTo(Point.of(0, -1));
-    b.arcTo(Point.of(1, 0), 0.5, 0.5);
-    b.arcTo(Point.of(0, 1), 0.5, 0.5);
-    b.arcTo(Point.of(-1, 0), 0.5, 0.5);
-    b.arcTo(Point.of(0, -1), 0.5, 0.5);
+    b.arcTo(Point.of(1, 0), 1, 1);
+    b.arcTo(Point.of(0, 1), 1, 1);
+    b.arcTo(Point.of(-1, 0), 1, 1);
+    b.arcTo(Point.of(0, -1), 1, 1);
     return b;
   }
 }

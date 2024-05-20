@@ -846,10 +846,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         nodes.push(await parseTriangle(id, bounds, props, style, diagram, layer));
       } else if ('image' in style) {
         nodes.push(await parseImage(id, bounds, props, style, diagram, layer));
-      } else if ('ellipse' in style) {
-        nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
       } else if (style.shape! in shapes) {
         nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
+      } else if ('ellipse' in style) {
+        nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
       } else if (style.shape?.startsWith('mxgraph.')) {
         const registry = diagram.document.nodeDefinitions;
 

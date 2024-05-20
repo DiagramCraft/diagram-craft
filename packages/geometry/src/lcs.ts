@@ -9,6 +9,7 @@ const isPoint = (c: Box | Point): c is Point => 'x' in c;
 // Note, this provides an "unscaled" local coordinate system.
 export class LocalCoordinateSystem {
   static UNITY = new LocalCoordinateSystem({ x: 0, y: 0, w: 1, h: 1, r: 0 });
+
   private toGlobalTransforms: Transform[];
   private toLocalTransforms: Transform[];
 
@@ -20,12 +21,13 @@ export class LocalCoordinateSystem {
 
   constructor(box: Box, xRange?: [number, number], yRange?: [number, number], flipY?: boolean) {
     this.toGlobalTransforms = [];
-    if (xRange && xRange[0] !== 0) {
-      this.toGlobalTransforms.push(new Translation({ x: -xRange[0], y: 0 }));
-    }
-    if (yRange && yRange[0] !== 0) {
-      this.toGlobalTransforms.push(new Translation({ x: 0, y: -yRange[0] }));
-    }
+
+    this.toGlobalTransforms.push(
+      new Translation({
+        x: xRange && xRange[0] !== 0 ? -xRange[0] : 0,
+        y: yRange && yRange[0] !== 0 ? -yRange[0] : 0
+      })
+    );
 
     if (flipY) {
       const yr = yRange ? yRange[1] - yRange[0] : 1;
@@ -35,16 +37,15 @@ export class LocalCoordinateSystem {
 
     this.toGlobalTransforms.push(
       new Scale(
-        xRange ? (xRange[1] - xRange[0]) * box.w : 1,
-        yRange ? (yRange[1] - yRange[0]) * box.h : 1
+        xRange ? box.w / (xRange[1] - xRange[0]) : 1,
+        yRange ? box.h / (yRange[1] - yRange[0]) : 1
       )
     );
 
-    this.toGlobalTransforms.push(new Rotation(box.r), new Translation(box));
+    if (box.r !== 0) this.toGlobalTransforms.push(new Rotation(box.r));
 
-    const temp = [...this.toGlobalTransforms];
-    temp.reverse();
-    this.toLocalTransforms = temp.map(e => e.invert());
+    this.toGlobalTransforms.push(new Translation(box));
+    this.toLocalTransforms = this.toGlobalTransforms.toReversed().map(e => e.invert());
   }
 
   toGlobal(c: Box): Box;

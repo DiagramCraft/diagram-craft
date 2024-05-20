@@ -69,7 +69,7 @@ export class PenTool extends AbstractTool {
 
     const currentPath = PathBuilder.fromString(
       this.node!.props.genericPath!.path!,
-      unitCoordinateSystem(this.node!.bounds, true)
+      unitCoordinateSystem(this.node!.bounds)
     )
       .getPaths()
       .singularPath();

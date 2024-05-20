@@ -17,6 +17,8 @@ export const WritableBox = {
 };
 
 export const Box = {
+  withoutRotation: (b: Box): Box => ({ ...b, r: 0 }),
+
   unit: () => ({ x: -1, y: -1, w: 2, h: 2, r: 0 }),
 
   asReadWrite: (b: Box): WritableBox => {

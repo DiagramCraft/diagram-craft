@@ -107,13 +107,13 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
 
     pathBuilder.moveTo(Point.of(-1, 1 - size));
     pathBuilder.lineTo(Point.of(-1, -1 + size));
-    pathBuilder.arcTo(Point.of(0, -1), 1 / 2, size / 2, 0);
-    pathBuilder.arcTo(Point.of(1, -1 + size), 1 / 2, size / 2, 0);
+    pathBuilder.arcTo(Point.of(0, -1), 1, size, 0);
+    pathBuilder.arcTo(Point.of(1, -1 + size), 1, size, 0);
     pathBuilder.lineTo(Point.of(1, 1 - size));
-    pathBuilder.arcTo(Point.of(0, 1), 1 / 2, size / 2, 0);
-    pathBuilder.arcTo(Point.of(-1, 1 - size), 1 / 2, size / 2, 0);
-    pathBuilder.arcTo(Point.of(0, 1 - 2 * size), 1 / 2, size / 2, 0);
-    pathBuilder.arcTo(Point.of(1, 1 - size), 1 / 2, size / 2, 0);
+    pathBuilder.arcTo(Point.of(0, 1), 1, size, 0);
+    pathBuilder.arcTo(Point.of(-1, 1 - size), 1, size, 0);
+    pathBuilder.arcTo(Point.of(0, 1 - 2 * size), 1, size, 0);
+    pathBuilder.arcTo(Point.of(1, 1 - size), 1, size, 0);
 
     return pathBuilder;
   }

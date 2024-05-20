@@ -84,15 +84,15 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
 
     pathBuilder.moveTo(Point.of(1, 1));
     pathBuilder.lineTo(Point.of(bar + rx, 1));
-    pathBuilder.arcTo(Point.of(bar, 1 - ry), rx / 2, ry / 2, 0);
+    pathBuilder.arcTo(Point.of(bar, 1 - ry), rx, ry, 0);
     pathBuilder.lineTo(Point.of(bar, ry));
-    pathBuilder.arcTo(Point.of(bar - rx, 0), rx / 2, ry / 2, 0, 0, 1);
+    pathBuilder.arcTo(Point.of(bar - rx, 0), rx, ry, 0, 0, 1);
     pathBuilder.lineTo(Point.of(-1, 0));
 
     pathBuilder.moveTo(Point.of(bar - rx, 0));
-    pathBuilder.arcTo(Point.of(bar, -ry), rx / 2, ry / 2, 0, 0, 1);
+    pathBuilder.arcTo(Point.of(bar, -ry), rx, ry, 0, 0, 1);
     pathBuilder.lineTo(Point.of(bar, -1 + ry));
-    pathBuilder.arcTo(Point.of(bar + rx, -1), rx / 2, ry / 2, 0);
+    pathBuilder.arcTo(Point.of(bar + rx, -1), rx, ry, 0);
     pathBuilder.lineTo(Point.of(1, -1));
 
     return pathBuilder;

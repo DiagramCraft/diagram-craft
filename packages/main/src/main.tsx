@@ -13,6 +13,7 @@ import {
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { drawioReader } from '@diagram-craft/canvas-app/drawio/drawioReader';
+import { simpleDiagram } from './sample/simple';
 
 const stencilRegistry = [
   {

@@ -6,6 +6,7 @@ import { assert, precondition, VerifyNotReached } from '@diagram-craft/utils/ass
 import { Transform, TransformFactory } from './transform';
 import { PathUtils } from './pathUtils';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
+import { LocalCoordinateSystem } from './lcs';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];
@@ -21,31 +22,14 @@ export type RawSegment =
   | RawQuadSegment;
 
 /* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
-export const unitCoordinateSystem = (b: Box, invert = true) => {
-  return (p: Point, type?: 'point' | 'distance') => {
-    if (type === 'distance') return { x: p.x * b.w, y: p.y * b.h };
-
-    const xPart = (p.x * b.w) / 2 + b.w / 2;
-    const yPart = ((invert ? -1 : 1) * (p.y * b.h)) / 2 + b.h / 2;
-
-    return { x: xPart + b.x, y: yPart + b.y };
-  };
+export const unitCoordinateSystem = (b: Box) => {
+  const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [-1, 1], [-1, 1], true);
+  return (p: Point) => lcs.toGlobal(p);
 };
 
-const posZero = (n: number) => (n === 0 ? 0 : n);
-
 export const inverseUnitCoordinateSystem = (b: Box, invert = true) => {
-  return (p: Point, type?: 'point' | 'distance') => {
-    if (type === 'distance') return { x: p.x / b.w, y: p.y / b.h };
-
-    const xPart = p.x - b.x;
-    const yPart = p.y - b.y;
-
-    return {
-      x: posZero((xPart / b.w) * 2 - 1),
-      y: posZero((invert ? -1 : 1) * ((yPart / b.h) * 2 - 1))
-    };
-  };
+  const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [-1, 1], [-1, 1], invert);
+  return (p: Point) => lcs.toLocal(p);
 };
 
 export class CompoundPath {
@@ -116,7 +100,7 @@ export class CompoundPath {
   }
 }
 
-type PathBuilderTransform = (p: Point, type?: 'point' | 'distance') => Point;
+type PathBuilderTransform = (p: Point) => Point;
 
 export class PathBuilder {
   private start: Point | undefined;
@@ -180,9 +164,21 @@ export class PathBuilder {
     sweep_flag: 0 | 1 = 0
   ) {
     const tp = this.transform(p);
-    const tr = this.transform({ x: rx, y: ry }, 'distance');
 
-    this.path.push(['A', tr.x, tr.y, angle, large_arc_flag, sweep_flag, tp.x, tp.y]);
+    const g = this.transform(Point.of(rx, ry));
+    const o = this.transform(Point.ORIGIN);
+    const tr = Point.subtract(g, o);
+
+    this.path.push([
+      'A',
+      Math.abs(tr.x),
+      Math.abs(tr.y),
+      angle,
+      large_arc_flag,
+      sweep_flag,
+      tp.x,
+      tp.y
+    ]);
   }
 
   curveTo(p: Point) {

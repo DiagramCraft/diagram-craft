@@ -176,7 +176,7 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     const da = Math.abs(endAngle - startAngle);
     const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
 
-    pathBuilder.arcTo(Point.of(endX, endY), 1 / 2, 1 / 2, 0, largeArcFlag);
+    pathBuilder.arcTo(Point.of(endX, endY), 1, 1, 0, largeArcFlag);
 
     const endInnerX = (innerRadius / 100) * Math.cos(endAngle);
     const endInnerY = (innerRadius / 100) * Math.sin(endAngle);
@@ -186,8 +186,8 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     const startInnerY = (innerRadius / 100) * Math.sin(startAngle);
     pathBuilder.arcTo(
       Point.of(startInnerX, startInnerY),
-      innerRadius / 200,
-      innerRadius / 200,
+      innerRadius / 100,
+      innerRadius / 100,
       0,
       largeArcFlag,
       1
