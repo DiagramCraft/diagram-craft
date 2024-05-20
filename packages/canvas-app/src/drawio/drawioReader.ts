@@ -26,11 +26,14 @@ import {
   parseCloud,
   parseCurlyBracket,
   parseCylinder,
+  parseDelay,
   parseEllipse,
   parseHexagon,
   parseImage,
   parseParallelogram,
+  parsePartialRect,
   parseProcess,
+  parseRect,
   parseRhombus,
   parseRoundedRect,
   parseStep,
@@ -58,6 +61,7 @@ import { parseCisco19Shapes, registerCisco19Shapes } from './shapes/cisco19';
 import { parseAWS4Shapes, registerAWS4Shapes } from './shapes/aws4';
 import { registerGCP2Shapes } from './shapes/gcp2';
 import { registerC4Shapes } from './shapes/c4';
+import { registerSalesforceShapes } from './shapes/salesforce';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -91,6 +95,9 @@ const shapes: Record<string, ShapeParser> = {
   'hexagon': parseHexagon,
   'step': parseStep,
   'cloud': parseCloud,
+  'rect': parseRect,
+  'partialRectangle': parsePartialRect,
+  'delay': parseDelay,
   'rhombus': parseRhombus,
   'parallelogram': parseParallelogram,
   'cylinder': parseCylinder,
@@ -133,7 +140,8 @@ const loaders: Record<string, Loader> = {
   'mxgraph.cisco19': registerCisco19Shapes,
   'mxgraph.aws4': registerAWS4Shapes,
   'mxgraph.gcp2': registerGCP2Shapes,
-  'mxgraph.c4': registerC4Shapes
+  'mxgraph.c4': registerC4Shapes,
+  'mxgraph.salesforce': registerSalesforceShapes
 };
 
 const getLoader = (shape: string | undefined): Loader | undefined =>
@@ -219,7 +227,9 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'async-outline': 'SQUARE_STICK_ARROW_HALF_LEFT',
   'dash-outline': 'SLASH',
   'cross-outline': 'CROSS',
-  'openThin-outline': 'SQUARE_STICK_ARROW'
+  'openThin-outline': 'SQUARE_STICK_ARROW',
+  'manyOptional': 'CROWS_FEET_BALL_FILLED',
+  'manyOptional-outline': 'CROWS_FEET_BALL'
 };
 
 const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
@@ -827,12 +837,23 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
             const parser = getParser(style.shape!);
             if (parser) {
-              bgNode = await parser(newid(), bounds, props, style, diagram, layer);
+              bgNode = await parseRoundedRect(newid(), bounds, props, style, diagram, layer);
             } else {
               bgNode = new DiagramNode(newid(), style.shape!, bounds, diagram, layer, props);
             }
           } else {
-            bgNode = new DiagramNode(newid(), 'rect', { ...bounds }, diagram, layer, props);
+            if (style.rounded === '1') {
+              bgNode = new DiagramNode(
+                newid(),
+                'rounded-rect',
+                { ...bounds },
+                diagram,
+                layer,
+                props
+              );
+            } else {
+              bgNode = new DiagramNode(newid(), 'rect', { ...bounds }, diagram, layer, props);
+            }
           }
 
           node.addChild(bgNode, uow);

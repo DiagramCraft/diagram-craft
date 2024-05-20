@@ -261,6 +261,28 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     ].join('\n'),
     fill: 'bg'
   }),
+  CROWS_FEET_BALL_FILLED: s => ({
+    width: s * 35,
+    height: s * 20,
+    anchor: { x: s * 25, y: s * 5 },
+    path: [
+      `M ${s * 15} ${s * 5}`,
+      `L ${s * 25} 0`,
+      `M ${s * 15} ${s * 5}`,
+      `L ${s * 25} ${s * 5}`,
+      `M ${s * 15} ${s * 5}`,
+      `L ${s * 25} ${s * 10}`,
+      `M ${s * 15} ${s * 5}`,
+      `L ${s * 13},${s * 5}`,
+
+      /* M cx cy m r, 0 a r,r 0 1,1 -(r * 2),0 a r,r 0 1,1  (r * 2),0 */
+      `M ${s * 9},${s * 5}`,
+      `m ${s * 4}, 0`,
+      `a ${s * 4},${s * 4} 0 1,1 -${s * 8},0`,
+      `a ${s * 4},${s * 4} 0 1,1 ${s * 8},0`
+    ].join('\n'),
+    fill: 'fg'
+  }),
   BAR_BALL: s => ({
     width: s * 30,
     height: s * 20,

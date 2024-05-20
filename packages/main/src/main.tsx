@@ -94,7 +94,7 @@ const diagrams = [
   {
     name: 'Drawio',
     document: async () => {
-      const res = await fetch('/diagrams/c4.drawio');
+      const res = await fetch('/diagrams/salesforce.drawio');
       const text = await res.text();
 
       const doc = drawioReader(text, documentFactory, diagramFactory);

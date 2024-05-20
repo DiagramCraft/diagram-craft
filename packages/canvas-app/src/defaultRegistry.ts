@@ -27,6 +27,8 @@ import { CloudNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Clou
 import { BlockArrowEdgeDefinition } from '@diagram-craft/canvas-nodes/edge-types/BlockArrow.edgeType';
 import { SimpleEdgeDefinition } from '@diagram-craft/canvas/components/BaseEdgeComponent';
 import { StepNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Step.nodeType';
+import { DelayNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Delay.nodeType';
+import { PartialRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/PartialRect.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -55,6 +57,8 @@ export const defaultNodeRegistry = () => {
   dest.register(new BlockArcNodeDefinition());
   dest.register(new CloudNodeDefinition());
   dest.register(new StepNodeDefinition());
+  dest.register(new DelayNodeDefinition());
+  dest.register(new PartialRectNodeDefinition());
   dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
   dest.register(new DrawioShapeNodeDefinition(), { hidden: true });

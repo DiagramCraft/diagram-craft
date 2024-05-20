@@ -34,6 +34,29 @@ export const parseStep = makeShape('step', (style, props) => {
   };
 });
 
+export const parsePartialRect = makeShape('partial-rect', (style, props) => {
+  props.shapePartialRect = {
+    north: style.top !== '0',
+    south: style.bottom !== '0',
+    east: style.right !== '0',
+    west: style.left !== '0'
+  };
+});
+
+export const parseRect = async (
+  id: string,
+  bounds: Box,
+  props: NodeProps,
+  style: Style,
+  diagram: Diagram,
+  layer: Layer
+) => {
+  if (style.rounded === '1') return parseRoundedRect(id, bounds, props, style, diagram, layer);
+  return new DiagramNode(id, 'rect', bounds, diagram, layer, props);
+};
+
+export const parseDelay = makeShape('delay');
+
 export const parseCloud = makeShape('cloud');
 
 export const parseRhombus = makeShape('diamond');
@@ -174,7 +197,7 @@ export const parseRoundedRect = async (
   props.roundedRect = {
     radius:
       style.absoluteArcSize === '1'
-        ? parseNum(style.arcSize, 10) / 2
+        ? Math.min(bounds.w / 2, bounds.h / 2, parseNum(style.arcSize, 10) / 2)
         : (parseNum(style.arcSize, 10) * Math.min(bounds.w, bounds.h)) / 100
   };
   return new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props);
