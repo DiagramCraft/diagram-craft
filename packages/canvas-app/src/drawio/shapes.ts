@@ -45,8 +45,20 @@ export const parseParallelogram = makeShape('parallelogram', (style, props) => {
 });
 
 export const parseCylinder = makeShape('cylinder', (style, props) => {
+  const directionMap = {
+    south: 'east',
+    north: 'west',
+    east: 'north',
+    west: 'south'
+  };
+
   props.shapeCylinder = {
-    size: parseNum(style.size, 8) * 2
+    size: parseNum(style.size, 8) * 2,
+    direction: (directionMap[style.direction! as keyof typeof directionMap] ?? 'north') as
+      | 'east'
+      | 'north'
+      | 'south'
+      | 'west'
   };
 });
 
