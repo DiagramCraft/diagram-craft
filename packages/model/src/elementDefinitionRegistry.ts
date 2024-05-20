@@ -140,7 +140,7 @@ export class NodeDefinitionRegistry {
 
     if (!r) {
       missing.add(type);
-      console.warn(`Cannot find shape ${type}`);
+      console.warn(`Cannot find shape '${type}'`);
       return this.nodes.get('rect')![0].node;
     }
 
@@ -153,7 +153,7 @@ export class NodeDefinitionRegistry {
 
     if (!r) {
       missing.add(type);
-      console.warn(`Cannot find shape ${type}`);
+      console.warn(`Cannot find shape '${type}'`);
       return this.nodes.get('rect')![0];
     }
 

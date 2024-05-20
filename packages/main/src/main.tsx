@@ -13,7 +13,6 @@ import {
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { drawioReader } from '@diagram-craft/canvas-app/drawio/drawioReader';
-import { simpleDiagram } from './sample/simple';
 
 const stencilRegistry = [
   {
@@ -94,7 +93,7 @@ const diagrams = [
   {
     name: 'Drawio',
     document: async () => {
-      const res = await fetch('/diagrams/salesforce.drawio');
+      const res = await fetch('/diagrams/uml.drawio');
       const text = await res.text();
 
       const doc = drawioReader(text, documentFactory, diagramFactory);

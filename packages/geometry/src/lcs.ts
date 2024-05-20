@@ -45,7 +45,10 @@ export class LocalCoordinateSystem {
     if (box.r !== 0) this.toGlobalTransforms.push(new Rotation(box.r));
 
     this.toGlobalTransforms.push(new Translation(box));
-    this.toLocalTransforms = this.toGlobalTransforms.toReversed().map(e => e.invert());
+
+    const temp = [...this.toGlobalTransforms];
+    temp.reverse();
+    this.toLocalTransforms = temp.map(e => e.invert());
   }
 
   toGlobal(c: Box): Box;

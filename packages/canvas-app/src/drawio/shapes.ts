@@ -55,6 +55,10 @@ export const parseRect = async (
   return new DiagramNode(id, 'rect', bounds, diagram, layer, props);
 };
 
+export const parseCube = makeShape('cube');
+
+export const parseLine = makeShape('line');
+
 export const parseDelay = makeShape('delay');
 
 export const parseCloud = makeShape('cloud');

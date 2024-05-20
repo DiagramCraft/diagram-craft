@@ -24,12 +24,14 @@ import {
   parseArrow,
   parseBlockArc,
   parseCloud,
+  parseCube,
   parseCurlyBracket,
   parseCylinder,
   parseDelay,
   parseEllipse,
   parseHexagon,
   parseImage,
+  parseLine,
   parseParallelogram,
   parsePartialRect,
   parseProcess,
@@ -62,6 +64,7 @@ import { parseAWS4Shapes, registerAWS4Shapes } from './shapes/aws4';
 import { registerGCP2Shapes } from './shapes/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
+import { parseUMLModule, registerUMLShapes } from './shapes/uml';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -108,9 +111,15 @@ const shapes: Record<string, ShapeParser> = {
   'triangle': parseTriangle,
   'mxgraph.arrows2.arrow': parseArrow,
   'image': parseImage,
+  'cube': parseCube,
+  'line': parseLine,
   'ellipse': parseEllipse,
   'mxgraph.cisco19': parseCisco19Shapes,
-  'mxgraph.aws4': parseAWS4Shapes
+  'mxgraph.aws4': parseAWS4Shapes,
+
+  // Note: module and component are the same
+  'module': parseUMLModule,
+  'component': parseUMLModule
 };
 
 const getParser = (shape: string | undefined): ShapeParser | undefined =>
@@ -141,12 +150,16 @@ const loaders: Record<string, Loader> = {
   'mxgraph.aws4': registerAWS4Shapes,
   'mxgraph.gcp2': registerGCP2Shapes,
   'mxgraph.c4': registerC4Shapes,
-  'mxgraph.salesforce': registerSalesforceShapes
+  'mxgraph.salesforce': registerSalesforceShapes,
+  'module': registerUMLShapes,
+  'folder': registerUMLShapes
 };
 
 const getLoader = (shape: string | undefined): Loader | undefined =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  loaders[shape?.split('.').slice(0, -1).join('.') as unknown as any];
+  loaders[shape?.split('.').slice(0, -1).join('.') as unknown as any] ??
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  loaders[shape as unknown as any];
 
 const load = async (
   loader: Loader,
@@ -816,7 +829,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
         nodes.push(node);
 
-        if (!('group' in style) && (style.fillColor || style.strokeColor)) {
+        if (!('group' in style) && (style.fillColor || style.strokeColor || value)) {
           // TODO: This is all a bit duplication - we should refactor this
           let bgNode: DiagramNode;
           if (style.shape! in shapes) {
@@ -871,7 +884,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
       } else if ('ellipse' in style) {
         nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
-      } else if (style.shape?.startsWith('mxgraph.')) {
+      } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
         const registry = diagram.document.nodeDefinitions;
 
         const loader = getLoader(style.shape);
@@ -881,7 +894,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           continue;
         }
 
-        if (!registry.hasRegistration(style.shape)) {
+        if (!registry.hasRegistration(style.shape!)) {
           await load(loader, registry, alreadyLoaded);
         }
 
