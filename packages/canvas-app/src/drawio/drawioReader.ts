@@ -65,6 +65,7 @@ import { registerGCP2Shapes } from './shapes/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
 import { parseUMLModule, registerUMLShapes } from './shapes/uml';
+import { registerAndroidShapes } from './shapes/android';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -151,6 +152,7 @@ const loaders: Record<string, Loader> = {
   'mxgraph.gcp2': registerGCP2Shapes,
   'mxgraph.c4': registerC4Shapes,
   'mxgraph.salesforce': registerSalesforceShapes,
+  'mxgraph.android': registerAndroidShapes,
   'module': registerUMLShapes,
   'folder': registerUMLShapes
 };

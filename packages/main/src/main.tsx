@@ -93,7 +93,7 @@ const diagrams = [
   {
     name: 'Drawio',
     document: async () => {
-      const res = await fetch('/diagrams/uml.drawio');
+      const res = await fetch('/diagrams/android.drawio');
       const text = await res.text();
 
       const doc = drawioReader(text, documentFactory, diagramFactory);
