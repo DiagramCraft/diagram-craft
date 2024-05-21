@@ -24,7 +24,7 @@ import { Context, OnDoubleClick, OnMouseDown } from '../context';
 export type EdgeComponentProps = {
   element: DiagramEdge;
   onMouseDown: OnMouseDown;
-  onDoubleClick: OnDoubleClick;
+  onDoubleClick?: OnDoubleClick;
 } & Context;
 
 const makeArrowMarker = (
@@ -236,7 +236,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
         class: `${edgeProps.highlight.map(h => `svg-edge--highlight-${h}`).join(' ')}`,
         on: {
           mousedown: onMouseDown,
-          dblclick: e => props.onDoubleClick(props.element.id, EventHelper.point(e)),
+          dblclick: e => props.onDoubleClick?.(props.element.id, EventHelper.point(e)),
           contextmenu: onContextMenu
         }
       },

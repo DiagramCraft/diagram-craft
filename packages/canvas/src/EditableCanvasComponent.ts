@@ -200,7 +200,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     this.onSelectionRedrawElement(selection);
 
-    const onDoubleClick = (id: string, coord: Point) => {
+    const onEdgeDoubleClick = (id: string, coord: Point) => {
       actionMap['EDGE_TEXT_ADD']?.execute({
         point: diagram.viewBox.toDiagramPoint(coord),
         id
@@ -339,7 +339,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                       ),
                     {
                       key: `edge-${id}`,
-                      onDoubleClick,
+                      onDoubleClick: onEdgeDoubleClick,
                       onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
                         this.tool!.onMouseDown(id, coord, modifiers),
                       element: edge,
@@ -378,7 +378,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                       tool: this.tool,
                       onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
                         this.tool!.onMouseDown(id, coord, modifiers),
-                      onDoubleClick,
                       applicationTriggers: props.applicationTriggers,
                       actionMap
                     },

@@ -32,6 +32,7 @@ type ShapeBuilderProps = {
   elementProps: DeepReadonly<ElementProps>;
   isSingleSelected: boolean;
   onMouseDown: (e: MouseEvent) => void;
+  onDoubleClick?: (e: MouseEvent) => void;
   style: Partial<CSSStyleDeclaration>;
 };
 
@@ -101,7 +102,9 @@ export class ShapeBuilder {
           style: toInlineCSS(d.style),
           on: {
             mousedown: this.props.onMouseDown,
-            ...(textId ? { dblclick: this.makeOnDblclickHandle(textId) } : {})
+
+            dblclick:
+              this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {})
           }
         }))
         .map(p => opts.map!(svg.path(p)))

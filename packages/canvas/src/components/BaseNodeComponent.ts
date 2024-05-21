@@ -28,7 +28,7 @@ import { Context, OnDoubleClick, OnMouseDown } from '../context';
 export type NodeComponentProps = {
   element: DiagramNode;
   onMouseDown: OnMouseDown;
-  onDoubleClick: OnDoubleClick;
+  onDoubleClick?: OnDoubleClick;
   mode?: 'picker' | 'canvas';
 } & Context;
 
@@ -43,6 +43,8 @@ export type BaseShapeBuildShapeProps = {
   isSingleSelected: boolean;
 
   onMouseDown: (e: MouseEvent) => void;
+  onDoubleClick?: (e: MouseEvent) => void;
+
   childProps: {
     onMouseDown: OnMouseDown;
     onDoubleClick?: OnDoubleClick;
@@ -74,6 +76,18 @@ export class BaseNodeComponent<
       props.onMouseDown(props.element.id, EventHelper.pointWithRespectTo(e, target), e);
       e.stopPropagation();
     };
+
+    const onDoubleClick = props.onDoubleClick
+      ? (e: MouseEvent) => {
+          if (e.button !== 0) return;
+
+          const target = document.getElementById(`diagram-${$d.id}`) as HTMLElement | undefined;
+          if (!target) return;
+
+          props.onDoubleClick?.(props.element.id, EventHelper.pointWithRespectTo(e, target));
+          e.stopPropagation();
+        }
+      : undefined;
 
     const nodeProps = props.element.propsForRendering;
 
@@ -156,6 +170,7 @@ export class BaseNodeComponent<
       isSingleSelected,
 
       onMouseDown,
+      onDoubleClick,
 
       childProps: {
         onMouseDown: props.onMouseDown,
@@ -239,10 +254,10 @@ export class BaseNodeComponent<
 
   protected makeElement(child: DiagramElement, props: BaseShapeBuildShapeProps) {
     const p: NodeComponentProps & EdgeComponentProps = {
-      //key: isNode(child) ? `node-${child.id}` : `edge-${child.id}`,
+      key: isNode(child) ? `node-${child.id}` : `edge-${child.id}`,
       // @ts-expect-error - this is fine as child is either node or edge
       element: child,
-      onDoubleClick: props.childProps.onDoubleClick ?? (() => {}),
+      onDoubleClick: props.childProps.onDoubleClick,
       onMouseDown: props.childProps.onMouseDown,
 
       tool: props.tool,

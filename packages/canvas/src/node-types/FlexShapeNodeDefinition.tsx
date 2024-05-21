@@ -8,7 +8,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { newid } from '@diagram-craft/utils/id';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Scale, Transform } from '@diagram-craft/geometry/transform';
@@ -132,7 +131,7 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
 
         // Create a dummy node
         const node = new DiagramNode(
-          newid(),
+          `${props.node.id}-${cmpDef?.id ?? cmp.id}`,
           cmpNodeType,
           adjustedBounds,
           props.node.diagram,
@@ -149,7 +148,8 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
                 ...props.childProps,
                 onMouseDown: (_id: string, coord: Point, m: Modifiers) => {
                   props.childProps.onMouseDown(props.node.id, coord, m);
-                }
+                },
+                onDoubleClick: builder.makeOnDblclickHandle('1')
               }
             })
           )
