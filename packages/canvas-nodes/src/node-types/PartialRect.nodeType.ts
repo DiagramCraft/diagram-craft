@@ -4,7 +4,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
@@ -41,7 +41,7 @@ export class PartialRectNodeDefinition extends ShapeNodeDefinition {
 }
 
 class PartialRectComponent extends BaseNodeComponent {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const def = props.node;
 
     if (props.node.props.shapePartialRect?.north) {

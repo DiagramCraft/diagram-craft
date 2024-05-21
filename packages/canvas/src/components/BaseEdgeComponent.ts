@@ -8,21 +8,24 @@ import { asDistortedSvgPath, parseArrowSvgPath } from '../effects/sketch';
 import { hash } from '@diagram-craft/utils/hash';
 import { VNode } from '../component/vdom';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DRAG_DROP_MANAGER, Modifiers } from '../dragDropManager';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
 import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
 import { ControlPoints } from '@diagram-craft/model/types';
 import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { Tool } from '../tool';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
-import { Point } from '@diagram-craft/geometry/point';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
+import { Context, OnDoubleClick, OnMouseDown } from '../context';
+
+export type EdgeComponentProps = {
+  element: DiagramEdge;
+  onMouseDown: OnMouseDown;
+  onDoubleClick: OnDoubleClick;
+} & Context;
 
 const makeArrowMarker = (
   id: string,
@@ -65,16 +68,6 @@ const makeArrowMarker = (
   );
 };
 
-export type EdgeComponentProps = {
-  def: DiagramEdge;
-  diagram: Diagram;
-  tool: Tool | undefined;
-  applicationTriggers: ApplicationTriggers;
-  onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-  onDoubleClick: (id: string, coord: Point) => void;
-  actionMap: Partial<ActionMap>;
-};
-
 export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
   buildShape(
     _path: Path,
@@ -86,33 +79,33 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
   }
 
   render(props: EdgeComponentProps) {
-    const $d = props.diagram;
+    const $d = props.element.diagram;
     const actionMap = props.actionMap;
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
-      props.onMouseDown(props.def.id, EventHelper.point(e), e);
+      props.onMouseDown(props.element.id, EventHelper.point(e), e);
       e.stopPropagation();
     };
 
     const onContextMenu = (event: MouseEvent) => {
       props.applicationTriggers.showEdgeContextMenu?.(
         $d.viewBox.toDiagramPoint(EventHelper.point(event)),
-        props.def.id,
+        props.element.id,
         event
       );
     };
 
-    const isSelected = $d.selectionState.elements.includes(props.def);
+    const isSelected = $d.selectionState.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
     const firstEdge = $d.selectionState.edges[0];
 
-    const edgeProps = props.def.propsForRendering;
+    const edgeProps = props.element.propsForRendering;
 
     const startArrow = this.getArrow('start', edgeProps);
     const endArrow = this.getArrow('end', edgeProps);
 
-    const basePath = clipPath(props.def.path(), props.def, startArrow, endArrow);
+    const basePath = clipPath(props.element.path(), props.element, startArrow, endArrow);
     if (basePath === undefined) return svg.g({});
 
     const points: VNode[] = [];
@@ -129,14 +122,14 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
               mousedown: (e: MouseEvent) => {
                 if (e.button !== 0) return;
                 const uow = new UnitOfWork($d);
-                const idx = props.def.addWaypoint(
+                const idx = props.element.addWaypoint(
                   { point: $d.viewBox.toDiagramPoint(EventHelper.point(e)) },
                   uow
                 );
                 uow.commit();
 
                 DRAG_DROP_MANAGER.initiate(
-                  new EdgeWaypointDrag(props.def, idx, props.applicationTriggers)
+                  new EdgeWaypointDrag(props.element, idx, props.applicationTriggers)
                 );
                 e.stopPropagation();
               },
@@ -171,7 +164,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
                     if (e.button !== 0) return;
                     DRAG_DROP_MANAGER.initiate(
                       new EdgeControlPointDrag(
-                        props.def,
+                        props.element,
                         idx,
                         name as keyof ControlPoints,
                         props.applicationTriggers
@@ -196,7 +189,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
                 if (e.button !== 0) return;
                 if (!e.metaKey) return;
                 actionMap['WAYPOINT_DELETE']?.execute({
-                  id: props.def.id,
+                  id: props.element.id,
                   point: wp.point
                 });
                 e.stopPropagation();
@@ -204,7 +197,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
               mousedown: e => {
                 if (e.button !== 0) return;
                 DRAG_DROP_MANAGER.initiate(
-                  new EdgeWaypointDrag(props.def, idx, props.applicationTriggers)
+                  new EdgeWaypointDrag(props.element, idx, props.applicationTriggers)
                 );
                 e.stopPropagation();
               },
@@ -216,34 +209,34 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     }
 
     const arrowMarkers = [
-      makeArrowMarker(`s_${props.def.id}`, startArrow, edgeProps),
-      makeArrowMarker(`e_${props.def.id}`, endArrow, edgeProps)
+      makeArrowMarker(`s_${props.element.id}`, startArrow, edgeProps),
+      makeArrowMarker(`e_${props.element.id}`, endArrow, edgeProps)
     ].filter(Boolean) as VNode[];
 
     const shapeBuilder = new ShapeBuilder({
-      element: props.def,
+      element: props.element,
       elementProps: edgeProps,
       style: {},
       isSingleSelected,
       onMouseDown: () => {}
     });
 
-    this.buildShape(basePath, shapeBuilder, props.def, edgeProps);
+    this.buildShape(basePath, shapeBuilder, props.element, edgeProps);
 
     const controlPoints: VNode[] = [];
     if (isSingleSelected && props.tool?.type === 'move') {
       for (const cp of shapeBuilder.controlPoints) {
-        controlPoints.push(makeControlPoint(cp, props.def));
+        controlPoints.push(makeControlPoint(cp, props.element));
       }
     }
 
     return svg.g(
       {
-        id: `edge-${props.def.id}`,
+        id: `edge-${props.element.id}`,
         class: `${edgeProps.highlight.map(h => `svg-edge--highlight-${h}`).join(' ')}`,
         on: {
           mousedown: onMouseDown,
-          dblclick: e => props.onDoubleClick(props.def.id, EventHelper.point(e)),
+          dblclick: e => props.onDoubleClick(props.element.id, EventHelper.point(e)),
           contextmenu: onContextMenu
         }
       },

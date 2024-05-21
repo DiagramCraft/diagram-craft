@@ -1,5 +1,5 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { BaseNodeComponent, BaseShapeBuildProps } from '../components/BaseNodeComponent';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
@@ -44,7 +44,7 @@ export class GroupNodeDefinition extends ShapeNodeDefinition {
 }
 
 class GroupComponent extends BaseNodeComponent {
-  buildShape(props: BaseShapeBuildProps, builder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     builder.add(
       svg.g(
         {},

@@ -1,6 +1,6 @@
 import { EditablePath, EditableWaypointType } from '../editablePath';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { BaseNodeComponent, BaseShapeBuildProps } from '../components/BaseNodeComponent';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { toInlineCSS } from '../component/vdom';
 import { GenericPathControlPointDrag } from '../drag/genericPathControlPointDrag';
@@ -57,7 +57,7 @@ class GenericPathComponent extends BaseNodeComponent {
     this.update(this.currentProps!);
   }
 
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const drag = DRAG_DROP_MANAGER;
     const pathBuilder = new GenericPathNodeDefinition().getBoundingPathBuilder(props.node);
     const paths = pathBuilder.getPaths();

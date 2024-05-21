@@ -1,7 +1,5 @@
 import { $cmp, Component } from '../component/component';
 import { VNode } from '../component/vdom';
-import { Tool } from '../tool';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { makeShadowFilter } from '../effects/shadow';
 import {
@@ -13,12 +11,9 @@ import {
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { Modifiers } from '../dragDropManager';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
-import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -26,72 +21,49 @@ import { makeReflection } from '../effects/reflection';
 import { makeBlur } from '../effects/blur';
 import { makeOpacity } from '../effects/opacity';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import { Box } from '@diagram-craft/geometry/box';
 import { EdgeComponentProps } from './BaseEdgeComponent';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
+import { Context, OnDoubleClick, OnMouseDown } from '../context';
 
-export type BaseShapeProps = {
-  def: DiagramNode;
-  diagram: Diagram;
-  tool: Tool | undefined;
-  onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-  onDoubleClick?: (id: string, coord: Point) => void;
+export type NodeComponentProps = {
+  element: DiagramNode;
+  onMouseDown: OnMouseDown;
+  onDoubleClick: OnDoubleClick;
   mode?: 'picker' | 'canvas';
-  applicationTriggers: ApplicationTriggers;
-
-  actionMap: Partial<ActionMap>;
-};
-
-export type BaseShapeBuildProps = {
-  style: Partial<CSSStyleDeclaration>;
-  nodeProps: DeepReadonly<NodeProps>;
-  isSingleSelected: boolean;
-
-  node: DiagramNode;
-  onMouseDown: (e: MouseEvent) => void;
-  applicationTriggers: ApplicationTriggers;
-
-  tool: Tool | undefined;
-  actionMap: Partial<ActionMap>;
-  childProps: {
-    onMouseDown: (id: string, coord: Point, modifiers: Modifiers) => void;
-    onDoubleClick?: (id: string, coord: Point) => void;
-    applicationTriggers: ApplicationTriggers;
-  };
-};
+} & Context;
 
 /**
- * Transforms a point from the unit coordinate system to the given bounding box.
- * The unit coordinate system is a 2D coordinate system where x and y range from -1 to 1.
- * The transformation is done by scaling and translating the point to fit into the bounding box.
- *
- * @param {Point} point - The point in the unit coordinate system to be transformed
- * @param {Box} b - The bounding box where the point should be placed.
- *                  It is an object with x, y, w (width), and h (height) properties.
- * @returns {Object} The transformed point in the bounding box coordinate system
+ * The properties that are passed to the buildShape method of a BaseNodeComponent.
  */
-export const pointInBounds = ({ x, y }: Point, b: Box) => {
-  return {
-    x: b.x + ((x + 1) * b.w) / 2,
-    y: b.y + b.h - ((y + 1) * b.h) / 2
+export type BaseShapeBuildShapeProps = {
+  node: DiagramNode;
+  nodeProps: DeepReadonly<NodeProps>;
+
+  style: Partial<CSSStyleDeclaration>;
+  isSingleSelected: boolean;
+
+  onMouseDown: (e: MouseEvent) => void;
+  childProps: {
+    onMouseDown: OnMouseDown;
+    onDoubleClick?: OnDoubleClick;
   };
-};
+} & Context;
 
 export class BaseNodeComponent<
   T extends ShapeNodeDefinition = ShapeNodeDefinition
-> extends Component<BaseShapeProps> {
+> extends Component<NodeComponentProps> {
   constructor(protected readonly def: T) {
     super();
   }
 
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     shapeBuilder.boundaryPath(boundary.all());
     shapeBuilder.text(this);
   }
 
-  render(props: BaseShapeProps): VNode {
-    const $d = props.def.diagram;
+  render(props: NodeComponentProps): VNode {
+    const $d = props.element.diagram;
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
@@ -99,13 +71,13 @@ export class BaseNodeComponent<
       const target = document.getElementById(`diagram-${$d.id}`) as HTMLElement | undefined;
       if (!target) return;
 
-      props.onMouseDown(props.def.id, EventHelper.pointWithRespectTo(e, target), e);
+      props.onMouseDown(props.element.id, EventHelper.pointWithRespectTo(e, target), e);
       e.stopPropagation();
     };
 
-    const nodeProps = props.def.propsForRendering;
+    const nodeProps = props.element.propsForRendering;
 
-    const isSelected = $d.selectionState.elements.includes(props.def);
+    const isSelected = $d.selectionState.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
     const isEdgeConnect = nodeProps.highlight.includes('edge-connect');
     const children: VNode[] = [];
@@ -141,7 +113,7 @@ export class BaseNodeComponent<
     }
 
     if (nodeProps.fill.type === 'gradient') {
-      const gradientId = `node-${props.def.id}-gradient`;
+      const gradientId = `node-${props.element.id}-gradient`;
       style.fill = `url(#${gradientId})`;
 
       /* For a gradient we need to add its definition */
@@ -153,17 +125,21 @@ export class BaseNodeComponent<
         VERIFY_NOT_REACHED();
       }
     } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
-      const patternId = `node-${props.def.id}-pattern`;
+      const patternId = `node-${props.element.id}-pattern`;
       style.fill = `url(#${patternId})`;
 
       /* An image based fill has both color adjustments and the fill itself */
       children.push(this.subComponent($cmp(PatternFillColorAdjustment), { patternId, nodeProps }));
-      children.push(this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.def }));
+      children.push(
+        this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.element })
+      );
     } else if (nodeProps.fill.type === 'pattern' && nodeProps.fill.pattern !== '') {
-      const patternId = `node-${props.def.id}-pattern`;
+      const patternId = `node-${props.element.id}-pattern`;
       style.fill = `url(#${patternId})`;
 
-      children.push(this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.def }));
+      children.push(
+        this.subComponent($cmp(FillPattern), { patternId, nodeProps, def: props.element })
+      );
     }
 
     if (!this.def.supports('fill')) {
@@ -172,26 +148,29 @@ export class BaseNodeComponent<
 
     /* Build shape ******************************************************************* */
 
-    const buildProps: BaseShapeBuildProps = {
-      node: props.def,
-      actionMap: props.actionMap,
-      tool: props.tool,
-      applicationTriggers: props.applicationTriggers,
-      onMouseDown,
-      style,
+    const buildProps: BaseShapeBuildShapeProps = {
+      node: props.element,
       nodeProps,
+
+      style,
       isSingleSelected,
+
+      onMouseDown,
+
       childProps: {
         onMouseDown: props.onMouseDown,
-        onDoubleClick: props.onDoubleClick,
-        applicationTriggers: props.applicationTriggers
-      }
+        onDoubleClick: props.onDoubleClick
+      },
+
+      actionMap: props.actionMap,
+      tool: props.tool,
+      applicationTriggers: props.applicationTriggers
     };
 
     const shapeBuilder = new ShapeBuilder({
       ...buildProps,
-      element: props.def,
-      elementProps: nodeProps
+      element: buildProps.node,
+      elementProps: buildProps.nodeProps
     });
     this.buildShape(buildProps, shapeBuilder);
 
@@ -199,7 +178,7 @@ export class BaseNodeComponent<
 
     if (isSingleSelected && props.tool?.type === 'move') {
       for (const cp of shapeBuilder.controlPoints) {
-        shapeVNodes.push(makeControlPoint(cp, props.def));
+        shapeVNodes.push(makeControlPoint(cp, props.element));
       }
     }
 
@@ -210,7 +189,7 @@ export class BaseNodeComponent<
     }
 
     if (nodeProps.effects.blur || nodeProps.effects.opacity !== 1) {
-      const filterId = `node-${props.def.id}-filter`;
+      const filterId = `node-${props.element.id}-filter`;
       style.filter = (style.filter ?? '') + ` url(#${filterId})`;
 
       children.push(
@@ -223,7 +202,7 @@ export class BaseNodeComponent<
     }
 
     if (nodeProps.effects.reflection) {
-      children.push(svg.g({}, ...makeReflection(props.def, shapeVNodes), ...shapeVNodes));
+      children.push(svg.g({}, ...makeReflection(props.element, shapeVNodes), ...shapeVNodes));
     } else {
       children.push(...shapeVNodes);
     }
@@ -233,12 +212,12 @@ export class BaseNodeComponent<
     if (isEdgeConnect) {
       children.push(
         svg.g(
-          { transform: Transforms.rotateBack(props.def.bounds) },
-          ...props.def.anchors.map(anchor =>
+          { transform: Transforms.rotateBack(props.element.bounds) },
+          ...props.element.anchors.map(anchor =>
             svg.circle({
               class: 'svg-node__anchor',
-              cx: props.def.bounds.x + anchor.point.x * props.def.bounds.w,
-              cy: props.def.bounds.y + anchor.point.y * props.def.bounds.h,
+              cx: props.element.bounds.x + anchor.point.x * props.element.bounds.w,
+              cy: props.element.bounds.y + anchor.point.y * props.element.bounds.h,
               r: '5',
               style: `pointer-events: none;`
             })
@@ -249,25 +228,25 @@ export class BaseNodeComponent<
 
     return svg.g(
       {
-        id: `node-${props.def.id}`,
+        id: `node-${props.element.id}`,
         class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
-        transform: `${Transforms.rotate(props.def.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.def.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.def.bounds) : ''}`,
+        transform: `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`,
         style: `filter: ${style.filter ?? 'none'}`
       },
       ...children
     );
   }
 
-  protected makeElement(child: DiagramElement, props: BaseShapeBuildProps) {
-    const p: BaseShapeProps & EdgeComponentProps = {
-      key: isNode(child) ? `node-${child.id}` : `edge-${child.id}`,
+  protected makeElement(child: DiagramElement, props: BaseShapeBuildShapeProps) {
+    const p: NodeComponentProps & EdgeComponentProps = {
+      //key: isNode(child) ? `node-${child.id}` : `edge-${child.id}`,
       // @ts-expect-error - this is fine as child is either node or edge
-      def: child,
-      diagram: child.diagram,
-      tool: props.tool,
+      element: child,
       onDoubleClick: props.childProps.onDoubleClick ?? (() => {}),
       onMouseDown: props.childProps.onMouseDown,
-      applicationTriggers: props.childProps.applicationTriggers,
+
+      tool: props.tool,
+      applicationTriggers: props.applicationTriggers,
       actionMap: props.actionMap
     };
 

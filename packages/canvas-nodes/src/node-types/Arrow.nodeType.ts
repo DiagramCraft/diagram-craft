@@ -1,8 +1,7 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps,
-  pointInBounds
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
@@ -14,6 +13,7 @@ import { DeepReadonly } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
 import { Box } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
 
 // NodeProps extension for custom props *****************************************
 
@@ -104,7 +104,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<ArrowNodeDefinition> {
-    buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;

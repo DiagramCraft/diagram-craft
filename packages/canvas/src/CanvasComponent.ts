@@ -47,8 +47,7 @@ export class CanvasComponent extends Component<CanvasProps> {
                     new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
                   // @ts-ignore
                   {
-                    def: edge,
-                    diagram,
+                    element: edge,
                     applicationTriggers: {},
                     onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
                   }
@@ -63,8 +62,7 @@ export class CanvasComponent extends Component<CanvasProps> {
                   // @ts-ignore
                   {
                     key: `node-${node.nodeType}-${id}`,
-                    def: node,
-                    diagram,
+                    element: node,
                     applicationTriggers: {},
                     onMouseDown: (_id: string, _coord: Point, _modifiers: Modifiers) => {}
                   }

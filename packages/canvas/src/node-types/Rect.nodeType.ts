@@ -1,5 +1,5 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { BaseNodeComponent, BaseShapeBuildProps } from '../components/BaseNodeComponent';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
@@ -23,7 +23,7 @@ export class RectNodeDefinition extends ShapeNodeDefinition {
 }
 
 class RectComponent extends BaseNodeComponent {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = new RectNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary.all());

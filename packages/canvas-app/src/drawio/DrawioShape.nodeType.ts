@@ -8,7 +8,7 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
@@ -243,7 +243,7 @@ const setColor = (c: string, alpha: number) => {
 };
 
 class DrawioShapeComponent extends BaseNodeComponent {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const shapeNodeDefinition = this.def as DrawioShapeNodeDefinition;
 
     const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();

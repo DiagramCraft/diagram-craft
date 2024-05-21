@@ -1,7 +1,7 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
@@ -85,7 +85,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<CylinderNodeDefinition> {
-    buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
       shapeBuilder.boundaryPath(boundary.all());
 

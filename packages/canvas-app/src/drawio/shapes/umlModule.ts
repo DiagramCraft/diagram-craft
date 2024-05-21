@@ -8,7 +8,7 @@ import { round } from '@diagram-craft/utils/math';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
@@ -78,7 +78,7 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<UmlModuleNodeDefinition> {
-    buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       const bounds = props.node.bounds;
 
       shapeBuilder.boundaryPath(

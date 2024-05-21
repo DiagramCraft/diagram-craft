@@ -1,7 +1,7 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
@@ -70,7 +70,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 }
 
 class RoundedRectComponent extends BaseNodeComponent {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const radius = props.nodeProps.roundedRect?.radius ?? 10;
     const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 

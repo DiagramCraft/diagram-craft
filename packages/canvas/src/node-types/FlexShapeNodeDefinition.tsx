@@ -1,5 +1,5 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import { BaseNodeComponent, BaseShapeBuildProps } from '../components/BaseNodeComponent';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
@@ -73,7 +73,7 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<FlexShapeNodeDefinition> {
-    buildShape(props: BaseShapeBuildProps, builder: ShapeBuilder) {
+    buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
       const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
 
       builder.add(

@@ -4,7 +4,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
@@ -26,7 +26,7 @@ export class DrawioImageNodeDefinition extends ShapeNodeDefinition {
 }
 
 class DrawioImageComponent extends BaseNodeComponent {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = new DrawioImageNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary.all());

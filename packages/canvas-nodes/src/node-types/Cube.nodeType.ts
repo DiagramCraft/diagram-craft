@@ -1,7 +1,7 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
@@ -54,7 +54,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<CubeNodeDefinition> {
-    buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       const size = Size.get(props.nodeProps.shapeCube);
       const sizePct = size / Math.min(props.node.bounds.w, props.node.bounds.h);
 

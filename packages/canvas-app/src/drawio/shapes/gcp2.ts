@@ -5,7 +5,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
@@ -58,7 +58,7 @@ class DoubleRectNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<DoubleRectNodeDefinition> {
-    buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+    buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;

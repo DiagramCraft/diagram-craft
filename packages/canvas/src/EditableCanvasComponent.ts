@@ -12,7 +12,7 @@ import { $cmp, Component, ComponentVNodeData, createEffect } from './component/c
 import * as svg from './component/vdom-svg';
 import * as html from './component/vdom-html';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
-import { BaseShapeProps } from './components/BaseNodeComponent';
+import { NodeComponentProps } from './components/BaseNodeComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
@@ -342,8 +342,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                       onDoubleClick,
                       onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
                         this.tool!.onMouseDown(id, coord, modifiers),
-                      def: edge,
-                      diagram,
+                      element: edge,
                       applicationTriggers: props.applicationTriggers,
                       tool: this.tool,
                       actionMap
@@ -368,15 +367,14 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                   const node = diagram.nodeLookup.get(id)!;
                   const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
 
-                  return this.subComponent<BaseShapeProps>(
+                  return this.subComponent<NodeComponentProps>(
                     () =>
                       new (nodeDef as ShapeNodeDefinition).component!(
                         nodeDef as ShapeNodeDefinition
                       ),
                     {
                       key: `node-${node.nodeType}-${id}`,
-                      def: node,
-                      diagram,
+                      element: node,
                       tool: this.tool,
                       onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
                         this.tool!.onMouseDown(id, coord, modifiers),
@@ -387,13 +385,13 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                     {
                       onCreate: element => {
                         this.nodeRefs[id] = (
-                          element.data as ComponentVNodeData<BaseShapeProps>
+                          element.data as ComponentVNodeData<NodeComponentProps>
                         ).component.instance!;
                       },
                       onRemove: element => {
                         /* Note: Need to check if the instance is the same as the one we have stored,
                          *       as removes and adds can come out of order */
-                        const instance = (element.data as ComponentVNodeData<BaseShapeProps>)
+                        const instance = (element.data as ComponentVNodeData<NodeComponentProps>)
                           .component.instance;
                         if (this.nodeRefs[id] === instance) {
                           this.nodeRefs[id] = null;

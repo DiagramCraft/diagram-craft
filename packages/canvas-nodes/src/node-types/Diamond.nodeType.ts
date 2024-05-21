@@ -1,7 +1,7 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
-  BaseShapeBuildProps
+  BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
@@ -26,7 +26,7 @@ export class DiamondNodeDefinition extends ShapeNodeDefinition {
 }
 
 class DiamondComponent extends BaseNodeComponent {
-  buildShape(props: BaseShapeBuildProps, shapeBuilder: ShapeBuilder) {
+  buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = new DiamondNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary.all());
