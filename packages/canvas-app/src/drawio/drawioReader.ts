@@ -561,7 +561,7 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
 const readMetadata = ($parent: HTMLElement) => {
   const dest: Record<string, string> = {};
   for (const n of $parent.getAttributeNames()) {
-    if (n === 'id' || n === 'label') continue;
+    if (n === 'id' || n === 'label' || n === 'placeholders') continue;
 
     const value = $parent.getAttribute(n);
     if (value) {
@@ -569,15 +569,6 @@ const readMetadata = ($parent: HTMLElement) => {
     }
   }
   return dest;
-};
-
-const applyTemplate = (text: string, props: Metadata) => {
-  for (const match of text.matchAll(/%(\w+)%/g)) {
-    const key = match[1];
-    const value = props[key];
-    text = text.replace(match[0], value?.toString() ?? '');
-  }
-  return text;
 };
 
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
@@ -660,9 +651,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         props.text!.text = $parent.getAttribute('label') ?? '';
       }
-
-      // TODO: We should replace this as we add proper support for metadata and template vars
-      props.text!.text = applyTemplate(props.text!.text, props.metadata ?? {});
 
       if ('rotation' in style) {
         bounds.r = Angle.toRad(parseNum(style.rotation, 0));
@@ -804,22 +792,12 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           ? $parent.getAttribute('label')
           : $cell.getAttribute('value');
 
-        const metadata = isWrappedByObject ? readMetadata($parent) : {};
-
         if (hasValue(value)) {
           props.stroke!.enabled = false;
 
           const labelBg = style.labelBackgroundColor ?? 'transparent';
 
-          // TODO: We should replace this as we add proper support for metadata and template vars
-          const textNode = createLabelNode(
-            `${id}-label`,
-            edge,
-            applyTemplate(value, metadata),
-            props,
-            labelBg,
-            uow
-          );
+          const textNode = createLabelNode(`${id}-label`, edge, value, props, labelBg, uow);
           nodes.push(textNode);
 
           queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));

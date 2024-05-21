@@ -14,6 +14,7 @@ import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
+import { applyTemplate } from './template';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -134,12 +135,16 @@ export class DiagramNode
     if (this.#cache?.has('name')) return this.#cache.get('name') as string;
 
     if (this.props.text?.text) {
+      const metadata =
+        (this.isLabelNode() ? this.labelEdge()!.propsForRendering.metadata : this.props.metadata) ??
+        {};
+
       if (this.props.text.text[0] === '<') {
         try {
           const d = new DOMParser().parseFromString(this.props.text.text, 'text/html');
           const text = d.body.textContent;
           if (text) {
-            this.#cache?.set('name', text);
+            this.cache.set('name', applyTemplate(text, metadata));
             return text;
           }
         } catch (e) {
@@ -147,8 +152,8 @@ export class DiagramNode
         }
       }
 
-      this.#cache?.set('name', this.props.text.text);
-      return this.props.text.text;
+      this.cache.set('name', applyTemplate(this.props.text.text, metadata));
+      return this.cache.get('name') as string;
     }
     return this.nodeType + ' / ' + this.id;
   }

@@ -4,6 +4,8 @@ import * as html from '../component/vdom-html';
 import { rawHTML, toInlineCSS, VNode } from '../component/vdom';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
+import { DeepReadonly } from '@diagram-craft/utils/types';
+import { applyTemplate } from '@diagram-craft/model/template';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -15,6 +17,7 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 
 export type ShapeTextProps = {
   id: string;
+  metadata: DeepReadonly<Metadata> | undefined;
   text: NodeProps['text'];
   bounds: Box;
   onMouseDown: (e: MouseEvent) => void;
@@ -46,6 +49,8 @@ export class ShapeText extends Component<ShapeTextProps> {
       paddingTop: withPx(props.text?.top) ?? '0',
       paddingBottom: withPx(props.text?.bottom) ?? '0'
     };
+
+    const metadata = props.metadata ?? {};
 
     const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
 
@@ -110,7 +115,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 }
               }
             },
-            [rawHTML((props.text?.text ?? '').replaceAll('\n', '<br>'))]
+            [rawHTML(applyTemplate((props.text?.text ?? '').replaceAll('\n', '<br>'), metadata))]
           )
         ]
       )
