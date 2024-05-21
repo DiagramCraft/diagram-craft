@@ -2,6 +2,7 @@ import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRe
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
+import { DeepReadonly } from '@diagram-craft/utils/types';
 
 export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
   r.register(
@@ -20,11 +21,13 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
             ...(p as NodeProps),
             roundedRect: {
               radius: 40
-            }
+            },
+            text: {}
           }),
-          text: {
-            id: '1'
-          }
+          text: (p: NodeProps | DeepReadonly<NodeProps>) => ({
+            id: '1',
+            text: p.text!
+          })
         },
         {
           id: 'head',
@@ -145,6 +148,9 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           })
         }
       ]
-    })
+    }),
+    {
+      hidden: true
+    }
   );
 };

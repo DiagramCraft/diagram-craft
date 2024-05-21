@@ -278,8 +278,6 @@ export class BaseNodeComponent<
     } else if (isEdge(child)) {
       const edgeDefinition = child.getDefinition() as ShapeEdgeDefinition;
       const edgeComponent = edgeDefinition.component!;
-
-      // TODO: Get the right type from the edge definition
       return this.subComponent(() => new edgeComponent(edgeDefinition), p);
     } else {
       VERIFY_NOT_REACHED();

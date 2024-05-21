@@ -15,6 +15,7 @@ import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepMerge } from '@diagram-craft/utils/object';
+import { Modifiers } from '../dragDropManager';
 
 type TypeOrPropsFn<T> = T | ((p: NodeProps | DeepReadonly<NodeProps>) => T);
 
@@ -43,7 +44,7 @@ type FlexShapeNodeDefinitionConfig = {
     bounds?: TypeOrPropsFn<Box>;
     offset?: TypeOrPropsFn<Omit<Box, 'r'>>;
     props?: TypeOrPropsFn<NodeProps>;
-    text?: TextConfig;
+    text?: TypeOrPropsFn<TextConfig>;
   }>;
 };
 
@@ -139,7 +140,20 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
           cmpProps
         );
 
-        builder.add(svg.g({}, this.makeElement(node, props)));
+        builder.add(
+          svg.g(
+            {},
+            this.makeElement(node, {
+              ...props,
+              childProps: {
+                ...props.childProps,
+                onMouseDown: (_id: string, coord: Point, m: Modifiers) => {
+                  props.childProps.onMouseDown(props.node.id, coord, m);
+                }
+              }
+            })
+          )
+        );
 
         const txtConfig =
           getValue(cmp.text, props.nodeProps) ?? getValue(cmpDef?.text, props.nodeProps);
