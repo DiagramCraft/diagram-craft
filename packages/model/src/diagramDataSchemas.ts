@@ -46,16 +46,20 @@ export class DiagramDataSchemas {
 
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
-        if (node.props.data?.schema === schema.id) {
+        if (node.props.data?.data?.find(d => d.schema === schema.id)) {
           node.updateProps(props => {
-            delete props.data?.schema;
+            props.data ??= {};
+            props.data.data ??= [];
+            props.data.data = props.data.data.filter(d => d.schema !== schema.id);
           }, uow);
         }
       }
       for (const edge of diagram.edgeLookup.values()) {
-        if (edge.props.data?.schema === schema.id) {
+        if (edge.props.data?.data?.find(d => d.schema === schema.id)) {
           edge.updateProps(props => {
-            delete props.data?.schema;
+            props.data ??= {};
+            props.data.data ??= [];
+            props.data.data = props.data.data.filter(d => d.schema !== schema.id);
           }, uow);
         }
       }

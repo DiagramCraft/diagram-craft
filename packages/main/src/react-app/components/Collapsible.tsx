@@ -3,7 +3,7 @@ import { ReactNode, useState } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 
 export const Collapsible = (props: Props) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(props.isOpen);
   return (
     <ReactCollapsible.Root className="cmp-collapsible" open={open} onOpenChange={setOpen}>
       <div className={'cmp-collapsible__trigger'}>
@@ -25,4 +25,5 @@ export const Collapsible = (props: Props) => {
 type Props = {
   label: string;
   children: ReactNode;
+  isOpen?: boolean;
 };

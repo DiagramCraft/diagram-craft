@@ -131,13 +131,17 @@ export class DiagramNode
 
   /* Name **************************************************************************************************** */
 
+  get data() {
+    if (this.isLabelNode()) return this.labelEdge()!.data;
+
+    return this.propsForRendering.data?.customData ?? {};
+  }
+
   get name() {
     if (this.#cache?.has('name')) return this.#cache.get('name') as string;
 
     if (this.props.text?.text) {
-      const metadata =
-        (this.isLabelNode() ? this.labelEdge()!.propsForRendering.metadata : this.props.metadata) ??
-        {};
+      const metadata = this.data;
 
       if (this.props.text.text[0] === '<') {
         try {

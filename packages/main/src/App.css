@@ -902,6 +902,38 @@ input::-webkit-input-placeholder {
   }
 }
 
+.cmp-schema-selector {
+  .cmp-schema-selector__schemas {
+    margin-right: 2rem;
+  }
+  .cmp-schema-selector__schema {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    .cmp-schema-selector__schema-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 0.25rem;
+      color: var(--blue-10);
+      > button {
+        background: transparent;
+        padding: 0;
+        color: var(--blue-10);
+        display: flex;
+      }
+    }
+  }
+  .cmp-schema-selector__buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    margin-right: 2rem;
+    > button {
+      margin-left: auto;
+    }
+  }
+}
+
 /* Adjustments of general components for specific use-cases */
 
 #menu {

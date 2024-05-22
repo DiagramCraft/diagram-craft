@@ -12,7 +12,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { Point } from '@diagram-craft/geometry/point';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { hash } from '@diagram-craft/utils/hash';
 import { ArrowShape } from '../arrowShapes';
 import { deepMerge } from '@diagram-craft/utils/object';
@@ -65,10 +65,7 @@ export class ShapeBuilder {
       cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
         key: `text_${id}_${this.props.element.id}`,
         id: `text_${id}_${this.props.element.id}`,
-        metadata:
-          isNode(this.props.element) && this.props.element.isLabelNode()
-            ? this.props.element.labelEdge()!.propsForRendering.metadata
-            : this.props.elementProps.metadata,
+        metadata: this.props.element.data,
         text: text ?? this.props.elementProps.text,
         bounds: bounds ?? this.props.element.bounds,
         onMouseDown: this.props.onMouseDown,
@@ -258,7 +255,7 @@ export class ShapeBuilder {
   }
 
   private processPath(
-    props: NodeProps | undefined,
+    props: NodeProps | DeepReadonly<NodeProps> | undefined,
     opts: {
       map?: (n: VNode) => VNode;
       className?: string;

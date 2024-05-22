@@ -121,10 +121,14 @@ declare global {
       blur?: number;
     };
     data?: {
-      type?: 'schema' | 'derived-from';
-      schema?: string;
-      data?: Record<string, string>;
-      customData?: Record<string, string>;
+      data?: Array<{
+        schema: string;
+        // TODO: Need to add some stuff to support derived-from
+        type: 'schema' | 'derived-from';
+        data: Record<string, string>;
+        enabled?: boolean;
+      }>;
+      customData?: Metadata;
     };
     geometry?: {
       flipV?: boolean;
@@ -161,7 +165,6 @@ declare global {
 
       opacity?: number;
     };
-    metadata?: Metadata;
   }
 
   interface EdgeProps extends ElementProps {

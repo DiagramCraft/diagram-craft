@@ -647,7 +647,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       props.text!.text = hasValue(value) ? value : '';
 
       if (isWrappedByObject) {
-        props.metadata = readMetadata($parent);
+        props.data ??= {};
+        props.data.customData = readMetadata($parent);
 
         props.text!.text = $parent.getAttribute('label') ?? '';
       }

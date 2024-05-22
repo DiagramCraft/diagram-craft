@@ -162,6 +162,10 @@ export class DiagramEdge
 
   /* Name **************************************************************************************************** */
 
+  get data() {
+    return this.propsForRendering.data?.customData ?? {};
+  }
+
   get name() {
     // First we use any label nodes
     if (this.#labelNodes && this.#labelNodes.length > 0) {

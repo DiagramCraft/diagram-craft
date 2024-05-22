@@ -1,14 +1,11 @@
 import { AccordionTrigger } from '../AccordionTrigger';
 import { AccordionContent } from '../AccordionContext';
 import * as Accordion from '@radix-ui/react-accordion';
-import { Select } from '../components/Select';
 import { useDiagram } from '../context/DiagramContext';
-import { useElementProperty } from '../ObjectProperties/useProperty';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../useRedraw';
 import { useEventListener } from '../hooks/useEventListener';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { TbDots } from 'react-icons/tb';
+import { TbDots, TbPencil, TbTrash, TbX } from 'react-icons/tb';
 import { MessageDialog, MessageDialogState } from '../components/MessageDialog';
 import { JSONDialog } from '../components/JSONDialog';
 import {
@@ -22,6 +19,9 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
+import { Collapsible } from '../components/Collapsible';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import * as Popover from '@radix-ui/react-popover';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -55,21 +55,91 @@ export const ObjectData = () => {
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
 
-  const schema = useElementProperty($d, 'data.schema', 'none');
-
   const changeCallback = useCallback(
-    (id: string, ev: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (
+      type: 'data' | 'custom',
+      schema: string,
+      id: string,
+      ev: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
       const uow = new UnitOfWork($d, true);
-      $d.selectionState.elements.forEach(e => {
-        e.updateProps(p => {
-          p.data ??= {};
-          p.data.data ??= {};
-          p.data.data[id] = (ev.target! as HTMLInputElement).value;
-        }, uow);
-      });
+
+      if (type === 'data') {
+        $d.selectionState.elements.forEach(e => {
+          e.updateProps(p => {
+            p.data ??= {};
+            p.data.data ??= [];
+            let s = p.data.data.find(e => e.schema === schema);
+            if (!s) {
+              s = { schema, type: 'schema', data: {} };
+              p.data.data.push(s);
+            }
+            s.data[id] = (ev.target! as HTMLInputElement).value;
+          }, uow);
+        });
+      } else if (type === 'custom') {
+        $d.selectionState.elements.forEach(e => {
+          e.updateProps(p => {
+            p.data ??= {};
+            p.data.customData ??= {};
+            p.data.customData[id] = (ev.target! as HTMLInputElement).value;
+          }, uow);
+        });
+      } else {
+        VERIFY_NOT_REACHED();
+      }
       commitWithUndo(uow, 'Update data');
     },
     [$d]
+  );
+
+  const addSchemaToSelection = useCallback(
+    (schema: string) => {
+      $d.selectionState.elements.forEach(e => {
+        const entry = e.propsForEditing.data?.data?.find(s => s.schema === schema);
+        if (!entry) {
+          const uow = new UnitOfWork($d, true);
+          e.updateProps(p => {
+            p.data ??= {};
+            p.data.data ??= [];
+            p.data.data.push({ enabled: true, schema, type: 'schema', data: {} });
+          }, uow);
+          commitWithUndo(uow, 'Add schema to selection');
+        } else if (!entry.enabled) {
+          const uow = new UnitOfWork($d, true);
+          e.updateProps(p => {
+            p.data!.data!.find(s => s.schema === schema)!.enabled = true;
+          }, uow);
+          commitWithUndo(uow, 'Add schema to selection');
+        }
+      });
+    },
+    [$d]
+  );
+
+  const removeSchemaFromSelection = useCallback(
+    (schema: string) => {
+      $d.selectionState.elements.forEach(e => {
+        const entry = e.propsForEditing.data?.data?.find(s => s.schema === schema);
+        if (entry?.enabled) {
+          const uow = new UnitOfWork($d, true);
+          e.updateProps(p => {
+            p.data!.data!.find(s => s.schema === schema)!.enabled = false;
+          }, uow);
+          commitWithUndo(uow, 'Add schema to selection');
+        }
+      });
+    },
+    [$d]
+  );
+
+  const customDataKeys = unique(
+    $d.selectionState.elements.flatMap(e => Object.keys(e.props.data?.customData ?? {}))
+  ).toSorted();
+
+  // Get all schemas from all selected elements
+  const schemas = $d.selectionState.elements.flatMap(e =>
+    e.propsForEditing.data?.data?.filter(d => d.enabled).map(d => d.schema)
   );
 
   if ($d.selectionState.elements.length === 0)
@@ -86,7 +156,112 @@ export const ObjectData = () => {
     <>
       <Accordion.Root className="cmp-accordion" type="single" defaultValue={'data'}>
         <Accordion.Item className="cmp-accordion__item" value="data">
-          <AccordionTrigger>Data</AccordionTrigger>
+          <AccordionTrigger>
+            Data
+            <div className={'cmp-accordion__header_btn'}>
+              <Popover.Root>
+                <Popover.Trigger asChild>
+                  <a href={'#'}>
+                    <TbDots />
+                  </a>
+                </Popover.Trigger>
+                <Popover.Portal>
+                  <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={15}>
+                    <div className={'cmp-schema-selector'}>
+                      <h2
+                        className={'util-hstack'}
+                        style={{ gap: '0.5rem', marginBottom: '0.75rem' }}
+                      >
+                        Schemas
+                      </h2>
+                      <div className={'cmp-schema-selector__schemas'}>
+                        {$d.document.schemas.all.map(s => (
+                          <div key={s.id} className={'cmp-schema-selector__schema'}>
+                            <input
+                              type={'checkbox'}
+                              checked={schemas.includes(s.id)}
+                              onChange={e => {
+                                if (e.currentTarget.checked) {
+                                  addSchemaToSelection(s.id);
+                                } else {
+                                  removeSchemaFromSelection(s.id);
+                                }
+                              }}
+                            />
+                            {s.name}
+                            <div className={'cmp-schema-selector__schema-actions'}>
+                              <button
+                                onClick={() => {
+                                  setModifyDialog(s);
+                                }}
+                              >
+                                <TbPencil />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setConfirmDeleteDialog({
+                                    isOpen: true,
+                                    title: 'Confirm delete',
+                                    message: 'Are you sure you want to delete this schema?',
+                                    buttons: [
+                                      {
+                                        label: 'Yes',
+                                        type: 'danger',
+                                        onClick: () => {
+                                          const uow = new UnitOfWork($d, true);
+                                          const schemas = $d.document.schemas;
+                                          schemas.removeSchema(s, uow);
+
+                                          const snapshots = uow.commit();
+                                          $d.undoManager.add(
+                                            new CompoundUndoableAction([
+                                              new DeleteSchemaUndoableAction(uow.diagram, s),
+                                              new SnapshotUndoableAction(
+                                                'Delete schema',
+                                                uow.diagram,
+                                                snapshots
+                                              )
+                                            ])
+                                          );
+                                          redraw();
+                                        }
+                                      },
+                                      {
+                                        label: 'No',
+                                        type: 'cancel',
+                                        onClick: () => {}
+                                      }
+                                    ]
+                                  });
+                                }}
+                              >
+                                <TbTrash />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className={'cmp-schema-selector__buttons'}>
+                        <button
+                          className={'cmp-button cmp-button--secondary'}
+                          onClick={() => {
+                            setModifyDialog(makeTemplate());
+                          }}
+                        >
+                          Add Schema
+                        </button>
+                      </div>
+                    </div>
+                    <Popover.Close className="cmp-popover__close" aria-label="Close">
+                      <TbX />
+                    </Popover.Close>
+                    <Popover.Arrow className="cmp-popover__arrow" />
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+            </div>
+          </AccordionTrigger>
           <AccordionContent>
             {/*<div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Type:</div>
@@ -94,126 +269,78 @@ export const ObjectData = () => {
               Derived (overrides) | Standalone (schema)
             </div>
           </div>*/}
+
             <div className={'cmp-labeled-table'}>
-              <div className={'cmp-labeled-table__label util-a-top-center'}>Schema:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
-                <Select
-                  value={schema.val}
-                  values={[
-                    {
-                      value: 'none',
-                      label: 'None'
-                    },
-                    ...$d.document.schemas.all.map(s => ({
-                      value: s.id,
-                      label: s.name
-                    }))
-                  ]}
-                  hasMultipleValues={schema.hasMultipleValues}
-                  onValueChange={v => {
-                    schema.set(v);
-                  }}
-                />
+              {schemas.map(schemaName => {
+                if (schemaName === undefined) return undefined;
 
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <button className={'cmp-button'}>
-                      <TbDots />
-                    </button>
-                  </DropdownMenu.Trigger>
-
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                      <DropdownMenu.Item
-                        className="cmp-context-menu__item"
-                        onSelect={() => {
-                          if (schema.val === 'none') return;
-                          setModifyDialog($d.document.schemas.get(schema.val));
-                        }}
-                      >
-                        Modify
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
-                        className="cmp-context-menu__item"
-                        onSelect={() => {
-                          setConfirmDeleteDialog({
-                            isOpen: true,
-                            title: 'Confirm delete',
-                            message: 'Are you sure you want to delete this schema?',
-                            buttons: [
-                              {
-                                label: 'Yes',
-                                type: 'danger',
-                                onClick: () => {
-                                  const uow = new UnitOfWork($d, true);
-                                  const schemas = $d.document.schemas;
-                                  const s = schemas.get(schema.val);
-                                  schemas.removeSchema(s, uow);
-
-                                  const snapshots = uow.commit();
-                                  $d.undoManager.add(
-                                    new CompoundUndoableAction([
-                                      new DeleteSchemaUndoableAction(uow.diagram, s),
-                                      new SnapshotUndoableAction(
-                                        'Delete schema',
-                                        uow.diagram,
-                                        snapshots
-                                      )
-                                    ])
-                                  );
-                                  redraw();
-                                }
-                              },
-                              { label: 'No', type: 'cancel', onClick: () => {} }
-                            ]
-                          });
-                        }}
-                      >
-                        Delete
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                      <DropdownMenu.Item
-                        className="cmp-context-menu__item"
-                        onSelect={() => {
-                          setModifyDialog(makeTemplate());
-                        }}
-                      >
-                        Add new
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
-              </div>
-              {$d.document.schemas.get(schema.val).fields.map(f => {
-                const v = unique(
-                  $d.selectionState.elements.map(e => {
-                    return e.props.data?.data?.[f.id];
-                  })
-                );
+                const schema = $d.document.schemas.get(schemaName!);
 
                 return (
-                  <React.Fragment key={f.id}>
-                    <div className={'cmp-labeled-table__label util-a-top-center'}>{f.name}:</div>
-                    <div className={'cmp-labeled-table__value cmp-text-input'}>
-                      {f.type === 'text' && (
-                        <input
-                          type={'text'}
-                          value={v.length > 1 ? '***' : v[0] ?? ''}
-                          onChange={e => changeCallback(f.id, e)}
-                        />
-                      )}
-                      {f.type === 'longtext' && (
-                        <textarea
-                          style={{ height: '40px' }}
-                          value={v.length > 1 ? '***' : v[0] ?? ''}
-                          onChange={e => changeCallback(f.id, e)}
-                        />
-                      )}
-                    </div>
+                  <React.Fragment key={schema.id}>
+                    <Collapsible label={schema.name} isOpen={true}>
+                      {schema.fields.map(f => {
+                        const v = unique(
+                          $d.selectionState.elements.map(e => {
+                            return e.props.data?.data?.find(d => d.schema === schemaName)?.data[
+                              f.id
+                            ];
+                          })
+                        );
+
+                        return (
+                          <React.Fragment key={f.id}>
+                            <div className={'cmp-labeled-table__label util-a-top-center'}>
+                              {f.name}:
+                            </div>
+                            <div className={'cmp-labeled-table__value cmp-text-input'}>
+                              {f.type === 'text' && (
+                                <input
+                                  type={'text'}
+                                  value={v.length > 1 ? '***' : v[0] ?? ''}
+                                  onChange={e => changeCallback('data', schemaName, f.id, e)}
+                                />
+                              )}
+                              {f.type === 'longtext' && (
+                                <textarea
+                                  style={{ height: '40px' }}
+                                  value={v.length > 1 ? '***' : v[0] ?? ''}
+                                  onChange={e => changeCallback('data', schemaName, f.id, e)}
+                                />
+                              )}
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </Collapsible>
+                    <br />
                   </React.Fragment>
                 );
               })}
+
+              <Collapsible label={'Custom data'} isOpen={true}>
+                {customDataKeys.map(k => {
+                  const v = unique(
+                    $d.selectionState.elements.map(e => {
+                      return e.props.data?.customData?.[k]?.toString();
+                    })
+                  );
+
+                  return (
+                    <React.Fragment key={k}>
+                      <div className={'cmp-labeled-table__label util-a-top-center'}>{k}:</div>
+                      <div className={'cmp-labeled-table__value cmp-text-input'}>
+                        <textarea
+                          style={{ height: '40px' }}
+                          value={v.length > 1 ? '***' : v[0] ?? ''}
+                          onChange={e => changeCallback('custom', '', k, e)}
+                        />
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+              </Collapsible>
+              <br />
             </div>
           </AccordionContent>
         </Accordion.Item>

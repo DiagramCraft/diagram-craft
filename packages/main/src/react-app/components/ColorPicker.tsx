@@ -8,7 +8,7 @@ const transpose = (matrix: string[][]) =>
     matrix.map(rowNumber => rowNumber[colNumber as unknown as number])
   );
 
-const EditableColowWell = (props: { color: string; onChange: (s: string) => void }) => {
+const EditableColorWell = (props: { color: string; onChange: (s: string) => void }) => {
   const [color, setColor] = React.useState(props.color);
   return (
     <div className={'cmp-color-grid__editable'} style={{ backgroundColor: color }}>
@@ -139,7 +139,7 @@ export const ColorPicker = (props: Props) => {
 
               <h2>Custom palette</h2>
               {range(0, 14).map(i => (
-                <EditableColowWell
+                <EditableColorWell
                   key={i}
                   color={props.customPalette[i]}
                   onChange={c => {
