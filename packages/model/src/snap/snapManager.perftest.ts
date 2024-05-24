@@ -19,7 +19,7 @@ export class SnapManagerPerftest implements PerformanceTest {
       '1',
       new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry())
     );
-    d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.throwaway(d));
+    d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.immediate(d));
 
     UnitOfWork.execute(d, uow => {
       for (let i = 0; i < 1000; i++) {

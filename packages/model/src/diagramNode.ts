@@ -61,7 +61,7 @@ export class DiagramNode
     this.#anchors = anchorCache;
 
     if (!this.#anchors) {
-      this.invalidateAnchors(UnitOfWork.throwaway(diagram));
+      this.invalidateAnchors(UnitOfWork.immediate(diagram));
     }
 
     this.#props.style ??= this.nodeType === 'text' ? 'default-text' : 'default';
@@ -380,7 +380,7 @@ export class DiagramNode
       const newElement = c.duplicate(context);
       newChildren.push(newElement);
     }
-    node.setChildren(newChildren, UnitOfWork.throwaway(this.diagram));
+    node.setChildren(newChildren, UnitOfWork.immediate(this.diagram));
     context.targetElementsInGroup.set(this.id, node);
 
     if (!isTopLevel) return node;

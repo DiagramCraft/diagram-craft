@@ -574,7 +574,7 @@ const readMetadata = ($parent: HTMLElement) => {
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const alreadyLoaded = new Set<Loader>();
 
-  const uow = UnitOfWork.throwaway(diagram);
+  const uow = UnitOfWork.immediate(diagram);
   const queue = new WorkQueue();
 
   const parentChild = new Map<string, string[]>();

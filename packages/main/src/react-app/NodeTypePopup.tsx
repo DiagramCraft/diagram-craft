@@ -76,7 +76,7 @@ export const NodeTypePopup = (props: Props) => {
         n.type,
         new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
       );
-      dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.throwaway(dest));
+      dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
       dest.layers.active.addElement(
         new DiagramNode(
           n.type,
@@ -92,7 +92,7 @@ export const NodeTypePopup = (props: Props) => {
           dest.layers.active,
           n.getDefaultProps('picker')
         ),
-        UnitOfWork.throwaway(dest)
+        UnitOfWork.immediate(dest)
       );
       return dest;
     });

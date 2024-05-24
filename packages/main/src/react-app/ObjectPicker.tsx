@@ -14,7 +14,7 @@ export const ObjectPicker = (props: Props) => {
   const nodes = diagram.document.nodeDefinitions.getForGroup(props.group);
 
   const diagrams = nodes.map(n => {
-    const uow = UnitOfWork.throwaway(diagram);
+    const uow = UnitOfWork.immediate(diagram);
 
     const dest = new Diagram(
       newid(),

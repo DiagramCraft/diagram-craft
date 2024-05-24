@@ -41,7 +41,7 @@ function createDiagram() {
   registry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
   const d = new Diagram('1', 'test', new DiagramDocument(registry, new EdgeDefinitionRegistry()));
-  d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.throwaway(d));
+  d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.immediate(d));
 
   return d;
 }

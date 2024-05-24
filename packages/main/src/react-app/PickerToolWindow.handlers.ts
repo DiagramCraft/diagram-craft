@@ -50,7 +50,7 @@ export const canvasDropHandler = ($d: Diagram) => {
           h: e.bounds.h * scaleY,
           r: e.bounds.r
         },
-        UnitOfWork.throwaway($d)
+        UnitOfWork.immediate($d)
       );
     }
 

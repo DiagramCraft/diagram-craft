@@ -139,7 +139,7 @@ export class UnitOfWork {
     registry.register(this, this.isThrowaway.toString(), this);
   }
 
-  static throwaway(diagram: Diagram) {
+  static immediate(diagram: Diagram) {
     return new UnitOfWork(diagram, false, true);
   }
 

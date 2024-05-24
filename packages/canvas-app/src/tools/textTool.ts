@@ -51,7 +51,7 @@ export class TextTool extends AbstractTool {
         ...nd.bounds,
         ...nodeDef.getDefaultConfig(nd).size
       },
-      UnitOfWork.throwaway(this.diagram)
+      UnitOfWork.immediate(this.diagram)
     );
 
     this.diagram.undoManager.addAndExecute(

@@ -62,7 +62,7 @@ export const DocumentTabs = (props: Props) => {
           );
           diagram.layers.add(
             new Layer('default', 'Default', [], diagram),
-            UnitOfWork.throwaway(diagram)
+            UnitOfWork.immediate(diagram)
           );
 
           props.document.addDiagram(diagram);

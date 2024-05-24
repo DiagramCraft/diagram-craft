@@ -95,7 +95,7 @@ export const deserializeDiagramElements = (
             ...nodeLookup[child.id].bounds,
             ...Point.add(nodeLookup[child.id].bounds, nodeLookup[child.parent.id].bounds)
           },
-          UnitOfWork.throwaway(diagram)
+          UnitOfWork.immediate(diagram)
         );
       }
     }
@@ -107,7 +107,7 @@ export const deserializeDiagramElements = (
       if (c.type === 'edge') continue;
       nodeLookup[c.id].setChildren(
         c.children.map(c2 => nodeLookup[c2.id]),
-        UnitOfWork.throwaway(diagram)
+        UnitOfWork.immediate(diagram)
       );
       if (c.parent) {
         nodeLookup[c.id]._setParent(nodeLookup[c.parent.id]);
@@ -156,7 +156,7 @@ export const deserializeDiagramElements = (
           ...ln,
           node: nodeLookup[ln.id]
         })),
-        UnitOfWork.throwaway(diagram)
+        UnitOfWork.immediate(diagram)
       );
     }
   }
@@ -224,7 +224,7 @@ const deserializeDiagrams = <T extends Diagram>(
     const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {
       const layer = new Layer(l.id, l.name, [], newDiagram);
-      newDiagram.layers.add(layer, UnitOfWork.throwaway(newDiagram));
+      newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
 
       const elements = deserializeDiagramElements(
         l.elements,
