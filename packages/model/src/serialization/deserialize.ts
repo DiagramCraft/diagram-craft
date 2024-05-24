@@ -95,7 +95,7 @@ export const deserializeDiagramElements = (
             ...nodeLookup[child.id].bounds,
             ...Point.add(nodeLookup[child.id].bounds, nodeLookup[child.parent.id].bounds)
           },
-          new UnitOfWork(diagram)
+          UnitOfWork.throwaway(diagram)
         );
       }
     }
@@ -107,7 +107,7 @@ export const deserializeDiagramElements = (
       if (c.type === 'edge') continue;
       nodeLookup[c.id].setChildren(
         c.children.map(c2 => nodeLookup[c2.id]),
-        new UnitOfWork(diagram)
+        UnitOfWork.throwaway(diagram)
       );
       if (c.parent) {
         nodeLookup[c.id]._setParent(nodeLookup[c.parent.id]);
@@ -156,7 +156,7 @@ export const deserializeDiagramElements = (
           ...ln,
           node: nodeLookup[ln.id]
         })),
-        new UnitOfWork(diagram)
+        UnitOfWork.throwaway(diagram)
       );
     }
   }
@@ -243,6 +243,7 @@ const deserializeDiagrams = <T extends Diagram>(
       newDiagram.canvas = $d.canvas;
     }
     dest.push(newDiagram);
+    uow.commit();
 
     newDiagram.diagrams = deserializeDiagrams(doc, $d.diagrams, diagramFactory);
   }

@@ -103,8 +103,17 @@ export class ElementsSnapshot {
   }
 }
 
-// TODO: Add FinalizationRegistry in dev mode to ensure that all elements are
-//       commited properly
+const registry =
+  process.env.NODE_ENV === 'development'
+    ? new FinalizationRegistry((v: string) => {
+        // No warnings for throwaways
+        if (v === 'true') return;
+        console.error('Failed uow cleanup');
+      })
+    : {
+        register: () => {},
+        unregister: () => {}
+      };
 
 export class UnitOfWork {
   #elementsToUpdate = new Map<string, Trackable>();
@@ -124,11 +133,14 @@ export class UnitOfWork {
 
   constructor(
     readonly diagram: Diagram,
-    public trackChanges: boolean = false
-  ) {}
+    public trackChanges: boolean = false,
+    public isThrowaway: boolean = false
+  ) {
+    registry.register(this, this.isThrowaway.toString(), this);
+  }
 
   static throwaway(diagram: Diagram) {
-    return new UnitOfWork(diagram, false);
+    return new UnitOfWork(diagram, false, true);
   }
 
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
@@ -185,6 +197,10 @@ export class UnitOfWork {
   }
 
   pushAction(name: string, element: Trackable, cb: ActionCallback) {
+    if (this.isThrowaway) {
+      return cb();
+    }
+
     const id = name + element.id;
     if (this.#actions.has(id)) return;
 
@@ -216,10 +232,14 @@ export class UnitOfWork {
       this.diagram.emit('change', { diagram: this.diagram });
     }
 
+    registry.unregister(this);
+
     return new ElementsSnapshot(this.#snapshots);
   }
 
-  abort() {}
+  abort() {
+    registry.unregister(this);
+  }
 
   private processEvents() {
     // Note, actions must run before elements events are emitted

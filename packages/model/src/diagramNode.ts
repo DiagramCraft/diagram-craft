@@ -214,7 +214,9 @@ export class DiagramNode
     // TODO: This should be wrapped in uow.pushAction
     //       ... however, deserialization doesn't ever commit there uow
     //       so the event is never triggered
-    this.getDefinition().onChildChanged(this, uow);
+    uow.pushAction('onChildChanged', this, () => {
+      this.getDefinition().onChildChanged(this, uow);
+    });
   }
 
   addChild(child: DiagramElement, uow: UnitOfWork) {
@@ -378,7 +380,7 @@ export class DiagramNode
       const newElement = c.duplicate(context);
       newChildren.push(newElement);
     }
-    node.setChildren(newChildren, new UnitOfWork(this.diagram));
+    node.setChildren(newChildren, UnitOfWork.throwaway(this.diagram));
     context.targetElementsInGroup.set(this.id, node);
 
     if (!isTopLevel) return node;

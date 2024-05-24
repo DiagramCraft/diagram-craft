@@ -92,7 +92,7 @@ export const NodeTypePopup = (props: Props) => {
           dest.layers.active,
           n.getDefaultProps('picker')
         ),
-        new UnitOfWork(dest)
+        UnitOfWork.throwaway(dest)
       );
       return dest;
     });
