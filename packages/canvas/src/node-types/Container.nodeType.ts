@@ -14,11 +14,14 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { largest } from '@diagram-craft/utils/array';
 
 declare global {
   interface NodeProps {
     container?: {
       autoGrow?: boolean;
+      fillSecondaryAxis?: boolean;
+      canResize?: 'primary' | 'secondary' | 'both';
       layout?: 'manual' | 'horizontal' | 'vertical';
       gap?: number;
     };
@@ -29,6 +32,87 @@ type Entry = {
   node: DiagramElement;
   localBounds: Box;
   newLocalBounds?: Box;
+};
+
+type Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => Box;
+
+const horizontalLayout: Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => {
+  if (children.length === 0) return localBounds;
+
+  const fill = node.props.container?.fillSecondaryAxis;
+  const gap = node.props.container?.gap ?? 0;
+
+  // Sort children by x position
+  const sortedLocalChildren = children.sort((a, b) => a.localBounds.x - b.localBounds.x);
+
+  const maxHeight = largest(
+    sortedLocalChildren.map(c => c.localBounds.h),
+    (a, b) => a - b
+  )!;
+
+  let x = gap;
+  for (const entry of sortedLocalChildren) {
+    if (!isNode(entry.node)) continue;
+
+    entry.newLocalBounds = {
+      ...entry.localBounds,
+      x,
+      y: fill ? 0 : entry.localBounds.y,
+      h: maxHeight
+    };
+    x += entry.newLocalBounds.w + (node.props.container?.gap ?? 0);
+  }
+
+  return Box.boundingBox([
+    { ...localBounds, w: x - localBounds.x, h: 1 },
+    ...children.map(c => c.localBounds)
+  ]);
+};
+
+const verticalLayout: Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => {
+  if (children.length === 0) return localBounds;
+
+  const fill = node.props.container?.fillSecondaryAxis;
+  const gap = node.props.container?.gap ?? 0;
+
+  // Sort children by y position
+  const sortedLocalChildren = children.sort((a, b) => a.localBounds.y - b.localBounds.y);
+
+  const maxWidth = largest(
+    sortedLocalChildren.map(c => c.localBounds.w),
+    (a, b) => a - b
+  )!;
+
+  let y = gap;
+  for (const entry of sortedLocalChildren) {
+    if (!isNode(entry.node)) continue;
+
+    entry.newLocalBounds = {
+      ...entry.localBounds,
+      x: fill ? 0 : entry.localBounds.x,
+      y,
+      w: maxWidth
+    };
+    y += entry.newLocalBounds.h + (node.props.container?.gap ?? 0);
+  }
+
+  return Box.boundingBox([
+    { ...localBounds, w: 1, h: y - node.bounds.y },
+    ...children.map(c => c.localBounds)
+  ]);
+};
+
+const defaultLayout: Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => {
+  if (!node.props.container?.autoGrow) return localBounds;
+  if (children.length === 0) return localBounds;
+
+  return Box.boundingBox([localBounds, ...children.map(c => c.localBounds)]);
+};
+
+const LAYOUTS = {
+  horizontal: horizontalLayout,
+  vertical: verticalLayout,
+  manual: defaultLayout
 };
 
 export class ContainerNodeDefinition extends ShapeNodeDefinition {
@@ -61,18 +145,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
-        id: 'autoGrow',
-        type: 'boolean',
-        label: 'Grow',
-        value: node.props.container?.autoGrow ?? false,
-        onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.container ??= {};
-            props.container.autoGrow = value;
-          }, uow);
-        }
-      },
-      {
         id: 'layout',
         type: 'select',
         label: 'Layout',
@@ -91,6 +163,19 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         }
       },
       {
+        id: 'autoGrow',
+        type: 'boolean',
+        label: 'Grow',
+        value: node.props.container?.autoGrow ?? false,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.container ??= {};
+            props.container.autoGrow = value;
+          }, uow);
+        }
+      },
+
+      {
         id: 'gap',
         type: 'number',
         label: 'Gap',
@@ -100,6 +185,36 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           node.updateProps(props => {
             props.container ??= {};
             props.container.gap = value;
+          }, uow);
+        }
+      },
+      {
+        id: 'fillSecondaryAxis',
+        type: 'boolean',
+        label: 'Fill',
+        value: node.props.container?.fillSecondaryAxis ?? false,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.container ??= {};
+            props.container.fillSecondaryAxis = value;
+          }, uow);
+        }
+      },
+      {
+        id: 'canResize',
+        type: 'select',
+        label: 'Can Resize',
+        value: node.props.container?.canResize ?? 'both',
+        options: [
+          { value: 'primary', label: 'Primary' },
+          { value: 'secondary', label: 'Secondary' },
+          { value: 'both', label: 'Both' }
+        ],
+        onChange: (value: string, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.container ??= {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            props.container.canResize = value as any;
           }, uow);
         }
       }
@@ -123,6 +238,11 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     if (uow.changeType === 'interactive') return;
 
     this.applyLayout(node, uow);
+
+    if (node.parent) {
+      const parentDef = node.parent.getDefinition();
+      parentDef.onChildChanged(node.parent, uow);
+    }
   }
 
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
@@ -148,51 +268,29 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       newLocalBounds: undefined
     }));
 
-    let newBounds: Box;
-    if (node.props.container?.layout === 'horizontal') {
-      // Sort children by x position
-      const sortedLocalChildren = children.sort((a, b) => a.localBounds.x - b.localBounds.x);
-      if (sortedLocalChildren.length === 0) return;
+    if (children.length === 0) return;
 
-      let x = node.props.container.gap ?? 0;
-      for (let i = 0; i < sortedLocalChildren.length; i++) {
-        const entry = sortedLocalChildren[i];
-        if (!isNode(entry.node)) continue;
+    const layout = LAYOUTS[node.props.container?.layout ?? 'manual'];
+    let newBounds = layout(node, children, localBounds);
 
-        entry.newLocalBounds = { ...entry.localBounds, x };
-        x += entry.newLocalBounds.w + (node.props.container.gap ?? 0);
+    // Shrink to minimum size, but retain the position
+    let xEnd = localBounds.x + localBounds.w;
+    let yEnd = localBounds.y + localBounds.h;
+    if (node.props.container?.autoGrow) {
+      for (const entry of children) {
+        const lb = entry.newLocalBounds ?? entry.localBounds;
+        xEnd = Math.max(xEnd, lb.x + lb.w);
+        yEnd = Math.max(yEnd, lb.y + lb.h);
       }
-
-      newBounds = Box.boundingBox([
-        { ...localBounds, w: x - localBounds.x, h: 1 },
-        ...children.map(c => c.localBounds)
-      ]);
-    } else if (node.props.container?.layout === 'vertical') {
-      // Sort children by y position
-      const sortedLocalChildren = children.sort((a, b) => a.localBounds.y - b.localBounds.y);
-      if (sortedLocalChildren.length === 0) return;
-
-      let y = node.props.container.gap ?? 0;
-      for (let i = 0; i < sortedLocalChildren.length; i++) {
-        const entry = sortedLocalChildren[i];
-        if (!isNode(entry.node)) continue;
-
-        entry.newLocalBounds = { ...entry.localBounds, y };
-        y += entry.newLocalBounds.h + (node.props.container.gap ?? 0);
-      }
-
-      newBounds = Box.boundingBox([
-        { ...localBounds, w: 1, h: y - node.bounds.y },
-        ...children.map(c => c.localBounds)
-      ]);
-    } else {
-      if (!node.props.container?.autoGrow) return;
-
-      const sortedLocalChildren = children.sort((a, b) => a.localBounds.x - b.localBounds.x);
-      if (sortedLocalChildren.length === 0) return;
-
-      newBounds = Box.boundingBox([localBounds, ...children.map(c => c.localBounds)]);
     }
+
+    newBounds = {
+      x: localBounds.x,
+      y: localBounds.y,
+      w: Math.max(xEnd - localBounds.x, 1),
+      h: Math.max(yEnd - localBounds.y, 1),
+      r: 0
+    };
 
     // Transform back to global coordinate system
     node.setBounds(Transform.box(newBounds, ...transformForward), uow);

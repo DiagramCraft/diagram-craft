@@ -103,6 +103,9 @@ export class ElementsSnapshot {
   }
 }
 
+// TODO: Add FinalizationRegistry in dev mode to ensure that all elements are
+//       commited properly
+
 export class UnitOfWork {
   #elementsToUpdate = new Map<string, Trackable>();
   #elementsToRemove = new Map<string, Trackable>();

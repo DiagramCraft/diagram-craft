@@ -211,6 +211,9 @@ export class DiagramNode
     this.#children.forEach(c => uow.updateElement(c));
     uow.updateElement(this);
 
+    // TODO: This should be wrapped in uow.pushAction
+    //       ... however, deserialization doesn't ever commit there uow
+    //       so the event is never triggered
     this.getDefinition().onChildChanged(this, uow);
   }
 
@@ -223,7 +226,9 @@ export class DiagramNode
     uow.updateElement(this);
     uow.updateElement(child);
 
-    this.getDefinition().onChildChanged(this, uow);
+    uow.pushAction('onChildChanged', this, () => {
+      this.getDefinition().onChildChanged(this, uow);
+    });
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
@@ -235,7 +240,9 @@ export class DiagramNode
     uow.updateElement(this);
     uow.updateElement(child);
 
-    this.getDefinition().onChildChanged(this, uow);
+    uow.pushAction('onChildChanged', this, () => {
+      this.getDefinition().onChildChanged(this, uow);
+    });
   }
 
   /* Bounds ************************************************************************************************* */

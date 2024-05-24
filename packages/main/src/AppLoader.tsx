@@ -6,6 +6,7 @@ import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serializat
 import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
 import { loadStencil } from '@diagram-craft/canvas-app/drawio/stencilLoader';
+import { Autosave } from './Autosave';
 
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
@@ -28,10 +29,10 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     Promise.all([
-      /*Autosave.load(props.documentFactory, props.diagramFactory),*/
+      Autosave.load(props.documentFactory, props.diagramFactory),
       props.diagram.document()
-    ]).then(([/*autosaved, */ defDiagram]) => {
-      setDoc(/*autosaved ?? */ defDiagram);
+    ]).then(([autosaved, defDiagram]) => {
+      setDoc(autosaved ?? defDiagram);
     });
   }, [props.diagramFactory, props.recent, props.documentFactory]);
 

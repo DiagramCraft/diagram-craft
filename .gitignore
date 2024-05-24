@@ -12,7 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Local links
+packages/main/public/diagrams
+packages/main/public/img
+packages/main/public/stencils
+
 # Editor directories and files
+.tsimp
 .vscode/*
 !.vscode/extensions.json
 .idea

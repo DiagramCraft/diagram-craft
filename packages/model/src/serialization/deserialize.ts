@@ -38,7 +38,7 @@ const unfoldGroup = (node: SerializedNode) => {
     ];
   };
 
-  if (node.nodeType === 'group') {
+  if (node.children.length > 0) {
     return [{ ...node }, ...recurse(node.children, node)];
   } else {
     return [{ ...node }];
