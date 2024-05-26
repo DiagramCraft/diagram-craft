@@ -510,7 +510,7 @@ export class DiagramNode
     const previousBounds = this.bounds;
     this.setBounds(Transform.box(this.bounds, ...transforms), uow);
 
-    this.getDefinition().onTransform(transforms, this, uow);
+    this.getDefinition().onTransform(transforms, this, this.bounds, previousBounds, uow);
 
     if (this.parent && !isChild) {
       const parent = this.parent;

@@ -212,9 +212,9 @@ export class UnitOfWork {
   notify() {
     this.changeType = 'interactive';
 
-    this.processEvents();
+    // Note: we keep actions until the commit phase
+    this.processEvents(false);
 
-    this.#actions.clear();
     this.#elementsToUpdate.clear();
     this.#elementsToRemove.clear();
     this.#elementsToAdd.clear();
@@ -226,7 +226,7 @@ export class UnitOfWork {
   commit() {
     this.changeType = 'non-interactive';
 
-    this.processEvents();
+    this.processEvents(true);
 
     if (this.#shouldUpdateDiagram) {
       this.diagram.emit('change', { diagram: this.diagram });
@@ -241,9 +241,9 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
-  private processEvents() {
+  private processEvents(processActions: boolean) {
     // Note, actions must run before elements events are emitted
-    this.#actions.forEach(a => a());
+    if (processActions) this.#actions.forEach(a => a());
 
     // At this point, any elements have been added and or removed
     this.#elementsToRemove.forEach(e => e.invalidate(this));

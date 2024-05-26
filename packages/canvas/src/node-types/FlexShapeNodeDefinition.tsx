@@ -178,7 +178,13 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork) {
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    _newBounds: Box,
+    _previousBounds: Box,
+    uow: UnitOfWork
+  ) {
     if (transforms.find(t => t instanceof Scale)) return;
     for (const child of node.children) {
       child.transform(transforms, uow, true);

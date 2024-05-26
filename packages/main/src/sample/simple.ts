@@ -5,50 +5,50 @@ export const simpleDiagram: SerializedDiagramDocument = {
     {
       id: 'doc1',
       name: 'Sheet 1',
-      diagrams: [
-        {
-          id: 'doc1.1',
-          name: 'Sheet 1.1',
-          diagrams: [],
-          layers: [
-            {
-              type: 'layer',
-              id: 'layer1',
-              name: 'Layer 1',
-              layerType: 'basic',
-              elements: [
-                {
-                  type: 'node',
-                  nodeType: 'star',
-                  id: '2',
-                  bounds: {
-                    x: 400,
-                    y: 270,
-                    w: 150,
-                    h: 150,
-                    r: 0
-                  },
-                  children: [],
-                  props: {}
-                }
-              ]
-            }
-          ]
-        }
-      ],
       layers: [
         {
-          type: 'layer',
           id: 'layer1',
           name: 'Layer 1',
+          type: 'layer',
           layerType: 'basic',
           elements: [
             {
-              type: 'edge',
               id: 'e1',
-              start: { anchor: 0, node: { id: '3' } },
-              end: { anchor: 0, node: { id: '4' } },
+              type: 'edge',
+              start: {
+                anchor: 0,
+                node: {
+                  id: '3'
+                },
+                position: {
+                  x: 350,
+                  y: 70
+                }
+              },
+              end: {
+                anchor: 0,
+                node: {
+                  id: '4'
+                },
+                position: {
+                  x: 325,
+                  y: 255
+                }
+              },
+              labelNodes: [
+                {
+                  id: 't2',
+                  type: 'perpendicular-readable',
+                  offset: {
+                    x: 0,
+                    y: 0
+                  },
+                  timeOffset: 0.843974175035868
+                }
+              ],
+              waypoints: [],
               props: {
+                style: 'default-edge',
                 arrow: {
                   start: {
                     type: 'SQUARE_ARROW_OUTLINE'
@@ -57,62 +57,118 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     type: 'CROWS_FEET_BAR'
                   }
                 }
-              },
-              labelNodes: [
-                {
-                  id: 't2',
-                  timeOffset: 0.5,
-                  offset: { x: 0, y: 0 },
-                  type: 'perpendicular-readable'
-                }
-              ],
-              waypoints: [{ point: { x: 360, y: 200 } }]
+              }
             },
             {
-              type: 'edge',
               id: 'e2',
-              start: { position: { x: 20, y: 20 } },
-              end: { position: { x: 300, y: 400 } },
-              props: {}
-            },
-            {
-              type: 'node',
-              nodeType: 'star',
-              id: '2',
-              bounds: {
-                x: 400,
-                y: 270,
-                w: 150,
-                h: 150,
-                r: 0
+              type: 'edge',
+              start: {
+                position: {
+                  x: 20,
+                  y: 20
+                }
               },
-              children: [],
-              props: {}
+              end: {
+                position: {
+                  x: 300,
+                  y: 400
+                }
+              },
+              labelNodes: [],
+              waypoints: [],
+              props: {
+                style: 'default-edge',
+                highlight: []
+              }
             },
-
             {
+              id: '3',
               type: 'node',
               nodeType: 'rounded-rect',
-              id: '3',
               bounds: {
-                x: 370,
+                x: 300,
                 y: 20,
                 w: 100,
                 h: 100,
                 r: 0
               },
+              anchors: [
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0.5
+                  },
+                  clip: true
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.99,
+                    y: 0.01
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 1,
+                    y: 0.5
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.99,
+                    y: 0.99
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 1
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.01,
+                    y: 0.99
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0,
+                    y: 0.5
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.01,
+                    y: 0.01
+                  },
+                  clip: false
+                }
+              ],
               children: [],
               props: {
+                style: 'default',
                 text: {
                   text: ''
                 }
               }
             },
-
             {
+              id: '4',
               type: 'node',
               nodeType: 'rect',
-              id: '4',
               bounds: {
                 x: 300,
                 y: 245,
@@ -120,22 +176,99 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 h: 20,
                 r: 0
               },
+              anchors: [
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0.5
+                  },
+                  clip: true
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 1,
+                    y: 0.5
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 1
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0,
+                    y: 0.5
+                  },
+                  clip: false
+                }
+              ],
               children: [],
-              props: {}
+              props: {
+                style: 'default'
+              }
             },
-
             {
+              id: 't2',
               type: 'node',
               nodeType: 'text',
               bounds: {
-                x: 300,
-                y: 170,
+                x: 296.9006456241033,
+                y: 220.13522238163557,
                 w: 64,
-                h: 17,
-                r: 0
+                h: 12,
+                r: 0.13432144195296836
               },
-              id: 't2',
+              anchors: [
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0.5
+                  },
+                  clip: true
+                },
+                {
+                  point: {
+                    x: 0.51,
+                    y: 0
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 1,
+                    y: 0.86
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.49,
+                    y: 1
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0,
+                    y: 0.14
+                  },
+                  clip: false
+                }
+              ],
+              children: [],
               props: {
+                style: 'default-text',
                 labelForEdgeId: 'e1',
                 text: {
                   text: 'Hello world',
@@ -145,28 +278,630 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   enabled: true,
                   color: '#ffffff'
                 }
+              }
+            },
+            {
+              id: 'epb7kko',
+              type: 'node',
+              nodeType: 'container',
+              bounds: {
+                x: 90,
+                y: 390,
+                w: 200,
+                h: 200,
+                r: 0
               },
-              children: []
+              anchors: [
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0.5
+                  },
+                  clip: true
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 1,
+                    y: 0.5
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 1
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0,
+                    y: 0.5
+                  },
+                  clip: false
+                }
+              ],
+              children: [
+                {
+                  id: 'el4hq06',
+                  type: 'node',
+                  nodeType: 'container',
+                  bounds: {
+                    x: 90,
+                    y: 390,
+                    w: 200,
+                    h: 100,
+                    r: 0
+                  },
+                  anchors: [
+                    {
+                      point: {
+                        x: 0.5,
+                        y: 0.5
+                      },
+                      clip: true
+                    },
+                    {
+                      point: {
+                        x: 0.5,
+                        y: 0
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 1,
+                        y: 0.5
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.5,
+                        y: 1
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0,
+                        y: 0.5
+                      },
+                      clip: false
+                    }
+                  ],
+                  children: [
+                    {
+                      id: 'cukdoml',
+                      type: 'node',
+                      nodeType: 'cloud',
+                      bounds: {
+                        x: 90,
+                        y: 390,
+                        w: 100,
+                        h: 100,
+                        r: 0
+                      },
+                      anchors: [
+                        {
+                          point: {
+                            x: 0.5,
+                            y: 0.5
+                          },
+                          clip: true
+                        },
+                        {
+                          point: {
+                            x: 0.03,
+                            y: 0.31
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.4,
+                            y: 0
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.89,
+                            y: 0.07
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.99,
+                            y: 0.61
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.62,
+                            y: 0.99
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.09,
+                            y: 0.85
+                          },
+                          clip: false
+                        }
+                      ],
+                      children: [],
+                      props: {
+                        style: 'default',
+                        highlight: []
+                      }
+                    },
+                    {
+                      id: '3p0ktgd',
+                      type: 'node',
+                      nodeType: 'cylinder',
+                      bounds: {
+                        x: 190,
+                        y: 390,
+                        w: 100,
+                        h: 100,
+                        r: 0
+                      },
+                      anchors: [
+                        {
+                          point: {
+                            x: 0.5,
+                            y: 0.5
+                          },
+                          clip: true
+                        },
+                        {
+                          point: {
+                            x: 0,
+                            y: 0.5
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.15,
+                            y: 0.96
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.85,
+                            y: 0.96
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 1,
+                            y: 0.5
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.85,
+                            y: 0.04
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.15,
+                            y: 0.04
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.15,
+                            y: 0.26
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.85,
+                            y: 0.26
+                          },
+                          clip: false
+                        }
+                      ],
+                      children: [],
+                      props: {
+                        style: 'default'
+                      }
+                    }
+                  ],
+                  props: {
+                    style: 'default',
+                    container: {
+                      canResize: 'both',
+                      containerResize: 'both',
+                      layout: 'horizontal',
+                      childResize: 'fill'
+                    },
+                    highlight: []
+                  }
+                },
+                {
+                  id: 'ekk5sda',
+                  type: 'node',
+                  nodeType: 'container',
+                  bounds: {
+                    x: 90,
+                    y: 490,
+                    w: 200,
+                    h: 100,
+                    r: 0
+                  },
+                  anchors: [
+                    {
+                      point: {
+                        x: 0.5,
+                        y: 0.5
+                      },
+                      clip: true
+                    },
+                    {
+                      point: {
+                        x: 0.5,
+                        y: 0
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 1,
+                        y: 0.5
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.5,
+                        y: 1
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0,
+                        y: 0.5
+                      },
+                      clip: false
+                    }
+                  ],
+                  children: [
+                    {
+                      id: 'nq982mr',
+                      type: 'node',
+                      nodeType: 'circle',
+                      bounds: {
+                        x: 90,
+                        y: 490,
+                        w: 100,
+                        h: 100,
+                        r: 0
+                      },
+                      anchors: [
+                        {
+                          point: {
+                            x: 0.5,
+                            y: 0.5
+                          },
+                          clip: true
+                        },
+                        {
+                          point: {
+                            x: 0.85,
+                            y: 0.85
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.85,
+                            y: 0.15
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.15,
+                            y: 0.15
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.15,
+                            y: 0.85
+                          },
+                          clip: false
+                        }
+                      ],
+                      children: [],
+                      props: {
+                        style: 'default'
+                      }
+                    },
+                    {
+                      id: 'rpvl4ar',
+                      type: 'node',
+                      nodeType: 'star',
+                      bounds: {
+                        x: 190,
+                        y: 490,
+                        w: 100,
+                        h: 100,
+                        r: 0
+                      },
+                      anchors: [
+                        {
+                          point: {
+                            x: 0.5,
+                            y: 0.5
+                          },
+                          clip: true
+                        },
+                        {
+                          point: {
+                            x: 0.57,
+                            y: 0.15
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.81,
+                            y: 0.32
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.86,
+                            y: 0.46
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.77,
+                            y: 0.74
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.65,
+                            y: 0.83
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.35,
+                            y: 0.83
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.23,
+                            y: 0.74
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.14,
+                            y: 0.46
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.19,
+                            y: 0.32
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0.43,
+                            y: 0.15
+                          },
+                          clip: false
+                        }
+                      ],
+                      children: [],
+                      props: {
+                        style: 'default'
+                      }
+                    }
+                  ],
+                  props: {
+                    style: 'default',
+                    container: {
+                      canResize: 'both',
+                      containerResize: 'both',
+                      layout: 'horizontal',
+                      childResize: 'fill'
+                    },
+                    highlight: []
+                  }
+                }
+              ],
+              props: {
+                style: 'default',
+                container: {
+                  canResize: 'both',
+                  containerResize: 'both',
+                  layout: 'vertical',
+                  childResize: 'fill'
+                },
+                highlight: []
+              }
             }
           ]
         }
-      ]
+      ],
+      diagrams: [
+        {
+          id: 'doc1.1',
+          name: 'Sheet 1.1',
+          layers: [
+            {
+              id: 'layer1',
+              name: 'Layer 1',
+              type: 'layer',
+              layerType: 'basic',
+              elements: [
+                {
+                  id: '2',
+                  type: 'node',
+                  nodeType: 'star',
+                  bounds: {
+                    x: 400,
+                    y: 270,
+                    w: 150,
+                    h: 150,
+                    r: 0
+                  },
+                  anchors: [
+                    {
+                      point: {
+                        x: 0.5,
+                        y: 0.5
+                      },
+                      clip: true
+                    },
+                    {
+                      point: {
+                        x: 0.57,
+                        y: 0.15
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.81,
+                        y: 0.32
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.86,
+                        y: 0.46
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.77,
+                        y: 0.74
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.65,
+                        y: 0.83
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.35,
+                        y: 0.83
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.23,
+                        y: 0.74
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.14,
+                        y: 0.46
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.19,
+                        y: 0.32
+                      },
+                      clip: false
+                    },
+                    {
+                      point: {
+                        x: 0.43,
+                        y: 0.15
+                      },
+                      clip: false
+                    }
+                  ],
+                  children: [],
+                  props: {
+                    style: 'default'
+                  }
+                }
+              ]
+            }
+          ],
+          diagrams: [],
+          canvas: {
+            x: 0,
+            y: 0,
+            w: 640,
+            h: 640
+          }
+        }
+      ],
+      canvas: {
+        w: 1200,
+        h: 640,
+        x: 0,
+        y: 0
+      }
     },
     {
       id: 'doc2',
-      diagrams: [],
       name: 'Sheet 2',
       layers: [
         {
-          type: 'layer',
           id: 'layer1',
           name: 'Layer 1',
+          type: 'layer',
           layerType: 'basic',
           elements: [
             {
+              id: '2',
               type: 'node',
               nodeType: 'star',
-              id: '2',
               bounds: {
                 x: 400,
                 y: 270,
@@ -174,21 +909,102 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 h: 150,
                 r: 0
               },
+              anchors: [
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0.5
+                  },
+                  clip: true
+                },
+                {
+                  point: {
+                    x: 0.57,
+                    y: 0.15
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.81,
+                    y: 0.32
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.86,
+                    y: 0.46
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.77,
+                    y: 0.74
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.65,
+                    y: 0.83
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.35,
+                    y: 0.83
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.23,
+                    y: 0.74
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.14,
+                    y: 0.46
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.19,
+                    y: 0.32
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.43,
+                    y: 0.15
+                  },
+                  clip: false
+                }
+              ],
               children: [],
-              props: {}
+              props: {
+                style: 'default'
+              }
             }
           ]
         },
         {
-          type: 'layer',
           id: 'layer2',
           name: 'Layer 2',
+          type: 'layer',
           layerType: 'basic',
           elements: [
             {
+              id: '3',
               type: 'node',
               nodeType: 'rounded-rect',
-              id: '3',
               bounds: {
                 x: 370,
                 y: 20,
@@ -196,8 +1012,74 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 h: 100,
                 r: 0
               },
+              anchors: [
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0.5
+                  },
+                  clip: true
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 0
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.99,
+                    y: 0.01
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 1,
+                    y: 0.5
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.99,
+                    y: 0.99
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.5,
+                    y: 1
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.01,
+                    y: 0.99
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0,
+                    y: 0.5
+                  },
+                  clip: false
+                },
+                {
+                  point: {
+                    x: 0.01,
+                    y: 0.01
+                  },
+                  clip: false
+                }
+              ],
               children: [],
               props: {
+                style: 'default',
                 text: {
                   text: ''
                 }
@@ -205,7 +1087,15 @@ export const simpleDiagram: SerializedDiagramDocument = {
             }
           ]
         }
-      ]
+      ],
+      diagrams: [],
+      canvas: {
+        x: 0,
+        y: 0,
+        w: 640,
+        h: 640
+      }
     }
-  ]
+  ],
+  attachments: {}
 };

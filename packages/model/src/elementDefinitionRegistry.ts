@@ -10,6 +10,7 @@ import { UnitOfWork } from './unitOfWork';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique } from '@diagram-craft/utils/array';
 import { Anchor } from './types';
+import { Box } from '@diagram-craft/geometry/box';
 
 export type NodeCapability = 'children' | 'fill';
 
@@ -63,7 +64,13 @@ export interface NodeDefinition {
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
-  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void;
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    newBounds: Box,
+    previousBounds: Box,
+    uow: UnitOfWork
+  ): void;
   onDrop(
     coord: Point,
     node: DiagramNode,

@@ -110,7 +110,13 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   onChildChanged(_node: DiagramNode, _uow: UnitOfWork): void {}
-  onTransform(transforms: ReadonlyArray<Transform>, node: DiagramNode, uow: UnitOfWork): void {
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    _newBounds: Box,
+    _previousBounds: Box,
+    uow: UnitOfWork
+  ): void {
     for (const child of node.children) {
       child.transform(transforms, uow, true);
     }

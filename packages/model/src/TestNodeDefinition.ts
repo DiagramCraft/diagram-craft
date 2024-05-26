@@ -65,7 +65,13 @@ export class TestNodeDefinition implements NodeDefinition {
 
   onPropUpdate(_node: DiagramNode, _uow: UnitOfWork): void {}
 
-  onTransform(_transforms: ReadonlyArray<Transform>, _node: DiagramNode, _uow: UnitOfWork): void {}
+  onTransform(
+    _transforms: ReadonlyArray<Transform>,
+    _node: DiagramNode,
+    _newBounds: Box,
+    _previousBounds: Box,
+    _uow: UnitOfWork
+  ): void {}
 
   requestFocus(_node: DiagramNode): void {}
 

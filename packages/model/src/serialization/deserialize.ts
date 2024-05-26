@@ -20,7 +20,6 @@ import {
 } from './types';
 import { ConnectedEndpoint, FixedEndpoint, FreeEndpoint } from '../endpoint';
 import { Waypoint } from '../types';
-import { Point } from '@diagram-craft/geometry/point';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -83,21 +82,6 @@ export const deserializeDiagramElements = (
         },
         c.anchors
       );
-    }
-  }
-
-  // Resolve relative positions
-  for (const n of allNodes) {
-    for (const child of unfoldGroup(n)) {
-      if (child.parent) {
-        nodeLookup[child.id].setBounds(
-          {
-            ...nodeLookup[child.id].bounds,
-            ...Point.add(nodeLookup[child.id].bounds, nodeLookup[child.parent.id].bounds)
-          },
-          UnitOfWork.immediate(diagram)
-        );
-      }
     }
   }
 
