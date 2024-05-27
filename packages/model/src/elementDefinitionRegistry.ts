@@ -2,7 +2,7 @@ import { DiagramNode } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
-import { CompoundPath, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
@@ -47,10 +47,9 @@ export interface NodeDefinition {
   name: string;
 
   supports(capability: NodeCapability): boolean;
-
-  getBoundingPathBuilder(node: DiagramNode): PathBuilder;
-  getBoundingPath(node: DiagramNode): CompoundPath;
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition>;
+
+  getBoundingPath(node: DiagramNode): CompoundPath;
 
   // TODO: These are a bit weird, considering we allow for multiple registrations
   //       of the same definition
@@ -62,6 +61,8 @@ export interface NodeDefinition {
 
   // This returns anchors in diagram coordinates, i.e. rotated and translated
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
+
+  layoutChildren(node: DiagramNode, uow: UnitOfWork): void;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
   onTransform(

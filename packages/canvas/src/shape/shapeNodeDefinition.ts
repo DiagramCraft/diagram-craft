@@ -16,7 +16,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor } from '@diagram-craft/model/types';
 
@@ -109,7 +109,17 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     }, 0);
   }
 
-  onChildChanged(_node: DiagramNode, _uow: UnitOfWork): void {}
+  onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
+    if (uow.changeType === 'interactive') return;
+
+    this.layoutChildren(node, uow);
+
+    if (node.parent) {
+      const parentDef = node.parent.getDefinition();
+      parentDef.onChildChanged(node.parent, uow);
+    }
+  }
+
   onTransform(
     transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
@@ -120,6 +130,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     for (const child of node.children) {
       child.transform(transforms, uow, true);
     }
+
+    this.layoutChildren(node, uow);
   }
 
   onDrop(
@@ -132,5 +144,15 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     // Do nothing
   }
 
-  onPropUpdate(_node: DiagramNode, _uow: UnitOfWork): void {}
+  onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
+    this.layoutChildren(node, uow);
+  }
+
+  layoutChildren(node: DiagramNode, uow: UnitOfWork): void {
+    for (const child of node.children) {
+      if (isNode(child)) {
+        child.getDefinition().layoutChildren(child, uow);
+      }
+    }
+  }
 }

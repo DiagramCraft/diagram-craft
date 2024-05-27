@@ -31,6 +31,10 @@ import { DelayNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Dela
 import { PartialRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/PartialRect.nodeType';
 import { CubeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cube.nodeType';
 import { LineNodeDefinition } from '@diagram-craft/canvas/node-types/Line.nodeType';
+import {
+  TableNodeDefinition,
+  TableRowNodeDefinition
+} from '@diagram-craft/canvas/node-types/Table.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -65,6 +69,8 @@ export const defaultNodeRegistry = () => {
   dest.register(new CubeNodeDefinition());
   dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
+  dest.register(new TableNodeDefinition(), { hidden: true });
+  dest.register(new TableRowNodeDefinition(), { hidden: true });
   dest.register(new DrawioShapeNodeDefinition(), { hidden: true });
   dest.register(new DrawioImageNodeDefinition(), { hidden: true });
 

@@ -25,6 +25,7 @@ declare global {
       canResize?: 'none' | 'width' | 'height' | 'both';
       layout?: 'manual' | 'horizontal' | 'vertical';
       gap?: number;
+      gapType?: 'between' | 'around';
     };
   }
 }
@@ -35,13 +36,28 @@ type Entry = {
   newLocalBounds?: Box;
 };
 
-type Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => Box;
+type LayoutFn = (
+  node: DiagramNode,
+  props: NonNullable<NodeProps['container']>,
+  children: Entry[],
+  localBounds: Box
+) => Box;
+type Layout = {
+  fn: LayoutFn;
+  primaryAxis: 'x' | 'y' | undefined;
+};
 
-const horizontalLayout: Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => {
+const horizontalLayout: LayoutFn = (
+  node: DiagramNode,
+  props: NonNullable<NodeProps['container']>,
+  children: Entry[],
+  localBounds: Box
+) => {
   if (children.length === 0) return localBounds;
 
-  const fill = node.props.container?.childResize === 'fill';
-  const gap = node.props.container?.gap ?? 0;
+  const fill = props.childResize === 'fill';
+  const gap = props.gap ?? 0;
+  const gapType = props.gapType ?? 'between';
 
   // Sort children by x position
   const sortedLocalChildren = children.sort((a, b) => a.localBounds.x - b.localBounds.x);
@@ -54,7 +70,7 @@ const horizontalLayout: Layout = (node: DiagramNode, children: Entry[], localBou
     )!
   );
 
-  let x = 0;
+  let x = gapType === 'around' ? gap : 0;
   for (const entry of sortedLocalChildren) {
     if (!isNode(entry.node)) continue;
 
@@ -64,17 +80,23 @@ const horizontalLayout: Layout = (node: DiagramNode, children: Entry[], localBou
       y: fill ? 0 : entry.localBounds.y,
       h: fill ? maxHeight : entry.localBounds.h
     };
-    x += entry.newLocalBounds.w + gap;
+    x += entry.newLocalBounds.w + (gapType === 'around' ? 2 : 1) * gap;
   }
 
   return Box.boundingBox(children.map(c => c.localBounds));
 };
 
-const verticalLayout: Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => {
+const verticalLayout: LayoutFn = (
+  node: DiagramNode,
+  props: NonNullable<NodeProps['container']>,
+  children: Entry[],
+  localBounds: Box
+) => {
   if (children.length === 0) return localBounds;
 
-  const fill = node.props.container?.childResize === 'fill';
-  const gap = node.props.container?.gap ?? 0;
+  const fill = props.childResize === 'fill';
+  const gap = props.gap ?? 0;
+  const gapType = props.gapType ?? 'between';
 
   // Sort children by y position
   const sortedLocalChildren = children.sort((a, b) => a.localBounds.y - b.localBounds.y);
@@ -87,7 +109,7 @@ const verticalLayout: Layout = (node: DiagramNode, children: Entry[], localBound
     )!
   );
 
-  let y = 0;
+  let y = gapType === 'around' ? gap : 0;
   for (const entry of sortedLocalChildren) {
     if (!isNode(entry.node)) continue;
 
@@ -97,30 +119,33 @@ const verticalLayout: Layout = (node: DiagramNode, children: Entry[], localBound
       y,
       w: fill ? maxWidth : entry.localBounds.w
     };
-    y += entry.newLocalBounds.h + gap;
+    y += entry.newLocalBounds.h + (gapType === 'around' ? 2 : 1) * gap;
   }
 
   return Box.boundingBox(children.map(c => c.localBounds));
 };
 
-const defaultLayout: Layout = (node: DiagramNode, children: Entry[], localBounds: Box) => {
-  const props = node.props.container ?? {};
-
+const defaultLayout: LayoutFn = (
+  _node: DiagramNode,
+  props: NonNullable<NodeProps['container']>,
+  children: Entry[],
+  localBounds: Box
+) => {
   if (props.containerResize === 'shrink' || props.containerResize === 'none') return localBounds;
   if (children.length === 0) return localBounds;
 
   return Box.boundingBox([localBounds, ...children.map(c => c.localBounds)]);
 };
 
-const LAYOUTS = {
-  horizontal: horizontalLayout,
-  vertical: verticalLayout,
-  manual: defaultLayout
+const LAYOUTS: Record<string, Layout> = {
+  horizontal: { fn: horizontalLayout, primaryAxis: 'x' },
+  vertical: { fn: verticalLayout, primaryAxis: 'y' },
+  manual: { fn: defaultLayout, primaryAxis: undefined }
 };
 
 export class ContainerNodeDefinition extends ShapeNodeDefinition {
-  constructor() {
-    super('container', 'Container', ContainerComponent);
+  constructor(id = 'container', name = 'Container', component = ContainerComponent) {
+    super(id, name, component);
   }
 
   supports(capability: NodeCapability): boolean {
@@ -150,11 +175,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       newBounds.h === previousBounds.h &&
       newBounds.r === previousBounds.r
     ) {
-      for (const child of node.children) {
-        child.transform(transforms, uow, true);
-      }
-
-      return this.applyLayout(node, uow);
+      return super.onTransform(transforms, node, newBounds, previousBounds, uow);
     }
 
     const isScaling = transforms.find(t => t instanceof Scale);
@@ -184,7 +205,120 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       }
     }
 
-    return this.applyLayout(node, uow);
+    return this.layoutChildren(node, uow);
+  }
+
+  onDrop(
+    _coord: Point,
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    _operation: string
+  ) {
+    node.diagram.moveElement(elements, uow, node.layer, {
+      relation: 'on',
+      element: node
+    });
+  }
+
+  layoutChildren(node: DiagramNode, uow: UnitOfWork) {
+    // First layout all children
+    super.layoutChildren(node, uow);
+
+    const props = node.props.container ?? {};
+
+    this.doLayoutChildren(props, node, uow);
+  }
+
+  protected doLayoutChildren(
+    props: NonNullable<NodeProps['container']>,
+    node: DiagramNode,
+    uow: UnitOfWork
+  ) {
+    const autoShrink = props.containerResize === 'shrink' || props.containerResize === 'both';
+    const autoGrow = props.containerResize === 'grow' || props.containerResize === 'both';
+    const gapType = node.props.container?.gapType ?? 'between';
+
+    // We need to perform all layout operations in the local coordinate system of the node
+
+    const transformBack = [
+      // Rotation around center
+      new Translation({
+        x: -node.bounds.x - node.bounds.w / 2,
+        y: -node.bounds.y - node.bounds.h / 2
+      }),
+      new Rotation(-node.bounds.r),
+      // Move back to 0,0
+      new Translation({
+        x: node.bounds.w / 2,
+        y: node.bounds.h / 2
+      })
+    ];
+    const transformForward = transformBack.map(t => t.invert()).reverse();
+
+    const boundsBefore = node.bounds;
+    const localBounds = Transform.box(boundsBefore, ...transformBack);
+    assert.true(Math.abs(localBounds.r) < 0.0001);
+
+    const children: Entry[] = node.children.map(c => ({
+      node: c,
+      localBounds: Transform.box(c.bounds, ...transformBack),
+      newLocalBounds: undefined
+    }));
+
+    if (children.length === 0) return;
+
+    const layout = LAYOUTS[props.layout ?? 'manual'];
+    let newBounds = layout.fn(node, props, children, localBounds);
+
+    // Shrink to minimum size, but retain the position
+    let xEnd = localBounds.x + (autoShrink ? 0 : localBounds.w);
+    let yEnd = localBounds.y + (autoShrink ? 0 : localBounds.h);
+    if (autoGrow || autoShrink) {
+      for (const entry of children) {
+        const lb = entry.newLocalBounds ?? entry.localBounds;
+        xEnd = Math.max(xEnd, lb.x + lb.w);
+        yEnd = Math.max(yEnd, lb.y + lb.h);
+      }
+
+      if (gapType === 'around') {
+        xEnd += layout.primaryAxis === 'x' ? props.gap ?? 0 : 0;
+        yEnd += layout.primaryAxis === 'y' ? props.gap ?? 0 : 0;
+      }
+    }
+
+    let newWidth = Math.max(xEnd - localBounds.x, 10);
+    if (autoShrink && !autoGrow) newWidth = Math.min(newWidth, localBounds.w);
+    if (!autoShrink && autoGrow) newWidth = Math.max(newWidth, localBounds.w);
+
+    let newHeight = Math.max(yEnd - localBounds.y, 10);
+    if (autoShrink && !autoGrow) newHeight = Math.min(newHeight, localBounds.h);
+    if (!autoShrink && autoGrow) newHeight = Math.max(newHeight, localBounds.h);
+
+    newBounds = {
+      x: localBounds.x,
+      y: localBounds.y,
+      w: newWidth,
+      h: newHeight,
+      r: 0
+    };
+
+    // Transform back to global coordinate system
+    node.setBounds(Transform.box(newBounds, ...transformForward), uow);
+    for (const entry of children) {
+      if (!entry.newLocalBounds) continue;
+      if (!isNode(entry.node)) continue;
+
+      entry.node.setBounds(Transform.box(entry.newLocalBounds, ...transformForward), uow);
+    }
+
+    // Only trigger parent.onChildChanged in case this node has indeed changed
+    const mark = `parent-${node.id})`;
+    if (node.parent && !Box.isEqual(node.bounds, boundsBefore) && !uow.hasMark(mark)) {
+      uow.mark(mark);
+      const parentDef = node.parent.getDefinition();
+      parentDef.onChildChanged(node.parent, uow);
+    }
   }
 
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
@@ -259,6 +393,23 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         }
       },
       {
+        id: 'gapType',
+        type: 'select',
+        label: 'Gap Type',
+        value: node.props.container?.gapType ?? 'between',
+        options: [
+          { value: 'between', label: 'Between' },
+          { value: 'around', label: 'Around' }
+        ],
+        onChange: (value: string, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.container ??= {};
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            props.container.gapType = value as any;
+          }, uow);
+        }
+      },
+      {
         id: 'childResize',
         type: 'select',
         label: 'Child Resize',
@@ -278,116 +429,9 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       }
     ];
   }
-
-  onDrop(
-    _coord: Point,
-    node: DiagramNode,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    _operation: string
-  ) {
-    node.diagram.moveElement(elements, uow, node.layer, {
-      relation: 'on',
-      element: node
-    });
-  }
-
-  onChildChanged(node: DiagramNode, uow: UnitOfWork) {
-    if (uow.changeType === 'interactive') return;
-
-    this.applyLayout(node, uow);
-
-    if (node.parent) {
-      const parentDef = node.parent.getDefinition();
-      parentDef.onChildChanged(node.parent, uow);
-    }
-  }
-
-  onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
-    this.applyLayout(node, uow);
-  }
-
-  private applyLayout(node: DiagramNode, uow: UnitOfWork) {
-    const props = node.props.container ?? {};
-
-    const autoShrink = props.containerResize === 'shrink' || props.containerResize === 'both';
-    const autoGrow = props.containerResize === 'grow' || props.containerResize === 'both';
-
-    // We need to perform all layout operations in the local coordinate system of the node
-
-    const transformBack = [
-      // Rotation around center
-      new Translation({
-        x: -node.bounds.x - node.bounds.w / 2,
-        y: -node.bounds.y - node.bounds.h / 2
-      }),
-      new Rotation(-node.bounds.r),
-      // Move back to 0,0
-      new Translation({
-        x: node.bounds.w / 2,
-        y: node.bounds.h / 2
-      })
-    ];
-    const transformForward = transformBack.map(t => t.invert()).reverse();
-
-    const localBounds = Transform.box(node.bounds, ...transformBack);
-    assert.true(Math.abs(localBounds.r) < 0.0001);
-
-    const children: Entry[] = node.children.map(c => ({
-      node: c,
-      localBounds: Transform.box(c.bounds, ...transformBack),
-      newLocalBounds: undefined
-    }));
-
-    if (children.length === 0) return;
-
-    const layout = LAYOUTS[props.layout ?? 'manual'];
-    let newBounds = layout(node, children, localBounds);
-
-    // Shrink to minimum size, but retain the position
-    let xEnd = localBounds.x + (autoShrink ? 0 : localBounds.w);
-    let yEnd = localBounds.y + (autoShrink ? 0 : localBounds.h);
-    if (autoGrow || autoShrink) {
-      for (const entry of children) {
-        const lb = entry.newLocalBounds ?? entry.localBounds;
-        xEnd = Math.max(xEnd, lb.x + lb.w);
-        yEnd = Math.max(yEnd, lb.y + lb.h);
-      }
-    }
-
-    let newWidth = Math.max(xEnd - localBounds.x, 10);
-    if (autoShrink && !autoGrow) newWidth = Math.min(newWidth, localBounds.w);
-    if (!autoShrink && autoGrow) newWidth = Math.max(newWidth, localBounds.w);
-
-    let newHeight = Math.max(yEnd - localBounds.y, 10);
-    if (autoShrink && !autoGrow) newHeight = Math.min(newHeight, localBounds.h);
-    if (!autoShrink && autoGrow) newHeight = Math.max(newHeight, localBounds.h);
-
-    newBounds = {
-      x: localBounds.x,
-      y: localBounds.y,
-      w: newWidth,
-      h: newHeight,
-      r: 0
-    };
-
-    // Transform back to global coordinate system
-    node.setBounds(Transform.box(newBounds, ...transformForward), uow);
-    for (const entry of children) {
-      if (!entry.newLocalBounds) continue;
-      if (!isNode(entry.node)) continue;
-
-      entry.node.setBounds(Transform.box(entry.newLocalBounds, ...transformForward), uow);
-    }
-
-    if (node.parent) {
-      const parentDef = node.parent.getDefinition();
-      parentDef.onChildChanged(node.parent, uow);
-    }
-  }
 }
 
-class ContainerComponent extends BaseNodeComponent {
+export class ContainerComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const paths = new ContainerNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 

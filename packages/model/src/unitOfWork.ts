@@ -121,6 +121,7 @@ export class UnitOfWork {
   #elementsToAdd = new Map<string, Trackable>();
 
   #invalidatedElements = new Set<Trackable>();
+  #marks = new Set<string>();
 
   #shouldUpdateDiagram = false;
 
@@ -148,6 +149,14 @@ export class UnitOfWork {
     const result = cb(uow);
     uow.commit();
     return result;
+  }
+
+  hasMark(mark: string) {
+    return this.#marks.has(mark);
+  }
+
+  mark(mark: string) {
+    this.#marks.add(mark);
   }
 
   snapshot(element: Trackable) {

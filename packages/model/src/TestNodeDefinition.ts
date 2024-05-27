@@ -78,4 +78,6 @@ export class TestNodeDefinition implements NodeDefinition {
   supports(_capability: NodeCapability): boolean {
     return false;
   }
+
+  layoutChildren(_node: DiagramNode, _uow: UnitOfWork): void {}
 }

@@ -283,12 +283,12 @@ export const simpleDiagram: SerializedDiagramDocument = {
             {
               id: 'epb7kko',
               type: 'node',
-              nodeType: 'container',
+              nodeType: 'table',
               bounds: {
                 x: 90,
                 y: 390,
-                w: 200,
-                h: 200,
+                w: 240,
+                h: 240,
                 r: 0
               },
               anchors: [
@@ -332,11 +332,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 {
                   id: 'el4hq06',
                   type: 'node',
-                  nodeType: 'container',
+                  nodeType: 'tableRow',
                   bounds: {
                     x: 90,
-                    y: 390,
-                    w: 200,
+                    y: 400,
+                    w: 240,
                     h: 100,
                     r: 0
                   },
@@ -383,8 +383,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       type: 'node',
                       nodeType: 'cloud',
                       bounds: {
-                        x: 90,
-                        y: 390,
+                        x: 100,
+                        y: 400,
                         w: 100,
                         h: 100,
                         r: 0
@@ -451,8 +451,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       type: 'node',
                       nodeType: 'cylinder',
                       bounds: {
-                        x: 190,
-                        y: 390,
+                        x: 220,
+                        y: 400,
                         w: 100,
                         h: 100,
                         r: 0
@@ -534,7 +534,9 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       canResize: 'both',
                       containerResize: 'both',
                       layout: 'horizontal',
-                      childResize: 'fill'
+                      childResize: 'fill',
+                      gapType: 'around',
+                      gap: 10
                     },
                     highlight: []
                   }
@@ -542,11 +544,11 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 {
                   id: 'ekk5sda',
                   type: 'node',
-                  nodeType: 'container',
+                  nodeType: 'tableRow',
                   bounds: {
                     x: 90,
-                    y: 490,
-                    w: 200,
+                    y: 520,
+                    w: 240,
                     h: 100,
                     r: 0
                   },
@@ -593,8 +595,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       type: 'node',
                       nodeType: 'circle',
                       bounds: {
-                        x: 90,
-                        y: 490,
+                        x: 100,
+                        y: 520,
                         w: 100,
                         h: 100,
                         r: 0
@@ -646,8 +648,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       type: 'node',
                       nodeType: 'star',
                       bounds: {
-                        x: 190,
-                        y: 490,
+                        x: 220,
+                        y: 520,
                         w: 100,
                         h: 100,
                         r: 0
@@ -743,7 +745,9 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       canResize: 'both',
                       containerResize: 'both',
                       layout: 'horizontal',
-                      childResize: 'fill'
+                      childResize: 'fill',
+                      gapType: 'around',
+                      gap: 10
                     },
                     highlight: []
                   }
@@ -755,7 +759,9 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   canResize: 'both',
                   containerResize: 'both',
                   layout: 'vertical',
-                  childResize: 'fill'
+                  childResize: 'scale',
+                  gapType: 'around',
+                  gap: 10
                 },
                 highlight: []
               }
