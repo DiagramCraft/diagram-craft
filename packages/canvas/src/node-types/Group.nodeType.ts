@@ -6,17 +6,13 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('group', 'Group', GroupComponent);
-  }
-
-  supports(capability: NodeCapability): boolean {
-    return ['children'].includes(capability);
+    this.capabilities.children = true;
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

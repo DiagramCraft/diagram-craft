@@ -381,7 +381,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     {
                       id: 'cukdoml',
                       type: 'node',
-                      nodeType: 'cloud',
+                      nodeType: 'text',
                       bounds: {
                         x: 100,
                         y: 400,
@@ -443,13 +443,16 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       children: [],
                       props: {
                         style: 'default',
-                        highlight: []
+                        highlight: [],
+                        text: {
+                          text: 'Lorem ipsum'
+                        }
                       }
                     },
                     {
                       id: '3p0ktgd',
                       type: 'node',
-                      nodeType: 'cylinder',
+                      nodeType: 'text',
                       bounds: {
                         x: 220,
                         y: 400,
@@ -524,7 +527,10 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       ],
                       children: [],
                       props: {
-                        style: 'default'
+                        style: 'default',
+                        text: {
+                          text: 'Dolor sit amet'
+                        }
                       }
                     }
                   ],
@@ -593,7 +599,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     {
                       id: 'nq982mr',
                       type: 'node',
-                      nodeType: 'circle',
+                      nodeType: 'text',
                       bounds: {
                         x: 100,
                         y: 520,
@@ -640,13 +646,16 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       ],
                       children: [],
                       props: {
-                        style: 'default'
+                        style: 'default',
+                        text: {
+                          text: 'Consectetur adipiscing elit'
+                        }
                       }
                     },
                     {
                       id: 'rpvl4ar',
                       type: 'node',
-                      nodeType: 'star',
+                      nodeType: 'text',
                       bounds: {
                         x: 220,
                         y: 520,
@@ -735,7 +744,10 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       ],
                       children: [],
                       props: {
-                        style: 'default'
+                        style: 'default',
+                        text: {
+                          text: '12345'
+                        }
                       }
                     }
                   ],

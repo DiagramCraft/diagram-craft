@@ -25,16 +25,24 @@ type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> =
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
+  protected capabilities: Record<NodeCapability, boolean>;
+
   protected constructor(
     readonly type: string,
     readonly name: string,
 
     // @ts-ignore
     readonly component: NodeShapeConstructor<this>
-  ) {}
+  ) {
+    this.capabilities = {
+      fill: true,
+      select: true,
+      children: false
+    };
+  }
 
   supports(capability: NodeCapability): boolean {
-    return capability !== 'children';
+    return this.capabilities[capability];
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

@@ -10,6 +10,8 @@ import { useConfiguration } from '../context/ConfigurationContext';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { assertFillType } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
+import { useEventListener } from '../hooks/useEventListener';
+import { useRedraw } from '../useRedraw';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -133,6 +135,7 @@ export const NodeFillPanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
   const defaults = useNodeDefaults();
+  const redraw = useRedraw();
 
   const color = useElementProperty($d, 'fill.color', defaults.fill.color);
   const pattern = useElementProperty($d, 'fill.pattern', '');
@@ -163,6 +166,8 @@ export const NodeFillPanel = (props: Props) => {
   const enabled = useElementProperty($d, 'fill.enabled', defaults.fill.enabled);
   const gradientDirection = useElementProperty($d, 'fill.gradient.direction', 0);
   const gradientType = useElementProperty($d, 'fill.gradient.type', 'linear');
+
+  useEventListener($d.selectionState, 'change', redraw);
 
   const panelDisabled =
     $d.selectionState.nodes.every(n => !n.getDefinition().supports('fill')) &&

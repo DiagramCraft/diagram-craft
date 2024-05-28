@@ -7,10 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomPropertyDefinition,
-  NodeCapability
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
@@ -53,6 +50,7 @@ const Size = {
 export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('curlyBracket', 'CurlyBracket', CurlyBracketNodeDefinition.Shape);
+    this.capabilities.fill = false;
   }
 
   static Shape = class extends BaseNodeComponent<CurlyBracketNodeDefinition> {
@@ -117,9 +115,5 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
         h: 100
       }
     };
-  }
-
-  supports(capability: NodeCapability) {
-    return capability !== 'fill';
   }
 }

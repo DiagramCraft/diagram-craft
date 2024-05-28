@@ -8,10 +8,7 @@ import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathB
 import { Point } from '@diagram-craft/geometry/point';
 import { Rotation, Scale, Transform, Translation } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
-import {
-  CustomPropertyDefinition,
-  NodeCapability
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { largest } from '@diagram-craft/utils/array';
@@ -146,10 +143,9 @@ const LAYOUTS: Record<string, Layout> = {
 export class ContainerNodeDefinition extends ShapeNodeDefinition {
   constructor(id = 'container', name = 'Container', component = ContainerComponent) {
     super(id, name, component);
-  }
 
-  supports(capability: NodeCapability): boolean {
-    return ['children'].includes(capability);
+    this.capabilities.fill = false;
+    this.capabilities.children = true;
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

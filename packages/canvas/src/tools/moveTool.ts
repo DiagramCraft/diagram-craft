@@ -63,10 +63,12 @@ export class MoveTool extends AbstractTool {
         if (path.length > 0) {
           for (let i = 0; i < path.length; i++) {
             const parent = path[i];
-            if (selection.nodes.includes(parent)) {
-              break;
-            } else {
-              element = parent;
+            if (parent.getDefinition().supports('select')) {
+              if (selection.nodes.includes(parent)) {
+                break;
+              } else {
+                element = parent;
+              }
             }
           }
         }
@@ -107,11 +109,13 @@ export class MoveTool extends AbstractTool {
       if (path.length > 0) {
         for (let i = 0; i < path.length; i++) {
           const parent = path[i];
-          if (selection.nodes.includes(parent)) {
-            selection.toggle(parent);
-            break;
-          } else {
-            element = parent;
+          if (parent.getDefinition().supports('select')) {
+            if (selection.nodes.includes(parent)) {
+              selection.toggle(parent);
+              break;
+            } else {
+              element = parent;
+            }
           }
         }
       }

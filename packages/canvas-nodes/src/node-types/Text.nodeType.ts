@@ -62,18 +62,20 @@ class TextComponent extends BaseNodeComponent {
       const width = size.w;
       const height = size.h;
 
-      UnitOfWork.execute(props.node.diagram!, uow => {
-        props.node.setBounds(
-          {
-            ...props.node.bounds,
-            h: height,
-            w: width
-          },
-          uow
-        );
-      });
-
-      props.node.diagram!.selectionState.rebaseline();
+      // Grow only
+      // TODO: Maybe we want to control this somehow
+      if (width > props.node.bounds.w || height > props.node.bounds.h) {
+        UnitOfWork.execute(props.node.diagram!, uow => {
+          props.node.setBounds(
+            {
+              ...props.node.bounds,
+              h: height > props.node.bounds.h ? height : props.node.bounds.h,
+              w: width > props.node.bounds.w ? width : props.node.bounds.w
+            },
+            uow
+          );
+        });
+      }
     });
   }
 }

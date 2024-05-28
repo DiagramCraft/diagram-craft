@@ -1,66 +1,192 @@
-import { ContainerComponent, ContainerNodeDefinition } from './Container.nodeType';
-import { BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
+import { ContainerComponent } from './Container.nodeType';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
+import { assert } from '@diagram-craft/utils/assert';
+import { Rotation, Transform, Translation } from '@diagram-craft/geometry/transform';
+import { Box } from '@diagram-craft/geometry/box';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
+import * as svg from '../component/vdom-svg';
+import { Transforms } from '../component/vdom-svg';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 
-export class TableNodeDefinition extends ContainerNodeDefinition {
-  constructor() {
-    super('table', 'Table', TableComponent);
-  }
-
-  protected doLayoutChildren(
-    props: NonNullable<NodeProps['container']>,
-    node: DiagramNode,
-    uow: UnitOfWork
-  ) {
-    // Ensure all columns have the same width
-    const children = node.children;
-    const rows = children.filter(isNode);
-    for (let i = 0; i < rows[0].children.length; i++) {
-      const maxWidth = Math.max(...rows.map(row => row.children[i]?.bounds.w));
-      if (isNaN(maxWidth)) continue;
-
-      for (const row of rows) {
-        const child = row.children[i];
-        if (child && isNode(child)) {
-          child.setBounds(
-            {
-              ...child.bounds,
-              w: isNaN(maxWidth) ? 100 : maxWidth
-            },
-            uow
-          );
-        }
-      }
-    }
-
-    super.doLayoutChildren(props, node, uow);
+declare global {
+  interface NodeProps {
+    table?: {
+      gap?: number;
+    };
   }
 }
 
-export class TableRowNodeDefinition extends ContainerNodeDefinition {
+type CellsInOrder = Array<{
+  row: DiagramNode;
+  newLocalBounds?: Box;
+  idx?: number;
+  columns: Array<{
+    cell: DiagramNode;
+    newLocalBounds?: Box;
+    idx?: number;
+  }>;
+}>;
+
+const getCellsInOrder = (rows: DiagramNode[]): CellsInOrder => {
+  const dest: CellsInOrder = [];
+
+  for (const r of rows) {
+    const columns = r.children.filter(isNode);
+    const cells = columns.map(c => ({ cell: c, idx: 0 }));
+
+    dest.push({ row: r, columns: cells, idx: 0 });
+  }
+
+  dest.sort((a, b) => a.row.bounds.y - b.row.bounds.y);
+
+  for (let i = 0; i < dest.length; i++) {
+    dest[i].idx = i;
+    for (let j = 0; j < dest[i].columns.length; j++) {
+      dest[i].columns[j].idx = j;
+    }
+  }
+
+  return dest;
+};
+
+export class TableNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('tableRow', 'Table Row', ContainerComponent);
+    super('table', 'Table', TableComponent);
+
+    this.capabilities.fill = false;
+    this.capabilities.children = true;
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
+    // First layout all children
     super.layoutChildren(node, uow);
 
-    const props = node.props.container ?? {};
+    const nodeProps = node.propsForRendering;
 
-    this.doLayoutChildren(
+    const gap = nodeProps.table?.gap ?? 10;
+
+    const transformBack = [
+      // Rotation around center
+      new Translation({
+        x: -node.bounds.x - node.bounds.w / 2,
+        y: -node.bounds.y - node.bounds.h / 2
+      }),
+      new Rotation(-node.bounds.r),
+      // Move back to 0,0
+      new Translation({
+        x: node.bounds.w / 2,
+        y: node.bounds.h / 2
+      })
+    ];
+    const transformForward = transformBack.map(t => t.invert()).reverse();
+
+    const children = node.children;
+    const rows = children.filter(isNode);
+
+    // Assert all children are rows
+    for (const row of rows) assert.true(row.nodeType === 'tableRow');
+
+    const cellsInOrder = getCellsInOrder(rows);
+
+    const boundsBefore = node.bounds;
+    const localBounds = Transform.box(node.bounds, ...transformBack);
+    assert.true(Math.abs(localBounds.r) < 0.0001);
+
+    const columnWidths: number[] = [];
+    for (const r of cellsInOrder) {
+      for (const c of r.columns) {
+        const width = c.cell.bounds.w;
+        columnWidths[c.idx!] = Math.max(columnWidths[c.idx!] ?? 0, width);
+      }
+    }
+
+    let maxX = 0;
+    let y = 0;
+    for (const row of cellsInOrder) {
+      let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
+
+      // TODO: Why is this needed
+      if (isNaN(targetHeight) || !isFinite(targetHeight)) targetHeight = 100;
+
+      // Layout row
+      y += gap;
+
+      // Layout columns in row
+      let x = 0;
+      for (const cell of row.columns) {
+        const targetWidth = columnWidths[cell.idx!];
+
+        x += gap;
+        cell.newLocalBounds = {
+          x,
+          w: targetWidth,
+          y,
+          h: targetHeight,
+          r: 0
+        };
+        x += targetWidth;
+        x += gap;
+      }
+      maxX = Math.max(x, maxX);
+
+      row.newLocalBounds = {
+        x: 0,
+        w: x,
+        y,
+        h: targetHeight,
+        r: 0
+      };
+
+      y += targetHeight;
+      y += gap;
+    }
+
+    const newLocalBounds = {
+      ...localBounds,
+      h: y,
+      w: maxX
+    };
+
+    // Transform back
+    node.setBounds(Transform.box(newLocalBounds, ...transformForward), uow);
+    for (const r of cellsInOrder) {
+      r.row.setBounds(Transform.box(r.newLocalBounds!, ...transformForward), uow);
+      for (const c of r.columns) {
+        c.cell.setBounds(Transform.box(c.newLocalBounds!, ...transformForward), uow);
+      }
+    }
+
+    // Only trigger parent.onChildChanged in case this node has indeed changed
+    const mark = `parent-${node.id})`;
+    if (node.parent && !Box.isEqual(node.bounds, boundsBefore) && !uow.hasMark(mark)) {
+      uow.mark(mark);
+      const parentDef = node.parent.getDefinition();
+      parentDef.onChildChanged(node.parent, uow);
+    }
+  }
+
+  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
       {
-        ...props,
-        gap: node.parent?.propsForRendering.container.gap ?? 0,
-        containerResize: 'both'
-      },
-      node,
-      uow
-    );
+        id: 'gap',
+        type: 'number',
+        label: 'Gap',
+        value: node.props.table?.gap ?? 10,
+        unit: 'px',
+        onChange: (value: number, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.table ??= {};
+            props.table.gap = value;
+          }, uow);
+        }
+      }
+    ];
   }
 }
 
@@ -68,7 +194,7 @@ class TableComponent extends ContainerComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     super.buildShape(props, builder);
 
-    const gap = props.nodeProps.container?.gap ?? 0;
+    const gap = props.nodeProps.table?.gap ?? 10;
 
     const pathBuilder = new PathBuilder();
     PathBuilderHelper.rect(pathBuilder, props.node.bounds);
@@ -87,8 +213,9 @@ class TableComponent extends ContainerComponent {
     }
 
     let y = bounds.y + gap;
-    for (let i = 0; i < props.node.children.length - 1; i++) {
-      const child = props.node.children[i];
+    const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
+    for (let i = 0; i < sortedChildren.length - 1; i++) {
+      const child = sortedChildren[i];
       if (isNode(child)) {
         y += child.bounds.h + gap;
         pathBuilder.moveTo(Point.of(bounds.x, y));
@@ -102,6 +229,32 @@ class TableComponent extends ContainerComponent {
         color: 'red'
       },
       fill: {}
+    });
+  }
+}
+
+export class TableRowNodeDefinition extends ShapeNodeDefinition {
+  constructor() {
+    super('tableRow', 'Table Row', TableRowComponent);
+    this.capabilities.fill = false;
+    this.capabilities.select = false;
+    this.capabilities.children = true;
+  }
+
+  layoutChildren(_node: DiagramNode, _uow: UnitOfWork) {
+    // Do nothing
+  }
+}
+
+class TableRowComponent extends BaseNodeComponent {
+  buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
+    props.node.children.forEach(child => {
+      builder.add(
+        svg.g(
+          { transform: Transforms.rotateBack(props.node.bounds) },
+          this.makeElement(child, props)
+        )
+      );
     });
   }
 }
