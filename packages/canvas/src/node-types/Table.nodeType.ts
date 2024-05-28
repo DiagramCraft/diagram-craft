@@ -18,6 +18,8 @@ declare global {
   interface NodeProps {
     table?: {
       gap?: number;
+      horizontalRows?: boolean;
+      verticalRows?: boolean;
     };
   }
 }
@@ -185,6 +187,30 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
             props.table.gap = value;
           }, uow);
         }
+      },
+      {
+        id: 'horizontalRows',
+        type: 'boolean',
+        label: 'Horizontal Rows',
+        value: node.props.table?.horizontalRows ?? true,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.table ??= {};
+            props.table.horizontalRows = value;
+          }, uow);
+        }
+      },
+      {
+        id: 'verticalRows',
+        type: 'boolean',
+        label: 'Vertical Rows',
+        value: node.props.table?.verticalRows ?? true,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.table ??= {};
+            props.table.verticalRows = value;
+          }, uow);
+        }
       }
     ];
   }
@@ -201,33 +227,41 @@ class TableComponent extends ContainerComponent {
 
     const bounds = props.node.bounds;
 
-    let x = bounds.x + gap;
-    const row = props.node.children[0] as DiagramNode;
-    for (let i = 0; i < row.children.length - 1; i++) {
-      const child = row.children[i];
-      if (isNode(child)) {
-        x += child.bounds.w + gap;
-        pathBuilder.moveTo(Point.of(x, bounds.y));
-        pathBuilder.lineTo(Point.of(x, bounds.y + bounds.h));
+    if (props.nodeProps.table?.verticalRows !== false) {
+      let x = bounds.x + gap;
+      const row = props.node.children[0] as DiagramNode;
+      for (let i = 0; i < row.children.length - 1; i++) {
+        const child = row.children[i];
+        if (isNode(child)) {
+          x += child.bounds.w + gap;
+          pathBuilder.moveTo(Point.of(x, bounds.y));
+          pathBuilder.lineTo(Point.of(x, bounds.y + bounds.h));
+          x += gap;
+        }
       }
     }
 
-    let y = bounds.y + gap;
-    const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
-    for (let i = 0; i < sortedChildren.length - 1; i++) {
-      const child = sortedChildren[i];
-      if (isNode(child)) {
-        y += child.bounds.h + gap;
-        pathBuilder.moveTo(Point.of(bounds.x, y));
-        pathBuilder.lineTo(Point.of(bounds.x + bounds.w, y));
+    if (props.nodeProps.table?.horizontalRows !== false) {
+      let y = bounds.y + gap;
+      const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
+      for (let i = 0; i < sortedChildren.length - 1; i++) {
+        const child = sortedChildren[i];
+        if (isNode(child)) {
+          y += child.bounds.h + gap;
+          pathBuilder.moveTo(Point.of(bounds.x, y));
+          pathBuilder.lineTo(Point.of(bounds.x + bounds.w, y));
+          y += gap;
+        }
       }
     }
 
     builder.path(pathBuilder.getPaths().all(), {
-      stroke: {
-        enabled: true,
-        color: 'red'
-      },
+      stroke: !props.nodeProps.stroke?.enabled
+        ? {
+            enabled: false,
+            color: 'transparent'
+          }
+        : props.nodeProps.stroke,
       fill: {}
     });
   }

@@ -287,8 +287,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
               bounds: {
                 x: 90,
                 y: 390,
-                w: 240,
-                h: 240,
+                w: 200,
+                h: 200,
                 r: 0
               },
               anchors: [
@@ -302,7 +302,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 {
                   point: {
                     x: 0.5,
-                    y: 0
+                    y: 1
                   },
                   clip: false
                 },
@@ -316,7 +316,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                 {
                   point: {
                     x: 0.5,
-                    y: 1
+                    y: 0
                   },
                   clip: false
                 },
@@ -335,8 +335,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   nodeType: 'tableRow',
                   bounds: {
                     x: 90,
-                    y: 400,
-                    w: 240,
+                    w: 200,
+                    y: 390,
                     h: 100,
                     r: 0
                   },
@@ -351,7 +351,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     {
                       point: {
                         x: 0.5,
-                        y: 0
+                        y: 1
                       },
                       clip: false
                     },
@@ -365,7 +365,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     {
                       point: {
                         x: 0.5,
-                        y: 1
+                        y: 0
                       },
                       clip: false
                     },
@@ -383,9 +383,9 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       type: 'node',
                       nodeType: 'text',
                       bounds: {
-                        x: 100,
-                        y: 400,
+                        x: 90,
                         w: 100,
+                        y: 390,
                         h: 100,
                         r: 0
                       },
@@ -399,93 +399,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                         },
                         {
                           point: {
-                            x: 0.03,
-                            y: 0.31
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.4,
+                            x: 0.5,
                             y: 0
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.89,
-                            y: 0.07
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.99,
-                            y: 0.61
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.62,
-                            y: 0.99
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.09,
-                            y: 0.85
-                          },
-                          clip: false
-                        }
-                      ],
-                      children: [],
-                      props: {
-                        style: 'default',
-                        highlight: [],
-                        text: {
-                          text: 'Lorem ipsum'
-                        }
-                      }
-                    },
-                    {
-                      id: '3p0ktgd',
-                      type: 'node',
-                      nodeType: 'text',
-                      bounds: {
-                        x: 220,
-                        y: 400,
-                        w: 100,
-                        h: 100,
-                        r: 0
-                      },
-                      anchors: [
-                        {
-                          point: {
-                            x: 0.5,
-                            y: 0.5
-                          },
-                          clip: true
-                        },
-                        {
-                          point: {
-                            x: 0,
-                            y: 0.5
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.15,
-                            y: 0.96
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.85,
-                            y: 0.96
                           },
                           clip: false
                         },
@@ -498,29 +413,78 @@ export const simpleDiagram: SerializedDiagramDocument = {
                         },
                         {
                           point: {
-                            x: 0.85,
-                            y: 0.04
+                            x: 0.5,
+                            y: 1
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.15,
-                            y: 0.04
+                            x: 0,
+                            y: 0.5
+                          },
+                          clip: false
+                        }
+                      ],
+                      children: [],
+                      props: {
+                        style: 'default',
+                        highlight: [],
+                        text: {
+                          text: 'Lorem ipsum'
+                        },
+                        stroke: {
+                          enabled: false
+                        },
+                        fill: {
+                          enabled: true
+                        }
+                      }
+                    },
+                    {
+                      id: '3p0ktgd',
+                      type: 'node',
+                      nodeType: 'text',
+                      bounds: {
+                        x: 190,
+                        w: 100,
+                        y: 390,
+                        h: 100,
+                        r: 0
+                      },
+                      anchors: [
+                        {
+                          point: {
+                            x: 0.5,
+                            y: 0.5
+                          },
+                          clip: true
+                        },
+                        {
+                          point: {
+                            x: 0.5,
+                            y: 0
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.15,
-                            y: 0.26
+                            x: 1,
+                            y: 0.5
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.85,
-                            y: 0.26
+                            x: 0.5,
+                            y: 1
+                          },
+                          clip: false
+                        },
+                        {
+                          point: {
+                            x: 0,
+                            y: 0.5
                           },
                           clip: false
                         }
@@ -530,6 +494,13 @@ export const simpleDiagram: SerializedDiagramDocument = {
                         style: 'default',
                         text: {
                           text: 'Dolor sit amet'
+                        },
+                        stroke: {
+                          enabled: false
+                        },
+                        fill: {
+                          enabled: true,
+                          color: '#f7edfe'
                         }
                       }
                     }
@@ -542,7 +513,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       layout: 'horizontal',
                       childResize: 'fill',
                       gapType: 'around',
-                      gap: 10
+                      gap: 0
                     },
                     highlight: []
                   }
@@ -553,8 +524,8 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   nodeType: 'tableRow',
                   bounds: {
                     x: 90,
-                    y: 520,
-                    w: 240,
+                    w: 200,
+                    y: 490,
                     h: 100,
                     r: 0
                   },
@@ -569,7 +540,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     {
                       point: {
                         x: 0.5,
-                        y: 0
+                        y: 1
                       },
                       clip: false
                     },
@@ -583,7 +554,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                     {
                       point: {
                         x: 0.5,
-                        y: 1
+                        y: 0
                       },
                       clip: false
                     },
@@ -601,9 +572,9 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       type: 'node',
                       nodeType: 'text',
                       bounds: {
-                        x: 100,
-                        y: 520,
+                        x: 90,
                         w: 100,
+                        y: 490,
                         h: 100,
                         r: 0
                       },
@@ -617,29 +588,29 @@ export const simpleDiagram: SerializedDiagramDocument = {
                         },
                         {
                           point: {
-                            x: 0.85,
-                            y: 0.85
+                            x: 0.5,
+                            y: 0
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.85,
-                            y: 0.15
+                            x: 1,
+                            y: 0.5
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.15,
-                            y: 0.15
+                            x: 0.5,
+                            y: 1
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.15,
-                            y: 0.85
+                            x: 0,
+                            y: 0.5
                           },
                           clip: false
                         }
@@ -649,6 +620,13 @@ export const simpleDiagram: SerializedDiagramDocument = {
                         style: 'default',
                         text: {
                           text: 'Consectetur adipiscing elit'
+                        },
+                        stroke: {
+                          enabled: false
+                        },
+                        fill: {
+                          enabled: true,
+                          color: '#d2deff'
                         }
                       }
                     },
@@ -657,9 +635,9 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       type: 'node',
                       nodeType: 'text',
                       bounds: {
-                        x: 220,
-                        y: 520,
+                        x: 190,
                         w: 100,
+                        y: 490,
                         h: 100,
                         r: 0
                       },
@@ -673,71 +651,29 @@ export const simpleDiagram: SerializedDiagramDocument = {
                         },
                         {
                           point: {
-                            x: 0.57,
-                            y: 0.15
+                            x: 0.5,
+                            y: 0
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.81,
-                            y: 0.32
+                            x: 1,
+                            y: 0.5
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.86,
-                            y: 0.46
+                            x: 0.5,
+                            y: 1
                           },
                           clip: false
                         },
                         {
                           point: {
-                            x: 0.77,
-                            y: 0.74
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.65,
-                            y: 0.83
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.35,
-                            y: 0.83
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.23,
-                            y: 0.74
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.14,
-                            y: 0.46
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.19,
-                            y: 0.32
-                          },
-                          clip: false
-                        },
-                        {
-                          point: {
-                            x: 0.43,
-                            y: 0.15
+                            x: 0,
+                            y: 0.5
                           },
                           clip: false
                         }
@@ -747,6 +683,13 @@ export const simpleDiagram: SerializedDiagramDocument = {
                         style: 'default',
                         text: {
                           text: '12345'
+                        },
+                        stroke: {
+                          enabled: false
+                        },
+                        fill: {
+                          enabled: true,
+                          color: '#e9f6e9'
                         }
                       }
                     }
@@ -759,7 +702,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                       layout: 'horizontal',
                       childResize: 'fill',
                       gapType: 'around',
-                      gap: 10
+                      gap: 0
                     },
                     highlight: []
                   }
@@ -775,7 +718,10 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   gapType: 'around',
                   gap: 10
                 },
-                highlight: []
+                highlight: [],
+                table: {
+                  gap: 0
+                }
               }
             }
           ]
