@@ -87,6 +87,10 @@ export const rawHTML = (text: string): VNode => {
   return { type: 'r', tag: '#raw', data: {}, children: [text], el: undefined };
 };
 
+// Note: this is used as a performance optimization to avoid parsing
+//       HTML every time a raw HTML node is updated
+const elCache = new WeakMap<HTMLElement, string>();
+
 const onUpdate = (oldVNode: VNode, newVNode: VNode, parentElement: VNode | undefined) => {
   updateAttrs(oldVNode, newVNode);
   updateEvents(oldVNode, newVNode);
@@ -101,7 +105,10 @@ const onUpdate = (oldVNode: VNode, newVNode: VNode, parentElement: VNode | undef
     if (newVNode.type === 't') {
       (parentElement.el! as HTMLElement).innerText = newVNode.children[0];
     } else if (newVNode.type === 'r') {
+      const prev = elCache.get(parentElement.el! as HTMLElement);
+      if (prev === newVNode.children[0]) return;
       (parentElement.el! as HTMLElement).innerHTML = newVNode.children[0];
+      elCache.set(parentElement.el! as HTMLElement, newVNode.children[0]);
     }
   }
 
