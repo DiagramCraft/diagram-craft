@@ -39,6 +39,8 @@ import {
   parseRhombus,
   parseRoundedRect,
   parseStep,
+  parseTable,
+  parseTableRow,
   parseTriangle
 } from './shapes';
 import { registerAzureShapes } from './shapes/azure';
@@ -117,6 +119,8 @@ const shapes: Record<string, ShapeParser> = {
   'ellipse': parseEllipse,
   'mxgraph.cisco19': parseCisco19Shapes,
   'mxgraph.aws4': parseAWS4Shapes,
+  'table': parseTable,
+  'tableRow': parseTableRow,
 
   // Note: module and component are the same
   'module': parseUMLModule,
@@ -807,53 +811,60 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       } else if (parentChild.has(id) || 'group' in style) {
         // Handle groups
 
-        const node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
-        nodes.push(node);
+        let node: DiagramNode;
+        if (style.shape === 'table' || style.shape === 'tableRow') {
+          const parser = getParser(style.shape!)!;
+          node = await parser(id, bounds, props, style, diagram, layer);
+          nodes.push(node);
+        } else {
+          node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
+          nodes.push(node);
 
-        if (!('group' in style) && (style.fillColor || style.strokeColor || value)) {
-          // TODO: This is all a bit duplication - we should refactor this
-          let bgNode: DiagramNode;
-          if (style.shape! in shapes) {
-            bgNode = await shapes[style.shape!](newid(), bounds, props, style, diagram, layer);
-          } else if (style.shape?.startsWith('mxgraph.')) {
-            const registry = diagram.document.nodeDefinitions;
+          if (!('group' in style) && (style.fillColor || style.strokeColor || value)) {
+            // TODO: This is all a bit duplication - we should refactor this
+            let bgNode: DiagramNode;
+            if (style.shape! in shapes) {
+              bgNode = await shapes[style.shape!](newid(), bounds, props, style, diagram, layer);
+            } else if (style.shape?.startsWith('mxgraph.')) {
+              const registry = diagram.document.nodeDefinitions;
 
-            const loader = getLoader(style.shape);
-            if (!loader) {
-              console.warn(`No loader found for ${style.shape}`);
-              nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
-              continue;
-            }
+              const loader = getLoader(style.shape);
+              if (!loader) {
+                console.warn(`No loader found for ${style.shape}`);
+                nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+                continue;
+              }
 
-            if (!registry.hasRegistration(style.shape)) {
-              await load(loader, registry, alreadyLoaded);
-            }
+              if (!registry.hasRegistration(style.shape)) {
+                await load(loader, registry, alreadyLoaded);
+              }
 
-            const parser = getParser(style.shape!);
-            if (parser) {
-              bgNode = await parseRoundedRect(newid(), bounds, props, style, diagram, layer);
+              const parser = getParser(style.shape!);
+              if (parser) {
+                bgNode = await parseRoundedRect(newid(), bounds, props, style, diagram, layer);
+              } else {
+                bgNode = new DiagramNode(newid(), style.shape!, bounds, diagram, layer, props);
+              }
             } else {
-              bgNode = new DiagramNode(newid(), style.shape!, bounds, diagram, layer, props);
+              if (style.rounded === '1') {
+                bgNode = new DiagramNode(
+                  newid(),
+                  'rounded-rect',
+                  { ...bounds },
+                  diagram,
+                  layer,
+                  props
+                );
+              } else {
+                bgNode = new DiagramNode(newid(), 'rect', { ...bounds }, diagram, layer, props);
+              }
             }
-          } else {
-            if (style.rounded === '1') {
-              bgNode = new DiagramNode(
-                newid(),
-                'rounded-rect',
-                { ...bounds },
-                diagram,
-                layer,
-                props
-              );
-            } else {
-              bgNode = new DiagramNode(newid(), 'rect', { ...bounds }, diagram, layer, props);
-            }
+
+            node.addChild(bgNode, uow);
+            queue.add(() => {
+              bgNode.setBounds(node.bounds, uow);
+            });
           }
-
-          node.addChild(bgNode, uow);
-          queue.add(() => {
-            bgNode.setBounds(node.bounds, uow);
-          });
         }
 
         parents.set(id, node);

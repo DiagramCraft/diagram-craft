@@ -63,6 +63,9 @@ export const parseDelay = makeShape('delay');
 
 export const parseCloud = makeShape('cloud');
 
+export const parseTable = makeShape('table');
+export const parseTableRow = makeShape('tableRow');
+
 export const parseRhombus = makeShape('diamond');
 
 export const parseParallelogram = makeShape('parallelogram', (style, props) => {

@@ -44,6 +44,16 @@ class PartialRectComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const def = props.node;
 
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    shapeBuilder.boundaryPath(boundary.all(), {
+      ...props.nodeProps,
+      stroke: {
+        ...(props.nodeProps.stroke ?? {}),
+        enabled: false,
+        color: 'transparent'
+      }
+    } as NodeProps);
+
     if (props.node.props.shapePartialRect?.north) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(-1, 1));
