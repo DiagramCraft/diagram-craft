@@ -32,7 +32,7 @@ const TABS: Record<Type, string[]> = {
   'edge': ['style'],
   'mixed': ['style', 'text', 'arrange'],
   'single-label-node': ['style', 'text'],
-  'table': ['table'],
+  'table': ['table', 'arrange'],
   'table-cell': ['table', 'cell', 'text']
 };
 

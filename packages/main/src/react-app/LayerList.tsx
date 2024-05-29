@@ -8,7 +8,9 @@ import {
   TbLine,
   TbLock,
   TbLockOff,
-  TbRectangle
+  TbRectangle,
+  TbTable,
+  TbTableRow
 } from 'react-icons/tb';
 import { useRedraw } from './useRedraw';
 import { useEventListener } from './hooks/useEventListener';
@@ -182,6 +184,10 @@ const ElementEntry = (props: { element: DiagramElement }) => {
     icon = <TbLine />;
   } else if (isNode(e) && e.nodeType === 'group') {
     icon = <TbBoxMultiple />;
+  } else if (isNode(e) && e.nodeType === 'table') {
+    icon = <TbTable />;
+  } else if (isNode(e) && e.nodeType === 'tableRow') {
+    icon = <TbTableRow />;
   }
 
   return (
