@@ -12,6 +12,18 @@ import {
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { useTable } from './useTable';
+import {
+  TbColumnInsertLeft,
+  TbColumnInsertRight,
+  TbColumnRemove,
+  TbColumns2,
+  TbLayoutRows,
+  TbRowInsertBottom,
+  TbRowInsertTop,
+  TbRowRemove
+} from 'react-icons/tb';
+import * as ReactToolbar from '@radix-ui/react-toolbar';
+import { ActionToolbarButton } from '../toolbar/ActionToolbarButton';
 
 export const TablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -33,6 +45,37 @@ export const TablePropertiesPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
+      <ReactToolbar.Root className="cmp-toolbar">
+        <ActionToolbarButton action={'TABLE_COLUMN_INSERT_BEFORE'}>
+          <TbColumnInsertLeft className={'svg__insert'} />
+        </ActionToolbarButton>
+        <ActionToolbarButton action={'TABLE_COLUMN_INSERT_AFTER'}>
+          <TbColumnInsertRight className={'svg__insert'} />
+        </ActionToolbarButton>
+        <ActionToolbarButton action={'TABLE_COLUMN_REMOVE'}>
+          <TbColumnRemove className={'svg__remove'} />
+        </ActionToolbarButton>
+
+        <ActionToolbarButton action={'TABLE_ROW_INSERT_BEFORE'}>
+          <TbRowInsertTop className={'svg__insert'} />
+        </ActionToolbarButton>
+        <ActionToolbarButton action={'TABLE_ROW_INSERT_AFTER'}>
+          <TbRowInsertBottom className={'svg__insert'} />
+        </ActionToolbarButton>
+        <ActionToolbarButton action={'TABLE_ROW_REMOVE'}>
+          <TbRowRemove className={'svg__remove'} />
+        </ActionToolbarButton>
+
+        <ReactToolbar.Separator className={'cmp-toolbar__separator'} />
+
+        <ActionToolbarButton action={'TABLE_COLUMN_DISTRIBUTE'}>
+          <TbColumns2 />
+        </ActionToolbarButton>
+        <ActionToolbarButton action={'TABLE_ROW_DISTRIBUTE'}>
+          <TbLayoutRows />
+        </ActionToolbarButton>
+      </ReactToolbar.Root>
+
       <div className={'cmp-labeled-table'}>
         {Object.entries(customProperties).map(([key, value]) => {
           if (value.type === 'number') {

@@ -1,7 +1,12 @@
 import { ColorPicker } from '../components/ColorPicker';
 import { DashSelector } from './DashSelector';
 import { NumberInput } from '../components/NumberInput';
-import { TbAdjustmentsHorizontal } from 'react-icons/tb';
+import {
+  TbAdjustmentsHorizontal,
+  TbBorderHorizontal,
+  TbBorderOuter,
+  TbBorderVertical
+} from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../context/DiagramContext';
 import { useNodeDefaults } from '../useDefaults';
@@ -9,6 +14,7 @@ import { PopoverButton } from '../components/PopoverButton';
 import { useConfiguration } from '../context/ConfigurationContext';
 import { Select } from '../components/Select';
 import { useTableProperty } from './useTable';
+import * as ReactToolbar from '@radix-ui/react-toolbar';
 
 export const TableStrokePanel = (props: Props) => {
   const $d = useDiagram();
@@ -27,6 +33,18 @@ export const TableStrokePanel = (props: Props) => {
   const lineJoin = useTableProperty($d, 'stroke.lineJoin', defaults.stroke.lineJoin);
   const miterLimit = useTableProperty($d, 'stroke.miterLimit', defaults.stroke.miterLimit);
 
+  const horizontalBorder = useTableProperty(
+    $d,
+    'table.horizontalBorder',
+    defaults.table.horizontalBorder
+  );
+  const verticalBorder = useTableProperty(
+    $d,
+    'table.verticalBorder',
+    defaults.table.verticalBorder
+  );
+  const outerBorder = useTableProperty($d, 'table.outerBorder', defaults.table.outerBorder);
+
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
@@ -37,6 +55,40 @@ export const TableStrokePanel = (props: Props) => {
       onChange={enabled.set}
     >
       <div className={'cmp-labeled-table'}>
+        <div className={'cmp-labeled-table__label'}>Border:</div>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+          <ReactToolbar.Root className="cmp-toolbar">
+            <ReactToolbar.ToggleGroup
+              type={'multiple'}
+              value={Object.entries({
+                outer: outerBorder.val,
+                horizontal: horizontalBorder.val,
+                vertical: verticalBorder.val
+              })
+                .filter(([_, value]) => value)
+                .map(([key, _]) => key)}
+              onValueChange={value => {
+                if (!!outerBorder.val !== value.includes('outer'))
+                  outerBorder.set(value.includes('outer'));
+                if (!!horizontalBorder.val !== value.includes('horizontal'))
+                  horizontalBorder.set(value.includes('horizontal'));
+                if (!!verticalBorder.val !== value.includes('vertical'))
+                  verticalBorder.set(value.includes('vertical'));
+              }}
+            >
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'outer'}>
+                <TbBorderOuter />
+              </ReactToolbar.ToggleItem>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'horizontal'}>
+                <TbBorderHorizontal />
+              </ReactToolbar.ToggleItem>
+              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'vertical'}>
+                <TbBorderVertical />
+              </ReactToolbar.ToggleItem>
+            </ReactToolbar.ToggleGroup>
+          </ReactToolbar.Root>
+        </div>
+
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker

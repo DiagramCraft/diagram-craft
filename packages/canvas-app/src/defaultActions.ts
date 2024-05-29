@@ -19,9 +19,11 @@ import { layerActions } from './actions/layerActions';
 import { toolActions } from './actions/toolAction';
 import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas/src/keyMap';
 import { groupActions } from './actions/groupAction';
+import { tableActions } from '@diagram-craft/canvas/actions/tableActions';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
+  ...tableActions(state),
   ...clipboardActions(state),
   ...undoActions(state),
   ...redoActions(state),

@@ -29,7 +29,7 @@ export const TableDimensionsPanel = (props: Props) => {
         const row = (table.children.at(-1) as DiagramNode).duplicate();
         uow.snapshot(row);
         table.addChild(row, uow);
-        diagram.layers.active.addElement(row, uow);
+        table.layer.addElement(row, uow);
       }
 
       commitWithUndo(uow, 'Adding row');
@@ -39,7 +39,7 @@ export const TableDimensionsPanel = (props: Props) => {
         const row = table.children.at(-1) as DiagramNode;
         uow.snapshot(row);
         table.removeChild(row, uow);
-        diagram.layers.active.removeElement(row, uow);
+        row.layer.removeElement(row, uow);
       }
       commitWithUndo(uow, 'Deleting row');
     }
@@ -56,7 +56,7 @@ export const TableDimensionsPanel = (props: Props) => {
             const child = (row.children.at(-1) as DiagramNode).duplicate();
             uow.snapshot(child);
             row.addChild(child, uow);
-            diagram.layers.active.addElement(child, uow);
+            table.layer.addElement(child, uow);
           }
         }
       }
@@ -70,7 +70,7 @@ export const TableDimensionsPanel = (props: Props) => {
           const child = row.children.at(-1) as DiagramNode;
           uow.snapshot(child);
           row.removeChild(child, uow);
-          diagram.layers.active.removeElement(child, uow);
+          table.layer.removeElement(child, uow);
         }
       }
       commitWithUndo(uow, 'Deleting column');

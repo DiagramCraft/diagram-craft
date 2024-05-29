@@ -18,8 +18,9 @@ declare global {
   interface NodeProps {
     table?: {
       gap?: number;
-      horizontalRows?: boolean;
-      verticalRows?: boolean;
+      horizontalBorder?: boolean;
+      verticalBorder?: boolean;
+      outerBorder?: boolean;
     };
   }
 }
@@ -178,37 +179,13 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
       {
         id: 'gap',
         type: 'number',
-        label: 'Gap',
+        label: 'Padding',
         value: node.props.table?.gap ?? 10,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           node.updateProps(props => {
             props.table ??= {};
             props.table.gap = value;
-          }, uow);
-        }
-      },
-      {
-        id: 'horizontalRows',
-        type: 'boolean',
-        label: 'Horizontal Rows',
-        value: node.props.table?.horizontalRows ?? true,
-        onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.table ??= {};
-            props.table.horizontalRows = value;
-          }, uow);
-        }
-      },
-      {
-        id: 'verticalRows',
-        type: 'boolean',
-        label: 'Vertical Rows',
-        value: node.props.table?.verticalRows ?? true,
-        onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.table ??= {};
-            props.table.verticalRows = value;
           }, uow);
         }
       }
@@ -223,11 +200,14 @@ class TableComponent extends ContainerComponent {
     const gap = props.nodeProps.table?.gap ?? 10;
 
     const pathBuilder = new PathBuilder();
-    PathBuilderHelper.rect(pathBuilder, props.node.bounds);
+
+    if (props.nodeProps.table?.outerBorder !== false) {
+      PathBuilderHelper.rect(pathBuilder, props.node.bounds);
+    }
 
     const bounds = props.node.bounds;
 
-    if (props.nodeProps.table?.verticalRows !== false) {
+    if (props.nodeProps.table?.verticalBorder !== false) {
       let x = bounds.x + gap;
       const row = props.node.children[0] as DiagramNode;
       for (let i = 0; i < row.children.length - 1; i++) {
@@ -241,7 +221,7 @@ class TableComponent extends ContainerComponent {
       }
     }
 
-    if (props.nodeProps.table?.horizontalRows !== false) {
+    if (props.nodeProps.table?.horizontalBorder !== false) {
       let y = bounds.y + gap;
       const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
       for (let i = 0; i < sortedChildren.length - 1; i++) {

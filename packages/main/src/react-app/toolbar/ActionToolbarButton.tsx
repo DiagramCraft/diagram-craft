@@ -3,6 +3,7 @@ import * as Toolbar from '@radix-ui/react-toolbar';
 import { useEventListener } from '../hooks/useEventListener';
 import { useActions } from '../context/ActionsContext';
 import { ActionEvents } from '@diagram-craft/canvas/action';
+import * as Tooltip from '@radix-ui/react-tooltip';
 
 export const ActionToolbarButton = (props: Props) => {
   const { actionMap } = useActions();
@@ -24,15 +25,27 @@ export const ActionToolbarButton = (props: Props) => {
   }, [enabled, props.action, actionMap]);
 
   return (
-    <Toolbar.Button
-      className="cmp-toolbar__button"
-      disabled={!enabled}
-      onClick={() => {
-        actionMap[props.action]!.execute({});
-      }}
-    >
-      {props.children}
-    </Toolbar.Button>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <Toolbar.Button
+            className="cmp-toolbar__button"
+            disabled={!enabled}
+            onClick={() => {
+              actionMap[props.action]!.execute({});
+            }}
+          >
+            {props.children}
+          </Toolbar.Button>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content className="cmp-tooltip" sideOffset={5} side={'bottom'}>
+            {props.action}
+            <Tooltip.Arrow className="cmp-tooltip__arrow" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   );
 };
 

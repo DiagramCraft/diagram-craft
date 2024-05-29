@@ -96,6 +96,12 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
   geometry: {
     flipV: false,
     flipH: false
+  },
+  table: {
+    horizontalBorder: true,
+    verticalBorder: true,
+    gap: 0,
+    outerBorder: true
   }
 });
 
