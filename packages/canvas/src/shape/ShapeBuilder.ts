@@ -118,6 +118,8 @@ export class ShapeBuilder {
     opts.map ??= a => a;
     opts.style ??= {};
 
+    if (paths.length === 0) return;
+
     const bounds = this.props.element.bounds;
 
     const joinedPaths = this.processPath(props, opts, paths);

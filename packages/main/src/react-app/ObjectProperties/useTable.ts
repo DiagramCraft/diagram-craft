@@ -9,6 +9,8 @@ import {
 } from './usePropertyFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useEventListener } from '../hooks/useEventListener';
+import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { makeWriteable } from '@diagram-craft/utils/types';
 
 export const useTable = (diagram: Diagram) => {
   const [element, setElement] = useState<DiagramNode | undefined>(undefined);
@@ -63,6 +65,7 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
   },
+  makeWriteable(nodeDefaults),
   {
     onAfterSet: (diagram, nodes, path, oldValue, newValue) => {
       diagram.undoManager.add(

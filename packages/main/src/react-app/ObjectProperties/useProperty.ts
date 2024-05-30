@@ -13,6 +13,8 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { makeWriteable } from '@diagram-craft/utils/types';
+import { edgeDefaults, elementDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePropertyHook<
   Diagram,
@@ -65,6 +67,7 @@ export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makeProper
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
   },
+  makeWriteable(edgeDefaults),
   {
     onAfterSet: (diagram, edges, path, oldValue, newValue) => {
       diagram.undoManager.add(
@@ -93,6 +96,7 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
   },
+  makeWriteable(nodeDefaults),
   {
     onAfterSet: (diagram, nodes, path, oldValue, newValue) => {
       diagram.undoManager.add(
@@ -123,6 +127,7 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
   },
+  makeWriteable(elementDefaults),
   {
     onAfterSet: (diagram, elements, path, oldValue, newValue) => {
       diagram.undoManager.add(

@@ -1,4 +1,4 @@
-import { DeepPartial } from '@diagram-craft/utils/types';
+import { DeepPartial, DeepReadonly } from '@diagram-craft/utils/types';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { NodePropsForRendering } from './diagramNode';
 import { EdgePropsForRendering } from './diagramEdge';
@@ -174,6 +174,9 @@ export function registerEdgeDefaults<K extends keyof EdgeProps>(k: K, v: EdgePro
   // @ts-ignore
   return (d: EdgeProps[K]) => deepMerge({}, v, d);
 }
+
+export const elementDefaults: DeepReadonly<ElementProps> =
+  createDefaultsProxy<ElementPropsForRendering>(_elementDefaults);
 
 export const nodeDefaults: NodePropsForRendering =
   createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);

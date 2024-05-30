@@ -14,7 +14,7 @@ export type PropertyHook<TBase, TObj> = <
 >(
   obj: TBase,
   propertyPath: K,
-  defaultValue: DV
+  defaultValue?: DV
 ) => {
   val: V;
   set: (value: V) => void;
@@ -27,7 +27,7 @@ export type PropertyArrayHook<TBase, TObj> = <
 >(
   obj: TBase,
   propertyPath: K,
-  defaultValue: NonNullable<DV>
+  defaultValue?: NonNullable<DV>
 ) => {
   val: NonNullable<V>;
   set: (value: V) => void;
@@ -83,6 +83,7 @@ export const makePropertyArrayHook = <
   getObj: (e: TItem) => DeepReadonly<TObj>,
   updateObj: (obj: TBase, e: TItem, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
+  defaults: TObj,
   callbacks?: {
     onAfterSet?: (
       obj: TBase,
@@ -93,7 +94,10 @@ export const makePropertyArrayHook = <
     ) => void;
   }
 ): PropertyArrayHook<TBase, TObj> => {
-  return ((obj: TBase, path: TPath, defaultValue: TValue) => {
+  return ((obj: TBase, path: TPath, defaultValueOverride?: TValue) => {
+    const accessor = new DynamicAccessor<TObj>();
+
+    const defaultValue = defaultValueOverride ?? (accessor.get(defaults, path) as TValue);
     const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
     const handler = () => {
@@ -108,7 +112,6 @@ export const makePropertyArrayHook = <
     subscribe(obj, handler);
     useEffect(handler, [defaultValue, obj, path]);
 
-    const accessor = new DynamicAccessor<TObj>();
     return {
       val: value,
       set: (v: TValue) => {

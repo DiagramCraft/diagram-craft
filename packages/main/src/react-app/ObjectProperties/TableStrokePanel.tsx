@@ -9,7 +9,6 @@ import {
 } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../context/DiagramContext';
-import { useNodeDefaults } from '../useDefaults';
 import { PopoverButton } from '../components/PopoverButton';
 import { useConfiguration } from '../context/ConfigurationContext';
 import { Select } from '../components/Select';
@@ -19,37 +18,23 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 export const TableStrokePanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
-  const defaults = useNodeDefaults();
 
-  const strokeColor = useTableProperty($d, 'stroke.color', defaults.stroke.color);
-  const pattern = useTableProperty($d, 'stroke.pattern', defaults.stroke.pattern ?? '');
+  const strokeColor = useTableProperty($d, 'stroke.color');
+  const pattern = useTableProperty($d, 'stroke.pattern');
 
-  const strokeSize = useTableProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
-  const strokeSpacing = useTableProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);
-  const strokeWidth = useTableProperty($d, 'stroke.width', defaults.stroke.width);
-  const enabled = useTableProperty($d, 'stroke.enabled', defaults.stroke.enabled);
+  const strokeSize = useTableProperty($d, 'stroke.patternSize');
+  const strokeSpacing = useTableProperty($d, 'stroke.patternSpacing');
+  const strokeWidth = useTableProperty($d, 'stroke.width');
+  const enabled = useTableProperty($d, 'stroke.enabled');
 
-  const lineCap = useTableProperty($d, 'stroke.lineCap', defaults.stroke.lineCap);
-  const lineJoin = useTableProperty($d, 'stroke.lineJoin', defaults.stroke.lineJoin);
-  const miterLimit = useTableProperty($d, 'stroke.miterLimit', defaults.stroke.miterLimit);
+  const lineCap = useTableProperty($d, 'stroke.lineCap');
+  const lineJoin = useTableProperty($d, 'stroke.lineJoin');
+  const miterLimit = useTableProperty($d, 'stroke.miterLimit');
 
-  const horizontalBorder = useTableProperty(
-    $d,
-    'shapeTable.horizontalBorder',
-    defaults.shapeTable.horizontalBorder
-  );
-  const verticalBorder = useTableProperty(
-    $d,
-    'shapeTable.verticalBorder',
-    defaults.shapeTable.verticalBorder
-  );
+  const horizontalBorder = useTableProperty($d, 'shapeTable.horizontalBorder');
+  const verticalBorder = useTableProperty($d, 'shapeTable.verticalBorder');
 
-  // TODO: No need to provide defaults - same for useProperty
-  const outerBorder = useTableProperty(
-    $d,
-    'shapeTable.outerBorder',
-    defaults.shapeTable.outerBorder
-  );
+  const outerBorder = useTableProperty($d, 'shapeTable.outerBorder');
 
   return (
     <ToolWindowPanel
