@@ -50,7 +50,7 @@ export class PenTool extends AbstractTool {
         this.diagram,
         this.diagram.layers.active,
         {
-          genericPath: {
+          shapeGenericPath: {
             path: `M 0 0`
           }
         }
@@ -68,7 +68,7 @@ export class PenTool extends AbstractTool {
     const uow = new UnitOfWork(this.diagram);
 
     const currentPath = PathBuilder.fromString(
-      this.node!.renderProps.genericPath!.path!,
+      this.node!.renderProps.shapeGenericPath!.path!,
       unitCoordinateSystem(this.node!.bounds)
     )
       .getPaths()
@@ -92,7 +92,7 @@ export class PenTool extends AbstractTool {
     const bounds = path.bounds();
 
     this.node!.updateProps(p => {
-      p.genericPath!.path = PathUtils.scalePath(path, bounds, {
+      p.shapeGenericPath!.path = PathUtils.scalePath(path, bounds, {
         x: -1,
         y: 1,
         w: 2,

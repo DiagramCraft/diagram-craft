@@ -20,7 +20,7 @@ type ExtraProps = {
 
 declare global {
   interface NodeProps {
-    hexagon?: ExtraProps;
+    shapeHexagon?: ExtraProps;
   }
 }
 
@@ -31,7 +31,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.renderProps.hexagon),
+    value: Size.get(node.renderProps.shapeHexagon),
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -41,7 +41,7 @@ const Size = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
-    node.updateProps(props => (props.hexagon = { size: round(value) }), uow);
+    node.updateProps(props => (props.shapeHexagon = { size: round(value) }), uow);
   }
 };
 
@@ -57,18 +57,18 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const sizePct = Size.get(props.nodeProps.hexagon) / 100;
+      const sizePct = Size.get(props.nodeProps.shapeHexagon) / 100;
 
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const distance = Math.max(0, x - bounds.x);
         Size.set((distance / bounds.w) * 100, props.node, uow);
-        return `Size: ${Size.get(props.node.renderProps.hexagon)}%`;
+        return `Size: ${Size.get(props.node.renderProps.shapeHexagon)}%`;
       });
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = Size.get(def.renderProps.hexagon) / 100;
+    const sizePct = Size.get(def.renderProps.shapeHexagon) / 100;
 
     const x1 = -1 + sizePct * 2;
     const x2 = 1 - sizePct * 2;

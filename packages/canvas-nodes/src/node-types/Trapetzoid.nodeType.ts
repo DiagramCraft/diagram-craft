@@ -12,7 +12,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   interface NodeProps {
-    trapetzoid?: {
+    shapeTrapetzoid?: {
       slantLeft?: number;
       slantRight?: number;
     };
@@ -30,14 +30,14 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
         id: 'slantLeft',
         type: 'number',
         label: 'Slant (left)',
-        value: def.renderProps.trapetzoid?.slantLeft ?? 5,
+        value: def.renderProps.shapeTrapetzoid?.slantLeft ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
           def.updateProps(props => {
-            props.trapetzoid ??= {};
-            props.trapetzoid.slantLeft = value;
+            props.shapeTrapetzoid ??= {};
+            props.shapeTrapetzoid.slantLeft = value;
           }, uow);
         }
       },
@@ -45,14 +45,14 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
         id: 'slantRight',
         type: 'number',
         label: 'Slant (right)',
-        value: def.renderProps.trapetzoid?.slantRight ?? 5,
+        value: def.renderProps.shapeTrapetzoid?.slantRight ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
           def.updateProps(props => {
-            props.trapetzoid ??= {};
-            props.trapetzoid.slantRight = value;
+            props.shapeTrapetzoid ??= {};
+            props.shapeTrapetzoid.slantRight = value;
           }, uow);
         }
       }
@@ -60,8 +60,8 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slantLeft = def.renderProps.trapetzoid?.slantLeft ?? 5;
-    const slantRight = def.renderProps.trapetzoid?.slantRight ?? 5;
+    const slantLeft = def.renderProps.shapeTrapetzoid?.slantLeft ?? 5;
+    const slantRight = def.renderProps.shapeTrapetzoid?.slantRight ?? 5;
     const bnd = def.bounds;
 
     const cdSl = (slantLeft / bnd.w) * 2;
@@ -81,8 +81,8 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
 
 class TrapetzoidComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const slantLeft = props.nodeProps.trapetzoid?.slantLeft ?? 5;
-    const slantRight = props.nodeProps.trapetzoid?.slantRight ?? 5;
+    const slantLeft = props.nodeProps.shapeTrapetzoid?.slantLeft ?? 5;
+    const slantRight = props.nodeProps.shapeTrapetzoid?.slantRight ?? 5;
 
     const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
@@ -95,11 +95,11 @@ class TrapetzoidComponent extends BaseNodeComponent {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
           props.node.updateProps(props => {
-            props.trapetzoid ??= {};
-            props.trapetzoid.slantLeft = distance;
+            props.shapeTrapetzoid ??= {};
+            props.shapeTrapetzoid.slantLeft = distance;
           }, uow);
         }
-        return `Slant: ${props.node.renderProps.trapetzoid?.slantLeft}px`;
+        return `Slant: ${props.node.renderProps.shapeTrapetzoid?.slantLeft}px`;
       }
     );
 
@@ -109,11 +109,11 @@ class TrapetzoidComponent extends BaseNodeComponent {
         const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
           props.node.updateProps(props => {
-            props.trapetzoid ??= {};
-            props.trapetzoid.slantRight = distance;
+            props.shapeTrapetzoid ??= {};
+            props.shapeTrapetzoid.slantRight = distance;
           }, uow);
         }
-        return `Slant: ${props.node.renderProps.trapetzoid?.slantRight}px`;
+        return `Slant: ${props.node.renderProps.shapeTrapetzoid?.slantRight}px`;
       }
     );
   }

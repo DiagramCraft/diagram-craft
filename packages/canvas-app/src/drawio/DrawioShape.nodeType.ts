@@ -27,7 +27,7 @@ import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   interface NodeProps {
-    drawio?: {
+    shapeDrawio?: {
       shape?: string;
       textPosition?: 'center' | 'bottom' | 'right';
     };
@@ -57,7 +57,7 @@ const isShapeElement = ($el: Element) =>
 const parse = (def: DiagramNode, stencil: Stencil): Element | undefined => {
   if (def.cache.has('element')) return def.cache.get('element') as Element;
 
-  const data = def.renderProps?.drawio?.shape ?? stencil.props?.drawio?.shape;
+  const data = def.renderProps?.shapeDrawio?.shape ?? stencil.props?.shapeDrawio?.shape;
   if (!data) {
     console.warn(`Cannot find shape for ${def.type} / ${def.name}`);
     return undefined;
@@ -397,14 +397,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
           },
           {
             x:
-              props.nodeProps.drawio?.textPosition === 'right'
+              props.nodeProps.shapeDrawio?.textPosition === 'right'
                 ? props.node.bounds.x + props.node.bounds.w
                 : props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
             y:
-              props.nodeProps.drawio?.textPosition === 'bottom'
+              props.nodeProps.shapeDrawio?.textPosition === 'bottom'
                 ? props.node.bounds.y + props.node.bounds.h
                 : props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
-            w: props.nodeProps.drawio?.textPosition === 'right' ? 200 : 60,
+            w: props.nodeProps.shapeDrawio?.textPosition === 'right' ? 200 : 60,
             h: 40,
             r: 0
           }
@@ -487,14 +487,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
     shapeBuilder.text(this, '1', props.nodeProps.text, {
       ...props.node.bounds,
       x:
-        props.nodeProps.drawio?.textPosition === 'right'
+        props.nodeProps.shapeDrawio?.textPosition === 'right'
           ? props.node.bounds.x + props.node.bounds.w
           : props.node.bounds.x,
       y:
-        props.nodeProps.drawio?.textPosition === 'bottom'
+        props.nodeProps.shapeDrawio?.textPosition === 'bottom'
           ? props.node.bounds.y + props.node.bounds.h
           : props.node.bounds.y,
-      w: props.nodeProps.drawio?.textPosition === 'right' ? 200 : props.node.bounds.w
+      w: props.nodeProps.shapeDrawio?.textPosition === 'right' ? 200 : props.node.bounds.w
     });
   }
 }

@@ -15,7 +15,7 @@ import { EventHelper } from '@diagram-craft/utils/eventHelper';
 
 declare global {
   interface NodeProps {
-    genericPath?: {
+    shapeGenericPath?: {
       path?: string;
       waypointTypes?: EditableWaypointType[];
     };
@@ -43,7 +43,7 @@ export class GenericPathNodeDefinition extends ShapeNodeDefinition {
 
   getBoundingPathBuilder(def: DiagramNode) {
     return PathBuilder.fromString(
-      def.renderProps.genericPath?.path ?? DEFAULT_PATH,
+      def.renderProps.shapeGenericPath?.path ?? DEFAULT_PATH,
       unitCoordinateSystem(def.bounds)
     );
   }

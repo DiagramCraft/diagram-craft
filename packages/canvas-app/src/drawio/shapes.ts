@@ -23,13 +23,13 @@ const makeShape = (type: string, setProps: (s: Style, p: NodeProps) => void = ()
 };
 
 export const parseHexagon = makeShape('hexagon', (style, props) => {
-  props.hexagon = {
+  props.shapeHexagon = {
     size: parseNum(style.size, 50) / 2
   };
 });
 
 export const parseStep = makeShape('step', (style, props) => {
-  props.step = {
+  props.shapeStep = {
     size: parseNum(style.size, 25)
   };
 });
@@ -76,7 +76,7 @@ export const parseTableRow = makeShape('tableRow');
 export const parseRhombus = makeShape('diamond');
 
 export const parseParallelogram = makeShape('parallelogram', (style, props) => {
-  props.parallelogram = {
+  props.shapeParallelogram = {
     slant: parseNum(style.size, 20)
   };
 });
@@ -100,7 +100,7 @@ export const parseCylinder = makeShape('cylinder', (style, props) => {
 });
 
 export const parseProcess = makeShape('process', (style, props) => {
-  props.process = {
+  props.shapeProcess = {
     size: parseNum(style.size, 0.125) * 100
   };
 });
@@ -171,7 +171,7 @@ export const parseImage = async (
   props.text!.valign = 'top';
   props.text!.align = 'center';
 
-  if (props.drawio?.textPosition === 'right') {
+  if (props.shapeDrawio?.textPosition === 'right') {
     props.text!.align = 'left';
     props.text!.valign = 'middle';
   }
@@ -208,7 +208,7 @@ export const parseRoundedRect = async (
   diagram: Diagram,
   layer: Layer
 ) => {
-  props.roundedRect = {
+  props.shapeRoundedRect = {
     radius:
       style.absoluteArcSize === '1'
         ? Math.min(bounds.w / 2, bounds.h / 2, parseNum(style.arcSize, 10) / 2)

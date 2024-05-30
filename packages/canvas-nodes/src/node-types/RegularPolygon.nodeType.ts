@@ -14,7 +14,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   interface NodeProps {
-    regularPolygon?: {
+    shapeRegularPolygon?: {
       numberOfSides?: number;
     };
   }
@@ -26,7 +26,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sides = def.renderProps.regularPolygon?.numberOfSides ?? 5;
+    const sides = def.renderProps.shapeRegularPolygon?.numberOfSides ?? 5;
 
     const theta = Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
@@ -49,11 +49,11 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
         id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
-        value: def.renderProps.regularPolygon?.numberOfSides ?? 5,
+        value: def.renderProps.shapeRegularPolygon?.numberOfSides ?? 5,
         onChange: (value: number, uow: UnitOfWork) => {
           def.updateProps(props => {
-            props.regularPolygon ??= {};
-            props.regularPolygon.numberOfSides = value;
+            props.shapeRegularPolygon ??= {};
+            props.shapeRegularPolygon.numberOfSides = value;
           }, uow);
         }
       }
@@ -78,8 +78,8 @@ class RegularPolygonComponent extends BaseNodeComponent {
       const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
       props.node.updateProps(props => {
-        props.regularPolygon ??= {};
-        props.regularPolygon.numberOfSides = numberOfSides;
+        props.shapeRegularPolygon ??= {};
+        props.shapeRegularPolygon.numberOfSides = numberOfSides;
       }, uow);
       return `Sides: ${numberOfSides}`;
     });

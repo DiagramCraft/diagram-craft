@@ -116,7 +116,7 @@ export class EditablePath {
     this.buildFromPath(path.segments());
     this.originalSvgPath = path.asSvgPath();
 
-    const gpProps = node.renderProps.genericPath ?? {};
+    const gpProps = node.renderProps.shapeGenericPath ?? {};
     if (gpProps.waypointTypes && gpProps.waypointTypes.length === this.waypoints.length) {
       for (let i = 0; i < this.waypoints.length; i++) {
         this.waypoints[i].type = gpProps.waypointTypes[i];
@@ -236,7 +236,7 @@ export class EditablePath {
     // Raw path and raw bounds represent the path in the original unit coordinate system,
     // but since waypoints have been moved, some points may lie outside the [-1, 1] range
     const rawPath = PathBuilder.fromString(
-      this.node.renderProps.genericPath?.path ?? this.originalSvgPath
+      this.node.renderProps.shapeGenericPath?.path ?? this.originalSvgPath
     ).getPaths();
     const rawBounds = rawPath.bounds();
 
@@ -262,18 +262,18 @@ export class EditablePath {
 
   public commitToNode(uow: UnitOfWork) {
     this.node.updateProps(p => {
-      p.genericPath ??= {};
-      p.genericPath.path = this.getPath('as-stored').asSvgPath();
-      p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
+      p.shapeGenericPath ??= {};
+      p.shapeGenericPath.path = this.getPath('as-stored').asSvgPath();
+      p.shapeGenericPath.waypointTypes = this.waypoints.map(wp => wp.type);
     }, uow);
 
     // As this reads the genericPath.path, we have to first set the path provisionally -
     // ... see code above
     const { path, bounds } = this.resizePathToUnitLCS();
     this.node.updateProps(p => {
-      p.genericPath ??= {};
-      p.genericPath.path = path.asSvgPath();
-      p.genericPath.waypointTypes = this.waypoints.map(wp => wp.type);
+      p.shapeGenericPath ??= {};
+      p.shapeGenericPath.path = path.asSvgPath();
+      p.shapeGenericPath.waypointTypes = this.waypoints.map(wp => wp.type);
     }, uow);
     this.node.setBounds(bounds, uow);
   }

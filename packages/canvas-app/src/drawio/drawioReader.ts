@@ -523,8 +523,8 @@ const getNodeProps = (style: Style) => {
   }
 
   if (style.labelPosition === 'right') {
-    props.drawio ??= {};
-    props.drawio.textPosition = 'right';
+    props.shapeDrawio ??= {};
+    props.shapeDrawio.textPosition = 'right';
   }
 
   return props;
@@ -666,7 +666,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       const shape = parseShape(drawioBuiltinShapes[style.shape!] ?? style.shape);
 
       if (shape) {
-        props.drawio = { shape: btoa(await decode(shape)) };
+        props.shapeDrawio = { shape: btoa(await decode(shape)) };
         nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props));
       } else if ($style.startsWith('text;')) {
         if (!style.strokeColor || style.strokeColor === 'none') {

@@ -28,7 +28,7 @@ export const loadStencil = async (
       props: {
         fill: { color: background },
         stroke: { color: foreground },
-        drawio: { shape: btoa(xmlSerializer.serializeToString($shapes[i])) }
+        shapeDrawio: { shape: btoa(xmlSerializer.serializeToString($shapes[i])) }
       },
       dimensions: {
         w: xNum($shapes[i], 'w'),

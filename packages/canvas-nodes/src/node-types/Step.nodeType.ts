@@ -20,7 +20,7 @@ type ExtraProps = {
 
 declare global {
   interface NodeProps {
-    step?: ExtraProps;
+    shapeStep?: ExtraProps;
   }
 }
 
@@ -31,7 +31,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.renderProps.step),
+    value: Size.get(node.renderProps.shapeStep),
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -41,7 +41,7 @@ const Size = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= node.bounds.w / 2 || value <= 0) return;
-    node.updateProps(props => (props.step = { size: round(value) }), uow);
+    node.updateProps(props => (props.shapeStep = { size: round(value) }), uow);
   }
 };
 
@@ -57,21 +57,21 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const size = Size.get(props.nodeProps.step);
+      const size = Size.get(props.nodeProps.shapeStep);
 
       shapeBuilder.controlPoint(
         Point.of(bounds.x + size, bounds.y + bounds.h / 2),
         ({ x }, uow) => {
           const distance = Math.max(0, x - bounds.x);
           Size.set(distance, props.node, uow);
-          return `Size: ${Size.get(props.node.renderProps.step)}px`;
+          return `Size: ${Size.get(props.node.renderProps.shapeStep)}px`;
         }
       );
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = Size.get(def.renderProps.step) / def.bounds.w;
+    const sizePct = Size.get(def.renderProps.shapeStep) / def.bounds.w;
 
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 

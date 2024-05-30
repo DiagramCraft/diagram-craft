@@ -2,11 +2,10 @@ import { Component } from '../component/component';
 import { rawHTML, VNode } from '../component/vdom';
 import * as svg from '../component/vdom-svg';
 import { Box } from '@diagram-craft/geometry/box';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { Angle } from '@diagram-craft/geometry/angle';
 
-const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bounds: Box) => {
+const getPatternProps = (nodeProps: NodePropsForRendering, bounds: Box) => {
   if (nodeProps.fill.image) {
     if (nodeProps.fill.image.fit === 'fill') {
       return {
@@ -74,7 +73,7 @@ const getPatternProps = (nodeProps: DeepRequired<DeepReadonly<NodeProps>>, bound
 
 type FillProps = {
   patternId: string;
-  nodeProps: DeepRequired<DeepReadonly<NodeProps>>;
+  nodeProps: NodePropsForRendering;
 };
 
 export class PatternFillColorAdjustment extends Component<FillProps> {
@@ -170,7 +169,7 @@ export class PatternFillColorAdjustment extends Component<FillProps> {
 type FillPatternProps = {
   def: DiagramNode;
   patternId: string;
-  nodeProps: DeepRequired<DeepReadonly<NodeProps>>;
+  nodeProps: NodePropsForRendering;
 };
 
 export class FillPattern extends Component<FillPatternProps> {
@@ -259,10 +258,7 @@ export class FillPattern extends Component<FillPatternProps> {
   }
 }
 
-export const makeLinearGradient = (
-  gradientId: string,
-  nodeProps: DeepReadonly<DeepRequired<NodeProps>>
-) => {
+export const makeLinearGradient = (gradientId: string, nodeProps: NodePropsForRendering) => {
   return svg.linearGradient(
     {
       id: gradientId,
@@ -273,10 +269,7 @@ export const makeLinearGradient = (
   );
 };
 
-export const makeRadialGradient = (
-  gradientId: string,
-  nodeProps: DeepReadonly<DeepRequired<NodeProps>>
-) => {
+export const makeRadialGradient = (gradientId: string, nodeProps: NodePropsForRendering) => {
   return svg.radialGradient(
     {
       id: gradientId,

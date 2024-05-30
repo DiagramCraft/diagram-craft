@@ -89,8 +89,8 @@ export const parseAWS4Shapes = async (
   }
 
   if (style.shape?.includes('illustration')) {
-    props.drawio ??= {};
-    props.drawio!.textPosition = 'bottom';
+    props.shapeDrawio ??= {};
+    props.shapeDrawio!.textPosition = 'bottom';
   }
 
   return new DiagramNode(id, style.shape!, bounds, diagram, layer, props);

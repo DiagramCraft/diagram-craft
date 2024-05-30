@@ -21,15 +21,15 @@ export class DelayNodeDefinition extends ShapeNodeDefinition {
         id: 'radius',
         type: 'number',
         label: 'Radius',
-        value: def.renderProps.roundedRect?.radius ?? 5,
+        value: def.renderProps.shapeRoundedRect?.radius ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
 
           def.updateProps(props => {
-            props.roundedRect ??= {};
-            props.roundedRect.radius = value;
+            props.shapeRoundedRect ??= {};
+            props.shapeRoundedRect.radius = value;
           }, uow);
         }
       }

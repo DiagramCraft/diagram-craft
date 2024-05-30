@@ -20,7 +20,11 @@ export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
 };
 
-export type NodePropsForRendering = DeepReadonly<DeepRequired<NodeProps>>;
+type OptionalKeys = 'labelForEdgeId';
+
+export type NodePropsForRendering = DeepReadonly<
+  DeepRequired<Omit<NodeProps, OptionalKeys>> & Pick<NodeProps, OptionalKeys>
+>;
 export type NodePropsForEditing = DeepReadonly<NodeProps>;
 
 export class DiagramNode
@@ -359,8 +363,8 @@ export class DiagramNode
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {
-      p.genericPath = {};
-      p.genericPath.path = scaledPath.asSvgPath();
+      p.shapeGenericPath = {};
+      p.shapeGenericPath.path = scaledPath.asSvgPath();
     }, uow);
   }
 

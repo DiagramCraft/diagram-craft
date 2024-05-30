@@ -19,7 +19,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           offset: { x: 0, y: 60, w: 0, h: -60 },
           props: (p): NodeProps => ({
             ...(p as NodeProps),
-            roundedRect: {
+            shapeRoundedRect: {
               radius: 40
             },
             text: {}
@@ -72,7 +72,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           offset: { x: 5, y: 5, w: -60, h: 12 },
           props: (p): NodeProps => ({
             ...(p as NodeProps),
-            roundedRect: {
+            shapeRoundedRect: {
               radius: 4
             },
             stroke: {
@@ -88,7 +88,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           offset: { x: -50, y: 5, w: 12, h: 12 },
           props: (p): NodeProps => ({
             ...(p as NodeProps),
-            roundedRect: {
+            shapeRoundedRect: {
               radius: 4
             },
             stroke: {
@@ -104,7 +104,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           offset: { x: -34, y: 5, w: 12, h: 12 },
           props: (p): NodeProps => ({
             ...(p as NodeProps),
-            roundedRect: {
+            shapeRoundedRect: {
               radius: 4
             },
             stroke: {
@@ -120,7 +120,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           offset: { x: -17, y: 5, w: 12, h: 12 },
           props: (p): NodeProps => ({
             ...(p as NodeProps),
-            roundedRect: {
+            shapeRoundedRect: {
               radius: 4
             },
             stroke: {
@@ -139,7 +139,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           },
           props: (p): NodeProps => ({
             ...(p as NodeProps),
-            roundedRect: {
+            shapeRoundedRect: {
               radius: 8
             },
             stroke: {

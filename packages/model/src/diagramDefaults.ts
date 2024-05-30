@@ -2,12 +2,14 @@ import { DeepPartial } from '@diagram-craft/utils/types';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { NodePropsForRendering } from './diagramNode';
 import { EdgePropsForRendering } from './diagramEdge';
+import { ElementPropsForRendering } from './diagramElement';
 
-export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: string): T =>
+const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: string): T =>
   new Proxy<T>(target as T, {
-    get(target, property) {
+    get(_target, property) {
       const item = target[property as keyof T];
       if (item === null || item === undefined) {
+        if (property === 'toJSON') return undefined;
         throw new Error(`${path ?? ''}#${String(property)} is not defined in defaults`);
       }
 
@@ -24,8 +26,29 @@ export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, pa
     }
   });
 
-export const nodeDefaults: NodePropsForRendering = createDefaultsProxy<NodePropsForRendering>({
-  style: 'default',
+type FilterNotStartingWith<B, P extends string> = B extends `${P}${infer _X}` ? never : B;
+
+const _elementDefaults: Pick<
+  ElementPropsForRendering,
+  'data' | 'highlight' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'text'
+> = {
+  data: {
+    data: [],
+    customData: {}
+  },
+  highlight: [],
+  geometry: {
+    flipV: false,
+    flipH: false
+  },
+  shadow: {
+    enabled: false,
+    color: 'var(--canvas-fg)',
+    blur: 5,
+    opacity: 0.5,
+    x: 5,
+    y: 5
+  },
   fill: {
     color: 'var(--canvas-bg)',
     color2: 'blue',
@@ -62,6 +85,7 @@ export const nodeDefaults: NodePropsForRendering = createDefaultsProxy<NodeProps
     miterLimit: 4
   },
   text: {
+    text: '',
     color: 'var(--canvas-fg)',
     fontSize: 10,
     lineHeight: 1,
@@ -76,15 +100,16 @@ export const nodeDefaults: NodePropsForRendering = createDefaultsProxy<NodeProps
     left: 6,
     right: 6,
     bottom: 6
-  },
-  shadow: {
-    enabled: false,
-    color: 'var(--canvas-fg)',
-    blur: 5,
-    opacity: 0.5,
-    x: 5,
-    y: 5
-  },
+  }
+};
+
+const _nodeDefaults: Omit<
+  Pick<NodePropsForRendering, FilterNotStartingWith<keyof NodePropsForRendering, 'shape'>>,
+  'labelForEdgeId'
+> = {
+  ..._elementDefaults,
+  style: 'default',
+
   effects: {
     blur: 0,
     opacity: 1,
@@ -94,67 +119,56 @@ export const nodeDefaults: NodePropsForRendering = createDefaultsProxy<NodeProps
     sketchFillType: 'fill',
     sketchStrength: 0.1
   },
-  highlight: [],
-  geometry: {
-    flipV: false,
-    flipH: false
-  },
   table: {
     horizontalBorder: true,
     verticalBorder: true,
     gap: 0,
-    outerBorder: true
+    outerBorder: true,
+    title: false,
+    titleSize: 30
   }
-});
+};
+
+const _edgeProps: Pick<
+  EdgePropsForRendering,
+  FilterNotStartingWith<keyof EdgePropsForRendering, 'shape'>
+> = {
+  ..._elementDefaults,
+  style: 'default-edge',
+  type: 'straight',
+  arrow: {
+    start: {
+      type: 'NONE',
+      size: 100
+    },
+    end: {
+      type: 'NONE',
+      size: 100
+    }
+  },
+  routing: {
+    rounding: 0
+  },
+  lineHops: {
+    type: 'none',
+    size: 10
+  },
+  effects: {
+    sketch: false,
+    sketchStrength: 0.1,
+    sketchFillType: 'fill',
+    opacity: 1
+  }
+};
+
+export function registerNodeDefaults<K extends keyof NodeProps>(k: K, v: NodePropsForRendering[K]) {
+  // @ts-expect-error
+  _nodeDefaults[k] = v;
+}
+
+export const nodeDefaults: NodePropsForRendering =
+  createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);
 
 export const edgeDefaults: EdgePropsForRendering = createDefaultsProxy<EdgePropsForRendering>(
-  deepMerge<EdgePropsForRendering>({}, nodeDefaults, {
-    fill: {
-      color: 'var(--canvas-fg)',
-      enabled: true,
-      color2: 'blue',
-      type: 'solid',
-      image: {
-        id: '',
-        fit: 'fill',
-        url: '',
-        w: 0,
-        h: 0,
-        scale: 1,
-        tint: '',
-        tintStrength: 1,
-        brightness: 1,
-        contrast: 1,
-        saturation: 1
-      },
-      pattern: '',
-      gradient: {
-        direction: 0,
-        type: 'linear'
-      }
-    },
-    arrow: {
-      start: {
-        type: 'NONE',
-        size: 100
-      },
-      end: {
-        type: 'NONE',
-        size: 100
-      }
-    },
-    routing: {
-      rounding: 0
-    },
-    lineHops: {
-      type: 'none',
-      size: 10
-    },
-    effects: {
-      sketch: false,
-      sketchStrength: 0.1,
-      sketchFillType: 'fill',
-      opacity: 1
-    }
-  })
+  deepMerge<EdgePropsForRendering>({}, nodeDefaults, _edgeProps)
 );

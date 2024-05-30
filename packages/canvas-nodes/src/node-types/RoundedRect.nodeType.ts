@@ -9,14 +9,19 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
-    roundedRect?: {
+    shapeRoundedRect?: {
       radius?: number;
     };
   }
 }
+
+registerNodeDefaults('shapeRoundedRect', {
+  radius: 5
+});
 
 export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -29,15 +34,15 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
         id: 'radius',
         type: 'number',
         label: 'Radius',
-        value: def.renderProps.roundedRect?.radius ?? 5,
+        value: def.renderProps.shapeRoundedRect.radius,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
 
           def.updateProps(props => {
-            props.roundedRect ??= {};
-            props.roundedRect.radius = value;
+            props.shapeRoundedRect ??= {};
+            props.shapeRoundedRect.radius = value;
           }, uow);
         }
       }
@@ -45,7 +50,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const radius = def.renderProps.roundedRect?.radius ?? 5;
+    const radius = def.renderProps.shapeRoundedRect.radius;
     const bnd = def.bounds;
 
     const xr = (2 * radius) / bnd.w;
@@ -71,7 +76,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 
 class RoundedRectComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const radius = props.nodeProps.roundedRect?.radius ?? 10;
+    const radius = props.nodeProps.shapeRoundedRect?.radius ?? 10;
     const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary.all());
@@ -83,11 +88,11 @@ class RoundedRectComponent extends BaseNodeComponent {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
           props.node.updateProps(props => {
-            props.roundedRect ??= {};
-            props.roundedRect.radius = distance;
+            props.shapeRoundedRect ??= {};
+            props.shapeRoundedRect.radius = distance;
           }, uow);
         }
-        return `Radius: ${props.node.renderProps.roundedRect!.radius}px`;
+        return `Radius: ${props.node.renderProps.shapeRoundedRect!.radius}px`;
       }
     );
   }

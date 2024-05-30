@@ -20,7 +20,7 @@ type ExtraProps = {
 
 declare global {
   interface NodeProps {
-    process?: ExtraProps;
+    shapeProcess?: ExtraProps;
   }
 }
 
@@ -31,7 +31,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.renderProps.process),
+    value: Size.get(node.renderProps.shapeProcess),
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -41,7 +41,7 @@ const Size = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
-    node.updateProps(props => (props.process = { size: round(value) }), uow);
+    node.updateProps(props => (props.shapeProcess = { size: round(value) }), uow);
   }
 };
 
@@ -57,7 +57,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const sizePct = Size.get(props.nodeProps.process) / 100;
+      const sizePct = Size.get(props.nodeProps.shapeProcess) / 100;
 
       // Draw additional shape details
       const pathBuilder = new PathBuilder(unitCoordinateSystem(bounds));
@@ -74,7 +74,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
         Size.set(newValue, props.node, uow);
-        return `Size: ${Size.get(props.node.renderProps.process)}%`;
+        return `Size: ${Size.get(props.node.renderProps.shapeProcess)}%`;
       });
     }
   };

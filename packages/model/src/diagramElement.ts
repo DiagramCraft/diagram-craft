@@ -1,21 +1,23 @@
-import { DiagramEdge } from './diagramEdge';
-import { DiagramNode, DuplicationContext } from './diagramNode';
+import { DiagramEdge, EdgePropsForEditing, EdgePropsForRendering } from './diagramEdge';
+import {
+  DiagramNode,
+  DuplicationContext,
+  NodePropsForEditing,
+  NodePropsForRendering
+} from './diagramNode';
 import { AbstractElement } from './types';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
-import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { AttachmentConsumer } from './attachment';
 
 // eslint-disable-next-line
 type Snapshot = any;
 
-export type ElementPropsForEditing = DeepReadonly<NodeProps> | DeepReadonly<EdgeProps>;
-export type ElementPropsForRendering =
-  | DeepReadonly<DeepRequired<NodeProps>>
-  | DeepReadonly<DeepRequired<EdgeProps>>;
+export type ElementPropsForEditing = EdgePropsForEditing | NodePropsForEditing;
+export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRendering;
 
 export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   invalidate(uow: UnitOfWork): void;

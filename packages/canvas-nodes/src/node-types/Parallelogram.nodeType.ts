@@ -12,7 +12,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   interface NodeProps {
-    parallelogram?: {
+    shapeParallelogram?: {
       slant?: number;
     };
   }
@@ -29,14 +29,14 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
         id: 'slant',
         type: 'number',
         label: 'Slant',
-        value: def.renderProps.parallelogram?.slant ?? 5,
+        value: def.renderProps.shapeParallelogram?.slant ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
           def.updateProps(props => {
-            props.parallelogram ??= {};
-            props.parallelogram.slant = value;
+            props.shapeParallelogram ??= {};
+            props.shapeParallelogram.slant = value;
           }, uow);
         }
       }
@@ -44,7 +44,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slant = def.renderProps.parallelogram?.slant ?? 5;
+    const slant = def.renderProps.shapeParallelogram?.slant ?? 5;
     const bnd = def.bounds;
 
     const sr = slant / bnd.w;
@@ -64,7 +64,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
 
 class ParallelogramComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const slant = props.nodeProps.parallelogram?.slant ?? 5;
+    const slant = props.nodeProps.shapeParallelogram?.slant ?? 5;
     const boundary = new ParallelogramNodeDefinition()
       .getBoundingPathBuilder(props.node)
       .getPaths();
@@ -78,11 +78,11 @@ class ParallelogramComponent extends BaseNodeComponent {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
           props.node.updateProps(props => {
-            props.parallelogram ??= {};
-            props.parallelogram.slant = distance;
+            props.shapeParallelogram ??= {};
+            props.shapeParallelogram.slant = distance;
           }, uow);
         }
-        return `Slant: ${props.node.renderProps.parallelogram!.slant}px`;
+        return `Slant: ${props.node.renderProps.shapeParallelogram!.slant}px`;
       }
     );
   }

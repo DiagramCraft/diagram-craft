@@ -507,7 +507,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   ],
                   props: {
                     style: 'default',
-                    container: {
+                    shapeContainer: {
                       canResize: 'both',
                       containerResize: 'both',
                       layout: 'horizontal',
@@ -696,7 +696,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   ],
                   props: {
                     style: 'default',
-                    container: {
+                    shapeContainer: {
                       canResize: 'both',
                       containerResize: 'both',
                       layout: 'horizontal',
@@ -710,7 +710,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
               ],
               props: {
                 style: 'default',
-                container: {
+                shapeContainer: {
                   canResize: 'both',
                   containerResize: 'both',
                   layout: 'vertical',
