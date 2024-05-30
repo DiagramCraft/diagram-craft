@@ -215,7 +215,8 @@ export class TableInsertAction extends AbstractAction {
       if (rowIdx === undefined) return;
 
       const uow = new UnitOfWork(this.diagram, true);
-      const newRow = (table.children[rowIdx] as DiagramNode).duplicate();
+      const current = table.children[rowIdx] as DiagramNode;
+      const newRow = current.duplicate();
 
       // Shift nodes below
       for (let i = rowIdx + (this.position === -1 ? 0 : 1); i < table.children.length; i++) {
@@ -228,7 +229,10 @@ export class TableInsertAction extends AbstractAction {
       }
 
       uow.snapshot(newRow);
-      table.addChild(newRow, uow);
+      table.addChild(newRow, uow, {
+        ref: current,
+        type: this.position === -1 ? 'before' : 'after'
+      });
       table.layer.addElement(newRow, uow);
 
       commitWithUndo(uow, 'Insert row');
@@ -256,7 +260,10 @@ export class TableInsertAction extends AbstractAction {
         }
 
         uow.snapshot(newCell);
-        (r as DiagramNode).addChild(newCell, uow);
+        (r as DiagramNode).addChild(newCell, uow, {
+          ref: cell,
+          type: this.position === -1 ? 'before' : 'after'
+        });
         table.layer.addElement(newCell, uow);
       }
 

@@ -219,10 +219,24 @@ export class DiagramNode
     });
   }
 
-  addChild(child: DiagramElement, uow: UnitOfWork) {
+  addChild(
+    child: DiagramElement,
+    uow: UnitOfWork,
+    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+  ) {
     uow.snapshot(this);
 
-    this.#children = [...this.children, child];
+    if (relation) {
+      const children = this.children;
+      const index = children.indexOf(relation.ref);
+      if (relation.type === 'after') {
+        this.#children = [...children.slice(0, index + 1), child, ...children.slice(index + 1)];
+      } else {
+        this.#children = [...children.slice(0, index), child, ...children.slice(index)];
+      }
+    } else {
+      this.#children = [...this.children, child];
+    }
     child._setParent(this);
 
     uow.updateElement(this);

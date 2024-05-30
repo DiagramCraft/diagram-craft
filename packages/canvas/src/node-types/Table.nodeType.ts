@@ -54,6 +54,8 @@ const getCellsInOrder = (rows: DiagramNode[]): CellsInOrder => {
     for (let j = 0; j < dest[i].columns.length; j++) {
       dest[i].columns[j].idx = j;
     }
+
+    dest[i].columns.sort((a, b) => a.cell.bounds.x - b.cell.bounds.x);
   }
 
   return dest;
