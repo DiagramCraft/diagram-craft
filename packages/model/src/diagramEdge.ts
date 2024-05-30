@@ -45,6 +45,9 @@ const intersectionListIsSame = (a: Intersection[], b: Intersection[]) => {
   return true;
 };
 
+export type EdgePropsForEditing = DeepReadonly<EdgeProps>;
+export type EdgePropsForRendering = DeepReadonly<DeepRequired<EdgeProps>>;
+
 export class DiagramEdge
   implements AbstractEdge, DiagramElement, UOWTrackable<DiagramEdgeSnapshot>
 {
@@ -69,7 +72,7 @@ export class DiagramEdge
     id: string,
     start: Endpoint,
     end: Endpoint,
-    props: DeepReadonly<EdgeProps>,
+    props: EdgePropsForEditing,
     midpoints: ReadonlyArray<Waypoint>,
     diagram: Diagram,
     layer: Layer
@@ -102,7 +105,7 @@ export class DiagramEdge
     this.#propsCache = undefined;
   }
 
-  get propsForEditing(): DeepReadonly<EdgeProps> {
+  get propsForEditing(): EdgePropsForEditing {
     const styleProps = this.diagram.document.styles.edgeStyles.find(
       s => s.id === this.props.style
     )?.props;
@@ -121,11 +124,11 @@ export class DiagramEdge
     return this.#propsCache;
   }
 
-  get propsForRendering(): DeepReadonly<DeepRequired<EdgeProps>> {
-    return this.propsForEditing as DeepRequired<EdgeProps>;
+  get propsForRendering(): EdgePropsForRendering {
+    return this.propsForEditing as DeepRequired<EdgePropsForEditing>;
   }
 
-  get props(): DeepReadonly<EdgeProps> {
+  get props(): EdgeProps {
     return this.#props;
   }
 

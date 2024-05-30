@@ -12,6 +12,11 @@ import { AttachmentConsumer } from './attachment';
 // eslint-disable-next-line
 type Snapshot = any;
 
+export type ElementPropsForEditing = DeepReadonly<NodeProps> | DeepReadonly<EdgeProps>;
+export type ElementPropsForRendering =
+  | DeepReadonly<DeepRequired<NodeProps>>
+  | DeepReadonly<DeepRequired<EdgeProps>>;
+
 export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   invalidate(uow: UnitOfWork): void;
   detach(uow: UnitOfWork): void;
@@ -30,8 +35,8 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   setBounds(bounds: Box, uow: UnitOfWork): void;
 
   props: DeepReadonly<NodeProps> | DeepReadonly<EdgeProps>;
-  propsForEditing: DeepReadonly<NodeProps> | DeepReadonly<EdgeProps>;
-  propsForRendering: DeepReadonly<DeepRequired<NodeProps>> | DeepReadonly<DeepRequired<EdgeProps>>;
+  propsForEditing: ElementPropsForEditing;
+  propsForRendering: ElementPropsForRendering;
   updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 
   snapshot(): Snapshot;

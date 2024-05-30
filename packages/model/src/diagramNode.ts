@@ -20,6 +20,9 @@ export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
 };
 
+export type NodePropsForRendering = DeepReadonly<DeepRequired<NodeProps>>;
+export type NodePropsForEditing = DeepReadonly<NodeProps>;
+
 export class DiagramNode
   implements AbstractNode, DiagramElement, UOWTrackable<DiagramNodeSnapshot>
 {
@@ -47,7 +50,7 @@ export class DiagramNode
     bounds: Box,
     diagram: Diagram,
     layer: Layer,
-    props?: DeepReadonly<NodeProps>,
+    props?: NodePropsForEditing,
     anchorCache?: ReadonlyArray<Anchor>
   ) {
     this.id = id;
@@ -92,7 +95,7 @@ export class DiagramNode
     this.#propsCache = undefined;
   }
 
-  get propsForEditing(): DeepReadonly<NodeProps> {
+  get propsForEditing(): NodePropsForEditing {
     const styleProps = this.diagram.document.styles.nodeStyles.find(
       s => s.id === this.props.style
     )?.props;
@@ -110,11 +113,11 @@ export class DiagramNode
     return this.#propsCache;
   }
 
-  get propsForRendering(): DeepReadonly<DeepRequired<NodeProps>> {
-    return this.propsForEditing as DeepRequired<NodeProps>;
+  get propsForRendering(): NodePropsForRendering {
+    return this.propsForEditing as DeepRequired<NodePropsForEditing>;
   }
 
-  get props(): DeepReadonly<NodeProps> {
+  get props(): NodeProps {
     return this.#props;
   }
 
