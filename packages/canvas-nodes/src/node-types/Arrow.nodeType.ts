@@ -36,7 +36,7 @@ const Notch = {
     id: 'notch',
     label: 'Notch',
     type: 'number',
-    value: Notch.get(node.props.shapeArrow),
+    value: Notch.get(node.renderProps.shapeArrow),
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Notch.set(value, node, uow)
@@ -45,8 +45,7 @@ const Notch = {
   get: (props: DeepReadonly<ExtraProps> | undefined) => props?.notch ?? 0,
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= node.bounds.w - ArrowControlX.get(node.propsForEditing.shapeArrow) || value <= 0)
-      return;
+    if (value >= node.bounds.w - ArrowControlX.get(node.editProps.shapeArrow) || value <= 0) return;
     node.updateProps(
       props => (props.shapeArrow = { ...props.shapeArrow, notch: round(value) }),
       uow
@@ -59,7 +58,7 @@ const ArrowControlX = {
     id: 'x',
     label: 'Pointiness',
     type: 'number',
-    value: ArrowControlX.get(node.props.shapeArrow),
+    value: ArrowControlX.get(node.renderProps.shapeArrow),
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowControlX.set(value, node, uow)
@@ -78,7 +77,7 @@ const ArrowControlY = {
     id: 'y',
     label: 'Thickness',
     type: 'number',
-    value: ArrowControlY.get(node.props.shapeArrow),
+    value: ArrowControlY.get(node.renderProps.shapeArrow),
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => ArrowControlY.set(value, node, uow)
@@ -127,7 +126,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
 
         const distance = Math.max(0, p.x - bounds.x);
         Notch.set(distance, props.node, uow);
-        return `Notch: ${Notch.get(props.node.props.shapeArrow)}px`;
+        return `Notch: ${Notch.get(props.node.renderProps.shapeArrow)}px`;
       });
 
       // Arrow control points
@@ -151,7 +150,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
         const newY = (100 * (p.y - bounds.y)) / h;
         ArrowControlY.set(newY, props.node, uow);
 
-        return `${ArrowControlX.get(props.node.props.shapeArrow)}px, ${ArrowControlY.get(props.node.props.shapeArrow)}%`;
+        return `${ArrowControlX.get(props.node.renderProps.shapeArrow)}px, ${ArrowControlY.get(props.node.renderProps.shapeArrow)}%`;
       });
     }
   };
@@ -161,9 +160,9 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const x = ArrowControlX.get(def.props.shapeArrow);
-    const y = ArrowControlY.get(def.props.shapeArrow);
-    const notch = Notch.get(def.props.shapeArrow);
+    const x = ArrowControlX.get(def.renderProps.shapeArrow);
+    const y = ArrowControlY.get(def.renderProps.shapeArrow);
+    const notch = Notch.get(def.renderProps.shapeArrow);
 
     const w = this.isHorizontal() ? def.bounds.w : def.bounds.h;
 

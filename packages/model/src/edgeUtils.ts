@@ -58,7 +58,8 @@ const intersectWithNode = (
   } else {
     const closeIntersections = endIntersections.filter(
       i =>
-        Point.distance(endpointPosition, i.point) < 1.5 * (endpoint.node.props.stroke?.width ?? 1)
+        Point.distance(endpointPosition, i.point) <
+        1.5 * (endpoint.node.renderProps.stroke?.width ?? 1)
     );
     return closeIntersections[0] ?? { point: endpointPosition };
   }
@@ -110,8 +111,8 @@ export const applyLineHops = (
   endArrow: ArrowShape | undefined,
   intersections: Intersection[]
 ): Path[] => {
-  const thisType = edge.props.lineHops?.type ?? 'none';
-  const gapSize = edge.props.lineHops?.size ?? 10;
+  const thisType = edge.renderProps.lineHops?.type ?? 'none';
+  const gapSize = edge.renderProps.lineHops?.size ?? 10;
 
   if (intersections.length === 0 || thisType === 'none') return [basePath];
 

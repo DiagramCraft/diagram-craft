@@ -36,7 +36,7 @@ const InnerRadius = {
     id: 'innerRadius',
     label: 'Inner Radius',
     type: 'number',
-    value: InnerRadius.get(node.props.shapeBlockArc),
+    value: InnerRadius.get(node.renderProps.shapeBlockArc),
     maxValue: 99,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => InnerRadius.set(value, node, uow)
@@ -58,7 +58,7 @@ const StartAngle = {
     id: 'startAngle',
     label: 'Start Angle',
     type: 'number',
-    value: StartAngle.get(node.props.shapeBlockArc),
+    value: StartAngle.get(node.renderProps.shapeBlockArc),
     maxValue: 360,
     unit: '°',
     onChange: (value: number, uow: UnitOfWork) => StartAngle.set(value, node, uow)
@@ -68,7 +68,7 @@ const StartAngle = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 360 || value <= -360) return;
-    if (value >= EndAngle.get(node.propsForEditing.shapeBlockArc)) {
+    if (value >= EndAngle.get(node.editProps.shapeBlockArc)) {
       StartAngle.set(value - 360, node, uow);
       return;
     }
@@ -84,7 +84,7 @@ const EndAngle = {
     id: 'endAngle',
     label: 'End Angle',
     type: 'number',
-    value: EndAngle.get(node.props.shapeBlockArc),
+    value: EndAngle.get(node.renderProps.shapeBlockArc),
     maxValue: 360,
     unit: '°',
     onChange: (value: number, uow: UnitOfWork) => EndAngle.set(value, node, uow)
@@ -94,7 +94,7 @@ const EndAngle = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 360 || value <= -360) return;
-    if (value <= StartAngle.get(node.propsForEditing.shapeBlockArc)) {
+    if (value <= StartAngle.get(node.editProps.shapeBlockArc)) {
       EndAngle.set(value + 360, node, uow);
       return;
     }
@@ -141,28 +141,28 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
           );
 
           InnerRadius.set((distance / radius) * 100, props.node, uow);
-          return `Inner Radius: ${InnerRadius.get(props.node.props.shapeBlockArc)}%`;
+          return `Inner Radius: ${InnerRadius.get(props.node.renderProps.shapeBlockArc)}%`;
         }
       );
 
       shapeBuilder.controlPoint(pointInBounds(Point.of(startX, startY), bounds), (p, uow) => {
         const angle = Math.atan2(Box.center(bounds).y - p.y, p.x - Box.center(bounds).x);
         StartAngle.set(Angle.toDeg(angle), props.node, uow);
-        return `Start Angle: ${StartAngle.get(props.node.props.shapeBlockArc)}°`;
+        return `Start Angle: ${StartAngle.get(props.node.renderProps.shapeBlockArc)}°`;
       });
 
       shapeBuilder.controlPoint(pointInBounds(Point.of(endX, endY), bounds), (p, uow) => {
         const angle = Math.atan2(Box.center(bounds).y - p.y, p.x - Box.center(bounds).x);
         EndAngle.set(Angle.toDeg(angle), props.node, uow);
-        return `End Angle: ${EndAngle.get(props.node.props.shapeBlockArc)}°`;
+        return `End Angle: ${EndAngle.get(props.node.renderProps.shapeBlockArc)}°`;
       });
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const innerRadius = InnerRadius.get(def.props.shapeBlockArc);
-    const startAngle = Angle.toRad(StartAngle.get(def.props.shapeBlockArc));
-    const endAngle = Angle.toRad(EndAngle.get(def.props.shapeBlockArc));
+    const innerRadius = InnerRadius.get(def.renderProps.shapeBlockArc);
+    const startAngle = Angle.toRad(StartAngle.get(def.renderProps.shapeBlockArc));
+    const endAngle = Angle.toRad(EndAngle.get(def.renderProps.shapeBlockArc));
 
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 

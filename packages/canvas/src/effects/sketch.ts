@@ -20,11 +20,11 @@ export class SketchPathRenderer implements PathRenderer {
   render(node: DiagramElement, path: StyledPath): RenderedStyledPath[] {
     const svgPathOutline = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(node.id)), {
       passes: 2,
-      amount: node.props.effects?.sketchStrength ?? 0.1
+      amount: node.renderProps.effects?.sketchStrength ?? 0.1
     });
     const svgPathFill = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(node.id)), {
       passes: 1,
-      amount: node.props.effects?.sketchStrength ?? 0.1,
+      amount: node.renderProps.effects?.sketchStrength ?? 0.1,
       distortVertices: true
     });
 
@@ -36,7 +36,7 @@ export class SketchPathRenderer implements PathRenderer {
 
     let hachure: string[] | undefined = undefined;
 
-    if (node.props.effects?.sketchFillType === 'hachure') {
+    if (node.renderProps.effects?.sketchFillType === 'hachure') {
       const lines = calculateHachureLines(node.bounds, path.path, Math.PI / 4, 10);
       hachure = lines.map(l => {
         return asDistortedSvgPath(
@@ -44,7 +44,7 @@ export class SketchPathRenderer implements PathRenderer {
           hash(new TextEncoder().encode(node.id)),
           {
             passes: 2,
-            amount: node.props.effects?.sketchStrength ?? 0.1,
+            amount: node.renderProps.effects?.sketchStrength ?? 0.1,
             unidirectional: false
           }
         );

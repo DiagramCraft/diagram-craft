@@ -263,7 +263,7 @@ export class ShapeBuilder {
     },
     paths: Path[]
   ) {
-    const propsInEffect = props ?? (this.props.element.propsForRendering as NodeProps);
+    const propsInEffect = props ?? (this.props.element.renderProps as NodeProps);
     const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
       ? new SketchPathRenderer()
       : new DefaultPathRenderer();

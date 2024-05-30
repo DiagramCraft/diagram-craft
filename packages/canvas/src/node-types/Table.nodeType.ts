@@ -73,7 +73,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     // First layout all children
     super.layoutChildren(node, uow);
 
-    const nodeProps = node.propsForRendering;
+    const nodeProps = node.renderProps;
 
     const gap = nodeProps.table?.gap ?? 10;
 
@@ -184,7 +184,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         id: 'gap',
         type: 'number',
         label: 'Padding',
-        value: node.props.table?.gap ?? 10,
+        value: node.renderProps.table?.gap ?? 10,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           node.updateProps(props => {
@@ -197,7 +197,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         id: 'title',
         type: 'boolean',
         label: 'Title',
-        value: node.props.table?.title ?? false,
+        value: node.renderProps.table?.title ?? false,
         onChange: (value: boolean, uow: UnitOfWork) => {
           node.updateProps(props => {
             props.table ??= {};
@@ -210,7 +210,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         type: 'number',
         label: 'Title Size',
         unit: 'px',
-        value: node.props.table?.titleSize ?? 30,
+        value: node.renderProps.table?.titleSize ?? 30,
         onChange: (value: number, uow: UnitOfWork) => {
           node.updateProps(props => {
             props.table ??= {};

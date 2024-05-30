@@ -29,7 +29,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
         id: 'slant',
         type: 'number',
         label: 'Slant',
-        value: def.props.parallelogram?.slant ?? 5,
+        value: def.renderProps.parallelogram?.slant ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -44,7 +44,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slant = def.props.parallelogram?.slant ?? 5;
+    const slant = def.renderProps.parallelogram?.slant ?? 5;
     const bnd = def.bounds;
 
     const sr = slant / bnd.w;
@@ -82,7 +82,7 @@ class ParallelogramComponent extends BaseNodeComponent {
             props.parallelogram.slant = distance;
           }, uow);
         }
-        return `Slant: ${props.node.props.parallelogram!.slant}px`;
+        return `Slant: ${props.node.renderProps.parallelogram!.slant}px`;
       }
     );
   }

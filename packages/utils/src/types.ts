@@ -6,6 +6,8 @@ export type DeepRequired<T> = { [P in keyof T]-?: DeepRequired<T[P]> };
 
 export type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
+export const writeable = <T>(o: DeepReadonly<T>): DeepWriteable<T> => o as DeepWriteable<T>;
+
 /* Tagged type *********************************************************************************** */
 
 export type TaggedType<T extends string, V> = { _type: T; _val: V };

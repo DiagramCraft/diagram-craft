@@ -116,7 +116,7 @@ export class EditablePath {
     this.buildFromPath(path.segments());
     this.originalSvgPath = path.asSvgPath();
 
-    const gpProps = node.props.genericPath ?? {};
+    const gpProps = node.renderProps.genericPath ?? {};
     if (gpProps.waypointTypes && gpProps.waypointTypes.length === this.waypoints.length) {
       for (let i = 0; i < this.waypoints.length; i++) {
         this.waypoints[i].type = gpProps.waypointTypes[i];
@@ -236,7 +236,7 @@ export class EditablePath {
     // Raw path and raw bounds represent the path in the original unit coordinate system,
     // but since waypoints have been moved, some points may lie outside the [-1, 1] range
     const rawPath = PathBuilder.fromString(
-      this.node.props.genericPath?.path ?? this.originalSvgPath
+      this.node.renderProps.genericPath?.path ?? this.originalSvgPath
     ).getPaths();
     const rawBounds = rawPath.bounds();
 

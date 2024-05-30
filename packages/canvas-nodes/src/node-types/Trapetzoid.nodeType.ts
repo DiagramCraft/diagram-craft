@@ -30,7 +30,7 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
         id: 'slantLeft',
         type: 'number',
         label: 'Slant (left)',
-        value: def.props.trapetzoid?.slantLeft ?? 5,
+        value: def.renderProps.trapetzoid?.slantLeft ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -45,7 +45,7 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
         id: 'slantRight',
         type: 'number',
         label: 'Slant (right)',
-        value: def.props.trapetzoid?.slantRight ?? 5,
+        value: def.renderProps.trapetzoid?.slantRight ?? 5,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -60,8 +60,8 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slantLeft = def.props.trapetzoid?.slantLeft ?? 5;
-    const slantRight = def.props.trapetzoid?.slantRight ?? 5;
+    const slantLeft = def.renderProps.trapetzoid?.slantLeft ?? 5;
+    const slantRight = def.renderProps.trapetzoid?.slantRight ?? 5;
     const bnd = def.bounds;
 
     const cdSl = (slantLeft / bnd.w) * 2;
@@ -99,7 +99,7 @@ class TrapetzoidComponent extends BaseNodeComponent {
             props.trapetzoid.slantLeft = distance;
           }, uow);
         }
-        return `Slant: ${props.node.props.trapetzoid?.slantLeft}px`;
+        return `Slant: ${props.node.renderProps.trapetzoid?.slantLeft}px`;
       }
     );
 
@@ -113,7 +113,7 @@ class TrapetzoidComponent extends BaseNodeComponent {
             props.trapetzoid.slantRight = distance;
           }, uow);
         }
-        return `Slant: ${props.node.props.trapetzoid?.slantRight}px`;
+        return `Slant: ${props.node.renderProps.trapetzoid?.slantRight}px`;
       }
     );
   }

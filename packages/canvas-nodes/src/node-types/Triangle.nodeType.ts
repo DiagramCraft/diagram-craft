@@ -37,7 +37,7 @@ export class TriangleNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 
-    switch (Direction.get(def.props.shapeTriangle)) {
+    switch (Direction.get(def.renderProps.shapeTriangle)) {
       case 'east':
         pathBuilder.moveTo(Point.of(1, 0));
         pathBuilder.lineTo(Point.of(-1, -1));

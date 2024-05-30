@@ -89,7 +89,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       bounds: node.bounds,
       anchors: node.anchors,
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
-      props: node.props
+      props: node.renderProps
     };
   } else if (isEdge(element)) {
     const edge = element;
@@ -133,7 +133,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
         timeOffset: e.timeOffset
       })),
       waypoints: edge.waypoints,
-      props: edge.props
+      props: edge.renderProps
     };
   } else {
     throw new VerifyNotReached();

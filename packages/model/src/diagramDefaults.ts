@@ -1,5 +1,7 @@
-import { DeepPartial, DeepRequired } from '@diagram-craft/utils/types';
+import { DeepPartial } from '@diagram-craft/utils/types';
 import { deepMerge } from '@diagram-craft/utils/object';
+import { NodePropsForRendering } from './diagramNode';
+import { EdgePropsForRendering } from './diagramEdge';
 
 export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: string): T =>
   new Proxy<T>(target as T, {
@@ -22,7 +24,7 @@ export const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, pa
     }
   });
 
-export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepRequired<NodeProps>>({
+export const nodeDefaults: NodePropsForRendering = createDefaultsProxy<NodePropsForRendering>({
   style: 'default',
   fill: {
     color: 'var(--canvas-bg)',
@@ -105,8 +107,8 @@ export const nodeDefaults: DeepRequired<NodeProps> = createDefaultsProxy<DeepReq
   }
 });
 
-export const edgeDefaults: DeepRequired<EdgeProps> = createDefaultsProxy<DeepRequired<EdgeProps>>(
-  deepMerge<DeepRequired<EdgeProps>>({}, nodeDefaults, {
+export const edgeDefaults: EdgePropsForRendering = createDefaultsProxy<EdgePropsForRendering>(
+  deepMerge<EdgePropsForRendering>({}, nodeDefaults, {
     fill: {
       color: 'var(--canvas-fg)',
       enabled: true,

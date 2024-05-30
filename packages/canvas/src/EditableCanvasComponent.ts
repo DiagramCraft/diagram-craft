@@ -328,9 +328,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                 const id = e.id;
                 if (e.type === 'edge') {
                   const edge = diagram.edgeLookup.get(id)!;
-                  const edgeDef = diagram.document.edgeDefinitions.get(
-                    edge.propsForRendering.shape
-                  );
+                  const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
 
                   return this.subComponent(
                     () =>

@@ -1,6 +1,8 @@
 import { AbstractEdge, AbstractNode } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import { Canvas } from '../diagram';
+import { EdgePropsForEditing } from '../diagramEdge';
+import { NodePropsForEditing } from '../diagramNode';
 
 interface Reference {
   id: string;
@@ -30,6 +32,7 @@ export interface SerializedDiagramDocument {
 export interface SerializedNode extends AbstractNode {
   edges?: Record<string, ReadonlyArray<Reference>>;
   children: ReadonlyArray<SerializedElement>;
+  props: NodePropsForEditing;
 }
 
 export type SerializedFixedEndpoint = { offset: Point; node: Reference; position?: Point };
@@ -44,6 +47,7 @@ export type SerializedEndpoint =
 export interface SerializedEdge extends AbstractEdge {
   start: SerializedEndpoint;
   end: SerializedEndpoint;
+  props: EdgePropsForEditing;
 }
 
 export type SerializedElement = SerializedNode | SerializedEdge;

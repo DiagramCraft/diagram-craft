@@ -31,7 +31,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.props.hexagon),
+    value: Size.get(node.renderProps.hexagon),
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -62,13 +62,13 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const distance = Math.max(0, x - bounds.x);
         Size.set((distance / bounds.w) * 100, props.node, uow);
-        return `Size: ${Size.get(props.node.props.hexagon)}%`;
+        return `Size: ${Size.get(props.node.renderProps.hexagon)}%`;
       });
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = Size.get(def.props.hexagon) / 100;
+    const sizePct = Size.get(def.renderProps.hexagon) / 100;
 
     const x1 = -1 + sizePct * 2;
     const x2 = 1 - sizePct * 2;

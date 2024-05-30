@@ -1,6 +1,5 @@
 import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 
 export interface AbstractElement {
   id: string;
@@ -13,8 +12,6 @@ export interface AbstractNode extends AbstractElement {
   id: string;
   bounds: Box;
 
-  // TODO: Maybe we should make this readonly (deep)?
-  props: DeepReadonly<NodeProps>;
   anchors?: ReadonlyArray<Anchor>;
 }
 
@@ -43,7 +40,6 @@ export interface AbstractEdge extends AbstractElement {
   type: 'edge';
   id: string;
   waypoints?: ReadonlyArray<Waypoint>;
-  props: DeepReadonly<EdgeProps>;
 
   labelNodes?: ReadonlyArray<LabelNode>;
 }

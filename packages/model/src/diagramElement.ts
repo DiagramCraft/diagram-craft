@@ -34,9 +34,8 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
 
   setBounds(bounds: Box, uow: UnitOfWork): void;
 
-  props: DeepReadonly<NodeProps> | DeepReadonly<EdgeProps>;
-  propsForEditing: ElementPropsForEditing;
-  propsForRendering: ElementPropsForRendering;
+  editProps: ElementPropsForEditing;
+  renderProps: ElementPropsForRendering;
   updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 
   snapshot(): Snapshot;

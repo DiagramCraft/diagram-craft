@@ -180,7 +180,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     let newHeight = newBounds.h;
     const newTransforms: Array<Transform> = [...transforms];
 
-    const canResize = node.props.container?.canResize;
+    const canResize = node.renderProps.container?.canResize;
 
     if (canResize !== 'width' && canResize !== 'both' && newBounds.w !== previousBounds.w) {
       newWidth = previousBounds.w;
@@ -195,7 +195,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       newTransforms.push(new Scale(newWidth / newBounds.w, newHeight / newBounds.h));
     }
 
-    if (!isScaling || node.props.container?.childResize !== 'fixed') {
+    if (!isScaling || node.renderProps.container?.childResize !== 'fixed') {
       for (const child of node.children) {
         child.transform(newTransforms, uow, true);
       }
@@ -221,7 +221,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     // First layout all children
     super.layoutChildren(node, uow);
 
-    const props = node.props.container ?? {};
+    const props = node.renderProps.container ?? {};
 
     this.doLayoutChildren(props, node, uow);
   }
@@ -233,7 +233,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
   ) {
     const autoShrink = props.containerResize === 'shrink' || props.containerResize === 'both';
     const autoGrow = props.containerResize === 'grow' || props.containerResize === 'both';
-    const gapType = node.props.container?.gapType ?? 'between';
+    const gapType = node.renderProps.container?.gapType ?? 'between';
 
     // We need to perform all layout operations in the local coordinate system of the node
 
@@ -323,7 +323,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'canResize',
         type: 'select',
         label: 'Resizeable',
-        value: node.props.container?.canResize ?? 'none',
+        value: node.renderProps.container?.canResize ?? 'none',
         options: [
           { value: 'none', label: 'None' },
           { value: 'width', label: 'Width' },
@@ -342,7 +342,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'containerResize',
         type: 'select',
         label: 'Container Resize',
-        value: node.props.container?.containerResize ?? 'none',
+        value: node.renderProps.container?.containerResize ?? 'none',
         options: [
           { value: 'none', label: 'None' },
           { value: 'shrink', label: 'Auto Shrink' },
@@ -361,7 +361,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'layout',
         type: 'select',
         label: 'Layout',
-        value: node.props.container?.layout ?? 'manual',
+        value: node.renderProps.container?.layout ?? 'manual',
         options: [
           { value: 'manual', label: 'Manual' },
           { value: 'horizontal', label: 'Horizontal' },
@@ -379,7 +379,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'gap',
         type: 'number',
         label: 'Gap',
-        value: node.props.container?.gap ?? 0,
+        value: node.renderProps.container?.gap ?? 0,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           node.updateProps(props => {
@@ -392,7 +392,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'gapType',
         type: 'select',
         label: 'Gap Type',
-        value: node.props.container?.gapType ?? 'between',
+        value: node.renderProps.container?.gapType ?? 'between',
         options: [
           { value: 'between', label: 'Between' },
           { value: 'around', label: 'Around' }
@@ -409,7 +409,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'childResize',
         type: 'select',
         label: 'Child Resize',
-        value: node.props.container?.childResize ?? 'fixed',
+        value: node.renderProps.container?.childResize ?? 'fixed',
         options: [
           { value: 'fixed', label: 'Fixed' },
           { value: 'scale', label: 'Scale' },

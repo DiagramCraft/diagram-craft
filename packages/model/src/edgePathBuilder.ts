@@ -226,7 +226,7 @@ export const buildEdgePath = (
   preferedStartDirection?: Direction,
   preferedEndDirection?: Direction
 ): Path => {
-  switch (edge.props.type) {
+  switch (edge.renderProps.type) {
     case 'orthogonal': {
       const r = buildOrthogonalEdgePath(edge, preferedStartDirection, preferedEndDirection);
       if (rounding > 0) r.processSegments(applyRounding(rounding));

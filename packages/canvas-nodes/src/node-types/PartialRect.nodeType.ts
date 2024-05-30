@@ -54,32 +54,32 @@ class PartialRectComponent extends BaseNodeComponent {
       }
     } as NodeProps);
 
-    if (props.node.props.shapePartialRect?.north) {
+    if (props.node.renderProps.shapePartialRect?.north) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(-1, 1));
       pathBuilder.lineTo(Point.of(1, 1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.props);
+      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
     }
 
-    if (props.node.props.shapePartialRect?.south) {
+    if (props.node.renderProps.shapePartialRect?.south) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(-1, -1));
       pathBuilder.lineTo(Point.of(1, -1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.props);
+      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
     }
 
-    if (props.node.props.shapePartialRect?.east) {
+    if (props.node.renderProps.shapePartialRect?.east) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(1, 1));
       pathBuilder.lineTo(Point.of(1, -1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.props);
+      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
     }
 
-    if (props.node.props.shapePartialRect?.west) {
+    if (props.node.renderProps.shapePartialRect?.west) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(-1, 1));
       pathBuilder.lineTo(Point.of(-1, -1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.props);
+      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
     }
 
     shapeBuilder.text(this);

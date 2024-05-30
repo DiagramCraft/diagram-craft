@@ -40,7 +40,7 @@ export class CanvasComponent extends Component<CanvasProps> {
               const id = e.id;
               if (e.type === 'edge') {
                 const edge = diagram.edgeLookup.get(id)!;
-                const edgeDef = diagram.document.edgeDefinitions.get(edge.propsForRendering.shape);
+                const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
 
                 return this.subComponent(
                   () =>

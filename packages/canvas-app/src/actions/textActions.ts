@@ -31,7 +31,7 @@ export class TextAction extends AbstractToggleAction {
       if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
         const node = diagram.selectionState.nodes[0];
         this.enabled = node.nodeType === 'text';
-        this.state = !!node.props.text?.[this.prop];
+        this.state = !!node.renderProps.text?.[this.prop];
       } else {
         this.enabled = false;
       }
@@ -56,7 +56,7 @@ export class TextAction extends AbstractToggleAction {
 
     commitWithUndo(uow, `Text: ${this.prop}`);
 
-    this.state = !!node.props.text![this.prop];
+    this.state = !!node.renderProps.text![this.prop];
     this.emit('actionchanged', { action: this });
   }
 }
@@ -71,7 +71,7 @@ export class TextDecorationAction extends AbstractToggleAction {
       if (diagram.selectionState.isNodesOnly() && diagram.selectionState.nodes.length === 1) {
         const node = diagram.selectionState.nodes[0];
         this.enabled = node.nodeType === 'text';
-        this.state = node.props.text?.textDecoration === this.prop;
+        this.state = node.renderProps.text?.textDecoration === this.prop;
       } else {
         this.enabled = false;
       }
@@ -99,7 +99,7 @@ export class TextDecorationAction extends AbstractToggleAction {
 
     commitWithUndo(uow, `Text decoration`);
 
-    this.state = node.props.text!.textDecoration === this.prop;
+    this.state = node.renderProps.text!.textDecoration === this.prop;
     this.emit('actionchanged', { action: this });
   }
 }

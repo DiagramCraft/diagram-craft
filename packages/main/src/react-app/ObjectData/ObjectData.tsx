@@ -96,7 +96,7 @@ export const ObjectData = () => {
   const addSchemaToSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.propsForEditing.data?.data?.find(s => s.schema === schema);
+        const entry = e.editProps.data?.data?.find(s => s.schema === schema);
         if (!entry) {
           const uow = new UnitOfWork($d, true);
           e.updateProps(p => {
@@ -120,7 +120,7 @@ export const ObjectData = () => {
   const removeSchemaFromSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.propsForEditing.data?.data?.find(s => s.schema === schema);
+        const entry = e.editProps.data?.data?.find(s => s.schema === schema);
         if (entry?.enabled) {
           const uow = new UnitOfWork($d, true);
           e.updateProps(p => {
@@ -134,12 +134,12 @@ export const ObjectData = () => {
   );
 
   const customDataKeys = unique(
-    $d.selectionState.elements.flatMap(e => Object.keys(e.props.data?.customData ?? {}))
+    $d.selectionState.elements.flatMap(e => Object.keys(e.renderProps.data?.customData ?? {}))
   ).toSorted();
 
   // Get all schemas from all selected elements
   const schemas = $d.selectionState.elements.flatMap(e =>
-    e.propsForEditing.data?.data?.filter(d => d.enabled).map(d => d.schema)
+    e.editProps.data?.data?.filter(d => d.enabled).map(d => d.schema)
   );
 
   if ($d.selectionState.elements.length === 0)
@@ -282,9 +282,8 @@ export const ObjectData = () => {
                       {schema.fields.map(f => {
                         const v = unique(
                           $d.selectionState.elements.map(e => {
-                            return e.props.data?.data?.find(d => d.schema === schemaName)?.data[
-                              f.id
-                            ];
+                            return e.renderProps.data?.data?.find(d => d.schema === schemaName)
+                              ?.data[f.id];
                           })
                         );
 
@@ -322,7 +321,7 @@ export const ObjectData = () => {
                 {customDataKeys.map(k => {
                   const v = unique(
                     $d.selectionState.elements.map(e => {
-                      return e.props.data?.customData?.[k]?.toString();
+                      return e.renderProps.data?.customData?.[k]?.toString();
                     })
                   );
 

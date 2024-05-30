@@ -20,7 +20,7 @@ import {
 import { edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
-import { DeepReadonly, DeepRequired, DeepWriteable } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, DeepWriteable, writeable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
@@ -92,22 +92,22 @@ export class DiagramEdge
   }
 
   getDefinition(): EdgeDefinition {
-    return this.diagram.document.edgeDefinitions.get(this.propsForRendering.shape);
+    return this.diagram.document.edgeDefinitions.get(this.renderProps.shape);
   }
 
   /* Props *************************************************************************************************** */
 
   // TODO: Maybe create a props cache helper
-  #propsCache: NodeProps | undefined = undefined;
-  #propsCacheStyle: NodeProps | undefined = undefined;
+  #propsCache: EdgePropsForEditing | undefined = undefined;
+  #propsCacheStyle: EdgeProps | undefined = undefined;
 
   private clearPropsCache() {
     this.#propsCache = undefined;
   }
 
-  get propsForEditing(): EdgePropsForEditing {
+  get editProps(): EdgePropsForEditing {
     const styleProps = this.diagram.document.styles.edgeStyles.find(
-      s => s.id === this.props.style
+      s => s.id === this.#props.style
     )?.props;
 
     if (this.#propsCache && this.#propsCacheStyle === styleProps) return this.#propsCache;
@@ -115,21 +115,16 @@ export class DiagramEdge
     this.#propsCacheStyle = styleProps;
     this.#propsCache = deepMerge(
       {},
-      edgeDefaults,
-      {},
+      writeable(edgeDefaults),
       styleProps ?? {},
-      this.#props as EdgeProps
+      this.#props
     ) as DeepRequired<EdgeProps>;
 
     return this.#propsCache;
   }
 
-  get propsForRendering(): EdgePropsForRendering {
-    return this.propsForEditing as DeepRequired<EdgePropsForEditing>;
-  }
-
-  get props(): EdgeProps {
-    return this.#props;
+  get renderProps(): EdgePropsForRendering {
+    return this.editProps as DeepRequired<EdgePropsForEditing>;
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
@@ -166,7 +161,7 @@ export class DiagramEdge
   /* Name **************************************************************************************************** */
 
   get data() {
-    return this.propsForRendering.data?.customData ?? {};
+    return this.renderProps.data?.customData ?? {};
   }
 
   get name() {
@@ -346,7 +341,7 @@ export class DiagramEdge
     const path = this.path();
     const projection = path.projectPoint(waypoint.point);
 
-    if (this.props.type === 'bezier' && !waypoint.controlPoints) {
+    if (this.#props.type === 'bezier' && !waypoint.controlPoints) {
       const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
       const [p1, p2] = path.split(offset);
 
@@ -428,7 +423,7 @@ export class DiagramEdge
       _snapshotType: 'edge',
       id: this.id,
       type: 'edge',
-      props: deepClone(this.props),
+      props: deepClone(this.#props),
       start: this.start.serialize(),
       end: this.end.serialize(),
       waypoints: deepClone(this.waypoints),
@@ -470,7 +465,7 @@ export class DiagramEdge
       newid(),
       this.start,
       this.end,
-      deepClone(this.props) as EdgeProps,
+      deepClone(this.#props) as EdgeProps,
       deepClone(this.waypoints) as Array<Waypoint>,
       this.diagram,
       this.layer
@@ -514,8 +509,8 @@ export class DiagramEdge
 
     return buildEdgePath(
       this,
-      !this.props.stroke?.lineJoin || this.props.stroke?.lineJoin === 'round'
-        ? this.props.routing?.rounding ?? 0
+      !this.#props.stroke?.lineJoin || this.#props.stroke?.lineJoin === 'round'
+        ? this.#props.routing?.rounding ?? 0
         : 0,
       startDirection,
       endDirection ? Direction.opposite(endDirection) : undefined

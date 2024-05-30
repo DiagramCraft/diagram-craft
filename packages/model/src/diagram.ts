@@ -35,7 +35,8 @@ export type DiagramEvents = {
 
 export type StackPosition = { element: DiagramElement; idx: number };
 
-export const excludeLabelNodes = (n: DiagramElement) => !(isNode(n) && n.props.labelForEdgeId);
+export const excludeLabelNodes = (n: DiagramElement) =>
+  !(isNode(n) && n.renderProps.labelForEdgeId);
 
 export const includeAll = () => true;
 
@@ -80,7 +81,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     const toggleMustCalculateIntersections = () => {
       const old = this.mustCalculateIntersections;
       this.mustCalculateIntersections = this.visibleElements().some(
-        e => isEdge(e) && (e.props.lineHops?.type ?? 'none') !== 'none'
+        e => isEdge(e) && (e.renderProps.lineHops?.type ?? 'none') !== 'none'
       );
       // Only trigger invalidation in case the value has changed to true
       if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {

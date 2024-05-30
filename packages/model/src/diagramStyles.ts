@@ -185,12 +185,12 @@ export class DiagramStyles {
 
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
-        if (node.props.style === id) {
+        if (node.renderProps.style === id) {
           this.clearStylesheetFromElement(node, stylesheet, uow);
         }
       }
       for (const edge of diagram.edgeLookup.values()) {
-        if (edge.props.style === id) {
+        if (edge.renderProps.style === id) {
           this.clearStylesheetFromElement(edge, stylesheet, uow);
         }
       }

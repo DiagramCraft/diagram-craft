@@ -43,7 +43,7 @@ export class GenericPathNodeDefinition extends ShapeNodeDefinition {
 
   getBoundingPathBuilder(def: DiagramNode) {
     return PathBuilder.fromString(
-      def.props.genericPath?.path ?? DEFAULT_PATH,
+      def.renderProps.genericPath?.path ?? DEFAULT_PATH,
       unitCoordinateSystem(def.bounds)
     );
   }

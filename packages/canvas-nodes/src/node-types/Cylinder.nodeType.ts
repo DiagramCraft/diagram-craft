@@ -34,7 +34,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.props.shapeCylinder),
+    value: Size.get(node.renderProps.shapeCylinder),
     maxValue: Number.MAX_VALUE,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -62,7 +62,7 @@ const Direction = {
       { value: 'east', label: 'East' },
       { value: 'west', label: 'West' }
     ],
-    value: Direction.get(node.props.shapeCylinder),
+    value: Direction.get(node.renderProps.shapeCylinder),
     onChange: (value: string, uow: UnitOfWork) => Direction.set(value, node, uow)
   }),
 
@@ -111,21 +111,21 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
         shapeBuilder.controlPoint(Point.of(bounds.x, bounds.y + size / 2), ({ y }, uow) => {
           const distance = Math.max(0, y - bounds.y);
           Size.set(distance * 2, props.node, uow);
-          return `Size: ${Size.get(props.node.props.shapeCylinder)}px`;
+          return `Size: ${Size.get(props.node.renderProps.shapeCylinder)}px`;
         });
       }
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    let size = Size.get(def.props.shapeCylinder) / def.bounds.h;
+    let size = Size.get(def.renderProps.shapeCylinder) / def.bounds.h;
     let bounds: Box = Box.withoutRotation(def.bounds);
-    if (def.props.shapeCylinder?.direction === 'south') {
+    if (def.renderProps.shapeCylinder?.direction === 'south') {
       bounds = { ...bounds, r: Math.PI, x: bounds.x + bounds.w, y: bounds.y + bounds.h };
-    } else if (def.props.shapeCylinder?.direction === 'east') {
+    } else if (def.renderProps.shapeCylinder?.direction === 'east') {
       bounds = { ...bounds, r: Math.PI / 2, w: bounds.h, h: bounds.w, x: bounds.x + bounds.w };
-      size = Size.get(def.props.shapeCylinder) / def.bounds.w;
-    } else if (def.props.shapeCylinder?.direction === 'west') {
+      size = Size.get(def.renderProps.shapeCylinder) / def.bounds.w;
+    } else if (def.renderProps.shapeCylinder?.direction === 'west') {
       bounds = {
         ...bounds,
         r: (3 * Math.PI) / 2,
@@ -133,7 +133,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
         h: bounds.w,
         y: bounds.y + bounds.h
       };
-      size = Size.get(def.props.shapeCylinder) / def.bounds.w;
+      size = Size.get(def.renderProps.shapeCylinder) / def.bounds.w;
     }
 
     const lcs = new LocalCoordinateSystem(bounds, [-1, 1], [-1, 1], true);

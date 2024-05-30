@@ -28,8 +28,8 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sides = def.props.star?.numberOfSides ?? 5;
-    const innerRadius = def.props.star?.innerRadius ?? 0.5;
+    const sides = def.renderProps.star?.numberOfSides ?? 5;
+    const innerRadius = def.renderProps.star?.innerRadius ?? 0.5;
 
     const theta = Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
@@ -55,7 +55,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
-        value: def.props.star?.numberOfSides ?? 5,
+        value: def.renderProps.star?.numberOfSides ?? 5,
         onChange: (value: number, uow: UnitOfWork) => {
           def.updateProps(props => {
             props.star ??= {};
@@ -67,7 +67,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         id: 'innerRadius',
         type: 'number',
         label: 'Radius',
-        value: round((def.props.star?.innerRadius ?? 0.5) * 100),
+        value: round((def.renderProps.star?.innerRadius ?? 0.5) * 100),
         maxValue: 100,
         unit: '%',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -96,7 +96,7 @@ class StarComponent extends BaseNodeComponent {
         p.star ??= {};
         p.star.innerRadius = distance / (props.node.bounds.w / 2);
       }, uow);
-      return `Inner radius: ${round(props.node.props.star!.innerRadius! * 100)}%`;
+      return `Inner radius: ${round(props.node.renderProps.star!.innerRadius! * 100)}%`;
     });
 
     shapeBuilder.controlPoint(path.segments[2].start, ({ x, y }, uow) => {

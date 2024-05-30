@@ -31,7 +31,7 @@ const JettyWidth = {
     id: 'jettyWidth',
     label: 'Width',
     type: 'number',
-    value: JettyWidth.get(node.props.shapeUmlModule),
+    value: JettyWidth.get(node.renderProps.shapeUmlModule),
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => JettyWidth.set(value, node, uow)
@@ -53,7 +53,7 @@ const JettyHeight = {
     id: 'jettyHeight',
     label: 'Height',
     type: 'number',
-    value: JettyHeight.get(node.props.shapeUmlModule),
+    value: JettyHeight.get(node.renderProps.shapeUmlModule),
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => JettyHeight.set(value, node, uow)

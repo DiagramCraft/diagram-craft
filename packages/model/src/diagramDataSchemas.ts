@@ -46,7 +46,7 @@ export class DiagramDataSchemas {
 
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
-        if (node.props.data?.data?.find(d => d.schema === schema.id)) {
+        if (node.renderProps.data?.data?.find(d => d.schema === schema.id)) {
           node.updateProps(props => {
             props.data ??= {};
             props.data.data ??= [];
@@ -55,7 +55,7 @@ export class DiagramDataSchemas {
         }
       }
       for (const edge of diagram.edgeLookup.values()) {
-        if (edge.props.data?.data?.find(d => d.schema === schema.id)) {
+        if (edge.renderProps.data?.data?.find(d => d.schema === schema.id)) {
           edge.updateProps(props => {
             props.data ??= {};
             props.data.data ??= [];

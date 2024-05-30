@@ -32,7 +32,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.props.shapeCube),
+    value: Size.get(node.renderProps.shapeCube),
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -96,14 +96,14 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
         ({ x }, uow) => {
           const distance = Math.max(0, bounds.x + bounds.w - x);
           Size.set(distance, props.node, uow);
-          return `Size: ${Size.get(props.node.props.shapeCube)}px`;
+          return `Size: ${Size.get(props.node.renderProps.shapeCube)}px`;
         }
       );
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = Size.get(def.props.shapeCube) / Math.min(def.bounds.w, def.bounds.h);
+    const sizePct = Size.get(def.renderProps.shapeCube) / Math.min(def.bounds.w, def.bounds.h);
 
     const lcs = new LocalCoordinateSystem(def.bounds, [0, 1], [0, 1], false);
     const pathBuilder = new PathBuilder(p => lcs.toGlobal(p));

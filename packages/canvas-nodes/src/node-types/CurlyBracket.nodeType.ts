@@ -31,7 +31,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.props.shapeCurlyBracket),
+    value: Size.get(node.renderProps.shapeCurlyBracket),
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -65,14 +65,14 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
         ({ x }, uow) => {
           const distance = Math.max(0, x - bounds.x);
           Size.set((distance / bounds.w) * 100, props.node, uow);
-          return `Size: ${Size.get(props.node.props.shapeCurlyBracket)}%`;
+          return `Size: ${Size.get(props.node.renderProps.shapeCurlyBracket)}%`;
         }
       );
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = Size.get(def.props.shapeCurlyBracket) / 100;
+    const sizePct = Size.get(def.renderProps.shapeCurlyBracket) / 100;
 
     const rx = (2 * 10) / def.bounds.w;
     const ry = (2 * 10) / def.bounds.h;

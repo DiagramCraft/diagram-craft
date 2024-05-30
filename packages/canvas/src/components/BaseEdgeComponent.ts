@@ -100,7 +100,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
     const firstEdge = $d.selectionState.edges[0];
 
-    const edgeProps = props.element.propsForRendering;
+    const edgeProps = props.element.renderProps;
 
     const startArrow = this.getArrow('start', edgeProps);
     const endArrow = this.getArrow('end', edgeProps);
@@ -268,7 +268,7 @@ export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
       const paths = applyLineHops(path, edge, undefined, undefined, edge.intersections);
       shapeBuilder.edge(
         paths,
-        edge.propsForRendering,
+        edge.renderProps,
         this.getArrow('start', props),
         this.getArrow('end', props),
         { style: { fill: 'none' } }

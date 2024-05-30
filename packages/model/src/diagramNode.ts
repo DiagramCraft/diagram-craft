@@ -8,7 +8,7 @@ import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { nodeDefaults } from './diagramDefaults';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnectedOrFixed } from './endpoint';
-import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, writeable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -88,16 +88,16 @@ export class DiagramNode
   /* Props *************************************************************************************************** */
 
   // TODO: Maybe create a props cache helper
-  #propsCache: NodeProps | undefined = undefined;
+  #propsCache: NodePropsForEditing | undefined = undefined;
   #propsCacheStyle: NodeProps | undefined = undefined;
 
   private clearPropsCache() {
     this.#propsCache = undefined;
   }
 
-  get propsForEditing(): NodePropsForEditing {
+  get editProps(): NodePropsForEditing {
     const styleProps = this.diagram.document.styles.nodeStyles.find(
-      s => s.id === this.props.style
+      s => s.id === this.#props.style
     )?.props;
 
     if (this.#propsCache && this.#propsCacheStyle === styleProps) return this.#propsCache;
@@ -105,20 +105,16 @@ export class DiagramNode
     this.#propsCacheStyle = styleProps;
     this.#propsCache = deepMerge(
       {},
-      nodeDefaults,
+      writeable(nodeDefaults),
       styleProps ?? {},
-      this.#props as NodeProps
+      this.#props
     ) as DeepRequired<NodeProps>;
 
     return this.#propsCache;
   }
 
-  get propsForRendering(): NodePropsForRendering {
-    return this.propsForEditing as DeepRequired<NodePropsForEditing>;
-  }
-
-  get props(): NodeProps {
-    return this.#props;
+  get renderProps(): NodePropsForRendering {
+    return this.editProps as DeepRequired<NodePropsForEditing>;
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
@@ -137,18 +133,18 @@ export class DiagramNode
   get data() {
     if (this.isLabelNode()) return this.labelEdge()!.data;
 
-    return this.propsForRendering.data?.customData ?? {};
+    return this.renderProps.data?.customData ?? {};
   }
 
   get name() {
     if (this.#cache?.has('name')) return this.#cache.get('name') as string;
 
-    if (this.props.text?.text) {
+    if (this.#props.text?.text) {
       const metadata = this.data;
 
-      if (this.props.text.text[0] === '<') {
+      if (this.#props.text.text[0] === '<') {
         try {
-          const d = new DOMParser().parseFromString(this.props.text.text, 'text/html');
+          const d = new DOMParser().parseFromString(this.#props.text.text, 'text/html');
           const text = d.body.textContent;
           if (text) {
             this.cache.set('name', applyTemplate(text, metadata));
@@ -159,7 +155,7 @@ export class DiagramNode
         }
       }
 
-      this.cache.set('name', applyTemplate(this.props.text.text, metadata));
+      this.cache.set('name', applyTemplate(this.#props.text.text, metadata));
       return this.cache.get('name') as string;
     }
     return this.nodeType + ' / ' + this.id;
@@ -306,7 +302,7 @@ export class DiagramNode
       type: 'node',
       nodeType: this.nodeType,
       bounds: this.bounds,
-      props: this.props,
+      props: this.#props,
       children: this.children,
       edges: this.edges
     };
@@ -320,7 +316,7 @@ export class DiagramNode
       type: 'node',
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
-      props: deepClone(this.props),
+      props: deepClone(this.#props),
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
         [...this.edges.entries()].map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
@@ -385,7 +381,7 @@ export class DiagramNode
       deepClone(this.bounds),
       this.diagram,
       this.layer,
-      deepClone(this.props) as NodeProps,
+      deepClone(this.#props) as NodeProps,
       this.#anchors
     );
 
@@ -578,8 +574,8 @@ export class DiagramNode
 
   _getPositionInBounds(p: Point) {
     return {
-      x: this.bounds.x + this.bounds.w * (this.propsForRendering.geometry.flipH ? 1 - p.x : p.x),
-      y: this.bounds.y + this.bounds.h * (this.propsForRendering.geometry.flipV ? 1 - p.y : p.y)
+      x: this.bounds.x + this.bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
+      y: this.bounds.y + this.bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
     };
   }
 
@@ -591,11 +587,11 @@ export class DiagramNode
   }
 
   isLabelNode() {
-    return !!this.props.labelForEdgeId;
+    return !!this.#props.labelForEdgeId;
   }
 
   labelNode() {
-    if (!this.props.labelForEdgeId) return undefined;
+    if (!this.#props.labelForEdgeId) return undefined;
     const edge = this.labelEdge();
     assert.present(edge);
     assert.present(edge.labelNodes);
@@ -603,14 +599,14 @@ export class DiagramNode
   }
 
   labelEdge() {
-    if (!this.props.labelForEdgeId) return undefined;
-    const edge = this.diagram.edgeLookup.get(this.props.labelForEdgeId);
+    if (!this.#props.labelForEdgeId) return undefined;
+    const edge = this.diagram.edgeLookup.get(this.#props.labelForEdgeId);
     assert.present(edge);
     return edge;
   }
 
   updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
-    if (!this.props.labelForEdgeId) return;
+    if (!this.#props.labelForEdgeId) return;
 
     uow.snapshot(this);
 
@@ -643,6 +639,6 @@ export class DiagramNode
   }
 
   getAttachmentsInUse() {
-    return [this.propsForRendering.fill?.image?.id, this.propsForRendering.fill?.pattern];
+    return [this.renderProps.fill?.image?.id, this.renderProps.fill?.pattern];
   }
 }

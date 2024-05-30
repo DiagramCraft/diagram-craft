@@ -41,11 +41,11 @@ export const StylesheetPanel = (props: Props) => {
 
   if ($d.selectionState.isEmpty()) return null;
 
-  const stylesheet = $d.document.styles.get($d.selectionState.elements[0].props.style!);
+  const stylesheet = $d.document.styles.get($d.selectionState.elements[0].renderProps.style!);
 
   const isDirty =
     !style.hasMultipleValues &&
-    $d.selectionState.elements.some(e => isPropsDirty(e.props, stylesheet?.props ?? {}));
+    $d.selectionState.elements.some(e => isPropsDirty(e.renderProps, stylesheet?.props ?? {}));
 
   const styleList = $d.selectionState.isNodesOnly()
     ? $d.document.styles.nodeStyles
@@ -101,7 +101,7 @@ export const StylesheetPanel = (props: Props) => {
                     const stylesheet = $d.document.styles.get(style.val);
                     if (stylesheet) {
                       stylesheet.setProps(
-                        getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
+                        getCommonProps($d.selectionState.elements.map(e => e.editProps)) as
                           | NodeProps
                           | EdgeProps,
                         uow
@@ -197,7 +197,7 @@ export const StylesheetPanel = (props: Props) => {
                 id,
                 v,
                 {
-                  ...(getCommonProps($d.selectionState.elements.map(e => e.propsForEditing)) as
+                  ...(getCommonProps($d.selectionState.elements.map(e => e.editProps)) as
                     | NodeProps
                     | EdgeProps),
                   style: undefined,

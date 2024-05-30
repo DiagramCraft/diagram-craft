@@ -31,7 +31,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.props.process),
+    value: Size.get(node.renderProps.process),
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -74,7 +74,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
         Size.set(newValue, props.node, uow);
-        return `Size: ${Size.get(props.node.props.process)}%`;
+        return `Size: ${Size.get(props.node.renderProps.process)}%`;
       });
     }
   };

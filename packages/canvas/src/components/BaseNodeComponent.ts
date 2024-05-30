@@ -89,7 +89,7 @@ export class BaseNodeComponent<
         }
       : undefined;
 
-    const nodeProps = props.element.propsForRendering;
+    const nodeProps = props.element.renderProps;
 
     const isSelected = $d.selectionState.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;

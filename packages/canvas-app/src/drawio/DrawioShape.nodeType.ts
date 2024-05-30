@@ -57,7 +57,7 @@ const isShapeElement = ($el: Element) =>
 const parse = (def: DiagramNode, stencil: Stencil): Element | undefined => {
   if (def.cache.has('element')) return def.cache.get('element') as Element;
 
-  const data = def.propsForRendering?.drawio?.shape ?? stencil.props?.drawio?.shape;
+  const data = def.renderProps?.drawio?.shape ?? stencil.props?.drawio?.shape;
   if (!data) {
     console.warn(`Cannot find shape for ${def.type} / ${def.name}`);
     return undefined;

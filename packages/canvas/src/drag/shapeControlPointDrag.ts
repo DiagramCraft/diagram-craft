@@ -16,7 +16,7 @@ export class ShapeControlPointDrag extends AbstractDrag {
 
   onDrag(coord: Point, _modifiers: Modifiers) {
     const bounds = this.element.bounds;
-    const nodeProps = this.element.propsForRendering;
+    const nodeProps = this.element.renderProps;
 
     const p = {
       x: (coord.x - bounds.x) / bounds.w,

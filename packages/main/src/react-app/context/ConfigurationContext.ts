@@ -1,6 +1,7 @@
 import React from 'react';
-import { DeepRequired } from '@diagram-craft/utils/types';
 import { assert } from '@diagram-craft/utils/assert';
+import { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 
 type ConfigurationContextType = {
   palette: {
@@ -10,8 +11,8 @@ type ConfigurationContextType = {
   fonts: Record<string, string>;
 
   defaults: {
-    node: DeepRequired<NodeProps>;
-    edge: DeepRequired<EdgeProps>;
+    node: NodePropsForRendering;
+    edge: EdgePropsForRendering;
   };
 
   // TODO: Add styles, patterns, fonts etc

@@ -88,8 +88,8 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
     node.anchors.forEach((a, idx) => {
       if (a.clip) return;
 
-      const x = node.propsForRendering.geometry.flipH ? 1 - a.point.x : a.point.x;
-      const y = node.propsForRendering.geometry.flipV ? 1 - a.point.y : a.point.y;
+      const x = node.renderProps.geometry.flipH ? 1 - a.point.x : a.point.x;
+      const y = node.renderProps.geometry.flipV ? 1 - a.point.y : a.point.y;
       children.push(
         svg.g(
           {

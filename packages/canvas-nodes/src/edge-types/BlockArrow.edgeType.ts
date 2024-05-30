@@ -37,7 +37,7 @@ const ArrowDepth = {
     id: 'arrowDepth',
     label: 'Arrow Depth',
     type: 'number',
-    value: ArrowDepth.get(edge.props.shapeBlockArrow),
+    value: ArrowDepth.get(edge.renderProps.shapeBlockArrow),
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowDepth.set(value, edge, uow)
   }),
@@ -58,7 +58,7 @@ const ArrowWidth = {
     id: 'arrowWidth',
     label: 'Arrow Width',
     type: 'number',
-    value: ArrowWidth.get(edge.props.shapeBlockArrow),
+    value: ArrowWidth.get(edge.renderProps.shapeBlockArrow),
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowWidth.set(value, edge, uow)
   }),
@@ -79,7 +79,7 @@ const Width = {
     id: 'width',
     label: 'Width',
     type: 'number',
-    value: Width.get(edge.props.shapeBlockArrow),
+    value: Width.get(edge.renderProps.shapeBlockArrow),
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Width.set(value, edge, uow)
   }),
@@ -87,7 +87,7 @@ const Width = {
   get: (props: DeepReadonly<ExtraProps> | undefined) => round(props?.width ?? 20),
 
   set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value <= 0 || value >= ArrowWidth.get(edge.propsForEditing.shapeBlockArrow)) return;
+    if (value <= 0 || value >= ArrowWidth.get(edge.editProps.shapeBlockArrow)) return;
     edge.updateProps(
       props => (props.shapeBlockArrow = { ...props.shapeBlockArrow, width: round(value) }),
       uow

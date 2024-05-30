@@ -8,7 +8,7 @@ import { VNode } from '../component/vdom';
 export const makeReflection = (node: DiagramNode, children: VNode[]) => {
   const id = node.id;
   const bounds = node.bounds;
-  const props = node.props;
+  const props = node.renderProps;
 
   const center = Box.center(bounds);
 
@@ -19,7 +19,7 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
     pathBounds = paths.bounds();
   }
 
-  const strength = node.props.effects?.reflectionStrength?.toString() ?? '1';
+  const strength = node.renderProps.effects?.reflectionStrength?.toString() ?? '1';
 
   return [
     svg.linearGradient(
