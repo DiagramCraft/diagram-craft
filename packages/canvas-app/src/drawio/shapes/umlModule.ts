@@ -1,9 +1,8 @@
 // NodeProps extension for custom props *****************************************
 
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
@@ -12,6 +11,7 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type ExtraProps = {
   jettyWidth?: number;
@@ -23,6 +23,11 @@ declare global {
     shapeUmlModule?: ExtraProps;
   }
 }
+
+registerNodeDefaults('shapeUmlModule', {
+  jettyWidth: 20,
+  jettyHeight: 10
+});
 
 // Custom properties ************************************************************
 
@@ -37,7 +42,7 @@ const JettyWidth = {
     onChange: (value: number, uow: UnitOfWork) => JettyWidth.set(value, node, uow)
   }),
 
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.jettyWidth ?? 20,
+  get: (props: NodePropsForRendering['shapeUmlModule']): number => props.jettyWidth,
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
@@ -59,7 +64,7 @@ const JettyHeight = {
     onChange: (value: number, uow: UnitOfWork) => JettyHeight.set(value, node, uow)
   }),
 
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.jettyHeight ?? 10,
+  get: (props: NodePropsForRendering['shapeUmlModule']) => props.jettyHeight,
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
@@ -93,8 +98,13 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
         }
       );
 
-      const width = JettyWidth.get(props.nodeProps.shapeUmlModule);
-      const height = JettyHeight.get(props.nodeProps.shapeUmlModule);
+      // TODO: Fix these type conversions
+      const width = JettyWidth.get(
+        props.nodeProps.shapeUmlModule as NodePropsForRendering['shapeUmlModule']
+      );
+      const height = JettyHeight.get(
+        props.nodeProps.shapeUmlModule as NodePropsForRendering['shapeUmlModule']
+      );
 
       const body = new PathBuilder();
       PathBuilderHelper.rect(body, {

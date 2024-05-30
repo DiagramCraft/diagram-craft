@@ -20,7 +20,7 @@ export const EdgeLinePanel = (props: Props) => {
 
   const strokeColor = useEdgeProperty($d, 'stroke.color', defaults.stroke.color);
   const fillColor = useEdgeProperty($d, 'fill.color', defaults.fill.color);
-  const pattern = useEdgeProperty($d, 'stroke.pattern', defaults.stroke.pattern);
+  const pattern = useEdgeProperty($d, 'stroke.pattern', defaults.stroke.pattern ?? '');
 
   const strokeSize = useEdgeProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
   const strokeSpacing = useEdgeProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);

@@ -7,7 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { DeepReadonly } from '@diagram-craft/utils/types';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -21,11 +21,7 @@ declare global {
   }
 }
 
-// Custom properties ************************************************************
-
-const Direction = {
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.direction ?? 'east'
-};
+registerNodeDefaults('shapeTriangle', { direction: 'east' });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -37,7 +33,7 @@ export class TriangleNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 
-    switch (Direction.get(def.renderProps.shapeTriangle)) {
+    switch (def.renderProps.shapeTriangle.direction) {
       case 'east':
         pathBuilder.moveTo(Point.of(1, 0));
         pathBuilder.lineTo(Point.of(-1, -1));

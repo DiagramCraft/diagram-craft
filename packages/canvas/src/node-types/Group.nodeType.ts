@@ -3,8 +3,6 @@ import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseN
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -13,17 +11,6 @@ export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('group', 'Group', GroupComponent);
     this.capabilities.children = true;
-  }
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-    pathBuilder.moveTo(Point.of(-1, 1));
-    pathBuilder.lineTo(Point.of(1, 1));
-    pathBuilder.lineTo(Point.of(1, -1));
-    pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(-1, 1));
-
-    return pathBuilder;
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork) {

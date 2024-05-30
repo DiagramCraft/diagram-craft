@@ -1,4 +1,4 @@
-import { DiagramNode } from './diagramNode';
+import { DiagramNode, NodePropsForEditing } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
@@ -7,7 +7,6 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique } from '@diagram-craft/utils/array';
 import { Anchor } from './types';
 import { Box } from '@diagram-craft/geometry/box';
@@ -53,7 +52,7 @@ export interface NodeDefinition {
 
   // TODO: These are a bit weird, considering we allow for multiple registrations
   //       of the same definition
-  getDefaultProps(mode: 'picker' | 'canvas'): DeepReadonly<NodeProps>;
+  getDefaultProps(mode: 'picker' | 'canvas'): NodePropsForEditing;
   getDefaultAspectRatio(node: DiagramNode): number;
 
   // TODO: Remove this perhaps

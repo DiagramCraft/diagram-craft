@@ -719,7 +719,7 @@ export const simpleDiagram: SerializedDiagramDocument = {
                   gap: 10
                 },
                 highlight: [],
-                table: {
+                shapeTable: {
                   gap: 0
                 }
               }

@@ -9,8 +9,8 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -24,6 +24,8 @@ declare global {
   }
 }
 
+registerNodeDefaults('shapeHexagon', { size: 25 });
+
 // Custom properties ************************************************************
 
 const Size = {
@@ -31,13 +33,11 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.renderProps.shapeHexagon),
+    value: node.renderProps.shapeHexagon.size,
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
-
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.size ?? 25,
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
@@ -57,18 +57,18 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const sizePct = Size.get(props.nodeProps.shapeHexagon) / 100;
+      const sizePct = props.nodeProps.shapeHexagon.size / 100;
 
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const distance = Math.max(0, x - bounds.x);
         Size.set((distance / bounds.w) * 100, props.node, uow);
-        return `Size: ${Size.get(props.node.renderProps.shapeHexagon)}%`;
+        return `Size: ${props.node.renderProps.shapeHexagon.size}%`;
       });
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = Size.get(def.renderProps.shapeHexagon) / 100;
+    const sizePct = def.renderProps.shapeHexagon.size / 100;
 
     const x1 = -1 + sizePct * 2;
     const x2 = 1 - sizePct * 2;

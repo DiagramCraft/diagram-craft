@@ -22,7 +22,7 @@ export const TableStrokePanel = (props: Props) => {
   const defaults = useNodeDefaults();
 
   const strokeColor = useTableProperty($d, 'stroke.color', defaults.stroke.color);
-  const pattern = useTableProperty($d, 'stroke.pattern', defaults.stroke.pattern);
+  const pattern = useTableProperty($d, 'stroke.pattern', defaults.stroke.pattern ?? '');
 
   const strokeSize = useTableProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
   const strokeSpacing = useTableProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);
@@ -35,15 +35,21 @@ export const TableStrokePanel = (props: Props) => {
 
   const horizontalBorder = useTableProperty(
     $d,
-    'table.horizontalBorder',
-    defaults.table.horizontalBorder
+    'shapeTable.horizontalBorder',
+    defaults.shapeTable.horizontalBorder
   );
   const verticalBorder = useTableProperty(
     $d,
-    'table.verticalBorder',
-    defaults.table.verticalBorder
+    'shapeTable.verticalBorder',
+    defaults.shapeTable.verticalBorder
   );
-  const outerBorder = useTableProperty($d, 'table.outerBorder', defaults.table.outerBorder);
+
+  // TODO: No need to provide defaults - same for useProperty
+  const outerBorder = useTableProperty(
+    $d,
+    'shapeTable.outerBorder',
+    defaults.shapeTable.outerBorder
+  );
 
   return (
     <ToolWindowPanel

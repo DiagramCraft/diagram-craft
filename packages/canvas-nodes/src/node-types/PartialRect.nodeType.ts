@@ -7,6 +7,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -22,6 +23,8 @@ declare global {
     shapePartialRect?: ExtraProps;
   }
 }
+
+registerNodeDefaults('shapePartialRect', { north: true, south: true, east: true, west: true });
 
 export class PartialRectNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'partial-rect', displayName = 'PartialRectangle') {
@@ -48,34 +51,34 @@ class PartialRectComponent extends BaseNodeComponent {
     shapeBuilder.boundaryPath(boundary.all(), {
       ...props.nodeProps,
       stroke: {
-        ...(props.nodeProps.stroke ?? {}),
+        ...props.nodeProps.stroke,
         enabled: false,
         color: 'transparent'
       }
     } as NodeProps);
 
-    if (props.node.renderProps.shapePartialRect?.north) {
+    if (props.node.renderProps.shapePartialRect.north) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(-1, 1));
       pathBuilder.lineTo(Point.of(1, 1));
       shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
     }
 
-    if (props.node.renderProps.shapePartialRect?.south) {
+    if (props.node.renderProps.shapePartialRect.south) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(-1, -1));
       pathBuilder.lineTo(Point.of(1, -1));
       shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
     }
 
-    if (props.node.renderProps.shapePartialRect?.east) {
+    if (props.node.renderProps.shapePartialRect.east) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(1, 1));
       pathBuilder.lineTo(Point.of(1, -1));
       shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
     }
 
-    if (props.node.renderProps.shapePartialRect?.west) {
+    if (props.node.renderProps.shapePartialRect.west) {
       const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
       pathBuilder.moveTo(Point.of(-1, 1));
       pathBuilder.lineTo(Point.of(-1, -1));

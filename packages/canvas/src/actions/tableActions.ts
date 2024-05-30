@@ -97,7 +97,9 @@ export class TableDistributeAction extends AbstractAction {
     if (this.type === 'row') {
       const h =
         tableElement.bounds.h -
-        (tableElement.renderProps.table.title ? tableElement.renderProps.table.titleSize : 0);
+        (tableElement.renderProps.shapeTable.title
+          ? tableElement.renderProps.shapeTable.titleSize
+          : 0);
       const rows = tableElement.children.filter(
         c => isNode(c) && c.nodeType === 'tableRow'
       ) as DiagramNode[];

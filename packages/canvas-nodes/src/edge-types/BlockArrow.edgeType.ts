@@ -10,11 +10,12 @@ import {
   CustomPropertyDefinition,
   EdgeCapability
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
+import { registerEdgeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // EdgeProps extension for custom props *****************************************
 
@@ -30,6 +31,12 @@ declare global {
   }
 }
 
+const $defaults = registerEdgeDefaults('shapeBlockArrow', {
+  arrowDepth: 20,
+  arrowWidth: 50,
+  width: 20
+});
+
 // Custom properties ************************************************************
 
 const ArrowDepth = {
@@ -37,12 +44,10 @@ const ArrowDepth = {
     id: 'arrowDepth',
     label: 'Arrow Depth',
     type: 'number',
-    value: ArrowDepth.get(edge.renderProps.shapeBlockArrow),
+    value: round(edge.renderProps.shapeBlockArrow.arrowDepth),
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowDepth.set(value, edge, uow)
   }),
-
-  get: (props: DeepReadonly<ExtraProps> | undefined) => round(props?.arrowDepth ?? 20),
 
   set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value <= 0) return;
@@ -58,12 +63,10 @@ const ArrowWidth = {
     id: 'arrowWidth',
     label: 'Arrow Width',
     type: 'number',
-    value: ArrowWidth.get(edge.renderProps.shapeBlockArrow),
+    value: round(edge.renderProps.shapeBlockArrow.arrowWidth),
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowWidth.set(value, edge, uow)
   }),
-
-  get: (props: DeepReadonly<ExtraProps> | undefined) => round(props?.arrowWidth ?? 50),
 
   set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value <= 0) return;
@@ -79,15 +82,13 @@ const Width = {
     id: 'width',
     label: 'Width',
     type: 'number',
-    value: Width.get(edge.renderProps.shapeBlockArrow),
+    value: round(edge.renderProps.shapeBlockArrow.width),
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Width.set(value, edge, uow)
   }),
 
-  get: (props: DeepReadonly<ExtraProps> | undefined) => round(props?.width ?? 20),
-
   set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value <= 0 || value >= ArrowWidth.get(edge.editProps.shapeBlockArrow)) return;
+    if (value <= 0 || value >= round($defaults(edge.editProps.shapeBlockArrow).arrowWidth)) return;
     edge.updateProps(
       props => (props.shapeBlockArrow = { ...props.shapeBlockArrow, width: round(value) }),
       uow
@@ -107,11 +108,11 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
       path: Path,
       shapeBuilder: ShapeBuilder,
       edge: DiagramEdge,
-      props: DeepReadonly<EdgeProps>
+      props: EdgePropsForRendering
     ) {
-      const width = Width.get(props.shapeBlockArrow);
-      const arrowDepth = ArrowDepth.get(props.shapeBlockArrow);
-      const arrowWidth = ArrowWidth.get(props.shapeBlockArrow);
+      const width = round(props.shapeBlockArrow.width);
+      const arrowDepth = round(props.shapeBlockArrow.arrowDepth);
+      const arrowWidth = round(props.shapeBlockArrow.arrowWidth);
 
       const offset1 = path.offset(width / 2);
       const offset2 = path.offset(-width / 2);

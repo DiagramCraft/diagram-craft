@@ -9,6 +9,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
@@ -17,6 +18,8 @@ declare global {
     };
   }
 }
+
+registerNodeDefaults('shapeParallelogram', { slant: 5 });
 
 export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -29,7 +32,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
         id: 'slant',
         type: 'number',
         label: 'Slant',
-        value: def.renderProps.shapeParallelogram?.slant ?? 5,
+        value: def.renderProps.shapeParallelogram.slant,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -44,7 +47,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slant = def.renderProps.shapeParallelogram?.slant ?? 5;
+    const slant = def.renderProps.shapeParallelogram.slant;
     const bnd = def.bounds;
 
     const sr = slant / bnd.w;
@@ -64,7 +67,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
 
 class ParallelogramComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const slant = props.nodeProps.shapeParallelogram?.slant ?? 5;
+    const slant = props.nodeProps.shapeParallelogram.slant;
     const boundary = new ParallelogramNodeDefinition()
       .getBoundingPathBuilder(props.node)
       .getPaths();

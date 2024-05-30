@@ -10,8 +10,7 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
-import { deepClone } from '@diagram-craft/utils/object';
-import { DeepWriteable } from '@diagram-craft/utils/types';
+import { cloneAsWriteable } from '@diagram-craft/utils/types';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -71,7 +70,7 @@ class DoubleRectNodeDefinition extends ShapeNodeDefinition {
       pathBuilder.lineTo(Point.of(1 - offsetW, -1 + offsetH));
       pathBuilder.lineTo(Point.of(1 - offsetW, 1 - offsetH));
 
-      const lineProps = deepClone(props.nodeProps) as DeepWriteable<NodeProps>;
+      const lineProps = cloneAsWriteable(props.nodeProps);
       lineProps.shadow!.enabled = false;
       shapeBuilder.path(pathBuilder.getPaths().all(), lineProps);
     }

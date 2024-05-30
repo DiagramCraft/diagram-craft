@@ -12,11 +12,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { Point } from '@diagram-craft/geometry/point';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, ElementPropsForEditing } from '@diagram-craft/model/diagramElement';
 import { hash } from '@diagram-craft/utils/hash';
 import { ArrowShape } from '../arrowShapes';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { makeShadowFilter } from '../effects/shadow';
+import { NodePropsForEditing } from '@diagram-craft/model/diagramNode';
 
 const defaultOnChange = (element: DiagramElement) => (text: string) => {
   UnitOfWork.execute(element.diagram, uow => {
@@ -78,7 +79,7 @@ export class ShapeBuilder {
 
   boundaryPath(
     paths: Path[],
-    props: NodeProps | undefined = undefined,
+    props: NodePropsForEditing | undefined = undefined,
     textId: undefined | string = '1',
     opts?: Opts
   ) {
@@ -112,11 +113,7 @@ export class ShapeBuilder {
     );
   }
 
-  path(
-    paths: Path[],
-    props: ElementProps | DeepReadonly<ElementProps> | undefined = undefined,
-    opts?: Opts
-  ) {
+  path(paths: Path[], props: ElementPropsForEditing | undefined = undefined, opts?: Opts) {
     opts ??= {};
     opts.map ??= a => a;
     opts.style ??= {};
@@ -217,9 +214,7 @@ export class ShapeBuilder {
       .item(0) as HTMLDivElement | undefined | null;
   }
 
-  private makeStyle(
-    props: ElementProps | DeepReadonly<ElementProps>
-  ): Partial<CSSStyleDeclaration> {
+  private makeStyle(props: ElementPropsForEditing): Partial<CSSStyleDeclaration> {
     const style: Partial<CSSStyleDeclaration> = {};
     style.strokeWidth = props.stroke!.width?.toString();
     style.stroke = props.stroke!.color;
@@ -231,7 +226,7 @@ export class ShapeBuilder {
     if (props.stroke!.pattern !== 'SOLID') {
       const p = DASH_PATTERNS[props.stroke!.pattern as unknown as keyof typeof DASH_PATTERNS];
       if (!p) {
-        style.strokeDasharray = props.stroke!.pattern;
+        style.strokeDasharray = props.stroke!.pattern ?? '1 1';
       } else {
         style.strokeDasharray = p(
           (props.stroke!.patternSize ?? 50) / 100,
@@ -255,7 +250,7 @@ export class ShapeBuilder {
   }
 
   private processPath(
-    props: NodeProps | DeepReadonly<NodeProps> | undefined,
+    props: ElementPropsForEditing | undefined,
     opts: {
       map?: (n: VNode) => VNode;
       className?: string;

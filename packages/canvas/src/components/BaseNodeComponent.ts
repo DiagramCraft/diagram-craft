@@ -13,8 +13,7 @@ import { Transforms } from '../component/vdom-svg';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { DeepReadonly } from '@diagram-craft/utils/types';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { makeReflection } from '../effects/reflection';
@@ -37,7 +36,7 @@ export type NodeComponentProps = {
  */
 export type BaseShapeBuildShapeProps = {
   node: DiagramNode;
-  nodeProps: DeepReadonly<NodeProps>;
+  nodeProps: NodePropsForRendering;
 
   style: Partial<CSSStyleDeclaration>;
   isSingleSelected: boolean;

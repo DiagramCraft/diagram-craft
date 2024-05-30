@@ -9,8 +9,8 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -24,6 +24,8 @@ declare global {
   }
 }
 
+registerNodeDefaults('shapeStep', { size: 25 });
+
 // Custom properties ************************************************************
 
 const Size = {
@@ -31,13 +33,11 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.renderProps.shapeStep),
+    value: node.renderProps.shapeStep.size,
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
-
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.size ?? 25,
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= node.bounds.w / 2 || value <= 0) return;
@@ -57,21 +57,21 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const size = Size.get(props.nodeProps.shapeStep);
+      const size = props.nodeProps.shapeStep.size;
 
       shapeBuilder.controlPoint(
         Point.of(bounds.x + size, bounds.y + bounds.h / 2),
         ({ x }, uow) => {
           const distance = Math.max(0, x - bounds.x);
           Size.set(distance, props.node, uow);
-          return `Size: ${Size.get(props.node.renderProps.shapeStep)}px`;
+          return `Size: ${props.node.renderProps.shapeStep.size}px`;
         }
       );
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = Size.get(def.renderProps.shapeStep) / def.bounds.w;
+    const sizePct = def.renderProps.shapeStep.size / def.bounds.w;
 
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 

@@ -10,6 +10,8 @@ const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: st
       const item = target[property as keyof T];
       if (item === null || item === undefined) {
         if (property === 'toJSON') return undefined;
+        if (item === null) return null;
+        console.log(item);
         throw new Error(`${path ?? ''}#${String(property)} is not defined in defaults`);
       }
 
@@ -118,18 +120,10 @@ const _nodeDefaults: Omit<
     sketch: false,
     sketchFillType: 'fill',
     sketchStrength: 0.1
-  },
-  table: {
-    horizontalBorder: true,
-    verticalBorder: true,
-    gap: 0,
-    outerBorder: true,
-    title: false,
-    titleSize: 30
   }
 };
 
-const _edgeProps: Pick<
+const _edgeDefaults: Pick<
   EdgePropsForRendering,
   FilterNotStartingWith<keyof EdgePropsForRendering, 'shape'>
 > = {
@@ -164,11 +158,26 @@ const _edgeProps: Pick<
 export function registerNodeDefaults<K extends keyof NodeProps>(k: K, v: NodePropsForRendering[K]) {
   // @ts-expect-error
   _nodeDefaults[k] = v;
+
+  // TODO: Maybe we can use a Proxy here to make it immutable and more performant
+
+  // @ts-ignore
+  return (d: NodeProps[K]) => deepMerge({}, v, d);
+}
+
+export function registerEdgeDefaults<K extends keyof EdgeProps>(k: K, v: EdgePropsForRendering[K]) {
+  // @ts-expect-error
+  _edgeDefaults[k] = v;
+
+  // TODO: Maybe we can use a Proxy here to make it immutable and more performant
+
+  // @ts-ignore
+  return (d: EdgeProps[K]) => deepMerge({}, v, d);
 }
 
 export const nodeDefaults: NodePropsForRendering =
   createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);
 
 export const edgeDefaults: EdgePropsForRendering = createDefaultsProxy<EdgePropsForRendering>(
-  deepMerge<EdgePropsForRendering>({}, nodeDefaults, _edgeProps)
+  deepMerge<EdgePropsForRendering>({}, nodeDefaults, _edgeDefaults)
 );

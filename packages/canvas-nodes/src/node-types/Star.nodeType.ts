@@ -12,6 +12,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
@@ -22,14 +23,16 @@ declare global {
   }
 }
 
+registerNodeDefaults('shapeStar', { numberOfSides: 5, innerRadius: 0.5 });
+
 export class StarNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('star', 'Star', StarComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sides = def.renderProps.shapeStar?.numberOfSides ?? 5;
-    const innerRadius = def.renderProps.shapeStar?.innerRadius ?? 0.5;
+    const sides = def.renderProps.shapeStar.numberOfSides;
+    const innerRadius = def.renderProps.shapeStar.innerRadius;
 
     const theta = Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
@@ -55,7 +58,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
-        value: def.renderProps.shapeStar?.numberOfSides ?? 5,
+        value: def.renderProps.shapeStar.numberOfSides,
         onChange: (value: number, uow: UnitOfWork) => {
           def.updateProps(props => {
             props.shapeStar ??= {};
@@ -67,7 +70,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         id: 'innerRadius',
         type: 'number',
         label: 'Radius',
-        value: round((def.renderProps.shapeStar?.innerRadius ?? 0.5) * 100),
+        value: round(def.renderProps.shapeStar.innerRadius * 100),
         maxValue: 100,
         unit: '%',
         onChange: (value: number, uow: UnitOfWork) => {

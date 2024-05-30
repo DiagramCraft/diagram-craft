@@ -9,6 +9,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
@@ -18,6 +19,8 @@ declare global {
     };
   }
 }
+
+registerNodeDefaults('shapeTrapetzoid', { slantLeft: 5, slantRight: 5 });
 
 export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -30,7 +33,7 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
         id: 'slantLeft',
         type: 'number',
         label: 'Slant (left)',
-        value: def.renderProps.shapeTrapetzoid?.slantLeft ?? 5,
+        value: def.renderProps.shapeTrapetzoid.slantLeft,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -45,7 +48,7 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
         id: 'slantRight',
         type: 'number',
         label: 'Slant (right)',
-        value: def.renderProps.shapeTrapetzoid?.slantRight ?? 5,
+        value: def.renderProps.shapeTrapetzoid.slantRight,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
@@ -60,8 +63,8 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slantLeft = def.renderProps.shapeTrapetzoid?.slantLeft ?? 5;
-    const slantRight = def.renderProps.shapeTrapetzoid?.slantRight ?? 5;
+    const slantLeft = def.renderProps.shapeTrapetzoid.slantLeft;
+    const slantRight = def.renderProps.shapeTrapetzoid.slantRight;
     const bnd = def.bounds;
 
     const cdSl = (slantLeft / bnd.w) * 2;
@@ -81,8 +84,8 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
 
 class TrapetzoidComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const slantLeft = props.nodeProps.shapeTrapetzoid?.slantLeft ?? 5;
-    const slantRight = props.nodeProps.shapeTrapetzoid?.slantRight ?? 5;
+    const slantLeft = props.nodeProps.shapeTrapetzoid.slantLeft;
+    const slantRight = props.nodeProps.shapeTrapetzoid.slantRight;
 
     const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
@@ -99,7 +102,7 @@ class TrapetzoidComponent extends BaseNodeComponent {
             props.shapeTrapetzoid.slantLeft = distance;
           }, uow);
         }
-        return `Slant: ${props.node.renderProps.shapeTrapetzoid?.slantLeft}px`;
+        return `Slant: ${props.node.renderProps.shapeTrapetzoid.slantLeft}px`;
       }
     );
 
@@ -113,7 +116,7 @@ class TrapetzoidComponent extends BaseNodeComponent {
             props.shapeTrapetzoid.slantRight = distance;
           }, uow);
         }
-        return `Slant: ${props.node.renderProps.shapeTrapetzoid?.slantRight}px`;
+        return `Slant: ${props.node.renderProps.shapeTrapetzoid.slantRight}px`;
       }
     );
   }

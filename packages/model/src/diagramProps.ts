@@ -88,7 +88,7 @@ declare global {
       enabled?: boolean;
       color?: string;
       width?: number;
-      pattern?: string;
+      pattern?: string | null;
       patternSpacing?: number;
       patternSize?: number;
       miterLimit?: number;

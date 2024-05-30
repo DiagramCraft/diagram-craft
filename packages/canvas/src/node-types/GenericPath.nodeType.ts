@@ -12,6 +12,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
@@ -23,6 +24,8 @@ declare global {
 }
 
 const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
+
+registerNodeDefaults('shapeGenericPath', { path: DEFAULT_PATH, waypointTypes: [] });
 
 const COLORS: Record<EditableWaypointType, string> = {
   corner: 'red',
@@ -43,7 +46,7 @@ export class GenericPathNodeDefinition extends ShapeNodeDefinition {
 
   getBoundingPathBuilder(def: DiagramNode) {
     return PathBuilder.fromString(
-      def.renderProps.shapeGenericPath?.path ?? DEFAULT_PATH,
+      def.renderProps.shapeGenericPath.path,
       unitCoordinateSystem(def.bounds)
     );
   }

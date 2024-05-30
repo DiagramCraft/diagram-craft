@@ -13,7 +13,7 @@ import { EdgeWaypointDrag } from '../drag/edgeWaypointDrag';
 import { EdgeControlPointDrag } from '../drag/edgeControlPointDrag';
 import { ControlPoints } from '@diagram-craft/model/types';
 import { ARROW_SHAPES, ArrowShape } from '../arrowShapes';
-import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -73,7 +73,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     _path: Path,
     _shapeBuilder: ShapeBuilder,
     _edge: DiagramEdge,
-    _props: DeepReadonly<DeepRequired<EdgeProps>>
+    _props: EdgePropsForRendering
   ) {
     throw new VerifyNotReached();
   }

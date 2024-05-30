@@ -14,7 +14,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
-import { DeepWriteable } from '@diagram-craft/utils/types';
+import { cloneAsWriteable } from '@diagram-craft/utils/types';
 import { Anchor } from '@diagram-craft/model/types';
 import {
   assertHAlign,
@@ -24,6 +24,8 @@ import {
 } from '@diagram-craft/model/diagramProps';
 import { xNum } from './utils';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { coalesce } from '@diagram-craft/utils/strings';
 
 declare global {
   interface NodeProps {
@@ -33,6 +35,12 @@ declare global {
     };
   }
 }
+
+registerNodeDefaults('shapeDrawio', {
+  // TODO: Need to find a way to indicate that some values are truly optional
+  shape: '',
+  textPosition: 'center'
+});
 
 const makeShapeTransform =
   (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {
@@ -57,7 +65,7 @@ const isShapeElement = ($el: Element) =>
 const parse = (def: DiagramNode, stencil: Stencil): Element | undefined => {
   if (def.cache.has('element')) return def.cache.get('element') as Element;
 
-  const data = def.renderProps?.shapeDrawio?.shape ?? stencil.props?.shapeDrawio?.shape;
+  const data = coalesce(def.renderProps.shapeDrawio.shape, stencil.props?.shapeDrawio?.shape);
   if (!data) {
     console.warn(`Cannot find shape for ${def.type} / ${def.name}`);
     return undefined;
@@ -259,11 +267,11 @@ class DrawioShapeComponent extends BaseNodeComponent {
     const h = xNum($shape, 'h', 100);
 
     let strokeAlpha = 1;
-    let strokeColor = props.nodeProps.stroke?.color ?? 'transparent';
+    let strokeColor = props.nodeProps.stroke.color;
     let fillAlpha = 1;
-    let fillColor = props.nodeProps.fill?.color ?? 'transparent';
+    let fillColor = props.nodeProps.fill.color;
 
-    let style = deepClone(props.nodeProps as DeepWriteable<NodeProps>);
+    let style = cloneAsWriteable(props.nodeProps);
     let savedStyle = { style, strokeAlpha, strokeColor, fillAlpha, fillColor };
 
     let currentShape: (p: NodeProps) => void = p => {
@@ -330,7 +338,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
           style.stroke!.pattern = $el.getAttribute('pattern')!;
         } else if ($el.nodeName === 'dashed') {
           if ($el.getAttribute('dashed') === '0') {
-            style.stroke!.pattern = undefined;
+            style.stroke!.pattern = null;
           }
         } else if ($el.nodeName === 'miterlimit') {
           style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
@@ -392,19 +400,19 @@ class DrawioShapeComponent extends BaseNodeComponent {
             text: $el.getAttribute('str')!,
             align: align,
             valign: valign,
-            color: style.text?.color ?? style.fill?.color,
-            fontSize: (style.text?.fontSize ?? 12) * (props.node.bounds.h / xNum($shape, 'h'))
+            color: style.text.color ?? style.fill.color,
+            fontSize: (style.text.fontSize ?? 12) * (props.node.bounds.h / xNum($shape, 'h'))
           },
           {
             x:
-              props.nodeProps.shapeDrawio?.textPosition === 'right'
+              props.nodeProps.shapeDrawio.textPosition === 'right'
                 ? props.node.bounds.x + props.node.bounds.w
                 : props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
             y:
-              props.nodeProps.shapeDrawio?.textPosition === 'bottom'
+              props.nodeProps.shapeDrawio.textPosition === 'bottom'
                 ? props.node.bounds.y + props.node.bounds.h
                 : props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
-            w: props.nodeProps.shapeDrawio?.textPosition === 'right' ? 200 : 60,
+            w: props.nodeProps.shapeDrawio.textPosition === 'right' ? 200 : 60,
             h: 40,
             r: 0
           }
@@ -448,7 +456,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
         style.stroke!.pattern = $el.getAttribute('pattern')!;
       } else if ($el.nodeName === 'dashed') {
         if ($el.getAttribute('dashed') === '0') {
-          style.stroke!.pattern = undefined;
+          style.stroke!.pattern = null;
         }
       } else if ($el.nodeName === 'miterlimit') {
         style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
@@ -487,14 +495,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
     shapeBuilder.text(this, '1', props.nodeProps.text, {
       ...props.node.bounds,
       x:
-        props.nodeProps.shapeDrawio?.textPosition === 'right'
+        props.nodeProps.shapeDrawio.textPosition === 'right'
           ? props.node.bounds.x + props.node.bounds.w
           : props.node.bounds.x,
       y:
-        props.nodeProps.shapeDrawio?.textPosition === 'bottom'
+        props.nodeProps.shapeDrawio.textPosition === 'bottom'
           ? props.node.bounds.y + props.node.bounds.h
           : props.node.bounds.y,
-      w: props.nodeProps.shapeDrawio?.textPosition === 'right' ? 200 : props.node.bounds.w
+      w: props.nodeProps.shapeDrawio.textPosition === 'right' ? 200 : props.node.bounds.w
     });
   }
 }

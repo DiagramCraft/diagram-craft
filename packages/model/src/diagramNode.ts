@@ -8,7 +8,7 @@ import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { nodeDefaults } from './diagramDefaults';
 import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnectedOrFixed } from './endpoint';
-import { DeepReadonly, DeepRequired, writeable } from '@diagram-craft/utils/types';
+import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -109,7 +109,7 @@ export class DiagramNode
     this.#propsCacheStyle = styleProps;
     this.#propsCache = deepMerge(
       {},
-      writeable(nodeDefaults),
+      makeWriteable(nodeDefaults),
       styleProps ?? {},
       this.#props
     ) as DeepRequired<NodeProps>;

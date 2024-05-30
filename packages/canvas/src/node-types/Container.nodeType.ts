@@ -4,15 +4,15 @@ import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Rotation, Scale, Transform, Translation } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { largest } from '@diagram-craft/utils/array';
 import { assert } from '@diagram-craft/utils/assert';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
@@ -27,6 +27,15 @@ declare global {
   }
 }
 
+registerNodeDefaults('shapeContainer', {
+  containerResize: 'none',
+  childResize: 'fixed',
+  canResize: 'none',
+  layout: 'manual',
+  gap: 0,
+  gapType: 'between'
+});
+
 type Entry = {
   node: DiagramElement;
   localBounds: Box;
@@ -35,10 +44,11 @@ type Entry = {
 
 type LayoutFn = (
   node: DiagramNode,
-  props: NonNullable<NodeProps['shapeContainer']>,
+  props: NodePropsForRendering['shapeContainer'],
   children: Entry[],
   localBounds: Box
 ) => Box;
+
 type Layout = {
   fn: LayoutFn;
   primaryAxis: 'x' | 'y' | undefined;
@@ -46,15 +56,15 @@ type Layout = {
 
 const horizontalLayout: LayoutFn = (
   node: DiagramNode,
-  props: NonNullable<NodeProps['shapeContainer']>,
+  props: NodePropsForRendering['shapeContainer'],
   children: Entry[],
   localBounds: Box
 ) => {
   if (children.length === 0) return localBounds;
 
   const fill = props.childResize === 'fill';
-  const gap = props.gap ?? 0;
-  const gapType = props.gapType ?? 'between';
+  const gap = props.gap;
+  const gapType = props.gapType;
 
   // Sort children by x position
   const sortedLocalChildren = children.sort((a, b) => a.localBounds.x - b.localBounds.x);
@@ -85,15 +95,15 @@ const horizontalLayout: LayoutFn = (
 
 const verticalLayout: LayoutFn = (
   node: DiagramNode,
-  props: NonNullable<NodeProps['shapeContainer']>,
+  props: NodePropsForRendering['shapeContainer'],
   children: Entry[],
   localBounds: Box
 ) => {
   if (children.length === 0) return localBounds;
 
   const fill = props.childResize === 'fill';
-  const gap = props.gap ?? 0;
-  const gapType = props.gapType ?? 'between';
+  const gap = props.gap;
+  const gapType = props.gapType;
 
   // Sort children by y position
   const sortedLocalChildren = children.sort((a, b) => a.localBounds.y - b.localBounds.y);
@@ -124,7 +134,7 @@ const verticalLayout: LayoutFn = (
 
 const defaultLayout: LayoutFn = (
   _node: DiagramNode,
-  props: NonNullable<NodeProps['shapeContainer']>,
+  props: NodePropsForRendering['shapeContainer'],
   children: Entry[],
   localBounds: Box
 ) => {
@@ -148,17 +158,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     this.capabilities.children = true;
   }
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-    pathBuilder.moveTo(Point.of(-1, 1));
-    pathBuilder.lineTo(Point.of(1, 1));
-    pathBuilder.lineTo(Point.of(1, -1));
-    pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(-1, 1));
-
-    return pathBuilder;
-  }
-
   onTransform(
     transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
@@ -180,7 +179,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     let newHeight = newBounds.h;
     const newTransforms: Array<Transform> = [...transforms];
 
-    const canResize = node.renderProps.shapeContainer?.canResize;
+    const canResize = node.renderProps.shapeContainer.canResize;
 
     if (canResize !== 'width' && canResize !== 'both' && newBounds.w !== previousBounds.w) {
       newWidth = previousBounds.w;
@@ -195,7 +194,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       newTransforms.push(new Scale(newWidth / newBounds.w, newHeight / newBounds.h));
     }
 
-    if (!isScaling || node.renderProps.shapeContainer?.childResize !== 'fixed') {
+    if (!isScaling || node.renderProps.shapeContainer.childResize !== 'fixed') {
       for (const child of node.children) {
         child.transform(newTransforms, uow, true);
       }
@@ -221,19 +220,17 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     // First layout all children
     super.layoutChildren(node, uow);
 
-    const props = node.renderProps.shapeContainer ?? {};
-
-    this.doLayoutChildren(props, node, uow);
+    this.doLayoutChildren(node.renderProps.shapeContainer, node, uow);
   }
 
   protected doLayoutChildren(
-    props: NonNullable<NodeProps['shapeContainer']>,
+    props: NodePropsForRendering['shapeContainer'],
     node: DiagramNode,
     uow: UnitOfWork
   ) {
     const autoShrink = props.containerResize === 'shrink' || props.containerResize === 'both';
     const autoGrow = props.containerResize === 'grow' || props.containerResize === 'both';
-    const gapType = node.renderProps.shapeContainer?.gapType ?? 'between';
+    const gapType = node.renderProps.shapeContainer.gapType;
 
     // We need to perform all layout operations in the local coordinate system of the node
 
@@ -264,7 +261,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
     if (children.length === 0) return;
 
-    const layout = LAYOUTS[props.layout ?? 'manual'];
+    const layout = LAYOUTS[props.layout];
     let newBounds = layout.fn(node, props, children, localBounds);
 
     // Shrink to minimum size, but retain the position
@@ -278,8 +275,8 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       }
 
       if (gapType === 'around') {
-        xEnd += layout.primaryAxis === 'x' ? props.gap ?? 0 : 0;
-        yEnd += layout.primaryAxis === 'y' ? props.gap ?? 0 : 0;
+        xEnd += layout.primaryAxis === 'x' ? props.gap : 0;
+        yEnd += layout.primaryAxis === 'y' ? props.gap : 0;
       }
     }
 
@@ -323,7 +320,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'canResize',
         type: 'select',
         label: 'Resizeable',
-        value: node.renderProps.shapeContainer?.canResize ?? 'none',
+        value: node.renderProps.shapeContainer.canResize,
         options: [
           { value: 'none', label: 'None' },
           { value: 'width', label: 'Width' },
@@ -342,7 +339,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'containerResize',
         type: 'select',
         label: 'Container Resize',
-        value: node.renderProps.shapeContainer?.containerResize ?? 'none',
+        value: node.renderProps.shapeContainer.containerResize,
         options: [
           { value: 'none', label: 'None' },
           { value: 'shrink', label: 'Auto Shrink' },
@@ -361,7 +358,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'layout',
         type: 'select',
         label: 'Layout',
-        value: node.renderProps.shapeContainer?.layout ?? 'manual',
+        value: node.renderProps.shapeContainer.layout,
         options: [
           { value: 'manual', label: 'Manual' },
           { value: 'horizontal', label: 'Horizontal' },
@@ -379,7 +376,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'gap',
         type: 'number',
         label: 'Gap',
-        value: node.renderProps.shapeContainer?.gap ?? 0,
+        value: node.renderProps.shapeContainer.gap,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           node.updateProps(props => {
@@ -392,7 +389,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'gapType',
         type: 'select',
         label: 'Gap Type',
-        value: node.renderProps.shapeContainer?.gapType ?? 'between',
+        value: node.renderProps.shapeContainer.gapType,
         options: [
           { value: 'between', label: 'Between' },
           { value: 'around', label: 'Around' }
@@ -409,7 +406,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'childResize',
         type: 'select',
         label: 'Child Resize',
-        value: node.renderProps.shapeContainer?.childResize ?? 'fixed',
+        value: node.renderProps.shapeContainer.childResize,
         options: [
           { value: 'fixed', label: 'Fixed' },
           { value: 'scale', label: 'Scale' },
@@ -441,8 +438,8 @@ export class ContainerComponent extends BaseNodeComponent {
         'y': props.node.bounds.y,
         'width': props.node.bounds.w,
         'height': props.node.bounds.h,
-        'stroke': props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : '#d5d5d4',
-        'stroke-width': props.nodeProps.highlight?.includes('drop-target') ? 3 : 1,
+        'stroke': props.nodeProps.highlight.includes('drop-target') ? '#30A46C' : '#d5d5d4',
+        'stroke-width': props.nodeProps.highlight.includes('drop-target') ? 3 : 1,
         'fill': 'transparent',
         'on': {
           mousedown: props.onMouseDown

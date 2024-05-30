@@ -11,6 +11,7 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
@@ -20,13 +21,15 @@ declare global {
   }
 }
 
+registerNodeDefaults('shapeRegularPolygon', { numberOfSides: 5 });
+
 export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('regular-polygon', 'Regular Polygon', RegularPolygonComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sides = def.renderProps.shapeRegularPolygon?.numberOfSides ?? 5;
+    const sides = def.renderProps.shapeRegularPolygon.numberOfSides;
 
     const theta = Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
@@ -49,7 +52,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
         id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
-        value: def.renderProps.shapeRegularPolygon?.numberOfSides ?? 5,
+        value: def.renderProps.shapeRegularPolygon.numberOfSides,
         onChange: (value: number, uow: UnitOfWork) => {
           def.updateProps(props => {
             props.shapeRegularPolygon ??= {};

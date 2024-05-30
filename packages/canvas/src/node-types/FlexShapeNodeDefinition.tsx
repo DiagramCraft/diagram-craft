@@ -1,7 +1,7 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -11,16 +11,16 @@ import { Transforms } from '../component/vdom-svg';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Scale, Transform } from '@diagram-craft/geometry/transform';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { Modifiers } from '../dragDropManager';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
-type TypeOrPropsFn<T> = T | ((p: NodeProps | DeepReadonly<NodeProps>) => T);
+type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
 
-function getValue<T>(value: TypeOrPropsFn<T>, props: NodeProps | DeepReadonly<NodeProps>): T {
+function getValue<T>(value: TypeOrPropsFn<T>, props: NodePropsForRendering): T {
   if (typeof value === 'function') {
-    return (value as (p: NodeProps | DeepReadonly<NodeProps>) => T)(props);
+    return (value as (p: NodePropsForRendering) => T)(props);
   } else {
     return value;
   }
@@ -51,16 +51,18 @@ declare global {
   interface NodeProps {
     shapeFlex?: {
       components?: Array<{
-        id?: string;
-        nodeType?: string;
-        bounds?: Box;
-        offset?: Omit<Box, 'r'>;
-        props?: NodeProps;
-        text?: TextConfig;
-      }>;
+        id: string;
+        nodeType?: string | null;
+        bounds?: Box | null;
+        offset?: Omit<Box, 'r'> | null;
+        props?: NodeProps | null;
+        text?: TextConfig | null;
+      }> | null;
     };
   }
 }
+
+registerNodeDefaults('shapeFlex', { components: null });
 
 export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
   constructor(
@@ -82,8 +84,8 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
           'y': props.node.bounds.y,
           'width': props.node.bounds.w,
           'height': props.node.bounds.h,
-          'stroke': props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : 'none', // ''#d5d5d4',
-          'stroke-width': props.nodeProps.highlight?.includes('drop-target') ? 3 : 1,
+          'stroke': props.nodeProps.highlight.includes('drop-target') ? '#30A46C' : 'none', // ''#d5d5d4',
+          'stroke-width': props.nodeProps.highlight.includes('drop-target') ? 3 : 1,
           'fill': 'transparent',
           'on': {
             mousedown: props.onMouseDown
@@ -100,7 +102,7 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
         builder.text(this, txtConfig.id, txtConfig.text, txtConfig.bounds);
       }
 
-      for (const cmp of props.nodeProps.shapeFlex?.components ?? this.def.config.components!) {
+      for (const cmp of props.nodeProps.shapeFlex.components ?? this.def.config.components!) {
         const cmpDef = this.def.config.components?.find(c => c.id === cmp.id);
 
         const cmpBounds = getValue(cmp.bounds ?? cmpDef?.bounds, props.nodeProps);
@@ -108,6 +110,7 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
         const cmpProps = deepMerge(
           {},
           getValue(cmpDef?.props, props.nodeProps) ?? {},
+          // @ts-ignore - this should be fine
           getValue(cmp.props ?? cmpDef?.props ?? {}, props.nodeProps)
         );
         const cmpNodeType = getValue(cmp.nodeType ?? cmpDef?.nodeType, props.nodeProps);

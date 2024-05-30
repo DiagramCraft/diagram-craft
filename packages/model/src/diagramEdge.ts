@@ -20,7 +20,12 @@ import {
 import { edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
-import { DeepReadonly, DeepRequired, DeepWriteable, writeable } from '@diagram-craft/utils/types';
+import {
+  DeepReadonly,
+  DeepRequired,
+  DeepWriteable,
+  makeWriteable
+} from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
@@ -115,7 +120,7 @@ export class DiagramEdge
     this.#propsCacheStyle = styleProps;
     this.#propsCache = deepMerge(
       {},
-      writeable(edgeDefaults),
+      makeWriteable(edgeDefaults),
       styleProps ?? {},
       this.#props
     ) as DeepRequired<EdgeProps>;

@@ -9,8 +9,8 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DeepReadonly } from '@diagram-craft/utils/types';
 import { round } from '@diagram-craft/utils/math';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -24,6 +24,8 @@ declare global {
   }
 }
 
+registerNodeDefaults('shapeProcess', { size: 10 });
+
 // Custom properties ************************************************************
 
 const Size = {
@@ -31,13 +33,11 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: Size.get(node.renderProps.shapeProcess),
+    value: node.renderProps.shapeProcess.size,
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
-
-  get: (props: DeepReadonly<ExtraProps> | undefined) => props?.size ?? 10,
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
@@ -57,7 +57,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const sizePct = Size.get(props.nodeProps.shapeProcess) / 100;
+      const sizePct = props.nodeProps.shapeProcess.size / 100;
 
       // Draw additional shape details
       const pathBuilder = new PathBuilder(unitCoordinateSystem(bounds));
@@ -74,7 +74,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
         Size.set(newValue, props.node, uow);
-        return `Size: ${Size.get(props.node.renderProps.shapeProcess)}%`;
+        return `Size: ${props.node.renderProps.shapeProcess.size}%`;
       });
     }
   };

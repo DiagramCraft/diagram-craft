@@ -12,6 +12,7 @@ export class CloudNodeDefinition extends ShapeNodeDefinition {
 
   static Shape = class extends BaseNodeComponent<CloudNodeDefinition> {};
 
+  // TODO: Round these numbers
   getBoundingPathBuilder(def: DiagramNode) {
     const pathBuilder = PathBuilder.fromString(`
       M -77.232385 12.876487,

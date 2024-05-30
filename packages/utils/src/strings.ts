@@ -11,3 +11,11 @@ export const shorten = (str: string, length: number) => {
 
   return str.substring(0, length) + '...';
 };
+
+/**
+ * Returns the first non-undefined argument.
+ *
+ * @param args - The arguments to be coalesced.
+ * @returns The first non-undefined argument, or undefined if all arguments are undefined.
+ */
+export const coalesce = (...args: (string | undefined)[]) => args.find(a => a !== undefined);

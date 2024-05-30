@@ -12,10 +12,11 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface NodeProps {
-    table?: {
+    shapeTable?: {
       gap?: number;
       horizontalBorder?: boolean;
       verticalBorder?: boolean;
@@ -25,6 +26,15 @@ declare global {
     };
   }
 }
+
+registerNodeDefaults('shapeTable', {
+  gap: 0,
+  horizontalBorder: true,
+  verticalBorder: true,
+  outerBorder: true,
+  title: false,
+  titleSize: 30
+});
 
 type CellsInOrder = Array<{
   row: DiagramNode;
@@ -75,7 +85,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 
     const nodeProps = node.renderProps;
 
-    const gap = nodeProps.table?.gap ?? 10;
+    const gap = nodeProps.shapeTable.gap;
 
     const transformBack = [
       // Rotation around center
@@ -113,7 +123,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
 
     let maxX = 0;
-    const startY = nodeProps.table.title ? nodeProps.table.titleSize ?? 30 : 0;
+    const startY = nodeProps.shapeTable.title ? nodeProps.shapeTable.titleSize : 0;
     let y = startY;
     for (const row of cellsInOrder) {
       let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
@@ -184,12 +194,12 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         id: 'gap',
         type: 'number',
         label: 'Padding',
-        value: node.renderProps.table?.gap ?? 10,
+        value: node.renderProps.shapeTable.gap,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           node.updateProps(props => {
-            props.table ??= {};
-            props.table.gap = value;
+            props.shapeTable ??= {};
+            props.shapeTable.gap = value;
           }, uow);
         }
       },
@@ -197,11 +207,11 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         id: 'title',
         type: 'boolean',
         label: 'Title',
-        value: node.renderProps.table?.title ?? false,
+        value: node.renderProps.shapeTable.title,
         onChange: (value: boolean, uow: UnitOfWork) => {
           node.updateProps(props => {
-            props.table ??= {};
-            props.table.title = value;
+            props.shapeTable ??= {};
+            props.shapeTable.title = value;
           }, uow);
         }
       },
@@ -210,11 +220,11 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         type: 'number',
         label: 'Title Size',
         unit: 'px',
-        value: node.renderProps.table?.titleSize ?? 30,
+        value: node.renderProps.shapeTable.titleSize,
         onChange: (value: number, uow: UnitOfWork) => {
           node.updateProps(props => {
-            props.table ??= {};
-            props.table.titleSize = value;
+            props.shapeTable ??= {};
+            props.shapeTable.titleSize = value;
           }, uow);
         }
       }
@@ -235,8 +245,8 @@ class TableComponent extends BaseNodeComponent {
         'y': props.node.bounds.y,
         'width': props.node.bounds.w,
         'height': props.node.bounds.h,
-        'stroke': props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : '#d5d5d4',
-        'stroke-width': props.nodeProps.highlight?.includes('drop-target') ? 3 : 1,
+        'stroke': props.nodeProps.highlight.includes('drop-target') ? '#30A46C' : '#d5d5d4',
+        'stroke-width': props.nodeProps.highlight.includes('drop-target') ? 3 : 1,
         'fill': 'transparent',
         'on': {
           mousedown: props.onMouseDown,
@@ -254,16 +264,16 @@ class TableComponent extends BaseNodeComponent {
       );
     });
 
-    const gap = props.nodeProps.table?.gap ?? 10;
+    const gap = props.nodeProps.shapeTable.gap;
 
     const pathBuilder = new PathBuilder();
 
-    if (props.nodeProps.table?.outerBorder !== false) {
+    if (props.nodeProps.shapeTable.outerBorder !== false) {
       const nodeProps = props.nodeProps;
       PathBuilderHelper.rect(pathBuilder, {
         ...props.node.bounds,
-        y: props.node.bounds.y + (nodeProps.table?.title ? nodeProps.table?.titleSize ?? 30 : 0),
-        h: props.node.bounds.h - (nodeProps.table?.title ? nodeProps.table?.titleSize ?? 30 : 0)
+        y: props.node.bounds.y + (nodeProps.shapeTable.title ? nodeProps.shapeTable.titleSize : 0),
+        h: props.node.bounds.h - (nodeProps.shapeTable.title ? nodeProps.shapeTable.titleSize : 0)
       });
     }
 
@@ -271,8 +281,8 @@ class TableComponent extends BaseNodeComponent {
 
     let startY = bounds.y;
     let height = bounds.h;
-    if (props.nodeProps.table?.title) {
-      const titleSize = props.nodeProps.table?.titleSize ?? 30;
+    if (props.nodeProps.shapeTable.title) {
+      const titleSize = props.nodeProps.shapeTable.titleSize;
       builder.text(this, '1', props.nodeProps.text, {
         ...bounds,
         h: titleSize
@@ -282,7 +292,7 @@ class TableComponent extends BaseNodeComponent {
       height -= titleSize;
     }
 
-    if (props.nodeProps.table?.verticalBorder !== false) {
+    if (props.nodeProps.shapeTable.verticalBorder !== false) {
       let x = bounds.x + gap;
       const row = props.node.children[0] as DiagramNode;
       for (let i = 0; i < row.children.length - 1; i++) {
@@ -296,7 +306,7 @@ class TableComponent extends BaseNodeComponent {
       }
     }
 
-    if (props.nodeProps.table?.horizontalBorder !== false) {
+    if (props.nodeProps.shapeTable.horizontalBorder !== false) {
       let y = startY + gap;
       const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
       for (let i = 0; i < sortedChildren.length - 1; i++) {
@@ -311,11 +321,8 @@ class TableComponent extends BaseNodeComponent {
     }
 
     builder.path(pathBuilder.getPaths().all(), {
-      stroke: !props.nodeProps.stroke?.enabled
-        ? {
-            enabled: false,
-            color: 'transparent'
-          }
+      stroke: !props.nodeProps.stroke.enabled
+        ? { enabled: false, color: 'transparent' }
         : props.nodeProps.stroke,
       fill: {}
     });

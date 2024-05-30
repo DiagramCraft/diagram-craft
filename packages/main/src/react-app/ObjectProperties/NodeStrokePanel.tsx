@@ -16,7 +16,7 @@ export const NodeStrokePanel = (props: Props) => {
   const defaults = useNodeDefaults();
 
   const strokeColor = useNodeProperty($d, 'stroke.color', defaults.stroke.color);
-  const pattern = useNodeProperty($d, 'stroke.pattern', defaults.stroke.pattern);
+  const pattern = useNodeProperty($d, 'stroke.pattern', defaults.stroke.pattern ?? '');
 
   const strokeSize = useNodeProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
   const strokeSpacing = useNodeProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);
