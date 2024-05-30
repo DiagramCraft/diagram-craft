@@ -113,7 +113,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
 
     let maxX = 0;
-    const startY = nodeProps.table.title ? nodeProps.table.titleSize : 0;
+    const startY = nodeProps.table.title ? nodeProps.table.titleSize ?? 30 : 0;
     let y = startY;
     for (const row of cellsInOrder) {
       let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
@@ -259,7 +259,12 @@ class TableComponent extends BaseNodeComponent {
     const pathBuilder = new PathBuilder();
 
     if (props.nodeProps.table?.outerBorder !== false) {
-      PathBuilderHelper.rect(pathBuilder, props.node.bounds);
+      const nodeProps = props.nodeProps;
+      PathBuilderHelper.rect(pathBuilder, {
+        ...props.node.bounds,
+        y: props.node.bounds.y + (nodeProps.table?.title ? nodeProps.table?.titleSize ?? 30 : 0),
+        h: props.node.bounds.h - (nodeProps.table?.title ? nodeProps.table?.titleSize ?? 30 : 0)
+      });
     }
 
     const bounds = props.node.bounds;
