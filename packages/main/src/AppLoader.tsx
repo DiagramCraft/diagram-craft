@@ -49,6 +49,11 @@ export const AppLoader = (props: Props) => {
     redraw();
   }, [doc, stencils]);
 
+  if (doc && doc.diagrams.length === 0) {
+    console.error('Doc contains no diagrams');
+    return null;
+  }
+
   if (doc) return <App doc={doc} recent={props.recent} />;
   else return null;
 };

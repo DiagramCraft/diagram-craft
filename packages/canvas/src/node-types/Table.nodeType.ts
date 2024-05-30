@@ -1,4 +1,3 @@
-import { ContainerComponent } from './Container.nodeType';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
@@ -21,6 +20,8 @@ declare global {
       horizontalBorder?: boolean;
       verticalBorder?: boolean;
       outerBorder?: boolean;
+      title?: boolean;
+      titleSize?: number;
     };
   }
 }
@@ -110,7 +111,8 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
 
     let maxX = 0;
-    let y = 0;
+    const startY = nodeProps.table.title ? nodeProps.table.titleSize : 0;
+    let y = startY;
     for (const row of cellsInOrder) {
       let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
 
@@ -188,14 +190,67 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
             props.table.gap = value;
           }, uow);
         }
+      },
+      {
+        id: 'title',
+        type: 'boolean',
+        label: 'Title',
+        value: node.props.table?.title ?? false,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.table ??= {};
+            props.table.title = value;
+          }, uow);
+        }
+      },
+      {
+        id: 'titleSize',
+        type: 'number',
+        label: 'Title Size',
+        unit: 'px',
+        value: node.props.table?.titleSize ?? 30,
+        onChange: (value: number, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.table ??= {};
+            props.table.titleSize = value;
+          }, uow);
+        }
       }
     ];
   }
 }
 
-class TableComponent extends ContainerComponent {
+class TableComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
-    super.buildShape(props, builder);
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    const path = boundary.singularPath();
+    const svgPath = path.asSvgPath();
+
+    builder.add(
+      svg.path({
+        'd': svgPath,
+        'x': props.node.bounds.x,
+        'y': props.node.bounds.y,
+        'width': props.node.bounds.w,
+        'height': props.node.bounds.h,
+        'stroke': props.nodeProps.highlight?.includes('drop-target') ? '#30A46C' : '#d5d5d4',
+        'stroke-width': props.nodeProps.highlight?.includes('drop-target') ? 3 : 1,
+        'fill': 'transparent',
+        'on': {
+          mousedown: props.onMouseDown,
+          dblclick: builder.makeOnDblclickHandle('1')
+        }
+      })
+    );
+
+    props.node.children.forEach(child => {
+      builder.add(
+        svg.g(
+          { transform: Transforms.rotateBack(props.node.bounds) },
+          this.makeElement(child, props)
+        )
+      );
+    });
 
     const gap = props.nodeProps.table?.gap ?? 10;
 
@@ -207,6 +262,19 @@ class TableComponent extends ContainerComponent {
 
     const bounds = props.node.bounds;
 
+    let startY = bounds.y;
+    let height = bounds.h;
+    if (props.nodeProps.table?.title) {
+      const titleSize = props.nodeProps.table?.titleSize ?? 30;
+      builder.text(this, '1', props.nodeProps.text, {
+        ...bounds,
+        h: titleSize
+      });
+
+      startY += titleSize;
+      height -= titleSize;
+    }
+
     if (props.nodeProps.table?.verticalBorder !== false) {
       let x = bounds.x + gap;
       const row = props.node.children[0] as DiagramNode;
@@ -214,15 +282,15 @@ class TableComponent extends ContainerComponent {
         const child = row.children[i];
         if (isNode(child)) {
           x += child.bounds.w + gap;
-          pathBuilder.moveTo(Point.of(x, bounds.y));
-          pathBuilder.lineTo(Point.of(x, bounds.y + bounds.h));
+          pathBuilder.moveTo(Point.of(x, startY));
+          pathBuilder.lineTo(Point.of(x, startY + height));
           x += gap;
         }
       }
     }
 
     if (props.nodeProps.table?.horizontalBorder !== false) {
-      let y = bounds.y + gap;
+      let y = startY + gap;
       const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
       for (let i = 0; i < sortedChildren.length - 1; i++) {
         const child = sortedChildren[i];

@@ -63,9 +63,11 @@ export const parseDelay = makeShape('delay');
 
 export const parseCloud = makeShape('cloud');
 
-export const parseTable = makeShape('table', (_style, props) => {
+export const parseTable = makeShape('table', (style, props) => {
   props.table = {
-    gap: 0
+    gap: 0,
+    title: 'startSize' in style,
+    titleSize: parseNum(style.startSize, 0)
   };
 });
 
