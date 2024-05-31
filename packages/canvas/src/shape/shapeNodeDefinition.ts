@@ -60,6 +60,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     for (const path of paths.all()) {
       for (const p of path.segments) {
         const { x, y } = p.point(0.5);
+
+        // Note: This is to Prevent NaN issues
+        if (node.bounds.h === 0 || node.bounds.w) continue;
+
         const lx = round((x - node.bounds.x) / node.bounds.w);
         const ly = round((y - node.bounds.y) / node.bounds.h);
 
