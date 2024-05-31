@@ -60,6 +60,8 @@ export class DiagramEdge
 
   readonly id: string;
 
+  #cache: Map<string, unknown> | undefined = undefined;
+
   #diagram: Diagram;
   #layer: Layer;
   #parent?: DiagramNode;
@@ -100,36 +102,45 @@ export class DiagramEdge
     return this.diagram.document.edgeDefinitions.get(this.renderProps.shape);
   }
 
-  /* Props *************************************************************************************************** */
-
-  // TODO: Maybe create a props cache helper
-  #propsCache: EdgePropsForEditing | undefined = undefined;
-  #propsCacheStyle: EdgeProps | undefined = undefined;
-
-  private clearPropsCache() {
-    this.#propsCache = undefined;
+  get cache() {
+    if (!this.#cache) {
+      this.#cache = new Map<string, unknown>();
+    }
+    return this.#cache;
   }
 
-  get editProps(): EdgePropsForEditing {
+  /* Props *************************************************************************************************** */
+
+  private populatePropsCache() {
     const styleProps = this.diagram.document.styles.edgeStyles.find(
       s => s.id === this.#props.style
     )?.props;
 
-    if (this.#propsCache && this.#propsCacheStyle === styleProps) return this.#propsCache;
+    const propsForEditing = deepMerge({}, styleProps ?? {}, this.#props) as DeepRequired<EdgeProps>;
 
-    this.#propsCacheStyle = styleProps;
-    this.#propsCache = deepMerge(
-      {},
-      makeWriteable(edgeDefaults),
-      styleProps ?? {},
-      this.#props
-    ) as DeepRequired<EdgeProps>;
+    const propsForRendering = deepMerge({}, makeWriteable(edgeDefaults), propsForEditing);
 
-    return this.#propsCache;
+    this.cache.set('props.forEditing', propsForEditing);
+    this.cache.set('props.forRendering', propsForRendering);
+
+    return {
+      forEditing: propsForEditing,
+      forRendering: propsForRendering
+    };
+  }
+
+  get storedProps() {
+    return this.#props;
+  }
+
+  get editProps(): EdgePropsForEditing {
+    return (this.cache.get('props.forEditing') ??
+      this.populatePropsCache().forEditing) as EdgePropsForEditing;
   }
 
   get renderProps(): EdgePropsForRendering {
-    return this.editProps as DeepRequired<EdgePropsForEditing>;
+    return (this.cache.get('props.forRendering') ??
+      this.populatePropsCache().forRendering) as EdgePropsForRendering;
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
@@ -150,7 +161,7 @@ export class DiagramEdge
 
     uow.updateElement(this);
 
-    this.clearPropsCache();
+    this.#cache?.clear();
   }
 
   inferControlPoints(i: number) {

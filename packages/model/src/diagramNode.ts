@@ -91,34 +91,36 @@ export class DiagramNode
 
   /* Props *************************************************************************************************** */
 
-  // TODO: Maybe create a props cache helper
-  #propsCache: NodePropsForEditing | undefined = undefined;
-  #propsCacheStyle: NodeProps | undefined = undefined;
-
-  private clearPropsCache() {
-    this.#propsCache = undefined;
-  }
-
-  get editProps(): NodePropsForEditing {
+  private populatePropsCache() {
     const styleProps = this.diagram.document.styles.nodeStyles.find(
       s => s.id === this.#props.style
     )?.props;
 
-    if (this.#propsCache && this.#propsCacheStyle === styleProps) return this.#propsCache;
+    const propsForEditing = deepMerge({}, styleProps ?? {}, this.#props) as DeepRequired<NodeProps>;
 
-    this.#propsCacheStyle = styleProps;
-    this.#propsCache = deepMerge(
-      {},
-      makeWriteable(nodeDefaults),
-      styleProps ?? {},
-      this.#props
-    ) as DeepRequired<NodeProps>;
+    const propsForRendering = deepMerge({}, makeWriteable(nodeDefaults), propsForEditing);
 
-    return this.#propsCache;
+    this.cache.set('props.forEditing', propsForEditing);
+    this.cache.set('props.forRendering', propsForRendering);
+
+    return {
+      forEditing: propsForEditing,
+      forRendering: propsForRendering
+    };
+  }
+
+  get storedProps() {
+    return this.#props;
+  }
+
+  get editProps(): NodePropsForEditing {
+    return (this.cache.get('props.forEditing') ??
+      this.populatePropsCache().forEditing) as NodePropsForEditing;
   }
 
   get renderProps(): NodePropsForRendering {
-    return this.editProps as DeepRequired<NodePropsForEditing>;
+    return (this.cache.get('props.forRendering') ??
+      this.populatePropsCache().forRendering) as NodePropsForRendering;
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
@@ -126,8 +128,6 @@ export class DiagramNode
     callback(this.#props);
     uow.updateElement(this);
 
-    // TODO: Maybe we can move the propsCache to the cache
-    this.clearPropsCache();
     this.#cache?.clear();
     this.getDefinition().onPropUpdate(this, uow);
   }
