@@ -807,6 +807,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
           queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
+          queue.add(() => edge.invalidate(uow));
         }
       } else if (parentChild.has(id) || 'group' in style) {
         // Handle groups

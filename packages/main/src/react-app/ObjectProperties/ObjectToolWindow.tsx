@@ -172,7 +172,6 @@ export const ObjectToolWindow = () => {
               defaultValue={['text', 'label-node']}
             >
               <TextPanel />
-              {type === 'single-label-node' && <LabelNodePanel />}
             </Accordion.Root>
           </Tabs.Content>
 
@@ -180,12 +179,13 @@ export const ObjectToolWindow = () => {
             <Accordion.Root
               className="cmp-accordion"
               type="multiple"
-              defaultValue={['stylesheet', 'fill', 'stroke', 'line', 'custom']}
+              defaultValue={['stylesheet', 'fill', 'stroke', 'line', 'custom', 'label-node']}
             >
               {type === 'node' && <StylesheetPanel />}
 
               {(type === 'node' || type === 'mixed' || type === 'single-label-node') && (
                 <>
+                  {type === 'single-label-node' && <LabelNodePanel />}
                   <NodeFillPanel />
                   <ShadowPanel />
                   <NodeStrokePanel />
