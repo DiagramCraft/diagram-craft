@@ -13,9 +13,18 @@ export const shorten = (str: string, length: number) => {
 };
 
 /**
- * Returns the first non-undefined argument.
+ * Returns the first string that is not undefined, null or empty from the provided arguments.
  *
- * @param args - The arguments to be coalesced.
- * @returns The first non-undefined argument, or undefined if all arguments are undefined.
+ * @param {...(string | undefined | null)[]} args - The strings to be checked.
+ * @returns {string | undefined} The first string that is not undefined, null or empty, or undefined if all strings are undefined, null or empty.
+ *
+ * @example
+ * // returns "Hello"
+ * coalesce(undefined, "Hello", "World");
+ *
+ * @example
+ * // returns undefined
+ * coalesce(undefined, null, "");
  */
-export const coalesce = (...args: (string | undefined)[]) => args.find(a => a !== undefined);
+export const coalesce = (...args: (string | undefined | null)[]) =>
+  args.find(a => a !== undefined && a !== null && a.trim() !== '');
