@@ -472,6 +472,7 @@ export class DiagramEdge
     }
 
     uow.updateElement(this);
+    this.#cache?.clear();
   }
 
   duplicate(ctx?: DuplicationContext) {

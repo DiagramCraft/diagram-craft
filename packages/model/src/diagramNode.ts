@@ -352,6 +352,7 @@ export class DiagramNode
     }
 
     uow.updateElement(this);
+    this.#cache?.clear();
   }
 
   convertToPath(uow: UnitOfWork) {

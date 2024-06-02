@@ -24,6 +24,7 @@ import {
 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ActionToolbarButton } from '../toolbar/ActionToolbarButton';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 export const TablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -92,7 +93,9 @@ export const TablePropertiesPanel = (props: Props) => {
                     step={value.step ?? 1}
                     style={{ width: '50px' }}
                     onChange={ev => {
-                      UnitOfWork.execute(diagram, uow => value.onChange(ev ?? 0, uow));
+                      const uow = new UnitOfWork(diagram, true);
+                      value.onChange(ev ?? 0, uow);
+                      commitWithUndo(uow, `Change ${value.label}`);
                     }}
                   />
                 </div>
@@ -107,7 +110,9 @@ export const TablePropertiesPanel = (props: Props) => {
                     type="checkbox"
                     checked={value.value}
                     onChange={() => {
-                      UnitOfWork.execute(diagram, uow => value.onChange(!value.value, uow));
+                      const uow = new UnitOfWork(diagram, true);
+                      value.onChange(!value.value, uow);
+                      commitWithUndo(uow, `Change ${value.label}`);
                     }}
                   />
                 </div>
@@ -120,7 +125,9 @@ export const TablePropertiesPanel = (props: Props) => {
                 <div className={'cmp-labeled-table__value'}>
                   <Select
                     onValueChange={v => {
-                      UnitOfWork.execute(diagram, uow => value.onChange(v, uow));
+                      const uow = new UnitOfWork(diagram, true);
+                      value.onChange(v, uow);
+                      commitWithUndo(uow, `Change ${value.label}`);
                     }}
                     value={value.value}
                     values={value.options.map(o => ({ value: o.value, label: o.label }))}
