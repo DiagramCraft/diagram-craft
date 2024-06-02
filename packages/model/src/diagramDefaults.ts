@@ -119,7 +119,9 @@ const _nodeDefaults: Omit<
     reflectionStrength: 0.7,
     sketch: false,
     sketchFillType: 'fill',
-    sketchStrength: 0.1
+    sketchStrength: 0.1,
+    rounding: false,
+    roundingAmount: 20
   }
 };
 
@@ -151,7 +153,9 @@ const _edgeDefaults: Pick<
     sketch: false,
     sketchStrength: 0.1,
     sketchFillType: 'fill',
-    opacity: 1
+    opacity: 1,
+    rounding: false,
+    roundingAmount: 20
   }
 };
 

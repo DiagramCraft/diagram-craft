@@ -67,5 +67,9 @@ export const Line = {
       Point.add(of.from, Vector.scale(Vector.tangentToNormal(v), n)),
       Point.add(of.to, Vector.scale(Vector.tangentToNormal(v), n))
     );
+  },
+
+  length(l: Line) {
+    return Vector.length(Vector.from(l.from, l.to));
   }
 };

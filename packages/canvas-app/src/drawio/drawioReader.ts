@@ -512,6 +512,11 @@ const getNodeProps = (style: Style) => {
     props.stroke.lineCap = 'butt';
   }
 
+  if (style.rounded === '1') {
+    props.effects ??= {};
+    props.effects.rounding = true;
+  }
+
   if (style.shadow === '1') {
     props.shadow = {
       enabled: true,

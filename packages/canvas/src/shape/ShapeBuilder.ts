@@ -18,6 +18,7 @@ import { ArrowShape } from '../arrowShapes';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { makeShadowFilter } from '../effects/shadow';
 import { NodePropsForEditing } from '@diagram-craft/model/diagramNode';
+import { RoundingPathRenderer } from '../effects/rounding';
 
 const defaultOnChange = (element: DiagramElement) => (text: string) => {
   UnitOfWork.execute(element.diagram, uow => {
@@ -261,9 +262,13 @@ export class ShapeBuilder {
     paths: Path[]
   ) {
     const propsInEffect = props ?? (this.props.element.renderProps as NodeProps);
+
+    // TODO: Can we apply multiple path renderers
     const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
       ? new SketchPathRenderer()
-      : new DefaultPathRenderer();
+      : propsInEffect.effects?.rounding
+        ? new RoundingPathRenderer()
+        : new DefaultPathRenderer();
 
     const style = deepMerge(
       {},

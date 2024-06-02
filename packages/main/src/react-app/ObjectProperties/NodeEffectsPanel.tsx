@@ -13,6 +13,9 @@ export const NodeEffectsPanel = (props: Props) => {
   const $d = useDiagram();
   const defaults = useNodeDefaults();
 
+  const rounding = useNodeProperty($d, 'effects.rounding');
+  const roundingAmount = useNodeProperty($d, 'effects.roundingAmount');
+
   const reflection = useNodeProperty($d, 'effects.reflection', defaults.effects.reflection);
   const reflectionStrength = useNodeProperty(
     $d,
@@ -120,6 +123,28 @@ export const NodeEffectsPanel = (props: Props) => {
                 { label: 'Solid', value: 'fill' },
                 { label: 'Hachure', value: 'hachure' }
               ]}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Rounding:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <input
+              type="checkbox"
+              checked={rounding.val}
+              onChange={() => {
+                rounding.set(!rounding.val);
+              }}
+            />
+          </div>
+          <div className={'cmp-labeled-table__label'}></div>
+          <div className={'cmp-labeled-table__value'}>
+            <SliderAndNumberInput
+              value={round(roundingAmount.val)}
+              onChange={v => {
+                roundingAmount.set(v);
+              }}
+              unit={'px'}
+              max={200}
             />
           </div>
         </div>

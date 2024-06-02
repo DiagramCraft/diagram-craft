@@ -28,6 +28,12 @@ export const Vector = {
   },
   tangentToNormal(v: Vector) {
     return { x: -v.y, y: v.x };
+  },
+  angleBetween(v1: Vector, v2: Vector) {
+    return Math.acos(Vector.dotProduct(v1, v2) / (Vector.length(v1) * Vector.length(v2)));
+  },
+  dotProduct(v1: Vector, v2: Vector) {
+    return v1.x * v2.x + v1.y * v2.y;
   }
 
   /*

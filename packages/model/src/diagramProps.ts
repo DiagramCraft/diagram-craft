@@ -164,6 +164,9 @@ declare global {
       sketchFillType?: 'fill' | 'hachure';
 
       opacity?: number;
+
+      rounding?: boolean;
+      roundingAmount?: number;
     };
   }
 
@@ -205,6 +208,9 @@ declare global {
       sketchFillType?: 'fill' | 'hachure';
 
       opacity?: number;
+
+      rounding?: boolean;
+      roundingAmount?: number;
     };
   }
 }
