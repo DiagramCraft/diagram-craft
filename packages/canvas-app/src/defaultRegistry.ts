@@ -35,6 +35,7 @@ import {
   TableNodeDefinition,
   TableRowNodeDefinition
 } from '@diagram-craft/canvas/node-types/Table.nodeType';
+import { DrawioTransparentNodeDefinition } from './drawio/DrawioTransparentShape.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -73,6 +74,7 @@ export const defaultNodeRegistry = () => {
   dest.register(new TableRowNodeDefinition(), { hidden: true });
   dest.register(new DrawioShapeNodeDefinition(), { hidden: true });
   dest.register(new DrawioImageNodeDefinition(), { hidden: true });
+  dest.register(new DrawioTransparentNodeDefinition(), { hidden: true });
 
   return dest;
 };

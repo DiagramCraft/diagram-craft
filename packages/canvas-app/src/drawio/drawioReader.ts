@@ -41,6 +41,7 @@ import {
   parseStep,
   parseTable,
   parseTableRow,
+  parseTransparent,
   parseTriangle
 } from './shapes';
 import { registerAzureShapes } from './shapes/azure';
@@ -67,7 +68,7 @@ import { registerGCP2Shapes } from './shapes/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
 import { parseUMLModule, registerUMLShapes } from './shapes/uml';
-import { registerAndroidShapes } from './shapes/android';
+import { parseAndroidShapes, registerAndroidShapes } from './shapes/android';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -102,6 +103,7 @@ const shapes: Record<string, ShapeParser> = {
   'step': parseStep,
   'cloud': parseCloud,
   'rect': parseRect,
+  'transparent': parseTransparent,
   'partialRectangle': parsePartialRect,
   'delay': parseDelay,
   'rhombus': parseRhombus,
@@ -119,6 +121,7 @@ const shapes: Record<string, ShapeParser> = {
   'ellipse': parseEllipse,
   'mxgraph.cisco19': parseCisco19Shapes,
   'mxgraph.aws4': parseAWS4Shapes,
+  'mxgraph.android': parseAndroidShapes,
   'table': parseTable,
   'tableRow': parseTableRow,
 
@@ -476,7 +479,7 @@ const getNodeProps = (style: Style) => {
     props.text!.textDecoration = 'underline';
   }
 
-  if (style.gradientColor && style.gradientColor !== 'none') {
+  if (style.gradientColor && style.gradientColor !== 'none' && style.gradientColor !== 'inherit') {
     props.fill!.type = 'gradient';
     props.fill!.color2 = style.gradientColor;
     props.fill!.gradient = {
@@ -512,7 +515,8 @@ const getNodeProps = (style: Style) => {
     props.stroke.lineCap = 'butt';
   }
 
-  if (style.rounded === '1') {
+  // TODO: This is a bit ugly - need to fix
+  if (style.rounded === '1' && style.shape !== 'mxgraph.android.rect') {
     props.effects ??= {};
     props.effects.rounding = true;
   }
@@ -537,10 +541,6 @@ const getNodeProps = (style: Style) => {
 
 const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOfWork) => {
   const diagram = edge.diagram;
-
-  // TODO: Probably need a 4th type of endpoint that just connects to the closest point
-  //       on the shape (especially important for orthogonal connectors) - or we change
-  //       the orthogonal router to behave this way for (0.5, 0.5)
 
   const source = $cell.getAttribute('source')!;
   if (source) {
@@ -826,7 +826,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
           nodes.push(node);
 
-          if (!('group' in style) && (style.fillColor || style.strokeColor || value)) {
+          if (
+            !('group' in style) &&
+            (style.fillColor || style.strokeColor || value || style.shape)
+          ) {
             // TODO: This is all a bit duplication - we should refactor this
             let bgNode: DiagramNode;
             if (style.shape! in shapes) {
@@ -847,7 +850,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
               const parser = getParser(style.shape!);
               if (parser) {
-                bgNode = await parseRoundedRect(newid(), bounds, props, style, diagram, layer);
+                bgNode = await parser(newid(), bounds, props, style, diagram, layer);
               } else {
                 bgNode = new DiagramNode(newid(), style.shape!, bounds, diagram, layer, props);
               }
@@ -896,11 +899,46 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           await load(loader, registry, alreadyLoaded);
         }
 
+        let newBounds = { ...bounds };
+        if (style.direction === 'south') {
+          const p = Point.rotateAround(
+            Point.add(newBounds, { x: 0, y: newBounds.w }),
+            Math.PI / 2,
+            Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+          );
+
+          newBounds = {
+            ...newBounds,
+            w: newBounds.h,
+            h: newBounds.w,
+            r: Math.PI / 2,
+            x: newBounds.x + (newBounds.x - p.x),
+            y: newBounds.y + (newBounds.y - p.y)
+          };
+        } else if (style.direction === 'north') {
+          const p = Point.rotateAround(
+            Point.add(newBounds, { x: newBounds.h, y: 0 }),
+            -Math.PI / 2,
+            Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+          );
+
+          newBounds = {
+            ...newBounds,
+            w: newBounds.h,
+            h: newBounds.w,
+            r: -Math.PI / 2,
+            x: newBounds.x + (newBounds.x - p.x),
+            y: newBounds.y + (newBounds.y - p.y)
+          };
+        } else if (style.direction === 'west') {
+          newBounds = { ...newBounds, r: Math.PI };
+        }
+
         const parser = getParser(style.shape!);
         if (parser) {
-          nodes.push(await parser(id, bounds, props, style, diagram, layer));
+          nodes.push(await parser(id, newBounds, props, style, diagram, layer));
         } else {
-          nodes.push(new DiagramNode(id, style.shape!, bounds, diagram, layer, props));
+          nodes.push(new DiagramNode(id, style.shape!, newBounds, diagram, layer, props));
         }
       } else {
         if (style.rounded === '1') {
@@ -941,6 +979,17 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             edge.waypoints.forEach(wp => {
               edge.moveWaypoint(wp, Point.add(p.bounds, wp.point), uow);
             });
+          }
+
+          if (node.editProps.fill?.color === 'inherit') {
+            node.updateProps(props => {
+              props.fill!.color = p.renderProps.fill!.color;
+            }, uow);
+          }
+          if (node.editProps.stroke?.color === 'inherit') {
+            node.updateProps(props => {
+              props.stroke!.color = p.renderProps.stroke!.color;
+            }, uow);
           }
 
           // This needs to be deferred as adding children changes the bounds of the group

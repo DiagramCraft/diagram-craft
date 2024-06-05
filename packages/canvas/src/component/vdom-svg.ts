@@ -6,6 +6,7 @@ import { Angle } from '@diagram-craft/geometry/angle';
 type CommonPresentationAttributes = {
   'stroke'?: string;
   'stroke-width'?: string | number;
+  'stroke-linecap'?: string;
   'fill'?: string;
   'marker-start'?: string;
   'marker-mid'?: string;
@@ -105,9 +106,13 @@ export const line = (
 export const text = (
   attrs: Attr<
     {
-      x?: string | number;
-      y?: string | number;
-    } & ElementAttributes
+      'x'?: string | number;
+      'y'?: string | number;
+      'font-size'?: number;
+      'font-family'?: string;
+      'text-anchor'?: string;
+    } & ElementAttributes &
+      CommonPresentationAttributes
   >,
   ...children: VNode[]
 ) => {

@@ -57,6 +57,12 @@ export const parseRect = async (
 
 export const parseCube = makeShape('cube');
 
+export const parseTransparent = makeShape('transparent', (style, props) => {
+  props.text!.valign = 'middle';
+  // @ts-ignore
+  props.text!.align = style.align ?? 'center';
+});
+
 export const parseLine = makeShape('line');
 
 export const parseDelay = makeShape('delay');
