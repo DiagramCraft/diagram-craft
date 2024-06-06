@@ -19,6 +19,8 @@ import { deepMerge } from '@diagram-craft/utils/object';
 import { makeShadowFilter } from '../effects/shadow';
 import { NodePropsForEditing } from '@diagram-craft/model/diagramNode';
 import { RoundingPathRenderer } from '../effects/rounding';
+import { SVGGBuilder } from './SVGGBuilder';
+import { newid } from '@diagram-craft/utils/id';
 
 const defaultOnChange = (element: DiagramElement) => (text: string) => {
   UnitOfWork.execute(element.diagram, uow => {
@@ -52,6 +54,28 @@ export class ShapeBuilder {
 
   add(vnode: VNode) {
     this.nodes.push(vnode);
+  }
+
+  buildBoundary(w = 1, h = 1, textId: undefined | string = '1') {
+    const g = svg.g({
+      id: newid(),
+      class: 'svg-node__boundary svg-node',
+      on: {
+        mousedown: this.props.onMouseDown,
+        dblclick:
+          this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {})
+      }
+    });
+    this.nodes.push(g);
+    return new SVGGBuilder(g, w, h, this.props.element);
+  }
+
+  buildInterior(w = 1, h = 1) {
+    const g = svg.g({
+      id: newid()
+    });
+    this.nodes.push(g);
+    return new SVGGBuilder(g, w, h, this.props.element);
   }
 
   // TODO: Maybe we can pass Component<any> in the constructor instead

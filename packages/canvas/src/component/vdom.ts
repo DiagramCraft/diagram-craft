@@ -69,7 +69,11 @@ export const h = (tag: string, props: VNodeData, ...children: VNodeChildParam[])
   };
 };
 
-export const s = (tag: string, props: VNodeData, ...children: VNodeChildParam[]): VNode => {
+export const s = (
+  tag: string,
+  props: VNodeData,
+  ...children: VNodeChildParam[]
+): VNode & { type: 's' } => {
   return {
     type: 's',
     tag,

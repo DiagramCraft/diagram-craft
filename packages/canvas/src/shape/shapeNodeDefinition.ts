@@ -19,6 +19,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor } from '@diagram-craft/model/types';
+import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -27,13 +28,28 @@ type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> =
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   protected capabilities: Record<NodeCapability, boolean>;
 
-  protected constructor(
-    readonly type: string,
-    readonly name: string,
+  public readonly name: string;
+  public readonly type: string;
+  protected readonly component: string;
 
-    // @ts-ignore
-    readonly component: NodeShapeConstructor<this>
-  ) {
+  // @ts-ignore
+  protected constructor(type: string, component: NodeShapeConstructor<this>);
+  // @ts-ignore
+  protected constructor(type: string, name: string, component: NodeShapeConstructor<this>);
+  // eslint-disable-next-line
+  protected constructor(...arr: any[]) {
+    if (arr.length === 2) {
+      this.type = arr[0];
+      this.name = '#unnamed';
+      this.component = arr[1];
+    } else if (arr.length === 3) {
+      this.type = arr[0];
+      this.name = arr[1];
+      this.component = arr[2];
+    } else {
+      throw new VerifyNotReached();
+    }
+
     this.capabilities = {
       fill: true,
       select: true,
