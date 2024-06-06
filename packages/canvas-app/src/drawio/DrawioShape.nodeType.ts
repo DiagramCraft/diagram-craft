@@ -252,7 +252,7 @@ const setColor = (c: string, alpha: number) => {
 
 class DrawioShapeComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const shapeNodeDefinition = this.def as DrawioShapeNodeDefinition;
+    const shapeNodeDefinition = this.def as unknown as DrawioShapeNodeDefinition;
 
     const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
 

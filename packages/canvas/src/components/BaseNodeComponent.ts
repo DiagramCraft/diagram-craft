@@ -23,6 +23,8 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import { EdgeComponentProps } from './BaseEdgeComponent';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
+import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -51,7 +53,10 @@ export type BaseShapeBuildShapeProps = {
 } & Context;
 
 export class BaseNodeComponent<
-  T extends ShapeNodeDefinition = ShapeNodeDefinition
+  T extends {
+    getBoundingPathBuilder(node: DiagramNode): PathBuilder;
+    supports(capability: NodeCapability): boolean;
+  } = ShapeNodeDefinition
 > extends Component<NodeComponentProps> {
   constructor(protected readonly def: T) {
     super();
@@ -276,4 +281,22 @@ export class BaseNodeComponent<
       VERIFY_NOT_REACHED();
     }
   }
+}
+
+export type SimpleShapeNodeDefinitionProps = BaseShapeBuildShapeProps & {
+  cmp: BaseNodeComponent<SimpleShapeNodeDefinition>;
+};
+
+export abstract class SimpleShapeNodeDefinition extends ShapeNodeDefinition {
+  constructor(type: string) {
+    super(type, '', SimpleShapeNodeDefinition.Component);
+  }
+
+  abstract buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void;
+
+  static Component = class extends BaseNodeComponent<SimpleShapeNodeDefinition> {
+    buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
+      return this.def.buildShape({ ...props, cmp: this }, shapeBuilder);
+    }
+  };
 }

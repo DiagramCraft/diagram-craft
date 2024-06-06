@@ -30,7 +30,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   public readonly name: string;
   public readonly type: string;
-  protected readonly component: string;
+  public readonly component: NodeShapeConstructor<this>;
 
   // @ts-ignore
   protected constructor(type: string, component: NodeShapeConstructor<this>);

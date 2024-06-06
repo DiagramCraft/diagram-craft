@@ -74,7 +74,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class RoundedRectComponent extends BaseNodeComponent {
+export class RoundedRectComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const radius = props.nodeProps.shapeRoundedRect?.radius ?? 10;
     const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
