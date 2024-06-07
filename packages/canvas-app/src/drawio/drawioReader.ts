@@ -79,14 +79,15 @@ const drawioBuiltinShapes: Partial<Record<string, string>> = {
 export type Style = Partial<Record<string, string>>;
 
 class WorkQueue {
-  queue: Array<() => void> = [];
+  queue: [Array<() => void>, Array<() => void>] = [[], []];
 
-  add(work: () => void) {
-    this.queue.push(work);
+  add(work: () => void, priority: 0 | 1 = 0) {
+    this.queue[priority].push(work);
   }
 
   run() {
-    this.queue.forEach(work => work());
+    this.queue[0].forEach(work => work());
+    this.queue[1].forEach(work => work());
   }
 }
 
@@ -246,6 +247,7 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'diamondThin-outline': 'DIAMOND_OUTLINE',
   'diamond': 'DIAMOND_FILLED',
   'diamondThin': 'DIAMOND_FILLED',
+  'circle': 'BALL_FILLED',
   'circle-outline': 'BALL_OUTLINE',
   'circlePlus-outline': 'BALL_PLUS_OUTLINE',
   'oval-outline': 'BALL_OUTLINE',
@@ -269,6 +271,7 @@ const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
   let type = style[`${t}Arrow`];
   const size = style[`${t}Size`];
   const fill = style[`${t}Fill`];
+
   if (type && type !== 'none') {
     if (fill === '0') {
       type += '-outline';
@@ -283,6 +286,7 @@ const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
       type: arrows[type],
       size: parseNum(size, 6) * 15
     };
+    props.stroke!.color ??= 'black';
     props.fill!.color = props.stroke!.color;
   }
 };
@@ -441,7 +445,7 @@ const attachLabelNode = (
   );
 };
 
-const getNodeProps = (style: Style) => {
+const getNodeProps = (style: Style, isEdge: boolean) => {
   // NOTE: test6.drawio suggests this should be center
   const align = style.align ?? 'center';
   assertHAlign(align);
@@ -451,7 +455,7 @@ const getNodeProps = (style: Style) => {
 
   const props: NodeProps = {
     text: {
-      fontSize: parseNum(style.fontSize, 12),
+      fontSize: parseNum(style.fontSize, isEdge ? 11 : 12),
       font: style.fontFamily ?? 'Helvetica',
       color: style.fontColor ?? 'black',
       lineHeight: 0.97,
@@ -663,7 +667,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       const bounds = MxGeometry.boundsFrom($geometry);
 
-      const props = getNodeProps(style);
+      const props = getNodeProps(style, $cell.getAttribute('edge') === '1');
       props.text!.text = hasValue(value) ? value : '';
 
       if (isWrappedByObject) {
@@ -712,8 +716,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const textNode = createLabelNode(id, edge, value, props, '#ffffff', uow);
         nodes.push(textNode);
 
-        queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
+        // Note: This used to be done with queue.add - unclear why
+        attachLabelNode(textNode, edge, $geometry, uow);
+
         queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
+        queue.add(() => edge.invalidate(uow), 1);
       } else if ($cell.getAttribute('edge') === '1') {
         // Handle edge creation
 
@@ -823,7 +830,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
           queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
-          queue.add(() => edge.invalidate(uow));
+          queue.add(() => edge.invalidate(uow), 1);
         }
       } else if (parentChild.has(id) || 'group' in style) {
         // Handle groups

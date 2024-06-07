@@ -677,7 +677,7 @@ export class DiagramEdge
       const pathD = TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset }, path);
       const attachmentPoint = path.pointAt(pathD);
 
-      let newCenterPoint = Point.add(attachmentPoint, labelNode.offset);
+      let newReferencePoint = Point.add(attachmentPoint, labelNode.offset);
       let newRotation = labelNode.node.bounds.r;
       if (isParallel(labelNode.type) || isPerpendicular(labelNode.type)) {
         const tangent = path.tangentAt(pathD);
@@ -693,7 +693,7 @@ export class DiagramEdge
           if (newRotation < -Math.PI / 2) newRotation += Math.PI;
         }
 
-        newCenterPoint = Point.add(
+        newReferencePoint = Point.add(
           attachmentPoint,
           Point.rotate({ x: -labelNode.offset.x, y: 0 }, Vector.angle(tangent) + Math.PI / 2)
         );
@@ -703,11 +703,28 @@ export class DiagramEdge
         newRotation = Math.PI / 2;
       }
 
+      const referenceOffsetFromMidpoint = Point.of(0, 0);
+      if (labelNode.node.renderProps.text.align === 'left') {
+        referenceOffsetFromMidpoint.x = labelNode.node.bounds.w / 2;
+      } else if (labelNode.node.renderProps.text.align === 'right') {
+        referenceOffsetFromMidpoint.x = -labelNode.node.bounds.w / 2;
+      }
+
+      if (labelNode.node.renderProps.text.valign === 'top') {
+        referenceOffsetFromMidpoint.y = labelNode.node.bounds.h / 2 + 1;
+      } else if (labelNode.node.renderProps.text.valign === 'bottom') {
+        referenceOffsetFromMidpoint.y = -labelNode.node.bounds.h / 2 - 1;
+      }
+
       // Note, using rounding here to avoid infinite recursion
-      const currentCenterPoint = Box.center(labelNode.node.bounds);
+      newReferencePoint = Point.add(newReferencePoint, referenceOffsetFromMidpoint);
+      const currentReferencePoint = Point.add(
+        Box.center(labelNode.node.bounds),
+        referenceOffsetFromMidpoint
+      );
       const hasChanged =
-        isDifferent(newCenterPoint.x, currentCenterPoint.x) ||
-        isDifferent(newCenterPoint.y, currentCenterPoint.y) ||
+        isDifferent(newReferencePoint.x, currentReferencePoint.x) ||
+        isDifferent(newReferencePoint.y, currentReferencePoint.y) ||
         isDifferent(newRotation, labelNode.node.bounds.r);
 
       if (hasChanged) {
@@ -715,8 +732,8 @@ export class DiagramEdge
           {
             ...labelNode.node.bounds,
             r: newRotation,
-            x: newCenterPoint.x - labelNode.node.bounds.w / 2,
-            y: newCenterPoint.y - labelNode.node.bounds.h / 2
+            x: newReferencePoint.x - labelNode.node.bounds.w / 2,
+            y: newReferencePoint.y - labelNode.node.bounds.h / 2
           },
           uow
         );
