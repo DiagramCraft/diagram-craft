@@ -49,7 +49,7 @@ export class GridComponent extends Component<CanvasState> {
     const dx = diagram.props.grid?.size ?? 10;
     const dy = diagram.props.grid?.size ?? 10;
 
-    const majorCount = diagram.props.grid?.majorCount ?? 5;
+    const majorCount = diagram.props.grid?.majorCount ?? 4;
 
     const rows = Math.floor(h / dy);
     const cols = Math.floor(w / dx);
@@ -80,8 +80,9 @@ export class GridComponent extends Component<CanvasState> {
 
     if (type === 'lines') {
       for (let i = 0; i < rows; i++) {
-        const yCoord = i * dy + dy + y;
+        const yCoord = i * dy + y;
         if (yCoord >= y + h - 1) continue;
+        if (yCoord === y || yCoord === y + h - 1) continue;
 
         if (i % majorCount !== 0 || majorType !== 'lines') {
           dest.push(hLine(x, yCoord, w, 'minor', minorStyleAsString));
@@ -89,8 +90,9 @@ export class GridComponent extends Component<CanvasState> {
       }
 
       for (let i = 0; i < cols; i++) {
-        const xCoord = i * dx + dx + x;
+        const xCoord = i * dx + x;
         if (xCoord >= x + w - 1) continue;
+        if (xCoord === x || xCoord === x + w - 1) continue;
 
         if (i % majorCount !== 0 || majorType !== 'lines') {
           dest.push(vLine(xCoord, y, h, 'minor', minorStyleAsString));
@@ -99,8 +101,8 @@ export class GridComponent extends Component<CanvasState> {
     } else if (type === 'dots') {
       for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
-          const yCoord = i * dy + dy + y;
-          const xCoord = j * dx + dx + x;
+          const yCoord = i * dy + y;
+          const xCoord = j * dx + x;
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
@@ -111,8 +113,9 @@ export class GridComponent extends Component<CanvasState> {
 
     if (majorType === 'lines') {
       for (let i = 0; i < rows; i++) {
-        const yCoord = i * dy + dy + y;
+        const yCoord = i * dy + y;
         if (yCoord >= y + h - 1) continue;
+        if (yCoord === y || yCoord === y + h - 1) continue;
 
         if (i % majorCount === 0) {
           dest.push(hLine(x, yCoord, w, 'major', majorStyleAsString));
@@ -120,8 +123,9 @@ export class GridComponent extends Component<CanvasState> {
       }
 
       for (let i = 0; i < cols; i++) {
-        const xCoord = i * dx + dx + x;
+        const xCoord = i * dx + x;
         if (xCoord >= x + w - 1) continue;
+        if (xCoord === x || xCoord === x + w - 1) continue;
 
         if (i % majorCount === 0) {
           dest.push(vLine(xCoord, y, h, 'major', majorStyleAsString));
@@ -132,8 +136,8 @@ export class GridComponent extends Component<CanvasState> {
         for (let j = 0; j < cols; j++) {
           if (i % majorCount !== 0 || j % majorCount !== 0) continue;
 
-          const yCoord = i * dy + dy + y;
-          const xCoord = j * dx + dx + x;
+          const yCoord = i * dy + y;
+          const xCoord = j * dx + x;
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
