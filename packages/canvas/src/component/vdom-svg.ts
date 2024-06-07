@@ -31,6 +31,22 @@ export const circle = (
   return s('circle', attrs, ...children);
 };
 
+export const ellipse = (
+  attrs: Attr<
+    {
+      cx?: string | number;
+      cy?: string | number;
+      rx?: string | number;
+      ry?: string | number;
+      pathLength?: string | number;
+    } & ElementAttributes &
+      CommonPresentationAttributes
+  >,
+  ...children: VNode[]
+) => {
+  return s('ellipse', attrs, ...children);
+};
+
 export const path = (
   attrs: Attr<
     {

@@ -28,6 +28,7 @@ import {
   parseCurlyBracket,
   parseCylinder,
   parseDelay,
+  parseDiamond,
   parseEllipse,
   parseHexagon,
   parseImage,
@@ -67,7 +68,7 @@ import { parseAWS4Shapes, registerAWS4Shapes } from './shapes/aws4';
 import { registerGCP2Shapes } from './shapes/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
-import { parseUMLModule, registerUMLShapes } from './shapes/uml';
+import { parseUMLShapes, registerUMLShapes } from './shapes/uml';
 import { parseAndroidShapes, registerAndroidShapes } from './shapes/android';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
@@ -126,8 +127,9 @@ const shapes: Record<string, ShapeParser> = {
   'tableRow': parseTableRow,
 
   // Note: module and component are the same
-  'module': parseUMLModule,
-  'component': parseUMLModule
+  'module': parseUMLShapes,
+  'component': parseUMLShapes,
+  'umlLifeline': parseUMLShapes
 };
 
 const getParser = (shape: string | undefined): ShapeParser | undefined =>
@@ -161,7 +163,16 @@ const loaders: Record<string, Loader> = {
   'mxgraph.salesforce': registerSalesforceShapes,
   'mxgraph.android': registerAndroidShapes,
   'module': registerUMLShapes,
-  'folder': registerUMLShapes
+  'folder': registerUMLShapes,
+  'umlActor': registerUMLShapes,
+  'umlBoundary': registerUMLShapes,
+  'umlEntity': registerUMLShapes,
+  'umlFrame': registerUMLShapes,
+  'umlDestroy': registerUMLShapes,
+  'umlControl': registerUMLShapes,
+  'umlLifeline': registerUMLShapes,
+  'providedRequiredInterface': registerUMLShapes,
+  'requiredInterface': registerUMLShapes
 };
 
 const getLoader = (shape: string | undefined): Loader | undefined =>
@@ -883,8 +894,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         nodes.push(await parseImage(id, bounds, props, style, diagram, layer));
       } else if (style.shape! in shapes) {
         nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
-      } else if ('ellipse' in style) {
-        nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
         const registry = diagram.document.nodeDefinitions;
 
@@ -940,6 +949,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         } else {
           nodes.push(new DiagramNode(id, style.shape!, newBounds, diagram, layer, props));
         }
+      } else if ('ellipse' in style) {
+        nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
+      } else if ('rhombus' in style) {
+        nodes.push(await parseDiamond(id, bounds, props, style, diagram, layer));
       } else {
         if (style.rounded === '1') {
           nodes.push(await parseRoundedRect(id, bounds, props, style, diagram, layer));

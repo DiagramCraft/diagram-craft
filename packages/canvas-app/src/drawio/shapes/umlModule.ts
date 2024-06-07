@@ -84,20 +84,6 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
 
   static Shape = class extends BaseNodeComponent<UmlModuleNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-      const bounds = props.node.bounds;
-
-      shapeBuilder.boundaryPath(
-        this.def.getBoundingPathBuilder(props.node).getPaths().all(),
-        undefined,
-        '1',
-        {
-          style: {
-            stroke: 'transparent',
-            fill: 'transparent'
-          }
-        }
-      );
-
       // TODO: Fix these type conversions
       const width = JettyWidth.get(
         props.nodeProps.shapeUmlModule as NodePropsForRendering['shapeUmlModule']
@@ -106,33 +92,13 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
         props.nodeProps.shapeUmlModule as NodePropsForRendering['shapeUmlModule']
       );
 
-      const body = new PathBuilder();
-      PathBuilderHelper.rect(body, {
-        ...bounds,
-        w: bounds.w - width / 2,
-        x: bounds.x + width / 2
-      });
-      shapeBuilder.path(body.getPaths().all());
+      const { h, w } = props.node.bounds;
+      const b = shapeBuilder.buildBoundary();
 
-      const b1 = new PathBuilder();
-      PathBuilderHelper.rect(b1, {
-        x: bounds.x,
-        y: bounds.y + height,
-        w: width,
-        h: height,
-        r: bounds.r
-      });
-      shapeBuilder.path(b1.getPaths().all());
-
-      const b2 = new PathBuilder();
-      PathBuilderHelper.rect(b2, {
-        x: bounds.x,
-        y: bounds.y + 3 * height,
-        w: width,
-        h: height,
-        r: bounds.r
-      });
-      shapeBuilder.path(b2.getPaths().all());
+      b.rect(width / 2, 0, w - width / 2, h);
+      b.rect(0, height, width, height);
+      b.rect(0, 3 * height, width, height);
+      b.fillAndStroke();
 
       shapeBuilder.text(this);
     }

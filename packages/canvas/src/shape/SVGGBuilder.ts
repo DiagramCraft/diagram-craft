@@ -3,6 +3,7 @@ import * as svg from '../component/vdom-svg';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { makeLinearGradient, makeRadialGradient } from './shapeFill';
 import { newid } from '@diagram-craft/utils/id';
+import { DASH_PATTERNS } from '../dashPatterns';
 
 // TODO: Change this to use PathBuilder under the hood
 export class SVGGBuilder {
@@ -88,6 +89,22 @@ export class SVGGBuilder {
     move(x: number, y: number) {
       this.#path.push(
         `M ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
+      );
+      this.path.data.d = this.#path.join(' ');
+      return this;
+    }
+
+    curve(x1: number, y1: number, x2: number, y2: number, x: number, y: number) {
+      this.#path.push(
+        `C ${this.parent.#x + x1 * this.parent.#w} ${this.parent.#y + y1 * this.parent.#h} ${this.parent.#x + x2 * this.parent.#w} ${this.parent.#y + y2 * this.parent.#h} ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
+      );
+      this.path.data.d = this.#path.join(' ');
+      return this;
+    }
+
+    quad(x1: number, y1: number, x: number, y: number) {
+      this.#path.push(
+        `Q ${this.parent.#x + x1 * this.parent.#w} ${this.parent.#y + y1 * this.parent.#h} ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
       );
       this.path.data.d = this.#path.join(' ');
       return this;
@@ -224,6 +241,18 @@ export class SVGGBuilder {
     return this;
   }
 
+  ellipse(cx: number, cy: number, rx: number, ry: number) {
+    this.#shapes.push(
+      svg.ellipse({
+        cx: this.#x + cx * this.#w,
+        cy: this.#y + cy * this.#h,
+        rx,
+        ry
+      })
+    );
+    return this;
+  }
+
   text(x: number, y: number, s: string, font?: Omit<NodeProps['text'], 'text'>) {
     if (font) this.setFont(font);
     this.g.children.push(
@@ -250,9 +279,16 @@ export class SVGGBuilder {
   }
 
   private strokeProps() {
-    return {
+    const d: any = {
       'stroke': this.#stroke?.color,
       'stroke-width': this.#stroke?.width
     };
+    if (this.#stroke?.pattern) {
+      d['stroke-dasharray'] = DASH_PATTERNS[this.#stroke?.pattern ?? 'SOLID']!(
+        (this.#stroke?.patternSpacing ?? 100) / 100,
+        (this.#stroke?.patternSize ?? 100) / 100
+      );
+    }
+    return d;
   }
 }

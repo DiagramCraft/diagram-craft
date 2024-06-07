@@ -139,6 +139,8 @@ export const parseEllipse = makeShape('circle', (style, props) => {
   props.text!.align = (style.align ?? 'center') as HAlign;
 });
 
+export const parseDiamond = makeShape('diamond');
+
 export const parseArrow = async (
   id: string,
   bounds: Box,
