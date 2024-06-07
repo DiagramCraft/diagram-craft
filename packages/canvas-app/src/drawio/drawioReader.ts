@@ -231,7 +231,7 @@ const angleFromDirection = (s: string) => {
 const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'open': 'SQUARE_STICK_ARROW',
   'classic': 'SHARP_ARROW_FILLED',
-  'classicThin': 'SHARP_ARROW_FILLED',
+  'classicThin': 'SHARP_ARROW_THIN_FILLED',
   'oval': 'BALL_FILLED',
   'doubleBlock': 'SQUARE_DOUBLE_ARROW_FILLED',
   'doubleBlock-outline': 'SQUARE_DOUBLE_ARROW_OUTLINE',
@@ -244,22 +244,22 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'halfCircle-outline': 'SOCKET',
   'box-outline': 'BOX_OUTLINE',
   'diamond-outline': 'DIAMOND_OUTLINE',
-  'diamondThin-outline': 'DIAMOND_OUTLINE',
+  'diamondThin-outline': 'DIAMOND_THIN_OUTLINE',
   'diamond': 'DIAMOND_FILLED',
-  'diamondThin': 'DIAMOND_FILLED',
+  'diamondThin': 'DIAMOND_THIN_FILLED',
   'circle': 'BALL_FILLED',
   'circle-outline': 'BALL_OUTLINE',
   'circlePlus-outline': 'BALL_PLUS_OUTLINE',
   'oval-outline': 'BALL_OUTLINE',
   'block': 'SQUARE_ARROW_FILLED',
-  'blockThin': 'SQUARE_ARROW_FILLED',
+  'blockThin': 'SQUARE_ARROW_THIN_FILLED',
   'block-outline': 'SQUARE_ARROW_OUTLINE',
   'open-outline': 'SQUARE_STICK_ARROW',
   'openAsync-outline': 'SQUARE_STICK_ARROW_HALF_LEFT',
-  'async': 'SQUARE_STICK_ARROW_HALF_LEFT',
+  'async': 'SQUARE_STICK_ARROW_HALF_LEFT_THIN_FILLED',
   'classic-outline': 'SHARP_ARROW_OUTLINE',
-  'blockThin-outline': 'SQUARE_ARROW_OUTLINE',
-  'async-outline': 'SQUARE_STICK_ARROW_HALF_LEFT',
+  'blockThin-outline': 'SQUARE_ARROW_THIN_OUTLINE',
+  'async-outline': 'SQUARE_STICK_ARROW_HALF_LEFT_THIN_OUTLINE',
   'dash-outline': 'SLASH',
   'cross-outline': 'CROSS',
   'openThin-outline': 'SQUARE_STICK_ARROW',
@@ -284,9 +284,12 @@ const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
     props.arrow ??= {};
     props.arrow![t] = {
       type: arrows[type],
-      size: parseNum(size, 6) * 15
+      size: parseNum(size, 6) * (type === 'circle' || type === 'circlePlus-outline' ? 20 : 11)
     };
     props.stroke!.color ??= 'black';
+    if (props.stroke!.color === 'default') {
+      props.stroke!.color = 'black';
+    }
     props.fill!.color = props.stroke!.color;
   }
 };

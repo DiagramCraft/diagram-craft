@@ -711,7 +711,7 @@ export class DiagramEdge
       }
 
       if (labelNode.node.renderProps.text.valign === 'top') {
-        referenceOffsetFromMidpoint.y = labelNode.node.bounds.h / 2 + 1;
+        referenceOffsetFromMidpoint.y = labelNode.node.bounds.h / 2 + 6;
       } else if (labelNode.node.renderProps.text.valign === 'bottom') {
         referenceOffsetFromMidpoint.y = -labelNode.node.bounds.h / 2 - 1;
       }

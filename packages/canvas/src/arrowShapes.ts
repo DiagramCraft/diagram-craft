@@ -19,11 +19,25 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     path: [`M 0 0`, `L ${s * 10} ${s * 5}`, `L 0 ${s * 10}`, `z`].join('\n'),
     fill: 'fg'
   }),
+  SQUARE_ARROW_THIN_FILLED: s => ({
+    width: s * 10,
+    height: s * 6,
+    anchor: { x: s * 10, y: s * 3 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 3}`, `L 0 ${s * 6}`, `z`].join('\n'),
+    fill: 'fg'
+  }),
   SQUARE_ARROW_OUTLINE: s => ({
     width: s * 20,
     height: s * 20,
     anchor: { x: s * 10, y: s * 5 },
     path: [`M 0 0`, `L ${s * 10} ${s * 5}`, `L 0 ${s * 10}`, `z`].join('\n'),
+    fill: 'bg'
+  }),
+  SQUARE_ARROW_THIN_OUTLINE: s => ({
+    width: s * 10,
+    height: s * 6,
+    anchor: { x: s * 10, y: s * 3 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 3}`, `L 0 ${s * 6}`, `z`].join('\n'),
     fill: 'bg'
   }),
   BALL_FILLED: s => ({
@@ -128,6 +142,24 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     ].join('\n'),
     fill: 'fg'
   }),
+  DIAMOND_THIN_FILLED: s => ({
+    width: s * 10,
+    height: s * 6,
+    anchor: { x: s * 10, y: s * 3 },
+    path: [`M 0 ${s * 3}`, `L ${s * 5} 0`, `L ${s * 10} ${s * 3}`, `L ${s * 5} ${s * 6}`, `z`].join(
+      '\n'
+    ),
+    fill: 'fg'
+  }),
+  DIAMOND_THIN_OUTLINE: s => ({
+    width: s * 10,
+    height: s * 6,
+    anchor: { x: s * 10, y: s * 3 },
+    path: [`M 0 ${s * 3}`, `L ${s * 5} 0`, `L ${s * 10} ${s * 3}`, `L ${s * 5} ${s * 6}`, `z`].join(
+      '\n'
+    ),
+    fill: 'bg'
+  }),
   DIAMOND_OUTLINE: s => ({
     width: s * 10,
     height: s * 10,
@@ -153,6 +185,20 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     height: s * 10,
     anchor: { x: s * 10, y: s * 5 },
     path: [`M 0 0`, `L ${s * 10} ${s * 5}`, `L 0 ${s * 10}`].join('\n'),
+    fill: 'transparent'
+  }),
+  SQUARE_STICK_ARROW_HALF_LEFT_THIN_FILLED: s => ({
+    width: s * 10,
+    height: s * 6,
+    anchor: { x: s * 10, y: s * 3 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 3}`, `L 0 ${s * 3}`, `z`].join('\n'),
+    fill: 'fg'
+  }),
+  SQUARE_STICK_ARROW_HALF_LEFT_THIN_OUTLINE: s => ({
+    width: s * 10,
+    height: s * 6,
+    anchor: { x: s * 10, y: s * 3 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 3}`, `L 0 ${s * 3}`, `z`].join('\n'),
     fill: 'transparent'
   }),
   SQUARE_STICK_ARROW_HALF_LEFT: s => ({
@@ -209,6 +255,13 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     height: s * 10,
     anchor: { x: s * 10, y: s * 5 },
     path: [`M 0 0`, `L ${s * 10} ${s * 5}`, `L 0 ${s * 10}`, `L ${s * 3} ${s * 5}`, `Z`].join('\n'),
+    fill: 'fg'
+  }),
+  SHARP_ARROW_THIN_FILLED: s => ({
+    width: s * 10,
+    height: s * 6,
+    anchor: { x: s * 10, y: s * 3 },
+    path: [`M 0 0`, `L ${s * 10} ${s * 3}`, `L 0 ${s * 6}`, `L ${s * 3} ${s * 3}`, `Z`].join('\n'),
     fill: 'fg'
   }),
   SHARP_ARROW_OUTLINE: s => ({
