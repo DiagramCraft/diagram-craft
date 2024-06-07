@@ -35,7 +35,12 @@ export interface SerializedNode extends AbstractNode {
   props: NodePropsForEditing;
 }
 
-export type SerializedFixedEndpoint = { offset: Point; node: Reference; position?: Point };
+export type SerializedFixedEndpoint = {
+  anchor: Point;
+  offset: Point;
+  node: Reference;
+  position?: Point;
+};
 export type SerializedConnectedEndpoint = { anchor: number; node: Reference; position?: Point };
 export type SerializedFreeEndpoint = { position: Point };
 

@@ -51,7 +51,7 @@ const deserializeEndpoint = (
   if (isSerializedEndpointConnected(e)) {
     return new ConnectedEndpoint(e.anchor, nodeLookup[e.node.id]);
   } else if (isSerializedEndpointFixed(e)) {
-    return new FixedEndpoint(e.offset, nodeLookup[e.node.id]);
+    return new FixedEndpoint(e.anchor, e.offset, nodeLookup[e.node.id]);
   } else {
     return new FreeEndpoint(e.position);
   }
