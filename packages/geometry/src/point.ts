@@ -32,8 +32,8 @@ export const Point = {
     return Point.add(rotatedCoord, centerOfRotation);
   },
 
-  isEqual: (a: Point, b: Point) => {
-    return isSame(a.x, b.x) && isSame(a.y, b.y);
+  isEqual: (a: Point, b: Point, epsilon = 0.01) => {
+    return isSame(a.x, b.x, epsilon) && isSame(a.y, b.y, epsilon);
   },
 
   squareDistance(posA: Point, posB: Point) {

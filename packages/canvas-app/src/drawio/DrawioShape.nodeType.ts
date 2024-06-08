@@ -31,16 +31,12 @@ declare global {
   interface NodeProps {
     shapeDrawio?: {
       shape?: string;
-      textPosition?: 'center' | 'bottom' | 'right';
+      textPosition?: '' | 'center' | 'bottom' | 'right';
     };
   }
 }
 
-registerNodeDefaults('shapeDrawio', {
-  // TODO: Need to find a way to indicate that some values are truly optional
-  shape: '',
-  textPosition: 'center'
-});
+registerNodeDefaults('shapeDrawio', { shape: '', textPosition: '' });
 
 const makeShapeTransform =
   (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {

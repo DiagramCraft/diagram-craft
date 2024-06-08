@@ -5,6 +5,7 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Path } from '@diagram-craft/geometry/path';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { BezierUtils } from '@diagram-craft/geometry/bezier';
+import { Point } from '@diagram-craft/geometry/point';
 
 export class RoundingPathRenderer implements PathRenderer {
   render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {
@@ -92,6 +93,8 @@ const applyRounding = (rounding: number, segments: ReadonlyArray<PathSegment>) =
       const current = d[i];
 
       if (previous instanceof LineSegment && current instanceof LineSegment) {
+        if (!Point.isEqual(previous.end, current.start)) continue;
+
         const [p, c, r] = roundLinePair(previous, current, rounding, minLineLength / 1.5);
         d[i - 1 < 0 ? d.length - 1 : i - 1] = p;
         d[i] = c;

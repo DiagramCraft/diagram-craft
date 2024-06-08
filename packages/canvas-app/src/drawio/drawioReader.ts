@@ -336,6 +336,7 @@ const calculateLabelNodeActualSize = (
   $el.style.visibility = 'hidden';
   $el.style.position = 'absolute';
   $el.style.width = 'auto';
+  $el.style.lineHeight = '0';
   document.body.appendChild($el);
 
   const css: string[] = [];
@@ -359,6 +360,8 @@ const calculateLabelNodeActualSize = (
     },
     uow
   );
+
+  document.body.removeChild($el);
 };
 
 const createLabelNode = (
@@ -661,22 +664,31 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       parents.set(id, layer);
     } else {
-      const p = parents.get(parent);
+      const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
+      let bounds = MxGeometry.boundsFrom($geometry);
+
+      let p = parents.get(parent);
       if (!p) {
-        console.warn(`Parent ${parent} not found for ${id}`);
-        continue;
+        const parentNode = diagram.nodeLookup.get(parent);
+        if (!parentNode) {
+          console.warn(`Parent ${parent} not found for ${id}`);
+          continue;
+        }
+
+        p = parentNode.layer;
+        bounds = {
+          ...bounds,
+          x: parentNode.bounds.x + bounds.x,
+          y: parentNode.bounds.y + bounds.y
+        };
       }
 
       assert.present(p);
 
       const layer = p instanceof Layer ? p : p!.layer;
 
-      const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
-
       const $style = $cell.getAttribute('style')!;
       const style = parseStyle($style);
-
-      const bounds = MxGeometry.boundsFrom($geometry);
 
       const props = getNodeProps(style, $cell.getAttribute('edge') === '1');
       props.text!.text = hasValue(value) ? value : '';
