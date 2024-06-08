@@ -29,3 +29,11 @@ packages/main/public/stencils
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright
+node_modules/
+/packages/playwright/test-results/
+/packages/playwright/playwright-report/
+/packages/playwright/blob-report/
+/packages/playwright/playwright/.cache/
+/packages/playwright/src/local-tests/

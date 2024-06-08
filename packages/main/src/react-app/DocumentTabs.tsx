@@ -28,6 +28,7 @@ export const DocumentTabs = (props: Props) => {
               key={d.id}
               className="cmp-document-tabs__tab-trigger util-vcenter"
               value={d.id}
+              id={`tab-${d.id}`}
             >
               <DocumentsContextMenu documentId={d.id}>
                 <div>
