@@ -179,7 +179,16 @@ export const parseImage = async (
   props.text!.valign = 'top';
   props.text!.align = 'center';
 
-  if (props.shapeDrawio?.textPosition === 'right') {
+  props.shapeDrawio ??= {};
+
+  if ('label' in style) {
+    props.shapeDrawio!.textPosition = 'right';
+  }
+
+  props.shapeDrawio.imageHeight = parseNum(style.imageHeight, 0);
+  props.shapeDrawio.imageWidth = parseNum(style.imageWidth, 0);
+
+  if (props.shapeDrawio.textPosition === 'right') {
     props.text!.align = 'left';
     props.text!.valign = 'middle';
   }

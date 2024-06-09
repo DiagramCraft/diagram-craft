@@ -29,14 +29,17 @@ import { coalesce } from '@diagram-craft/utils/strings';
 
 declare global {
   interface NodeProps {
+    // TODO: We should split this in shapeDrawio and shapeDrawioImage
     shapeDrawio?: {
       shape?: string;
       textPosition?: '' | 'center' | 'bottom' | 'right';
+      imageWidth?: number;
+      imageHeight?: number;
     };
   }
 }
 
-registerNodeDefaults('shapeDrawio', { shape: '', textPosition: '' });
+registerNodeDefaults('shapeDrawio', { shape: '', textPosition: '', imageHeight: 0, imageWidth: 0 });
 
 const makeShapeTransform =
   (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {

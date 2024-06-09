@@ -4,6 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
+import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 
 export class DrawioImageNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'drawioImage', displayName = 'DrawIO Image') {
@@ -15,7 +16,27 @@ class DrawioImageComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = new DrawioImageNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    shapeBuilder.boundaryPath(boundary.all());
+    if (props.nodeProps.shapeDrawio.imageWidth > 0) {
+      shapeBuilder.boundaryPath(boundary.all(), {
+        ...props.nodeProps,
+        fill: { enabled: false, color: 'transparent', type: 'solid' }
+      });
+
+      shapeBuilder.add(
+        svg.image({
+          x: props.node.bounds.x + 4,
+          y: props.node.bounds.y + 4,
+          width: props.nodeProps.shapeDrawio.imageWidth,
+          height: props.nodeProps.shapeDrawio.imageHeight,
+          href: props.nodeProps.fill.image.url
+        })
+      );
+    } else {
+      // TODO: Is this branch ever taken?
+      shapeBuilder.boundaryPath(boundary.all());
+    }
+
+    const w = props.nodeProps.shapeDrawio.imageWidth === 0 ? props.node.bounds.w : 0;
 
     const bounds = props.node.bounds;
 
@@ -24,7 +45,7 @@ class DrawioImageComponent extends BaseNodeComponent {
     let textBounds = bounds;
     if (textPosition === 'right') {
       textBounds = {
-        x: bounds.x + bounds.w,
+        x: bounds.x + w,
         y: bounds.y,
         w: 200,
         h: bounds.h,

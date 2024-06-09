@@ -94,7 +94,7 @@ const diagrams = [
     name: 'Drawio',
     document: async () => {
       const res = await fetch(
-        location.hash !== '' ? location.hash.slice(1) : '/diagrams/test6.drawio'
+        location.hash !== '' ? location.hash.slice(1) : '/diagrams/c4.drawio'
       );
       const text = await res.text();
 
