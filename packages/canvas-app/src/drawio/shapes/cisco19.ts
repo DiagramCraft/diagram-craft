@@ -1,7 +1,7 @@
 import { loadStencil } from '../stencilLoader';
 import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import { Style } from '../drawioReader';
+import { ShapeParser, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -36,8 +36,13 @@ export const parseCisco19Shapes = async (
   return new DiagramNode(id, style.shape!, bounds, diagram, layer, props);
 };
 
-export const registerCisco19Shapes = async (r: NodeDefinitionRegistry) => {
+export const registerCisco19Shapes = async (
+  r: NodeDefinitionRegistry,
+  shapeParser: Record<string, ShapeParser>
+) => {
   const stencils = await loadStencil('/stencils/cisco19.xml', 'Cisco19', '#005073', '#005073');
+
+  shapeParser['mxgraph.cisco19.rect'] = parseCisco19Shapes;
 
   registerStencil(r, '3g 4g Indicator', stencils);
   registerStencil(r, '6500 Vss', stencils);

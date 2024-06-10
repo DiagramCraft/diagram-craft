@@ -64,13 +64,13 @@ import { registerCitrixShapes } from './shapes/citrix';
 import { registerVeeamShapes } from './shapes/veeam';
 import { registerVeeam3dShapes } from './shapes/veeam3d';
 import { registerVeeam2dShapes } from './shapes/veeam2d';
-import { parseCisco19Shapes, registerCisco19Shapes } from './shapes/cisco19';
-import { parseAWS4Shapes, registerAWS4Shapes } from './shapes/aws4';
+import { registerCisco19Shapes } from './shapes/cisco19';
+import { registerAWS4Shapes } from './shapes/aws4';
 import { registerGCP2Shapes } from './shapes/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
-import { parseUMLShapes, registerUMLShapes } from './shapes/uml';
-import { parseAndroidShapes, registerAndroidShapes } from './shapes/android';
+import { registerUMLShapes } from './shapes/uml';
+import { registerAndroidShapes } from './shapes/android';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -92,7 +92,7 @@ class WorkQueue {
   }
 }
 
-type ShapeParser = (
+export type ShapeParser = (
   id: string,
   bounds: Box,
   props: NodeProps,
@@ -101,7 +101,7 @@ type ShapeParser = (
   layer: Layer
 ) => Promise<DiagramNode>;
 
-const shapes: Record<string, ShapeParser> = {
+const shapeParsers: Record<string, ShapeParser> = {
   'hexagon': parseHexagon,
   'step': parseStep,
   'cloud': parseCloud,
@@ -122,66 +122,57 @@ const shapes: Record<string, ShapeParser> = {
   'cube': parseCube,
   'line': parseLine,
   'ellipse': parseEllipse,
-  'mxgraph.cisco19': parseCisco19Shapes,
-  'mxgraph.aws4': parseAWS4Shapes,
-  'mxgraph.android': parseAndroidShapes,
   'table': parseTable,
-  'tableRow': parseTableRow,
-
-  // Note: module and component are the same
-  'module': parseUMLShapes,
-  'component': parseUMLShapes,
-  'umlLifeline': parseUMLShapes
+  'tableRow': parseTableRow
 };
 
 const getParser = (shape: string | undefined): ShapeParser | undefined =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shapes[shape as unknown as any] ??
+  shapeParsers[shape as unknown as any] ??
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shapes[shape?.split('.').slice(0, -1).join('.') as unknown as any];
+  shapeParsers[shape?.split('.').slice(0, -1).join('.') as unknown as any];
 
-type Loader = (registry: NodeDefinitionRegistry) => Promise<void>;
+type Loader = (
+  registry: NodeDefinitionRegistry,
+  parsers: Record<string, ShapeParser>
+) => Promise<void>;
 
-const loaders: Record<string, Loader> = {
-  'mxgraph.azure': registerAzureShapes,
-  'mxgraph.office.communications': registerOfficeCommunicationsShapes,
-  'mxgraph.office.concepts': registerOfficeConceptShapes,
-  'mxgraph.office.clouds': registerOfficeCloudsShapes,
-  'mxgraph.office.databases': registerOfficeDatabasesShapes,
-  'mxgraph.office.devices': registerOfficeDevicesShapes,
-  'mxgraph.office.security': registerOfficeSecurityShapes,
-  'mxgraph.office.servers': registerOfficeServersShapes,
-  'mxgraph.office.services': registerOfficeServicesShapes,
-  'mxgraph.office.sites': registerOfficeSitesShapes,
-  'mxgraph.office.users': registerOfficeUsersShapes,
-  'mxgraph.citrix': registerCitrixShapes,
-  'mxgraph.veeam2': registerVeeamShapes,
-  'mxgraph.veeam.2d': registerVeeam2dShapes,
-  'mxgraph.veeam.3d': registerVeeam3dShapes,
-  'mxgraph.cisco19': registerCisco19Shapes,
-  'mxgraph.aws4': registerAWS4Shapes,
-  'mxgraph.gcp2': registerGCP2Shapes,
-  'mxgraph.c4': registerC4Shapes,
-  'mxgraph.salesforce': registerSalesforceShapes,
-  'mxgraph.android': registerAndroidShapes,
-  'module': registerUMLShapes,
-  'folder': registerUMLShapes,
-  'umlActor': registerUMLShapes,
-  'umlBoundary': registerUMLShapes,
-  'umlEntity': registerUMLShapes,
-  'umlFrame': registerUMLShapes,
-  'umlDestroy': registerUMLShapes,
-  'umlControl': registerUMLShapes,
-  'umlLifeline': registerUMLShapes,
-  'providedRequiredInterface': registerUMLShapes,
-  'requiredInterface': registerUMLShapes
+const loaders: Array<[RegExp, Loader]> = [
+  [/^mxgraph\.azure/, registerAzureShapes],
+  [/^mxgraph\.office\.communications/, registerOfficeCommunicationsShapes],
+  [/^mxgraph\.office\.concepts/, registerOfficeConceptShapes],
+  [/^mxgraph\.office\.clouds/, registerOfficeCloudsShapes],
+  [/^mxgraph\.office\.databases/, registerOfficeDatabasesShapes],
+  [/^mxgraph\.office\.devices/, registerOfficeDevicesShapes],
+  [/^mxgraph\.office\.security/, registerOfficeSecurityShapes],
+  [/^mxgraph\.office\.servers/, registerOfficeServersShapes],
+  [/^mxgraph\.office\.services/, registerOfficeServicesShapes],
+  [/^mxgraph\.office\.sites/, registerOfficeSitesShapes],
+  [/^mxgraph\.office\.users/, registerOfficeUsersShapes],
+  [/^mxgraph\.citrix/, registerCitrixShapes],
+  [/^mxgraph\.veeam2/, registerVeeamShapes],
+  [/^mxgraph\.veeam\.2d/, registerVeeam2dShapes],
+  [/^mxgraph\.veeam\.3d/, registerVeeam3dShapes],
+  [/^mxgraph\.cisco19/, registerCisco19Shapes],
+  [/^mxgraph\.aws4/, registerAWS4Shapes],
+  [/^mxgraph\.gcp2/, registerGCP2Shapes],
+  [/^mxgraph\.c4/, registerC4Shapes],
+  [/^mxgraph\.salesforce/, registerSalesforceShapes],
+  [/^mxgraph\.android/, registerAndroidShapes],
+  [
+    /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
+    registerUMLShapes
+  ]
+];
+
+const getLoader = (shape: string | undefined): Loader | undefined => {
+  for (const [r, fn] of loaders) {
+    if (shape?.match(r)) {
+      return fn;
+    }
+  }
+  return undefined;
 };
-
-const getLoader = (shape: string | undefined): Loader | undefined =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  loaders[shape?.split('.').slice(0, -1).join('.') as unknown as any] ??
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  loaders[shape as unknown as any];
 
 const load = async (
   loader: Loader,
@@ -189,7 +180,7 @@ const load = async (
   alreadyLoaded: Set<Loader>
 ) => {
   if (alreadyLoaded.has(loader)) return;
-  await loader(registry);
+  await loader(registry, shapeParsers);
   alreadyLoaded.add(loader);
 };
 
@@ -883,8 +874,15 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           ) {
             // TODO: This is all a bit duplication - we should refactor this
             let bgNode: DiagramNode;
-            if (style.shape! in shapes) {
-              bgNode = await shapes[style.shape!](newid(), bounds, props, style, diagram, layer);
+            if (style.shape! in shapeParsers) {
+              bgNode = await shapeParsers[style.shape!](
+                newid(),
+                bounds,
+                props,
+                style,
+                diagram,
+                layer
+              );
             } else if (style.shape?.startsWith('mxgraph.')) {
               const registry = diagram.document.nodeDefinitions;
 
@@ -934,8 +932,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         nodes.push(await parseImage(id, bounds, props, style, diagram, layer));
       } else if ('line' in style) {
         nodes.push(await parseLine(id, bounds, props, style, diagram, layer));
-      } else if (style.shape! in shapes) {
-        nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
+      } else if (style.shape! in shapeParsers) {
+        nodes.push(await shapeParsers[style.shape!](id, bounds, props, style, diagram, layer));
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
         const registry = diagram.document.nodeDefinitions;
 

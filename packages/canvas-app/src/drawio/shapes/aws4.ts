@@ -1,7 +1,7 @@
 import { loadStencil } from '../stencilLoader';
 import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import { Style } from '../drawioReader';
+import { ShapeParser, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -96,8 +96,20 @@ export const parseAWS4Shapes = async (
   return new DiagramNode(id, style.shape!, bounds, diagram, layer, props);
 };
 
-export const registerAWS4Shapes = async (r: NodeDefinitionRegistry) => {
+export const registerAWS4Shapes = async (
+  r: NodeDefinitionRegistry,
+  shapeParsers: Record<string, ShapeParser>
+) => {
   const stencils = await loadStencil('/stencils/aws4.xml', 'AWS4', '#005073', '#005073');
+
+  shapeParsers['mxgraph.aws4.resourceIcon'] = parseAWS4Shapes;
+  shapeParsers['mxgraph.aws4.group'] = parseAWS4Shapes;
+
+  shapeParsers['mxgraph.aws4.illustration_desktop'] = parseAWS4Shapes;
+  shapeParsers['mxgraph.aws4.illustration_devices'] = parseAWS4Shapes;
+  shapeParsers['mxgraph.aws4.illustration_notification'] = parseAWS4Shapes;
+  shapeParsers['mxgraph.aws4.illustration_office_building'] = parseAWS4Shapes;
+  shapeParsers['mxgraph.aws4.illustration_users'] = parseAWS4Shapes;
 
   // Register some node definitions that are needed for AWS4 shapes
   r.register(

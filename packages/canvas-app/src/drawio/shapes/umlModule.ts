@@ -78,8 +78,8 @@ const JettyHeight = {
 // NodeDefinition and Shape *****************************************************
 
 export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
-  constructor() {
-    super('module', 'UML Module', UmlModuleNodeDefinition.Shape);
+  constructor(id = 'module', name = 'UML Module') {
+    super(id, name, UmlModuleNodeDefinition.Shape);
   }
 
   static Shape = class extends BaseNodeComponent<UmlModuleNodeDefinition> {

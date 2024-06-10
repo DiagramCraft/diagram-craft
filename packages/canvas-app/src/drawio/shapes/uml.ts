@@ -1,7 +1,7 @@
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
-import { Style } from '../drawioReader';
+import { ShapeParser, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
@@ -26,7 +26,7 @@ export const parseUMLShapes = async (
   diagram: Diagram,
   layer: Layer
 ) => {
-  if (style.shape === 'module') {
+  if (style.shape === 'module' || style.shape === 'component') {
     props.shapeUmlModule = {
       jettyWidth: parseNum(style.jettyWidth, 20),
       jettyHeight: parseNum(style.jettyHeight, 10)
@@ -318,15 +318,25 @@ class UmlLifeline extends SimpleShapeNodeDefinition {
   }
 }
 
-export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
+export const registerUMLShapes = async (
+  r: NodeDefinitionRegistry,
+  shapeParser: Record<string, ShapeParser>
+) => {
   r.register(new UmlActor(), { hidden: true });
   r.register(new UmlEntity(), { hidden: true });
   r.register(new UmlControl(), { hidden: true });
   r.register(new UmlDestroy(), { hidden: true });
+
   r.register(new UmlLifeline(r), { hidden: true });
+  shapeParser['umlLifeline'] = parseUMLShapes;
+
   r.register(new UmlBoundary(), { hidden: true });
   r.register(new UmlFrame(), { hidden: true });
+
   r.register(new UmlModuleNodeDefinition(), { hidden: true });
+  shapeParser['module'] = parseUMLShapes;
+  shapeParser['component'] = parseUMLShapes;
+
   r.register(new Folder(), { hidden: true });
   r.register(new ProvidedRequiredInterface(), { hidden: true });
   r.register(new RequiredInterface(), { hidden: true });

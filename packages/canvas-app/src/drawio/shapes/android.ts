@@ -10,7 +10,7 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { RoundedRectComponent } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import { Box } from '@diagram-craft/geometry/box';
-import { Style } from '../drawioReader';
+import { ShapeParser, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -334,13 +334,24 @@ export const parseAndroidShapes = async (
   return new DiagramNode(id, style.shape!, bounds, diagram, layer, props);
 };
 
-export const registerAndroidShapes = async (r: NodeDefinitionRegistry) => {
+export const registerAndroidShapes = async (
+  r: NodeDefinitionRegistry,
+  shapeParsers: Record<string, ShapeParser>
+) => {
   const stencils = await loadStencil(
     '/stencils/android/android.xml',
     'Android',
     '#00BEF2',
     'white'
   );
+
+  shapeParsers['mxgraph.android.progressBar'] = parseAndroidShapes;
+  shapeParsers['mxgraph.android.quickscroll2'] = parseAndroidShapes;
+  shapeParsers['mxgraph.android.quickscroll3'] = parseAndroidShapes;
+  shapeParsers['mxgraph.android.progressScrubber'] = parseAndroidShapes;
+  shapeParsers['mxgraph.android.progressScrubberDisabled'] = parseAndroidShapes;
+  shapeParsers['mxgraph.android.progressScrubberPressed'] = parseAndroidShapes;
+  shapeParsers['mxgraph.android.progressScrubberFocused'] = parseAndroidShapes;
 
   r.register(new Spinner2NodeDefinition(), { hidden: true });
   r.register(new AndroidRectNodeDefinition(), { hidden: true });
