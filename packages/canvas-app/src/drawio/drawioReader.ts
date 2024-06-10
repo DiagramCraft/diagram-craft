@@ -40,6 +40,7 @@ import {
   parseRhombus,
   parseRoundedRect,
   parseStep,
+  parseSwimlane,
   parseTable,
   parseTableRow,
   parseTransparent,
@@ -406,6 +407,11 @@ const attachLabelNode = (
   const xOffset = (xNum($geometry, 'x', 0) + 1) / 2;
 
   const path = edge.path();
+  if (path.length() === 0) {
+    console.error('Path has zero length', path);
+    return;
+  }
+
   const clippedPath = clipPath(path, edge, undefined, undefined)!;
 
   // Since drawio uses a position on the clipped path, we convert the offset to a
@@ -863,6 +869,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           const parser = getParser(style.shape!)!;
           node = await parser(id, bounds, props, style, diagram, layer);
           nodes.push(node);
+          // TODO: Support more than stackLayout
+        } else if ('swimlane' in style && style.childLayout === 'stackLayout') {
+          node = await parseSwimlane(id, bounds, props, style, diagram, layer);
+          nodes.push(node);
         } else {
           node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
           nodes.push(node);
@@ -922,6 +932,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         nodes.push(await parseTriangle(id, bounds, props, style, diagram, layer));
       } else if ('image' in style) {
         nodes.push(await parseImage(id, bounds, props, style, diagram, layer));
+      } else if ('line' in style) {
+        nodes.push(await parseLine(id, bounds, props, style, diagram, layer));
       } else if (style.shape! in shapes) {
         nodes.push(await shapes[style.shape!](id, bounds, props, style, diagram, layer));
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {

@@ -36,6 +36,7 @@ import {
   TableRowNodeDefinition
 } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { DrawioTransparentNodeDefinition } from './drawio/DrawioTransparentShape.nodeType';
+import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 
 export const defaultNodeRegistry = () => {
   const dest = new NodeDefinitionRegistry();
@@ -70,6 +71,7 @@ export const defaultNodeRegistry = () => {
   dest.register(new CubeNodeDefinition());
   dest.register(new GenericPathNodeDefinition(), { hidden: true });
   dest.register(new ContainerNodeDefinition());
+  dest.register(new SwimlaneNodeDefinition(), { hidden: true });
   dest.register(new TableNodeDefinition(), { hidden: true });
   dest.register(new TableRowNodeDefinition(), { hidden: true });
   dest.register(new DrawioShapeNodeDefinition(), { hidden: true });

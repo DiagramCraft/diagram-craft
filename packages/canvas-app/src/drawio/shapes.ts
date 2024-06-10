@@ -77,6 +77,15 @@ export const parseTable = makeShape('table', (style, props) => {
   };
 });
 
+export const parseSwimlane = makeShape('swimlane', (style, props) => {
+  props.shapeSwimlane = {
+    title: true,
+    titleBorder: true,
+    titleSize: parseNum(style.startSize, 20),
+    horizontalBorder: false
+  };
+});
+
 export const parseTableRow = makeShape('tableRow');
 
 export const parseRhombus = makeShape('diamond');
