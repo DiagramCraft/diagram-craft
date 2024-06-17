@@ -46,6 +46,19 @@ export const TransformPanel = (props: Props) => {
 
   const aspectRatio = transformedBounds.w / transformedBounds.h;
 
+  const rotatable = diagram.selectionState.nodes.every(
+    p => p.renderProps.capabilities.rotatable !== false
+  );
+  const resizeableVertically = diagram.selectionState.nodes.every(
+    p => p.renderProps.capabilities.resizable.vertical !== false
+  );
+  const resizeableHorizontally = diagram.selectionState.nodes.every(
+    p => p.renderProps.capabilities.resizable.horizontal !== false
+  );
+  const moveable = diagram.selectionState.nodes.every(
+    p => p.renderProps.capabilities.moveable !== false
+  );
+
   useEffect(() => {
     const callback = () => {
       const selection = diagram.selectionState;
@@ -124,6 +137,7 @@ export const TransformPanel = (props: Props) => {
                 label={'x'}
                 value={round(transformedBounds.x)}
                 defaultUnit={'px'}
+                disabled={!moveable}
                 min={0}
                 onChange={ev => updateBounds({ ...transformedBounds, x: ev ?? 0 })}
               />
@@ -133,6 +147,7 @@ export const TransformPanel = (props: Props) => {
                 label={'y'}
                 value={round(transformedBounds.y)}
                 defaultUnit={'px'}
+                disabled={!moveable}
                 min={0}
                 onChange={ev => updateBounds({ ...transformedBounds, y: ev ?? 0 })}
               />
@@ -143,6 +158,7 @@ export const TransformPanel = (props: Props) => {
                 label={'w'}
                 defaultUnit={'px'}
                 min={0}
+                disabled={!resizeableHorizontally}
                 onChange={ev => {
                   updateBounds({
                     ...transformedBounds,
@@ -158,6 +174,7 @@ export const TransformPanel = (props: Props) => {
                 label={'h'}
                 defaultUnit={'px'}
                 min={0}
+                disabled={!resizeableVertically}
                 onChange={ev => {
                   updateBounds({
                     ...transformedBounds,
@@ -174,6 +191,7 @@ export const TransformPanel = (props: Props) => {
                 min={-360}
                 max={360}
                 defaultUnit={'°'}
+                disabled={!rotatable}
                 onChange={ev => {
                   const number = ev ?? 0;
                   updateBounds({

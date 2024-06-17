@@ -4,6 +4,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 declare global {
   interface ActionMap {
@@ -62,6 +63,7 @@ export class DistributeAction extends AbstractSelectionAction {
 
     let currentPosition = min + Math.abs(minimal.bounds[size] + difference);
     for (const e of elementsInOrder.slice(1)) {
+      if (isNode(e) && e.renderProps.capabilities.moveable === false) continue;
       if (e.bounds[size] >= 0) {
         e.setBounds(
           orientation === 'y'

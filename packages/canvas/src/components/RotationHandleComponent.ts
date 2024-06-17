@@ -21,6 +21,10 @@ export class RotationHandleComponent extends Component<Props> {
       y: bounds.y
     });
 
+    if (selection.nodes.some(p => p.renderProps.capabilities.rotatable === false)) {
+      return svg.g({});
+    }
+
     return svg.g(
       {},
       svg.line({

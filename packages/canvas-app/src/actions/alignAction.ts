@@ -4,6 +4,7 @@ import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 declare global {
   interface ActionMap {
@@ -69,6 +70,7 @@ export class AlignAction extends AbstractSelectionAction {
   // y === Y           => y = Y           => y = Y - h * offset (offset = 0)
   private alignY(y: number, offset: number, uow: UnitOfWork) {
     this.diagram.selectionState.elements.forEach(e => {
+      if (isNode(e) && e.renderProps.capabilities.moveable === false) return;
       e.setBounds({ ...e.bounds, y: y - e.bounds.h * offset }, uow);
     });
   }
@@ -78,6 +80,7 @@ export class AlignAction extends AbstractSelectionAction {
   // x === X           => x = X           => x = X - w * offset (offset = 0)
   private alignX(x: number, offset: number, uow: UnitOfWork) {
     this.diagram.selectionState.elements.forEach(e => {
+      if (isNode(e) && e.renderProps.capabilities.moveable === false) return;
       e.setBounds({ ...e.bounds, x: x - e.bounds.w * offset }, uow);
     });
   }

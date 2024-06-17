@@ -199,9 +199,11 @@ const parseShape = (shape: string | undefined) => {
 
   if (getLoader(shape)) return undefined;
 
+  // TODO: Are these still needed
   if (shape === 'mxgraph.basic.rect') return undefined;
   if (shape === 'circle3') return undefined;
   if (shape === 'flexArrow') return undefined;
+
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {

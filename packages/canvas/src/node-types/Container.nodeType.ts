@@ -19,7 +19,6 @@ declare global {
     shapeContainer?: {
       containerResize?: 'none' | 'shrink' | 'grow' | 'both';
       childResize?: 'fixed' | 'scale' | 'fill';
-      canResize?: 'none' | 'width' | 'height' | 'both';
       layout?: 'manual' | 'horizontal' | 'vertical';
       gap?: number;
       gapType?: 'between' | 'around';
@@ -30,7 +29,6 @@ declare global {
 registerNodeDefaults('shapeContainer', {
   containerResize: 'none',
   childResize: 'fixed',
-  canResize: 'none',
   layout: 'manual',
   gap: 0,
   gapType: 'between'
@@ -175,19 +173,9 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
     const isScaling = transforms.find(t => t instanceof Scale);
 
-    let newWidth = newBounds.w;
-    let newHeight = newBounds.h;
+    const newWidth = newBounds.w;
+    const newHeight = newBounds.h;
     const newTransforms: Array<Transform> = [...transforms];
-
-    const canResize = node.renderProps.shapeContainer.canResize;
-
-    if (canResize !== 'width' && canResize !== 'both' && newBounds.w !== previousBounds.w) {
-      newWidth = previousBounds.w;
-    }
-
-    if (canResize !== 'height' && canResize !== 'both' && newBounds.h !== previousBounds.h) {
-      newHeight = previousBounds.h;
-    }
 
     if (newWidth !== newBounds.w || newHeight !== newBounds.h) {
       node.setBounds({ ...newBounds, w: newWidth, h: newHeight }, uow);
@@ -316,25 +304,6 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [
-      {
-        id: 'canResize',
-        type: 'select',
-        label: 'Resizeable',
-        value: node.renderProps.shapeContainer.canResize,
-        options: [
-          { value: 'none', label: 'None' },
-          { value: 'width', label: 'Width' },
-          { value: 'height', label: 'Height' },
-          { value: 'both', label: 'Both' }
-        ],
-        onChange: (value: string, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeContainer ??= {};
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props.shapeContainer.canResize = value as any;
-          }, uow);
-        }
-      },
       {
         id: 'containerResize',
         type: 'select',

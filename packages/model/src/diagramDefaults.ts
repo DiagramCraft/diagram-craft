@@ -122,6 +122,16 @@ const _nodeDefaults: Omit<
     sketchStrength: 0.1,
     rounding: false,
     roundingAmount: 20
+  },
+
+  // TODO: Honor these properties even if part of group
+  capabilities: {
+    resizable: {
+      vertical: true,
+      horizontal: true
+    },
+    moveable: true,
+    rotatable: true
   }
 };
 

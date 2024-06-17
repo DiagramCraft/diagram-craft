@@ -199,6 +199,15 @@ declare global {
     labelForEdgeId?: string;
     highlight?: string[];
 
+    capabilities?: {
+      resizable?: {
+        vertical?: boolean;
+        horizontal?: boolean;
+      };
+      moveable?: boolean;
+      rotatable?: boolean;
+    };
+
     effects?: {
       reflection?: boolean;
       reflectionStrength?: number;

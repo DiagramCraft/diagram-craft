@@ -23,16 +23,19 @@ import { TablePropertiesPanel } from './TablePropertiesPanel';
 import { TableStrokePanel } from './TableStrokePanel';
 import { TableDimensionsPanel } from './TableDimensionsPanel';
 import { TableCellDimensionsPanel } from './TableCellDimensionsPanel';
+import { NodeAdvancedPropertiesPanel } from '../NodeAdvancedPropertiesPanel';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
-const TABS: Record<Type, string[]> = {
+type TabType = 'diagram' | 'style' | 'table' | 'cell' | 'text' | 'arrange' | 'advanced';
+
+const TABS: Record<Type, TabType[]> = {
   'diagram': ['diagram'],
-  'node': ['style', 'text', 'arrange'],
+  'node': ['style', 'text', 'arrange', 'advanced'],
   'edge': ['style'],
   'mixed': ['style', 'text', 'arrange'],
   'single-label-node': ['style', 'text'],
-  'table': ['table', 'arrange'],
+  'table': ['table', 'arrange', 'advanced'],
   'table-cell': ['table', 'cell', 'text']
 };
 
@@ -40,7 +43,7 @@ export const ObjectToolWindow = () => {
   const diagram = useDiagram();
 
   const [type, setType] = useState<Type>('diagram');
-  const [tab, setTab] = useState('main');
+  const [tab, setTab] = useState<TabType>('style');
   const [edgeSupportsFill, setEdgeSupportsFill] = useState(false);
 
   useEffect(() => {
@@ -84,7 +87,7 @@ export const ObjectToolWindow = () => {
   return (
     <>
       <div className={'cmp-tool-tabs'}>
-        <Tabs.Root value={tab} onValueChange={e => setTab(e)}>
+        <Tabs.Root value={tab} onValueChange={e => setTab(e as TabType)}>
           <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: tabs.length <= 1 })}>
             {tabs.includes('diagram') && (
               <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'diagram'}>
@@ -114,6 +117,11 @@ export const ObjectToolWindow = () => {
             {tabs.includes('arrange') && (
               <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'arrange'}>
                 Arrange
+              </Tabs.Trigger>
+            )}
+            {tabs.includes('advanced') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'advanced'}>
+                Advanced
               </Tabs.Trigger>
             )}
           </Tabs.List>
@@ -204,6 +212,16 @@ export const ObjectToolWindow = () => {
                   <CustomPropertiesPanel />
                 </>
               )}
+            </Accordion.Root>
+          </Tabs.Content>
+
+          <Tabs.Content value={'advanced'}>
+            <Accordion.Root
+              className="cmp-accordion"
+              type="multiple"
+              defaultValue={['advanced-props']}
+            >
+              <NodeAdvancedPropertiesPanel />
             </Accordion.Root>
           </Tabs.Content>
         </Tabs.Root>

@@ -246,6 +246,10 @@
     &:focus {
       outline: none;
     }
+    &:disabled {
+      color: var(--slate-8);
+    }
+
   }
 
   > input:focus + button,
@@ -276,6 +280,9 @@
     height: 12px;
     border-bottom: 1px solid var(--blue-6);
     border-left: 1px solid var(--blue-6);
+    &:disabled {
+      color: var(--slate-8);
+    }
   }
   .cmp-number-input__btn-down {
     position: absolute;
@@ -283,6 +290,9 @@
     bottom: 0;
     height: 11px;
     border-left: 1px solid var(--blue-6);
+    &:disabled {
+      color: var(--slate-8);
+    }
   }
 
   &::after {
@@ -823,6 +833,11 @@
   grid-template-columns: 4rem 2fr;
   row-gap: 0.5rem;
   align-items: center;
+
+  &.cmp-labeled-table--wide {
+    grid-template-columns: 1fr 4rem !important;
+  }
+
   .cmp-labeled-table__row {
     grid-column: 1/3;
     margin-bottom: -2px;

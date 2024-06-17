@@ -16,6 +16,7 @@ const AdjustButton = (props: {
   className: string;
   children: React.ReactNode;
   onClick: () => void;
+  disabled?: boolean;
 }) => {
   const btnRef = useRef<HTMLButtonElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,7 +51,7 @@ const AdjustButton = (props: {
   }, [btnRef, props, props.onClick]);
 
   return (
-    <button ref={btnRef} className={props.className}>
+    <button ref={btnRef} className={props.className} disabled={props.disabled}>
       {props.children}
     </button>
   );
@@ -110,6 +111,7 @@ export const NumberInput = (props: Props) => {
         placeholder={props.hasMultipleValues ? '···' : undefined}
         type={'text'}
         value={props.hasMultipleValues ? '' : currentValue}
+        disabled={props.disabled}
         onFocus={() => {
           hasFocus.current = true;
         }}
@@ -139,12 +141,14 @@ export const NumberInput = (props: Props) => {
       />
       <AdjustButton
         className={'cmp-number-input__btn-up'}
+        disabled={props.disabled}
         onClick={() => adjust(props.step ? Number(props.step) : 1)}
       >
         <TbChevronUp size={'0.7rem'} />
       </AdjustButton>
       <AdjustButton
         className={'cmp-number-input__btn-down'}
+        disabled={props.disabled}
         onClick={() => adjust(props.step ? -1 * Number(props.step) : -1)}
       >
         <TbChevronDown size={'0.7rem'} />

@@ -6,6 +6,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { VNode } from '../component/vdom';
 
 type Props = {
   diagram: Diagram;
@@ -40,6 +41,13 @@ export class ResizeHandlesComponent extends Component<Props> {
     const selection = diagram.selectionState;
     const bounds = selection.bounds;
 
+    const resizeableVertically = selection.nodes.every(
+      p => p.renderProps.capabilities.resizable.vertical !== false
+    );
+    const resizeableHorizontally = selection.nodes.every(
+      p => p.renderProps.capabilities.resizable.horizontal !== false
+    );
+
     const points: Point[] = Box.corners({ ...bounds, r: 0 });
 
     const north = Point.midpoint(points[0], points[1]);
@@ -55,16 +63,31 @@ export class ResizeHandlesComponent extends Component<Props> {
       e.stopPropagation();
     };
 
-    return svg.g(
-      {},
-      this.makeHandle(points[0], 'nw', makeDragInitiation),
-      this.makeHandle(points[1], 'ne', makeDragInitiation),
-      this.makeHandle(points[2], 'se', makeDragInitiation),
-      this.makeHandle(points[3], 'sw', makeDragInitiation),
-      this.makeHandle(north, 'n', makeDragInitiation),
-      this.makeHandle(east, 'e', makeDragInitiation),
-      this.makeHandle(south, 's', makeDragInitiation),
-      this.makeHandle(west, 'w', makeDragInitiation)
-    );
+    const handles: VNode[] = [];
+
+    if (resizeableVertically && resizeableHorizontally) {
+      handles.push(
+        this.makeHandle(points[0], 'nw', makeDragInitiation),
+        this.makeHandle(points[1], 'ne', makeDragInitiation),
+        this.makeHandle(points[2], 'se', makeDragInitiation),
+        this.makeHandle(points[3], 'sw', makeDragInitiation)
+      );
+    }
+
+    if (resizeableVertically) {
+      handles.push(
+        this.makeHandle(south, 's', makeDragInitiation),
+        this.makeHandle(north, 'n', makeDragInitiation)
+      );
+    }
+
+    if (resizeableHorizontally) {
+      handles.push(
+        this.makeHandle(west, 'w', makeDragInitiation),
+        this.makeHandle(east, 'e', makeDragInitiation)
+      );
+    }
+
+    return svg.g({}, ...handles);
   }
 }
