@@ -1,26 +1,26 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { Extent } from '@diagram-craft/geometry/extent';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
-
-const stencilDimensions = new Map<string, Extent>();
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = 'mxgraph.salesforce.' + stencilNameToType(name);
-
-  stencilDimensions.set(stencil.node.type, stencil.dimensions!);
-  registry.register(stencil.node, stencil);
+  registry.register(
+    new DrawioShapeNodeDefinition(`mxgraph.salesforce.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 export const registerSalesforceShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil(
+  const stencils = await loadDrawioStencils(
     '/stencils/salesforce.xml',
     'Salesforce',
     '#005073',

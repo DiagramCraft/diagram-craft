@@ -23,9 +23,9 @@ import {
   assertVAlign
 } from '@diagram-craft/model/diagramProps';
 import { xNum } from './utils';
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { coalesce } from '@diagram-craft/utils/strings';
+import { DrawioStencil } from './drawioStencilLoader';
 
 declare global {
   interface NodeProps {
@@ -61,10 +61,10 @@ const isShapeElement = ($el: Element) =>
   $el.nodeName === 'path' ||
   $el.nodeName === 'roundrect';
 
-const parse = (def: DiagramNode, stencil: Stencil): Element | undefined => {
+const parse = (def: DiagramNode, stencil: DrawioStencil | undefined): Element | undefined => {
   if (def.cache.has('element')) return def.cache.get('element') as Element;
 
-  const data = coalesce(def.renderProps.shapeDrawio.shape, stencil.props?.shapeDrawio?.shape);
+  const data = coalesce(def.renderProps.shapeDrawio.shape, stencil?.props?.shapeDrawio?.shape);
   if (!data) {
     console.warn(`Cannot find shape for ${def.type} / ${def.name}`);
     return undefined;
@@ -157,12 +157,16 @@ const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
 };
 
 export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
-  constructor() {
-    super('drawio', 'Drawio Shape', DrawioShapeComponent);
+  constructor(
+    key: string,
+    name: string,
+    public readonly stencil?: DrawioStencil
+  ) {
+    super(key, name, DrawioShapeComponent);
   }
 
   getDefaultConfig(node: DiagramNode): { size: Extent } {
-    const shape = parse(node, node.diagram.document.nodeDefinitions.getRegistration(this.type));
+    const shape = parse(node, this.stencil);
 
     if (!shape) return { size: { w: 100, h: 100 } };
 
@@ -175,7 +179,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getDefaultAspectRatio(def: DiagramNode) {
-    const shape = parse(def, def.diagram.document.nodeDefinitions.getRegistration(this.type));
+    const shape = parse(def, this.stencil);
 
     if (!shape) return 1;
 
@@ -183,7 +187,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const shape = parse(def, def.diagram.document.nodeDefinitions.getRegistration(this.type));
+    const shape = parse(def, this.stencil);
 
     if (!shape) return new PathBuilder(unitCoordinateSystem(def.bounds));
 
@@ -223,7 +227,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
 
   // TODO: This needs to consider rotation
   getAnchors(def: DiagramNode) {
-    const shape = parse(def, def.diagram.document.nodeDefinitions.getRegistration(this.type));
+    const shape = parse(def, this.stencil);
 
     if (!shape) return super.getAnchors(def);
 
@@ -255,10 +259,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
     const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
 
-    const $shape = parse(
-      props.node,
-      props.node.diagram.document.nodeDefinitions.getRegistration(this.def.type)
-    );
+    const $shape = parse(props.node, (this.def as unknown as DrawioShapeNodeDefinition).stencil);
 
     if (!$shape) return;
 

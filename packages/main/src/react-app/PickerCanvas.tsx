@@ -1,6 +1,6 @@
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
 
@@ -76,7 +76,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         height={props.height ?? 40}
         onClick={props.onClick}
         diagram={diagram}
-        viewBox={`0 0 ${props.diagramWidth ?? props.width} ${props.diagramHeight ?? props.height}`}
+        viewBox={`${props.diagram.viewBox.svgViewboxString}`}
       />
     </div>
   );

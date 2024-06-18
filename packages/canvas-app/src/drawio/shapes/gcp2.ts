@@ -1,6 +1,10 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
@@ -11,18 +15,18 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { cloneAsWriteable } from '@diagram-craft/utils/types';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = 'mxgraph.gcp2.' + stencilNameToType(name);
-
-  registry.register(stencil.node, stencil);
+  registry.register(
+    new DrawioShapeNodeDefinition(`mxgraph.gcp2.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 const NOTCH = 8;
@@ -78,9 +82,9 @@ class DoubleRectNodeDefinition extends ShapeNodeDefinition {
 }
 
 export const registerGCP2Shapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/gcp2.xml', 'GCP', '#00BEF2', 'white');
+  const stencils = await loadDrawioStencils('/stencils/gcp2.xml', 'GCP', '#00BEF2', 'white');
 
-  r.register(new DoubleRectNodeDefinition(), { hidden: true });
+  r.register(new DoubleRectNodeDefinition());
 
   registerStencil(r, 'google cloud platform', stencils);
   registerStencil(r, 'gateway', stencils);

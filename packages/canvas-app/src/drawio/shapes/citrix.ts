@@ -1,22 +1,26 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = `mxgraph.citrix.${stencilNameToType(name)}`;
-
-  registry.register(stencil.node, stencil);
+  registry.register(
+    new DrawioShapeNodeDefinition(`mxgraph.citrix.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 export const registerCitrixShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/citrix.xml', 'Citrix', 'black', 'white');
+  const stencils = await loadDrawioStencils('/stencils/citrix.xml', 'Citrix');
 
   registerStencil(r, '1U 2U Server', stencils);
   registerStencil(r, 'Access Card', stencils);

@@ -1,26 +1,34 @@
 import { useEffect, useState } from 'react';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
-import { useRedraw } from './react-app/useRedraw';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
-import { loadStencil } from '@diagram-craft/canvas-app/drawio/stencilLoader';
+import { StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
+import { useRedraw } from './react-app/useRedraw';
+import {
+  toRegularStencil,
+  loadDrawioStencils
+} from '@diagram-craft/canvas-app/drawio/drawioStencilLoader';
 
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
+  // TODO: Allow loading stencils from variety of sources
   const [stencils, setStencils] = useState<Array<StencilPackage>>(
     props.stencils
-      .map(s => ({ name: s.name, stencils: [] }))
+      .map(s => ({ id: s.name, name: s.name, stencils: [] }))
       .sort((a, b) => a.name.localeCompare(b.name))
   );
   const redraw = useRedraw();
 
   useEffect(() => {
     for (const def of props.stencils) {
-      loadStencil(def.url, def.name, def.foreground, def.background).then(newStencils => {
+      loadDrawioStencils(def.url, def.name, def.foreground, def.background).then(drawioStencils => {
         setStencils(arr =>
-          arr.map(a => (a.name === def.name ? { name: def.name, stencils: newStencils } : a))
+          arr.map(a =>
+            a.name === def.name
+              ? { id: def.name, name: def.name, stencils: drawioStencils.map(toRegularStencil) }
+              : a
+          )
         );
       });
     }
@@ -39,10 +47,8 @@ export const AppLoader = (props: Props) => {
     if (!doc) return;
 
     stencils.forEach(pkg => {
-      doc.nodeDefinitions.addGroup(pkg.name);
-      pkg.stencils.forEach(stencil => {
-        doc.nodeDefinitions.register(stencil.node, stencil);
-      });
+      doc.nodeDefinitions.stencilRegistry.register(pkg);
+      doc.nodeDefinitions.stencilRegistry.activate(pkg.id);
     });
 
     // TODO: Can we avoid explicit redraw here, and instead have a listener on the nodeDefinition

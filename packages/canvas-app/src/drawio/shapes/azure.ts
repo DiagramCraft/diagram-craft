@@ -1,22 +1,26 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = 'mxgraph.azure.' + stencilNameToType(name);
-
-  registry.register(stencil.node, stencil);
+  registry.register(
+    new DrawioShapeNodeDefinition(`mxgraph.azure.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 export const registerAzureShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/azure.xml', 'Azure', '#00BEF2', 'white');
+  const stencils = await loadDrawioStencils('/stencils/azure.xml', 'Azure', '#00BEF2', 'white');
 
   registerStencil(r, 'Access Control', stencils);
   registerStencil(r, 'Automation', stencils);

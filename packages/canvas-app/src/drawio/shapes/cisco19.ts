@@ -1,23 +1,27 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { ShapeParser, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = 'mxgraph.cisco19.' + stencilNameToType(name);
-
-  registry.register(stencil.node, stencil);
+  registry.register(
+    new DrawioShapeNodeDefinition(`mxgraph.cisco19.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 export const parseCisco19Shapes = async (
@@ -40,7 +44,12 @@ export const registerCisco19Shapes = async (
   r: NodeDefinitionRegistry,
   shapeParser: Record<string, ShapeParser>
 ) => {
-  const stencils = await loadStencil('/stencils/cisco19.xml', 'Cisco19', '#005073', '#005073');
+  const stencils = await loadDrawioStencils(
+    '/stencils/cisco19.xml',
+    'Cisco19',
+    '#005073',
+    '#005073'
+  );
 
   shapeParser['mxgraph.cisco19.rect'] = parseCisco19Shapes;
 

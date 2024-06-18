@@ -6,12 +6,10 @@ import { assert } from '@diagram-craft/utils/assert';
 import { useCallback } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { newid } from '@diagram-craft/utils/id';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export const NodeTypePopup = (props: Props) => {
@@ -25,9 +23,8 @@ export const NodeTypePopup = (props: Props) => {
       const nodePosition = Point.subtract(diagramPosition, Point.of(dimension / 2, dimension / 2));
 
       UnitOfWork.execute(diagram, uow => {
-        const node = new DiagramNode(
-          newid(),
-          registration.node.type,
+        const node = registration.node(diagram);
+        node.setBounds(
           {
             x: nodePosition.x,
             y: nodePosition.y,
@@ -35,9 +32,9 @@ export const NodeTypePopup = (props: Props) => {
             h: dimension,
             r: 0
           },
-          diagram,
-          diagram.layers.active
+          uow
         );
+
         diagram.layers.active.addElement(node, uow);
 
         const edge = diagram.edgeLookup.get(props.edgeId);
@@ -60,42 +57,28 @@ export const NodeTypePopup = (props: Props) => {
     diagram.selectionState.clear();
   }, [diagram, props.edgeId]);
 
-  const size = 20;
+  const size = 30;
 
   // TODO: Support aspect ratio
 
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
-  const nodes = diagram.document.nodeDefinitions.getForGroup(undefined);
-  const diagrams = nodes
-    .filter(r => !r.hidden)
-    .map(r => r.node)
-    .map(n => {
-      const dest = new Diagram(
-        n.type,
-        n.type,
-        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
-      );
-      dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
-      dest.layers.active.addElement(
-        new DiagramNode(
-          n.type,
-          n.type,
-          {
-            x: 1,
-            y: 1,
-            w: size - 2,
-            h: size - 2,
-            r: 0
-          },
-          dest,
-          dest.layers.active,
-          n.getDefaultProps('picker')
-        ),
-        UnitOfWork.immediate(dest)
-      );
-      return dest;
-    });
+  const nodes = diagram.document.nodeDefinitions.stencilRegistry.get('default')!.stencils;
+  const diagrams = nodes.map(n => {
+    const dest = new Diagram(
+      n.id,
+      n.name ?? n.id,
+      new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+    );
+    dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
+
+    const node = n.node(dest);
+    dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+    dest.viewBox.offset = { x: -5, y: -5 };
+    dest.layers.active.addElement(node, UnitOfWork.immediate(dest));
+
+    return dest;
+  });
 
   return (
     <Popover.Root
@@ -120,7 +103,7 @@ export const NodeTypePopup = (props: Props) => {
         <Popover.Content
           className="cmp-popover cmp-node-type-popup"
           sideOffset={5}
-          style={{ maxWidth: '8rem' }}
+          style={{ maxWidth: '13rem' }}
         >
           <div
             className={'cmp-object-picker'}
@@ -131,6 +114,8 @@ export const NodeTypePopup = (props: Props) => {
                 <PickerCanvas
                   width={size}
                   height={size}
+                  diagramWidth={d.viewBox.dimensions.w}
+                  diagramHeight={d.viewBox.dimensions.h}
                   diagram={d}
                   onClick={() => addNode(nodes[idx])}
                 />

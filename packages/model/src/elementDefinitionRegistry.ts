@@ -7,9 +7,10 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
-import { unique } from '@diagram-craft/utils/array';
 import { Anchor } from './types';
 import { Box } from '@diagram-craft/geometry/box';
+import { Diagram } from './diagram';
+import { newid } from '@diagram-craft/utils/id';
 
 export type NodeCapability = 'children' | 'fill' | 'select';
 
@@ -83,41 +84,6 @@ export interface NodeDefinition {
   requestFocus(node: DiagramNode): void;
 }
 
-export type StencilOpts = {
-  group?: string;
-  hidden?: boolean;
-  props?: NodeProps;
-  key?: string;
-};
-
-// TODO: Change from NodeDefinition to Diagram
-export type Stencil = StencilOpts & {
-  node: NodeDefinition;
-  dimensions?: Extent;
-};
-
-export type StencilPackage = {
-  name: string;
-  stencils: Array<Stencil>;
-};
-
-const addRegistration = (id: string, reg: Stencil, dest: Map<string, Stencil[]>) => {
-  if (!dest.has(id)) {
-    dest.set(id, []);
-  }
-
-  const arr = dest.get(id)!;
-  if (reg.key && arr.find(e => e.key === reg.key)) {
-    arr.splice(
-      arr.findIndex(e => e.key === reg.key),
-      1,
-      reg
-    );
-  } else {
-    arr.push(reg);
-  }
-};
-
 const missing = new Set();
 if (typeof window !== 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,19 +93,13 @@ if (typeof window !== 'undefined') {
 }
 
 export class NodeDefinitionRegistry {
-  private nodes = new Map<string, Stencil[]>();
-  private grouping = new Map<string, Stencil[]>();
+  private nodes = new Map<string, NodeDefinition>();
 
-  addGroup(group: string) {
-    this.grouping.set(group, []);
-  }
+  public stencilRegistry = new StencilRegistry();
 
-  register(node: NodeDefinition, opts: StencilOpts = {}) {
-    addRegistration(node.type, { ...opts, node }, this.nodes);
-
-    if (opts.group) {
-      addRegistration(opts.group, { ...opts, node }, this.grouping);
-    }
+  register(node: NodeDefinition) {
+    this.nodes.set(node.type, node);
+    return node;
   }
 
   get(type: string): NodeDefinition {
@@ -148,48 +108,11 @@ export class NodeDefinitionRegistry {
     if (!r) {
       missing.add(type);
       console.warn(`Cannot find shape '${type}'`);
-      return this.nodes.get('rect')![0].node;
+      return this.nodes.get('rect')!;
     }
 
     assert.present(r, 'Not found: ' + type);
-    return r[0].node;
-  }
-
-  getRegistration(type: string): Stencil {
-    const r = this.nodes.get(type);
-
-    if (!r) {
-      missing.add(type);
-      console.warn(`Cannot find shape '${type}'`);
-      return this.nodes.get('rect')![0];
-    }
-
-    assert.present(r, 'Not found: ' + type);
-    return r[0];
-  }
-
-  getRegistrations(type: string): Stencil[] {
-    return this.nodes.get(type) ?? [];
-  }
-
-  getGroups() {
-    return unique([...this.grouping.keys()]);
-  }
-
-  getForGroup(group: string | undefined) {
-    if (!group) {
-      const dest: Stencil[] = [];
-      for (const v of this.nodes.values()) {
-        for (const r of v) {
-          if (r.hidden) continue;
-          if (r.group) continue;
-          dest.push(r);
-        }
-      }
-      return dest;
-    } else {
-      return this.grouping.get(group)!.filter(e => !e.hidden);
-    }
+    return r;
   }
 
   hasRegistration(type: string) {
@@ -233,5 +156,81 @@ export class EdgeDefinitionRegistry {
     const r = this.edges.get(type) ?? this.#defaultValue;
     assert.present(r);
     return r;
+  }
+}
+
+const isNodeDefinition = (type: string | NodeDefinition): type is NodeDefinition =>
+  typeof type !== 'string';
+
+export const makeStencilNode =
+  (type: string | NodeDefinition, _aspectRation = 1) =>
+  ($d: Diagram) => {
+    const typeId = isNodeDefinition(type) ? type.type : type;
+    const typeDef = $d.document.nodeDefinitions.get(typeId);
+
+    const n = new DiagramNode(
+      newid(),
+      typeId,
+      { x: 0, y: 0, w: $d.canvas.w, h: $d.canvas.h, r: 0 },
+      $d,
+      $d.layers.active,
+      typeDef.getDefaultProps('picker')
+    );
+
+    const size = typeDef.getDefaultConfig(n).size;
+    n.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, UnitOfWork.immediate($d));
+
+    return n;
+  };
+
+export const registerStencil = (
+  reg: NodeDefinitionRegistry,
+  pkg: StencilPackage,
+  def: NodeDefinition
+) => {
+  pkg.stencils.push({ id: def.type, node: makeStencilNode(reg.register(def)) });
+};
+
+export type Stencil = {
+  id: string;
+  name?: string;
+  node: (diagram: Diagram) => DiagramNode;
+};
+
+export type StencilPackage = {
+  id: string;
+  name: string;
+  group?: string;
+  stencils: Array<Stencil>;
+};
+
+export class StencilRegistry {
+  private stencils = new Map<string, StencilPackage>();
+  private activeStencils = new Set<string>();
+
+  register(pkg: StencilPackage, activate = false) {
+    if (this.stencils.has(pkg.id)) {
+      this.stencils.get(pkg.id)!.stencils.push(...pkg.stencils);
+    } else {
+      this.stencils.set(pkg.id, pkg);
+    }
+
+    if (activate) {
+      this.activate(pkg.id);
+    }
+  }
+
+  get(name: string): StencilPackage {
+    return this.stencils.get(name)!;
+  }
+
+  activate(name: string) {
+    this.activeStencils.add(name);
+  }
+
+  getActiveStencils() {
+    return [...this.activeStencils.values()]
+      .filter(s => this.stencils.has(s))
+      .map(s => this.stencils.get(s)!);
   }
 }

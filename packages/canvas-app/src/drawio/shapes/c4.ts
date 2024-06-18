@@ -39,8 +39,7 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           })
         }
       ]
-    }),
-    { hidden: true }
+    })
   );
 
   r.register(
@@ -147,9 +146,6 @@ export const registerC4Shapes = async (r: NodeDefinitionRegistry) => {
           })
         }
       ]
-    }),
-    {
-      hidden: true
-    }
+    })
   );
 };

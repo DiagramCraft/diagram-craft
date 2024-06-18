@@ -1,5 +1,10 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { ShapeParser, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -8,22 +13,21 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const stencilDimensions = new Map<string, Extent>();
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = 'mxgraph.aws4.' + stencilNameToType(name);
+  const node = new DrawioShapeNodeDefinition(`mxgraph.aws4.${toTypeName(name)}`, name, stencil);
+  stencilDimensions.set(node.type, stencil.dimensions!);
 
-  stencilDimensions.set(stencil.node.type, stencil.dimensions!);
-  registry.register(stencil.node, stencil);
+  registry.register(node);
 };
 
 export const parseAWS4Shapes = async (
@@ -100,7 +104,7 @@ export const registerAWS4Shapes = async (
   r: NodeDefinitionRegistry,
   shapeParsers: Record<string, ShapeParser>
 ) => {
-  const stencils = await loadStencil('/stencils/aws4.xml', 'AWS4', '#005073', '#005073');
+  const stencils = await loadDrawioStencils('/stencils/aws4.xml', 'AWS4', '#005073', '#005073');
 
   shapeParsers['mxgraph.aws4.resourceIcon'] = parseAWS4Shapes;
   shapeParsers['mxgraph.aws4.group'] = parseAWS4Shapes;
@@ -126,8 +130,7 @@ export const registerAWS4Shapes = async (
           }
         }
       ]
-    }),
-    { hidden: true }
+    })
   );
   r.register(
     new FlexShapeNodeDefinition('mxgraph.aws4.group', 'AWS Group', {
@@ -154,8 +157,7 @@ export const registerAWS4Shapes = async (
           }
         }
       ]
-    }),
-    { hidden: true }
+    })
   );
   r.register(
     new FlexShapeNodeDefinition('mxgraph.aws4.groupCenter', 'AWS Group Center', {
@@ -187,8 +189,7 @@ export const registerAWS4Shapes = async (
           }
         }
       ]
-    }),
-    { hidden: true }
+    })
   );
 
   const stencilList = [

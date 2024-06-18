@@ -322,22 +322,22 @@ export const registerUMLShapes = async (
   r: NodeDefinitionRegistry,
   shapeParser: Record<string, ShapeParser>
 ) => {
-  r.register(new UmlActor(), { hidden: true });
-  r.register(new UmlEntity(), { hidden: true });
-  r.register(new UmlControl(), { hidden: true });
-  r.register(new UmlDestroy(), { hidden: true });
+  r.register(new UmlActor());
+  r.register(new UmlEntity());
+  r.register(new UmlControl());
+  r.register(new UmlDestroy());
 
-  r.register(new UmlLifeline(r), { hidden: true });
+  r.register(new UmlLifeline(r));
   shapeParser['umlLifeline'] = parseUMLShapes;
 
-  r.register(new UmlBoundary(), { hidden: true });
-  r.register(new UmlFrame(), { hidden: true });
+  r.register(new UmlBoundary());
+  r.register(new UmlFrame());
 
-  r.register(new UmlModuleNodeDefinition(), { hidden: true });
+  r.register(new UmlModuleNodeDefinition());
   shapeParser['module'] = parseUMLShapes;
   shapeParser['component'] = parseUMLShapes;
 
-  r.register(new Folder(), { hidden: true });
-  r.register(new ProvidedRequiredInterface(), { hidden: true });
-  r.register(new RequiredInterface(), { hidden: true });
+  r.register(new Folder());
+  r.register(new ProvidedRequiredInterface());
+  r.register(new RequiredInterface());
 };

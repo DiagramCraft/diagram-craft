@@ -78,7 +78,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         const { x, y } = p.point(0.5);
 
         // Note: This is to Prevent NaN issues
-        if (node.bounds.h === 0 || node.bounds.w) continue;
+        if (node.bounds.h === 0 || node.bounds.w === 0) continue;
 
         const lx = round((x - node.bounds.x) / node.bounds.w);
         const ly = round((y - node.bounds.y) / node.bounds.h);

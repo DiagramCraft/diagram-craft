@@ -1,6 +1,10 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
@@ -16,18 +20,18 @@ import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { parseNum } from '../utils';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = 'mxgraph.android.' + stencilNameToType(name);
-
-  registry.register(stencil.node, stencil);
+  registry.register(
+    new DrawioShapeNodeDefinition(`mxgraph.android.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 class Spinner2NodeDefinition extends SimpleShapeNodeDefinition {
@@ -338,7 +342,7 @@ export const registerAndroidShapes = async (
   r: NodeDefinitionRegistry,
   shapeParsers: Record<string, ShapeParser>
 ) => {
-  const stencils = await loadStencil(
+  const stencils = await loadDrawioStencils(
     '/stencils/android/android.xml',
     'Android',
     '#00BEF2',
@@ -353,17 +357,17 @@ export const registerAndroidShapes = async (
   shapeParsers['mxgraph.android.progressScrubberPressed'] = parseAndroidShapes;
   shapeParsers['mxgraph.android.progressScrubberFocused'] = parseAndroidShapes;
 
-  r.register(new Spinner2NodeDefinition(), { hidden: true });
-  r.register(new AndroidRectNodeDefinition(), { hidden: true });
-  r.register(new AndroidProgressBarDefinition(), { hidden: true });
-  r.register(new AndroidProgressScrubber(), { hidden: true });
-  r.register(new AndroidQuickscroll2(), { hidden: true });
-  r.register(new AndroidQuickscroll3(), { hidden: true });
-  r.register(new AndroidRRectNodeDefinition(), { hidden: true });
-  r.register(new AndroidAnchorNodeDefinition(), { hidden: true });
-  r.register(new AndroidScrollbars2NodeDefinition(), { hidden: true });
-  r.register(new AndroidCheckboxNodeDefinition(), { hidden: true });
-  r.register(new AndroidIndeterminateSpinner(), { hidden: true });
+  r.register(new Spinner2NodeDefinition());
+  r.register(new AndroidRectNodeDefinition());
+  r.register(new AndroidProgressBarDefinition());
+  r.register(new AndroidProgressScrubber());
+  r.register(new AndroidQuickscroll2());
+  r.register(new AndroidQuickscroll3());
+  r.register(new AndroidRRectNodeDefinition());
+  r.register(new AndroidAnchorNodeDefinition());
+  r.register(new AndroidScrollbars2NodeDefinition());
+  r.register(new AndroidCheckboxNodeDefinition());
+  r.register(new AndroidIndeterminateSpinner());
 
   registerStencil(r, 'phone2', stencils);
   registerStencil(r, 'tab2', stencils);

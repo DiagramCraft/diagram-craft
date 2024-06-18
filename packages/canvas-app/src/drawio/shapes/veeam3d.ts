@@ -1,22 +1,26 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = `mxgraph.veeam.3d.${stencilNameToType(name)}`;
-
-  registry.register(stencil.node, stencil);
+  registry.register(
+    new DrawioShapeNodeDefinition(`mxgraph.veeam.3d.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 export const registerVeeam3dShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/veeam/3d.xml', 'Veeam', 'black', 'white');
+  const stencils = await loadDrawioStencils('/stencils/veeam/3d.xml', 'Veeam', 'black', 'white');
 
   registerStencil(r, '1ftvm', stencils);
   registerStencil(r, '1ftvm error', stencils);

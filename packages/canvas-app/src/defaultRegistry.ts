@@ -3,7 +3,6 @@ import { CircleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cir
 import { DiamondNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Diamond.nodeType';
 import { ParallelogramNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Parallelogram.nodeType';
 import { RegularPolygonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RegularPolygon.nodeType';
-import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import { StarNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Star.nodeType';
 import { TrapetzoidNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Trapetzoid.nodeType';
 import { TextNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Text.nodeType';
@@ -12,9 +11,10 @@ import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/Gene
 import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.nodeType';
 import {
   EdgeDefinitionRegistry,
-  NodeDefinitionRegistry
+  NodeDefinitionRegistry,
+  registerStencil,
+  StencilPackage
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from './drawio/DrawioShape.nodeType';
 import { DrawioImageNodeDefinition } from './drawio/DrawioImage.nodeType';
 import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
 import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
@@ -37,48 +37,60 @@ import {
 } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { DrawioTransparentNodeDefinition } from './drawio/DrawioTransparentShape.nodeType';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
+import { DrawioShapeNodeDefinition } from './drawio/DrawioShape.nodeType';
+import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 
 export const defaultNodeRegistry = () => {
-  const dest = new NodeDefinitionRegistry();
-  dest.register(new GroupNodeDefinition(), { hidden: true });
+  const reg = new NodeDefinitionRegistry();
 
-  dest.register(new RectNodeDefinition());
-  dest.register(new RoundedRectNodeDefinition());
-  dest.register(new CircleNodeDefinition());
-  dest.register(new TextNodeDefinition());
-  dest.register(new StarNodeDefinition());
-  dest.register(new RegularPolygonNodeDefinition());
-  dest.register(new ParallelogramNodeDefinition());
-  dest.register(new TrapetzoidNodeDefinition());
-  dest.register(new DiamondNodeDefinition());
-  dest.register(new HexagonNodeDefinition());
-  dest.register(new TriangleNodeDefinition());
-  dest.register(new ProcessNodeDefinition());
-  dest.register(new ArrowNodeDefinition('arrow-right', 'Arrow Right', 0), { group: 'Arrow' });
-  dest.register(new ArrowNodeDefinition('arrow-up', 'Arrow Up', Math.PI / 2), { group: 'Arrow' });
-  dest.register(new ArrowNodeDefinition('arrow-down', 'Arrow Down', -Math.PI / 2), {
-    group: 'Arrow'
-  });
-  dest.register(new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI), { group: 'Arrow' });
-  dest.register(new CylinderNodeDefinition());
-  dest.register(new CurlyBracketNodeDefinition());
-  dest.register(new BlockArcNodeDefinition());
-  dest.register(new CloudNodeDefinition());
-  dest.register(new StepNodeDefinition());
-  dest.register(new LineNodeDefinition());
-  dest.register(new DelayNodeDefinition());
-  dest.register(new PartialRectNodeDefinition(), { hidden: true });
-  dest.register(new CubeNodeDefinition());
-  dest.register(new GenericPathNodeDefinition(), { hidden: true });
-  dest.register(new ContainerNodeDefinition());
-  dest.register(new SwimlaneNodeDefinition(), { hidden: true });
-  dest.register(new TableNodeDefinition(), { hidden: true });
-  dest.register(new TableRowNodeDefinition(), { hidden: true });
-  dest.register(new DrawioShapeNodeDefinition(), { hidden: true });
-  dest.register(new DrawioImageNodeDefinition(), { hidden: true });
-  dest.register(new DrawioTransparentNodeDefinition(), { hidden: true });
+  const defaults: StencilPackage = { id: 'default', name: 'Default', stencils: [] };
+  const arrows: StencilPackage = { id: 'arrow', name: 'Arrow', stencils: [] };
 
-  return dest;
+  reg.register(new GroupNodeDefinition());
+
+  registerStencil(reg, defaults, new RectNodeDefinition());
+  registerStencil(reg, defaults, new RoundedRectNodeDefinition());
+  registerStencil(reg, defaults, new CircleNodeDefinition());
+  registerStencil(reg, defaults, new TextNodeDefinition());
+  registerStencil(reg, defaults, new StarNodeDefinition());
+  registerStencil(reg, defaults, new RegularPolygonNodeDefinition());
+  registerStencil(reg, defaults, new ParallelogramNodeDefinition());
+  registerStencil(reg, defaults, new TrapetzoidNodeDefinition());
+  registerStencil(reg, defaults, new DiamondNodeDefinition());
+  registerStencil(reg, defaults, new HexagonNodeDefinition());
+  registerStencil(reg, defaults, new TriangleNodeDefinition());
+  registerStencil(reg, defaults, new ProcessNodeDefinition());
+  registerStencil(reg, defaults, new CylinderNodeDefinition());
+  registerStencil(reg, defaults, new CurlyBracketNodeDefinition());
+  registerStencil(reg, defaults, new BlockArcNodeDefinition());
+  registerStencil(reg, defaults, new CloudNodeDefinition());
+  registerStencil(reg, defaults, new StepNodeDefinition());
+  registerStencil(reg, defaults, new LineNodeDefinition());
+  registerStencil(reg, defaults, new DelayNodeDefinition());
+  registerStencil(reg, defaults, new CubeNodeDefinition());
+  registerStencil(reg, defaults, new ContainerNodeDefinition());
+
+  // Arrow stencils
+  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-right', 'Arrow Right', 0));
+  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-up', 'Arrow Up', Math.PI / 2));
+  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', -Math.PI / 2));
+  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
+
+  // Hidden node definitions
+  reg.register(new GenericPathNodeDefinition());
+  reg.register(new PartialRectNodeDefinition());
+  reg.register(new SwimlaneNodeDefinition());
+  reg.register(new TableNodeDefinition());
+  reg.register(new TableRowNodeDefinition());
+  reg.register(new DrawioImageNodeDefinition());
+  reg.register(new DrawioTransparentNodeDefinition());
+  reg.register(new DrawioShapeNodeDefinition('drawio', 'DrawIO Shape'));
+
+  const stencilRegistry = reg.stencilRegistry;
+  stencilRegistry.register(defaults);
+  stencilRegistry.register(arrows, true);
+
+  return reg;
 };
 
 export const defaultEdgeRegistry = () => {

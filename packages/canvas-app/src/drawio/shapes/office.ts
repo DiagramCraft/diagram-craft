@@ -1,23 +1,27 @@
-import { loadStencil } from '../stencilLoader';
-import { NodeDefinitionRegistry, Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { findStencilByName, stencilNameToType } from './shapeUtils';
+import {
+  DrawioStencil,
+  findStencilByName,
+  loadDrawioStencils,
+  toTypeName
+} from '../drawioStencilLoader';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
 
 const registerStencil = (
-  registry: NodeDefinitionRegistry,
+  reg: NodeDefinitionRegistry,
   type: string,
   name: string,
-  stencils: Array<Stencil>
+  stencils: Array<DrawioStencil>
 ) => {
   const stencil = findStencilByName(stencils, name);
 
-  stencil.node.name = name;
-  stencil.node.type = `mxgraph.office.${type}.${stencilNameToType(name)}`;
-
-  registry.register(stencil.node, stencil);
+  reg.register(
+    new DrawioShapeNodeDefinition(`mxgraph.office.${type}.${toTypeName(name)}`, name, stencil)
+  );
 };
 
 export const registerOfficeServersShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/servers.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils('/stencils/office/servers.xml', 'Azure');
 
   registerStencil(r, 'servers', '3rd Party Mail Server', stencils);
   registerStencil(r, 'servers', 'Active Directory Federation Services Proxy', stencils);
@@ -99,7 +103,12 @@ export const registerOfficeServersShapes = async (r: NodeDefinitionRegistry) => 
 };
 
 export const registerOfficeSecurityShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/security.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/security.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'security', 'Active Directory', stencils);
   registerStencil(r, 'security', 'Address Book Policies', stencils);
@@ -140,7 +149,12 @@ export const registerOfficeSecurityShapes = async (r: NodeDefinitionRegistry) =>
 };
 
 export const registerOfficeDevicesShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/devices.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/devices.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'devices', 'Bluetooth', stencils);
   registerStencil(r, 'devices', 'CD DVD', stencils);
@@ -193,7 +207,7 @@ export const registerOfficeDevicesShapes = async (r: NodeDefinitionRegistry) => 
 };
 
 export const registerOfficeCommunicationsShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil(
+  const stencils = await loadDrawioStencils(
     '/stencils/office/communications.xml',
     'Azure',
     'white',
@@ -272,7 +286,12 @@ export const registerOfficeCommunicationsShapes = async (r: NodeDefinitionRegist
 };
 
 export const registerOfficeCloudsShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/clouds.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/clouds.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'clouds', 'Azure', stencils);
   registerStencil(r, 'clouds', 'Cloud', stencils);
@@ -289,7 +308,12 @@ export const registerOfficeCloudsShapes = async (r: NodeDefinitionRegistry) => {
 };
 
 export const registerOfficeServicesShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/services.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/services.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'services', '3rd party Service', stencils);
   registerStencil(r, 'services', 'Access Services', stencils);
@@ -320,7 +344,12 @@ export const registerOfficeServicesShapes = async (r: NodeDefinitionRegistry) =>
 };
 
 export const registerOfficeUsersShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/users.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/users.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'users', 'Administrator', stencils);
   registerStencil(r, 'users', 'Approver', stencils);
@@ -355,7 +384,12 @@ export const registerOfficeUsersShapes = async (r: NodeDefinitionRegistry) => {
 };
 
 export const registerOfficeSitesShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/sites.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/sites.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'sites', 'Access Services', stencils);
   registerStencil(r, 'sites', 'My Site', stencils);
@@ -377,7 +411,12 @@ export const registerOfficeSitesShapes = async (r: NodeDefinitionRegistry) => {
 };
 
 export const registerOfficeDatabasesShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/databases.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/databases.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'databases', 'Address Book Store', stencils);
   registerStencil(r, 'databases', 'Application Store', stencils);
@@ -406,7 +445,12 @@ export const registerOfficeDatabasesShapes = async (r: NodeDefinitionRegistry) =
 };
 
 export const registerOfficeConceptShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadStencil('/stencils/office/concepts.xml', 'Azure', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '/stencils/office/concepts.xml',
+    'Azure',
+    'black',
+    'white'
+  );
 
   registerStencil(r, 'concepts', 'Address Book', stencils);
   registerStencil(r, 'concepts', 'Anti Spam', stencils);

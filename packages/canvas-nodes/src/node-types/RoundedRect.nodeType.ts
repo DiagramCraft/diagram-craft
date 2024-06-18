@@ -72,6 +72,17 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 
     return pathBuilder;
   }
+
+  getDefaultProps(mode: 'picker' | 'canvas'): NodeProps {
+    if (mode === 'picker') {
+      return {
+        shapeRoundedRect: {
+          radius: 30
+        }
+      };
+    }
+    return super.getDefaultProps(mode);
+  }
 }
 
 export class RoundedRectComponent extends BaseNodeComponent {
