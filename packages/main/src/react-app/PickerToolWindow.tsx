@@ -8,7 +8,7 @@ import { useState } from 'react';
 export const PickerToolWindow = () => {
   const diagram = useDiagram();
   const groups = diagram.document.nodeDefinitions.stencilRegistry.getActiveStencils();
-  const [open, setOpen] = useState(['basic-shapes', 'arrow']);
+  const [open, setOpen] = useState(['basic-shapes', 'arrow', 'uml']);
 
   return (
     <Accordion.Root className="cmp-accordion" type="multiple" value={open} onValueChange={setOpen}>

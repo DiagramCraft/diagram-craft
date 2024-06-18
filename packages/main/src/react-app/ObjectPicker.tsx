@@ -48,7 +48,7 @@ export const ObjectPicker = (props: Props) => {
               JSON.stringify({
                 elements: elements.map(e => serializeDiagramElement(e)),
                 attachments: {},
-                dimensions: { w: 100, h: 100 }
+                dimensions: n.bounds
               })
             );
           }}

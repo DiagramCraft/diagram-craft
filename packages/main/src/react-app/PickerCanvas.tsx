@@ -61,7 +61,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               height={80}
               onClick={() => {}}
               diagram={diagram}
-              viewBox={`0 0 ${props.diagramWidth} ${props.diagramHeight}`}
+              viewBox={props.diagram.viewBox.svgViewboxString}
             />
 
             <div style={{ lineHeight: '14px', justifySelf: 'flex-end', marginTop: 'auto' }}>

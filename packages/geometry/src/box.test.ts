@@ -33,4 +33,19 @@ describe('Box', () => {
   test("doesn't contains point with rotated box", () => {
     expect(Box.contains({ x: 0, y: 0, w: 10, h: 10, r: Math.PI / 2 }, { x: 0, y: 5.1 })).toBe(true);
   });
+
+  test('applyAspectRatio returns original box when aspect ratio is 1', () => {
+    const box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+    expect(Box.applyAspectRatio(box, 1)).toStrictEqual(box);
+  });
+
+  test('applyAspectRatio adjusts width when aspect ratio is less than 1', () => {
+    const box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+    expect(Box.applyAspectRatio(box, 0.5)).toStrictEqual({ ...box, w: 5 });
+  });
+
+  test('applyAspectRatio adjusts height when aspect ratio is greater than 1', () => {
+    const box = { x: 0, y: 0, w: 10, h: 10, r: 0 };
+    expect(Box.applyAspectRatio(box, 2)).toStrictEqual({ ...box, h: 5 });
+  });
 });

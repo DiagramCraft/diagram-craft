@@ -23,6 +23,7 @@
   --dimmed-fg: var(--slate-4);
   --canvas-fg: var(--slate-12);
   --canvas-bg: var(--slate-1);
+  --canvas-bg2: white;
   --error-fg: var(--red-9);
 }
 
@@ -35,6 +36,7 @@
   --dimmed-fg: var(--slate-6);
   --canvas-fg: var(--slate-1);
   --canvas-bg: var(--slate-12);
+  --canvas-bg2: white;
   --error-fg: var(--red-9);
 }
 
@@ -42,13 +44,15 @@
 .dark-theme .cmp-node-type-popup
 {
   --canvas-fg: var(--blue-11);
-  --canvas-bg: var(--slate-5);
+  --canvas-bg: var(--slate-2);
+  --canvas-bg2: var(--slate-5);
 }
 .light-theme #left,
 .light-theme .cmp-node-type-popup
 {
   --canvas-fg: var(--blue-11);
-  --canvas-bg: var(--slate-5);
+  --canvas-bg: var(--slate-4);
+  --canvas-bg2: var(--slate-3);
 }
 
 
@@ -655,7 +659,7 @@ input::-webkit-input-placeholder {
     display: block;
     cursor: pointer;
 
-    .svg-node {
+    * {
       vector-effect: non-scaling-stroke;
       path {
         vector-effect: non-scaling-stroke;

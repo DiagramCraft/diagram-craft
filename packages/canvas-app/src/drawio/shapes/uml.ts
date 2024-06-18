@@ -1,4 +1,8 @@
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  MakeStencilNodeOptsProps,
+  NodeDefinitionRegistry,
+  registerStencil
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
 import { ShapeParser, Style } from '../drawioReader';
@@ -14,9 +18,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { coalesce } from '@diagram-craft/utils/strings';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { deepClone } from '@diagram-craft/utils/object';
+import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 
 export const parseUMLShapes = async (
   id: string,
@@ -43,7 +48,7 @@ export const parseUMLShapes = async (
 
 class Folder extends SimpleShapeNodeDefinition {
   constructor() {
-    super('folder');
+    super('folder', 'UML Folder');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -60,7 +65,7 @@ class Folder extends SimpleShapeNodeDefinition {
 
 class UmlActor extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlActor');
+    super('umlActor', 'UML Actor');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -87,7 +92,7 @@ class UmlActor extends SimpleShapeNodeDefinition {
 
 class UmlBoundary extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlBoundary');
+    super('umlBoundary', 'UML Boundary');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -112,7 +117,7 @@ class UmlBoundary extends SimpleShapeNodeDefinition {
 
 class UmlEntity extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlEntity');
+    super('umlEntity', 'UML Entity');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -130,7 +135,7 @@ class UmlEntity extends SimpleShapeNodeDefinition {
 
 class UmlControl extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlControl');
+    super('umlControl', 'UML Control');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -158,7 +163,7 @@ class UmlControl extends SimpleShapeNodeDefinition {
 
 class ProvidedRequiredInterface extends SimpleShapeNodeDefinition {
   constructor() {
-    super('providedRequiredInterface');
+    super('providedRequiredInterface', 'Provided/Required Interface');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -179,7 +184,7 @@ class ProvidedRequiredInterface extends SimpleShapeNodeDefinition {
 
 class RequiredInterface extends SimpleShapeNodeDefinition {
   constructor() {
-    super('requiredInterface');
+    super('requiredInterface', 'Required Interface');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -196,7 +201,7 @@ class RequiredInterface extends SimpleShapeNodeDefinition {
 
 class UmlFrame extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlFrame');
+    super('umlFrame', 'UML Frame');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -231,7 +236,7 @@ class UmlFrame extends SimpleShapeNodeDefinition {
 
 class UmlDestroy extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlDestroy');
+    super('umlDestroy', 'UML Destroy');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -256,7 +261,7 @@ registerNodeDefaults('shapeUmlLifeline', { participant: '' });
 
 class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor(private readonly registry: NodeDefinitionRegistry) {
-    super('umlLifeline');
+    super('umlLifeline', 'UML Lifeline');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
@@ -322,22 +327,105 @@ export const registerUMLShapes = async (
   r: NodeDefinitionRegistry,
   shapeParser: Record<string, ShapeParser>
 ) => {
-  r.register(new UmlActor());
-  r.register(new UmlEntity());
-  r.register(new UmlControl());
-  r.register(new UmlDestroy());
+  const umlStencils = { id: 'uml', name: 'UML', stencils: [] };
 
-  r.register(new UmlLifeline(r));
+  const props: MakeStencilNodeOptsProps = () => ({
+    fill: {
+      color: 'var(--canvas-bg2)'
+    },
+    text: {
+      fontSize: 12,
+      top: 7,
+      left: 7,
+      right: 7,
+      bottom: 7
+    }
+  });
+
+  const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOptsProps = p => () =>
+    deepMerge(props('picker'), p);
+
+  registerStencil(r, umlStencils, new RectNodeDefinition(), {
+    id: 'umlObject',
+    name: 'Object',
+    size: { w: 100, h: 50 },
+    props: mergedProps({
+      text: {
+        text: 'Object',
+        valign: 'middle'
+      }
+    })
+  });
+
+  registerStencil(r, umlStencils, new RectNodeDefinition(), {
+    id: 'umlInterface',
+    name: 'Interface',
+    size: { w: 100, h: 50 },
+    props: mergedProps({
+      text: {
+        text: '&laquo;interface&raquo;<br /><b>Name</b>',
+        valign: 'middle'
+      }
+    })
+  });
+
+  registerStencil(r, umlStencils, new UmlActor(), { aspectRatio: 0.6, props });
+
+  registerStencil(r, umlStencils, new Folder(), {
+    aspectRatio: 1.5,
+    props: mergedProps({
+      text: {
+        bold: true,
+        top: 12,
+        text: 'package'
+      }
+    })
+  });
+
+  registerStencil(r, umlStencils, new UmlEntity(), { props });
+
+  registerStencil(r, umlStencils, new UmlControl(), { aspectRatio: 7 / 8, props });
+
+  registerStencil(r, umlStencils, new UmlDestroy(), { size: { w: 10, h: 10 } });
+
+  registerStencil(r, umlStencils, new UmlLifeline(r), { props });
+
+  registerStencil(r, umlStencils, new UmlBoundary(), {
+    aspectRatio: 1.25,
+    props: mergedProps({
+      text: {
+        text: 'Boundary Object'
+      }
+    })
+  });
+
+  registerStencil(r, umlStencils, new UmlFrame(), { props });
+
+  registerStencil(r, umlStencils, new UmlModuleNodeDefinition(), {
+    props: mergedProps({
+      text: {
+        text: 'Module',
+        left: 22,
+        valign: 'top'
+      }
+    }),
+    size: { w: 90, h: 50 }
+  });
+
+  registerStencil(r, umlStencils, new ProvidedRequiredInterface(), {
+    props,
+    size: { w: 20, h: 20 }
+  });
+
+  registerStencil(r, umlStencils, new RequiredInterface(), {
+    props,
+    size: { w: 20, h: 20 },
+    aspectRatio: 0.5
+  });
+
   shapeParser['umlLifeline'] = parseUMLShapes;
-
-  r.register(new UmlBoundary());
-  r.register(new UmlFrame());
-
-  r.register(new UmlModuleNodeDefinition());
   shapeParser['module'] = parseUMLShapes;
   shapeParser['component'] = parseUMLShapes;
 
-  r.register(new Folder());
-  r.register(new ProvidedRequiredInterface());
-  r.register(new RequiredInterface());
+  r.stencilRegistry.register(umlStencils, true);
 };

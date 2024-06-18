@@ -11,6 +11,8 @@ import { Anchor } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
+import { unique } from '@diagram-craft/utils/array';
+import { deepMerge } from '@diagram-craft/utils/object';
 
 export type NodeCapability = 'children' | 'fill' | 'select';
 
@@ -162,23 +164,44 @@ export class EdgeDefinitionRegistry {
 const isNodeDefinition = (type: string | NodeDefinition): type is NodeDefinition =>
   typeof type !== 'string';
 
+export type MakeStencilNodeOpts = {
+  id?: string;
+  name?: string;
+  aspectRatio?: number;
+  size?: { w: number; h: number };
+  props?: MakeStencilNodeOptsProps;
+};
+
+export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
+
 export const makeStencilNode =
-  (type: string | NodeDefinition, _aspectRation = 1) =>
-  ($d: Diagram) => {
+  (type: string | NodeDefinition, opts?: MakeStencilNodeOpts) => ($d: Diagram) => {
     const typeId = isNodeDefinition(type) ? type.type : type;
     const typeDef = $d.document.nodeDefinitions.get(typeId);
 
     const n = new DiagramNode(
       newid(),
       typeId,
-      { x: 0, y: 0, w: $d.canvas.w, h: $d.canvas.h, r: 0 },
+      Box.applyAspectRatio(
+        { x: 0, y: 0, w: $d.canvas.w, h: $d.canvas.h, r: 0 },
+        opts?.aspectRatio ?? 1
+      ),
       $d,
       $d.layers.active,
-      typeDef.getDefaultProps('picker')
+      deepMerge(typeDef.getDefaultProps('picker'), {
+        ...(opts?.props?.('picker') ?? {})
+      })
     );
 
     const size = typeDef.getDefaultConfig(n).size;
-    n.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, UnitOfWork.immediate($d));
+
+    n.setBounds(
+      Box.applyAspectRatio(
+        { x: 0, y: 0, w: opts?.size?.w ?? size.w, h: opts?.size?.h ?? size.h, r: 0 },
+        opts?.aspectRatio ?? 1
+      ),
+      UnitOfWork.immediate($d)
+    );
 
     return n;
   };
@@ -186,9 +209,14 @@ export const makeStencilNode =
 export const registerStencil = (
   reg: NodeDefinitionRegistry,
   pkg: StencilPackage,
-  def: NodeDefinition
+  def: NodeDefinition,
+  opts?: MakeStencilNodeOpts
 ) => {
-  pkg.stencils.push({ id: def.type, node: makeStencilNode(reg.register(def)) });
+  pkg.stencils.push({
+    id: opts?.id ?? def.type,
+    name: opts?.name ?? def.name,
+    node: makeStencilNode(reg.register(def), opts)
+  });
 };
 
 export type Stencil = {
@@ -210,7 +238,10 @@ export class StencilRegistry {
 
   register(pkg: StencilPackage, activate = false) {
     if (this.stencils.has(pkg.id)) {
-      this.stencils.get(pkg.id)!.stencils.push(...pkg.stencils);
+      this.stencils.get(pkg.id)!.stencils = unique(
+        [...this.stencils.get(pkg.id)!.stencils, ...pkg.stencils],
+        e => e.id
+      );
     } else {
       this.stencils.set(pkg.id, pkg);
     }

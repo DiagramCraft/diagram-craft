@@ -101,7 +101,7 @@ export type ShapeParser = (
   layer: Layer
 ) => Promise<DiagramNode>;
 
-const shapeParsers: Record<string, ShapeParser> = {
+export const shapeParsers: Record<string, ShapeParser> = {
   'hexagon': parseHexagon,
   'step': parseStep,
   'cloud': parseCloud,

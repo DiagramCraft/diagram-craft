@@ -288,8 +288,8 @@ export type SimpleShapeNodeDefinitionProps = BaseShapeBuildShapeProps & {
 };
 
 export abstract class SimpleShapeNodeDefinition extends ShapeNodeDefinition {
-  constructor(type: string) {
-    super(type, '', SimpleShapeNodeDefinition.Component);
+  constructor(type: string, name?: string) {
+    super(type, name ?? type, SimpleShapeNodeDefinition.Component);
   }
 
   abstract buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void;

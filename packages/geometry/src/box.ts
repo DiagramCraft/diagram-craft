@@ -25,6 +25,17 @@ export const Box = {
     return { ...b, _discriminator: 'rw' };
   },
 
+  applyAspectRatio: (b: Box, aspectRatio: number): Box => {
+    if (aspectRatio === 1) return b;
+    if (aspectRatio < 1) {
+      const newW = b.h * aspectRatio;
+      return { ...b, w: newW };
+    } else {
+      const newH = b.w / aspectRatio;
+      return { ...b, h: newH };
+    }
+  },
+
   fromCorners: (a: Point, b: Point): Box => {
     return {
       x: Math.min(a.x, b.x),
