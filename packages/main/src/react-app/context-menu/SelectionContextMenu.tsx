@@ -23,6 +23,9 @@ export const SelectionContextMenu = () => {
       <ActionContextMenuItem action={'GROUP_UNGROUP'}>Ungroup</ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
+      <ActionContextMenuItem action={'SELECTION_DUMP'}>Dump</ActionContextMenuItem>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
           Align
