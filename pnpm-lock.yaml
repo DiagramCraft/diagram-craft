@@ -62,10 +62,8 @@ importers:
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../utils
-    devDependencies:
-      '@rollup/plugin-yaml':
-        specifier: ^4.1.2
-        version: 4.1.2
+
+  packages/canvas-drawio: {}
 
   packages/canvas-edges:
     dependencies:
@@ -133,6 +131,9 @@ importers:
       '@diagram-craft/canvas-app':
         specifier: workspace:^
         version: link:../canvas-app
+      '@diagram-craft/canvas-drawio':
+        specifier: workspace:^
+        version: link:../canvas-drawio
       '@diagram-craft/canvas-edges':
         specifier: workspace:^
         version: link:../canvas-edges

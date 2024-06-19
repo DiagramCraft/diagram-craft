@@ -37,6 +37,7 @@
       "@diagram-craft/canvas-edges/*": ["./packages/canvas-edges/src/*"],
       "@diagram-craft/canvas-nodes/*": ["./packages/canvas-nodes/src/*"],
       "@diagram-craft/canvas-react/*": ["./packages/canvas-react/src/*"],
+      "@diagram-craft/canvas-drawio/*": ["./packages/canvas-drawio/src/*"],
     },
   },
   "references": [{ "path": "./tsconfig.node.json"}]

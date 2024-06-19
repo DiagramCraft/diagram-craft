@@ -12,12 +12,13 @@ import {
   defaultEdgeRegistry,
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
-import { drawioReader } from '@diagram-craft/canvas-app/drawio/drawioReader';
+import { drawioReader } from '@diagram-craft/canvas-drawio/drawioReader';
+import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
 
 const stencilRegistry: StencilRegistryConfig = [
   {
     type: 'drawioManual',
-    callback: import('@diagram-craft/canvas-app/drawio/shapes/uml').then(
+    callback: import('@diagram-craft/canvas-drawio/shapes/uml').then(
       ({ registerUMLShapes }) => registerUMLShapes
     )
   },
@@ -94,6 +95,8 @@ const stencilRegistry: StencilRegistryConfig = [
 ];
 
 const nodeRegistry = defaultNodeRegistry();
+registerDrawioBaseNodeTypes(nodeRegistry);
+
 const edgeRegistry = defaultEdgeRegistry();
 
 const diagramFactory = (d: SerializedDiagram, doc: DiagramDocument) => {

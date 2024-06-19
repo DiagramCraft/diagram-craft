@@ -20,6 +20,8 @@ export default defineConfig({
             return 'vendor';
           } else if (id.includes('canvas-nodes/')) {
             return 'shapes';
+          } else if (id.includes('canvas-drawio/')) {
+            return 'drawio';
           } else if (id.includes('sample/')) {
             return 'sample-data';
           } else if (id.includes('query')) {
@@ -34,6 +36,7 @@ export default defineConfig({
       '@diagram-craft/query': path.join(__dirname, '../../packages/query/src'),
       '@diagram-craft/canvas': path.join(__dirname, '../../packages/canvas/src'),
       '@diagram-craft/canvas-app': path.join(__dirname, '../../packages/canvas-app/src'),
+      '@diagram-craft/canvas-drawio': path.join(__dirname, '../../packages/canvas-drawio/src'),
       '@diagram-craft/canvas-edges': path.join(__dirname, '../../packages/canvas-edges/src'),
       '@diagram-craft/canvas-nodes': path.join(__dirname, '../../packages/canvas-nodes/src'),
       '@diagram-craft/canvas-react': path.join(__dirname, '../../packages/canvas-react/src'),

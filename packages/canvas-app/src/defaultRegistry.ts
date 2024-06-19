@@ -15,7 +15,6 @@ import {
   registerStencil,
   StencilPackage
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioImageNodeDefinition } from './drawio/DrawioImage.nodeType';
 import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
 import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
 import { ProcessNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Process.nodeType';
@@ -35,9 +34,7 @@ import {
   TableNodeDefinition,
   TableRowNodeDefinition
 } from '@diagram-craft/canvas/node-types/Table.nodeType';
-import { DrawioTransparentNodeDefinition } from './drawio/DrawioTransparentShape.nodeType';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
-import { DrawioShapeNodeDefinition } from './drawio/DrawioShape.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 
 export const defaultNodeRegistry = () => {
@@ -82,9 +79,6 @@ export const defaultNodeRegistry = () => {
   reg.register(new SwimlaneNodeDefinition());
   reg.register(new TableNodeDefinition());
   reg.register(new TableRowNodeDefinition());
-  reg.register(new DrawioImageNodeDefinition());
-  reg.register(new DrawioTransparentNodeDefinition());
-  reg.register(new DrawioShapeNodeDefinition('drawio', 'DrawIO Shape'));
 
   const stencilRegistry = reg.stencilRegistry;
   stencilRegistry.register(defaults);

@@ -11,8 +11,8 @@ import { useRedraw } from './react-app/useRedraw';
 import {
   toRegularStencil,
   loadDrawioStencils
-} from '@diagram-craft/canvas-app/drawio/drawioStencilLoader';
-import { ShapeParser, shapeParsers } from '@diagram-craft/canvas-app/drawio/drawioReader';
+} from '@diagram-craft/canvas-drawio/drawioStencilLoader';
+import { ShapeParser, shapeParsers } from '@diagram-craft/canvas-drawio/drawioReader';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 export const AppLoader = (props: Props) => {
