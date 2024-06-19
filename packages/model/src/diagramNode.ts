@@ -15,6 +15,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
 import { applyTemplate } from './template';
+import { isEmptyString } from '@diagram-craft/utils/strings';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -142,6 +143,11 @@ export class DiagramNode
 
   get name() {
     if (this.#cache?.has('name')) return this.#cache.get('name') as string;
+
+    if (!isEmptyString(this.#props.name)) {
+      this.cache.set('name', this.#props.name!);
+      return this.cache.get('name') as string;
+    }
 
     if (this.#props.text?.text) {
       const metadata = this.data;

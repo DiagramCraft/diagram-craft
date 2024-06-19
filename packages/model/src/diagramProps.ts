@@ -83,6 +83,7 @@ declare global {
   type Metadata = Record<string, string | number | boolean>;
 
   interface ElementProps {
+    name?: string;
     style?: string;
     stroke?: {
       enabled?: boolean;

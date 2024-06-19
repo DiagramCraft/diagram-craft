@@ -32,8 +32,9 @@ type FilterNotStartingWith<B, P extends string> = B extends `${P}${infer _X}` ? 
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'data' | 'highlight' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'text'
+  'data' | 'highlight' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'text' | 'name'
 > = {
+  name: '',
   data: {
     data: [],
     customData: {}
@@ -107,7 +108,7 @@ const _elementDefaults: Pick<
 
 const _nodeDefaults: Omit<
   Pick<NodePropsForRendering, FilterNotStartingWith<keyof NodePropsForRendering, 'shape'>>,
-  'labelForEdgeId'
+  'labelForEdgeId' | 'name'
 > = {
   ..._elementDefaults,
   style: 'default',

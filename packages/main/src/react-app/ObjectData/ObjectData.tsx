@@ -22,6 +22,7 @@ import { unique } from '@diagram-craft/utils/array';
 import { Collapsible } from '../components/Collapsible';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import * as Popover from '@radix-ui/react-popover';
+import { useElementProperty } from '../ObjectProperties/useProperty';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -54,6 +55,8 @@ export const ObjectData = () => {
 
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
+
+  const name = useElementProperty($d, 'name');
 
   const changeCallback = useCallback(
     (
@@ -154,7 +157,20 @@ export const ObjectData = () => {
 
   return (
     <>
-      <Accordion.Root className="cmp-accordion" type="single" defaultValue={'data'}>
+      <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['data', 'basic']}>
+        {$d.selectionState.elements.length === 1 && (
+          <Accordion.Item className="cmp-accordion__item" value="basic">
+            <AccordionTrigger>Name</AccordionTrigger>
+            <AccordionContent>
+              <div className={'cmp-labeled-table'}>
+                <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
+                <div className={'cmp-labeled-table__value cmp-text-input'}>
+                  <input type={'text'} value={name.val} onChange={e => name.set(e.target.value)} />
+                </div>
+              </div>
+            </AccordionContent>
+          </Accordion.Item>
+        )}
         <Accordion.Item className="cmp-accordion__item" value="data">
           <AccordionTrigger>
             Data

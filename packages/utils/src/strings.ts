@@ -28,3 +28,11 @@ export const shorten = (str: string, length: number) => {
  */
 export const coalesce = (...args: (string | undefined | null)[]) =>
   args.find(a => a !== undefined && a !== null && a.trim() !== '');
+
+/**
+ * Returns true if the provided string is null, undefined or empty.
+ * @param s - The string to be checked.
+ * @returns {boolean} True if the provided string is null, undefined or empty, false otherwise.
+ */
+export const isEmptyString = (s: string | undefined) =>
+  s === null || s === undefined || s.trim() === '';

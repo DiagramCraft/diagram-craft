@@ -31,6 +31,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { EdgeDefinition } from './elementDefinitionRegistry';
+import { isEmptyString } from '@diagram-craft/utils/strings';
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -184,6 +185,11 @@ export class DiagramEdge
     // First we use any label nodes
     if (this.#labelNodes && this.#labelNodes.length > 0) {
       return this.#labelNodes[0].node.name;
+    }
+
+    if (!isEmptyString(this.#props.name)) {
+      this.cache.set('name', this.#props.name!);
+      return this.cache.get('name') as string;
     }
 
     // ... otherwise we form the name based on connected nodes

@@ -227,7 +227,16 @@ export const LayerList = () => {
   const diagram = useDiagram();
   const layers = diagram.layers.all.toReversed();
 
+  const names = Object.fromEntries(
+    diagram.layers.all.flatMap(l => l.elements.map(e => [e.id, e.name]))
+  );
+
   useEventListener(diagram, 'change', redraw);
+  useEventListener(diagram, 'elementChange', ({ element }) => {
+    if (names[element.id] !== element.name) {
+      redraw();
+    }
+  });
 
   return (
     <div style={{ height: '100%', margin: '-10px' }} className={'cmp-layer-list'}>
