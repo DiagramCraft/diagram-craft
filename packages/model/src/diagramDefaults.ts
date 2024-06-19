@@ -52,7 +52,7 @@ const _elementDefaults: Pick<
     y: 5
   },
   fill: {
-    color: 'var(--canvas-bg)',
+    color: 'var(--canvas-bg2)',
     color2: 'blue',
     type: 'solid',
     enabled: true,

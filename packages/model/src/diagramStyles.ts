@@ -65,7 +65,7 @@ export class Stylesheet<P extends ElementProps = ElementProps>
 const DEFAULT_NODE_STYLES: Stylesheet<NodeProps>[] = [
   new Stylesheet('node', 'default', 'Default', {
     fill: {
-      color: 'var(--canvas-bg)'
+      color: 'var(--canvas-bg2)'
     },
     stroke: {
       color: 'var(--canvas-fg)'

@@ -33,12 +33,12 @@ const unfoldGroup = (node: SerializedNode) => {
   ): (SerializedElement & { parent?: SerializedNode | undefined })[] => {
     return [
       ...nodes.map(n => ({ ...n, parent })),
-      ...nodes.flatMap(n => (n.type === 'node' ? recurse(n.children, n) : []))
+      ...nodes.flatMap(n => (n.type === 'node' ? recurse(n.children ?? [], n) : []))
     ];
   };
 
-  if (node.children.length > 0) {
-    return [{ ...node }, ...recurse(node.children, node)];
+  if ((node.children ?? []).length > 0) {
+    return [{ ...node }, ...recurse(node.children ?? [], node)];
   } else {
     return [{ ...node }];
   }
@@ -90,7 +90,7 @@ export const deserializeDiagramElements = (
     for (const c of unfoldGroup(n)) {
       if (c.type === 'edge') continue;
       nodeLookup[c.id].setChildren(
-        c.children.map(c2 => nodeLookup[c2.id]),
+        c.children?.map(c2 => nodeLookup[c2.id]) ?? [],
         UnitOfWork.immediate(diagram)
       );
       if (c.parent) {

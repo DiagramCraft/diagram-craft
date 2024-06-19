@@ -1,7 +1,8 @@
 import {
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
-  registerStencil
+  registerStencil,
+  StencilPackage
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
@@ -21,7 +22,11 @@ import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefini
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
+import stencils from './uml.yaml';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { newid } from '@diagram-craft/utils/id';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 
 export const parseUMLShapes = async (
   id: string,
@@ -327,7 +332,36 @@ export const registerUMLShapes = async (
   r: NodeDefinitionRegistry,
   shapeParser: Record<string, ShapeParser>
 ) => {
-  const umlStencils = { id: 'uml', name: 'UML', stencils: [] };
+  const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [] };
+
+  for (const stencil of stencils.stencils) {
+    umlStencils.stencils.push({
+      id: stencil.id,
+      name: stencil.name,
+      node: (diagram: Diagram) => {
+        const uow = UnitOfWork.immediate(diagram);
+
+        const dest = new Diagram(
+          newid(),
+          stencil.name,
+          new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+        );
+
+        dest.layers.add(new Layer('default', 'Default', [], dest), uow);
+
+        const node = deserializeDiagramElements(
+          [stencil.node],
+          dest,
+          dest.layers.active,
+          {},
+          {}
+        )[0] as DiagramNode;
+        dest.layers.active.addElement(node, uow);
+
+        return node;
+      }
+    });
+  }
 
   const props: MakeStencilNodeOptsProps = () => ({
     fill: {
@@ -344,30 +378,6 @@ export const registerUMLShapes = async (
 
   const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOptsProps = p => () =>
     deepMerge(props('picker'), p);
-
-  registerStencil(r, umlStencils, new RectNodeDefinition(), {
-    id: 'umlObject',
-    name: 'Object',
-    size: { w: 100, h: 50 },
-    props: mergedProps({
-      text: {
-        text: 'Object',
-        valign: 'middle'
-      }
-    })
-  });
-
-  registerStencil(r, umlStencils, new RectNodeDefinition(), {
-    id: 'umlInterface',
-    name: 'Interface',
-    size: { w: 100, h: 50 },
-    props: mergedProps({
-      text: {
-        text: '&laquo;interface&raquo;<br /><b>Name</b>',
-        valign: 'middle'
-      }
-    })
-  });
 
   registerStencil(r, umlStencils, new UmlActor(), { aspectRatio: 0.6, props });
 

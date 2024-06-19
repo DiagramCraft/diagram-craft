@@ -1,0 +1,192 @@
+stencils:
+  - id: 'class'
+    name: Class
+    node:
+      id: cWmGFZhKdYEZwk7NpRVw-3
+      type: node
+      nodeType: swimlane
+      bounds:
+        x: 0
+        y: 0
+        w: 160
+        h: 86
+        r: 0
+      children:
+        - id: cWmGFZhKdYEZwk7NpRVw-4
+          type: node
+          nodeType: rect
+          bounds:
+            x: 0
+            w: 160
+            y: 26
+            h: 26
+            r: 0
+          props:
+            text:
+              fontSize: 12
+              font: Helvetica
+              color: var(--canvas-fg)
+              lineHeight: 0.97
+              top: 7
+              bottom: 7
+              left: 6
+              right: 6
+              align: left
+              valign: top
+              text: '+ field: type'
+            fill:
+              color: var(--canvas-bg2)
+            geometry:
+              flipH: false
+              flipV: false
+            stroke:
+              color: none
+              width: 1
+              enabled: false
+            style: default
+        - id: cWmGFZhKdYEZwk7NpRVw-5
+          type: node
+          nodeType: line
+          bounds:
+            x: 0
+            w: 160
+            y: 52
+            h: 8
+            r: 0
+          props:
+            text:
+              fontSize: 12
+              font: Helvetica
+              color: black
+              lineHeight: 0.97
+              top: 1
+              bottom: 7
+              left: 5
+              right: 5
+              align: left
+              valign: middle
+              text: ''
+            geometry:
+              flipH: false
+              flipV: false
+            stroke:
+              color: var(--canvas-fg)
+              width: 1
+            shapeDrawio:
+              textPosition: right
+            style: default
+        - id: cWmGFZhKdYEZwk7NpRVw-6
+          type: node
+          nodeType: rect
+          bounds:
+            x: 0
+            w: 160
+            y: 60
+            h: 26
+            r: 0
+          props:
+            text:
+              fontSize: 12
+              font: Helvetica
+              color: var(--canvas-fg)
+              lineHeight: 0.97
+              top: 7
+              bottom: 7
+              left: 6
+              right: 6
+              align: left
+              valign: top
+              text: '+ method(type): type'
+            fill:
+              color: var(--canvas-bg2)
+            geometry:
+              flipH: false
+              flipV: false
+            stroke:
+              color: none
+              width: 1
+              enabled: false
+            style: default
+      props:
+        text:
+          fontSize: 12
+          font: Helvetica
+          color: var(--canvas-fg)
+          lineHeight: 0.97
+          top: 7
+          bottom: 7
+          left: 2
+          right: 2
+          align: center
+          valign: top
+          bold: true
+          text: Classname
+        fill:
+          color: var(--canvas-bg2)
+        geometry:
+          flipH: false
+          flipV: false
+        stroke:
+          width: 1
+        shapeSwimlane:
+          title: true
+          titleBorder: true
+          titleSize: 26
+          horizontalBorder: false
+        style: default
+  - id: object
+    name: Object
+    node:
+      id: cWmGFZhKdYEZwk7NpRVw-1
+      type: node
+      nodeType: rect
+      bounds:
+        x: 0
+        y: 0
+        w: 110
+        h: 50
+        r: 0
+      props:
+        text:
+          fontSize: 12
+          font: Helvetica
+          lineHeight: 0.97
+          top: 7
+          bottom: 7
+          left: 2
+          right: 2
+          align: center
+          valign: middle
+          text: Object
+        fill:
+          color: var(--canvas-bg2)
+        geometry:
+          flipH: false
+          flipV: false
+        stroke:
+          width: 1
+        style: default
+  - id: interface
+    name: Interface
+    node:
+      id: cWmGFZhKdYEZwk7NpRVw-2
+      type: node
+      nodeType: rect
+      bounds:
+        x: 0
+        y: 0
+        w: 110
+        h: 50
+        r: 0
+      props:
+        text:
+          fontSize: 12
+          top: 7
+          bottom: 7
+          left: 2
+          right: 2
+          align: center
+          valign: middle
+          text: '&laquo;interface&raquo;<br><b>Name</b>'
+        fill:
+          color: var(--canvas-bg2)

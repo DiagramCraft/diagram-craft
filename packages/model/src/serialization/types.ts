@@ -31,7 +31,7 @@ export interface SerializedDiagramDocument {
 
 export interface SerializedNode extends AbstractNode {
   edges?: Record<string, ReadonlyArray<Reference>>;
-  children: ReadonlyArray<SerializedElement>;
+  children?: ReadonlyArray<SerializedElement>;
   props: NodePropsForEditing;
 }
 
