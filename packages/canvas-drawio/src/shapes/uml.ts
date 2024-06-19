@@ -1,4 +1,5 @@
 import {
+  loadStencilsFromYaml,
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
   registerStencil,
@@ -23,10 +24,6 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import stencils from './uml.yaml';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { newid } from '@diagram-craft/utils/id';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 
 export const parseUMLShapes = async (
   id: string,
@@ -334,34 +331,7 @@ export const registerUMLShapes = async (
 ) => {
   const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [] };
 
-  for (const stencil of stencils.stencils) {
-    umlStencils.stencils.push({
-      id: stencil.id,
-      name: stencil.name,
-      node: (diagram: Diagram) => {
-        const uow = UnitOfWork.immediate(diagram);
-
-        const dest = new Diagram(
-          newid(),
-          stencil.name,
-          new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
-        );
-
-        dest.layers.add(new Layer('default', 'Default', [], dest), uow);
-
-        const node = deserializeDiagramElements(
-          [stencil.node],
-          dest,
-          dest.layers.active,
-          {},
-          {}
-        )[0] as DiagramNode;
-        dest.layers.active.addElement(node, uow);
-
-        return node;
-      }
-    });
-  }
+  umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
 
   const props: MakeStencilNodeOptsProps = () => ({
     fill: {

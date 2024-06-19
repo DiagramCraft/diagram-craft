@@ -11,6 +11,7 @@ import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/Gene
 import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.nodeType';
 import {
   EdgeDefinitionRegistry,
+  loadStencilsFromYaml,
   NodeDefinitionRegistry,
   registerStencil,
   StencilPackage
@@ -36,6 +37,7 @@ import {
 } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
+import stencils from './defaultStencils.yaml';
 
 export const defaultNodeRegistry = () => {
   const reg = new NodeDefinitionRegistry();
@@ -83,6 +85,8 @@ export const defaultNodeRegistry = () => {
   const stencilRegistry = reg.stencilRegistry;
   stencilRegistry.register(defaults);
   stencilRegistry.register(arrows, true);
+
+  defaults.stencils.push(...loadStencilsFromYaml(stencils));
 
   return reg;
 };

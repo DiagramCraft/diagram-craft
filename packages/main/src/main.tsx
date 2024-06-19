@@ -14,6 +14,7 @@ import {
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { drawioReader } from '@diagram-craft/canvas-drawio/drawioReader';
 import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
+import { simpleDiagram } from './sample/simple';
 
 const stencilRegistry: StencilRegistryConfig = [
   {
@@ -108,10 +109,10 @@ const documentFactory = () => {
 };
 
 const diagrams = [
-  /*{
+  {
     name: 'Simple',
     document: () => deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
-  },*/
+  },
   {
     name: 'Drawio',
     document: async () => {

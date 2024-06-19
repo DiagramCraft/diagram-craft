@@ -1,0 +1,319 @@
+stencils:
+  - id: 'table'
+    name: Table
+    node:
+      id: zvtnb1j
+      type: node
+      nodeType: table
+      bounds:
+        x: 0
+        y: 0
+        w: 300
+        h: 160
+        r: 0
+      children:
+        - id: ycci95l
+          type: node
+          nodeType: tableRow
+          bounds:
+            x: 0
+            w: 300
+            y: 0
+            h: 40
+            r: 0
+          children:
+            - id: 0gry4n3
+              type: node
+              nodeType: text
+              bounds:
+                x: 0
+                w: 100
+                y: 0
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: Header 1
+                  bold: true
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg)
+            - id: uyky8zy
+              type: node
+              nodeType: text
+              bounds:
+                x: 100
+                w: 100
+                y: 0
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: Header 2
+                  bold: true
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg)
+
+            - id: 6thlpmi
+              type: node
+              nodeType: text
+              bounds:
+                x: 200
+                w: 100
+                y: 0
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: Header 3
+                  bold: true
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg)
+          props:
+            style: default
+            shapeContainer:
+              containerResize: both
+              layout: horizontal
+              childResize: fill
+              gapType: around
+              gap: 0
+        - id: qag6j4p
+          type: node
+          nodeType: tableRow
+          bounds:
+            x: 0
+            w: 300
+            y: 40
+            h: 40
+            r: 0
+          children:
+            - id: 5iuu4iq
+              type: node
+              nodeType: text
+              bounds:
+                x: 0
+                w: 100
+                y: 40
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+            - id: oglt1l7
+              type: node
+              nodeType: text
+              bounds:
+                x: 100
+                w: 100
+                y: 40
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+            - id: smikt5d
+              type: node
+              nodeType: text
+              bounds:
+                x: 200
+                w: 100
+                y: 40
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+          props:
+            style: default
+            shapeContainer:
+              containerResize: both
+              layout: horizontal
+              childResize: fill
+              gapType: around
+              gap: 0
+        - id: 65gz3p2
+          type: node
+          nodeType: tableRow
+          bounds:
+            x: 0
+            w: 300
+            y: 80
+            h: 40
+            r: 0
+          children:
+            - id: yjeptoc
+              type: node
+              nodeType: text
+              bounds:
+                x: 0
+                w: 100
+                y: 80
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+            - id: lwxcumy
+              type: node
+              nodeType: text
+              bounds:
+                x: 100
+                w: 100
+                y: 80
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+            - id: 6l0q84j
+              type: node
+              nodeType: text
+              bounds:
+                x: 200
+                w: 100
+                y: 80
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+          props:
+            style: default
+            shapeContainer:
+              containerResize: both
+              layout: horizontal
+              childResize: fill
+              gapType: around
+              gap: 0
+        - id: loxzs52
+          type: node
+          nodeType: tableRow
+          bounds:
+            x: 0
+            w: 300
+            y: 120
+            h: 40
+            r: 0
+          children:
+            - id: vblv6z0
+              type: node
+              nodeType: text
+              bounds:
+                x: 0
+                w: 100
+                y: 120
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+            - id: kgmeib2
+              type: node
+              nodeType: text
+              bounds:
+                x: 100
+                w: 100
+                y: 120
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+            - id: wqc1jaz
+              type: node
+              nodeType: text
+              bounds:
+                x: 200
+                w: 100
+                y: 120
+                h: 40
+                r: 0
+              props:
+                style: default
+                text:
+                  text: ''
+                stroke:
+                  enabled: false
+                fill:
+                  enabled: true
+                  color: var(--canvas-bg2)
+          props:
+            style: default
+            shapeContainer:
+              containerResize: both
+              layout: horizontal
+              childResize: fill
+              gapType: around
+              gap: 0
+      props:
+        style: default
+        shapeContainer:
+          containerResize: both
+          layout: vertical
+          childResize: scale
+          gapType: around
+          gap: 10
+        shapeTable:
+          gap: 0
+          title: false
+        text:
+          text: ''

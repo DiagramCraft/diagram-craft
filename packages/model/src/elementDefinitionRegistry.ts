@@ -13,6 +13,9 @@ import { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { deepMerge } from '@diagram-craft/utils/object';
+import { DiagramDocument } from './diagramDocument';
+import { Layer } from './diagramLayer';
+import { deserializeDiagramElements } from './serialization/deserialize';
 
 export type NodeCapability = 'children' | 'fill' | 'select';
 
@@ -265,3 +268,37 @@ export class StencilRegistry {
       .map(s => this.stencils.get(s)!);
   }
 }
+
+// eslint-disable-next-line
+export const loadStencilsFromYaml = (stencils: any) => {
+  const dest: Array<Stencil> = [];
+  for (const stencil of stencils.stencils) {
+    dest.push({
+      id: stencil.id,
+      name: stencil.name,
+      node: (diagram: Diagram) => {
+        const uow = UnitOfWork.immediate(diagram);
+
+        const dest = new Diagram(
+          newid(),
+          stencil.name,
+          new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+        );
+
+        dest.layers.add(new Layer('default', 'Default', [], dest), uow);
+
+        const node = deserializeDiagramElements(
+          [stencil.node],
+          dest,
+          dest.layers.active,
+          {},
+          {}
+        )[0] as DiagramNode;
+        dest.layers.active.addElement(node, uow);
+
+        return node;
+      }
+    });
+  }
+  return dest;
+};
