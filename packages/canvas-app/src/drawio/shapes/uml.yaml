@@ -25,7 +25,6 @@ stencils:
             text:
               fontSize: 12
               font: Helvetica
-              color: var(--canvas-fg)
               lineHeight: 0.97
               top: 7
               bottom: 7
@@ -34,11 +33,9 @@ stencils:
               align: left
               valign: top
               text: '+ field: type'
-            fill:
-              color: var(--canvas-bg2)
-            geometry:
-              flipH: false
               flipV: false
+            fill:
+              enabled: false
             stroke:
               color: none
               width: 1
@@ -54,18 +51,6 @@ stencils:
             h: 8
             r: 0
           props:
-            text:
-              fontSize: 12
-              font: Helvetica
-              color: black
-              lineHeight: 0.97
-              top: 1
-              bottom: 7
-              left: 5
-              right: 5
-              align: left
-              valign: middle
-              text: ''
             geometry:
               flipH: false
               flipV: false
@@ -88,7 +73,6 @@ stencils:
             text:
               fontSize: 12
               font: Helvetica
-              color: var(--canvas-fg)
               lineHeight: 0.97
               top: 7
               bottom: 7
@@ -98,10 +82,7 @@ stencils:
               valign: top
               text: '+ method(type): type'
             fill:
-              color: var(--canvas-bg2)
-            geometry:
-              flipH: false
-              flipV: false
+              enabled: false
             stroke:
               color: none
               width: 1
@@ -111,7 +92,6 @@ stencils:
         text:
           fontSize: 12
           font: Helvetica
-          color: var(--canvas-fg)
           lineHeight: 0.97
           top: 7
           bottom: 7
@@ -121,8 +101,6 @@ stencils:
           valign: top
           bold: true
           text: Classname
-        fill:
-          color: var(--canvas-bg2)
         geometry:
           flipH: false
           flipV: false

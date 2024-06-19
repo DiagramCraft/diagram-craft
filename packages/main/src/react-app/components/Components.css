@@ -835,7 +835,7 @@
   align-items: center;
 
   &.cmp-labeled-table--wide {
-    grid-template-columns: 1fr 4rem !important;
+    grid-template-columns: 1fr 5rem !important;
   }
 
   .cmp-labeled-table__row {

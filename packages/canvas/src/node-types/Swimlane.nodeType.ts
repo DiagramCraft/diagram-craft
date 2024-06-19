@@ -22,6 +22,7 @@ declare global {
       title?: boolean;
       titleBorder?: boolean;
       titleSize?: number;
+      fill?: boolean;
     };
   }
 }
@@ -31,7 +32,8 @@ registerNodeDefaults('shapeSwimlane', {
   outerBorder: true,
   title: false,
   titleBorder: true,
-  titleSize: 30
+  titleSize: 30,
+  fill: false
 });
 
 type RowsInOrder = Array<{
@@ -56,7 +58,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('swimlane', 'Swimlane', SwimlaneComponent);
 
-    this.capabilities.fill = false;
+    this.capabilities.fill = true;
     this.capabilities.children = true;
   }
 
@@ -160,6 +162,54 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
             props.shapeSwimlane.titleSize = value;
           }, uow);
         }
+      },
+      {
+        id: 'outerBorder',
+        type: 'boolean',
+        label: 'Outer Border',
+        value: node.renderProps.shapeSwimlane.outerBorder,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.shapeSwimlane ??= {};
+            props.shapeSwimlane.outerBorder = value;
+          }, uow);
+        }
+      },
+      {
+        id: 'horizontalBorder',
+        type: 'boolean',
+        label: 'Horizontal Border',
+        value: node.renderProps.shapeSwimlane.horizontalBorder,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.shapeSwimlane ??= {};
+            props.shapeSwimlane.horizontalBorder = value;
+          }, uow);
+        }
+      },
+      {
+        id: 'titleBorder',
+        type: 'boolean',
+        label: 'Title Border',
+        value: node.renderProps.shapeSwimlane.titleBorder,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.shapeSwimlane ??= {};
+            props.shapeSwimlane.titleBorder = value;
+          }, uow);
+        }
+      },
+      {
+        id: 'fill',
+        type: 'boolean',
+        label: 'Fill',
+        value: node.renderProps.shapeSwimlane.fill,
+        onChange: (value: boolean, uow: UnitOfWork) => {
+          node.updateProps(props => {
+            props.shapeSwimlane ??= {};
+            props.shapeSwimlane.fill = value;
+          }, uow);
+        }
       }
     ];
   }
@@ -188,6 +238,13 @@ class SwimlaneComponent extends BaseNodeComponent {
         }
       })
     );
+
+    if (props.nodeProps.shapeSwimlane.fill && props.nodeProps.fill.enabled !== false) {
+      builder.boundaryPath(boundary.all(), {
+        fill: props.nodeProps.fill,
+        stroke: { enabled: false }
+      });
+    }
 
     props.node.children.forEach(child => {
       builder.add(
@@ -218,12 +275,28 @@ class SwimlaneComponent extends BaseNodeComponent {
     let startY = bounds.y;
     if (props.nodeProps.shapeSwimlane.title) {
       const titleSize = props.nodeProps.shapeSwimlane.titleSize;
+      startY += titleSize;
+
+      if (props.nodeProps.shapeSwimlane.titleBorder !== false) {
+        const titlePathBuilder = new PathBuilder();
+        titlePathBuilder.moveTo(Point.of(bounds.x, startY));
+        titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
+        titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, bounds.y));
+        titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
+
+        builder.path(titlePathBuilder.getPaths().all(), {
+          ...props.nodeProps,
+          stroke: !props.nodeProps.stroke.enabled
+            ? { enabled: false, color: 'transparent' }
+            : props.nodeProps.stroke,
+          fill: props.nodeProps.fill.enabled !== false ? props.nodeProps.fill : {}
+        });
+      }
+
       builder.text(this, '1', props.nodeProps.text, {
         ...bounds,
         h: titleSize
       });
-
-      startY += titleSize;
     }
 
     if (props.nodeProps.shapeSwimlane.horizontalBorder !== false) {
@@ -239,18 +312,14 @@ class SwimlaneComponent extends BaseNodeComponent {
       }
     }
 
-    if (props.nodeProps.shapeSwimlane.titleBorder !== false) {
-      pathBuilder.moveTo(Point.of(bounds.x, startY));
-      pathBuilder.lineTo(Point.of(bounds.x, bounds.y));
-      pathBuilder.lineTo(Point.of(bounds.x + bounds.w, bounds.y));
-      pathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
-    }
-
     builder.path(pathBuilder.getPaths().all(), {
       stroke: !props.nodeProps.stroke.enabled
         ? { enabled: false, color: 'transparent' }
         : props.nodeProps.stroke,
-      fill: {}
+      fill: {
+        enabled: false,
+        color: 'transparent'
+      }
     });
   }
 }

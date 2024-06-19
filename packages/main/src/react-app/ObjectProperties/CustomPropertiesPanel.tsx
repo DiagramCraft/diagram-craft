@@ -68,7 +68,7 @@ export const CustomPropertiesPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
-      <div className={'cmp-labeled-table'}>
+      <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
         {Object.entries(customProperties).map(([key, value]) => {
           if (value.type === 'number') {
             return (
