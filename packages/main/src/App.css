@@ -46,6 +46,9 @@
   --canvas-fg: var(--blue-11);
   --canvas-bg: var(--slate-2);
   --canvas-bg2: var(--slate-5);
+  .canvas {
+    background-color: transparent;
+  }
 }
 .light-theme #left,
 .light-theme .cmp-node-type-popup
@@ -53,6 +56,9 @@
   --canvas-fg: var(--blue-11);
   --canvas-bg: var(--slate-4);
   --canvas-bg2: var(--slate-3);
+  .canvas {
+    background-color: transparent;
+  }
 }
 
 

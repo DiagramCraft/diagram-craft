@@ -11,6 +11,8 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -22,26 +24,37 @@ export const NodeTypePopup = (props: Props) => {
       const dimension = 50;
       const nodePosition = Point.subtract(diagramPosition, Point.of(dimension / 2, dimension / 2));
 
-      UnitOfWork.execute(diagram, uow => {
-        const node = registration.node(diagram);
-        node.setBounds(
-          {
-            x: nodePosition.x,
-            y: nodePosition.y,
-            w: dimension,
-            h: dimension,
-            r: 0
-          },
-          uow
-        );
+      const uow = new UnitOfWork(diagram, true);
 
-        diagram.layers.active.addElement(node, uow);
+      const node = registration.node(diagram);
+      node.setBounds(
+        {
+          x: nodePosition.x,
+          y: nodePosition.y,
+          w: dimension,
+          h: dimension,
+          r: 0
+        },
+        uow
+      );
 
-        const edge = diagram.edgeLookup.get(props.edgeId);
-        assert.present(edge);
+      diagram.layers.active.addElement(node, uow);
 
-        edge.setEnd(new ConnectedEndpoint(0, node), uow);
-      });
+      const edge = diagram.edgeLookup.get(props.edgeId);
+      assert.present(edge);
+
+      edge.setEnd(new ConnectedEndpoint(0, node), uow);
+
+      const snapshots = uow.commit();
+
+      // The last action on the undo stack is adding the edge, so we need to pop it and
+      // add a compound action
+      uow.diagram.undoManager.add(
+        new CompoundUndoableAction([
+          uow.diagram.undoManager.undoableActions.pop()!,
+          new SnapshotUndoableAction('Add element', uow.diagram, snapshots)
+        ])
+      );
 
       props.onClose();
     },
@@ -112,6 +125,7 @@ export const NodeTypePopup = (props: Props) => {
             {diagrams.map((d, idx) => (
               <div key={idx} style={{ background: 'transparent' }}>
                 <PickerCanvas
+                  name={d.name}
                   width={size}
                   height={size}
                   diagramWidth={d.viewBox.dimensions.w}
