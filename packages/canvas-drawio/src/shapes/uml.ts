@@ -7,7 +7,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
-import { ShapeParser, Style } from '../drawioReader';
+import { shapeParsers, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
@@ -325,10 +325,7 @@ class UmlLifeline extends SimpleShapeNodeDefinition {
   }
 }
 
-export const registerUMLShapes = async (
-  r: NodeDefinitionRegistry,
-  shapeParser: Record<string, ShapeParser>
-) => {
+export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
   const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [] };
 
   umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
@@ -403,9 +400,9 @@ export const registerUMLShapes = async (
     aspectRatio: 0.5
   });
 
-  shapeParser['umlLifeline'] = parseUMLShapes;
-  shapeParser['module'] = parseUMLShapes;
-  shapeParser['component'] = parseUMLShapes;
+  shapeParsers['umlLifeline'] = parseUMLShapes;
+  shapeParsers['module'] = parseUMLShapes;
+  shapeParsers['component'] = parseUMLShapes;
 
   r.stencilRegistry.register(umlStencils, true);
 };

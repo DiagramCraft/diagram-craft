@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom/client';
 import { AppLoader, StencilRegistryConfig } from './AppLoader';
 import './index.css';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
-import { snapTestDiagram } from './sample/snap-test';
-import { testDiagram } from './sample/test';
 import { SerializedDiagram } from '@diagram-craft/model/serialization/types';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -12,86 +10,119 @@ import {
   defaultEdgeRegistry,
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
-import { drawioReader } from '@diagram-craft/canvas-drawio/drawioReader';
 import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
-import { simpleDiagram } from './sample/simple';
+import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
+import { DiagramRef } from './App';
+
+stencilLoaderRegistry.drawioManual = () =>
+  import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);
+
+stencilLoaderRegistry.drawioXml = () =>
+  import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioXml);
+
+fileLoaderRegistry['.drawio'] = () =>
+  import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio);
+
+fileLoaderRegistry['.json'] = async () => (content, documentFactory, diagramFactory) =>
+  deserializeDiagramDocument(JSON.parse(content), documentFactory, diagramFactory);
 
 const stencilRegistry: StencilRegistryConfig = [
   {
     type: 'drawioManual',
-    callback: import('@diagram-craft/canvas-drawio/shapes/uml').then(
-      ({ registerUMLShapes }) => registerUMLShapes
-    )
+    opts: {
+      callback: () =>
+        import('@diagram-craft/canvas-drawio/shapes/uml').then(m => m.registerUMLShapes)
+    }
   },
   {
-    name: 'GCP',
     type: 'drawioXml',
-    url: '/stencils/gcp2.xml',
-    foreground: '#3b8df1',
-    background: '#3b8df1'
+    opts: {
+      name: 'GCP',
+      url: '/stencils/gcp2.xml',
+      foreground: '#3b8df1',
+      background: '#3b8df1'
+    }
   },
   {
-    name: 'AWS',
     type: 'drawioXml',
-    url: '/stencils/aws3.xml',
-    foreground: '#ff9900',
-    background: '#ff9900'
+    opts: {
+      name: 'AWS',
+      url: '/stencils/aws3.xml',
+      foreground: '#ff9900',
+      background: '#ff9900'
+    }
   },
   {
-    name: 'Azure',
     type: 'drawioXml',
-    url: '/stencils/azure.xml',
-    foreground: '#00abf0',
-    background: '#00abf0'
+    opts: {
+      name: 'Azure',
+      url: '/stencils/azure.xml',
+      foreground: '#00abf0',
+      background: '#00abf0'
+    }
   },
   {
-    name: 'Fluid Power',
     type: 'drawioXml',
-    url: '/stencils/fluid_power.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'var(--canvas-fg)'
+    opts: {
+      name: 'Fluid Power',
+      url: '/stencils/fluid_power.xml',
+      foreground: 'var(--canvas-fg)',
+      background: 'var(--canvas-fg)'
+    }
   },
   {
-    name: 'IBM',
     type: 'drawioXml',
-    url: '/stencils/ibm.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'transparent'
+    opts: {
+      name: 'IBM',
+      url: '/stencils/ibm.xml',
+      foreground: 'var(--canvas-fg)',
+      background: 'transparent'
+    }
   },
   {
-    name: 'Web Logos',
     type: 'drawioXml',
-    url: '/stencils/weblogos.xml',
-    foreground: 'blue',
-    background: '#ffffff'
+    opts: {
+      name: 'Web Logos',
+      url: '/stencils/weblogos.xml',
+      foreground: 'blue',
+      background: '#ffffff'
+    }
   },
   {
-    name: 'Web Icons',
     type: 'drawioXml',
-    url: '/stencils/webicons.xml',
-    foreground: 'blue',
-    background: '#000000'
+    opts: {
+      name: 'Web Icons',
+      url: '/stencils/webicons.xml',
+      foreground: 'blue',
+      background: '#000000'
+    }
   },
   {
-    name: 'EIP',
     type: 'drawioXml',
-    url: '/stencils/eip.xml',
-    foreground: 'black',
-    background: '#c0f5a9'
+    opts: {
+      name: 'EIP',
+      url: '/stencils/eip.xml',
+      foreground: 'black',
+      background: '#c0f5a9'
+    }
   },
   {
-    name: 'Arrows',
     type: 'drawioXml',
-    url: '/stencils/arrows.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'transparent'
+    opts: {
+      name: 'Arrows',
+      url: '/stencils/arrows.xml',
+      foreground: 'var(--canvas-fg)',
+      background: 'transparent'
+    }
   },
   {
-    name: 'Basic',
     type: 'drawioXml',
-    url: '/stencils/basic.xml',
-    foreground: 'var(--canvas-fg)',
-    background: 'transparent'
+    opts: {
+      name: 'Basic',
+      url: '/stencils/basic.xml',
+      foreground: 'var(--canvas-fg)',
+      background: 'transparent'
+    }
   }
 ];
 
@@ -108,32 +139,17 @@ const documentFactory = () => {
   return new DiagramDocument(nodeRegistry, edgeRegistry);
 };
 
-const diagrams = [
-  {
-    name: 'Simple',
-    document: () => deserializeDiagramDocument(simpleDiagram, documentFactory, diagramFactory)
-  },
-  {
-    name: 'Drawio',
-    document: async () => {
-      const res = await fetch(
-        location.hash !== '' ? location.hash.slice(1) : '/diagrams/uml.drawio'
-      );
-      const text = await res.text();
-
-      const doc = drawioReader(text, documentFactory, diagramFactory);
-      return await doc;
-    }
-  },
-  {
-    name: 'Snap test',
-    document: () => deserializeDiagramDocument(snapTestDiagram, documentFactory, diagramFactory)
-  },
-  {
-    name: 'Test',
-    document: () => deserializeDiagramDocument(testDiagram, documentFactory, diagramFactory)
-  }
+const diagrams: Array<DiagramRef> = [
+  { url: '/sample/simple.json' },
+  { url: '/diagrams/uml.drawio' },
+  { url: '/sample/snap-test.json' },
+  { url: '/sample/test.json' }
 ];
+
+if (location.hash !== '') {
+  const url = location.hash.slice(1);
+  diagrams.unshift({ url });
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -72,6 +72,8 @@ import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
+import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -114,13 +116,14 @@ export type ContextMenuTarget = { pos: Point } & (
 );
 
 export type DiagramRef = {
-  name: string;
-  document: () => Promise<DiagramDocument>;
+  name?: string;
+  url: string;
 };
 
 export const App = (props: {
   doc: DiagramDocument;
-
+  documentFactory: DocumentFactory;
+  diagramFactory: DiagramFactory<Diagram>;
   recent: Array<DiagramRef>;
 }) => {
   const [doc, setDoc] = useState<DiagramDocument>(props.doc);
@@ -216,6 +219,8 @@ export const App = (props: {
               <div className={'_document'}>
                 <DocumentSelector
                   diagrams={props.recent}
+                  documentFactory={props.documentFactory}
+                  diagramFactory={props.diagramFactory}
                   defaultValue={0}
                   onChange={async d => {
                     const doc = await d;

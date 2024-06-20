@@ -16,6 +16,7 @@ import { deepMerge } from '@diagram-craft/utils/object';
 import { DiagramDocument } from './diagramDocument';
 import { Layer } from './diagramLayer';
 import { deserializeDiagramElements } from './serialization/deserialize';
+import { EventEmitter } from '@diagram-craft/utils/event';
 
 export type NodeCapability = 'children' | 'fill' | 'select';
 
@@ -235,7 +236,12 @@ export type StencilPackage = {
   stencils: Array<Stencil>;
 };
 
-export class StencilRegistry {
+export type StencilEvents = {
+  /* Stencils registered, activated or deactivated */
+  change: { stencilRegistry: StencilRegistry };
+};
+
+export class StencilRegistry extends EventEmitter<StencilEvents> {
   private stencils = new Map<string, StencilPackage>();
   private activeStencils = new Set<string>();
 
@@ -250,16 +256,20 @@ export class StencilRegistry {
     }
 
     if (activate) {
-      this.activate(pkg.id);
+      this.activeStencils.add(pkg.id);
     }
+
+    this.emitAsync('change', { stencilRegistry: this });
   }
 
-  get(name: string): StencilPackage {
-    return this.stencils.get(name)!;
+  get(id: string): StencilPackage {
+    return this.stencils.get(id)!;
   }
 
-  activate(name: string) {
-    this.activeStencils.add(name);
+  activate(id: string) {
+    this.activeStencils.add(id);
+
+    this.emitAsync('change', { stencilRegistry: this });
   }
 
   getActiveStencils() {

@@ -3,12 +3,21 @@ import { AccordionTrigger } from './AccordionTrigger';
 import { AccordionContent } from './AccordionContext';
 import { ObjectPicker } from './ObjectPicker';
 import { useDiagram } from './context/DiagramContext';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRedraw } from './useRedraw';
 
 export const PickerToolWindow = () => {
   const diagram = useDiagram();
   const groups = diagram.document.nodeDefinitions.stencilRegistry.getActiveStencils();
   const [open, setOpen] = useState(['basic-shapes', 'arrow', 'uml']);
+  const redraw = useRedraw();
+
+  useEffect(() => {
+    diagram.document.nodeDefinitions.stencilRegistry.on('change', redraw);
+    return () => {
+      diagram.document.nodeDefinitions.stencilRegistry.off('change', redraw);
+    };
+  }, [diagram, redraw]);
 
   return (
     <Accordion.Root className="cmp-accordion" type="multiple" value={open} onValueChange={setOpen}>

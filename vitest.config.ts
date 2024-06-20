@@ -1,9 +1,10 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import yaml from '@rollup/plugin-yaml';
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  plugins: [tsconfigPaths(), yaml()],
   test: {
     exclude: ['**/*.spec.ts', '**/node_modules/**', '**/dist/**'],
     fakeTimers: {
