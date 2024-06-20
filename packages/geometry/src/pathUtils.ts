@@ -41,8 +41,8 @@ export const PathUtils = {
           s[2] = ((s[2] - fromBounds.y) / fromBounds.h) * toBounds.h + toBounds.y;
           break;
         case 'A':
-          s[1] = ((s[1] / Math.abs(fromBounds.w)) * Math.abs(toBounds.w)) / 2;
-          s[2] = ((s[2] / Math.abs(fromBounds.h)) * Math.abs(toBounds.h)) / 2;
+          s[1] = (s[1] / Math.abs(fromBounds.w)) * Math.abs(toBounds.w);
+          s[2] = (s[2] / Math.abs(fromBounds.h)) * Math.abs(toBounds.h);
           s[6] = ((s[6] - fromBounds.x) / fromBounds.w) * toBounds.w + toBounds.x;
           s[7] = ((s[7] - fromBounds.y) / fromBounds.h) * toBounds.h + toBounds.y;
           break;
