@@ -400,6 +400,7 @@ export class ContainerComponent extends BaseNodeComponent {
     const path = paths.singularPath();
     const svgPath = path.asSvgPath();
 
+    builder.noBoundaryNeeded();
     builder.add(
       svg.path({
         'd': svgPath,

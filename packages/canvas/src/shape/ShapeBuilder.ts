@@ -49,6 +49,7 @@ type Opts = {
 export class ShapeBuilder {
   nodes: VNode[] = [];
   controlPoints: ControlPoint[] = [];
+  boundaryPathExists = false;
 
   constructor(private readonly props: ShapeBuilderProps) {}
 
@@ -56,7 +57,13 @@ export class ShapeBuilder {
     this.nodes.push(vnode);
   }
 
+  noBoundaryNeeded() {
+    this.boundaryPathExists = true;
+  }
+
   buildBoundary(w = 1, h = 1, textId: undefined | string = '1') {
+    this.boundaryPathExists = true;
+
     const g = svg.g({
       id: newid(),
       class: 'svg-node__boundary svg-node',
@@ -108,6 +115,8 @@ export class ShapeBuilder {
     textId: undefined | string = '1',
     opts?: Opts
   ) {
+    this.boundaryPathExists = true;
+
     opts ??= {};
     opts.map ??= a => a;
     opts.className ??= 'svg-node__boundary svg-node';

@@ -238,6 +238,7 @@ class TableComponent extends BaseNodeComponent {
     const path = boundary.singularPath();
     const svgPath = path.asSvgPath();
 
+    builder.noBoundaryNeeded();
     builder.add(
       svg.path({
         'd': svgPath,
@@ -344,6 +345,7 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
 
 class TableRowComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
+    builder.noBoundaryNeeded();
     props.node.children.forEach(child => {
       builder.add(
         svg.g(

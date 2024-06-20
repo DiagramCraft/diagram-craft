@@ -222,6 +222,7 @@ class SwimlaneComponent extends BaseNodeComponent {
     const path = boundary.singularPath();
     const svgPath = path.asSvgPath();
 
+    builder.noBoundaryNeeded();
     builder.add(
       svg.path({
         'd': svgPath,

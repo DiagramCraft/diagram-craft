@@ -193,6 +193,10 @@ export class BaseNodeComponent<
     });
     this.buildShape(buildProps, shapeBuilder);
 
+    if (!shapeBuilder.boundaryPathExists) {
+      console.warn('Node has no boundary path', props.element.id, props.element.nodeType);
+    }
+
     const shapeVNodes = [...shapeBuilder.nodes];
 
     if (isSingleSelected && props.tool?.type === 'move') {
