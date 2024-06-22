@@ -13,6 +13,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -27,16 +28,8 @@ export const NodeTypePopup = (props: Props) => {
       const uow = new UnitOfWork(diagram, true);
 
       const node = registration.node(diagram);
-      node.setBounds(
-        {
-          x: nodePosition.x,
-          y: nodePosition.y,
-          w: dimension,
-          h: dimension,
-          r: 0
-        },
-        uow
-      );
+      assignNewIds([node]);
+      assignNewBounds([node], nodePosition, 1, 1, diagram, uow);
 
       diagram.layers.active.addElement(node, uow);
 

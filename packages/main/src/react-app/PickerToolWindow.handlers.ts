@@ -6,48 +6,12 @@ import { Box } from '@diagram-craft/geometry/box';
 import { SerializedElement } from '@diagram-craft/model/serialization/types';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { newid } from '@diagram-craft/utils/id';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
-import { Point } from '@diagram-craft/geometry/point';
+import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 
 type ElementsDraggable = {
   elements: Array<SerializedElement>;
   attachments: Record<string, string>;
   dimensions: Extent;
-};
-
-const assignNewIds = (droppedElements: readonly DiagramElement[]) => {
-  for (const e of droppedElements) {
-    e.id = newid();
-    if (isNode(e)) {
-      assignNewIds(e.children);
-    }
-  }
-};
-
-const assignNewBounds = (
-  droppedElements: readonly DiagramElement[],
-  bounds: Box,
-  point: Point,
-  scaleX: number,
-  scaleY: number,
-  $d: Diagram
-) => {
-  for (const e of droppedElements) {
-    e.setBounds(
-      {
-        x: (e.bounds.x - bounds.x) * scaleX + point.x,
-        y: (e.bounds.y - bounds.y) * scaleY + point.y,
-        w: e.bounds.w * scaleX,
-        h: e.bounds.h * scaleY,
-        r: e.bounds.r
-      },
-      UnitOfWork.immediate($d)
-    );
-    if (isNode(e)) {
-      assignNewBounds(e.children, bounds, point, scaleX, scaleY, $d);
-    }
-  }
 };
 
 export const canvasDropHandler = ($d: Diagram) => {
@@ -75,7 +39,7 @@ export const canvasDropHandler = ($d: Diagram) => {
     const scaleY = draggable.dimensions.h / bounds.h;
 
     const point = $d.viewBox.toDiagramPoint(EventHelper.point(e));
-    assignNewBounds(droppedElements, bounds, point, scaleX, scaleY, $d);
+    assignNewBounds(droppedElements, point, scaleX, scaleY, $d, UnitOfWork.immediate($d));
 
     $d.undoManager.addAndExecute(new ElementAddUndoableAction(droppedElements, $d));
 
