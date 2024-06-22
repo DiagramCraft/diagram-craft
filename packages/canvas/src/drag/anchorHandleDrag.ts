@@ -34,6 +34,8 @@ export class AnchorHandleDrag extends AbstractDrag {
       diagram.layers.active
     );
 
+    diagram.undoManager.setMark();
+
     const uow = new UnitOfWork(diagram);
     diagram.layers.active.addElement(this.edge, uow);
 

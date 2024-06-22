@@ -51,7 +51,7 @@ export const NodeTypePopup = (props: Props) => {
       // add a compound action
       uow.diagram.undoManager.add(
         new CompoundUndoableAction([
-          uow.diagram.undoManager.undoableActions.pop()!,
+          ...uow.diagram.undoManager.getToMark(),
           new SnapshotUndoableAction('Add element', uow.diagram, snapshots)
         ])
       );

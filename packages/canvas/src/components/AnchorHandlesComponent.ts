@@ -8,48 +8,46 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
 
+type State = 'background' | 'node' | 'handle';
+
+const ANCHOR_SIZE = 4;
+const SCALE = 10;
+
 // TODO: All these timeouts are a bit ugly... should find a better way
 //       to describe the state machine - or somehow subscribe to mouse move events
 //       to trigger the hiding of the handles
 //
-// TODO: This needs some refactoring :) state in the component, the listeners, state in
-//       the render function - all a bit of a mess
 export class AnchorHandlesComponent extends Component<CanvasState> {
   private hoverNode: DiagramElement | undefined;
-  private state: 'background' | 'node' | 'handle' = 'background';
+  private state: State = 'background';
   private timeout: number | undefined = undefined;
-  private shouldScale: boolean = false;
-
-  setHoverNode(node: DiagramElement | undefined) {
-    this.hoverNode = node;
-    this.redraw();
-  }
 
   render(props: CanvasState) {
     const diagram = props.diagram;
 
     const selection = diagram.selectionState;
-    this.shouldScale = selection.nodes.length === 1 && selection.nodes[0] === this.hoverNode;
+    const shouldScale = selection.nodes.length === 1 && selection.nodes[0] === this.hoverNode;
 
+    // Whenever an element is hovered, we capture the element (and reset any previous state)
     createEffect(() => {
       const cb = ({ element }: { element: string | undefined }) => {
-        if (this.timeout) clearTimeout(this.timeout);
+        this.clearTimeout();
+
         if (element === undefined) {
-          this.triggerMouseOut();
+          this.triggerMouseOut(shouldScale);
         } else {
-          this.timeout = undefined;
-          this.state = 'node';
-          this.setHoverNode(diagram.lookup(element));
+          this.setState(diagram.lookup(element), 'node');
         }
       };
       props.applicationState.on('hoverElementChange', cb);
       return () => props.applicationState.off('hoverElementChange', cb);
     }, [props.applicationState]);
 
+    // When the selection is changes, we reset the state
     createEffect(() => {
       const cb = () => {
-        if (this.timeout) clearTimeout(this.timeout);
-        this.redraw();
+        this.clearTimeout();
+        this.setState(undefined, 'background');
       };
       diagram.selectionState.on('change', cb);
       return () => diagram.selectionState.off('change', cb);
@@ -57,17 +55,14 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
     createEffect(() => {
       const cb = ({ element }: { element: DiagramElement }) => {
-        if (this.timeout) clearTimeout(this.timeout);
+        this.clearTimeout();
         if (element === this.hoverNode) {
-          this.state = 'background';
-          this.setHoverNode(undefined);
+          this.setState(undefined, 'background');
         }
       };
       diagram.on('elementRemove', cb);
       return () => diagram.off('elementRemove', cb);
     }, [diagram]);
-
-    const scale = 4;
 
     if (
       this.hoverNode === undefined ||
@@ -79,9 +74,17 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
     const node = this.hoverNode;
 
-    if (this.shouldScale || selection.isDragging()) return svg.g({});
+    if (selection.isDragging()) return svg.g({});
 
-    const scaledBounds = node.bounds;
+    const sBounds = shouldScale
+      ? {
+          x: node.bounds.x - SCALE,
+          y: node.bounds.y - SCALE,
+          w: node.bounds.w + 2 * SCALE,
+          h: node.bounds.h + 2 * SCALE,
+          r: node.bounds.r
+        }
+      : node.bounds;
 
     const children: VNode[] = [];
 
@@ -93,21 +96,20 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
       children.push(
         svg.g(
           {
-            transform: `translate(${scaledBounds.x + x * scaledBounds.w} ${
-              scaledBounds.y + y * scaledBounds.h
-            })
-            `,
+            transform: `translate(${sBounds.x + x * sBounds.w} ${sBounds.y + y * sBounds.h})`,
             on: {
               mouseover: () => (this.state = 'handle'),
               mouseout: () => {
                 this.state = 'background';
-                if (this.timeout) clearTimeout(this.timeout);
-                this.triggerMouseOut();
+                this.clearTimeout();
+                this.triggerMouseOut(shouldScale);
               },
               mousedown: e => {
                 DRAG_DROP_MANAGER.initiate(
                   new AnchorHandleDrag(node, idx, EventHelper.point(e), props.applicationTriggers)
                 );
+                this.clearTimeout();
+                this.setState(undefined, 'background');
                 e.preventDefault();
                 e.stopPropagation();
               }
@@ -115,24 +117,35 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
           },
           svg.path({
             class: 'svg-anchor-handle',
-            d: `M 0 -${scale}, L ${scale} 0, L 0 ${scale}, L -${scale} 0, L 0 -${scale}`
+            d: `M 0 -${ANCHOR_SIZE}, L ${ANCHOR_SIZE} 0, L 0 ${ANCHOR_SIZE}, L -${ANCHOR_SIZE} 0, L 0 -${ANCHOR_SIZE}`
           })
         )
       );
     });
 
-    // TODO: Fix this
     return svg.g({}, ...children);
   }
 
-  private triggerMouseOut() {
+  private setState(node: DiagramElement | undefined, state: State) {
+    this.state = state;
+    this.hoverNode = node;
+    this.redraw();
+  }
+
+  private clearTimeout() {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = undefined;
+    }
+  }
+
+  private triggerMouseOut(shouldScale: boolean) {
     this.timeout = window.setTimeout(
       () => {
         if (this.state === 'handle') return;
-        this.state = 'background';
-        this.setHoverNode(undefined);
+        this.setState(undefined, 'background');
       },
-      this.shouldScale ? 400 : 50
+      shouldScale ? 400 : 50
     );
   }
 }

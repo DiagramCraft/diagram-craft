@@ -62,12 +62,27 @@ const MAX_HISTORY = 100;
 export class UndoManager extends EventEmitter<UndoEvents> {
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
+  mark: UndoableAction | undefined = undefined;
 
   constructor(private readonly diagram: Diagram) {
     super();
 
     this.undoableActions = [];
     this.redoableActions = [];
+  }
+
+  setMark() {
+    this.mark = this.undoableActions.at(-1);
+  }
+
+  getToMark() {
+    const actions: UndoableAction[] = [];
+    while (this.undoableActions.at(-1) !== this.mark) {
+      actions.push(this.undoableActions.pop()!);
+    }
+    actions.reverse();
+
+    return actions;
   }
 
   combine(callback: () => void) {
