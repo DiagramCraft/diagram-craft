@@ -78,9 +78,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
   private svgRef: SVGSVGElement | null = null;
   private tool: Tool | undefined;
 
-  // TODO: Change to Map
-  private nodeRefs: Record<string, Component<unknown> | null> = {};
-  private edgeRefs: Record<string, Component<unknown> | null> = {};
+  private nodeRefs: Map<string, Component<unknown> | null> = new Map();
+  private edgeRefs: Map<string, Component<unknown> | null> = new Map();
 
   setTool(tool: Tool | undefined) {
     this.tool = tool;
@@ -347,16 +346,17 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                     },
                     {
                       onCreate: element => {
-                        this.edgeRefs[id] = (
-                          element.data as ComponentVNodeData<unknown>
-                        ).component.instance!;
+                        this.edgeRefs.set(
+                          id,
+                          (element.data as ComponentVNodeData<unknown>).component.instance!
+                        );
                       },
                       onRemove: element => {
                         /* Note: Need to check if the instance is the same as the one we have stored,
                          *       as removes and adds can come out of order */
                         const instance = element.data as ComponentVNodeData<unknown>;
-                        if (this.edgeRefs[id] === instance.component.instance) {
-                          this.edgeRefs[id] = null;
+                        if (this.edgeRefs.get(id) === instance.component.instance) {
+                          this.edgeRefs.set(id, null);
                         }
                       }
                     }
@@ -381,17 +381,19 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                     },
                     {
                       onCreate: element => {
-                        this.nodeRefs[id] = (
-                          element.data as ComponentVNodeData<NodeComponentProps>
-                        ).component.instance!;
+                        this.nodeRefs.set(
+                          id,
+                          (element.data as ComponentVNodeData<NodeComponentProps>).component
+                            .instance!
+                        );
                       },
                       onRemove: element => {
                         /* Note: Need to check if the instance is the same as the one we have stored,
                          *       as removes and adds can come out of order */
                         const instance = (element.data as ComponentVNodeData<NodeComponentProps>)
                           .component.instance;
-                        if (this.nodeRefs[id] === instance) {
-                          this.nodeRefs[id] = null;
+                        if (this.nodeRefs.get(id) === instance) {
+                          this.nodeRefs.set(id, null);
                         }
                       }
                     }
@@ -418,12 +420,12 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
   private redrawElement = (e: { element: DiagramElement }) => {
     if (isNode(e.element)) {
       const nodeToRepaint = getTopMostNode(e.element);
-      this.nodeRefs[nodeToRepaint.id]?.redraw();
+      this.nodeRefs.get(nodeToRepaint.id)?.redraw();
       for (const edge of nodeToRepaint.listEdges()) {
-        this.edgeRefs[edge.id]?.redraw();
+        this.edgeRefs.get(edge.id)?.redraw();
       }
     } else {
-      this.edgeRefs[e.element.id]?.redraw();
+      this.edgeRefs.get(e.element.id)?.redraw();
     }
   };
 
