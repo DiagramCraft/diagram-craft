@@ -8,10 +8,16 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
   const diagram = props.diagram;
   const timeout = useRef<number | null>(null);
   const [hover, setHover] = useState<Point | undefined>(undefined);
+  const r = useRef<string>('');
 
-  const onMouseOver = useCallback((e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const onMouseOver = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const p = { x: rect.x, y: rect.y };
+
+    // Note: this is a hack to ensure the event is not re-triggered as the object is dropped on the canvas
+    const hash = `${e.nativeEvent.screenX},${e.nativeEvent.screenY},${e.nativeEvent.offsetX},${e.nativeEvent.offsetY}`;
+    if (r.current === hash) return;
+    r.current = hash;
 
     if (timeout.current) {
       clearTimeout(timeout.current);
@@ -20,7 +26,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     timeout.current = window.setTimeout(() => {
       setHover(p);
     }, 100);
-  }, []);
+  };
 
   const onMouseOut = useCallback(() => {
     if (timeout.current) {
@@ -29,9 +35,13 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     setHover(undefined);
   }, []);
 
+  if (!props.showHover && hover) {
+    setHover(undefined);
+  }
+
   return (
-    <div onMouseEnter={e => onMouseOver(e)} onMouseLeave={onMouseOut} style={{}}>
-      {hover && (
+    <div onMouseOver={e => onMouseOver(e)} onMouseLeave={onMouseOut} style={{}}>
+      {hover && props.showHover && (
         <Portal.Root>
           <div
             style={{
@@ -89,5 +99,6 @@ type PickerCanvasProps = {
   onClick?: (e: MouseEvent) => void;
   diagramWidth?: number;
   diagramHeight?: number;
+  showHover?: boolean;
   name?: string;
 };

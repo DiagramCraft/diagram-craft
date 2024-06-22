@@ -8,9 +8,27 @@ import { serializeDiagramElement } from '@diagram-craft/model/serialization/seri
 import { newid } from '@diagram-craft/utils/id';
 import { StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { useState } from 'react';
+
+const encodeSvg = (svgString: string) =>
+  'data:image/svg+xml,' +
+  svgString
+    .replace(
+      '<svg',
+      ~svgString.indexOf('xmlns') ? '<svg' : '<svg xmlns="http://www.w3.org/2000/svg"'
+    )
+    .replace(/"/g, "'")
+    .replace(/%/g, '%25')
+    .replace(/#/g, '%23')
+    .replace(/{/g, '%7B')
+    .replace(/}/g, '%7D')
+    .replace(/</g, '%3C')
+    .replace(/>/g, '%3E')
+    .replace(/\s+/g, ' ');
 
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
+  const [showHover, setShowHover] = useState(true);
 
   const stencils = props.package.stencils;
   const diagrams = stencils.map((n): [Diagram, DiagramNode] => {
@@ -51,6 +69,53 @@ export const ObjectPicker = (props: Props) => {
                 dimensions: n.bounds
               })
             );
+
+            const clonedSvg = (
+              ev.target as HTMLElement
+            ).firstElementChild?.firstElementChild?.firstElementChild!.cloneNode(
+              true
+            ) as HTMLElement;
+            clonedSvg.setAttribute('width', n.bounds.w.toString());
+            clonedSvg.setAttribute('height', n.bounds.h.toString());
+
+            const canvasFg = getComputedStyle(document.getElementById('app')!).getPropertyValue(
+              '--canvas-fg'
+            );
+            const canvasBg = getComputedStyle(document.getElementById('app')!).getPropertyValue(
+              '--canvas-bg'
+            );
+            const canvasBg2 = getComputedStyle(document.getElementById('app')!).getPropertyValue(
+              '--canvas-bg2'
+            );
+
+            clonedSvg.setAttribute(
+              'style',
+              `--canvas-fg: ${canvasFg}; --canvas-bg: ${canvasBg}; --canvas-bg2: ${canvasBg2};`
+            );
+            clonedSvg.setAttribute('viewBox', `-2 -2 ${n.bounds.w + 4} ${n.bounds.h + 4}`);
+
+            const div = document.createElement('div');
+            div.id = 'drag-image';
+
+            const img = new Image();
+            img.src = encodeSvg(clonedSvg.outerHTML);
+            img.width = n.bounds.w;
+            img.height = n.bounds.h;
+
+            div.style.position = 'absolute';
+
+            div.style.zIndex = '1000';
+            div.style.top = '100%';
+            div.style.left = '100%';
+            div.appendChild(img);
+            document.body.appendChild(div);
+
+            ev.dataTransfer.setDragImage(img, 2, 2);
+            setShowHover(false);
+          }}
+          onDragEnd={() => {
+            setShowHover(true);
+            document.getElementById('drag-image')?.remove();
           }}
           style={{ background: 'transparent' }}
           data-width={d.viewBox.dimensions.w}
@@ -61,6 +126,7 @@ export const ObjectPicker = (props: Props) => {
             diagramWidth={d.viewBox.dimensions.w}
             diagramHeight={d.viewBox.dimensions.h}
             diagram={d}
+            showHover={showHover}
             name={
               stencils[idx].name ??
               diagram.document.nodeDefinitions.get(n.nodeType).name ??
