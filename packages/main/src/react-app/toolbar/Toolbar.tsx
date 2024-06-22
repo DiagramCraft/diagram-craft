@@ -21,19 +21,19 @@ import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ActionToolbarButton } from './ActionToolbarButton';
 import { useEventListener } from '../hooks/useEventListener';
 import { useCallback, useEffect, useState } from 'react';
-import { CanvasGridToolbarButton } from '../ObjectProperties/CanvasGridToolbarButton';
-import { CanvasSnapToolbarButton } from '../ObjectProperties/CanvasSnapToolbarButton';
-import { NodeFillToolbarButton } from '../ObjectProperties/NodeFillToolbarButton';
-import { ShadowToolbarButton } from '../ObjectProperties/ShadowToolbarButton';
-import { NodeStrokeToolbarButton } from '../ObjectProperties/NodeStrokeToolbarButton';
 import { ActionToggleButton } from './ActionToggleButton';
-import { TextToolbarButton } from '../ObjectProperties/TextToolbarButton';
-import { CustomPropertiesToolbarButton } from '../ObjectProperties/CustomPropertiesToolbarButton';
 import { useDiagram } from '../context/DiagramContext';
-import { TextFontToolbarButton } from '../ObjectProperties/TextFontToolbarButton';
-import { TextFontSizeToolbarButton } from '../ObjectProperties/TextFontSizeToolbarButton';
-import { LineToolbarButton } from '../ObjectProperties/LineToolbarButton';
 import { SelectionType } from '@diagram-craft/model/selectionState';
+import { ElementTextFontToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextFontToolbarButton';
+import { ElementTextFontSizeToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextFontSizeToolbarButton';
+import { ElementTextToolbarButton } from '../toolwindow/ObjectToolWindow/ElementTextToolbarButton';
+import { NodeFillToolbarButton } from '../toolwindow/ObjectToolWindow/NodeFillToolbarButton';
+import { NodeStrokeToolbarButton } from '../toolwindow/ObjectToolWindow/NodeStrokeToolbarButton';
+import { EdgeLineToolbarButton } from '../toolwindow/ObjectToolWindow/EdgeLineToolbarButton';
+import { ElementShadowToolbarButton } from '../toolwindow/ObjectToolWindow/ElementShadowToolbarButton';
+import { ElementCustomPropertiesToolbarButton } from '../toolwindow/ObjectToolWindow/ElementCustomPropertiesToolbarButton';
+import { CanvasGridToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGridToolbarButton';
+import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSnapToolbarButton';
 
 export const Toolbar = () => {
   const diagram = useDiagram();
@@ -66,8 +66,8 @@ export const Toolbar = () => {
     <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
       {isTextSelection && (
         <>
-          <TextFontToolbarButton />
-          <TextFontSizeToolbarButton />
+          <ElementTextFontToolbarButton />
+          <ElementTextFontSizeToolbarButton />
 
           <ActionToggleButton action={'TEXT_BOLD'}>
             <TbBold />
@@ -78,7 +78,7 @@ export const Toolbar = () => {
           <ActionToggleButton action={'TEXT_UNDERLINE'}>
             <TbUnderline />
           </ActionToggleButton>
-          <TextToolbarButton />
+          <ElementTextToolbarButton />
         </>
       )}
 
@@ -91,19 +91,19 @@ export const Toolbar = () => {
 
       {isEdgeSelection && (
         <>
-          <LineToolbarButton />
+          <EdgeLineToolbarButton />
           <ActionToolbarButton action={'EDGE_FLIP'}>
             <TbArrowsExchange2 />
           </ActionToolbarButton>
-          <ShadowToolbarButton />
+          <ElementShadowToolbarButton />
         </>
       )}
 
       {isNodeSelection && !isTextSelection && (
         <>
-          <TextToolbarButton />
-          <ShadowToolbarButton />
-          <CustomPropertiesToolbarButton />
+          <ElementTextToolbarButton />
+          <ElementShadowToolbarButton />
+          <ElementCustomPropertiesToolbarButton />
         </>
       )}
 

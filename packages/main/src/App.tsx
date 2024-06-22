@@ -1,6 +1,6 @@
 import './App.css';
 import { useRef, useState } from 'react';
-import { LayerToolWindow } from './react-app/LayerToolWindow';
+import { LayerToolWindow } from './react-app/toolwindow/LayerToolWindow/LayerToolWindow';
 import { DocumentSelector } from './react-app/DocumentSelector';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
@@ -28,34 +28,36 @@ import {
   TbZoomIn,
   TbZoomOut
 } from 'react-icons/tb';
-import { CanvasContextMenu } from './react-app/context-menu/CanvasContextMenu';
-import { ContextMenuDispatcher } from './react-app/context-menu/ContextMenuDispatcher';
-import { SelectionContextMenu } from './react-app/context-menu/SelectionContextMenu';
+import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
+import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
+import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
 import { Toolbar } from './react-app/toolbar/Toolbar';
-import { SideBar } from './react-app/SideBar';
-import { SideBarPage } from './react-app/SideBarPage';
-import { PickerToolWindow } from './react-app/PickerToolWindow';
-import { ObjectToolWindow } from './react-app/ObjectProperties/ObjectToolWindow';
-import { EdgeContextMenu } from './react-app/context-menu/EdgeContextMenu';
+import { SideBar, SideBarPage } from './react-app/SideBar';
+import { PickerToolWindow } from './react-app/toolwindow/PickerToolWindow/PickerToolWindow';
+import { ObjectToolWindow } from './react-app/toolwindow/ObjectToolWindow/ObjectToolWindow';
+import { EdgeContextMenu } from './react-app/context-menu-dispatcher/EdgeContextMenu';
 import { useEventListener } from './react-app/hooks/useEventListener';
-import { useRedraw } from './react-app/useRedraw';
+import { useRedraw } from './react-app/hooks/useRedraw';
 import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap';
-import { ObjectInfo } from './react-app/ObjectInfo/ObjectInfo';
+import { ObjectInfoToolWindow } from './react-app/toolwindow/ObjectInfoToolWindow/ObjectInfoToolWindow';
 import { DocumentTabs } from './react-app/DocumentTabs';
-import { HistoryToolWindow } from './react-app/HistoryToolWindow';
+import { HistoryToolWindow } from './react-app/toolwindow/HistoryToolWindow/HistoryToolWindow';
 import { Ruler } from './react-app/Ruler';
 import { ActionsContext, useActions } from './react-app/context/ActionsContext';
 import { DiagramContext } from './react-app/context/DiagramContext';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext';
-import { defaultPalette } from './react-app/ObjectProperties/palette';
-import { DocumentToolWindow } from './react-app/DocumentToolWindow';
+import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
+import { DocumentToolWindow } from './react-app/toolwindow/DocumentToolWindow/DocumentToolWindow';
 import { ActionToggleButton } from './react-app/toolbar/ActionToggleButton';
 import { LayerIndicator } from './react-app/LayerIndicator';
 import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup';
 import { MessageDialog, MessageDialogState } from './react-app/components/MessageDialog';
-import { ObjectData } from './react-app/ObjectData/ObjectData';
-import { QueryToolWindow } from './react-app/QueryToolWindow';
-import { canvasDragOverHandler, canvasDropHandler } from './react-app/PickerToolWindow.handlers';
+import { ObjectDataToolWindow } from './react-app/toolwindow/ObjectDataToolWindow/ObjectDataToolWindow';
+import { QueryToolWindow } from './react-app/toolwindow/QueryToolWindow/QueryToolWindow';
+import {
+  canvasDragOverHandler,
+  canvasDropHandler
+} from './react-app/toolwindow/PickerToolWindow/PickerToolWindow.handlers';
 import { Point } from '@diagram-craft/geometry/point';
 import { ToolContructor } from '@diagram-craft/canvas/tool';
 import { MoveTool } from '@diagram-craft/canvas/tools/moveTool';
@@ -297,10 +299,10 @@ export const App = (props: {
                   <ObjectToolWindow />
                 </SideBarPage>
                 <SideBarPage icon={TbInfoCircle}>
-                  <ObjectInfo />
+                  <ObjectInfoToolWindow />
                 </SideBarPage>
                 <SideBarPage icon={TbDatabaseEdit}>
-                  <ObjectData />
+                  <ObjectDataToolWindow />
                 </SideBarPage>
               </SideBar>
 

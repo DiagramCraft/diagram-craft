@@ -279,6 +279,7 @@ export class SVGGBuilder {
   }
 
   private strokeProps() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const d: any = {
       'stroke': this.#stroke?.color,
       'stroke-width': this.#stroke?.width

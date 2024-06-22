@@ -1,5 +1,5 @@
 import { useEventListener } from './hooks/useEventListener';
-import { useRedraw } from './useRedraw';
+import { useRedraw } from './hooks/useRedraw';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { useDiagram } from './context/DiagramContext';

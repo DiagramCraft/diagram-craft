@@ -1,7 +1,17 @@
-import { ToolWindowButton } from './ToolWindowButton';
+import { ToolWindowButton } from './toolwindow/ToolWindowButton';
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from './hooks/useEventListener';
 import { UserState } from '@diagram-craft/canvas/UserState';
+import { IconType } from 'react-icons/lib/cjs/iconBase';
+
+export const SideBarPage = (props: SideBarPage) => {
+  return props.children;
+};
+
+type SideBarPage = {
+  icon: IconType;
+  children: React.ReactNode;
+};
 
 export const SideBar = (props: Props) => {
   const propName = props.side === 'left' ? 'panelLeft' : 'panelRight';

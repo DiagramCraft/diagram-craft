@@ -1,13 +1,39 @@
 import * as Tabs from '@radix-ui/react-tabs';
-import { useRedraw } from './useRedraw';
+import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { TbFiles, TbPlus } from 'react-icons/tb';
-import { DocumentsContextMenu } from './DocumentsContextMenu';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
+import * as ContextMenu from '@radix-ui/react-context-menu';
+import { ActionContextMenuItem } from './components/ActionContextMenuItem';
+import { ReactNode } from 'react';
+
+const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
+  return (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
+      <ContextMenu.Portal>
+        <ContextMenu.Content className="cmp-context-menu">
+          <ActionContextMenuItem action={'EDGE_FLIP'}>Rename...</ActionContextMenuItem>
+          <ActionContextMenuItem action={'EDGE_FLIP'}>Add</ActionContextMenuItem>
+          <ActionContextMenuItem action={'EDGE_FLIP'}>Add subpage</ActionContextMenuItem>
+          <ActionContextMenuItem action={'EDGE_FLIP'}>Delete</ActionContextMenuItem>
+          <ContextMenu.Separator className="cmp-context-menu__separator" />
+          <ActionContextMenuItem action={'EDGE_FLIP'}>Sheet 1.1</ActionContextMenuItem>
+          <ActionContextMenuItem action={'EDGE_FLIP'}>Sheet 1.2</ActionContextMenuItem>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
+  );
+};
+
+type DocumentsContextMenuProps = {
+  documentId: string;
+  children: ReactNode;
+};
 
 export const DocumentTabs = (props: Props) => {
   const redraw = useRedraw();

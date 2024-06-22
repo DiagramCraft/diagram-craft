@@ -1,0 +1,231 @@
+import { useEffect, useState } from 'react';
+import { useEventListener } from '../../hooks/useEventListener';
+import * as Accordion from '@radix-ui/react-accordion';
+import { EdgeLinePanel } from './EdgeLinePanel';
+import { NodeFillPanel } from './NodeFillPanel';
+import { ElementTextPanel } from './ElementTextPanel';
+import { ElementTransformPanel } from './ElementTransformPanel';
+import { ElementCustomPropertiesPanel } from './ElementCustomPropertiesPanel';
+import { ElementShadowPanel } from './ElementShadowPanel';
+import { CanvasPanel } from './CanvasPanel';
+import { CanvasGuidesPropertiesPanel } from './CanvasGuidesPropertiesPanel';
+import { CanvasGridPanel } from './CanvasGridPanel';
+import { CanvasSnapPanel } from './CanvasSnapPanel';
+import { NodeStrokePanel } from './NodeStrokePanel';
+import { useDiagram } from '../../context/DiagramContext';
+import { LabelNodePanel } from './LabelNodePanel';
+import { NodeEffectsPanel } from './NodeEffectsPanel';
+import { ElementStylesheetPanel } from './ElementStylesheetPanel';
+import { EdgeEffectsPanel } from './EdgeEffectsPanel';
+import * as Tabs from '@radix-ui/react-tabs';
+import { $c } from '@diagram-craft/utils/classname';
+import { NodeTablePropertiesPanel } from './NodeTablePropertiesPanel';
+import { NodeTableStrokePanel } from './NodeTableStrokePanel';
+import { NodeTableDimensionsPanel } from './NodeTableDimensionsPanel';
+import { NodeTableCellDimensionsPanel } from './NodeTableCellDimensionsPanel';
+import { NodeAdvancedPropertiesPanel } from '../ObjectInfoToolWindow/NodeAdvancedPropertiesPanel';
+
+type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
+
+type TabType = 'diagram' | 'style' | 'table' | 'cell' | 'text' | 'arrange' | 'advanced';
+
+const TABS: Record<Type, TabType[]> = {
+  'diagram': ['diagram'],
+  'node': ['style', 'text', 'arrange', 'advanced'],
+  'edge': ['style'],
+  'mixed': ['style', 'text', 'arrange'],
+  'single-label-node': ['style', 'text'],
+  'table': ['table', 'arrange', 'advanced'],
+  'table-cell': ['table', 'cell', 'text']
+};
+
+export const ObjectToolWindow = () => {
+  const diagram = useDiagram();
+
+  const [type, setType] = useState<Type>('diagram');
+  const [tab, setTab] = useState<TabType>('style');
+  const [edgeSupportsFill, setEdgeSupportsFill] = useState(false);
+
+  useEffect(() => {
+    if (TABS[type].includes(tab)) return;
+    setTab(TABS[type][0]);
+  }, [tab, type]);
+
+  const callback = () => {
+    if (
+      diagram.selectionState.isNodesOnly() &&
+      diagram.selectionState.nodes.every(e => e.nodeType === 'table')
+    ) {
+      setType('table');
+    } else if (
+      diagram.selectionState.isNodesOnly() &&
+      diagram.selectionState.nodes.every(e => e.parent?.nodeType === 'tableRow')
+    ) {
+      setType('table-cell');
+    } else if (diagram.selectionState.getSelectionType() === 'mixed') {
+      setType('mixed');
+    } else if (diagram.selectionState.getSelectionType() === 'single-label-node') {
+      setType('single-label-node');
+    } else if (diagram.selectionState.isNodesOnly()) {
+      setType('node');
+    } else if (diagram.selectionState.isEdgesOnly()) {
+      setType('edge');
+    } else {
+      setType('diagram');
+    }
+
+    setEdgeSupportsFill(
+      diagram.selectionState.isEdgesOnly() &&
+        diagram.selectionState.edges.every(e => e.getDefinition().supports('fill'))
+    );
+  };
+  useEventListener(diagram.selectionState, 'change', callback);
+  useEffect(callback, [diagram.selectionState]);
+
+  const tabs = TABS[type];
+
+  return (
+    <>
+      <div className={'cmp-tool-tabs'}>
+        <Tabs.Root value={tab} onValueChange={e => setTab(e as TabType)}>
+          <Tabs.List className={$c('cmp-tool-tabs__tabs', { hidden: tabs.length <= 1 })}>
+            {tabs.includes('diagram') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'diagram'}>
+                Diagram
+              </Tabs.Trigger>
+            )}
+            {tabs.includes('style') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'style'}>
+                Style
+              </Tabs.Trigger>
+            )}
+            {tabs.includes('table') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'table'}>
+                Table
+              </Tabs.Trigger>
+            )}
+            {tabs.includes('cell') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'cell'}>
+                Cell
+              </Tabs.Trigger>
+            )}
+            {tabs.includes('text') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'text'}>
+                Text
+              </Tabs.Trigger>
+            )}
+            {tabs.includes('arrange') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'arrange'}>
+                Arrange
+              </Tabs.Trigger>
+            )}
+            {tabs.includes('advanced') && (
+              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'advanced'}>
+                Advanced
+              </Tabs.Trigger>
+            )}
+          </Tabs.List>
+
+          {(type === 'table' || type === 'table-cell') && (
+            <Tabs.Content value={'table'}>
+              <Accordion.Root
+                className="cmp-accordion"
+                type="multiple"
+                defaultValue={['custom', 'dimensions', 'stroke']}
+              >
+                <NodeTablePropertiesPanel />
+                <NodeTableDimensionsPanel />
+                <NodeTableStrokePanel />
+              </Accordion.Root>
+            </Tabs.Content>
+          )}
+          {type === 'table-cell' && (
+            <Tabs.Content value={'cell'}>
+              <Accordion.Root
+                className="cmp-accordion"
+                type="multiple"
+                defaultValue={['fill', 'dimensions']}
+              >
+                <NodeFillPanel />
+                <NodeTableCellDimensionsPanel />
+              </Accordion.Root>
+            </Tabs.Content>
+          )}
+
+          {type === 'diagram' && (
+            <Tabs.Content value={'diagram'}>
+              <Accordion.Root
+                className="cmp-accordion"
+                type="multiple"
+                defaultValue={['grid', 'canvas', 'snap']}
+              >
+                <CanvasPanel />
+                <CanvasGridPanel />
+                <CanvasGuidesPropertiesPanel />
+                <CanvasSnapPanel />
+              </Accordion.Root>
+            </Tabs.Content>
+          )}
+
+          <Tabs.Content value={'arrange'}>
+            <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['transform']}>
+              <ElementTransformPanel />
+            </Accordion.Root>
+          </Tabs.Content>
+
+          <Tabs.Content value={'text'}>
+            <Accordion.Root
+              className="cmp-accordion"
+              type="multiple"
+              defaultValue={['text', 'label-node']}
+            >
+              <ElementTextPanel />
+            </Accordion.Root>
+          </Tabs.Content>
+
+          <Tabs.Content value={'style'}>
+            <Accordion.Root
+              className="cmp-accordion"
+              type="multiple"
+              defaultValue={['stylesheet', 'fill', 'stroke', 'line', 'custom', 'label-node']}
+            >
+              {type === 'node' && <ElementStylesheetPanel />}
+
+              {(type === 'node' || type === 'mixed' || type === 'single-label-node') && (
+                <>
+                  {type === 'single-label-node' && <LabelNodePanel />}
+                  <NodeFillPanel />
+                  <ElementShadowPanel />
+                  <NodeStrokePanel />
+                  <NodeEffectsPanel />
+                  <ElementCustomPropertiesPanel />
+                </>
+              )}
+
+              {type === 'edge' && (
+                <>
+                  <ElementStylesheetPanel />
+                  {edgeSupportsFill && <NodeFillPanel />}
+                  <EdgeLinePanel />
+                  <ElementShadowPanel />
+                  <EdgeEffectsPanel />
+                  <ElementCustomPropertiesPanel />
+                </>
+              )}
+            </Accordion.Root>
+          </Tabs.Content>
+
+          <Tabs.Content value={'advanced'}>
+            <Accordion.Root
+              className="cmp-accordion"
+              type="multiple"
+              defaultValue={['advanced-props']}
+            >
+              <NodeAdvancedPropertiesPanel />
+            </Accordion.Root>
+          </Tabs.Content>
+        </Tabs.Root>
+      </div>
+    </>
+  );
+};

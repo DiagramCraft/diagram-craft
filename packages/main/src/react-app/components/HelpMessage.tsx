@@ -1,6 +1,6 @@
 import { ApplicationState } from '@diagram-craft/canvas/ApplicationState';
 import { useEventListener } from '../hooks/useEventListener';
-import { useRedraw } from '../useRedraw';
+import { useRedraw } from '../hooks/useRedraw';
 import { TbX } from 'react-icons/tb';
 
 export const HelpMessage = (props: Props) => {

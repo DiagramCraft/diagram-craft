@@ -1,7 +1,7 @@
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import React from 'react';
 import { useEventListener } from '../hooks/useEventListener';
-import { useRedraw } from '../useRedraw';
+import { useRedraw } from '../hooks/useRedraw';
 import { useActions } from '../context/ActionsContext';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { ActionName } from '@diagram-craft/canvas/keyMap';
