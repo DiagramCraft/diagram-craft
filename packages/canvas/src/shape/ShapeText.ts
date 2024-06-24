@@ -6,6 +6,7 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { applyTemplate } from '@diagram-craft/model/template';
+import { stripTags } from '@diagram-craft/utils/html';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -82,6 +83,12 @@ export class ShapeText extends Component<ShapeTextProps> {
               class: 'svg-node__text',
               style: toInlineCSS(style),
               on: {
+                paste: (e: ClipboardEvent) => {
+                  const data = e.clipboardData!.getData('text/html');
+                  (e.currentTarget! as HTMLElement).innerHTML = stripTags(data);
+
+                  e.preventDefault();
+                },
                 keydown: (e: KeyboardEvent) => {
                   const target = e.target as HTMLElement;
                   if (e.key === 'Escape') {
