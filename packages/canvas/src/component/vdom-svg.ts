@@ -217,6 +217,10 @@ export const defs = (...children: VNode[]) => {
   return s('defs', {}, ...children);
 };
 
+export const style = (attrs: Attr, ...children: VNode[]) => {
+  return s('style', attrs, ...children);
+};
+
 type PatterAttributes = ElementAttributes & {
   patternUnits?: string;
   patternContentUnits?: string;

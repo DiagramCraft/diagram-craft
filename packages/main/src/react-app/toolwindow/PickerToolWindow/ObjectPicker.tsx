@@ -10,21 +10,7 @@ import { StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useState } from 'react';
 
-const encodeSvg = (svgString: string) =>
-  'data:image/svg+xml,' +
-  svgString
-    .replace(
-      '<svg',
-      ~svgString.indexOf('xmlns') ? '<svg' : '<svg xmlns="http://www.w3.org/2000/svg"'
-    )
-    .replace(/"/g, "'")
-    .replace(/%/g, '%25')
-    .replace(/#/g, '%23')
-    .replace(/{/g, '%7B')
-    .replace(/}/g, '%7D')
-    .replace(/</g, '%3C')
-    .replace(/>/g, '%3E')
-    .replace(/\s+/g, ' ');
+const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').replace('»', '&#187;');
 
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
@@ -94,13 +80,26 @@ export const ObjectPicker = (props: Props) => {
             );
             clonedSvg.setAttribute('viewBox', `-2 -2 ${n.bounds.w + 4} ${n.bounds.h + 4}`);
 
+            const canvas = document.createElement('canvas');
+            canvas.width = n.bounds.w * 2;
+            canvas.height = n.bounds.h * 2;
+
+            const ctx = canvas.getContext('2d')!;
+            ctx.scale(2, 2);
+
+            const img = new Image();
+            const svgData = encodeSvg(new XMLSerializer().serializeToString(clonedSvg));
+
+            img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+            ctx.drawImage(img, 0, 0);
+
             const div = document.createElement('div');
             div.id = 'drag-image';
 
-            const img = new Image();
-            img.src = encodeSvg(clonedSvg.outerHTML);
-            img.width = n.bounds.w;
-            img.height = n.bounds.h;
+            const dragImage = new Image();
+            dragImage.src = canvas.toDataURL('image/png');
+            dragImage.width = n.bounds.w;
+            dragImage.height = n.bounds.h;
 
             div.style.position = 'absolute';
 
@@ -110,7 +109,10 @@ export const ObjectPicker = (props: Props) => {
             div.appendChild(img);
             document.body.appendChild(div);
 
-            ev.dataTransfer.setDragImage(img, 2, 2);
+            ev.dataTransfer.setDragImage(div, 2, 2);
+
+            canvas.remove();
+
             setShowHover(false);
           }}
           onDragEnd={() => {

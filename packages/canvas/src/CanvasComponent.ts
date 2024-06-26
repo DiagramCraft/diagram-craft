@@ -6,6 +6,8 @@ import { Modifiers } from './dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
 import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
+import { rawHTML } from './component/vdom';
+import styles from './canvas.css?inline';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
@@ -26,6 +28,7 @@ export class CanvasComponent extends Component<CanvasProps> {
         }
       },
       [
+        svg.style({}, rawHTML(styles)),
         svg.defs(
           svg.filter(
             { id: 'reflection-filter', filterUnits: 'objectBoundingBox' },

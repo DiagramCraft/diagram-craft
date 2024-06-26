@@ -518,43 +518,14 @@ input::-webkit-input-placeholder {
     stroke: #9DBCFA;
   }
 
-  .svg-node {
-    cursor: move;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-
-    .svg-node__anchor {
-      stroke: red;
-      fill: transparent;
-    }
-    .svg-node__fo {
+  /* This is for mixed foreignObject svg text situations */
+  .svg-node__fo--with-text {
+    &:has(*[contenteditable="true"]) {
       & > div {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        cursor: move;
-      }
-      .svg-node__text {
-        cursor: move;
-        pointer-events: none;
-        left: 50%;
-        transform: translateX(-50%);
-        position: relative;
-      }
-    }
-    /* This is for mixed foreignObject svg text situations */
-    .svg-node__fo--with-text {
-      & > div {
-        visibility: hidden;
-      }
-      &:has(*[contenteditable="true"]) {
-        & > div {
-          visibility: visible;
-        }
+        visibility: visible;
       }
     }
   }
-  /* This is for mixed foreignObject svg text situations */
   .svg-node__fo--with-text:has(*[contenteditable="true"]) + text {
     fill: transparent !important;
     stroke: transparent !important;

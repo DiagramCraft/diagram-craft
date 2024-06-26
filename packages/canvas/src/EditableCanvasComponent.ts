@@ -24,6 +24,8 @@ import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { EventKey } from '@diagram-craft/utils/event';
 import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
+import { rawHTML } from './component/vdom';
+import styles from './canvas.css?inline';
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement
@@ -309,6 +311,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           }
         },
         [
+          svg.style({}, rawHTML(styles)),
           svg.defs(
             svg.filter(
               { id: 'reflection-filter', filterUnits: 'objectBoundingBox' },
