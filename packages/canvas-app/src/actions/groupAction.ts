@@ -48,7 +48,9 @@ class UndoableGroupAction implements UndoableAction {
 
   private group(uow: UnitOfWork) {
     if (this.#elements === undefined) {
-      this.#elements = this.diagram.selectionState.elements;
+      this.#elements = this.diagram.selectionState.elements.toSorted((a, b) => {
+        return this.diagram.layers.isAbove(a, b) ? 1 : -1;
+      });
     }
 
     this.#elements.forEach(e => {
@@ -83,7 +85,7 @@ class UndoableGroupAction implements UndoableAction {
     this.#group.layer.removeElement(this.#group!, uow);
     this.#elements = this.#group.children;
 
-    children.toReversed().forEach(e => {
+    children.forEach(e => {
       this.#group?.removeChild(e, uow);
       this.diagram.layers.active.addElement(e, uow);
     });
@@ -98,12 +100,11 @@ export class GroupAction extends AbstractSelectionAction {
     private readonly type: 'group' | 'ungroup'
   ) {
     super(diagram, type === 'group');
+
     if (type === 'ungroup') {
-      diagram.selectionState.on('change', () => {
-        this.enabled = diagram.selectionState.nodes.some(e => e.nodeType === 'group');
-        this.emit('actionchanged', { action: this });
+      this.addSelectionListener(() => {
+        this.enabled = this.diagram.selectionState.nodes.some(e => e.nodeType === 'group');
       });
-      this.enabled = diagram.selectionState.nodes.some(e => e.nodeType === 'group');
     }
   }
 

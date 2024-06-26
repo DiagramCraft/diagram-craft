@@ -227,6 +227,17 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     });
   }
 
+  isAbove(a: DiagramElement, b: DiagramElement) {
+    const l1 = this.#layers.indexOf(a.layer);
+    const l2 = this.#layers.indexOf(b.layer);
+
+    if (l1 === l2) {
+      return this.#layers[l1].elements.indexOf(a) > this.#layers[l2].elements.indexOf(b);
+    }
+
+    return l1 > l2;
+  }
+
   get all(): ReadonlyArray<Layer> {
     return this.#layers;
   }
