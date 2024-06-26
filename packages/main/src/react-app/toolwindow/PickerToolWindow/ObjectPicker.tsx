@@ -9,6 +9,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useState } from 'react';
+import { Browser } from '@diagram-craft/canvas/browser';
 
 const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').replace('»', '&#187;');
 
@@ -103,13 +104,16 @@ export const ObjectPicker = (props: Props) => {
 
             div.style.position = 'absolute';
 
+            document.body.style.overflow = 'hidden';
             div.style.zIndex = '1000';
             div.style.top = '100%';
             div.style.left = '100%';
             div.appendChild(img);
             document.body.appendChild(div);
 
-            ev.dataTransfer.setDragImage(div, 2, 2);
+            if (Browser.isChrome()) {
+              ev.dataTransfer.setDragImage(div, 2, 2);
+            }
 
             canvas.remove();
 

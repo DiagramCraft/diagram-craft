@@ -26,6 +26,7 @@ import { EventKey } from '@diagram-craft/utils/event';
 import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
+import { Browser } from './browser';
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement
@@ -222,7 +223,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           ...(props.width ? { width: props.width } : {}),
           ...(props.height ? { height: props.height } : {}),
           id: `diagram-${diagram.id}`,
-          class: props.className ?? 'canvas',
+          class: (props.className ?? 'canvas') + ' ' + (Browser.isChrome() ? 'browser-chrome' : ''),
           preserveAspectRatio: 'none',
           viewBox: diagram.viewBox.svgViewboxString,
           style: `user-select: none`,

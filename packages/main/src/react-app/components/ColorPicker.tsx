@@ -72,7 +72,7 @@ export const ColorPicker = (props: Props) => {
             >
               {props.hasMultipleValues && <TbDots style={{ margin: '0px' }} />}
             </div>
-            <TbChevronDown size={'0.7rem'} />
+            <TbChevronDown size={'11px'} />
           </button>
         </Popover.Trigger>
         <Popover.Portal>

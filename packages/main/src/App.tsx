@@ -103,9 +103,9 @@ const DarkModeToggleButton = () => {
       onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}
     >
       {actionMap['TOGGLE_DARK_MODE']?.getState({}) ? (
-        <TbSun size={'1.1rem'} />
+        <TbSun size={'17.5px'} />
       ) : (
-        <TbMoon size={'1.1rem'} />
+        <TbMoon size={'17.5px'} />
       )}
     </button>
   );
@@ -188,32 +188,32 @@ export const App = (props: {
             <div id="menu">
               <div className={'_menu-button'}>
                 <div>
-                  <TbMenu2 size={'1.5rem'} />
+                  <TbMenu2 size={'24px'} />
                 </div>
               </div>
 
               <div className={'_tools'}>
                 <ReactToolbar.Root className="cmp-toolbar" data-size={'large'}>
                   <ActionToggleButton action={'TOOL_MOVE'}>
-                    <TbPointer size={'1.1rem'} />
+                    <TbPointer size={'17.5px'} />
                   </ActionToggleButton>
                   <button className={'cmp-toolbar__toggle-item'}>
-                    <TbLayoutGridAdd size={'1.1rem'} />
+                    <TbLayoutGridAdd size={'17.5px'} />
                   </button>
                   <ActionToggleButton action={'TOOL_EDGE'}>
-                    <TbLine size={'1.1rem'} />
+                    <TbLine size={'17.5px'} />
                   </ActionToggleButton>
                   <ActionToggleButton action={'TOOL_TEXT'}>
-                    <TbTextSize size={'1.1rem'} />
+                    <TbTextSize size={'17.5px'} />
                   </ActionToggleButton>
                   <button className={'cmp-toolbar__toggle-item'}>
-                    <TbPencil size={'1.1rem'} />
+                    <TbPencil size={'17.5px'} />
                   </button>
                   <ActionToggleButton action={'TOOL_PEN'}>
-                    <TbPolygon size={'1.1rem'} />
+                    <TbPolygon size={'17.5px'} />
                   </ActionToggleButton>
                   <ActionToggleButton action={'TOOL_NODE'}>
-                    <TbLocation size={'1.1rem'} transform={'scale(-1,1)'} />
+                    <TbLocation size={'17.5px'} transform={'scale(-1,1)'} />
                   </ActionToggleButton>
                 </ReactToolbar.Root>
               </div>
@@ -237,7 +237,7 @@ export const App = (props: {
                 <div className={'cmp-toolbar'}>
                   <ReactToolbar.Root>
                     <ActionToggleButton action={'TOGGLE_HELP'}>
-                      <TbHelpSquare size={'1.1rem'} />
+                      <TbHelpSquare size={'17.5px'} />
                     </ActionToggleButton>
                   </ReactToolbar.Root>
 
@@ -245,19 +245,19 @@ export const App = (props: {
                     className={'cmp-toolbar__button'}
                     onClick={() => actionMap['ZOOM_IN']?.execute()}
                   >
-                    <TbZoomOut size={'1.1rem'} />
+                    <TbZoomOut size={'17.5px'} />
                   </button>
                   <button
                     className={'cmp-toolbar__button'}
                     onClick={() => actionMap['ZOOM_IN']?.execute()}
                   >
-                    <TbZoomOut size={'1.1rem'} />
+                    <TbZoomOut size={'17.5px'} />
                   </button>
                   <button
                     className={'cmp-toolbar__button'}
                     onClick={() => actionMap['ZOOM_OUT']?.execute()}
                   >
-                    <TbZoomIn size={'1.1rem'} />
+                    <TbZoomIn size={'17.5px'} />
                   </button>
 
                   <DarkModeToggleButton />

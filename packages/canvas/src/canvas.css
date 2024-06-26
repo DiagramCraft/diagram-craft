@@ -17,11 +17,14 @@
     .svg-node__text {
       cursor: move;
       pointer-events: none;
-      left: 50%;
-      transform: translateX(-50%);
-      position: relative;
     }
   }
+}
+
+.browser-chrome .svg-node__text {
+  left: 50%;
+  transform: translateX(-50%);
+  position: relative;
 }
 
 /* This is for mixed foreignObject svg text situations */

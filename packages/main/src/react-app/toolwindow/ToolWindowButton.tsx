@@ -7,7 +7,7 @@ export const ToolWindowButton = (props: Props) => {
       onClick={props.onClick}
       data-state={props.isSelected ? 'on' : 'off'}
     >
-      <props.icon size={'1rem'} />
+      <props.icon size={'16px'} />
     </button>
   );
 };

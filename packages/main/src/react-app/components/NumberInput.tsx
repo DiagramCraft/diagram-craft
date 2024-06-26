@@ -144,14 +144,14 @@ export const NumberInput = (props: Props) => {
         disabled={props.disabled}
         onClick={() => adjust(props.step ? Number(props.step) : 1)}
       >
-        <TbChevronUp size={'0.7rem'} />
+        <TbChevronUp size={'11px'} />
       </AdjustButton>
       <AdjustButton
         className={'cmp-number-input__btn-down'}
         disabled={props.disabled}
         onClick={() => adjust(props.step ? -1 * Number(props.step) : -1)}
       >
-        <TbChevronDown size={'0.7rem'} />
+        <TbChevronDown size={'11px'} />
       </AdjustButton>
     </div>
   );

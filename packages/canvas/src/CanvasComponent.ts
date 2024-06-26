@@ -8,6 +8,7 @@ import { ShapeNodeDefinition } from './shape/shapeNodeDefinition';
 import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
+import { Browser } from './browser';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
@@ -19,7 +20,7 @@ export class CanvasComponent extends Component<CanvasProps> {
         ...(props.width ? { width: props.width } : {}),
         ...(props.height ? { height: props.height } : {}),
         id: `diagram-${diagram.id}`,
-        class: props.className ?? 'canvas',
+        class: (props.className ?? 'canvas') + ' ' + (Browser.isChrome() ? 'browser-chrome' : ''),
         preserveAspectRatio: 'xMidYMid',
         style: `user-select: none`,
         ...(props.viewBox ? { viewBox: props.viewBox } : {}),
