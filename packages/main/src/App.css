@@ -542,7 +542,28 @@ input::-webkit-input-placeholder {
         position: relative;
       }
     }
+    /* This is for mixed foreignObject svg text situations */
+    .svg-node__fo--with-text {
+      & > div {
+        visibility: hidden;
+      }
+      &:has(*[contenteditable="true"]) {
+        & > div {
+          visibility: visible;
+        }
+      }
+    }
   }
+  /* This is for mixed foreignObject svg text situations */
+  .svg-node__fo--with-text:has(*[contenteditable="true"]) + text {
+    fill: transparent !important;
+    stroke: transparent !important;
+    tspan {
+      fill: transparent !important;
+      stroke: transparent !important;
+    }
+  }
+
   .svg-node--highlight-node-tool-edit {
     outline: 1px solid green;
   }

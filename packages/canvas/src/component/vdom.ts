@@ -19,6 +19,7 @@ export interface VNodeData extends Record<string, unknown> {
   hooks?: {
     onUpdate?: (oldVNode: VNode, newVNode: VNode) => void;
     onInsert?: (node: VNode) => void;
+    onChildrenChanged?: (node: VNode) => void;
     onCreate?: (node: VNode) => void;
     onRemove?: (node: VNode) => void;
   };
@@ -123,6 +124,10 @@ const onInsert = (node: VNode) => {
   node.data.hooks?.onInsert?.(node);
 };
 
+const onChildrenChanged = (node: VNode) => {
+  node.data.hooks?.onChildrenChanged?.(node);
+};
+
 const onCreate = (node: VNode) => {
   node.data.hooks?.onCreate?.(node);
 };
@@ -206,7 +211,8 @@ const applyUpdates = (
   oldElement: VNode,
   newElement: VNode,
   parentElement: VNode | undefined,
-  insertQueue: VNode[]
+  insertQueue: VNode[],
+  childChangedQueue: VNode[]
 ): VNode => {
   newElement.el ??= oldElement.el;
 
@@ -225,6 +231,8 @@ const applyUpdates = (
   // Diff children
   const oldChildren = oldElement.children;
   const newChildren = newElement.children as VNode[];
+
+  let childrenChanged = false;
 
   // Diff this.elements and newElements
   // TODO: This is a bit of a naive algorithm, as it doesn't try to match elements properly
@@ -246,10 +254,12 @@ const applyUpdates = (
       oldChild.el!.replaceWith(newChild.el!);
 
       onRemove(oldChild);
+      childrenChanged = true;
     } else {
       // Only properties have changed
       newChild.el = oldChild.el;
-      applyUpdates(oldChild, newChild, newElement, insertQueue);
+      applyUpdates(oldChild, newChild, newElement, insertQueue, childChangedQueue);
+      if (newChild.type === 'r') childrenChanged = true;
     }
     i++;
     j++;
@@ -259,12 +269,18 @@ const applyUpdates = (
     const oldChild = oldChildren[j];
     onRemove(oldChild);
     oldChild.el!.remove();
+    childrenChanged = true;
   }
 
   for (; i < newChildren.length; i++) {
     const newChild = newChildren[i];
     createElement(newChild, newElement, insertQueue);
     if (newChild.type !== 'r') newElement.el!.appendChild(newChild.el!);
+    childrenChanged = true;
+  }
+
+  if (childrenChanged) {
+    childChangedQueue.push(newElement);
   }
 
   return newElement;
@@ -272,11 +288,15 @@ const applyUpdates = (
 
 export const apply = (oldElement: VNode, newElement: VNode) => {
   const insertQueue: VNode[] = [];
+  const childChangedQueue: VNode[] = [];
   // TODO: Support replacing root element in case tag name has changed
-  const newRoot = applyUpdates(oldElement, newElement, undefined, insertQueue);
+  const newRoot = applyUpdates(oldElement, newElement, undefined, insertQueue, childChangedQueue);
   // TODO: Not sure if queueMicrotask is the best way to do this
   queueMicrotask(() => {
     insertQueue.forEach(onInsert);
+  });
+  queueMicrotask(() => {
+    childChangedQueue.forEach(onChildrenChanged);
   });
   return newRoot;
 };

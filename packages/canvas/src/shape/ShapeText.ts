@@ -5,8 +5,10 @@ import { rawHTML, toInlineCSS, VNode } from '../component/vdom';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
 import { DeepReadonly } from '@diagram-craft/utils/types';
+import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
+import { hash64 } from '@diagram-craft/utils/hash';
 import { applyTemplate } from '@diagram-craft/model/template';
-import { stripTags } from '@diagram-craft/utils/html';
+import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -27,13 +29,50 @@ export type ShapeTextProps = {
   isSingleSelected: boolean;
 };
 
+const getTextElement = (textId: string) => {
+  return document.getElementById(textId)?.getElementsByClassName('svg-node__text').item(0) as
+    | HTMLDivElement
+    | undefined
+    | null;
+};
+
+const requiresForeignObject = (s: string) => {
+  return s.includes('<table') || s.includes('<hr');
+};
+
 export class ShapeText extends Component<ShapeTextProps> {
   private width: number = 0;
   private height: number = 0;
 
+  static edit(textId: string, elementId: string) {
+    const domId = `text_${textId}_${elementId}`;
+
+    const editable = getTextElement(domId);
+    if (!editable) {
+      console.warn('editable not found');
+      return;
+    }
+
+    editable.contentEditable = 'true';
+    editable.style.pointerEvents = 'auto';
+    editable.onmousedown = (e: MouseEvent) => {
+      if (editable.contentEditable === 'true') {
+        e.stopPropagation();
+      }
+    };
+    editable.focus();
+
+    setTimeout(() => {
+      document.execCommand('selectAll', false, undefined);
+    }, 0);
+  }
+
   render(props: ShapeTextProps) {
     const style: Partial<CSSStyleDeclaration> = {
+      // TODO: color is not supported when using text
       color: props.text?.color ?? 'unset',
+      fill: props.text?.color ?? 'unset',
+
       fontFamily: props.text?.font ?? 'unset',
       fontSize: withPx(props.text?.fontSize) ?? 'unset',
       fontWeight: props.text?.bold ? 'bold' : 'normal',
@@ -62,7 +101,7 @@ export class ShapeText extends Component<ShapeTextProps> {
       props.onSizeChange?.({ w, h });
     };
 
-    return svg.foreignObject(
+    const foreignObject = svg.foreignObject(
       {
         class: 'svg-node__fo',
         id: props.id,
@@ -75,7 +114,7 @@ export class ShapeText extends Component<ShapeTextProps> {
       html.div(
         {
           class: 'svg-node__fo__inner',
-          style: `justify-content: ${valign}`
+          style: `justify-content: ${valign};`
         },
         [
           html.div(
@@ -125,6 +164,61 @@ export class ShapeText extends Component<ShapeTextProps> {
             [rawHTML(applyTemplate((props.text?.text ?? '').replaceAll('\n', '<br>'), metadata))]
           )
         ]
+      )
+    );
+
+    const mode = requiresForeignObject(props.text?.text ?? '') ? 'foreignObject' : 'foreignObject';
+    if (mode === 'foreignObject') {
+      return foreignObject;
+    }
+
+    foreignObject.data.class = 'svg-node__fo svg-node__fo--with-text';
+
+    const transformer = new HTMLToSvgTransformer();
+    const parser = new HTMLParser(transformer);
+    parser.parse(props.text?.text ?? '');
+
+    // TODO: Maybe use a transform on the text node to not have to rerender/realign as much
+
+    return svg.g(
+      {},
+      foreignObject,
+      svg.text(
+        {
+          'id': props.id + '-text',
+          'x': props.bounds.x.toString(),
+          'y': props.bounds.y.toString(),
+          'data-width': props.bounds.w.toString(),
+          'data-height': props.bounds.h.toString(),
+          'style': toInlineCSS({ pointerEvents: 'none', ...style }),
+          'hooks': {
+            onChildrenChanged: (n: VNode) => {
+              const target = n.el! as SVGTextElement;
+
+              const currentHash = target.dataset['hash'] ?? '';
+              const newHash = hash64(
+                new TextEncoder().encode(
+                  JSON.stringify({
+                    ...props.text,
+                    width: props.bounds.w,
+                    height: props.bounds.h
+                  })
+                )
+              );
+
+              const svgTextHelper = new SvgTextHelper(target);
+
+              if (currentHash !== newHash) {
+                svgTextHelper.reflow();
+              }
+              svgTextHelper.realign(props.text?.align ?? 'left', props.text?.valign ?? 'middle');
+              svgTextHelper.apply();
+
+              target.dataset['hash'] = newHash;
+            }
+          }
+        },
+        ...[rawHTML(transformer.svgTags)]
       )
     );
   }

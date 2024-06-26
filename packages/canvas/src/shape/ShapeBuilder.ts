@@ -225,29 +225,8 @@ export class ShapeBuilder {
 
   makeOnDblclickHandle(textId: string | undefined = '1') {
     return () => {
-      const editable = this.getTextElement(textId);
-      if (!editable) return;
-
-      editable.contentEditable = 'true';
-      editable.style.pointerEvents = 'auto';
-      editable.onmousedown = (e: MouseEvent) => {
-        if (editable.contentEditable === 'true') {
-          e.stopPropagation();
-        }
-      };
-      editable.focus();
-
-      setTimeout(() => {
-        document.execCommand('selectAll', false, undefined);
-      }, 0);
+      ShapeText.edit(textId, this.props.element.id);
     };
-  }
-
-  private getTextElement(textId: string | undefined) {
-    return document
-      .getElementById(`text_${textId}_${this.props.element.id}`)
-      ?.getElementsByClassName('svg-node__text')
-      .item(0) as HTMLDivElement | undefined | null;
   }
 
   private makeStyle(props: ElementPropsForEditing): Partial<CSSStyleDeclaration> {

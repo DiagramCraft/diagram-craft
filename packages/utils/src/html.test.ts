@@ -31,7 +31,9 @@ describe('HTMLParser', () => {
   const handler = {
     onText: vi.fn(),
     onTagOpen: vi.fn(),
-    onTagClose: vi.fn()
+    onTagClose: vi.fn(),
+    onStart: vi.fn(),
+    onEnd: vi.fn()
   };
 
   beforeEach(() => {
