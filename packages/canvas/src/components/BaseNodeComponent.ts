@@ -254,11 +254,7 @@ export class BaseNodeComponent<
       {
         id: `node-${props.element.id}`,
         class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
-        ...(transform.trim() === ''
-          ? {}
-          : {
-              transform: transform
-            }),
+        transform: transform.trim(),
         style: style.filter ? `filter: ${style.filter}` : ''
       },
       ...children
