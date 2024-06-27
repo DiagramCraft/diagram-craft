@@ -64,6 +64,7 @@ export class PenTool extends AbstractTool {
     }
   }
 
+  // TODO: Likely not working with firefox
   private addPoint(diagramPoint: Point, deleteOld = false) {
     const uow = new UnitOfWork(this.diagram);
 

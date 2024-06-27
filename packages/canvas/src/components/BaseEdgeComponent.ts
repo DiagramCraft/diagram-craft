@@ -43,7 +43,7 @@ const makeArrowMarker = (
     const seed = hash(new TextEncoder().encode(id));
     path = parseArrowSvgPath(arrow.path)
       .map(p => asDistortedSvgPath(p, seed, { passes: 2 }))
-      .join(', ');
+      .join(' ');
   }
 
   return svg.marker(

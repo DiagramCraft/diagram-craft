@@ -239,8 +239,7 @@ export const asDistortedSvgPath = (
   }
 
   return (
-    `M ${round(path.start.x)} ${round(path.start.y)}` +
-    (distortedPath.length > 0 ? ', ' : '') +
-    distortedPath.map(e => e.join(' ')).join(', ')
+    `M ${round(path.start.x)},${round(path.start.y)}` +
+    distortedPath.map(e => e.join(' ')).join(' ')
   );
 };

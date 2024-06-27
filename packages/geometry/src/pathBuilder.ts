@@ -7,6 +7,7 @@ import { Transform, TransformFactory } from './transform';
 import { PathUtils } from './pathUtils';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
 import { LocalCoordinateSystem } from './lcs';
+import { parseSvgPath } from './svgPathUtils';
 
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
 export type RawLineSegment = ['L', number, number];
@@ -49,7 +50,7 @@ export class CompoundPath {
   }
 
   asSvgPath() {
-    return this.paths.map(p => p.asSvgPath()).join(', ');
+    return this.paths.map(p => p.asSvgPath()).join(' ');
   }
 
   segments() {
@@ -114,9 +115,8 @@ export class PathBuilder {
 
   static fromString(path: string, transform: PathBuilderTransform = p => p) {
     const d = new PathBuilder(transform);
-    const parts = path.split(',');
-    parts.forEach(p => {
-      const [t, ...params] = p.trim().split(' ');
+    parseSvgPath(path).forEach(p => {
+      const [t, ...params] = p;
       const pn = params.map(p => parseFloat(p));
 
       // TODO: Support relative instructions

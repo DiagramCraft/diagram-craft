@@ -339,9 +339,8 @@ export class Path {
       : this.#path;
 
     return (
-      `M ${round(this.#start.x)} ${round(this.#start.y)}` +
-      (normalizedPath.length > 0 ? ', ' : '') +
-      normalizedPath.map(r => this.rawSegmentAsSvgPath(r)).join(', ')
+      `M ${round(this.#start.x)},${round(this.#start.y)} ` +
+      normalizedPath.map(r => this.rawSegmentAsSvgPath(r)).join(' ')
     );
   }
 
@@ -360,7 +359,7 @@ export class Path {
     const [command, ...numbers] = r;
 
     const roundedNumbers = numbers.map(e => roundHighPrecision(e));
-    return `${command} ${roundedNumbers.join(' ')}`;
+    return `${command} ${roundedNumbers.join(',')}`;
   }
 
   clean() {
