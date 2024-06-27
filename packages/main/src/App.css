@@ -339,6 +339,12 @@ input::-webkit-input-placeholder {
 
 /* Canvas stuff */
 
+/* To prevent flickering in Safari */
+foreignObject {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .canvas {
   background: var(--canvas-bg);
 

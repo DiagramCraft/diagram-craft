@@ -249,12 +249,17 @@ export class BaseNodeComponent<
       );
     }
 
+    const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`;
     return svg.g(
       {
         id: `node-${props.element.id}`,
         class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
-        transform: `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`,
-        style: `filter: ${style.filter ?? 'none'}`
+        ...(transform.trim() === ''
+          ? {}
+          : {
+              transform: transform
+            }),
+        style: style.filter ? `filter: ${style.filter}` : ''
       },
       ...children
     );

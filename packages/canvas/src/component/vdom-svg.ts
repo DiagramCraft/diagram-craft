@@ -217,7 +217,7 @@ export const defs = (...children: VNode[]) => {
   return s('defs', {}, ...children);
 };
 
-export const style = (attrs: Attr, ...children: VNode[]) => {
+export const style = (attrs: Attr<ElementAttributes>, ...children: VNode[]) => {
   return s('style', attrs, ...children);
 };
 
@@ -334,6 +334,7 @@ export const foreignObject = (attrs: Attr<ForeignObjectAttributes>, ...children:
 
 export const Transforms = {
   rotate: (b: Box) => {
+    if (Angle.toDeg(b.r) === 0) return '';
     const center = Box.center(b);
     return `rotate(${Angle.toDeg(b.r)} ${center.x} ${center.y})`;
   },
