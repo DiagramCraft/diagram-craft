@@ -17,7 +17,8 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useRedraw } from '../../hooks/useRedraw';
 import { Diagram } from '@diagram-craft/model/diagram';
 
-const replacer = (_key: string, value: unknown) => {
+const replacer = (key: string, value: unknown) => {
+  if (key === 'parent') return value ? '...' : undefined;
   if (value instanceof Map) {
     return {
       __type: 'Map',
@@ -254,6 +255,7 @@ export const QueryToolWindow = () => {
             {res &&
               res.map((e, idx) => (
                 <div
+                  key={idx}
                   className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
                   onClick={() => {
                     if (expanded.includes(idx)) {
