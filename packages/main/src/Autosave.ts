@@ -7,19 +7,32 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 
+const KEY = 'autosave';
+
 export const Autosave = {
-  load: async (documentFactory: DocumentFactory, diagramFactory: DiagramFactory<Diagram>) =>
-    localStorage.getItem('autosave')
-      ? await deserializeDiagramDocument(
-          JSON.parse(localStorage.getItem('autosave')!),
-          documentFactory,
-          diagramFactory
-        )
-      : undefined,
+  load: async (documentFactory: DocumentFactory, diagramFactory: DiagramFactory<Diagram>) => {
+    const item = localStorage.getItem(KEY);
+    if (!item) return undefined;
 
-  clear: () => localStorage.removeItem('autosave'),
+    const parsed = JSON.parse(item);
 
-  save: async (doc: DiagramDocument) => {
-    localStorage.setItem('autosave', JSON.stringify(await serializeDiagramDocument(doc)));
+    return {
+      url: parsed.url,
+      diagram: await deserializeDiagramDocument(parsed.diagram, documentFactory, diagramFactory)
+    };
+  },
+
+  clear: () => localStorage.removeItem(KEY),
+
+  exists: () => !!localStorage.getItem(KEY),
+
+  save: async (url: string, doc: DiagramDocument) => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        url,
+        diagram: await serializeDiagramDocument(doc)
+      })
+    );
   }
 };

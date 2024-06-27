@@ -76,6 +76,8 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { DirtyIndicator } from './react-app/DirtyIndicator';
+import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -123,12 +125,15 @@ export type DiagramRef = {
 };
 
 export const App = (props: {
+  url: string;
   doc: DiagramDocument;
   documentFactory: DocumentFactory;
   diagramFactory: DiagramFactory<Diagram>;
   recent: Array<DiagramRef>;
 }) => {
   const [doc, setDoc] = useState<DiagramDocument>(props.doc);
+  const [url, setUrl] = useState(props.url);
+  const [dirty, setDirty] = useState(Autosave.exists());
   const [$d, setDiagram] = useState(doc.diagrams[0]);
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
   const [dialogState, setDialogState] = useState<MessageDialogState>(MessageDialog.INITIAL_STATE);
@@ -146,7 +151,10 @@ export const App = (props: {
 
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const autosave = debounce(() => Autosave.save(doc), 1000);
+  const autosave = debounce(() => {
+    Autosave.save(url, doc);
+    setDirty(true);
+  }, 1000);
 
   useEventListener($d, 'change', autosave);
   useEventListener($d, 'elementAdd', autosave);
@@ -223,12 +231,26 @@ export const App = (props: {
                   diagrams={props.recent}
                   documentFactory={props.documentFactory}
                   diagramFactory={props.diagramFactory}
-                  defaultValue={0}
-                  onChange={async d => {
+                  selectedUrl={url}
+                  onChange={async (url, d) => {
                     const doc = await d;
+                    setUrl(url);
                     setDoc(doc);
                     setDiagram(doc.diagrams[0]);
                     Autosave.clear();
+                    setDirty(false);
+                  }}
+                />
+
+                <DirtyIndicator
+                  dirty={dirty}
+                  onDirtyChange={() => {
+                    loadFileFromUrl(url, props.documentFactory, props.diagramFactory).then(doc => {
+                      setDirty(false);
+                      setDoc(doc);
+                      setDiagram(doc.diagrams[0]);
+                      Autosave.clear();
+                    });
                   }}
                 />
               </div>

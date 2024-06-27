@@ -10,9 +10,11 @@ import {
   stencilLoaderRegistry
 } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
+import { Autosave } from './Autosave';
 
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
+  const [url, setUrl] = useState<string>(props.diagram.url);
 
   useEffect(() => {
     if (!doc) return;
@@ -30,12 +32,11 @@ export const AppLoader = (props: Props) => {
     assert.present(fileLoader, `File loader for ${props.diagram.url} not found`);
 
     Promise.all([
-      //      Autosave.load(props.documentFactory, props.diagramFactory),
+      Autosave.load(props.documentFactory, props.diagramFactory),
       loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)
-
-      //      loadUrl(props.diagram.url).then(c => fileLoader(c, props.documentFactory, props.diagramFactory)),
-    ]).then(([/*autosaved,*/ defDiagram]) => {
-      setDoc(/*autosaved ?? */ defDiagram);
+    ]).then(([autosaved, defDiagram]) => {
+      setDoc(autosaved?.diagram ?? defDiagram);
+      if (autosaved) setUrl(autosaved.url);
     });
   }, [props.diagramFactory, props.recent, props.documentFactory]);
 
@@ -49,6 +50,7 @@ export const AppLoader = (props: Props) => {
   return (
     <App
       doc={doc}
+      url={url}
       documentFactory={props.documentFactory}
       diagramFactory={props.diagramFactory}
       recent={props.recent}
