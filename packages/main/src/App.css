@@ -352,10 +352,10 @@ foreignObject {
     outline: 0 solid transparent;
     border-radius: 3px;
 
-    &::selection, div::selection {
+    &::selection, *::selection {
       background: rgba(175,210,255,0.5);
     }
-    &::-moz-selection, div::-moz-selection {
+    &::-moz-selection, *::-moz-selection {
       background: rgba(175,210,255,0.5);
     }
   }
