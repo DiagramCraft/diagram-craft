@@ -1,5 +1,5 @@
 import { Diagram } from '../diagram';
-import { MatchingMagnetPair, SnapProvider } from './snapManager';
+import { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Guide } from '../selectionState';
 import { Magnet, MagnetOfType } from './magnet';
 import { isNode } from '../diagramElement';
@@ -23,7 +23,7 @@ const compareFn = (a: AnchorWithDistance, b: AnchorWithDistance) => b[1] - a[1];
 export class NodeSnapProvider implements SnapProvider<'node'> {
   constructor(
     private readonly diagram: Diagram,
-    private readonly excludedNodeIds: ReadonlyArray<string>
+    private readonly eligibleNodePredicate: EligibleNodePredicate
   ) {}
 
   private getRange(b: Box, axis: Axis) {
@@ -44,7 +44,7 @@ export class NodeSnapProvider implements SnapProvider<'node'> {
     for (const node of this.diagram.visibleElements()) {
       if (!isNode(node)) continue;
       if (node.renderProps.labelForEdgeId) continue;
-      if (this.excludedNodeIds.includes(node.id)) continue;
+      if (!this.eligibleNodePredicate(node.id)) continue;
       for (const other of Magnet.forNode(node.bounds)) {
         // TODO: We should be able to filter out even more here
         //       by considering the direction of the magnet line

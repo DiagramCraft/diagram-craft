@@ -49,18 +49,20 @@ class SourceSnapProvider implements SnapProvider<'source'> {
   }
 }
 
+export type EligibleNodePredicate = (nodeId: string) => boolean;
+
 class SnapProviders {
   readonly #providers: {
     [T in MagnetType]: SnapProvider<T>;
   };
 
-  constructor(diagram: Diagram, excludeNodeIds: ReadonlyArray<string>) {
+  constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
     this.#providers = {
       grid: new GridSnapProvider(diagram),
       source: new SourceSnapProvider(),
-      node: new NodeSnapProvider(diagram, excludeNodeIds),
-      distance: new NodeDistanceSnapProvider(diagram, excludeNodeIds),
-      size: new NodeSizeSnapProvider(diagram, excludeNodeIds),
+      node: new NodeSnapProvider(diagram, eligibleNodePredicate),
+      distance: new NodeDistanceSnapProvider(diagram, eligibleNodePredicate),
+      size: new NodeSizeSnapProvider(diagram, eligibleNodePredicate),
       canvas: new CanvasSnapProvider(diagram)
     };
   }
@@ -91,11 +93,9 @@ const orhogonalDistance = (a1: Magnet, a2: Magnet) => {
 };
 
 export class SnapManager {
-  // TODO: Ideally we should find a better way to exclude the currently selected node
-  //       maybe we can pass in the current selection instead of just the box (bounds)
   constructor(
     private readonly diagram: Diagram,
-    private readonly excludeNodeIds: ReadonlyArray<string> = [],
+    private readonly eligibleNodePredicate: EligibleNodePredicate = () => true,
     private readonly magnetTypes: ReadonlyArray<MagnetType> = [],
     private readonly threshold: number,
     private readonly enabled: boolean
@@ -128,7 +128,7 @@ export class SnapManager {
     if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
 
     const enabledSnapProviders: ReadonlyArray<MagnetType> = [...this.magnetTypes];
-    const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
+    const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
     const selfMagnets = Magnet.forNode(b, 'source').filter(s =>
       directions.includes(s.matchDirection!)
@@ -185,7 +185,7 @@ export class SnapManager {
     const enabledSnapProviders: ReadonlyArray<MagnetType> = this.magnetTypes.filter(
       a => a !== 'size'
     );
-    const snapProviders = new SnapProviders(this.diagram, this.excludeNodeIds);
+    const snapProviders = new SnapProviders(this.diagram, this.eligibleNodePredicate);
 
     const magnets = Magnet.forNode(b, 'source').filter(s => directions.includes(s.matchDirection!));
 

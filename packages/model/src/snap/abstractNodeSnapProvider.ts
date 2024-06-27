@@ -6,11 +6,12 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Range } from '@diagram-craft/geometry/range';
+import { EligibleNodePredicate } from './snapManager';
 
 export abstract class AbstractNodeSnapProvider {
   protected constructor(
     protected readonly diagram: Diagram,
-    protected readonly excludedNodeIds: ReadonlyArray<string>
+    protected readonly eligibleNodePredicate: EligibleNodePredicate
   ) {}
 
   protected get(b: Box, dir: Direction) {
@@ -43,7 +44,7 @@ export abstract class AbstractNodeSnapProvider {
     for (const node of this.diagram.visibleElements()) {
       if (!isNode(node)) continue;
       if (node.renderProps.labelForEdgeId) continue;
-      if (this.excludedNodeIds.includes(node.id)) continue;
+      if (!this.eligibleNodePredicate(node.id)) continue;
       if (Box.intersects(node.bounds, box)) continue;
       if (node.bounds.r !== 0) continue;
 

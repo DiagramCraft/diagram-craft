@@ -110,13 +110,30 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   createSnapManager() {
-    return new SnapManager(
-      this,
-      this.selectionState.elements.map(e => e.id),
-      this.snapManagerConfig.magnetTypes,
-      this.snapManagerConfig.threshold,
-      this.snapManagerConfig.enabled
-    );
+    const firstParent = this.selectionState.nodes[0].parent;
+    if (this.selectionState.nodes.every(n => n.parent === firstParent) && firstParent) {
+      const selectionIds = new Set(firstParent.children.map(c => c.id));
+      for (const n of this.selectionState.nodes) {
+        selectionIds.delete(n.id);
+      }
+
+      return new SnapManager(
+        this,
+        id => selectionIds.has(id),
+        this.snapManagerConfig.magnetTypes,
+        this.snapManagerConfig.threshold,
+        this.snapManagerConfig.enabled
+      );
+    } else {
+      const selectionIds = new Set(this.selectionState.elements.map(e => e.id));
+      return new SnapManager(
+        this,
+        id => !selectionIds.has(id) && !this.lookup(id)?.parent,
+        this.snapManagerConfig.magnetTypes,
+        this.snapManagerConfig.threshold,
+        this.snapManagerConfig.enabled
+      );
+    }
   }
 
   visibleElements() {

@@ -1,4 +1,4 @@
-import { MatchingMagnetPair, SnapProvider } from './snapManager';
+import { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Guide } from '../selectionState';
 import { MagnetOfType } from './magnet';
 import { Diagram } from '../diagram';
@@ -21,8 +21,8 @@ const backward: Partial<Record<Direction, Direction>> = {
 };
 
 export class NodeSizeSnapProvider extends AbstractNodeSnapProvider implements SnapProvider<'size'> {
-  constructor(diagram: Diagram, excludedNodeIds: ReadonlyArray<string>) {
-    super(diagram, excludedNodeIds);
+  constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
+    super(diagram, eligibleNodePredicate);
   }
 
   getMagnets(box: Box): MagnetOfType<'size'>[] {

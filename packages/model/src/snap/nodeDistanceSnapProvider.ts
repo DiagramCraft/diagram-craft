@@ -1,4 +1,4 @@
-import { MatchingMagnetPair, SnapProvider } from './snapManager';
+import { EligibleNodePredicate, MatchingMagnetPair, SnapProvider } from './snapManager';
 import { Guide } from '../selectionState';
 import { Diagram } from '../diagram';
 import { DistancePairWithRange, MagnetOfType } from './magnet';
@@ -30,8 +30,8 @@ export class NodeDistanceSnapProvider
   extends AbstractNodeSnapProvider
   implements SnapProvider<'distance'>
 {
-  constructor(diagram: Diagram, excludedNodeIds: ReadonlyArray<string>) {
-    super(diagram, excludedNodeIds);
+  constructor(diagram: Diagram, eligibleNodePredicate: EligibleNodePredicate) {
+    super(diagram, eligibleNodePredicate);
   }
 
   getMagnets(box: Box): MagnetOfType<'distance'>[] {
