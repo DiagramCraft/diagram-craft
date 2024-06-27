@@ -111,7 +111,7 @@ export class Path {
   }
 
   get segmentCount() {
-    return this.#segmentList ? this.#segmentList.length() : this.#path.length;
+    return this.#segmentList ? this.#segmentList.segments.length : this.#path.length;
   }
 
   get segments(): ReadonlyArray<PathSegment> {
@@ -374,6 +374,17 @@ export class Path {
     }
 
     this.#path = dest;
+    this.#segmentList = undefined;
+  }
+
+  pop() {
+    const last = this.#path.pop();
+    this.#segmentList = undefined;
+    return last;
+  }
+
+  add(segment: RawSegment) {
+    this.#path.push(segment);
     this.#segmentList = undefined;
   }
 }
