@@ -2,6 +2,7 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
+import { newid } from '@diagram-craft/utils/id';
 
 export type ViewboxEvents = {
   viewbox: { viewbox: Viewbox };
@@ -17,6 +18,9 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
 
   zoomLevel = 1;
   windowSize: Extent;
+
+  // This is mainly for debugging purposes
+  readonly uid = newid();
 
   constructor(size: Extent) {
     super();

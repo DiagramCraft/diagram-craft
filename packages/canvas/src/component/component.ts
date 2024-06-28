@@ -127,8 +127,8 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   update(props: P) {
-    this.element = apply(this.element!, this.doRender(props));
     this.currentProps = props;
+    this.element = apply(this.element!, this.doRender(props));
   }
 
   isRendered(): boolean {

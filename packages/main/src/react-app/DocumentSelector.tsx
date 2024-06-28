@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Select } from './components/Select';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramRef } from '../App';
-import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { urlToName } from '@diagram-craft/utils/url';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -12,8 +10,7 @@ export const DocumentSelector = (props: Props) => {
 
   const loadDocument = async (idx: number) => {
     const ref = props.diagrams[idx];
-
-    props.onChange(ref.url, loadFileFromUrl(ref.url, props.documentFactory, props.diagramFactory));
+    props.onChange(ref.url);
   };
 
   let diagrams: Array<DiagramRef & { isTemp?: boolean }> = [...props.diagrams];
@@ -44,5 +41,5 @@ type Props = {
   documentFactory: DocumentFactory;
   diagramFactory: DiagramFactory<Diagram>;
   selectedUrl: string;
-  onChange: (url: string, document: Promise<DiagramDocument>) => void;
+  onChange: (url: string) => void;
 };

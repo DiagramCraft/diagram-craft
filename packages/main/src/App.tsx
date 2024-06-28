@@ -232,8 +232,12 @@ export const App = (props: {
                   documentFactory={props.documentFactory}
                   diagramFactory={props.diagramFactory}
                   selectedUrl={url}
-                  onChange={async (url, d) => {
-                    const doc = await d;
+                  onChange={async url => {
+                    const doc = await loadFileFromUrl(
+                      url,
+                      props.documentFactory,
+                      props.diagramFactory
+                    );
                     setUrl(url);
                     setDoc(doc);
                     setDiagram(doc.diagrams[0]);
@@ -244,13 +248,17 @@ export const App = (props: {
 
                 <DirtyIndicator
                   dirty={dirty}
-                  onDirtyChange={() => {
-                    loadFileFromUrl(url, props.documentFactory, props.diagramFactory).then(doc => {
-                      setDirty(false);
-                      setDoc(doc);
-                      setDiagram(doc.diagrams[0]);
-                      Autosave.clear();
-                    });
+                  onDirtyChange={async () => {
+                    const doc = await loadFileFromUrl(
+                      url,
+                      props.documentFactory,
+                      props.diagramFactory
+                    );
+                    setUrl(url);
+                    setDoc(doc);
+                    setDiagram(doc.diagrams[0]);
+                    Autosave.clear();
+                    setDirty(false);
                   }}
                 />
               </div>
@@ -265,19 +273,13 @@ export const App = (props: {
 
                   <button
                     className={'cmp-toolbar__button'}
-                    onClick={() => actionMap['ZOOM_IN']?.execute()}
-                  >
-                    <TbZoomOut size={'17.5px'} />
-                  </button>
-                  <button
-                    className={'cmp-toolbar__button'}
-                    onClick={() => actionMap['ZOOM_IN']?.execute()}
-                  >
-                    <TbZoomOut size={'17.5px'} />
-                  </button>
-                  <button
-                    className={'cmp-toolbar__button'}
                     onClick={() => actionMap['ZOOM_OUT']?.execute()}
+                  >
+                    <TbZoomOut size={'17.5px'} />
+                  </button>
+                  <button
+                    className={'cmp-toolbar__button'}
+                    onClick={() => actionMap['ZOOM_IN']?.execute()}
                   >
                     <TbZoomIn size={'17.5px'} />
                   </button>
@@ -334,7 +336,8 @@ export const App = (props: {
                     <EditableCanvas
                       ref={svgRef}
                       diagram={$d}
-                      key={$d.id}
+                      /* Note: this uid here to force redraw in case the diagram is reloaded */
+                      key={$d.uid}
                       actionMap={actionMap}
                       tools={tools}
                       keyMap={keyMap}

@@ -119,7 +119,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       };
       props.applicationState.on('toolChange', cb);
       return () => props.applicationState.off('toolChange', cb);
-    }, [props.applicationState]);
+    }, [diagram, props.applicationState]);
 
     // ---> start useCanvasZoomAndPan
 
@@ -129,7 +129,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       };
       diagram.viewBox.on('viewbox', cb);
       return () => diagram.viewBox.off('viewbox', cb);
-    }, [diagram.viewBox]);
+    }, [diagram, diagram.viewBox]);
 
     createEffect(() => {
       if (!this.svgRef) return;
@@ -149,10 +149,10 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       };
       this.svgRef!.addEventListener('wheel', cb);
       return () => this.svgRef!.removeEventListener('wheel', cb);
-    }, [this.svgRef]);
+    }, [diagram, this.svgRef]);
 
     createEffect(() => {
-      const cb = () => this.adjustViewbox(props.offset);
+      const cb = () => this.adjustViewbox(diagram, props.offset);
       window.addEventListener('resize', cb);
       return () => window.removeEventListener('resize', cb);
     }, [diagram]);
@@ -193,7 +193,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     createEffect(() => {
       if (!this.svgRef) return;
-      this.adjustViewbox(props.offset);
+      this.adjustViewbox(diagram, props.offset);
     }, [diagram]);
 
     this.onDiagramRedraw('elementAdd', diagram);
@@ -230,7 +230,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           hooks: {
             onInsert: node => {
               this.svgRef = node.el! as SVGSVGElement;
-              this.adjustViewbox(props.offset);
+              this.adjustViewbox(diagram, props.offset);
 
               // Note: this causes an extra redraw, but it's necessary to ensure that
               //       the wheel events (among others) are bound correctly
@@ -457,9 +457,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     }, [selection]);
   }
 
-  private adjustViewbox(offset: Point) {
-    const diagram = this.currentProps!.diagram;
-
+  private adjustViewbox(diagram: Diagram, offset: Point) {
     const rect = this.svgRef!.getBoundingClientRect();
 
     if (diagram.viewBox.zoomLevel === 1) {

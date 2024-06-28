@@ -4,11 +4,7 @@ import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serializat
 import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import {
-  getFileLoaderForUrl,
-  loadFileFromUrl,
-  stencilLoaderRegistry
-} from '@diagram-craft/canvas-app/loaders';
+import { loadFileFromUrl, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import { Autosave } from './Autosave';
 
@@ -28,9 +24,6 @@ export const AppLoader = (props: Props) => {
   }, [props.stencils, doc]);
 
   useEffect(() => {
-    const fileLoader = getFileLoaderForUrl(props.diagram.url);
-    assert.present(fileLoader, `File loader for ${props.diagram.url} not found`);
-
     Promise.all([
       Autosave.load(props.documentFactory, props.diagramFactory),
       loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)

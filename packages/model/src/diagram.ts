@@ -14,6 +14,7 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
+import { newid } from '@diagram-craft/utils/id';
 
 export type Canvas = Omit<Box, 'r'>;
 
@@ -67,6 +68,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     'size'
   ]);
   readonly undoManager = new UndoManager(this);
+
+  readonly uid = newid();
 
   constructor(
     readonly id: string,

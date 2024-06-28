@@ -18,9 +18,9 @@ export class ZoomAction extends AbstractToggleAction {
 
   execute(): void {
     if (this.direction === 'in') {
-      this.diagram.viewBox.zoom(this.diagram.viewBox.midpoint, 1.1);
-    } else {
       this.diagram.viewBox.zoom(this.diagram.viewBox.midpoint, 0.9);
+    } else {
+      this.diagram.viewBox.zoom(this.diagram.viewBox.midpoint, 1.1);
     }
   }
 }

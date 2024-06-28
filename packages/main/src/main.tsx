@@ -13,6 +13,7 @@ import {
 import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
 import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { DiagramRef } from './App';
+import { Autosave } from './Autosave';
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);
@@ -151,6 +152,7 @@ const diagrams: Array<DiagramRef> = [
 if (location.hash !== '') {
   const url = location.hash.slice(1);
   diagrams.unshift({ url });
+  Autosave.clear();
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
