@@ -25,7 +25,7 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     Promise.all([
-      Autosave.load(props.documentFactory, props.diagramFactory),
+      Autosave.load(props.documentFactory, props.diagramFactory, true),
       loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)
     ]).then(([autosaved, defDiagram]) => {
       setDoc(autosaved?.diagram ?? defDiagram);

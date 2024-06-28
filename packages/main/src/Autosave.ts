@@ -10,16 +10,27 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 const KEY = 'autosave';
 
 export const Autosave = {
-  load: async (documentFactory: DocumentFactory, diagramFactory: DiagramFactory<Diagram>) => {
-    const item = localStorage.getItem(KEY);
-    if (!item) return undefined;
+  load: async (
+    documentFactory: DocumentFactory,
+    diagramFactory: DiagramFactory<Diagram>,
+    failSilently = false
+  ) => {
+    try {
+      const item = localStorage.getItem(KEY);
+      if (!item) return undefined;
 
-    const parsed = JSON.parse(item);
+      const parsed = JSON.parse(item);
 
-    return {
-      url: parsed.url,
-      diagram: await deserializeDiagramDocument(parsed.diagram, documentFactory, diagramFactory)
-    };
+      return {
+        url: parsed.url,
+        diagram: await deserializeDiagramDocument(parsed.diagram, documentFactory, diagramFactory)
+      };
+    } catch (e) {
+      if (!failSilently) throw e;
+
+      console.warn('Failed to load autosaved document', e);
+      Autosave.clear();
+    }
   },
 
   clear: () => localStorage.removeItem(KEY),
