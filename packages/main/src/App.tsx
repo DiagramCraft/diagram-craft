@@ -78,6 +78,7 @@ import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serializat
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DirtyIndicator } from './react-app/DirtyIndicator';
 import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
+import { ErrorBoundary } from './react-app/ErrorBoundary';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -295,142 +296,168 @@ export const App = (props: {
 
               <SideBar side={'left'} userState={userState.current}>
                 <SideBarPage icon={TbCategoryPlus}>
-                  <PickerToolWindow />
+                  <ErrorBoundary>
+                    <PickerToolWindow />
+                  </ErrorBoundary>
                 </SideBarPage>
                 <SideBarPage icon={TbStack2}>
-                  <LayerToolWindow />
+                  <ErrorBoundary>
+                    <LayerToolWindow />
+                  </ErrorBoundary>
                 </SideBarPage>
                 <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
                 <SideBarPage icon={TbFiles}>
-                  <DocumentToolWindow
-                    document={doc}
-                    value={$d.id}
-                    onValueChange={v => {
-                      setDiagram(doc.getById(v)!);
-                    }}
-                  />
+                  <ErrorBoundary>
+                    <DocumentToolWindow
+                      document={doc}
+                      value={$d.id}
+                      onValueChange={v => {
+                        setDiagram(doc.getById(v)!);
+                      }}
+                    />
+                  </ErrorBoundary>
                 </SideBarPage>
                 <SideBarPage icon={TbHistory}>
-                  <HistoryToolWindow />
+                  <ErrorBoundary>
+                    <HistoryToolWindow />
+                  </ErrorBoundary>
                 </SideBarPage>
                 <SideBarPage icon={TbDropletSearch}>
-                  <QueryToolWindow />
+                  <ErrorBoundary>
+                    <QueryToolWindow />
+                  </ErrorBoundary>
                 </SideBarPage>
               </SideBar>
 
               <SideBar side={'right'} userState={userState.current}>
                 <SideBarPage icon={TbPalette}>
-                  <ObjectToolWindow />
+                  <ErrorBoundary>
+                    <ObjectToolWindow />
+                  </ErrorBoundary>
                 </SideBarPage>
                 <SideBarPage icon={TbInfoCircle}>
-                  <ObjectInfoToolWindow />
+                  <ErrorBoundary>
+                    <ObjectInfoToolWindow />
+                  </ErrorBoundary>
                 </SideBarPage>
                 <SideBarPage icon={TbDatabaseEdit}>
-                  <ObjectDataToolWindow />
+                  <ErrorBoundary>
+                    <ObjectDataToolWindow />
+                  </ErrorBoundary>
                 </SideBarPage>
               </SideBar>
 
               <div id="canvas-area" className={'light-theme'}>
                 <ContextMenu.Root>
                   <ContextMenu.Trigger asChild={true}>
-                    <EditableCanvas
-                      ref={svgRef}
-                      diagram={$d}
-                      /* Note: this uid here to force redraw in case the diagram is reloaded */
-                      key={$d.uid}
-                      actionMap={actionMap}
-                      tools={tools}
-                      keyMap={keyMap}
-                      applicationState={applicationState.current}
-                      offset={
-                        (userState.current.panelLeft ?? -1) >= 0
-                          ? {
-                              x: 250, // Corresponding to left panel width
-                              y: 0
-                            }
-                          : Point.ORIGIN
-                      }
-                      className={'canvas'}
-                      onDrop={canvasDropHandler($d)}
-                      onDragOver={canvasDragOverHandler()}
-                      applicationTriggers={{
-                        pushHelp: (id: string, message: string) => {
-                          const help = applicationState.current.help;
-                          if (help && help.id === id && help.message === message) return;
-                          queueMicrotask(() => {
-                            applicationState.current.pushHelp({ id, message });
-                          });
-                        },
-                        popHelp: (id: string) => {
-                          applicationState.current.popHelp(id);
-                        },
-                        setHelp: (message: string) => {
-                          applicationState.current.setHelp({ id: 'default', message });
-                        },
-                        showCanvasContextMenu: (point: Point, mouseEvent: MouseEvent) => {
-                          oncePerEvent(mouseEvent, () => {
-                            contextMenuTarget.current = { type: 'canvas', pos: point };
-                          });
-                        },
-                        showEdgeContextMenu: (point: Point, id: string, mouseEvent: MouseEvent) => {
-                          oncePerEvent(mouseEvent, () => {
-                            contextMenuTarget.current = { type: 'edge', id, pos: point };
-                          });
-                        },
-                        showNodeContextMenu: (
-                          _point: Point,
-                          _id: string,
-                          _mouseEvent: MouseEvent
-                        ) => {
-                          // TODO: To be implemented
-                          //contextMenuTarget.current = { type: 'node', id, pos: point };
-                        },
-                        showSelectionContextMenu: (point: Point, mouseEvent: MouseEvent) => {
-                          oncePerEvent(mouseEvent, () => {
-                            contextMenuTarget.current = { type: 'selection', pos: point };
-                          });
-                        },
-                        showNodeLinkPopup: (point: Point, sourceNodeId: string, edgId: string) => {
-                          const screenPoint = $d.viewBox.toScreenPoint(point);
-                          setPopoverState({
-                            isOpen: true,
-                            position: screenPoint,
-                            nodeId: sourceNodeId,
-                            edgeId: edgId
-                          });
-                        },
-                        showDialog: (
-                          title: string,
-                          message: string,
-                          okLabel: string,
-                          cancelLabel: string,
-                          onClick: () => void
-                        ) => {
-                          setDialogState({
-                            isOpen: true,
-                            title,
-                            message,
-                            buttons: [
-                              {
-                                label: okLabel,
-                                type: 'default',
-                                onClick: () => {
-                                  onClick();
-                                  setDialogState(MessageDialog.INITIAL_STATE);
-                                }
-                              },
-                              {
-                                label: cancelLabel,
-                                type: 'cancel',
-                                onClick: () => {
-                                  setDialogState(MessageDialog.INITIAL_STATE);
-                                }
+                    <ErrorBoundary>
+                      <EditableCanvas
+                        ref={svgRef}
+                        diagram={$d}
+                        /* Note: this uid here to force redraw in case the diagram is reloaded */
+                        key={$d.uid}
+                        actionMap={actionMap}
+                        tools={tools}
+                        keyMap={keyMap}
+                        applicationState={applicationState.current}
+                        offset={
+                          (userState.current.panelLeft ?? -1) >= 0
+                            ? {
+                                x: 250, // Corresponding to left panel width
+                                y: 0
                               }
-                            ]
-                          });
+                            : Point.ORIGIN
                         }
-                      }}
-                    />
+                        className={'canvas'}
+                        onDrop={canvasDropHandler($d)}
+                        onDragOver={canvasDragOverHandler()}
+                        applicationTriggers={{
+                          pushHelp: (id: string, message: string) => {
+                            const help = applicationState.current.help;
+                            if (help && help.id === id && help.message === message) return;
+                            queueMicrotask(() => {
+                              applicationState.current.pushHelp({ id, message });
+                            });
+                          },
+                          popHelp: (id: string) => {
+                            applicationState.current.popHelp(id);
+                          },
+                          setHelp: (message: string) => {
+                            applicationState.current.setHelp({ id: 'default', message });
+                          },
+                          showCanvasContextMenu: (point: Point, mouseEvent: MouseEvent) => {
+                            oncePerEvent(mouseEvent, () => {
+                              contextMenuTarget.current = { type: 'canvas', pos: point };
+                            });
+                          },
+                          showEdgeContextMenu: (
+                            point: Point,
+                            id: string,
+                            mouseEvent: MouseEvent
+                          ) => {
+                            oncePerEvent(mouseEvent, () => {
+                              contextMenuTarget.current = { type: 'edge', id, pos: point };
+                            });
+                          },
+                          showNodeContextMenu: (
+                            _point: Point,
+                            _id: string,
+                            _mouseEvent: MouseEvent
+                          ) => {
+                            // TODO: To be implemented
+                            //contextMenuTarget.current = { type: 'node', id, pos: point };
+                          },
+                          showSelectionContextMenu: (point: Point, mouseEvent: MouseEvent) => {
+                            oncePerEvent(mouseEvent, () => {
+                              contextMenuTarget.current = { type: 'selection', pos: point };
+                            });
+                          },
+                          showNodeLinkPopup: (
+                            point: Point,
+                            sourceNodeId: string,
+                            edgId: string
+                          ) => {
+                            const screenPoint = $d.viewBox.toScreenPoint(point);
+                            setPopoverState({
+                              isOpen: true,
+                              position: screenPoint,
+                              nodeId: sourceNodeId,
+                              edgeId: edgId
+                            });
+                          },
+                          showDialog: (
+                            title: string,
+                            message: string,
+                            okLabel: string,
+                            cancelLabel: string,
+                            onClick: () => void
+                          ) => {
+                            setDialogState({
+                              isOpen: true,
+                              title,
+                              message,
+                              buttons: [
+                                {
+                                  label: okLabel,
+                                  type: 'default',
+                                  onClick: () => {
+                                    onClick();
+                                    setDialogState(MessageDialog.INITIAL_STATE);
+                                  }
+                                },
+                                {
+                                  label: cancelLabel,
+                                  type: 'cancel',
+                                  onClick: () => {
+                                    setDialogState(MessageDialog.INITIAL_STATE);
+                                  }
+                                }
+                              ]
+                            });
+                          }
+                        }}
+                      />
+                    </ErrorBoundary>
                   </ContextMenu.Trigger>
                   <ContextMenu.Portal>
                     <ContextMenu.Content className="cmp-context-menu">
