@@ -124,11 +124,11 @@ export abstract class Component<P = Record<string, never>> {
 
   redraw() {
     if (!this.element) return;
-    this.update(this.currentProps!);
+    this.update(this.currentProps!, true);
   }
 
-  update(props: P) {
-    if (shallowEquals(this.currentProps, props)) return;
+  update(props: P, force = false) {
+    if (!force && shallowEquals(this.currentProps, props)) return;
     this.currentProps = props;
     this.element = apply(this.element!, this.doRender(props));
   }
