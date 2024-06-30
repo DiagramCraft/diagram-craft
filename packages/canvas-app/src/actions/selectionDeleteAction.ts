@@ -22,7 +22,7 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
     if (this.diagram.selectionState.isEmpty()) return;
 
     this.diagram.undoManager.addAndExecute(
-      new ElementDeleteUndoableAction(this.diagram, this.diagram.selectionState.elements)
+      new ElementDeleteUndoableAction(this.diagram, this.diagram.selectionState.elements, true)
     );
 
     this.emit('actiontriggered', { action: this });

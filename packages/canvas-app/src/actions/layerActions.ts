@@ -54,7 +54,7 @@ export class LayerDeleteAction extends AbstractAction {
     this.diagram.undoManager.add(
       new CompoundUndoableAction([
         new SnapshotUndoableAction('Delete layer', this.diagram, snapshots.onlyUpdated()),
-        new ElementDeleteUndoableAction(this.diagram, layer.elements),
+        new ElementDeleteUndoableAction(this.diagram, layer.elements, false),
         new LayerDeleteUndoableAction(this.diagram, layer)
       ])
     );

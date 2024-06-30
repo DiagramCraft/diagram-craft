@@ -14,10 +14,10 @@ export type UndoableAction = {
 };
 
 export class CompoundUndoableAction implements UndoableAction {
-  #actions: UndoableAction[];
+  private readonly actions: UndoableAction[];
 
   constructor(actions?: UndoableAction[]) {
-    this.#actions = actions ?? [];
+    this.actions = actions ?? [];
   }
 
   addAction(action: UndoableAction | undefined) {
@@ -25,27 +25,27 @@ export class CompoundUndoableAction implements UndoableAction {
       console.warn('No undoable action provided');
       return;
     }
-    this.#actions.push(action);
+    this.actions.push(action);
   }
 
   get description() {
-    return this.#actions.map(a => a.description).join(', ');
+    return this.actions.map(a => a.description).join(', ');
   }
 
   undo(uow: UnitOfWork) {
-    for (const action of this.#actions.toReversed()) {
+    for (const action of this.actions.toReversed()) {
       action.undo(uow);
     }
   }
 
   redo(uow: UnitOfWork) {
-    for (const action of this.#actions) {
+    for (const action of this.actions) {
       action.redo(uow);
     }
   }
 
   hasActions() {
-    return this.#actions.length > 0;
+    return this.actions.length > 0;
   }
 }
 

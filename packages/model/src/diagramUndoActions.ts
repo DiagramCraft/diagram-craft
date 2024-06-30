@@ -11,6 +11,32 @@ export const commitWithUndo = (uow: UnitOfWork, description: string) => {
   uow.diagram.undoManager.add(new SnapshotUndoableAction(description, uow.diagram, snapshots));
 };
 
+const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork) => {
+  for (const [id, snapshot] of e.snapshots) {
+    // Addition must be handled differently ... and explictly before this
+    assert.present(snapshot);
+
+    if (snapshot._snapshotType === 'layer') {
+      const layer = diagram.layers.byId(id);
+      if (layer) {
+        layer.restore(snapshot, uow);
+      }
+    } else if (snapshot._snapshotType === 'layers') {
+      diagram.layers.restore(snapshot, uow);
+    } else if (snapshot._snapshotType === 'stylesheet') {
+      const stylesheet = diagram.document.styles.get(id);
+      if (stylesheet) {
+        stylesheet.restore(snapshot, uow);
+      }
+    } else {
+      const node = diagram.lookup(id);
+      if (node) {
+        node.restore(snapshot!, uow);
+      }
+    }
+  }
+};
+
 export class SnapshotUndoableAction implements UndoableAction {
   private afterSnapshot: ElementsSnapshot;
 
@@ -31,7 +57,7 @@ export class SnapshotUndoableAction implements UndoableAction {
     console.log('after', this.afterSnapshot);
 
     for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
-      // Addition must be handled differently ... and explictly before this
+      // Addition must be handled differently ... and explicitly before this
       assert.present(snapshot);
 
       if (snapshot._snapshotType === 'layer') {
@@ -56,29 +82,7 @@ export class SnapshotUndoableAction implements UndoableAction {
   }
 
   redo(uow: UnitOfWork) {
-    for (const [id, snapshot] of this.afterSnapshot.snapshots) {
-      // Addition must be handled differently ... and explictly before this
-      assert.present(snapshot);
-
-      if (snapshot._snapshotType === 'layer') {
-        const layer = this.diagram.layers.byId(id);
-        if (layer) {
-          layer.restore(snapshot, uow);
-        }
-      } else if (snapshot._snapshotType === 'layers') {
-        this.diagram.layers.restore(snapshot, uow);
-      } else if (snapshot._snapshotType === 'stylesheet') {
-        const stylesheet = this.diagram.document.styles.get(id);
-        if (stylesheet) {
-          stylesheet.restore(snapshot, uow);
-        }
-      } else {
-        const node = this.diagram.lookup(id);
-        if (node) {
-          node.restore(snapshot!, uow);
-        }
-      }
-    }
+    restoreSnapshots(this.afterSnapshot, this.diagram, uow);
   }
 
   merge(nextAction: UndoableAction): boolean {
@@ -126,10 +130,12 @@ export class ElementDeleteUndoableAction implements UndoableAction {
   description = 'Delete elements';
   private layer: Layer;
   private readonly elements: DiagramElement[];
+  private snapshot: ElementsSnapshot | undefined;
 
   constructor(
     private readonly diagram: Diagram,
-    elements: ReadonlyArray<DiagramElement>
+    elements: ReadonlyArray<DiagramElement>,
+    private readonly restoreSelection: boolean
   ) {
     this.layer = this.diagram.layers.active;
     this.elements = [...elements];
@@ -139,13 +145,25 @@ export class ElementDeleteUndoableAction implements UndoableAction {
     for (const element of this.elements) {
       this.layer.addElement(element, uow);
     }
-    this.diagram.selectionState.setElements(this.elements);
+
+    assert.present(this.snapshot);
+    restoreSnapshots(this.snapshot, this.diagram, uow);
+
+    if (this.restoreSelection) {
+      this.diagram.selectionState.setElements(this.elements);
+    }
   }
 
   redo(uow: UnitOfWork): void {
+    uow.trackChanges = true;
     for (const element of this.elements) {
+      uow.snapshot(element);
       element.layer.removeElement(element, uow);
     }
-    this.diagram.selectionState.clear();
+    this.snapshot = uow.commit();
+
+    if (this.restoreSelection) {
+      this.diagram.selectionState.clear();
+    }
   }
 }

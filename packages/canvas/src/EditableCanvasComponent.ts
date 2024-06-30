@@ -17,11 +17,9 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram, DiagramEvents } from '@diagram-craft/model/diagram';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
-import { UndoEvents } from '@diagram-craft/model/undoManager';
 import { DiagramElement, getTopMostNode, isNode } from '@diagram-craft/model/diagramElement';
 import { SelectionState, SelectionStateEvents } from '@diagram-craft/model/selectionState';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { debounce } from '@diagram-craft/utils/debounce';
 import { EventKey } from '@diagram-craft/utils/event';
 import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 import { rawHTML } from './component/vdom';
@@ -175,16 +173,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       document.addEventListener('keyup', cb);
       return () => document.removeEventListener('keyup', cb);
     }, [diagram]);
-
-    const clearSelection = debounce(() => selection.clear());
-
-    createEffect(() => {
-      const cb = (e: UndoEvents['execute']) => {
-        if (e.type === 'undo') clearSelection();
-      };
-      diagram.undoManager.on('execute', cb);
-      return () => diagram.undoManager.off('execute', cb);
-    }, [diagram.undoManager]);
 
     createEffect(() => {
       const cb = (e: { element: DiagramElement }) => this.redrawElement(e);
