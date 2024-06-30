@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import { EditableCanvasComponent, Props } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { Actions } from '@diagram-craft/canvas/keyMap';
 
@@ -29,6 +29,13 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props & Actions>((props,
     cmpRef.current.attach(ref.current!, cmpProps);
     svgRef.current = cmpRef.current.getSvgElement();
   });
+
+  useLayoutEffect(() => {
+    return () => {
+      cmpRef.current.detach();
+      cmpRef.current = new EditableCanvasComponent();
+    };
+  }, []);
 
   return <div ref={ref}></div>;
 });

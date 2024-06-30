@@ -8,7 +8,6 @@ import { ElementTransformPanel } from './ElementTransformPanel';
 import { ElementCustomPropertiesPanel } from './ElementCustomPropertiesPanel';
 import { ElementShadowPanel } from './ElementShadowPanel';
 import { CanvasPanel } from './CanvasPanel';
-import { CanvasGuidesPropertiesPanel } from './CanvasGuidesPropertiesPanel';
 import { CanvasGridPanel } from './CanvasGridPanel';
 import { CanvasSnapPanel } from './CanvasSnapPanel';
 import { NodeStrokePanel } from './NodeStrokePanel';
@@ -161,7 +160,6 @@ export const ObjectToolWindow = () => {
               >
                 <CanvasPanel />
                 <CanvasGridPanel />
-                <CanvasGuidesPropertiesPanel />
                 <CanvasSnapPanel />
               </Accordion.Root>
             </Tabs.Content>

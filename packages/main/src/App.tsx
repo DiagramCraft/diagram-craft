@@ -125,6 +125,31 @@ export type DiagramRef = {
   url: string;
 };
 
+type ActiveDocument = {
+  doc: DiagramDocument;
+  url: string;
+};
+
+type ActiveDiagram = {
+  diagram: Diagram;
+  actionMap: Partial<ActionMap>;
+};
+
+const createActiveDiagram = (
+  $d: Diagram,
+  applicationState: ApplicationState,
+  userState: UserState
+): ActiveDiagram => {
+  return {
+    diagram: $d,
+    actionMap: makeActionMap(defaultAppActions)({
+      diagram: $d,
+      applicationState: applicationState,
+      userState: userState
+    })
+  };
+};
+
 export const App = (props: {
   url: string;
   doc: DiagramDocument;
@@ -132,25 +157,28 @@ export const App = (props: {
   diagramFactory: DiagramFactory<Diagram>;
   recent: Array<DiagramRef>;
 }) => {
-  const [doc, setDoc] = useState<DiagramDocument>(props.doc);
-  const [url, setUrl] = useState(props.url);
-  const [dirty, setDirty] = useState(Autosave.exists());
-  const [$d, setDiagram] = useState(doc.diagrams[0]);
-  const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
-  const [dialogState, setDialogState] = useState<MessageDialogState>(MessageDialog.INITIAL_STATE);
-  const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
 
-  const [actionMap] = useState(() => {
-    return makeActionMap(defaultAppActions)({
-      diagram: $d,
-      applicationState: applicationState.current,
-      userState: userState.current
-    });
+  const [activeDoc, setActiveDoc] = useState<ActiveDocument>({
+    doc: props.doc,
+    url: props.url
   });
+  const [activeDiagram, setActiveDiagram] = useState<ActiveDiagram>(
+    createActiveDiagram(activeDoc.doc.diagrams[0], applicationState.current, userState.current)
+  );
+
+  const [dirty, setDirty] = useState(Autosave.exists());
+  const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
+  const [dialogState, setDialogState] = useState<MessageDialogState>(MessageDialog.INITIAL_STATE);
+  const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+
+  const $d = activeDiagram.diagram;
+  const actionMap = activeDiagram.actionMap;
+  const doc = activeDoc.doc;
+  const url = activeDoc.url;
 
   const autosave = debounce(() => {
     Autosave.save(url, doc);
@@ -239,9 +267,14 @@ export const App = (props: {
                       props.documentFactory,
                       props.diagramFactory
                     );
-                    setUrl(url);
-                    setDoc(doc);
-                    setDiagram(doc.diagrams[0]);
+                    setActiveDoc({ doc, url });
+                    setActiveDiagram(
+                      createActiveDiagram(
+                        doc.diagrams[0],
+                        applicationState.current,
+                        userState.current
+                      )
+                    );
                     Autosave.clear();
                     setDirty(false);
                   }}
@@ -250,14 +283,19 @@ export const App = (props: {
                 <DirtyIndicator
                   dirty={dirty}
                   onDirtyChange={async () => {
-                    const doc = await loadFileFromUrl(
+                    const newDoc = await loadFileFromUrl(
                       url,
                       props.documentFactory,
                       props.diagramFactory
                     );
-                    setUrl(url);
-                    setDoc(doc);
-                    setDiagram(doc.diagrams[0]);
+                    setActiveDoc({ doc: newDoc, url: url });
+                    setActiveDiagram(
+                      createActiveDiagram(
+                        newDoc.diagrams[0],
+                        applicationState.current,
+                        userState.current
+                      )
+                    );
                     Autosave.clear();
                     setDirty(false);
                   }}
@@ -312,7 +350,13 @@ export const App = (props: {
                       document={doc}
                       value={$d.id}
                       onValueChange={v => {
-                        setDiagram(doc.getById(v)!);
+                        setActiveDiagram(
+                          createActiveDiagram(
+                            doc.getById(v)!,
+                            applicationState.current,
+                            userState.current
+                          )
+                        );
                       }}
                     />
                   </ErrorBoundary>
@@ -348,9 +392,9 @@ export const App = (props: {
               </SideBar>
 
               <div id="canvas-area" className={'light-theme'}>
-                <ContextMenu.Root>
-                  <ContextMenu.Trigger asChild={true}>
-                    <ErrorBoundary>
+                <ErrorBoundary>
+                  <ContextMenu.Root>
+                    <ContextMenu.Trigger asChild={true}>
                       <EditableCanvas
                         ref={svgRef}
                         diagram={$d}
@@ -457,25 +501,25 @@ export const App = (props: {
                           }
                         }}
                       />
-                    </ErrorBoundary>
-                  </ContextMenu.Trigger>
-                  <ContextMenu.Portal>
-                    <ContextMenu.Content className="cmp-context-menu">
-                      <ContextMenuDispatcher
-                        state={contextMenuTarget}
-                        createContextMenu={state => {
-                          if (state.type === 'canvas') {
-                            return <CanvasContextMenu target={state} />;
-                          } else if (state.type === 'selection') {
-                            return <SelectionContextMenu />;
-                          } else {
-                            return <EdgeContextMenu target={state} />;
-                          }
-                        }}
-                      />
-                    </ContextMenu.Content>
-                  </ContextMenu.Portal>
-                </ContextMenu.Root>
+                    </ContextMenu.Trigger>
+                    <ContextMenu.Portal>
+                      <ContextMenu.Content className="cmp-context-menu">
+                        <ContextMenuDispatcher
+                          state={contextMenuTarget}
+                          createContextMenu={state => {
+                            if (state.type === 'canvas') {
+                              return <CanvasContextMenu target={state} />;
+                            } else if (state.type === 'selection') {
+                              return <SelectionContextMenu />;
+                            } else {
+                              return <EdgeContextMenu target={state} />;
+                            }
+                          }}
+                        />
+                      </ContextMenu.Content>
+                    </ContextMenu.Portal>
+                  </ContextMenu.Root>
+                </ErrorBoundary>
 
                 <Ruler orientation={'horizontal'} canvasRef={svgRef} />
                 <Ruler orientation={'vertical'} canvasRef={svgRef} />
@@ -495,7 +539,13 @@ export const App = (props: {
                 <DocumentTabs
                   value={$d.id}
                   onValueChange={v => {
-                    setDiagram(doc.getById(v)!);
+                    setActiveDiagram(
+                      createActiveDiagram(
+                        doc.getById(v)!,
+                        applicationState.current,
+                        userState.current
+                      )
+                    );
                   }}
                   document={doc}
                 />

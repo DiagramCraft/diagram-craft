@@ -125,7 +125,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     createEffect(() => {
       const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
-        this.svgRef!.setAttribute('viewBox', viewbox.svgViewboxString);
+        this.svgRef?.setAttribute('viewBox', viewbox.svgViewboxString);
       };
       diagram.viewBox.on('viewbox', cb);
       return () => diagram.viewBox.off('viewbox', cb);
@@ -165,15 +165,16 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           this.tool?.onKeyDown(e);
         }
       };
+
       document.addEventListener('keydown', cb);
       return () => document.removeEventListener('keydown', cb);
-    }, []);
+    }, [diagram]);
 
     createEffect(() => {
       const cb = (e: KeyboardEvent) => this.tool?.onKeyUp(e);
       document.addEventListener('keyup', cb);
       return () => document.removeEventListener('keyup', cb);
-    }, []);
+    }, [diagram]);
 
     const clearSelection = debounce(() => selection.clear());
 
