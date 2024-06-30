@@ -135,17 +135,12 @@ type ActiveDiagram = {
   actionMap: Partial<ActionMap>;
 };
 
-const createActiveDiagram = (
-  $d: Diagram,
-  applicationState: ApplicationState,
-  userState: UserState
-): ActiveDiagram => {
+const createActiveDiagram = ($d: Diagram, applicationState: ApplicationState): ActiveDiagram => {
   return {
     diagram: $d,
     actionMap: makeActionMap(defaultAppActions)({
       diagram: $d,
-      applicationState: applicationState,
-      userState: userState
+      applicationState: applicationState
     })
   };
 };
@@ -165,7 +160,7 @@ export const App = (props: {
     url: props.url
   });
   const [activeDiagram, setActiveDiagram] = useState<ActiveDiagram>(
-    createActiveDiagram(activeDoc.doc.diagrams[0], applicationState.current, userState.current)
+    createActiveDiagram(activeDoc.doc.diagrams[0], applicationState.current)
   );
 
   const [dirty, setDirty] = useState(Autosave.exists());
@@ -269,11 +264,7 @@ export const App = (props: {
                     );
                     setActiveDoc({ doc, url });
                     setActiveDiagram(
-                      createActiveDiagram(
-                        doc.diagrams[0],
-                        applicationState.current,
-                        userState.current
-                      )
+                      createActiveDiagram(doc.diagrams[0], applicationState.current)
                     );
                     Autosave.clear();
                     setDirty(false);
@@ -290,11 +281,7 @@ export const App = (props: {
                     );
                     setActiveDoc({ doc: newDoc, url: url });
                     setActiveDiagram(
-                      createActiveDiagram(
-                        newDoc.diagrams[0],
-                        applicationState.current,
-                        userState.current
-                      )
+                      createActiveDiagram(newDoc.diagrams[0], applicationState.current)
                     );
                     Autosave.clear();
                     setDirty(false);
@@ -332,7 +319,7 @@ export const App = (props: {
                 <Toolbar />
               </div>
 
-              <SideBar side={'left'} userState={userState.current}>
+              <SideBar side={'left'}>
                 <SideBarPage icon={TbCategoryPlus}>
                   <ErrorBoundary>
                     <PickerToolWindow />
@@ -351,11 +338,7 @@ export const App = (props: {
                       value={$d.id}
                       onValueChange={v => {
                         setActiveDiagram(
-                          createActiveDiagram(
-                            doc.getById(v)!,
-                            applicationState.current,
-                            userState.current
-                          )
+                          createActiveDiagram(doc.getById(v)!, applicationState.current)
                         );
                       }}
                     />
@@ -373,7 +356,7 @@ export const App = (props: {
                 </SideBarPage>
               </SideBar>
 
-              <SideBar side={'right'} userState={userState.current}>
+              <SideBar side={'right'}>
                 <SideBarPage icon={TbPalette}>
                   <ErrorBoundary>
                     <ObjectToolWindow />
@@ -540,11 +523,7 @@ export const App = (props: {
                   value={$d.id}
                   onValueChange={v => {
                     setActiveDiagram(
-                      createActiveDiagram(
-                        doc.getById(v)!,
-                        applicationState.current,
-                        userState.current
-                      )
+                      createActiveDiagram(doc.getById(v)!, applicationState.current)
                     );
                   }}
                   document={doc}

@@ -16,15 +16,16 @@ type SideBarPage = {
 export const SideBar = (props: Props) => {
   const propName = props.side === 'left' ? 'panelLeft' : 'panelRight';
 
-  const [selected, setSelected] = useState(props.userState[propName] ?? -1);
+  const userState = UserState.get();
+  const [selected, setSelected] = useState(userState[propName] ?? -1);
 
   const updateSelected = (idx: number) => {
     setSelected(idx);
-    props.userState[propName] = idx;
+    userState[propName] = idx;
   };
 
-  useEventListener(props.userState, 'change', () => {
-    setSelected(props.userState[propName] ?? 0);
+  useEventListener(userState, 'change', () => {
+    setSelected(userState[propName] ?? 0);
   });
 
   // TODO: Can we do this with CSS?
@@ -72,7 +73,8 @@ export const SideBar = (props: Props) => {
                   return;
                 }
                 updateSelected(idx);
-                props.userState[propName] = idx;
+
+                userState[propName] = idx;
               }}
             />
           );
@@ -91,6 +93,5 @@ export const SideBar = (props: Props) => {
 
 type Props = {
   side: 'left' | 'right';
-  userState: UserState;
   children: React.ReactNode[];
 };

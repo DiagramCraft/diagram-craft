@@ -144,3 +144,42 @@ export const deepEquals = <T>(a: T, b: T): boolean => {
 
   return true;
 };
+
+/**
+ * Performs a shallow equality check between two objects of the same type.
+ *
+ * This function checks if the two input objects have the same keys and the same values for each key.
+ * The function does not check nested properties of the objects, i.e., if a property value is an object,
+ * the function does not check the equality of the properties of this object (hence the term "shallow").
+ *
+ * @param a - The first object to compare.
+ * @param b - The second object to compare.
+ * @returns A boolean indicating whether the two objects are shallowly equal.
+ *
+ * @example
+ * // returns true
+ * shallowEquals({ a: 1, b: 2 }, { a: 1, b: 2 });
+ *
+ * @example
+ * // returns false
+ * shallowEquals({ a: 1, b: 2 }, { a: 1, b: 3 });
+ *
+ * @template T - The type of the input objects. Must be an object type.
+ */
+export const shallowEquals = <T>(a: T, b: T): boolean => {
+  if (a === b) return true;
+
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return a === b;
+
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysA) {
+    // @ts-ignore
+    if (!Object.prototype.hasOwnProperty.call(b, key) || a[key] !== b[key]) return false;
+  }
+
+  return true;
+};

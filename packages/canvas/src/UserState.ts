@@ -4,10 +4,22 @@ type UserStateEvents = {
   change: { after: UserState };
 };
 
+const DEFAULT_STENCILS = [{ id: 'basic-shapes', isOpen: true }];
+
 export class UserState extends EventEmitter<UserStateEvents> {
   #panelLeft?: number;
   #panelRight?: number;
   #showHelp: boolean = true;
+  #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
+
+  private static instance: UserState;
+
+  static get() {
+    if (!UserState.instance) {
+      UserState.instance = new UserState();
+    }
+    return UserState.instance;
+  }
 
   constructor() {
     super();
@@ -15,6 +27,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#panelLeft = state.panelLeft;
     this.#panelRight = state.panelRight;
     this.#showHelp = state.showHelp;
+    this.#stencils = state.stencils ?? DEFAULT_STENCILS;
   }
 
   set panelLeft(panelLeft: number | undefined) {
@@ -44,13 +57,23 @@ export class UserState extends EventEmitter<UserStateEvents> {
     return this.#showHelp;
   }
 
+  get stencils() {
+    return this.#stencils;
+  }
+
+  setStencils(stencils: Array<{ id: string; isOpen?: boolean }>) {
+    this.#stencils = stencils;
+    this.triggerChange();
+  }
+
   private triggerChange() {
     localStorage.setItem(
       'diagram-craft.user-state',
       JSON.stringify({
         panelLeft: this.#panelLeft,
         panelRight: this.#panelRight,
-        showHelp: this.#showHelp
+        showHelp: this.#showHelp,
+        stencils: this.#stencils
       })
     );
     this.emit('change', { after: this });

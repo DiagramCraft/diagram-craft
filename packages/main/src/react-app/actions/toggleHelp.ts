@@ -1,5 +1,5 @@
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
-import { AppState } from '@diagram-craft/canvas/keyMap';
+import { UserState } from '@diagram-craft/canvas/UserState';
 
 declare global {
   interface ActionMap {
@@ -8,10 +8,13 @@ declare global {
 }
 
 export class ToggleHelpAction extends AbstractToggleAction {
-  constructor(private readonly appState: AppState) {
+  private userState: UserState;
+
+  constructor() {
     super();
 
-    this.state = appState.userState.showHelp;
+    this.userState = UserState.get();
+    this.state = this.userState.showHelp;
 
     setTimeout(() => {
       document.getElementById('help')!.style.opacity = this.state ? '100' : '0';
@@ -27,7 +30,7 @@ export class ToggleHelpAction extends AbstractToggleAction {
       this.state = true;
     }
 
-    this.appState.userState.showHelp = this.state;
+    this.userState.showHelp = this.state;
     this.emit('actionchanged', { action: this });
   }
 }

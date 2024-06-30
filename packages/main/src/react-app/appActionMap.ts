@@ -7,7 +7,7 @@ import { ToggleHelpAction } from './actions/toggleHelp';
 
 export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...defaultCanvasActions(state),
-  TOGGLE_HELP: new ToggleHelpAction(state),
+  TOGGLE_HELP: new ToggleHelpAction(),
   TOGGLE_DARK_MODE: new ToggleDarkModeAction(),
   ZOOM_IN: new ZoomAction(state.diagram, 'in'),
   ZOOM_OUT: new ZoomAction(state.diagram, 'out'),

@@ -15,31 +15,34 @@ declare global {
   }
 }
 
-export const sidebarActions: ActionMapFactory = (state: AppState) => ({
-  SIDEBAR_SHAPES: new SidebarAction('left', 0, state.userState),
-  SIDEBAR_LAYERS: new SidebarAction('left', 1, state.userState),
-  SIDEBAR_SELECT: new SidebarAction('left', 2, state.userState),
-  SIDEBAR_DOCUMENT: new SidebarAction('left', 3, state.userState),
-  SIDEBAR_HISTORY: new SidebarAction('left', 4, state.userState),
-  SIDEBAR_STYLE: new SidebarAction('right', 0, state.userState),
-  SIDEBAR_INFO: new SidebarAction('right', 1, state.userState),
-  SIDEBAR_DATA: new SidebarAction('right', 2, state.userState)
+export const sidebarActions: ActionMapFactory = (_state: AppState) => ({
+  SIDEBAR_SHAPES: new SidebarAction('left', 0),
+  SIDEBAR_LAYERS: new SidebarAction('left', 1),
+  SIDEBAR_SELECT: new SidebarAction('left', 2),
+  SIDEBAR_DOCUMENT: new SidebarAction('left', 3),
+  SIDEBAR_HISTORY: new SidebarAction('left', 4),
+  SIDEBAR_STYLE: new SidebarAction('right', 0),
+  SIDEBAR_INFO: new SidebarAction('right', 1),
+  SIDEBAR_DATA: new SidebarAction('right', 2)
 });
 
 export class SidebarAction extends AbstractToggleAction {
+  private userState: UserState;
+
   constructor(
     private readonly side: 'left' | 'right',
-    private readonly idx: number,
-    private readonly userState: UserState
+    private readonly idx: number
   ) {
     super();
 
+    this.userState = UserState.get();
+
     const key = side === 'left' ? 'panelLeft' : 'panelRight';
-    this.state = userState[key] === idx;
+    this.state = this.userState[key] === idx;
 
     this.userState.on('change', () => {
       const prevState = this.state;
-      this.state = userState[key] === idx;
+      this.state = this.userState[key] === idx;
       if (this.state !== prevState) {
         this.emit('actionchanged', { action: this });
       }
