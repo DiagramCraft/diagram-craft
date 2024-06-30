@@ -223,8 +223,10 @@ const deserializeDiagrams = <T extends Diagram>(
 
       layer.elements.forEach(e => e.invalidate(uow));
     }
-    if ($d.canvas) {
-      newDiagram.canvas = $d.canvas;
+
+    if ($d.zoom) {
+      newDiagram.viewBox.zoom($d.zoom.zoom);
+      newDiagram.viewBox.pan({ x: $d.zoom.x, y: $d.zoom.y });
     }
     dest.push(newDiagram);
     uow.commit();

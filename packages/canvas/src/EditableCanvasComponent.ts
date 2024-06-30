@@ -137,7 +137,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
         if (e.ctrlKey) {
           const delta = e.deltaY;
           const normalized = -(delta % 3 ? delta * 10 : delta / 3);
-          diagram.viewBox.zoom(EventHelper.point(e), normalized > 0 ? 1 / 1.008 : 1.008);
+          diagram.viewBox.zoom(normalized > 0 ? 1 / 1.008 : 1.008, EventHelper.point(e));
         } else {
           diagram.viewBox.pan({
             x: diagram.viewBox.offset.x + e.deltaX * 0.7,

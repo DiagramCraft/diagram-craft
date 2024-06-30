@@ -48,13 +48,16 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
     return Transform.point(point, ...transforms);
   }
 
-  zoom(point: Point, factor: number) {
-    const p = this.toDiagramPoint(point);
+  zoom(factor: number, point?: Point) {
+    if (point) {
+      const p = this.toDiagramPoint(point);
 
-    this.#offset = {
-      x: this.#offset.x - (p.x - this.#offset.x) * (factor - 1),
-      y: this.#offset.y - (p.y - this.#offset.y) * (factor - 1)
-    };
+      this.#offset = {
+        x: this.#offset.x - (p.x - this.#offset.x) * (factor - 1),
+        y: this.#offset.y - (p.y - this.#offset.y) * (factor - 1)
+      };
+    }
+
     this.#dimensions = {
       w: this.#dimensions.w * factor,
       h: this.#dimensions.h * factor
