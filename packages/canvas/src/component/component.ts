@@ -1,5 +1,4 @@
 import { apply, DOMElement, insert, VNode, VNodeData } from './vdom';
-import { shallowEquals } from '@diagram-craft/utils/object';
 
 type Callback = () => void | (() => void);
 

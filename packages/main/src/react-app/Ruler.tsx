@@ -1,6 +1,6 @@
 import { useEventListener } from './hooks/useEventListener';
 import { useRedraw } from './hooks/useRedraw';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useDiagram } from './context/DiagramContext';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
@@ -62,10 +62,14 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
       updateCursorLine();
     };
 
-    const currentCanvas = canvasRef.current;
-    currentCanvas?.addEventListener('mousemove', handler);
-    return () => currentCanvas?.removeEventListener('mousemove', handler);
-  }, [diagram.props.ruler?.enabled, orientation, canvasRef.current, viewbox, updateCursorLine]);
+    const currentCanvas = canvasRef;
+    if (!currentCanvas) return;
+
+    currentCanvas.addEventListener('mousemove', handler);
+    return () => {
+      currentCanvas.removeEventListener('mousemove', handler);
+    };
+  }, [diagram.props.ruler?.enabled, orientation, canvasRef, viewbox, updateCursorLine]);
 
   if (diagram.props.ruler?.enabled === false) return null;
 
@@ -149,6 +153,6 @@ export const Ruler = ({ canvasRef, orientation }: Props) => {
 };
 
 type Props = {
-  canvasRef: React.RefObject<SVGSVGElement>;
+  canvasRef: SVGSVGElement | null;
   orientation: 'horizontal' | 'vertical';
 };

@@ -1,28 +1,27 @@
 import './App.css';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LayerToolWindow } from './react-app/toolwindow/LayerToolWindow/LayerToolWindow';
 import { DocumentSelector } from './react-app/DocumentSelector';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import {
-  TbCategoryPlus,
+  TbCheck,
   TbDatabaseEdit,
-  TbDropletSearch,
-  TbFiles,
+  TbFile,
   TbHelpSquare,
   TbHistory,
   TbInfoCircle,
-  TbLayoutGridAdd,
   TbLine,
   TbLocation,
   TbMenu2,
   TbMoon,
   TbPalette,
   TbPencil,
+  TbPentagonPlus,
   TbPointer,
   TbPolygon,
-  TbSelectAll,
-  TbStack2,
+  TbSearch,
+  TbStack,
   TbSun,
   TbTextSize,
   TbZoomIn,
@@ -152,6 +151,7 @@ export const App = (props: {
   diagramFactory: DiagramFactory<Diagram>;
   recent: Array<DiagramRef>;
 }) => {
+  const redraw = useRedraw();
   const applicationState = useRef(new ApplicationState());
   const userState = useRef(new UserState());
 
@@ -169,6 +169,12 @@ export const App = (props: {
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
+  //       Can be tested if ruler indicators work at startup immediately or not
+  useEffect(() => {
+    redraw();
+  }, [svgRef.current]);
 
   const $d = activeDiagram.diagram;
   const actionMap = activeDiagram.actionMap;
@@ -230,7 +236,7 @@ export const App = (props: {
                     <TbPointer size={'17.5px'} />
                   </ActionToggleButton>
                   <button className={'cmp-toolbar__toggle-item'}>
-                    <TbLayoutGridAdd size={'17.5px'} />
+                    <TbPentagonPlus size={'17.5px'} />
                   </button>
                   <ActionToggleButton action={'TOOL_EDGE'}>
                     <TbLine size={'17.5px'} />
@@ -320,18 +326,18 @@ export const App = (props: {
               </div>
 
               <SideBar side={'left'}>
-                <SideBarPage icon={TbCategoryPlus}>
+                <SideBarPage icon={TbPentagonPlus}>
                   <ErrorBoundary>
                     <PickerToolWindow />
                   </ErrorBoundary>
                 </SideBarPage>
-                <SideBarPage icon={TbStack2}>
+                <SideBarPage icon={TbStack}>
                   <ErrorBoundary>
                     <LayerToolWindow />
                   </ErrorBoundary>
                 </SideBarPage>
-                <SideBarPage icon={TbSelectAll}>TbSelectAll</SideBarPage>
-                <SideBarPage icon={TbFiles}>
+                <SideBarPage icon={TbCheck}>TbSelectAll</SideBarPage>
+                <SideBarPage icon={TbFile}>
                   <ErrorBoundary>
                     <DocumentToolWindow
                       document={doc}
@@ -349,7 +355,7 @@ export const App = (props: {
                     <HistoryToolWindow />
                   </ErrorBoundary>
                 </SideBarPage>
-                <SideBarPage icon={TbDropletSearch}>
+                <SideBarPage icon={TbSearch}>
                   <ErrorBoundary>
                     <QueryToolWindow />
                   </ErrorBoundary>
@@ -504,8 +510,8 @@ export const App = (props: {
                   </ContextMenu.Root>
                 </ErrorBoundary>
 
-                <Ruler orientation={'horizontal'} canvasRef={svgRef} />
-                <Ruler orientation={'vertical'} canvasRef={svgRef} />
+                <Ruler orientation={'horizontal'} canvasRef={svgRef.current} />
+                <Ruler orientation={'vertical'} canvasRef={svgRef.current} />
 
                 <NodeTypePopup
                   {...popoverState}
