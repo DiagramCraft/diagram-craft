@@ -960,7 +960,7 @@
 
 .cmp-tree {
   display: grid;
-  grid-template-columns: 1fr 1fr min-content;
+  grid-template-columns: 1fr 0.5fr min-content;
   grid-template-rows: 1fr;
 
   font-size: 11px;

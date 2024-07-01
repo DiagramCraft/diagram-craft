@@ -78,6 +78,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DirtyIndicator } from './react-app/DirtyIndicator';
 import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { ErrorBoundary } from './react-app/ErrorBoundary';
+import { SelectToolWindow } from './react-app/toolwindow/SelectToolWindow/SelectToolWindow';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -336,7 +337,11 @@ export const App = (props: {
                     <LayerToolWindow />
                   </ErrorBoundary>
                 </SideBarPage>
-                <SideBarPage icon={TbCheck}>TbSelectAll</SideBarPage>
+                <SideBarPage icon={TbCheck}>
+                  <ErrorBoundary>
+                    <SelectToolWindow diagram={$d} />
+                  </ErrorBoundary>
+                </SideBarPage>
                 <SideBarPage icon={TbFile}>
                   <ErrorBoundary>
                     <DocumentToolWindow
