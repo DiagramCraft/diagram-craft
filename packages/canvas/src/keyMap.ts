@@ -65,7 +65,7 @@ export const executeAction = (
   const action = findAction(e, keyMap, actionMap);
   if (!action || !action.isEnabled) return false;
 
-  action.execute(actionContext);
+  action.execute({ ...actionContext, source: 'keyboard' });
 
   e.preventDefault();
 

@@ -10,6 +10,7 @@ export type ActionEvents = {
 export type ActionContext = {
   point?: Point;
   id?: string;
+  source?: 'keyboard' | 'mouse' | 'ui-element';
 };
 
 export interface Action<T = unknown> extends Emitter<ActionEvents> {

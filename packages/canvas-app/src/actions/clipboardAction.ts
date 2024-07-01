@@ -18,6 +18,7 @@ import { precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { Browser } from '@diagram-craft/canvas/browser';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { hash64 } from '@diagram-craft/utils/hash';
 
 declare global {
   interface ActionMap {
@@ -34,7 +35,7 @@ export const clipboardActions: ActionMapFactory = (state: State) => ({
 });
 
 const OFFSET = 10;
-const PREFIX = 'application/x-diagram-craft-selection;';
+const ELEMENTS_CONTENT_TYPE = 'application/x-diagram-craft-selection';
 
 export class PasteUndoableAction implements UndoableAction {
   description = 'Paste';
@@ -51,6 +52,12 @@ export class PasteUndoableAction implements UndoableAction {
     this.elements.forEach(e => {
       e.layer.removeElement(e, uow);
     });
+
+    this.diagram.selectionState.setElements(
+      this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
+    );
+
+    PasteHandler.clearPastePoint();
   }
 
   redo(uow: UnitOfWork) {
@@ -60,17 +67,248 @@ export class PasteUndoableAction implements UndoableAction {
   }
 }
 
-abstract class AbstractClipboardPasteAction extends AbstractAction {
-  protected constructor(protected readonly diagram: Diagram) {
-    super();
+type ClipboardItem = {
+  type: string;
+  blob: Promise<Blob>;
+};
+
+type Clipboard = {
+  read: () => Promise<ClipboardItem[]>;
+  write: (content: string, contentType: string, mode: 'copy' | 'cut') => Promise<void>;
+};
+
+const PREFIX = ELEMENTS_CONTENT_TYPE + ';';
+
+/**
+ * Note: There is special handling of application/x-diagram-craft-selection here,
+ * as it's not possible to write arbitrary content types to the clipboard.
+ * Instead, we write it using text/plain with a prefix in the content
+ */
+const HTML5Clipboard: Clipboard = {
+  read: async (): Promise<ClipboardItem[]> => {
+    const clip = await navigator.clipboard.read();
+    const dest: ClipboardItem[] = [];
+
+    for (const c of clip) {
+      const types = c.types;
+
+      for (const type of types) {
+        if (type === 'text/plain') {
+          const blob = await c.getType(type);
+          const text = await blob.text();
+          if (text.startsWith(PREFIX)) {
+            dest.push({
+              type: ELEMENTS_CONTENT_TYPE,
+              blob: Promise.resolve(
+                new Blob([text.slice(PREFIX.length)], { type: ELEMENTS_CONTENT_TYPE })
+              )
+            });
+            continue;
+          }
+        }
+        dest.push({ type, blob: c.getType(type) });
+      }
+    }
+
+    return dest;
+  },
+  write: async (content: string, contentType: string, _mode: 'copy' | 'cut') => {
+    if (contentType === ELEMENTS_CONTENT_TYPE) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          ['text/plain']: new Blob([PREFIX + content], { type: 'text/plain' })
+        })
+      ]);
+    } else {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [contentType]: new Blob([content], { type: contentType })
+        })
+      ]);
+    }
+  }
+};
+
+/**
+ * The idea here is to use a hidden textarea as the source and target of clipboard operations.
+ * As such, it is limited to text payloads. Similar to the HTML5Clipboard, special handling
+ * is required for application/x-diagram-craft-selection - similar to HTML5Clipboard, the
+ * content is prefixed to allow for discrimination on paste
+ */
+const TextareaClipboard: Clipboard = {
+  read: async (): Promise<ClipboardItem[]> => {
+    const $clipboard = document.getElementById('clipboard')! as HTMLTextAreaElement;
+    $clipboard.value = '';
+    $clipboard.focus();
+
+    document.execCommand('paste');
+
+    return new Promise<ClipboardItem[]>(resolve => {
+      window.setTimeout(() => {
+        let content = $clipboard.value;
+
+        if (content.trim() === '') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          content = (document.body as any)._diagramCraftClipboard;
+        }
+
+        if (content.startsWith(PREFIX)) {
+          resolve([
+            {
+              type: ELEMENTS_CONTENT_TYPE,
+              blob: Promise.resolve(
+                new Blob([content.slice(PREFIX.length)], { type: ELEMENTS_CONTENT_TYPE })
+              )
+            }
+          ]);
+        } else {
+          resolve([
+            {
+              type: 'text/plain',
+              blob: Promise.resolve(new Blob([content], { type: 'text/plain' }))
+            }
+          ]);
+        }
+      }, 10);
+    });
+  },
+  write: async (content: string, contentType: string, mode: 'copy' | 'cut') => {
+    const $clipboard: HTMLTextAreaElement = document.getElementById(
+      'clipboard'
+    )! as HTMLTextAreaElement;
+    if (contentType === ELEMENTS_CONTENT_TYPE) {
+      $clipboard.value = PREFIX + content;
+    } else {
+      $clipboard.value = content;
+    }
+    $clipboard.focus();
+    $clipboard.select();
+
+    document.execCommand(mode);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (document.body as any)._diagramCraftClipboard = $clipboard.value;
+  }
+};
+
+const Clipboard = {
+  get(): Clipboard {
+    if (Browser.isFirefox()) {
+      return TextareaClipboard;
+    } else {
+      return HTML5Clipboard;
+    }
+  }
+};
+
+abstract class PasteHandler {
+  static lastPasteHash?: string;
+  static lastPastePoint: Point | undefined = undefined;
+
+  static clearPastePoint() {
+    PasteHandler.lastPasteHash = undefined;
+    PasteHandler.lastPastePoint = undefined;
   }
 
-  abstract execute(context: ActionContext): void;
+  protected async hash(blob: Blob) {
+    return hash64(new Uint8Array(await blob.arrayBuffer()));
+  }
 
-  protected pasteElements(elements: SerializedElement[], context: ActionContext): Point {
-    const nodeIdMapping = new Map<string, string>();
+  protected async getPastePoint(hash: string) {
+    if (hash === PasteHandler.lastPasteHash) {
+      return {
+        x: PasteHandler.lastPastePoint!.x + OFFSET,
+        y: PasteHandler.lastPastePoint!.y + OFFSET
+      };
+    } else {
+      return undefined;
+    }
+  }
 
-    const bb = Box.boundingBox(
+  protected registerPastePoint(hash: string, point: Point) {
+    PasteHandler.lastPasteHash = hash;
+    PasteHandler.lastPastePoint = point;
+  }
+
+  abstract paste(content: Blob, diagram: Diagram, context: ActionContext): Promise<void>;
+}
+
+class ImagePasteHandler extends PasteHandler {
+  async paste(content: Blob, diagram: Diagram, context: ActionContext) {
+    const hash = await this.hash(content);
+
+    const point = (await this.getPastePoint(hash)) ?? context.point!;
+
+    const att = await diagram.document.attachments.addAttachment(content);
+    const img = await createImageBitmap(att.content);
+
+    const newElements = [
+      new DiagramNode(
+        newid(),
+        'rect',
+        { x: point!.x, y: point!.y, w: img.width, h: img.height, r: 0 },
+        diagram,
+        diagram.layers.active,
+        {
+          fill: {
+            type: 'image',
+            image: { id: att.hash, w: img.width, h: img.height, fit: 'cover' }
+          },
+          stroke: {
+            enabled: false
+          }
+        }
+      )
+    ];
+
+    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram));
+    diagram.selectionState.setElements(newElements);
+
+    this.registerPastePoint(hash, point);
+  }
+}
+
+class TextPasteHandler extends PasteHandler {
+  async paste(content: Blob, diagram: Diagram, context: ActionContext) {
+    const hash = await this.hash(content);
+
+    const point = (await this.getPastePoint(hash)) ?? context.point!;
+
+    const text = await content.text();
+    const newElements = [
+      new DiagramNode(
+        newid(),
+        'text',
+        { x: point!.x, y: point!.y, w: 200, h: 20, r: 0 },
+        diagram,
+        diagram.layers.active,
+        {
+          stroke: {
+            enabled: false
+          },
+          text: {
+            text
+          }
+        }
+      )
+    ];
+
+    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram));
+    diagram.selectionState.setElements(newElements);
+
+    this.registerPastePoint(hash, point);
+  }
+}
+
+class ElementsPasteHandler extends PasteHandler {
+  async paste(content: Blob, diagram: Diagram, context: ActionContext) {
+    const hash = await this.hash(content);
+
+    const text = await content.text();
+
+    const elements = JSON.parse(text) as SerializedElement[];
+
+    const bounds = Box.boundingBox(
       elements.map(e => {
         if (e.type === 'node') return e.bounds;
         else {
@@ -81,9 +319,17 @@ abstract class AbstractClipboardPasteAction extends AbstractAction {
       })
     );
 
-    if (!context.point) {
-      context.point = { x: bb.x + OFFSET, y: bb.y + OFFSET };
+    let point = await this.getPastePoint(hash);
+    if (!point) {
+      if (context.source !== 'keyboard') {
+        point = context.point;
+      } else {
+        point = { x: bounds.x + OFFSET, y: bounds.y + OFFSET };
+      }
     }
+    point ??= context.point!;
+
+    const nodeIdMapping = new Map<string, string>();
 
     for (const e of elements) {
       if (e.type === 'node') {
@@ -91,7 +337,7 @@ abstract class AbstractClipboardPasteAction extends AbstractAction {
         nodeIdMapping.set(e.id, newId);
         e.id = newId;
 
-        const adjustPosition = this.adjustPosition(e.bounds, context, bb);
+        const adjustPosition = this.adjustPosition(e.bounds, point, bounds);
         e.bounds = {
           ...e.bounds,
           x: adjustPosition.x,
@@ -100,10 +346,10 @@ abstract class AbstractClipboardPasteAction extends AbstractAction {
       } else {
         e.id = newid();
         if (isSerializedEndpointFree(e.start)) {
-          e.start.position = this.adjustPosition(e.start.position, context, bb);
+          e.start.position = this.adjustPosition(e.start.position, point, bounds);
         }
         if (isSerializedEndpointFree(e.end)) {
-          e.end.position = this.adjustPosition(e.end.position, context, bb);
+          e.end.position = this.adjustPosition(e.end.position, point, bounds);
         }
       }
     }
@@ -131,151 +377,53 @@ abstract class AbstractClipboardPasteAction extends AbstractAction {
 
     const newElements = deserializeDiagramElements(
       elements,
-      this.diagram,
-      this.diagram.layers.active,
+      diagram,
+      diagram.layers.active,
       {},
       {}
     );
 
-    this.diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, this.diagram));
-    this.diagram.selectionState.setElements(newElements);
+    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram));
+    diagram.selectionState.setElements(newElements);
 
-    return context.point;
+    this.registerPastePoint(hash, point);
   }
 
-  private adjustPosition(s: Point, context: ActionContext, bb: Box) {
+  private adjustPosition(s: Point, pastePoint: Point, bb: Box) {
     return {
-      x: s.x + (context.point!.x - bb.x),
-      y: s.y + (context.point!.y - bb.y)
+      x: s.x + (pastePoint.x - bb.x),
+      y: s.y + (pastePoint.y - bb.y)
     };
-  }
-
-  protected pasteText(content: string, context: ActionContext): Point {
-    console.log('paste text not implemented yet "', content, '"', context);
-
-    return context.point!;
   }
 }
 
-export class ClipboardPasteAction extends AbstractClipboardPasteAction {
-  #lastPasteHash?: string;
-  #lastPastePoint: Point | undefined = undefined;
+const HANDLERS = {
+  'image/png': new ImagePasteHandler(),
+  'image/jpeg': new ImagePasteHandler(),
+  'text/plain': new TextPasteHandler(),
+  [ELEMENTS_CONTENT_TYPE]: new ElementsPasteHandler()
+};
 
+export class ClipboardPasteAction extends AbstractAction {
   constructor(protected readonly diagram: Diagram) {
-    super(diagram);
+    super();
   }
 
   execute(context: ActionContext) {
-    if (Browser.isFirefox()) {
-      const $clipboard: HTMLTextAreaElement = document.getElementById(
-        'clipboard'
-      )! as HTMLTextAreaElement;
-      $clipboard.value = '';
-      $clipboard.focus();
-
-      document.execCommand('paste');
-
-      window.setTimeout(() => {
-        const content = $clipboard.value;
-
-        this.pasteTextContent(content, context);
-      }, 10);
-    } else {
-      navigator.clipboard.read().then(clip => {
+    Clipboard.get()
+      .read()
+      .then(clip => {
         for (const c of clip) {
-          if (c.types.includes('text/plain')) {
-            c.getType('text/plain').then(blob => {
-              blob.text().then(content => {
-                this.pasteTextContent(content, context);
-              });
-            });
-          } else if (c.types.includes('image/png')) {
-            c.getType('image/png').then(blob => {
-              this.pasteImage(blob, context);
-            });
-          } else if (c.types.includes('image/jpeg')) {
-            c.getType('image/jpeg').then(blob => {
-              this.pasteImage(blob, context);
-            });
+          for (const [contentType, handler] of Object.entries(HANDLERS)) {
+            if (c.type.includes(contentType)) {
+              c.blob.then(blob => handler.paste(blob, this.diagram, context));
+              return;
+            }
           }
         }
       });
-    }
 
     this.emit('actiontriggered', { action: this });
-  }
-
-  private async pasteImage(blob: Blob, context: ActionContext) {
-    const att = await this.diagram.document.attachments.addAttachment(blob);
-    const img = await createImageBitmap(att.content);
-
-    // TODO: Why is not context point set?
-    if (!context.point) {
-      context.point = { x: 100, y: 100 };
-    }
-
-    const newElements = [
-      new DiagramNode(
-        newid(),
-        'rect',
-        {
-          x: context.point!.x,
-          y: context.point!.y,
-          w: img.width,
-          h: img.height,
-          r: 0
-        },
-        this.diagram,
-        this.diagram.layers.active,
-        {
-          fill: {
-            type: 'image',
-            image: {
-              id: att.hash,
-              w: img.width,
-              h: img.height,
-              fit: 'cover'
-            }
-          },
-          stroke: {
-            enabled: false
-          }
-        }
-      )
-    ];
-
-    this.diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, this.diagram));
-    this.diagram.selectionState.setElements(newElements);
-  }
-
-  private pasteTextContent(content: string, context: ActionContext) {
-    if (content.trim() === '') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      content = (document.body as any)._diagramCraftClipboard;
-    }
-
-    if (content === this.#lastPasteHash) {
-      this.#lastPastePoint = {
-        x: this.#lastPastePoint!.x + OFFSET,
-        y: this.#lastPastePoint!.y + OFFSET
-      };
-    } else {
-      this.#lastPasteHash = content;
-      this.#lastPastePoint = undefined;
-    }
-
-    if (content.startsWith(PREFIX)) {
-      const elements = JSON.parse(content.substring(PREFIX.length));
-      this.#lastPastePoint = this.pasteElements(elements, {
-        point: this.#lastPastePoint,
-        ...context
-      });
-    } else {
-      this.#lastPastePoint = this.pasteText(content, {
-        point: this.#lastPastePoint,
-        ...context
-      });
-    }
   }
 }
 
@@ -288,25 +436,19 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const $clipboard: HTMLTextAreaElement = document.getElementById(
-      'clipboard'
-    )! as HTMLTextAreaElement;
-    $clipboard.value =
-      'application/x-diagram-craft-selection;' +
-      JSON.stringify(this.diagram.selectionState.elements.map(e => serializeDiagramElement(e)));
-    $clipboard.focus();
-    $clipboard.select();
+    Clipboard.get()
+      .write(
+        JSON.stringify(this.diagram.selectionState.elements.map(e => serializeDiagramElement(e))),
+        ELEMENTS_CONTENT_TYPE,
+        this.mode
+      )
+      .then(() => {
+        if (this.mode === 'cut') {
+          this.deleteSelection();
+        }
 
-    document.execCommand(this.mode);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (document.body as any)._diagramCraftClipboard = $clipboard.value;
-
-    if (this.mode === 'cut') {
-      this.deleteSelection();
-    }
-
-    this.emit('actiontriggered', { action: this });
+        this.emit('actiontriggered', { action: this });
+      });
   }
 
   private deleteSelection() {
