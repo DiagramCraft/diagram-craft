@@ -16,6 +16,8 @@ import {
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
+import { Browser } from '@diagram-craft/canvas/browser';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 declare global {
   interface ActionMap {
@@ -164,44 +166,116 @@ export class ClipboardPasteAction extends AbstractClipboardPasteAction {
   }
 
   execute(context: ActionContext) {
-    const $clipboard: HTMLTextAreaElement = document.getElementById(
-      'clipboard'
-    )! as HTMLTextAreaElement;
-    $clipboard.value = '';
-    $clipboard.focus();
+    if (Browser.isFirefox()) {
+      const $clipboard: HTMLTextAreaElement = document.getElementById(
+        'clipboard'
+      )! as HTMLTextAreaElement;
+      $clipboard.value = '';
+      $clipboard.focus();
 
-    document.execCommand('paste');
+      document.execCommand('paste');
 
-    window.setTimeout(() => {
-      let content = $clipboard.value;
+      window.setTimeout(() => {
+        const content = $clipboard.value;
 
-      if (content.trim() === '') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        content = (document.body as any)._diagramCraftClipboard;
-      }
-
-      if (content === this.#lastPasteHash) {
-        this.#lastPastePoint = {
-          x: this.#lastPastePoint!.x + OFFSET,
-          y: this.#lastPastePoint!.y + OFFSET
-        };
-      } else {
-        this.#lastPasteHash = content;
-        this.#lastPastePoint = undefined;
-      }
-
-      if (content.startsWith(PREFIX)) {
-        const elements = JSON.parse(content.substring(PREFIX.length));
-        this.#lastPastePoint = this.pasteElements(elements, {
-          point: this.#lastPastePoint,
-          ...context
-        });
-      } else {
-        this.#lastPastePoint = this.pasteText(content, { point: this.#lastPastePoint, ...context });
-      }
-    }, 10);
+        this.pasteTextContent(content, context);
+      }, 10);
+    } else {
+      navigator.clipboard.read().then(clip => {
+        for (const c of clip) {
+          if (c.types.includes('text/plain')) {
+            c.getType('text/plain').then(blob => {
+              blob.text().then(content => {
+                this.pasteTextContent(content, context);
+              });
+            });
+          } else if (c.types.includes('image/png')) {
+            c.getType('image/png').then(blob => {
+              this.pasteImage(blob, context);
+            });
+          } else if (c.types.includes('image/jpeg')) {
+            c.getType('image/jpeg').then(blob => {
+              this.pasteImage(blob, context);
+            });
+          }
+        }
+      });
+    }
 
     this.emit('actiontriggered', { action: this });
+  }
+
+  private async pasteImage(blob: Blob, context: ActionContext) {
+    const att = await this.diagram.document.attachments.addAttachment(blob);
+    const img = await createImageBitmap(att.content);
+
+    // TODO: Why is not context point set?
+    if (!context.point) {
+      context.point = { x: 100, y: 100 };
+    }
+
+    const newElements = [
+      new DiagramNode(
+        newid(),
+        'rect',
+        {
+          x: context.point!.x,
+          y: context.point!.y,
+          w: img.width,
+          h: img.height,
+          r: 0
+        },
+        this.diagram,
+        this.diagram.layers.active,
+        {
+          fill: {
+            type: 'image',
+            image: {
+              id: att.hash,
+              w: img.width,
+              h: img.height,
+              fit: 'cover'
+            }
+          },
+          stroke: {
+            enabled: false
+          }
+        }
+      )
+    ];
+
+    this.diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, this.diagram));
+    this.diagram.selectionState.setElements(newElements);
+  }
+
+  private pasteTextContent(content: string, context: ActionContext) {
+    if (content.trim() === '') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      content = (document.body as any)._diagramCraftClipboard;
+    }
+
+    if (content === this.#lastPasteHash) {
+      this.#lastPastePoint = {
+        x: this.#lastPastePoint!.x + OFFSET,
+        y: this.#lastPastePoint!.y + OFFSET
+      };
+    } else {
+      this.#lastPasteHash = content;
+      this.#lastPastePoint = undefined;
+    }
+
+    if (content.startsWith(PREFIX)) {
+      const elements = JSON.parse(content.substring(PREFIX.length));
+      this.#lastPastePoint = this.pasteElements(elements, {
+        point: this.#lastPastePoint,
+        ...context
+      });
+    } else {
+      this.#lastPastePoint = this.pasteText(content, {
+        point: this.#lastPastePoint,
+        ...context
+      });
+    }
   }
 }
 

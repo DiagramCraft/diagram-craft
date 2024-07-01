@@ -82,6 +82,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
   private nodeRefs: Map<string, Component<unknown> | null> = new Map();
   private edgeRefs: Map<string, Component<unknown> | null> = new Map();
 
+  private point: Point = { x: 0, y: 0 };
+
   setTool(tool: Tool | undefined) {
     this.tool = tool;
     this.redraw();
@@ -157,9 +159,29 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     // ---> end useCanvasZoomAndPan
 
+    // Keep track of last diagram position (in this.point) in order to
+    // e.g. paste at the location of the cursor
+    createEffect(() => {
+      const cb = (e: MouseEvent) => {
+        const canvas = document.getElementById(`diagram-${diagram.id}`);
+        if (!canvas) return;
+
+        const b = canvas.getBoundingClientRect();
+
+        if (e.x >= b.left && e.x <= b.right && e.y >= b.top && e.y <= b.bottom) {
+          this.point = diagram.viewBox.toDiagramPoint({
+            x: e.x - b.left,
+            y: e.y - b.top
+          });
+        }
+      };
+      document.addEventListener('mousemove', cb);
+      return () => document.removeEventListener('mousemove', cb);
+    }, [diagram]);
+
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
-        if (!executeAction(e, {}, keyMap, actionMap)) {
+        if (!executeAction(e, { point: this.point }, keyMap, actionMap)) {
           this.tool?.onKeyDown(e);
         }
       };
@@ -178,11 +200,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       const cb = (e: { element: DiagramElement }) => this.redrawElement(e);
       diagram.on('elementChange', cb);
       return () => diagram.off('elementChange', cb);
-    }, [diagram]);
-
-    createEffect(() => {
-      if (!this.svgRef) return;
-      this.adjustViewbox(diagram, props.offset);
     }, [diagram]);
 
     this.onDiagramRedraw('elementAdd', diagram);

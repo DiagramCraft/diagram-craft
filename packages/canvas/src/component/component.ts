@@ -89,7 +89,7 @@ export abstract class Component<P = Record<string, never>> {
 
   abstract render(props: P): VNode;
 
-  private doRender(props: P): VNode {
+  protected doRender(props: P): VNode {
     this.effectManager._start();
     try {
       return this.render(props);
@@ -127,8 +127,8 @@ export abstract class Component<P = Record<string, never>> {
     this.update(this.currentProps!, true);
   }
 
-  update(props: P, force = false) {
-    if (!force && shallowEquals(this.currentProps, props)) return;
+  update(props: P, _force = false) {
+    //if (!force && shallowEquals(this.currentProps, props)) return;
     this.currentProps = props;
     this.element = apply(this.element!, this.doRender(props));
   }
