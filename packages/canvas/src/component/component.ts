@@ -1,4 +1,5 @@
 import { apply, DOMElement, insert, VNode, VNodeData } from './vdom';
+import { shallowEquals } from '@diagram-craft/utils/object';
 
 type Callback = () => void | (() => void);
 
@@ -126,8 +127,8 @@ export abstract class Component<P = Record<string, never>> {
     this.update(this.currentProps!, true);
   }
 
-  update(props: P, _force = false) {
-    //if (!force && shallowEquals(this.currentProps, props)) return;
+  update(props: P, force = false) {
+    if (!force && shallowEquals(this.currentProps, props)) return;
     this.currentProps = props;
     this.element = apply(this.element!, this.doRender(props));
   }

@@ -8,7 +8,7 @@ import { serializeDiagramElement } from '@diagram-craft/model/serialization/seri
 import { newid } from '@diagram-craft/utils/id';
 import { StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Browser } from '@diagram-craft/canvas/browser';
 
 const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').replace('»', '&#187;');
@@ -18,24 +18,26 @@ export const ObjectPicker = (props: Props) => {
   const [showHover, setShowHover] = useState(true);
 
   const stencils = props.package.stencils;
-  const diagrams = stencils.map((n): [Diagram, DiagramNode] => {
-    const uow = UnitOfWork.immediate(diagram);
+  const diagrams = useMemo(() => {
+    return stencils.map((n): [Diagram, DiagramNode] => {
+      const uow = UnitOfWork.immediate(diagram);
 
-    const dest = new Diagram(
-      newid(),
-      n.node.name,
-      new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
-    );
+      const dest = new Diagram(
+        newid(),
+        n.node.name,
+        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+      );
 
-    dest.layers.add(new Layer('default', 'Default', [], dest), uow);
+      dest.layers.add(new Layer('default', 'Default', [], dest), uow);
 
-    const node = n.node(dest);
-    dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
-    dest.viewBox.offset = { x: -5, y: -5 };
-    dest.layers.active.addElement(node, uow);
+      const node = n.node(dest);
+      dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+      dest.viewBox.offset = { x: -5, y: -5 };
+      dest.layers.active.addElement(node, uow);
 
-    return [dest, node];
-  });
+      return [dest, node];
+    });
+  }, [diagram, stencils]);
 
   return (
     <div className={'cmp-object-picker'}>

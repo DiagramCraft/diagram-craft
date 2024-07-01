@@ -150,12 +150,14 @@ export class ShapeText extends Component<ShapeTextProps> {
               },
               hooks: {
                 onInsert: (n: VNode) => {
-                  if (!props.text?.text) return;
+                  if (!props.text?.text || props.text.text.trim() === '') return;
 
                   const target = n.el! as HTMLElement;
                   updateBounds(target.offsetWidth, target.offsetHeight);
                 },
                 onUpdate: (_o: VNode, n: VNode) => {
+                  if (!props.text?.text || props.text.text.trim() === '') return;
+
                   const target = n.el! as HTMLElement;
                   updateBounds(target.offsetWidth, target.offsetHeight);
                 }
