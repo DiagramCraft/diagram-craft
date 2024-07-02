@@ -3,7 +3,7 @@ import * as svg from '../component/vdom-svg';
 import { text, VNode } from '../component/vdom';
 import { Point } from '@diagram-craft/geometry/point';
 import { Line } from '@diagram-craft/geometry/line';
-import { SelectionState } from '@diagram-craft/model/selectionState';
+import { Guide } from '@diagram-craft/model/selectionState';
 import { newid } from '@diagram-craft/utils/id';
 import { round } from '@diagram-craft/utils/math';
 
@@ -58,8 +58,8 @@ export class GuidesComponent extends Component<Props> {
     return svg.g(
       {},
       ...[
-        ...props.selection.guides.filter(s => s.matchingMagnet.type !== 'distance'),
-        ...props.selection.guides.filter(s => s.matchingMagnet.type === 'distance')
+        ...props.guides.filter(s => s.matchingMagnet.type !== 'distance'),
+        ...props.guides.filter(s => s.matchingMagnet.type === 'distance')
       ].flatMap(g => {
         const l = Line.extend(g.line, 30, 30);
         return [
@@ -94,5 +94,5 @@ export class GuidesComponent extends Component<Props> {
 }
 
 type Props = {
-  selection: SelectionState;
+  guides: ReadonlyArray<Guide>;
 };
