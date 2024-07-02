@@ -23,6 +23,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
+import { red } from '@radix-ui/colors';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -237,6 +238,8 @@ export const LayerList = () => {
       redraw();
     }
   });
+  useEventListener(diagram.selectionState, 'add', redraw);
+  useEventListener(diagram.selectionState, 'remove', redraw);
 
   return (
     <div style={{ height: '100%', margin: '-10px' }} className={'cmp-layer-list'}>
