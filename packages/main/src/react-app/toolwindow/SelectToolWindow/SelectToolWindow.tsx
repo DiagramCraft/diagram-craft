@@ -27,7 +27,12 @@ export const SelectToolWindow = (props: Props) => {
 
   const selection = props.diagram.selectionState;
   return (
-    <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['selection']}>
+    <Accordion.Root
+      className="cmp-accordion"
+      disabled={true}
+      type="multiple"
+      defaultValue={['selection']}
+    >
       <Accordion.Item className="cmp-accordion__item cmp-accordion__item" value="selection">
         <AccordionTrigger>Selection</AccordionTrigger>
         <AccordionContent>

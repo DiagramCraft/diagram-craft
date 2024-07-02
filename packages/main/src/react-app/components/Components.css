@@ -694,6 +694,12 @@
       position: relative;
       z-index: 1;
     }
+
+    &[data-disabled] {
+      .cmp-accordion__chevron {
+        visibility: hidden;
+      }
+    }
   }
   .cmp-accordion__item--fill {
     height: 100%;

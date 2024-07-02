@@ -166,7 +166,12 @@ export const ObjectToolWindow = () => {
           )}
 
           <Tabs.Content value={'arrange'}>
-            <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['transform']}>
+            <Accordion.Root
+              className="cmp-accordion"
+              disabled={true}
+              type="multiple"
+              defaultValue={['transform']}
+            >
               <ElementTransformPanel />
             </Accordion.Root>
           </Tabs.Content>
@@ -175,6 +180,7 @@ export const ObjectToolWindow = () => {
             <Accordion.Root
               className="cmp-accordion"
               type="multiple"
+              disabled={true}
               defaultValue={['text', 'label-node']}
             >
               <ElementTextPanel />
@@ -217,6 +223,7 @@ export const ObjectToolWindow = () => {
             <Accordion.Root
               className="cmp-accordion"
               type="multiple"
+              disabled={true}
               defaultValue={['advanced-props']}
             >
               <NodeAdvancedPropertiesPanel />

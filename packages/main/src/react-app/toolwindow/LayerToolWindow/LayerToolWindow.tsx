@@ -25,7 +25,7 @@ export const LayerToolWindow = () => {
   }, [diagram, redraw]);
 
   return (
-    <Accordion.Root className="cmp-accordion" type="single" defaultValue={'layers'}>
+    <Accordion.Root className="cmp-accordion" disabled={true} type="single" defaultValue={'layers'}>
       <Accordion.Item className="cmp-accordion__item cmp-accordion__item--fill" value="layers">
         <AccordionTrigger>Layers</AccordionTrigger>
         <AccordionContent>

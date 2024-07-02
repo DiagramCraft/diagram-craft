@@ -22,7 +22,12 @@ export const HistoryToolWindow = () => {
   const undoActions = diagram.undoManager.undoableActions.toReversed();
 
   return (
-    <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['history']}>
+    <Accordion.Root
+      className="cmp-accordion"
+      disabled={true}
+      type="multiple"
+      defaultValue={['history']}
+    >
       <Accordion.Item className="cmp-accordion__item" value="history">
         <AccordionTrigger>History</AccordionTrigger>
         <AccordionContent>

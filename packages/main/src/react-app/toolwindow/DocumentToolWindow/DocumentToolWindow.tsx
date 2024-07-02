@@ -42,7 +42,12 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
 
 export const DocumentToolWindow = (props: Props) => {
   return (
-    <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['document']}>
+    <Accordion.Root
+      className="cmp-accordion"
+      disabled={true}
+      type="multiple"
+      defaultValue={['document']}
+    >
       <Accordion.Item className="cmp-accordion__item" value="document">
         <AccordionTrigger>Document structure</AccordionTrigger>
         <AccordionContent>

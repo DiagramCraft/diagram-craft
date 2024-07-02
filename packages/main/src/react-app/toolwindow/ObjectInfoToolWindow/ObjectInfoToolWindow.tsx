@@ -37,7 +37,12 @@ export const ObjectInfoToolWindow = () => {
   }, [callback, diagram.selectionState]);
 
   return (
-    <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['info']}>
+    <Accordion.Root
+      className="cmp-accordion"
+      disabled={true}
+      type="multiple"
+      defaultValue={['info']}
+    >
       <Accordion.Item className="cmp-accordion__item" value="info">
         <AccordionTrigger>Info</AccordionTrigger>
         <AccordionContent>
