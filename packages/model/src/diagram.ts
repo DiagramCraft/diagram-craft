@@ -32,6 +32,9 @@ export type DiagramEvents = {
 
   /* An element has been removed from the diagram */
   elementRemove: { element: DiagramElement };
+
+  /* An element has highlights changed */
+  elementHighlighted: { element: DiagramElement };
 };
 
 export type StackPosition = { element: DiagramElement; idx: number };

@@ -32,14 +32,13 @@ type FilterNotStartingWith<B, P extends string> = B extends `${P}${infer _X}` ? 
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'data' | 'highlight' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'text' | 'name'
+  'data' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'text' | 'name'
 > = {
   name: '',
   data: {
     data: [],
     customData: {}
   },
-  highlight: [],
   geometry: {
     flipV: false,
     flipH: false

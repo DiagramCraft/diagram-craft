@@ -110,6 +110,19 @@ export class DiagramEdge
     return this.#cache;
   }
 
+  /* Highlights ********************************************************************************************** */
+
+  #highlights: ReadonlyArray<string> = [];
+
+  set highlights(highlights: ReadonlyArray<string>) {
+    this.#highlights = highlights;
+    this.diagram.emitAsync('elementHighlighted', { element: this });
+  }
+
+  get highlights() {
+    return this.#highlights;
+  }
+
   /* Props *************************************************************************************************** */
 
   private populatePropsCache() {
@@ -461,7 +474,7 @@ export class DiagramEdge
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props = snapshot.props as NodeProps;
-    this.#props.highlight = undefined;
+    this.#highlights = [];
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram);
     this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;

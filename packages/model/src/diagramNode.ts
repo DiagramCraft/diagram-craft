@@ -90,6 +90,19 @@ export class DiagramNode
     return this.#cache;
   }
 
+  /* Highlights ********************************************************************************************** */
+
+  #highlights: ReadonlyArray<string> = [];
+
+  set highlights(highlights: ReadonlyArray<string>) {
+    this.#highlights = highlights;
+    this.diagram.emitAsync('elementHighlighted', { element: this });
+  }
+
+  get highlights() {
+    return this.#highlights;
+  }
+
   /* Props *************************************************************************************************** */
 
   private populatePropsCache() {
@@ -338,7 +351,7 @@ export class DiagramNode
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props = snapshot.props as NodeProps;
-    this.#props.highlight = undefined;
+    this.#highlights = [];
     this.#nodeType = snapshot.nodeType;
 
     this.setChildren(

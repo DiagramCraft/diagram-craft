@@ -25,7 +25,7 @@ import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
-import { hasHighlight } from '../highlight';
+import { getHighlights, hasHighlight } from '../highlight';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -255,7 +255,11 @@ export class BaseNodeComponent<
     return svg.g(
       {
         id: `node-${props.element.id}`,
-        class: 'svg-node ' + nodeProps.highlight.map(h => `svg-node--highlight-${h}`).join(' '),
+        class:
+          'svg-node ' +
+          getHighlights(props.element)
+            .map(h => `svg-node--highlight-${h}`)
+            .join(' '),
         transform: transform.trim(),
         style: style.filter ? `filter: ${style.filter}` : ''
       },

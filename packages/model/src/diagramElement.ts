@@ -34,6 +34,8 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   readonly name: string;
   readonly data: Metadata;
 
+  highlights: ReadonlyArray<string>;
+
   setBounds(bounds: Box, uow: UnitOfWork): void;
 
   editProps: ElementPropsForEditing;

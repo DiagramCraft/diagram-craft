@@ -205,7 +205,11 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     createEffect(() => {
       const cb = (e: { element: DiagramElement }) => this.redrawElement(e);
       diagram.on('elementChange', cb);
-      return () => diagram.off('elementChange', cb);
+      diagram.on('elementHighlighted', cb);
+      return () => {
+        diagram.off('elementChange', cb);
+        diagram.off('elementHighlighted', cb);
+      };
     }, [diagram]);
 
     this.onDiagramRedraw('elementAdd', diagram);

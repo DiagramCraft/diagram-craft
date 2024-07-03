@@ -172,8 +172,6 @@ declare global {
   }
 
   interface EdgeProps extends ElementProps {
-    highlight?: string[];
-
     type?: EdgeType;
     shape?: string;
 
@@ -198,7 +196,6 @@ declare global {
 
   interface NodeProps extends ElementProps {
     labelForEdgeId?: string;
-    highlight?: string[];
 
     capabilities?: {
       resizable?: {

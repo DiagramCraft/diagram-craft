@@ -1,39 +1,23 @@
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+
+// TODO: Maybe we can change DiagramElement.highlights to be a Set
+//       However, we need a set that can trigger events
 
 export const addHighlight = (element: DiagramElement, highlight: string) => {
-  UnitOfWork.execute(element.diagram, uow => {
-    element.updateProps(props => {
-      props.highlight ??= [];
-      props.highlight.push(highlight);
-    }, uow);
-  });
+  if (hasHighlight(element, highlight)) return;
+  element.highlights = [...element.highlights, highlight];
 };
 
 export const removeHighlight = (element: DiagramElement | undefined, highlight: string) => {
   if (!element) return;
-  if (!element.renderProps.highlight) return;
-
-  UnitOfWork.execute(element.diagram, uow => {
-    element.updateProps(props => {
-      props.highlight = (props.highlight ?? []).filter(h => h !== highlight);
-    }, uow);
-  });
+  element.highlights = element.highlights.filter(h => h !== highlight);
 };
 
 export const hasHighlight = (element: DiagramElement, highlight: string) => {
-  return element.renderProps.highlight?.includes(highlight) ?? false;
-};
-
-export const clearHighlights = (element: DiagramElement) => {
-  UnitOfWork.execute(element.diagram, uow => {
-    element.updateProps(props => {
-      props.highlight = [];
-    }, uow);
-  });
+  return element.highlights.includes(highlight);
 };
 
 export const getHighlights = (element: DiagramElement | undefined) => {
   if (!element) return [];
-  return element.renderProps.highlight ?? [];
+  return element.highlights;
 };
