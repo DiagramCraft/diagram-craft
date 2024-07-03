@@ -32,7 +32,7 @@ export class PenTool extends AbstractTool {
     protected readonly applicationTriggers: ApplicationTriggers,
     protected readonly resetTool: () => void
   ) {
-    super('node', diagram, drag, svg, applicationTriggers, resetTool);
+    super('pen', diagram, drag, svg, applicationTriggers, resetTool);
     if (this.svg) this.svg.style.cursor = 'default';
 
     applicationTriggers.setHelp?.(

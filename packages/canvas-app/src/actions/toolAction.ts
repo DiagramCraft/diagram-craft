@@ -9,6 +9,7 @@ declare global {
     TOOL_EDGE: ToolAction;
     TOOL_NODE: ToolAction;
     TOOL_PEN: ToolAction;
+    TOOL_FREEHAND: ToolAction;
   }
 }
 
@@ -17,7 +18,8 @@ export const toolActions: ActionMapFactory = (state: AppState) => ({
   TOOL_TEXT: new ToolAction('text', state.applicationState),
   TOOL_EDGE: new ToolAction('edge', state.applicationState),
   TOOL_NODE: new ToolAction('node', state.applicationState),
-  TOOL_PEN: new ToolAction('pen', state.applicationState)
+  TOOL_PEN: new ToolAction('pen', state.applicationState),
+  TOOL_FREEHAND: new ToolAction('freehand', state.applicationState)
 });
 
 export class ToolAction extends AbstractToggleAction {

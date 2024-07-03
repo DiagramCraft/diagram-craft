@@ -79,6 +79,7 @@ import { DirtyIndicator } from './react-app/DirtyIndicator';
 import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { ErrorBoundary } from './react-app/ErrorBoundary';
 import { SelectToolWindow } from './react-app/toolwindow/SelectToolWindow/SelectToolWindow';
+import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -93,7 +94,8 @@ const tools: Record<ToolType, ToolContructor> = {
   text: TextTool,
   edge: EdgeTool,
   node: NodeTool,
-  pen: PenTool
+  pen: PenTool,
+  freehand: FreehandTool
 };
 
 const DarkModeToggleButton = () => {
@@ -245,9 +247,9 @@ export const App = (props: {
                   <ActionToggleButton action={'TOOL_TEXT'}>
                     <TbTextSize size={'17.5px'} />
                   </ActionToggleButton>
-                  <button className={'cmp-toolbar__toggle-item'}>
+                  <ActionToggleButton action={'TOOL_FREEHAND'}>
                     <TbPencil size={'17.5px'} />
-                  </button>
+                  </ActionToggleButton>
                   <ActionToggleButton action={'TOOL_PEN'}>
                     <TbPolygon size={'17.5px'} />
                   </ActionToggleButton>
