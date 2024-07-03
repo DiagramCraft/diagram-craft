@@ -116,6 +116,12 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             resetTool
           )
         );
+        for (const cl of this.svgRef?.classList ?? []) {
+          if (cl.startsWith('tool-')) {
+            this.svgRef?.classList.remove(cl);
+          }
+        }
+        this.svgRef?.classList.add(`tool-${s.tool}`);
       };
       props.applicationState.on('toolChange', cb);
       return () => props.applicationState.off('toolChange', cb);

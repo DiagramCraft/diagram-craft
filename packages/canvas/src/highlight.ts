@@ -16,7 +16,7 @@ export const removeHighlight = (element: DiagramElement | undefined, highlight: 
 
   UnitOfWork.execute(element.diagram, uow => {
     element.updateProps(props => {
-      props.highlight = props.highlight!.filter(h => h !== highlight);
+      props.highlight = (props.highlight ?? []).filter(h => h !== highlight);
     }, uow);
   });
 };
@@ -33,6 +33,7 @@ export const clearHighlights = (element: DiagramElement) => {
   });
 };
 
-export const getHighlights = (element: DiagramElement) => {
+export const getHighlights = (element: DiagramElement | undefined) => {
+  if (!element) return [];
   return element.renderProps.highlight ?? [];
 };

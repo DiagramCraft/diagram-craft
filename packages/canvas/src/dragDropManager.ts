@@ -18,6 +18,7 @@ export type State = {
   }[];
 };
 
+// TODO: These events does not seem to be triggered properly
 type DragEvents = {
   drag: { coord: Point; modifiers: Modifiers };
   dragEnd: void;
@@ -82,12 +83,13 @@ type DragDopEvents = {
 export class DragDopManager extends EventEmitter<DragDopEvents> {
   private drag?: Drag;
 
-  initiate(drag: Drag) {
+  initiate(drag: Drag, onEndCallback = () => {}) {
     this.drag = drag;
     this.emit('dragStart', { drag });
     this.drag.on('stateChange', ({ state }) => {
       this.emit('dragStateChange', { drag: this.drag!, state });
     });
+    this.drag.on('dragEnd', onEndCallback);
   }
 
   isDragging() {

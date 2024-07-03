@@ -1,16 +1,23 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry/point';
-import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
+import {
+  DRAG_DROP_MANAGER,
+  DragDopManager,
+  Modifiers
+} from '@diagram-craft/canvas/dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
-import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
+import { addHighlight, getHighlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Anchor } from '@diagram-craft/model/types';
+import { EdgeEndpointMoveDrag } from '@diagram-craft/canvas/drag/edgeEndpointMoveDrag';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 declare global {
   interface Tools {
@@ -22,7 +29,7 @@ const EDGE_HIGHLIGHT = 'edge-connect';
 
 export class EdgeTool extends AbstractTool {
   // @ts-ignore
-  private currentAnchor: Anchor | undefined = undefined;
+  private currentAnchor: (Anchor & { idx: number }) | undefined = undefined;
 
   constructor(
     protected readonly diagram: Diagram,
@@ -32,7 +39,6 @@ export class EdgeTool extends AbstractTool {
     protected readonly resetTool: () => void
   ) {
     super('edge', diagram, drag, svg, applicationTriggers, resetTool);
-    if (this.svg) this.svg.style.cursor = 'crosshair';
 
     applicationTriggers.setHelp?.('Click to add edge');
   }
@@ -40,8 +46,13 @@ export class EdgeTool extends AbstractTool {
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
     const nd = new DiagramEdge(
       newid(),
+      this.currentAnchor
+        ? new ConnectedEndpoint(
+            this.currentAnchor.idx,
+            this.diagram.lookup(this.currentElement!) as DiagramNode
+          )
+        : new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
       new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
-      new FreeEndpoint(Point.add(this.diagram.viewBox.toDiagramPoint(point), { x: 50, y: 50 })),
       {},
       [],
       this.diagram,
@@ -56,6 +67,23 @@ export class EdgeTool extends AbstractTool {
     this.diagram.selectionState.toggle(nd);
 
     this.resetTool();
+    DRAG_DROP_MANAGER.initiate(
+      new EdgeEndpointMoveDrag(this.diagram, nd, 'end', this.applicationTriggers),
+      () => {
+        if (this.currentElement) {
+          removeHighlight(this.diagram.lookup(this.currentElement!), EDGE_HIGHLIGHT);
+        }
+        if (Point.distance(nd.end.position, nd.start.position) < 5) {
+          nd.setEnd(
+            new FreeEndpoint({
+              x: nd.start.position.x + 10,
+              y: nd.start.position.y + 10
+            }),
+            UnitOfWork.immediate(this.diagram)
+          );
+        }
+      }
+    );
   }
 
   onMouseOver(id: string, point: Point) {
@@ -72,7 +100,13 @@ export class EdgeTool extends AbstractTool {
 
   onMouseOut(id: string, _point: Point) {
     if (this.currentElement) {
-      removeHighlight(this.diagram.lookup(this.currentElement), EDGE_HIGHLIGHT);
+      const el = this.diagram.lookup(this.currentElement);
+      removeHighlight(el, EDGE_HIGHLIGHT);
+      for (const h of getHighlights(el)) {
+        if (h.startsWith('anchor-')) {
+          removeHighlight(el, h);
+        }
+      }
     }
     super.onMouseOut(id, _point);
   }
@@ -82,8 +116,11 @@ export class EdgeTool extends AbstractTool {
   }
 
   onMouseMove(point: Point, _modifiers: Modifiers) {
-    this.currentAnchor = undefined;
+    if (this.currentAnchor && this.currentElement) {
+      removeHighlight(this.diagram.lookup(this.currentElement), `anchor-${this.currentAnchor.idx}`);
+    }
 
+    this.currentAnchor = undefined;
     if (!this.currentElement) return;
 
     const el = this.diagram.lookup(this.currentElement)!;
@@ -94,9 +131,10 @@ export class EdgeTool extends AbstractTool {
       const anchorPos = getAnchorPosition(el, closestAnchor);
 
       const distance = Point.distance(anchorPos, dp);
-      if (distance < 5) {
+      if (distance < 25) {
         this.currentAnchor = closestAnchor;
-        //console.log(distance);
+
+        addHighlight(el, `anchor-${this.currentAnchor.idx}`);
       }
     }
   }

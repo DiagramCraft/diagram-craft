@@ -90,6 +90,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'unset';
 
     this.applicationTriggers.popHelp?.('EdgeEndpointMoveDrag');
+    this.emit('dragEnd');
   }
 
   private attachToClosestAnchor(coord: Point) {
