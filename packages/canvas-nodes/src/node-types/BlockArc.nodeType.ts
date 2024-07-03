@@ -112,6 +112,15 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     super('blockArc', 'BlockArc', BlockArcNodeDefinition.Shape);
   }
 
+  getAnchors(_def: DiagramNode) {
+    return [
+      { point: Point.of(0.5, 0) },
+      { point: Point.of(1, 0.5) },
+      { point: Point.of(0.5, 1) },
+      { point: Point.of(0, 0.5) }
+    ];
+  }
+
   static Shape = class extends BaseNodeComponent<BlockArcNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);

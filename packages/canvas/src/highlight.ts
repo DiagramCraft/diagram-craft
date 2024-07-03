@@ -13,7 +13,8 @@ export const removeHighlight = (element: DiagramElement | undefined, highlight: 
   element.highlights = element.highlights.filter(h => h !== highlight);
 };
 
-export const hasHighlight = (element: DiagramElement, highlight: string) => {
+export const hasHighlight = (element: DiagramElement | undefined, highlight: string) => {
+  if (!element) return false;
   return element.highlights.includes(highlight);
 };
 

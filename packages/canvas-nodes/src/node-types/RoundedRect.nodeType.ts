@@ -28,6 +28,16 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     super('rounded-rect', 'Rounded Rectangle', RoundedRectComponent);
   }
 
+  getAnchors(_def: DiagramNode) {
+    return [
+      { point: Point.of(0.5, 1) },
+      { point: Point.of(0.5, 0) },
+      { point: Point.of(1, 0.5) },
+      { point: Point.of(0, 0.5) },
+      { point: Point.of(0.5, 0.5), clip: true }
+    ];
+  }
+
   getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {

@@ -13,6 +13,16 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
     super('circle', 'Circle', CircleComponent);
   }
 
+  getAnchors(_def: DiagramNode) {
+    return [
+      { point: Point.of(0.5, 0) },
+      { point: Point.of(1, 0.5) },
+      { point: Point.of(0.5, 1) },
+      { point: Point.of(0, 0.5) },
+      { point: Point.of(0.5, 0.5), clip: true }
+    ];
+  }
+
   getBoundingPathBuilder(def: DiagramNode) {
     const b = new PathBuilder(unitCoordinateSystem(def.bounds));
     b.moveTo(Point.of(0, -1));
