@@ -23,7 +23,6 @@ export class NodeTool extends AbstractTool {
     protected readonly resetTool: () => void
   ) {
     super('node', diagram, drag, svg, applicationTriggers, resetTool);
-    if (this.svg) this.svg.style.cursor = 'default';
 
     if (
       diagram.selectionState.getSelectionType() !== 'single-node' &&

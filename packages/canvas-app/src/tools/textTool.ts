@@ -23,7 +23,6 @@ export class TextTool extends AbstractTool {
     protected readonly resetTool: () => void
   ) {
     super('text', diagram, drag, svg, applicationTriggers, resetTool);
-    if (this.svg) this.svg.style.cursor = 'text';
 
     applicationTriggers.setHelp?.('Click to add text');
   }

@@ -348,9 +348,11 @@ foreignObject {
 .canvas {
   background: var(--canvas-bg);
 
-  &.tool-edge, &.tool-edge * {
-    cursor: crosshair !important;
-  }
+  &.tool-edge, &.tool-edge * { cursor: crosshair !important; }
+  &.tool-text, &.tool-text * { cursor: text !important; }
+  &.tool-freehand, &.tool-freehand * { cursor: crosshair !important; }
+  &.tool-pen, &.tool-pen * { cursor: default !important; }
+  &.tool-node, &.tool-node * { cursor: default !important; }
 
   [contenteditable] {
     outline: 0 solid transparent;
