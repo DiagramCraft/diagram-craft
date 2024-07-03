@@ -87,6 +87,8 @@ export abstract class Component<P = Record<string, never>> {
   protected currentProps: P | undefined;
   protected effectManager = new EffectManager();
 
+  private oldMemoKey: unknown;
+
   abstract render(props: P): VNode;
 
   protected doRender(props: P): VNode {
@@ -98,8 +100,8 @@ export abstract class Component<P = Record<string, never>> {
     }
   }
 
-  protected isChanged(props: P): boolean {
-    return !shallowEquals(this.currentProps, props);
+  protected getMemoKey(_props: P): unknown | undefined {
+    return undefined;
   }
 
   onDetach(_props: P) {}
@@ -132,8 +134,10 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   update(props: P, force = false) {
-    if (!force && !this.isChanged(props)) return;
+    const memoKey = this.getMemoKey(props);
+    if (!force && memoKey !== undefined && shallowEquals(memoKey, this.oldMemoKey)) return;
     this.currentProps = props;
+    this.oldMemoKey = memoKey;
     this.element = apply(this.element!, this.doRender(props));
   }
 

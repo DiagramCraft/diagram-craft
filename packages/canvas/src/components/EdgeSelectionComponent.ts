@@ -9,11 +9,6 @@ import { $c } from '@diagram-craft/utils/classname';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 
 export class EdgeSelectionComponent extends Component<Props> {
-  // TODO: Fix this
-  protected isChanged(_props: Props): boolean {
-    return true;
-  }
-
   render(props: Props) {
     const { diagram, edge } = props;
 
