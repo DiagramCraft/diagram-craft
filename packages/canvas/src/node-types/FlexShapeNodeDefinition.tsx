@@ -15,6 +15,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { Modifiers } from '../dragDropManager';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { hasHighlight } from '../highlight';
 
 type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
 
@@ -84,8 +85,8 @@ export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
           'y': props.node.bounds.y,
           'width': props.node.bounds.w,
           'height': props.node.bounds.h,
-          'stroke': props.nodeProps.highlight.includes('drop-target') ? '#30A46C' : 'none', // ''#d5d5d4',
-          'stroke-width': props.nodeProps.highlight.includes('drop-target') ? 3 : 1,
+          'stroke': hasHighlight(props.node, 'drop-target') ? '#30A46C' : 'none', // ''#d5d5d4',
+          'stroke-width': hasHighlight(props.node, 'drop-target') ? 3 : 1,
           'fill': 'transparent',
           'on': {
             mousedown: props.onMouseDown

@@ -20,6 +20,7 @@ import { EdgeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
+import { getHighlights } from '../highlight';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -233,7 +234,9 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     return svg.g(
       {
         id: `edge-${props.element.id}`,
-        class: `${edgeProps.highlight.map(h => `svg-edge--highlight-${h}`).join(' ')}`,
+        class: `${getHighlights(props.element)
+          .map(h => `svg-edge--highlight-${h}`)
+          .join(' ')}`,
         on: {
           mousedown: onMouseDown,
           dblclick: e => props.onDoubleClick?.(props.element.id, EventHelper.point(e)),

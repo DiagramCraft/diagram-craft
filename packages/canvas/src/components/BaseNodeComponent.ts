@@ -25,6 +25,7 @@ import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
+import { hasHighlight } from '../highlight';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -97,7 +98,7 @@ export class BaseNodeComponent<
 
     const isSelected = $d.selectionState.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
-    const isEdgeConnect = nodeProps.highlight.includes('edge-connect');
+    const isEdgeConnect = hasHighlight(props.element, 'edge-connect');
     const children: VNode[] = [];
 
     const style: Partial<CSSStyleDeclaration> = {};

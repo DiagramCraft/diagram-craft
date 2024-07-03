@@ -20,3 +20,19 @@ export const removeHighlight = (element: DiagramElement | undefined, highlight: 
     }, uow);
   });
 };
+
+export const hasHighlight = (element: DiagramElement, highlight: string) => {
+  return element.renderProps.highlight?.includes(highlight) ?? false;
+};
+
+export const clearHighlights = (element: DiagramElement) => {
+  UnitOfWork.execute(element.diagram, uow => {
+    element.updateProps(props => {
+      props.highlight = [];
+    }, uow);
+  });
+};
+
+export const getHighlights = (element: DiagramElement) => {
+  return element.renderProps.highlight ?? [];
+};

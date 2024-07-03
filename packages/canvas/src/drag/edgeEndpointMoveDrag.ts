@@ -13,6 +13,7 @@ import {
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { getClosestAnchor } from '@diagram-craft/model/anchor';
 
 const EDGE_HIGHLIGHT = 'edge-connect';
 
@@ -94,12 +95,8 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   private attachToClosestAnchor(coord: Point) {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
-    this.setEndpoint(
-      new ConnectedEndpoint(
-        this.getClosestAnchor(coord),
-        this.diagram.nodeLookup.get(this.hoverElement)!
-      )
-    );
+    const a = getClosestAnchor(coord, this.diagram.nodeLookup.get(this.hoverElement)!);
+    this.setEndpoint(new ConnectedEndpoint(a.idx, this.diagram.nodeLookup.get(this.hoverElement)!));
   }
 
   private setEndpoint(endpoint: Endpoint) {
@@ -108,28 +105,5 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     } else {
       this.edge.setEnd(endpoint, this.uow);
     }
-  }
-
-  private getClosestAnchor(coord: Point): number {
-    const node = this.diagram.nodeLookup.get(this.hoverElement!)!;
-    const anchors = node.anchors.map((a, idx) => {
-      return {
-        idx,
-        x: node.bounds.x + a.point.x * node.bounds.w,
-        y: node.bounds.y + a.point.y * node.bounds.h
-      };
-    });
-
-    let closestAnchor = 0;
-    let closestDistance = Number.MAX_SAFE_INTEGER;
-    for (const a of anchors) {
-      const d = Point.squareDistance(coord, a);
-      if (d < closestDistance) {
-        closestAnchor = a.idx;
-        closestDistance = d;
-      }
-    }
-
-    return closestAnchor;
   }
 }
