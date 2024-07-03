@@ -98,6 +98,10 @@ export abstract class Component<P = Record<string, never>> {
     }
   }
 
+  protected isChanged(props: P): boolean {
+    return !shallowEquals(this.currentProps, props);
+  }
+
   onDetach(_props: P) {}
   onAttach(_props: P) {}
 
@@ -128,7 +132,7 @@ export abstract class Component<P = Record<string, never>> {
   }
 
   update(props: P, force = false) {
-    if (!force && shallowEquals(this.currentProps, props)) return;
+    if (!force && !this.isChanged(props)) return;
     this.currentProps = props;
     this.element = apply(this.element!, this.doRender(props));
   }

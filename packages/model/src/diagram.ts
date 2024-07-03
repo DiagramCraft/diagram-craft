@@ -113,8 +113,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   createSnapManager() {
-    const firstParent = this.selectionState.nodes[0].parent;
-    if (this.selectionState.nodes.every(n => n.parent === firstParent) && firstParent) {
+    const firstParent = this.selectionState.nodes[0]?.parent;
+    if (
+      this.selectionState.nodes.length > 0 &&
+      this.selectionState.nodes.every(n => n.parent === firstParent) &&
+      firstParent
+    ) {
       const selectionIds = new Set(firstParent.children.map(c => c.id));
       for (const n of this.selectionState.nodes) {
         selectionIds.delete(n.id);
