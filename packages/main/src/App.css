@@ -353,6 +353,7 @@ foreignObject {
   &.tool-freehand, &.tool-freehand * { cursor: crosshair !important; }
   &.tool-pen, &.tool-pen * { cursor: default !important; }
   &.tool-node, &.tool-node * { cursor: default !important; }
+  &.tool-pan, &.tool-pan * { cursor: move !important; }
 
   [contenteditable] {
     outline: 0 solid transparent;

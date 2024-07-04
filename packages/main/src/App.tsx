@@ -80,6 +80,7 @@ import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { ErrorBoundary } from './react-app/ErrorBoundary';
 import { SelectToolWindow } from './react-app/toolwindow/SelectToolWindow/SelectToolWindow';
 import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
+import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -95,7 +96,8 @@ const tools: Record<ToolType, ToolContructor> = {
   edge: EdgeTool,
   node: NodeTool,
   pen: PenTool,
-  freehand: FreehandTool
+  freehand: FreehandTool,
+  pan: PanTool
 };
 
 const DarkModeToggleButton = () => {

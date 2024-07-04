@@ -116,12 +116,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             resetTool
           )
         );
-        for (const cl of this.svgRef?.classList ?? []) {
-          if (cl.startsWith('tool-')) {
-            this.svgRef?.classList.remove(cl);
-          }
-        }
-        this.svgRef?.classList.add(`tool-${s.tool}`);
+        this.updateToolClassOnSvg(s.tool);
       };
       props.applicationState.on('toolChange', cb);
       return () => props.applicationState.off('toolChange', cb);
@@ -187,6 +182,13 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
+        if (e.code === 'Space' && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+          if (this.tool?.type !== 'pan') {
+            props.applicationState.tool = 'pan';
+          }
+          return;
+        }
+
         if (!executeAction(e, { point: this.point }, keyMap, actionMap)) {
           this.tool?.onKeyDown(e);
         }
@@ -312,8 +314,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                   event
                 );
               }
-
-              props.onContextMenu?.(event);
             },
 
             drag: e => {
@@ -437,6 +437,15 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     ]);
   }
 
+  private updateToolClassOnSvg(s: ToolType) {
+    for (const cl of this.svgRef?.classList ?? []) {
+      if (cl.startsWith('tool-')) {
+        this.svgRef?.classList.remove(cl);
+      }
+    }
+    this.svgRef?.classList.add(`tool-${s}`);
+  }
+
   private redrawElement = (e: { element: DiagramElement }) => {
     if (isNode(e.element)) {
       const nodeToRepaint = getTopMostNode(e.element);
@@ -521,7 +530,6 @@ export type Props = {
   onDrop?: (e: DragEvent) => void;
   onDrag?: (e: DragEvent) => void;
   onDragOver?: (e: DragEvent) => void;
-  onContextMenu?: (e: MouseEvent) => void;
 };
 
 export type CanvasState = {
