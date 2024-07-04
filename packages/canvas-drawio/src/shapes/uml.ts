@@ -311,8 +311,10 @@ class UmlLifeline extends SimpleShapeNodeDefinition {
         mode: 'canvas',
         element: node,
         actionMap: props.actionMap,
-        onDoubleClick: () => {},
-        onMouseDown: () => {},
+        onDoubleClick: shapeBuilder.makeOnDblclickHandle(),
+        onMouseDown: (_id, coord, modifiers) => {
+          props.childProps.onMouseDown?.(props.node.id, coord, modifiers);
+        },
         applicationTriggers: props.applicationTriggers,
         tool: props.tool
       })

@@ -30,6 +30,7 @@ fileLoaderRegistry['.json'] = async () => (content, documentFactory, diagramFact
 const stencilRegistry: StencilRegistryConfig = [
   {
     type: 'drawioManual',
+    shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
     opts: {
       callback: () =>
         import('@diagram-craft/canvas-drawio/shapes/uml').then(m => m.registerUMLShapes)

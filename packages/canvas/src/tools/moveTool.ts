@@ -7,6 +7,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { getDiagramElementPath } from '@diagram-craft/model/diagramElement';
+import { assert } from '@diagram-craft/utils/assert';
 
 type DeferredMouseAction = {
   callback: () => void;
@@ -96,6 +97,7 @@ export class MoveTool extends AbstractTool {
       if (!modifiers.shiftKey) selection.clear();
 
       let element = this.diagram.lookup(id)!;
+      assert.present(element);
 
       // Ensure you cannot select an additional node if you already have a group selected
       const parents = selection.nodes.map(n => n.parent);
