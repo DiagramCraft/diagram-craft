@@ -35,13 +35,4 @@ export const Vector = {
   dotProduct(v1: Vector, v2: Vector) {
     return v1.x * v2.x + v1.y * v2.y;
   }
-
-  /*
-  fromLine: (l: Line) => {
-    return { x: l.to.x - l.from.x, y: l.to.y - l.from.y };
-  },
-  angle2: (v1: Vector, v2: Vector) => {
-    return Vector.angle(v2) - Vector.angle(v1);
-  },
-  */
 };

@@ -14,6 +14,7 @@ export class PanTool extends AbstractTool {
   private mouseDown = false;
   private clickPoint: Point | undefined = undefined;
   private clickOffset: Point | undefined = undefined;
+  private resetOnMouseUp = false;
 
   constructor(
     protected readonly diagram: Diagram,
@@ -25,6 +26,10 @@ export class PanTool extends AbstractTool {
     super('pan', diagram, drag, svg, applicationTriggers, resetTool);
 
     applicationTriggers.pushHelp?.('pan', 'Click and drag to pan');
+  }
+
+  setResetOnMouseUp(reset: boolean) {
+    this.resetOnMouseUp = reset;
   }
 
   onKeyUp(_e: KeyboardEvent) {
@@ -40,6 +45,9 @@ export class PanTool extends AbstractTool {
 
   onMouseUp(_point: Point) {
     this.mouseDown = false;
+    if (this.resetOnMouseUp) {
+      this.resetTool();
+    }
   }
 
   onMouseMove(point: Point, _modifiers: Modifiers) {

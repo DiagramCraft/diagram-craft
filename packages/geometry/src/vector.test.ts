@@ -35,4 +35,38 @@ describe('Vector', () => {
   test('scale', () => {
     expect(Vector.scale({ x: 1, y: 2 }, 2)).toStrictEqual({ x: 2, y: 4 });
   });
+
+  describe('tangentToNormal', () => {
+    test('converts vector to its normal vector correctly', () => {
+      expect(Vector.tangentToNormal({ x: 0, y: 1 })).toStrictEqual({ x: -1, y: 0 });
+    });
+  });
+
+  describe('angleBetween', () => {
+    test('calculates zero angle between identical vectors', () => {
+      expect(Vector.angleBetween({ x: 1, y: 0 }, { x: 1, y: 0 })).toBeCloseTo(0);
+    });
+
+    test('calculates right angle between perpendicular vectors', () => {
+      expect(Vector.angleBetween({ x: 0, y: 1 }, { x: 1, y: 0 })).toBeCloseTo(Math.PI / 2);
+    });
+
+    test('calculates correct angle between two arbitrary vectors', () => {
+      expect(Vector.angleBetween({ x: 1, y: 1 }, { x: -1, y: 1 })).toBeCloseTo(Math.PI / 2);
+    });
+  });
+
+  describe('dotProduct', () => {
+    test('calculates zero for perpendicular vectors', () => {
+      expect(Vector.dotProduct({ x: 1, y: 0 }, { x: 0, y: 1 })).toBe(0);
+    });
+
+    test('calculates correct dot product for parallel vectors', () => {
+      expect(Vector.dotProduct({ x: 1, y: 1 }, { x: 2, y: 2 })).toBe(4);
+    });
+
+    test('calculates correct dot product for arbitrary vectors', () => {
+      expect(Vector.dotProduct({ x: 1, y: 2 }, { x: 3, y: 4 })).toBe(11);
+    });
+  });
 });

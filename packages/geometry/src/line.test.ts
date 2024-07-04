@@ -47,4 +47,26 @@ describe('Line', () => {
       )
     ).toStrictEqual({ x: 5, y: 0 });
   });
+
+  describe('length', () => {
+    test('calculates length of horizontal line correctly', () => {
+      const line = Line.of({ x: 0, y: 0 }, { x: 10, y: 0 });
+      expect(Line.length(line)).toBeCloseTo(10);
+    });
+
+    test('calculates length of vertical line correctly', () => {
+      const line = Line.of({ x: 0, y: 0 }, { x: 0, y: 10 });
+      expect(Line.length(line)).toBeCloseTo(10);
+    });
+
+    test('calculates length of diagonal line correctly', () => {
+      const line = Line.of({ x: 0, y: 0 }, { x: 10, y: 10 });
+      expect(Line.length(line)).toBeCloseTo(Math.sqrt(200));
+    });
+
+    test('returns zero for line of zero length', () => {
+      const line = Line.of({ x: 0, y: 0 }, { x: 0, y: 0 });
+      expect(Line.length(line)).toBe(0);
+    });
+  });
 });

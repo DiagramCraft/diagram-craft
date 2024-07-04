@@ -25,6 +25,7 @@ import { ShapeEdgeDefinition } from './shape/shapeEdgeDefinition';
 import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
 import { Browser } from './browser';
+import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement
@@ -263,6 +264,22 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               props.onClick?.(e);
             },
             mousedown: e => {
+              if (e.button === 1) {
+                const currentTool = props.applicationState.tool;
+                const panTool = new PanTool(
+                  diagram,
+                  DRAG_DROP_MANAGER,
+                  this.svgRef,
+                  props.applicationTriggers,
+                  () => {
+                    props.applicationState.tool = currentTool;
+                  }
+                );
+                this.setTool(panTool);
+                panTool.setResetOnMouseUp(true);
+                this.updateToolClassOnSvg('pan');
+                panTool.onMouseDown(BACKGROUND, EventHelper.point(e), e);
+              }
               if (e.button !== 0) return;
               this.tool!.onMouseDown(BACKGROUND, EventHelper.point(e), e);
             },

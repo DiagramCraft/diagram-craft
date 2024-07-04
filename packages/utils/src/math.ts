@@ -79,23 +79,3 @@ export const isSame = (a: number, b: number, epsilon = 0.01) => {
 export const isDifferent = (a: number, b: number, epsilon = 0.01) => {
   return !isSame(a, b, epsilon);
 };
-
-/**
- * Returns the input number, but ensures that -0 is converted to 0.
- *
- * @param n - The number to be processed.
- * @returns The input number, or 0 if the input number is -0.
- *
- * @example
- * // returns 10
- * posZero(10);
- *
- * @example
- * // returns 0
- * posZero(-0);
- *
- * @example
- * // returns -10
- * posZero(-10);
- */
-export const posZero = (n: number) => (n === 0 ? 0 : n);

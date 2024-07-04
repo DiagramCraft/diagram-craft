@@ -61,14 +61,6 @@ export const Line = {
     return { x: l1.from.x + t * (l1.to.x - l1.from.x), y: l1.from.y + t * (l1.to.y - l1.from.y) };
   },
 
-  offset(of: Line, n: number) {
-    const v = Vector.normalize(Vector.from(of.from, of.to));
-    return Line.of(
-      Point.add(of.from, Vector.scale(Vector.tangentToNormal(v), n)),
-      Point.add(of.to, Vector.scale(Vector.tangentToNormal(v), n))
-    );
-  },
-
   length(l: Line) {
     return Vector.length(Vector.from(l.from, l.to));
   }
