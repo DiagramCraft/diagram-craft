@@ -17,17 +17,20 @@ declare global {
   }
 }
 
-export const stencilLoaderDrawioManual: StencilLoader<'drawioManual'> = async (diagram, opts) => {
+export const stencilLoaderDrawioManual: StencilLoader<'drawioManual'> = async (
+  nodeDefinitions,
+  opts
+) => {
   await (
     await opts.callback()
-  )(diagram.document.nodeDefinitions);
+  )(nodeDefinitions);
 };
 
-export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (diagram, opts) => {
+export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDefinitions, opts) => {
   const { name, url, foreground, background } = opts;
   const drawioStencils = await loadDrawioStencils(url, name, foreground, background);
 
-  const stencilRegistry = diagram.document.nodeDefinitions.stencilRegistry;
+  const stencilRegistry = nodeDefinitions.stencilRegistry;
   stencilRegistry.register({
     id: name,
     name: name,

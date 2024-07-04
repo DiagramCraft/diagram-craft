@@ -17,6 +17,7 @@ import { DiagramDocument } from './diagramDocument';
 import { Layer } from './diagramLayer';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 
 export type NodeCapability = 'children' | 'fill' | 'select';
 
@@ -98,10 +99,44 @@ if (typeof window !== 'undefined') {
   };
 }
 
+type PreregistrationEntry<K extends keyof StencilLoaderOpts> = {
+  type: K;
+  shapes: RegExp;
+  opts: StencilLoaderOpts[K];
+};
+
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
+  private preRegistrations: Array<PreregistrationEntry<keyof StencilLoaderOpts>> = [];
 
   public stencilRegistry = new StencilRegistry();
+
+  preregister<K extends keyof StencilLoaderOpts>(
+    shapes: RegExp,
+    type: K,
+    opts: StencilLoaderOpts[K]
+  ) {
+    this.preRegistrations.push({ shapes, type, opts });
+  }
+
+  async load(s: string): Promise<boolean> {
+    if (this.hasRegistration(s)) return true;
+
+    const idx = this.preRegistrations.findIndex(a => a.shapes.test(s));
+    if (idx === -1) return false;
+
+    const entry = this.preRegistrations[idx];
+    //this.preRegistrations.splice(idx, 1);
+
+    const loader = stencilLoaderRegistry[entry.type];
+    assert.present(loader, `Stencil loader ${entry.type} not found`);
+
+    const l = await loader();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await l(this, entry.opts as any);
+
+    return true;
+  }
 
   register(node: NodeDefinition) {
     this.nodes.set(node.type, node);

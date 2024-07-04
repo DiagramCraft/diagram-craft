@@ -21,9 +21,17 @@ export const Autosave = {
 
       const parsed = JSON.parse(item);
 
+      const document = await deserializeDiagramDocument(
+        parsed.diagram,
+        documentFactory,
+        diagramFactory
+      );
+
+      await document.load();
+
       return {
         url: parsed.url,
-        diagram: await deserializeDiagramDocument(parsed.diagram, documentFactory, diagramFactory)
+        document
       };
     } catch (e) {
       if (!failSilently) throw e;

@@ -19,7 +19,7 @@ export const AppLoader = (props: Props) => {
       assert.present(loader, `Stencil loader ${def.type} not found`);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      loader().then(loader => loader(doc!.diagrams[0], def.opts as any));
+      loader().then(loader => loader(doc!.nodeDefinitions, def.opts as any));
     }
   }, [props.stencils, doc]);
 
@@ -28,7 +28,7 @@ export const AppLoader = (props: Props) => {
       Autosave.load(props.documentFactory, props.diagramFactory, true),
       loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)
     ]).then(([autosaved, defDiagram]) => {
-      setDoc(autosaved?.diagram ?? defDiagram);
+      setDoc(autosaved?.document ?? defDiagram);
       if (autosaved) setUrl(autosaved.url);
     });
   }, [props.diagramFactory, props.recent, props.documentFactory]);
@@ -53,6 +53,7 @@ export const AppLoader = (props: Props) => {
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   type: K;
+  shapes?: RegExp;
   opts: StencilLoaderOpts[K];
 };
 

@@ -2,15 +2,16 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assert } from '@diagram-craft/utils/assert';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   interface StencilLoaderOpts {}
 }
 
 export type StencilLoader<T extends keyof StencilLoaderOpts> = (
-  diagram: Diagram,
+  nodeDefinition: NodeDefinitionRegistry,
   opts: StencilLoaderOpts[T]
-) => void;
+) => Promise<void>;
 
 export const stencilLoaderRegistry: Partial<{
   [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
@@ -40,9 +41,13 @@ export const loadFileFromUrl = async (
   const fileLoader = getFileLoaderForUrl(url);
   assert.present(fileLoader, `File loader for ${url} not found`);
 
-  return fileLoader().then(loader =>
+  const document = await fileLoader().then(loader =>
     fetch(url)
       .then(r => r.text())
       .then(c => loader(c, documentFactory, diagramFactory))
   );
+
+  await document.load();
+
+  return document;
 };

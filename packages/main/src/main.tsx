@@ -129,6 +129,12 @@ const stencilRegistry: StencilRegistryConfig = [
 ];
 
 const nodeRegistry = defaultNodeRegistry();
+for (let i = 0; i < stencilRegistry.length; i++) {
+  const s = stencilRegistry[i];
+  if (s.shapes) {
+    nodeRegistry.preregister(s.shapes, s.type, s.opts);
+  }
+}
 registerDrawioBaseNodeTypes(nodeRegistry);
 
 const edgeRegistry = defaultEdgeRegistry();

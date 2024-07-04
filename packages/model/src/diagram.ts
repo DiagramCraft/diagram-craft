@@ -281,4 +281,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   getAttachmentsInUse() {
     return this.layers.getAttachmentsInUse();
   }
+
+  getNodeTypes(): Set<string> {
+    // TODO: Should recurse into groups
+    return new Set(
+      this.layers.all.flatMap(l => l.elements.map(e => (isNode(e) ? e.nodeType : 'rect')))
+    );
+  }
 }

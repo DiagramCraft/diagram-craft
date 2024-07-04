@@ -97,4 +97,19 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   getAttachmentsInUse() {
     return this.diagrams.flatMap(e => e.getAttachmentsInUse());
   }
+
+  // TODO: We should probably move this into the diagram loaders and/or deserialization
+  //       This way, warnings as anchors are determined during deserialization are triggered
+  async load() {
+    for (const diagram of this.diagrams) {
+      const nodeTypes = diagram.getNodeTypes();
+      for (const s of nodeTypes) {
+        if (!this.nodeDefinitions.hasRegistration(s)) {
+          if (!(await this.nodeDefinitions.load(s))) {
+            console.warn(`Node definition ${s} not loaded`);
+          }
+        }
+      }
+    }
+  }
 }
