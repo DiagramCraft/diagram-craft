@@ -331,6 +331,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                   event
                 );
               }
+
+              props.onContextMenu?.(event);
             },
 
             drag: e => {
@@ -547,6 +549,7 @@ export type Props = {
   onDrop?: (e: DragEvent) => void;
   onDrag?: (e: DragEvent) => void;
   onDragOver?: (e: DragEvent) => void;
+  onContextMenu?: (e: MouseEvent) => void;
 };
 
 export type CanvasState = {
