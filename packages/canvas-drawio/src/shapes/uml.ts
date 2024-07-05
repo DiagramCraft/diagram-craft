@@ -292,7 +292,7 @@ class UmlLifeline extends SimpleShapeNodeDefinition {
     participantProps.text.text = '';
 
     const node = new DiagramNode(
-      `${props.node.id}-participant`,
+      `${props.node.id}---participant`,
       shape.type,
       {
         x: props.node.bounds.x,

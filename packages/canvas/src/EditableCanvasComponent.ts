@@ -27,6 +27,10 @@ import styles from './canvas.css?inline';
 import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 
+const removeSuffix = (s: string) => {
+  return s.replace(/---.+$/, '');
+};
+
 const getAncestorDiagramElement = (
   e: SVGElement | HTMLElement
 ):
@@ -39,12 +43,12 @@ const getAncestorDiagramElement = (
   while (element) {
     if (element.id.startsWith('node-')) {
       return {
-        id: element.id.slice('node-'.length),
+        id: removeSuffix(element.id.slice('node-'.length)),
         type: 'node'
       };
     } else if (element.id.startsWith('edge-')) {
       return {
-        id: element.id.slice('edge-'.length),
+        id: removeSuffix(element.id.slice('edge-'.length)),
         type: 'edge'
       };
     }
