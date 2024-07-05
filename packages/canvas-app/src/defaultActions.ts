@@ -20,6 +20,7 @@ import { toolActions } from './actions/toolAction';
 import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas/src/keyMap';
 import { groupActions } from './actions/groupAction';
 import { tableActions } from '@diagram-craft/canvas/actions/tableActions';
+import { selectionMoveActions } from './actions/selectionMoveAction';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
@@ -29,6 +30,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...redoActions(state),
   ...selectAllActions(state),
   ...selectionDeleteActions(state),
+  ...selectionMoveActions(state),
   ...selectionRestackActions(state),
   ...alignActions(state),
   ...toggleMagnetTypeActions(state),
@@ -61,5 +63,14 @@ export const defaultMacKeymap: KeyMap = {
   'M-KeyS': 'FILE_SAVE',
 
   'M-KeyG': 'GROUP_GROUP',
-  'MS-KeyG': 'GROUP_UNGROUP'
+  'MS-KeyG': 'GROUP_UNGROUP',
+
+  'ArrowRight': 'SELECTION_MOVE_RIGHT',
+  'ArrowLeft': 'SELECTION_MOVE_LEFT',
+  'ArrowUp': 'SELECTION_MOVE_UP',
+  'ArrowDown': 'SELECTION_MOVE_DOWN',
+  'S-ArrowRight': 'SELECTION_MOVE_GRID_RIGHT',
+  'S-ArrowLeft': 'SELECTION_MOVE_GRID_LEFT',
+  'S-ArrowUp': 'SELECTION_MOVE_GRID_UP',
+  'S-ArrowDown': 'SELECTION_MOVE_GRID_DOWN'
 };
