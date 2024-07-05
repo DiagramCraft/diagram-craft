@@ -207,13 +207,16 @@ export class EditablePath {
           const endWp = this.waypoints.find(wp => wp.preSegment === segment);
 
           assert.present(startWp);
-          assert.present(endWp);
 
-          pb.cubicTo(
-            segment.end,
-            Point.add(startWp.point, startWp.controlPoints.p2!),
-            Point.add(endWp.point, endWp.controlPoints.p1!)
-          );
+          if (!endWp) {
+            pb.quadTo(segment.end, Point.add(startWp.point, startWp.controlPoints.p2!));
+          } else {
+            pb.cubicTo(
+              segment.end,
+              Point.add(startWp.point, startWp.controlPoints.p2!),
+              Point.add(endWp.point, endWp.controlPoints.p1!)
+            );
+          }
           break;
         }
         case 'move':
@@ -282,6 +285,8 @@ export class EditablePath {
     this.segments = [];
     this.waypoints = [];
 
+    const isClosed = Point.isEqual(segments[0].start, segments.at(-1)!.end);
+
     let waypointsInSegment: EditableWaypoint[] = [];
 
     for (let i = 0; i < segments.length; i++) {
@@ -317,7 +322,7 @@ export class EditablePath {
 
       if (i < segments.length - 1 && !Point.isEqual(s.end, segments[i + 1].start)) {
         // TODO: We should only do this if the segments connect
-        waypointsInSegment[0].preSegment = this.segments.at(-1)!;
+        if (isClosed) waypointsInSegment[0].preSegment = this.segments.at(-1)!;
         this.waypoints.push(...waypointsInSegment);
 
         waypointsInSegment = [];
@@ -333,7 +338,7 @@ export class EditablePath {
 
     if (waypointsInSegment.length > 0) {
       // TODO: We should only do this if the segments connect
-      waypointsInSegment[0].preSegment = this.segments.at(-1)!;
+      if (isClosed) waypointsInSegment[0].preSegment = this.segments.at(-1)!;
       this.waypoints.push(...waypointsInSegment);
     }
   }
