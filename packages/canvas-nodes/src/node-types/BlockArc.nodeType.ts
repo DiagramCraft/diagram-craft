@@ -14,7 +14,7 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { Box } from '@diagram-craft/geometry/box';
 import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Anchor } from '@diagram-craft/model/types';
+import { Anchor } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
 

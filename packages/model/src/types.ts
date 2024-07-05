@@ -1,5 +1,6 @@
 import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
+import { Anchor } from './anchor';
 
 export interface AbstractElement {
   id: string;
@@ -14,18 +15,6 @@ export interface AbstractNode extends AbstractElement {
 
   anchors?: ReadonlyArray<Anchor>;
 }
-
-export type Anchor = {
-  id: string;
-  // TODO: Type is not used yet
-  type: 'center' | 'point' | 'edge' | 'custom';
-  start: Point;
-  // TODO: end is not yet used
-  end?: Point;
-  // TODO: directions is not yet used
-  directions?: ReadonlyArray<Range>;
-  clip?: boolean;
-};
 
 export type LabelNodeType =
   | 'parallel'

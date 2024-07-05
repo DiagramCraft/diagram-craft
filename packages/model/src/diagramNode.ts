@@ -1,4 +1,4 @@
-import { AbstractNode, Anchor, LabelNode } from './types';
+import { AbstractNode, LabelNode } from './types';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge, isNode } from './diagramElement';
@@ -16,6 +16,7 @@ import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
 import { applyTemplate } from './template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
+import { Anchor } from './anchor';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

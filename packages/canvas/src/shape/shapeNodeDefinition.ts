@@ -18,7 +18,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
-import { Anchor } from '@diagram-craft/model/types';
+import { Anchor } from '@diagram-craft/model/anchor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {

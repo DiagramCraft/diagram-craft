@@ -14,7 +14,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { addHighlight, getHighlights, removeHighlight } from '@diagram-craft/canvas/highlight';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
-import { Anchor } from '@diagram-craft/model/types';
+import { Anchor } from '@diagram-craft/model/anchor';
 import { EdgeEndpointMoveDrag } from '@diagram-craft/canvas/drag/edgeEndpointMoveDrag';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';

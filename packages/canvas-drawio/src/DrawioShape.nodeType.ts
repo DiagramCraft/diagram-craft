@@ -15,7 +15,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
 import { cloneAsWriteable } from '@diagram-craft/utils/types';
-import { Anchor } from '@diagram-craft/model/types';
+import { Anchor } from '@diagram-craft/model/anchor';
 import {
   assertHAlign,
   assertLineCap,

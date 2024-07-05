@@ -1,6 +1,31 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from './diagramNode';
-import { Anchor } from './types';
+
+export type Anchor = {
+  id: string;
+  type: 'center' | 'point' | 'edge' | 'custom';
+  start: Point;
+  // TODO: end is not yet used
+  end?: Point;
+
+  // TODO: directions is not yet used
+  /**
+   * If this anchor is directional, this is the list of directions it supports
+   */
+  directions?: ReadonlyArray<Range>;
+
+  // TODO: Not yet used
+  /**
+   * If true, this anchor can be used for creating new nodes quickly
+   */
+  isPrimary?: boolean;
+
+  /**
+   * If true, edges connected to this anchor will clipped at the boundary
+   * of the node
+   */
+  clip?: boolean;
+};
 
 export const getClosestAnchor = (coord: Point, node: DiagramNode): Anchor => {
   const anchors = node.anchors;

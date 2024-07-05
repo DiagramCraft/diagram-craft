@@ -10,7 +10,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Anchor } from '@diagram-craft/model/types';
+import { Anchor } from '@diagram-craft/model/anchor';
 
 declare global {
   interface NodeProps {

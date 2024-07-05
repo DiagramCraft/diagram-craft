@@ -7,7 +7,7 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
-import { Anchor } from './types';
+import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';

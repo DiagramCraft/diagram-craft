@@ -13,7 +13,7 @@ import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Anchor } from '@diagram-craft/model/types';
+import { Anchor } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
 

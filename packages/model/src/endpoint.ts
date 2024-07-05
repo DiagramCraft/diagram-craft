@@ -44,9 +44,7 @@ export class ConnectedEndpoint implements Endpoint {
   ) {}
 
   isMidpoint() {
-    const p = this.node!.getAnchor(this.anchor!)!.start;
-    if (!p) return false;
-    return p.x === 0.5 && p.y === 0.5;
+    return this.node!.getAnchor(this.anchor!)!.type === 'center';
   }
 
   get position() {
