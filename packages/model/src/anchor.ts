@@ -2,7 +2,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from './diagramNode';
 import { Anchor } from './types';
 
-export const getClosestAnchor = (coord: Point, node: DiagramNode): Anchor & { idx: number } => {
+export const getClosestAnchor = (coord: Point, node: DiagramNode): Anchor => {
   const anchors = node.anchors;
 
   let closestAnchor = 0;
@@ -17,7 +17,7 @@ export const getClosestAnchor = (coord: Point, node: DiagramNode): Anchor & { id
     }
   }
 
-  return { ...anchors[closestAnchor], idx: closestAnchor };
+  return anchors[closestAnchor];
 };
 
 export const getAnchorPosition = (node: DiagramNode, anchor: Anchor): Point => {

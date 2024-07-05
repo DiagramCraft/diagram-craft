@@ -44,7 +44,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
 
   private onDropSplit(edge: DiagramEdge, element: DiagramNode, uow: UnitOfWork) {
     // We will attach to the center point anchor
-    const anchor = 0;
+    const anchor = 'c';
 
     // TODO: This requires some work to support dropping on multi-segment edges
     const newEdge = new DiagramEdge(

@@ -16,7 +16,7 @@ export class AnchorHandleDrag extends AbstractDrag {
 
   constructor(
     private readonly node: DiagramNode,
-    private readonly anchorIndex: number,
+    private readonly anchorIndex: string,
     private readonly point: Point,
     private readonly applicationTriggers: ApplicationTriggers
   ) {

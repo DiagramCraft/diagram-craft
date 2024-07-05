@@ -44,7 +44,7 @@ export type SerializedFixedEndpoint = {
   node: Reference;
   position?: Point;
 };
-export type SerializedConnectedEndpoint = { anchor: number; node: Reference; position?: Point };
+export type SerializedConnectedEndpoint = { anchor: string; node: Reference; position?: Point };
 export type SerializedFreeEndpoint = { position: Point };
 
 export type SerializedEndpoint =

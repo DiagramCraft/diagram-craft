@@ -69,7 +69,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getAnchors(node: DiagramNode) {
     const newAnchors: Array<Anchor> = [];
-    newAnchors.push({ id: '0', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
+    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
 
     const paths = this.getBoundingPath(node);
 

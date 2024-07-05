@@ -88,7 +88,7 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
     const children: VNode[] = [];
 
-    node.anchors.forEach((a, idx) => {
+    node.anchors.forEach(a => {
       if (a.clip) return;
 
       const x = node.renderProps.geometry.flipH ? 1 - a.start.x : a.start.x;
@@ -106,7 +106,7 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
               },
               mousedown: e => {
                 DRAG_DROP_MANAGER.initiate(
-                  new AnchorHandleDrag(node, idx, EventHelper.point(e), props.applicationTriggers)
+                  new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.applicationTriggers)
                 );
                 this.clearTimeout();
                 this.setState(undefined, 'background');

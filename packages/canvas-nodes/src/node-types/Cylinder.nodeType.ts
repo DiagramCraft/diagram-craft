@@ -119,7 +119,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
       { id: '2', start: Point.of(1, 0.5), type: 'point' },
       { id: '3', start: Point.of(0.5, 1), type: 'point' },
       { id: '4', start: Point.of(0, 0.5), type: 'point' },
-      { id: '5', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
+      { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
     ];
   }
 

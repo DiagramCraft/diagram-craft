@@ -28,8 +28,7 @@ declare global {
 const EDGE_HIGHLIGHT = 'edge-connect';
 
 export class EdgeTool extends AbstractTool {
-  // @ts-ignore
-  private currentAnchor: (Anchor & { idx: number }) | undefined = undefined;
+  private currentAnchor: Anchor | undefined = undefined;
 
   constructor(
     protected readonly diagram: Diagram,
@@ -48,7 +47,7 @@ export class EdgeTool extends AbstractTool {
       newid(),
       this.currentAnchor
         ? new ConnectedEndpoint(
-            this.currentAnchor.idx,
+            this.currentAnchor.id,
             this.diagram.lookup(this.currentElement!) as DiagramNode
           )
         : new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
@@ -117,7 +116,7 @@ export class EdgeTool extends AbstractTool {
 
   onMouseMove(point: Point, _modifiers: Modifiers) {
     if (this.currentAnchor && this.currentElement) {
-      removeHighlight(this.diagram.lookup(this.currentElement), `anchor-${this.currentAnchor.idx}`);
+      removeHighlight(this.diagram.lookup(this.currentElement), `anchor-${this.currentAnchor.id}`);
     }
 
     this.currentAnchor = undefined;
@@ -134,7 +133,7 @@ export class EdgeTool extends AbstractTool {
       if (distance < 25) {
         this.currentAnchor = closestAnchor;
 
-        addHighlight(el, `anchor-${this.currentAnchor.idx}`);
+        addHighlight(el, `anchor-${this.currentAnchor.id}`);
       }
     }
   }

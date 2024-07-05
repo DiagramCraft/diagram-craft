@@ -34,7 +34,7 @@ export class DiagramNode
   readonly type = 'node';
 
   readonly id: string;
-  readonly edges: Map<number, DiagramEdge[]> = new Map<number, DiagramEdge[]>();
+  readonly edges: Map<string, DiagramEdge[]> = new Map<string, DiagramEdge[]>();
 
   #cache: Map<string, unknown> | undefined = undefined;
 
@@ -312,8 +312,8 @@ export class DiagramNode
     return this.#anchors ?? [];
   }
 
-  getAnchor(anchor: number) {
-    return this.anchors[anchor >= this.anchors.length ? 0 : anchor];
+  getAnchor(anchor: string) {
+    return this.anchors.find(a => a.id === anchor) ?? this.anchors[0];
   }
 
   /* Snapshot ************************************************************************************************ */
@@ -364,8 +364,8 @@ export class DiagramNode
     );
     this.edges.clear();
     for (const [k, v] of Object.entries(snapshot.edges ?? {})) {
-      this.edges.set(Number(k), [
-        ...(this.edges.get(Number(k)) ?? []),
+      this.edges.set(k, [
+        ...(this.edges.get(k) ?? []),
         ...v.map(e => this.diagram.edgeLookup.get(e.id)!)
       ]);
     }
@@ -584,15 +584,15 @@ export class DiagramNode
     uow.updateElement(this);
   }
 
-  _removeEdge(anchor: number, edge: DiagramEdge) {
+  _removeEdge(anchor: string, edge: DiagramEdge) {
     this.edges.set(anchor, this.edges.get(anchor)?.filter(e => e !== edge) ?? []);
   }
 
-  _addEdge(anchor: number, edge: DiagramEdge) {
+  _addEdge(anchor: string, edge: DiagramEdge) {
     this.edges.set(anchor, [...(this.edges.get(anchor) ?? []), edge]);
   }
 
-  _getAnchorPosition(anchor: number) {
+  _getAnchorPosition(anchor: string) {
     return this._getPositionInBounds(this.getAnchor(anchor).start);
   }
 

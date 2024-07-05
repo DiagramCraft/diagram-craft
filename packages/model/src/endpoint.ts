@@ -39,7 +39,7 @@ export const Endpoint = {
 
 export class ConnectedEndpoint implements Endpoint {
   constructor(
-    public readonly anchor: number,
+    public readonly anchor: string,
     public readonly node: DiagramNode
   ) {}
 

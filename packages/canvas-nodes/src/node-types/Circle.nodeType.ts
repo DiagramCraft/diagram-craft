@@ -20,7 +20,7 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
       { start: Point.of(1, 0.5), id: '2', type: 'point' },
       { start: Point.of(0.5, 1), id: '3', type: 'point' },
       { start: Point.of(0, 0.5), id: '4', type: 'point' },
-      { start: Point.of(0.5, 0.5), clip: true, id: '5', type: 'center' }
+      { start: Point.of(0.5, 0.5), clip: true, id: 'c', type: 'center' }
     ];
   }
 

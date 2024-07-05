@@ -232,7 +232,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     if (!shape) return super.getAnchors(def);
 
     const newAnchors: Array<Anchor> = [];
-    newAnchors.push({ id: '0', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
+    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
 
     const $constraints = shape.getElementsByTagName('constraint');
     for (let i = 0; i < $constraints.length; i++) {
