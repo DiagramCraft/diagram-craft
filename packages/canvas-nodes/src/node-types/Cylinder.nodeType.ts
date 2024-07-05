@@ -13,6 +13,7 @@ import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { Anchor } from '@diagram-craft/model/types';
 
 // NodeProps extension for custom props *****************************************
 
@@ -112,13 +113,13 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  getAnchors(_def: DiagramNode) {
+  getAnchors(_def: DiagramNode): Anchor[] {
     return [
-      { point: Point.of(0.5, 0) },
-      { point: Point.of(1, 0.5) },
-      { point: Point.of(0.5, 1) },
-      { point: Point.of(0, 0.5) },
-      { point: Point.of(0.5, 0.5), clip: true }
+      { id: '1', start: Point.of(0.5, 0), type: 'point' },
+      { id: '2', start: Point.of(1, 0.5), type: 'point' },
+      { id: '3', start: Point.of(0.5, 1), type: 'point' },
+      { id: '4', start: Point.of(0, 0.5), type: 'point' },
+      { id: '5', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
     ];
   }
 

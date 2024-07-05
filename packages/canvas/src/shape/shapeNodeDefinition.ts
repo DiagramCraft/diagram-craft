@@ -69,12 +69,14 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getAnchors(node: DiagramNode) {
     const newAnchors: Array<Anchor> = [];
-    newAnchors.push({ point: { x: 0.5, y: 0.5 }, clip: true });
+    newAnchors.push({ id: '0', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
 
     const paths = this.getBoundingPath(node);
 
-    for (const path of paths.all()) {
-      for (const p of path.segments) {
+    for (let i = 0; i < paths.all().length; i++) {
+      const path = paths.all()[i];
+      for (let j = 0; j < path.segments.length; j++) {
+        const p = path.segments[j];
         const { x, y } = p.point(0.5);
 
         // Note: This is to Prevent NaN issues
@@ -83,7 +85,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         const lx = round((x - node.bounds.x) / node.bounds.w);
         const ly = round((y - node.bounds.y) / node.bounds.h);
 
-        newAnchors.push({ point: { x: lx, y: ly }, clip: false });
+        newAnchors.push({ id: `${i}_${j}`, start: { x: lx, y: ly }, clip: false, type: 'point' });
       }
     }
 

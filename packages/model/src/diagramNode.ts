@@ -593,7 +593,7 @@ export class DiagramNode
   }
 
   _getAnchorPosition(anchor: number) {
-    return this._getPositionInBounds(this.getAnchor(anchor).point);
+    return this._getPositionInBounds(this.getAnchor(anchor).start);
   }
 
   _getPositionInBounds(p: Point) {

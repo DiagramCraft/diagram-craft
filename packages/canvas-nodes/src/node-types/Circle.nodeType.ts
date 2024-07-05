@@ -7,19 +7,20 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { Anchor } from '@diagram-craft/model/types';
 
 export class CircleNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('circle', 'Circle', CircleComponent);
   }
 
-  getAnchors(_def: DiagramNode) {
+  getAnchors(_def: DiagramNode): Anchor[] {
     return [
-      { point: Point.of(0.5, 0) },
-      { point: Point.of(1, 0.5) },
-      { point: Point.of(0.5, 1) },
-      { point: Point.of(0, 0.5) },
-      { point: Point.of(0.5, 0.5), clip: true }
+      { start: Point.of(0.5, 0), id: '1', type: 'point' },
+      { start: Point.of(1, 0.5), id: '2', type: 'point' },
+      { start: Point.of(0.5, 1), id: '3', type: 'point' },
+      { start: Point.of(0, 0.5), id: '4', type: 'point' },
+      { start: Point.of(0.5, 0.5), clip: true, id: '5', type: 'center' }
     ];
   }
 

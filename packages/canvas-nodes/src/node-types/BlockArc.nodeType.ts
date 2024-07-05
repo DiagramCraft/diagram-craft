@@ -14,6 +14,7 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { Box } from '@diagram-craft/geometry/box';
 import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { Anchor } from '@diagram-craft/model/types';
 
 // NodeProps extension for custom props *****************************************
 
@@ -112,12 +113,12 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     super('blockArc', 'BlockArc', BlockArcNodeDefinition.Shape);
   }
 
-  getAnchors(_def: DiagramNode) {
+  getAnchors(_def: DiagramNode): Anchor[] {
     return [
-      { point: Point.of(0.5, 0) },
-      { point: Point.of(1, 0.5) },
-      { point: Point.of(0.5, 1) },
-      { point: Point.of(0, 0.5) }
+      { start: Point.of(0.5, 0), id: '1', type: 'point' },
+      { start: Point.of(1, 0.5), id: '2', type: 'point' },
+      { start: Point.of(0.5, 1), id: '3', type: 'point' },
+      { start: Point.of(0, 0.5), id: '4', type: 'point' }
     ];
   }
 

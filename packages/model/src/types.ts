@@ -16,7 +16,11 @@ export interface AbstractNode extends AbstractElement {
 }
 
 export type Anchor = {
-  point: Point;
+  id: string;
+  type: 'center' | 'point' | 'edge' | 'custom';
+  start: Point;
+  end?: Point;
+  directions?: ReadonlyArray<Range>;
   clip?: boolean;
 };
 

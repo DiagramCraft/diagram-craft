@@ -240,8 +240,8 @@ export class BaseNodeComponent<
           ...props.element.anchors.map((anchor, idx) =>
             svg.circle({
               class: 'svg-node__anchor',
-              cx: props.element.bounds.x + anchor.point.x * props.element.bounds.w,
-              cy: props.element.bounds.y + anchor.point.y * props.element.bounds.h,
+              cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
+              cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
               r: '5',
               // TODO: Change this to be a class instead of a fixed color
               style: `pointer-events: none; fill: ${hasHighlight(props.element, `anchor-${idx}`) ? '#16a34a' : 'transparent'};`

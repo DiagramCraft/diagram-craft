@@ -22,7 +22,7 @@ export const getClosestAnchor = (coord: Point, node: DiagramNode): Anchor & { id
 
 export const getAnchorPosition = (node: DiagramNode, anchor: Anchor): Point => {
   return {
-    x: node.bounds.x + anchor.point.x * node.bounds.w,
-    y: node.bounds.y + anchor.point.y * node.bounds.h
+    x: node.bounds.x + anchor.start.x * node.bounds.w,
+    y: node.bounds.y + anchor.start.y * node.bounds.h
   };
 };
