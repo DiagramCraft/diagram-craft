@@ -598,10 +598,14 @@ export class DiagramNode
   }
 
   _getPositionInBounds(p: Point) {
-    return {
-      x: this.bounds.x + this.bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
-      y: this.bounds.y + this.bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
-    };
+    return Point.rotateAround(
+      {
+        x: this.bounds.x + this.bounds.w * (this.renderProps.geometry.flipH ? 1 - p.x : p.x),
+        y: this.bounds.y + this.bounds.h * (this.renderProps.geometry.flipV ? 1 - p.y : p.y)
+      },
+      this.bounds.r,
+      Box.center(this.bounds)
+    );
   }
 
   listEdges(): DiagramEdge[] {

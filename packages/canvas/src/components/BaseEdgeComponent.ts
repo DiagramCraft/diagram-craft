@@ -21,6 +21,7 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
+import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -231,6 +232,11 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       }
     }
 
+    const isDraggingThisEdge =
+      DRAG_DROP_MANAGER.isDragging() &&
+      DRAG_DROP_MANAGER.current() instanceof EdgeEndpointMoveDrag &&
+      (DRAG_DROP_MANAGER.current() as EdgeEndpointMoveDrag).edge.id === props.element.id;
+
     return svg.g(
       {
         id: `edge-${props.element.id}`,
@@ -241,7 +247,8 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
           mousedown: onMouseDown,
           dblclick: e => props.onDoubleClick?.(props.element.id, EventHelper.point(e)),
           contextmenu: onContextMenu
-        }
+        },
+        style: `pointer-events: ${isDraggingThisEdge ? 'none' : 'unset'}`
       },
       ...arrowMarkers,
       ...shapeBuilder.nodes,

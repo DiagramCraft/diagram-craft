@@ -559,7 +559,7 @@
 
     &[data-disabled] {
       color: var(--slate-8);
-      pointer-events: 'none';
+      pointer-events: none;
     }
     &[data-highlighted] {
       background-color: var(--secondary-bg);

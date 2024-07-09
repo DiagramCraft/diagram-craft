@@ -7,6 +7,7 @@ import { MoveDrag } from '../drag/moveDrag';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
+import { Transforms } from '../component/vdom-svg';
 
 type State = 'background' | 'node' | 'handle';
 
@@ -123,7 +124,13 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
       );
     });
 
-    return svg.g({}, ...children);
+    const transform = `${Transforms.rotate(node.bounds)} ${node.renderProps.geometry.flipH ? Transforms.flipH(node.bounds) : ''} ${node.renderProps.geometry.flipV ? Transforms.flipV(node.bounds) : ''}`;
+    return svg.g(
+      {
+        transform: transform.trim()
+      },
+      ...children
+    );
   }
 
   private setState(node: DiagramElement | undefined, state: State) {

@@ -25,7 +25,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
   constructor(
     private readonly diagram: Diagram,
-    private readonly edge: DiagramEdge,
+    public readonly edge: DiagramEdge,
     private readonly type: 'start' | 'end',
     private applicationTriggers: ApplicationTriggers
   ) {
@@ -39,6 +39,8 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   }
 
   onDragEnter(id: string): void {
+    if (id === this.edge.id) return;
+
     const type = this.type;
 
     // Make sure we cannot connect to ourselves
@@ -58,7 +60,9 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     addHighlight(el, EDGE_HIGHLIGHT);
   }
 
-  onDragLeave(): void {
+  onDragLeave(id?: string): void {
+    if (id === this.edge.id) return;
+
     if (this.hoverElement) {
       removeHighlight(this.diagram.lookup(this.hoverElement), EDGE_HIGHLIGHT);
     }

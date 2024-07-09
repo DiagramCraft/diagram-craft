@@ -32,7 +32,7 @@ export interface Drag extends EventEmitter<DragEvents> {
   onKeyDown?: (event: KeyboardEvent) => void;
   onKeyUp?: (event: KeyboardEvent) => void;
   onDragEnter?: (id: string) => void;
-  onDragLeave?: () => void;
+  onDragLeave?: (id?: string) => void;
 
   state: State;
 }

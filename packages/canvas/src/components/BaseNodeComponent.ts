@@ -236,7 +236,7 @@ export class BaseNodeComponent<
     if (isEdgeConnect) {
       children.push(
         svg.g(
-          { transform: Transforms.rotateBack(props.element.bounds) },
+          {},
           ...props.element.anchors.map((anchor, idx) =>
             svg.circle({
               class: 'svg-node__anchor',

@@ -1,5 +1,6 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from './diagramNode';
+import { Box } from '@diagram-craft/geometry/box';
 
 export type Anchor = {
   id: string;
@@ -84,8 +85,12 @@ export const getClosestAnchor = (coord: Point, node: DiagramNode): AnchorPoint |
 };
 
 export const getAnchorPosition = (node: DiagramNode, anchor: Anchor): Point => {
-  return {
-    x: node.bounds.x + anchor.start.x * node.bounds.w,
-    y: node.bounds.y + anchor.start.y * node.bounds.h
-  };
+  return Point.rotateAround(
+    {
+      x: node.bounds.x + anchor.start.x * node.bounds.w,
+      y: node.bounds.y + anchor.start.y * node.bounds.h
+    },
+    node.bounds.r,
+    Box.center(node.bounds)
+  );
 };

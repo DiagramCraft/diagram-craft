@@ -83,11 +83,16 @@ export class FixedEndpoint implements Endpoint {
   get position() {
     const bounds = this.node.bounds;
     const ref = this.anchor ? this.node!._getPositionInBounds(this.anchor) : bounds;
-    const point =
-      this.offsetType === 'absolute'
-        ? Point.add(ref, this.offset)
-        : Point.add(ref, { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h });
-    return Point.rotateAround(point, bounds.r, Box.center(bounds));
+
+    if (this.offsetType === 'absolute') {
+      return Point.add(ref, this.offset);
+    } else {
+      return Point.rotateAround(
+        Point.add(ref, { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h }),
+        bounds.r,
+        Box.center(bounds)
+      );
+    }
   }
 
   serialize(): SerializedFixedEndpoint {

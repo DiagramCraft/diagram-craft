@@ -39,8 +39,8 @@ export class MoveTool extends AbstractTool {
     this.drag.current()?.onDragEnter?.(id);
   }
 
-  onMouseOut(_id: string, _point: Point) {
-    this.drag.current()?.onDragLeave?.();
+  onMouseOut(id: string, _point: Point) {
+    this.drag.current()?.onDragLeave?.(id);
   }
 
   onMouseDown(id: string, point: Point, modifiers: Modifiers) {

@@ -19,7 +19,8 @@ import { AttachmentManager } from '../attachment';
 
 export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint
-): endpoint is SerializedConnectedEndpoint => 'node' in endpoint && 'anchor' in endpoint;
+): endpoint is SerializedConnectedEndpoint =>
+  'node' in endpoint && 'anchor' in endpoint && !('offset' in endpoint);
 
 export const isSerializedEndpointFixed = (
   endpoint: SerializedEndpoint
@@ -125,7 +126,9 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
           ? {
               offset: (edge.end as FixedEndpoint).offset,
               node: { id: (edge.end as FixedEndpoint).node.id },
-              position: edge.end.position
+              position: edge.end.position,
+              offsetType: (edge.end as FixedEndpoint).offsetType,
+              type: (edge.end as FixedEndpoint).type
             }
           : {
               position: edge.end.position
