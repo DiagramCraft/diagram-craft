@@ -1,7 +1,6 @@
 import { SerializedEndpoint, SerializedFixedEndpoint } from './serialization/types';
 import { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
-import { Diagram } from './diagram';
 import { Box } from '@diagram-craft/geometry/box';
 
 export const isConnectedOrFixed = (
@@ -10,26 +9,31 @@ export const isConnectedOrFixed = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (endpoint as any).node !== undefined;
 
-export const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (endpoint as any).anchor !== undefined && (endpoint as any).isMidpoint;
-
 export interface Endpoint {
   readonly position: Point;
   serialize(): SerializedEndpoint;
 }
 
-// TODO: Seems to be partially duplicated in deserizalieEndpoint
 export const Endpoint = {
-  deserialize: (endpoint: SerializedEndpoint, diagram: Diagram): Endpoint => {
+  deserialize: (
+    endpoint: SerializedEndpoint,
+    nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>
+  ): Endpoint => {
     if ('node' in endpoint) {
       if ('anchor' in endpoint && !('offset' in endpoint)) {
-        return new ConnectedEndpoint(endpoint.anchor, diagram.nodeLookup.get(endpoint.node.id)!);
+        return new ConnectedEndpoint(
+          endpoint.anchor,
+          nodeLookup instanceof Map
+            ? nodeLookup.get(endpoint.node.id)!
+            : nodeLookup[endpoint.node.id]!
+        );
       } else {
         return new FixedEndpoint(
           endpoint.anchor,
           endpoint.offset,
-          diagram.nodeLookup.get(endpoint.node.id)!,
+          nodeLookup instanceof Map
+            ? nodeLookup.get(endpoint.node.id)!
+            : nodeLookup[endpoint.node.id]!,
           endpoint.offsetType ?? 'absolute',
           endpoint.type ?? 'anchor'
         );
@@ -46,7 +50,6 @@ export class ConnectedEndpoint implements Endpoint {
     public readonly node: DiagramNode
   ) {}
 
-  // TODO: Should be able to remove this
   isMidpoint() {
     return this.node!.getAnchor(this.anchor!)!.type === 'center';
   }
@@ -73,7 +76,6 @@ export class FixedEndpoint implements Endpoint {
     public readonly type: 'boundary' | 'anchor'
   ) {}
 
-  // TODO: Can we remove this
   isMidpoint() {
     const p = this.anchor;
     if (!p) return false;

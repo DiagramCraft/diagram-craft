@@ -3,7 +3,7 @@ import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { Layer } from '../diagramLayer';
-import { isSerializedEndpointConnected, isSerializedEndpointFixed } from './serialize';
+import { isSerializedEndpointConnected } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
 import { DiagramElement } from '../diagramElement';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -18,7 +18,7 @@ import {
   SerializedLayer,
   SerializedNode
 } from './types';
-import { ConnectedEndpoint, FixedEndpoint, FreeEndpoint } from '../endpoint';
+import { Endpoint } from '../endpoint';
 import { Waypoint } from '../types';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
@@ -46,21 +46,9 @@ const unfoldGroup = (node: SerializedNode) => {
 
 const deserializeEndpoint = (
   e: SerializedConnectedEndpoint | SerializedFixedEndpoint | SerializedFreeEndpoint,
-  nodeLookup: Record<string, DiagramNode>
+  nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>
 ) => {
-  if (isSerializedEndpointConnected(e)) {
-    return new ConnectedEndpoint(e.anchor, nodeLookup[e.node.id]);
-  } else if (isSerializedEndpointFixed(e)) {
-    return new FixedEndpoint(
-      e.anchor,
-      e.offset,
-      nodeLookup[e.node.id],
-      e.offsetType ?? 'absolute',
-      e.type ?? 'anchor'
-    );
-  } else {
-    return new FreeEndpoint(e.position);
-  }
+  return Endpoint.deserialize(e, nodeLookup);
 };
 
 export const deserializeDiagramElements = (

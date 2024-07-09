@@ -13,7 +13,6 @@ import {
   SerializedLayer,
   SerializedNode
 } from './types';
-import { ConnectedEndpoint, FixedEndpoint } from '../endpoint';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { AttachmentManager } from '../attachment';
 
@@ -101,38 +100,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
     return {
       id: edge.id,
       type: 'edge',
-      start: isSerializedEndpointConnected(edge.start)
-        ? {
-            anchor: (edge.start as ConnectedEndpoint).anchor,
-            node: { id: (edge.start as ConnectedEndpoint).node.id },
-            position: edge.start.position
-          }
-        : isSerializedEndpointFixed(edge.start)
-          ? {
-              offset: (edge.start as FixedEndpoint).offset,
-              node: { id: (edge.start as FixedEndpoint).node.id },
-              position: edge.start.position
-            }
-          : {
-              position: edge.start.position
-            },
-      end: isSerializedEndpointConnected(edge.end)
-        ? {
-            anchor: (edge.end as ConnectedEndpoint).anchor,
-            node: { id: (edge.end as ConnectedEndpoint).node.id },
-            position: edge.end.position
-          }
-        : isSerializedEndpointFixed(edge.end)
-          ? {
-              offset: (edge.end as FixedEndpoint).offset,
-              node: { id: (edge.end as FixedEndpoint).node.id },
-              position: edge.end.position,
-              offsetType: (edge.end as FixedEndpoint).offsetType,
-              type: (edge.end as FixedEndpoint).type
-            }
-          : {
-              position: edge.end.position
-            },
+      start: edge.start.serialize(),
+      end: edge.end.serialize(),
       labelNodes: edge.labelNodes?.map(e => ({
         id: e.id,
         type: e.type,

@@ -475,8 +475,8 @@ export class DiagramEdge
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props = snapshot.props as NodeProps;
     this.#highlights = [];
-    this.#start = Endpoint.deserialize(snapshot.start, this.diagram);
-    this.#end = Endpoint.deserialize(snapshot.end, this.diagram);
+    this.#start = Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup);
+    this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);
     this.#waypoints = (snapshot.waypoints ?? []) as Array<Waypoint>;
 
     const oldLabelNodes = this.#labelNodes ?? [];
