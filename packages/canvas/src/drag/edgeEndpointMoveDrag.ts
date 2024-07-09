@@ -7,6 +7,7 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import {
   ConnectedEndpoint,
   Endpoint,
+  FixedEndpoint,
   FreeEndpoint,
   isConnectedOrFixed
 } from '@diagram-craft/model/endpoint';
@@ -97,7 +98,34 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
     const a = getClosestAnchor(coord, this.diagram.nodeLookup.get(this.hoverElement)!);
-    this.setEndpoint(new ConnectedEndpoint(a.id, this.diagram.nodeLookup.get(this.hoverElement)!));
+    if (!a) return;
+
+    if (a.anchor) {
+      this.setEndpoint(
+        new ConnectedEndpoint(a.anchor.id, this.diagram.nodeLookup.get(this.hoverElement)!)
+      );
+    } else {
+      const bounds = this.diagram.nodeLookup.get(this.hoverElement)!.bounds;
+      const relativePoint = Point.subtract(a.point, bounds);
+      const offset = Point.rotateAround(
+        {
+          x: relativePoint.x / bounds.w,
+          y: relativePoint.y / bounds.h
+        },
+        -bounds.r,
+        { x: 0.5, y: 0.5 }
+      );
+
+      this.setEndpoint(
+        new FixedEndpoint(
+          undefined,
+          offset,
+          this.diagram.nodeLookup.get(this.hoverElement)!,
+          'relative',
+          'boundary'
+        )!
+      );
+    }
   }
 
   private setEndpoint(endpoint: Endpoint) {

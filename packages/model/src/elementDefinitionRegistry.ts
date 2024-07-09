@@ -19,7 +19,7 @@ import { deserializeDiagramElements } from './serialization/deserialize';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 
-export type NodeCapability = 'children' | 'fill' | 'select';
+export type NodeCapability = 'children' | 'fill' | 'select' | 'connect-to-boundary';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 // TODO: Should we change these callbacks to have a UOW parameter?

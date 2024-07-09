@@ -51,9 +51,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     }
 
     this.capabilities = {
-      fill: true,
-      select: true,
-      children: false
+      'fill': true,
+      'select': true,
+      'children': false,
+      'connect-to-boundary': false
     };
   }
 

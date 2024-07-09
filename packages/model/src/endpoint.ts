@@ -1,4 +1,4 @@
-import { SerializedEndpoint } from './serialization/types';
+import { SerializedEndpoint, SerializedFixedEndpoint } from './serialization/types';
 import { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from './diagram';
@@ -19,6 +19,7 @@ export interface Endpoint {
   serialize(): SerializedEndpoint;
 }
 
+// TODO: Seems to be partially duplicated in deserizalieEndpoint
 export const Endpoint = {
   deserialize: (endpoint: SerializedEndpoint, diagram: Diagram): Endpoint => {
     if ('node' in endpoint) {
@@ -28,7 +29,9 @@ export const Endpoint = {
         return new FixedEndpoint(
           endpoint.anchor,
           endpoint.offset,
-          diagram.nodeLookup.get(endpoint.node.id)!
+          diagram.nodeLookup.get(endpoint.node.id)!,
+          endpoint.offsetType ?? 'absolute',
+          endpoint.type ?? 'anchor'
         );
       }
     } else {
@@ -43,6 +46,7 @@ export class ConnectedEndpoint implements Endpoint {
     public readonly node: DiagramNode
   ) {}
 
+  // TODO: Should be able to remove this
   isMidpoint() {
     return this.node!.getAnchor(this.anchor!)!.type === 'center';
   }
@@ -62,27 +66,38 @@ export class ConnectedEndpoint implements Endpoint {
 
 export class FixedEndpoint implements Endpoint {
   constructor(
-    public readonly anchor: Point,
+    public readonly anchor: Point | undefined,
     public readonly offset: Point,
-    public readonly node: DiagramNode
+    public readonly node: DiagramNode,
+    public readonly offsetType: 'absolute' | 'relative',
+    public readonly type: 'boundary' | 'anchor'
   ) {}
 
+  // TODO: Can we remove this
   isMidpoint() {
     const p = this.anchor;
+    if (!p) return false;
     return p.x === 0.5 && p.y === 0.5 && this.offset.x === 0 && this.offset.y === 0;
   }
 
   get position() {
-    const point = Point.add(this.node!._getPositionInBounds(this.anchor!), this.offset);
-    return Point.rotateAround(point, this.node.bounds.r, Box.center(this.node.bounds));
+    const bounds = this.node.bounds;
+    const ref = this.anchor ? this.node!._getPositionInBounds(this.anchor) : bounds;
+    const point =
+      this.offsetType === 'absolute'
+        ? Point.add(ref, this.offset)
+        : Point.add(ref, { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h });
+    return Point.rotateAround(point, bounds.r, Box.center(bounds));
   }
 
-  serialize(): SerializedEndpoint {
+  serialize(): SerializedFixedEndpoint {
     return {
       node: { id: this.node.id },
       position: this.position,
       anchor: this.anchor,
-      offset: this.offset
+      offset: this.offset,
+      offsetType: this.offsetType,
+      type: this.type
     };
   }
 }

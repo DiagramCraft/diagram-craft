@@ -127,11 +127,16 @@ export class EdgeTool extends AbstractTool {
       const dp = this.diagram.viewBox.toDiagramPoint(point);
 
       const closestAnchor = getClosestAnchor(dp, el);
-      const anchorPos = getAnchorPosition(el, closestAnchor);
+      if (!closestAnchor) return;
+
+      // TODO: Support boundary endpoints
+      if (!closestAnchor.anchor) return;
+
+      const anchorPos = getAnchorPosition(el, closestAnchor.anchor);
 
       const distance = Point.distance(anchorPos, dp);
       if (distance < 25) {
-        this.currentAnchor = closestAnchor;
+        this.currentAnchor = closestAnchor.anchor;
 
         addHighlight(el, `anchor-${this.currentAnchor.id}`);
       }

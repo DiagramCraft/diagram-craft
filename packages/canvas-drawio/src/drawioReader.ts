@@ -574,7 +574,10 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
       const dx = parseNum(style.exitDx, 0);
       const dy = parseNum(style.exitDy, 0);
 
-      edge.setStart(new FixedEndpoint({ x: x, y: y }, { x: dx, y: dy }, sourceNode), uow);
+      edge.setStart(
+        new FixedEndpoint({ x: x, y: y }, { x: dx, y: dy }, sourceNode, 'absolute', 'anchor'),
+        uow
+      );
     }
   }
 
@@ -590,7 +593,10 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
       const dx = parseNum(style.entryDx, 0);
       const dy = parseNum(style.entryDy, 0);
 
-      edge.setEnd(new FixedEndpoint({ x, y }, { x: dx, y: dy }, targetNode), uow);
+      edge.setEnd(
+        new FixedEndpoint({ x, y }, { x: dx, y: dy }, targetNode, 'absolute', 'anchor'),
+        uow
+      );
     }
   }
 };

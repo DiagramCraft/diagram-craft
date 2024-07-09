@@ -39,10 +39,12 @@ export interface SerializedNode extends AbstractNode {
 }
 
 export type SerializedFixedEndpoint = {
-  anchor: Point;
   offset: Point;
   node: Reference;
+  anchor?: Point;
   position?: Point;
+  offsetType?: 'absolute' | 'relative';
+  type?: 'boundary' | 'anchor';
 };
 export type SerializedConnectedEndpoint = { anchor: string; node: Reference; position?: Point };
 export type SerializedFreeEndpoint = { position: Point };

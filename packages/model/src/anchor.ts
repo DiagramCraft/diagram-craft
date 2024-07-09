@@ -32,10 +32,19 @@ export type Anchor = {
   clip?: boolean;
 };
 
-export const getClosestAnchor = (coord: Point, node: DiagramNode): Anchor => {
+// This represents a endpoint connection. In most cases it's an anchor, but in
+// case you are attaching to the boundary, it's a point
+//
+// Also, for edge anchors, the point indicates the exact point on the edge
+type AnchorPoint = {
+  anchor?: Anchor;
+  point: Point;
+};
+
+export const getClosestAnchor = (coord: Point, node: DiagramNode): AnchorPoint | undefined => {
   const anchors = node.anchors;
 
-  let closestAnchor = 0;
+  let closestAnchor = -1;
   let closestDistance = Number.MAX_SAFE_INTEGER;
   for (let i = 0; i < anchors.length; i++) {
     const a = anchors[i];
@@ -47,7 +56,31 @@ export const getClosestAnchor = (coord: Point, node: DiagramNode): Anchor => {
     }
   }
 
-  return anchors[closestAnchor];
+  // TODO: This is only used in one of the callers of getClosestAnchor
+  //.      ... thus we should refactor this
+  if (node.getDefinition().supports('connect-to-boundary')) {
+    const boundingPath = node.getDefinition().getBoundingPath(node);
+    let closestPoint: Point | undefined = undefined;
+    let closestPointDistance = Number.MAX_SAFE_INTEGER;
+    for (const path of boundingPath.all()) {
+      const pp = path.projectPoint(coord).point;
+      const d = Point.squareDistance(coord, pp);
+      if (d < closestPointDistance) {
+        closestPoint = pp;
+        closestPointDistance = d;
+      }
+    }
+
+    if (closestPoint && closestPointDistance < closestDistance - 25) {
+      return {
+        point: closestPoint
+      };
+    }
+  }
+
+  if (closestAnchor === -1) return undefined;
+
+  return { anchor: anchors[closestAnchor], point: getAnchorPosition(node, anchors[closestAnchor]) };
 };
 
 export const getAnchorPosition = (node: DiagramNode, anchor: Anchor): Point => {
