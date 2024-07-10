@@ -42,7 +42,11 @@ type AnchorPoint = {
   point: Point;
 };
 
-export const getClosestAnchor = (coord: Point, node: DiagramNode): AnchorPoint | undefined => {
+export const getClosestAnchor = (
+  coord: Point,
+  node: DiagramNode,
+  includeBoundary: boolean
+): AnchorPoint | undefined => {
   const anchors = node.anchors;
 
   let closestAnchor = -1;
@@ -57,9 +61,7 @@ export const getClosestAnchor = (coord: Point, node: DiagramNode): AnchorPoint |
     }
   }
 
-  // TODO: This is only used in one of the callers of getClosestAnchor
-  //.      ... thus we should refactor this
-  if (node.getDefinition().supports('connect-to-boundary')) {
+  if (includeBoundary && node.getDefinition().supports('connect-to-boundary')) {
     const boundingPath = node.getDefinition().getBoundingPath(node);
     let closestPoint: Point | undefined = undefined;
     let closestPointDistance = Number.MAX_SAFE_INTEGER;

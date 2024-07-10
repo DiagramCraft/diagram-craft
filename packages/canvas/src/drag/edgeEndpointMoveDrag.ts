@@ -101,7 +101,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   private attachToClosestAnchor(coord: Point) {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
-    const a = getClosestAnchor(coord, this.diagram.nodeLookup.get(this.hoverElement)!);
+    const a = getClosestAnchor(coord, this.diagram.nodeLookup.get(this.hoverElement)!, true);
     if (!a) return;
 
     if (a.anchor) {

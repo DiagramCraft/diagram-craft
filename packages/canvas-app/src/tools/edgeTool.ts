@@ -126,7 +126,7 @@ export class EdgeTool extends AbstractTool {
     if (isNode(el)) {
       const dp = this.diagram.viewBox.toDiagramPoint(point);
 
-      const closestAnchor = getClosestAnchor(dp, el);
+      const closestAnchor = getClosestAnchor(dp, el, false);
       if (!closestAnchor) return;
 
       // TODO: Support boundary endpoints
