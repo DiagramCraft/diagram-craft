@@ -6,7 +6,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { useCallback } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
@@ -36,7 +36,7 @@ export const NodeTypePopup = (props: Props) => {
       const edge = diagram.edgeLookup.get(props.edgeId);
       assert.present(edge);
 
-      edge.setEnd(new ConnectedEndpoint('c', node), uow);
+      edge.setEnd(new AnchorEndpoint(node, 'c'), uow);
 
       const snapshots = uow.commit();
 

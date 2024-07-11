@@ -2,6 +2,7 @@ import { AbstractEdge, AbstractNode } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import { EdgePropsForEditing } from '../diagramEdge';
 import { NodePropsForEditing } from '../diagramNode';
+import { OffsetType } from '../endpoint';
 
 interface Reference {
   id: string;
@@ -38,20 +39,25 @@ export interface SerializedNode extends AbstractNode {
   props: NodePropsForEditing;
 }
 
-export type SerializedFixedEndpoint = {
-  offset: Point;
+export type SerializedPointInNodeEndpoint = {
+  ref?: Point;
   node: Reference;
-  anchor?: Point;
   position?: Point;
-  offsetType?: 'absolute' | 'relative';
-  type?: 'boundary' | 'anchor';
+  offset: Point;
+  offsetType?: OffsetType;
 };
-export type SerializedConnectedEndpoint = { anchor: string; node: Reference; position?: Point };
+export type SerializedAnchorEndpoint = {
+  anchor: string;
+  node: Reference;
+  position?: Point;
+  offset: Point;
+  offsetType?: OffsetType;
+};
 export type SerializedFreeEndpoint = { position: Point };
 
 export type SerializedEndpoint =
-  | SerializedConnectedEndpoint
-  | SerializedFixedEndpoint
+  | SerializedAnchorEndpoint
+  | SerializedPointInNodeEndpoint
   | SerializedFreeEndpoint;
 
 export interface SerializedEdge extends AbstractEdge {

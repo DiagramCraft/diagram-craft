@@ -13,7 +13,7 @@ import {
 import { Line } from '@diagram-craft/geometry/line';
 import { unique } from '@diagram-craft/utils/array';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { isConnectedOrFixed } from './endpoint';
+import { ConnectedEndpoint } from './endpoint';
 import { Box } from '@diagram-craft/geometry/box';
 
 type Result = {
@@ -123,11 +123,15 @@ const buildOrthogonalEdgePath = (
   let sm = edge.start.position;
   let em = edge.end.position;
 
-  if (isConnectedOrFixed(edge.start) && edge.start.isMidpoint() && edge.waypoints.length > 0) {
+  if (
+    edge.start instanceof ConnectedEndpoint &&
+    edge.start.isMidpoint() &&
+    edge.waypoints.length > 0
+  ) {
     sm = readjustConnectionPoint(sm, edge.waypoints[0].point, edge.start.node.bounds);
   }
 
-  if (isConnectedOrFixed(edge.end) && edge.end.isMidpoint() && edge.waypoints.length > 0) {
+  if (edge.end instanceof ConnectedEndpoint && edge.end.isMidpoint() && edge.waypoints.length > 0) {
     em = readjustConnectionPoint(em, edge.waypoints.at(-1)!.point, edge.end.node.bounds);
   }
 

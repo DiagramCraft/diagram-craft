@@ -3,12 +3,12 @@ import { DiagramDocument } from '../diagramDocument';
 import { Layer } from '../diagramLayer';
 import { DiagramElement, isEdge, isNode } from '../diagramElement';
 import {
-  SerializedConnectedEndpoint,
+  SerializedAnchorEndpoint,
   SerializedDiagram,
   SerializedDiagramDocument,
   SerializedElement,
   SerializedEndpoint,
-  SerializedFixedEndpoint,
+  SerializedPointInNodeEndpoint,
   SerializedFreeEndpoint,
   SerializedLayer,
   SerializedNode
@@ -16,19 +16,17 @@ import {
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { AttachmentManager } from '../attachment';
 
+export const isSerializedEndpointAnchor = (
+  endpoint: SerializedEndpoint
+): endpoint is SerializedAnchorEndpoint => 'node' in endpoint && 'anchor' in endpoint;
+
 export const isSerializedEndpointConnected = (
   endpoint: SerializedEndpoint
-): endpoint is SerializedConnectedEndpoint =>
-  'node' in endpoint && 'anchor' in endpoint && !('offset' in endpoint);
-
-export const isSerializedEndpointFixed = (
-  endpoint: SerializedEndpoint
-): endpoint is SerializedFixedEndpoint => 'offset' in endpoint;
+): endpoint is SerializedPointInNodeEndpoint => 'node' in endpoint && !('anchor' in endpoint);
 
 export const isSerializedEndpointFree = (
   endpoint: SerializedEndpoint
-): endpoint is SerializedFreeEndpoint =>
-  !isSerializedEndpointFixed(endpoint) && !isSerializedEndpointConnected(endpoint);
+): endpoint is SerializedFreeEndpoint => !('node' in endpoint);
 
 export const serializeDiagramDocument = async (
   document: DiagramDocument

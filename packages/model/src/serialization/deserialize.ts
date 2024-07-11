@@ -3,17 +3,17 @@ import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
 import { Layer } from '../diagramLayer';
-import { isSerializedEndpointConnected } from './serialize';
+import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
 import { DiagramElement } from '../diagramElement';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import {
-  SerializedConnectedEndpoint,
+  SerializedAnchorEndpoint,
   SerializedDiagram,
   SerializedDiagramDocument,
   SerializedEdge,
   SerializedElement,
-  SerializedFixedEndpoint,
+  SerializedPointInNodeEndpoint,
   SerializedFreeEndpoint,
   SerializedLayer,
   SerializedNode
@@ -45,7 +45,7 @@ const unfoldGroup = (node: SerializedNode) => {
 };
 
 const deserializeEndpoint = (
-  e: SerializedConnectedEndpoint | SerializedFixedEndpoint | SerializedFreeEndpoint,
+  e: SerializedAnchorEndpoint | SerializedPointInNodeEndpoint | SerializedFreeEndpoint,
   nodeLookup: Record<string, DiagramNode> | Map<string, DiagramNode>
 ) => {
   return Endpoint.deserialize(e, nodeLookup);
@@ -115,14 +115,20 @@ export const deserializeDiagramElements = (
       layer
     );
 
-    if (isSerializedEndpointConnected(start)) {
+    if (isSerializedEndpointAnchor(start)) {
       const startNode = nodeLookup[start.node.id];
       startNode.edges.set(start.anchor, [...(startNode.edges.get(start.anchor) ?? []), edge]);
+    } else if (isSerializedEndpointConnected(start)) {
+      const startNode = nodeLookup[start.node.id];
+      startNode.edges.set(undefined, [...(startNode.edges.get('connected') ?? []), edge]);
     }
 
-    if (isSerializedEndpointConnected(end)) {
+    if (isSerializedEndpointAnchor(end)) {
       const endNode = nodeLookup[end.node.id];
       endNode.edges.set(end.anchor, [...(endNode.edges.get(end.anchor) ?? []), edge]);
+    } else if (isSerializedEndpointConnected(end)) {
+      const endNode = nodeLookup[end.node.id];
+      endNode.edges.set(undefined, [...(endNode.edges.get('connected') ?? []), edge]);
     }
 
     edgeLookup[e.id] = edge;

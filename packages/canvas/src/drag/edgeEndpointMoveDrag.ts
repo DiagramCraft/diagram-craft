@@ -5,11 +5,11 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import {
-  ConnectedEndpoint,
+  AnchorEndpoint,
   Endpoint,
-  FixedEndpoint,
+  PointInNodeEndpoint,
   FreeEndpoint,
-  isConnectedOrFixed
+  ConnectedEndpoint
 } from '@diagram-craft/model/endpoint';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -44,9 +44,17 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     const type = this.type;
 
     // Make sure we cannot connect to ourselves
-    if (type === 'start' && isConnectedOrFixed(this.edge.end) && this.edge.end.node.id === id)
+    if (
+      type === 'start' &&
+      this.edge.end instanceof ConnectedEndpoint &&
+      this.edge.end.node.id === id
+    )
       return;
-    if (type === 'end' && isConnectedOrFixed(this.edge.start) && this.edge.start.node.id === id)
+    if (
+      type === 'end' &&
+      this.edge.start instanceof ConnectedEndpoint &&
+      this.edge.start.node.id === id
+    )
       return;
 
     this.hoverElement = id;
@@ -108,7 +116,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     if (a.anchor) {
       if (a.anchor.type !== 'edge') {
         this.setEndpoint(
-          new ConnectedEndpoint(a.anchor.id, this.diagram.nodeLookup.get(this.hoverElement)!)
+          new AnchorEndpoint(this.diagram.nodeLookup.get(this.hoverElement)!, a.anchor.id)
         );
       } else {
         const node = this.diagram.nodeLookup.get(this.hoverElement)!;
@@ -129,12 +137,11 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
         );
 
         this.setEndpoint(
-          new FixedEndpoint(
-            a.anchor.start,
-            offset,
+          new AnchorEndpoint(
             this.diagram.nodeLookup.get(this.hoverElement)!,
-            'relative',
-            'boundary'
+            a.anchor.id,
+            offset,
+            'relative'
           )!
         );
       }
@@ -151,12 +158,11 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
       );
 
       this.setEndpoint(
-        new FixedEndpoint(
+        new PointInNodeEndpoint(
+          this.diagram.nodeLookup.get(this.hoverElement)!,
           undefined,
           offset,
-          this.diagram.nodeLookup.get(this.hoverElement)!,
-          'relative',
-          'boundary'
+          'relative'
         )!
       );
     }

@@ -8,7 +8,7 @@ import {
 } from '@diagram-craft/canvas/dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { addHighlight, getHighlights, removeHighlight } from '@diagram-craft/canvas/highlight';
@@ -46,9 +46,9 @@ export class EdgeTool extends AbstractTool {
     const nd = new DiagramEdge(
       newid(),
       this.currentAnchor
-        ? new ConnectedEndpoint(
-            this.currentAnchor.id,
-            this.diagram.lookup(this.currentElement!) as DiagramNode
+        ? new AnchorEndpoint(
+            this.diagram.lookup(this.currentElement!) as DiagramNode,
+            this.currentAnchor.id
           )
         : new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
       new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),

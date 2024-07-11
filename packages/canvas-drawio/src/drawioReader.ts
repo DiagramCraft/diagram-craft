@@ -8,7 +8,7 @@ import { parseNum, xNum } from './utils';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { FixedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { PointInNodeEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
@@ -575,7 +575,7 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
       const dy = parseNum(style.exitDy, 0);
 
       edge.setStart(
-        new FixedEndpoint({ x: x, y: y }, { x: dx, y: dy }, sourceNode, 'absolute', 'anchor'),
+        new PointInNodeEndpoint(sourceNode, { x: x, y: y }, { x: dx, y: dy }, 'absolute'),
         uow
       );
     }
@@ -593,10 +593,7 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
       const dx = parseNum(style.entryDx, 0);
       const dy = parseNum(style.entryDy, 0);
 
-      edge.setEnd(
-        new FixedEndpoint({ x, y }, { x: dx, y: dy }, targetNode, 'absolute', 'anchor'),
-        uow
-      );
+      edge.setEnd(new PointInNodeEndpoint(targetNode, { x, y }, { x: dx, y: dy }, 'absolute'), uow);
     }
   }
 };

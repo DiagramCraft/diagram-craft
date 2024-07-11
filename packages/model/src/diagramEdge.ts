@@ -10,13 +10,7 @@ import { DiagramElement, isEdge } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
-import {
-  ConnectedEndpoint,
-  Endpoint,
-  FixedEndpoint,
-  FreeEndpoint,
-  isConnectedOrFixed
-} from './endpoint';
+import { AnchorEndpoint, ConnectedEndpoint, Endpoint, FreeEndpoint } from './endpoint';
 import { edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
@@ -32,6 +26,9 @@ import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
+
+const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
+  endpoint instanceof ConnectedEndpoint;
 
 export type ResolvedLabelNode = LabelNode & {
   node: DiagramNode;
@@ -93,8 +90,10 @@ export class DiagramEdge
     this.#diagram = diagram;
     this.#layer = layer;
 
-    if (isConnectedOrFixed(start)) start.node._addEdge(start.anchor, this);
-    if (isConnectedOrFixed(end)) end.node._addEdge(end.anchor, this);
+    if (start instanceof ConnectedEndpoint)
+      start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, this);
+    if (end instanceof ConnectedEndpoint)
+      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
 
     this.#props.style ??= 'default-edge';
   }
@@ -206,13 +205,13 @@ export class DiagramEdge
     }
 
     // ... otherwise we form the name based on connected nodes
-    if (isConnectedOrFixed(this.start) || isConnectedOrFixed(this.end)) {
+    if (isConnected(this.start) || isConnected(this.end)) {
       let s = '';
-      if (isConnectedOrFixed(this.start)) {
+      if (isConnected(this.start)) {
         s = this.start.node.name;
       }
       s += ' - ';
-      if (isConnectedOrFixed(this.end)) {
+      if (isConnected(this.end)) {
         s += this.end.node.name;
       }
       return s;
@@ -259,14 +258,14 @@ export class DiagramEdge
 
     const delta = Point.subtract(b, this.bounds);
 
-    if (!isConnectedOrFixed(this.start)) {
+    if (!isConnected(this.start)) {
       this.#start = new FreeEndpoint({
         x: this.#start.position.x + delta.x,
         y: this.#start.position.y + delta.y
       });
       uow.updateElement(this);
     }
-    if (!isConnectedOrFixed(this.end)) {
+    if (!isConnected(this.end)) {
       this.#end = new FreeEndpoint({
         x: this.#end.position.x + delta.x,
         y: this.#end.position.y + delta.y
@@ -280,17 +279,20 @@ export class DiagramEdge
   setStart(start: Endpoint, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    if (isConnectedOrFixed(this.#start)) {
+    if (isConnected(this.#start)) {
       uow.snapshot(this.#start.node);
 
-      this.#start.node._removeEdge(this.#start.anchor, this);
+      this.#start.node._removeEdge(
+        this.#start instanceof AnchorEndpoint ? this.#start.anchorId : undefined,
+        this
+      );
       uow.updateElement(this.#start.node);
     }
 
-    if (isConnectedOrFixed(start)) {
+    if (isConnected(start)) {
       uow.snapshot(start.node);
 
-      start.node._addEdge(start.anchor, this);
+      start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, this);
       uow.updateElement(start.node);
     }
 
@@ -306,17 +308,20 @@ export class DiagramEdge
   setEnd(end: Endpoint, uow: UnitOfWork) {
     uow.snapshot(this);
 
-    if (isConnectedOrFixed(this.#end)) {
+    if (isConnected(this.#end)) {
       uow.snapshot(this.#end.node);
 
-      this.#end.node._removeEdge(this.#end.anchor, this);
+      this.#end.node._removeEdge(
+        this.#end instanceof AnchorEndpoint ? this.#end.anchorId : undefined,
+        this
+      );
       uow.updateElement(this.#end.node);
     }
 
-    if (isConnectedOrFixed(end)) {
+    if (isConnected(end)) {
       uow.snapshot(end.node);
 
-      end.node._addEdge(end.anchor, this);
+      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
       uow.updateElement(end.node);
     }
 
@@ -330,7 +335,7 @@ export class DiagramEdge
   }
 
   isConnected() {
-    return isConnectedOrFixed(this.start) || isConnectedOrFixed(this.end);
+    return isConnected(this.start) || isConnected(this.end);
   }
 
   /* Label Nodes ******************************************************************************************** */
@@ -535,10 +540,8 @@ export class DiagramEdge
   path() {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
 
-    const startNormal = isConnectedOrFixed(this.start)
-      ? this._calculateNormal(this.start)
-      : undefined;
-    const endNormal = isConnectedOrFixed(this.end) ? this._calculateNormal(this.end) : undefined;
+    const startNormal = isConnected(this.start) ? this._calculateNormal(this.start) : undefined;
+    const endNormal = isConnected(this.end) ? this._calculateNormal(this.end) : undefined;
 
     const startDirection = startNormal ? Direction.fromVector(startNormal) : undefined;
     const endDirection = endNormal ? Direction.fromVector(endNormal) : undefined;
@@ -553,7 +556,7 @@ export class DiagramEdge
     );
   }
 
-  private _calculateNormal(endpoint: ConnectedEndpoint | FixedEndpoint) {
+  private _calculateNormal(endpoint: ConnectedEndpoint) {
     const startNode = endpoint.node;
     const boundingPath = startNode.getDefinition().getBoundingPath(startNode);
     const t = boundingPath.projectPoint(endpoint.position);

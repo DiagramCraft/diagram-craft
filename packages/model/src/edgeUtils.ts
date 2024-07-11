@@ -1,5 +1,5 @@
 import { DiagramEdge, Intersection } from './diagramEdge';
-import { ConnectedEndpoint, FixedEndpoint, isConnectedOrFixed } from './endpoint';
+import { AnchorEndpoint, ConnectedEndpoint } from './endpoint';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -38,13 +38,13 @@ const adjustForArrow = (
 };
 
 const intersectWithNode = (
-  endpoint: ConnectedEndpoint | FixedEndpoint,
+  endpoint: ConnectedEndpoint,
   endpointPosition: Point,
   path: Path,
   diagram: Diagram
 ): PointOnPath => {
   const clip =
-    endpoint instanceof ConnectedEndpoint ? endpoint.node.getAnchor(endpoint.anchor).clip : true;
+    endpoint instanceof AnchorEndpoint ? endpoint.node.getAnchor(endpoint.anchorId).clip : true;
   const nodeDefinition = diagram.document.nodeDefinitions.get(endpoint.node.nodeType);
 
   const endIntersections = nodeDefinition
@@ -73,14 +73,16 @@ export const clipPath = (
 ) => {
   const diagram = edge.diagram!;
 
-  const start = isConnectedOrFixed(edge.start)
-    ? intersectWithNode(edge.start, edge.start.position, path, diagram)
-    : undefined;
+  const start =
+    edge.start instanceof ConnectedEndpoint
+      ? intersectWithNode(edge.start, edge.start.position, path, diagram)
+      : undefined;
   const startOffset = adjustForArrow(start, startArrow, path, 1);
 
-  const end = isConnectedOrFixed(edge.end)
-    ? intersectWithNode(edge.end, edge.end.position, path, diagram)
-    : undefined;
+  const end =
+    edge.end instanceof ConnectedEndpoint
+      ? intersectWithNode(edge.end, edge.end.position, path, diagram)
+      : undefined;
   const endOffset = adjustForArrow(end, endArrow, path, -1);
 
   let basePath: Path;

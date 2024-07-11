@@ -5,10 +5,9 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { newid } from '@diagram-craft/utils/id';
-import { ConnectedEndpoint, FreeEndpoint, isConnectedOrFixed } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 export class AnchorHandleDrag extends AbstractDrag {
   edge: DiagramEdge;
@@ -16,7 +15,7 @@ export class AnchorHandleDrag extends AbstractDrag {
 
   constructor(
     private readonly node: DiagramNode,
-    private readonly anchorIndex: string,
+    private readonly anchorId: string,
     private readonly point: Point,
     private readonly applicationTriggers: ApplicationTriggers
   ) {
@@ -26,7 +25,7 @@ export class AnchorHandleDrag extends AbstractDrag {
 
     this.edge = new DiagramEdge(
       newid(),
-      new ConnectedEndpoint(this.anchorIndex, this.node),
+      new AnchorEndpoint(this.node, this.anchorId),
       new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),
       {},
       [],
@@ -69,15 +68,11 @@ export class AnchorHandleDrag extends AbstractDrag {
     this.delegate.onDragEnd();
 
     // In case we have connected to an existing node, we don't need to show the popup
-    if (isConnectedOrFixed(this.edge.end)) {
-      return;
-    }
+    if (this.edge.end.isConnected) return;
 
-    const startNode = this.edge.start;
-    if (!isConnectedOrFixed(startNode)) throw new VerifyNotReached();
     this.applicationTriggers.showNodeLinkPopup?.(
       this.edge.end.position,
-      startNode.node!.id,
+      this.node!.id,
       this.edge.id
     );
   }

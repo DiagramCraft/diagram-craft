@@ -7,10 +7,16 @@ import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { nodeDefaults } from './diagramDefaults';
-import { ConnectedEndpoint, Endpoint, FreeEndpoint, isConnectedOrFixed } from './endpoint';
+import {
+  AnchorEndpoint,
+  ConnectedEndpoint,
+  Endpoint,
+  FreeEndpoint,
+  PointInNodeEndpoint
+} from './endpoint';
 import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
@@ -35,7 +41,10 @@ export class DiagramNode
   readonly type = 'node';
 
   readonly id: string;
-  readonly edges: Map<string, DiagramEdge[]> = new Map<string, DiagramEdge[]>();
+  readonly edges: Map<string | undefined, DiagramEdge[]> = new Map<
+    string | undefined,
+    DiagramEdge[]
+  >();
 
   #cache: Map<string, unknown> | undefined = undefined;
 
@@ -304,6 +313,7 @@ export class DiagramNode
   /* Anchors ************************************************************************************************ */
 
   get anchors(): ReadonlyArray<Anchor> {
+    // TODO: Can this be handled using cache
     if (this.#anchors === undefined) {
       UnitOfWork.execute(this.diagram, uow => {
         this.invalidateAnchors(uow);
@@ -429,10 +439,22 @@ export class DiagramNode
         let newStart: Endpoint;
         let newEnd: Endpoint;
 
-        if (isConnectedOrFixed(e.start)) {
+        // TODO: This is duplicated. Can refactor?
+        if (e.start instanceof ConnectedEndpoint) {
           const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
           if (newStartNode) {
-            newStart = new ConnectedEndpoint(e.start.anchor, newStartNode as DiagramNode);
+            if (e.start instanceof AnchorEndpoint) {
+              newStart = new AnchorEndpoint(newStartNode as DiagramNode, e.start.anchorId);
+            } else if (e.start instanceof PointInNodeEndpoint) {
+              newStart = new PointInNodeEndpoint(
+                newStartNode as DiagramNode,
+                e.start.ref,
+                e.start.offset,
+                e.start.offsetType
+              );
+            } else {
+              throw new VerifyNotReached();
+            }
           } else {
             newStart = new FreeEndpoint(e.start.position);
           }
@@ -440,10 +462,21 @@ export class DiagramNode
           newStart = new FreeEndpoint(e.start.position);
         }
 
-        if (isConnectedOrFixed(e.end)) {
+        if (e.end instanceof ConnectedEndpoint) {
           const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
           if (newEndNode) {
-            newEnd = new ConnectedEndpoint(e.end.anchor, newEndNode as DiagramNode);
+            if (e.end instanceof AnchorEndpoint) {
+              newEnd = new AnchorEndpoint(newEndNode as DiagramNode, e.end.anchorId);
+            } else if (e.end instanceof PointInNodeEndpoint) {
+              newEnd = new PointInNodeEndpoint(
+                newEndNode as DiagramNode,
+                e.end.ref,
+                e.end.offset,
+                e.end.offsetType
+              );
+            } else {
+              throw new VerifyNotReached();
+            }
           } else {
             newEnd = new FreeEndpoint(e.end.position);
           }
@@ -514,11 +547,11 @@ export class DiagramNode
     for (const anchor of this.edges.keys()) {
       for (const edge of this.edges.get(anchor) ?? []) {
         let isChanged = false;
-        if (isConnectedOrFixed(edge.start) && edge.start.node === this) {
+        if (edge.start instanceof ConnectedEndpoint && edge.start.node === this) {
           edge.setStart(new FreeEndpoint(edge.start.position), uow);
           isChanged = true;
         }
-        if (isConnectedOrFixed(edge.end) && edge.end.node === this) {
+        if (edge.end instanceof ConnectedEndpoint && edge.end.node === this) {
           edge.setEnd(new FreeEndpoint(edge.end.position), uow);
           isChanged = true;
         }
@@ -585,11 +618,11 @@ export class DiagramNode
     uow.updateElement(this);
   }
 
-  _removeEdge(anchor: string, edge: DiagramEdge) {
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
     this.edges.set(anchor, this.edges.get(anchor)?.filter(e => e !== edge) ?? []);
   }
 
-  _addEdge(anchor: string, edge: DiagramEdge) {
+  _addEdge(anchor: string | undefined, edge: DiagramEdge) {
     this.edges.set(anchor, [...(this.edges.get(anchor) ?? []), edge]);
   }
 

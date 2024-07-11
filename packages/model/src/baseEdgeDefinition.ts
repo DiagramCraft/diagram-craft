@@ -9,7 +9,7 @@ import { DiagramEdge } from './diagramEdge';
 import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
-import { ConnectedEndpoint } from './endpoint';
+import { AnchorEndpoint } from './endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 
@@ -49,7 +49,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     // TODO: This requires some work to support dropping on multi-segment edges
     const newEdge = new DiagramEdge(
       newid(),
-      new ConnectedEndpoint(anchor, element),
+      new AnchorEndpoint(element, anchor),
       edge.end,
       deepClone(edge.editProps) as EdgeProps,
       [],
@@ -58,7 +58,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     );
     edge.layer.addElement(newEdge, uow);
 
-    edge.setEnd(new ConnectedEndpoint(anchor, element), uow);
+    edge.setEnd(new AnchorEndpoint(element, anchor), uow);
 
     uow.updateElement(edge);
   }
