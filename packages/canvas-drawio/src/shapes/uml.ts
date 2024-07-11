@@ -24,6 +24,7 @@ import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import stencils from './uml.yaml';
+import { Anchor } from '@diagram-craft/model/anchor';
 
 export const parseUMLShapes = async (
   id: string,
@@ -264,6 +265,25 @@ registerNodeDefaults('shapeUmlLifeline', { participant: '' });
 class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor(private readonly registry: NodeDefinitionRegistry) {
     super('umlLifeline', 'UML Lifeline');
+  }
+
+  getAnchors(node: DiagramNode): Anchor[] {
+    // TODO: This must be read from the file
+    const participantHeight = 40;
+
+    return [
+      {
+        id: 'lifeline',
+        type: 'edge',
+        start: { x: 0.5, y: participantHeight / node.bounds.h },
+        end: { x: 0.5, y: 1 },
+        clip: false,
+        directions: [
+          [0, 0],
+          [Math.PI, Math.PI]
+        ]
+      }
+    ];
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {

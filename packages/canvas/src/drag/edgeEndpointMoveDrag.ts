@@ -104,10 +104,40 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     const a = getClosestAnchor(coord, this.diagram.nodeLookup.get(this.hoverElement)!, true);
     if (!a) return;
 
+    // TODO: Refactor this. Lot's of duplication
     if (a.anchor) {
-      this.setEndpoint(
-        new ConnectedEndpoint(a.anchor.id, this.diagram.nodeLookup.get(this.hoverElement)!)
-      );
+      if (a.anchor.type !== 'edge') {
+        this.setEndpoint(
+          new ConnectedEndpoint(a.anchor.id, this.diagram.nodeLookup.get(this.hoverElement)!)
+        );
+      } else {
+        const node = this.diagram.nodeLookup.get(this.hoverElement)!;
+        const bounds = node.bounds;
+        const ref = {
+          x: node.bounds.x + a.anchor.start.x * node.bounds.w,
+          y: node.bounds.y + a.anchor.start.y * node.bounds.h
+        };
+
+        const relativePoint = Point.subtract(coord, ref);
+        const offset = Point.rotateAround(
+          {
+            x: relativePoint.x / bounds.w,
+            y: relativePoint.y / bounds.h
+          },
+          -bounds.r,
+          { x: 0.5, y: 0.5 }
+        );
+
+        this.setEndpoint(
+          new FixedEndpoint(
+            a.anchor.start,
+            offset,
+            this.diagram.nodeLookup.get(this.hoverElement)!,
+            'relative',
+            'boundary'
+          )!
+        );
+      }
     } else {
       const bounds = this.diagram.nodeLookup.get(this.hoverElement)!.bounds;
       const relativePoint = Point.subtract(a.point, bounds);

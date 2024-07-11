@@ -1,6 +1,7 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from './diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
+import { Range } from '@diagram-craft/geometry/range';
 
 export type Anchor = {
   id: string;

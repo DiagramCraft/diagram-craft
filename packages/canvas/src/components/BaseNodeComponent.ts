@@ -237,16 +237,28 @@ export class BaseNodeComponent<
       children.push(
         svg.g(
           {},
-          ...props.element.anchors.map(anchor =>
-            svg.circle({
-              class: 'svg-node__anchor',
-              cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
-              cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
-              r: '5',
-              // TODO: Change this to be a class instead of a fixed color
-              style: `pointer-events: none; fill: ${hasHighlight(props.element, `anchor-${anchor.id}`) ? '#16a34a' : 'transparent'};`
-            })
-          )
+          ...props.element.anchors.map(anchor => {
+            if (anchor.type === 'edge') {
+              return svg.line({
+                'class': 'svg-node__anchor',
+                'x1': props.element.bounds.x + anchor.start.x * props.element.bounds.w,
+                'y1': props.element.bounds.y + anchor.start.y * props.element.bounds.h,
+                'x2': props.element.bounds.x + anchor.end!.x * props.element.bounds.w,
+                'y2': props.element.bounds.y + anchor.end!.y * props.element.bounds.h,
+                'stroke-width': '5',
+                'style': `pointer-events: none; fill: ${hasHighlight(props.element, `anchor-${anchor.id}`) ? '#16a34a' : 'transparent'};`
+              });
+            } else {
+              return svg.circle({
+                class: 'svg-node__anchor',
+                cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
+                cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
+                r: '5',
+                // TODO: Change this to be a class instead of a fixed color
+                style: `pointer-events: none; fill: ${hasHighlight(props.element, `anchor-${anchor.id}`) ? '#16a34a' : 'transparent'};`
+              });
+            }
+          })
         )
       );
     }
