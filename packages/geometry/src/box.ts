@@ -188,6 +188,10 @@ export const Box = {
       h: l.to.y - l.from.y,
       r: 0
     };
+  },
+
+  fromOffset: (b: Box, offset: Point) => {
+    return { x: b.x + offset.x * b.w, y: b.y + offset.y * b.h };
   }
 
   /*

@@ -1,4 +1,4 @@
-import { AbstractDrag } from '../dragDropManager';
+import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { addHighlight, removeHighlight } from '../highlight';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -15,12 +15,15 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { getClosestAnchor } from '@diagram-craft/model/anchor';
+import { Box } from '@diagram-craft/geometry/box';
 
 const EDGE_HIGHLIGHT = 'edge-connect';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
   private hoverElement: string | undefined;
+  private modifiers: Modifiers | undefined;
+
   coord: Point | undefined;
 
   constructor(
@@ -35,7 +38,10 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     // TODO: Make a helper for this ... as well as getting edges and nodes from ids
     document.getElementById(`diagram-${this.diagram.id}`)!.style.cursor = 'move';
 
-    this.applicationTriggers.pushHelp?.('EdgeEndpointMoveDrag', 'Move waypoint');
+    this.applicationTriggers.pushHelp?.(
+      'EdgeEndpointMoveDrag',
+      'Move waypoint. Shift-drag to attach to any point in node.'
+    );
   }
 
   onDragEnter(id: string): void {
@@ -77,23 +83,33 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.hoverElement = undefined;
   }
 
-  onDrag(coord: Point) {
+  onDrag(p: Point, modifiers: Modifiers) {
     const selection = this.diagram.selectionState;
     selection.guides = [];
 
-    this.setEndpoint(new FreeEndpoint(coord));
+    this.setEndpoint(new FreeEndpoint(p));
 
-    this.coord = coord;
+    this.coord = p;
+
+    this.modifiers = modifiers;
 
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      this.attachToClosestAnchor(coord);
+      if (modifiers.shiftKey) {
+        this.attachToPoint(p);
+      } else {
+        this.attachToClosestAnchor(p);
+      }
     }
 
     this.uow.notify();
   }
 
   onDragEnd(): void {
-    this.attachToClosestAnchor(this.coord!);
+    if (this.modifiers?.shiftKey) {
+      this.attachToPoint(this.coord!);
+    } else {
+      this.attachToClosestAnchor(this.coord!);
+    }
 
     if (this.hoverElement) {
       removeHighlight(this.diagram.lookup(this.hoverElement), EDGE_HIGHLIGHT);
@@ -106,66 +122,49 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.emit('dragEnd');
   }
 
-  private attachToClosestAnchor(coord: Point) {
+  private attachToClosestAnchor(p: Point) {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
-    const a = getClosestAnchor(coord, this.diagram.nodeLookup.get(this.hoverElement)!, true);
+    const hoverNode = this.diagram.nodeLookup.get(this.hoverElement)!;
+    const a = getClosestAnchor(p, hoverNode, true);
     if (!a) return;
 
-    // TODO: Refactor this. Lot's of duplication
     if (a.anchor) {
       if (a.anchor.type !== 'edge') {
-        this.setEndpoint(
-          new AnchorEndpoint(this.diagram.nodeLookup.get(this.hoverElement)!, a.anchor.id)
-        );
+        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id));
       } else {
-        const node = this.diagram.nodeLookup.get(this.hoverElement)!;
-        const bounds = node.bounds;
-        const ref = {
-          x: node.bounds.x + a.anchor.start.x * node.bounds.w,
-          y: node.bounds.y + a.anchor.start.y * node.bounds.h
-        };
+        const ref = Box.fromOffset(hoverNode.bounds, a.anchor.start);
+        const offset = this.calculateOffset(p, ref, hoverNode.bounds);
 
-        const relativePoint = Point.subtract(coord, ref);
-        const offset = Point.rotateAround(
-          {
-            x: relativePoint.x / bounds.w,
-            y: relativePoint.y / bounds.h
-          },
-          -bounds.r,
-          { x: 0.5, y: 0.5 }
-        );
-
-        this.setEndpoint(
-          new AnchorEndpoint(
-            this.diagram.nodeLookup.get(this.hoverElement)!,
-            a.anchor.id,
-            offset,
-            'relative'
-          )!
-        );
+        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset, 'relative')!);
       }
     } else {
-      const bounds = this.diagram.nodeLookup.get(this.hoverElement)!.bounds;
-      const relativePoint = Point.subtract(a.point, bounds);
-      const offset = Point.rotateAround(
-        {
-          x: relativePoint.x / bounds.w,
-          y: relativePoint.y / bounds.h
-        },
-        -bounds.r,
-        { x: 0.5, y: 0.5 }
-      );
+      const offset = this.calculateOffset(a.point, hoverNode.bounds, hoverNode.bounds);
 
-      this.setEndpoint(
-        new PointInNodeEndpoint(
-          this.diagram.nodeLookup.get(this.hoverElement)!,
-          undefined,
-          offset,
-          'relative'
-        )!
-      );
+      this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative')!);
     }
+  }
+
+  private attachToPoint(p: Point) {
+    if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
+
+    const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
+    const offset = this.calculateOffset(p, hoverNode!.bounds, hoverNode!.bounds);
+
+    this.setEndpoint(new PointInNodeEndpoint(hoverNode!, undefined, offset, 'relative')!);
+  }
+
+  private calculateOffset(p: Point, ref: Point, bounds: Box) {
+    const relativePoint = Point.subtract(p, ref);
+    const offset = Point.rotateAround(
+      {
+        x: relativePoint.x / bounds.w,
+        y: relativePoint.y / bounds.h
+      },
+      -bounds.r,
+      { x: 0.5, y: 0.5 }
+    );
+    return offset;
   }
 
   private setEndpoint(endpoint: Endpoint) {
