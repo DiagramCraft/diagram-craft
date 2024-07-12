@@ -51,8 +51,8 @@ export class AnchorHandleDrag extends AbstractDrag {
     const diagram = this.node.diagram;
 
     if (
-      this.delegate.coord === undefined ||
-      Point.distance(this.delegate.coord!, diagram.viewBox.toDiagramPoint(this.point)) < 5
+      this.delegate.point === undefined ||
+      Point.distance(this.delegate.point!, diagram.viewBox.toDiagramPoint(this.point)) < 5
     ) {
       UnitOfWork.execute(this.node.diagram, uow => {
         this.edge.layer.removeElement(this.edge, uow);

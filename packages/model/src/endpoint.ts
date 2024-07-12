@@ -1,7 +1,7 @@
 import {
   SerializedAnchorEndpoint,
-  SerializedPointInNodeEndpoint,
-  SerializedEndpoint
+  SerializedEndpoint,
+  SerializedPointInNodeEndpoint
 } from './serialization/types';
 import { DiagramNode } from './diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
@@ -63,11 +63,7 @@ const applyOffset = (offset: Point, offsetType: OffsetType, ref: Point, bounds: 
   if (offsetType === 'absolute') {
     return Point.add(ref, offset);
   } else {
-    return Point.rotateAround(
-      Point.add(ref, { x: offset.x * bounds.w, y: offset.y * bounds.h }),
-      bounds.r,
-      Box.center(bounds)
-    );
+    return Point.add(ref, { x: offset.x * bounds.w, y: offset.y * bounds.h });
   }
 };
 
@@ -131,7 +127,11 @@ export class PointInNodeEndpoint
     const bounds = this.node.bounds;
     const ref = this.ref ? this.node!._getPositionInBounds(this.ref) : bounds;
 
-    return applyOffset(this.offset, this.offsetType, ref, bounds);
+    const p = applyOffset(this.offset, this.offsetType, ref, bounds);
+    if (!this.ref && this.offsetType !== 'absolute') {
+      return Point.rotateAround(p, bounds.r, Box.center(bounds));
+    }
+    return p;
   }
 
   serialize(): SerializedPointInNodeEndpoint {

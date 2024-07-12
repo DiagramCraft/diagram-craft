@@ -24,7 +24,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   private hoverElement: string | undefined;
   private modifiers: Modifiers | undefined;
 
-  coord: Point | undefined;
+  point: Point | undefined;
 
   constructor(
     private readonly diagram: Diagram,
@@ -89,7 +89,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
     this.setEndpoint(new FreeEndpoint(p));
 
-    this.coord = p;
+    this.point = p;
 
     this.modifiers = modifiers;
 
@@ -106,9 +106,9 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
   onDragEnd(): void {
     if (this.modifiers?.shiftKey) {
-      this.attachToPoint(this.coord!);
+      this.attachToPoint(this.point!);
     } else {
-      this.attachToClosestAnchor(this.coord!);
+      this.attachToClosestAnchor(this.point!);
     }
 
     if (this.hoverElement) {
