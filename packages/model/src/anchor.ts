@@ -11,8 +11,6 @@ export type Anchor = {
    * Position defined in a 0-1/0-1/SE coordinate system
    */
   start: Point;
-
-  // TODO: end is not yet used
   end?: Point;
 
   // TODO: directions is not yet used

@@ -27,7 +27,6 @@ registerNodeDefaults('shapeRoundedRect', {
 export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('rounded-rect', 'Rounded Rectangle', RoundedRectComponent);
-    this.capabilities['connect-to-boundary'] = true;
   }
 
   getAnchors(_def: DiagramNode): Anchor[] {

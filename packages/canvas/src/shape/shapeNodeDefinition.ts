@@ -54,7 +54,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       'fill': true,
       'select': true,
       'children': false,
-      'connect-to-boundary': false
+      'connect-to-boundary': true
     };
   }
 
