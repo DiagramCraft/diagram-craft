@@ -69,8 +69,8 @@ import { registerAWS4Shapes } from './shapes/aws4';
 import { registerGCP2Shapes } from './shapes/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
-import { registerUMLShapes } from './shapes/uml';
-import { registerAndroidShapes } from './shapes/android';
+import { registerUMLShapes } from './shapes/uml/uml';
+import { registerAndroidShapes } from './shapes/android/android';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:

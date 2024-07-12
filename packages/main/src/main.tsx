@@ -33,7 +33,7 @@ const stencilRegistry: StencilRegistryConfig = [
     shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
     opts: {
       callback: () =>
-        import('@diagram-craft/canvas-drawio/shapes/uml').then(m => m.registerUMLShapes)
+        import('@diagram-craft/canvas-drawio/shapes/uml/uml').then(m => m.registerUMLShapes)
     }
   },
   {

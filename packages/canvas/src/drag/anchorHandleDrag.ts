@@ -78,7 +78,7 @@ export class AnchorHandleDrag extends AbstractDrag {
   }
 
   onDrag(coord: Point, _modifiers: Modifiers): void {
-    this.delegate.onDrag(coord);
+    this.delegate.onDrag(coord, _modifiers);
   }
 
   onDragEnter(id: string) {

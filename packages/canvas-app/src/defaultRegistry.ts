@@ -31,13 +31,11 @@ import { DelayNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Dela
 import { PartialRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/PartialRect.nodeType';
 import { CubeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cube.nodeType';
 import { LineNodeDefinition } from '@diagram-craft/canvas/node-types/Line.nodeType';
-import {
-  TableNodeDefinition,
-  TableRowNodeDefinition
-} from '@diagram-craft/canvas/node-types/Table.nodeType';
+import { TableNodeDefinition } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import stencils from './defaultStencils.yaml';
+import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
 
 export const defaultNodeRegistry = () => {
   const reg = new NodeDefinitionRegistry();
