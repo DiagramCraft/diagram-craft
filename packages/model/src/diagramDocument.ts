@@ -7,6 +7,8 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import { range } from '@diagram-craft/utils/array';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
 import { precondition } from '@diagram-craft/utils/assert';
+import { isNode } from './diagramElement';
+import { UnitOfWork } from './unitOfWork';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -101,12 +103,23 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   // TODO: We should probably move this into the diagram loaders and/or deserialization
   //       This way, warnings as anchors are determined during deserialization are triggered
   async load() {
+    const loadedTypes = new Set<string>();
     for (const diagram of this.diagrams) {
-      const nodeTypes = diagram.getNodeTypes();
-      for (const s of nodeTypes) {
-        if (!this.nodeDefinitions.hasRegistration(s)) {
-          if (!(await this.nodeDefinitions.load(s))) {
-            console.warn(`Node definition ${s} not loaded`);
+      const uow = new UnitOfWork(diagram, false, false);
+      for (const layer of diagram.layers.all) {
+        for (const element of layer.elements) {
+          if (isNode(element)) {
+            const s = element.nodeType;
+            if (!this.nodeDefinitions.hasRegistration(s)) {
+              if (!(await this.nodeDefinitions.load(s))) {
+                console.warn(`Node definition ${s} not loaded`);
+              } else {
+                element.invalidate(uow);
+                loadedTypes.add(s);
+              }
+            } else if (loadedTypes.has(s)) {
+              element.invalidate(uow);
+            }
           }
         }
       }
