@@ -1,23 +1,21 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { addHighlight, removeHighlight } from '../highlight';
+import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import {
   AnchorEndpoint,
+  ConnectedEndpoint,
   Endpoint,
-  PointInNodeEndpoint,
   FreeEndpoint,
-  ConnectedEndpoint
+  PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
-
-const EDGE_HIGHLIGHT = 'edge-connect';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -71,14 +69,14 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
       el.anchors; // This looks like a noop, but it will trigger the anchors to be calculated
     }
 
-    addHighlight(el, EDGE_HIGHLIGHT);
+    addHighlight(el, Highlights.NODE__EDGE_CONNECT);
   }
 
   onDragLeave(id?: string): void {
     if (id === this.edge.id) return;
 
     if (this.hoverElement) {
-      removeHighlight(this.diagram.lookup(this.hoverElement), EDGE_HIGHLIGHT);
+      removeHighlight(this.diagram.lookup(this.hoverElement), Highlights.NODE__EDGE_CONNECT);
     }
     this.hoverElement = undefined;
   }
@@ -112,7 +110,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     }
 
     if (this.hoverElement) {
-      removeHighlight(this.diagram.lookup(this.hoverElement), EDGE_HIGHLIGHT);
+      removeHighlight(this.diagram.lookup(this.hoverElement), Highlights.NODE__EDGE_CONNECT);
     }
 
     commitWithUndo(this.uow, 'Move edge endpoint');

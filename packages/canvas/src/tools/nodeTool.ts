@@ -1,5 +1,5 @@
 import { AbstractTool, BACKGROUND } from '../tool';
-import { addHighlight, removeHighlight } from '../highlight';
+import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '../dragDropManager';
@@ -41,9 +41,9 @@ export class NodeTool extends AbstractTool {
     if (this.diagram.selectionState.elements.includes(el!)) return;
     if (isNode(el)) {
       if (el.nodeType === 'generic-path') {
-        addHighlight(el, 'node-tool-edit');
+        addHighlight(el, Highlights.NODE__TOOL_EDIT);
       } else if (el.nodeType !== 'text') {
-        addHighlight(el, 'node-tool-convert');
+        addHighlight(el, Highlights.NODE__TOOL_CONVERT);
       }
     }
   }
@@ -53,8 +53,8 @@ export class NodeTool extends AbstractTool {
 
     const el = this.diagram.lookup(id);
     if (isNode(el)) {
-      removeHighlight(el, 'node-tool-edit');
-      removeHighlight(el, 'node-tool-convert');
+      removeHighlight(el, Highlights.NODE__TOOL_EDIT);
+      removeHighlight(el, Highlights.NODE__TOOL_CONVERT);
     }
   }
 

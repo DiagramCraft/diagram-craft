@@ -1,5 +1,5 @@
 import { AbstractDrag, Modifiers } from '../dragDropManager';
-import { addHighlight, removeHighlight } from '../highlight';
+import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
@@ -337,12 +337,12 @@ export class MoveDrag extends AbstractDrag {
 
   private clearHighlight() {
     if (!this.#currentElement) return;
-    removeHighlight(this.#currentElement, 'drop-target');
+    removeHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
   }
 
   private setHighlight() {
     if (!this.#currentElement) return;
-    addHighlight(this.#currentElement, 'drop-target');
+    addHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
   }
 
   private getLastState(max: number) {

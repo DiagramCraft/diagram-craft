@@ -25,7 +25,7 @@ import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
-import { getHighlights, hasHighlight } from '../highlight';
+import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -98,7 +98,7 @@ export class BaseNodeComponent<
 
     const isSelected = $d.selectionState.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selectionState.elements.length === 1;
-    const isEdgeConnect = hasHighlight(props.element, 'edge-connect');
+    const isEdgeConnect = hasHighlight(props.element, Highlights.NODE__EDGE_CONNECT);
     const children: VNode[] = [];
 
     const style: Partial<CSSStyleDeclaration> = {};
@@ -246,7 +246,7 @@ export class BaseNodeComponent<
                 'x2': props.element.bounds.x + anchor.end!.x * props.element.bounds.w,
                 'y2': props.element.bounds.y + anchor.end!.y * props.element.bounds.h,
                 'stroke-width': '5',
-                'style': `pointer-events: none; fill: ${hasHighlight(props.element, `anchor-${anchor.id}`) ? '#16a34a' : 'transparent'};`
+                'style': `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? '#16a34a' : 'transparent'};`
               });
             } else {
               return svg.circle({
@@ -255,7 +255,7 @@ export class BaseNodeComponent<
                 cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
                 r: '5',
                 // TODO: Change this to be a class instead of a fixed color
-                style: `pointer-events: none; fill: ${hasHighlight(props.element, `anchor-${anchor.id}`) ? '#16a34a' : 'transparent'};`
+                style: `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? '#16a34a' : 'transparent'};`
               });
             }
           })

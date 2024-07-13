@@ -13,7 +13,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { largest } from '@diagram-craft/utils/array';
 import { assert } from '@diagram-craft/utils/assert';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { hasHighlight } from '../highlight';
+import { hasHighlight, Highlights } from '../highlight';
 
 declare global {
   interface NodeProps {
@@ -409,8 +409,8 @@ export class ContainerComponent extends BaseNodeComponent {
         'y': props.node.bounds.y,
         'width': props.node.bounds.w,
         'height': props.node.bounds.h,
-        'stroke': hasHighlight(props.node, 'drop-target') ? '#30A46C' : '#d5d5d4',
-        'stroke-width': hasHighlight(props.node, 'drop-target') ? 3 : 1,
+        'stroke': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? '#30A46C' : '#d5d5d4',
+        'stroke-width': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? 3 : 1,
         'fill': 'transparent',
         'on': {
           mousedown: props.onMouseDown

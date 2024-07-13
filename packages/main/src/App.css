@@ -548,17 +548,17 @@ foreignObject {
     }
   }
 
-  .svg-node--highlight-node-tool-edit {
+  .svg-node--highlight-node__tool-edit {
     outline: 1px solid green;
   }
-  .svg-node--highlight-node-tool-convert {
+  .svg-node--highlight-node__tool-convert {
     outline: 1px solid red;
   }
   .svg-edge {
     cursor: move;
     fill: none;
   }
-  .svg-edge--highlight-drop-target {
+  .svg-edge--highlight-node__drop-target {
     .svg-edge {
       stroke: #30A46C !important;
       stroke-width: 3 !important;
