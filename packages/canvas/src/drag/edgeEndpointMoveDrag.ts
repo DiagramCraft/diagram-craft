@@ -16,6 +16,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
+import { assert } from '@diagram-craft/utils/assert';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -123,20 +124,26 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   private attachToClosestAnchor(p: Point) {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
-    const hoverNode = this.diagram.nodeLookup.get(this.hoverElement)!;
+    const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
+    assert.present(hoverNode);
+
     const a = getClosestAnchor(p, hoverNode, true);
     if (!a) return;
 
     if (a.anchor) {
       if (a.anchor.type !== 'edge') {
         this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id));
+        addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor');
       } else {
         const ref = Box.fromOffset(hoverNode.bounds, a.anchor.start);
         const offset = this.calculateOffset(p, ref, hoverNode.bounds);
+        addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor-edge');
 
         this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset, 'relative')!);
       }
     } else {
+      addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'edge');
+
       const offset = this.calculateOffset(a.point, hoverNode.bounds, hoverNode.bounds);
 
       this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative')!);
@@ -147,9 +154,13 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
     const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
-    const offset = this.calculateOffset(p, hoverNode!.bounds, hoverNode!.bounds);
+    assert.present(hoverNode);
 
-    this.setEndpoint(new PointInNodeEndpoint(hoverNode!, undefined, offset, 'relative')!);
+    addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'point');
+
+    const offset = this.calculateOffset(p, hoverNode.bounds, hoverNode.bounds);
+
+    this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative')!);
   }
 
   private calculateOffset(p: Point, ref: Point, bounds: Box) {

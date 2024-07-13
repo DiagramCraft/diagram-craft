@@ -29,7 +29,7 @@ class Highlight {
 
   add(highlight: string, arg?: string) {
     if (arg) {
-      this.remove(highlight, arg);
+      this.remove(highlight);
     }
     this.highlights.push(getHighlight(highlight, arg));
   }

@@ -1124,3 +1124,26 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
     transform: translate(-50%, -50%) scale(1);
   }
 }
+
+
+/* Test stuff */
+.svg-node--highlight-node__edge-connect .svg-node__boundary {
+  stroke: green !important;
+  stroke-width: 3px !important;
+}
+.svg-node--highlight-node__edge-connect---point .svg-node__boundary {
+  stroke-width: 3px !important;
+  stroke: blue !important;
+}
+.svg-node--highlight-node__edge-connect---anchor .svg-node__boundary {
+  stroke-width: 3px !important;
+  stroke: red !important;
+}
+.svg-node--highlight-node__edge-connect---anchor-edge .svg-node__boundary {
+  stroke-width: 3px !important;
+  stroke: purple !important;
+}
+.svg-node--highlight-node__edge-connect---edge .svg-node__boundary {
+  stroke-width: 3px !important;
+  stroke: green !important;
+}
