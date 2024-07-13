@@ -80,7 +80,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
         y: props.node.bounds.y,
         w: props.node.bounds.w,
         h: participantHeight,
-        r: props.node.bounds.r
+        r: 0
       },
       props.node.diagram,
       props.node.layer,
