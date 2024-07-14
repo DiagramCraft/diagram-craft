@@ -2,6 +2,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from './diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { Range } from '@diagram-craft/geometry/range';
+import { Line } from '@diagram-craft/geometry/line';
 
 export type Anchor = {
   id: string;
@@ -53,7 +54,15 @@ export const getClosestAnchor = (
   for (let i = 0; i < anchors.length; i++) {
     const a = anchors[i];
     const pos = getAnchorPosition(node, a);
-    const d = Point.squareDistance(coord, pos);
+
+    let d = Point.squareDistance(coord, pos);
+
+    if (a.type === 'edge') {
+      const end = getAnchorPosition(node, a, 'end');
+      const p = Line.projectPoint(Line.of(pos, end), coord);
+      d = Point.squareDistance(coord, p);
+    }
+
     if (d < closestDistance) {
       closestAnchor = i;
       closestDistance = d;
@@ -85,11 +94,15 @@ export const getClosestAnchor = (
   return { anchor: anchors[closestAnchor], point: getAnchorPosition(node, anchors[closestAnchor]) };
 };
 
-export const getAnchorPosition = (node: DiagramNode, anchor: Anchor): Point => {
+export const getAnchorPosition = (
+  node: DiagramNode,
+  anchor: Anchor,
+  key: 'start' | 'end' = 'start'
+): Point => {
   return Point.rotateAround(
     {
-      x: node.bounds.x + anchor.start.x * node.bounds.w,
-      y: node.bounds.y + anchor.start.y * node.bounds.h
+      x: node.bounds.x + anchor[key]!.x * node.bounds.w,
+      y: node.bounds.y + anchor[key]!.y * node.bounds.h
     },
     node.bounds.r,
     Box.center(node.bounds)

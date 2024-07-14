@@ -1128,8 +1128,8 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
 
 /* Test stuff */
 .svg-node--highlight-node__edge-connect .svg-node__boundary {
-  stroke: green !important;
-  stroke-width: 3px !important;
+  /*stroke: orange !important;
+  stroke-width: 3px !important;*/
 }
 .svg-node--highlight-node__edge-connect---point .svg-node__boundary {
   stroke-width: 3px !important;

@@ -63,5 +63,16 @@ export const Line = {
 
   length(l: Line) {
     return Vector.length(Vector.from(l.from, l.to));
+  },
+
+  projectPoint(l: Line, p: Point) {
+    const v = Vector.from(l.from, l.to);
+    const w = Vector.from(l.from, p);
+    const c1 = Vector.dotProduct(w, v);
+    if (c1 <= 0) return l.from;
+    const c2 = Vector.dotProduct(v, v);
+    if (c2 <= c1) return l.to;
+    const b = c1 / c2;
+    return Point.add(l.from, Vector.scale(v, b));
   }
 };

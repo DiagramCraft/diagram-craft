@@ -14,9 +14,10 @@ import {
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
-import { getClosestAnchor } from '@diagram-craft/model/anchor';
+import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
+import { Line } from '@diagram-craft/geometry/line';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -136,9 +137,19 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
         addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor');
       } else {
         const ref = Box.fromOffset(hoverNode.bounds, a.anchor.start);
-        const offset = this.calculateOffset(p, ref, hoverNode.bounds);
-        addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor-edge');
 
+        const pp = Line.projectPoint(
+          Line.of(
+            getAnchorPosition(hoverNode, a.anchor, 'start'),
+            getAnchorPosition(hoverNode, a.anchor, 'end')
+          ),
+          p
+        );
+
+        if (Point.distance(pp, p) > 10) return;
+
+        const offset = this.calculateOffset(pp, ref, hoverNode.bounds);
+        addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor-edge');
         this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset)!);
       }
     } else {
