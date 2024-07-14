@@ -139,7 +139,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
         const offset = this.calculateOffset(p, ref, hoverNode.bounds);
         addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor-edge');
 
-        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset, 'relative')!);
+        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset)!);
       }
     } else {
       addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'edge');

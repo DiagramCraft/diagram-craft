@@ -52,18 +52,9 @@ export const Endpoint = {
       return new AnchorEndpoint(
         Maplike.get(nodeLookup, endpoint.node.id)!,
         endpoint.anchor,
-        endpoint.offset ?? Point.ORIGIN,
-        endpoint.offsetType ?? 'absolute'
+        endpoint.offset ?? Point.ORIGIN
       );
     }
-  }
-};
-
-const applyOffset = (offset: Point, offsetType: OffsetType, ref: Point, bounds: Box) => {
-  if (offsetType === 'absolute') {
-    return Point.add(ref, offset);
-  } else {
-    return Point.add(ref, { x: offset.x * bounds.w, y: offset.y * bounds.h });
   }
 };
 
@@ -76,8 +67,7 @@ export class AnchorEndpoint
   constructor(
     node: DiagramNode,
     public readonly anchorId: string,
-    public readonly offset: Point = Point.ORIGIN,
-    public readonly offsetType: OffsetType = 'relative'
+    public readonly offset: Point = Point.ORIGIN
   ) {
     super(node);
   }
@@ -87,8 +77,13 @@ export class AnchorEndpoint
   }
 
   get position() {
+    const bounds = this.node.bounds;
     const ref = this.node!._getAnchorPosition(this.anchorId!);
-    return applyOffset(this.offset, this.offsetType, ref, this.node!.bounds);
+
+    const v = { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h };
+    const rotatedOffset = Point.rotateAround(v, bounds.r, Point.ORIGIN);
+
+    return Point.add(ref, rotatedOffset);
   }
 
   serialize(): SerializedAnchorEndpoint {
@@ -96,8 +91,7 @@ export class AnchorEndpoint
       anchor: this.anchorId,
       node: { id: this.node.id },
       position: this.position,
-      offset: this.offset,
-      offsetType: this.offsetType
+      offset: this.offset
     };
   }
 }
@@ -127,7 +121,12 @@ export class PointInNodeEndpoint
     const bounds = this.node.bounds;
     const ref = this.ref ? this.node!._getPositionInBounds(this.ref) : bounds;
 
-    const p = applyOffset(this.offset, this.offsetType, ref, bounds);
+    const v =
+      this.offsetType === 'absolute'
+        ? this.offset
+        : { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h };
+    const p = Point.add(ref, v);
+
     if (!this.ref && this.offsetType !== 'absolute') {
       return Point.rotateAround(p, bounds.r, Box.center(bounds));
     }

@@ -51,7 +51,6 @@ export type SerializedAnchorEndpoint = {
   node: Reference;
   position?: Point;
   offset: Point;
-  offsetType?: OffsetType;
 };
 export type SerializedFreeEndpoint = { position: Point };
 
