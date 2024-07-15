@@ -195,9 +195,11 @@ export class SVGGBuilder {
     return this;
   }
 
-  fillAndStroke(stroke?: NodeProps['stroke'], fill?: NodeProps['fill']) {
+  fillAndStroke(stroke?: NodeProps['stroke'], fill?: NodeProps['fill'], backing = false) {
     if (stroke) this.setStroke(stroke);
     if (fill) this.setFill(fill);
+
+    if (backing) this.applyBacking();
 
     this.#shapes.forEach(s => (s.data = { ...s.data, ...this.fillProps(), ...this.strokeProps() }));
     this.g.children.push(...this.#shapes);
@@ -206,13 +208,36 @@ export class SVGGBuilder {
     return this;
   }
 
-  stroke(stroke?: NodeProps['stroke']) {
+  stroke(stroke?: NodeProps['stroke'], backing = false) {
     if (stroke) this.setStroke(stroke);
+
+    if (backing) this.applyBacking();
+
     this.#shapes.forEach(s => (s.data = { ...s.data, ...this.strokeProps(), fill: 'transparent' }));
     this.g.children.push(...this.#shapes);
     this.#shapes = [];
 
     return this;
+  }
+
+  /**
+   * Backing means that the shape will be drawn with a
+   * backing shape that is transparent and has a stroke width of 10
+   * so that mouse events works well on thin or dashes edges
+   */
+  private applyBacking() {
+    this.g.children.push(
+      ...this.#shapes.map(s => ({
+        ...s,
+        data: {
+          ...s.data,
+          'class': 'svg-node__backing',
+          'fill': 'transparent',
+          'stroke': 'transparent',
+          'stroke-width': 10
+        }
+      }))
+    );
   }
 
   rect(x: number, y: number, w: number, h: number, rx = 0, ry = 0) {

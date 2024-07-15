@@ -56,12 +56,15 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const b = shapeBuilder.buildBoundary();
     b.path(w / 2, participantHeight).line(w / 2, h);
-    b.stroke({
-      ...props.nodeProps.stroke,
-      pattern: 'DASHED',
-      patternSpacing: 40,
-      patternSize: 40
-    });
+    b.stroke(
+      {
+        ...props.nodeProps.stroke,
+        pattern: 'DASHED',
+        patternSpacing: 40,
+        patternSize: 40
+      },
+      true
+    );
 
     const participant = coalesce(props.node.renderProps.shapeUmlLifeline?.participant, 'rect')!;
 
