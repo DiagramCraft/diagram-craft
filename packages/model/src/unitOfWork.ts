@@ -107,8 +107,8 @@ const registry =
   process.env.NODE_ENV === 'development'
     ? new FinalizationRegistry((v: string) => {
         // No warnings for throwaways
-        if (v === 'true') return;
-        console.error('Failed uow cleanup');
+        if (v.startsWith('true;')) return;
+        console.error('Failed uow cleanup', v.substring(5));
       })
     : {
         register: () => {},
@@ -137,7 +137,7 @@ export class UnitOfWork {
     public trackChanges: boolean = false,
     public isThrowaway: boolean = false
   ) {
-    registry.register(this, this.isThrowaway.toString(), this);
+    registry.register(this, this.isThrowaway.toString() + ';' + new Error().stack, this);
   }
 
   static immediate(diagram: Diagram) {

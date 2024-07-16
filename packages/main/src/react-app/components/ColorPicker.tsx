@@ -14,7 +14,6 @@ const EditableColorWell = (props: { color: string; onChange: (s: string) => void
     <div className={'cmp-color-grid__editable'} style={{ backgroundColor: color }}>
       <button
         onClick={() => {
-          close();
           props.onChange(color);
         }}
       ></button>
