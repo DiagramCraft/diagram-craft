@@ -1,4 +1,3 @@
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { TbGrid3X3, TbGridDots } from 'react-icons/tb';
 import { assertGridType } from '@diagram-craft/model/diagramProps';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -9,6 +8,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '../../components/NumberInput';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 
 export const CanvasGridPanel = (props: Props) => {
   const $d = useDiagram();
@@ -51,23 +51,22 @@ export const CanvasGridPanel = (props: Props) => {
             validUnits={['px']}
             defaultUnit={'px'}
           />
-          <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
-            <ReactToolbar.ToggleGroup
-              type={'single'}
-              value={type.val}
-              onValueChange={v => {
-                assertGridType(v);
-                type.set(v);
-              }}
-            >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'lines'}>
-                <TbGrid3X3 />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'dots'}>
-                <TbGridDots />
-              </ReactToolbar.ToggleItem>
-            </ReactToolbar.ToggleGroup>
-          </ReactToolbar.Root>
+          <ToggleButtonGroup.Root
+            aria-label="Grid type"
+            type={'single'}
+            value={type.val}
+            onValueChange={v => {
+              assertGridType(v);
+              type.set(v);
+            }}
+          >
+            <ToggleButtonGroup.Item value={'lines'}>
+              <TbGrid3X3 />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'dots'}>
+              <TbGridDots />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
         </div>
 
         <div className={'cmp-labeled-table__label'}>Major</div>
@@ -84,23 +83,22 @@ export const CanvasGridPanel = (props: Props) => {
             value={majorCount.val ?? 5}
             onChange={n => majorCount.set(n ?? 0)}
           />
-          <ReactToolbar.Root className="cmp-toolbar" aria-label="Grid type">
-            <ReactToolbar.ToggleGroup
-              type={'single'}
-              value={majorType.val}
-              onValueChange={v => {
-                assertGridType(v);
-                majorType.set(v);
-              }}
-            >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'lines'}>
-                <TbGrid3X3 />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'dots'}>
-                <TbGridDots />
-              </ReactToolbar.ToggleItem>
-            </ReactToolbar.ToggleGroup>
-          </ReactToolbar.Root>
+          <ToggleButtonGroup.Root
+            aria-label="Grid type"
+            type={'single'}
+            value={majorType.val}
+            onValueChange={v => {
+              assertGridType(v);
+              majorType.set(v);
+            }}
+          >
+            <ToggleButtonGroup.Item value={'lines'}>
+              <TbGrid3X3 />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'dots'}>
+              <TbGridDots />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
         </div>
       </div>
     </ToolWindowPanel>

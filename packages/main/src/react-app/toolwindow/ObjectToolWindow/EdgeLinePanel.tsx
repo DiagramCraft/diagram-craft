@@ -1,5 +1,4 @@
 import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ArrowSelector } from './components/ArrowSelector';
 import { assertEdgeType } from '@diagram-craft/model/diagramProps';
 import { useDiagram } from '../../context/DiagramContext';
@@ -11,6 +10,7 @@ import { NumberInput } from '../../components/NumberInput';
 import { ColorPicker } from '../../components/ColorPicker';
 import { DashSelector } from './components/DashSelector';
 import { Select } from '../../components/Select';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 
 export const EdgeLinePanel = (props: Props) => {
   const $d = useDiagram();
@@ -60,29 +60,28 @@ export const EdgeLinePanel = (props: Props) => {
         <div className={'cmp-labeled-table'}>
           <div className={'cmp-labeled-table__label'}>Type:</div>
           <div className={'cmp-labeled-table__value'}>
-            <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-              <ReactToolbar.ToggleGroup
-                type={'single'}
-                value={type.val}
-                onValueChange={value => {
-                  assertEdgeType(value);
-                  type.set(value);
-                }}
-              >
-                <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'straight'}>
-                  <TbLine />
-                </ReactToolbar.ToggleItem>
-                <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'orthogonal'}>
-                  <TbShape3 />
-                </ReactToolbar.ToggleItem>
-                <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'curved'}>
-                  <TbVectorSpline />
-                </ReactToolbar.ToggleItem>
-                <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'bezier'}>
-                  <TbVectorBezier2 />
-                </ReactToolbar.ToggleItem>
-              </ReactToolbar.ToggleGroup>
-            </ReactToolbar.Root>
+            <ToggleButtonGroup.Root
+              aria-label="Formatting options"
+              type={'single'}
+              value={type.val}
+              onValueChange={value => {
+                assertEdgeType(value);
+                type.set(value);
+              }}
+            >
+              <ToggleButtonGroup.Item value={'straight'}>
+                <TbLine />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'orthogonal'}>
+                <TbShape3 />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'curved'}>
+                <TbVectorSpline />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'bezier'}>
+                <TbVectorBezier2 />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
           </div>
 
           {supportsArrows && (

@@ -12,8 +12,8 @@ import { PopoverButton } from '../../components/PopoverButton';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '../../components/Select';
 import { useTableProperty } from '../../hooks/useTable';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { DashSelector } from './components/DashSelector';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 
 export const NodeTableStrokePanel = (props: Props) => {
   const $d = useDiagram();
@@ -48,36 +48,34 @@ export const NodeTableStrokePanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Border:</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <ReactToolbar.Root className="cmp-toolbar">
-            <ReactToolbar.ToggleGroup
-              type={'multiple'}
-              value={Object.entries({
-                outer: outerBorder.val,
-                horizontal: horizontalBorder.val,
-                vertical: verticalBorder.val
-              })
-                .filter(([_, value]) => value)
-                .map(([key, _]) => key)}
-              onValueChange={value => {
-                if (!!outerBorder.val !== value.includes('outer'))
-                  outerBorder.set(value.includes('outer'));
-                if (!!horizontalBorder.val !== value.includes('horizontal'))
-                  horizontalBorder.set(value.includes('horizontal'));
-                if (!!verticalBorder.val !== value.includes('vertical'))
-                  verticalBorder.set(value.includes('vertical'));
-              }}
-            >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'outer'}>
-                <TbBorderOuter />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'horizontal'}>
-                <TbBorderHorizontal />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'vertical'}>
-                <TbBorderVertical />
-              </ReactToolbar.ToggleItem>
-            </ReactToolbar.ToggleGroup>
-          </ReactToolbar.Root>
+          <ToggleButtonGroup.Root
+            type={'multiple'}
+            value={Object.entries({
+              outer: outerBorder.val,
+              horizontal: horizontalBorder.val,
+              vertical: verticalBorder.val
+            })
+              .filter(([_, value]) => value)
+              .map(([key, _]) => key)}
+            onValueChange={value => {
+              if (!!outerBorder.val !== value.includes('outer'))
+                outerBorder.set(value.includes('outer'));
+              if (!!horizontalBorder.val !== value.includes('horizontal'))
+                horizontalBorder.set(value.includes('horizontal'));
+              if (!!verticalBorder.val !== value.includes('vertical'))
+                verticalBorder.set(value.includes('vertical'));
+            }}
+          >
+            <ToggleButtonGroup.Item value={'outer'}>
+              <TbBorderOuter />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'horizontal'}>
+              <TbBorderHorizontal />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'vertical'}>
+              <TbBorderVertical />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
         </div>
 
         <div className={'cmp-labeled-table__label'}>Color:</div>

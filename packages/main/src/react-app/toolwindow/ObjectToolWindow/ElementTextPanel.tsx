@@ -10,7 +10,6 @@ import {
   TbStrikethrough,
   TbUnderline
 } from 'react-icons/tb';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
 import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '../../components/NumberInput';
@@ -22,6 +21,7 @@ import { Collapsible } from '../../components/Collapsible';
 import { Select } from '../../components/Select';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
+import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 
 export const ElementTextPanel = (props: Props) => {
   const $d = useDiagram();
@@ -76,64 +76,63 @@ export const ElementTextPanel = (props: Props) => {
 
         <div></div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup
-              type={'multiple'}
-              value={Object.entries({
-                bold: isBold.val,
-                italic: isItalic.val,
-                underline: textDecoration.val === 'underline',
-                strikethrough: textDecoration.val === 'line-through'
-              })
-                .filter(([_, value]) => value)
-                .map(([key, _]) => key)}
-              onValueChange={value => {
-                if (!!isBold.val !== value.includes('bold')) isBold.set(value.includes('bold'));
-                if (!!isItalic.val !== value.includes('italic'))
-                  isItalic.set(value.includes('italic'));
+          <ToggleButtonGroup.Root
+            aria-label="Formatting options"
+            type={'multiple'}
+            value={Object.entries({
+              bold: isBold.val,
+              italic: isItalic.val,
+              underline: textDecoration.val === 'underline',
+              strikethrough: textDecoration.val === 'line-through'
+            })
+              .filter(([_, value]) => value)
+              .map(([key, _]) => key)}
+            onValueChange={value => {
+              if (!!isBold.val !== value.includes('bold')) isBold.set(value.includes('bold'));
+              if (!!isItalic.val !== value.includes('italic'))
+                isItalic.set(value.includes('italic'));
 
-                const isUnderlineChanged =
-                  value.includes('underline') !== (textDecoration.val === 'underline');
-                const isStrikethroughChanged =
-                  value.includes('strikethrough') !== (textDecoration.val === 'line-through');
+              const isUnderlineChanged =
+                value.includes('underline') !== (textDecoration.val === 'underline');
+              const isStrikethroughChanged =
+                value.includes('strikethrough') !== (textDecoration.val === 'line-through');
 
-                if (isUnderlineChanged) {
-                  textDecoration.set(value.includes('underline') ? 'underline' : undefined);
-                } else if (isStrikethroughChanged) {
-                  textDecoration.set(value.includes('strikethrough') ? 'line-through' : undefined);
-                }
-              }}
-            >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'bold'}>
-                <TbBold />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'italic'}>
-                <TbItalic />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'underline'}>
-                <TbUnderline />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'strikethrough'}>
-                <TbStrikethrough />
-              </ReactToolbar.ToggleItem>
-            </ReactToolbar.ToggleGroup>
-          </ReactToolbar.Root>
-          <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup
-              type={'single'}
-              value={textTransform.val}
-              onValueChange={value => {
-                textTransform.set(value as NonNullable<NodeProps['text']>['textTransform']);
-              }}
-            >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'capitalize'}>
-                <TbLetterCase />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'uppercase'}>
-                <TbLetterCaseUpper />
-              </ReactToolbar.ToggleItem>
-            </ReactToolbar.ToggleGroup>
-          </ReactToolbar.Root>
+              if (isUnderlineChanged) {
+                textDecoration.set(value.includes('underline') ? 'underline' : undefined);
+              } else if (isStrikethroughChanged) {
+                textDecoration.set(value.includes('strikethrough') ? 'line-through' : undefined);
+              }
+            }}
+          >
+            <ToggleButtonGroup.Item value={'bold'}>
+              <TbBold />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'italic'}>
+              <TbItalic />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'underline'}>
+              <TbUnderline />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'strikethrough'}>
+              <TbStrikethrough />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
+
+          <ToggleButtonGroup.Root
+            aria-label="Formatting options"
+            type={'single'}
+            value={textTransform.val}
+            onValueChange={(value: string) => {
+              textTransform.set(value as NonNullable<NodeProps['text']>['textTransform']);
+            }}
+          >
+            <ToggleButtonGroup.Item value={'capitalize'}>
+              <TbLetterCase />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'uppercase'}>
+              <TbLetterCaseUpper />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
         </div>
 
         <div className={'cmp-labeled-table__label'}>Color:</div>
@@ -150,46 +149,44 @@ export const ElementTextPanel = (props: Props) => {
 
         <div className={'cmp-labeled-table__label'}>Align:</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup
-              type={'single'}
-              value={align.val}
-              onValueChange={v => {
-                assertHAlign(v);
-                align.set(v);
-              }}
-            >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'left'}>
-                <TbAlignLeft />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'center'}>
-                <TbAlignCenter />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'right'}>
-                <TbAlignRight />
-              </ReactToolbar.ToggleItem>
-            </ReactToolbar.ToggleGroup>
-          </ReactToolbar.Root>
-          <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
-            <ReactToolbar.ToggleGroup
-              type={'single'}
-              value={valign.val}
-              onValueChange={v => {
-                assertVAlign(v);
-                valign.set(v);
-              }}
-            >
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'top'}>
-                <RxTextAlignTop />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'middle'}>
-                <RxTextAlignMiddle />
-              </ReactToolbar.ToggleItem>
-              <ReactToolbar.ToggleItem className="cmp-toolbar__toggle-item" value={'bottom'}>
-                <RxTextAlignBottom />
-              </ReactToolbar.ToggleItem>
-            </ReactToolbar.ToggleGroup>
-          </ReactToolbar.Root>
+          <ToggleButtonGroup.Root
+            aria-label="Formatting options"
+            type={'single'}
+            value={align.val}
+            onValueChange={v => {
+              assertHAlign(v);
+              align.set(v);
+            }}
+          >
+            <ToggleButtonGroup.Item value={'left'}>
+              <TbAlignLeft />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'center'}>
+              <TbAlignCenter />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'right'}>
+              <TbAlignRight />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
+          <ToggleButtonGroup.Root
+            aria-label="Formatting options"
+            type={'single'}
+            value={valign.val}
+            onValueChange={v => {
+              assertVAlign(v);
+              valign.set(v);
+            }}
+          >
+            <ToggleButtonGroup.Item value={'top'}>
+              <RxTextAlignTop />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'middle'}>
+              <RxTextAlignMiddle />
+            </ToggleButtonGroup.Item>
+            <ToggleButtonGroup.Item value={'bottom'}>
+              <RxTextAlignBottom />
+            </ToggleButtonGroup.Item>
+          </ToggleButtonGroup.Root>
         </div>
 
         <div

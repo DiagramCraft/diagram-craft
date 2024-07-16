@@ -22,6 +22,7 @@
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/model": "workspace:^",
     "@diagram-craft/query": "workspace:^",
+    "@diagram-craft/app-components": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/canvas-drawio": "workspace:^",
     "@radix-ui/colors": "^3.0.0",
