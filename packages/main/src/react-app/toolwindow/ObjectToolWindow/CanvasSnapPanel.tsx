@@ -2,7 +2,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { useSnapManagerProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ActionCheckbox } from '../../components/ActionCheckbox';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 
 export const CanvasSnapPanel = (props: Props) => {
   const diagram = useDiagram();

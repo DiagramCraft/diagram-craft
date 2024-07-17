@@ -1,2 +1,66 @@
 .root {
+  padding: 0;
+  border: 1px solid var(--blue-6);
+  border-radius: 4px;
+  background-color: var(--secondary-bg);
+  width: fit-content !important;
+  min-width: 0;
+}
+
+.item {
+  flex: 0 0 auto;
+  color: var(--slate-11);
+  background-color: transparent;
+  height: 25px;
+  padding: 0 5px;
+  border-radius: 4px;
+  display: inline-flex;
+  font-size: 11px;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+
+  /* Note, this is a bit of a hack to make some icon details red */
+  .svg__remove {
+    path:nth-child(3), path:nth-child(4) {
+      stroke: #BB0000;
+    }
+  }
+  .svg__insert {
+    path:nth-child(3), path:nth-child(4) {
+      stroke: #00BB00;
+    }
+  }
+
+  &:first-child {
+    margin-left: 0;
+  }
+
+
+  &[data-state='on'] {
+    background-color: var(--slate-1);
+    color: var(--blue-11);
+  }
+
+  &:hover,
+  &[data-hover='true'] {
+    background-color: var(--blue-3);
+    color: var(--blue-11);
+  }
+
+  &:focus,
+  &[data-focus="true"]{
+    position: relative;
+    box-shadow: 0 0 0 2px var(--blue-7);
+  }
+
+  &:disabled {
+    color: var(--slate-8);
+    /* TODO: Is there a better way to disable hover when in disabled state */
+    pointer-events: none;
+    & > svg > path:nth-child(n + 2) {
+      stroke: currentColor !important;
+    }
+  }
 }

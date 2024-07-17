@@ -4,7 +4,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { assert } from '@diagram-craft/utils/assert';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { round } from '@diagram-craft/utils/math';
 import { SliderAndNumberInput } from '../../components/SliderAndNumberInput';
 import { Select } from '../../components/Select';

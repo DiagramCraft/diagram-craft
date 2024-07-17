@@ -1,6 +1,6 @@
 import { ColorPicker } from '../../components/ColorPicker';
 import { useNodeProperty } from '../../hooks/useProperty';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';

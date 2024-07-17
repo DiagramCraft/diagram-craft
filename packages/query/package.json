@@ -8,7 +8,5 @@
     "test": "vitest"
   },
   "keywords": [],
-  "author": "Magnus Johansson",
-  "dependencies": {
-  }
+  "author": "Magnus Johansson"
 }

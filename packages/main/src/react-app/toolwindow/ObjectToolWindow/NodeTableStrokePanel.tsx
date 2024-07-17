@@ -1,5 +1,5 @@
 import { ColorPicker } from '../../components/ColorPicker';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import {
   TbAdjustmentsHorizontal,
   TbBorderHorizontal,

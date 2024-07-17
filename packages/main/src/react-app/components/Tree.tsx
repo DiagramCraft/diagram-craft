@@ -7,7 +7,7 @@ import React, {
   useState
 } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
-import { propsUtils } from '../propsUtils';
+import { propsUtils } from '@diagram-craft/utils/propsUtils';
 
 const isReactElement = (
   element: ReactNode

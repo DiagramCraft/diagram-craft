@@ -1,18 +1,19 @@
 import * as ReactToggleGroup from '@radix-ui/react-toggle-group';
 import React from 'react';
 import { extractDataAttributes } from './utils';
-import module from './ToggleButtonGroup.module.css';
+import styles from './ToggleButtonGroup.module.css';
 
 // TODO: Change to use radix ToggleGroup
 const Root = (props: RootProps) => {
   return (
     // @ts-ignore
     <ReactToggleGroup.Root
-      className={`cmp-toolbar ${module.root}`}
+      className={`${styles.root}`}
       aria-label={props['aria-label']}
       type={props.type}
       value={props.value}
       onValueChange={props.onValueChange}
+      disabled={props.disabled}
       {...extractDataAttributes(props)}
     >
       {props.children}
@@ -24,6 +25,7 @@ const Root = (props: RootProps) => {
 type RootProps = {
   'children': React.ReactNode;
   'aria-label'?: string;
+  'disabled'?: boolean;
 } & (
   | { type: 'single'; value: string | undefined; onValueChange: (v: string) => void }
   | { type: 'multiple'; value: string[] | undefined; onValueChange: (v: string[]) => void }
@@ -32,8 +34,9 @@ type RootProps = {
 const Item = (props: ItemProps) => {
   return (
     <ReactToggleGroup.Item
-      className="cmp-toolbar__toggle-item"
+      className={`${styles.item}`}
       value={props.value}
+      disabled={props.disabled}
       {...extractDataAttributes(props)}
     >
       {props.children}
@@ -43,6 +46,7 @@ const Item = (props: ItemProps) => {
 
 type ItemProps = {
   value: string;
+  disabled?: boolean;
   children: React.ReactNode;
 };
 

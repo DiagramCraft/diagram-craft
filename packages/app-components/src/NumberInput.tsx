@@ -1,13 +1,21 @@
 import { TbChevronDown, TbChevronUp } from 'react-icons/tb';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { propsUtils } from '../propsUtils';
-import { $c } from '@diagram-craft/utils/classname';
+import { propsUtils } from '@diagram-craft/utils/propsUtils';
+import { extractDataAttributes } from './utils';
+import styles from './NumberInput.module.css';
 
-const parse = (value: string) => {
+type UnitAndValue = [string, string | undefined];
+
+const parseNumberAndUnit = (value: string): UnitAndValue | undefined => {
   const m = value.match(/^ ?(-?\d+\.?\d*) ?([^ ]*)$/);
   if (!m) return undefined;
   if (m[2] === '') return [m[1], undefined];
   return [m[1], m[2]];
+};
+
+const formatValue = (value: string, defaultUnit: string | undefined, fallback: string) => {
+  const [number, unit] = parseNumberAndUnit(value) ?? [];
+  return number ? `${number} ${unit ?? defaultUnit ?? ''}` : fallback;
 };
 
 let idx = 0;
@@ -57,15 +65,6 @@ const AdjustButton = (props: {
   );
 };
 
-function formatValue(value: string, defaultUnit: string | undefined, fallback: string) {
-  const parsedValue = parse(value.toString());
-  let formattedValue = fallback;
-  if (parsedValue) {
-    formattedValue = parsedValue[0] + ' ' + (parsedValue[1] ?? defaultUnit ?? '');
-  }
-  return formattedValue;
-}
-
 export const NumberInput = (props: Props) => {
   const [error, setError] = useState(false);
   const [origValue, setOrigValue] = useState(props.value.toString());
@@ -81,7 +80,7 @@ export const NumberInput = (props: Props) => {
   const adjust = useCallback(
     (delta: number) => {
       setCurrentValue(prev => {
-        const p = parse(prev);
+        const p = parseNumberAndUnit(prev);
         if (!p) return prev;
 
         const newValue = parseFloat(p[0]!) + delta;
@@ -104,8 +103,13 @@ export const NumberInput = (props: Props) => {
   }
 
   return (
-    <div className={$c('cmp-number-input', { error: error })} style={props.style ?? {}}>
-      {props.label && <div className={'cmp-number-input__label'}>{props.label}</div>}
+    <div
+      className={styles.wrapper} /*$c('cmp-number-input', { error: error })}*/
+      data-error={error}
+      style={props.style ?? {}}
+      {...extractDataAttributes(props)}
+    >
+      {props.label && <div className={styles.label}>{props.label}</div>}
       <input
         {...propsUtils.filterDomProperties(props)}
         placeholder={props.hasMultipleValues ? '···' : undefined}
@@ -120,7 +124,7 @@ export const NumberInput = (props: Props) => {
           updateCurrentValue();
         }}
         onChange={ev => {
-          const p = parse(ev.target.value);
+          const p = parseNumberAndUnit(ev.target.value);
           setCurrentValue(ev.target.value);
 
           if (ev.target.value === '') {
@@ -138,16 +142,17 @@ export const NumberInput = (props: Props) => {
           props.onChange(parseFloat(p[0]!), p[1] ?? props.defaultUnit);
           return;
         }}
+        {...extractDataAttributes(props)}
       />
       <AdjustButton
-        className={'cmp-number-input__btn-up'}
+        className={styles.btnUp}
         disabled={props.disabled}
         onClick={() => adjust(props.step ? Number(props.step) : 1)}
       >
         <TbChevronUp size={'11px'} />
       </AdjustButton>
       <AdjustButton
-        className={'cmp-number-input__btn-down'}
+        className={styles.btnDown}
         disabled={props.disabled}
         onClick={() => adjust(props.step ? -1 * Number(props.step) : -1)}
       >

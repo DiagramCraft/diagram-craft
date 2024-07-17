@@ -10,7 +10,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButton } from '../../components/ToggleButton';
 
 const origins: Record<string, Point> = {

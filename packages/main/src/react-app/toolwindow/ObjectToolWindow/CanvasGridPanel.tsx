@@ -7,7 +7,7 @@ import { useDiagramProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ColorPicker } from '../../components/ColorPicker';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 
 export const CanvasGridPanel = (props: Props) => {

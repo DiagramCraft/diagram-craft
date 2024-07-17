@@ -12,7 +12,7 @@ import {
 } from 'react-icons/tb';
 import { RxTextAlignBottom, RxTextAlignMiddle, RxTextAlignTop } from 'react-icons/rx';
 import { ColorPicker } from '../../components/ColorPicker';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';

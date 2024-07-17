@@ -14,7 +14,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Select } from '../../components/Select';
 
 export const ElementCustomPropertiesPanel = (props: Props) => {

@@ -1,0 +1,31 @@
+import { Canvas, Meta } from '@storybook/blocks';
+
+import * as NumberInputStories from './NumberInput.stories';
+
+<Meta of={NumberInputStories} />
+
+# NumberInput
+
+## States
+
+### Default
+
+<Canvas of={NumberInputStories.Primary} />
+
+### Focus state
+
+<Canvas of={NumberInputStories.Focus} />
+
+### Error state
+
+<Canvas of={NumberInputStories.Error} />
+
+### Disabled
+
+<Canvas of={NumberInputStories.Disabled} />
+
+## Variants
+
+### With label
+
+<Canvas of={NumberInputStories.WithLabel} />

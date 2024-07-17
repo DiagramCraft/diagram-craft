@@ -5,7 +5,7 @@ import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useElementProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ColorPicker } from '../../components/ColorPicker';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 
 export const ElementShadowPanel = (props: Props) => {
   const $d = useDiagram();

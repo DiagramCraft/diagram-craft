@@ -7,7 +7,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { useDiagramProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ColorPicker } from '../../components/ColorPicker';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 
 export const CanvasPanel = (props: Props) => {
   const $cfg = useConfiguration();

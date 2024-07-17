@@ -1,7 +1,7 @@
 import React from 'react';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useRedraw } from '../../hooks/useRedraw';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '../../components/Select';

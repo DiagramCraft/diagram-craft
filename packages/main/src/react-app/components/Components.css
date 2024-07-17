@@ -209,102 +209,6 @@
   margin-top: 0.25rem;
 }
 
-.cmp-number-input {
-  border-radius: 4px;
-  background-color: var(--secondary-bg);
-  border: 1px solid var(--blue-6);
-  color: var(--primary-fg);
-  height: 25px;
-  padding: 1px 0 0 3px;
-  line-height: 1;
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  align-items: center;
-
-  .cmp-number-input__label {
-    font-size: 11px;
-    margin-top: -1px;
-    margin-right: 0.15rem;
-    color: var(--primary-fg);
-    width: 15px;
-    border-right: 1px solid var(--blue-6);
-  }
-
-  &.cmp-number-input--error {
-    color: var(--error-fg);
-    > input {
-      color: var(--error-fg);
-    }
-  }
-
-  > input {
-    color: var(--primary-fg);
-    border: none;
-    background: none;
-    font-size: 90%;
-    &:focus {
-      outline: none;
-    }
-    &:disabled {
-      color: var(--slate-8);
-    }
-
-  }
-
-  > input:focus + button,
-  > input:focus + button + button,
-  &:hover > button {
-    display: flex;
-  }
-
-  > button {
-    width: 13px;
-    display: none;
-    align-items: center;
-    background: none;
-    padding: 0;
-    border: none;
-    color: var(--primary-fg);
-    background: var(--primary-bg);;
-
-    &:hover {
-      color: var(--blue-11);
-    }
-  }
-
-  .cmp-number-input__btn-up {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 12px;
-    border-bottom: 1px solid var(--blue-6);
-    border-left: 1px solid var(--blue-6);
-    &:disabled {
-      color: var(--slate-8);
-    }
-  }
-  .cmp-number-input__btn-down {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    height: 11px;
-    border-left: 1px solid var(--blue-6);
-    &:disabled {
-      color: var(--slate-8);
-    }
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    border-radius: 4px;
-    inset: -1px;
-    border: 1px solid var(--blue-6);
-    pointer-events: none;
-  }
-}
-
 .cmp-select-trigger {
   display: inline-flex;
   align-items: center;
@@ -852,15 +756,6 @@
     display: flex;
     align-items: center;
     font-size: 11px;
-  }
-
-  .cmp-toolbar {
-    padding: 0;
-    border: 1px solid var(--blue-6);
-    border-radius: 4px;
-    background-color: var(--secondary-bg);
-    width: fit-content !important;
-    min-width: 0;
   }
 
   .cmp-collapsible {

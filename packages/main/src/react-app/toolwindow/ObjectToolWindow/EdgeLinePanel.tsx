@@ -6,7 +6,7 @@ import { useConfiguration } from '../../context/ConfigurationContext';
 import { useEdgeDefaults } from '../../hooks/useDefaults';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { NumberInput } from '../../components/NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ColorPicker } from '../../components/ColorPicker';
 import { DashSelector } from './components/DashSelector';
 import { Select } from '../../components/Select';

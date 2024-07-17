@@ -1,5 +1,5 @@
 import * as Slider from '@radix-ui/react-slider';
-import { NumberInput } from './NumberInput';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 
 export const SliderAndNumberInput = (props: Props) => {
   return (
