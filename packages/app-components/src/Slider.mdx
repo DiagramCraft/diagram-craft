@@ -1,0 +1,28 @@
+import { Canvas, Meta } from '@storybook/blocks';
+
+import * as SliderStories from './Slider.stories';
+
+<Meta of={SliderStories} />
+
+# Slider
+
+## States
+
+### Default
+
+<Canvas of={SliderStories.Primary} />
+
+### Disabled 
+
+<Canvas of={SliderStories.Disabled} />
+
+
+## Thumb States
+
+### Hover state
+
+<Canvas of={SliderStories.ThumbHover} />
+
+### Focus state
+
+<Canvas of={SliderStories.ThumbFocus} />

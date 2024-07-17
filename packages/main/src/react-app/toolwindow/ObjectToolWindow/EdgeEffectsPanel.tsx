@@ -5,7 +5,7 @@ import { useEdgeDefaults } from '../../hooks/useDefaults';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { SliderAndNumberInput } from '../../components/SliderAndNumberInput';
+import { Slider } from '@diagram-craft/app-components/Slider';
 
 // TODO: We should merge this with NodeEffectsPanel
 //       ... only sketch is common between the two
@@ -37,7 +37,7 @@ export const EdgeEffectsPanel = (props: Props) => {
         <div className={'cmp-labeled-table'}>
           <div className={'cmp-labeled-table__label'}>Opacity:</div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(opacity.val * 100)}
               onChange={v => {
                 opacity.set(Number(v) / 100);
@@ -58,7 +58,7 @@ export const EdgeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}></div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(sketchStrength.val * 100)}
               onChange={v => {
                 sketchStrength.set(Number(v) / 100);

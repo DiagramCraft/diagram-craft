@@ -1,7 +1,7 @@
 import { Angle } from '@diagram-craft/geometry/angle';
 import { assertFillType } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
-import { SliderAndNumberInput } from '../../components/SliderAndNumberInput';
+import { Slider } from '@diagram-craft/app-components/Slider';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../context/DiagramContext';
 import { Collapsible } from '../../components/Collapsible';
@@ -52,7 +52,7 @@ const ImageScale = (props: {
   <>
     <div className={'cmp-labeled-table__label'}>Scale:</div>
     <div className={'cmp-labeled-table__value'}>
-      <SliderAndNumberInput value={round(props.fillImageScale * 100)} onChange={props.onChange} />
+      <Slider value={round(props.fillImageScale * 100)} onChange={props.onChange} />
     </div>
   </>
 );
@@ -81,10 +81,7 @@ const ImageTint = (props: {
         </div>
         <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
         <div className={'cmp-labeled-table__value'}>
-          <SliderAndNumberInput
-            value={round(props.tintStrength * 100)}
-            onChange={props.onChangeTintStrength}
-          />
+          <Slider value={round(props.tintStrength * 100)} onChange={props.onChangeTintStrength} />
         </div>
       </div>
     </Collapsible>
@@ -103,16 +100,12 @@ const ImageAdjustments = (props: {
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label util-a-top-center'}>Contrast:</div>
       <div className={'cmp-labeled-table__value'}>
-        <SliderAndNumberInput
-          max={200}
-          value={round(props.contrast * 100)}
-          onChange={props.onChangeContrast}
-        />
+        <Slider max={200} value={round(props.contrast * 100)} onChange={props.onChangeContrast} />
       </div>
 
       <div className={'cmp-labeled-table__label util-a-top-center'}>Brightness:</div>
       <div className={'cmp-labeled-table__value'}>
-        <SliderAndNumberInput
+        <Slider
           max={200}
           value={round(props.brightness * 100)}
           onChange={props.onChangeBrightness}
@@ -121,7 +114,7 @@ const ImageAdjustments = (props: {
 
       <div className={'cmp-labeled-table__label util-a-top-center'}>Saturation:</div>
       <div className={'cmp-labeled-table__value'}>
-        <SliderAndNumberInput
+        <Slider
           max={200}
           value={round(props.saturation * 100)}
           onChange={props.onChangeSaturation}
@@ -252,7 +245,7 @@ export const NodeFillPanel = (props: Props) => {
               <>
                 <div className={'cmp-labeled-table__label'}>Direction:</div>
                 <div className={'cmp-labeled-table__value util-hstack'}>
-                  <SliderAndNumberInput
+                  <Slider
                     unit={'°'}
                     max={360}
                     value={round(Angle.toDeg(gradientDirection.val))}

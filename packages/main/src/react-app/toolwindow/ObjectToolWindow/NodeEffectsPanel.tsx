@@ -5,7 +5,7 @@ import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { SliderAndNumberInput } from '../../components/SliderAndNumberInput';
+import { Slider } from '@diagram-craft/app-components/Slider';
 import { Select } from '../../components/Select';
 
 export const NodeEffectsPanel = (props: Props) => {
@@ -61,7 +61,7 @@ export const NodeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}></div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(reflectionStrength.val * 100)}
               onChange={v => {
                 reflectionStrength.set(Number(v) / 100);
@@ -71,7 +71,7 @@ export const NodeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Blur:</div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(blur.val * 100)}
               onChange={v => {
                 blur.set(Number(v) / 100);
@@ -81,7 +81,7 @@ export const NodeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Opacity:</div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(opacity.val * 100)}
               onChange={v => {
                 opacity.set(Number(v) / 100);
@@ -102,7 +102,7 @@ export const NodeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}></div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(sketchStrength.val * 100)}
               onChange={v => {
                 sketchStrength.set(Number(v) / 100);
@@ -138,7 +138,7 @@ export const NodeEffectsPanel = (props: Props) => {
           </div>
           <div className={'cmp-labeled-table__label'}></div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(roundingAmount.val)}
               onChange={v => {
                 roundingAmount.set(v);

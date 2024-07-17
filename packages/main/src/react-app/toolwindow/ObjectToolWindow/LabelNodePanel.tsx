@@ -6,7 +6,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { assert } from '@diagram-craft/utils/assert';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { round } from '@diagram-craft/utils/math';
-import { SliderAndNumberInput } from '../../components/SliderAndNumberInput';
+import { Slider } from '@diagram-craft/app-components/Slider';
 import { Select } from '../../components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
@@ -64,7 +64,7 @@ export const LabelNodePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Position:</div>
           <div className={'cmp-labeled-table__value'}>
-            <SliderAndNumberInput
+            <Slider
               value={round(timeOffset * 100)}
               onChange={v => {
                 UnitOfWork.execute(edge.diagram, uow => {
