@@ -11,7 +11,7 @@ import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { ToggleButton } from '../../components/ToggleButton';
+import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
 
 const origins: Record<string, Point> = {
   tl: { x: 0, y: 0 },
