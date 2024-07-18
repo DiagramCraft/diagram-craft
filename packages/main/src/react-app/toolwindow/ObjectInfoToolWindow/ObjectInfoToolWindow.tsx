@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import { AccordionContent } from '../../components/AccordionContent';
-import * as Accordion from '@radix-ui/react-accordion';
 import { SelectionInfoDetails } from './SelectionInfoDetails';
 import { NodeInfoDetails } from './NodeInfoDetails';
 import { EdgeInfoDetails } from './EdgeInfoDetails';
 import { useDiagram } from '../../context/DiagramContext';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 export const ObjectInfoToolWindow = () => {
   const diagram = useDiagram();
@@ -27,6 +25,7 @@ export const ObjectInfoToolWindow = () => {
       setState(undefined);
     }
   }, [diagram.selectionState]);
+
   useEffect(() => {
     callback();
 
@@ -37,19 +36,14 @@ export const ObjectInfoToolWindow = () => {
   }, [callback, diagram.selectionState]);
 
   return (
-    <Accordion.Root
-      className="cmp-accordion"
-      disabled={true}
-      type="multiple"
-      defaultValue={['info']}
-    >
-      <Accordion.Item className="cmp-accordion__item" value="info">
-        <AccordionTrigger>Info</AccordionTrigger>
-        <AccordionContent>
+    <Accordion.Root disabled={true} type="multiple" defaultValue={['info']}>
+      <Accordion.Item value="info">
+        <Accordion.ItemHeader>Info</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
           {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
           {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>
   );

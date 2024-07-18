@@ -1,12 +1,10 @@
-import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import { AccordionContent } from '../../components/AccordionContent';
 import { ObjectPicker } from './ObjectPicker';
 import { useDiagram } from '../../context/DiagramContext';
 import { useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { UserState } from '@diagram-craft/canvas/UserState';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 const SIZE = 35;
 
@@ -43,17 +41,12 @@ export const PickerToolWindow = () => {
   useEventListener(stencilRegistry, 'change', redraw);
 
   return (
-    <Accordion.Root
-      className="cmp-accordion"
-      type="multiple"
-      value={open}
-      onValueChange={setOpenStencils}
-    >
-      <Accordion.Item className="cmp-accordion__item" value="basic-shapes">
-        <AccordionTrigger>Basic shapes</AccordionTrigger>
-        <AccordionContent>
+    <Accordion.Root type="multiple" value={open} onValueChange={setOpenStencils}>
+      <Accordion.Item value="basic-shapes">
+        <Accordion.ItemHeader>Basic shapes</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           <ObjectPicker size={SIZE} package={stencilRegistry.get('default')!} />
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
 
       {stencilRegistry
@@ -61,11 +54,11 @@ export const PickerToolWindow = () => {
         .toSorted((a, b) => a.name.localeCompare(b.name))
         .filter(s => s.id !== 'default')
         .map((group, idx) => (
-          <Accordion.Item key={idx} className="cmp-accordion__item" value={group.id}>
-            <AccordionTrigger>{group.name}</AccordionTrigger>
-            <AccordionContent>
+          <Accordion.Item key={idx} value={group.id}>
+            <Accordion.ItemHeader>{group.name}</Accordion.ItemHeader>
+            <Accordion.ItemContent>
               <ObjectPicker size={SIZE} package={group} />
-            </AccordionContent>
+            </Accordion.ItemContent>
           </Accordion.Item>
         ))}
     </Accordion.Root>

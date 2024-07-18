@@ -18,12 +18,14 @@
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-slider": "^1.2.0",
     "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-accordion": "^1.2.0",
     "@diagram-craft/utils": "workspace:^"
   },
   "devDependencies": {
     "@types/react": "^18.2.67",
     "@types/react-dom": "^18.2.22",
     "@storybook/react": "^8.2.4",
-    "@storybook/test": "^8.2.4"
+    "@storybook/test": "^8.2.4",
+    "@storybook/preview-api": "^8.2.4"
   }
 }

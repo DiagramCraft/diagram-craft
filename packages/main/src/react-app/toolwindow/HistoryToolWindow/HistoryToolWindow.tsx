@@ -1,10 +1,8 @@
 import { useRedraw } from '../../hooks/useRedraw';
-import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import { AccordionContent } from '../../components/AccordionContent';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
 import { useDiagram } from '../../context/DiagramContext';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {
@@ -22,15 +20,10 @@ export const HistoryToolWindow = () => {
   const undoActions = diagram.undoManager.undoableActions.toReversed();
 
   return (
-    <Accordion.Root
-      className="cmp-accordion"
-      disabled={true}
-      type="multiple"
-      defaultValue={['history']}
-    >
-      <Accordion.Item className="cmp-accordion__item" value="history">
-        <AccordionTrigger>History</AccordionTrigger>
-        <AccordionContent>
+    <Accordion.Root disabled={true} type="multiple" defaultValue={['history']}>
+      <Accordion.Item value="history">
+        <Accordion.ItemHeader>History</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           <div className={'util-vstack'}>
             {redoActions.map((a, idx) => (
               <div key={idx} className={'util-vcenter util-hgap'}>
@@ -50,7 +43,7 @@ export const HistoryToolWindow = () => {
               </div>
             ))}
           </div>
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>
   );

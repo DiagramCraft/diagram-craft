@@ -1,13 +1,11 @@
 import { Diagram } from '@diagram-craft/model/diagram';
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionContent } from '@radix-ui/react-accordion';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbBoxMultiple, TbLine, TbRectangle, TbTable, TbTableRow } from 'react-icons/tb';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import * as Tree from '../../components/Tree';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 export const SelectToolWindow = (props: Props) => {
   const redraw = useRedraw();
@@ -27,15 +25,10 @@ export const SelectToolWindow = (props: Props) => {
 
   const selection = props.diagram.selectionState;
   return (
-    <Accordion.Root
-      className="cmp-accordion"
-      disabled={true}
-      type="multiple"
-      defaultValue={['selection']}
-    >
-      <Accordion.Item className="cmp-accordion__item cmp-accordion__item" value="selection">
-        <AccordionTrigger>Selection</AccordionTrigger>
-        <AccordionContent>
+    <Accordion.Root disabled={true} type="multiple" defaultValue={['selection']}>
+      <Accordion.Item value="selection">
+        <Accordion.ItemHeader>Selection</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           <Tree.Root>
             <Tree.Node isOpen={true}>
               <Tree.NodeLabel>Selected elements</Tree.NodeLabel>
@@ -65,7 +58,7 @@ export const SelectToolWindow = (props: Props) => {
               </Tree.Children>
             </Tree.Node>
           </Tree.Root>
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>
   );

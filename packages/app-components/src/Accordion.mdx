@@ -1,0 +1,28 @@
+import { Canvas, Meta } from '@storybook/blocks';
+
+import * as AccordionStories from './Accordion.stories';
+
+<Meta of={AccordionStories} />
+
+# Accordion
+
+## States
+
+### Default
+
+<Canvas of={AccordionStories.Primary} />
+
+### Disabled
+
+<Canvas of={AccordionStories.Disabled} />
+
+## Item States
+
+### Hover state
+
+<Canvas of={AccordionStories.ItemHover} />
+
+### Focus state
+
+<Canvas of={AccordionStories.ItemFocus} />
+

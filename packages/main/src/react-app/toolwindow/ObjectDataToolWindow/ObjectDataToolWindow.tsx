@@ -1,6 +1,3 @@
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import { AccordionContent } from '../../components/AccordionContent';
-import * as Accordion from '@radix-ui/react-accordion';
 import { useDiagram } from '../../context/DiagramContext';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -23,6 +20,7 @@ import { Collapsible } from '../../components/Collapsible';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import * as Popover from '@radix-ui/react-popover';
 import { useElementProperty } from '../../hooks/useProperty';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -147,34 +145,34 @@ export const ObjectDataToolWindow = () => {
 
   if ($d.selectionState.elements.length === 0)
     return (
-      <Accordion.Root className="cmp-accordion" type="single" defaultValue={'data'}>
-        <Accordion.Item className="cmp-accordion__item" value="data">
-          <AccordionTrigger>Data</AccordionTrigger>
-          <AccordionContent>&nbsp;</AccordionContent>
+      <Accordion.Root type="single" defaultValue={'data'}>
+        <Accordion.Item value="data">
+          <Accordion.ItemHeader>Data</Accordion.ItemHeader>
+          <Accordion.ItemContent>&nbsp;</Accordion.ItemContent>
         </Accordion.Item>
       </Accordion.Root>
     );
 
   return (
     <>
-      <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['data', 'basic']}>
+      <Accordion.Root type="multiple" defaultValue={['data', 'basic']}>
         {$d.selectionState.elements.length === 1 && (
-          <Accordion.Item className="cmp-accordion__item" value="basic">
-            <AccordionTrigger>Name</AccordionTrigger>
-            <AccordionContent>
+          <Accordion.Item value="basic">
+            <Accordion.ItemHeader>Name</Accordion.ItemHeader>
+            <Accordion.ItemContent>
               <div className={'cmp-labeled-table'}>
                 <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
                 <div className={'cmp-labeled-table__value cmp-text-input'}>
                   <input type={'text'} value={name.val} onChange={e => name.set(e.target.value)} />
                 </div>
               </div>
-            </AccordionContent>
+            </Accordion.ItemContent>
           </Accordion.Item>
         )}
-        <Accordion.Item className="cmp-accordion__item" value="data">
-          <AccordionTrigger>
+        <Accordion.Item value="data">
+          <Accordion.ItemHeader>
             Data
-            <div className={'cmp-accordion__header_btn'}>
+            <Accordion.ItemHeaderButtons>
               <Popover.Root>
                 <Popover.Trigger asChild>
                   <a href={'#'}>
@@ -276,9 +274,9 @@ export const ObjectDataToolWindow = () => {
                   </Popover.Content>
                 </Popover.Portal>
               </Popover.Root>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
+            </Accordion.ItemHeaderButtons>
+          </Accordion.ItemHeader>
+          <Accordion.ItemContent>
             {/*<div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Type:</div>
             <div className={'cmp-labeled-table__value'}>
@@ -357,7 +355,7 @@ export const ObjectDataToolWindow = () => {
               </Collapsible>
               <br />
             </div>
-          </AccordionContent>
+          </Accordion.ItemContent>
         </Accordion.Item>
       </Accordion.Root>
 

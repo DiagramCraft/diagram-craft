@@ -1,6 +1,3 @@
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import { AccordionContent } from '../../components/AccordionContent';
-import * as Accordion from '@radix-ui/react-accordion';
 import { parseAndQuery } from '@diagram-craft/query/query';
 import { useDiagram } from '../../context/DiagramContext';
 import { useRef, useState } from 'react';
@@ -16,6 +13,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useRedraw } from '../../hooks/useRedraw';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 const replacer = (key: string, value: unknown) => {
   if (key === 'parent') return value ? '...' : undefined;
@@ -105,10 +103,10 @@ export const QueryToolWindow = () => {
   };
 
   return (
-    <Accordion.Root className="cmp-accordion" type="multiple" defaultValue={['query', 'response']}>
-      <Accordion.Item className="cmp-accordion__item cmp-accordion__item" value="query">
-        <AccordionTrigger>Query</AccordionTrigger>
-        <AccordionContent>
+    <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
+      <Accordion.Item value="query">
+        <Accordion.ItemHeader>Query</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           <div
             style={{
               marginBottom: '0.5rem',
@@ -240,12 +238,12 @@ export const QueryToolWindow = () => {
               Run
             </button>
           </div>
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
 
-      <Accordion.Item className="cmp-accordion__item cmp-accordion__item--fill" value="response">
-        <AccordionTrigger>Response</AccordionTrigger>
-        <AccordionContent>
+      <Accordion.Item value="response" fill={true}>
+        <Accordion.ItemHeader>Response</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           <div className={'cmp-query-response'}>
             {!!error && <div className={'cmp-text-input__error'}>{error.toString()}</div>}
             {res &&
@@ -295,7 +293,7 @@ export const QueryToolWindow = () => {
                 </div>
               ))}
           </div>
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>
   );

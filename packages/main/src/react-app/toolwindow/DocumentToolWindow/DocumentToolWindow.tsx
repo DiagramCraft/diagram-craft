@@ -1,9 +1,7 @@
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import { AccordionContent } from '../../components/AccordionContent';
-import * as Accordion from '@radix-ui/react-accordion';
 import * as Tree from '../../components/Tree';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 const DiagramLabel = (props: { diagram: Diagram } & Pick<Props, 'onValueChange'>) => {
   return (
@@ -42,15 +40,10 @@ const DiagramTreeNode = (props: { diagram: Diagram } & Pick<Props, 'value' | 'on
 
 export const DocumentToolWindow = (props: Props) => {
   return (
-    <Accordion.Root
-      className="cmp-accordion"
-      disabled={true}
-      type="multiple"
-      defaultValue={['document']}
-    >
-      <Accordion.Item className="cmp-accordion__item" value="document">
-        <AccordionTrigger>Document structure</AccordionTrigger>
-        <AccordionContent>
+    <Accordion.Root disabled={true} type="multiple" defaultValue={['document']}>
+      <Accordion.Item value="document">
+        <Accordion.ItemHeader>Document structure</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           <div style={{ margin: '-10px' }}>
             <Tree.Root>
               {props.document.diagrams.map(node => (
@@ -72,7 +65,7 @@ export const DocumentToolWindow = (props: Props) => {
               ))}
             </Tree.Root>
           </div>
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>
   );

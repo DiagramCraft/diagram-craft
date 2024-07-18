@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
-import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from '../../components/AccordionTrigger';
-import { AccordionContent } from '../../components/AccordionContent';
 import { LayerList } from './LayerList';
 import { useDiagram } from '../../context/DiagramContext';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 export const LayerToolWindow = () => {
   const diagram = useDiagram();
@@ -25,12 +23,12 @@ export const LayerToolWindow = () => {
   }, [diagram, redraw]);
 
   return (
-    <Accordion.Root className="cmp-accordion" disabled={true} type="single" defaultValue={'layers'}>
-      <Accordion.Item className="cmp-accordion__item cmp-accordion__item--fill" value="layers">
-        <AccordionTrigger>Layers</AccordionTrigger>
-        <AccordionContent>
+    <Accordion.Root disabled={true} type="single" defaultValue={'layers'}>
+      <Accordion.Item value="layers" fill={true}>
+        <Accordion.ItemHeader>Layers</Accordion.ItemHeader>
+        <Accordion.ItemContent>
           <LayerList />
-        </AccordionContent>
+        </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>
   );

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useEventListener } from '../../hooks/useEventListener';
-import * as Accordion from '@radix-ui/react-accordion';
 import { EdgeLinePanel } from './EdgeLinePanel';
 import { NodeFillPanel } from './NodeFillPanel';
 import { ElementTextPanel } from './ElementTextPanel';
@@ -23,6 +22,7 @@ import { NodeTableStrokePanel } from './NodeTableStrokePanel';
 import { NodeTableDimensionsPanel } from './NodeTableDimensionsPanel';
 import { NodeTableCellDimensionsPanel } from './NodeTableCellDimensionsPanel';
 import { NodeAdvancedPropertiesPanel } from '../ObjectInfoToolWindow/NodeAdvancedPropertiesPanel';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -127,11 +127,7 @@ export const ObjectToolWindow = () => {
 
           {(type === 'table' || type === 'table-cell') && (
             <Tabs.Content value={'table'}>
-              <Accordion.Root
-                className="cmp-accordion"
-                type="multiple"
-                defaultValue={['custom', 'dimensions', 'stroke']}
-              >
+              <Accordion.Root type="multiple" defaultValue={['custom', 'dimensions', 'stroke']}>
                 <NodeTablePropertiesPanel />
                 <NodeTableDimensionsPanel />
                 <NodeTableStrokePanel />
@@ -140,11 +136,7 @@ export const ObjectToolWindow = () => {
           )}
           {type === 'table-cell' && (
             <Tabs.Content value={'cell'}>
-              <Accordion.Root
-                className="cmp-accordion"
-                type="multiple"
-                defaultValue={['fill', 'dimensions']}
-              >
+              <Accordion.Root type="multiple" defaultValue={['fill', 'dimensions']}>
                 <NodeFillPanel />
                 <NodeTableCellDimensionsPanel />
               </Accordion.Root>
@@ -153,11 +145,7 @@ export const ObjectToolWindow = () => {
 
           {type === 'diagram' && (
             <Tabs.Content value={'diagram'}>
-              <Accordion.Root
-                className="cmp-accordion"
-                type="multiple"
-                defaultValue={['grid', 'canvas', 'snap']}
-              >
+              <Accordion.Root type="multiple" defaultValue={['grid', 'canvas', 'snap']}>
                 <CanvasPanel />
                 <CanvasGridPanel />
                 <CanvasSnapPanel />
@@ -166,30 +154,19 @@ export const ObjectToolWindow = () => {
           )}
 
           <Tabs.Content value={'arrange'}>
-            <Accordion.Root
-              className="cmp-accordion"
-              disabled={true}
-              type="multiple"
-              defaultValue={['transform']}
-            >
+            <Accordion.Root disabled={true} type="multiple" defaultValue={['transform']}>
               <ElementTransformPanel />
             </Accordion.Root>
           </Tabs.Content>
 
           <Tabs.Content value={'text'}>
-            <Accordion.Root
-              className="cmp-accordion"
-              type="multiple"
-              disabled={true}
-              defaultValue={['text', 'label-node']}
-            >
+            <Accordion.Root type="multiple" disabled={true} defaultValue={['text', 'label-node']}>
               <ElementTextPanel />
             </Accordion.Root>
           </Tabs.Content>
 
           <Tabs.Content value={'style'}>
             <Accordion.Root
-              className="cmp-accordion"
               type="multiple"
               defaultValue={['stylesheet', 'fill', 'stroke', 'line', 'custom', 'label-node']}
             >
@@ -220,12 +197,7 @@ export const ObjectToolWindow = () => {
           </Tabs.Content>
 
           <Tabs.Content value={'advanced'}>
-            <Accordion.Root
-              className="cmp-accordion"
-              type="multiple"
-              disabled={true}
-              defaultValue={['advanced-props']}
-            >
+            <Accordion.Root type="multiple" disabled={true} defaultValue={['advanced-props']}>
               <NodeAdvancedPropertiesPanel />
             </Accordion.Root>
           </Tabs.Content>

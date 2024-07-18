@@ -1,7 +1,5 @@
-import * as Accordion from '@radix-ui/react-accordion';
-import { AccordionTrigger } from '../components/AccordionTrigger';
-import { AccordionContent } from '../components/AccordionContent';
 import React, { useRef } from 'react';
+import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 export const ToolWindowPanel = (props: Props) => {
   const ref = useRef<HTMLButtonElement>(null);
@@ -32,8 +30,8 @@ export const ToolWindowPanel = (props: Props) => {
     );
   } else {
     return (
-      <Accordion.Item className="cmp-accordion__item" value={props.id}>
-        <AccordionTrigger ref={ref}>
+      <Accordion.Item value={props.id}>
+        <Accordion.ItemHeader ref={ref}>
           <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
             {props.hasCheckbox && (
               <input
@@ -52,8 +50,8 @@ export const ToolWindowPanel = (props: Props) => {
             )}
             <span>{props.title}</span>
           </div>
-        </AccordionTrigger>
-        <AccordionContent>{props.children}</AccordionContent>
+        </Accordion.ItemHeader>
+        <Accordion.ItemContent>{props.children}</Accordion.ItemContent>
       </Accordion.Item>
     );
   }
