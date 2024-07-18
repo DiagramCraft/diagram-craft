@@ -1,10 +1,10 @@
 import { TbPaint } from 'react-icons/tb';
 import { NodeFillPanel } from './NodeFillPanel';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 // TODO: Make this disable if selection includes edges
 export const NodeFillToolbarButton = () => {
@@ -18,7 +18,7 @@ export const NodeFillToolbarButton = () => {
   return (
     <Popover.Root>
       <Popover.Trigger>
-        <ReactToolbar.Button className="cmp-toolbar__button" disabled={disabled}>
+        <Toolbar.Button disabled={disabled}>
           <TbPaint />
           <div
             style={{
@@ -31,7 +31,7 @@ export const NodeFillToolbarButton = () => {
               borderRadius: '3px'
             }}
           ></div>
-        </ReactToolbar.Button>
+        </Toolbar.Button>
       </Popover.Trigger>
       <Popover.Content sideOffset={5}>
         <NodeFillPanel mode={'panel'} />

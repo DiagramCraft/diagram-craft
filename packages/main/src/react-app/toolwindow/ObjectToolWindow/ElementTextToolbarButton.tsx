@@ -1,10 +1,10 @@
 import { TbTextSize } from 'react-icons/tb';
 import { useNodeProperty } from '../../hooks/useProperty';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ElementTextPanel } from './ElementTextPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const ElementTextToolbarButton = () => {
   const diagram = useDiagram();
@@ -14,7 +14,7 @@ export const ElementTextToolbarButton = () => {
   return (
     <Popover.Root>
       <Popover.Trigger>
-        <ReactToolbar.Button className="cmp-toolbar__button">
+        <Toolbar.Button>
           <TbTextSize />
           <div
             style={{
@@ -27,7 +27,7 @@ export const ElementTextToolbarButton = () => {
               borderRadius: '3px'
             }}
           ></div>
-        </ReactToolbar.Button>
+        </Toolbar.Button>
       </Popover.Trigger>
       <Popover.Content sideOffset={5}>
         <ElementTextPanel mode={'panel'} />

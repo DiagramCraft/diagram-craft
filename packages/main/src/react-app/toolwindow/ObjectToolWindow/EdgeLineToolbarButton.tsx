@@ -1,4 +1,3 @@
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { EdgeLinePanel } from './EdgeLinePanel';
 import { ArrowPreview } from './components/ArrowPreview';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
@@ -6,6 +5,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { useEdgeDefaults } from '../../hooks/useDefaults';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const EdgeLineToolbarButton = () => {
   const diagram = useDiagram();
@@ -18,7 +18,7 @@ export const EdgeLineToolbarButton = () => {
   return (
     <Popover.Root>
       <Popover.Trigger>
-        <ReactToolbar.Button className="cmp-toolbar__button">
+        <Toolbar.Button>
           <div
             style={{
               marginLeft: '5px',
@@ -41,7 +41,7 @@ export const EdgeLineToolbarButton = () => {
               end={ARROW_SHAPES[arrowEnd.val]?.(0.75)}
             />
           </div>
-        </ReactToolbar.Button>
+        </Toolbar.Button>
       </Popover.Trigger>
       <Popover.Content sideOffset={5}>
         <EdgeLinePanel mode={'panel'} />

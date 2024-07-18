@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { LayerToolWindow } from './react-app/toolwindow/LayerToolWindow/LayerToolWindow';
 import { DocumentSelector } from './react-app/DocumentSelector';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import {
   TbCheck,
   TbDatabaseEdit,
@@ -30,7 +30,7 @@ import {
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
-import { Toolbar } from './react-app/toolbar/Toolbar';
+import { ContextSpecificToolbar } from './react-app/toolbar/ContextSpecificToolbar';
 import { SideBar, SideBarPage } from './react-app/SideBar';
 import { PickerToolWindow } from './react-app/toolwindow/PickerToolWindow/PickerToolWindow';
 import { ObjectToolWindow } from './react-app/toolwindow/ObjectToolWindow/ObjectToolWindow';
@@ -105,16 +105,13 @@ const DarkModeToggleButton = () => {
   const { actionMap } = useActions();
   useEventListener(actionMap['TOGGLE_DARK_MODE']!, 'actionchanged', redraw);
   return (
-    <button
-      className={'cmp-toolbar__button'}
-      onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}
-    >
+    <Toolbar.Button onClick={() => actionMap['TOGGLE_DARK_MODE']?.execute()}>
       {actionMap['TOGGLE_DARK_MODE']?.getState({}) ? (
         <TbSun size={'17.5px'} />
       ) : (
         <TbMoon size={'17.5px'} />
       )}
-    </button>
+    </Toolbar.Button>
   );
 };
 
@@ -236,13 +233,15 @@ export const App = (props: {
               </div>
 
               <div className={'_tools'}>
-                <ReactToolbar.Root className="cmp-toolbar" data-size={'large'}>
+                <Toolbar.Root size={'large'}>
                   <ActionToggleButton action={'TOOL_MOVE'}>
                     <TbPointer size={'17.5px'} />
                   </ActionToggleButton>
-                  <button className={'cmp-toolbar__toggle-item'}>
-                    <TbPentagonPlus size={'17.5px'} />
-                  </button>
+                  <Toolbar.ToggleGroup type={'single'}>
+                    <Toolbar.ToggleItem value={'a'}>
+                      <TbPentagonPlus size={'17.5px'} />
+                    </Toolbar.ToggleItem>
+                  </Toolbar.ToggleGroup>
                   <ActionToggleButton action={'TOOL_EDGE'}>
                     <TbLine size={'17.5px'} />
                   </ActionToggleButton>
@@ -258,7 +257,7 @@ export const App = (props: {
                   <ActionToggleButton action={'TOOL_NODE'}>
                     <TbLocation size={'17.5px'} transform={'scale(-1,1)'} />
                   </ActionToggleButton>
-                </ReactToolbar.Root>
+                </Toolbar.Root>
               </div>
 
               <div className={'_document'}>
@@ -301,33 +300,25 @@ export const App = (props: {
               </div>
 
               <div className={'_extra-tools'}>
-                <div className={'cmp-toolbar'}>
-                  <ReactToolbar.Root>
-                    <ActionToggleButton action={'TOGGLE_HELP'}>
-                      <TbHelpSquare size={'17.5px'} />
-                    </ActionToggleButton>
-                  </ReactToolbar.Root>
+                <Toolbar.Root>
+                  <ActionToggleButton action={'TOGGLE_HELP'}>
+                    <TbHelpSquare size={'17.5px'} />
+                  </ActionToggleButton>
 
-                  <button
-                    className={'cmp-toolbar__button'}
-                    onClick={() => actionMap['ZOOM_OUT']?.execute()}
-                  >
+                  <Toolbar.Button onClick={() => actionMap['ZOOM_OUT']?.execute()}>
                     <TbZoomOut size={'17.5px'} />
-                  </button>
-                  <button
-                    className={'cmp-toolbar__button'}
-                    onClick={() => actionMap['ZOOM_IN']?.execute()}
-                  >
+                  </Toolbar.Button>
+                  <Toolbar.Button onClick={() => actionMap['ZOOM_IN']?.execute()}>
                     <TbZoomIn size={'17.5px'} />
-                  </button>
+                  </Toolbar.Button>
 
                   <DarkModeToggleButton />
-                </div>
+                </Toolbar.Root>
               </div>
             </div>
             <div id="window-area">
               <div id="toolbar">
-                <Toolbar />
+                <ContextSpecificToolbar />
               </div>
 
               <SideBar side={'left'}>

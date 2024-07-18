@@ -1,13 +1,12 @@
-import * as ReactToggleGroup from '@radix-ui/react-toggle-group';
+import * as RadixToggleGroup from '@radix-ui/react-toggle-group';
 import React from 'react';
 import { extractDataAttributes } from './utils';
 import styles from './ToggleButtonGroup.module.css';
 
-// TODO: Change to use radix ToggleGroup
 const Root = (props: RootProps) => {
   return (
     // @ts-ignore
-    <ReactToggleGroup.Root
+    <RadixToggleGroup.Root
       className={styles.cmpToggleButtonGroup}
       aria-label={props['aria-label']}
       type={props.type}
@@ -17,7 +16,7 @@ const Root = (props: RootProps) => {
       {...extractDataAttributes(props)}
     >
       {props.children}
-    </ReactToggleGroup.Root>
+    </RadixToggleGroup.Root>
   );
 };
 
@@ -33,14 +32,14 @@ type RootProps = {
 
 const Item = (props: ItemProps) => {
   return (
-    <ReactToggleGroup.Item
+    <RadixToggleGroup.Item
       className={styles.cmpToggleButtonGroupItem}
       value={props.value}
       disabled={props.disabled}
       {...extractDataAttributes(props)}
     >
       {props.children}
-    </ReactToggleGroup.Item>
+    </RadixToggleGroup.Item>
   );
 };
 

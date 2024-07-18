@@ -3,7 +3,8 @@ import { ElementCustomPropertiesPanel } from './ElementCustomPropertiesPanel';
 import { useEffect, useState } from 'react';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useDiagram } from '../../context/DiagramContext';
-import { ToolbarButtonWithPopover } from '../../components/ToolbarButtonWithPopover';
+import { Popover } from '@diagram-craft/app-components/Popover';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const ElementCustomPropertiesToolbarButton = () => {
   const diagram = useDiagram();
@@ -39,8 +40,15 @@ export const ElementCustomPropertiesToolbarButton = () => {
   }
 
   return (
-    <ToolbarButtonWithPopover icon={TbSettings} disabled={disabled}>
-      <ElementCustomPropertiesPanel mode={'panel'} />
-    </ToolbarButtonWithPopover>
+    <Popover.Root>
+      <Popover.Trigger>
+        <Toolbar.Button disabled={disabled}>
+          <TbSettings />
+        </Toolbar.Button>
+      </Popover.Trigger>
+      <Popover.Content sideOffset={5}>
+        <ElementCustomPropertiesPanel mode={'panel'} />
+      </Popover.Content>
+    </Popover.Root>
   );
 };

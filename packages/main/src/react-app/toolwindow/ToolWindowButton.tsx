@@ -1,14 +1,15 @@
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { IconType } from 'react-icons/lib/cjs/iconBase';
 
 export const ToolWindowButton = (props: Props) => {
   return (
-    <button
-      className={'cmp-toolbar__toggle-item'}
+    <Toolbar.ToggleItem
+      value={'tool'}
       onClick={props.onClick}
       data-state={props.isSelected ? 'on' : 'off'}
     >
       <props.icon size={'16px'} />
-    </button>
+    </Toolbar.ToggleItem>
   );
 };
 

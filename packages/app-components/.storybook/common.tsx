@@ -8,7 +8,7 @@ export const themeDecorator = () => {
         <div
           className={'dark-theme'}
           style={{
-            padding: '2rem',
+            padding: '1rem',
             backgroundColor: 'var(--primary-bg)',
             color: 'var(--primary-fg)'
           }}
@@ -20,7 +20,7 @@ export const themeDecorator = () => {
         <div
           className={'dark-theme'}
           style={{
-            padding: '2rem',
+            padding: '1rem',
             backgroundColor: 'var(--secondary-bg)',
             color: 'var(--secondary-fg)'
           }}
@@ -32,7 +32,7 @@ export const themeDecorator = () => {
         <div
           className={'light-theme'}
           style={{
-            padding: '2rem',
+            padding: '1rem',
             backgroundColor: 'var(--primary-bg)',
             color: 'var(--primary-fg)'
           }}
@@ -44,7 +44,7 @@ export const themeDecorator = () => {
         <div
           className={'light-theme'}
           style={{
-            padding: '2rem',
+            padding: '1rem',
             backgroundColor: 'var(--secondary-bg)',
             color: 'var(--secondary-fg)'
           }}

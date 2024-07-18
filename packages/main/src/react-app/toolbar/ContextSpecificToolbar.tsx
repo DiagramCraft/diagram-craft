@@ -17,7 +17,6 @@ import {
   TbStackPush,
   TbUnderline
 } from 'react-icons/tb';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ActionToolbarButton } from './ActionToolbarButton';
 import { useEventListener } from '../hooks/useEventListener';
 import { useCallback, useEffect, useState } from 'react';
@@ -34,8 +33,9 @@ import { ElementShadowToolbarButton } from '../toolwindow/ObjectToolWindow/Eleme
 import { ElementCustomPropertiesToolbarButton } from '../toolwindow/ObjectToolWindow/ElementCustomPropertiesToolbarButton';
 import { CanvasGridToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGridToolbarButton';
 import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSnapToolbarButton';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
-export const Toolbar = () => {
+export const ContextSpecificToolbar = () => {
   const diagram = useDiagram();
 
   const [selectionType, setSelectionType] = useState<SelectionType | undefined>(undefined);
@@ -63,7 +63,7 @@ export const Toolbar = () => {
   const isTextSelection = nodeType === 'text';
 
   return (
-    <ReactToolbar.Root className="cmp-toolbar" aria-label="Formatting options">
+    <Toolbar.Root>
       {isTextSelection && (
         <>
           <ElementTextFontToolbarButton />
@@ -107,9 +107,7 @@ export const Toolbar = () => {
         </>
       )}
 
-      {(isNodeSelection || isMixedSelection || isEdgeSelection) && (
-        <ReactToolbar.Separator className="cmp-toolbar__separator" />
-      )}
+      {(isNodeSelection || isMixedSelection || isEdgeSelection) && <Toolbar.Separator />}
 
       {selectionType !== 'empty' && selectionType !== undefined && (
         <>
@@ -138,7 +136,7 @@ export const Toolbar = () => {
             <TbLayoutDistributeVertical />
           </ActionToolbarButton>
 
-          <ReactToolbar.Separator className="cmp-toolbar__separator" />
+          <Toolbar.Separator />
 
           <ActionToolbarButton action={'SELECTION_RESTACK_BOTTOM'}>
             <TbStackBack />
@@ -153,7 +151,7 @@ export const Toolbar = () => {
             <TbStackPush />
           </ActionToolbarButton>
 
-          <ReactToolbar.Separator className="cmp-toolbar__separator" />
+          <Toolbar.Separator />
         </>
       )}
 
@@ -164,6 +162,6 @@ export const Toolbar = () => {
       <ActionToggleButton action={'TOGGLE_RULER'}>
         <TbRuler />
       </ActionToggleButton>
-    </ReactToolbar.Root>
+    </Toolbar.Root>
   );
 };

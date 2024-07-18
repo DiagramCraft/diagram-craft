@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import * as Toolbar from '@radix-ui/react-toolbar';
 import { useEventListener } from '../hooks/useEventListener';
 import { useActions } from '../context/ActionsContext';
 import { ActionEvents } from '@diagram-craft/canvas/action';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const ActionToolbarButton = (props: Props) => {
   const { actionMap } = useActions();
@@ -29,7 +29,6 @@ export const ActionToolbarButton = (props: Props) => {
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
           <Toolbar.Button
-            className="cmp-toolbar__button"
             disabled={!enabled}
             onClick={() => {
               actionMap[props.action]!.execute({});

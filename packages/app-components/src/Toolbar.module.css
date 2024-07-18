@@ -1,0 +1,120 @@
+.cmp-toolbar {
+  display: flex;
+  padding: 4px 0 0 2px;
+  width: 100%;
+  max-width: 100%;
+  min-width: min-content;
+
+
+  .cmp-toolbar__button {
+    flex: 0 0 auto;
+    color: var(--slate-11);
+    background-color: transparent;
+    height: 25px;
+    padding: 0 5px;
+    border-radius: 4px;
+    display: inline-flex;
+    font-size: 11px;
+    line-height: 1;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2px;
+
+    /* Note, this is a bit of a hack to make some icon details red */
+    .svg__remove {
+      path:nth-child(3), path:nth-child(4) {
+        stroke: #BB0000;
+      }
+    }
+    .svg__insert {
+      path:nth-child(3), path:nth-child(4) {
+        stroke: #00BB00;
+      }
+    }
+
+    &:disabled > svg > path:nth-child(n + 2) {
+      stroke: currentColor !important;
+    }
+  }
+
+  .cmp-toolbar__button[data-state='on'] {
+    color: var(--blue-11);
+  }
+
+
+  .cmp-toolbar__button--more {
+    width: 10px;
+    margin-left: -2px;
+    margin-right: 2px;
+    border: none;
+    padding: 0;
+    & > svg {
+      width: 80%;
+      height: 80%;
+    }
+  }
+
+  .cmp-toolbar__button:hover,
+  .cmp-toolbar__button[data-hover='true'] {
+    background-color: var(--blue-3);
+    color: var(--blue-11);
+  }
+
+  .cmp-toolbar__button:focus,
+  .cmp-toolbar__button[data-focus="true"] {
+    position: relative;
+    box-shadow: 0 0 0 2px var(--blue-7);
+    outline: none;
+  }
+
+  .cmp-toolbar__button:disabled {
+    color: var(--slate-8);
+    /* TODO: Is there a better way to disable hover when in disabled state */
+    pointer-events: none;
+  }
+
+  .cmp-toolbar__button:first-child {
+    margin-left: 0;
+  }
+
+  .cmp-toolbar__separator {
+    width: 1px;
+    background-color: var(--slate-6);
+    margin: 0 10px;
+  }
+
+  > div[role='group'] {
+    display: contents;
+  }
+
+  /* Variants */
+
+  &[data-direction='vertical'] {
+    flex-direction: column;
+    padding: 0 !important;
+
+
+    .cmp-toolbar__button {
+      width: 25px;
+      height: 25px;
+      flex: 0 0 auto;
+      align-self: center;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+  }
+
+  &:not([data-size='large']) {
+    overflow: hidden;
+    flex-wrap: wrap;
+  }
+
+  &[data-size='large'] {
+    overflow: auto;
+    flex-wrap: nowrap;
+    .cmp-toolbar__button {
+      padding: 15px 10px;
+      margin-right: 2px;
+    }
+  }
+}

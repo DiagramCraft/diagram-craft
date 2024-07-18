@@ -1,10 +1,10 @@
 import { TbBorderStyle2 } from 'react-icons/tb';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { NodeStrokePanel } from './NodeStrokePanel';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const NodeStrokeToolbarButton = () => {
   const diagram = useDiagram();
@@ -14,7 +14,7 @@ export const NodeStrokeToolbarButton = () => {
   return (
     <Popover.Root>
       <Popover.Trigger>
-        <ReactToolbar.Button className="cmp-toolbar__button">
+        <Toolbar.Button>
           <TbBorderStyle2 />
           <div
             style={{
@@ -27,7 +27,7 @@ export const NodeStrokeToolbarButton = () => {
               borderRadius: '3px'
             }}
           ></div>
-        </ReactToolbar.Button>
+        </Toolbar.Button>
       </Popover.Trigger>
       <Popover.Content sideOffset={5}>
         <NodeStrokePanel mode={'panel'} />

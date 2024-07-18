@@ -22,9 +22,9 @@ import {
   TbRowInsertTop,
   TbRowRemove
 } from 'react-icons/tb';
-import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ActionToolbarButton } from '../../toolbar/ActionToolbarButton';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -46,7 +46,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
-      <ReactToolbar.Root className="cmp-toolbar">
+      <Toolbar.Root>
         <ActionToolbarButton action={'TABLE_COLUMN_INSERT_BEFORE'}>
           <TbColumnInsertLeft className={'svg__insert'} />
         </ActionToolbarButton>
@@ -67,7 +67,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
           <TbRowRemove className={'svg__remove'} />
         </ActionToolbarButton>
 
-        <ReactToolbar.Separator className={'cmp-toolbar__separator'} />
+        <Toolbar.Separator />
 
         <ActionToolbarButton action={'TABLE_COLUMN_DISTRIBUTE'}>
           <TbColumns2 />
@@ -75,7 +75,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
         <ActionToolbarButton action={'TABLE_ROW_DISTRIBUTE'}>
           <TbLayoutRows />
         </ActionToolbarButton>
-      </ReactToolbar.Root>
+      </Toolbar.Root>
 
       <div className={'cmp-labeled-table'}>
         {Object.entries(customProperties).map(([key, value]) => {
