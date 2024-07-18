@@ -55,7 +55,7 @@ const Item = (props: ItemProps) => {
       {...extractDataAttributes(props)}
     >
       <ReactSelect.ItemText>{props.children}</ReactSelect.ItemText>
-      <ReactSelect.ItemIndicator className={styles.cmpSelectContentIndicator}>
+      <ReactSelect.ItemIndicator className={styles.cmpSelectContentItemIndicator}>
         <TbCheck />
       </ReactSelect.ItemIndicator>
     </ReactSelect.Item>
