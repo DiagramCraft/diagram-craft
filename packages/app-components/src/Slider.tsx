@@ -5,9 +5,9 @@ import { extractDataAttributes } from './utils';
 
 export const Slider = (props: Props) => {
   return (
-    <div className={styles.root}>
+    <div className={styles.cmpSlider}>
       <ReactSlider.Root
-        className={styles.slider}
+        className={styles.cmpSliderSlider}
         defaultValue={[props.value]}
         value={[props.value]}
         max={props.max ?? 100}
@@ -15,11 +15,11 @@ export const Slider = (props: Props) => {
         disabled={props.disabled}
         onValueChange={v => props.onChange(v[0])}
       >
-        <ReactSlider.Track className={styles.track}>
-          <ReactSlider.Range className={styles.range} />
+        <ReactSlider.Track className={styles.cmpSliderTrack}>
+          <ReactSlider.Range className={styles.cmpSliderRange} />
         </ReactSlider.Track>
         <ReactSlider.Thumb
-          className={styles.thumb}
+          className={styles.cmpSliderThumb}
           {...extractDataAttributes(props, ['thumb-hover', 'thumb-focus'])}
         />
       </ReactSlider.Root>

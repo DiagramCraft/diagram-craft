@@ -4,7 +4,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
   CustomPropertyDefinition,
@@ -123,15 +123,20 @@ export const NodeTablePropertiesPanel = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <Select
+                  <Select.Root
                     onValueChange={v => {
                       const uow = new UnitOfWork(diagram, true);
                       value.onChange(v, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
                     value={value.value}
-                    values={value.options.map(o => ({ value: o.value, label: o.label }))}
-                  />
+                  >
+                    {value.options.map(o => (
+                      <Select.Item key={o.value} value={o.value}>
+                        {o.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
                 </div>
               </React.Fragment>
             );

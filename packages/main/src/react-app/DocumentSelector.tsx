@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Select } from './components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import { DiagramRef } from '../App';
 import { urlToName } from '@diagram-craft/utils/url';
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
@@ -22,17 +22,20 @@ export const DocumentSelector = (props: Props) => {
   diagrams = diagrams.filter(d => d.url === selectedDiagram || !d.isTemp);
 
   return (
-    <Select
+    <Select.Root
       onValueChange={v => {
         setSelectedDiagram(props.diagrams[Number(v)].url);
         loadDocument(Number(v));
       }}
       value={diagrams.findIndex(d => d.url === selectedDiagram).toString()}
-      values={diagrams.map((d, idx) => ({
-        value: idx.toString(),
-        label: d.name ?? urlToName(d.url) /* TODO: Use url suffix here */
-      }))}
-    />
+    >
+      {/* TODO: Use url suffix here */}
+      {diagrams.map((d, idx) => (
+        <Select.Item key={idx.toString()} value={idx.toString()}>
+          {d.name ?? urlToName(d.url)}
+        </Select.Item>
+      ))}
+    </Select.Root>
   );
 };
 

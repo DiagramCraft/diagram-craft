@@ -10,3 +10,5 @@ export const extractDataAttributes = (
 
     return acc;
   }, {});
+
+export type DataAttributes = { [dataAttibute: `data-${string}`]: string };

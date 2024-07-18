@@ -10,7 +10,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { PopoverButton } from '../../components/PopoverButton';
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import { useTableProperty } from '../../hooks/useTable';
 import { DashSelector } from './components/DashSelector';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
@@ -129,33 +129,31 @@ export const NodeTableStrokePanel = (props: Props) => {
 
               <div className={'cmp-labeled-table__label'}>Line cap:</div>
               <div className={'cmp-labeled-table__value util-hstack'}>
-                <Select
+                <Select.Root
                   onValueChange={v => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     lineCap.set(v as any);
                   }}
                   value={lineCap.val}
-                  values={[
-                    { label: 'Butt', value: 'butt' },
-                    { label: 'Round', value: 'round' },
-                    { label: 'Square', value: 'square' }
-                  ]}
-                />
+                >
+                  <Select.Item value={'butt'}>Butt</Select.Item>
+                  <Select.Item value={'round'}>Round</Select.Item>
+                  <Select.Item value={'square'}>Square</Select.Item>
+                </Select.Root>
               </div>
               <div className={'cmp-labeled-table__label'}>Line join:</div>
               <div className={'cmp-labeled-table__value util-hstack'}>
-                <Select
+                <Select.Root
                   onValueChange={v => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     lineJoin.set(v as any);
                   }}
                   value={lineJoin.val}
-                  values={[
-                    { label: 'Miter', value: 'miter' },
-                    { label: 'Round', value: 'round' },
-                    { label: 'Bevel', value: 'bevel' }
-                  ]}
-                />
+                >
+                  <Select.Item value={'miter'}>Miter</Select.Item>
+                  <Select.Item value={'round'}>Round</Select.Item>
+                  <Select.Item value={'bevel'}>Bevel</Select.Item>
+                </Select.Root>
 
                 {lineJoin.val === 'miter' && (
                   <NumberInput

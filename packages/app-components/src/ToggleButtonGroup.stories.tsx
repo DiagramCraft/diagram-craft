@@ -24,13 +24,13 @@ export const Primary: Story = {
     value: 'bold',
     onValueChange: fn(),
     children: [
-      <ToggleButtonGroup.Item value={'bold'}>
+      <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'italic'}>
+      <ToggleButtonGroup.Item key={2} value={'italic'}>
         <TbItalic />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'underline'}>
+      <ToggleButtonGroup.Item key={3} value={'underline'}>
         <TbUnderline />
       </ToggleButtonGroup.Item>
     ]
@@ -43,13 +43,13 @@ export const Multiple: Story = {
     value: ['bold', 'italic'],
     onValueChange: fn(),
     children: [
-      <ToggleButtonGroup.Item value={'bold'}>
+      <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'italic'}>
+      <ToggleButtonGroup.Item key={2} value={'italic'}>
         <TbItalic />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'underline'}>
+      <ToggleButtonGroup.Item key={3} value={'underline'}>
         <TbUnderline />
       </ToggleButtonGroup.Item>
     ]
@@ -62,13 +62,13 @@ export const Focus: Story = {
     value: 'bold',
     onValueChange: fn(),
     children: [
-      <ToggleButtonGroup.Item value={'bold'}>
+      <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'italic'} data-focus={'true'}>
+      <ToggleButtonGroup.Item key={2} value={'italic'} data-focus={'true'}>
         <TbItalic />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'underline'}>
+      <ToggleButtonGroup.Item key={3} value={'underline'}>
         <TbUnderline />
       </ToggleButtonGroup.Item>
     ]
@@ -81,13 +81,13 @@ export const Hover: Story = {
     value: 'bold',
     onValueChange: fn(),
     children: [
-      <ToggleButtonGroup.Item value={'bold'}>
+      <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'italic'} data-hover={'true'}>
+      <ToggleButtonGroup.Item key={2} value={'italic'} data-hover={'true'}>
         <TbItalic />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'underline'}>
+      <ToggleButtonGroup.Item key={3} value={'underline'}>
         <TbUnderline />
       </ToggleButtonGroup.Item>
     ]
@@ -100,13 +100,13 @@ export const Disabled: Story = {
     value: 'bold',
     onValueChange: fn(),
     children: [
-      <ToggleButtonGroup.Item value={'bold'}>
+      <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'italic'} disabled={true}>
+      <ToggleButtonGroup.Item key={2} value={'italic'} disabled={true}>
         <TbItalic />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'underline'}>
+      <ToggleButtonGroup.Item key={3} value={'underline'}>
         <TbUnderline />
       </ToggleButtonGroup.Item>
     ]
@@ -120,13 +120,13 @@ export const AllDisabled: Story = {
     disabled: true,
     onValueChange: fn(),
     children: [
-      <ToggleButtonGroup.Item value={'bold'}>
+      <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'italic'}>
+      <ToggleButtonGroup.Item key={2} value={'italic'}>
         <TbItalic />
       </ToggleButtonGroup.Item>,
-      <ToggleButtonGroup.Item value={'underline'}>
+      <ToggleButtonGroup.Item key={3} value={'underline'}>
         <TbUnderline />
       </ToggleButtonGroup.Item>
     ]

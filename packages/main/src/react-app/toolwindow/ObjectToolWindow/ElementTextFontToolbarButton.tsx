@@ -2,7 +2,7 @@ import { useConfiguration } from '../../context/ConfigurationContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 
 export const ElementTextFontToolbarButton = (_props: Props) => {
   const { fonts } = useConfiguration();
@@ -12,11 +12,13 @@ export const ElementTextFontToolbarButton = (_props: Props) => {
   const font = useNodeProperty($d, 'text.font', defaults.text.font);
 
   return (
-    <Select
-      value={font.val}
-      onValueChange={font.set}
-      values={Object.entries(fonts).map(([label, value]) => ({ label, value }))}
-    />
+    <Select.Root value={font.val} onValueChange={font.set}>
+      {Object.entries(fonts).map(([label, value]) => (
+        <Select.Item key={value} value={value}>
+          {label}
+        </Select.Item>
+      ))}
+    </Select.Root>
   );
 };
 

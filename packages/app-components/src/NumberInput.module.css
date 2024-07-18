@@ -1,4 +1,4 @@
-.wrapper {
+.cmp-number-input {
   border-radius: 4px;
   background-color: var(--secondary-bg);
   border: 1px solid var(--blue-6);
@@ -65,7 +65,7 @@
   }
 }
 
-.label {
+.cmp-number-input__label {
   font-size: 11px;
   margin-top: -1px;
   margin-right: 0.15rem;
@@ -74,7 +74,7 @@
   border-right: 1px solid var(--blue-6);
 }
 
-.btnUp {
+.cmp-number-input__btn-up {
   position: absolute;
   right: 0;
   top: 0;
@@ -89,7 +89,7 @@
   }
 }
 
-.btnDown {
+.cmp-number-input__btn_down {
   position: absolute;
   right: 0;
   bottom: 0;

@@ -18,7 +18,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Collapsible } from '../../components/Collapsible';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
@@ -63,15 +63,17 @@ export const ElementTextPanel = (props: Props) => {
             hasMultipleValues={fontSize.hasMultipleValues}
           />
           {/* TODO: Can we use Select here - need to support hasMultipleValues */}
-          <Select
+          <Select.Root
             value={font.val}
             hasMultipleValues={font.hasMultipleValues}
             onValueChange={font.set}
-            values={Object.entries(fonts).map(([label, value]) => ({
-              value,
-              label
-            }))}
-          />
+          >
+            {Object.entries(fonts).map(([label, value]) => (
+              <Select.Item key={value} value={value}>
+                {label}
+              </Select.Item>
+            ))}
+          </Select.Root>
         </div>
 
         <div></div>

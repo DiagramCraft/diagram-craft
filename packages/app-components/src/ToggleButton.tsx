@@ -11,12 +11,12 @@ export const ToggleButton = (props: Props) => {
       onValueChange={value => {
         props.onChange(value === 'true');
       }}
-      className={styles.root}
+      className={styles.cmpToggleButtonGroup}
       disabled={props.disabled}
       {...extractDataAttributes(props)}
     >
       <ReactToggleGroup.Item
-        className={styles.item}
+        className={styles.cmpToggleButtonGroupItem}
         value={'true'}
         {...extractDataAttributes(props)}
       >

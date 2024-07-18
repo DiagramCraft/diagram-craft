@@ -8,7 +8,7 @@ const Root = (props: RootProps) => {
   return (
     // @ts-ignore
     <ReactToggleGroup.Root
-      className={styles.root}
+      className={styles.cmpToggleButtonGroup}
       aria-label={props['aria-label']}
       type={props.type}
       value={props.value}
@@ -34,7 +34,7 @@ type RootProps = {
 const Item = (props: ItemProps) => {
   return (
     <ReactToggleGroup.Item
-      className={styles.item}
+      className={styles.cmpToggleButtonGroupItem}
       value={props.value}
       disabled={props.disabled}
       {...extractDataAttributes(props)}

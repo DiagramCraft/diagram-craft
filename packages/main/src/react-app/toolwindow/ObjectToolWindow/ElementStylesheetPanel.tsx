@@ -17,7 +17,7 @@ import { useElementProperty } from '../../hooks/useProperty';
 import { useState } from 'react';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
 import { StringInputDialog } from '../../components/StringInputDialog';
@@ -61,17 +61,19 @@ export const ElementStylesheetPanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Style:</div>
         <div className={'cmp-labeled-table__value util-hstack'}>
-          <Select
+          <Select.Root
             value={style.val}
-            values={styleList.map(e => ({
-              value: e.id,
-              label: isDirty && e.id === style.val ? `${e.name} ∗` : e.name
-            }))}
             hasMultipleValues={style.hasMultipleValues}
             onValueChange={v => {
               style.set(v);
             }}
-          />
+          >
+            {styleList.map(e => (
+              <Select.Item key={e.id} value={e.id}>
+                {isDirty && e.id === style.val ? `${e.name} ∗` : e.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button className={'cmp-button'}>

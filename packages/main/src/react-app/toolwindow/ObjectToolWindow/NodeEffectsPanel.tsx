@@ -6,7 +6,7 @@ import { useNodeProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Slider } from '@diagram-craft/app-components/Slider';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 
 export const NodeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();
@@ -113,17 +113,16 @@ export const NodeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}></div>
           <div className={'cmp-labeled-table__value'}>
-            <Select
+            <Select.Root
               onValueChange={v => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 sketchFillType.set(v as any);
               }}
               value={sketchFillType.val}
-              values={[
-                { label: 'Solid', value: 'fill' },
-                { label: 'Hachure', value: 'hachure' }
-              ]}
-            />
+            >
+              <Select.Item value={'fill'}>Solid</Select.Item>
+              <Select.Item value={'hachure'}>Hachure</Select.Item>
+            </Select.Root>
           </div>
 
           <div className={'cmp-labeled-table__label'}>Rounding:</div>

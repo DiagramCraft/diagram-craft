@@ -7,7 +7,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { round } from '@diagram-craft/utils/math';
 import { Slider } from '@diagram-craft/app-components/Slider';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const values = {
@@ -50,7 +50,7 @@ export const LabelNodePanel = (props: Props) => {
         <div className={'cmp-labeled-table'}>
           <div className={'cmp-labeled-table__label'}>Type:</div>
           <div className={'cmp-labeled-table__value'}>
-            <Select
+            <Select.Root
               value={type}
               onValueChange={v => {
                 UnitOfWork.execute(edge.diagram, uow => {
@@ -58,8 +58,13 @@ export const LabelNodePanel = (props: Props) => {
                   node.updateLabelNode({ type: v as any }, uow);
                 });
               }}
-              values={Object.entries(values).map(([k, v]) => ({ label: v, value: k }))}
-            />
+            >
+              {Object.entries(values).map(([label, value]) => (
+                <Select.Item key={value} value={value}>
+                  {label}
+                </Select.Item>
+              ))}
+            </Select.Root>
           </div>
 
           <div className={'cmp-labeled-table__label'}>Position:</div>

@@ -15,7 +15,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 
 export const ElementCustomPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -114,15 +114,20 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <Select
+                  <Select.Root
                     onValueChange={v => {
                       const uow = new UnitOfWork(diagram, true);
                       value.onChange(v, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
                     value={value.value}
-                    values={value.options.map(o => ({ value: o.value, label: o.label }))}
-                  />
+                  >
+                    {value.options.map(o => (
+                      <Select.Item key={o.value} value={o.value}>
+                        {o.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
                 </div>
               </React.Fragment>
             );

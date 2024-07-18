@@ -12,7 +12,7 @@ import {
   TbFile,
   TbHistory
 } from 'react-icons/tb';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useRedraw } from '../../hooks/useRedraw';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -117,16 +117,12 @@ export const QueryToolWindow = () => {
               alignItems: 'center'
             }}
           >
-            <Select
-              onValueChange={setSource}
-              value={source}
-              values={[
-                { label: 'Active Layer', value: 'active-layer' },
-                { label: 'Active Diagram', value: 'active-diagram' },
-                { label: 'Active Document', value: 'active-document' },
-                { label: 'Selection', value: 'selection' }
-              ]}
-            />
+            <Select.Root onValueChange={setSource} value={source}>
+              <Select.Item value={'active-layer'}>Active Layer</Select.Item>
+              <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
+              <Select.Item value={'active-document'}>Active Document</Select.Item>
+              <Select.Item value={'selection'}>Selection</Select.Item>
+            </Select.Root>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>

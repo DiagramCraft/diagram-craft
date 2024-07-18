@@ -9,7 +9,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ColorPicker } from '../../components/ColorPicker';
 import { DashSelector } from './components/DashSelector';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 
 export const EdgeLinePanel = (props: Props) => {
@@ -167,20 +167,19 @@ export const EdgeLinePanel = (props: Props) => {
               <div className={'cmp-labeled-table__label util-a-top-center'}>Line hops:</div>
               <div className={'cmp-labeled-table__value util-vcenter'}>
                 <div className={'util-vstack'} style={{ width: '100%' }}>
-                  <Select
+                  <Select.Root
                     onValueChange={v => {
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       lineHopsType.set(v as any);
                     }}
                     value={lineHopsType.val}
-                    values={[
-                      { label: 'None', value: 'none' },
-                      { label: 'Gap when below', value: 'below-hide' },
-                      { label: 'Gap with line when below', value: 'below-line' },
-                      { label: 'Arc when below', value: 'below-arc' },
-                      { label: 'Arc when above', value: 'above-arc' }
-                    ]}
-                  />
+                  >
+                    <Select.Item value={'none'}>None</Select.Item>
+                    <Select.Item value={'below-hide'}>Gap when below</Select.Item>
+                    <Select.Item value={'below-line'}>Gap with line when below</Select.Item>
+                    <Select.Item value={'below-arc'}>Arc when below</Select.Item>
+                    <Select.Item value={'above-arc'}>Arc when above</Select.Item>
+                  </Select.Root>
 
                   <NumberInput
                     defaultUnit={'px'}
@@ -196,34 +195,32 @@ export const EdgeLinePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Line cap:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>
-            <Select
+            <Select.Root
               onValueChange={v => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 lineCap.set(v as any);
               }}
               value={lineCap.val}
-              values={[
-                { label: 'Butt', value: 'butt' },
-                { label: 'Round', value: 'round' },
-                { label: 'Square', value: 'square' }
-              ]}
-            />
+            >
+              <Select.Item value={'butt'}>Butt</Select.Item>
+              <Select.Item value={'round'}>Round</Select.Item>
+              <Select.Item value={'square'}>Square</Select.Item>
+            </Select.Root>
           </div>
 
           <div className={'cmp-labeled-table__label'}>Line join:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>
-            <Select
+            <Select.Root
               onValueChange={v => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 lineJoin.set(v as any);
               }}
               value={lineJoin.val}
-              values={[
-                { label: 'Miter', value: 'miter' },
-                { label: 'Round', value: 'round' },
-                { label: 'Bevel', value: 'bevel' }
-              ]}
-            />
+            >
+              <Select.Item value={'miter'}>Miter</Select.Item>
+              <Select.Item value={'round'}>Round</Select.Item>
+              <Select.Item value={'bevel'}>Bevel</Select.Item>
+            </Select.Root>
 
             {lineJoin.val === 'miter' && (
               <NumberInput

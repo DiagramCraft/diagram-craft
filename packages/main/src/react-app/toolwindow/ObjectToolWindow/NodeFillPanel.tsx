@@ -11,7 +11,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useElementProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -180,20 +180,19 @@ export const NodeFillPanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Type:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Select
+          <Select.Root
             onValueChange={v => {
               assertFillType(v);
               type.set(v);
             }}
             value={type.val}
-            values={[
-              { label: 'Solid', value: 'solid' },
-              { label: 'Gradient', value: 'gradient' },
-              { label: 'Pattern', value: 'pattern' },
-              { label: 'Texture', value: 'texture' },
-              { label: 'Image', value: 'image' }
-            ]}
-          />
+          >
+            <Select.Item value={'solid'}>Solid</Select.Item>
+            <Select.Item value={'gradient'}>Gradient</Select.Item>
+            <Select.Item value={'pattern'}>Pattern</Select.Item>
+            <Select.Item value={'texture'}>Texture</Select.Item>
+            <Select.Item value={'image'}>Image</Select.Item>
+          </Select.Root>
         </div>
 
         {(type.val === 'gradient' || type.val === 'solid') && (
@@ -228,17 +227,16 @@ export const NodeFillPanel = (props: Props) => {
           <>
             <div className={'cmp-labeled-table__label'}>Type:</div>
             <div className={'cmp-labeled-table__value util-hstack'}>
-              <Select
+              <Select.Root
                 onValueChange={v => {
                   // eslint-disable-next-line
                   gradientType.set(v as any);
                 }}
                 value={gradientType.val}
-                values={[
-                  { label: 'Linear', value: 'linear' },
-                  { label: 'Radial', value: 'radial' }
-                ]}
-              />
+              >
+                <Select.Item value={'linear'}>Linear</Select.Item>
+                <Select.Item value={'radial'}>Radial</Select.Item>
+              </Select.Root>
             </div>
 
             {gradientType.val === 'linear' && (
@@ -441,20 +439,19 @@ export const NodeFillPanel = (props: Props) => {
             </div>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Fit:</div>
             <div className={'cmp-labeled-table__value'}>
-              <Select
+              <Select.Root
                 onValueChange={v => {
                   // eslint-disable-next-line
                   imageFit.set(v as any);
                 }}
                 value={imageFit.val}
-                values={[
-                  { label: 'Fill', value: 'fill' },
-                  { label: 'Contain', value: 'contain' },
-                  { label: 'Cover', value: 'cover' },
-                  { label: 'Keep', value: 'keep' },
-                  { label: 'Tile', value: 'tile' }
-                ]}
-              />
+              >
+                <Select.Item value={'fill'}>Fill</Select.Item>
+                <Select.Item value={'contain'}>Contain</Select.Item>
+                <Select.Item value={'cover'}>Cover</Select.Item>
+                <Select.Item value={'keep'}>Keep</Select.Item>
+                <Select.Item value={'tile'}>Tile</Select.Item>
+              </Select.Root>
             </div>
 
             {imageFit.val === 'tile' && (

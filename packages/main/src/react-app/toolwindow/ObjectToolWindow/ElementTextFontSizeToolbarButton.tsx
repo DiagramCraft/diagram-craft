@@ -1,7 +1,7 @@
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
-import { Select } from '../../components/Select';
+import { Select } from '@diagram-craft/app-components/Select';
 
 const SIZES = {
   '10px': 10,
@@ -25,11 +25,13 @@ export const ElementTextFontSizeToolbarButton = (_props: Props) => {
   const fontSize = useNodeProperty($d, 'text.fontSize', defaults.text.fontSize);
 
   return (
-    <Select
-      value={fontSize.val.toString()}
-      onValueChange={a => fontSize.set(Number(a))}
-      values={Object.entries(SIZES).map(([k, v]) => ({ label: k, value: v.toString() }))}
-    />
+    <Select.Root value={fontSize.val.toString()} onValueChange={a => fontSize.set(Number(a))}>
+      {Object.entries(SIZES).map(([k, v]) => (
+        <Select.Item key={v.toString()} value={v.toString()}>
+          {k}
+        </Select.Item>
+      ))}
+    </Select.Root>
   );
 };
 

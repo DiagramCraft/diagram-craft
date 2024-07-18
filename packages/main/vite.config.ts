@@ -31,6 +31,13 @@ export default defineConfig({
       }
     }
   },
+  css: {
+    modules: {
+      exportGlobals: true,
+      scopeBehaviour: 'global',
+      localsConvention: 'camelCase'
+    }
+  },
   resolve: {
     alias: {
       '@diagram-craft/query': path.join(__dirname, '../../packages/query/src'),
