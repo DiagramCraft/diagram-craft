@@ -1,5 +1,5 @@
 import { ComponentProps, useEffect, useRef } from 'react';
-import { Dialog } from './Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 
 export const StringInputDialog = (
   props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
@@ -13,7 +13,7 @@ export const StringInputDialog = (
 ) => {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (!props.isOpen) return;
+    if (!props.open) return;
     setTimeout(() => {
       ref.current?.focus();
     }, 100);
@@ -21,7 +21,7 @@ export const StringInputDialog = (
   return (
     <Dialog
       title={props.title ?? 'Rename'}
-      isOpen={props.isOpen}
+      open={props.open}
       onClose={props.onClose}
       buttons={[
         {

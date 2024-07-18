@@ -361,7 +361,7 @@ export const ObjectDataToolWindow = () => {
       <JSONDialog<DataSchema>
         title={'Modify schema'}
         label={'Schema'}
-        isOpen={modifyDialog !== undefined}
+        open={modifyDialog !== undefined}
         onClose={() => {
           setModifyDialog(undefined);
         }}

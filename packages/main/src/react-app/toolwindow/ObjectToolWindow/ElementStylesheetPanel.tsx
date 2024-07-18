@@ -186,7 +186,7 @@ export const ElementStylesheetPanel = (props: Props) => {
           />
 
           <StringInputDialog
-            isOpen={newDialog}
+            open={newDialog}
             onClose={() => setNewDialog(!newDialog)}
             label={'Name'}
             title={'New style'}
@@ -222,7 +222,7 @@ export const ElementStylesheetPanel = (props: Props) => {
           />
 
           <JSONDialog
-            isOpen={modifyDialog !== undefined}
+            open={modifyDialog !== undefined}
             onClose={() => setModifyDialog(undefined)}
             title={'Modify style'}
             label={'Style definition'}
@@ -246,7 +246,7 @@ export const ElementStylesheetPanel = (props: Props) => {
           />
 
           <StringInputDialog
-            isOpen={renameDialog !== undefined}
+            open={renameDialog !== undefined}
             onClose={() => setRenameDialog(undefined)}
             label={'Name'}
             title={'Rename style'}

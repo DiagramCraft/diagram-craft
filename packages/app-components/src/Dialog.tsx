@@ -1,12 +1,14 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { ReactNode } from 'react';
+import { usePortal } from './PortalContext';
+import styles from './Dialog.module.css';
 
 const DialogButton = (props: Button) => {
   if (props.type === 'cancel') {
     return (
       <AlertDialog.Cancel asChild>
         <button
-          className="cmp-dialog__button cmp-dialog__button--secondary"
+          className={`${styles.cmpDialogButton} ${styles.cmpDialogButtonSecondary}`}
           onClick={props.onClick}
         >
           {props.label}
@@ -17,7 +19,7 @@ const DialogButton = (props: Button) => {
     return (
       <AlertDialog.Action asChild>
         <button
-          className={`cmp-dialog__button cmp-dialog__button--${props.type}`}
+          className={`${styles.cmpDialogButton} cmp-dialog__button--${props.type}`}
           onClick={props.onClick}
         >
           {props.label}
@@ -28,23 +30,27 @@ const DialogButton = (props: Button) => {
 };
 
 export const Dialog = (props: Props) => {
+  const portal = usePortal();
   return (
     <AlertDialog.Root
-      open={props.isOpen}
-      defaultOpen={props.isOpen}
+      open={props.open}
+      defaultOpen={props.open}
       onOpenChange={open => {
         if (!open) {
           props.onClose();
         }
       }}
     >
-      <AlertDialog.Portal>
-        <div className={'cmp-dialog'}>
-          <AlertDialog.Overlay className="cmp-dialog__overlay" />
-          <AlertDialog.Content className="cmp-dialog__content">
-            <AlertDialog.Title className="cmp-dialog__title">{props.title}</AlertDialog.Title>
+      <AlertDialog.Portal container={portal}>
+        <div className={styles.cmpDialog}>
+          <AlertDialog.Overlay className={styles.cmpDialogOverlay} />
+          <AlertDialog.Content
+            className={styles.cmpDialogContent}
+            onOpenAutoFocus={e => e.preventDefault()}
+          >
+            <AlertDialog.Title className={styles.cmpDialogTitle}>{props.title}</AlertDialog.Title>
             <AlertDialog.Description asChild>
-              <div className="cmp-dialog__description">{props.children}</div>
+              <div className={styles.cmpDialogDescription}>{props.children}</div>
             </AlertDialog.Description>
 
             <div style={{ display: 'flex', gap: 25, justifyContent: 'flex-end' }}>
@@ -60,7 +66,7 @@ export const Dialog = (props: Props) => {
 };
 
 type Props = {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode | string;

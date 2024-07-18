@@ -1,13 +1,8 @@
-import { Button, Dialog } from './Dialog';
+import { Button, Dialog } from '@diagram-craft/app-components/Dialog';
 
 export const MessageDialog = (props: Props) => {
   return (
-    <Dialog
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      title={props.title}
-      buttons={props.buttons}
-    >
+    <Dialog open={props.isOpen} onClose={props.onClose} title={props.title} buttons={props.buttons}>
       {props.message}
     </Dialog>
   );

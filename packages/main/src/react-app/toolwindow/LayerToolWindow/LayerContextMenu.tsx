@@ -24,7 +24,7 @@ export const LayerContextMenu = (props: Props) => {
               onBeforeSelect={async () => {
                 return new Promise<string | boolean>(resolve => {
                   setNameDialog({
-                    isOpen: true,
+                    open: true,
                     title: 'Rename layer',
                     description: 'Enter a new name for the layer.',
                     saveButtonLabel: 'Rename',
@@ -81,7 +81,7 @@ export const LayerContextMenu = (props: Props) => {
               onBeforeSelect={async () => {
                 return new Promise<string | boolean>(resolve => {
                   setNameDialog({
-                    isOpen: true,
+                    open: true,
                     title: 'New layer',
                     description: 'Enter a new name for the layer.',
                     saveButtonLabel: 'Create',
@@ -99,7 +99,7 @@ export const LayerContextMenu = (props: Props) => {
               onBeforeSelect={async () => {
                 return new Promise<string | boolean>(resolve => {
                   setNameDialog({
-                    isOpen: true,
+                    open: true,
                     title: 'New adjustment layer',
                     description: 'Enter a new name for the adjustment layer.',
                     saveButtonLabel: 'Create',
@@ -121,7 +121,7 @@ export const LayerContextMenu = (props: Props) => {
       />
 
       <StringInputDialog
-        {...(nameDialog ?? { isOpen: false })}
+        {...(nameDialog ?? { open: false })}
         onClose={() => setNameDialog(undefined)}
       />
     </>

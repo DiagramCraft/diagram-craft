@@ -1,5 +1,5 @@
 import { ComponentProps, useEffect, useRef, useState } from 'react';
-import { Dialog } from './Dialog';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 
 export function JSONDialog<T>(
   props: Omit<ComponentProps<typeof Dialog>, 'children' | 'title' | 'buttons'> & {
@@ -14,7 +14,7 @@ export function JSONDialog<T>(
   const [error, setError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (props.isOpen) {
+    if (props.open) {
       setTimeout(() => {
         ref.current?.focus();
       }, 100);
@@ -23,7 +23,7 @@ export function JSONDialog<T>(
   return (
     <Dialog
       title={props.title}
-      isOpen={props.isOpen}
+      open={props.open}
       onClose={props.onClose}
       buttons={[
         {
