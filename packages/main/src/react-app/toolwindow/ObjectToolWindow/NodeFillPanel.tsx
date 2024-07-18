@@ -4,7 +4,7 @@ import { round } from '@diagram-craft/utils/math';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../context/DiagramContext';
-import { Collapsible } from '../../components/Collapsible';
+import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { ColorPicker } from '../../components/ColorPicker';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useRedraw } from '../../hooks/useRedraw';

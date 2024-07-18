@@ -16,7 +16,7 @@ import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/dia
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
-import { Collapsible } from '../../components/Collapsible';
+import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { useElementProperty } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
@@ -286,7 +286,7 @@ export const ObjectDataToolWindow = () => {
 
                 return (
                   <React.Fragment key={schema.id}>
-                    <Collapsible label={schema.name} isOpen={true}>
+                    <Collapsible label={schema.name} defaultOpen={true}>
                       {schema.fields.map(f => {
                         const v = unique(
                           $d.selectionState.elements.map(e => {
@@ -325,7 +325,7 @@ export const ObjectDataToolWindow = () => {
                 );
               })}
 
-              <Collapsible label={'Custom data'} isOpen={true}>
+              <Collapsible label={'Custom data'} defaultOpen={true}>
                 {customDataKeys.map(k => {
                   const v = unique(
                     $d.selectionState.elements.map(e => {

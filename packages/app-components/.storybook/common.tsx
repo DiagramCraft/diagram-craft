@@ -7,7 +7,11 @@ export const themeDecorator = () => {
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
         <div
           className={'dark-theme'}
-          style={{ padding: '2rem', backgroundColor: 'var(--primary-bg)' }}
+          style={{
+            padding: '2rem',
+            backgroundColor: 'var(--primary-bg)',
+            color: 'var(--primary-fg)'
+          }}
         >
           <PortalContextProvider>
             <Story />
@@ -15,7 +19,11 @@ export const themeDecorator = () => {
         </div>
         <div
           className={'dark-theme'}
-          style={{ padding: '2rem', backgroundColor: 'var(--secondary-bg)' }}
+          style={{
+            padding: '2rem',
+            backgroundColor: 'var(--secondary-bg)',
+            color: 'var(--secondary-fg)'
+          }}
         >
           <PortalContextProvider>
             <Story />
@@ -23,7 +31,11 @@ export const themeDecorator = () => {
         </div>
         <div
           className={'light-theme'}
-          style={{ padding: '2rem', backgroundColor: 'var(--primary-bg)' }}
+          style={{
+            padding: '2rem',
+            backgroundColor: 'var(--primary-bg)',
+            color: 'var(--primary-fg)'
+          }}
         >
           <PortalContextProvider>
             <Story />
@@ -31,7 +43,11 @@ export const themeDecorator = () => {
         </div>
         <div
           className={'light-theme'}
-          style={{ padding: '2rem', backgroundColor: 'var(--secondary-bg)' }}
+          style={{
+            padding: '2rem',
+            backgroundColor: 'var(--secondary-bg)',
+            color: 'var(--secondary-fg)'
+          }}
         >
           <PortalContextProvider>
             <Story />

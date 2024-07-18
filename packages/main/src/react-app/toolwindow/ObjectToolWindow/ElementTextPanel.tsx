@@ -17,7 +17,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { Collapsible } from '../../components/Collapsible';
+import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { Select } from '@diagram-craft/app-components/Select';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';

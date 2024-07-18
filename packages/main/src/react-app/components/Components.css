@@ -571,47 +571,7 @@
   font-size: 11px;
 }
 
-.cmp-collapsible {
-  .cmp-collapsible__trigger {
-    position: relative;
-    z-index: 5;
-    margin-left: -2px;
 
-    &::before {
-      z-index: -1;
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 50%;
-      height: 1px;
-      background-color: var(--slate-5);
-    }
-
-    .cmp-collapsible__trigger_inner {
-      background-color: var(--primary-bg);
-      padding: 0;
-      padding-right: 0.25rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.125rem;
-      font-size: 11px;
-      color: var(--primary-fg);
-      font-style: italic;
-    }
-  }
-  .cmp-collapsible__content {
-    margin-top: 0.5rem;
-    will-change: height;
-
-    &[data-state='open'] {
-      animation: slideDown 200ms ease-in-out;
-    }
-    &[data-state='closed'] {
-      animation: slideUp 200ms ease-in-out;
-    }
-  }
-}
 
 
 .cmp-tree {
