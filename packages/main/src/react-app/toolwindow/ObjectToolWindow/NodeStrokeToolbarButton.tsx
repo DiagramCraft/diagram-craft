@@ -1,10 +1,10 @@
-import { TbBorderStyle2, TbX } from 'react-icons/tb';
-import * as Popover from '@radix-ui/react-popover';
+import { TbBorderStyle2 } from 'react-icons/tb';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { NodeStrokePanel } from './NodeStrokePanel';
+import { Popover } from '@diagram-craft/app-components/Popover';
 
 export const NodeStrokeToolbarButton = () => {
   const diagram = useDiagram();
@@ -13,7 +13,7 @@ export const NodeStrokeToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger asChild>
+      <Popover.Trigger>
         <ReactToolbar.Button className="cmp-toolbar__button">
           <TbBorderStyle2 />
           <div
@@ -29,15 +29,9 @@ export const NodeStrokeToolbarButton = () => {
           ></div>
         </ReactToolbar.Button>
       </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <NodeStrokePanel mode={'panel'} />
-          <Popover.Close className="cmp-popover__close" aria-label="Close">
-            <TbX />
-          </Popover.Close>
-          <Popover.Arrow className="cmp-popover__arrow" />
-        </Popover.Content>
-      </Popover.Portal>
+      <Popover.Content sideOffset={5}>
+        <NodeStrokePanel mode={'panel'} />
+      </Popover.Content>
     </Popover.Root>
   );
 };

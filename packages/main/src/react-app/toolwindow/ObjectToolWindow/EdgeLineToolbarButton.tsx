@@ -1,5 +1,3 @@
-import { TbX } from 'react-icons/tb';
-import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { EdgeLinePanel } from './EdgeLinePanel';
 import { ArrowPreview } from './components/ArrowPreview';
@@ -7,6 +5,7 @@ import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { useDiagram } from '../../context/DiagramContext';
 import { useEdgeDefaults } from '../../hooks/useDefaults';
 import { useEdgeProperty } from '../../hooks/useProperty';
+import { Popover } from '@diagram-craft/app-components/Popover';
 
 export const EdgeLineToolbarButton = () => {
   const diagram = useDiagram();
@@ -18,7 +17,7 @@ export const EdgeLineToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger asChild>
+      <Popover.Trigger>
         <ReactToolbar.Button className="cmp-toolbar__button">
           <div
             style={{
@@ -44,15 +43,9 @@ export const EdgeLineToolbarButton = () => {
           </div>
         </ReactToolbar.Button>
       </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <EdgeLinePanel mode={'panel'} />
-          <Popover.Close className="cmp-popover__close" aria-label="Close">
-            <TbX />
-          </Popover.Close>
-          <Popover.Arrow className="cmp-popover__arrow" />
-        </Popover.Content>
-      </Popover.Portal>
+      <Popover.Content sideOffset={5}>
+        <EdgeLinePanel mode={'panel'} />
+      </Popover.Content>
     </Popover.Root>
   );
 };

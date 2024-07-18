@@ -2,7 +2,7 @@ import { useDiagram } from '../../context/DiagramContext';
 import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { TbDots, TbPencil, TbTrash, TbX } from 'react-icons/tb';
+import { TbDots, TbPencil, TbTrash } from 'react-icons/tb';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { JSONDialog } from '../../components/JSONDialog';
 import {
@@ -18,9 +18,9 @@ import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { Collapsible } from '../../components/Collapsible';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import * as Popover from '@radix-ui/react-popover';
 import { useElementProperty } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { Popover } from '@diagram-craft/app-components/Popover';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -174,105 +174,99 @@ export const ObjectDataToolWindow = () => {
             Data
             <Accordion.ItemHeaderButtons>
               <Popover.Root>
-                <Popover.Trigger asChild>
+                <Popover.Trigger>
                   <a href={'#'}>
                     <TbDots />
                   </a>
                 </Popover.Trigger>
-                <Popover.Portal>
-                  <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={15}>
-                    <div className={'cmp-schema-selector'}>
-                      <h2
-                        className={'util-hstack'}
-                        style={{ gap: '0.5rem', marginBottom: '0.75rem' }}
-                      >
-                        Schemas
-                      </h2>
-                      <div className={'cmp-schema-selector__schemas'}>
-                        {$d.document.schemas.all.map(s => (
-                          <div key={s.id} className={'cmp-schema-selector__schema'}>
-                            <input
-                              type={'checkbox'}
-                              checked={schemas.includes(s.id)}
-                              onChange={e => {
-                                if (e.currentTarget.checked) {
-                                  addSchemaToSelection(s.id);
-                                } else {
-                                  removeSchemaFromSelection(s.id);
-                                }
+                <Popover.Content sideOffset={15}>
+                  <div className={'cmp-schema-selector'}>
+                    <h2
+                      className={'util-hstack'}
+                      style={{ gap: '0.5rem', marginBottom: '0.75rem' }}
+                    >
+                      Schemas
+                    </h2>
+                    <div className={'cmp-schema-selector__schemas'}>
+                      {$d.document.schemas.all.map(s => (
+                        <div key={s.id} className={'cmp-schema-selector__schema'}>
+                          <input
+                            type={'checkbox'}
+                            checked={schemas.includes(s.id)}
+                            onChange={e => {
+                              if (e.currentTarget.checked) {
+                                addSchemaToSelection(s.id);
+                              } else {
+                                removeSchemaFromSelection(s.id);
+                              }
+                            }}
+                          />
+                          {s.name}
+                          <div className={'cmp-schema-selector__schema-actions'}>
+                            <button
+                              onClick={() => {
+                                setModifyDialog(s);
                               }}
-                            />
-                            {s.name}
-                            <div className={'cmp-schema-selector__schema-actions'}>
-                              <button
-                                onClick={() => {
-                                  setModifyDialog(s);
-                                }}
-                              >
-                                <TbPencil />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setConfirmDeleteDialog({
-                                    isOpen: true,
-                                    title: 'Confirm delete',
-                                    message: 'Are you sure you want to delete this schema?',
-                                    buttons: [
-                                      {
-                                        label: 'Yes',
-                                        type: 'danger',
-                                        onClick: () => {
-                                          const uow = new UnitOfWork($d, true);
-                                          const schemas = $d.document.schemas;
-                                          schemas.removeSchema(s, uow);
+                            >
+                              <TbPencil />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setConfirmDeleteDialog({
+                                  isOpen: true,
+                                  title: 'Confirm delete',
+                                  message: 'Are you sure you want to delete this schema?',
+                                  buttons: [
+                                    {
+                                      label: 'Yes',
+                                      type: 'danger',
+                                      onClick: () => {
+                                        const uow = new UnitOfWork($d, true);
+                                        const schemas = $d.document.schemas;
+                                        schemas.removeSchema(s, uow);
 
-                                          const snapshots = uow.commit();
-                                          $d.undoManager.add(
-                                            new CompoundUndoableAction([
-                                              new DeleteSchemaUndoableAction(uow.diagram, s),
-                                              new SnapshotUndoableAction(
-                                                'Delete schema',
-                                                uow.diagram,
-                                                snapshots
-                                              )
-                                            ])
-                                          );
-                                          redraw();
-                                        }
-                                      },
-                                      {
-                                        label: 'No',
-                                        type: 'cancel',
-                                        onClick: () => {}
+                                        const snapshots = uow.commit();
+                                        $d.undoManager.add(
+                                          new CompoundUndoableAction([
+                                            new DeleteSchemaUndoableAction(uow.diagram, s),
+                                            new SnapshotUndoableAction(
+                                              'Delete schema',
+                                              uow.diagram,
+                                              snapshots
+                                            )
+                                          ])
+                                        );
+                                        redraw();
                                       }
-                                    ]
-                                  });
-                                }}
-                              >
-                                <TbTrash />
-                              </button>
-                            </div>
+                                    },
+                                    {
+                                      label: 'No',
+                                      type: 'cancel',
+                                      onClick: () => {}
+                                    }
+                                  ]
+                                });
+                              }}
+                            >
+                              <TbTrash />
+                            </button>
                           </div>
-                        ))}
-                      </div>
-
-                      <div className={'cmp-schema-selector__buttons'}>
-                        <button
-                          className={'cmp-button cmp-button--secondary'}
-                          onClick={() => {
-                            setModifyDialog(makeTemplate());
-                          }}
-                        >
-                          Add Schema
-                        </button>
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                    <Popover.Close className="cmp-popover__close" aria-label="Close">
-                      <TbX />
-                    </Popover.Close>
-                    <Popover.Arrow className="cmp-popover__arrow" />
-                  </Popover.Content>
-                </Popover.Portal>
+
+                    <div className={'cmp-schema-selector__buttons'}>
+                      <button
+                        className={'cmp-button cmp-button--secondary'}
+                        onClick={() => {
+                          setModifyDialog(makeTemplate());
+                        }}
+                      >
+                        Add Schema
+                      </button>
+                    </div>
+                  </div>
+                </Popover.Content>
               </Popover.Root>
             </Accordion.ItemHeaderButtons>
           </Accordion.ItemHeader>

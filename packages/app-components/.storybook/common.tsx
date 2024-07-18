@@ -4,7 +4,7 @@ export const themeDecorator = () => {
   // @ts-ignore
   return Story => (
     <div style={{ fontSize: '11px' }}>
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
         <div
           className={'dark-theme'}
           style={{ padding: '2rem', backgroundColor: 'var(--primary-bg)' }}

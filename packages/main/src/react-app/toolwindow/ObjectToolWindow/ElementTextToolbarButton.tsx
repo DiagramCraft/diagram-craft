@@ -1,10 +1,10 @@
-import { TbTextSize, TbX } from 'react-icons/tb';
+import { TbTextSize } from 'react-icons/tb';
 import { useNodeProperty } from '../../hooks/useProperty';
-import * as Popover from '@radix-ui/react-popover';
 import * as ReactToolbar from '@radix-ui/react-toolbar';
 import { ElementTextPanel } from './ElementTextPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
+import { Popover } from '@diagram-craft/app-components/Popover';
 
 export const ElementTextToolbarButton = () => {
   const diagram = useDiagram();
@@ -13,7 +13,7 @@ export const ElementTextToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger asChild>
+      <Popover.Trigger>
         <ReactToolbar.Button className="cmp-toolbar__button">
           <TbTextSize />
           <div
@@ -29,15 +29,9 @@ export const ElementTextToolbarButton = () => {
           ></div>
         </ReactToolbar.Button>
       </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content className="cmp-popover cmp-popover--toolbar" sideOffset={5}>
-          <ElementTextPanel mode={'panel'} />
-          <Popover.Close className="cmp-popover__close" aria-label="Close">
-            <TbX />
-          </Popover.Close>
-          <Popover.Arrow className="cmp-popover__arrow" />
-        </Popover.Content>
-      </Popover.Portal>
+      <Popover.Content sideOffset={5}>
+        <ElementTextPanel mode={'panel'} />
+      </Popover.Content>
     </Popover.Root>
   );
 };

@@ -56,6 +56,10 @@
   }
 }
 
+/* TODO: Move into module.css for NodeTypePopup */
+.cmp-node-type-popup {
+  max-width: 13rem;
+}
 
 body {
   --right-indent: 0;
@@ -961,13 +965,6 @@ foreignObject {
     overflow: auto;
     flex-wrap: nowrap;
     padding: 2px 2px;
-  }
-}
-
-.cmp-popover--toolbar {
-  .cmp-panel__enabled:focus {
-    box-shadow: none;
-    outline: none;
   }
 }
 

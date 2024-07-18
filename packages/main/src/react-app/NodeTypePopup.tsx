@@ -1,5 +1,3 @@
-import * as Popover from '@radix-ui/react-popover';
-import { TbX } from 'react-icons/tb';
 import { useDiagram } from './context/DiagramContext';
 import { PickerCanvas } from './PickerCanvas';
 import { assert } from '@diagram-craft/utils/assert';
@@ -14,6 +12,7 @@ import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
+import { Popover } from '@diagram-craft/app-components/Popover';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -96,7 +95,7 @@ export const NodeTypePopup = (props: Props) => {
         }
       }}
     >
-      <Popover.Anchor asChild>
+      <Popover.Anchor>
         <div
           style={{
             position: 'absolute',
@@ -105,36 +104,26 @@ export const NodeTypePopup = (props: Props) => {
           }}
         ></div>
       </Popover.Anchor>
-      <Popover.Portal>
-        <Popover.Content
-          className="cmp-popover cmp-node-type-popup"
-          sideOffset={5}
-          style={{ maxWidth: '13rem' }}
+      <Popover.Content className="cmp-node-type-popup" sideOffset={5}>
+        <div
+          className={'cmp-object-picker'}
+          style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
         >
-          <div
-            className={'cmp-object-picker'}
-            style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
-          >
-            {diagrams.map((d, idx) => (
-              <div key={idx} style={{ background: 'transparent' }}>
-                <PickerCanvas
-                  name={d.name}
-                  width={size}
-                  height={size}
-                  diagramWidth={d.viewBox.dimensions.w}
-                  diagramHeight={d.viewBox.dimensions.h}
-                  diagram={d}
-                  onClick={() => addNode(nodes[idx])}
-                />
-              </div>
-            ))}
-          </div>
-          <Popover.Close className="cmp-popover__close" aria-label="Close" onClick={props.onClose}>
-            <TbX />
-          </Popover.Close>
-          <Popover.Arrow className="cmp-popover__arrow" />
-        </Popover.Content>
-      </Popover.Portal>
+          {diagrams.map((d, idx) => (
+            <div key={idx} style={{ background: 'transparent' }}>
+              <PickerCanvas
+                name={d.name}
+                width={size}
+                height={size}
+                diagramWidth={d.viewBox.dimensions.w}
+                diagramHeight={d.viewBox.dimensions.h}
+                diagram={d}
+                onClick={() => addNode(nodes[idx])}
+              />
+            </div>
+          ))}
+        </div>
+      </Popover.Content>
     </Popover.Root>
   );
 };
