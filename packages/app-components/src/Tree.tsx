@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
 import { propsUtils } from '@diagram-craft/utils/propsUtils';
+import styles from './Tree.module.css';
 
 const isReactElement = (
   element: ReactNode
@@ -24,12 +25,12 @@ type TreeContextType = {
 
 const TreeContext = createContext<TreeContextType | undefined>(undefined);
 
-export const Root = (props: RootProps) => {
+const Root = (props: RootProps) => {
   return (
     <TreeContext.Provider value={{ depth: 0 }}>
       <div
         {...propsUtils.filterDomProperties(props)}
-        className={`cmp-tree ${props.className ?? ''}`}
+        className={`${styles.cmpTree} ${props.className ?? ''}`}
       >
         {props.children}
       </div>
@@ -41,7 +42,7 @@ type RootProps = {
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const Node = (props: NodeProps) => {
+const Node = (props: NodeProps) => {
   const [open, setOpen] = useState(props.isOpen);
   const ctx = useContext(TreeContext);
 
@@ -53,7 +54,7 @@ export const Node = (props: NodeProps) => {
     <TreeContext.Provider value={{ depth: ctx!.depth + 1, open, setOpen, hasChildren }}>
       <div
         {...propsUtils.filterDomProperties(props)}
-        className={`cmp-tree__node ${props.className ?? ''}`}
+        className={`${styles.cmpTreeNode} ${props.className ?? ''}`}
         data-depth={ctx!.depth}
         onClick={props.onClick}
         style={{ cursor: props.onClick ? 'pointer' : 'default' }}
@@ -77,16 +78,14 @@ type NodeProps = {
   children?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-export const NodeLabel = (
-  props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
-) => {
+const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   const ctx = useContext(TreeContext)!;
   return (
     <div
       {...propsUtils.filterDomProperties(props)}
-      className={`cmp-tree__node__label ${props.className ?? ''}`}
+      className={`${styles.cmpTreeNodeLabel} ${props.className ?? ''}`}
     >
-      <div className={'cmp-tree__node__label__toggle'}>
+      <div className={styles.cmpTreeNodeLabelToggle}>
         {ctx.hasChildren && !ctx.open && (
           <button onClick={() => ctx.setOpen!(true)}>
             <TbChevronRight />
@@ -103,33 +102,40 @@ export const NodeLabel = (
   );
 };
 
-export const NodeValue = (
-  props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
-) => {
+const NodeValue = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
       {...propsUtils.filterDomProperties(props)}
       {...propsUtils.filterDomProperties(props)}
-      className={`cmp-tree__node__value ${props.className ?? ''}`}
+      className={`${styles.cmpTreeNodeValue} ${props.className ?? ''}`}
     >
       {props.children}
     </div>
   );
 };
 
-export const NodeAction = (
+const NodeAction = (
   props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>
 ) => {
   return (
     <div
       {...propsUtils.filterDomProperties(props)}
-      className={`cmp-tree__node__action ${props.className ?? ''}`}
+      className={`${styles.cmpTreeNodeAction} ${props.className ?? ''}`}
     >
       {props.children}
     </div>
   );
 };
 
-export const Children = (props: { children: React.ReactNode }) => {
+const Children = (props: { children: React.ReactNode }) => {
   return props.children;
+};
+
+export const Tree = {
+  Root,
+  Node,
+  NodeAction,
+  NodeValue,
+  NodeLabel,
+  Children
 };

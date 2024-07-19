@@ -1,5 +1,5 @@
 import { useDiagram } from '../../context/DiagramContext';
-import * as Tree from '../../components/Tree';
+import { Tree } from '@diagram-craft/app-components/Tree';
 import {
   TbAdjustments,
   TbBoxMultiple,
@@ -241,8 +241,11 @@ export const LayerList = () => {
   useEventListener(diagram.selectionState, 'remove', redraw);
 
   return (
-    <div style={{ height: '100%', margin: '-10px' }} className={'cmp-layer-list'}>
-      <Tree.Root data-dragmimetype={'application/x-diagram-craft-element-instances'}>
+    <>
+      <Tree.Root
+        className={'cmp-layer-list'}
+        data-dragmimetype={'application/x-diagram-craft-element-instances'}
+      >
         {layers.map(l => (
           <LayerEntry key={l.id} layer={l} />
         ))}
@@ -250,6 +253,6 @@ export const LayerList = () => {
       <LayerContextMenu>
         <div style={{ height: '100%' }}></div>
       </LayerContextMenu>
-    </div>
+    </>
   );
 };

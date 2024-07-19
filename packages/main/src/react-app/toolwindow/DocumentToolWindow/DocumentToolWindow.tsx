@@ -1,4 +1,4 @@
-import * as Tree from '../../components/Tree';
+import { Tree } from '@diagram-craft/app-components/Tree';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
@@ -44,27 +44,25 @@ export const DocumentToolWindow = (props: Props) => {
       <Accordion.Item value="document">
         <Accordion.ItemHeader>Document structure</Accordion.ItemHeader>
         <Accordion.ItemContent>
-          <div style={{ margin: '-10px' }}>
-            <Tree.Root>
-              {props.document.diagrams.map(node => (
-                <Tree.Node key={node.id} isOpen={true}>
-                  <Tree.NodeLabel>
-                    <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
-                  </Tree.NodeLabel>
-                  <Tree.NodeValue>{props.value === node.id ? 'Active' : ''}</Tree.NodeValue>
-                  {node.diagrams.length > 0 && (
-                    <Tree.Children>
-                      <DiagramTreeNode
-                        diagram={node}
-                        onValueChange={props.onValueChange}
-                        value={props.value}
-                      />
-                    </Tree.Children>
-                  )}
-                </Tree.Node>
-              ))}
-            </Tree.Root>
-          </div>
+          <Tree.Root>
+            {props.document.diagrams.map(node => (
+              <Tree.Node key={node.id} isOpen={true}>
+                <Tree.NodeLabel>
+                  <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+                </Tree.NodeLabel>
+                <Tree.NodeValue>{props.value === node.id ? 'Active' : ''}</Tree.NodeValue>
+                {node.diagrams.length > 0 && (
+                  <Tree.Children>
+                    <DiagramTreeNode
+                      diagram={node}
+                      onValueChange={props.onValueChange}
+                      value={props.value}
+                    />
+                  </Tree.Children>
+                )}
+              </Tree.Node>
+            ))}
+          </Tree.Root>
         </Accordion.ItemContent>
       </Accordion.Item>
     </Accordion.Root>

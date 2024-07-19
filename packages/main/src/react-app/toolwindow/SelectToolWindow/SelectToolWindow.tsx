@@ -4,7 +4,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { TbBoxMultiple, TbLine, TbRectangle, TbTable, TbTableRow } from 'react-icons/tb';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
-import * as Tree from '../../components/Tree';
+import { Tree } from '@diagram-craft/app-components/Tree';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 
 export const SelectToolWindow = (props: Props) => {

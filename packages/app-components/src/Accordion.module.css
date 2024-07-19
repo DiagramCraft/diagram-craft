@@ -91,6 +91,10 @@
     font-size: 11px;
     padding: 10px;
 
+    > .cmp-tree {
+      margin: -5px -10px;
+    }
+
     > .cmp-toolbar {
       padding: 3px;
       margin: -10px -10px 10px -10px;
