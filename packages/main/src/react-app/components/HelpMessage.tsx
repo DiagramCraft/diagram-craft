@@ -2,6 +2,8 @@ import { ApplicationState } from '@diagram-craft/canvas/ApplicationState';
 import { useEventListener } from '../hooks/useEventListener';
 import { useRedraw } from '../hooks/useRedraw';
 import { TbX } from 'react-icons/tb';
+import styles from './HelpMessage.module.css';
+import { Button } from '@diagram-craft/app-components/Button';
 
 export const HelpMessage = (props: Props) => {
   const redraw = useRedraw();
@@ -10,17 +12,16 @@ export const HelpMessage = (props: Props) => {
   });
 
   return (
-    <div id="help">
-      <div className={'messsage'}>
-        {props.applicationState.help && props.applicationState.help.message}
-      </div>
-      <button
+    <div id="help" className={styles.cmpHelp}>
+      <div>{props.applicationState.help && props.applicationState.help.message}</div>
+      <Button
+        type={'icon-only'}
         onClick={() => {
           props.actionMap['TOGGLE_HELP']?.execute();
         }}
       >
         <TbX />
-      </button>
+      </Button>
     </div>
   );
 };

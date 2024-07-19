@@ -2,9 +2,8 @@
   border-radius: 4px;
   padding: 20px;
   width: 300px;
-  background-color: var(--secondary-bg);
+  background-color: var(--primary-bg);
   box-shadow: var(--popover-shadow);
-  border: 1px solid var(--popover-border);
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
@@ -33,7 +32,7 @@
   }
 
   .cmp-popover__arrow {
-    fill: var(--secondary-bg);
+    fill: var(--primary-bg);
     transform: translateX(-0.2rem);
   }
 
@@ -44,17 +43,17 @@
     width: 25px;
     align-items: center;
     justify-content: center;
-    color: var(--blue-12);
+    color: var(--highlight-fg);
     position: absolute;
     top: 5px;
     right: 5px;
     z-index: 200;
     border: none;
     &:hover {
-      color: var(--blue-11);
+      color: var(--highlight-fg);
     }
     &:focus {
-      color: var(--blue-11);
+      color: var(--highlight-fg);
     }
   }
 

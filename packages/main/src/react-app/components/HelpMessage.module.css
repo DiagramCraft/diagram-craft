@@ -1,0 +1,28 @@
+.cmp-help {
+  opacity: 0;
+  position: absolute;
+  left: calc(16rem + 2rem + 3rem);
+  bottom: 3rem;
+  right: calc(16rem + 2rem + 3rem);
+  box-shadow: var(--popover-shadow);
+
+  color: var(--primary-fg);
+  background: var(--primary-bg);
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+
+  transition: opacity 0.25s;
+
+  button {
+    background: transparent;
+    color: var(--highlight-fg);
+    position: absolute;
+    right: 0.55rem;
+    top: 0.2rem;
+    cursor: hand;
+  }
+}

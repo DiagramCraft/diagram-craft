@@ -13,6 +13,19 @@
 @import "./Canvas.css";
 
 :root {
+  --accent-1: var(--blue-1);
+  --accent-2: var(--blue-2);
+  --accent-3: var(--blue-3);
+  --accent-4: var(--blue-4);
+  --accent-5: var(--blue-5);
+  --accent-6: var(--blue-6);
+  --accent-7: var(--blue-7);
+  --accent-8: var(--blue-8);
+  --accent-9: var(--blue-9);
+  --accent-10: var(--blue-10);
+  --accent-11: var(--blue-11);
+  --accent-12: var(--blue-12);
+
   --primary-bg: var(--slate-2);
   --primary-fg: var(--slate-11);
   --primary-border: var(--slate-6);
@@ -28,8 +41,7 @@
   --cmp-focus-border: var(--blue-8);
   --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
 
-  --popover-border: var(--cmp-hover-bg);
-  --popover-shadow: 0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+  --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.17), 0 10px 32px -16px rgba(0, 0, 0, 0.35);
 
   --menu-shadow: var(--popover-shadow);
   --menu-keybinding: var(--blue-11);
@@ -53,6 +65,19 @@
 }
 
 .dark-theme {
+  --accent-1: var(--blue-1);
+  --accent-2: var(--blue-2);
+  --accent-3: var(--blue-3);
+  --accent-4: var(--blue-4);
+  --accent-5: var(--blue-5);
+  --accent-6: var(--blue-6);
+  --accent-7: var(--blue-7);
+  --accent-8: var(--blue-8);
+  --accent-9: var(--blue-9);
+  --accent-10: var(--blue-10);
+  --accent-11: var(--blue-11);
+  --accent-12: var(--blue-12);
+
   --primary-bg: var(--slate-2);
   --primary-fg: var(--slate-11);
   --primary-border: var(--slate-6);
@@ -67,10 +92,10 @@
   --cmp-focus-border: var(--blue-8);
   --cmp-focus-shadow: 0 0 0 2px var(--cmp-focus-border);
 
+  --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.32), 0 10px 32px -16px rgba(0, 0, 0, 0.5);
+
   --menu-shadow: var(--popover-shadow);
   --menu-keybinding: var(--blue-11);
-
-  --popover-border: var(--cmp-border);
 
   --highlight-reverse-bg: var(--blue-9);
   --highlight-reverse-fg: var(--blue-12);
@@ -199,35 +224,6 @@ input::-webkit-input-placeholder {
   grid-template-columns: 40px 5fr 40px;
 }
 
-#help {
-  opacity: 0;
-  position: absolute;
-  left: calc(16rem + 2rem + 3rem);
-  bottom: 3rem;
-  right: calc(16rem + 2rem + 3rem);
-  box-shadow: var(--popover-shadow);
-
-  color: var(--secondary-fg);
-  background: var(--secondary-bg);
-  border: 1px solid var(--popover-border);
-  border-radius: 4px;
-  font-size: 12px;
-  text-align: center;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-
-  transition: opacity 0.25s;
-
-  button {
-    background: transparent;
-    color: var(--blue-11);
-    position: absolute;
-    right: 0.35rem;
-    top: 0.35rem;
-    cursor: hand;
-  }
-}
 
 
 #menu {
@@ -414,7 +410,6 @@ foreignObject {
   background-color: var(--primary-bg);
   color: var(--primary-fg);
   box-shadow: var(--popover-shadow);
-  border: 1px solid var(--popover-border);
   padding: 0.5rem 0.5rem;
   font-size: 11px;
   border-radius: 4px;
@@ -503,9 +498,7 @@ foreignObject {
 
 .cmp-panel__children {
   background-color: var(--primary-bg);
-  padding: 1rem;
-  margin-top: 0.5rem;
-  border-radius: 4px;
+  margin-top: 1rem;
 }
 
 .cmp-layer-list {
