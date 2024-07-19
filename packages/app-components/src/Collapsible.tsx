@@ -10,8 +10,8 @@ export const Collapsible = (props: Props) => {
       <div className={styles.cmpCollapsibleTrigger}>
         <RadixCollapsible.Trigger asChild>
           <button className={styles.cmpCollapsibleTriggerInner}>
-            {open ? <TbChevronDown /> : <TbChevronRight />}
-            {props.label}
+            <div>{props.label}</div>
+            <div>{open ? <TbChevronDown /> : <TbChevronRight />}</div>
           </button>
         </RadixCollapsible.Trigger>
       </div>

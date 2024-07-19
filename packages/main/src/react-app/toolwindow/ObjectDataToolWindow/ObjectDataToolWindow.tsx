@@ -319,8 +319,8 @@ export const ObjectDataToolWindow = () => {
                           </React.Fragment>
                         );
                       })}
+                      <div style={{ height: '0.5rem' }}></div>
                     </Collapsible>
-                    <br />
                   </React.Fragment>
                 );
               })}

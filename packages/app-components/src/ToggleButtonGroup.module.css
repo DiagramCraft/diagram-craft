@@ -1,14 +1,18 @@
 .cmp-toggle-button-group {
   padding: 0;
-  border: 1px solid var(--blue-6);
-  border-radius: 4px;
-  background-color: var(--secondary-bg);
+  border-radius: var(--cmp-radius);
+  background-color: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   width: fit-content !important;
   min-width: 0;
 
+  &:not(:has(*[data-state='off'])) {
+    border: 1px solid var(--cmp-focus-border);
+  }
+
   .cmp-toggle-button-group__item {
     flex: 0 0 auto;
-    color: var(--slate-11);
+    color: var(--cmp-fg);
     background-color: transparent;
     height: 25px;
     padding: 0 5px;
@@ -36,26 +40,26 @@
       margin-left: 0;
     }
 
-
     &[data-state='on'] {
-      background-color: var(--slate-1);
-      color: var(--blue-11);
+      background-color: var(--highlight-bg);
+      color: var(--highlight-fg);
     }
 
     &:hover,
     &[data-hover='true'] {
-      background-color: var(--blue-3);
-      color: var(--blue-11);
+      background-color: var(--highlight-bg);
+      color: var(--highlight-fg);
     }
 
     &:focus,
     &[data-focus="true"]{
       position: relative;
-      box-shadow: 0 0 0 2px var(--blue-7);
+      outline: none;
+      box-shadow: var(--cmp-focus-shadow);
     }
 
     &:disabled {
-      color: var(--slate-8);
+      color: var(--cmp-disabled-fg);
       /* TODO: Is there a better way to disable hover when in disabled state */
       pointer-events: none;
       & > svg > path:nth-child(n + 2) {

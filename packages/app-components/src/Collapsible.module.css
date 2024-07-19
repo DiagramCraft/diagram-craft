@@ -6,27 +6,25 @@
     z-index: 5;
     margin-left: -2px;
 
-    &::before {
-      z-index: -1;
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 50%;
-      height: 1px;
-      background-color: var(--slate-5);
+    &:hover {
+      background-color: var(--secondary-bg);
     }
 
     .cmp-collapsible__trigger_inner {
+      width: 100%;
       background-color: transparent;
       padding: 0;
-      padding-right: 0.25rem;
-      display: inline-flex;
       align-items: center;
       gap: 0.125rem;
       font-size: 11px;
+      font-weight: bold;
       color: var(--primary-fg);
-      font-style: italic;
+      display: flex;
+      justify-content: space-between;
+
+      & > div:nth-child(2) {
+        margin-left: auto;
+      }
     }
   }
   .cmp-collapsible__content {

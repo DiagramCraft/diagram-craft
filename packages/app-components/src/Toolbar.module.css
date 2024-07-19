@@ -38,7 +38,13 @@
   }
 
   .cmp-toolbar__button[data-state='on'] {
-    color: var(--blue-11);
+    color: var(--highlight-fg);
+    background-color: var(--cmp-bg);
+  }
+
+  .cmp-toolbar__button[data-state='on'] + .cmp-toolbar__button--more {
+    color: var(--highlight-fg);
+    background-color: var(--cmp-bg);
   }
 
 
@@ -56,9 +62,10 @@
 
   .cmp-toolbar__button:hover,
   .cmp-toolbar__button[data-hover='true'] {
-    background-color: var(--blue-3);
-    color: var(--blue-11);
+    color: var(--highlight-fg);
+    background-color: var(--highlight-bg);
   }
+
 
   .cmp-toolbar__button:focus,
   .cmp-toolbar__button[data-focus="true"] {

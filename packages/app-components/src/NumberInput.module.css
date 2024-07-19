@@ -1,8 +1,8 @@
 .cmp-number-input {
-  border-radius: 4px;
-  background-color: var(--secondary-bg);
-  border: 1px solid var(--blue-6);
-  color: var(--primary-fg);
+  border-radius: var(--cmp-radius);
+  background-color: var(--cmp-bg);
+  color: var(--cmp-fg);
+  border: 1px solid var(--cmp-border);
   height: 25px;
   padding: 1px 0 0 3px;
   line-height: 1;
@@ -10,6 +10,11 @@
   position: relative;
   display: flex;
   align-items: center;
+
+  &:focus-within,
+  &:has(*[data-focus="true"]) {
+    box-shadow: var(--cmp-focus-shadow);
+  }
 
   &[data-error='true'] {
     color: var(--error-fg);
@@ -28,7 +33,7 @@
       outline: none;
     }
     &:disabled {
-      color: var(--slate-8);
+      color: var(--cmp-disabled-fg);
     }
   }
 
@@ -47,11 +52,11 @@
     background: none;
     padding: 0;
     border: none;
-    color: var(--primary-fg);
-    background: var(--primary-bg);;
+    color: var(--cmp-fg);
+    background: var(--cmp-bg);;
 
     &:hover {
-      color: var(--blue-11);
+      background-color: var(--cmp-hover-bg);
     }
   }
 
@@ -60,7 +65,6 @@
     position: absolute;
     border-radius: 4px;
     inset: -1px;
-    border: 1px solid var(--blue-6);
     pointer-events: none;
   }
 }
@@ -69,9 +73,9 @@
   font-size: 11px;
   margin-top: -1px;
   margin-right: 0.15rem;
-  color: var(--primary-fg);
+  color: var(--cmp-fg);
   width: 15px;
-  border-right: 1px solid var(--blue-6);
+  border-right: 1px solid var(--cmp-border);
 }
 
 .cmp-number-input__btn-up {
@@ -79,13 +83,10 @@
   right: 0;
   top: 0;
   height: 12px;
-  border-bottom: 1px solid var(--blue-6);
-  border-left: 1px solid var(--blue-6);
+  border-bottom: 1px solid var(--cmp-border) !important;
+  border-left: 1px solid var(--cmp-border) !important;
   &:disabled {
-    color: var(--slate-8);
-    &:hover {
-      color: var(--slate-8);
-    }
+    color: var(--cmp-disabled-fg);
   }
 }
 
@@ -94,11 +95,8 @@
   right: 0;
   bottom: 0;
   height: 11px;
-  border-left: 1px solid var(--blue-6);
+  border-left: 1px solid var(--cmp-border) !important;
   &:disabled {
-    color: var(--slate-8);
-    &:hover {
-      color: var(--slate-8);
-    }
+    color: var(--cmp-disabled-fg);
   }
 }
