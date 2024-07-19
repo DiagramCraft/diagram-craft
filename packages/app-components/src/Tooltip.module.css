@@ -1,0 +1,18 @@
+.cmp-tooltip {
+  border-radius: var(--cmp-radius);
+  padding: 10px 10px;
+  font-size: 11px;
+  background-color: var(--primary-bg);
+  color: var(--primary-fg);
+
+  box-shadow: var(--popover-shadow);
+  user-select: none;
+
+  animation-name: overlayShow;
+  animation-duration: 250ms;
+  will-change: opacity;
+
+  .cmp-tooltip__arrow {
+    fill: var(--primary-bg);
+  }
+}

@@ -119,9 +119,14 @@ export const ObjectToolWindow = () => {
               </Tabs.Trigger>
             )}
             {tabs.includes('advanced') && (
-              <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'advanced'}>
-                Advanced
-              </Tabs.Trigger>
+              <>
+                <Tabs.Trigger
+                  className="cmp-tool-tabs__tab-trigger util-vcenter"
+                  value={'advanced'}
+                >
+                  Advanced
+                </Tabs.Trigger>
+              </>
             )}
           </Tabs.List>
 
