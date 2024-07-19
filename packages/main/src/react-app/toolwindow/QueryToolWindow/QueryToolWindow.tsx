@@ -14,6 +14,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useRedraw } from '../../hooks/useRedraw';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { Button } from '@diagram-craft/app-components/Button';
 
 const replacer = (key: string, value: unknown) => {
   if (key === 'parent') return value ? '...' : undefined;
@@ -124,9 +125,9 @@ export const QueryToolWindow = () => {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <button className={'cmp-button'}>
+                  <Button>
                     <TbHistory />
-                  </button>
+                  </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
@@ -148,9 +149,9 @@ export const QueryToolWindow = () => {
               </DropdownMenu.Root>
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <button className={'cmp-button'}>
+                  <Button>
                     <TbFile />
-                  </button>
+                  </Button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
@@ -198,22 +199,22 @@ export const QueryToolWindow = () => {
           <div
             style={{ display: 'flex', justifyContent: 'end', marginTop: '0.5rem', gap: '0.5rem' }}
           >
-            <button
-              className={'cmp-button cmp-button--secondary'}
+            <Button
+              type={'secondary'}
               onClick={() => {
                 setExpanded([]);
               }}
             >
               Save as...
-            </button>
-            <button
-              className={'cmp-button cmp-button--secondary'}
+            </Button>
+            <Button
+              type={'secondary'}
               onClick={() => {
                 exportToFile();
               }}
             >
               Export
-            </button>
+            </Button>
             <a
               style={{ display: 'none' }}
               download={'export.json'}
@@ -222,8 +223,7 @@ export const QueryToolWindow = () => {
             >
               -
             </a>
-            <button
-              className={'cmp-button cmp-button--primary'}
+            <Button
               onClick={() => {
                 if (ref.current?.value === queryString) {
                   redraw();
@@ -236,7 +236,7 @@ export const QueryToolWindow = () => {
               }}
             >
               Run
-            </button>
+            </Button>
           </div>
         </Accordion.ItemContent>
       </Accordion.Item>
@@ -270,11 +270,11 @@ export const QueryToolWindow = () => {
                         gap: '0.25rem'
                       }}
                     >
-                      <button className={'cmp-button--icon-only'}>
+                      <Button type={'icon-only'}>
                         <TbArrowDownRight />
-                      </button>
-                      <button
-                        className={'cmp-button--icon-only'}
+                      </Button>
+                      <Button
+                        type={'icon-only'}
                         onClick={ev => {
                           navigator.clipboard.writeText(
                             JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
@@ -284,7 +284,7 @@ export const QueryToolWindow = () => {
                         }}
                       >
                         <TbClipboardCopy />
-                      </button>
+                      </Button>
                     </div>
                   )}
                   <pre key={idx}>

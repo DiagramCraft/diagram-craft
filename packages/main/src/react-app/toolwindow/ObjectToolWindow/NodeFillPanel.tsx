@@ -12,6 +12,7 @@ import { useElementProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Button } from '@diagram-craft/app-components/Button';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -391,8 +392,8 @@ export const NodeFillPanel = (props: Props) => {
                   Upload...
                 </label>
                 &nbsp;
-                <button
-                  className={'cmp-button'}
+                <Button
+                  type={'secondary'}
                   style={{ fontSize: '11px' }}
                   disabled={image.val === ''}
                   onClick={() => {
@@ -405,7 +406,7 @@ export const NodeFillPanel = (props: Props) => {
                   }}
                 >
                   Clear
-                </button>
+                </Button>
                 <input
                   id={'fill-file-upload'}
                   style={{ display: 'none', width: 0 }}

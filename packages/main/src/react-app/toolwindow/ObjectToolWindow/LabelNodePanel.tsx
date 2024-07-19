@@ -9,6 +9,7 @@ import { round } from '@diagram-craft/utils/math';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { Select } from '@diagram-craft/app-components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Button } from '@diagram-craft/app-components/Button';
 
 const values = {
   'independent': 'Independent',
@@ -103,8 +104,9 @@ export const LabelNodePanel = (props: Props) => {
                 }}
               />
             )}
-            <button
-              className={'cmp-button util-square'}
+            <Button
+              type={'secondary'}
+              className={'util-square'}
               onClick={() => {
                 UnitOfWork.execute(edge.diagram, uow => {
                   node.updateLabelNode({ offset: { x: 0, y: 0 } }, uow);
@@ -112,7 +114,7 @@ export const LabelNodePanel = (props: Props) => {
               }}
             >
               <TbRestore />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

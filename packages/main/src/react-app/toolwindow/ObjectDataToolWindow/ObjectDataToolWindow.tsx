@@ -21,6 +21,7 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { useElementProperty } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import { Button } from '@diagram-craft/app-components/Button';
 
 const makeTemplate = (): DataSchema => {
   return {
@@ -256,14 +257,14 @@ export const ObjectDataToolWindow = () => {
                     </div>
 
                     <div className={'cmp-schema-selector__buttons'}>
-                      <button
-                        className={'cmp-button cmp-button--secondary'}
+                      <Button
+                        type={'secondary'}
                         onClick={() => {
                           setModifyDialog(makeTemplate());
                         }}
                       >
                         Add Schema
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </Popover.Content>

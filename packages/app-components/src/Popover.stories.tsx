@@ -2,6 +2,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { themeDecorator } from '../.storybook/common';
 import { Popover } from './Popover';
+import { Button } from './Button';
 
 const meta = {
   title: 'Components/Popover',
@@ -31,7 +32,7 @@ export const Primary: Story = {
     open: true,
     children: [
       <Popover.Trigger key={1}>
-        <button className={'cmp-button'}>Click</button>
+        <Button>Click</Button>
       </Popover.Trigger>,
       <Popover.Content key={2}>
         <h2>Title</h2>Some content

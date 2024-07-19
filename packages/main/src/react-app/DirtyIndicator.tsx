@@ -1,4 +1,5 @@
 import { TbTrash } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
 
 export const DirtyIndicator = (props: Props) => {
   if (!props.dirty) return null;
@@ -14,13 +15,13 @@ export const DirtyIndicator = (props: Props) => {
       }}
     >
       <div>Unsaved changes</div>
-      <button
-        className="cmp-button cmp-button--icon-only"
+      <Button
+        type={'icon-only'}
         style={{ padding: '1px 5px' }}
         onClick={() => props.onDirtyChange()}
       >
         <TbTrash size={'14px'} />
-      </button>
+      </Button>
     </div>
   );
 };

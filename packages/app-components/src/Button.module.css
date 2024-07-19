@@ -1,0 +1,70 @@
+.cmp-button {
+  flex: 0 0 auto;
+  color: var(--slate-11);
+  height: 23px;
+  padding: 0 5px;
+  display: inline-flex;
+  font-size: 11px;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--cmp-radius);
+  border: 1px solid var(--cmp-border);
+  background-color: var(--cmp-bg);
+  margin: 0;
+  width: fit-content !important;
+  box-sizing: content-box;
+
+  &:hover,
+  &[data-hover="true"] {
+    background-color: var(--cmp-hover-bg);
+  }
+  &:focus,
+  &[data-focus="true"] {
+    position: relative;
+    box-shadow: var(--cmp-focus-shadow);
+    outline: none;
+    border: 1px solid transparent;
+  }
+  &:disabled {
+    color: var(--cmp-disabled-fg);
+    border: 1px solid var(--cmp-border);
+    pointer-events: none;
+  }
+}
+
+.cmp-button--primary {
+  outline: 1px solid var(--cmp-focus-border);
+  outline-offset: -1px;
+}
+
+.cmp-button--secondary {
+}
+
+.cmp-button--danger {
+  border: 1px solid var(--error-fg);
+  color: var(--error-fg);
+
+  &:focus,
+  &[data-focus="true"] {
+    position: relative;
+    box-shadow: 0 0 0 2px var(--error-fg);
+    outline: none;
+    border: 1px solid transparent;
+  }
+
+  &:disabled {
+    border: 1px solid var(--cmp-border);
+  }
+}
+
+.cmp-button--icon-only {
+  padding: 0;
+  margin: 0;
+  background: none;
+  border-width: 0;
+  appearance: none;
+  font-size: 11px;
+}
+
+
