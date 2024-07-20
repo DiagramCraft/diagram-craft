@@ -1,6 +1,7 @@
 import * as RadixToolbar from '@radix-ui/react-toolbar';
 import React from 'react';
 import styles from './Toolbar.module.css';
+import { propsUtils } from '@diagram-craft/utils/propsUtils';
 
 const Root = (props: RootProps) => {
   return (
@@ -25,7 +26,7 @@ type RootProps = {
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, forwardedRef) => {
   return (
     <RadixToolbar.Button
-      {...props}
+      {...propsUtils.filter(props, 'isOverflow')}
       className={`${styles.cmpToolbarButton} ${props.isOverflow ? styles.cmpToolbarButtonMore : ''} ${props.className ?? ''}`}
       ref={forwardedRef}
     >
