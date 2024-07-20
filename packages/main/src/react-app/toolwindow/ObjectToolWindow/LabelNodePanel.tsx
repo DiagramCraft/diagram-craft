@@ -15,7 +15,7 @@ const values = {
   'independent': 'Independent',
   'parallel-readable': 'Parallel (readable)',
   'parallel': 'Parallel',
-  'perpendicular-readable': 'Perpendicular (readble)',
+  'perpendicular-readable': 'Perpendicular (readable)',
   'perpendicular': 'Perpendicular',
   'horizontal': 'Horizontal',
   'vertical': 'Vertical'
@@ -56,11 +56,11 @@ export const LabelNodePanel = (props: Props) => {
               onValueChange={v => {
                 UnitOfWork.execute(edge.diagram, uow => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  node.updateLabelNode({ type: v as any }, uow);
+                  node.updateLabelNode({ type: v as any, offset: { x: 0, y: 0 } }, uow);
                 });
               }}
             >
-              {Object.entries(values).map(([label, value]) => (
+              {Object.entries(values).map(([value, label]) => (
                 <Select.Item key={value} value={value}>
                   {label}
                 </Select.Item>
