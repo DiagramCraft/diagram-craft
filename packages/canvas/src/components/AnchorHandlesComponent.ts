@@ -37,7 +37,10 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
         if (element === undefined) {
           this.triggerMouseOut(shouldScale);
         } else {
-          this.setState(diagram.lookup(element), 'node');
+          const el = diagram.lookup(element);
+          if (isNode(el) && el.isLabelNode()) return;
+
+          this.setState(el, 'node');
         }
       };
       props.applicationState.on('hoverElementChange', cb);
