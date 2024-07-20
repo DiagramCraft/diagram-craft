@@ -12,6 +12,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { Box } from '@diagram-craft/geometry/box';
 
 // NodeProps extension for custom props *****************************************
 
@@ -63,7 +64,12 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
 
       const bounds = props.node.bounds;
 
-      const lcs = new LocalCoordinateSystem(props.node.bounds, [0, 1], [0, 1], false);
+      const lcs = new LocalCoordinateSystem(
+        Box.withoutRotation(props.node.bounds),
+        [0, 1],
+        [0, 1],
+        false
+      );
 
       // Inner box
       const inner = new PathBuilder(p => lcs.toGlobal(p));
@@ -105,7 +111,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const sizePct = def.renderProps.shapeCube.size / Math.min(def.bounds.w, def.bounds.h);
 
-    const lcs = new LocalCoordinateSystem(def.bounds, [0, 1], [0, 1], false);
+    const lcs = new LocalCoordinateSystem(Box.withoutRotation(def.bounds), [0, 1], [0, 1], false);
     const pathBuilder = new PathBuilder(p => lcs.toGlobal(p));
 
     pathBuilder.moveTo(Point.of(0, sizePct));
