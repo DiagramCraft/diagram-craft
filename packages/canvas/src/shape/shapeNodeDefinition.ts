@@ -80,11 +80,14 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         const p = path.segments[j];
         const { x, y } = p.point(0.5);
 
+        // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
+        const rp = Point.rotateAround({ x, y }, -node.bounds.r, Box.center(node.bounds));
+
         // Note: This is to Prevent NaN issues
         if (node.bounds.h === 0 || node.bounds.w === 0) continue;
 
-        const lx = round((x - node.bounds.x) / node.bounds.w);
-        const ly = round((y - node.bounds.y) / node.bounds.h);
+        const lx = round((rp.x - node.bounds.x) / node.bounds.w);
+        const ly = round((rp.y - node.bounds.y) / node.bounds.h);
 
         newAnchors.push({ id: `${i}_${j}`, start: { x: lx, y: ly }, clip: false, type: 'point' });
       }

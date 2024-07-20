@@ -73,7 +73,11 @@ export class AnchorEndpoint
   }
 
   isMidpoint() {
-    return this.node!.getAnchor(this.anchorId!)!.type === 'center';
+    return this.getAnchorType() === 'center';
+  }
+
+  private getAnchorType() {
+    return this.node!.getAnchor(this.anchorId!)!.type;
   }
 
   get position() {
