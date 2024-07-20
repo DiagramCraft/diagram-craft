@@ -285,7 +285,8 @@ export class EditablePath {
     this.segments = [];
     this.waypoints = [];
 
-    const isClosed = Point.isEqual(segments[0].start, segments.at(-1)!.end);
+    const isClosed =
+      segments.length === 0 || Point.isEqual(segments[0].start, segments.at(-1)!.end);
 
     let waypointsInSegment: EditableWaypoint[] = [];
 
