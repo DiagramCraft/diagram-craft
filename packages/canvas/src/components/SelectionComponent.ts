@@ -9,11 +9,23 @@ import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CanvasState } from '../EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
+import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
     const diagram = props.diagram;
     const selection = diagram.selectionState;
+
+    createEffect(() => {
+      const cb = ({ type }: ViewboxEvents['viewbox']) => {
+        if (type === 'pan') return;
+        this.redraw();
+      };
+      diagram.viewBox.on('viewbox', cb);
+      return () => {
+        diagram.viewBox.off('viewbox', cb);
+      };
+    }, [diagram]);
 
     createEffect(() => {
       const cb = () => this.redraw();
@@ -36,7 +48,8 @@ export class SelectionComponent extends Component<CanvasState> {
 
     return svg.g(
       {},
-      !isOnlyEdges && this.subComponent($cmp(GuidesComponent), { guides: selection.guides }),
+      !isOnlyEdges &&
+        this.subComponent($cmp(GuidesComponent), { diagram, guides: selection.guides }),
       svg.g(
         { class: 'svg-selection' },
         !isOnlyEdges &&

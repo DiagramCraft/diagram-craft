@@ -6,6 +6,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { $c } from '@diagram-craft/utils/classname';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { Zoom } from './zoom';
 
 export class EdgeSelectionComponent extends Component<Props> {
   render(props: Props) {
@@ -25,13 +26,15 @@ export class EdgeSelectionComponent extends Component<Props> {
       return () => DRAG_DROP_MANAGER.off('dragEnd', cb);
     }, []);
 
+    const z = new Zoom(diagram.viewBox.zoomLevel);
+
     return svg.g(
       {},
       svg.circle({
-        class: $c('svg-selection__handle-edge', { connected: edge.start.isConnected }),
+        class: $c('svg-handle svg-selection__handle-edge', { connected: edge.start.isConnected }),
         cx: edge.start.position.x,
         cy: edge.start.position.y,
-        r: 4,
+        r: z.num(4, 1.5),
         on: {
           mousedown: ev => {
             if (ev.button !== 0) return;
@@ -44,10 +47,10 @@ export class EdgeSelectionComponent extends Component<Props> {
         style: `pointer-events: ${DRAG_DROP_MANAGER.isDragging() ? 'none' : 'unset'}`
       }),
       svg.circle({
-        class: $c('svg-selection__handle-edge', { connected: edge.end.isConnected }),
+        class: $c('svg-handle svg-selection__handle-edge', { connected: edge.end.isConnected }),
         cx: edge.end.position.x,
         cy: edge.end.position.y,
-        r: 4,
+        r: z.num(4, 1.5),
         on: {
           mousedown: ev => {
             if (ev.button !== 0) return;

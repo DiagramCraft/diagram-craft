@@ -132,6 +132,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     createEffect(() => {
       const cb = ({ viewbox }: ViewboxEvents['viewbox']) => {
         this.svgRef?.setAttribute('viewBox', viewbox.svgViewboxString);
+        this.svgRef?.style.setProperty('--zoom', viewbox.zoomLevel.toString());
       };
       diagram.viewBox.on('viewbox', cb);
       return () => diagram.viewBox.off('viewbox', cb);
@@ -219,6 +220,21 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       };
     }, [diagram]);
 
+    // Need to redraw each selected element on zoom or pan
+    // as some of the control nodes will change dimensions
+    createEffect(() => {
+      const cb = ({ type }: ViewboxEvents['viewbox']) => {
+        if (type === 'pan') return;
+        for (const e of this.currentProps?.diagram?.selectionState.elements ?? []) {
+          this.redrawElement({ element: e });
+        }
+      };
+      diagram.viewBox.on('viewbox', cb);
+      return () => {
+        diagram.viewBox.off('viewbox', cb);
+      };
+    }, [diagram]);
+
     this.onDiagramRedraw('elementAdd', diagram);
     this.onDiagramRedraw('elementRemove', diagram);
     this.onDiagramRedraw('change', diagram);
@@ -238,226 +254,232 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       diagram
     };
 
-    return html.div({}, [
-      html.textarea({ id: 'clipboard', style: 'position: absolute; left: -4000px' }),
-      this.subComponent($cmp(DragLabelComponent), { ...canvasState }),
-      html.svg(
-        {
-          ...(props.width ? { width: props.width } : {}),
-          ...(props.height ? { height: props.height } : {}),
-          id: `diagram-${diagram.id}`,
-          class: (props.className ?? 'canvas') + ' ' + (Browser.isChrome() ? 'browser-chrome' : ''),
-          preserveAspectRatio: 'none',
-          viewBox: diagram.viewBox.svgViewboxString,
-          style: `user-select: none`,
-          hooks: {
-            onInsert: node => {
-              this.svgRef = node.el! as SVGSVGElement;
-              this.adjustViewbox(diagram, props.offset);
+    return html.div(
+      {
+        class: 'light-theme canvas-wrapper'
+      },
+      [
+        html.textarea({ id: 'clipboard', style: 'position: absolute; left: -4000px' }),
+        this.subComponent($cmp(DragLabelComponent), { ...canvasState }),
+        html.svg(
+          {
+            ...(props.width ? { width: props.width } : {}),
+            ...(props.height ? { height: props.height } : {}),
+            id: `diagram-${diagram.id}`,
+            class:
+              (props.className ?? 'canvas') + ' ' + (Browser.isChrome() ? 'browser-chrome' : ''),
+            preserveAspectRatio: 'none',
+            viewBox: diagram.viewBox.svgViewboxString,
+            style: `user-select: none`,
+            hooks: {
+              onInsert: node => {
+                this.svgRef = node.el! as SVGSVGElement;
+                this.adjustViewbox(diagram, props.offset);
 
-              // Note: this causes an extra redraw, but it's necessary to ensure that
-              //       the wheel events (among others) are bound correctly
-              this.redraw();
-            },
-            onRemove: () => {
-              this.svgRef = null;
-            }
-          },
-          on: {
-            click: e => {
-              props.onClick?.(e);
-            },
-            mousedown: e => {
-              if (e.button === 1) {
-                const currentTool = props.applicationState.tool;
-                const panTool = new PanTool(
-                  diagram,
-                  DRAG_DROP_MANAGER,
-                  this.svgRef,
-                  props.applicationTriggers,
-                  () => {
-                    props.applicationState.tool = currentTool;
-                  }
-                );
-                this.setTool(panTool);
-                panTool.setResetOnMouseUp(true);
-                this.updateToolClassOnSvg('pan');
-                panTool.onMouseDown(BACKGROUND, EventHelper.point(e), e);
+                // Note: this causes an extra redraw, but it's necessary to ensure that
+                //       the wheel events (among others) are bound correctly
+                this.redraw();
+              },
+              onRemove: () => {
+                this.svgRef = null;
               }
-              if (e.button !== 0) return;
-              this.tool!.onMouseDown(BACKGROUND, EventHelper.point(e), e);
             },
-            mouseover: e => {
-              const el = getAncestorDiagramElement(e.target as SVGElement);
-              if (!el) return;
-              // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
-              this.tool!.onMouseOver(el.id, EventHelper.point(e));
-              props.applicationState.hoverElement = el.id;
-            },
-            mouseout: e => {
-              const el = getAncestorDiagramElement(e.target as SVGElement);
-              if (!el) return;
-              // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
-              this.tool!.onMouseOut(el.id, EventHelper.point(e));
-              props.applicationState.hoverElement = undefined;
-            },
-            mouseup: e => this.tool!.onMouseUp(EventHelper.point(e)),
-            mousemove: e => {
-              const r = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
-              this.tool!.onMouseMove(
-                {
-                  x: e.clientX - r.x,
-                  y: e.clientY - r.y
-                },
-                e
-              );
-            },
-            contextmenu: event => {
-              const bounds = this.svgRef!.getBoundingClientRect();
-              const point = {
-                x: event.clientX - bounds.x,
-                y: event.clientY - bounds.y
-              };
-
-              const isClickOnSelection = Box.contains(
-                selection.bounds,
-                diagram.viewBox.toDiagramPoint(point)
-              );
-
-              if (isClickOnSelection) {
-                props.applicationTriggers.showSelectionContextMenu?.(
-                  diagram.viewBox.toDiagramPoint(point),
-                  event
-                );
-              } else {
-                props.applicationTriggers.showCanvasContextMenu?.(
-                  diagram.viewBox.toDiagramPoint(point),
-                  event
-                );
-              }
-
-              props.onContextMenu?.(event);
-            },
-
-            drag: e => {
-              props.onDrag?.(e);
-            },
-            drop: e => {
-              props.onDrop?.(e);
-            },
-            dragover: e => {
-              props.onDragOver?.(e);
-            }
-          }
-        },
-        [
-          svg.style({}, rawHTML(styles)),
-          svg.defs(
-            svg.filter(
-              { id: 'reflection-filter', filterUnits: 'objectBoundingBox' },
-              svg.feGaussianBlur({ stdDeviation: 0.5 })
-            )
-          ),
-
-          this.subComponent($cmp(DocumentBoundsComponent), { ...canvasState }),
-
-          this.subComponent($cmp(GridComponent), { ...canvasState }),
-
-          svg.g(
-            {},
-            ...diagram.layers.visible.flatMap(layer => {
-              return layer.elements.map(e => {
-                const id = e.id;
-                if (e.type === 'edge') {
-                  const edge = diagram.edgeLookup.get(id)!;
-                  const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
-
-                  return this.subComponent(
-                    () =>
-                      new (edgeDef as ShapeEdgeDefinition).component!(
-                        edgeDef as ShapeEdgeDefinition
-                      ),
-                    {
-                      key: `edge-${id}`,
-                      onDoubleClick: onEdgeDoubleClick,
-                      onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
-                        this.tool!.onMouseDown(id, coord, modifiers),
-                      element: edge,
-                      applicationTriggers: props.applicationTriggers,
-                      tool: this.tool,
-                      actionMap
-                    },
-                    {
-                      onCreate: element => {
-                        this.edgeRefs.set(
-                          id,
-                          (element.data as ComponentVNodeData<unknown>).component.instance!
-                        );
-                      },
-                      onRemove: element => {
-                        /* Note: Need to check if the instance is the same as the one we have stored,
-                         *       as removes and adds can come out of order */
-                        const instance = element.data as ComponentVNodeData<unknown>;
-                        if (this.edgeRefs.get(id) === instance.component.instance) {
-                          this.edgeRefs.set(id, null);
-                        }
-                      }
+            on: {
+              click: e => {
+                props.onClick?.(e);
+              },
+              mousedown: e => {
+                if (e.button === 1) {
+                  const currentTool = props.applicationState.tool;
+                  const panTool = new PanTool(
+                    diagram,
+                    DRAG_DROP_MANAGER,
+                    this.svgRef,
+                    props.applicationTriggers,
+                    () => {
+                      props.applicationState.tool = currentTool;
                     }
+                  );
+                  this.setTool(panTool);
+                  panTool.setResetOnMouseUp(true);
+                  this.updateToolClassOnSvg('pan');
+                  panTool.onMouseDown(BACKGROUND, EventHelper.point(e), e);
+                }
+                if (e.button !== 0) return;
+                this.tool!.onMouseDown(BACKGROUND, EventHelper.point(e), e);
+              },
+              mouseover: e => {
+                const el = getAncestorDiagramElement(e.target as SVGElement);
+                if (!el) return;
+                // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
+                this.tool!.onMouseOver(el.id, EventHelper.point(e));
+                props.applicationState.hoverElement = el.id;
+              },
+              mouseout: e => {
+                const el = getAncestorDiagramElement(e.target as SVGElement);
+                if (!el) return;
+                // TODO: Do we need to call onMouseOver if we keep the state in ApplicationState?
+                this.tool!.onMouseOut(el.id, EventHelper.point(e));
+                props.applicationState.hoverElement = undefined;
+              },
+              mouseup: e => this.tool!.onMouseUp(EventHelper.point(e)),
+              mousemove: e => {
+                const r = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
+                this.tool!.onMouseMove(
+                  {
+                    x: e.clientX - r.x,
+                    y: e.clientY - r.y
+                  },
+                  e
+                );
+              },
+              contextmenu: event => {
+                const bounds = this.svgRef!.getBoundingClientRect();
+                const point = {
+                  x: event.clientX - bounds.x,
+                  y: event.clientY - bounds.y
+                };
+
+                const isClickOnSelection = Box.contains(
+                  selection.bounds,
+                  diagram.viewBox.toDiagramPoint(point)
+                );
+
+                if (isClickOnSelection) {
+                  props.applicationTriggers.showSelectionContextMenu?.(
+                    diagram.viewBox.toDiagramPoint(point),
+                    event
                   );
                 } else {
-                  const node = diagram.nodeLookup.get(id)!;
-                  const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
-
-                  return this.subComponent<NodeComponentProps>(
-                    () =>
-                      new (nodeDef as ShapeNodeDefinition).component!(
-                        nodeDef as ShapeNodeDefinition
-                      ),
-                    {
-                      key: `node-${node.nodeType}-${id}`,
-                      element: node,
-                      tool: this.tool,
-                      onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
-                        this.tool!.onMouseDown(id, coord, modifiers),
-                      applicationTriggers: props.applicationTriggers,
-                      actionMap
-                    },
-                    {
-                      onCreate: element => {
-                        this.nodeRefs.set(
-                          id,
-                          (element.data as ComponentVNodeData<NodeComponentProps>).component
-                            .instance!
-                        );
-                      },
-                      onRemove: element => {
-                        /* Note: Need to check if the instance is the same as the one we have stored,
-                         *       as removes and adds can come out of order */
-                        const instance = (element.data as ComponentVNodeData<NodeComponentProps>)
-                          .component.instance;
-                        if (this.nodeRefs.get(id) === instance) {
-                          this.nodeRefs.set(id, null);
-                        }
-                      }
-                    }
+                  props.applicationTriggers.showCanvasContextMenu?.(
+                    diagram.viewBox.toDiagramPoint(point),
+                    event
                   );
                 }
-              });
-            })
-          ),
 
-          this.tool.type === 'move'
-            ? this.subComponent($cmp(SelectionComponent), { ...canvasState })
-            : svg.g({}),
+                props.onContextMenu?.(event);
+              },
 
-          this.subComponent($cmp(SelectionMarqueeComponent), { ...canvasState }),
+              drag: e => {
+                props.onDrag?.(e);
+              },
+              drop: e => {
+                props.onDrop?.(e);
+              },
+              dragover: e => {
+                props.onDragOver?.(e);
+              }
+            }
+          },
+          [
+            svg.style({}, rawHTML(styles)),
+            svg.defs(
+              svg.filter(
+                { id: 'reflection-filter', filterUnits: 'objectBoundingBox' },
+                svg.feGaussianBlur({ stdDeviation: 0.5 })
+              )
+            ),
 
-          this.tool.type === 'move'
-            ? this.subComponent($cmp(AnchorHandlesComponent), { ...canvasState })
-            : svg.g({})
-        ]
-      )
-    ]);
+            this.subComponent($cmp(DocumentBoundsComponent), { ...canvasState }),
+
+            this.subComponent($cmp(GridComponent), { ...canvasState }),
+
+            svg.g(
+              {},
+              ...diagram.layers.visible.flatMap(layer => {
+                return layer.elements.map(e => {
+                  const id = e.id;
+                  if (e.type === 'edge') {
+                    const edge = diagram.edgeLookup.get(id)!;
+                    const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
+
+                    return this.subComponent(
+                      () =>
+                        new (edgeDef as ShapeEdgeDefinition).component!(
+                          edgeDef as ShapeEdgeDefinition
+                        ),
+                      {
+                        key: `edge-${id}`,
+                        onDoubleClick: onEdgeDoubleClick,
+                        onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
+                          this.tool!.onMouseDown(id, coord, modifiers),
+                        element: edge,
+                        applicationTriggers: props.applicationTriggers,
+                        tool: this.tool,
+                        actionMap
+                      },
+                      {
+                        onCreate: element => {
+                          this.edgeRefs.set(
+                            id,
+                            (element.data as ComponentVNodeData<unknown>).component.instance!
+                          );
+                        },
+                        onRemove: element => {
+                          /* Note: Need to check if the instance is the same as the one we have stored,
+                           *       as removes and adds can come out of order */
+                          const instance = element.data as ComponentVNodeData<unknown>;
+                          if (this.edgeRefs.get(id) === instance.component.instance) {
+                            this.edgeRefs.set(id, null);
+                          }
+                        }
+                      }
+                    );
+                  } else {
+                    const node = diagram.nodeLookup.get(id)!;
+                    const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
+
+                    return this.subComponent<NodeComponentProps>(
+                      () =>
+                        new (nodeDef as ShapeNodeDefinition).component!(
+                          nodeDef as ShapeNodeDefinition
+                        ),
+                      {
+                        key: `node-${node.nodeType}-${id}`,
+                        element: node,
+                        tool: this.tool,
+                        onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
+                          this.tool!.onMouseDown(id, coord, modifiers),
+                        applicationTriggers: props.applicationTriggers,
+                        actionMap
+                      },
+                      {
+                        onCreate: element => {
+                          this.nodeRefs.set(
+                            id,
+                            (element.data as ComponentVNodeData<NodeComponentProps>).component
+                              .instance!
+                          );
+                        },
+                        onRemove: element => {
+                          /* Note: Need to check if the instance is the same as the one we have stored,
+                           *       as removes and adds can come out of order */
+                          const instance = (element.data as ComponentVNodeData<NodeComponentProps>)
+                            .component.instance;
+                          if (this.nodeRefs.get(id) === instance) {
+                            this.nodeRefs.set(id, null);
+                          }
+                        }
+                      }
+                    );
+                  }
+                });
+              })
+            ),
+
+            this.tool.type === 'move'
+              ? this.subComponent($cmp(SelectionComponent), { ...canvasState })
+              : svg.g({}),
+
+            this.subComponent($cmp(SelectionMarqueeComponent), { ...canvasState }),
+
+            this.tool.type === 'move'
+              ? this.subComponent($cmp(AnchorHandlesComponent), { ...canvasState })
+              : svg.g({})
+          ]
+        )
+      ]
+    );
   }
 
   private updateToolClassOnSvg(s: ToolType) {

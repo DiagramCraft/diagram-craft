@@ -8,6 +8,8 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
 import { Transforms } from '../component/vdom-svg';
+import { Zoom } from './zoom';
+import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 
 type State = 'background' | 'node' | 'handle';
 
@@ -25,6 +27,15 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
   render(props: CanvasState) {
     const diagram = props.diagram;
+
+    createEffect(() => {
+      const cb = ({ type }: ViewboxEvents['viewbox']) => {
+        if (type === 'pan') return;
+        this.redraw();
+      };
+      diagram.viewBox.on('viewbox', cb);
+      return () => diagram.viewBox.off('viewbox', cb);
+    }, [diagram]);
 
     const selection = diagram.selectionState;
     const shouldScale = selection.nodes.length === 1 && selection.nodes[0] === this.hoverNode;
@@ -80,12 +91,15 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
     if (selection.isDragging()) return svg.g({});
 
+    const z = new Zoom(diagram.viewBox.zoomLevel);
+    const anchorSizeInEffect = z.num(ANCHOR_SIZE, 2);
+
     const sBounds = shouldScale
       ? {
-          x: node.bounds.x - SCALE,
-          y: node.bounds.y - SCALE,
-          w: node.bounds.w + 2 * SCALE,
-          h: node.bounds.h + 2 * SCALE,
+          x: node.bounds.x - z.num(SCALE),
+          y: node.bounds.y - z.num(SCALE),
+          w: node.bounds.w + z.num(2 * SCALE),
+          h: node.bounds.h + z.num(2 * SCALE),
           r: node.bounds.r
         }
       : node.bounds;
@@ -120,8 +134,8 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
             }
           },
           svg.path({
-            class: 'svg-anchor-handle',
-            d: `M 0 -${ANCHOR_SIZE}, L ${ANCHOR_SIZE} 0, L 0 ${ANCHOR_SIZE}, L -${ANCHOR_SIZE} 0, L 0 -${ANCHOR_SIZE}`
+            class: 'svg-handle svg-anchor-handle',
+            d: `M 0 -${anchorSizeInEffect}, L ${anchorSizeInEffect} 0, L 0 ${anchorSizeInEffect}, L -${anchorSizeInEffect} 0, L 0 -${anchorSizeInEffect}`
           })
         )
       );

@@ -26,6 +26,7 @@ import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
+import { Zoom } from './zoom';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -231,6 +232,8 @@ export class BaseNodeComponent<
       children.push(...shapeVNodes);
     }
 
+    const z = new Zoom($d.viewBox.zoomLevel);
+
     /* Add anchors ******************************************************************* */
 
     if (isEdgeConnect) {
@@ -245,7 +248,7 @@ export class BaseNodeComponent<
                 'y1': props.element.bounds.y + anchor.start.y * props.element.bounds.h,
                 'x2': props.element.bounds.x + anchor.end!.x * props.element.bounds.w,
                 'y2': props.element.bounds.y + anchor.end!.y * props.element.bounds.h,
-                'stroke-width': '5',
+                'stroke-width': z.str(5, 3),
                 'style': `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? '#16a34a' : 'transparent'};`
               });
             } else {
@@ -253,7 +256,7 @@ export class BaseNodeComponent<
                 class: 'svg-node__anchor',
                 cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
                 cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
-                r: '5',
+                r: z.str(5, 3),
                 // TODO: Change this to be a class instead of a fixed color
                 style: `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? '#16a34a' : 'transparent'};`
               });

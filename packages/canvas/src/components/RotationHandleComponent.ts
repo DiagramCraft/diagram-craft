@@ -4,6 +4,7 @@ import * as svg from '../component/vdom-svg';
 import { Point } from '@diagram-craft/geometry/point';
 import { RotateDrag } from '../drag/rotateDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { Zoom } from './zoom';
 
 type Props = {
   diagram: Diagram;
@@ -25,20 +26,21 @@ export class RotationHandleComponent extends Component<Props> {
       return svg.g({});
     }
 
+    const z = new Zoom(diagram.viewBox.zoomLevel);
+
     return svg.g(
       {},
       svg.line({
         x1: north.x,
         y1: north.y,
         x2: north.x,
-        y2: north.y - 20,
-        class: 'svg-selection__handle'
+        y2: north.y - z.num(20, 10)
       }),
       svg.circle({
         cx: north.x,
-        cy: north.y - 20,
-        r: 4,
-        class: 'svg-selection__handle',
+        cy: north.y - z.num(20, 10),
+        r: z.num(4, 2),
+        class: 'svg-handle svg-selection__handle',
         cursor: 'ew-resize',
         on: {
           mousedown: e => {

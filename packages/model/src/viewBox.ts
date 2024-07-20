@@ -5,7 +5,7 @@ import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { newid } from '@diagram-craft/utils/id';
 
 export type ViewboxEvents = {
-  viewbox: { viewbox: Viewbox };
+  viewbox: { viewbox: Viewbox; type: 'pan' | 'zoom' | 'pan+zoom' };
 };
 
 export class Viewbox extends EventEmitter<ViewboxEvents> {
@@ -64,13 +64,13 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
     };
     this.zoomLevel *= factor;
 
-    this.emit('viewbox', { viewbox: this });
+    this.emit('viewbox', { viewbox: this, type: 'zoom' });
   }
 
   pan(point: Point) {
     this.#offset = point;
     this.#initialized = true;
-    this.emit('viewbox', { viewbox: this });
+    this.emit('viewbox', { viewbox: this, type: 'pan' });
   }
 
   get dimensions(): Extent {
@@ -80,7 +80,7 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
   set dimensions(d: Extent) {
     this.#dimensions = d;
     this.#initialized = true;
-    this.emit('viewbox', { viewbox: this });
+    this.emit('viewbox', { viewbox: this, type: 'pan+zoom' });
   }
 
   get offset(): Point {
@@ -90,7 +90,7 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
   set offset(o: Point) {
     this.#offset = o;
     this.#initialized = true;
-    this.emit('viewbox', { viewbox: this });
+    this.emit('viewbox', { viewbox: this, type: 'pan' });
   }
 
   get svgViewboxString() {

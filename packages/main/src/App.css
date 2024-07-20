@@ -3,16 +3,23 @@
 @import '@radix-ui/colors/slate-alpha.css';
 @import '@radix-ui/colors/slate-dark-alpha.css';
 @import '@radix-ui/colors/blue.css';
+@import '@radix-ui/colors/blue-dark.css';
 @import '@radix-ui/colors/red.css';
 @import '@radix-ui/colors/red-dark.css';
-@import '@radix-ui/colors/blue-dark.css';
+
+@import '@radix-ui/colors/green.css';
+@import '@radix-ui/colors/green-dark.css';
+
+@import '@radix-ui/colors/crimson.css';
+@import '@radix-ui/colors/crimson-dark.css';
+
 
 @import '@radix-ui/colors/black-alpha.css';
 
 @import "./react-app/components/Components.css";
 @import "./Canvas.css";
 
-:root {
+.dark-theme {
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);
   --accent-3: var(--blue-3);
@@ -26,6 +33,29 @@
   --accent-11: var(--blue-11);
   --accent-12: var(--blue-12);
 
+  --green: var(--green-9);
+  --crimson: var(--crimson-9);
+}
+
+.light-theme {
+  --accent-1: var(--blue-1);
+  --accent-2: var(--blue-2);
+  --accent-3: var(--blue-3);
+  --accent-4: var(--blue-4);
+  --accent-5: var(--blue-5);
+  --accent-6: var(--blue-6);
+  --accent-7: var(--blue-7);
+  --accent-8: var(--blue-8);
+  --accent-9: var(--blue-9);
+  --accent-10: var(--blue-10);
+  --accent-11: var(--blue-11);
+  --accent-12: var(--blue-12);
+
+  --green: var(--green-9);
+  --crimson: var(--crimson-9);
+}
+
+:root {
   --primary-bg: var(--slate-2);
   --primary-fg: var(--slate-11);
   --primary-border: var(--slate-6);
@@ -65,19 +95,6 @@
 }
 
 .dark-theme {
-  --accent-1: var(--blue-1);
-  --accent-2: var(--blue-2);
-  --accent-3: var(--blue-3);
-  --accent-4: var(--blue-4);
-  --accent-5: var(--blue-5);
-  --accent-6: var(--blue-6);
-  --accent-7: var(--blue-7);
-  --accent-8: var(--blue-8);
-  --accent-9: var(--blue-9);
-  --accent-10: var(--blue-10);
-  --accent-11: var(--blue-11);
-  --accent-12: var(--blue-12);
-
   --primary-bg: var(--slate-2);
   --primary-fg: var(--slate-11);
   --primary-border: var(--slate-6);

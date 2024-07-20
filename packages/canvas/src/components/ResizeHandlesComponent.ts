@@ -7,27 +7,30 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { VNode } from '../component/vdom';
+import { Zoom } from './zoom';
 
 type Props = {
   diagram: Diagram;
 };
 
 const HANDLE_RADIUS = 6;
+const MIN_DIM = 3;
 
 export class ResizeHandlesComponent extends Component<Props> {
   private makeHandle(
     point: Point,
     cursor: ResizeType,
-    onMouseDown: (type: ResizeType) => (e: MouseEvent) => void
+    onMouseDown: (type: ResizeType) => (e: MouseEvent) => void,
+    z: Zoom
   ) {
     return svg.rect({
-      x: point.x - HANDLE_RADIUS / 2,
-      y: point.y - HANDLE_RADIUS / 2,
-      width: HANDLE_RADIUS,
-      height: HANDLE_RADIUS,
-      rx: 1,
-      ry: 1,
-      class: 'svg-selection__handle',
+      x: point.x - z.num(HANDLE_RADIUS / 2, MIN_DIM / 2),
+      y: point.y - z.num(HANDLE_RADIUS / 2, MIN_DIM / 2),
+      width: z.str(HANDLE_RADIUS, MIN_DIM),
+      height: z.str(HANDLE_RADIUS, MIN_DIM),
+      rx: z.str(1),
+      ry: z.str(1),
+      class: 'svg-handle svg-selection__handle',
       cursor: `${cursor}-resize`,
       on: {
         mousedown: onMouseDown(cursor)
@@ -65,26 +68,28 @@ export class ResizeHandlesComponent extends Component<Props> {
 
     const handles: VNode[] = [];
 
+    const z = new Zoom(diagram.viewBox.zoomLevel);
+
     if (resizeableVertically && resizeableHorizontally) {
       handles.push(
-        this.makeHandle(points[0], 'nw', makeDragInitiation),
-        this.makeHandle(points[1], 'ne', makeDragInitiation),
-        this.makeHandle(points[2], 'se', makeDragInitiation),
-        this.makeHandle(points[3], 'sw', makeDragInitiation)
+        this.makeHandle(points[0], 'nw', makeDragInitiation, z),
+        this.makeHandle(points[1], 'ne', makeDragInitiation, z),
+        this.makeHandle(points[2], 'se', makeDragInitiation, z),
+        this.makeHandle(points[3], 'sw', makeDragInitiation, z)
       );
     }
 
     if (resizeableVertically) {
       handles.push(
-        this.makeHandle(south, 's', makeDragInitiation),
-        this.makeHandle(north, 'n', makeDragInitiation)
+        this.makeHandle(south, 's', makeDragInitiation, z),
+        this.makeHandle(north, 'n', makeDragInitiation, z)
       );
     }
 
     if (resizeableHorizontally) {
       handles.push(
-        this.makeHandle(west, 'w', makeDragInitiation),
-        this.makeHandle(east, 'e', makeDragInitiation)
+        this.makeHandle(west, 'w', makeDragInitiation, z),
+        this.makeHandle(east, 'e', makeDragInitiation, z)
       );
     }
 

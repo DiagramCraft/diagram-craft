@@ -13,6 +13,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { Zoom } from '../components/zoom';
 
 declare global {
   interface NodeProps {
@@ -28,9 +29,9 @@ const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
 registerNodeDefaults('shapeGenericPath', { path: DEFAULT_PATH, waypointTypes: [] });
 
 const COLORS: Record<EditableWaypointType, string> = {
-  corner: 'red',
-  smooth: 'blue',
-  symmetric: 'green'
+  corner: 'var(--accent-9)',
+  smooth: 'var(--accent-9)',
+  symmetric: 'var(--accent-9)'
 };
 
 const NEXT_TYPE: Record<EditableWaypointType, EditableWaypointType> = {
@@ -90,6 +91,8 @@ class GenericPathComponent extends BaseNodeComponent {
       }
     };
 
+    const z = new Zoom(props.node.diagram.viewBox.zoomLevel);
+
     if (props.isSingleSelected && props.tool?.type === 'node') {
       props.applicationTriggers.pushHelp?.(
         'GenericPathComponent',
@@ -104,8 +107,8 @@ class GenericPathComponent extends BaseNodeComponent {
           height: props.node.bounds.h,
           style: toInlineCSS({
             ...props.style,
-            stroke: '#e8e8f8',
-            strokeWidth: '20',
+            stroke: 'var(--accent-3)',
+            strokeWidth: z.str(20),
             strokeLinejoin: 'miter',
             strokeLinecap: 'square'
           }),
@@ -136,21 +139,23 @@ class GenericPathComponent extends BaseNodeComponent {
         if (this.selectedWaypoints.includes(idx)) {
           shapeBuilder.add(
             svg.line({
-              x1: wp.point.x,
-              y1: wp.point.y,
-              x2: wp.point.x + wp.controlPoints.p1.x,
-              y2: wp.point.y + wp.controlPoints.p1.y,
-              stroke: 'blue'
+              'x1': wp.point.x,
+              'y1': wp.point.y,
+              'x2': wp.point.x + wp.controlPoints.p1.x,
+              'y2': wp.point.y + wp.controlPoints.p1.y,
+              'stroke': 'var(--accent-9)',
+              'stroke-width': z.str(1)
             })
           );
           shapeBuilder.add(
             svg.circle({
-              cx: wp.point.x + wp.controlPoints.p1.x,
-              cy: wp.point.y + wp.controlPoints.p1.y,
-              stroke: 'blue',
-              fill: 'white',
-              r: '4',
-              on: {
+              'cx': wp.point.x + wp.controlPoints.p1.x,
+              'cy': wp.point.y + wp.controlPoints.p1.y,
+              'stroke': 'var(--accent-9)',
+              'stroke-width': z.str(1),
+              'fill': 'white',
+              'r': z.str(4, 1.5),
+              'on': {
                 mousedown: e => {
                   if (e.button !== 0) return;
                   drag.initiate(
@@ -169,22 +174,24 @@ class GenericPathComponent extends BaseNodeComponent {
 
           shapeBuilder.add(
             svg.line({
-              x1: wp.point.x,
-              y1: wp.point.y,
-              x2: wp.point.x + wp.controlPoints.p2.x,
-              y2: wp.point.y + wp.controlPoints.p2.y,
-              stroke: 'green'
+              'x1': wp.point.x,
+              'y1': wp.point.y,
+              'x2': wp.point.x + wp.controlPoints.p2.x,
+              'y2': wp.point.y + wp.controlPoints.p2.y,
+              'stroke': 'var(--accent-9)',
+              'stroke-width': z.str(1)
             })
           );
 
           shapeBuilder.add(
             svg.circle({
-              cx: wp.point.x + wp.controlPoints.p2.x,
-              cy: wp.point.y + wp.controlPoints.p2.y,
-              stroke: 'green',
-              fill: 'white',
-              r: '4',
-              on: {
+              'cx': wp.point.x + wp.controlPoints.p2.x,
+              'cy': wp.point.y + wp.controlPoints.p2.y,
+              'stroke': 'var(--accent-9)',
+              'stroke-width': z.str(1),
+              'fill': 'white',
+              'r': z.str(4, 1.5),
+              'on': {
                 mousedown: e => {
                   if (e.button !== 0) return;
                   drag.initiate(
@@ -204,12 +211,13 @@ class GenericPathComponent extends BaseNodeComponent {
 
         shapeBuilder.add(
           svg.circle({
-            cx: wp.point.x,
-            cy: wp.point.y,
-            stroke: COLORS[wp.type],
-            fill: this.selectedWaypoints.includes(idx) ? COLORS[wp.type] : 'white',
-            r: '4',
-            on: {
+            'cx': wp.point.x,
+            'cy': wp.point.y,
+            'stroke': COLORS[wp.type],
+            'stroke-width': z.str(1),
+            'fill': this.selectedWaypoints.includes(idx) ? COLORS[wp.type] : 'white',
+            'r': z.str(4, 1.5),
+            'on': {
               mousedown: e => {
                 if (e.button !== 0) return;
 

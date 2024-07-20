@@ -1,16 +1,22 @@
-import { Component } from '../component/component';
+import { Component, createEffect } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { toInlineCSS, VNode } from '../component/vdom';
 import { CanvasState } from '../EditableCanvasComponent';
+import { Zoom } from './zoom';
+import { debounce } from '@diagram-craft/utils/debounce';
+import { ViewboxEvents } from '@diagram-craft/model/viewBox';
+
+const DEFAULT_MAJOR_COLOR = '#e7e5e4';
+const DEFAULT_MINOR_COLOR = '#f5f5f4';
 
 type Type = 'major' | 'minor';
 
-const circleAt = (xCoord: number, yCoord: number, type: Type, style: string) => {
+const circleAt = (xCoord: number, yCoord: number, type: Type, style: string, z: Zoom) => {
   return svg.circle({
     class: `svg-grid svg-grid--${type}`,
     cx: xCoord,
     cy: yCoord,
-    r: 1,
+    r: z.str(1),
     style
   });
 };
@@ -38,8 +44,26 @@ const vLine = (xCoord: number, yCoord: number, h: number, type: Type, style: str
 };
 
 export class GridComponent extends Component<CanvasState> {
+  debouncedRedraw = debounce(() => {
+    this.redraw();
+  }, 1000);
+
   render(props: CanvasState) {
     const diagram = props.diagram;
+    const z = new Zoom(diagram.viewBox.zoomLevel);
+
+    createEffect(() => {
+      const redrawIfNeeded = ({ type }: ViewboxEvents['viewbox']) => {
+        if (type === 'pan') return;
+        if (diagram.props.grid?.majorType === 'dots' || diagram.props.grid?.type === 'dots') {
+          this.debouncedRedraw();
+        }
+      };
+      diagram.viewBox.on('viewbox', redrawIfNeeded);
+      return () => {
+        diagram.viewBox.off('viewbox', redrawIfNeeded);
+      };
+    }, [diagram, props]);
 
     // Note: we don't need to listen to diagram change events here, because this is handled
     //       through a full redraw of EditableCanvas when diagram changes.
@@ -58,20 +82,18 @@ export class GridComponent extends Component<CanvasState> {
       return svg.g({});
     }
 
-    const majorStyle: Partial<CSSStyleDeclaration> = {};
-    if (diagram.props.grid?.majorColor) {
-      majorStyle.stroke = diagram.props.grid.majorColor;
-      majorStyle.fill = diagram.props.grid.majorColor;
-    }
-
-    const minorStyle: Partial<CSSStyleDeclaration> = {};
-    if (diagram.props.grid?.color) {
-      minorStyle.stroke = diagram.props.grid.color;
-      minorStyle.fill = diagram.props.grid.color;
-    }
-
     const majorType = diagram.props.grid?.majorType ?? 'lines';
     const type = diagram.props.grid?.type ?? 'lines';
+
+    const majorStyle: Partial<CSSStyleDeclaration> = {
+      stroke: diagram.props.grid?.majorColor ?? DEFAULT_MAJOR_COLOR,
+      fill: diagram.props.grid?.majorColor ?? DEFAULT_MAJOR_COLOR
+    };
+
+    const minorStyle: Partial<CSSStyleDeclaration> = {
+      stroke: diagram.props.grid?.color ?? DEFAULT_MINOR_COLOR,
+      fill: diagram.props.grid?.color ?? DEFAULT_MINOR_COLOR
+    };
 
     const minorStyleAsString = toInlineCSS(minorStyle);
     const majorStyleAsString = toInlineCSS(majorStyle);
@@ -106,7 +128,7 @@ export class GridComponent extends Component<CanvasState> {
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
-          dest.push(circleAt(xCoord, yCoord, 'minor', minorStyleAsString));
+          dest.push(circleAt(xCoord, yCoord, 'minor', minorStyleAsString, z));
         }
       }
     }
@@ -141,7 +163,7 @@ export class GridComponent extends Component<CanvasState> {
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
-          dest.push(circleAt(xCoord, yCoord, 'major', majorStyleAsString));
+          dest.push(circleAt(xCoord, yCoord, 'major', majorStyleAsString, z));
         }
       }
     }

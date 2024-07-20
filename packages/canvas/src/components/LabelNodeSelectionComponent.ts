@@ -6,6 +6,7 @@ import { LabelAttachmentPointDrag } from '../drag/labelAttachmentPointDrag';
 import { Box } from '@diagram-craft/geometry/box';
 import { TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { Zoom } from './zoom';
 
 export class LabelNodeSelectionComponent extends Component<Props> {
   render(props: Props) {
@@ -23,19 +24,21 @@ export class LabelNodeSelectionComponent extends Component<Props> {
       TimeOffsetOnPath.toLengthOffsetOnPath({ pathT: labelNode.timeOffset! }, path)
     );
 
+    const z = new Zoom(props.node.diagram.viewBox.zoomLevel);
+
     return svg.g(
       {},
       svg.circle({
         class: 'svg-selection__label-node',
         cx: center.x,
         cy: center.y,
-        r: 3
+        r: z.num(3, 1.5)
       }),
       svg.circle({
-        class: 'svg-selection__label-node',
+        class: 'svg-handle svg-selection__label-node',
         cx: attachmentPoint.x,
         cy: attachmentPoint.y,
-        r: 4,
+        r: z.num(4, 1.5),
         on: {
           mousedown: e => {
             if (e.button !== 0) return;

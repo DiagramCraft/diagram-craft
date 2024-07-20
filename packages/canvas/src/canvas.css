@@ -3,10 +3,6 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 
-  .svg-node__anchor {
-    stroke: red;
-    fill: transparent;
-  }
   .svg-node__fo {
     > div {
       display: flex;

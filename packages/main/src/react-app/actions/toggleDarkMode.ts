@@ -17,7 +17,7 @@ export class ToggleDarkModeAction extends AbstractToggleAction {
 
   execute(): void {
     if (this.state) {
-      document.querySelectorAll('.dark-theme').forEach(element => {
+      document.querySelectorAll('.dark-theme:not(.canvas-wrapper)').forEach(element => {
         element.classList.remove('dark-theme');
         element.classList.add('light-theme');
       });
@@ -25,7 +25,7 @@ export class ToggleDarkModeAction extends AbstractToggleAction {
       document.body.classList.add('light-theme');
       this.state = false;
     } else {
-      document.querySelectorAll('.light-theme').forEach(element => {
+      document.querySelectorAll('.light-theme:not(.canvas-wrapper)').forEach(element => {
         if (element.id === 'middle') return;
         element.classList.remove('light-theme');
         element.classList.add('dark-theme');

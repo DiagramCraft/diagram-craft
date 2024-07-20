@@ -1,4 +1,5 @@
 .canvas {
+  --zoom: 1;
   background: var(--canvas-bg);
 
   &.tool-edge, &.tool-edge * { cursor: crosshair !important; }
@@ -37,135 +38,123 @@
     filter: drop-shadow(2px 2px 4px rgba(27, 25, 23, 0.05));
   }
 
+
   .svg-grid {
-    stroke-width: 1;
-    /* TODO: Use color variables for these */
-    &.svg-grid--minor {
-      stroke: #f5f5f4;
-      fill: #f5f5f4;
-    }
-    &.svg-grid--major {
-      stroke: #e7e5e4;
-      fill: #e7e5e4;
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-handle {
+    &:hover,
+    &:active {
+      fill: white;
+      stroke-width: calc(4 * var(--zoom));
+      transition: stroke-width 250ms;
     }
   }
 
   .svg-selection {
+    --_selection-color: var(--accent-9);
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--_selection-color);
+
     .svg-selection__bb {
       fill: none;
-      stroke-width: 1;
-      stroke: #1d4ed8;
-      &.svg-selection__bb--only-edges {
-        stroke: #a8a29e;
-        stroke-dasharray: 5 5;
-      }
-      &.svg-selection__bb--dragging {
-      }
     }
 
+    /* This includes both rotation and resize handles */
     .svg-selection__handle {
       fill: white;
-      stroke-width: 1;
-      stroke: #1d4ed8;
+      /* Note, that cursor is set in the code */
     }
+
+    /* This is mainly the endpoint of edges */
     .svg-selection__handle-edge {
       fill: white;
-      stroke-width: 1;
-      stroke: #1d4ed8;
       cursor: move;
-      &:hover,
-      &.svg-selection__handle-edge--active {
-        stroke-width: 2;
-      }
+
       &.svg-selection__handle-edge--connected {
-        stroke: #16a34a;
-        fill: #16a34a;
+        fill: var(--_selection-color);
       }
     }
 
     .svg-selection__label-node {
       fill: var(--canvas-bg);
-      stroke-width: 1;
       stroke: purple;
       cursor: move;
-      &:hover,
-      &.svg-selection__label-node--active {
-        stroke-width: 2;
-      }
     }
     .svg-selection__label-node__line {
-      stroke-width: 1;
       stroke: purple;
-      stroke-dasharray: 5 5;
+      stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
     }
 
     .svg-selection__group-bounds {
       fill: none;
-      stroke-dasharray: 5 5;
-      stroke: hsl(215, 63%, 70%);
+      stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
+      stroke: var(--accent-6);
     }
   }
 
 
   .svg-guide__line {
-    stroke-width: 1;
+    stroke-width: calc(1 * var(--zoom));
   }
   .svg-guide__extension {
-    stroke-width: 1;
-    stroke-dasharray: 5 5;
+    stroke-width: calc(1 * var(--zoom));
+    stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
   }
   .svg-guide__color--node {
-    stroke: red;
+    stroke: var(--accent-7);
   }
   .svg-guide__color--distance {
-    stroke: pink;
+    stroke: var(--accent-7);
   }
   .svg-guide__color--size {
-    stroke: pink;
+    stroke: var(--accent-7);
   }
   .svg-guide__color--canvas {
-    stroke: green;
+    stroke: var(--accent-7);
   }
   .svg-guide__color--source {
-    stroke: black;
+    stroke: var(--accent-7);
   }
   .svg-guide__color--grid {
-    stroke: purple;
+    stroke: var(--accent-7);
   }
-
   .svg-guide__distance-line {
-    stroke: pink;
-    fill: pink;
-    stroke-width: 1;
+    stroke: var(--accent-7);
+    fill: var(--accent-7);
+    stroke-width: calc(1 * var(--zoom));
   }
   .svg-guide__distance-label-bg {
     fill: white;
   }
   .svg-guide__distance-label {
-    fill: pink;
-    font-size: 10px;
+    fill: var(--accent-8);
+    font-size: calc(10px * var(--zoom));
     dominant-baseline: middle;
     text-anchor: middle;
   }
 
   .svg-marquee {
-    fill: rgba(43, 117, 221, 0.2);
-    stroke: #2673dd;
+    fill: color(from var(--accent-3) srgb r g b / 0.5);
+    stroke: var(--accent-9);
+    stroke-width: calc(1 * var(--zoom));
   }
   .svg-marquee__element {
     fill: transparent;
-    stroke: #2673dd;
+    stroke: var(--accent-9);
+    stroke-width: calc(1 * var(--zoom));
   }
 
   .svg-bezier-handle {
     fill: white;
-    stroke-width: 1;
-    stroke: darkorange;
-    cursor: move
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
+    cursor: move;
   }
   .svg-bezier-handle-line {
-    stroke-width: 1;
-    stroke: darkorange;
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
     stroke-dasharray: 2 2;
     cursor: move;
   }
@@ -173,15 +162,15 @@
   .svg-waypoint-handle {
     fill: white;
     cursor: move;
-    stroke-width: 1;
-    stroke: #1d4ed8;
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
   }
 
   .svg-midpoint-handle {
     fill: white;
     cursor: move;
-    stroke-width: 1;
-    stroke: #9DBCFA;
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
   }
 
   /* This is for mixed foreignObject svg text situations */
@@ -201,35 +190,37 @@
     }
   }
 
-  .svg-node--highlight-node__tool-edit {
-    outline: 1px solid green;
-  }
-  .svg-node--highlight-node__tool-convert {
-    outline: 1px solid red;
-  }
   .svg-edge {
     cursor: move;
     fill: none;
   }
+
   .svg-edge--highlight-node__drop-target {
     .svg-edge {
-      stroke: #30A46C !important;
-      stroke-width: 3 !important;
+      stroke: var(--green) !important;
+      stroke-width: calc(3 * var(--zoom)) !important;
       stroke-dasharray: none !important;
     }
   }
   .svg-shape-control-point {
     cursor: crosshair;
     fill: white;
-    stroke: #16a34a;
-    stroke-width: 2;
+    stroke: var(--crimson);
+    stroke-width: calc(1 * var(--zoom));
   }
 
   .svg-anchor-handle {
     fill: white;
     stroke: #16a34a;
+    stroke-width: calc(1 * var(--zoom));
     &:hover {
       stroke: red;
     }
+  }
+
+  .svg-node__anchor {
+    stroke: red;
+    fill: transparent;
+    stroke-width: calc(1 * var(--zoom));
   }
 }

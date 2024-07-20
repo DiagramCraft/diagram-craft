@@ -22,6 +22,7 @@ import { makeControlPoint } from '../shape/ShapeControlPoint';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights } from '../highlight';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
+import { Zoom } from './zoom';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -110,16 +111,18 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     const basePath = clipPath(props.element.path(), props.element, startArrow, endArrow);
     if (basePath === undefined) return svg.g({});
 
+    const z = new Zoom($d.viewBox.zoomLevel);
+
     const points: VNode[] = [];
 
     if (isSingleSelected && edgeProps.type !== 'curved') {
       for (const mp of firstEdge.midpoints) {
         points.push(
           svg.circle({
-            class: 'svg-midpoint-handle',
+            class: 'svg-handle svg-midpoint-handle',
             cx: mp.x,
             cy: mp.y,
-            r: 3,
+            r: z.num(3, 1.5),
             on: {
               mousedown: (e: MouseEvent) => {
                 if (e.button !== 0) return;
@@ -157,10 +160,10 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
             );
             points.push(
               svg.circle({
-                class: 'svg-bezier-handle',
+                class: 'svg-handle svg-bezier-handle',
                 cx: wp.point.x + cp.x,
                 cy: wp.point.y + cp.y,
-                r: 4,
+                r: z.num(4, 2),
                 on: {
                   mousedown: (e: MouseEvent) => {
                     if (e.button !== 0) return;
@@ -182,10 +185,10 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
         points.push(
           svg.circle({
-            class: 'svg-waypoint-handle',
+            class: 'svg-handle svg-waypoint-handle',
             cx: wp.point.x,
             cy: wp.point.y,
-            r: 4,
+            r: z.num(4, 2),
             on: {
               dblclick: e => {
                 if (e.button !== 0) return;

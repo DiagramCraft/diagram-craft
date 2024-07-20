@@ -6,8 +6,10 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Guide } from '@diagram-craft/model/selectionState';
 import { newid } from '@diagram-craft/utils/id';
 import { round } from '@diagram-craft/utils/math';
+import { Zoom } from './zoom';
+import { Diagram } from '@diagram-craft/model/diagram';
 
-const makeDistanceMarker = (p1: Point, p2: Point, lbl: string): VNode[] => {
+const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[] => {
   const l = Line.of(p1, p2);
   const marker = `distance_marker_${newid()}`;
   return [
@@ -22,7 +24,7 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string): VNode[] => {
         markerHeight: 6,
         orient: 'auto-start-reverse'
       },
-      svg.path({ d: 'M 0 0 L 10 5 L 0 10 z', stroke: 'pink', fill: 'pink' })
+      svg.path({ d: 'M 0 0 L 10 5 L 0 10 z', stroke: 'var(--accent-7)', fill: 'var(--accent-7)' })
     ),
     svg.line({
       'class': 'svg-guide__distance-line',
@@ -35,12 +37,12 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string): VNode[] => {
     }),
     svg.rect({
       class: 'svg-guide__distance-label-bg',
-      x: Line.midpoint(l).x - lbl.length * 5,
-      y: Line.midpoint(l).y - 10,
-      rx: 5,
-      ry: 5,
-      width: lbl.length * 10,
-      height: 17
+      x: Line.midpoint(l).x - z.num(lbl.length * 5),
+      y: Line.midpoint(l).y - z.num(10),
+      rx: z.num(5),
+      ry: z.num(5),
+      width: z.num(lbl.length * 10),
+      height: z.num(17)
     }),
     svg.text(
       {
@@ -55,6 +57,7 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string): VNode[] => {
 
 export class GuidesComponent extends Component<Props> {
   render(props: Props) {
+    const z = new Zoom(props.diagram.viewBox.zoomLevel);
     return svg.g(
       {},
       ...[
@@ -79,12 +82,12 @@ export class GuidesComponent extends Component<Props> {
           }),
           ...(g.matchingMagnet.type === 'size'
             ? g.matchingMagnet.distancePairs.flatMap(dp =>
-                makeDistanceMarker(dp.pointA, dp.pointB, round(dp.distance).toString())
+                makeDistanceMarker(dp.pointA, dp.pointB, round(dp.distance).toString(), z)
               )
             : []),
           ...(g.matchingMagnet.type === 'distance'
             ? g.matchingMagnet.distancePairs.flatMap(dp =>
-                makeDistanceMarker(dp.pointA, dp.pointB, round(dp.distance).toString())
+                makeDistanceMarker(dp.pointA, dp.pointB, round(dp.distance).toString(), z)
               )
             : [])
         ];
@@ -94,5 +97,6 @@ export class GuidesComponent extends Component<Props> {
 }
 
 type Props = {
+  diagram: Diagram;
   guides: ReadonlyArray<Guide>;
 };
