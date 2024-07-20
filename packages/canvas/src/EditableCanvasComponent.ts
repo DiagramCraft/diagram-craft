@@ -149,8 +149,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           diagram.viewBox.zoom(normalized > 0 ? 1 / 1.008 : 1.008, EventHelper.point(e));
         } else {
           diagram.viewBox.pan({
-            x: diagram.viewBox.offset.x + e.deltaX * 0.7,
-            y: diagram.viewBox.offset.y + e.deltaY * 0.7
+            x: diagram.viewBox.offset.x + e.deltaX * diagram.viewBox.zoomLevel,
+            y: diagram.viewBox.offset.y + e.deltaY * diagram.viewBox.zoomLevel
           });
         }
       };
