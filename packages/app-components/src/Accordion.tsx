@@ -81,7 +81,11 @@ type ItemHeaderProps = {
 
 // TODO: This is not perfect, as button events will propagate to the header
 const ItemHeaderButtons = (props: ItemHeaderButtonsProps) => {
-  return <div className={styles.cmpAccordionHeaderBtn}>{props.children}</div>;
+  return (
+    <div className={styles.cmpAccordionHeaderBtn} onClick={e => e.preventDefault()}>
+      {props.children}
+    </div>
+  );
 };
 
 type ItemHeaderButtonsProps = {
