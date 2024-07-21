@@ -20,6 +20,7 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { Vector } from '@diagram-craft/geometry/vector';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -62,10 +63,18 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return this.capabilities[capability];
   }
 
+  /**
+   * For normals to work correctly, it's important to declare the in the counter-clockwise
+   * direction
+   */
   getBoundingPathBuilder(node: DiagramNode) {
     const pathBuilder = new PathBuilder(unitCoordinateSystem(node.bounds));
     PathBuilderHelper.rect(pathBuilder, Box.unit());
     return pathBuilder;
+  }
+
+  protected makeAnchorId(p: Point) {
+    return `${Math.round(p.x * 1000)}_${Math.round(p.y * 1000)}`;
   }
 
   getAnchors(node: DiagramNode) {
@@ -74,6 +83,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
     const paths = this.getBoundingPath(node);
 
+    // Get anchors per side
     for (let i = 0; i < paths.all().length; i++) {
       const path = paths.all()[i];
       for (let j = 0; j < path.segments.length; j++) {
@@ -89,9 +99,55 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         const lx = round((rp.x - node.bounds.x) / node.bounds.w);
         const ly = round((rp.y - node.bounds.y) / node.bounds.h);
 
-        newAnchors.push({ id: `${i}_${j}`, start: { x: lx, y: ly }, clip: false, type: 'point' });
+        let normal = Vector.angle(Vector.tangentToNormal(p.tangent(0.5))) - node.bounds.r;
+
+        // Make sure normal is "outwards" from the center of the node
+        const tangent = Vector.from(Box.center(node.bounds), rp);
+        if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
+          normal += Math.PI;
+        }
+
+        newAnchors.push({
+          id: this.makeAnchorId({ x: lx, y: ly }),
+          start: { x: lx, y: ly },
+          clip: false,
+          type: 'point',
+          normal: normal,
+          isPrimary: p.length() / Math.max(node.bounds.w, node.bounds.h) > 0.25
+        });
       }
     }
+
+    // Get anchors in different directions
+    /*if (node.nodeType === 'rect') {
+      const center = Box.center(node.bounds);
+      const maxD = Math.max(node.bounds.w, node.bounds.h);
+      for (let d = 0; d < 2 * Math.PI; d += Math.PI / 8) {
+        const l = Line.of(center, Point.add(center, Vector.fromPolar(d, maxD)));
+        const linePath = new Path(center, [['L', l.to.x, l.to.y]]);
+        const firstPath = paths.all()[0];
+        firstPath.intersections(linePath).forEach(p => {
+          const lengthOffsetOnPath = PointOnPath.toTimeOffset(p, firstPath);
+
+          // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
+          const point = Point.rotateAround(p.point, -node.bounds.r, Box.center(node.bounds));
+
+          const start = {
+            x: (point.x - node.bounds.x) / node.bounds.w,
+            y: (point.y - node.bounds.y) / node.bounds.h
+          };
+          newAnchors.push({
+            id: this.makeAnchorId(start),
+            start: start,
+            clip: false,
+            type: 'point',
+            normal:
+              Vector.angle(Vector.tangentToNormal(firstPath.tangentAt(lengthOffsetOnPath))) -
+              node.bounds.r
+          });
+        });
+      }
+    }*/
 
     return newAnchors;
   }

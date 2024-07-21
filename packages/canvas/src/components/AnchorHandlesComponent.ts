@@ -10,6 +10,7 @@ import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
 import { Transforms } from '../component/vdom-svg';
 import { Zoom } from './zoom';
 import { ViewboxEvents } from '@diagram-craft/model/viewBox';
+import { Vector } from '@diagram-craft/geometry/vector';
 
 type State = 'background' | 'node' | 'handle';
 
@@ -108,6 +109,9 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
     node.anchors.forEach(a => {
       if (a.clip) return;
+      if (!a.isPrimary) return;
+
+      const normal = Vector.fromPolar(a.normal ?? 0, z.num(10, 7));
 
       const x = node.renderProps.geometry.flipH ? 1 - a.start.x : a.start.x;
       const y = node.renderProps.geometry.flipV ? 1 - a.start.y : a.start.y;
@@ -133,6 +137,14 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
               }
             }
           },
+          svg.line({
+            'x1': 0,
+            'y1': 0,
+            'x2': normal.x,
+            'y2': normal.y,
+            'stroke': 'var(--accent-9)',
+            'stroke-width': z.num(1)
+          }),
           svg.circle({
             class: 'svg-handle svg-anchor-handle',
             cx: 0,

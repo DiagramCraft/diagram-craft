@@ -82,7 +82,6 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
     pathBuilder.lineTo(Point.of(-1, 1));
     pathBuilder.lineTo(Point.of(-1 + 2 * sizePct, 0));
     pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.close();
 
     return pathBuilder;
   }

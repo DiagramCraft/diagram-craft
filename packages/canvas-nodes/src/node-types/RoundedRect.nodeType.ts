@@ -31,10 +31,10 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 
   getAnchors(_def: DiagramNode): Anchor[] {
     return [
-      { id: '1', start: Point.of(0.5, 1), type: 'point' },
-      { id: '2', start: Point.of(0.5, 0), type: 'point' },
-      { id: '3', start: Point.of(1, 0.5), type: 'point' },
-      { id: '4', start: Point.of(0, 0.5), type: 'point' },
+      { id: '1', start: Point.of(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
+      { id: '2', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
+      { id: '3', start: Point.of(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
+      { id: '4', start: Point.of(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
       { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
     ];
   }

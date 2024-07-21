@@ -22,6 +22,11 @@ export type RawSegment =
   | RawCurveSegment
   | RawQuadSegment;
 
+export const simpleCoordinateSystem = (b: Box) => {
+  const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [0, 1], [0, 1], false);
+  return (p: Point) => lcs.toGlobal(p);
+};
+
 /* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
 export const unitCoordinateSystem = (b: Box) => {
   const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [-1, 1], [-1, 1], true);

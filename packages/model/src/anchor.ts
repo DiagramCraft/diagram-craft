@@ -20,6 +20,8 @@ export type Anchor = {
    */
   directions?: ReadonlyArray<Range>;
 
+  normal?: number;
+
   // TODO: Not yet used
   /**
    * If true, this anchor can be used for creating new nodes quickly
