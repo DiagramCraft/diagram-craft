@@ -592,27 +592,25 @@ export class DiagramNode
 
     // TODO: This should be possible to put in the invalidation() method
     if (this.isLabelNode() && !isChild) {
-      uow.pushAction('updateLabelNode', this, () => {
-        if (uow.contains(this.labelEdge()!)) return;
+      if (uow.contains(this.labelEdge()!)) return;
 
-        const labelNode = this.labelNode();
-        assert.present(labelNode);
+      const labelNode = this.labelNode();
+      assert.present(labelNode);
 
-        const dx = this.bounds.x - previousBounds.x;
-        const dy = this.bounds.y - previousBounds.y;
+      const dx = this.bounds.x - previousBounds.x;
+      const dy = this.bounds.y - previousBounds.y;
 
-        const clampAmount = 100;
+      const clampAmount = 100;
 
-        this.updateLabelNode(
-          {
-            offset: {
-              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-            }
-          },
-          uow
-        );
-      });
+      this.updateLabelNode(
+        {
+          offset: {
+            x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+            y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+          }
+        },
+        uow
+      );
     }
 
     uow.updateElement(this);
