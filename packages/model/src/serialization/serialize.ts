@@ -11,10 +11,14 @@ import {
   SerializedPointInNodeEndpoint,
   SerializedFreeEndpoint,
   SerializedLayer,
-  SerializedNode
+  SerializedNode,
+  SerializedStyles
 } from './types';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { AttachmentManager } from '../attachment';
+import { DiagramPalette } from '../diagramPalette';
+import { DiagramStyles } from '../diagramStyles';
+import { DiagramDataSchemas } from '../diagramDataSchemas';
 
 export const isSerializedEndpointAnchor = (
   endpoint: SerializedEndpoint
@@ -33,8 +37,26 @@ export const serializeDiagramDocument = async (
 ): Promise<SerializedDiagramDocument> => {
   return {
     diagrams: document.diagrams.map(serializeDiagram),
-    attachments: await serializeAttachments(document.attachments)
+    attachments: await serializeAttachments(document.attachments),
+    customPalette: serializeCustomPalette(document.customPalette),
+    styles: serializeStyles(document.styles),
+    schemas: serializeSchemas(document.schemas)
   };
+};
+
+const serializeCustomPalette = (customPalette: DiagramPalette): string[] => {
+  return customPalette.colors;
+};
+
+const serializeStyles = (styles: DiagramStyles): SerializedStyles => {
+  return {
+    edgeStyles: styles.edgeStyles.map(e => e.snapshot()),
+    nodeStyles: styles.nodeStyles.map(e => e.snapshot())
+  };
+};
+
+const serializeSchemas = (schemas: DiagramDataSchemas) => {
+  return schemas.all;
 };
 
 const serializeAttachments = async (

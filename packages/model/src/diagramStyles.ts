@@ -146,11 +146,18 @@ export class DiagramStyles {
   }
 
   setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork) {
+    const oldProps = deepClone(el.renderProps);
     el.updateProps(props => {
       Object.keys(props).forEach(key => {
         delete props[key as keyof (NodeProps | EdgeProps)];
       });
       props.style = style;
+
+      props.text ??= {};
+      props.text.text = oldProps.text.text;
+
+      props.data ??= {};
+      props.data = oldProps.data as ElementProps['data'];
     }, uow);
   }
 
@@ -212,19 +219,14 @@ export class DiagramStyles {
     }, uow);
   }
 
-  addStylesheet(stylesheet: Stylesheet, _uow: UnitOfWork) {
+  addStylesheet(stylesheet: Stylesheet, _uow?: UnitOfWork) {
     if (stylesheet.type === 'node') {
+      this.nodeStyles = this.nodeStyles.filter(s => s.id !== stylesheet.id);
       this.nodeStyles.push(stylesheet);
     } else {
+      this.edgeStyles = this.edgeStyles.filter(s => s.id !== stylesheet.id);
       this.edgeStyles.push(stylesheet);
     }
-  }
-
-  toJSON() {
-    return {
-      nodeStyles: this.nodeStyles,
-      edgeStyles: this.edgeStyles
-    };
   }
 }
 

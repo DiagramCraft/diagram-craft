@@ -3,6 +3,8 @@ import { Point } from '@diagram-craft/geometry/point';
 import { EdgePropsForEditing } from '../diagramEdge';
 import { NodePropsForEditing } from '../diagramNode';
 import { OffsetType } from '../endpoint';
+import { StylesheetSnapshot } from '../unitOfWork';
+import { DataSchema } from '../diagramDataSchemas';
 
 interface Reference {
   id: string;
@@ -31,7 +33,17 @@ export type SerializedDiagram = {
 export interface SerializedDiagramDocument {
   diagrams: ReadonlyArray<SerializedDiagram>;
   attachments?: Record<string, string>;
+  customPalette: ReadonlyArray<string>;
+  styles: SerializedStyles;
+  schemas: ReadonlyArray<DataSchema>;
 }
+
+export interface SerializedStyles {
+  edgeStyles: ReadonlyArray<SerializedStylesheet>;
+  nodeStyles: ReadonlyArray<SerializedStylesheet>;
+}
+
+export type SerializedStylesheet = Omit<StylesheetSnapshot, '_snapshotType'>;
 
 export interface SerializedNode extends AbstractNode {
   edges?: Record<string, ReadonlyArray<Reference>>;

@@ -13,13 +13,15 @@ import {
   SerializedDiagramDocument,
   SerializedEdge,
   SerializedElement,
-  SerializedPointInNodeEndpoint,
   SerializedFreeEndpoint,
   SerializedLayer,
-  SerializedNode
+  SerializedNode,
+  SerializedPointInNodeEndpoint,
+  SerializedStylesheet
 } from './types';
 import { Endpoint } from '../endpoint';
 import { Waypoint } from '../types';
+import { Stylesheet } from '../diagramStyles';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -169,6 +171,28 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   const diagrams = document.diagrams;
 
   const doc = documentFactory();
+
+  if (document.customPalette) {
+    for (let i = 0; i < document.customPalette.length; i++) {
+      doc.customPalette.setColor(i, document.customPalette[i]);
+    }
+  }
+
+  if (document.styles) {
+    for (const edgeStyle of document.styles.edgeStyles) {
+      doc.styles.addStylesheet(deserializeStylesheet(edgeStyle));
+    }
+    for (const nodeStyle of document.styles.nodeStyles) {
+      doc.styles.addStylesheet(deserializeStylesheet(nodeStyle));
+    }
+  }
+
+  if (document.schemas) {
+    for (const schema of document.schemas) {
+      doc.schemas.addSchema(schema);
+    }
+  }
+
   const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
   dest.forEach(d => doc.addDiagram(d));
 
@@ -180,6 +204,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   }
 
   return doc;
+};
+
+const deserializeStylesheet = (s: SerializedStylesheet) => {
+  return new Stylesheet(s.type, s.id, s.name, s.props);
 };
 
 const deserializeDiagrams = <T extends Diagram>(

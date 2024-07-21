@@ -35,7 +35,11 @@ export class DiagramDataSchemas {
   }
 
   addSchema(schema: DataSchema) {
-    this.#schemas.push(schema);
+    if (this.#schemas.find(s => s.id === schema.id)) {
+      this.changeSchema(schema);
+    } else {
+      this.#schemas.push(schema);
+    }
   }
 
   removeSchema(schema: DataSchema, uow: UnitOfWork) {
