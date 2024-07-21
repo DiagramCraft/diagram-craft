@@ -23,7 +23,7 @@ export class RotateDrag extends AbstractDrag {
 
     const center = Box.center(selection.source.boundingBox);
 
-    const newAngle = Vector.angle(Vector.from(center, coord)) + Math.PI / 2;
+    const newAngle = Vector.angle(Vector.from(center, coord)) + Math.PI / 2 - Math.PI / 4;
     this.diagram.transformElements(
       selection.elements,
       TransformFactory.fromTo(before, { ...selection.bounds, r: newAngle }),

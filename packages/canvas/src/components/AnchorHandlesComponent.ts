@@ -133,9 +133,11 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
               }
             }
           },
-          svg.path({
+          svg.circle({
             class: 'svg-handle svg-anchor-handle',
-            d: `M 0 -${anchorSizeInEffect}, L ${anchorSizeInEffect} 0, L 0 ${anchorSizeInEffect}, L -${anchorSizeInEffect} 0, L 0 -${anchorSizeInEffect}`
+            cx: 0,
+            cy: 0,
+            r: anchorSizeInEffect
           })
         )
       );

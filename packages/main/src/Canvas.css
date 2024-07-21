@@ -77,6 +77,24 @@
       }
     }
 
+    .svg-rotation-handle {
+      stroke-width: calc(1 * var(--zoom));
+      fill: none;
+
+      &:hover, &:active {}
+
+      .svg-rotation-handle__backing {
+        stroke: transparent;
+        stroke-width: calc(8 * var(--zoom));
+        stroke-linecap: round;
+
+        &:hover,
+        &:active {
+          stroke: var(--accent-4);
+        }
+      }
+    }
+
     .svg-selection__label-node {
       fill: var(--canvas-bg);
       stroke: purple;
@@ -210,12 +228,9 @@
   }
 
   .svg-anchor-handle {
-    fill: white;
-    stroke: #16a34a;
+    fill: var(--accent-3);
+    stroke: var(--accent-9);
     stroke-width: calc(1 * var(--zoom));
-    &:hover {
-      stroke: red;
-    }
   }
 
   .svg-node__anchor {

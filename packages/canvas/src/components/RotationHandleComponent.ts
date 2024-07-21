@@ -1,7 +1,6 @@
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { Point } from '@diagram-craft/geometry/point';
 import { RotateDrag } from '../drag/rotateDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Zoom } from './zoom';
@@ -17,11 +16,6 @@ export class RotationHandleComponent extends Component<Props> {
     const selection = diagram.selectionState;
     const bounds = selection.bounds;
 
-    const north = Point.midpoint(bounds, {
-      x: bounds.x + bounds.w,
-      y: bounds.y
-    });
-
     if (selection.nodes.some(p => p.renderProps.capabilities.rotatable === false)) {
       return svg.g({});
     }
@@ -29,19 +23,8 @@ export class RotationHandleComponent extends Component<Props> {
     const z = new Zoom(diagram.viewBox.zoomLevel);
 
     return svg.g(
-      {},
-      svg.line({
-        x1: north.x,
-        y1: north.y,
-        x2: north.x,
-        y2: north.y - z.num(20, 10)
-      }),
-      svg.circle({
-        cx: north.x,
-        cy: north.y - z.num(20, 10),
-        r: z.num(4, 2),
-        class: 'svg-handle svg-selection__handle',
-        cursor: 'ew-resize',
+      {
+        class: 'svg-rotation-handle',
         on: {
           mousedown: e => {
             if (e.button !== 0) return;
@@ -49,6 +32,30 @@ export class RotationHandleComponent extends Component<Props> {
             e.stopPropagation();
           }
         }
+      },
+      svg.marker(
+        {
+          id: `rotation_marker`,
+          viewBox: '0 0 10 10',
+          refX: 7,
+          refY: 5,
+          markerWidth: 4,
+          markerHeight: 4,
+          orient: 'auto-start-reverse'
+        },
+        svg.path({ d: 'M 0 0 L 10 5 L 0 10 z', stroke: 'var(--accent-9)', fill: 'var(--accent-9)' })
+      ),
+      svg.path({
+        d: `M ${bounds.x + bounds.w} ${bounds.y - z.num(10, 5)} a ${z.num(10, 5)} ${z.num(10, 5)} 45 0 1 ${z.num(10, 5)} ${z.num(10, 5)}`,
+        class: 'svg-rotation-handle__backing',
+        cursor: 'nwse-resize'
+      }),
+      svg.path({
+        'd': `M ${bounds.x + bounds.w} ${bounds.y - z.num(10, 5)} a ${z.num(10, 5)} ${z.num(10, 5)} 45 0 1 ${z.num(10, 5)} ${z.num(10, 5)}`,
+        'marker-end': `url(#rotation_marker)`,
+        'marker-start': `url(#rotation_marker)`,
+        'pointer-events': 'none',
+        'cursor': 'nwse-resize'
       })
     );
   }
