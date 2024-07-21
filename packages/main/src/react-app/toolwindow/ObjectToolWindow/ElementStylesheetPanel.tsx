@@ -53,7 +53,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel
-      mode={props.mode ?? 'accordion'}
+      mode={props.mode ?? 'headless'}
       id="stylesheet"
       title={'Style'}
       hasCheckbox={false}
@@ -108,9 +108,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                           | EdgeProps,
                         uow
                       );
-                      $d.selectionState.elements.forEach(n => {
-                        $d.document.styles.setStylesheet(n, style.val, uow);
-                      });
+                      $d.document.styles.modifyStylesheet(stylesheet, uow);
                     }
                     commitWithUndo(uow, 'Redefine style');
                   }}

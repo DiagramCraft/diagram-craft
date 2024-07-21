@@ -518,6 +518,13 @@ foreignObject {
   margin-top: 1rem;
 }
 
+.cmp-panel__headless {
+  background-color: var(--primary-bg);
+  padding: 10px;
+  color: var(--cmp-fg);
+  border-bottom: 1px solid var(--primary-border);
+}
+
 .cmp-layer-list {
   .cmp-tree__node {
     position: relative;

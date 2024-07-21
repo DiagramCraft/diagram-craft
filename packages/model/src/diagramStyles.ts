@@ -181,6 +181,21 @@ export class DiagramStyles {
     }
   }
 
+  modifyStylesheet(stylesheet: Stylesheet, uow: UnitOfWork) {
+    for (const diagram of this.document.diagrams) {
+      for (const node of diagram.nodeLookup.values()) {
+        if (node.renderProps.style === stylesheet.id) {
+          this.setStylesheet(node, stylesheet.id, uow);
+        }
+      }
+      for (const edge of diagram.edgeLookup.values()) {
+        if (edge.renderProps.style === stylesheet.id) {
+          this.setStylesheet(edge, stylesheet.id, uow);
+        }
+      }
+    }
+  }
+
   clearStylesheet(id: string, uow: UnitOfWork) {
     // Cannot delete the default stylesheet
     if (id === 'default' || id === 'default-text') {
