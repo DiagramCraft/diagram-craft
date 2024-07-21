@@ -183,3 +183,29 @@ export const shallowEquals = <T>(a: T, b: T): boolean => {
 
   return true;
 };
+
+/**
+ * Removes all properties from the target object that exist in the source object. This function
+ * performs a deep comparison and removal, meaning that if a property value is an object,
+ * it will recursively remove matching properties from the nested objects as well.
+ *
+ * @param source - The object containing properties to be removed from the target.
+ * @param target - The object from which properties will be removed.
+ * @template T - The type of the objects, extending a generic `Props` type which is a record of string keys to any value.
+ *
+ * @example
+ * // Assuming `source` is { a: 1, b: { c: 2 } } and `target` is { a: 1, b: { c: 2, d: 3 } },
+ * // the function will modify target to be { b: { d: 3 } }.
+ * */
+export const deepClear = <T extends Props>(source: T, target: T) => {
+  for (const key of Object.keys(source)) {
+    if (source[key] === null) continue;
+    if (isObject(source[key])) {
+      if (isObject(target[key])) {
+        deepClear(source[key] as Props, target[key] as Props);
+      }
+    } else {
+      delete target[key];
+    }
+  }
+};

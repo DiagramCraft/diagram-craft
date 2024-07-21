@@ -1,4 +1,4 @@
-import { common, deepMerge, deepClone, deepEquals } from './object';
+import { common, deepMerge, deepClone, deepEquals, deepClear } from './object';
 import { expect, describe, test } from 'vitest';
 import { UNSAFE } from './testUtils';
 
@@ -136,5 +136,73 @@ describe('deepEquals function', () => {
     const obj1 = { a: 1, b: { c: 2, d: [3, 4] } };
     const obj2 = { a: 1, b: { c: 2, d: [3, 5] } };
     expect(deepEquals(obj1, obj2)).toBe(false);
+  });
+});
+
+describe('deepClear function', () => {
+  test('removes properties existing in source from target', () => {
+    const source = { a: 1, b: { c: 2 } };
+    const target = { a: 1, b: { c: 2, d: 3 }, e: 4 };
+    deepClear(source, target);
+    expect(target).toEqual({ b: { d: 3 }, e: 4 });
+  });
+
+  test('does not modify target if source is empty', () => {
+    const source = {};
+    const target = { a: 1, b: 2 };
+    deepClear(source, target);
+    expect(target).toEqual({ a: 1, b: 2 });
+  });
+
+  test('ignores null values in source', () => {
+    const source = { a: null };
+    const target = { a: 1, b: 2 };
+    // @ts-ignore
+    deepClear(source, target);
+    expect(target).toEqual({ a: 1, b: 2 });
+  });
+
+  test('removes nested properties existing in source from target', () => {
+    const source = { a: { b: 1 } };
+    const target = { a: { b: 1, c: 2 }, d: 3 };
+    deepClear(source, target);
+    expect(target).toEqual({ a: { c: 2 }, d: 3 });
+  });
+
+  test('leaves target unchanged if it has no matching properties with source', () => {
+    const source = { x: 1 };
+    const target = { a: 1, b: 2 };
+    // @ts-ignore
+    deepClear(source, target);
+    expect(target).toEqual({ a: 1, b: 2 });
+  });
+
+  test('removes properties from target if they are explicitly set to undefined in source', () => {
+    const source = { a: undefined };
+    const target = { a: 1, b: 2 };
+    // @ts-ignore
+    deepClear(source, target);
+    expect(target).toEqual({ b: 2 });
+  });
+
+  test('handles arrays as properties without removing them', () => {
+    const source = { a: [1, 2, 3] };
+    const target = { a: [1, 2, 3], b: 2 };
+    deepClear(source, target);
+    expect(target).toEqual({ b: 2 });
+  });
+
+  test('does not remove properties not explicitly defined in source', () => {
+    const source = { a: 1 };
+    const target = { a: 1, b: { c: 2 } };
+    deepClear(source, target);
+    expect(target).toEqual({ b: { c: 2 } });
+  });
+
+  test('returns an empty object if all properties of target are removed', () => {
+    const source = { a: 1, b: 2 };
+    const target = { a: 1, b: 2 };
+    deepClear(source, target);
+    expect(target).toEqual({});
   });
 });

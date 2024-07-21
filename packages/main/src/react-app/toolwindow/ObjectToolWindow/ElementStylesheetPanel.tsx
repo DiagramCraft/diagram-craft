@@ -53,7 +53,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel
-      mode={props.mode ?? 'headless'}
+      mode={props.mode ?? $d.selectionState.isNodesOnly() ? 'headless' : 'accordion'}
       id="stylesheet"
       title={'Style'}
       hasCheckbox={false}
@@ -93,7 +93,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     commitWithUndo(uow, 'Reapply style');
                   }}
                 >
-                  Reapply
+                  Reset
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
@@ -113,7 +113,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     commitWithUndo(uow, 'Redefine style');
                   }}
                 >
-                  Redefine from current
+                  Redefine
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"

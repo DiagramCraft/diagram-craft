@@ -3,7 +3,7 @@ import { UndoableAction } from './undoManager';
 import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
-import { common, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
+import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
 
 export class Stylesheet<P extends ElementProps = ElementProps>
   implements UOWTrackable<StylesheetSnapshot>
@@ -26,7 +26,11 @@ export class Stylesheet<P extends ElementProps = ElementProps>
 
   setProps(props: Partial<P>, uow: UnitOfWork): void {
     uow.snapshot(this);
-    this.#props = props;
+    this.#props = deepClone(props);
+
+    if (this.#props.data) delete this.#props.data;
+    if (this.#props.text?.text || this.#props.text?.text === '') delete this.#props.text.text;
+
     uow.updateElement(this);
   }
 
@@ -146,11 +150,15 @@ export class DiagramStyles {
   }
 
   setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork) {
+    const stylesheet = this.get(style);
+    if (!stylesheet) {
+      return;
+    }
+
     const oldProps = deepClone(el.renderProps);
     el.updateProps(props => {
-      Object.keys(props).forEach(key => {
-        delete props[key as keyof (NodeProps | EdgeProps)];
-      });
+      deepClear(stylesheet.props, props);
+
       props.style = style;
 
       props.text ??= {};
