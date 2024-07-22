@@ -139,6 +139,8 @@ export class ResizeDrag extends AbstractDrag {
     if (selection.isChanged()) {
       this.uow.stopTracking();
       commitWithUndo(this.uow, 'Resize');
+    } else {
+      this.uow.abort();
     }
 
     selection.rebaseline();

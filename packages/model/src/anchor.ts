@@ -20,9 +20,12 @@ export type Anchor = {
    */
   directions?: ReadonlyArray<Range>;
 
+  /**
+   * If this anchor is directional (type point and edge are),
+   * this is the normal of the anchor
+   */
   normal?: number;
 
-  // TODO: Not yet used
   /**
    * If true, this anchor can be used for creating new nodes quickly
    */

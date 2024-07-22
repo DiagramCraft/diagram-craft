@@ -117,7 +117,7 @@ export const createLinkedNode = (
     new AnchorEndpoint(node, sourceAnchorId),
     new AnchorEndpoint(newNode, shortest.id),
     {
-      type: 'straight',
+      type: 'orthogonal',
       arrow: {
         end: {
           type: 'SQUARE_STICK_ARROW'

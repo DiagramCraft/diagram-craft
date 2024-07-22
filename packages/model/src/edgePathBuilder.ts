@@ -12,7 +12,7 @@ import {
 } from '@diagram-craft/geometry/pathSegment';
 import { Line } from '@diagram-craft/geometry/line';
 import { unique } from '@diagram-craft/utils/array';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ConnectedEndpoint } from './endpoint';
 import { Box } from '@diagram-craft/geometry/box';
 
@@ -247,7 +247,8 @@ export const buildEdgePath = (
 
     default: {
       const r = buildStraightEdgePath(edge);
-      if (rounding > 0) r.processSegments(applyRounding(rounding));
+      if (rounding > 0 && r.segments.length > 1) r.processSegments(applyRounding(rounding));
+      assert.true(r.segments.length > 0, 'Straight edge path must have at least one segment');
       return r;
     }
   }

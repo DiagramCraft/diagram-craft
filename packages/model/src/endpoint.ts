@@ -77,7 +77,11 @@ export class AnchorEndpoint
   }
 
   private getAnchorType() {
-    return this.node!.getAnchor(this.anchorId!)!.type;
+    return this.getAnchor()!.type;
+  }
+
+  getAnchor() {
+    return this.node!.getAnchor(this.anchorId);
   }
 
   get position() {

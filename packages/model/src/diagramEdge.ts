@@ -540,31 +540,58 @@ export class DiagramEdge
   path() {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
 
-    const startNormal = isConnected(this.start) ? this._calculateNormal(this.start) : undefined;
-    const endNormal = isConnected(this.end) ? this._calculateNormal(this.end) : undefined;
+    const startDirection = this._getNormalDirection(this.start);
+    const endDirection = this._getNormalDirection(this.end);
 
-    const startDirection = startNormal ? Direction.fromVector(startNormal) : undefined;
-    const endDirection = endNormal ? Direction.fromVector(endNormal) : undefined;
+    let rounding = 0;
+    if (this.#props.stroke?.lineJoin === undefined || this.#props.stroke.lineJoin === 'round') {
+      rounding = this.#props.routing?.rounding ?? 0;
+    }
 
     return buildEdgePath(
       this,
-      !this.#props.stroke?.lineJoin || this.#props.stroke?.lineJoin === 'round'
-        ? this.#props.routing?.rounding ?? 0
-        : 0,
+      rounding,
       startDirection,
       endDirection ? Direction.opposite(endDirection) : undefined
     );
   }
 
-  private _calculateNormal(endpoint: ConnectedEndpoint) {
-    const startNode = endpoint.node;
-    const boundingPath = startNode.getDefinition().getBoundingPath(startNode);
-    const t = boundingPath.projectPoint(endpoint.position);
+  /**
+   * In case the endpoint is connected, there are two options; either
+   * the anchor has a normal (and we will use it) - or we need to calculate
+   * the normal based on the point and the boundary path
+   *
+   * In case the endpoint is not connected, there's no inherent direction to use
+   *
+   * Note that this gives you the direction of the endpoint as the node
+   * is rotated - i.e. rotating the node will have an effect on which direction
+   * this method returns
+   *
+   * TODO: Could we move this to the endpoint?
+   */
+  private _getNormalDirection(ep: Endpoint) {
+    if (isConnected(ep)) {
+      if (ep instanceof AnchorEndpoint && ep.getAnchor().normal !== undefined) {
+        return Direction.fromAngle(ep.getAnchor().normal! + ep.node.bounds.r, true);
+      }
 
-    const paths = boundingPath.all();
-    const tangent = paths[t.pathIdx].tangentAt(t.offset);
+      // ... else, we calculate the normal assuming the closest point to the
+      // endpoint on the boundary path
+      const startNode = ep.node;
+      const boundingPath = startNode.getDefinition().getBoundingPath(startNode);
+      const t = boundingPath.projectPoint(ep.position);
 
-    return { x: -tangent.y, y: tangent.x };
+      const paths = boundingPath.all();
+      const tangent = paths[t.pathIdx].tangentAt(t.offset);
+
+      const normal = Vector.angle(Vector.tangentToNormal(tangent));
+
+      // TODO: We need to check this is going in the right direction (i.e. outwards)
+      //       probably need to pick up some code from ShapeNodeDefinition.getAnchors
+
+      return Direction.fromAngle(normal, true);
+    }
+    return undefined;
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork) {
