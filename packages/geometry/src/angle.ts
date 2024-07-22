@@ -11,5 +11,13 @@ export const Angle = {
 
   isHorizontal: (angle: number) => {
     return round(angle) === 0 || round(angle) === round(Math.PI);
+  },
+
+  normalize: (radians: number) => {
+    let a = radians;
+    while (a < 0) {
+      a += Math.PI * 2;
+    }
+    return a % (Math.PI * 2);
   }
 };

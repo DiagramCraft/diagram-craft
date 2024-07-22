@@ -1,4 +1,5 @@
 import { Point } from './point';
+import { Angle } from './angle';
 
 export type Direction = 'n' | 's' | 'w' | 'e';
 
@@ -23,6 +24,19 @@ export const Direction = {
       return p.x > 0 ? 'w' : 'e';
     } else {
       return p.y > 0 ? 'n' : 's';
+    }
+  },
+  fromAngle: (angle: number, inverted = false): Direction => {
+    const a = Angle.normalize(angle);
+
+    if (a > Math.PI / 4 && a < (3 * Math.PI) / 4) {
+      return inverted ? 's' : 'n';
+    } else if (a > (3 * Math.PI) / 4 && a < (5 * Math.PI) / 4) {
+      return 'w';
+    } else if (a > (5 * Math.PI) / 4 && a < (7 * Math.PI) / 4) {
+      return inverted ? 'n' : 's';
+    } else {
+      return 'e';
     }
   }
 };

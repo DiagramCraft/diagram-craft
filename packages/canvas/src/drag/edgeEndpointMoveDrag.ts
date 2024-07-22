@@ -122,6 +122,10 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     this.emit('dragEnd');
   }
 
+  cancel() {
+    this.uow.abort();
+  }
+
   private attachToClosestAnchor(p: Point) {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 

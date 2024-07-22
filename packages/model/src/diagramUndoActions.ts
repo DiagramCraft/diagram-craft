@@ -117,6 +117,9 @@ export class ElementAddUndoableAction implements UndoableAction {
     UnitOfWork.execute(this.diagram, uow => {
       this.elements.forEach(node => node.layer.removeElement(node, uow));
     });
+    this.diagram.selectionState.setElements(
+      this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
+    );
   }
 
   redo() {
