@@ -31,7 +31,7 @@ export class DistributeAction extends AbstractSelectionAction {
     protected readonly diagram: Diagram,
     private readonly mode: 'vertical' | 'horizontal'
   ) {
-    super(diagram, true);
+    super(diagram, 'multiple-only');
   }
 
   execute(): void {

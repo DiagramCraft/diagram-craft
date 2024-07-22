@@ -39,7 +39,7 @@ export class SelectionMoveAction extends AbstractSelectionAction {
     protected readonly diagram: Diagram,
     protected readonly offset: () => Point
   ) {
-    super(diagram);
+    super(diagram, 'both');
   }
 
   execute(): void {

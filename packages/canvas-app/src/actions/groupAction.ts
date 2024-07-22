@@ -99,7 +99,7 @@ export class GroupAction extends AbstractSelectionAction {
     protected readonly diagram: Diagram,
     private readonly type: 'group' | 'ungroup'
   ) {
-    super(diagram, type === 'group');
+    super(diagram, type === 'group' ? 'multiple-only' : 'both');
 
     if (type === 'ungroup') {
       this.addSelectionListener(() => {

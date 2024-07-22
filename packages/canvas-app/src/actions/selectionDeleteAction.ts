@@ -15,7 +15,7 @@ export const selectionDeleteActions: ActionMapFactory = (state: State) => ({
 
 export class SelectionDeleteAction extends AbstractSelectionAction {
   constructor(protected readonly diagram: Diagram) {
-    super(diagram);
+    super(diagram, 'both');
   }
 
   execute(): void {

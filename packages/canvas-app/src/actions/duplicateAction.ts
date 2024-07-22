@@ -20,7 +20,7 @@ const OFFSET = 10;
 
 export class DuplicateAction extends AbstractSelectionAction {
   constructor(protected readonly diagram: Diagram) {
-    super(diagram);
+    super(diagram, 'both');
   }
 
   execute() {

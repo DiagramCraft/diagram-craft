@@ -38,5 +38,17 @@ export const Direction = {
     } else {
       return 'e';
     }
+  },
+  toAngle: (d: Direction, inverted = false): number => {
+    switch (d) {
+      case 'n':
+        return inverted ? (3 * Math.PI) / 2 : Math.PI / 2;
+      case 's':
+        return inverted ? Math.PI / 2 : (3 * Math.PI) / 2;
+      case 'w':
+        return Math.PI;
+      case 'e':
+        return 0;
+    }
   }
 };

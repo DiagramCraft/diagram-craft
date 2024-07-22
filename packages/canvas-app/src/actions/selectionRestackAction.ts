@@ -27,7 +27,7 @@ export class SelectionRestackAction extends AbstractSelectionAction {
     protected readonly diagram: Diagram,
     private readonly mode: RestackMode = 'up'
   ) {
-    super(diagram);
+    super(diagram, 'both');
   }
 
   execute(): void {

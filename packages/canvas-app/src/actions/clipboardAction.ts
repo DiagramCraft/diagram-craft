@@ -432,7 +432,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
     protected readonly diagram: Diagram,
     private readonly mode: 'copy' | 'cut'
   ) {
-    super(diagram);
+    super(diagram, 'both');
   }
 
   execute(): void {

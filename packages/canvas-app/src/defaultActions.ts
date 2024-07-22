@@ -22,6 +22,7 @@ import { groupActions } from './actions/groupAction';
 import { tableActions } from '@diagram-craft/canvas/actions/tableActions';
 import { selectionMoveActions } from './actions/selectionMoveAction';
 import { selectionResizeActions } from './actions/selectionResizeAction';
+import { createLinkedNodeActions } from './actions/linkedNodeAction';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
@@ -33,6 +34,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...selectionDeleteActions(state),
   ...selectionMoveActions(state),
   ...selectionResizeActions(state),
+  ...createLinkedNodeActions(state),
   ...selectionRestackActions(state),
   ...alignActions(state),
   ...toggleMagnetTypeActions(state),
@@ -83,5 +85,14 @@ export const defaultMacKeymap: KeyMap = {
   'MS-ArrowRight': 'SELECTION_RESIZE_GRID_RIGHT',
   'MS-ArrowLeft': 'SELECTION_RESIZE_GRID_LEFT',
   'MS-ArrowUp': 'SELECTION_RESIZE_GRID_UP',
-  'MS-ArrowDown': 'SELECTION_RESIZE_GRID_DOWN'
+  'MS-ArrowDown': 'SELECTION_RESIZE_GRID_DOWN',
+
+  'AC-ArrowUp': 'CREATE_LINKED_NODE_N',
+  'AC-ArrowDown': 'CREATE_LINKED_NODE_S',
+  'AC-ArrowLeft': 'CREATE_LINKED_NODE_W',
+  'AC-ArrowRight': 'CREATE_LINKED_NODE_E',
+  'ACS-ArrowUp': 'CREATE_LINKED_NODE_KEEP_N',
+  'ACS-ArrowDown': 'CREATE_LINKED_NODE_KEEP_S',
+  'ACS-ArrowLeft': 'CREATE_LINKED_NODE_KEEP_W',
+  'ACS-ArrowRight': 'CREATE_LINKED_NODE_KEEP_E'
 };
