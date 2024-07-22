@@ -153,6 +153,7 @@ export class DiagramNode
     uow.updateElement(this);
 
     this.#cache?.clear();
+    this.invalidateAnchors(uow);
     this.getDefinition().onPropUpdate(this, uow);
   }
 
@@ -515,8 +516,6 @@ export class DiagramNode
     if (uow.hasBeenInvalidated(this)) return;
     uow.beginInvalidation(this);
 
-    this.invalidateAnchors(uow);
-
     if (this.parent) {
       this.parent.invalidate(uow);
     }
@@ -686,7 +685,6 @@ export class DiagramNode
     uow.updateElement(this);
   }
 
-  // TODO: Need to make sure this is called when e.g. props are changed
   private invalidateAnchors(uow: UnitOfWork) {
     const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
     this.#anchors = def.getAnchors(this);

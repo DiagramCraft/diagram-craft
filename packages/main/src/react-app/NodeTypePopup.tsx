@@ -1,7 +1,7 @@
 import { useDiagram } from './context/DiagramContext';
 import { PickerCanvas } from './PickerCanvas';
 import { assert } from '@diagram-craft/utils/assert';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
@@ -68,22 +68,24 @@ export const NodeTypePopup = (props: Props) => {
 
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
-  const nodes = diagram.document.nodeDefinitions.stencilRegistry.get('default')!.stencils;
-  const diagrams = nodes.map(n => {
-    const dest = new Diagram(
-      n.id,
-      n.name ?? n.id,
-      new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
-    );
-    dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
+  const diagramsAndNodes: Array<[Stencil, Diagram]> = useMemo(() => {
+    const nodes = diagram.document.nodeDefinitions.stencilRegistry.get('default')!.stencils;
+    return nodes.map(n => {
+      const dest = new Diagram(
+        n.id,
+        n.name ?? n.id,
+        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+      );
+      dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
 
-    const node = n.node(dest);
-    dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
-    dest.viewBox.offset = { x: -5, y: -5 };
-    dest.layers.active.addElement(node, UnitOfWork.immediate(dest));
+      const node = n.node(dest);
+      dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+      dest.viewBox.offset = { x: -5, y: -5 };
+      dest.layers.active.addElement(node, UnitOfWork.immediate(dest));
 
-    return dest;
-  });
+      return [n, dest];
+    });
+  }, [diagram]);
 
   return (
     <Popover.Root
@@ -109,16 +111,16 @@ export const NodeTypePopup = (props: Props) => {
           className={'cmp-object-picker'}
           style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
         >
-          {diagrams.map((d, idx) => (
+          {diagramsAndNodes.map((d, idx) => (
             <div key={idx} style={{ background: 'transparent' }}>
               <PickerCanvas
-                name={d.name}
+                name={d[1].name}
                 width={size}
                 height={size}
-                diagramWidth={d.viewBox.dimensions.w}
-                diagramHeight={d.viewBox.dimensions.h}
-                diagram={d}
-                onClick={() => addNode(nodes[idx])}
+                diagramWidth={d[1].viewBox.dimensions.w}
+                diagramHeight={d[1].viewBox.dimensions.h}
+                diagram={d[1]}
+                onClick={() => addNode(d[0])}
               />
             </div>
           ))}
