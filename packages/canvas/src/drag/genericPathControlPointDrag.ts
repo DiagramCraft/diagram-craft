@@ -19,7 +19,7 @@ export class GenericPathControlPointDrag extends AbstractDrag {
 
     this.applicationTriggers.pushHelp?.(
       'GenericPathControlPointDrag',
-      'Move control point. Cmd-drag - symmetric, Alt-drag - corner'
+      'Move control point. Cmd-drag - symmetric, Alt-drag - smooth'
     );
   }
 
@@ -28,7 +28,7 @@ export class GenericPathControlPointDrag extends AbstractDrag {
     wp.updateControlPoint(
       this.controlPoint,
       this.editablePath.toLocalCoordinate(coord),
-      modifiers.metaKey ? 'symmetric' : modifiers.altKey ? 'corner' : undefined
+      modifiers.metaKey ? 'symmetric' : modifiers.altKey ? 'smooth' : 'corner'
     );
 
     this.editablePath.commitToNode(this.uow);

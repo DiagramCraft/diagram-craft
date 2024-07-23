@@ -1,4 +1,4 @@
-import { EditablePath, EditableWaypointType } from '../editablePath';
+import { EditablePath } from '../editablePath';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
@@ -19,26 +19,13 @@ declare global {
   interface NodeProps {
     shapeGenericPath?: {
       path?: string;
-      waypointTypes?: EditableWaypointType[];
     };
   }
 }
 
 const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
 
-registerNodeDefaults('shapeGenericPath', { path: DEFAULT_PATH, waypointTypes: [] });
-
-const COLORS: Record<EditableWaypointType, string> = {
-  corner: 'var(--accent-9)',
-  smooth: 'var(--accent-9)',
-  symmetric: 'var(--accent-9)'
-};
-
-const NEXT_TYPE: Record<EditableWaypointType, EditableWaypointType> = {
-  corner: 'smooth',
-  smooth: 'symmetric',
-  symmetric: 'corner'
-};
+registerNodeDefaults('shapeGenericPath', { path: DEFAULT_PATH });
 
 export class GenericPathNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'generic-path', displayName = 'Path') {
@@ -96,7 +83,7 @@ class GenericPathComponent extends BaseNodeComponent {
     if (props.isSingleSelected && props.tool?.type === 'node') {
       props.applicationTriggers.pushHelp?.(
         'GenericPathComponent',
-        'Edge Dbl-click - add waypoint, Edge Cmd-Dbl-Click - straighten, Waypoint Click - select, Waypoint Shift-Click - multi-select, Waypoint Dbl-Click - change type, Waypoint Cmd-Dbl-Click - delete'
+        'Edge Dbl-click - add waypoint, Edge Cmd-Dbl-Click - straighten, Waypoint Click - select, Waypoint Shift-Click - multi-select, Waypoint Cmd-Dbl-Click - delete'
       );
       shapeBuilder.add(
         svg.path({
@@ -144,7 +131,8 @@ class GenericPathComponent extends BaseNodeComponent {
               'x2': wp.point.x + wp.controlPoints.p1.x,
               'y2': wp.point.y + wp.controlPoints.p1.y,
               'stroke': 'var(--accent-9)',
-              'stroke-width': z.str(1)
+              'stroke-width': z.str(1),
+              'stroke-dasharray': `2 2`
             })
           );
           shapeBuilder.add(
@@ -179,7 +167,8 @@ class GenericPathComponent extends BaseNodeComponent {
               'x2': wp.point.x + wp.controlPoints.p2.x,
               'y2': wp.point.y + wp.controlPoints.p2.y,
               'stroke': 'var(--accent-9)',
-              'stroke-width': z.str(1)
+              'stroke-width': z.str(1),
+              'stroke-dasharray': `2 2`
             })
           );
 
@@ -213,9 +202,9 @@ class GenericPathComponent extends BaseNodeComponent {
           svg.circle({
             'cx': wp.point.x,
             'cy': wp.point.y,
-            'stroke': COLORS[wp.type],
+            'stroke': 'var(--accent-9)',
             'stroke-width': z.str(1),
-            'fill': this.selectedWaypoints.includes(idx) ? COLORS[wp.type] : 'white',
+            'fill': this.selectedWaypoints.includes(idx) ? 'var(--accent-9)' : 'white',
             'r': z.str(4, 1.5),
             'on': {
               mousedown: e => {
@@ -245,10 +234,6 @@ class GenericPathComponent extends BaseNodeComponent {
                   editablePath.deleteWaypoint(wp);
                   editablePath.commitToNode(uow);
                   commitWithUndo(uow, 'Delete waypoint');
-                } else {
-                  wp.type = NEXT_TYPE[wp.type];
-                  editablePath.commitToNode(uow);
-                  commitWithUndo(uow, 'Change waypoint type');
                 }
                 e.stopPropagation();
               }

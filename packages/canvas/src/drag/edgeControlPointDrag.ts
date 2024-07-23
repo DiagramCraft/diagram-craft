@@ -10,7 +10,7 @@ import { ApplicationTriggers } from '../EditableCanvasComponent';
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 
 const isSmoothDrag = (modifiers: Modifiers) => modifiers.metaKey;
-const isCornerDrag = (modifiers: Modifiers) => modifiers.altKey;
+const isSymmetricDrag = (modifiers: Modifiers) => modifiers.altKey;
 
 export class EdgeControlPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -26,7 +26,7 @@ export class EdgeControlPointDrag extends AbstractDrag {
 
     this.applicationTriggers.pushHelp?.(
       'EdgeControlPointDrag',
-      'Move control point. Cmd-drag - smooth, Alt-drag - corner'
+      'Move control point. Cmd-drag - symmetric, Alt-drag - smooth'
     );
   }
 
@@ -42,7 +42,7 @@ export class EdgeControlPointDrag extends AbstractDrag {
         x: wp.controlPoints![cIdx].x * -1,
         y: wp.controlPoints![cIdx].y * -1
       };
-    } else if (!isCornerDrag(modifiers)) {
+    } else if (isSymmetricDrag(modifiers)) {
       otherControlPoint = Vector.fromPolar(
         Vector.angle(wp.controlPoints![cIdx]) + Math.PI,
         Point.distance(Point.ORIGIN, wp.controlPoints![ocIdx])

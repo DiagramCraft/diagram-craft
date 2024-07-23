@@ -27,11 +27,8 @@ export class EditableWaypoint {
   #preSegment: EditableSegment | undefined;
   #postSegment: EditableSegment | undefined;
 
-  type: EditableWaypointType;
-
-  constructor(point: Point, type: EditableWaypointType) {
+  constructor(point: Point) {
     this.#point = point;
-    this.type = type;
     this.#controlPoints = { p1: Point.ORIGIN, p2: Point.ORIGIN };
   }
 
@@ -67,11 +64,7 @@ export class EditableWaypoint {
     if (segment) this.#controlPoints.p2 = segment.controlPoints.p1;
   }
 
-  updateControlPoint(
-    cp: 'p1' | 'p2',
-    absolutePoint: Point,
-    type: EditableWaypointType | undefined = undefined
-  ) {
+  updateControlPoint(cp: 'p1' | 'p2', absolutePoint: Point, type: EditableWaypointType) {
     this.#controlPoints[cp] = Point.subtract(absolutePoint, this.#point);
 
     assert.present(this.#postSegment);
@@ -86,7 +79,7 @@ export class EditableWaypoint {
     this.#preSegment.type = 'cubic';
 
     const otherCP = cp === 'p1' ? 'p2' : 'p1';
-    const typeInUse = type ?? this.type;
+    const typeInUse = type;
     if (typeInUse === 'smooth') {
       const otherLength = Vector.length(this.#controlPoints[otherCP]);
       const angle = Vector.angle(this.#controlPoints[cp]);
@@ -115,13 +108,6 @@ export class EditablePath {
   ) {
     this.buildFromPath(path.segments());
     this.originalSvgPath = path.asSvgPath();
-
-    const gpProps = node.renderProps.shapeGenericPath ?? {};
-    if (gpProps.waypointTypes && gpProps.waypointTypes.length === this.waypoints.length) {
-      for (let i = 0; i < this.waypoints.length; i++) {
-        this.waypoints[i].type = gpProps.waypointTypes[i];
-      }
-    }
   }
 
   toLocalCoordinate(coord: Point) {
@@ -170,18 +156,7 @@ export class EditablePath {
 
     const all = [...pre.segments(), ...post.segments()];
 
-    const originalWaypoints = this.waypoints;
-
     this.buildFromPath(all);
-
-    for (let i = 0; i < this.waypoints.length; i++) {
-      for (let j = 0; j < originalWaypoints.length; j++) {
-        if (Point.squareDistance(this.waypoints[i].point, originalWaypoints[j].point) < 0.0001) {
-          this.waypoints[i].type = originalWaypoints[j].type;
-          break;
-        }
-      }
-    }
 
     return pre.segments().length;
   }
@@ -267,7 +242,6 @@ export class EditablePath {
     this.node.updateProps(p => {
       p.shapeGenericPath ??= {};
       p.shapeGenericPath.path = this.getPath('as-stored').asSvgPath();
-      p.shapeGenericPath.waypointTypes = this.waypoints.map(wp => wp.type);
     }, uow);
 
     // As this reads the genericPath.path, we have to first set the path provisionally -
@@ -276,7 +250,6 @@ export class EditablePath {
     this.node.updateProps(p => {
       p.shapeGenericPath ??= {};
       p.shapeGenericPath.path = path.asSvgPath();
-      p.shapeGenericPath.waypointTypes = this.waypoints.map(wp => wp.type);
     }, uow);
     this.node.setBounds(bounds, uow);
   }
@@ -313,7 +286,7 @@ export class EditablePath {
         throw new VerifyNotReached(`Unknown type ${typeof s}`);
       }
 
-      const wp = new EditableWaypoint(this.segments.at(-1)!.start, 'corner');
+      const wp = new EditableWaypoint(this.segments.at(-1)!.start);
       wp.postSegment = this.segments.at(-1)!;
       if (this.segments.length >= 2) {
         wp.preSegment = this.segments.at(-2)!;

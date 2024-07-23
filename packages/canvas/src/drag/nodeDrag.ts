@@ -55,6 +55,7 @@ export class NodeDrag extends AbstractDrag {
       (new Date().getTime() - this.startTime < 200 &&
         Point.distance(this.lastPoint, this.startPoint!) < 5)
     ) {
+      this.uow.abort();
       return;
     }
 

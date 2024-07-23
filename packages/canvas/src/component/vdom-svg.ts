@@ -7,6 +7,7 @@ type CommonPresentationAttributes = {
   'stroke'?: string;
   'stroke-width'?: string | number;
   'stroke-linecap'?: string;
+  'stroke-dasharray'?: string;
   'fill'?: string;
   'marker-start'?: string;
   'marker-mid'?: string;
