@@ -234,8 +234,8 @@
   }
 
   .svg-node__anchor {
-    stroke: red;
-    fill: transparent;
+    stroke: var(--accent-9);
+    fill: white;
     stroke-width: calc(1 * var(--zoom));
   }
 }

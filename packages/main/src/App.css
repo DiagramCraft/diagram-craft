@@ -966,18 +966,19 @@ body[data-dragmimetype='application/x-diagram-craft-element-instances'] *[data-d
   stroke-width: 3px !important;*/
 }
 .svg-node--highlight-node__edge-connect---point .svg-node__boundary {
-  stroke-width: 3px !important;
-  stroke: blue !important;
+  stroke-width: 2px !important;
+  stroke: var(--accent-7) !important;
+  stroke-dasharray: 5 5;
 }
 .svg-node--highlight-node__edge-connect---anchor .svg-node__boundary {
-  stroke-width: 3px !important;
-  stroke: red !important;
+  /*stroke-width: 3px !important;
+  stroke: red !important;*/
 }
 .svg-node--highlight-node__edge-connect---anchor-edge .svg-node__boundary {
-  stroke-width: 3px !important;
-  stroke: purple !important;
+  /*stroke-width: 2px !important;
+  stroke: var(--accent-8) !important;*/
 }
 .svg-node--highlight-node__edge-connect---edge .svg-node__boundary {
-  stroke-width: 3px !important;
-  stroke: green !important;
+  stroke-width: 2px !important;
+  stroke: var(--accent-9) !important;
 }

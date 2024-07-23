@@ -107,7 +107,7 @@ export class BaseNodeComponent<
     /* Handle strokes **************************************************************** */
 
     style.strokeWidth = nodeProps.stroke.width?.toString();
-    style.stroke = isEdgeConnect ? 'red' : nodeProps.stroke.color;
+    style.stroke = nodeProps.stroke.color;
     style.strokeLinecap = nodeProps.stroke.lineCap;
     style.strokeLinejoin = nodeProps.stroke.lineJoin;
     style.strokeMiterlimit = nodeProps.stroke.miterLimit.toString();
@@ -243,22 +243,25 @@ export class BaseNodeComponent<
           ...props.element.anchors.map(anchor => {
             if (anchor.type === 'edge') {
               return svg.line({
-                'class': 'svg-node__anchor',
-                'x1': props.element.bounds.x + anchor.start.x * props.element.bounds.w,
-                'y1': props.element.bounds.y + anchor.start.y * props.element.bounds.h,
-                'x2': props.element.bounds.x + anchor.end!.x * props.element.bounds.w,
-                'y2': props.element.bounds.y + anchor.end!.y * props.element.bounds.h,
-                'stroke-width': z.str(5, 3),
-                'style': `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? '#16a34a' : 'transparent'};`
+                class: 'svg-node__anchor',
+                x1: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
+                y1: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
+                x2: props.element.bounds.x + anchor.end!.x * props.element.bounds.w,
+                y2: props.element.bounds.y + anchor.end!.y * props.element.bounds.h,
+                style: `
+                  stroke-width: ${z.str(2, 2)} !important; 
+                  pointer-events: none; 
+                  fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? 'var(--accent-9)' : 'transparent'};
+                `
               });
             } else {
               return svg.circle({
                 class: 'svg-node__anchor',
                 cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
                 cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
-                r: z.str(5, 3),
+                r: z.str(4, 2),
                 // TODO: Change this to be a class instead of a fixed color
-                style: `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? '#16a34a' : 'transparent'};`
+                style: `pointer-events: none; fill: ${getHighlightValue(props.element, Highlights.NODE__ACTIVE_ANCHOR) === anchor.id ? 'var(--accent-9)' : 'var(--accent-3)'};`
               });
             }
           })
