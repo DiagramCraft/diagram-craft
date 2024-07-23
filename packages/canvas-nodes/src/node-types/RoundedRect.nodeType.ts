@@ -29,7 +29,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     super('rounded-rect', 'Rounded Rectangle', RoundedRectComponent);
   }
 
-  getAnchors(_def: DiagramNode): Anchor[] {
+  getShapeAnchors(_def: DiagramNode): Anchor[] {
     return [
       { id: '1', start: Point.of(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
       { id: '2', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },

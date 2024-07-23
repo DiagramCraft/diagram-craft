@@ -14,7 +14,7 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
     super('circle', 'Circle', CircleComponent);
   }
 
-  getAnchors(_def: DiagramNode): Anchor[] {
+  getShapeAnchors(_def: DiagramNode): Anchor[] {
     return [
       { start: Point.of(0.5, 0), id: '1', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
       { start: Point.of(1, 0.5), id: '2', type: 'point', isPrimary: true, normal: 0 },

@@ -226,10 +226,10 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   // TODO: This needs to consider rotation
-  getAnchors(def: DiagramNode) {
+  getShapeAnchors(def: DiagramNode) {
     const shape = parse(def, this.stencil);
 
-    if (!shape) return super.getAnchors(def);
+    if (!shape) return super.getShapeAnchors(def);
 
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });

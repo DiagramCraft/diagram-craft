@@ -33,9 +33,9 @@ type TextConfig = {
   bounds?: Box;
 };
 
-type FlexShapeNodeDefinitionConfig = {
+type FlexShapeNodeDefinitionConfig<T extends ShapeNodeDefinition> = {
   isGroup: boolean;
-  boundary: ShapeNodeDefinition;
+  boundary: T;
   text?: TypeOrPropsFn<TextConfig>;
   drawBoundary?: boolean;
   components?: Array<{
@@ -65,11 +65,13 @@ declare global {
 
 registerNodeDefaults('shapeFlex', { components: null });
 
-export class FlexShapeNodeDefinition extends ShapeNodeDefinition {
+export class FlexShapeNodeDefinition<
+  B extends ShapeNodeDefinition = ShapeNodeDefinition
+> extends ShapeNodeDefinition {
   constructor(
     type: string,
     name: string,
-    private readonly config: FlexShapeNodeDefinitionConfig
+    private readonly config: FlexShapeNodeDefinitionConfig<B>
   ) {
     super(type, name, FlexShapeNodeDefinition.Shape);
   }

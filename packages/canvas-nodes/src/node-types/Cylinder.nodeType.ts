@@ -113,7 +113,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  getAnchors(_def: DiagramNode): Anchor[] {
+  getShapeAnchors(_def: DiagramNode): Anchor[] {
     return [
       { id: '1', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
       { id: '2', start: Point.of(1, 0.5), type: 'point', isPrimary: true, normal: 0 },

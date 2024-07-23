@@ -18,9 +18,8 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
-import { Anchor } from '@diagram-craft/model/anchor';
+import { Anchor, AnchorStrategy } from '@diagram-craft/model/anchor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
-import { Vector } from '@diagram-craft/geometry/vector';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -55,7 +54,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       'fill': true,
       'select': true,
       'children': false,
-      'connect-to-boundary': true
+      'connect-to-boundary': true,
+      'custom-anchors': true
     };
   }
 
@@ -73,83 +73,49 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return pathBuilder;
   }
 
-  protected makeAnchorId(p: Point) {
-    return `${Math.round(p.x * 1000)}_${Math.round(p.y * 1000)}`;
+  protected getShapeAnchors(_node: DiagramNode): Anchor[] {
+    return [];
   }
 
   getAnchors(node: DiagramNode) {
-    const newAnchors: Array<Anchor> = [];
-    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
+    const anchorStrategy = node.renderProps.anchors.type ?? 'shape-defaults';
 
-    const paths = this.getBoundingPath(node);
+    if (anchorStrategy === 'shape-defaults') {
+      const shapeAnchors = this.getShapeAnchors(node);
+      if (shapeAnchors.length > 0) return shapeAnchors;
 
-    // Get anchors per side
-    for (let i = 0; i < paths.all().length; i++) {
-      const path = paths.all()[i];
-      for (let j = 0; j < path.segments.length; j++) {
-        const p = path.segments[j];
-        const { x, y } = p.point(0.5);
-
-        // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
-        const rp = Point.rotateAround({ x, y }, -node.bounds.r, Box.center(node.bounds));
-
-        // Note: This is to Prevent NaN issues
-        if (node.bounds.h === 0 || node.bounds.w === 0) continue;
-
-        const lx = round((rp.x - node.bounds.x) / node.bounds.w);
-        const ly = round((rp.y - node.bounds.y) / node.bounds.h);
-
-        let normal = Vector.angle(Vector.tangentToNormal(p.tangent(0.5))) - node.bounds.r;
-
-        // Make sure normal is "outwards" from the center of the node
-        const tangent = Vector.from(Box.center(node.bounds), rp);
-        if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
-          normal += Math.PI;
-        }
-
-        newAnchors.push({
-          id: this.makeAnchorId({ x: lx, y: ly }),
-          start: { x: lx, y: ly },
-          clip: false,
-          type: 'point',
-          normal: normal,
-          isPrimary: p.length() / Math.max(node.bounds.w, node.bounds.h) > 0.25
-        });
-      }
+      return AnchorStrategy.getEdgeAnchors(node, this.getBoundingPath(node));
+    } else if (anchorStrategy === 'per-edge') {
+      return AnchorStrategy.getEdgeAnchors(
+        node,
+        this.getBoundingPath(node),
+        node.renderProps.anchors.perEdgeCount
+      );
+    } else if (anchorStrategy === 'none') {
+      return [
+        { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
+      ] satisfies Anchor[];
+    } else if (anchorStrategy === 'north-south') {
+      return [
+        { id: '1', start: Point.of(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
+        { id: '2', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
+        { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
+      ] satisfies Anchor[];
+    } else if (anchorStrategy === 'east-west') {
+      return [
+        { id: '3', start: Point.of(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
+        { id: '4', start: Point.of(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
+        { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
+      ] satisfies Anchor[];
+    } else if (anchorStrategy === 'directions') {
+      return AnchorStrategy.getAnchorsByDirection(
+        node,
+        this.getBoundingPath(node),
+        node.renderProps.anchors.directionsCount
+      );
     }
 
-    // Get anchors in different directions
-    /*if (node.nodeType === 'rect') {
-      const center = Box.center(node.bounds);
-      const maxD = Math.max(node.bounds.w, node.bounds.h);
-      for (let d = 0; d < 2 * Math.PI; d += Math.PI / 8) {
-        const l = Line.of(center, Point.add(center, Vector.fromPolar(d, maxD)));
-        const linePath = new Path(center, [['L', l.to.x, l.to.y]]);
-        const firstPath = paths.all()[0];
-        firstPath.intersections(linePath).forEach(p => {
-          const lengthOffsetOnPath = PointOnPath.toTimeOffset(p, firstPath);
-
-          // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
-          const point = Point.rotateAround(p.point, -node.bounds.r, Box.center(node.bounds));
-
-          const start = {
-            x: (point.x - node.bounds.x) / node.bounds.w,
-            y: (point.y - node.bounds.y) / node.bounds.h
-          };
-          newAnchors.push({
-            id: this.makeAnchorId(start),
-            start: start,
-            clip: false,
-            type: 'point',
-            normal:
-              Vector.angle(Vector.tangentToNormal(firstPath.tangentAt(lengthOffsetOnPath))) -
-              node.bounds.r
-          });
-        });
-      }
-    }*/
-
-    return newAnchors;
+    throw new VerifyNotReached();
   }
 
   getDefaultAspectRatio(_node: DiagramNode) {

@@ -132,6 +132,12 @@ const _nodeDefaults: Omit<
     },
     moveable: true,
     rotatable: true
+  },
+
+  anchors: {
+    type: 'shape-defaults',
+    perEdgeCount: 1,
+    directionsCount: 4
   }
 };
 

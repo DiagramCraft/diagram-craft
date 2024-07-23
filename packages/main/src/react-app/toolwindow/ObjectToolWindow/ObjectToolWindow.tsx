@@ -23,6 +23,7 @@ import { NodeTableDimensionsPanel } from './NodeTableDimensionsPanel';
 import { NodeTableCellDimensionsPanel } from './NodeTableCellDimensionsPanel';
 import { NodeAdvancedPropertiesPanel } from '../ObjectInfoToolWindow/NodeAdvancedPropertiesPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { ElementAnchorsPanel } from '../ObjectInfoToolWindow/ElementAnchorsPanel';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -202,7 +203,12 @@ export const ObjectToolWindow = () => {
           </Tabs.Content>
 
           <Tabs.Content value={'advanced'}>
-            <Accordion.Root type="multiple" disabled={true} defaultValue={['advanced-props']}>
+            <Accordion.Root
+              type="multiple"
+              disabled={true}
+              defaultValue={['anchors', 'advanced-props']}
+            >
+              {type === 'node' && <ElementAnchorsPanel />}
               <NodeAdvancedPropertiesPanel />
             </Accordion.Root>
           </Tabs.Content>

@@ -113,7 +113,7 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     super('blockArc', 'BlockArc', BlockArcNodeDefinition.Shape);
   }
 
-  getAnchors(_def: DiagramNode): Anchor[] {
+  getShapeAnchors(_def: DiagramNode): Anchor[] {
     return [
       { start: Point.of(0.5, 0), id: '1', type: 'point' },
       { start: Point.of(1, 0.5), id: '2', type: 'point' },

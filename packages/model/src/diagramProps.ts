@@ -219,5 +219,11 @@ declare global {
       rounding?: boolean;
       roundingAmount?: number;
     };
+
+    anchors?: {
+      type: 'none' | 'shape-defaults' | 'north-south' | 'east-west' | 'directions' | 'per-edge';
+      perEdgeCount?: number;
+      directionsCount?: number;
+    };
   }
 }

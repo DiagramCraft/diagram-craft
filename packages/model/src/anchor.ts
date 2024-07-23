@@ -3,6 +3,11 @@ import { DiagramNode } from './diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { Range } from '@diagram-craft/geometry/range';
 import { Line } from '@diagram-craft/geometry/line';
+import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
+import { Vector } from '@diagram-craft/geometry/vector';
+import { Path } from '@diagram-craft/geometry/path';
+import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
+import { round } from '@diagram-craft/utils/math';
 
 export type Anchor = {
   id: string;
@@ -112,4 +117,97 @@ export const getAnchorPosition = (
     node.bounds.r,
     Box.center(node.bounds)
   );
+};
+
+export const makeAnchorId = (p: Point) => {
+  return `${Math.round(p.x * 1000)}_${Math.round(p.y * 1000)}`;
+};
+
+export const AnchorStrategy = {
+  getAnchorsByDirection: (node: DiagramNode, paths: CompoundPath, numberOfDirections: number) => {
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
+
+    const center = Box.center(node.bounds);
+    const maxD = Math.max(node.bounds.w, node.bounds.h);
+    for (let d = 0; d < 2 * Math.PI; d += (2 * Math.PI) / numberOfDirections) {
+      const l = Line.of(center, Point.add(center, Vector.fromPolar(d, maxD)));
+      const linePath = new Path(center, [['L', l.to.x, l.to.y]]);
+      const firstPath = paths.all()[0];
+      firstPath.intersections(linePath).forEach(p => {
+        const lengthOffsetOnPath = PointOnPath.toTimeOffset(p, firstPath);
+
+        // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
+        const point = Point.rotateAround(p.point, -node.bounds.r, Box.center(node.bounds));
+
+        const start = {
+          x: (point.x - node.bounds.x) / node.bounds.w,
+          y: (point.y - node.bounds.y) / node.bounds.h
+        };
+        newAnchors.push({
+          id: makeAnchorId(start),
+          start: start,
+          clip: false,
+          type: 'point',
+          normal:
+            Vector.angle(Vector.tangentToNormal(firstPath.tangentAt(lengthOffsetOnPath))) -
+            node.bounds.r,
+          isPrimary:
+            round(d) === 0 ||
+            round(d) === round(Math.PI / 2) ||
+            round(d) === round(Math.PI) ||
+            round(d) === round((3 * Math.PI) / 2)
+        });
+      });
+    }
+
+    return newAnchors;
+  },
+  getEdgeAnchors: (node: DiagramNode, paths: CompoundPath, numberPerEdge = 1) => {
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
+
+    const d = 1 / (numberPerEdge + 1);
+
+    // Get anchors per side
+    for (let i = 0; i < paths.all().length; i++) {
+      const path = paths.all()[i];
+      for (let j = 0; j < path.segments.length; j++) {
+        for (let n = 0; n < numberPerEdge; n++) {
+          const p = path.segments[j];
+          const pct = (n + 1) * d;
+          const { x, y } = p.point(pct);
+
+          // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
+          const rp = Point.rotateAround({ x, y }, -node.bounds.r, Box.center(node.bounds));
+
+          // Note: This is to Prevent NaN issues
+          if (node.bounds.h === 0 || node.bounds.w === 0) continue;
+
+          const lx = round((rp.x - node.bounds.x) / node.bounds.w);
+          const ly = round((rp.y - node.bounds.y) / node.bounds.h);
+
+          let normal = Vector.angle(Vector.tangentToNormal(p.tangent(0.5))) - node.bounds.r;
+
+          // Make sure normal is "outwards" from the center of the node
+          const tangent = Vector.from(Box.center(node.bounds), rp);
+          if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
+            normal += Math.PI;
+          }
+
+          newAnchors.push({
+            id: makeAnchorId({ x: lx, y: ly }),
+            start: { x: lx, y: ly },
+            clip: false,
+            type: 'point',
+            normal: normal,
+            isPrimary:
+              p.length() / Math.max(node.bounds.w, node.bounds.h) > 0.25 && round(pct) === 0.5
+          });
+        }
+      }
+    }
+
+    return newAnchors;
+  }
 };
