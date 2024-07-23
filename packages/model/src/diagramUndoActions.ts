@@ -1,4 +1,4 @@
-import { DiagramElement } from './diagramElement';
+import { DiagramElement, isNode } from './diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork';
 import { UndoableAction } from './undoManager';
@@ -124,7 +124,12 @@ export class ElementAddUndoableAction implements UndoableAction {
 
   redo() {
     UnitOfWork.execute(this.diagram, uow => {
-      this.elements.forEach(node => this.#layer.addElement(node, uow));
+      this.elements.forEach(node => {
+        if (isNode(node)) {
+          node.invalidateAnchors(uow);
+        }
+        this.#layer.addElement(node, uow);
+      });
     });
   }
 }

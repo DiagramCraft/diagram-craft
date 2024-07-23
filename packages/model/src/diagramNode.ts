@@ -685,7 +685,7 @@ export class DiagramNode
     uow.updateElement(this);
   }
 
-  private invalidateAnchors(uow: UnitOfWork) {
+  invalidateAnchors(uow: UnitOfWork) {
     const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
     this.#anchors = def.getAnchors(this);
 
