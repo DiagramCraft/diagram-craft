@@ -160,11 +160,18 @@ export class MoveTool extends AbstractTool {
 
   onKeyDown(e: KeyboardEvent) {
     const current = this.drag.current();
-    current?.onKeyDown?.(e);
+    if (current) current.onKeyDown?.(e);
+    else if (
+      this.diagram.selectionState.isNodesOnly() &&
+      this.diagram.selectionState.nodes.length === 1
+    ) {
+      const node = this.diagram.selectionState.nodes[0];
+      node.getDefinition().requestFocus(node, false);
+    }
   }
 
   onKeyUp(e: KeyboardEvent) {
     const current = this.drag.current();
-    current?.onKeyUp?.(e);
+    if (current) current.onKeyUp?.(e);
   }
 }

@@ -93,7 +93,7 @@ export interface NodeDefinition {
   ): void;
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
-  requestFocus(node: DiagramNode): void;
+  requestFocus(node: DiagramNode, selectAll?: boolean): void;
 }
 
 const missing = new Set();

@@ -146,7 +146,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return { size: { w: 100 * this.getDefaultAspectRatio(node), h: 100 } };
   }
 
-  requestFocus(node: DiagramNode): void {
+  requestFocus(node: DiagramNode, selectAll = true): void {
     const editable = document
       .getElementById(`text_1_${node.id}`)
       ?.getElementsByClassName('svg-node__text')
@@ -160,9 +160,11 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     editable.style.pointerEvents = 'auto';
     editable.focus();
 
-    setTimeout(() => {
-      document.execCommand('selectAll', false, undefined);
-    }, 0);
+    if (selectAll) {
+      setTimeout(() => {
+        document.execCommand('selectAll', false, undefined);
+      }, 0);
+    }
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
