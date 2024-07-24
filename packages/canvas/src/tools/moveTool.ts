@@ -160,8 +160,11 @@ export class MoveTool extends AbstractTool {
 
   onKeyDown(e: KeyboardEvent) {
     const current = this.drag.current();
-    if (current) current.onKeyDown?.(e);
-    else if (
+    if (current) {
+      current.onKeyDown?.(e);
+    } else if (e.key === 'Escape') {
+      this.diagram.selectionState.clear();
+    } else if (
       this.diagram.selectionState.isNodesOnly() &&
       this.diagram.selectionState.nodes.length === 1
     ) {
