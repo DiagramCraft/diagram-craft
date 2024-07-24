@@ -24,7 +24,7 @@ export const LayerToolWindow = () => {
 
   return (
     <Accordion.Root disabled={true} type="single" defaultValue={'layers'}>
-      <Accordion.Item value="layers" fill={true}>
+      <Accordion.Item value="layers">
         <Accordion.ItemHeader>Layers</Accordion.ItemHeader>
         <Accordion.ItemContent>
           <LayerList />

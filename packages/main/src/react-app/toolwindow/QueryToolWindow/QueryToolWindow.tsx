@@ -241,7 +241,7 @@ export const QueryToolWindow = () => {
         </Accordion.ItemContent>
       </Accordion.Item>
 
-      <Accordion.Item value="response" fill={true}>
+      <Accordion.Item value="response">
         <Accordion.ItemHeader>Response</Accordion.ItemHeader>
         <Accordion.ItemContent>
           <div className={'cmp-query-response'}>

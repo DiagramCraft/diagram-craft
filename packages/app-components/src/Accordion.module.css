@@ -20,16 +20,6 @@
         visibility: hidden;
       }
     }
-
-    &[data-fill="true"] {
-      height: 100%;
-      .cmp-accordion__content {
-        height: 100%;
-      }
-      .cmp-accordion__content_text {
-        height: 100%;
-      }
-    }
   }
 
   .cmp-accordion__header {

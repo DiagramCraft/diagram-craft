@@ -40,11 +40,7 @@ type RootProps = {
 
 const Item = (props: ItemProps) => {
   return (
-    <RadixAccordion.Item
-      className={styles.cmpAccordionItem}
-      value={props.value}
-      data-fill={props.fill}
-    >
+    <RadixAccordion.Item className={styles.cmpAccordionItem} value={props.value}>
       {props.children}
     </RadixAccordion.Item>
   );
@@ -53,9 +49,6 @@ const Item = (props: ItemProps) => {
 type ItemProps = {
   value: string;
   children: React.ReactNode;
-
-  // TODO: Is this really needed?
-  fill?: boolean;
 };
 
 const ItemHeader = React.forwardRef<HTMLButtonElement, ItemHeaderProps>((props, forwardedRef) => {
@@ -79,7 +72,6 @@ type ItemHeaderProps = {
   children: React.ReactNode;
 };
 
-// TODO: This is not perfect, as button events will propagate to the header
 const ItemHeaderButtons = (props: ItemHeaderButtonsProps) => {
   return (
     <div className={styles.cmpAccordionHeaderBtn} onClick={e => e.preventDefault()}>
