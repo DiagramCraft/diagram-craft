@@ -1,4 +1,4 @@
-import { AbstractDrag } from '../dragDropManager';
+import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
@@ -6,6 +6,9 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { Angle } from '@diagram-craft/geometry/angle';
+
+const isFreeDrag = (m: Modifiers) => m.altKey;
 
 export class RotateDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -15,26 +18,32 @@ export class RotateDrag extends AbstractDrag {
     this.uow = new UnitOfWork(this.diagram, true);
   }
 
-  onDrag(coord: Point) {
+  onDrag(coord: Point, modifiers: Modifiers) {
     const selection = this.diagram.selectionState;
     selection.guides = [];
+
+    const snapManager = this.diagram.createSnapManager();
 
     const before = selection.bounds;
 
     const center = Box.center(selection.source.boundingBox);
 
-    const newAngle = Vector.angle(Vector.from(center, coord)) + Math.PI / 2 - Math.PI / 4;
+    const targetAngle = Vector.angle(Vector.from(center, coord)) + Math.PI / 2 - Math.PI / 4;
+
+    const result = snapManager.snapRotate({ ...before, r: targetAngle });
+    const adjustedAngle = isFreeDrag(modifiers) ? targetAngle : result.adjusted.r;
+
     this.diagram.transformElements(
       selection.elements,
-      TransformFactory.fromTo(before, { ...selection.bounds, r: newAngle }),
+      TransformFactory.fromTo(before, { ...selection.bounds, r: adjustedAngle }),
       this.uow,
       selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
     );
 
-    selection.forceRotation(newAngle);
+    selection.forceRotation(adjustedAngle);
 
     this.setState({
-      label: `angle: ${(Vector.angle(Vector.from(center, coord)) * (180 / Math.PI)).toFixed(0)}°`
+      label: `angle: ${Angle.toDeg(adjustedAngle).toFixed(0)}°`
     });
 
     this.uow.notify();

@@ -14,6 +14,7 @@ import { Range } from '@diagram-craft/geometry/range';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { largest, smallest } from '@diagram-craft/utils/array';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -76,7 +77,7 @@ class SnapProviders {
   }
 }
 
-const orhogonalLineDistance = (line1: Line, line2: Line, oAxis: Axis) =>
+const orthogonalLineDistance = (line1: Line, line2: Line, oAxis: Axis) =>
   line1.from[Axis.toXY(oAxis)] - line2.from[Axis.toXY(oAxis)];
 
 const rangeOverlap = (a1: Magnet, a2: Magnet) => {
@@ -87,7 +88,7 @@ const rangeOverlap = (a1: Magnet, a2: Magnet) => {
   );
 };
 
-const orhogonalDistance = (a1: Magnet, a2: Magnet) => {
+const orthogonalDistance = (a1: Magnet, a2: Magnet) => {
   const axis = Axis.toXY(Axis.orthogonal(a1.axis));
   return a1.line.from[axis] - a2.line.from[axis];
 };
@@ -113,7 +114,7 @@ export class SnapManager {
         if (other.respectDirection && other.matchDirection !== self.matchDirection) continue;
         if (!rangeOverlap(self, other)) continue;
 
-        const distance = orhogonalDistance(self, other);
+        const distance = orthogonalDistance(self, other);
         if (Math.abs(distance) > this.threshold) continue;
 
         dest.push({ self, matching: other, distance });
@@ -121,6 +122,21 @@ export class SnapManager {
     }
 
     return dest;
+  }
+
+  snapRotate(b: Box): SnapResult {
+    if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
+
+    const newBounds = Box.asReadWrite(b);
+
+    const roundTo = 5;
+
+    const angle = Angle.toDeg(b.r);
+    if (angle % roundTo !== 0) {
+      newBounds.r = Angle.toRad(Math.round(Angle.toDeg(b.r) / roundTo) * roundTo);
+    }
+
+    return { guides: [], magnets: [], adjusted: WritableBox.asBox(newBounds) };
   }
 
   // TODO: We should be able to merge snapResize and snapMove
@@ -150,7 +166,7 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      const distance = orhogonalDistance(closest.self, closest.matching);
+      const distance = orthogonalDistance(closest.self, closest.matching);
 
       if (closest.self.matchDirection === 'n' || closest.self.matchDirection === 'w') {
         newBounds[Axis.toXY(Axis.orthogonal(axis))] -= distance;
@@ -206,7 +222,7 @@ export class SnapManager {
 
       if (closest === undefined) continue;
 
-      newBounds[Axis.toXY(Axis.orthogonal(axis)) === 'x' ? 'x' : 'y'] -= orhogonalDistance(
+      newBounds[Axis.toXY(Axis.orthogonal(axis)) === 'x' ? 'x' : 'y'] -= orthogonalDistance(
         closest.self,
         closest.matching
       );
@@ -249,7 +265,7 @@ export class SnapManager {
 
       // Recalculate distance after snapping
       otherMagnetsForMagnet.forEach(e => {
-        e.distance = orhogonalDistance(self, e.matching);
+        e.distance = orthogonalDistance(self, e.matching);
       });
 
       const match = largest(
@@ -258,7 +274,7 @@ export class SnapManager {
           .filter(e => e.distance >= 0)
 
           // and remove anything that is close post anspping
-          .filter(e => Math.abs(orhogonalLineDistance(e.matching.line, e.self.line, oAxis)) < 1),
+          .filter(e => Math.abs(orthogonalLineDistance(e.matching.line, e.self.line, oAxis)) < 1),
         (a, b) =>
           enabledSnapProviders.indexOf(a.matching.type) -
           enabledSnapProviders.indexOf(b.matching.type)
