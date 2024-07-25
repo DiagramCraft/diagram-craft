@@ -165,6 +165,9 @@ export class MoveTool extends AbstractTool {
     } else if (e.key === 'Escape') {
       this.diagram.selectionState.clear();
     } else if (
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey &&
       this.diagram.selectionState.isNodesOnly() &&
       this.diagram.selectionState.nodes.length === 1
     ) {
