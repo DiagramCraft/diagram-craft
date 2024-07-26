@@ -569,27 +569,25 @@ export class DiagramEdge
    *
    * TODO: Could we move this to the endpoint?
    */
-  private _getNormalDirection(ep: Endpoint) {
-    if (isConnected(ep)) {
-      if (ep instanceof AnchorEndpoint && ep.getAnchor().normal !== undefined) {
-        return Direction.fromAngle(ep.getAnchor().normal! + ep.node.bounds.r, true);
+  private _getNormalDirection(endpoint: Endpoint) {
+    if (isConnected(endpoint)) {
+      if (endpoint instanceof AnchorEndpoint && endpoint.getAnchor().normal !== undefined) {
+        return Direction.fromAngle(endpoint.getAnchor().normal! + endpoint.node.bounds.r, true);
       }
 
       // ... else, we calculate the normal assuming the closest point to the
       // endpoint on the boundary path
-      const startNode = ep.node;
+      const startNode = endpoint.node;
       const boundingPath = startNode.getDefinition().getBoundingPath(startNode);
-      const t = boundingPath.projectPoint(ep.position);
+      const t = boundingPath.projectPoint(endpoint.position);
 
       const paths = boundingPath.all();
       const tangent = paths[t.pathIdx].tangentAt(t.offset);
 
-      const normal = Vector.angle(Vector.tangentToNormal(tangent));
-
       // TODO: We need to check this is going in the right direction (i.e. outwards)
       //       probably need to pick up some code from ShapeNodeDefinition.getAnchors
 
-      return Direction.fromAngle(normal, true);
+      return Direction.fromVector({ x: -tangent.y, y: tangent.x });
     }
     return undefined;
   }
