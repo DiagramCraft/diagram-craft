@@ -1,22 +1,4 @@
-import {
-  TbArrowsExchange2,
-  TbBold,
-  TbItalic,
-  TbLayoutAlignBottom,
-  TbLayoutAlignCenter,
-  TbLayoutAlignLeft,
-  TbLayoutAlignMiddle,
-  TbLayoutAlignRight,
-  TbLayoutAlignTop,
-  TbLayoutDistributeHorizontal,
-  TbLayoutDistributeVertical,
-  TbRuler,
-  TbStackBack,
-  TbStackFront,
-  TbStackPop,
-  TbStackPush,
-  TbUnderline
-} from 'react-icons/tb';
+import { TbArrowsExchange2, TbBold, TbItalic, TbRuler, TbUnderline } from 'react-icons/tb';
 import { ActionToolbarButton } from './ActionToolbarButton';
 import { useEventListener } from '../hooks/useEventListener';
 import { useCallback, useEffect, useState } from 'react';
@@ -34,6 +16,7 @@ import { ElementCustomPropertiesToolbarButton } from '../toolwindow/ObjectToolWi
 import { CanvasGridToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGridToolbarButton';
 import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSnapToolbarButton';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { ElementStylesheetToolbarButton } from '../toolwindow/ObjectToolWindow/ElementStylesheetToolbarButton';
 
 export const ContextSpecificToolbar = () => {
   const diagram = useDiagram();
@@ -66,6 +49,8 @@ export const ContextSpecificToolbar = () => {
     <Toolbar.Root>
       {isTextSelection && (
         <>
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
+
           <ElementTextFontToolbarButton />
           <ElementTextFontSizeToolbarButton />
 
@@ -84,6 +69,8 @@ export const ContextSpecificToolbar = () => {
 
       {!isTextSelection && (isNodeSelection || isMixedSelection) && (
         <>
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
+
           <NodeFillToolbarButton />
           <NodeStrokeToolbarButton />
         </>
@@ -91,6 +78,8 @@ export const ContextSpecificToolbar = () => {
 
       {isEdgeSelection && (
         <>
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
+
           <EdgeLineToolbarButton />
           <ActionToolbarButton action={'EDGE_FLIP'}>
             <TbArrowsExchange2 />
@@ -109,7 +98,7 @@ export const ContextSpecificToolbar = () => {
 
       {(isNodeSelection || isMixedSelection || isEdgeSelection) && <Toolbar.Separator />}
 
-      {selectionType !== 'empty' && selectionType !== undefined && (
+      {/*selectionType !== 'empty' && selectionType !== undefined && (
         <>
           <ActionToolbarButton action={'ALIGN_TOP'}>
             <TbLayoutAlignTop />
@@ -153,7 +142,7 @@ export const ContextSpecificToolbar = () => {
 
           <Toolbar.Separator />
         </>
-      )}
+      )*/}
 
       <CanvasGridToolbarButton />
 

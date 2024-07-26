@@ -87,7 +87,11 @@
   .cmp-toolbar__separator {
     width: 1px;
     background-color: var(--slate-6);
-    margin: 0 10px;
+    margin: 0 10px 4px 10px;
+  }
+
+  .cmp-select-trigger + .cmp-toolbar__separator {
+    margin-left: 12px;
   }
 
   > div[role='group'] {

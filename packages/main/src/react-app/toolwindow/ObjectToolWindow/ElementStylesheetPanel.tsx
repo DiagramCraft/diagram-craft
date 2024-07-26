@@ -67,7 +67,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             onValueChange={v => {
               const uow = new UnitOfWork($d, true);
               $d.selectionState.elements.forEach(n => {
-                $d.document.styles.setStylesheet(n, v, uow, false);
+                $d.document.styles.setStylesheet(n, v, uow, true);
               });
               style.set(v);
               commitWithUndo(uow, 'Change stylesheet');

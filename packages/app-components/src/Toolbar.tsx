@@ -73,9 +73,11 @@ type ToggleGroupProps = {
   value?: string | string[];
 };
 
-const Separator = () => {
-  return <RadixToolbar.Separator className={styles.cmpToolbarSeparator} />;
+const Separator = (props: SeparatorProps) => {
+  return <RadixToolbar.Separator {...props} className={styles.cmpToolbarSeparator} />;
 };
+
+type SeparatorProps = React.HTMLAttributes<HTMLDivElement>;
 
 export const Toolbar = {
   Root,
