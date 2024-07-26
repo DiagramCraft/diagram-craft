@@ -96,7 +96,10 @@ declare global {
       lineCap?: LineCap;
       lineJoin?: LineJoin;
     };
+
+    // TODO: Why is text part of elementProps and not only nodeProps
     text?: {
+      style?: string;
       text?: string;
       font?: string;
       fontSize?: number;

@@ -2,8 +2,9 @@ import {
   AddStylesheetUndoableAction,
   DeleteStylesheetUndoableAction,
   getCommonProps,
-  isPropsDirty,
-  Stylesheet
+  isSelectionDirty,
+  Stylesheet,
+  StylesheetType
 } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
@@ -13,7 +14,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { useDiagram } from '../../context/DiagramContext';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { useElementProperty } from '../../hooks/useProperty';
+import { useElementProperty, useNodeProperty } from '../../hooks/useProperty';
 import { useState } from 'react';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -22,15 +23,19 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
 import { StringInputDialog } from '../../components/StringInputDialog';
 import { JSONDialog } from '../../components/JSONDialog';
+import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();
   const redraw = useRedraw();
 
+  const isText = props.type === 'text';
+
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
 
-  const style = useElementProperty($d, 'style', 'default');
+  const style = useElementProperty($d, 'style', DefaultStyles.node.default);
+  const textStyle = useNodeProperty($d, 'text.style', DefaultStyles.text.default);
 
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE
@@ -40,16 +45,19 @@ export const ElementStylesheetPanel = (props: Props) => {
   const [renameDialog, setRenameDialog] = useState<Stylesheet | undefined>(undefined);
 
   if ($d.selectionState.isEmpty()) return null;
+  if ($d.selectionState.getSelectionType() === 'mixed') return null;
 
-  const stylesheet = $d.document.styles.get($d.selectionState.elements[0].renderProps.style!);
+  const isDirty = isText
+    ? !textStyle.hasMultipleValues && isSelectionDirty($d, true)
+    : !style.hasMultipleValues && isSelectionDirty($d, false);
 
-  const isDirty =
-    !style.hasMultipleValues &&
-    $d.selectionState.elements.some(e => isPropsDirty(e.renderProps, stylesheet?.props ?? {}));
+  const styleList = isText
+    ? $d.document.styles.textStyles
+    : $d.selectionState.isNodesOnly()
+      ? $d.document.styles.nodeStyles
+      : $d.document.styles.edgeStyles;
 
-  const styleList = $d.selectionState.isNodesOnly()
-    ? $d.document.styles.nodeStyles
-    : $d.document.styles.edgeStyles;
+  const $s = isText ? textStyle : style;
 
   return (
     <ToolWindowPanel
@@ -59,23 +67,23 @@ export const ElementStylesheetPanel = (props: Props) => {
       hasCheckbox={false}
     >
       <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Style:</div>
+        <div className={'cmp-labeled-table__label'}>{isText ? 'Text Style' : 'Style'}:</div>
         <div className={'cmp-labeled-table__value util-hstack'}>
           <Select.Root
-            value={style.val}
-            hasMultipleValues={style.hasMultipleValues}
+            value={$s.val}
+            hasMultipleValues={$s.hasMultipleValues}
             onValueChange={v => {
               const uow = new UnitOfWork($d, true);
               $d.selectionState.elements.forEach(n => {
                 $d.document.styles.setStylesheet(n, v, uow, true);
               });
-              style.set(v);
+              $s.set(v);
               commitWithUndo(uow, 'Change stylesheet');
             }}
           >
             {styleList.map(e => (
               <Select.Item key={e.id} value={e.id}>
-                {isDirty && e.id === style.val ? `${e.name} ∗` : e.name}
+                {isDirty && e.id === $s.val ? `${e.name} ∗` : e.name}
               </Select.Item>
             ))}
           </Select.Root>
@@ -93,7 +101,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                   onSelect={() => {
                     const uow = new UnitOfWork($d, true);
                     $d.selectionState.elements.forEach(n => {
-                      $d.document.styles.setStylesheet(n, style.val, uow, true);
+                      $d.document.styles.setStylesheet(n, $s.val, uow, true);
                     });
                     commitWithUndo(uow, 'Reapply style');
                   }}
@@ -105,20 +113,26 @@ export const ElementStylesheetPanel = (props: Props) => {
                   onSelect={() => {
                     // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
                     const uow = new UnitOfWork($d, true);
-                    const stylesheet = $d.document.styles.get(style.val);
+                    const stylesheet = $d.document.styles.get($s.val);
                     if (stylesheet) {
-                      stylesheet.setProps(
-                        getCommonProps($d.selectionState.elements.map(e => e.editProps)) as
-                          | NodeProps
-                          | EdgeProps,
-                        uow
-                      );
+                      const commonProps = getCommonProps(
+                        $d.selectionState.elements.map(e => e.editProps)
+                      ) as NodeProps | EdgeProps;
+                      stylesheet.setProps(isText ? { text: commonProps.text } : commonProps, uow);
                       $d.document.styles.modifyStylesheet(stylesheet, uow);
                     }
                     commitWithUndo(uow, 'Redefine style');
                   }}
                 >
-                  Redefine
+                  Save
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="cmp-context-menu__item"
+                  onSelect={() => {
+                    setNewDialog(true);
+                  }}
+                >
+                  Save As...
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
@@ -134,8 +148,8 @@ export const ElementStylesheetPanel = (props: Props) => {
                           onClick: () => {
                             const uow = new UnitOfWork($d, true);
 
-                            const s = $d.document.styles.get(style.val)!;
-                            $d.document.styles.deleteStylesheet(style.val, uow);
+                            const s = $d.document.styles.get($s.val)!;
+                            $d.document.styles.deleteStylesheet($s.val, uow);
 
                             const snapshots = uow.commit();
                             uow.diagram.undoManager.add(
@@ -156,7 +170,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setModifyDialog($d.document.styles.get(style.val));
+                    setModifyDialog($d.document.styles.get($s.val));
                   }}
                 >
                   Modify
@@ -164,19 +178,10 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <DropdownMenu.Item
                   className="cmp-context-menu__item"
                   onSelect={() => {
-                    setRenameDialog($d.document.styles.get(style.val));
+                    setRenameDialog($d.document.styles.get($s.val));
                   }}
                 >
                   Rename
-                </DropdownMenu.Item>
-                <DropdownMenu.Separator className="cmp-context-menu__separator" />
-                <DropdownMenu.Item
-                  className="cmp-context-menu__item"
-                  onSelect={() => {
-                    setNewDialog(true);
-                  }}
-                >
-                  Add new
                 </DropdownMenu.Item>
                 <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
               </DropdownMenu.Content>
@@ -197,14 +202,15 @@ export const ElementStylesheetPanel = (props: Props) => {
             name={renameDialog?.name ?? ''}
             onSave={v => {
               const id = newid();
+              const commonProps = getCommonProps(
+                $d.selectionState.elements.map(e => e.editProps)
+              ) as NodeProps | EdgeProps;
               const s = new Stylesheet(
-                isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
+                isText ? 'text' : isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
                 id,
                 v,
                 {
-                  ...(getCommonProps($d.selectionState.elements.map(e => e.editProps)) as
-                    | NodeProps
-                    | EdgeProps),
+                  ...(isText ? { text: commonProps.text } : commonProps),
                   style: undefined,
                   highlight: []
                 }
@@ -271,4 +277,5 @@ export const ElementStylesheetPanel = (props: Props) => {
 
 type Props = {
   mode?: 'accordion' | 'panel';
+  type: StylesheetType;
 };

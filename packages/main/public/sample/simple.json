@@ -94,7 +94,8 @@
               "props": {
                 "style": "default",
                 "text": {
-                  "text": ""
+                  "text": "Lorem",
+                  "style": "h1"
                 }
               }
             },

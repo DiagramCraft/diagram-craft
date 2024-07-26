@@ -11,7 +11,7 @@ import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
 import { AnchorEndpoint, ConnectedEndpoint, Endpoint, FreeEndpoint } from './endpoint';
-import { edgeDefaults } from './diagramDefaults';
+import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
 import {
@@ -95,7 +95,7 @@ export class DiagramEdge
     if (end instanceof ConnectedEndpoint)
       end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
 
-    this.#props.style ??= 'default-edge';
+    this.#props.style ??= DefaultStyles.edge.default;
   }
 
   getDefinition(): EdgeDefinition {

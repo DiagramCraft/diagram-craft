@@ -4,6 +4,10 @@ import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
+import { assert } from '@diagram-craft/utils/assert';
+import { DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
+
+export type StylesheetType = 'node' | 'edge' | 'text';
 
 export class Stylesheet<P extends ElementProps = ElementProps>
   implements UOWTrackable<StylesheetSnapshot>
@@ -11,9 +15,9 @@ export class Stylesheet<P extends ElementProps = ElementProps>
   id: string;
   #name: string;
   #props: Partial<P>;
-  type: 'node' | 'edge';
+  type: StylesheetType;
 
-  constructor(type: 'node' | 'edge', id: string, name: string, props: Partial<P>) {
+  constructor(type: StylesheetType, id: string, name: string, props: Partial<P>) {
     this.id = id;
     this.#name = name;
     this.#props = props;
@@ -26,10 +30,8 @@ export class Stylesheet<P extends ElementProps = ElementProps>
 
   setProps(props: Partial<P>, uow: UnitOfWork): void {
     uow.snapshot(this);
-    this.#props = deepClone(props);
 
-    if (this.#props.data) delete this.#props.data;
-    if (this.#props.text?.text || this.#props.text?.text === '') delete this.#props.text.text;
+    this.#props = this.cleanProps(props);
 
     uow.updateElement(this);
   }
@@ -64,48 +66,94 @@ export class Stylesheet<P extends ElementProps = ElementProps>
       type: this.type
     };
   }
+
+  getPropsFromElement(el: DiagramElement): Partial<P> {
+    const p = deepClone(el.editProps);
+    return this.cleanProps(p as unknown as Partial<P>);
+  }
+
+  private cleanProps(props: Partial<P>): Partial<P> {
+    if (this.type === 'edge') {
+      const p = deepClone(props) as NodeProps;
+      delete p.name;
+      delete p.text;
+      delete p.data;
+      delete p.style;
+      return p as P;
+    } else if (this.type === 'text') {
+      const p = deepClone(props) as NodeProps;
+      if (p.text) {
+        delete p.text.text;
+        delete p.text.style;
+        if (Object.keys(p.text).length === 0) {
+          delete p.text;
+        }
+      }
+      return { text: p.text } as P;
+    } else {
+      const p = deepClone(props) as NodeProps;
+      delete p.name;
+      delete p.text;
+      delete p.style;
+      delete p.data;
+      return p as P;
+    }
+  }
 }
 
-const DEFAULT_NODE_STYLES: Stylesheet<NodeProps>[] = [
-  new Stylesheet('node', 'default', 'Default', {
+type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style'> };
+type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'>;
+type EdgeStyleProps = Omit<EdgeProps, 'name' | 'text' | 'data' | 'style'>;
+
+const DEFAULT_NODE_STYLES: Stylesheet<NodeStyleProps>[] = [
+  new Stylesheet<NodeStyleProps>('node', DefaultStyles.node.default, 'Default', {
     fill: {
       color: 'var(--canvas-bg2)'
     },
     stroke: {
       color: 'var(--canvas-fg)'
-    },
-    text: {
-      color: 'var(--canvas-fg)',
-      fontSize: 10,
-      font: 'sans-serif',
-      top: 6,
-      left: 6,
-      right: 6,
-      bottom: 6
     }
   }),
-  new Stylesheet('node', 'default-text', 'Default text', {
+
+  new Stylesheet<NodeStyleProps>('node', DefaultStyles.node.text, 'Text', {
     fill: {
       enabled: false
     },
     stroke: {
       enabled: false
-    },
-    text: {
-      color: 'var(--canvas-fg)',
-      fontSize: 10,
-      font: 'sans-serif',
-      align: 'left',
-      left: 0,
-      top: 0,
-      right: 0,
-      bottom: 0
     }
   })
 ];
 
-const DEFAULT_EDGE_STYLES: Stylesheet<EdgeProps>[] = [
-  new Stylesheet('edge', 'default-edge', 'Default', {
+const DEFAULT_TEXT_STYLES: Stylesheet<TextStyleProps>[] = [
+  new Stylesheet<TextStyleProps>('text', DefaultStyles.text.default, 'Default', {
+    text: {
+      color: 'var(--canvas-fg)',
+      fontSize: 10,
+      font: 'sans-serif',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0
+    }
+  }),
+  new Stylesheet<TextStyleProps>('text', 'h1', 'H1', {
+    text: {
+      color: 'var(--canvas-fg)',
+      fontSize: 20,
+      bold: true,
+      font: 'sans-serif',
+      align: 'left',
+      top: 6,
+      left: 6,
+      right: 6,
+      bottom: 6
+    }
+  })
+];
+
+const DEFAULT_EDGE_STYLES: Stylesheet<EdgeStyleProps>[] = [
+  new Stylesheet<EdgeStyleProps>('edge', DefaultStyles.edge.default, 'Default', {
     stroke: {
       color: 'var(--canvas-fg)'
     },
@@ -121,39 +169,92 @@ export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>)
   return e as Partial<T>;
 };
 
-export const isPropsDirty = (
+const isDefaults = (props: Record<string, unknown>, defaults: Record<string, unknown>): boolean => {
+  for (const key of Object.keys(props)) {
+    if (isObj(props[key])) {
+      if (
+        !isDefaults(props[key] as Record<string, unknown>, defaults[key] as Record<string, unknown>)
+      ) {
+        return false;
+      }
+    } else if (props[key] !== defaults[key]) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const isPropsDirty = (
   props: Record<string, unknown>,
-  stylesheetProps: Record<string, unknown>
+  stylesheetProps: Record<string, unknown>,
+  defaults: Record<string, unknown>
 ): boolean => {
   for (const key of Object.keys(props)) {
-    if (stylesheetProps[key] === undefined) continue;
     if (isObj(props[key])) {
+      if (stylesheetProps[key] === undefined) {
+        const keys = Object.keys(props[key]);
+
+        if (keys.length === 0) continue;
+        if (isDefaults(props[key], defaults[key] as Record<string, unknown>)) continue;
+
+        // TODO: We should add some normalization - or check compared to default value instead
+        //        if (key === 'shadow' && keys.length === 1 && props[key].enabled === false) continue;
+
+        console.log('missing key', key, props[key]);
+        return true;
+      }
+
       const r = isPropsDirty(
         props[key] as Record<string, unknown>,
-        stylesheetProps[key] as Record<string, unknown>
+        stylesheetProps[key] as Record<string, unknown>,
+        defaults[key] as Record<string, unknown>
       );
       if (r) return true;
-    } else if (props[key] !== stylesheetProps[key]) {
+    } else if (props[key] !== undefined && props[key] !== stylesheetProps[key]) {
+      console.log('key', key, props[key], stylesheetProps[key]);
       return true;
     }
   }
   return false;
 };
 
+export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
+  const styles = $d.document.styles;
+  if ($d.selectionState.elements.length === 0) {
+    return false;
+  }
+
+  const renderProps = $d.selectionState.elements[0].renderProps;
+
+  const stylesheet = isText ? styles.get(renderProps.text.style!) : styles.get(renderProps.style!);
+  assert.present(stylesheet);
+
+  return $d.selectionState.elements.some(e => {
+    const propsFromElement = stylesheet.getPropsFromElement(e);
+    return isPropsDirty(
+      propsFromElement,
+      stylesheet?.props ?? {},
+      isNode(e) ? nodeDefaults : edgeDefaults
+    );
+  });
+};
+
 export class DiagramStyles {
   constructor(private readonly document: DiagramDocument) {}
 
-  nodeStyles: Stylesheet<NodeProps>[] = DEFAULT_NODE_STYLES;
-  edgeStyles: Stylesheet<EdgeProps>[] = DEFAULT_EDGE_STYLES;
+  textStyles: Stylesheet<TextStyleProps>[] = DEFAULT_TEXT_STYLES;
+  nodeStyles: Stylesheet<NodeStyleProps>[] = DEFAULT_NODE_STYLES;
+  edgeStyles: Stylesheet<EdgeStyleProps>[] = DEFAULT_EDGE_STYLES;
 
   #activeNodeStylesheet = DEFAULT_NODE_STYLES[0];
   #activeEdgeStylesheet = DEFAULT_EDGE_STYLES[0];
+  #activeTextStylesheet = DEFAULT_TEXT_STYLES[0];
 
   get activeNodeStylesheet() {
     return this.#activeNodeStylesheet;
   }
 
-  set activeNodeStylesheet(style: Stylesheet<NodeProps>) {
+  set activeNodeStylesheet(style: Stylesheet<NodeStyleProps>) {
     this.#activeNodeStylesheet = style;
   }
 
@@ -161,12 +262,26 @@ export class DiagramStyles {
     return this.#activeEdgeStylesheet;
   }
 
-  set activeEdgeStylesheet(style: Stylesheet<EdgeProps>) {
+  set activeEdgeStylesheet(style: Stylesheet<EdgeStyleProps>) {
     this.#activeEdgeStylesheet = style;
   }
 
-  get(id: string) {
-    return [...this.nodeStyles, ...this.edgeStyles].find(s => s.id === id);
+  get activeTextStylesheet() {
+    return this.#activeTextStylesheet;
+  }
+
+  set activeTextStylesheet(style: Stylesheet<TextStyleProps>) {
+    this.#activeTextStylesheet = style;
+  }
+
+  get(
+    id: string
+  ):
+    | Stylesheet<EdgeStyleProps>
+    | Stylesheet<NodeStyleProps>
+    | Stylesheet<TextStyleProps>
+    | undefined {
+    return [...this.nodeStyles, ...this.edgeStyles, ...this.textStyles].find(s => s.id === id);
   }
 
   setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork, force: boolean) {
@@ -176,19 +291,25 @@ export class DiagramStyles {
     }
 
     if (stylesheet.type === 'node') {
-      this.activeNodeStylesheet = stylesheet;
+      this.activeNodeStylesheet = stylesheet as Stylesheet<NodeStyleProps>;
+    } else if (stylesheet.type === 'text') {
+      this.activeTextStylesheet = stylesheet as Stylesheet<TextStyleProps>;
     } else {
-      this.activeEdgeStylesheet = stylesheet;
+      this.activeEdgeStylesheet = stylesheet as Stylesheet<EdgeStyleProps>;
     }
 
     const oldProps = deepClone(el.renderProps);
     if (force) {
       el.updateProps(props => {
-        deepClear(stylesheet.props, props);
-
-        props.style = style;
+        deepClear(stylesheet.getPropsFromElement(el), props);
 
         props.text ??= {};
+
+        if (stylesheet.type !== 'text') props.style = style;
+        else {
+          props.text.style = style;
+        }
+
         props.text.text = oldProps.text.text;
 
         props.data ??= {};
@@ -199,7 +320,7 @@ export class DiagramStyles {
 
   deleteStylesheet(id: string, uow: UnitOfWork) {
     // Cannot delete the default stylesheet
-    if (id === 'default' || id === 'default-text') {
+    if (this.isDefaultStyle(id)) {
       return;
     }
 
@@ -210,6 +331,8 @@ export class DiagramStyles {
 
     if (stylesheet.type === 'node') {
       this.activeNodeStylesheet = this.nodeStyles.filter(s => s !== stylesheet)[0];
+    } else if (stylesheet.type === 'text') {
+      this.activeTextStylesheet = this.textStyles.filter(s => s !== stylesheet)[0];
     } else {
       this.activeEdgeStylesheet = this.edgeStyles.filter(s => s !== stylesheet)[0];
     }
@@ -218,6 +341,8 @@ export class DiagramStyles {
 
     if (stylesheet.type === 'node') {
       this.nodeStyles = this.nodeStyles.filter(s => s.id !== id);
+    } else if (stylesheet.type === 'text') {
+      this.textStyles = this.textStyles.filter(s => s.id !== id);
     } else {
       this.edgeStyles = this.edgeStyles.filter(s => s.id !== id);
     }
@@ -240,7 +365,7 @@ export class DiagramStyles {
 
   clearStylesheet(id: string, uow: UnitOfWork) {
     // Cannot delete the default stylesheet
-    if (id === 'default' || id === 'default-text') {
+    if (this.isDefaultStyle(id)) {
       return;
     }
 
@@ -261,18 +386,22 @@ export class DiagramStyles {
     }
   }
 
+  private isDefaultStyle(id: string) {
+    return id.startsWith('default');
+  }
+
   private clearStylesheetFromElement(el: DiagramElement, stylesheet: Stylesheet, uow: UnitOfWork) {
     el.updateProps(props => {
       Object.keys(stylesheet.props).forEach(key => {
-        const validKey = key as keyof (NodeProps | EdgeProps);
+        const validKey = key as keyof (NodeProps | EdgeStyleProps);
         // @ts-ignore
         props[validKey] = deepMerge({}, props[validKey], stylesheet.props[validKey]);
       });
-      props.style = isEdge(el)
-        ? 'default-edge'
-        : isNode(el) && el.nodeType === 'text'
-          ? 'default-text'
-          : 'default';
+      props.style = isEdge(el) ? DefaultStyles.edge.default : DefaultStyles.node.default;
+      if (isNode(el)) {
+        props.text ??= {};
+        props.text.style = DefaultStyles.text.default;
+      }
     }, uow);
   }
 
@@ -281,6 +410,10 @@ export class DiagramStyles {
       this.nodeStyles = this.nodeStyles.filter(s => s.id !== stylesheet.id);
       this.nodeStyles.push(stylesheet);
       this.activeNodeStylesheet = stylesheet;
+    } else if (stylesheet.type === 'text') {
+      this.textStyles = this.textStyles.filter(s => s.id !== stylesheet.id);
+      this.textStyles.push(stylesheet);
+      this.activeTextStylesheet = stylesheet;
     } else {
       this.edgeStyles = this.edgeStyles.filter(s => s.id !== stylesheet.id);
       this.edgeStyles.push(stylesheet);

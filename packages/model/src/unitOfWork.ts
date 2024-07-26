@@ -1,7 +1,7 @@
 import { DiagramElement } from './diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { SerializedEdge, SerializedNode } from './serialization/types';
-import { Stylesheet } from './diagramStyles';
+import { Stylesheet, StylesheetType } from './diagramStyles';
 import { Layer, LayerManager, LayerType } from './diagramLayer';
 import { AdjustmentRule } from './diagramAdjustmentLayer';
 import { Diagram, DiagramEvents } from './diagram';
@@ -39,7 +39,7 @@ export type StylesheetSnapshot = {
   id: string;
   name: string;
   props: Record<string, unknown>;
-  type: 'node' | 'edge';
+  type: StylesheetType;
   _snapshotType: 'stylesheet';
 };
 

@@ -6,7 +6,7 @@ import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
-import { nodeDefaults } from './diagramDefaults';
+import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -82,7 +82,11 @@ export class DiagramNode
       this.invalidateAnchors(UnitOfWork.immediate(diagram));
     }
 
-    this.#props.style ??= this.nodeType === 'text' ? 'default-text' : 'default';
+    this.#props.style ??=
+      this.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
+
+    this.#props.text ??= {};
+    this.#props.text.style ??= DefaultStyles.text.default;
   }
 
   getDefinition() {
@@ -120,7 +124,16 @@ export class DiagramNode
       s => s.id === this.#props.style
     )?.props;
 
-    const propsForEditing = deepMerge({}, styleProps ?? {}, this.#props) as DeepRequired<NodeProps>;
+    const textStyleProps = this.diagram.document.styles.textStyles.find(
+      s => s.id === this.#props.text?.style
+    )?.props;
+
+    const propsForEditing = deepMerge<NodeProps>(
+      {},
+      styleProps ?? {},
+      textStyleProps ?? {},
+      this.#props
+    ) as DeepRequired<NodeProps>;
 
     const propsForRendering = deepMerge({}, makeWriteable(nodeDefaults), propsForEditing);
 

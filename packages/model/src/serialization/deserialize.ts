@@ -22,6 +22,7 @@ import {
 import { Endpoint } from '../endpoint';
 import { Waypoint } from '../types';
 import { Stylesheet } from '../diagramStyles';
+import { DefaultStyles } from '../diagramDefaults';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -73,7 +74,7 @@ export const deserializeDiagramElements = (
         diagram,
         layer,
         {
-          style: c.nodeType === 'text' ? 'default-text' : 'default',
+          style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
           ...c.props
         },
         c.anchors
@@ -179,10 +180,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   }
 
   if (document.styles) {
-    for (const edgeStyle of document.styles.edgeStyles) {
+    for (const edgeStyle of doc.styles.edgeStyles) {
       doc.styles.addStylesheet(deserializeStylesheet(edgeStyle));
     }
-    for (const nodeStyle of document.styles.nodeStyles) {
+    for (const nodeStyle of doc.styles.nodeStyles) {
       doc.styles.addStylesheet(deserializeStylesheet(nodeStyle));
     }
   }

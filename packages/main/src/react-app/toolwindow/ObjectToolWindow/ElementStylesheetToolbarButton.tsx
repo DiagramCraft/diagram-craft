@@ -1,34 +1,38 @@
-import { useElementProperty } from '../../hooks/useProperty';
+import { useElementProperty, useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { SelectionType } from '@diagram-craft/model/selectionState';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import { isPropsDirty } from '@diagram-craft/model/diagramStyles';
+import { isSelectionDirty } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { TbBaseline, TbPalette } from 'react-icons/tb';
+import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 export const ElementStylesheetToolbarButton = (props: Props) => {
   const $d = useDiagram();
 
   const nodeStyles = $d.document.styles.nodeStyles;
   const edgeStyles = $d.document.styles.edgeStyles;
+  const textStyles = $d.document.styles.textStyles;
 
-  const style = useElementProperty($d, 'style', 'default');
+  const style = useElementProperty($d, 'style', DefaultStyles.node.default);
+  const textStyle = useNodeProperty($d, 'text.style', DefaultStyles.text.default);
 
-  const stylesheet = $d.document.styles.get($d.selectionState.elements[0].renderProps.style!);
-
-  const isDirty =
-    !style.hasMultipleValues &&
-    $d.selectionState.elements.some(e => isPropsDirty(e.renderProps, stylesheet?.props ?? {}));
+  const isDirty = !style.hasMultipleValues && isSelectionDirty($d, false);
+  const isTextDirty = !textStyle.hasMultipleValues && isSelectionDirty($d, true);
 
   if (props.selectionType === 'mixed') return <></>;
 
-  const onValueChange = (v: string) => {
+  const onValueChange = (v: string, type: 'style' | 'text-style' = 'style') => {
     const uow = new UnitOfWork($d, true);
     $d.selectionState.elements.forEach(n => {
       $d.document.styles.setStylesheet(n, v, uow, true);
     });
-    style.set(v);
+    if (type === 'style') style.set(v);
+    else {
+      textStyle.set(v);
+    }
     commitWithUndo(uow, 'Change stylesheet');
   };
 
@@ -39,6 +43,9 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
   ) {
     return (
       <>
+        <div className={'cmp-toolbar__button'}>
+          <TbPalette />
+        </div>
         <Select.Root
           value={style.val}
           onValueChange={onValueChange}
@@ -50,12 +57,31 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
             </Select.Item>
           ))}
         </Select.Root>
+
+        <div className={'cmp-toolbar__button'} style={{ marginLeft: '0.5rem' }}>
+          <TbBaseline />
+        </div>
+        <Select.Root
+          value={textStyle.val}
+          onValueChange={v => onValueChange(v, 'text-style')}
+          hasMultipleValues={textStyle.hasMultipleValues}
+        >
+          {textStyles.map(e => (
+            <Select.Item key={e.id} value={e.id}>
+              {isTextDirty && e.id === textStyle.val ? `${e.name} ∗` : e.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
+
         <Toolbar.Separator style={{ marginRight: '5px' }} />
       </>
     );
   } else {
     return (
       <>
+        <div className={'cmp-toolbar__button'}>
+          <TbPalette />
+        </div>
         <Select.Root
           value={style.val}
           onValueChange={onValueChange}

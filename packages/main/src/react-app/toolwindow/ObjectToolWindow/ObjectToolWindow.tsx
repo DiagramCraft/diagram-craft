@@ -167,6 +167,7 @@ export const ObjectToolWindow = () => {
 
           <Tabs.Content value={'text'}>
             <Accordion.Root type="multiple" disabled={true} defaultValue={['text', 'label-node']}>
+              <ElementStylesheetPanel type={'text'} />
               <ElementTextPanel />
             </Accordion.Root>
           </Tabs.Content>
@@ -176,7 +177,7 @@ export const ObjectToolWindow = () => {
               type="multiple"
               defaultValue={['stylesheet', 'fill', 'stroke', 'line', 'custom', 'label-node']}
             >
-              {type === 'node' && <ElementStylesheetPanel />}
+              {type === 'node' && <ElementStylesheetPanel type={'node'} />}
 
               {(type === 'node' || type === 'mixed' || type === 'single-label-node') && (
                 <>
@@ -191,7 +192,7 @@ export const ObjectToolWindow = () => {
 
               {type === 'edge' && (
                 <>
-                  <ElementStylesheetPanel />
+                  <ElementStylesheetPanel type={'edge'} />
                   {edgeSupportsFill && <NodeFillPanel />}
                   <EdgeLinePanel />
                   <ElementShadowPanel />

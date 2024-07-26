@@ -30,6 +30,19 @@ const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: st
 
 type FilterNotStartingWith<B, P extends string> = B extends `${P}${infer _X}` ? never : B;
 
+export const DefaultStyles = {
+  node: {
+    default: 'default',
+    text: 'default-text'
+  },
+  edge: {
+    default: 'default-edge'
+  },
+  text: {
+    default: 'default-text-default'
+  }
+};
+
 const _elementDefaults: Pick<
   ElementPropsForRendering,
   'data' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'text' | 'name'
@@ -87,6 +100,7 @@ const _elementDefaults: Pick<
     miterLimit: 4
   },
   text: {
+    style: DefaultStyles.text.default,
     text: '',
     color: 'var(--canvas-fg)',
     fontSize: 10,
@@ -110,7 +124,7 @@ const _nodeDefaults: Omit<
   'labelForEdgeId' | 'name'
 > = {
   ..._elementDefaults,
-  style: 'default',
+  style: DefaultStyles.node.default,
 
   effects: {
     blur: 0,
@@ -146,7 +160,7 @@ const _edgeDefaults: Pick<
   FilterNotStartingWith<keyof EdgePropsForRendering, 'shape'>
 > = {
   ..._elementDefaults,
-  style: 'default-edge',
+  style: DefaultStyles.edge.default,
   type: 'straight',
   arrow: {
     start: {
