@@ -7,6 +7,7 @@ import { SerializedElement } from '@diagram-craft/model/serialization/types';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
+import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 
 type ElementsDraggable = {
   elements: Array<SerializedElement>;
@@ -41,6 +42,14 @@ export const canvasDropHandler = ($d: Diagram) => {
     const point = $d.viewBox.toDiagramPoint(EventHelper.point(e));
     assignNewBounds(droppedElements, point, scaleX, scaleY, $d, UnitOfWork.immediate($d));
 
+    const uow = new UnitOfWork($d, false, true);
+    droppedElements.forEach(e => {
+      if (isNode(e)) {
+        e.updateProps(p => (p.style = $d.document.styles.activeNodeStylesheet.id), uow);
+      } else if (isEdge(e)) {
+        e.updateProps(p => (p.style = $d.document.styles.activeEdgeStylesheet.id), uow);
+      }
+    });
     $d.undoManager.addAndExecute(new ElementAddUndoableAction(droppedElements, $d));
 
     $d.selectionState.clear();

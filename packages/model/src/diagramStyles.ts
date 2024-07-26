@@ -108,7 +108,8 @@ const DEFAULT_EDGE_STYLES: Stylesheet<EdgeProps>[] = [
   new Stylesheet('edge', 'default-edge', 'Default', {
     stroke: {
       color: 'var(--canvas-fg)'
-    }
+    },
+    type: 'straight'
   })
 ];
 
@@ -145,28 +146,55 @@ export class DiagramStyles {
   nodeStyles: Stylesheet<NodeProps>[] = DEFAULT_NODE_STYLES;
   edgeStyles: Stylesheet<EdgeProps>[] = DEFAULT_EDGE_STYLES;
 
+  #activeNodeStylesheet = DEFAULT_NODE_STYLES[0];
+  #activeEdgeStylesheet = DEFAULT_EDGE_STYLES[0];
+
+  get activeNodeStylesheet() {
+    return this.#activeNodeStylesheet;
+  }
+
+  set activeNodeStylesheet(style: Stylesheet<NodeProps>) {
+    this.#activeNodeStylesheet = style;
+  }
+
+  get activeEdgeStylesheet() {
+    return this.#activeEdgeStylesheet;
+  }
+
+  set activeEdgeStylesheet(style: Stylesheet<EdgeProps>) {
+    this.#activeEdgeStylesheet = style;
+  }
+
   get(id: string) {
     return [...this.nodeStyles, ...this.edgeStyles].find(s => s.id === id);
   }
 
-  setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork) {
+  setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork, force: boolean) {
     const stylesheet = this.get(style);
     if (!stylesheet) {
       return;
     }
 
+    if (stylesheet.type === 'node') {
+      this.activeNodeStylesheet = stylesheet;
+    } else {
+      this.activeEdgeStylesheet = stylesheet;
+    }
+
     const oldProps = deepClone(el.renderProps);
-    el.updateProps(props => {
-      deepClear(stylesheet.props, props);
+    if (force) {
+      el.updateProps(props => {
+        deepClear(stylesheet.props, props);
 
-      props.style = style;
+        props.style = style;
 
-      props.text ??= {};
-      props.text.text = oldProps.text.text;
+        props.text ??= {};
+        props.text.text = oldProps.text.text;
 
-      props.data ??= {};
-      props.data = oldProps.data as ElementProps['data'];
-    }, uow);
+        props.data ??= {};
+        props.data = oldProps.data as ElementProps['data'];
+      }, uow);
+    }
   }
 
   deleteStylesheet(id: string, uow: UnitOfWork) {
@@ -178,6 +206,12 @@ export class DiagramStyles {
     const stylesheet = this.get(id);
     if (!stylesheet) {
       return;
+    }
+
+    if (stylesheet.type === 'node') {
+      this.activeNodeStylesheet = this.nodeStyles.filter(s => s !== stylesheet)[0];
+    } else {
+      this.activeEdgeStylesheet = this.edgeStyles.filter(s => s !== stylesheet)[0];
     }
 
     this.clearStylesheet(id, uow);
@@ -193,12 +227,12 @@ export class DiagramStyles {
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
         if (node.renderProps.style === stylesheet.id) {
-          this.setStylesheet(node, stylesheet.id, uow);
+          this.setStylesheet(node, stylesheet.id, uow, false);
         }
       }
       for (const edge of diagram.edgeLookup.values()) {
         if (edge.renderProps.style === stylesheet.id) {
-          this.setStylesheet(edge, stylesheet.id, uow);
+          this.setStylesheet(edge, stylesheet.id, uow, false);
         }
       }
     }
@@ -246,9 +280,11 @@ export class DiagramStyles {
     if (stylesheet.type === 'node') {
       this.nodeStyles = this.nodeStyles.filter(s => s.id !== stylesheet.id);
       this.nodeStyles.push(stylesheet);
+      this.activeNodeStylesheet = stylesheet;
     } else {
       this.edgeStyles = this.edgeStyles.filter(s => s.id !== stylesheet.id);
       this.edgeStyles.push(stylesheet);
+      this.activeEdgeStylesheet = stylesheet;
     }
   }
 }

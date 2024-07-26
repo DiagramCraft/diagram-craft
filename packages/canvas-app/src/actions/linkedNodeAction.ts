@@ -112,20 +112,21 @@ export const createLinkedNode = (
     newNode.setBounds(rightBounds, uow);
   }
 
+  // In case the stylesheet doesn't include an end arrow, we add
+  // a default one
+  const styles = diagram.document.styles.activeEdgeStylesheet.props;
+  const additionalStyles: Partial<EdgeProps> = {};
+  if (!styles.arrow?.end?.type) {
+    additionalStyles.arrow = { end: { type: 'SQUARE_STICK_ARROW' } };
+  }
+
   const edge = new DiagramEdge(
     newid(),
     new AnchorEndpoint(node, sourceAnchorId),
     new AnchorEndpoint(newNode, shortest.id),
     {
-      type: 'orthogonal',
-      arrow: {
-        end: {
-          type: 'SQUARE_STICK_ARROW'
-        }
-      }
-      /*routing: {
-        rounding: 10
-      }*/
+      style: diagram.document.styles.activeEdgeStylesheet.id,
+      ...additionalStyles
     },
     [],
     node.diagram,

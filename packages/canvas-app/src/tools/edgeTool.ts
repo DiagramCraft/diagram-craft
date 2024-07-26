@@ -54,7 +54,9 @@ export class EdgeTool extends AbstractTool {
           )
         : new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
       new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
-      {},
+      {
+        style: this.diagram.document.styles.activeEdgeStylesheet.id
+      },
       [],
       this.diagram,
       this.diagram.layers.active

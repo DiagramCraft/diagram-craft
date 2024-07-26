@@ -39,11 +39,14 @@ export const StringInputDialog = (
       <label>{props.label ?? 'Name'}:</label>
       <div className={'cmp-text-input'}>
         <input
-          className={'cmp-text-input'}
           ref={ref}
           type={'text'}
           size={40}
           defaultValue={props.name ?? ''}
+          onKeyDown={e => {
+            // TODO: Why is this needed?
+            e.stopPropagation();
+          }}
         />
       </div>
     </Dialog>

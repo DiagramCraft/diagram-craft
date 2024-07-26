@@ -65,7 +65,12 @@ export const ElementStylesheetPanel = (props: Props) => {
             value={style.val}
             hasMultipleValues={style.hasMultipleValues}
             onValueChange={v => {
+              const uow = new UnitOfWork($d, true);
+              $d.selectionState.elements.forEach(n => {
+                $d.document.styles.setStylesheet(n, v, uow, false);
+              });
               style.set(v);
+              commitWithUndo(uow, 'Change stylesheet');
             }}
           >
             {styleList.map(e => (
@@ -88,7 +93,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                   onSelect={() => {
                     const uow = new UnitOfWork($d, true);
                     $d.selectionState.elements.forEach(n => {
-                      $d.document.styles.setStylesheet(n, style.val, uow);
+                      $d.document.styles.setStylesheet(n, style.val, uow, true);
                     });
                     commitWithUndo(uow, 'Reapply style');
                   }}
@@ -207,7 +212,7 @@ export const ElementStylesheetPanel = (props: Props) => {
               const uow = new UnitOfWork($d, true);
 
               $d.document.styles.addStylesheet(s, uow);
-              $d.document.styles.setStylesheet($d.selectionState.nodes[0], id, uow);
+              $d.document.styles.setStylesheet($d.selectionState.nodes[0], id, uow, true);
 
               const snapshots = uow.commit();
               uow.diagram.undoManager.add(
