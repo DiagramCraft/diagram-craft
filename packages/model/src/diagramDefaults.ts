@@ -45,7 +45,7 @@ export const DefaultStyles = {
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'data' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'text' | 'name'
+  'data' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'name'
 > = {
   name: '',
   data: {
@@ -98,24 +98,6 @@ const _elementDefaults: Pick<
     lineCap: 'round',
     lineJoin: 'round',
     miterLimit: 4
-  },
-  text: {
-    style: DefaultStyles.text.default,
-    text: '',
-    color: 'var(--canvas-fg)',
-    fontSize: 10,
-    lineHeight: 1,
-    font: 'sans-serif',
-    italic: false,
-    bold: false,
-    textTransform: 'none',
-    textDecoration: 'none',
-    align: 'center',
-    valign: 'middle',
-    top: 6,
-    left: 6,
-    right: 6,
-    bottom: 6
   }
 };
 
@@ -146,6 +128,25 @@ const _nodeDefaults: Omit<
     },
     moveable: true,
     rotatable: true
+  },
+
+  text: {
+    style: DefaultStyles.text.default,
+    text: '',
+    color: 'var(--canvas-fg)',
+    fontSize: 10,
+    lineHeight: 1,
+    font: 'sans-serif',
+    italic: false,
+    bold: false,
+    textTransform: 'none',
+    textDecoration: 'none',
+    align: 'center',
+    valign: 'middle',
+    top: 6,
+    left: 6,
+    right: 6,
+    bottom: 6
   },
 
   anchors: {

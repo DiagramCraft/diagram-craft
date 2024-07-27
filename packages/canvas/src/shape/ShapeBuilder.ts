@@ -12,17 +12,22 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { Point } from '@diagram-craft/geometry/point';
-import { DiagramElement, ElementPropsForEditing } from '@diagram-craft/model/diagramElement';
+import {
+  DiagramElement,
+  ElementPropsForEditing,
+  isNode
+} from '@diagram-craft/model/diagramElement';
 import { hash } from '@diagram-craft/utils/hash';
 import { ArrowShape } from '../arrowShapes';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { makeShadowFilter } from '../effects/shadow';
-import { NodePropsForEditing } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForEditing } from '@diagram-craft/model/diagramNode';
 import { RoundingPathRenderer } from '../effects/rounding';
 import { SVGGBuilder } from './SVGGBuilder';
 import { newid } from '@diagram-craft/utils/id';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
-const defaultOnChange = (element: DiagramElement) => (text: string) => {
+const defaultOnChange = (element: DiagramNode) => (text: string) => {
   UnitOfWork.execute(element.diagram, uow => {
     element.updateProps(props => {
       props.text ??= {};
@@ -94,19 +99,23 @@ export class ShapeBuilder {
     bounds?: Box,
     onSizeChange?: (size: Extent) => void
   ) {
-    this.nodes.push(
-      cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
-        key: `text_${id}_${this.props.element.id}`,
-        id: `text_${id}_${this.props.element.id}`,
-        metadata: this.props.element.data,
-        text: text ?? this.props.elementProps.text,
-        bounds: bounds ?? this.props.element.bounds,
-        onMouseDown: this.props.onMouseDown,
-        onChange: defaultOnChange(this.props.element),
-        onSizeChange: onSizeChange,
-        isSingleSelected: this.props.isSingleSelected
-      })
-    );
+    if (isNode(this.props.element)) {
+      this.nodes.push(
+        cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
+          key: `text_${id}_${this.props.element.id}`,
+          id: `text_${id}_${this.props.element.id}`,
+          metadata: this.props.element.data,
+          text: text ?? (this.props.elementProps as NodeProps).text,
+          bounds: bounds ?? this.props.element.bounds,
+          onMouseDown: this.props.onMouseDown,
+          onChange: defaultOnChange(this.props.element),
+          onSizeChange: onSizeChange,
+          isSingleSelected: this.props.isSingleSelected
+        })
+      );
+    } else {
+      VERIFY_NOT_REACHED();
+    }
   }
 
   boundaryPath(

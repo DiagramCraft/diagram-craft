@@ -41,8 +41,12 @@ export const ElementStylesheetPanel = (props: Props) => {
     MessageDialog.INITIAL_STATE
   );
   const [newDialog, setNewDialog] = useState(false);
-  const [modifyDialog, setModifyDialog] = useState<Stylesheet | undefined>(undefined);
-  const [renameDialog, setRenameDialog] = useState<Stylesheet | undefined>(undefined);
+  const [modifyDialog, setModifyDialog] = useState<Stylesheet<StylesheetType> | undefined>(
+    undefined
+  );
+  const [renameDialog, setRenameDialog] = useState<Stylesheet<StylesheetType> | undefined>(
+    undefined
+  );
 
   if ($d.selectionState.isEmpty()) return null;
   if ($d.selectionState.getSelectionType() === 'mixed') return null;
@@ -117,7 +121,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                     if (stylesheet) {
                       const commonProps = getCommonProps(
                         $d.selectionState.elements.map(e => e.editProps)
-                      ) as NodeProps | EdgeProps;
+                      ) as NodeProps & EdgeProps;
                       stylesheet.setProps(isText ? { text: commonProps.text } : commonProps, uow);
                       $d.document.styles.modifyStylesheet(stylesheet, uow);
                     }
@@ -204,7 +208,7 @@ export const ElementStylesheetPanel = (props: Props) => {
               const id = newid();
               const commonProps = getCommonProps(
                 $d.selectionState.elements.map(e => e.editProps)
-              ) as NodeProps | EdgeProps;
+              ) as NodeProps & EdgeProps;
               const s = new Stylesheet(
                 isText ? 'text' : isNode($d.selectionState.elements[0]) ? 'node' : 'edge',
                 id,

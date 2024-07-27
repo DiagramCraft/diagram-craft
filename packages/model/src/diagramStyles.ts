@@ -9,15 +9,25 @@ import { DefaultStyles, edgeDefaults, nodeDefaults } from './diagramDefaults';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
-export class Stylesheet<P extends ElementProps = ElementProps>
-  implements UOWTrackable<StylesheetSnapshot>
+type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style'> };
+type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'>;
+type EdgeStyleProps = Omit<EdgeProps, 'name' | 'text' | 'data' | 'style'>;
+
+export class Stylesheet<
+  T extends StylesheetType,
+  P = {
+    node: NodeStyleProps;
+    edge: EdgeStyleProps;
+    text: TextStyleProps;
+  }[T]
+> implements UOWTrackable<StylesheetSnapshot>
 {
   id: string;
   #name: string;
   #props: Partial<P>;
-  type: StylesheetType;
+  type: T;
 
-  constructor(type: StylesheetType, id: string, name: string, props: Partial<P>) {
+  constructor(type: T, id: string, name: string, props: Partial<P>) {
     this.id = id;
     this.#name = name;
     this.#props = props;
@@ -101,12 +111,8 @@ export class Stylesheet<P extends ElementProps = ElementProps>
   }
 }
 
-type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style'> };
-type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'>;
-type EdgeStyleProps = Omit<EdgeProps, 'name' | 'text' | 'data' | 'style'>;
-
-const DEFAULT_NODE_STYLES: Stylesheet<NodeStyleProps>[] = [
-  new Stylesheet<NodeStyleProps>('node', DefaultStyles.node.default, 'Default', {
+const DEFAULT_NODE_STYLES: Stylesheet<'node'>[] = [
+  new Stylesheet('node', DefaultStyles.node.default, 'Default', {
     fill: {
       color: 'var(--canvas-bg2)'
     },
@@ -115,7 +121,7 @@ const DEFAULT_NODE_STYLES: Stylesheet<NodeStyleProps>[] = [
     }
   }),
 
-  new Stylesheet<NodeStyleProps>('node', DefaultStyles.node.text, 'Text', {
+  new Stylesheet('node', DefaultStyles.node.text, 'Text', {
     fill: {
       enabled: false
     },
@@ -125,8 +131,8 @@ const DEFAULT_NODE_STYLES: Stylesheet<NodeStyleProps>[] = [
   })
 ];
 
-const DEFAULT_TEXT_STYLES: Stylesheet<TextStyleProps>[] = [
-  new Stylesheet<TextStyleProps>('text', DefaultStyles.text.default, 'Default', {
+const DEFAULT_TEXT_STYLES: Stylesheet<'text'>[] = [
+  new Stylesheet('text', DefaultStyles.text.default, 'Default', {
     text: {
       color: 'var(--canvas-fg)',
       fontSize: 10,
@@ -137,7 +143,7 @@ const DEFAULT_TEXT_STYLES: Stylesheet<TextStyleProps>[] = [
       bottom: 0
     }
   }),
-  new Stylesheet<TextStyleProps>('text', 'h1', 'H1', {
+  new Stylesheet('text', 'h1', 'H1', {
     text: {
       color: 'var(--canvas-fg)',
       fontSize: 20,
@@ -152,8 +158,8 @@ const DEFAULT_TEXT_STYLES: Stylesheet<TextStyleProps>[] = [
   })
 ];
 
-const DEFAULT_EDGE_STYLES: Stylesheet<EdgeStyleProps>[] = [
-  new Stylesheet<EdgeStyleProps>('edge', DefaultStyles.edge.default, 'Default', {
+const DEFAULT_EDGE_STYLES: Stylesheet<'edge'>[] = [
+  new Stylesheet('edge', DefaultStyles.edge.default, 'Default', {
     stroke: {
       color: 'var(--canvas-fg)'
     },
@@ -226,7 +232,9 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 
   const renderProps = $d.selectionState.elements[0].renderProps;
 
-  const stylesheet = isText ? styles.get(renderProps.text.style!) : styles.get(renderProps.style!);
+  const stylesheet = isText
+    ? styles.get((renderProps as NodeProps).text!.style!)
+    : styles.get(renderProps.style!);
   assert.present(stylesheet);
 
   return $d.selectionState.elements.some(e => {
@@ -242,9 +250,9 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 export class DiagramStyles {
   constructor(private readonly document: DiagramDocument) {}
 
-  textStyles: Stylesheet<TextStyleProps>[] = DEFAULT_TEXT_STYLES;
-  nodeStyles: Stylesheet<NodeStyleProps>[] = DEFAULT_NODE_STYLES;
-  edgeStyles: Stylesheet<EdgeStyleProps>[] = DEFAULT_EDGE_STYLES;
+  textStyles: Stylesheet<'text'>[] = DEFAULT_TEXT_STYLES;
+  nodeStyles: Stylesheet<'node'>[] = DEFAULT_NODE_STYLES;
+  edgeStyles: Stylesheet<'edge'>[] = DEFAULT_EDGE_STYLES;
 
   #activeNodeStylesheet = DEFAULT_NODE_STYLES[0];
   #activeEdgeStylesheet = DEFAULT_EDGE_STYLES[0];
@@ -254,7 +262,7 @@ export class DiagramStyles {
     return this.#activeNodeStylesheet;
   }
 
-  set activeNodeStylesheet(style: Stylesheet<NodeStyleProps>) {
+  set activeNodeStylesheet(style: Stylesheet<'node'>) {
     this.#activeNodeStylesheet = style;
   }
 
@@ -262,7 +270,7 @@ export class DiagramStyles {
     return this.#activeEdgeStylesheet;
   }
 
-  set activeEdgeStylesheet(style: Stylesheet<EdgeStyleProps>) {
+  set activeEdgeStylesheet(style: Stylesheet<'edge'>) {
     this.#activeEdgeStylesheet = style;
   }
 
@@ -270,17 +278,11 @@ export class DiagramStyles {
     return this.#activeTextStylesheet;
   }
 
-  set activeTextStylesheet(style: Stylesheet<TextStyleProps>) {
+  set activeTextStylesheet(style: Stylesheet<'text'>) {
     this.#activeTextStylesheet = style;
   }
 
-  get(
-    id: string
-  ):
-    | Stylesheet<EdgeStyleProps>
-    | Stylesheet<NodeStyleProps>
-    | Stylesheet<TextStyleProps>
-    | undefined {
+  get(id: string): Stylesheet<'edge'> | Stylesheet<'node'> | Stylesheet<'text'> | undefined {
     return [...this.nodeStyles, ...this.edgeStyles, ...this.textStyles].find(s => s.id === id);
   }
 
@@ -291,16 +293,16 @@ export class DiagramStyles {
     }
 
     if (stylesheet.type === 'node') {
-      this.activeNodeStylesheet = stylesheet as Stylesheet<NodeStyleProps>;
+      this.activeNodeStylesheet = stylesheet;
     } else if (stylesheet.type === 'text') {
-      this.activeTextStylesheet = stylesheet as Stylesheet<TextStyleProps>;
+      this.activeTextStylesheet = stylesheet;
     } else {
-      this.activeEdgeStylesheet = stylesheet as Stylesheet<EdgeStyleProps>;
+      this.activeEdgeStylesheet = stylesheet;
     }
 
-    const oldProps = deepClone(el.renderProps);
+    const oldProps = deepClone(el.renderProps) as NodeProps & EdgeProps;
     if (force) {
-      el.updateProps(props => {
+      el.updateProps((props: NodeProps & EdgeProps) => {
         deepClear(stylesheet.getPropsFromElement(el), props);
 
         props.text ??= {};
@@ -310,7 +312,7 @@ export class DiagramStyles {
           props.text.style = style;
         }
 
-        props.text.text = oldProps.text.text;
+        props.text.text = oldProps.text?.text;
 
         props.data ??= {};
         props.data = oldProps.data as ElementProps['data'];
@@ -348,7 +350,7 @@ export class DiagramStyles {
     }
   }
 
-  modifyStylesheet(stylesheet: Stylesheet, uow: UnitOfWork) {
+  modifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
         if (node.renderProps.style === stylesheet.id) {
@@ -390,8 +392,12 @@ export class DiagramStyles {
     return id.startsWith('default');
   }
 
-  private clearStylesheetFromElement(el: DiagramElement, stylesheet: Stylesheet, uow: UnitOfWork) {
-    el.updateProps(props => {
+  private clearStylesheetFromElement(
+    el: DiagramElement,
+    stylesheet: Stylesheet<StylesheetType>,
+    uow: UnitOfWork
+  ) {
+    el.updateProps((props: NodeProps & EdgeProps) => {
       Object.keys(stylesheet.props).forEach(key => {
         const validKey = key as keyof (NodeProps | EdgeStyleProps);
         // @ts-ignore
@@ -405,7 +411,8 @@ export class DiagramStyles {
     }, uow);
   }
 
-  addStylesheet(stylesheet: Stylesheet, _uow?: UnitOfWork) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addStylesheet(stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
     if (stylesheet.type === 'node') {
       this.nodeStyles = this.nodeStyles.filter(s => s.id !== stylesheet.id);
       this.nodeStyles.push(stylesheet);
@@ -427,7 +434,7 @@ export class DeleteStylesheetUndoableAction implements UndoableAction {
 
   constructor(
     private readonly diagram: Diagram,
-    private readonly stylesheet: Stylesheet
+    private readonly stylesheet: Stylesheet<StylesheetType>
   ) {}
 
   undo(uow: UnitOfWork) {
@@ -444,7 +451,7 @@ export class AddStylesheetUndoableAction implements UndoableAction {
 
   constructor(
     private readonly diagram: Diagram,
-    private readonly stylesheet: Stylesheet
+    private readonly stylesheet: Stylesheet<StylesheetType>
   ) {}
 
   undo(uow: UnitOfWork) {

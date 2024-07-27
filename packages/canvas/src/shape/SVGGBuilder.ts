@@ -42,7 +42,10 @@ export class SVGGBuilder {
 
     this.setStroke(el.renderProps.stroke);
     this.setFill(el.renderProps.fill);
-    this.setFont(el.renderProps.text);
+
+    if ('text' in el.renderProps) {
+      this.setFont(el.renderProps.text);
+    }
 
     this.#initialFill = el.renderProps.fill;
     this.#initialStroke = el.renderProps.stroke;

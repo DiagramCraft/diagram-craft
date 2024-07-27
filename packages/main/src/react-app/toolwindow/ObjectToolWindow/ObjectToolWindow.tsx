@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useEventListener } from '../../hooks/useEventListener';
 import { EdgeLinePanel } from './EdgeLinePanel';
 import { NodeFillPanel } from './NodeFillPanel';
-import { ElementTextPanel } from './ElementTextPanel';
+import { NodeTextPanel } from './NodeTextPanel';
 import { ElementTransformPanel } from './ElementTransformPanel';
 import { ElementCustomPropertiesPanel } from './ElementCustomPropertiesPanel';
 import { ElementShadowPanel } from './ElementShadowPanel';
@@ -168,7 +168,7 @@ export const ObjectToolWindow = () => {
           <Tabs.Content value={'text'}>
             <Accordion.Root type="multiple" disabled={true} defaultValue={['text', 'label-node']}>
               <ElementStylesheetPanel type={'text'} />
-              <ElementTextPanel />
+              <NodeTextPanel />
             </Accordion.Root>
           </Tabs.Content>
 

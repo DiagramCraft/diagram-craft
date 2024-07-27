@@ -1,6 +1,6 @@
 import { TbTextSize } from 'react-icons/tb';
 import { useNodeProperty } from '../../hooks/useProperty';
-import { ElementTextPanel } from './ElementTextPanel';
+import { NodeTextPanel } from './NodeTextPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { useNodeDefaults } from '../../hooks/useDefaults';
 import { Popover } from '@diagram-craft/app-components/Popover';
@@ -30,7 +30,7 @@ export const ElementTextToolbarButton = () => {
         </Toolbar.Button>
       </Popover.Trigger>
       <Popover.Content sideOffset={5}>
-        <ElementTextPanel mode={'panel'} />
+        <NodeTextPanel mode={'panel'} />
       </Popover.Content>
     </Popover.Root>
   );

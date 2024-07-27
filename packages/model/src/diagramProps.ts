@@ -97,25 +97,6 @@ declare global {
       lineJoin?: LineJoin;
     };
 
-    // TODO: Why is text part of elementProps and not only nodeProps
-    text?: {
-      style?: string;
-      text?: string;
-      font?: string;
-      fontSize?: number;
-      lineHeight?: number;
-      bold?: boolean;
-      italic?: boolean;
-      textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
-      textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
-      color?: string;
-      align?: HAlign;
-      valign?: Valign;
-      top?: number;
-      left?: number;
-      right?: number;
-      bottom?: number;
-    };
     shadow?: {
       enabled?: boolean;
       color?: string;
@@ -221,6 +202,25 @@ declare global {
 
       rounding?: boolean;
       roundingAmount?: number;
+    };
+
+    text?: {
+      style?: string;
+      text?: string;
+      font?: string;
+      fontSize?: number;
+      lineHeight?: number;
+      bold?: boolean;
+      italic?: boolean;
+      textDecoration?: 'none' | 'underline' | 'line-through' | 'overline';
+      textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+      color?: string;
+      align?: HAlign;
+      valign?: Valign;
+      top?: number;
+      left?: number;
+      right?: number;
+      bottom?: number;
     };
 
     anchors?: {
