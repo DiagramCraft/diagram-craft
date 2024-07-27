@@ -99,7 +99,6 @@ const _nodeDefaults: Omit<
   'labelForEdgeId' | 'name'
 > = {
   ..._elementDefaults,
-  style: DefaultStyles.node.default,
 
   effects: {
     blur: 0,
@@ -124,7 +123,6 @@ const _nodeDefaults: Omit<
   },
 
   text: {
-    style: DefaultStyles.text.default,
     text: '',
     color: 'var(--canvas-fg)',
     fontSize: 10,
@@ -154,7 +152,6 @@ const _edgeDefaults: Pick<
   FilterNotStartingWith<keyof EdgePropsForRendering, 'shape'>
 > = {
   ..._elementDefaults,
-  style: DefaultStyles.edge.default,
   type: 'straight',
   arrow: {
     start: {

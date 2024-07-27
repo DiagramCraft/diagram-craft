@@ -86,13 +86,11 @@ export class Stylesheet<
     if (this.type === 'edge') {
       const p = deepClone(props) as NodeProps;
       delete p.text;
-      delete p.style;
       return p as P;
     } else if (this.type === 'text') {
       const p = deepClone(props) as NodeProps;
       if (p.text) {
         delete p.text.text;
-        delete p.text.style;
         if (Object.keys(p.text).length === 0) {
           delete p.text;
         }
@@ -101,7 +99,6 @@ export class Stylesheet<
     } else {
       const p = deepClone(props) as NodeProps;
       delete p.text;
-      delete p.style;
       return p as P;
     }
   }
@@ -226,11 +223,9 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     return false;
   }
 
-  const renderProps = $d.selectionState.elements[0].renderProps;
+  const metadata = $d.selectionState.elements[0].metadata;
 
-  const stylesheet = isText
-    ? styles.get((renderProps as NodeProps).text!.style!)
-    : styles.get(renderProps.style!);
+  const stylesheet = isText ? styles.get(metadata.textStyle!) : styles.get(metadata.style!);
   assert.present(stylesheet);
 
   return $d.selectionState.elements.some(e => {
@@ -303,12 +298,14 @@ export class DiagramStyles {
 
         props.text ??= {};
 
-        if (stylesheet.type !== 'text') props.style = style;
-        else {
-          props.text.style = style;
-        }
-
         props.text.text = oldProps.text?.text;
+      }, uow);
+      el.updateMetadata(meta => {
+        if (stylesheet.type !== 'text') {
+          meta.style = style;
+        } else {
+          meta.textStyle = style;
+        }
       }, uow);
     }
   }
@@ -346,12 +343,12 @@ export class DiagramStyles {
   modifyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
-        if (node.renderProps.style === stylesheet.id) {
+        if (node.metadata.style === stylesheet.id || node.metadata.textStyle === stylesheet.id) {
           this.setStylesheet(node, stylesheet.id, uow, false);
         }
       }
       for (const edge of diagram.edgeLookup.values()) {
-        if (edge.renderProps.style === stylesheet.id) {
+        if (edge.metadata.style === stylesheet.id) {
           this.setStylesheet(edge, stylesheet.id, uow, false);
         }
       }
@@ -369,12 +366,12 @@ export class DiagramStyles {
 
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
-        if (node.renderProps.style === id) {
+        if (node.metadata.style === id || node.metadata.textStyle === id) {
           this.clearStylesheetFromElement(node, stylesheet, uow);
         }
       }
       for (const edge of diagram.edgeLookup.values()) {
-        if (edge.renderProps.style === id) {
+        if (edge.metadata.style === id) {
           this.clearStylesheetFromElement(edge, stylesheet, uow);
         }
       }
@@ -396,10 +393,11 @@ export class DiagramStyles {
         // @ts-ignore
         props[validKey] = deepMerge({}, props[validKey], stylesheet.props[validKey]);
       });
-      props.style = isEdge(el) ? DefaultStyles.edge.default : DefaultStyles.node.default;
+    }, uow);
+    el.updateMetadata(meta => {
+      meta.style = isEdge(el) ? DefaultStyles.edge.default : DefaultStyles.node.default;
       if (isNode(el)) {
-        props.text ??= {};
-        props.text.style = DefaultStyles.text.default;
+        meta.textStyle = DefaultStyles.text.default;
       }
     }, uow);
   }

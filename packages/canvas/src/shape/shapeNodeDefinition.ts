@@ -137,10 +137,14 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return [];
   }
 
-  getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
+  getDefaultMetadata(_mode: 'picker' | 'canvas'): ElementMetadata {
     return {
       style: this.name === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default
     };
+  }
+
+  getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
+    return {};
   }
 
   getDefaultConfig(node: DiagramNode): { size: Extent } {

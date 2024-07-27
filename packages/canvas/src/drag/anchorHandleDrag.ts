@@ -29,10 +29,10 @@ export class AnchorHandleDrag extends AbstractDrag {
       newid(),
       new AnchorEndpoint(this.node, this.anchorId),
       new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),
+      {},
       {
         style: diagram.document.styles.activeEdgeStylesheet.id
       },
-      {},
       [],
       diagram,
       diagram.layers.active

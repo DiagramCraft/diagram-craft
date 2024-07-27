@@ -14,7 +14,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { useDiagram } from '../../context/DiagramContext';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { useElementProperty, useNodeProperty } from '../../hooks/useProperty';
+import { useElementMetadata } from '../../hooks/useProperty';
 import { useState } from 'react';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -34,8 +34,8 @@ export const ElementStylesheetPanel = (props: Props) => {
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
 
-  const style = useElementProperty($d, 'style', DefaultStyles.node.default);
-  const textStyle = useNodeProperty($d, 'text.style', DefaultStyles.text.default);
+  const style = useElementMetadata($d, 'style', DefaultStyles.node.default);
+  const textStyle = useElementMetadata($d, 'textStyle', DefaultStyles.text.default);
 
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE

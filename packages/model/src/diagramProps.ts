@@ -99,8 +99,6 @@ declare global {
   }
 
   interface ElementProps {
-    style?: string;
-
     stroke?: {
       enabled?: boolean;
       color?: string;
@@ -213,7 +211,7 @@ declare global {
     };
 
     text?: {
-      style?: string;
+      // TODO: We should remove this from props and make it a part of the node
       text?: string;
       font?: string;
       fontSize?: number;

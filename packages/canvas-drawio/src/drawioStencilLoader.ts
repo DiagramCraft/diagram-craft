@@ -69,10 +69,18 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
       const type = 'drawio';
       const def = $d.document.nodeDefinitions.get(type);
 
-      const n = new DiagramNode(newid(), type, Box.unit(), $d, $d.layers.active, {
-        ...def.getDefaultProps('picker'),
-        ...drawio.props
-      });
+      const n = new DiagramNode(
+        newid(),
+        type,
+        Box.unit(),
+        $d,
+        $d.layers.active,
+        {
+          ...def.getDefaultProps('picker'),
+          ...drawio.props
+        },
+        def.getDefaultMetadata('picker')
+      );
 
       const size = def.getDefaultConfig(n).size;
       n.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, UnitOfWork.immediate($d));

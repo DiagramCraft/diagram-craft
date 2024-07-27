@@ -13,12 +13,13 @@ const makeShape = (type: string, setProps: (s: Style, p: NodeProps) => void = ()
     id: string,
     bounds: Box,
     props: NodeProps,
+    metadata: ElementMetadata,
     style: Style,
     diagram: Diagram,
     layer: Layer
   ) => {
     setProps(style, props);
-    return new DiagramNode(id, type, bounds, diagram, layer, props);
+    return new DiagramNode(id, type, bounds, diagram, layer, props, metadata);
   };
 };
 
@@ -47,12 +48,14 @@ export const parseRect = async (
   id: string,
   bounds: Box,
   props: NodeProps,
+  metadata: ElementMetadata,
   style: Style,
   diagram: Diagram,
   layer: Layer
 ) => {
-  if (style.rounded === '1') return parseRoundedRect(id, bounds, props, style, diagram, layer);
-  return new DiagramNode(id, 'rect', bounds, diagram, layer, props);
+  if (style.rounded === '1')
+    return parseRoundedRect(id, bounds, props, metadata, style, diagram, layer);
+  return new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata);
 };
 
 export const parseCube = makeShape('cube');
@@ -154,6 +157,7 @@ export const parseArrow = async (
   id: string,
   bounds: Box,
   props: NodeProps,
+  metadata: ElementMetadata,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -170,13 +174,14 @@ export const parseArrow = async (
   props.shapeArrow.y = parseNum(style.dy, 0.2) * 50;
   props.shapeArrow.x = parseNum(style.dx, 20);
 
-  return new DiagramNode(id, type, bounds, diagram, layer, props);
+  return new DiagramNode(id, type, bounds, diagram, layer, props, metadata);
 };
 
 export const parseImage = async (
   id: string,
   bounds: Box,
   props: NodeProps,
+  metadata: ElementMetadata,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -223,13 +228,14 @@ export const parseImage = async (
     };
   }
 
-  return new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props);
+  return new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props, metadata);
 };
 
 export const parseRoundedRect = async (
   id: string,
   bounds: Box,
   props: NodeProps,
+  metadata: ElementMetadata,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -240,5 +246,5 @@ export const parseRoundedRect = async (
         ? Math.min(bounds.w / 2, bounds.h / 2, parseNum(style.arcSize, 10) / 2)
         : (parseNum(style.arcSize, 10) * Math.min(bounds.w, bounds.h)) / 100
   };
-  return new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props);
+  return new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props, metadata);
 };

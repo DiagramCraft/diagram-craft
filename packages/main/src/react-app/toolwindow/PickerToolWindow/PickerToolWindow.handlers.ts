@@ -45,13 +45,12 @@ export const canvasDropHandler = ($d: Diagram) => {
     const uow = new UnitOfWork($d, false, true);
     droppedElements.forEach(e => {
       if (isNode(e)) {
-        e.updateProps(p => {
-          p.style = $d.document.styles.activeNodeStylesheet.id;
-          p.text ??= {};
-          p.text.style = $d.document.styles.activeTextStylesheet.id;
+        e.updateMetadata(meta => {
+          meta.style = $d.document.styles.activeNodeStylesheet.id;
+          meta.textStyle = $d.document.styles.activeTextStylesheet.id;
         }, uow);
       } else if (isEdge(e)) {
-        e.updateProps(p => (p.style = $d.document.styles.activeEdgeStylesheet.id), uow);
+        e.updateMetadata(meta => (meta.style = $d.document.styles.activeEdgeStylesheet.id), uow);
       }
     });
     $d.undoManager.addAndExecute(new ElementAddUndoableAction(droppedElements, $d));

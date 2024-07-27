@@ -29,6 +29,7 @@ export const parseUMLShapes = async (
   id: string,
   bounds: Box,
   props: NodeProps,
+  metadata: ElementMetadata,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -45,7 +46,7 @@ export const parseUMLShapes = async (
     };
   }
 
-  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props);
+  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {

@@ -124,11 +124,10 @@ export const createLinkedNode = (
     newid(),
     new AnchorEndpoint(node, sourceAnchorId),
     new AnchorEndpoint(newNode, shortest.id),
+    additionalStyles,
     {
-      style: diagram.document.styles.activeEdgeStylesheet.id,
-      ...additionalStyles
+      style: diagram.document.styles.activeEdgeStylesheet.id
     },
-    {},
     [],
     node.diagram,
     node.layer

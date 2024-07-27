@@ -29,10 +29,9 @@ export const NodeTypePopup = (props: Props) => {
       const node = registration.node(diagram);
       assignNewIds([node]);
       assignNewBounds([node], nodePosition, 1, 1, diagram, uow);
-      node.updateProps(props => {
-        props.style = diagram.document.styles.activeNodeStylesheet.id;
-        props.text ??= {};
-        props.text.style = diagram.document.styles.activeTextStylesheet.id;
+      node.updateMetadata(meta => {
+        meta.style = diagram.document.styles.activeNodeStylesheet.id;
+        meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
       }, uow);
 
       diagram.layers.active.addElement(node, uow);

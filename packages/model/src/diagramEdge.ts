@@ -98,7 +98,7 @@ export class DiagramEdge
     if (end instanceof ConnectedEndpoint)
       end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
 
-    this.#props.style ??= DefaultStyles.edge.default;
+    this.#metadata.style ??= DefaultStyles.edge.default;
   }
 
   getDefinition(): EdgeDefinition {
@@ -142,7 +142,7 @@ export class DiagramEdge
 
   private populatePropsCache() {
     const styleProps = this.diagram.document.styles.edgeStyles.find(
-      s => s.id === this.#props.style
+      s => s.id === this.#metadata.style
     )?.props;
 
     const propsForEditing = deepMerge({}, styleProps ?? {}, this.#props) as DeepRequired<EdgeProps>;

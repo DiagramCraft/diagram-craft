@@ -27,10 +27,14 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
+  getDefaultMetadata(_mode: 'picker' | 'canvas'): ElementMetadata {
+    return {
+      style: DefaultStyles.node.text
+    };
+  }
+
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
     return {
-      style: DefaultStyles.node.text,
-
       // TODO: Remove all of this
       stroke: {
         enabled: false

@@ -34,6 +34,7 @@ export const parseAWS4Shapes = async (
   id: string,
   bounds: Box,
   props: NodeProps,
+  metadata: ElementMetadata,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -69,7 +70,15 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, 'mxgraph.aws4.resourceIcon', bounds, diagram, layer, props);
+    return new DiagramNode(
+      id,
+      'mxgraph.aws4.resourceIcon',
+      bounds,
+      diagram,
+      layer,
+      props,
+      metadata
+    );
   } else if (style.shape === 'mxgraph.aws4.group' || style.shape === 'mxgraph.aws4.groupCenter') {
     if (style.grStroke === '0') {
       props.stroke = { enabled: false };
@@ -89,7 +98,7 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, style.shape, bounds, diagram, layer, props);
+    return new DiagramNode(id, style.shape, bounds, diagram, layer, props, metadata);
   }
 
   if (style.shape?.includes('illustration')) {
@@ -97,7 +106,7 @@ export const parseAWS4Shapes = async (
     props.shapeDrawio!.textPosition = 'bottom';
   }
 
-  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props);
+  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata);
 };
 
 export const registerAWS4Shapes = async (

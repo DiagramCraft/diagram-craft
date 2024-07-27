@@ -73,11 +73,11 @@ export const deserializeDiagramElements = (
         c.bounds,
         diagram,
         layer,
+        c.props,
         {
           style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
-          ...c.props
+          ...c.metadata
         },
-        c.metadata,
         c.anchors
       );
     }
@@ -110,11 +110,11 @@ export const deserializeDiagramElements = (
       e.id,
       startEndpoint,
       endEndpoint,
+      e.props,
       {
         style: 'default-edge',
-        ...e.props
+        ...e.metadata
       },
-      e.metadata,
       (e.waypoints ?? []) as Array<Waypoint>,
       diagram,
       layer

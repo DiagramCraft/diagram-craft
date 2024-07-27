@@ -1,4 +1,4 @@
-import { useElementProperty, useNodeProperty } from '../../hooks/useProperty';
+import { useElementMetadata } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { SelectionType } from '@diagram-craft/model/selectionState';
@@ -16,8 +16,8 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
   const edgeStyles = $d.document.styles.edgeStyles;
   const textStyles = $d.document.styles.textStyles;
 
-  const style = useElementProperty($d, 'style', DefaultStyles.node.default);
-  const textStyle = useNodeProperty($d, 'text.style', DefaultStyles.text.default);
+  const style = useElementMetadata($d, 'style', DefaultStyles.node.default);
+  const textStyle = useElementMetadata($d, 'textStyle', DefaultStyles.text.default);
 
   const isDirty = !style.hasMultipleValues && isSelectionDirty($d, false);
   const isTextDirty = !textStyle.hasMultipleValues && isSelectionDirty($d, true);

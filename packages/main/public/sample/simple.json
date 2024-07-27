@@ -94,9 +94,11 @@
               "props": {
                 "style": "default",
                 "text": {
-                  "text": "Lorem",
-                  "style": "h1"
+                  "text": "Lorem"
                 }
+              },
+              "metadata": {
+                "textStyle": "h1"
               }
             },
             {

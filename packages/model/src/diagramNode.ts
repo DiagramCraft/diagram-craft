@@ -86,11 +86,10 @@ export class DiagramNode
       this.invalidateAnchors(UnitOfWork.immediate(diagram));
     }
 
-    this.#props.style ??=
+    this.#metadata.style ??=
       this.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
 
-    this.#props.text ??= {};
-    this.#props.text.style ??= DefaultStyles.text.default;
+    this.#metadata.textStyle ??= DefaultStyles.text.default;
   }
 
   getDefinition() {
@@ -138,11 +137,11 @@ export class DiagramNode
 
   private populatePropsCache() {
     const styleProps = this.diagram.document.styles.nodeStyles.find(
-      s => s.id === this.#props.style
+      s => s.id === this.#metadata.style
     )?.props;
 
     const textStyleProps = this.diagram.document.styles.textStyles.find(
-      s => s.id === this.#props.text?.style
+      s => s.id === this.#metadata.textStyle
     )?.props;
 
     const propsForEditing = deepMerge<NodeProps>(

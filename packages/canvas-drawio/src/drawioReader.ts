@@ -8,7 +8,7 @@ import { parseNum, xNum } from './utils';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { PointInNodeEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
@@ -96,6 +96,7 @@ export type ShapeParser = (
   id: string,
   bounds: Box,
   props: NodeProps,
+  metadata: ElementMetadata,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -714,7 +715,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       if (shape) {
         props.shapeDrawio = { shape: btoa(await decode(shape)) };
-        nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props));
+        nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props, metadata));
       } else if ($style.startsWith('text;')) {
         if (!style.strokeColor || style.strokeColor === 'none') {
           props.stroke!.enabled = false;
@@ -874,11 +875,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         let node: DiagramNode;
         if (style.shape === 'table' || style.shape === 'tableRow') {
           const parser = getParser(style.shape!)!;
-          node = await parser(id, bounds, props, style, diagram, layer);
+          node = await parser(id, bounds, props, metadata, style, diagram, layer);
           nodes.push(node);
           // TODO: Support more than stackLayout
         } else if ('swimlane' in style && style.childLayout === 'stackLayout') {
-          node = await parseSwimlane(id, bounds, props, style, diagram, layer);
+          node = await parseSwimlane(id, bounds, props, metadata, style, diagram, layer);
           nodes.push(node);
         } else {
           node = new DiagramNode(id, 'group', bounds, diagram, layer, props, metadata);
@@ -895,6 +896,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 newid(),
                 bounds,
                 props,
+                metadata,
                 style,
                 diagram,
                 layer
@@ -915,7 +917,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
               const parser = getParser(style.shape!);
               if (parser) {
-                bgNode = await parser(newid(), bounds, props, style, diagram, layer);
+                bgNode = await parser(newid(), bounds, props, metadata, style, diagram, layer);
               } else {
                 bgNode = new DiagramNode(
                   newid(),
@@ -960,13 +962,15 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         parents.set(id, node);
       } else if ('triangle' in style) {
-        nodes.push(await parseTriangle(id, bounds, props, style, diagram, layer));
+        nodes.push(await parseTriangle(id, bounds, props, metadata, style, diagram, layer));
       } else if ('image' in style) {
-        nodes.push(await parseImage(id, bounds, props, style, diagram, layer));
+        nodes.push(await parseImage(id, bounds, props, metadata, style, diagram, layer));
       } else if ('line' in style) {
-        nodes.push(await parseLine(id, bounds, props, style, diagram, layer));
+        nodes.push(await parseLine(id, bounds, props, metadata, style, diagram, layer));
       } else if (style.shape! in shapeParsers) {
-        nodes.push(await shapeParsers[style.shape!](id, bounds, props, style, diagram, layer));
+        nodes.push(
+          await shapeParsers[style.shape!](id, bounds, props, metadata, style, diagram, layer)
+        );
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
         const registry = diagram.document.nodeDefinitions;
 
@@ -1018,17 +1022,17 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         const parser = getParser(style.shape!);
         if (parser) {
-          nodes.push(await parser(id, newBounds, props, style, diagram, layer));
+          nodes.push(await parser(id, newBounds, props, metadata, style, diagram, layer));
         } else {
           nodes.push(new DiagramNode(id, style.shape!, newBounds, diagram, layer, props, metadata));
         }
       } else if ('ellipse' in style) {
-        nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
+        nodes.push(await parseEllipse(id, bounds, props, metadata, style, diagram, layer));
       } else if ('rhombus' in style) {
-        nodes.push(await parseDiamond(id, bounds, props, style, diagram, layer));
+        nodes.push(await parseDiamond(id, bounds, props, metadata, style, diagram, layer));
       } else {
         if (style.rounded === '1') {
-          nodes.push(await parseRoundedRect(id, bounds, props, style, diagram, layer));
+          nodes.push(await parseRoundedRect(id, bounds, props, metadata, style, diagram, layer));
         } else {
           nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
         }

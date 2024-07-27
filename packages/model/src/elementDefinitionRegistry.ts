@@ -65,6 +65,7 @@ export interface NodeDefinition {
 
   // TODO: These are a bit weird, considering we allow for multiple registrations
   //       of the same definition
+  getDefaultMetadata(mode: 'picker' | 'canvas'): ElementMetadata;
   getDefaultProps(mode: 'picker' | 'canvas'): NodePropsForEditing;
   getDefaultAspectRatio(node: DiagramNode): number;
 
@@ -234,7 +235,8 @@ export const makeStencilNode =
       $d.layers.active,
       deepMerge(typeDef.getDefaultProps('picker'), {
         ...(opts?.props?.('picker') ?? {})
-      })
+      }),
+      typeDef.getDefaultMetadata('picker')
     );
 
     const size = typeDef.getDefaultConfig(n).size;

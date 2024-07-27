@@ -26,6 +26,12 @@ export const NodeInfoDetails = (props: Props) => {
         </Tree.Children>
       </Tree.Node>
       <Tree.Node isOpen={true}>
+        <Tree.NodeLabel>metadata</Tree.NodeLabel>
+        <Tree.Children>
+          <ObjectTreeNode obj={props.obj.metadata} />
+        </Tree.Children>
+      </Tree.Node>
+      <Tree.Node isOpen={true}>
         <Tree.NodeLabel>props</Tree.NodeLabel>
         <Tree.Children>
           <ObjectTreeNode obj={props.obj.storedProps} />

@@ -42,7 +42,8 @@ export class TextTool extends AbstractTool {
       },
       this.diagram,
       this.diagram.layers.active,
-      nodeDef.getDefaultProps('canvas')
+      nodeDef.getDefaultProps('canvas'),
+      nodeDef.getDefaultMetadata('canvas')
     );
 
     nd.setBounds(

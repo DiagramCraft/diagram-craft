@@ -146,7 +146,7 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
 );
 
 export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
-  makePropertyArrayHook<Diagram, DiagramElement, ElementProps>(
+  makePropertyArrayHook<Diagram, DiagramElement, ElementMetadata>(
     // TODO: This is to avoid issue with Readonly, but it's not ideal
     //       maybe change makePropertyArrayHook
     diagram => [...diagram.selectionState.elements],
@@ -159,7 +159,7 @@ export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
     {
       onAfterSet: (diagram, elements, path, oldValue, newValue) => {
         diagram.undoManager.add(
-          new PropertyArrayUndoableAction<DiagramElement, ElementProps>(
+          new PropertyArrayUndoableAction<DiagramElement, ElementMetadata>(
             `Change element ${path}`,
             elements,
             path,
