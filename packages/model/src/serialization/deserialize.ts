@@ -67,6 +67,16 @@ export const deserializeDiagramElements = (
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
       if (c.type === 'edge') continue;
+
+      // Note: this is for backwards compatibility only
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const textProps: any = c.props.text;
+      if (textProps && textProps.text && (!c.texts || !c.texts.text)) {
+        c.texts ??= { text: textProps.text };
+        c.texts.text = textProps.text;
+        delete textProps.text;
+      }
+
       nodeLookup[c.id] = new DiagramNode(
         c.id,
         c.nodeType,
@@ -78,6 +88,7 @@ export const deserializeDiagramElements = (
           style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
           ...c.metadata
         },
+        c.texts,
         c.anchors
       );
     }

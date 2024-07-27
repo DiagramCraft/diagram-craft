@@ -51,7 +51,8 @@ export class PenTool extends AbstractTool {
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
         this.diagram,
         this.diagram.layers.active,
-        { shapeGenericPath: { path: initialPath } }
+        { shapeGenericPath: { path: initialPath } },
+        {}
       );
 
       this.path = PathBuilder.fromString(initialPath, unitCoordinateSystem(this.node!.bounds))

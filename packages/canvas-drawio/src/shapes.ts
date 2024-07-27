@@ -2,7 +2,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { parseNum } from './utils';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Style } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
@@ -14,12 +14,13 @@ const makeShape = (type: string, setProps: (s: Style, p: NodeProps) => void = ()
     bounds: Box,
     props: NodeProps,
     metadata: ElementMetadata,
+    texts: NodeTexts,
     style: Style,
     diagram: Diagram,
     layer: Layer
   ) => {
     setProps(style, props);
-    return new DiagramNode(id, type, bounds, diagram, layer, props, metadata);
+    return new DiagramNode(id, type, bounds, diagram, layer, props, metadata, texts);
   };
 };
 
@@ -49,13 +50,14 @@ export const parseRect = async (
   bounds: Box,
   props: NodeProps,
   metadata: ElementMetadata,
+  texts: NodeTexts,
   style: Style,
   diagram: Diagram,
   layer: Layer
 ) => {
   if (style.rounded === '1')
-    return parseRoundedRect(id, bounds, props, metadata, style, diagram, layer);
-  return new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata);
+    return parseRoundedRect(id, bounds, props, metadata, texts, style, diagram, layer);
+  return new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts);
 };
 
 export const parseCube = makeShape('cube');
@@ -158,6 +160,7 @@ export const parseArrow = async (
   bounds: Box,
   props: NodeProps,
   metadata: ElementMetadata,
+  texts: NodeTexts,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -174,7 +177,7 @@ export const parseArrow = async (
   props.shapeArrow.y = parseNum(style.dy, 0.2) * 50;
   props.shapeArrow.x = parseNum(style.dx, 20);
 
-  return new DiagramNode(id, type, bounds, diagram, layer, props, metadata);
+  return new DiagramNode(id, type, bounds, diagram, layer, props, metadata, texts);
 };
 
 export const parseImage = async (
@@ -182,6 +185,7 @@ export const parseImage = async (
   bounds: Box,
   props: NodeProps,
   metadata: ElementMetadata,
+  texts: NodeTexts,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -228,7 +232,7 @@ export const parseImage = async (
     };
   }
 
-  return new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props, metadata);
+  return new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props, metadata, texts);
 };
 
 export const parseRoundedRect = async (
@@ -236,6 +240,7 @@ export const parseRoundedRect = async (
   bounds: Box,
   props: NodeProps,
   metadata: ElementMetadata,
+  texts: NodeTexts,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -246,5 +251,5 @@ export const parseRoundedRect = async (
         ? Math.min(bounds.w / 2, bounds.h / 2, parseNum(style.arcSize, 10) / 2)
         : (parseNum(style.arcSize, 10) * Math.min(bounds.w, bounds.h)) / 100
   };
-  return new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props, metadata);
+  return new DiagramNode(id, 'rounded-rect', bounds, diagram, layer, props, metadata, texts);
 };

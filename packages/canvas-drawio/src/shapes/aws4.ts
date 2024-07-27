@@ -9,7 +9,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { ShapeParser, Style } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
@@ -35,6 +35,7 @@ export const parseAWS4Shapes = async (
   bounds: Box,
   props: NodeProps,
   metadata: ElementMetadata,
+  texts: NodeTexts,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -77,7 +78,8 @@ export const parseAWS4Shapes = async (
       diagram,
       layer,
       props,
-      metadata
+      metadata,
+      texts
     );
   } else if (style.shape === 'mxgraph.aws4.group' || style.shape === 'mxgraph.aws4.groupCenter') {
     if (style.grStroke === '0') {
@@ -98,7 +100,7 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, style.shape, bounds, diagram, layer, props, metadata);
+    return new DiagramNode(id, style.shape, bounds, diagram, layer, props, metadata, texts);
   }
 
   if (style.shape?.includes('illustration')) {

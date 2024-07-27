@@ -89,7 +89,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
       top.close();
       shapeBuilder.path(top.getPaths().all());
 
-      shapeBuilder.text(this, '1', props.nodeProps.text, {
+      shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, {
         x: props.node.bounds.x,
         y: props.node.bounds.y + size,
         w: props.node.bounds.w,

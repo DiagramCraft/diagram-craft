@@ -21,7 +21,8 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 export type ShapeTextProps = {
   id: string;
   metadata: DeepReadonly<Data> | undefined;
-  text: NodeProps['text'];
+  textProps: NodeProps['text'];
+  text: string;
   bounds: Box;
   onMouseDown: (e: MouseEvent) => void;
   onChange: (text: string) => void;
@@ -70,29 +71,29 @@ export class ShapeText extends Component<ShapeTextProps> {
   render(props: ShapeTextProps) {
     const style: Partial<CSSStyleDeclaration> = {
       // TODO: color is not supported when using text
-      color: props.text?.color ?? 'unset',
-      fill: props.text?.color ?? 'unset',
+      color: props.textProps?.color ?? 'unset',
+      fill: props.textProps?.color ?? 'unset',
 
-      fontFamily: props.text?.font ?? 'unset',
-      fontSize: withPx(props.text?.fontSize) ?? 'unset',
-      fontWeight: props.text?.bold ? 'bold' : 'normal',
-      fontStyle: props.text?.italic ? 'italic' : 'normal',
-      lineHeight: `${1.2 * (props.text?.lineHeight ?? 1) * 100}%`,
+      fontFamily: props.textProps?.font ?? 'unset',
+      fontSize: withPx(props.textProps?.fontSize) ?? 'unset',
+      fontWeight: props.textProps?.bold ? 'bold' : 'normal',
+      fontStyle: props.textProps?.italic ? 'italic' : 'normal',
+      lineHeight: `${1.2 * (props.textProps?.lineHeight ?? 1) * 100}%`,
       minWidth: 'min-content',
-      textDecoration: props.text?.textDecoration
-        ? `${props.text.textDecoration} ${props.text.color ?? 'black'}`
+      textDecoration: props.textProps?.textDecoration
+        ? `${props.textProps.textDecoration} ${props.textProps.color ?? 'black'}`
         : 'none',
-      textTransform: props.text?.textTransform ?? 'none',
-      textAlign: props.text?.align ?? 'unset',
-      paddingLeft: withPx(props.text?.left) ?? '0',
-      paddingRight: withPx(props.text?.right) ?? '0',
-      paddingTop: withPx(props.text?.top) ?? '0',
-      paddingBottom: withPx(props.text?.bottom) ?? '0'
+      textTransform: props.textProps?.textTransform ?? 'none',
+      textAlign: props.textProps?.align ?? 'unset',
+      paddingLeft: withPx(props.textProps?.left) ?? '0',
+      paddingRight: withPx(props.textProps?.right) ?? '0',
+      paddingTop: withPx(props.textProps?.top) ?? '0',
+      paddingBottom: withPx(props.textProps?.bottom) ?? '0'
     };
 
     const metadata = props.metadata ?? {};
 
-    const valign = VALIGN_TO_FLEX_JUSTIFY[props.text?.valign ?? 'middle'];
+    const valign = VALIGN_TO_FLEX_JUSTIFY[props.textProps?.valign ?? 'middle'];
 
     const updateBounds = (w: number, h: number) => {
       if (w === this.width && h === this.height) return;
@@ -131,7 +132,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 keydown: (e: KeyboardEvent) => {
                   const target = e.target as HTMLElement;
                   if (e.key === 'Escape') {
-                    target.innerText = props.text?.text ?? '';
+                    target.innerText = props.text ?? '';
                     target.blur();
                   } else if (e.key === 'Enter' && e.metaKey) {
                     target.blur();
@@ -150,26 +151,26 @@ export class ShapeText extends Component<ShapeTextProps> {
               },
               hooks: {
                 onInsert: (n: VNode) => {
-                  if (!props.text?.text || props.text.text.trim() === '') return;
+                  if (!props.text || props.text.trim() === '') return;
 
                   const target = n.el! as HTMLElement;
                   updateBounds(target.offsetWidth, target.offsetHeight);
                 },
                 onUpdate: (_o: VNode, n: VNode) => {
-                  if (!props.text?.text || props.text.text.trim() === '') return;
+                  if (!props.text || props.text.trim() === '') return;
 
                   const target = n.el! as HTMLElement;
                   updateBounds(target.offsetWidth, target.offsetHeight);
                 }
               }
             },
-            [rawHTML(applyTemplate((props.text?.text ?? '').replaceAll('\n', '<br>'), metadata))]
+            [rawHTML(applyTemplate((props.text ?? '').replaceAll('\n', '<br>'), metadata))]
           )
         ]
       )
     );
 
-    const mode = requiresForeignObject(props.text?.text ?? '') ? 'foreignObject' : 'foreignObject';
+    const mode = requiresForeignObject(props.text ?? '') ? 'foreignObject' : 'foreignObject';
     if (mode === 'foreignObject') {
       return foreignObject;
     }
@@ -178,7 +179,7 @@ export class ShapeText extends Component<ShapeTextProps> {
 
     const transformer = new HTMLToSvgTransformer();
     const parser = new HTMLParser(transformer);
-    parser.parse(props.text?.text ?? '');
+    parser.parse(props.text ?? '');
 
     // TODO: Maybe use a transform on the text node to not have to rerender/realign as much
 
@@ -201,7 +202,7 @@ export class ShapeText extends Component<ShapeTextProps> {
               const newHash = hash64(
                 new TextEncoder().encode(
                   JSON.stringify({
-                    ...props.text,
+                    ...props.textProps,
                     width: props.bounds.w,
                     height: props.bounds.h
                   })
@@ -213,7 +214,10 @@ export class ShapeText extends Component<ShapeTextProps> {
               if (currentHash !== newHash) {
                 svgTextHelper.reflow();
               }
-              svgTextHelper.realign(props.text?.align ?? 'left', props.text?.valign ?? 'middle');
+              svgTextHelper.realign(
+                props.textProps?.align ?? 'left',
+                props.textProps?.valign ?? 'middle'
+              );
               svgTextHelper.apply();
 
               target.dataset['hash'] = newHash;

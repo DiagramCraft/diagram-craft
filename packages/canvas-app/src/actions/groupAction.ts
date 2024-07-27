@@ -62,7 +62,9 @@ class UndoableGroupAction implements UndoableAction {
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),
       this.diagram,
-      this.diagram.layers.active
+      this.diagram.layers.active,
+      {},
+      {}
     );
     this.#group.setChildren([...this.#elements], uow);
 

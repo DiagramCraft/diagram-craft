@@ -396,8 +396,8 @@ class DrawioShapeComponent extends BaseNodeComponent {
         shapeBuilder.text(
           this,
           (++textId).toString(),
+          $el.getAttribute('str')!,
           {
-            text: $el.getAttribute('str')!,
             align: align,
             valign: valign,
             color: style.text.color ?? style.fill.color,
@@ -492,7 +492,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
       }
     }
 
-    shapeBuilder.text(this, '1', props.nodeProps.text, {
+    shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, {
       ...props.node.bounds,
       x:
         props.nodeProps.shapeDrawio.textPosition === 'right'

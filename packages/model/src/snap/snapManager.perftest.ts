@@ -24,7 +24,7 @@ export class SnapManagerPerftest implements PerformanceTest {
     UnitOfWork.execute(d, uow => {
       for (let i = 0; i < 1000; i++) {
         d.layers.active.addElement(
-          new DiagramNode(i.toString(), 'box', this.randomBox(), d, d.layers.active),
+          new DiagramNode(i.toString(), 'box', this.randomBox(), d, d.layers.active, {}, {}),
           uow
         );
       }

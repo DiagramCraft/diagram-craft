@@ -35,6 +35,8 @@ export type NodePropsForRendering = DeepReadonly<
 >;
 export type NodePropsForEditing = DeepReadonly<NodeProps>;
 
+export type NodeTexts = { text: string } & Record<string, string>;
+
 export class DiagramNode
   implements AbstractNode, DiagramElement, UOWTrackable<DiagramNodeSnapshot>
 {
@@ -55,6 +57,9 @@ export class DiagramNode
 
   #props: NodeProps = {};
   #metadata: ElementMetadata = {};
+  #text: NodeTexts = {
+    text: ''
+  };
 
   #bounds: Box;
   #anchors?: ReadonlyArray<Anchor>;
@@ -66,8 +71,9 @@ export class DiagramNode
     bounds: Box,
     diagram: Diagram,
     layer: Layer,
-    props?: NodePropsForEditing,
-    metadata?: ElementMetadata,
+    props: NodePropsForEditing,
+    metadata: ElementMetadata,
+    text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {
     this.id = id;
@@ -76,6 +82,7 @@ export class DiagramNode
     this.#children = [];
     this.#diagram = diagram;
     this.#layer = layer;
+    this.#text = text;
 
     this.#metadata = metadata ?? {};
 
@@ -118,6 +125,23 @@ export class DiagramNode
 
   get highlights() {
     return this.#highlights;
+  }
+
+  /* Text **************************************************************************************************** */
+
+  getText(id = 'text') {
+    return this.#text[id === '1' ? 'text' : id];
+  }
+
+  setText(text: string, uow: UnitOfWork, id = 'text') {
+    uow.snapshot(this);
+    this.#text[id === '1' ? 'text' : id] = text;
+    uow.updateElement(this);
+    this.#cache?.clear();
+  }
+
+  get texts() {
+    return this.#text;
   }
 
   /* Metadata ************************************************************************************************ */
@@ -202,23 +226,24 @@ export class DiagramNode
       return this.cache.get('name') as string;
     }
 
-    if (this.#props.text?.text) {
+    const text = this.getText();
+    if (text) {
       const metadata = this.data;
 
-      if (this.#props.text.text[0] === '<') {
+      if (text[0] === '<') {
         try {
-          const d = new DOMParser().parseFromString(this.#props.text.text, 'text/html');
-          const text = d.body.textContent;
-          if (text) {
-            this.cache.set('name', applyTemplate(text, metadata));
-            return text;
+          const d = new DOMParser().parseFromString(text, 'text/html');
+          const textContent = d.body.textContent;
+          if (textContent) {
+            this.cache.set('name', applyTemplate(textContent, metadata));
+            return textContent;
           }
         } catch (e) {
           // Ignore
         }
       }
 
-      this.cache.set('name', applyTemplate(this.#props.text.text, metadata));
+      this.cache.set('name', applyTemplate(text, metadata));
       return this.cache.get('name') as string;
     }
     return this.nodeType + ' / ' + this.id;
@@ -385,7 +410,8 @@ export class DiagramNode
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
         [...this.edges.entries()].map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
-      )
+      ),
+      texts: deepClone(this.#text)
     };
   }
 
@@ -449,6 +475,7 @@ export class DiagramNode
       this.layer,
       deepClone(this.#props) as NodeProps,
       deepClone(this.#metadata) as ElementMetadata,
+      deepClone(this.#text) as NodeTexts,
       this.#anchors
     );
 

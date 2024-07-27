@@ -1,4 +1,4 @@
-import { DiagramNode, NodePropsForEditing } from './diagramNode';
+import { DiagramNode, NodePropsForEditing, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
@@ -67,6 +67,7 @@ export interface NodeDefinition {
   //       of the same definition
   getDefaultMetadata(mode: 'picker' | 'canvas'): ElementMetadata;
   getDefaultProps(mode: 'picker' | 'canvas'): NodePropsForEditing;
+  getDefaultTexts(mode: 'picker' | 'canvas'): NodeTexts;
   getDefaultAspectRatio(node: DiagramNode): number;
 
   // TODO: Remove this perhaps
@@ -215,6 +216,7 @@ export type MakeStencilNodeOpts = {
   aspectRatio?: number;
   size?: { w: number; h: number };
   props?: MakeStencilNodeOptsProps;
+  texts?: NodeTexts;
 };
 
 export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
@@ -236,7 +238,8 @@ export const makeStencilNode =
       deepMerge(typeDef.getDefaultProps('picker'), {
         ...(opts?.props?.('picker') ?? {})
       }),
-      typeDef.getDefaultMetadata('picker')
+      typeDef.getDefaultMetadata('picker'),
+      deepMerge(typeDef.getDefaultTexts('picker'), opts?.texts ?? {})
     );
 
     const size = typeDef.getDefaultConfig(n).size;

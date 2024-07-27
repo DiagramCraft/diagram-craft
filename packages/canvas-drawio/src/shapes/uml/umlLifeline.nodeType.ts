@@ -75,7 +75,6 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
     const nodeComponent = (shape as ShapeNodeDefinition).component!;
 
     const participantProps = deepClone(props.nodeProps) as DeepWriteable<NodePropsForRendering>;
-    participantProps.text.text = '';
 
     const node = new DiagramNode(
       `${props.node.id}---participant`,
@@ -89,7 +88,9 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
       },
       props.node.diagram,
       props.node.layer,
-      participantProps
+      participantProps,
+      {},
+      { text: '' }
     );
 
     shapeBuilder.add(
@@ -106,7 +107,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
       })
     );
 
-    shapeBuilder.text(props.cmp, '1', props.node.renderProps.text, {
+    shapeBuilder.text(props.cmp, '1', props.node.getText(), props.node.renderProps.text, {
       ...props.node.bounds,
       h: participantHeight
     });

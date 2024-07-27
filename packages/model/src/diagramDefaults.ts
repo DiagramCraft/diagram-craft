@@ -123,7 +123,6 @@ const _nodeDefaults: Omit<
   },
 
   text: {
-    text: '',
     color: 'var(--canvas-fg)',
     fontSize: 10,
     lineHeight: 1,

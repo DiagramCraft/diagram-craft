@@ -90,7 +90,6 @@ export class Stylesheet<
     } else if (this.type === 'text') {
       const p = deepClone(props) as NodeProps;
       if (p.text) {
-        delete p.text.text;
         if (Object.keys(p.text).length === 0) {
           delete p.text;
         }
@@ -291,14 +290,9 @@ export class DiagramStyles {
       this.activeEdgeStylesheet = stylesheet;
     }
 
-    const oldProps = deepClone(el.renderProps) as NodeProps & EdgeProps;
     if (force) {
       el.updateProps((props: NodeProps & EdgeProps) => {
         deepClear(stylesheet.getPropsFromElement(el), props);
-
-        props.text ??= {};
-
-        props.text.text = oldProps.text?.text;
       }, uow);
       el.updateMetadata(meta => {
         if (stylesheet.type !== 'text') {

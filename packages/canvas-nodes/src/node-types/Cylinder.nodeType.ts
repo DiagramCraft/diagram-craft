@@ -101,7 +101,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
         textBounds = { ...bounds, h: bounds.h - size };
       }
 
-      shapeBuilder.text(this, '1', props.nodeProps.text, textBounds);
+      shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, textBounds);
 
       if (props.nodeProps.shapeCylinder.direction === 'north') {
         shapeBuilder.controlPoint(Point.of(bounds.x, bounds.y + size / 2), ({ y }, uow) => {

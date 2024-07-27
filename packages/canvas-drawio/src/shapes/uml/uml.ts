@@ -10,7 +10,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { shapeParsers, Style } from '../../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { parseNum } from '../../utils';
 import { deepMerge } from '@diagram-craft/utils/object';
 import stencils from './uml.yaml';
@@ -30,6 +30,7 @@ export const parseUMLShapes = async (
   bounds: Box,
   props: NodeProps,
   metadata: ElementMetadata,
+  texts: NodeTexts,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -39,14 +40,14 @@ export const parseUMLShapes = async (
       jettyWidth: parseNum(style.jettyWidth, 20),
       jettyHeight: parseNum(style.jettyHeight, 10)
     };
-    return new DiagramNode(id, 'module', bounds, diagram, layer, props);
+    return new DiagramNode(id, 'module', bounds, diagram, layer, props, {});
   } else if (style.shape === 'umlLifeline') {
     props.shapeUmlLifeline = {
       participant: style.participant
     };
   }
 
-  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata);
+  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata, texts);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
@@ -77,10 +78,12 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
     props: mergedProps({
       text: {
         bold: true,
-        top: 12,
-        text: 'package'
+        top: 12
       }
-    })
+    }),
+    texts: {
+      text: 'package'
+    }
   });
 
   registerStencil(r, umlStencils, new UmlEntity(), { props });
@@ -93,11 +96,9 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
 
   registerStencil(r, umlStencils, new UmlBoundary(), {
     aspectRatio: 1.25,
-    props: mergedProps({
-      text: {
-        text: 'Boundary Object'
-      }
-    })
+    texts: {
+      text: 'Boundary Object'
+    }
   });
 
   registerStencil(r, umlStencils, new UmlFrame(), { props });
@@ -105,11 +106,13 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, umlStencils, new UmlModuleNodeDefinition(), {
     props: mergedProps({
       text: {
-        text: 'Module',
         left: 22,
         valign: 'top'
       }
     }),
+    texts: {
+      text: 'Module'
+    },
     size: { w: 90, h: 50 }
   });
 

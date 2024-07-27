@@ -21,7 +21,7 @@ export class UmlBoundary extends SimpleShapeNodeDefinition {
     b.ellipse((7 * w) / 12, h / 2, (w * 5) / 12, h / 2);
     b.fillAndStroke();
 
-    shapeBuilder.text(props.cmp, '1', props.node.renderProps.text, {
+    shapeBuilder.text(props.cmp, '1', props.node.getText(), props.node.renderProps.text, {
       ...props.node.bounds,
       x: x + w / 6,
       w: w - w / 6

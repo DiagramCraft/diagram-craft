@@ -63,6 +63,6 @@ class DrawioImageComponent extends BaseNodeComponent {
       console.warn('Unknown text position: ', textPosition);
     }
 
-    shapeBuilder.text(this, '1', props.nodeProps.text, textBounds, undefined);
+    shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, textBounds, undefined);
   }
 }

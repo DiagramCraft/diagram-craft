@@ -1,7 +1,7 @@
 import { AbstractEdge, AbstractNode } from '../types';
 import { Point } from '@diagram-craft/geometry/point';
 import { EdgePropsForEditing } from '../diagramEdge';
-import { NodePropsForEditing } from '../diagramNode';
+import { NodePropsForEditing, NodeTexts } from '../diagramNode';
 import { OffsetType } from '../endpoint';
 import { StylesheetSnapshot } from '../unitOfWork';
 import { DataSchema } from '../diagramDataSchemas';
@@ -50,6 +50,7 @@ export interface SerializedNode extends AbstractNode {
   children?: ReadonlyArray<SerializedElement>;
   props: NodePropsForEditing;
   metadata: ElementMetadata;
+  texts: NodeTexts;
 }
 
 export type SerializedPointInNodeEndpoint = {

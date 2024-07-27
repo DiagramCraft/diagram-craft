@@ -29,7 +29,7 @@ export class UmlFrame extends SimpleShapeNodeDefinition {
     b.path(cw, 0).line(w, 0).line(w, h).line(0, h).line(0, ch);
     b.stroke();
 
-    shapeBuilder.text(props.cmp, '1', props.node.renderProps.text, {
+    shapeBuilder.text(props.cmp, '1', props.node.getText(), props.node.renderProps.text, {
       ...props.node.bounds,
       x: x,
       y: y,

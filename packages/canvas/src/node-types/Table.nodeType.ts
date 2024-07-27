@@ -285,7 +285,7 @@ class TableComponent extends BaseNodeComponent {
     let height = bounds.h;
     if (props.nodeProps.shapeTable.title) {
       const titleSize = props.nodeProps.shapeTable.titleSize;
-      builder.text(this, '1', props.nodeProps.text, {
+      builder.text(this, '1', props.node.getText(), props.nodeProps.text, {
         ...bounds,
         h: titleSize
       });

@@ -24,7 +24,7 @@ export class UmlControl extends SimpleShapeNodeDefinition {
     fg.path((w * 3) / 8, (h / 8) * 1.1).line((w * 5) / 8, h / 4);
     fg.stroke();
 
-    shapeBuilder.text(props.cmp, '1', props.node.renderProps.text, {
+    shapeBuilder.text(props.cmp, '1', props.node.getText(), props.node.renderProps.text, {
       ...props.node.bounds,
       y: y + h / 8,
       h: h - h / 8

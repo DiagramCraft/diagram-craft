@@ -24,7 +24,7 @@ export class UmlActor extends SimpleShapeNodeDefinition {
     b.path(w / 2, (2 * h) / 3).line(w, h);
     b.fillAndStroke();
 
-    shapeBuilder.text(props.cmp, '1', props.node.renderProps.text, {
+    shapeBuilder.text(props.cmp, '1', props.node.getText(), props.node.renderProps.text, {
       ...props.node.bounds,
       y: props.node.bounds.y + h
     });

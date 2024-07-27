@@ -3,7 +3,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { parseNum, xNum } from './utils';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
@@ -97,6 +97,7 @@ export type ShapeParser = (
   bounds: Box,
   props: NodeProps,
   metadata: ElementMetadata,
+  texts: NodeTexts,
   style: Style,
   diagram: Diagram,
   layer: Layer
@@ -367,20 +368,30 @@ const createLabelNode = (
   bgColor: string,
   uow: UnitOfWork
 ) => {
-  const textNode = new DiagramNode(id, 'text', edge.bounds, edge.diagram, edge.layer, {
-    text: {
-      text,
-      align: props.text?.align,
-      valign: props.text?.valign,
-      fontSize: props.text?.fontSize,
-      font: props.text?.font
+  const textNode = new DiagramNode(
+    id,
+    'text',
+    edge.bounds,
+    edge.diagram,
+    edge.layer,
+    {
+      text: {
+        align: props.text?.align,
+        valign: props.text?.valign,
+        fontSize: props.text?.fontSize,
+        font: props.text?.font
+      },
+      fill: {
+        enabled: true,
+        type: 'solid',
+        color: bgColor
+      }
     },
-    fill: {
-      enabled: true,
-      type: 'solid',
-      color: bgColor
+    {},
+    {
+      text
     }
-  });
+  );
 
   // Add text node to any parent group
   if (edge.parent) {
@@ -696,13 +707,15 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       const metadata: ElementMetadata = {};
 
       const props = getNodeProps(style, $cell.getAttribute('edge') === '1');
-      props.text!.text = hasValue(value) ? value : '';
+      const texts: NodeTexts = {
+        text: hasValue(value) ? value : ''
+      };
 
       if (isWrappedByObject) {
         metadata.data ??= {};
         metadata.data.customData = readMetadata($parent);
 
-        props.text!.text = $parent.getAttribute('label') ?? '';
+        texts.text = $parent.getAttribute('label') ?? '';
       }
 
       if ('rotation' in style) {
@@ -715,7 +728,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       if (shape) {
         props.shapeDrawio = { shape: btoa(await decode(shape)) };
-        nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props, metadata));
+        nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props, metadata, texts));
       } else if ($style.startsWith('text;')) {
         if (!style.strokeColor || style.strokeColor === 'none') {
           props.stroke!.enabled = false;
@@ -735,7 +748,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         assertVAlign(valign);
         props.text!.valign = valign;
 
-        nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
+        nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts));
       } else if ($style.startsWith('edgeLabel;')) {
         // Handle free-standing edge labels
         const edge = diagram.edgeLookup.get(parent);
@@ -875,14 +888,14 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         let node: DiagramNode;
         if (style.shape === 'table' || style.shape === 'tableRow') {
           const parser = getParser(style.shape!)!;
-          node = await parser(id, bounds, props, metadata, style, diagram, layer);
+          node = await parser(id, bounds, props, metadata, texts, style, diagram, layer);
           nodes.push(node);
           // TODO: Support more than stackLayout
         } else if ('swimlane' in style && style.childLayout === 'stackLayout') {
-          node = await parseSwimlane(id, bounds, props, metadata, style, diagram, layer);
+          node = await parseSwimlane(id, bounds, props, metadata, texts, style, diagram, layer);
           nodes.push(node);
         } else {
-          node = new DiagramNode(id, 'group', bounds, diagram, layer, props, metadata);
+          node = new DiagramNode(id, 'group', bounds, diagram, layer, props, metadata, texts);
           nodes.push(node);
 
           if (
@@ -897,6 +910,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 bounds,
                 props,
                 metadata,
+                texts,
                 style,
                 diagram,
                 layer
@@ -907,7 +921,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               const loader = getLoader(style.shape);
               if (!loader) {
                 console.warn(`No loader found for ${style.shape}`);
-                nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
+                nodes.push(
+                  new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts)
+                );
                 continue;
               }
 
@@ -917,7 +933,16 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
               const parser = getParser(style.shape!);
               if (parser) {
-                bgNode = await parser(newid(), bounds, props, metadata, style, diagram, layer);
+                bgNode = await parser(
+                  newid(),
+                  bounds,
+                  props,
+                  metadata,
+                  texts,
+                  style,
+                  diagram,
+                  layer
+                );
               } else {
                 bgNode = new DiagramNode(
                   newid(),
@@ -926,7 +951,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   diagram,
                   layer,
                   props,
-                  metadata
+                  metadata,
+                  texts
                 );
               }
             } else {
@@ -938,7 +964,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   diagram,
                   layer,
                   props,
-                  metadata
+                  metadata,
+                  texts
                 );
               } else {
                 bgNode = new DiagramNode(
@@ -948,7 +975,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   diagram,
                   layer,
                   props,
-                  metadata
+                  metadata,
+                  texts
                 );
               }
             }
@@ -962,14 +990,23 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         parents.set(id, node);
       } else if ('triangle' in style) {
-        nodes.push(await parseTriangle(id, bounds, props, metadata, style, diagram, layer));
+        nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, diagram, layer));
       } else if ('image' in style) {
-        nodes.push(await parseImage(id, bounds, props, metadata, style, diagram, layer));
+        nodes.push(await parseImage(id, bounds, props, metadata, texts, style, diagram, layer));
       } else if ('line' in style) {
-        nodes.push(await parseLine(id, bounds, props, metadata, style, diagram, layer));
+        nodes.push(await parseLine(id, bounds, props, metadata, texts, style, diagram, layer));
       } else if (style.shape! in shapeParsers) {
         nodes.push(
-          await shapeParsers[style.shape!](id, bounds, props, metadata, style, diagram, layer)
+          await shapeParsers[style.shape!](
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            style,
+            diagram,
+            layer
+          )
         );
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
         const registry = diagram.document.nodeDefinitions;
@@ -977,7 +1014,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const loader = getLoader(style.shape);
         if (!loader) {
           console.warn(`No loader found for ${style.shape}`);
-          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
+          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts));
           continue;
         }
 
@@ -1022,19 +1059,23 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         const parser = getParser(style.shape!);
         if (parser) {
-          nodes.push(await parser(id, newBounds, props, metadata, style, diagram, layer));
+          nodes.push(await parser(id, newBounds, props, metadata, texts, style, diagram, layer));
         } else {
-          nodes.push(new DiagramNode(id, style.shape!, newBounds, diagram, layer, props, metadata));
+          nodes.push(
+            new DiagramNode(id, style.shape!, newBounds, diagram, layer, props, metadata, texts)
+          );
         }
       } else if ('ellipse' in style) {
-        nodes.push(await parseEllipse(id, bounds, props, metadata, style, diagram, layer));
+        nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, diagram, layer));
       } else if ('rhombus' in style) {
-        nodes.push(await parseDiamond(id, bounds, props, metadata, style, diagram, layer));
+        nodes.push(await parseDiamond(id, bounds, props, metadata, texts, style, diagram, layer));
       } else {
         if (style.rounded === '1') {
-          nodes.push(await parseRoundedRect(id, bounds, props, metadata, style, diagram, layer));
+          nodes.push(
+            await parseRoundedRect(id, bounds, props, metadata, texts, style, diagram, layer)
+          );
         } else {
-          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
+          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts));
         }
       }
 

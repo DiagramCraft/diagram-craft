@@ -295,7 +295,7 @@ class SwimlaneComponent extends BaseNodeComponent {
         });
       }
 
-      builder.text(this, '1', props.nodeProps.text, {
+      builder.text(this, '1', props.node.getText(), props.nodeProps.text, {
         ...bounds,
         h: titleSize
       });

@@ -46,13 +46,15 @@ export class EdgeTextAddAction extends AbstractAction {
       this.diagram,
       this.diagram.layers.active,
       {
-        text: { text: 'Label', align: 'center' },
+        text: { align: 'center' },
         labelForEdgeId: edge.id,
         fill: {
           enabled: true,
           color: '#ffffff'
         }
-      }
+      },
+      {},
+      { text: 'Label' }
     );
 
     // Add text node to any parent group

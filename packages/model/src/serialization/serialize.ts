@@ -114,7 +114,8 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
       anchors: node.anchors,
       children: node.children.map(serializeDiagramElement) as SerializedNode[],
       props: node.storedProps,
-      metadata: node.metadata
+      metadata: node.metadata,
+      texts: node.texts
     };
   } else if (isEdge(element)) {
     const edge = element;

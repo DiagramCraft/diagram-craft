@@ -46,7 +46,6 @@
               ],
               "waypoints": [],
               "props": {
-                "style": "default-edge",
                 "arrow": {
                   "start": {
                     "type": "SQUARE_ARROW_OUTLINE"
@@ -75,7 +74,6 @@
               "labelNodes": [],
               "waypoints": [],
               "props": {
-                "style": "default-edge",
                 "highlight": []
               }
             },
@@ -92,7 +90,6 @@
               },
               "children": [],
               "props": {
-                "style": "default",
                 "text": {
                   "text": "Lorem"
                 }
@@ -114,7 +111,6 @@
               },
               "children": [],
               "props": {
-                "style": "default"
               }
             },
             {
@@ -130,7 +126,6 @@
               },
               "children": [],
               "props": {
-                "style": "default-text",
                 "labelForEdgeId": "e1",
                 "text": {
                   "text": "Hello world",
@@ -179,7 +174,6 @@
                       },
                       "children": [],
                       "props": {
-                        "style": "default",
                         "highlight": [],
                         "text": {
                           "text": "Lorem ipsum"
@@ -205,7 +199,6 @@
                       },
                       "children": [],
                       "props": {
-                        "style": "default",
                         "text": {
                           "text": "Dolor sit amet"
                         },
@@ -220,7 +213,6 @@
                     }
                   ],
                   "props": {
-                    "style": "default",
                     "shapeContainer": {
                       "containerResize": "both",
                       "layout": "horizontal",
@@ -293,7 +285,6 @@
                       ],
                       "children": [],
                       "props": {
-                        "style": "default",
                         "text": {
                           "text": "Consectetur adipiscing elit"
                         },
@@ -319,7 +310,6 @@
                       },
                       "children": [],
                       "props": {
-                        "style": "default",
                         "text": {
                           "text": "12345"
                         },
@@ -334,7 +324,6 @@
                     }
                   ],
                   "props": {
-                    "style": "default",
                     "shapeContainer": {
                       "containerResize": "both",
                       "layout": "horizontal",
@@ -347,7 +336,6 @@
                 }
               ],
               "props": {
-                "style": "default",
                 "shapeContainer": {
                   "containerResize": "both",
                   "layout": "vertical",
@@ -388,7 +376,6 @@
                   },
                   "children": [],
                   "props": {
-                    "style": "default"
                   }
                 }
               ]
@@ -433,7 +420,6 @@
               },
               "children": [],
               "props": {
-                "style": "default"
               }
             }
           ]
@@ -457,10 +443,6 @@
               },
               "children": [],
               "props": {
-                "style": "default",
-                "text": {
-                  "text": ""
-                }
               }
             }
           ]

@@ -105,7 +105,8 @@ export class FreehandTool extends AbstractTool {
       { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
       this.diagram,
       this.diagram.layers.active,
-      { shapeGenericPath: { path: path }, fill: { enabled: false } }
+      { shapeGenericPath: { path: path }, fill: { enabled: false } },
+      {}
     );
 
     const uow = new UnitOfWork(this.diagram);

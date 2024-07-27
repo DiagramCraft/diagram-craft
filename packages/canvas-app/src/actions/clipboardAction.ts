@@ -257,7 +257,8 @@ class ImagePasteHandler extends PasteHandler {
           stroke: {
             enabled: false
           }
-        }
+        },
+        {}
       )
     ];
 
@@ -285,11 +286,10 @@ class TextPasteHandler extends PasteHandler {
         {
           stroke: {
             enabled: false
-          },
-          text: {
-            text
           }
-        }
+        },
+        {},
+        { text: text }
       )
     ];
 

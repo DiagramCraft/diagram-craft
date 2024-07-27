@@ -102,7 +102,13 @@ export class FlexShapeNodeDefinition<
 
       if (this.def.config.text) {
         const txtConfig = getValue(this.def.config.text, props.nodeProps);
-        builder.text(this, txtConfig.id, txtConfig.text, txtConfig.bounds);
+        builder.text(
+          this,
+          txtConfig.id,
+          props.node.getText(txtConfig.id),
+          txtConfig.text,
+          txtConfig.bounds
+        );
       }
 
       for (const cmp of props.nodeProps.shapeFlex.components ?? this.def.config.components!) {
@@ -142,7 +148,8 @@ export class FlexShapeNodeDefinition<
           adjustedBounds,
           props.node.diagram,
           props.node.layer,
-          cmpProps
+          cmpProps,
+          {}
         );
 
         builder.add(
@@ -164,7 +171,13 @@ export class FlexShapeNodeDefinition<
         const txtConfig =
           getValue(cmp.text, props.nodeProps) ?? getValue(cmpDef?.text, props.nodeProps);
         if (txtConfig) {
-          builder.text(this, txtConfig.id, txtConfig.text, txtConfig.bounds ?? node.bounds);
+          builder.text(
+            this,
+            txtConfig.id,
+            props.node.getText(txtConfig.id),
+            txtConfig.text,
+            txtConfig.bounds ?? node.bounds
+          );
         }
       }
 

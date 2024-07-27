@@ -28,12 +28,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 const defaultOnChange = (element: DiagramNode) => (text: string) => {
-  UnitOfWork.execute(element.diagram, uow => {
-    element.updateProps(props => {
-      props.text ??= {};
-      props.text.text = text;
-    }, uow);
-  });
+  UnitOfWork.execute(element.diagram, uow => element.setText(text, uow));
 };
 
 type ShapeBuilderProps = {
@@ -95,7 +90,9 @@ export class ShapeBuilder {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cmp: Component<any>,
     id: string = '1',
-    text?: NodeProps['text'],
+    // TODO: Do we really need to pass text if we have the id and the node itself
+    text?: string,
+    textProps?: NodeProps['text'],
     bounds?: Box,
     onSizeChange?: (size: Extent) => void
   ) {
@@ -105,7 +102,8 @@ export class ShapeBuilder {
           key: `text_${id}_${this.props.element.id}`,
           id: `text_${id}_${this.props.element.id}`,
           metadata: this.props.element.data,
-          text: text ?? (this.props.elementProps as NodeProps).text,
+          textProps: textProps ?? (this.props.elementProps as NodeProps).text,
+          text: text ?? this.props.element.getText(),
           bounds: bounds ?? this.props.element.bounds,
           onMouseDown: this.props.onMouseDown,
           onChange: defaultOnChange(this.props.element),

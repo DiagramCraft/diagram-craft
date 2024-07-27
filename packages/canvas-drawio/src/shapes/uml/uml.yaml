@@ -21,6 +21,8 @@ stencils:
             y: 26
             h: 26
             r: 0
+          texts:
+            text: '+ field: type'
           props:
             text:
               fontSize: 12
@@ -32,7 +34,6 @@ stencils:
               right: 6
               align: left
               valign: top
-              text: '+ field: type'
               flipV: false
             fill:
               enabled: false
@@ -69,6 +70,8 @@ stencils:
             y: 60
             h: 26
             r: 0
+          texts:
+            text: '+ method(type): type'
           props:
             text:
               fontSize: 12
@@ -80,7 +83,6 @@ stencils:
               right: 6
               align: left
               valign: top
-              text: '+ method(type): type'
             fill:
               enabled: false
             stroke:
@@ -88,6 +90,8 @@ stencils:
               width: 1
               enabled: false
             style: default
+      texts:
+        text: Classname
       props:
         text:
           fontSize: 12
@@ -100,7 +104,6 @@ stencils:
           align: center
           valign: top
           bold: true
-          text: Classname
         geometry:
           flipH: false
           flipV: false
@@ -124,6 +127,8 @@ stencils:
         w: 110
         h: 50
         r: 0
+      texts:
+        text: Object
       props:
         text:
           fontSize: 12
@@ -135,7 +140,6 @@ stencils:
           right: 2
           align: center
           valign: middle
-          text: Object
         fill:
           color: var(--canvas-bg2)
         geometry:
@@ -156,6 +160,8 @@ stencils:
         w: 110
         h: 50
         r: 0
+      texts:
+        text: '&laquo;interface&raquo;<br><b>Name</b>'
       props:
         text:
           fontSize: 12
@@ -165,6 +171,5 @@ stencils:
           right: 2
           align: center
           valign: middle
-          text: '&laquo;interface&raquo;<br><b>Name</b>'
         fill:
           color: var(--canvas-bg2)
