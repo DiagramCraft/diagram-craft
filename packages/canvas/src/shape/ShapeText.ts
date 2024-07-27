@@ -20,7 +20,7 @@ const withPx = (n?: number) => (n ? n + 'px' : undefined);
 
 export type ShapeTextProps = {
   id: string;
-  metadata: DeepReadonly<Metadata> | undefined;
+  metadata: DeepReadonly<Data> | undefined;
   text: NodeProps['text'];
   bounds: Box;
   onMouseDown: (e: MouseEvent) => void;

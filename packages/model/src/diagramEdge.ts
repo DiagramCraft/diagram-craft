@@ -65,6 +65,7 @@ export class DiagramEdge
   #parent?: DiagramNode;
 
   #props: EdgeProps = {};
+  #metadata: ElementMetadata = {};
 
   #intersections: Intersection[] = [];
   #waypoints: ReadonlyArray<Waypoint> = [];
@@ -78,6 +79,7 @@ export class DiagramEdge
     start: Endpoint,
     end: Endpoint,
     props: EdgePropsForEditing,
+    metadata: ElementMetadata,
     midpoints: ReadonlyArray<Waypoint>,
     diagram: Diagram,
     layer: Layer
@@ -86,6 +88,7 @@ export class DiagramEdge
     this.#start = start;
     this.#end = end;
     this.#props = props as EdgeProps;
+    this.#metadata = metadata ?? {};
     this.#waypoints = midpoints;
     this.#diagram = diagram;
     this.#layer = layer;
@@ -120,6 +123,19 @@ export class DiagramEdge
 
   get highlights() {
     return this.#highlights;
+  }
+
+  /* Metadata ************************************************************************************************ */
+
+  get metadata() {
+    return this.#metadata;
+  }
+
+  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
+    uow.snapshot(this);
+    callback(this.#metadata);
+    uow.updateElement(this);
+    this.#cache?.clear();
   }
 
   /* Props *************************************************************************************************** */
@@ -190,7 +206,7 @@ export class DiagramEdge
   /* Name **************************************************************************************************** */
 
   get data() {
-    return this.renderProps.data?.customData ?? {};
+    return this.metadata.data?.customData ?? {};
   }
 
   get name() {
@@ -199,8 +215,8 @@ export class DiagramEdge
       return this.#labelNodes[0].node.name;
     }
 
-    if (!isEmptyString(this.#props.name)) {
-      this.cache.set('name', this.#props.name!);
+    if (!isEmptyString(this.#metadata.name)) {
+      this.cache.set('name', this.#metadata.name!);
       return this.cache.get('name') as string;
     }
 
@@ -464,6 +480,7 @@ export class DiagramEdge
       id: this.id,
       type: 'edge',
       props: deepClone(this.#props),
+      metadata: deepClone(this.#metadata),
       start: this.start.serialize(),
       end: this.end.serialize(),
       waypoints: deepClone(this.waypoints),
@@ -507,6 +524,7 @@ export class DiagramEdge
       this.start,
       this.end,
       deepClone(this.#props) as EdgeProps,
+      deepClone(this.#metadata) as ElementMetadata,
       deepClone(this.waypoints) as Array<Waypoint>,
       this.diagram,
       this.layer

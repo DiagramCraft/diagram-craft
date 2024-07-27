@@ -80,11 +80,27 @@ declare global {
     };
   }
 
-  type Metadata = Record<string, string | number | boolean>;
+  type Data = Record<string, string | number | boolean>;
 
-  interface ElementProps {
+  interface ElementMetadata {
     name?: string;
     style?: string;
+    textStyle?: string;
+    data?: {
+      data?: Array<{
+        schema: string;
+        // TODO: Need to add some stuff to support derived-from
+        type: 'schema' | 'derived-from';
+        data: Record<string, string>;
+        enabled?: boolean;
+      }>;
+      customData?: Data;
+    };
+  }
+
+  interface ElementProps {
+    style?: string;
+
     stroke?: {
       enabled?: boolean;
       color?: string;
@@ -105,20 +121,12 @@ declare global {
       y?: number;
       blur?: number;
     };
-    data?: {
-      data?: Array<{
-        schema: string;
-        // TODO: Need to add some stuff to support derived-from
-        type: 'schema' | 'derived-from';
-        data: Record<string, string>;
-        enabled?: boolean;
-      }>;
-      customData?: Metadata;
-    };
     geometry?: {
       flipV?: boolean;
       flipH?: boolean;
     };
+
+    // TODO: Why is all of fill part of edge?
     fill?: {
       enabled?: boolean;
       image?: {

@@ -54,6 +54,7 @@ export class DiagramNode
   #parent?: DiagramNode;
 
   #props: NodeProps = {};
+  #metadata: ElementMetadata = {};
 
   #bounds: Box;
   #anchors?: ReadonlyArray<Anchor>;
@@ -66,6 +67,7 @@ export class DiagramNode
     diagram: Diagram,
     layer: Layer,
     props?: NodePropsForEditing,
+    metadata?: ElementMetadata,
     anchorCache?: ReadonlyArray<Anchor>
   ) {
     this.id = id;
@@ -74,6 +76,8 @@ export class DiagramNode
     this.#children = [];
     this.#diagram = diagram;
     this.#layer = layer;
+
+    this.#metadata = metadata ?? {};
 
     this.#props = (props ?? {}) as NodeProps;
     this.#anchors = anchorCache;
@@ -115,6 +119,19 @@ export class DiagramNode
 
   get highlights() {
     return this.#highlights;
+  }
+
+  /* Metadata ************************************************************************************************ */
+
+  get metadata() {
+    return this.#metadata;
+  }
+
+  updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
+    uow.snapshot(this);
+    callback(this.#metadata);
+    uow.updateElement(this);
+    this.#cache?.clear();
   }
 
   /* Props *************************************************************************************************** */
@@ -175,14 +192,14 @@ export class DiagramNode
   get data() {
     if (this.isLabelNode()) return this.labelEdge()!.data;
 
-    return this.renderProps.data?.customData ?? {};
+    return this.metadata.data?.customData ?? {};
   }
 
   get name() {
     if (this.#cache?.has('name')) return this.#cache.get('name') as string;
 
-    if (!isEmptyString(this.#props.name)) {
-      this.cache.set('name', this.#props.name!);
+    if (!isEmptyString(this.#metadata.name)) {
+      this.cache.set('name', this.#metadata.name!);
       return this.cache.get('name') as string;
     }
 
@@ -365,6 +382,7 @@ export class DiagramNode
       nodeType: this.nodeType,
       bounds: deepClone(this.bounds),
       props: deepClone(this.#props),
+      metadata: deepClone(this.#metadata),
       children: this.children.map(c => c.id),
       edges: Object.fromEntries(
         [...this.edges.entries()].map(([k, v]) => [k, v.map(e => ({ id: e.id }))])
@@ -431,6 +449,7 @@ export class DiagramNode
       this.diagram,
       this.layer,
       deepClone(this.#props) as NodeProps,
+      deepClone(this.#metadata) as ElementMetadata,
       this.#anchors
     );
 

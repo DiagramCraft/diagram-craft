@@ -18,7 +18,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { useElementProperty } from '../../hooks/useProperty';
+import { useElementMetadata } from '../../hooks/useProperty';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -55,7 +55,7 @@ export const ObjectDataToolWindow = () => {
   useEventListener($d.selectionState, 'change', redraw);
   useEventListener($d, 'change', redraw);
 
-  const name = useElementProperty($d, 'name');
+  const name = useElementMetadata($d, 'name', '');
 
   const changeCallback = useCallback(
     (
@@ -68,7 +68,7 @@ export const ObjectDataToolWindow = () => {
 
       if (type === 'data') {
         $d.selectionState.elements.forEach(e => {
-          e.updateProps(p => {
+          e.updateMetadata(p => {
             p.data ??= {};
             p.data.data ??= [];
             let s = p.data.data.find(e => e.schema === schema);
@@ -81,7 +81,7 @@ export const ObjectDataToolWindow = () => {
         });
       } else if (type === 'custom') {
         $d.selectionState.elements.forEach(e => {
-          e.updateProps(p => {
+          e.updateMetadata(p => {
             p.data ??= {};
             p.data.customData ??= {};
             p.data.customData[id] = (ev.target! as HTMLInputElement).value;
@@ -98,10 +98,10 @@ export const ObjectDataToolWindow = () => {
   const addSchemaToSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.editProps.data?.data?.find(s => s.schema === schema);
+        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
         if (!entry) {
           const uow = new UnitOfWork($d, true);
-          e.updateProps(p => {
+          e.updateMetadata(p => {
             p.data ??= {};
             p.data.data ??= [];
             p.data.data.push({ enabled: true, schema, type: 'schema', data: {} });
@@ -109,7 +109,7 @@ export const ObjectDataToolWindow = () => {
           commitWithUndo(uow, 'Add schema to selection');
         } else if (!entry.enabled) {
           const uow = new UnitOfWork($d, true);
-          e.updateProps(p => {
+          e.updateMetadata(p => {
             p.data!.data!.find(s => s.schema === schema)!.enabled = true;
           }, uow);
           commitWithUndo(uow, 'Add schema to selection');
@@ -122,10 +122,10 @@ export const ObjectDataToolWindow = () => {
   const removeSchemaFromSelection = useCallback(
     (schema: string) => {
       $d.selectionState.elements.forEach(e => {
-        const entry = e.editProps.data?.data?.find(s => s.schema === schema);
+        const entry = e.metadata.data?.data?.find(s => s.schema === schema);
         if (entry?.enabled) {
           const uow = new UnitOfWork($d, true);
-          e.updateProps(p => {
+          e.updateMetadata(p => {
             p.data!.data!.find(s => s.schema === schema)!.enabled = false;
           }, uow);
           commitWithUndo(uow, 'Add schema to selection');
@@ -136,12 +136,12 @@ export const ObjectDataToolWindow = () => {
   );
 
   const customDataKeys = unique(
-    $d.selectionState.elements.flatMap(e => Object.keys(e.renderProps.data?.customData ?? {}))
+    $d.selectionState.elements.flatMap(e => Object.keys(e.metadata.data?.customData ?? {}))
   ).toSorted();
 
   // Get all schemas from all selected elements
   const schemas = $d.selectionState.elements.flatMap(e =>
-    e.editProps.data?.data?.filter(d => d.enabled).map(d => d.schema)
+    e.metadata.data?.data?.filter(d => d.enabled).map(d => d.schema)
   );
 
   if ($d.selectionState.elements.length === 0)
@@ -291,8 +291,9 @@ export const ObjectDataToolWindow = () => {
                       {schema.fields.map(f => {
                         const v = unique(
                           $d.selectionState.elements.map(e => {
-                            return e.renderProps.data?.data?.find(d => d.schema === schemaName)
-                              ?.data[f.id];
+                            return e.metadata.data?.data?.find(d => d.schema === schemaName)?.data[
+                              f.id
+                            ];
                           })
                         );
 
@@ -330,7 +331,7 @@ export const ObjectDataToolWindow = () => {
                 {customDataKeys.map(k => {
                   const v = unique(
                     $d.selectionState.elements.map(e => {
-                      return e.renderProps.data?.customData?.[k]?.toString();
+                      return e.metadata.data?.customData?.[k]?.toString();
                     })
                   );
 

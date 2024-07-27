@@ -1,4 +1,4 @@
-export const applyTemplate = (text: string, props: Metadata) => {
+export const applyTemplate = (text: string, props: Data) => {
   for (const match of text.matchAll(/%(\w+)%/g)) {
     const key = match[1];
     const value = props[key];

@@ -50,8 +50,8 @@ export class DiagramDataSchemas {
 
     for (const diagram of this.document.diagrams) {
       for (const node of diagram.nodeLookup.values()) {
-        if (node.renderProps.data?.data?.find(d => d.schema === schema.id)) {
-          node.updateProps(props => {
+        if (node.metadata.data?.data?.find(d => d.schema === schema.id)) {
+          node.updateMetadata(props => {
             props.data ??= {};
             props.data.data ??= [];
             props.data.data = props.data.data.filter(d => d.schema !== schema.id);
@@ -59,8 +59,8 @@ export class DiagramDataSchemas {
         }
       }
       for (const edge of diagram.edgeLookup.values()) {
-        if (edge.renderProps.data?.data?.find(d => d.schema === schema.id)) {
-          edge.updateProps(props => {
+        if (edge.metadata.data?.data?.find(d => d.schema === schema.id)) {
+          edge.updateMetadata(props => {
             props.data ??= {};
             props.data.data ??= [];
             props.data.data = props.data.data.filter(d => d.schema !== schema.id);

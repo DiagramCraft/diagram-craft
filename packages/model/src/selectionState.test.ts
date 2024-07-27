@@ -31,6 +31,7 @@ const createEdge = (diagram: Diagram) =>
     new FreeEndpoint({ x: 0, y: 0 }),
     new FreeEndpoint({ x: 10, y: 10 }),
     {},
+    {},
     [],
     diagram,
     diagram.layers.active

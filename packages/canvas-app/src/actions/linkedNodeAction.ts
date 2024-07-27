@@ -128,6 +128,7 @@ export const createLinkedNode = (
       style: diagram.document.styles.activeEdgeStylesheet.id,
       ...additionalStyles
     },
+    {},
     [],
     node.diagram,
     node.layer

@@ -85,9 +85,7 @@ export class Stylesheet<
   private cleanProps(props: Partial<P>): Partial<P> {
     if (this.type === 'edge') {
       const p = deepClone(props) as NodeProps;
-      delete p.name;
       delete p.text;
-      delete p.data;
       delete p.style;
       return p as P;
     } else if (this.type === 'text') {
@@ -102,10 +100,8 @@ export class Stylesheet<
       return { text: p.text } as P;
     } else {
       const p = deepClone(props) as NodeProps;
-      delete p.name;
       delete p.text;
       delete p.style;
-      delete p.data;
       return p as P;
     }
   }
@@ -313,9 +309,6 @@ export class DiagramStyles {
         }
 
         props.text.text = oldProps.text?.text;
-
-        props.data ??= {};
-        props.data = oldProps.data as ElementProps['data'];
       }, uow);
     }
   }

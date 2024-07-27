@@ -692,12 +692,14 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       const $style = $cell.getAttribute('style')!;
       const style = parseStyle($style);
 
+      const metadata: ElementMetadata = {};
+
       const props = getNodeProps(style, $cell.getAttribute('edge') === '1');
       props.text!.text = hasValue(value) ? value : '';
 
       if (isWrappedByObject) {
-        props.data ??= {};
-        props.data.customData = readMetadata($parent);
+        metadata.data ??= {};
+        metadata.data.customData = readMetadata($parent);
 
         props.text!.text = $parent.getAttribute('label') ?? '';
       }
@@ -732,7 +734,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         assertVAlign(valign);
         props.text!.valign = valign;
 
-        nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+        nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
       } else if ($style.startsWith('edgeLabel;')) {
         // Handle free-standing edge labels
         const edge = diagram.edgeLookup.get(parent);
@@ -833,7 +835,16 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           }
         }
 
-        const edge = new DiagramEdge(id, source, target, props, waypoints, diagram, layer);
+        const edge = new DiagramEdge(
+          id,
+          source,
+          target,
+          props,
+          metadata,
+          waypoints,
+          diagram,
+          layer
+        );
         nodes.push(edge);
         parents.set(id, edge);
 
@@ -870,7 +881,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           node = await parseSwimlane(id, bounds, props, style, diagram, layer);
           nodes.push(node);
         } else {
-          node = new DiagramNode(id, 'group', bounds, diagram, layer, props);
+          node = new DiagramNode(id, 'group', bounds, diagram, layer, props, metadata);
           nodes.push(node);
 
           if (
@@ -894,7 +905,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               const loader = getLoader(style.shape);
               if (!loader) {
                 console.warn(`No loader found for ${style.shape}`);
-                nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+                nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
                 continue;
               }
 
@@ -906,7 +917,15 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
               if (parser) {
                 bgNode = await parser(newid(), bounds, props, style, diagram, layer);
               } else {
-                bgNode = new DiagramNode(newid(), style.shape!, bounds, diagram, layer, props);
+                bgNode = new DiagramNode(
+                  newid(),
+                  style.shape!,
+                  bounds,
+                  diagram,
+                  layer,
+                  props,
+                  metadata
+                );
               }
             } else {
               if (style.rounded === '1') {
@@ -916,10 +935,19 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   { ...bounds },
                   diagram,
                   layer,
-                  props
+                  props,
+                  metadata
                 );
               } else {
-                bgNode = new DiagramNode(newid(), 'rect', { ...bounds }, diagram, layer, props);
+                bgNode = new DiagramNode(
+                  newid(),
+                  'rect',
+                  { ...bounds },
+                  diagram,
+                  layer,
+                  props,
+                  metadata
+                );
               }
             }
 
@@ -945,7 +973,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const loader = getLoader(style.shape);
         if (!loader) {
           console.warn(`No loader found for ${style.shape}`);
-          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
           continue;
         }
 
@@ -992,7 +1020,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (parser) {
           nodes.push(await parser(id, newBounds, props, style, diagram, layer));
         } else {
-          nodes.push(new DiagramNode(id, style.shape!, newBounds, diagram, layer, props));
+          nodes.push(new DiagramNode(id, style.shape!, newBounds, diagram, layer, props, metadata));
         }
       } else if ('ellipse' in style) {
         nodes.push(await parseEllipse(id, bounds, props, style, diagram, layer));
@@ -1002,7 +1030,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (style.rounded === '1') {
           nodes.push(await parseRoundedRect(id, bounds, props, style, diagram, layer));
         } else {
-          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props));
+          nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata));
         }
       }
 

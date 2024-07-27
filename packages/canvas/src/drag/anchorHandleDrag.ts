@@ -32,6 +32,7 @@ export class AnchorHandleDrag extends AbstractDrag {
       {
         style: diagram.document.styles.activeEdgeStylesheet.id
       },
+      {},
       [],
       diagram,
       diagram.layers.active

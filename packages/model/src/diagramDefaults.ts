@@ -43,63 +43,56 @@ export const DefaultStyles = {
   }
 };
 
-const _elementDefaults: Pick<
-  ElementPropsForRendering,
-  'data' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'name'
-> = {
-  name: '',
-  data: {
-    data: [],
-    customData: {}
-  },
-  geometry: {
-    flipV: false,
-    flipH: false
-  },
-  shadow: {
-    enabled: false,
-    color: 'var(--canvas-fg)',
-    blur: 5,
-    opacity: 0.5,
-    x: 5,
-    y: 5
-  },
-  fill: {
-    color: 'var(--canvas-bg2)',
-    color2: 'blue',
-    type: 'solid',
-    enabled: true,
-    image: {
-      id: '',
-      fit: 'fill',
-      url: '',
-      w: 0,
-      h: 0,
-      scale: 1,
-      tint: '',
-      tintStrength: 1,
-      brightness: 1,
-      contrast: 1,
-      saturation: 1
+const _elementDefaults: Pick<ElementPropsForRendering, 'geometry' | 'fill' | 'shadow' | 'stroke'> =
+  {
+    geometry: {
+      flipV: false,
+      flipH: false
     },
-    pattern: '',
-    gradient: {
-      direction: 0,
-      type: 'linear'
+    shadow: {
+      enabled: false,
+      color: 'var(--canvas-fg)',
+      blur: 5,
+      opacity: 0.5,
+      x: 5,
+      y: 5
+    },
+    fill: {
+      color: 'var(--canvas-bg2)',
+      color2: 'blue',
+      type: 'solid',
+      enabled: true,
+      image: {
+        id: '',
+        fit: 'fill',
+        url: '',
+        w: 0,
+        h: 0,
+        scale: 1,
+        tint: '',
+        tintStrength: 1,
+        brightness: 1,
+        contrast: 1,
+        saturation: 1
+      },
+      pattern: '',
+      gradient: {
+        direction: 0,
+        type: 'linear'
+      }
+    },
+    stroke: {
+      color: 'var(--canvas-fg)',
+      width: 1,
+      pattern: 'SOLID',
+      patternSize: 100,
+      patternSpacing: 100,
+      enabled: true,
+      lineCap: 'round',
+      lineJoin: 'round',
+      miterLimit: 4
     }
-  },
-  stroke: {
-    color: 'var(--canvas-fg)',
-    width: 1,
-    pattern: 'SOLID',
-    patternSize: 100,
-    patternSpacing: 100,
-    enabled: true,
-    lineCap: 'round',
-    lineJoin: 'round',
-    miterLimit: 4
-  }
-};
+  };
 
 const _nodeDefaults: Omit<
   Pick<NodePropsForRendering, FilterNotStartingWith<keyof NodePropsForRendering, 'shape'>>,

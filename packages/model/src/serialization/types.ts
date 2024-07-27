@@ -49,6 +49,7 @@ export interface SerializedNode extends AbstractNode {
   edges?: Record<string, ReadonlyArray<Reference>>;
   children?: ReadonlyArray<SerializedElement>;
   props: NodePropsForEditing;
+  metadata: ElementMetadata;
 }
 
 export type SerializedPointInNodeEndpoint = {
@@ -75,6 +76,7 @@ export interface SerializedEdge extends AbstractEdge {
   start: SerializedEndpoint;
   end: SerializedEndpoint;
   props: EdgePropsForEditing;
+  metadata: ElementMetadata;
 }
 
 export type SerializedElement = SerializedNode | SerializedEdge;

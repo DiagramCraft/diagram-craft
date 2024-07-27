@@ -12,6 +12,7 @@ import { UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
+import { DeepReadonly } from '@diagram-craft/utils/types';
 
 // eslint-disable-next-line
 type Snapshot = any;
@@ -32,7 +33,7 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   readonly parent?: DiagramNode;
 
   readonly name: string;
-  readonly data: Metadata;
+  readonly data: Data;
 
   highlights: ReadonlyArray<string>;
 
@@ -41,6 +42,9 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   editProps: ElementPropsForEditing;
   renderProps: ElementPropsForRendering;
   updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
+
+  metadata: DeepReadonly<ElementMetadata>;
+  updateMetadata(callback: (metaData: ElementMetadata) => void, uow: UnitOfWork): void;
 
   snapshot(): Snapshot;
   restore(snapshot: Snapshot, uow: UnitOfWork): void;

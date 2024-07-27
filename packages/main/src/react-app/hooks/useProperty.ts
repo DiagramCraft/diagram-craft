@@ -144,3 +144,31 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
     }
   }
 );
+
+export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
+  makePropertyArrayHook<Diagram, DiagramElement, ElementProps>(
+    // TODO: This is to avoid issue with Readonly, but it's not ideal
+    //       maybe change makePropertyArrayHook
+    diagram => [...diagram.selectionState.elements],
+    element => element.metadata,
+    (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateMetadata(cb, uow)),
+    (diagram, handler) => {
+      useEventListener(diagram.selectionState, 'change', handler);
+    },
+    {},
+    {
+      onAfterSet: (diagram, elements, path, oldValue, newValue) => {
+        diagram.undoManager.add(
+          new PropertyArrayUndoableAction<DiagramElement, ElementProps>(
+            `Change element ${path}`,
+            elements,
+            path,
+            oldValue,
+            newValue,
+            () => new UnitOfWork(diagram),
+            (el: DiagramElement, uow: UnitOfWork, cb) => el.updateMetadata(cb, uow)
+          )
+        );
+      }
+    }
+  );

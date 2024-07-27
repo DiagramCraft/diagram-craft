@@ -4,6 +4,7 @@ import { NodeInfoDetails } from './NodeInfoDetails';
 import { EdgeInfoDetails } from './EdgeInfoDetails';
 import { useDiagram } from '../../context/DiagramContext';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { MetadataDetails } from './MetadataDetails';
 
 export const ObjectInfoToolWindow = () => {
   const diagram = useDiagram();
@@ -36,9 +37,19 @@ export const ObjectInfoToolWindow = () => {
   }, [callback, diagram.selectionState]);
 
   return (
-    <Accordion.Root disabled={true} type="multiple" defaultValue={['info']}>
-      <Accordion.Item value="info">
-        <Accordion.ItemHeader>Info</Accordion.ItemHeader>
+    <Accordion.Root type="multiple" defaultValue={['metadata', 'props']}>
+      {state !== 'selection' && (
+        <Accordion.Item value="metadata">
+          <Accordion.ItemHeader>Metadata</Accordion.ItemHeader>
+          <Accordion.ItemContent>
+            {state === 'node' && <MetadataDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
+            {state === 'edge' && <MetadataDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
+          </Accordion.ItemContent>
+        </Accordion.Item>
+      )}
+
+      <Accordion.Item value="props">
+        <Accordion.ItemHeader>Properties</Accordion.ItemHeader>
         <Accordion.ItemContent>
           {state === 'selection' && <SelectionInfoDetails obj={diagram.selectionState} />}
           {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
