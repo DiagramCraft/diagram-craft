@@ -74,7 +74,6 @@
               "labelNodes": [],
               "waypoints": [],
               "props": {
-                "highlight": []
               }
             },
             {
@@ -174,7 +173,6 @@
                       },
                       "children": [],
                       "props": {
-                        "highlight": [],
                         "text": {
                           "text": "Lorem ipsum"
                         },
@@ -219,8 +217,7 @@
                       "childResize": "fill",
                       "gapType": "around",
                       "gap": 0
-                    },
-                    "highlight": []
+                    }
                   }
                 },
                 {
@@ -330,8 +327,7 @@
                       "childResize": "fill",
                       "gapType": "around",
                       "gap": 0
-                    },
-                    "highlight": []
+                    }
                   }
                 }
               ],
@@ -343,7 +339,6 @@
                   "gapType": "around",
                   "gap": 10
                 },
-                "highlight": [],
                 "shapeTable": {
                   "gap": 0
                 }

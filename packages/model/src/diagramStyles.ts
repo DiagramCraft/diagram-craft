@@ -224,7 +224,9 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 
   const metadata = $d.selectionState.elements[0].metadata;
 
-  const stylesheet = isText ? styles.get(metadata.textStyle!) : styles.get(metadata.style!);
+  const stylesheet = isText
+    ? styles.get(metadata.textStyle ?? DefaultStyles.text.default)
+    : styles.get(metadata.style ?? DefaultStyles.node.default);
   assert.present(stylesheet);
 
   return $d.selectionState.elements.some(e => {

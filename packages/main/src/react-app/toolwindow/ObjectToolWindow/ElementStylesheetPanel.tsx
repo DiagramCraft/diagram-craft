@@ -214,15 +214,13 @@ export const ElementStylesheetPanel = (props: Props) => {
                 id,
                 v,
                 {
-                  ...(isText ? { text: commonProps.text } : commonProps),
-                  style: undefined,
-                  highlight: []
+                  ...(isText ? { text: commonProps.text } : commonProps)
                 }
               );
               const uow = new UnitOfWork($d, true);
 
               $d.document.styles.addStylesheet(s, uow);
-              $d.document.styles.setStylesheet($d.selectionState.nodes[0], id, uow, true);
+              $d.document.styles.setStylesheet($d.selectionState.elements[0], id, uow, true);
 
               const snapshots = uow.commit();
               uow.diagram.undoManager.add(
@@ -241,8 +239,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             label={'Style definition'}
             data={{
               props: {
-                ...(modifyDialog?.props ?? {}),
-                highlight: []
+                ...(modifyDialog?.props ?? {})
               }
             }}
             onModify={e => {
