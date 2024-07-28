@@ -283,6 +283,7 @@ export class DiagramStyles {
   }
 
   set activeNodeStylesheet(style: Stylesheet<'node'>) {
+    if (style.id === DefaultStyles.node.text) return;
     this.#activeNodeStylesheet = style;
   }
 
