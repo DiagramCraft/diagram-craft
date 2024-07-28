@@ -58,8 +58,9 @@ stencils:
             stroke:
               color: var(--canvas-fg)
               width: 1
-            shapeDrawio:
-              textPosition: right
+            custom:
+              drawio:
+                textPosition: right
             style: default
         - id: cWmGFZhKdYEZwk7NpRVw-6
           type: node
@@ -109,11 +110,12 @@ stencils:
           flipV: false
         stroke:
           width: 1
-        shapeSwimlane:
-          title: true
-          titleBorder: true
-          titleSize: 26
-          horizontalBorder: false
+        custom:
+          swimlane:
+            title: true
+            titleBorder: true
+            titleSize: 26
+            horizontalBorder: false
         style: default
   - id: object
     name: Object

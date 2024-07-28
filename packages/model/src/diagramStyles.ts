@@ -89,11 +89,10 @@ export class Stylesheet<
       return p as P;
     } else if (this.type === 'text') {
       const p = deepClone(props) as NodeProps;
-      if (p.text) {
-        if (Object.keys(p.text).length === 0) {
-          delete p.text;
-        }
-      }
+      // TODO: Not sure why this is needed?
+      /*if (p.text && Object.keys(p.text).length === 0) {
+        delete p.text;
+      }*/
       return { text: p.text } as P;
     } else {
       const p = deepClone(props) as NodeProps;
@@ -170,9 +169,7 @@ export const getCommonProps = <T extends Record<string, unknown>>(arr: Array<T>)
 const isDefaults = (props: Record<string, unknown>, defaults: Record<string, unknown>): boolean => {
   for (const key of Object.keys(props)) {
     if (isObj(props[key])) {
-      if (
-        !isDefaults(props[key] as Record<string, unknown>, defaults[key] as Record<string, unknown>)
-      ) {
+      if (!isDefaults(props[key], defaults[key] as Record<string, unknown>)) {
         return false;
       }
     } else if (props[key] !== defaults[key]) {
@@ -185,29 +182,59 @@ const isDefaults = (props: Record<string, unknown>, defaults: Record<string, unk
 const isPropsDirty = (
   props: Record<string, unknown>,
   stylesheetProps: Record<string, unknown>,
-  defaults: Record<string, unknown>
+  defaults: Record<string, unknown>,
+  path: string[],
+  strict = true
 ): boolean => {
   for (const key of Object.keys(props)) {
     if (isObj(props[key])) {
-      if (stylesheetProps[key] === undefined) {
-        const keys = Object.keys(props[key]);
+      // Need to get the default value wrapped in a try/catch as the default proxy being
+      // used, will throw an exception in case the property is not found
+      let defaultValue: Record<string, unknown> | undefined;
+      try {
+        defaultValue = defaults[key] as Record<string, unknown>;
+      } catch (e) {
+        defaultValue = undefined;
+      }
 
-        if (keys.length === 0) continue;
-        if (isDefaults(props[key], defaults[key] as Record<string, unknown>)) continue;
+      // For custom props, we allow the stylesheet to include additional props
+      if (key === 'custom' && path.length === 0) {
+        if (stylesheetProps[key] === undefined) continue;
+
+        const customPropsDirty = isPropsDirty(
+          props[key],
+          stylesheetProps[key] as Record<string, unknown>,
+          defaultValue ?? {},
+          [...path, key],
+          false
+        );
+        if (customPropsDirty) return true;
+      } else if (stylesheetProps[key] === undefined) {
+        // If we are in non-strict mode (i.e. within the custom section), it's not considered
+        // dirty in case the stylesheet is missing properties
+        if (!strict) continue;
+
+        // An empty object is considered equivalent to undefined
+        if (Object.keys(props[key]).length === 0) continue;
+
+        // Also an object with all defaults is equivalent to undefined
+        if (isDefaults(props[key], defaultValue ?? {})) continue;
 
         // TODO: We should add some normalization - or check compared to default value instead
         //        if (key === 'shadow' && keys.length === 1 && props[key].enabled === false) continue;
 
         console.log('missing key', key, props[key]);
         return true;
+      } else {
+        const dirty = isPropsDirty(
+          props[key],
+          stylesheetProps[key] as Record<string, unknown>,
+          defaultValue ?? {},
+          [...path, key],
+          strict
+        );
+        if (dirty) return true;
       }
-
-      const r = isPropsDirty(
-        props[key] as Record<string, unknown>,
-        stylesheetProps[key] as Record<string, unknown>,
-        defaults[key] as Record<string, unknown>
-      );
-      if (r) return true;
     } else if (props[key] !== undefined && props[key] !== stylesheetProps[key]) {
       console.log('key', key, props[key], stylesheetProps[key]);
       return true;
@@ -234,7 +261,8 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
     return isPropsDirty(
       propsFromElement,
       stylesheet?.props ?? {},
-      isNode(e) ? nodeDefaults : edgeDefaults
+      isNode(e) ? nodeDefaults : edgeDefaults,
+      []
     );
   });
 };
@@ -294,7 +322,24 @@ export class DiagramStyles {
 
     if (force) {
       el.updateProps((props: NodeProps & EdgeProps) => {
-        deepClear(stylesheet.getPropsFromElement(el), props);
+        const shapeToClear = stylesheet.getPropsFromElement(el);
+
+        // For custom properties, we keep all custom properties that are
+        // not part of the stylesheet
+        if ('custom' in shapeToClear) {
+          delete shapeToClear.custom;
+
+          if ('custom' in stylesheet.props) {
+            for (const key of Object.keys(stylesheet.props.custom!)) {
+              if (key in shapeToClear.custom!) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                delete (shapeToClear.custom! as any)[key];
+              }
+            }
+          }
+        }
+
+        deepClear(shapeToClear, props);
       }, uow);
       el.updateMetadata(meta => {
         if (stylesheet.type !== 'text') {

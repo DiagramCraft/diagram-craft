@@ -211,12 +211,14 @@
                     }
                   ],
                   "props": {
-                    "shapeContainer": {
-                      "containerResize": "both",
-                      "layout": "horizontal",
-                      "childResize": "fill",
-                      "gapType": "around",
-                      "gap": 0
+                    "custom": {
+                      "container": {
+                        "containerResize": "both",
+                        "layout": "horizontal",
+                        "childResize": "fill",
+                        "gapType": "around",
+                        "gap": 0
+                      }
                     }
                   }
                 },
@@ -321,26 +323,30 @@
                     }
                   ],
                   "props": {
-                    "shapeContainer": {
-                      "containerResize": "both",
-                      "layout": "horizontal",
-                      "childResize": "fill",
-                      "gapType": "around",
-                      "gap": 0
+                    "custom": {
+                      "container": {
+                        "containerResize": "both",
+                        "layout": "horizontal",
+                        "childResize": "fill",
+                        "gapType": "around",
+                        "gap": 0
+                      }
                     }
                   }
                 }
               ],
               "props": {
-                "shapeContainer": {
-                  "containerResize": "both",
-                  "layout": "vertical",
-                  "childResize": "scale",
-                  "gapType": "around",
-                  "gap": 10
-                },
-                "shapeTable": {
-                  "gap": 0
+                "custom": {
+                  "container": {
+                    "containerResize": "both",
+                    "layout": "vertical",
+                    "childResize": "scale",
+                    "gapType": "around",
+                    "gap": 10
+                  },
+                  "table": {
+                    "gap": 0
+                  }
                 }
               }
             }
