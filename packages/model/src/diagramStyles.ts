@@ -307,7 +307,7 @@ export class DiagramStyles {
     return [...this.nodeStyles, ...this.edgeStyles, ...this.textStyles].find(s => s.id === id);
   }
 
-  setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork, force: boolean) {
+  setStylesheet(el: DiagramElement, style: string, uow: UnitOfWork, resetLocalProps: boolean) {
     const stylesheet = this.get(style);
     if (!stylesheet) {
       return;
@@ -321,7 +321,7 @@ export class DiagramStyles {
       this.activeEdgeStylesheet = stylesheet;
     }
 
-    if (force) {
+    if (resetLocalProps) {
       el.updateProps((props: NodeProps & EdgeProps) => {
         const shapeToClear = stylesheet.getPropsFromElement(el);
 
@@ -332,7 +332,7 @@ export class DiagramStyles {
 
           if ('custom' in stylesheet.props) {
             for (const key of Object.keys(stylesheet.props.custom!)) {
-              if (key in shapeToClear.custom!) {
+              if (shapeToClear.custom !== undefined && key in shapeToClear.custom) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 delete (shapeToClear.custom! as any)[key];
               }
@@ -342,14 +342,14 @@ export class DiagramStyles {
 
         deepClear(shapeToClear, props);
       }, uow);
-      el.updateMetadata(meta => {
-        if (stylesheet.type !== 'text') {
-          meta.style = style;
-        } else {
-          meta.textStyle = style;
-        }
-      }, uow);
     }
+    el.updateMetadata(meta => {
+      if (stylesheet.type !== 'text') {
+        meta.style = style;
+      } else {
+        meta.textStyle = style;
+      }
+    }, uow);
   }
 
   deleteStylesheet(id: string, uow: UnitOfWork) {
