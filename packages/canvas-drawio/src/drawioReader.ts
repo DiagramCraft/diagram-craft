@@ -263,7 +263,7 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'manyOptional-outline': 'CROWS_FEET_BALL'
 };
 
-const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps) => {
+const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps & NodeProps) => {
   let type = style[`${t}Arrow`];
   const size = style[`${t}Size`];
   const fill = style[`${t}Fill`];
@@ -564,8 +564,9 @@ const getNodeProps = (style: Style, isEdge: boolean) => {
   }
 
   if (style.labelPosition === 'right') {
-    props.shapeDrawio ??= {};
-    props.shapeDrawio.textPosition = 'right';
+    props.custom ??= {};
+    props.custom.drawio ??= {};
+    props.custom.drawio.textPosition = 'right';
   }
 
   return props;
@@ -727,7 +728,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       const shape = parseShape(drawioBuiltinShapes[style.shape!] ?? style.shape);
 
       if (shape) {
-        props.shapeDrawio = { shape: btoa(await decode(shape)) };
+        props.custom ??= {};
+        props.custom.drawio = { shape: btoa(await decode(shape)) };
         nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props, metadata, texts));
       } else if ($style.startsWith('text;')) {
         if (!style.strokeColor || style.strokeColor === 'none') {
@@ -807,7 +809,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         if (style.shape === 'flexArrow') {
           edgeProps.shape = 'BlockArrow';
-          edgeProps.shapeBlockArrow = {
+          edgeProps.custom ??= {};
+          edgeProps.custom.blockArrow = {
             width: parseNum(style.width, 10),
             arrowWidth: parseNum(style.width, 10) + parseNum(style.endWidth, 20),
             arrowDepth: parseNum(style.endSize, 7) * 3
@@ -853,6 +856,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           id,
           source,
           target,
+          // @ts-ignore
           props,
           metadata,
           waypoints,

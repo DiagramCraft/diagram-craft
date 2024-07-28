@@ -42,6 +42,8 @@ export const parseAWS4Shapes = async (
 ): Promise<DiagramNode> => {
   const fg = props.stroke?.color;
 
+  props.custom ??= {};
+
   if (style.shape === 'mxgraph.aws4.resourceIcon') {
     const MARGIN = 0.1;
 
@@ -56,8 +58,8 @@ export const parseAWS4Shapes = async (
       fgBounds = { w: 1 - 2 * MARGIN, h: h, x: MARGIN, y: (1 - h) / 2, r: 0 };
     }
 
-    props.shapeFlex ??= {};
-    props.shapeFlex.components = [
+    props.custom.flex ??= {};
+    props.custom.flex.components = [
       {
         id: 'icon',
         nodeType: style!.resIcon!,
@@ -86,8 +88,8 @@ export const parseAWS4Shapes = async (
       props.stroke = { enabled: false };
     }
 
-    props.shapeFlex ??= {};
-    props.shapeFlex.components = [
+    props.custom.flex ??= {};
+    props.custom.flex.components = [
       {
         id: 'icon',
         nodeType: style!.grIcon!,
@@ -104,8 +106,8 @@ export const parseAWS4Shapes = async (
   }
 
   if (style.shape?.includes('illustration')) {
-    props.shapeDrawio ??= {};
-    props.shapeDrawio!.textPosition = 'bottom';
+    props.custom.drawio ??= {};
+    props.custom.drawio!.textPosition = 'bottom';
   }
 
   return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata);

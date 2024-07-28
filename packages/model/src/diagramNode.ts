@@ -210,6 +210,18 @@ export class DiagramNode
     this.getDefinition().onPropUpdate(this, uow);
   }
 
+  updateCustomProps<K extends keyof CustomNodeProps>(
+    key: K,
+    callback: (props: NonNullable<CustomNodeProps[K]>) => void,
+    uow: UnitOfWork
+  ) {
+    this.updateProps(p => {
+      p.custom ??= {};
+      p.custom[key] ??= {};
+      callback(p.custom[key]!);
+    }, uow);
+  }
+
   /* Name **************************************************************************************************** */
 
   get data() {
@@ -451,8 +463,9 @@ export class DiagramNode
 
     this.#nodeType = 'generic-path';
     this.updateProps(p => {
-      p.shapeGenericPath = {};
-      p.shapeGenericPath.path = scaledPath.asSvgPath();
+      p.custom ??= {};
+      p.custom.genericPath = {};
+      p.custom.genericPath.path = scaledPath.asSvgPath();
     }, uow);
   }
 

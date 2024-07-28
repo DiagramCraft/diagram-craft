@@ -11,17 +11,17 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface NodeProps {
-    shapeRegularPolygon?: {
+  interface CustomNodeProps {
+    regularPolygon?: {
       numberOfSides?: number;
     };
   }
 }
 
-registerNodeDefaults('shapeRegularPolygon', { numberOfSides: 5 });
+registerCustomNodeDefaults('regularPolygon', { numberOfSides: 5 });
 
 export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -29,7 +29,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sides = def.renderProps.shapeRegularPolygon.numberOfSides;
+    const sides = def.renderProps.custom.regularPolygon.numberOfSides;
 
     const theta = Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
@@ -52,12 +52,9 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
         id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
-        value: def.renderProps.shapeRegularPolygon.numberOfSides,
+        value: def.renderProps.custom.regularPolygon.numberOfSides,
         onChange: (value: number, uow: UnitOfWork) => {
-          def.updateProps(props => {
-            props.shapeRegularPolygon ??= {};
-            props.shapeRegularPolygon.numberOfSides = value;
-          }, uow);
+          def.updateCustomProps('regularPolygon', props => (props.numberOfSides = value), uow);
         }
       }
     ];
@@ -80,10 +77,11 @@ class RegularPolygonComponent extends BaseNodeComponent {
         Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
       const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-      props.node.updateProps(props => {
-        props.shapeRegularPolygon ??= {};
-        props.shapeRegularPolygon.numberOfSides = numberOfSides;
-      }, uow);
+      props.node.updateCustomProps(
+        'regularPolygon',
+        props => (props.numberOfSides = numberOfSides),
+        uow
+      );
       return `Sides: ${numberOfSides}`;
     });
   }

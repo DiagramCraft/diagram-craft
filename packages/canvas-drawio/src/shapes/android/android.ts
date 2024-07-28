@@ -46,28 +46,29 @@ export const parseAndroidShapes = async (
   diagram: Diagram,
   layer: Layer
 ): Promise<DiagramNode> => {
+  const $c = (props.custom ??= {});
   if (style.shape === 'mxgraph.android.progressBar') {
-    props.shapeAndroidProgressBar ??= {};
-    props.shapeAndroidProgressBar.width = parseNum(style.strokeWidth, 2);
-    props.shapeAndroidProgressBar.dx1 = parseNum(style.dx1, 0.25);
-    props.shapeAndroidProgressBar.dx2 = parseNum(style.dx2, 0.75);
+    $c.androidProgressBar ??= {};
+    $c.androidProgressBar.width = parseNum(style.strokeWidth, 2);
+    $c.androidProgressBar.dx1 = parseNum(style.dx1, 0.25);
+    $c.androidProgressBar.dx2 = parseNum(style.dx2, 0.75);
   } else if (style.shape?.startsWith('mxgraph.android.quickscroll2')) {
-    props.shapeAndroidQuickscroll2 ??= {};
-    props.shapeAndroidQuickscroll2.dy = parseNum(style.dy, 0.5);
+    $c.androidQuickscroll2 ??= {};
+    $c.androidQuickscroll2.dy = parseNum(style.dy, 0.5);
   } else if (style.shape?.startsWith('mxgraph.android.quickscroll3')) {
-    props.shapeAndroidQuickscroll3 ??= {};
-    props.shapeAndroidQuickscroll3.dy = parseNum(style.dy, 0.5);
+    $c.androidQuickscroll3 ??= {};
+    $c.androidQuickscroll3.dy = parseNum(style.dy, 0.5);
   } else if (style.shape?.startsWith('mxgraph.android.progressScrubber')) {
-    props.shapeAndroidProgressScrubber ??= {};
-    props.shapeAndroidProgressScrubber.dx = parseNum(style.dx, 0.5);
+    $c.androidProgressScrubber ??= {};
+    $c.androidProgressScrubber.dx = parseNum(style.dx, 0.5);
     if (style.shape === 'mxgraph.android.progressScrubberDisabled') {
-      props.shapeAndroidProgressScrubber.state = 'disabled';
+      $c.androidProgressScrubber.state = 'disabled';
       style.shape = 'mxgraph.android.progressScrubber';
     } else if (style.shape === 'mxgraph.android.progressScrubberPressed') {
-      props.shapeAndroidProgressScrubber.state = 'pressed';
+      $c.androidProgressScrubber.state = 'pressed';
       style.shape = 'mxgraph.android.progressScrubber';
     } else if (style.shape === 'mxgraph.android.progressScrubberFocused') {
-      props.shapeAndroidProgressScrubber.state = 'focused';
+      $c.androidProgressScrubber.state = 'focused';
       style.shape = 'mxgraph.android.progressScrubber';
     }
   }

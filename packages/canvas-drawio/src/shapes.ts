@@ -8,7 +8,10 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
 import { HAlign } from '@diagram-craft/model/diagramProps';
 
-const makeShape = (type: string, setProps: (s: Style, p: NodeProps) => void = () => {}) => {
+const makeShape = (
+  type: string,
+  setProps: (s: Style, p: NodeProps & { custom: CustomNodeProps }) => void = () => {}
+) => {
   return async (
     id: string,
     bounds: Box,
@@ -19,25 +22,26 @@ const makeShape = (type: string, setProps: (s: Style, p: NodeProps) => void = ()
     diagram: Diagram,
     layer: Layer
   ) => {
-    setProps(style, props);
+    props.custom ??= {};
+    setProps(style, props as NodeProps & { custom: CustomNodeProps });
     return new DiagramNode(id, type, bounds, diagram, layer, props, metadata, texts);
   };
 };
 
 export const parseHexagon = makeShape('hexagon', (style, props) => {
-  props.shapeHexagon = {
+  props.custom.hexagon = {
     size: parseNum(style.size, 50) / 2
   };
 });
 
 export const parseStep = makeShape('step', (style, props) => {
-  props.shapeStep = {
+  props.custom.step = {
     size: parseNum(style.size, 25)
   };
 });
 
 export const parsePartialRect = makeShape('partial-rect', (style, props) => {
-  props.shapePartialRect = {
+  props.custom.partialRect = {
     north: style.top !== '0',
     south: style.bottom !== '0',
     east: style.right !== '0',
@@ -75,7 +79,7 @@ export const parseDelay = makeShape('delay');
 export const parseCloud = makeShape('cloud');
 
 export const parseTable = makeShape('table', (style, props) => {
-  props.shapeTable = {
+  props.custom.table = {
     gap: 0,
     title: 'startSize' in style,
     titleSize: parseNum(style.startSize, 0)
@@ -83,7 +87,7 @@ export const parseTable = makeShape('table', (style, props) => {
 });
 
 export const parseSwimlane = makeShape('swimlane', (style, props) => {
-  props.shapeSwimlane = {
+  props.custom.swimlane = {
     title: true,
     titleBorder: true,
     titleSize: parseNum(style.startSize, 20),
@@ -96,7 +100,7 @@ export const parseTableRow = makeShape('tableRow');
 export const parseRhombus = makeShape('diamond');
 
 export const parseParallelogram = makeShape('parallelogram', (style, props) => {
-  props.shapeParallelogram = {
+  props.custom.parallelogram = {
     slant: parseNum(style.size, 20)
   };
 });
@@ -109,7 +113,7 @@ export const parseCylinder = makeShape('cylinder', (style, props) => {
     west: 'south'
   };
 
-  props.shapeCylinder = {
+  props.custom.cylinder = {
     size: parseNum(style.size, 8) * 2,
     direction: (directionMap[style.direction! as keyof typeof directionMap] ?? 'north') as
       | 'east'
@@ -120,31 +124,31 @@ export const parseCylinder = makeShape('cylinder', (style, props) => {
 });
 
 export const parseProcess = makeShape('process', (style, props) => {
-  props.shapeProcess = {
+  props.custom.process = {
     size: parseNum(style.size, 0.125) * 100
   };
 });
 
 export const parseCurlyBracket = makeShape('curlyBracket', (style, props) => {
-  props.shapeCurlyBracket = {
+  props.custom.curlyBracket = {
     size: parseNum(style.size, 0.5) * 100
   };
 });
 
 export const parseBlockArc = makeShape('blockArc', (style, props) => {
-  props.shapeBlockArc = {
+  props.custom.blockArc = {
     innerRadius: 100 - parseNum(style.arcWidth, 0.5) * 100,
     startAngle: Angle.toDeg(Math.PI / 2 + 2 * Math.PI * (1 - parseNum(style.endAngle, 0.5))),
     endAngle: Angle.toDeg(Math.PI / 2 + 2 * Math.PI * (1 - parseNum(style.startAngle, 0.3)))
   };
 
-  if (props.shapeBlockArc.endAngle === 0) {
-    props.shapeBlockArc.endAngle = 359.999;
+  if (props.custom.blockArc.endAngle === 0) {
+    props.custom.blockArc.endAngle = 359.999;
   }
 });
 
 export const parseTriangle = makeShape('triangle', (style, props) => {
-  props.shapeTriangle = {
+  props.custom.triangle = {
     direction: (style.direction ?? 'east') as 'east' | 'north' | 'south' | 'west'
   };
 });
@@ -172,10 +176,11 @@ export const parseArrow = async (
     type = 'arrow-down';
   }
 
-  props.shapeArrow = {};
-  props.shapeArrow.notch = parseNum(style.notch, 0);
-  props.shapeArrow.y = parseNum(style.dy, 0.2) * 50;
-  props.shapeArrow.x = parseNum(style.dx, 20);
+  props.custom ??= {};
+  props.custom.arrow = {};
+  props.custom.arrow.notch = parseNum(style.notch, 0);
+  props.custom.arrow.y = parseNum(style.dy, 0.2) * 50;
+  props.custom.arrow.x = parseNum(style.dx, 20);
 
   return new DiagramNode(id, type, bounds, diagram, layer, props, metadata, texts);
 };
@@ -197,16 +202,17 @@ export const parseImage = async (
   props.text!.valign = 'top';
   props.text!.align = 'center';
 
-  props.shapeDrawio ??= {};
+  props.custom ??= {};
+  props.custom.drawio ??= {};
 
   if ('label' in style) {
-    props.shapeDrawio!.textPosition = 'right';
+    props.custom.drawio!.textPosition = 'right';
   }
 
-  props.shapeDrawio.imageHeight = parseNum(style.imageHeight, 0);
-  props.shapeDrawio.imageWidth = parseNum(style.imageWidth, 0);
+  props.custom.drawio.imageHeight = parseNum(style.imageHeight, 0);
+  props.custom.drawio.imageWidth = parseNum(style.imageWidth, 0);
 
-  if (props.shapeDrawio.textPosition === 'right') {
+  if (props.custom.drawio.textPosition === 'right') {
     props.text!.align = 'left';
     props.text!.valign = 'middle';
   }
@@ -245,7 +251,8 @@ export const parseRoundedRect = async (
   diagram: Diagram,
   layer: Layer
 ) => {
-  props.shapeRoundedRect = {
+  props.custom ??= {};
+  props.custom.roundedRect = {
     radius:
       style.absoluteArcSize === '1'
         ? Math.min(bounds.w / 2, bounds.h / 2, parseNum(style.arcSize, 10) / 2)

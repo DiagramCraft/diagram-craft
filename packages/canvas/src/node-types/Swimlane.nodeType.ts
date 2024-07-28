@@ -12,12 +12,12 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 
 declare global {
-  interface NodeProps {
-    shapeSwimlane?: {
+  interface CustomNodeProps {
+    swimlane?: {
       horizontalBorder?: boolean;
       outerBorder?: boolean;
       title?: boolean;
@@ -28,7 +28,7 @@ declare global {
   }
 }
 
-registerNodeDefaults('shapeSwimlane', {
+registerCustomNodeDefaults('swimlane', {
   horizontalBorder: true,
   outerBorder: true,
   title: false,
@@ -96,7 +96,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
     assert.true(Math.abs(localBounds.r) < 0.0001);
 
     let maxX = 0;
-    const startY = nodeProps.shapeSwimlane.title ? nodeProps.shapeSwimlane.titleSize : 0;
+    const startY = nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0;
     let y = startY;
     for (const row of rows) {
       let targetHeight = row.row.bounds.h;
@@ -143,12 +143,9 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         id: 'title',
         type: 'boolean',
         label: 'Title',
-        value: node.renderProps.shapeSwimlane.title,
+        value: node.renderProps.custom.swimlane.title,
         onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeSwimlane ??= {};
-            props.shapeSwimlane.title = value;
-          }, uow);
+          node.updateCustomProps('swimlane', props => (props.title = value), uow);
         }
       },
       {
@@ -156,60 +153,45 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         type: 'number',
         label: 'Title Size',
         unit: 'px',
-        value: node.renderProps.shapeSwimlane.titleSize,
+        value: node.renderProps.custom.swimlane.titleSize,
         onChange: (value: number, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeSwimlane ??= {};
-            props.shapeSwimlane.titleSize = value;
-          }, uow);
+          node.updateCustomProps('swimlane', props => (props.titleSize = value), uow);
         }
       },
       {
         id: 'outerBorder',
         type: 'boolean',
         label: 'Outer Border',
-        value: node.renderProps.shapeSwimlane.outerBorder,
+        value: node.renderProps.custom.swimlane.outerBorder,
         onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeSwimlane ??= {};
-            props.shapeSwimlane.outerBorder = value;
-          }, uow);
+          node.updateCustomProps('swimlane', props => (props.outerBorder = value), uow);
         }
       },
       {
         id: 'horizontalBorder',
         type: 'boolean',
         label: 'Horizontal Border',
-        value: node.renderProps.shapeSwimlane.horizontalBorder,
+        value: node.renderProps.custom.swimlane.horizontalBorder,
         onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeSwimlane ??= {};
-            props.shapeSwimlane.horizontalBorder = value;
-          }, uow);
+          node.updateCustomProps('swimlane', props => (props.horizontalBorder = value), uow);
         }
       },
       {
         id: 'titleBorder',
         type: 'boolean',
         label: 'Title Border',
-        value: node.renderProps.shapeSwimlane.titleBorder,
+        value: node.renderProps.custom.swimlane.titleBorder,
         onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeSwimlane ??= {};
-            props.shapeSwimlane.titleBorder = value;
-          }, uow);
+          node.updateCustomProps('swimlane', props => (props.titleBorder = value), uow);
         }
       },
       {
         id: 'fill',
         type: 'boolean',
         label: 'Fill',
-        value: node.renderProps.shapeSwimlane.fill,
+        value: node.renderProps.custom.swimlane.fill,
         onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeSwimlane ??= {};
-            props.shapeSwimlane.fill = value;
-          }, uow);
+          node.updateCustomProps('swimlane', props => (props.fill = value), uow);
         }
       }
     ];
@@ -241,7 +223,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       })
     );
 
-    if (props.nodeProps.shapeSwimlane.fill && props.nodeProps.fill.enabled !== false) {
+    if (props.nodeProps.custom.swimlane.fill && props.nodeProps.fill.enabled !== false) {
       builder.boundaryPath(boundary.all(), {
         fill: props.nodeProps.fill,
         stroke: { enabled: false }
@@ -259,27 +241,27 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     const pathBuilder = new PathBuilder();
 
-    if (props.nodeProps.shapeSwimlane.outerBorder !== false) {
+    if (props.nodeProps.custom.swimlane.outerBorder !== false) {
       const nodeProps = props.nodeProps;
       PathBuilderHelper.rect(pathBuilder, {
         ...props.node.bounds,
         y:
           props.node.bounds.y +
-          (nodeProps.shapeSwimlane.title ? nodeProps.shapeSwimlane.titleSize : 0),
+          (nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0),
         h:
           props.node.bounds.h -
-          (nodeProps.shapeSwimlane.title ? nodeProps.shapeSwimlane.titleSize : 0)
+          (nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0)
       });
     }
 
     const bounds = props.node.bounds;
 
     let startY = bounds.y;
-    if (props.nodeProps.shapeSwimlane.title) {
-      const titleSize = props.nodeProps.shapeSwimlane.titleSize;
+    if (props.nodeProps.custom.swimlane.title) {
+      const titleSize = props.nodeProps.custom.swimlane.titleSize;
       startY += titleSize;
 
-      if (props.nodeProps.shapeSwimlane.titleBorder !== false) {
+      if (props.nodeProps.custom.swimlane.titleBorder !== false) {
         const titlePathBuilder = new PathBuilder();
         titlePathBuilder.moveTo(Point.of(bounds.x, startY));
         titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
@@ -301,7 +283,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       });
     }
 
-    if (props.nodeProps.shapeSwimlane.horizontalBorder !== false) {
+    if (props.nodeProps.custom.swimlane.horizontalBorder !== false) {
       let y = startY;
       const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
       for (let i = 0; i < sortedChildren.length - 1; i++) {

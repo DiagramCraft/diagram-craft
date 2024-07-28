@@ -14,7 +14,7 @@ import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { Modifiers } from '../dragDropManager';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 
 type TypeOrPropsFn<T> = T | ((p: NodePropsForRendering) => T);
@@ -49,8 +49,8 @@ type FlexShapeNodeDefinitionConfig<T extends ShapeNodeDefinition> = {
 };
 
 declare global {
-  interface NodeProps {
-    shapeFlex?: {
+  interface CustomNodeProps {
+    flex?: {
       components?: Array<{
         id: string;
         nodeType?: string | null;
@@ -63,7 +63,7 @@ declare global {
   }
 }
 
-registerNodeDefaults('shapeFlex', { components: null });
+registerCustomNodeDefaults('flex', { components: null });
 
 export class FlexShapeNodeDefinition<
   B extends ShapeNodeDefinition = ShapeNodeDefinition
@@ -111,7 +111,7 @@ export class FlexShapeNodeDefinition<
         );
       }
 
-      for (const cmp of props.nodeProps.shapeFlex.components ?? this.def.config.components!) {
+      for (const cmp of props.nodeProps.custom.flex.components ?? this.def.config.components!) {
         const cmpDef = this.def.config.components?.find(c => c.id === cmp.id);
 
         const cmpBounds = getValue(cmp.bounds ?? cmpDef?.bounds, props.nodeProps);

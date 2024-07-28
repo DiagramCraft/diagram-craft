@@ -35,14 +35,15 @@ export const parseUMLShapes = async (
   diagram: Diagram,
   layer: Layer
 ) => {
+  props.custom ??= {};
   if (style.shape === 'module' || style.shape === 'component') {
-    props.shapeUmlModule = {
+    props.custom.umlModule = {
       jettyWidth: parseNum(style.jettyWidth, 20),
       jettyHeight: parseNum(style.jettyHeight, 10)
     };
     return new DiagramNode(id, 'module', bounds, diagram, layer, props, {});
   } else if (style.shape === 'umlLifeline') {
-    props.shapeUmlLifeline = {
+    props.custom.umlLifeline = {
       participant: style.participant
     };
   }

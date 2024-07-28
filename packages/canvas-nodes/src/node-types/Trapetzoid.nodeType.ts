@@ -9,18 +9,18 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface NodeProps {
-    shapeTrapetzoid?: {
+  interface CustomNodeProps {
+    trapetzoid?: {
       slantLeft?: number;
       slantRight?: number;
     };
   }
 }
 
-registerNodeDefaults('shapeTrapetzoid', { slantLeft: 5, slantRight: 5 });
+registerCustomNodeDefaults('trapetzoid', { slantLeft: 5, slantRight: 5 });
 
 export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -33,38 +33,32 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
         id: 'slantLeft',
         type: 'number',
         label: 'Slant (left)',
-        value: def.renderProps.shapeTrapetzoid.slantLeft,
+        value: def.renderProps.custom.trapetzoid.slantLeft,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          def.updateProps(props => {
-            props.shapeTrapetzoid ??= {};
-            props.shapeTrapetzoid.slantLeft = value;
-          }, uow);
+          def.updateCustomProps('trapetzoid', props => (props.slantLeft = value), uow);
         }
       },
       {
         id: 'slantRight',
         type: 'number',
         label: 'Slant (right)',
-        value: def.renderProps.shapeTrapetzoid.slantRight,
+        value: def.renderProps.custom.trapetzoid.slantRight,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-          def.updateProps(props => {
-            props.shapeTrapetzoid ??= {};
-            props.shapeTrapetzoid.slantRight = value;
-          }, uow);
+          def.updateCustomProps('trapetzoid', props => (props.slantRight = value), uow);
         }
       }
     ];
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const slantLeft = def.renderProps.shapeTrapetzoid.slantLeft;
-    const slantRight = def.renderProps.shapeTrapetzoid.slantRight;
+    const slantLeft = def.renderProps.custom.trapetzoid.slantLeft;
+    const slantRight = def.renderProps.custom.trapetzoid.slantRight;
     const bnd = def.bounds;
 
     const cdSl = (slantLeft / bnd.w) * 2;
@@ -84,8 +78,8 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
 
 class TrapetzoidComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const slantLeft = props.nodeProps.shapeTrapetzoid.slantLeft;
-    const slantRight = props.nodeProps.shapeTrapetzoid.slantRight;
+    const slantLeft = props.nodeProps.custom.trapetzoid.slantLeft;
+    const slantRight = props.nodeProps.custom.trapetzoid.slantRight;
 
     const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
@@ -97,12 +91,9 @@ class TrapetzoidComponent extends BaseNodeComponent {
       ({ x }, uow) => {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-          props.node.updateProps(props => {
-            props.shapeTrapetzoid ??= {};
-            props.shapeTrapetzoid.slantLeft = distance;
-          }, uow);
+          props.node.updateCustomProps('trapetzoid', props => (props.slantLeft = distance), uow);
         }
-        return `Slant: ${props.node.renderProps.shapeTrapetzoid.slantLeft}px`;
+        return `Slant: ${props.node.renderProps.custom.trapetzoid.slantLeft}px`;
       }
     );
 
@@ -111,12 +102,9 @@ class TrapetzoidComponent extends BaseNodeComponent {
       ({ x }, uow) => {
         const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-          props.node.updateProps(props => {
-            props.shapeTrapetzoid ??= {};
-            props.shapeTrapetzoid.slantRight = distance;
-          }, uow);
+          props.node.updateCustomProps('trapetzoid', props => (props.slantRight = distance), uow);
         }
-        return `Slant: ${props.node.renderProps.shapeTrapetzoid.slantRight}px`;
+        return `Slant: ${props.node.renderProps.custom.trapetzoid.slantRight}px`;
       }
     );
   }

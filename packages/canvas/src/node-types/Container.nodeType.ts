@@ -12,12 +12,12 @@ import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagram
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { largest } from '@diagram-craft/utils/array';
 import { assert } from '@diagram-craft/utils/assert';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 
 declare global {
-  interface NodeProps {
-    shapeContainer?: {
+  interface CustomNodeProps {
+    container?: {
       containerResize?: 'none' | 'shrink' | 'grow' | 'both';
       childResize?: 'fixed' | 'scale' | 'fill';
       layout?: 'manual' | 'horizontal' | 'vertical';
@@ -27,13 +27,15 @@ declare global {
   }
 }
 
-registerNodeDefaults('shapeContainer', {
+registerCustomNodeDefaults('container', {
   containerResize: 'none',
   childResize: 'fixed',
   layout: 'manual',
   gap: 0,
   gapType: 'between'
 });
+
+type ContainerProps = NodePropsForRendering['custom']['container'];
 
 type Entry = {
   node: DiagramElement;
@@ -43,7 +45,7 @@ type Entry = {
 
 type LayoutFn = (
   node: DiagramNode,
-  props: NodePropsForRendering['shapeContainer'],
+  props: ContainerProps,
   children: Entry[],
   localBounds: Box
 ) => Box;
@@ -55,7 +57,7 @@ type Layout = {
 
 const horizontalLayout: LayoutFn = (
   node: DiagramNode,
-  props: NodePropsForRendering['shapeContainer'],
+  props: ContainerProps,
   children: Entry[],
   localBounds: Box
 ) => {
@@ -94,7 +96,7 @@ const horizontalLayout: LayoutFn = (
 
 const verticalLayout: LayoutFn = (
   node: DiagramNode,
-  props: NodePropsForRendering['shapeContainer'],
+  props: ContainerProps,
   children: Entry[],
   localBounds: Box
 ) => {
@@ -133,7 +135,7 @@ const verticalLayout: LayoutFn = (
 
 const defaultLayout: LayoutFn = (
   _node: DiagramNode,
-  props: NodePropsForRendering['shapeContainer'],
+  props: ContainerProps,
   children: Entry[],
   localBounds: Box
 ) => {
@@ -183,7 +185,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
       newTransforms.push(new Scale(newWidth / newBounds.w, newHeight / newBounds.h));
     }
 
-    if (!isScaling || node.renderProps.shapeContainer.childResize !== 'fixed') {
+    if (!isScaling || node.renderProps.custom.container.childResize !== 'fixed') {
       for (const child of node.children) {
         child.transform(newTransforms, uow, true);
       }
@@ -209,17 +211,13 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     // First layout all children
     super.layoutChildren(node, uow);
 
-    this.doLayoutChildren(node.renderProps.shapeContainer, node, uow);
+    this.doLayoutChildren(node.renderProps.custom.container, node, uow);
   }
 
-  protected doLayoutChildren(
-    props: NodePropsForRendering['shapeContainer'],
-    node: DiagramNode,
-    uow: UnitOfWork
-  ) {
+  protected doLayoutChildren(props: ContainerProps, node: DiagramNode, uow: UnitOfWork) {
     const autoShrink = props.containerResize === 'shrink' || props.containerResize === 'both';
     const autoGrow = props.containerResize === 'grow' || props.containerResize === 'both';
-    const gapType = node.renderProps.shapeContainer.gapType;
+    const gapType = node.renderProps.custom.container.gapType;
 
     // We need to perform all layout operations in the local coordinate system of the node
 
@@ -309,7 +307,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
         id: 'containerResize',
         type: 'select',
         label: 'Container Resize',
-        value: node.renderProps.shapeContainer.containerResize,
+        value: node.renderProps.custom.container.containerResize,
         options: [
           { value: 'none', label: 'None' },
           { value: 'shrink', label: 'Auto Shrink' },
@@ -317,77 +315,62 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'both', label: 'Both' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeContainer ??= {};
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props.shapeContainer.containerResize = value as any;
-          }, uow);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          node.updateCustomProps('container', props => (props.containerResize = value as any), uow);
         }
       },
       {
         id: 'layout',
         type: 'select',
         label: 'Layout',
-        value: node.renderProps.shapeContainer.layout,
+        value: node.renderProps.custom.container.layout,
         options: [
           { value: 'manual', label: 'Manual' },
           { value: 'horizontal', label: 'Horizontal' },
           { value: 'vertical', label: 'Vertical' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeContainer ??= {};
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props.shapeContainer.layout = value as any;
-          }, uow);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          node.updateCustomProps('container', props => (props.layout = value as any), uow);
         }
       },
       {
         id: 'gap',
         type: 'number',
         label: 'Gap',
-        value: node.renderProps.shapeContainer.gap,
+        value: node.renderProps.custom.container.gap,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeContainer ??= {};
-            props.shapeContainer.gap = value;
-          }, uow);
+          node.updateCustomProps('container', props => (props.gap = value), uow);
         }
       },
       {
         id: 'gapType',
         type: 'select',
         label: 'Gap Type',
-        value: node.renderProps.shapeContainer.gapType,
+        value: node.renderProps.custom.container.gapType,
         options: [
           { value: 'between', label: 'Between' },
           { value: 'around', label: 'Around' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeContainer ??= {};
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props.shapeContainer.gapType = value as any;
-          }, uow);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          node.updateCustomProps('container', props => (props.gapType = value as any), uow);
         }
       },
       {
         id: 'childResize',
         type: 'select',
         label: 'Child Resize',
-        value: node.renderProps.shapeContainer.childResize,
+        value: node.renderProps.custom.container.childResize,
         options: [
           { value: 'fixed', label: 'Fixed' },
           { value: 'scale', label: 'Scale' },
           { value: 'fill', label: 'Fill' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeContainer ??= {};
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            props.shapeContainer.childResize = value as any;
-          }, uow);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          node.updateCustomProps('container', props => (props.childResize = value as any), uow);
         }
       }
     ];

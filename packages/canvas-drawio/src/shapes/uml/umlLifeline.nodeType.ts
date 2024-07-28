@@ -1,4 +1,4 @@
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import {
   SimpleShapeNodeDefinition,
   SimpleShapeNodeDefinitionProps
@@ -14,14 +14,14 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 
 declare global {
-  interface NodeProps {
-    shapeUmlLifeline?: {
+  interface CustomNodeProps {
+    umlLifeline?: {
       participant?: string;
     };
   }
 }
 
-registerNodeDefaults('shapeUmlLifeline', { participant: '' });
+registerCustomNodeDefaults('umlLifeline', { participant: '' });
 
 export class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor(private readonly registry: NodeDefinitionRegistry) {
@@ -67,7 +67,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
       true
     );
 
-    const participant = coalesce(props.node.renderProps.shapeUmlLifeline?.participant, 'rect')!;
+    const participant = coalesce(props.node.renderProps.custom.umlLifeline?.participant, 'rect')!;
 
     const shape = this.registry.get(participant)!;
     if (!shape) VERIFY_NOT_REACHED();

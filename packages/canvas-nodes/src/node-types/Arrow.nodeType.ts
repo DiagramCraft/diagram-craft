@@ -13,7 +13,7 @@ import { round } from '@diagram-craft/utils/math';
 import { Box } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -24,12 +24,12 @@ type ExtraProps = {
 };
 
 declare global {
-  interface NodeProps {
-    shapeArrow?: ExtraProps;
+  interface CustomNodeProps {
+    arrow?: ExtraProps;
   }
 }
 
-const $defaults = registerNodeDefaults('shapeArrow', { notch: 0, x: 40, y: 30 });
+const $defaults = registerCustomNodeDefaults('arrow', { notch: 0, x: 40, y: 30 });
 
 // Custom properties ************************************************************
 
@@ -38,18 +38,15 @@ const Notch = {
     id: 'notch',
     label: 'Notch',
     type: 'number',
-    value: $defaults(node.renderProps.shapeArrow).notch,
+    value: $defaults(node.renderProps.custom.arrow).notch,
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Notch.set(value, node, uow)
   }),
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= node.bounds.w - $defaults(node.editProps.shapeArrow).x || value <= 0) return;
-    node.updateProps(
-      props => (props.shapeArrow = { ...props.shapeArrow, notch: round(value) }),
-      uow
-    );
+    if (value >= node.bounds.w - $defaults(node.editProps.custom?.arrow).x || value <= 0) return;
+    node.updateCustomProps('arrow', props => (props.notch = round(value)), uow);
   }
 };
 
@@ -58,7 +55,7 @@ const ArrowControlX = {
     id: 'x',
     label: 'Pointiness',
     type: 'number',
-    value: $defaults(node.renderProps.shapeArrow).x,
+    value: $defaults(node.renderProps.custom.arrow).x,
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => ArrowControlX.set(value, node, uow)
@@ -66,7 +63,7 @@ const ArrowControlX = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= Math.min(node.bounds.w, node.bounds.h) || value <= 0) return;
-    node.updateProps(props => (props.shapeArrow = { ...props.shapeArrow, x: round(value) }), uow);
+    node.updateCustomProps('arrow', props => (props.x = round(value)), uow);
   }
 };
 
@@ -75,7 +72,7 @@ const ArrowControlY = {
     id: 'y',
     label: 'Thickness',
     type: 'number',
-    value: $defaults(node.renderProps.shapeArrow).y,
+    value: $defaults(node.renderProps.custom.arrow).y,
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => ArrowControlY.set(value, node, uow)
@@ -83,7 +80,7 @@ const ArrowControlY = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value <= 0 || value >= 50) return;
-    node.updateProps(props => (props.shapeArrow = { ...props.shapeArrow, y: round(value) }), uow);
+    node.updateCustomProps('arrow', props => (props.y = round(value)), uow);
   }
 };
 
@@ -108,7 +105,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
       const h = this.def.isHorizontal() ? bounds.h : bounds.w;
 
       // Notch
-      const notch = $defaults(props.nodeProps.shapeArrow).notch;
+      const notch = $defaults(props.nodeProps.custom.arrow).notch;
       const notchPct = 1 - (w - notch) / w;
 
       const notchPoint = pointInBounds(
@@ -121,13 +118,13 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
 
         const distance = Math.max(0, p.x - bounds.x);
         Notch.set(distance, props.node, uow);
-        return `Notch: ${props.node.renderProps.shapeArrow.notch}px`;
+        return `Notch: ${props.node.renderProps.custom.arrow.notch}px`;
       });
 
       // Arrow control points
 
-      const x = props.nodeProps.shapeArrow.x;
-      const y = props.nodeProps.shapeArrow.y;
+      const x = props.nodeProps.custom.arrow.x;
+      const y = props.nodeProps.custom.arrow.y;
 
       const xPct = (w - x) / w;
 
@@ -145,7 +142,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
         const newY = (100 * (p.y - bounds.y)) / h;
         ArrowControlY.set(newY, props.node, uow);
 
-        return `${props.node.renderProps.shapeArrow.x}px, ${props.node.renderProps.shapeArrow.y}%`;
+        return `${props.node.renderProps.custom.arrow.x}px, ${props.node.renderProps.custom.arrow.y}%`;
       });
     }
   };
@@ -155,9 +152,9 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const x = def.renderProps.shapeArrow.x;
-    const y = def.renderProps.shapeArrow.y;
-    const notch = def.renderProps.shapeArrow.notch;
+    const x = def.renderProps.custom.arrow.x;
+    const y = def.renderProps.custom.arrow.y;
+    const notch = def.renderProps.custom.arrow.notch;
 
     const w = this.isHorizontal() ? def.bounds.w : def.bounds.h;
 

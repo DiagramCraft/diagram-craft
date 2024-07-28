@@ -97,8 +97,8 @@ export class TableDistributeAction extends AbstractAction {
     if (this.type === 'row') {
       const h =
         tableElement.bounds.h -
-        (tableElement.renderProps.shapeTable.title
-          ? tableElement.renderProps.shapeTable.titleSize
+        (tableElement.renderProps.custom.table.title
+          ? tableElement.renderProps.custom.table.titleSize
           : 0);
       const rows = tableElement.children.filter(
         c => isNode(c) && c.nodeType === 'tableRow'

@@ -9,18 +9,18 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 
 declare global {
-  interface NodeProps {
-    shapeRoundedRect?: {
+  interface CustomNodeProps {
+    roundedRect?: {
       radius?: number;
     };
   }
 }
 
-registerNodeDefaults('shapeRoundedRect', {
+registerCustomNodeDefaults('roundedRect', {
   radius: 5
 });
 
@@ -45,23 +45,20 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
         id: 'radius',
         type: 'number',
         label: 'Radius',
-        value: def.renderProps.shapeRoundedRect.radius,
+        value: def.renderProps.custom.roundedRect.radius,
         maxValue: 60,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
           if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
 
-          def.updateProps(props => {
-            props.shapeRoundedRect ??= {};
-            props.shapeRoundedRect.radius = value;
-          }, uow);
+          def.updateCustomProps('roundedRect', props => (props.radius = value), uow);
         }
       }
     ];
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const radius = def.renderProps.shapeRoundedRect.radius;
+    const radius = def.renderProps.custom.roundedRect.radius;
     const bnd = def.bounds;
 
     const xr = (2 * radius) / bnd.w;
@@ -87,8 +84,10 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
   getDefaultProps(mode: 'picker' | 'canvas'): NodeProps {
     if (mode === 'picker') {
       return {
-        shapeRoundedRect: {
-          radius: 30
+        custom: {
+          roundedRect: {
+            radius: 30
+          }
         }
       };
     }
@@ -98,7 +97,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 
 export class RoundedRectComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const radius = props.nodeProps.shapeRoundedRect?.radius ?? 10;
+    const radius = props.nodeProps.custom.roundedRect?.radius ?? 10;
     const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary.all());
@@ -109,12 +108,9 @@ export class RoundedRectComponent extends BaseNodeComponent {
       ({ x }, uow) => {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-          props.node.updateProps(props => {
-            props.shapeRoundedRect ??= {};
-            props.shapeRoundedRect.radius = distance;
-          }, uow);
+          props.node.updateCustomProps('roundedRect', props => (props.radius = distance), uow);
         }
-        return `Radius: ${props.node.renderProps.shapeRoundedRect!.radius}px`;
+        return `Radius: ${props.node.renderProps.custom.roundedRect!.radius}px`;
       }
     );
   }

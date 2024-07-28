@@ -1,4 +1,4 @@
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import {
   SimpleShapeNodeDefinition,
   SimpleShapeNodeDefinitionProps
@@ -6,8 +6,8 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 declare global {
-  interface NodeProps {
-    shapeAndroidProgressBar?: {
+  interface CustomNodeProps {
+    androidProgressBar?: {
       width?: number;
       dx1?: number;
       dx2?: number;
@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-registerNodeDefaults('shapeAndroidProgressBar', { width: 2, dx1: 0.25, dx2: 0.75 });
+registerCustomNodeDefaults('androidProgressBar', { width: 2, dx1: 0.25, dx2: 0.75 });
 
 export class AndroidProgressBarDefinition extends SimpleShapeNodeDefinition {
   constructor() {
@@ -24,7 +24,7 @@ export class AndroidProgressBarDefinition extends SimpleShapeNodeDefinition {
 
   buildShape(props: SimpleShapeNodeDefinitionProps, builder: ShapeBuilder) {
     const { w, h } = props.node.bounds;
-    const { width, dx1, dx2 } = props.nodeProps.shapeAndroidProgressBar;
+    const { width, dx1, dx2 } = props.nodeProps.custom.androidProgressBar;
 
     const b = builder.buildBoundary();
     b.path(0, h * 0.5).line(w, h * 0.5);

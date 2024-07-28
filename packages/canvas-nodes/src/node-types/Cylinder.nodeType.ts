@@ -12,7 +12,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Box } from '@diagram-craft/geometry/box';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
@@ -23,12 +23,12 @@ type ExtraProps = {
 };
 
 declare global {
-  interface NodeProps {
-    shapeCylinder?: ExtraProps;
+  interface CustomNodeProps {
+    cylinder?: ExtraProps;
   }
 }
 
-registerNodeDefaults('shapeCylinder', { size: 30, direction: 'north' });
+registerCustomNodeDefaults('cylinder', { size: 30, direction: 'north' });
 
 // Custom properties ************************************************************
 
@@ -37,7 +37,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: node.renderProps.shapeCylinder.size,
+    value: node.renderProps.custom.cylinder.size,
     maxValue: Number.MAX_VALUE,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -45,10 +45,7 @@ const Size = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= node.bounds.h || value <= 0) return;
-    node.updateProps(
-      props => (props.shapeCylinder = { ...props.shapeCylinder, size: round(value) }),
-      uow
-    );
+    node.updateCustomProps('cylinder', props => (props.size = round(value)), uow);
   }
 };
 
@@ -63,16 +60,13 @@ const Direction = {
       { value: 'east', label: 'East' },
       { value: 'west', label: 'West' }
     ],
-    value: node.renderProps.shapeCylinder.direction,
+    value: node.renderProps.custom.cylinder.direction,
     onChange: (value: string, uow: UnitOfWork) => Direction.set(value, node, uow)
   }),
 
   set: (value: string, node: DiagramNode, uow: UnitOfWork) => {
-    node.updateProps(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      props => (props.shapeCylinder = { ...props.shapeCylinder, direction: value as any }),
-      uow
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    node.updateCustomProps('cylinder', props => (props.direction = value as any), uow);
   }
 };
 
@@ -89,25 +83,26 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.boundaryPath(boundary.all());
 
       const bounds = props.node.bounds;
-      const size = props.nodeProps.shapeCylinder.size;
+      const size = props.nodeProps.custom.cylinder.size;
+
+      const direction = props.nodeProps.custom.cylinder.direction;
 
       let textBounds = { ...bounds, y: bounds.y + size, h: bounds.h - size };
-
-      if (props.nodeProps.shapeCylinder.direction === 'east') {
+      if (direction === 'east') {
         textBounds = { ...bounds, w: bounds.w - size };
-      } else if (props.nodeProps.shapeCylinder.direction === 'west') {
+      } else if (direction === 'west') {
         textBounds = { ...bounds, x: bounds.x + size, w: bounds.w - size };
-      } else if (props.nodeProps.shapeCylinder.direction === 'south') {
+      } else if (direction === 'south') {
         textBounds = { ...bounds, h: bounds.h - size };
       }
 
       shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, textBounds);
 
-      if (props.nodeProps.shapeCylinder.direction === 'north') {
+      if (direction === 'north') {
         shapeBuilder.controlPoint(Point.of(bounds.x, bounds.y + size / 2), ({ y }, uow) => {
           const distance = Math.max(0, y - bounds.y);
           Size.set(distance * 2, props.node, uow);
-          return `Size: ${props.node.renderProps.shapeCylinder.size}px`;
+          return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       }
     }
@@ -124,14 +119,16 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    let size = def.renderProps.shapeCylinder.size / def.bounds.h;
+    const direction = def.renderProps.custom.cylinder.direction;
+
+    let size = def.renderProps.custom.cylinder.size / def.bounds.h;
     let bounds: Box = Box.withoutRotation(def.bounds);
-    if (def.renderProps.shapeCylinder.direction === 'south') {
+    if (direction === 'south') {
       bounds = { ...bounds, r: Math.PI, x: bounds.x + bounds.w, y: bounds.y + bounds.h };
-    } else if (def.renderProps.shapeCylinder.direction === 'east') {
+    } else if (direction === 'east') {
       bounds = { ...bounds, r: Math.PI / 2, w: bounds.h, h: bounds.w, x: bounds.x + bounds.w };
-      size = def.renderProps.shapeCylinder.size / def.bounds.w;
-    } else if (def.renderProps.shapeCylinder.direction === 'west') {
+      size = def.renderProps.custom.cylinder.size / def.bounds.w;
+    } else if (direction === 'west') {
       bounds = {
         ...bounds,
         r: (3 * Math.PI) / 2,
@@ -139,7 +136,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
         h: bounds.w,
         y: bounds.y + bounds.h
       };
-      size = def.renderProps.shapeCylinder.size / def.bounds.w;
+      size = def.renderProps.custom.cylinder.size / def.bounds.w;
     }
 
     const lcs = new LocalCoordinateSystem(bounds, [-1, 1], [-1, 1], true);

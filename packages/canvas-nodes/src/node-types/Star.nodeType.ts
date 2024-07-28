@@ -12,18 +12,18 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface NodeProps {
-    shapeStar?: {
+  interface CustomNodeProps {
+    star?: {
       numberOfSides?: number;
       innerRadius?: number;
     };
   }
 }
 
-registerNodeDefaults('shapeStar', { numberOfSides: 5, innerRadius: 0.5 });
+registerCustomNodeDefaults('star', { numberOfSides: 5, innerRadius: 0.5 });
 
 export class StarNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -31,8 +31,8 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sides = def.renderProps.shapeStar.numberOfSides;
-    const innerRadius = def.renderProps.shapeStar.innerRadius;
+    const sides = def.renderProps.custom.star.numberOfSides;
+    const innerRadius = def.renderProps.custom.star.innerRadius;
 
     const theta = Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
@@ -58,26 +58,20 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         id: 'numberOfSides',
         type: 'number',
         label: 'Sides',
-        value: def.renderProps.shapeStar.numberOfSides,
+        value: def.renderProps.custom.star.numberOfSides,
         onChange: (value: number, uow: UnitOfWork) => {
-          def.updateProps(props => {
-            props.shapeStar ??= {};
-            props.shapeStar.numberOfSides = value;
-          }, uow);
+          def.updateCustomProps('star', props => (props.numberOfSides = value), uow);
         }
       },
       {
         id: 'innerRadius',
         type: 'number',
         label: 'Radius',
-        value: round(def.renderProps.shapeStar.innerRadius * 100),
+        value: round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',
         onChange: (value: number, uow: UnitOfWork) => {
-          def.updateProps(props => {
-            props.shapeStar ??= {};
-            props.shapeStar.innerRadius = value / 100;
-          }, uow);
+          def.updateCustomProps('star', props => (props.innerRadius = value / 100), uow);
         }
       }
     ];
@@ -95,11 +89,12 @@ class StarComponent extends BaseNodeComponent {
 
     shapeBuilder.controlPoint(path.segments[1].start, ({ x, y }, uow) => {
       const distance = Point.distance({ x, y }, Box.center(props.node.bounds));
-      props.node.updateProps(p => {
-        p.shapeStar ??= {};
-        p.shapeStar.innerRadius = distance / (props.node.bounds.w / 2);
-      }, uow);
-      return `Inner radius: ${round(props.node.renderProps.shapeStar!.innerRadius! * 100)}%`;
+      props.node.updateCustomProps(
+        'star',
+        p => (p.innerRadius = distance / (props.node.bounds.w / 2)),
+        uow
+      );
+      return `Inner radius: ${round(props.node.renderProps.custom.star!.innerRadius! * 100)}%`;
     });
 
     shapeBuilder.controlPoint(path.segments[2].start, ({ x, y }, uow) => {
@@ -107,10 +102,7 @@ class StarComponent extends BaseNodeComponent {
         Math.PI / 2 + Vector.angle(Point.subtract({ x, y }, Box.center(props.node.bounds)));
       const numberOfSides = Math.min(100, Math.max(4, Math.ceil((Math.PI * 2) / angle)));
 
-      props.node.updateProps(props => {
-        props.shapeStar ??= {};
-        props.shapeStar.numberOfSides = numberOfSides;
-      }, uow);
+      props.node.updateCustomProps('star', props => (props.numberOfSides = numberOfSides), uow);
 
       return `Sides: ${numberOfSides}`;
     });

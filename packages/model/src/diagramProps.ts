@@ -98,6 +98,9 @@ declare global {
     };
   }
 
+  interface CustomNodeProps {}
+  interface CustomEdgeProps {}
+
   interface ElementProps {
     stroke?: {
       enabled?: boolean;
@@ -182,6 +185,8 @@ declare global {
       type?: 'none' | 'below-line' | 'above-arc' | 'below-arc' | 'below-hide';
       size?: number;
     };
+
+    custom?: CustomEdgeProps;
   }
 
   interface NodeProps extends ElementProps {
@@ -232,5 +237,7 @@ declare global {
       perEdgeCount?: number;
       directionsCount?: number;
     };
+
+    custom?: CustomNodeProps;
   }
 }

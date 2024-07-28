@@ -10,7 +10,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -19,12 +19,12 @@ type ExtraProps = {
 };
 
 declare global {
-  interface NodeProps {
-    shapeHexagon?: ExtraProps;
+  interface CustomNodeProps {
+    hexagon?: ExtraProps;
   }
 }
 
-registerNodeDefaults('shapeHexagon', { size: 25 });
+registerCustomNodeDefaults('hexagon', { size: 25 });
 
 // Custom properties ************************************************************
 
@@ -33,7 +33,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: node.renderProps.shapeHexagon.size,
+    value: node.renderProps.custom.hexagon.size,
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -41,7 +41,7 @@ const Size = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
-    node.updateProps(props => (props.shapeHexagon = { size: round(value) }), uow);
+    node.updateCustomProps('hexagon', props => (props.size = round(value)), uow);
   }
 };
 
@@ -57,18 +57,18 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const sizePct = props.nodeProps.shapeHexagon.size / 100;
+      const sizePct = props.nodeProps.custom.hexagon.size / 100;
 
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const distance = Math.max(0, x - bounds.x);
         Size.set((distance / bounds.w) * 100, props.node, uow);
-        return `Size: ${props.node.renderProps.shapeHexagon.size}%`;
+        return `Size: ${props.node.renderProps.custom.hexagon.size}%`;
       });
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = def.renderProps.shapeHexagon.size / 100;
+    const sizePct = def.renderProps.custom.hexagon.size / 100;
 
     const x1 = -1 + sizePct * 2;
     const x2 = 1 - sizePct * 2;

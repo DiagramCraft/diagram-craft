@@ -12,12 +12,12 @@ import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 
 declare global {
-  interface NodeProps {
-    shapeTable?: {
+  interface CustomNodeProps {
+    table?: {
       gap?: number;
       horizontalBorder?: boolean;
       verticalBorder?: boolean;
@@ -28,7 +28,7 @@ declare global {
   }
 }
 
-registerNodeDefaults('shapeTable', {
+registerCustomNodeDefaults('table', {
   gap: 0,
   horizontalBorder: true,
   verticalBorder: true,
@@ -86,7 +86,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 
     const nodeProps = node.renderProps;
 
-    const gap = nodeProps.shapeTable.gap;
+    const gap = nodeProps.custom.table.gap;
 
     const transformBack = [
       // Rotation around center
@@ -124,7 +124,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
 
     let maxX = 0;
-    const startY = nodeProps.shapeTable.title ? nodeProps.shapeTable.titleSize : 0;
+    const startY = nodeProps.custom.table.title ? nodeProps.custom.table.titleSize : 0;
     let y = startY;
     for (const row of cellsInOrder) {
       let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
@@ -195,25 +195,19 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         id: 'gap',
         type: 'number',
         label: 'Padding',
-        value: node.renderProps.shapeTable.gap,
+        value: node.renderProps.custom.table.gap,
         unit: 'px',
         onChange: (value: number, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeTable ??= {};
-            props.shapeTable.gap = value;
-          }, uow);
+          node.updateCustomProps('table', props => (props.gap = value), uow);
         }
       },
       {
         id: 'title',
         type: 'boolean',
         label: 'Title',
-        value: node.renderProps.shapeTable.title,
+        value: node.renderProps.custom.table.title,
         onChange: (value: boolean, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeTable ??= {};
-            props.shapeTable.title = value;
-          }, uow);
+          node.updateCustomProps('table', props => (props.title = value), uow);
         }
       },
       {
@@ -221,12 +215,9 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         type: 'number',
         label: 'Title Size',
         unit: 'px',
-        value: node.renderProps.shapeTable.titleSize,
+        value: node.renderProps.custom.table.titleSize,
         onChange: (value: number, uow: UnitOfWork) => {
-          node.updateProps(props => {
-            props.shapeTable ??= {};
-            props.shapeTable.titleSize = value;
-          }, uow);
+          node.updateCustomProps('table', props => (props.titleSize = value), uow);
         }
       }
     ];
@@ -266,16 +257,20 @@ class TableComponent extends BaseNodeComponent {
       );
     });
 
-    const gap = props.nodeProps.shapeTable.gap;
+    const gap = props.nodeProps.custom.table.gap;
 
     const pathBuilder = new PathBuilder();
 
-    if (props.nodeProps.shapeTable.outerBorder !== false) {
+    if (props.nodeProps.custom.table.outerBorder !== false) {
       const nodeProps = props.nodeProps;
       PathBuilderHelper.rect(pathBuilder, {
         ...props.node.bounds,
-        y: props.node.bounds.y + (nodeProps.shapeTable.title ? nodeProps.shapeTable.titleSize : 0),
-        h: props.node.bounds.h - (nodeProps.shapeTable.title ? nodeProps.shapeTable.titleSize : 0)
+        y:
+          props.node.bounds.y +
+          (nodeProps.custom.table.title ? nodeProps.custom.table.titleSize : 0),
+        h:
+          props.node.bounds.h -
+          (nodeProps.custom.table.title ? nodeProps.custom.table.titleSize : 0)
       });
     }
 
@@ -283,8 +278,8 @@ class TableComponent extends BaseNodeComponent {
 
     let startY = bounds.y;
     let height = bounds.h;
-    if (props.nodeProps.shapeTable.title) {
-      const titleSize = props.nodeProps.shapeTable.titleSize;
+    if (props.nodeProps.custom.table.title) {
+      const titleSize = props.nodeProps.custom.table.titleSize;
       builder.text(this, '1', props.node.getText(), props.nodeProps.text, {
         ...bounds,
         h: titleSize
@@ -294,7 +289,7 @@ class TableComponent extends BaseNodeComponent {
       height -= titleSize;
     }
 
-    if (props.nodeProps.shapeTable.verticalBorder !== false) {
+    if (props.nodeProps.custom.table.verticalBorder !== false) {
       let x = bounds.x + gap;
       const row = props.node.children[0] as DiagramNode;
       for (let i = 0; i < row.children.length - 1; i++) {
@@ -308,7 +303,7 @@ class TableComponent extends BaseNodeComponent {
       }
     }
 
-    if (props.nodeProps.shapeTable.horizontalBorder !== false) {
+    if (props.nodeProps.custom.table.horizontalBorder !== false) {
       let y = startY + gap;
       const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
       for (let i = 0; i < sortedChildren.length - 1; i++) {

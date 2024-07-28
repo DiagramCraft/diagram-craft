@@ -10,7 +10,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -19,12 +19,12 @@ type ExtraProps = {
 };
 
 declare global {
-  interface NodeProps {
-    shapeStep?: ExtraProps;
+  interface CustomNodeProps {
+    step?: ExtraProps;
   }
 }
 
-registerNodeDefaults('shapeStep', { size: 25 });
+registerCustomNodeDefaults('step', { size: 25 });
 
 // Custom properties ************************************************************
 
@@ -33,7 +33,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: node.renderProps.shapeStep.size,
+    value: node.renderProps.custom.step.size,
     maxValue: 50,
     unit: 'px',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -41,7 +41,7 @@ const Size = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= node.bounds.w / 2 || value <= 0) return;
-    node.updateProps(props => (props.shapeStep = { size: round(value) }), uow);
+    node.updateCustomProps('step', props => (props.size = round(value)), uow);
   }
 };
 
@@ -57,21 +57,21 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const size = props.nodeProps.shapeStep.size;
+      const size = props.nodeProps.custom.step.size;
 
       shapeBuilder.controlPoint(
         Point.of(bounds.x + size, bounds.y + bounds.h / 2),
         ({ x }, uow) => {
           const distance = Math.max(0, x - bounds.x);
           Size.set(distance, props.node, uow);
-          return `Size: ${props.node.renderProps.shapeStep.size}px`;
+          return `Size: ${props.node.renderProps.custom.step.size}px`;
         }
       );
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = def.renderProps.shapeStep.size / def.bounds.w;
+    const sizePct = def.renderProps.custom.step.size / def.bounds.w;
 
     const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
 

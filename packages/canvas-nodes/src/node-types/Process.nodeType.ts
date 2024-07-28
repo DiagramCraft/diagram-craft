@@ -10,7 +10,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 // NodeProps extension for custom props *****************************************
 
@@ -19,12 +19,12 @@ type ExtraProps = {
 };
 
 declare global {
-  interface NodeProps {
-    shapeProcess?: ExtraProps;
+  interface CustomNodeProps {
+    process?: ExtraProps;
   }
 }
 
-registerNodeDefaults('shapeProcess', { size: 10 });
+registerCustomNodeDefaults('process', { size: 10 });
 
 // Custom properties ************************************************************
 
@@ -33,7 +33,7 @@ const Size = {
     id: 'size',
     label: 'Size',
     type: 'number',
-    value: node.renderProps.shapeProcess.size,
+    value: node.renderProps.custom.process.size,
     maxValue: 50,
     unit: '%',
     onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
@@ -41,7 +41,7 @@ const Size = {
 
   set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
     if (value >= 50 || value <= 0) return;
-    node.updateProps(props => (props.shapeProcess = { size: round(value) }), uow);
+    node.updateCustomProps('process', props => (props.size = round(value)), uow);
   }
 };
 
@@ -57,7 +57,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       super.buildShape(props, shapeBuilder);
 
       const bounds = props.node.bounds;
-      const sizePct = props.nodeProps.shapeProcess.size / 100;
+      const sizePct = props.nodeProps.custom.process.size / 100;
 
       // Draw additional shape details
       const pathBuilder = new PathBuilder(unitCoordinateSystem(bounds));
@@ -74,7 +74,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
         Size.set(newValue, props.node, uow);
-        return `Size: ${props.node.renderProps.shapeProcess.size}%`;
+        return `Size: ${props.node.renderProps.custom.process.size}%`;
       });
     }
   };

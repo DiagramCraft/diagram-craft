@@ -12,12 +12,12 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Zoom } from '../components/zoom';
 
 declare global {
-  interface NodeProps {
-    shapeGenericPath?: {
+  interface CustomNodeProps {
+    genericPath?: {
       path?: string;
     };
   }
@@ -25,7 +25,7 @@ declare global {
 
 const DEFAULT_PATH = 'M -1 1, L 1 1, L 1 -1, L -1 -1, L -1 1';
 
-registerNodeDefaults('shapeGenericPath', { path: DEFAULT_PATH });
+registerCustomNodeDefaults('genericPath', { path: DEFAULT_PATH });
 
 export class GenericPathNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'generic-path', displayName = 'Path') {
@@ -34,7 +34,7 @@ export class GenericPathNodeDefinition extends ShapeNodeDefinition {
 
   getBoundingPathBuilder(def: DiagramNode) {
     return PathBuilder.fromString(
-      def.renderProps.shapeGenericPath.path,
+      def.renderProps.custom.genericPath.path,
       unitCoordinateSystem(def.bounds)
     );
   }

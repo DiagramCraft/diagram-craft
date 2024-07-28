@@ -1,4 +1,4 @@
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import {
   SimpleShapeNodeDefinition,
   SimpleShapeNodeDefinitionProps
@@ -6,15 +6,15 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 declare global {
-  interface NodeProps {
-    shapeAndroidProgressScrubber?: {
+  interface CustomNodeProps {
+    androidProgressScrubber?: {
       dx?: number;
       state?: 'disabled' | 'focused' | 'pressed';
     };
   }
 }
 
-registerNodeDefaults('shapeAndroidProgressScrubber', { dx: 0.5, state: 'disabled' });
+registerCustomNodeDefaults('androidProgressScrubber', { dx: 0.5, state: 'disabled' });
 
 export class AndroidProgressScrubber extends SimpleShapeNodeDefinition {
   constructor() {
@@ -25,7 +25,7 @@ export class AndroidProgressScrubber extends SimpleShapeNodeDefinition {
     const { w, h } = props.node.bounds;
     const yMid = h / 2;
 
-    const { dx, state } = props.nodeProps.shapeAndroidProgressScrubber;
+    const { dx, state } = props.nodeProps.custom.androidProgressScrubber;
     const c = props.node.renderProps.fill.color;
 
     const b = builder.buildBoundary();

@@ -23,14 +23,14 @@ import {
   assertVAlign
 } from '@diagram-craft/model/diagramProps';
 import { xNum } from './utils';
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { coalesce } from '@diagram-craft/utils/strings';
 import { DrawioStencil } from './drawioStencilLoader';
 
 declare global {
-  interface NodeProps {
+  interface CustomNodeProps {
     // TODO: We should split this in shapeDrawio and shapeDrawioImage
-    shapeDrawio?: {
+    drawio?: {
       shape?: string;
       textPosition?: '' | 'center' | 'bottom' | 'right';
       imageWidth?: number;
@@ -39,7 +39,12 @@ declare global {
   }
 }
 
-registerNodeDefaults('shapeDrawio', { shape: '', textPosition: '', imageHeight: 0, imageWidth: 0 });
+registerCustomNodeDefaults('drawio', {
+  shape: '',
+  textPosition: '',
+  imageHeight: 0,
+  imageWidth: 0
+});
 
 const makeShapeTransform =
   (source: Extent, target: Box) => (p: Point, _type?: 'point' | 'distance') => {
@@ -64,7 +69,7 @@ const isShapeElement = ($el: Element) =>
 const parse = (def: DiagramNode, stencil: DrawioStencil | undefined): Element | undefined => {
   if (def.cache.has('element')) return def.cache.get('element') as Element;
 
-  const data = coalesce(def.renderProps.shapeDrawio.shape, stencil?.props?.shapeDrawio?.shape);
+  const data = coalesce(def.renderProps.custom.drawio.shape, stencil?.props?.custom?.drawio?.shape);
   if (!data) {
     console.warn(`Cannot find shape for ${def.type} / ${def.name}`);
     return undefined;
@@ -405,14 +410,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
           },
           {
             x:
-              props.nodeProps.shapeDrawio.textPosition === 'right'
+              props.nodeProps.custom.drawio.textPosition === 'right'
                 ? props.node.bounds.x + props.node.bounds.w
                 : props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
             y:
-              props.nodeProps.shapeDrawio.textPosition === 'bottom'
+              props.nodeProps.custom.drawio.textPosition === 'bottom'
                 ? props.node.bounds.y + props.node.bounds.h
                 : props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
-            w: props.nodeProps.shapeDrawio.textPosition === 'right' ? 200 : 60,
+            w: props.nodeProps.custom.drawio.textPosition === 'right' ? 200 : 60,
             h: 40,
             r: 0
           }
@@ -495,14 +500,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
     shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, {
       ...props.node.bounds,
       x:
-        props.nodeProps.shapeDrawio.textPosition === 'right'
+        props.nodeProps.custom.drawio.textPosition === 'right'
           ? props.node.bounds.x + props.node.bounds.w
           : props.node.bounds.x,
       y:
-        props.nodeProps.shapeDrawio.textPosition === 'bottom'
+        props.nodeProps.custom.drawio.textPosition === 'bottom'
           ? props.node.bounds.y + props.node.bounds.h
           : props.node.bounds.y,
-      w: props.nodeProps.shapeDrawio.textPosition === 'right' ? 200 : props.node.bounds.w
+      w: props.nodeProps.custom.drawio.textPosition === 'right' ? 200 : props.node.bounds.w
     });
   }
 }

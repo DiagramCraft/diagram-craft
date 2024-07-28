@@ -31,10 +31,10 @@ export const NodeTableStrokePanel = (props: Props) => {
   const lineJoin = useTableProperty($d, 'stroke.lineJoin');
   const miterLimit = useTableProperty($d, 'stroke.miterLimit');
 
-  const horizontalBorder = useTableProperty($d, 'shapeTable.horizontalBorder');
-  const verticalBorder = useTableProperty($d, 'shapeTable.verticalBorder');
+  const horizontalBorder = useTableProperty($d, 'custom.table.horizontalBorder');
+  const verticalBorder = useTableProperty($d, 'custom.table.verticalBorder');
 
-  const outerBorder = useTableProperty($d, 'shapeTable.outerBorder');
+  const outerBorder = useTableProperty($d, 'custom.table.outerBorder');
 
   return (
     <ToolWindowPanel

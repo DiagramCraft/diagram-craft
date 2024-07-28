@@ -16,7 +16,7 @@ class DrawioImageComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = new DrawioImageNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    if (props.nodeProps.shapeDrawio.imageWidth > 0) {
+    if (props.nodeProps.custom.drawio.imageWidth > 0) {
       shapeBuilder.boundaryPath(boundary.all(), {
         ...props.nodeProps,
         fill: { enabled: false, color: 'transparent', type: 'solid' }
@@ -26,8 +26,8 @@ class DrawioImageComponent extends BaseNodeComponent {
         svg.image({
           x: props.node.bounds.x + 4,
           y: props.node.bounds.y + 4,
-          width: props.nodeProps.shapeDrawio.imageWidth,
-          height: props.nodeProps.shapeDrawio.imageHeight,
+          width: props.nodeProps.custom.drawio.imageWidth,
+          height: props.nodeProps.custom.drawio.imageHeight,
           href: props.nodeProps.fill.image.url
         })
       );
@@ -36,11 +36,11 @@ class DrawioImageComponent extends BaseNodeComponent {
       shapeBuilder.boundaryPath(boundary.all());
     }
 
-    const w = props.nodeProps.shapeDrawio.imageWidth === 0 ? props.node.bounds.w : 0;
+    const w = props.nodeProps.custom.drawio.imageWidth === 0 ? props.node.bounds.w : 0;
 
     const bounds = props.node.bounds;
 
-    const textPosition = props.nodeProps.shapeDrawio.textPosition;
+    const textPosition = props.nodeProps.custom.drawio.textPosition;
 
     let textBounds = bounds;
     if (textPosition === 'right') {

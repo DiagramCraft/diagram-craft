@@ -1,4 +1,4 @@
-import { registerNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import {
   SimpleShapeNodeDefinition,
   SimpleShapeNodeDefinitionProps
@@ -8,14 +8,14 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 const THUMB = { w: 6, h: 20 };
 
 declare global {
-  interface NodeProps {
-    shapeAndroidQuickscroll3?: {
+  interface CustomNodeProps {
+    androidQuickscroll3?: {
       dy?: number;
     };
   }
 }
 
-registerNodeDefaults('shapeAndroidQuickscroll3', { dy: 0.5 });
+registerCustomNodeDefaults('androidQuickscroll3', { dy: 0.5 });
 
 export class AndroidQuickscroll3 extends SimpleShapeNodeDefinition {
   constructor() {
@@ -24,7 +24,7 @@ export class AndroidQuickscroll3 extends SimpleShapeNodeDefinition {
 
   buildShape(props: SimpleShapeNodeDefinitionProps, builder: ShapeBuilder) {
     const { w, h } = props.node.bounds;
-    const { dy } = props.nodeProps.shapeAndroidQuickscroll3;
+    const { dy } = props.nodeProps.custom.androidQuickscroll3;
 
     const b = builder.buildBoundary();
     b.path(w - THUMB.w / 2, 0).line(w - THUMB.w / 2, h);

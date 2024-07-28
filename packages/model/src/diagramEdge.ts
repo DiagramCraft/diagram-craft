@@ -193,6 +193,18 @@ export class DiagramEdge
     this.#cache?.clear();
   }
 
+  updateCustomProps<K extends keyof CustomEdgeProps>(
+    key: K,
+    callback: (props: NonNullable<CustomEdgeProps[K]>) => void,
+    uow: UnitOfWork
+  ) {
+    this.updateProps(p => {
+      p.custom ??= {};
+      p.custom[key] ??= {};
+      callback(p.custom[key]!);
+    }, uow);
+  }
+
   inferControlPoints(i: number) {
     const before = i === 0 ? this.start.position : this.waypoints[i - 1].point;
     const after = i === this.waypoints.length - 1 ? this.end.position : this.waypoints[i + 1].point;
@@ -495,7 +507,7 @@ export class DiagramEdge
 
   // TODO: Add assertions for lookups
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
-    this.#props = snapshot.props as NodeProps;
+    this.#props = snapshot.props as EdgeProps;
     this.#highlights = [];
     this.#start = Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup);
     this.#end = Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup);

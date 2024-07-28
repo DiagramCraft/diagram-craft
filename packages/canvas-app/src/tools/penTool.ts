@@ -51,7 +51,7 @@ export class PenTool extends AbstractTool {
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
         this.diagram,
         this.diagram.layers.active,
-        { shapeGenericPath: { path: initialPath } },
+        { custom: { genericPath: { path: initialPath } } },
         {}
       );
 
@@ -133,9 +133,7 @@ export class PenTool extends AbstractTool {
     const scaledPath = PathUtils.scalePath(this.path, bounds, UNIT_BOUNDS);
 
     const uow = new UnitOfWork(this.diagram);
-    this.node!.updateProps(p => {
-      p.shapeGenericPath!.path = scaledPath.asSvgPath();
-    }, uow);
+    this.node!.updateCustomProps('genericPath', p => (p.path = scaledPath.asSvgPath()), uow);
     this.node!.setBounds(bounds, uow);
     uow.commit();
   }

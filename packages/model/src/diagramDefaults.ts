@@ -1,4 +1,4 @@
-import { DeepPartial, DeepReadonly } from '@diagram-craft/utils/types';
+import { DeepPartial, DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { NodePropsForRendering } from './diagramNode';
 import { EdgePropsForRendering } from './diagramEdge';
@@ -27,8 +27,6 @@ const createDefaultsProxy = <T extends object>(target: DeepPartial<T>, path?: st
       throw new Error('defaults are immutable');
     }
   });
-
-type FilterNotStartingWith<B, P extends string> = B extends `${P}${infer _X}` ? never : B;
 
 export const DefaultStyles = {
   node: {
@@ -94,10 +92,7 @@ const _elementDefaults: Pick<ElementPropsForRendering, 'geometry' | 'fill' | 'sh
     }
   };
 
-const _nodeDefaults: Omit<
-  Pick<NodePropsForRendering, FilterNotStartingWith<keyof NodePropsForRendering, 'shape'>>,
-  'labelForEdgeId' | 'name'
-> = {
+const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'custom'> = {
   ..._elementDefaults,
 
   effects: {
@@ -146,10 +141,7 @@ const _nodeDefaults: Omit<
   }
 };
 
-const _edgeDefaults: Pick<
-  EdgePropsForRendering,
-  FilterNotStartingWith<keyof EdgePropsForRendering, 'shape'>
-> = {
+const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape'> = {
   ..._elementDefaults,
   type: 'straight',
   arrow: {
@@ -179,24 +171,34 @@ const _edgeDefaults: Pick<
   }
 };
 
-export function registerNodeDefaults<K extends keyof NodeProps>(k: K, v: NodePropsForRendering[K]) {
+export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
+  k: K,
+  v: DeepRequired<CustomNodeProps[K]>
+) {
   // @ts-expect-error
-  _nodeDefaults[k] = v;
+  _nodeDefaults.custom ??= {};
+  // @ts-expect-error
+  _nodeDefaults['custom'][k] = v;
 
   // TODO: Maybe we can use a Proxy here to make it immutable and more performant
 
   // @ts-ignore
-  return (d: NodeProps[K]) => deepMerge({}, v, d);
+  return (d: CustomNodeProps[K]) => deepMerge({}, v, d);
 }
 
-export function registerEdgeDefaults<K extends keyof EdgeProps>(k: K, v: EdgePropsForRendering[K]) {
+export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
+  k: K,
+  v: DeepRequired<CustomEdgeProps[K]>
+) {
   // @ts-expect-error
-  _edgeDefaults[k] = v;
+  _edgeDefaults.custom ??= {};
+  // @ts-expect-error
+  _edgeDefaults['custom'][k] = v;
 
   // TODO: Maybe we can use a Proxy here to make it immutable and more performant
 
   // @ts-ignore
-  return (d: EdgeProps[K]) => deepMerge({}, v, d);
+  return (d: CustomEdgeProps[K]) => deepMerge({}, v, d);
 }
 
 export const elementDefaults: DeepReadonly<ElementProps> =
@@ -206,5 +208,6 @@ export const nodeDefaults: NodePropsForRendering =
   createDefaultsProxy<NodePropsForRendering>(_nodeDefaults);
 
 export const edgeDefaults: EdgePropsForRendering = createDefaultsProxy<EdgePropsForRendering>(
+  // @ts-ignore
   deepMerge<EdgePropsForRendering>({}, nodeDefaults, _edgeDefaults)
 );

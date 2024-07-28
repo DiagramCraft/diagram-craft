@@ -214,7 +214,7 @@ export class EditablePath {
     // Raw path and raw bounds represent the path in the original unit coordinate system,
     // but since waypoints have been moved, some points may lie outside the [-1, 1] range
     const rawPath = PathBuilder.fromString(
-      this.node.renderProps.shapeGenericPath?.path ?? this.originalSvgPath
+      this.node.renderProps.custom.genericPath?.path ?? this.originalSvgPath
     ).getPaths();
     const rawBounds = rawPath.bounds();
 
@@ -239,18 +239,16 @@ export class EditablePath {
   }
 
   public commitToNode(uow: UnitOfWork) {
-    this.node.updateProps(p => {
-      p.shapeGenericPath ??= {};
-      p.shapeGenericPath.path = this.getPath('as-stored').asSvgPath();
-    }, uow);
+    this.node.updateCustomProps(
+      'genericPath',
+      p => (p.path = this.getPath('as-stored').asSvgPath()),
+      uow
+    );
 
     // As this reads the genericPath.path, we have to first set the path provisionally -
     // ... see code above
     const { path, bounds } = this.resizePathToUnitLCS();
-    this.node.updateProps(p => {
-      p.shapeGenericPath ??= {};
-      p.shapeGenericPath.path = path.asSvgPath();
-    }, uow);
+    this.node.updateCustomProps('genericPath', p => (p.path = path.asSvgPath()), uow);
     this.node.setBounds(bounds, uow);
   }
 
