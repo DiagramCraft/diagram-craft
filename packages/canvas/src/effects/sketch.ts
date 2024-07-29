@@ -15,6 +15,7 @@ import { Random } from '@diagram-craft/utils/random';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { round } from '@diagram-craft/utils/math';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { parseSvgPath } from '@diagram-craft/geometry/svgPathUtils';
 
 export class SketchPathRenderer implements PathRenderer {
   render(node: DiagramElement, path: StyledPath): RenderedStyledPath[] {
@@ -106,15 +107,13 @@ const calculateHachureLines = (
   return dest;
 };
 
-// TODO: Add unit tests to make sure all of ARROW_SHAPES can be parsed
 export const parseArrowSvgPath = (path: string): Path[] => {
   const dest: [Point, PathSegment[]][] = [];
   let segments: PathSegment[] = [];
 
   let startPoint: Point | undefined = undefined;
   let point: Point | undefined = undefined;
-  for (const s of path.split('\n')) {
-    const rs = s.split(/,|\s/);
+  for (const rs of parseSvgPath(path)) {
     if (rs[0] === 'M') {
       point = { x: Number(rs[1]), y: Number(rs[2]) };
       startPoint = point;
