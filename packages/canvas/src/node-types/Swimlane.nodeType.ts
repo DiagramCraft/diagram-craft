@@ -205,6 +205,9 @@ class SwimlaneComponent extends BaseNodeComponent {
     const path = boundary.singularPath();
     const svgPath = path.asSvgPath();
 
+    const nodeProps = props.nodeProps;
+    const shapeProps = nodeProps.custom.swimlane;
+
     builder.noBoundaryNeeded();
     builder.add(
       svg.path({
@@ -223,9 +226,9 @@ class SwimlaneComponent extends BaseNodeComponent {
       })
     );
 
-    if (props.nodeProps.custom.swimlane.fill && props.nodeProps.fill.enabled !== false) {
+    if (shapeProps.fill && nodeProps.fill.enabled !== false) {
       builder.boundaryPath(boundary.all(), {
-        fill: props.nodeProps.fill,
+        fill: nodeProps.fill,
         stroke: { enabled: false }
       });
     }
@@ -241,27 +244,22 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     const pathBuilder = new PathBuilder();
 
-    if (props.nodeProps.custom.swimlane.outerBorder !== false) {
-      const nodeProps = props.nodeProps;
+    if (shapeProps.outerBorder !== false) {
       PathBuilderHelper.rect(pathBuilder, {
         ...props.node.bounds,
-        y:
-          props.node.bounds.y +
-          (nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0),
-        h:
-          props.node.bounds.h -
-          (nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0)
+        y: props.node.bounds.y + (shapeProps.title ? shapeProps.titleSize : 0),
+        h: props.node.bounds.h - (shapeProps.title ? shapeProps.titleSize : 0)
       });
     }
 
     const bounds = props.node.bounds;
 
     let startY = bounds.y;
-    if (props.nodeProps.custom.swimlane.title) {
-      const titleSize = props.nodeProps.custom.swimlane.titleSize;
+    if (shapeProps.title) {
+      const titleSize = shapeProps.titleSize;
       startY += titleSize;
 
-      if (props.nodeProps.custom.swimlane.titleBorder !== false) {
+      if (shapeProps.titleBorder !== false) {
         const titlePathBuilder = new PathBuilder();
         titlePathBuilder.moveTo(Point.of(bounds.x, startY));
         titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
@@ -269,21 +267,21 @@ class SwimlaneComponent extends BaseNodeComponent {
         titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
 
         builder.path(titlePathBuilder.getPaths().all(), {
-          ...props.nodeProps,
-          stroke: !props.nodeProps.stroke.enabled
+          ...nodeProps,
+          stroke: !nodeProps.stroke.enabled
             ? { enabled: false, color: 'transparent' }
-            : props.nodeProps.stroke,
-          fill: props.nodeProps.fill.enabled !== false ? props.nodeProps.fill : {}
+            : nodeProps.stroke,
+          fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
         });
       }
 
-      builder.text(this, '1', props.node.getText(), props.nodeProps.text, {
+      builder.text(this, '1', props.node.getText(), nodeProps.text, {
         ...bounds,
         h: titleSize
       });
     }
 
-    if (props.nodeProps.custom.swimlane.horizontalBorder !== false) {
+    if (shapeProps.horizontalBorder !== false) {
       let y = startY;
       const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
       for (let i = 0; i < sortedChildren.length - 1; i++) {
@@ -297,9 +295,10 @@ class SwimlaneComponent extends BaseNodeComponent {
     }
 
     builder.path(pathBuilder.getPaths().all(), {
-      stroke: !props.nodeProps.stroke.enabled
+      ...nodeProps,
+      stroke: !nodeProps.stroke.enabled
         ? { enabled: false, color: 'transparent' }
-        : props.nodeProps.stroke,
+        : nodeProps.stroke,
       fill: {
         enabled: false,
         color: 'transparent'
