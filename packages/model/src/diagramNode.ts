@@ -168,10 +168,15 @@ export class DiagramNode
       s => s.id === this.#metadata.textStyle
     )?.props;
 
+    const parentProps: Partial<NodeProps> = this.#parent
+      ? makeWriteable(this.#parent.editProps)
+      : {};
+
     const propsForEditing = deepMerge<NodeProps>(
       {},
       styleProps ?? {},
       textStyleProps ?? {},
+      parentProps,
       this.#props
     ) as DeepRequired<NodeProps>;
 
