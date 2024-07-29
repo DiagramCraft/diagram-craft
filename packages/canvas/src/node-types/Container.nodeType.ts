@@ -14,15 +14,36 @@ import { largest } from '@diagram-craft/utils/array';
 import { assert } from '@diagram-craft/utils/assert';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
+import { isEnum } from '@diagram-craft/utils/types';
+
+type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
+function assertIsContainerResize(value: string): asserts value is ContainerResize {
+  assert.true(isEnum(value, ['none', 'shrink', 'grow', 'both']));
+}
+
+type ChildResize = 'fixed' | 'scale' | 'fill';
+function assertIsChildResize(value: string): asserts value is ChildResize {
+  assert.true(isEnum(value, ['fixed', 'scale', 'fill']));
+}
+
+type LayoutType = 'manual' | 'horizontal' | 'vertical';
+function assertIsLayoutType(value: string): asserts value is LayoutType {
+  assert.true(isEnum(value, ['manual', 'horizontal', 'vertical']));
+}
+
+type GapType = 'between' | 'around';
+function assertIsGapType(value: string): asserts value is GapType {
+  assert.true(isEnum(value, ['between', 'around']));
+}
 
 declare global {
   interface CustomNodeProps {
     container?: {
-      containerResize?: 'none' | 'shrink' | 'grow' | 'both';
-      childResize?: 'fixed' | 'scale' | 'fill';
-      layout?: 'manual' | 'horizontal' | 'vertical';
+      containerResize?: ContainerResize;
+      childResize?: ChildResize;
+      layout?: LayoutType;
       gap?: number;
-      gapType?: 'between' | 'around';
+      gapType?: GapType;
     };
   }
 }
@@ -315,8 +336,8 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'both', label: 'Both' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          node.updateCustomProps('container', props => (props.containerResize = value as any), uow);
+          assertIsContainerResize(value);
+          node.updateCustomProps('container', props => (props.containerResize = value), uow);
         }
       },
       {
@@ -330,8 +351,8 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'vertical', label: 'Vertical' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          node.updateCustomProps('container', props => (props.layout = value as any), uow);
+          assertIsLayoutType(value);
+          node.updateCustomProps('container', props => (props.layout = value), uow);
         }
       },
       {
@@ -354,8 +375,8 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'around', label: 'Around' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          node.updateCustomProps('container', props => (props.gapType = value as any), uow);
+          assertIsGapType(value);
+          node.updateCustomProps('container', props => (props.gapType = value), uow);
         }
       },
       {
@@ -369,8 +390,8 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
           { value: 'fill', label: 'Fill' }
         ],
         onChange: (value: string, uow: UnitOfWork) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          node.updateCustomProps('container', props => (props.childResize = value as any), uow);
+          assertIsChildResize(value);
+          node.updateCustomProps('container', props => (props.childResize = value), uow);
         }
       }
     ];

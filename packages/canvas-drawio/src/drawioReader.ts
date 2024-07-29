@@ -129,10 +129,8 @@ export const shapeParsers: Record<string, ShapeParser> = {
 };
 
 const getParser = (shape: string | undefined): ShapeParser | undefined =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shapeParsers[shape as unknown as any] ??
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  shapeParsers[shape?.split('.').slice(0, -1).join('.') as unknown as any];
+  shapeParsers[shape as keyof ShapeParser] ??
+  shapeParsers[shape?.split('.').slice(0, -1).join('.') as keyof ShapeParser];
 
 type Loader = (
   registry: NodeDefinitionRegistry,

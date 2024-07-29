@@ -129,6 +129,12 @@ const HTML5Clipboard: Clipboard = {
   }
 };
 
+declare global {
+  interface HTMLElement {
+    _diagramCraftClipboard?: string;
+  }
+}
+
 /**
  * The idea here is to use a hidden textarea as the source and target of clipboard operations.
  * As such, it is limited to text payloads. Similar to the HTML5Clipboard, special handling
@@ -148,8 +154,7 @@ const TextareaClipboard: Clipboard = {
         let content = $clipboard.value;
 
         if (content.trim() === '') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          content = (document.body as any)._diagramCraftClipboard;
+          content = document.body._diagramCraftClipboard ?? '';
         }
 
         if (content.startsWith(PREFIX)) {
@@ -186,8 +191,7 @@ const TextareaClipboard: Clipboard = {
 
     document.execCommand(mode);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (document.body as any)._diagramCraftClipboard = $clipboard.value;
+    document.body._diagramCraftClipboard = $clipboard.value;
   }
 };
 

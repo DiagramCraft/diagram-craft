@@ -222,10 +222,6 @@ export class SvgTextHelper {
         inlineElement.ascent = maxMetrics.actualBoundingBoxAscent;
         inlineElement.descent = maxMetrics.actualBoundingBoxDescent;
 
-        if (debug) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (inlineElement as any).font = context.font;
-        }
         // TODO: Fix gap calculation
       }
     }

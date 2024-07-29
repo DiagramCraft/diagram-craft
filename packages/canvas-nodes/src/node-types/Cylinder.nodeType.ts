@@ -17,9 +17,16 @@ import { Anchor } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
 
+type Direction = 'north' | 'south' | 'east' | 'west';
+function assertDirection(value: string): asserts value is Direction {
+  if (!['north', 'south', 'east', 'west'].includes(value)) {
+    throw new Error(`Invalid direction: ${value}`);
+  }
+}
+
 type ExtraProps = {
   size?: number;
-  direction?: 'north' | 'south' | 'east' | 'west';
+  direction?: Direction;
 };
 
 declare global {
@@ -65,8 +72,8 @@ const Direction = {
   }),
 
   set: (value: string, node: DiagramNode, uow: UnitOfWork) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    node.updateCustomProps('cylinder', props => (props.direction = value as any), uow);
+    assertDirection(value);
+    node.updateCustomProps('cylinder', props => (props.direction = value), uow);
   }
 };
 

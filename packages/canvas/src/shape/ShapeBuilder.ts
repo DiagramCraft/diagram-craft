@@ -87,8 +87,7 @@ export class ShapeBuilder {
 
   // TODO: Maybe we can pass Component<any> in the constructor instead
   text(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cmp: Component<any>,
+    cmp: Component<unknown>,
     id: string = '1',
     // TODO: Do we really need to pass text if we have the id and the node itself
     text?: string,

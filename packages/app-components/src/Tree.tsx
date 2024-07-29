@@ -12,8 +12,7 @@ import styles from './Tree.module.css';
 
 const isReactElement = (
   element: ReactNode
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): element is ReactElement<any, JSXElementConstructor<any>> =>
+): element is ReactElement<{ children?: ReactNode }, JSXElementConstructor<unknown>> =>
   element !== null && typeof element === 'object' && 'props' in element;
 
 type TreeContextType = {

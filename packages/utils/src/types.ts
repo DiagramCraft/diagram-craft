@@ -25,3 +25,8 @@ export const tag = <T extends string>(type: T, val: unknown): TaggedType<T, unkn
   _type: type,
   _val: val
 });
+
+export const isEnum = <T extends string>(o: unknown, values: T[]): o is T => {
+  if (typeof o !== 'string' || !values.includes(o as T)) return false;
+  return true;
+};
