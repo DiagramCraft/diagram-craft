@@ -159,7 +159,7 @@ export class DiagramNode
 
   /* Props *************************************************************************************************** */
 
-  private populatePropsCache() {
+  protected populatePropsCache() {
     const styleProps = this.diagram.document.styles.nodeStyles.find(
       s => s.id === this.#metadata.style
     )?.props;
@@ -184,6 +184,12 @@ export class DiagramNode
 
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);
+
+    for (const child of this.#children) {
+      if (isNode(child)) {
+        child.populatePropsCache();
+      }
+    }
 
     return {
       forEditing: propsForEditing,
