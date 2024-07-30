@@ -62,7 +62,6 @@ export const defaultNodeRegistry = () => {
     texts: { text: 'Text' },
     size: { w: 25, h: 10 },
     metadata: {
-      // TODO: It seems this is not respected properly
       style: DefaultStyles.node.text
     },
     props: () => ({

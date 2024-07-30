@@ -8,6 +8,7 @@ import { deserializeDiagramElements } from '@diagram-craft/model/serialization/d
 import { Extent } from '@diagram-craft/geometry/extent';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 type ElementsDraggable = {
   elements: Array<SerializedElement>;
@@ -46,8 +47,12 @@ export const canvasDropHandler = ($d: Diagram) => {
     droppedElements.forEach(e => {
       if (isNode(e)) {
         e.updateMetadata(meta => {
-          meta.style = $d.document.styles.activeNodeStylesheet.id;
-          meta.textStyle = $d.document.styles.activeTextStylesheet.id;
+          if (meta.style === DefaultStyles.node.default) {
+            meta.style = $d.document.styles.activeNodeStylesheet.id;
+          }
+          if (meta.textStyle === DefaultStyles.text.default) {
+            meta.textStyle = $d.document.styles.activeTextStylesheet.id;
+          }
         }, uow);
       } else if (isEdge(e)) {
         e.updateMetadata(meta => (meta.style = $d.document.styles.activeEdgeStylesheet.id), uow);
