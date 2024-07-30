@@ -20,7 +20,7 @@ import { round } from '@diagram-craft/utils/math';
 import { Anchor, AnchorStrategy } from '@diagram-craft/model/anchor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
-type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
+type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
 };
 
@@ -31,12 +31,14 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   public readonly type: string;
   public readonly component: NodeShapeConstructor<this>;
 
-  // @ts-ignore
-  protected constructor(type: string, component: NodeShapeConstructor<this>);
-  // @ts-ignore
-  protected constructor(type: string, name: string, component: NodeShapeConstructor<this>);
-  // eslint-disable-next-line
-  protected constructor(...arr: any[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected constructor(type: string, component: NodeShapeConstructor<any>);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected constructor(type: string, name: string, component: NodeShapeConstructor<any>);
+  protected constructor(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...arr: [string, NodeShapeConstructor<any>] | [string, string, NodeShapeConstructor<any>]
+  ) {
     if (arr.length === 2) {
       this.type = arr[0];
       this.name = '#unnamed';
@@ -127,7 +129,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return pb.getPaths();
   }
 
-  getCustomProperties(_node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(_node: DiagramNode): Array<CustomPropertyDefinition> {
     return [];
   }
 
@@ -191,10 +193,13 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     this.layoutChildren(node, uow);
   }
 
-  layoutChildren(node: DiagramNode, uow: UnitOfWork): void {
+  protected layoutChildren(node: DiagramNode, uow: UnitOfWork): void {
     for (const child of node.children) {
       if (isNode(child)) {
-        child.getDefinition().layoutChildren(child, uow);
+        const def = child.getDefinition();
+        if (def instanceof ShapeNodeDefinition) {
+          def.layoutChildren(child, uow);
+        }
       }
     }
   }

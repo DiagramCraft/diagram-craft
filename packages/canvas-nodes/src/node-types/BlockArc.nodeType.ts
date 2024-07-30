@@ -199,7 +199,7 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [InnerRadius.definition(node), StartAngle.definition(node), EndAngle.definition(node)];
   }
 }

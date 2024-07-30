@@ -322,7 +322,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
-  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
         id: 'containerResize',

@@ -23,8 +23,6 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import { EdgeComponentProps } from './BaseEdgeComponent';
 import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
-import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
-import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
 import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
 import { Zoom } from './zoom';
 
@@ -55,10 +53,7 @@ export type BaseShapeBuildShapeProps = {
 } & Context;
 
 export class BaseNodeComponent<
-  T extends {
-    getBoundingPathBuilder(node: DiagramNode): PathBuilder;
-    supports(capability: NodeCapability): boolean;
-  } = ShapeNodeDefinition
+  T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'supports'> = ShapeNodeDefinition
 > extends Component<NodeComponentProps> {
   constructor(protected readonly def: T) {
     super();

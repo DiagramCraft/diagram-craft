@@ -38,7 +38,8 @@ export const NodeTablePropertiesPanel = (props: Props) => {
   }
 
   const def: EdgeDefinition | NodeDefinition = element.getDefinition();
-  const customProperties: Array<CustomPropertyDefinition> = def.getCustomProperties(element);
+  const customProperties: Array<CustomPropertyDefinition> =
+    def.getCustomPropertyDefinitions(element);
 
   if (Object.keys(customProperties).length === 0) {
     return <div></div>;

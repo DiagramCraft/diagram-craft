@@ -26,7 +26,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
     super('parallelogram', 'Parallelogram', ParallelogramComponent);
   }
 
-  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
         id: 'slant',

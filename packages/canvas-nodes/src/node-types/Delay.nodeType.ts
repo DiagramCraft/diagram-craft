@@ -15,7 +15,7 @@ export class DelayNodeDefinition extends ShapeNodeDefinition {
     super('delay', 'Delay', DelayComponent);
   }
 
-  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
         id: 'radius',

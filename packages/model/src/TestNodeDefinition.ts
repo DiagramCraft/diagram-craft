@@ -35,7 +35,7 @@ export class TestNodeDefinition implements NodeDefinition {
     return new PathBuilder();
   }
 
-  getCustomProperties(_node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(_node: DiagramNode): Array<CustomPropertyDefinition> {
     return [];
   }
 
@@ -64,6 +64,4 @@ export class TestNodeDefinition implements NodeDefinition {
   supports(_capability: NodeCapability): boolean {
     return false;
   }
-
-  layoutChildren(_node: DiagramNode, _uow: UnitOfWork): void {}
 }

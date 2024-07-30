@@ -202,7 +202,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [Notch.definition(node), ArrowControlX.definition(node), ArrowControlY.definition(node)];
   }
 }

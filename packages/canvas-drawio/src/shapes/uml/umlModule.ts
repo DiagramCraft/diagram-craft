@@ -104,7 +104,7 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [JettyWidth.definition(node), JettyHeight.definition(node)];
   }
 }

@@ -54,7 +54,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
 
   if (element instanceof DiagramNode) {
     def = element.getDefinition();
-    customProperties = def.getCustomProperties(element);
+    customProperties = def.getCustomPropertyDefinitions(element);
   } else if (element instanceof DiagramEdge) {
     def = element.getDefinition();
     customProperties = def.getCustomProperties(element);

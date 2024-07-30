@@ -27,7 +27,7 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
     super('trapetzoid', 'Trapetzoid', TrapetzoidComponent);
   }
 
-  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
         id: 'slantLeft',

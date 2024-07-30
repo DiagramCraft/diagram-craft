@@ -46,7 +46,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
         id: 'numberOfSides',

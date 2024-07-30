@@ -39,7 +39,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getCustomProperties(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
         id: 'radius',

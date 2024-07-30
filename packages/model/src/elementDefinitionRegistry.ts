@@ -57,14 +57,12 @@ export interface NodeDefinition {
   name: string;
 
   supports(capability: NodeCapability): boolean;
-  getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition>;
+  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition>;
 
   getBoundingPath(node: DiagramNode): CompoundPath;
 
   // This returns anchors in local coordinates [0-1], [0-1]
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
-
-  layoutChildren(node: DiagramNode, uow: UnitOfWork): void;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
   onTransform(
