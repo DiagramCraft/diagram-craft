@@ -9,7 +9,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -25,12 +24,6 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
     pathBuilder.lineTo(Point.of(-1, 1));
 
     return pathBuilder;
-  }
-
-  getDefaultMetadata(_mode: 'picker' | 'canvas'): ElementMetadata {
-    return {
-      style: DefaultStyles.node.text
-    };
   }
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {

@@ -7,6 +7,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
   interface Tools {
@@ -43,7 +44,9 @@ export class TextTool extends AbstractTool {
       this.diagram,
       this.diagram.layers.active,
       nodeDef.getDefaultProps('canvas'),
-      nodeDef.getDefaultMetadata('canvas'),
+      {
+        style: DefaultStyles.node.text
+      },
       {
         text: 'Text'
       }

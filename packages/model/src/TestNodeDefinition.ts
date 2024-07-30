@@ -44,10 +44,6 @@ export class TestNodeDefinition implements NodeDefinition {
     return [];
   }
 
-  getDefaultMetadata(_mode: 'picker' | 'canvas'): ElementMetadata {
-    return {};
-  }
-
   getDefaultProps(_mode: 'picker' | 'canvas'): NodePropsForEditing {
     return {};
   }

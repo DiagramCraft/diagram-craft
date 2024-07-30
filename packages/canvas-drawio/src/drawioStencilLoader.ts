@@ -81,7 +81,7 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
           ...def.getDefaultProps('picker'),
           ...drawio.props
         },
-        def.getDefaultMetadata('picker')
+        {}
       );
 
       const size = def.getDefaultConfig(n).size;

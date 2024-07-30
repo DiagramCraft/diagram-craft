@@ -20,7 +20,6 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor, AnchorStrategy } from '@diagram-craft/model/anchor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
-import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition = ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -135,12 +134,6 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getCustomProperties(_node: DiagramNode): Array<CustomPropertyDefinition> {
     return [];
-  }
-
-  getDefaultMetadata(_mode: 'picker' | 'canvas'): ElementMetadata {
-    return {
-      style: this.name === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default
-    };
   }
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {

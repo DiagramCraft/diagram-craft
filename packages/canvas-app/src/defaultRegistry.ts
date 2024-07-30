@@ -36,6 +36,7 @@ import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlan
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import stencils from './defaultStencils.yaml';
 import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
+import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 export const defaultNodeRegistry = () => {
   const reg = new NodeDefinitionRegistry();
@@ -49,7 +50,10 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, defaults, new RoundedRectNodeDefinition());
   registerStencil(reg, defaults, new CircleNodeDefinition());
   registerStencil(reg, defaults, new TextNodeDefinition(), {
-    texts: { text: 'Text' }
+    texts: { text: 'Text' },
+    metadata: {
+      style: DefaultStyles.node.text
+    }
   });
   registerStencil(reg, defaults, new StarNodeDefinition());
   registerStencil(reg, defaults, new RegularPolygonNodeDefinition());
