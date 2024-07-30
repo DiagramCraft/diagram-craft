@@ -27,6 +27,7 @@ stencils:
             text:
               fontSize: 12
               font: Helvetica
+              bold: false
               lineHeight: 0.97
               top: 7
               bottom: 7
@@ -77,6 +78,7 @@ stencils:
             text:
               fontSize: 12
               font: Helvetica
+              bold: false
               lineHeight: 0.97
               top: 7
               bottom: 7
