@@ -25,10 +25,6 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
 
     return pathBuilder;
   }
-
-  getDefaultConfig(): { size: Extent } {
-    return { size: { w: 25, h: 10 } };
-  }
 }
 
 class TextComponent extends BaseNodeComponent {

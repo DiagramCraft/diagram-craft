@@ -6,7 +6,6 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
@@ -30,13 +29,12 @@ export class TextTool extends AbstractTool {
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
     const nodeType = 'text';
-    const nodeDef = this.diagram.document.nodeDefinitions.get(nodeType);
 
     const nd = new DiagramNode(
       newid(),
       nodeType,
       {
-        w: 10,
+        w: 25,
         h: 10,
         ...this.diagram.viewBox.toDiagramPoint(point),
         r: 0
@@ -66,14 +64,6 @@ export class TextTool extends AbstractTool {
       {
         text: 'Text'
       }
-    );
-
-    nd.setBounds(
-      {
-        ...nd.bounds,
-        ...nodeDef.getDefaultConfig(nd).size
-      },
-      UnitOfWork.immediate(this.diagram)
     );
 
     this.diagram.undoManager.addAndExecute(

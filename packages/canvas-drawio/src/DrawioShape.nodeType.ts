@@ -26,6 +26,7 @@ import { xNum } from './utils';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { coalesce } from '@diagram-craft/utils/strings';
 import { DrawioStencil } from './drawioStencilLoader';
+import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   interface CustomNodeProps {
@@ -161,6 +162,14 @@ const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
   }
 };
 
+export function assertDrawioShapeNodeDefinition(
+  def: NodeDefinition
+): asserts def is DrawioShapeNodeDefinition {
+  if (!(def instanceof DrawioShapeNodeDefinition)) {
+    throw new Error(`Expected DrawioShapeNodeDefinition, got ${def}`);
+  }
+}
+
 export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   constructor(
     key: string,
@@ -170,25 +179,15 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
     super(key, name, DrawioShapeComponent);
   }
 
-  getDefaultConfig(node: DiagramNode): { size: Extent } {
+  getSize(node: DiagramNode): Extent {
     const shape = parse(node, this.stencil);
 
-    if (!shape) return { size: { w: 100, h: 100 } };
+    if (!shape) return { w: 100, h: 100 };
 
     return {
-      size: {
-        w: xNum(shape, 'w', 100),
-        h: xNum(shape, 'h', 100)
-      }
+      w: xNum(shape, 'w', 100),
+      h: xNum(shape, 'h', 100)
     };
-  }
-
-  getDefaultAspectRatio(def: DiagramNode) {
-    const shape = parse(def, this.stencil);
-
-    if (!shape) return 1;
-
-    return xNum(shape, 'w', 100) / xNum(shape, 'h', 100);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

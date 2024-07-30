@@ -99,13 +99,4 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [Size.definition(node)];
   }
-
-  getDefaultConfig() {
-    return {
-      size: {
-        w: 35,
-        h: 100
-      }
-    };
-  }
 }

@@ -6,7 +6,6 @@ import {
   unitCoordinateSystem
 } from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
-import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import {
@@ -118,10 +117,6 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     throw new VerifyNotReached();
   }
 
-  getDefaultAspectRatio(_node: DiagramNode) {
-    return 1;
-  }
-
   getBoundingPath(node: DiagramNode): CompoundPath {
     const bnd = node.bounds;
 
@@ -134,10 +129,6 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getCustomProperties(_node: DiagramNode): Array<CustomPropertyDefinition> {
     return [];
-  }
-
-  getDefaultConfig(node: DiagramNode): { size: Extent } {
-    return { size: { w: 100 * this.getDefaultAspectRatio(node), h: 100 } };
   }
 
   requestFocus(node: DiagramNode, selectAll = true): void {

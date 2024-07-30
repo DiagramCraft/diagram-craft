@@ -6,6 +6,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert } from '@diagram-craft/utils/assert';
 import { Box } from '@diagram-craft/geometry/box';
+import { assertDrawioShapeNodeDefinition } from './DrawioShape.nodeType';
 
 export type DrawioStencil = {
   key: string;
@@ -69,11 +70,13 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
     name: drawio.key,
     node: ($d: Diagram) => {
       const type = 'drawio';
+
       const def = $d.document.nodeDefinitions.get(type);
+      assertDrawioShapeNodeDefinition(def);
 
       const n = new DiagramNode(newid(), type, Box.unit(), $d, $d.layers.active, drawio.props, {});
 
-      const size = def.getDefaultConfig(n).size;
+      const size = def.getSize(n);
       n.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, UnitOfWork.immediate($d));
 
       return n;

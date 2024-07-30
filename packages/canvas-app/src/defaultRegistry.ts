@@ -60,7 +60,9 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, defaults, new CircleNodeDefinition());
   registerStencil(reg, defaults, new TextNodeDefinition(), {
     texts: { text: 'Text' },
+    size: { w: 25, h: 10 },
     metadata: {
+      // TODO: It seems this is not respected properly
       style: DefaultStyles.node.text
     },
     props: () => ({
@@ -86,11 +88,17 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, defaults, new DiamondNodeDefinition());
   registerStencil(reg, defaults, new HexagonNodeDefinition());
   registerStencil(reg, defaults, new TriangleNodeDefinition());
-  registerStencil(reg, defaults, new ProcessNodeDefinition());
+  registerStencil(reg, defaults, new ProcessNodeDefinition(), {
+    size: { w: 100, h: 60 }
+  });
   registerStencil(reg, defaults, new CylinderNodeDefinition());
-  registerStencil(reg, defaults, new CurlyBracketNodeDefinition());
+  registerStencil(reg, defaults, new CurlyBracketNodeDefinition(), {
+    size: { w: 35, h: 100 }
+  });
   registerStencil(reg, defaults, new BlockArcNodeDefinition());
-  registerStencil(reg, defaults, new CloudNodeDefinition());
+  registerStencil(reg, defaults, new CloudNodeDefinition(), {
+    size: { w: 100, h: 70 }
+  });
   registerStencil(reg, defaults, new StepNodeDefinition());
   registerStencil(reg, defaults, new LineNodeDefinition());
   registerStencil(reg, defaults, new DelayNodeDefinition());

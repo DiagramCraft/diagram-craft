@@ -79,10 +79,6 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  getDefaultConfig() {
-    return { size: { w: 100, h: 60 } };
-  }
-
   getCustomProperties(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [Size.definition(node)];
   }

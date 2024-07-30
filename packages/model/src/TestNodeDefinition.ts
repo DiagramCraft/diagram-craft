@@ -8,7 +8,6 @@ import { UnitOfWork } from './unitOfWork';
 import { DiagramElement } from './diagramElement';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
-import { Extent } from '@diagram-craft/geometry/extent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { round } from '@diagram-craft/utils/math';
@@ -32,20 +31,12 @@ export class TestNodeDefinition implements NodeDefinition {
     return [];
   }
 
-  getDefaultAspectRatio() {
-    return 1;
-  }
-
   getBoundingPathBuilder(_node: DiagramNode): PathBuilder {
     return new PathBuilder();
   }
 
   getCustomProperties(_node: DiagramNode): Array<CustomPropertyDefinition> {
     return [];
-  }
-
-  getDefaultConfig(): { size: Extent } {
-    return { size: { w: 100 * this.getDefaultAspectRatio(), h: 100 } };
   }
 
   onChildChanged(_node: DiagramNode, _uow: UnitOfWork): void {}

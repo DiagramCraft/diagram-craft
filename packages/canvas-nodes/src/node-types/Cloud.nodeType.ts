@@ -28,10 +28,4 @@ export class CloudNodeDefinition extends ShapeNodeDefinition {
 
     return pathBuilder;
   }
-
-  getDefaultConfig() {
-    return {
-      size: { w: 100, h: 70 }
-    };
-  }
 }

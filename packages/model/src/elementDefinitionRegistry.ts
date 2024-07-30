@@ -3,7 +3,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { DiagramEdge } from './diagramEdge';
 import { CompoundPath } from '@diagram-craft/geometry/pathBuilder';
-import { Extent } from '@diagram-craft/geometry/extent';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
@@ -62,14 +61,7 @@ export interface NodeDefinition {
 
   getBoundingPath(node: DiagramNode): CompoundPath;
 
-  // TODO: These are a bit weird, considering we allow for multiple registrations
-  //       of the same definition
-  getDefaultAspectRatio(node: DiagramNode): number;
-
-  // TODO: Remove this perhaps
-  getDefaultConfig(node: DiagramNode): { size: Extent };
-
-  // This returns anchors in diagram coordinates, i.e. rotated and translated
+  // This returns anchors in local coordinates [0-1], [0-1]
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork): void;
@@ -221,7 +213,6 @@ export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeP
 export const makeStencilNode =
   (type: string | NodeDefinition, opts?: MakeStencilNodeOpts) => ($d: Diagram) => {
     const typeId = isNodeDefinition(type) ? type.type : type;
-    const typeDef = $d.document.nodeDefinitions.get(typeId);
 
     const n = new DiagramNode(
       newid(),
@@ -237,7 +228,7 @@ export const makeStencilNode =
       opts?.texts
     );
 
-    const size = typeDef.getDefaultConfig(n).size;
+    const size = { w: 100, h: 100 };
 
     n.setBounds(
       Box.applyAspectRatio(
