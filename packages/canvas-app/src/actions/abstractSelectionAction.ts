@@ -2,7 +2,20 @@ import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 
 type MultipleType = 'single-only' | 'multiple-only' | 'both';
+
+export const MultipleType: Record<string, MultipleType> = {
+  SingleOnly: 'single-only',
+  MultipleOnly: 'multiple-only',
+  Both: 'both'
+};
+
 type ElementType = 'node' | 'edge' | 'both';
+
+export const ElementType: Record<string, ElementType> = {
+  Node: 'node',
+  Edge: 'edge',
+  Both: 'both'
+};
 
 export abstract class AbstractSelectionAction extends AbstractAction {
   protected constructor(

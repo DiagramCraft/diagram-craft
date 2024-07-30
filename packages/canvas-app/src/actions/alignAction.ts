@@ -1,5 +1,4 @@
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { AbstractSelectionAction } from './abstractSelectionAction';
+import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -26,38 +25,39 @@ export const alignActions: ActionMapFactory = (state: State) => ({
   ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical')
 });
 
+type Mode = 'top' | 'bottom' | 'right' | 'left' | 'center-vertical' | 'center-horizontal';
+
 export class AlignAction extends AbstractSelectionAction {
   constructor(
     protected readonly diagram: Diagram,
-    private readonly mode:
-      | 'top'
-      | 'bottom'
-      | 'right'
-      | 'left'
-      | 'center-vertical'
-      | 'center-horizontal'
+    private readonly mode: Mode
   ) {
-    super(diagram, 'multiple-only');
+    super(diagram, MultipleType.MultipleOnly, ElementType.Node);
   }
 
   execute(): void {
     const uow = new UnitOfWork(this.diagram, true);
 
     const first = this.diagram.selectionState.elements[0];
-    if (this.mode === 'top') {
-      this.alignY(first.bounds.y, 0, uow);
-    } else if (this.mode === 'bottom') {
-      this.alignY(first.bounds.y + first.bounds.h, 1, uow);
-    } else if (this.mode === 'center-horizontal') {
-      this.alignY(first.bounds.y + first.bounds.h / 2, 0.5, uow);
-    } else if (this.mode === 'left') {
-      this.alignX(first.bounds.x, 0, uow);
-    } else if (this.mode === 'right') {
-      this.alignX(first.bounds.x + first.bounds.w, 1, uow);
-    } else if (this.mode === 'center-vertical') {
-      this.alignX(first.bounds.x + first.bounds.w / 2, 0.5, uow);
-    } else {
-      VERIFY_NOT_REACHED();
+    switch (this.mode) {
+      case 'top':
+        this.alignY(first.bounds.y, 0, uow);
+        break;
+      case 'bottom':
+        this.alignY(first.bounds.y + first.bounds.h, 1, uow);
+        break;
+      case 'center-horizontal':
+        this.alignY(first.bounds.y + first.bounds.h / 2, 0.5, uow);
+        break;
+      case 'left':
+        this.alignX(first.bounds.x, 0, uow);
+        break;
+      case 'right':
+        this.alignX(first.bounds.x + first.bounds.w, 1, uow);
+        break;
+      case 'center-vertical':
+        this.alignX(first.bounds.x + first.bounds.w / 2, 0.5, uow);
+        break;
     }
 
     commitWithUndo(uow, `Align ${this.mode}`);
