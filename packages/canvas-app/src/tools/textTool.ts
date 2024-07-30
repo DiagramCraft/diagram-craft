@@ -43,7 +43,23 @@ export class TextTool extends AbstractTool {
       },
       this.diagram,
       this.diagram.layers.active,
-      nodeDef.getDefaultProps('canvas'),
+      // TODO: This is partially duplicated in defaultRegistry.ts
+      //       - perhaps make static member of Text.nodeType.ts
+      {
+        stroke: {
+          enabled: false
+        },
+        fill: {
+          enabled: false
+        },
+        text: {
+          align: 'left',
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0
+        }
+      },
       {
         style: DefaultStyles.node.text
       },

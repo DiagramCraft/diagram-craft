@@ -136,10 +136,6 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return [];
   }
 
-  getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
-    return {};
-  }
-
   getDefaultConfig(node: DiagramNode): { size: Extent } {
     return { size: { w: 100 * this.getDefaultAspectRatio(node), h: 100 } };
   }

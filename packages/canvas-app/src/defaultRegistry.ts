@@ -47,13 +47,37 @@ export const defaultNodeRegistry = () => {
   reg.register(new GroupNodeDefinition());
 
   registerStencil(reg, defaults, new RectNodeDefinition());
-  registerStencil(reg, defaults, new RoundedRectNodeDefinition());
+  registerStencil(reg, defaults, new RoundedRectNodeDefinition(), {
+    props: mode => ({
+      custom: {
+        roundedRect: {
+          // TODO: The mode switch doesn't work
+          radius: mode === 'picker' ? 20 : 10
+        }
+      }
+    })
+  });
   registerStencil(reg, defaults, new CircleNodeDefinition());
   registerStencil(reg, defaults, new TextNodeDefinition(), {
     texts: { text: 'Text' },
     metadata: {
       style: DefaultStyles.node.text
-    }
+    },
+    props: () => ({
+      stroke: {
+        enabled: false
+      },
+      fill: {
+        enabled: false
+      },
+      text: {
+        align: 'left',
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0
+      }
+    })
   });
   registerStencil(reg, defaults, new StarNodeDefinition());
   registerStencil(reg, defaults, new RegularPolygonNodeDefinition());

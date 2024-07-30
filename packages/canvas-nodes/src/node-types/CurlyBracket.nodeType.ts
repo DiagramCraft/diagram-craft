@@ -100,14 +100,6 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
     return [Size.definition(node)];
   }
 
-  getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
-    return {
-      fill: {
-        enabled: false
-      }
-    };
-  }
-
   getDefaultConfig() {
     return {
       size: {

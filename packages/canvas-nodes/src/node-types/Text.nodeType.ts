@@ -26,25 +26,6 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
-    return {
-      // TODO: Remove all of this
-      stroke: {
-        enabled: false
-      },
-      fill: {
-        enabled: false
-      },
-      text: {
-        align: 'left',
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0
-      }
-    };
-  }
-
   getDefaultConfig(): { size: Extent } {
     return { size: { w: 25, h: 10 } };
   }
