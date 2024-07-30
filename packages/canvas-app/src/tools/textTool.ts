@@ -44,7 +44,9 @@ export class TextTool extends AbstractTool {
       this.diagram.layers.active,
       nodeDef.getDefaultProps('canvas'),
       nodeDef.getDefaultMetadata('canvas'),
-      nodeDef.getDefaultTexts('canvas')
+      {
+        text: 'Text'
+      }
     );
 
     nd.setBounds(

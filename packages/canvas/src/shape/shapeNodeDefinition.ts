@@ -14,7 +14,7 @@ import {
   NodeCapability,
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
@@ -145,10 +145,6 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodeProps {
     return {};
-  }
-
-  getDefaultTexts(_mode: 'picker' | 'canvas'): NodeTexts {
-    return { text: '' };
   }
 
   getDefaultConfig(node: DiagramNode): { size: Extent } {

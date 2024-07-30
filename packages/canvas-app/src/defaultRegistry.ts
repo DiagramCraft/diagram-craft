@@ -48,7 +48,9 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, defaults, new RectNodeDefinition());
   registerStencil(reg, defaults, new RoundedRectNodeDefinition());
   registerStencil(reg, defaults, new CircleNodeDefinition());
-  registerStencil(reg, defaults, new TextNodeDefinition());
+  registerStencil(reg, defaults, new TextNodeDefinition(), {
+    texts: { text: 'Text' }
+  });
   registerStencil(reg, defaults, new StarNodeDefinition());
   registerStencil(reg, defaults, new RegularPolygonNodeDefinition());
   registerStencil(reg, defaults, new ParallelogramNodeDefinition());

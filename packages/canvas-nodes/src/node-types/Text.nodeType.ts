@@ -7,7 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
@@ -50,10 +50,6 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
         bottom: 0
       }
     };
-  }
-
-  getDefaultTexts(_mode: 'picker' | 'canvas'): NodeTexts {
-    return { text: 'Text' };
   }
 
   getDefaultConfig(): { size: Extent } {

@@ -3,7 +3,7 @@ import {
   NodeCapability,
   NodeDefinition
 } from './elementDefinitionRegistry';
-import { DiagramNode, NodePropsForEditing, NodeTexts } from './diagramNode';
+import { DiagramNode, NodePropsForEditing } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramElement } from './diagramElement';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
@@ -50,10 +50,6 @@ export class TestNodeDefinition implements NodeDefinition {
 
   getDefaultProps(_mode: 'picker' | 'canvas'): NodePropsForEditing {
     return {};
-  }
-
-  getDefaultTexts(_mode: 'picker' | 'canvas'): NodeTexts {
-    return { text: '' };
   }
 
   getDefaultConfig(): { size: Extent } {

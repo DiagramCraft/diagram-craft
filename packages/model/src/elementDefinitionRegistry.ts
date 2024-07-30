@@ -67,7 +67,6 @@ export interface NodeDefinition {
   //       of the same definition
   getDefaultMetadata(mode: 'picker' | 'canvas'): ElementMetadata;
   getDefaultProps(mode: 'picker' | 'canvas'): NodePropsForEditing;
-  getDefaultTexts(mode: 'picker' | 'canvas'): NodeTexts;
   getDefaultAspectRatio(node: DiagramNode): number;
 
   // TODO: Remove this perhaps
@@ -239,7 +238,7 @@ export const makeStencilNode =
         ...(opts?.props?.('picker') ?? {})
       }),
       typeDef.getDefaultMetadata('picker'),
-      deepMerge(typeDef.getDefaultTexts('picker'), opts?.texts ?? {})
+      opts?.texts
     );
 
     const size = typeDef.getDefaultConfig(n).size;
