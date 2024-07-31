@@ -1,7 +1,7 @@
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 
-type MultipleType = 'single-only' | 'multiple-only' | 'both';
+export type MultipleType = 'single-only' | 'multiple-only' | 'both';
 
 export const MultipleType: Record<string, MultipleType> = {
   SingleOnly: 'single-only',
@@ -9,7 +9,7 @@ export const MultipleType: Record<string, MultipleType> = {
   Both: 'both'
 };
 
-type ElementType = 'node' | 'edge' | 'both';
+export type ElementType = 'node' | 'edge' | 'both';
 
 export const ElementType: Record<string, ElementType> = {
   Node: 'node',
