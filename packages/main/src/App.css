@@ -523,6 +523,10 @@ foreignObject {
   padding: 10px;
   color: var(--cmp-fg);
   border-bottom: 1px solid var(--primary-border);
+
+  &:has(> .cmp-toolbar) {
+    padding: 0 0.25rem 0.25rem 0.25rem;
+  }
 }
 
 .cmp-layer-list {

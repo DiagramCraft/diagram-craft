@@ -24,6 +24,7 @@ import { NodeTableCellDimensionsPanel } from './NodeTableCellDimensionsPanel';
 import { NodeAdvancedPropertiesPanel } from '../ObjectInfoToolWindow/NodeAdvancedPropertiesPanel';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { ElementAnchorsPanel } from '../ObjectInfoToolWindow/ElementAnchorsPanel';
+import { NodeTableToolbarPanel } from './NodeTableToolbarPanel';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -36,7 +37,7 @@ const TABS: Record<Type, TabType[]> = {
   'mixed': ['style', 'text', 'arrange'],
   'single-label-node': ['style', 'text'],
   'table': ['table', 'arrange', 'advanced'],
-  'table-cell': ['table', 'cell', 'text']
+  'table-cell': ['cell', 'text']
 };
 
 export const ObjectToolWindow = () => {
@@ -101,12 +102,12 @@ export const ObjectToolWindow = () => {
             )}
             {tabs.includes('table') && (
               <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'table'}>
-                Table
+                Style
               </Tabs.Trigger>
             )}
             {tabs.includes('cell') && (
               <Tabs.Trigger className="cmp-tool-tabs__tab-trigger util-vcenter" value={'cell'}>
-                Cell
+                Style
               </Tabs.Trigger>
             )}
             {tabs.includes('text') && (
@@ -131,9 +132,12 @@ export const ObjectToolWindow = () => {
             )}
           </Tabs.List>
 
-          {(type === 'table' || type === 'table-cell') && (
+          {type === 'table' && (
             <Tabs.Content value={'table'}>
               <Accordion.Root type="multiple" defaultValue={['custom', 'dimensions', 'stroke']}>
+                <NodeTableToolbarPanel />
+                <ElementStylesheetPanel type={'node'} />
+
                 <NodeTablePropertiesPanel />
                 <NodeTableDimensionsPanel />
                 <NodeTableStrokePanel />
@@ -143,6 +147,9 @@ export const ObjectToolWindow = () => {
           {type === 'table-cell' && (
             <Tabs.Content value={'cell'}>
               <Accordion.Root type="multiple" defaultValue={['fill', 'dimensions']}>
+                <NodeTableToolbarPanel />
+                <ElementStylesheetPanel type={'node'} />
+
                 <NodeFillPanel />
                 <NodeTableCellDimensionsPanel />
               </Accordion.Root>

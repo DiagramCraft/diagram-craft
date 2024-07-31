@@ -52,11 +52,7 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
   };
 
   return (
-    <ToolWindowPanel
-      mode={props.mode ?? 'accordion'}
-      title={'Row/Column Dimensions'}
-      id={'dimensions'}
-    >
+    <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Cell Dimensions'} id={'dimensions'}>
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Height:</div>
         <div className={'cmp-labeled-table__value'}>
