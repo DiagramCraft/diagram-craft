@@ -13,19 +13,6 @@ export const cloneAsWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> =>
 
 export const makeWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> => o as DeepWriteable<T>;
 
-/* Tagged type *********************************************************************************** */
-
-export type TaggedType<T extends string, V> = { _type: T; _val: V };
-
-export const isTaggedType = <T extends string, V>(o: unknown, type: T): o is TaggedType<T, V> =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (o as any)?._type === type;
-
-export const tag = <T extends string>(type: T, val: unknown): TaggedType<T, unknown> => ({
-  _type: type,
-  _val: val
-});
-
 export const isEnum = <T extends string>(o: unknown, values: T[]): o is T => {
   if (typeof o !== 'string' || !values.includes(o as T)) return false;
   return true;
