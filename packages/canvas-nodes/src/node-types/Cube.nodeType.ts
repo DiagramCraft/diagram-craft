@@ -52,6 +52,7 @@ const Size = {
 export class CubeNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('cube', 'Cube', CubeNodeDefinition.Shape);
+    this.capabilities.rounding = false;
   }
 
   static Shape = class extends BaseNodeComponent<CubeNodeDefinition> {

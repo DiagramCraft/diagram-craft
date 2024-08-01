@@ -1,5 +1,5 @@
 import { PathRenderer, RenderedStyledPath, StyledPath } from '../shape/PathRenderer';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { CubicSegment, LineSegment, PathSegment } from '@diagram-craft/geometry/pathSegment';
 import { Line } from '@diagram-craft/geometry/line';
 import { Path } from '@diagram-craft/geometry/path';
@@ -9,6 +9,15 @@ import { Point } from '@diagram-craft/geometry/point';
 
 export class RoundingPathRenderer implements PathRenderer {
   render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {
+    if (isNode(el) && !el.getDefinition().supports('rounding')) {
+      return [
+        {
+          path: path.path.asSvgPath(),
+          style: path.style
+        }
+      ];
+    }
+
     const rounded = applyRounding(el.renderProps.effects.roundingAmount, path.path.segments);
     return [
       {

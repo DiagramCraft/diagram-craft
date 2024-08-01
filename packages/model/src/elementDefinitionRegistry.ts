@@ -20,6 +20,7 @@ import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 export type NodeCapability =
   | 'children'
   | 'fill'
+  | 'rounding'
   | 'select'
   | 'connect-to-boundary'
   | 'custom-anchors';

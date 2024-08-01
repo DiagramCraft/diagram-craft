@@ -111,27 +111,31 @@ export const NodeEffectsPanel = (props: Props) => {
             </Select.Root>
           </div>
 
-          <div className={'cmp-labeled-table__label'}>Rounding:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <input
-              type="checkbox"
-              checked={rounding.val}
-              onChange={() => {
-                rounding.set(!rounding.val);
-              }}
-            />
-          </div>
-          <div className={'cmp-labeled-table__label'}></div>
-          <div className={'cmp-labeled-table__value'}>
-            <Slider
-              value={round(roundingAmount.val)}
-              onChange={v => {
-                roundingAmount.set(v);
-              }}
-              unit={'px'}
-              max={200}
-            />
-          </div>
+          {$d.selectionState.nodes.some(e => e.getDefinition().supports('rounding')) && (
+            <>
+              <div className={'cmp-labeled-table__label'}>Rounding:</div>
+              <div className={'cmp-labeled-table__value'}>
+                <input
+                  type="checkbox"
+                  checked={rounding.val}
+                  onChange={() => {
+                    rounding.set(!rounding.val);
+                  }}
+                />
+              </div>
+              <div className={'cmp-labeled-table__label'}></div>
+              <div className={'cmp-labeled-table__value'}>
+                <Slider
+                  value={round(roundingAmount.val)}
+                  onChange={v => {
+                    roundingAmount.set(v);
+                  }}
+                  unit={'px'}
+                  max={200}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </ToolWindowPanel>
