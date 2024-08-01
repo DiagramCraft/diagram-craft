@@ -300,9 +300,10 @@ export class ShapeBuilder {
     );
 
     const joinedPaths: Array<{ path: string; style: Partial<CSSStyleDeclaration> }> = [];
-    for (let i = 0; i < renderedPaths[0].length; i++) {
+    const maxLength = renderedPaths.reduce((max, p) => Math.max(max, p.length), 0);
+    for (let i = 0; i < maxLength; i++) {
       joinedPaths.push({
-        path: renderedPaths.map(p => p[i].path).join(' '),
+        path: renderedPaths.map(p => p[i]?.path ?? '').join(' '),
         style: renderedPaths[0][i].style
       });
     }

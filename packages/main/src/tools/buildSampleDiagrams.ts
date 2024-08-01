@@ -353,7 +353,7 @@ const writeShape = (shape: string, y: number, layer: Layer, diagram: Diagram) =>
     UnitOfWork.immediate(diagram)
   );
   x += 110;
-  /*
+
   layer.addElement(
     new DiagramNode(
       newid(),
@@ -377,7 +377,7 @@ const writeShape = (shape: string, y: number, layer: Layer, diagram: Diagram) =>
       []
     ),
     UnitOfWork.immediate(diagram)
-  );*/
+  );
 };
 
 const shapesTestFile = async () => {

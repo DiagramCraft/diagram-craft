@@ -148,14 +148,14 @@ const documentFactory = () => {
 };
 
 const diagrams: Array<DiagramRef> = [
+  { url: '/sample/shapes.json' },
   { url: '/sample/simple.json' },
   { url: '/diagrams/test6.drawio' },
   { url: '/diagrams/uml.drawio' },
   { url: '/diagrams/test5.drawio' },
   { url: '/sample/snap-test.json' },
   { url: '/sample/test.json' },
-  { url: '/sample/arrows.json' },
-  { url: '/sample/shapes.json' }
+  { url: '/sample/arrows.json' }
 ];
 
 if (location.hash !== '') {
