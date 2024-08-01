@@ -1,32 +1,40 @@
-import { Component, createEffect } from '../component/component';
+import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { toInlineCSS, VNode } from '../component/vdom';
 import { CanvasState } from '../EditableCanvasComponent';
-import { Zoom } from './zoom';
-import { debounce } from '@diagram-craft/utils/debounce';
-import { ViewboxEvents } from '@diagram-craft/model/viewBox';
 
 const DEFAULT_MAJOR_COLOR = '#e7e5e4';
 const DEFAULT_MINOR_COLOR = '#f5f5f4';
 
 type Type = 'major' | 'minor';
 
-const circleAt = (xCoord: number, yCoord: number, type: Type, style: string, z: Zoom) => {
-  return svg.circle({
-    class: `svg-grid svg-grid--${type}`,
-    cx: xCoord,
-    cy: yCoord,
-    r: z.str(1),
-    style
-  });
+const crossAt = (xCoord: number, yCoord: number, type: Type, style: string) => {
+  return [
+    svg.line({
+      class: `svg-grid svg-grid--${type}`,
+      x1: xCoord - 1,
+      y1: yCoord,
+      x2: xCoord + 1,
+      y2: yCoord,
+      style
+    }),
+    svg.line({
+      class: `svg-grid svg-grid--${type}`,
+      x1: xCoord,
+      y1: yCoord - 1,
+      x2: xCoord,
+      y2: yCoord + 1,
+      style
+    })
+  ];
 };
 
 const hLine = (xCoord: number, yCoord: number, w: number, type: Type, style: string) => {
   return svg.line({
     class: `svg-grid svg-grid--${type}`,
-    x1: xCoord + 1,
+    x1: xCoord,
     y1: yCoord,
-    x2: xCoord + w - 1,
+    x2: xCoord + w,
     y2: yCoord,
     style
   });
@@ -36,34 +44,20 @@ const vLine = (xCoord: number, yCoord: number, h: number, type: Type, style: str
   return svg.line({
     class: `svg-grid svg-grid--${type}`,
     x1: xCoord,
-    y1: yCoord + 1,
+    y1: yCoord,
     x2: xCoord,
-    y2: yCoord + h - 1,
+    y2: yCoord + h,
     style
   });
 };
 
 export class GridComponent extends Component<CanvasState> {
-  debouncedRedraw = debounce(() => {
-    this.redraw();
-  }, 1000);
-
   render(props: CanvasState) {
     const diagram = props.diagram;
-    const z = new Zoom(diagram.viewBox.zoomLevel);
 
-    createEffect(() => {
-      const redrawIfNeeded = ({ type }: ViewboxEvents['viewbox']) => {
-        if (type === 'pan') return;
-        if (diagram.props.grid?.majorType === 'dots' || diagram.props.grid?.type === 'dots') {
-          this.debouncedRedraw();
-        }
-      };
-      diagram.viewBox.on('viewbox', redrawIfNeeded);
-      return () => {
-        diagram.viewBox.off('viewbox', redrawIfNeeded);
-      };
-    }, [diagram, props]);
+    if (diagram.props.grid?.enabled === false) {
+      return svg.g({});
+    }
 
     // Note: we don't need to listen to diagram change events here, because this is handled
     //       through a full redraw of EditableCanvas when diagram changes.
@@ -75,12 +69,11 @@ export class GridComponent extends Component<CanvasState> {
 
     const majorCount = diagram.props.grid?.majorCount ?? 4;
 
-    const rows = Math.floor(h / dy);
-    const cols = Math.floor(w / dx);
+    const patternWidth = dx * majorCount;
+    const patternHeight = dy * majorCount;
 
-    if (diagram.props.grid?.enabled === false) {
-      return svg.g({});
-    }
+    const rows = Math.floor(patternHeight / dy) + 1;
+    const cols = Math.floor(patternWidth / dx) + 1;
 
     const majorType = diagram.props.grid?.majorType ?? 'lines';
     const type = diagram.props.grid?.type ?? 'lines';
@@ -102,22 +95,16 @@ export class GridComponent extends Component<CanvasState> {
 
     if (type === 'lines') {
       for (let i = 0; i < rows; i++) {
-        const yCoord = i * dy + y;
-        if (yCoord >= y + h - 1) continue;
-        if (yCoord === y || yCoord === y + h - 1) continue;
-
+        const yCoord = i * dy;
         if (i % majorCount !== 0 || majorType !== 'lines') {
-          dest.push(hLine(x, yCoord, w, 'minor', minorStyleAsString));
+          dest.push(hLine(0, yCoord, patternWidth, 'minor', minorStyleAsString));
         }
       }
 
       for (let i = 0; i < cols; i++) {
-        const xCoord = i * dx + x;
-        if (xCoord >= x + w - 1) continue;
-        if (xCoord === x || xCoord === x + w - 1) continue;
-
+        const xCoord = i * dx;
         if (i % majorCount !== 0 || majorType !== 'lines') {
-          dest.push(vLine(xCoord, y, h, 'minor', minorStyleAsString));
+          dest.push(vLine(xCoord, 0, patternHeight, 'minor', minorStyleAsString));
         }
       }
     } else if (type === 'dots') {
@@ -128,29 +115,23 @@ export class GridComponent extends Component<CanvasState> {
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
-          dest.push(circleAt(xCoord, yCoord, 'minor', minorStyleAsString, z));
+          dest.push(...crossAt(xCoord, yCoord, 'minor', minorStyleAsString));
         }
       }
     }
 
     if (majorType === 'lines') {
       for (let i = 0; i < rows; i++) {
-        const yCoord = i * dy + y;
-        if (yCoord >= y + h - 1) continue;
-        if (yCoord === y || yCoord === y + h - 1) continue;
-
+        const yCoord = i * dy;
         if (i % majorCount === 0) {
-          dest.push(hLine(x, yCoord, w, 'major', majorStyleAsString));
+          dest.push(hLine(0, yCoord, patternWidth, 'major', majorStyleAsString));
         }
       }
 
       for (let i = 0; i < cols; i++) {
-        const xCoord = i * dx + x;
-        if (xCoord >= x + w - 1) continue;
-        if (xCoord === x || xCoord === x + w - 1) continue;
-
+        const xCoord = i * dx;
         if (i % majorCount === 0) {
-          dest.push(vLine(xCoord, y, h, 'major', majorStyleAsString));
+          dest.push(vLine(xCoord, 0, patternHeight, 'major', majorStyleAsString));
         }
       }
     } else if (majorType === 'dots') {
@@ -163,11 +144,29 @@ export class GridComponent extends Component<CanvasState> {
 
           if (yCoord >= y + h - 1 || xCoord >= x + w - 1) continue;
 
-          dest.push(circleAt(xCoord, yCoord, 'major', majorStyleAsString, z));
+          dest.push(...crossAt(xCoord, yCoord, 'major', majorStyleAsString));
         }
       }
     }
 
-    return svg.g({}, ...dest);
+    return svg.g(
+      {},
+      svg.pattern(
+        {
+          id: 'grid-pattern',
+          width: patternWidth,
+          height: patternHeight,
+          patternUnits: 'userSpaceOnUse'
+        },
+        ...dest
+      ),
+      svg.rect({
+        x,
+        y,
+        width: w,
+        height: h,
+        fill: 'url(#grid-pattern)'
+      })
+    );
   }
 }
