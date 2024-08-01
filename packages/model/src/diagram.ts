@@ -101,6 +101,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.on('elementChange', toggleMustCalculateIntersections);
     this.on('elementAdd', toggleMustCalculateIntersections);
     this.on('elementRemove', toggleMustCalculateIntersections);
+    toggleMustCalculateIntersections();
   }
 
   set document(d: DiagramDocument) {
