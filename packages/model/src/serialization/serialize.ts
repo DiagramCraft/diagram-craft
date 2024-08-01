@@ -89,7 +89,8 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
       x: diagram.viewBox.offset.x,
       y: diagram.viewBox.offset.y,
       zoom: diagram.viewBox.zoomLevel
-    }
+    },
+    canvas: diagram.canvas
   };
 };
 

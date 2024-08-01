@@ -246,6 +246,7 @@ const deserializeDiagrams = <T extends Diagram>(
     }
 
     const newDiagram = diagramFactory($d, doc);
+    newDiagram.canvas = $d.canvas;
 
     const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {

@@ -5,6 +5,7 @@ import { NodePropsForEditing, NodeTexts } from '../diagramNode';
 import { OffsetType } from '../endpoint';
 import { StylesheetSnapshot } from '../unitOfWork';
 import { DataSchema } from '../diagramDataSchemas';
+import { Canvas } from '../diagram';
 
 interface Reference {
   id: string;
@@ -28,6 +29,7 @@ export type SerializedDiagram = {
     y: number;
     zoom: number;
   };
+  canvas: Canvas;
 };
 
 export interface SerializedDiagramDocument {
