@@ -23,6 +23,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
+import { useLayoutEffect, useRef } from 'react';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -226,6 +227,7 @@ export const LayerList = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const layers = diagram.layers.all.toReversed();
+  const ref = useRef<HTMLDivElement>(null);
 
   const names = Object.fromEntries(
     diagram.layers.all.flatMap(l => l.elements.map(e => [e.id, e.name]))
@@ -240,9 +242,17 @@ export const LayerList = () => {
   useEventListener(diagram.selectionState, 'add', redraw);
   useEventListener(diagram.selectionState, 'remove', redraw);
 
+  useLayoutEffect(() => {
+    // Scroll first element with data-state="on" into view
+    const selected = ref.current?.querySelector('[data-state="on"]');
+    if (!selected) return;
+    selected.scrollIntoView({ block: 'nearest' });
+  });
+
   return (
     <>
       <Tree.Root
+        ref={ref}
         className={'cmp-layer-list'}
         data-dragmimetype={'application/x-diagram-craft-element-instances'}
       >

@@ -24,18 +24,19 @@ type TreeContextType = {
 
 const TreeContext = createContext<TreeContextType | undefined>(undefined);
 
-const Root = (props: RootProps) => {
+const Root = React.forwardRef<HTMLDivElement, RootProps>((props, ref) => {
   return (
     <TreeContext.Provider value={{ depth: 0 }}>
       <div
         {...propsUtils.filterDomProperties(props)}
         className={`${styles.cmpTree} ${props.className ?? ''}`}
+        ref={ref}
       >
         {props.children}
       </div>
     </TreeContext.Provider>
   );
-};
+});
 
 type RootProps = {
   children: React.ReactNode;
