@@ -22,35 +22,43 @@ export class RoundingPathRenderer implements PathRenderer {
   }
 }
 
-const roundLinePair = (
-  l1: LineSegment,
-  l2: LineSegment,
-  rounding: number,
-  maxD: number
-): [LineSegment, LineSegment, Array<PathSegment>] => {
+const calculateRounding = (l1: LineSegment, l2: LineSegment, rounding: number) => {
   const theta = Vector.angleBetween(Vector.from(l1.start, l1.end), Vector.from(l2.start, l2.end));
-
-  const line1 = Line.of(l1.start, l1.end);
-  const line2 = Line.of(l2.start, l2.end);
 
   const determinant =
     (l1.end.x - l1.start.x) * (l2.end.y - l2.start.y) -
     (l2.end.x - l2.start.x) * (l1.end.y - l1.start.y);
 
-  const r = Math.min(rounding, maxD);
-  const d = r * Math.tan(theta / 2);
+  const d = rounding * Math.tan(theta / 2);
+  return {
+    theta,
+    cutoff: d,
+    determinant
+  };
+};
 
-  const p1 = Line.extend(line1, 0, -d);
-  const p2 = Line.extend(line2, -d, 0);
+const roundLinePair = (
+  l1: LineSegment,
+  l2: LineSegment,
+  rounding: number
+): [LineSegment, LineSegment, Array<PathSegment>] | undefined => {
+  const res = calculateRounding(l1, l2, rounding);
+  if (res.determinant === 0) return undefined;
+
+  const line1 = Line.of(l1.start, l1.end);
+  const line2 = Line.of(l2.start, l2.end);
+
+  const p1 = Line.extend(line1, 0, -res.cutoff);
+  const p2 = Line.extend(line2, -res.cutoff, 0);
 
   const cubicSegments = BezierUtils.fromArc(
     p1.to.x,
     p1.to.y,
-    r,
-    r,
+    rounding,
+    rounding,
     0, //Vector.angle(Vector.from(p1.to, p2.from)),
     0,
-    determinant > 0 ? 1 : 0,
+    res.determinant > 0 ? 1 : 0,
     p2.from.x,
     p2.from.y
   );
@@ -75,16 +83,7 @@ const roundLinePair = (
 const applyRounding = (rounding: number, segments: ReadonlyArray<PathSegment>) => {
   const d = [...segments];
 
-  // First find shortest line
-  let minLineLength = Number.MAX_SAFE_INTEGER;
-  for (let i = 0; i < d.length; i++) {
-    const segment = d[i];
-    if (segment instanceof LineSegment) {
-      const line = Line.of(segment.start, segment.end);
-      minLineLength = Math.min(Line.length(line), minLineLength);
-    }
-  }
-
+  let maxRounding = Number.MAX_SAFE_INTEGER;
   let pairFound = true;
   while (pairFound) {
     pairFound = false;
@@ -95,7 +94,39 @@ const applyRounding = (rounding: number, segments: ReadonlyArray<PathSegment>) =
       if (previous instanceof LineSegment && current instanceof LineSegment) {
         if (!Point.isEqual(previous.end, current.start)) continue;
 
-        const [p, c, r] = roundLinePair(previous, current, rounding, minLineLength / 1.5);
+        const res = calculateRounding(previous, current, rounding);
+        if (res.determinant === 0) continue;
+
+        const q = 3;
+
+        const l1 = Line.of(previous.start, previous.end);
+        if (res.cutoff > Line.length(l1) / q) {
+          maxRounding = Math.min(maxRounding, (Line.length(l1) / q) * Math.tan(res.theta / 2));
+        }
+
+        const l2 = Line.of(current.start, current.end);
+        if (res.cutoff > Line.length(l2) / q) {
+          maxRounding = Math.min(maxRounding, (Line.length(l2) / q) * Math.tan(res.theta / 2));
+        }
+      }
+    }
+  }
+
+  pairFound = true;
+  while (pairFound) {
+    pairFound = false;
+    for (let i = 0; i < d.length; i++) {
+      const previous = d.at(i - 1);
+      const current = d[i];
+
+      if (previous instanceof LineSegment && current instanceof LineSegment) {
+        if (!Point.isEqual(previous.end, current.start)) continue;
+
+        // TODO: We need to analytically determine the maxD value
+        const res = roundLinePair(previous, current, Math.min(maxRounding, rounding));
+        if (res === undefined) continue;
+
+        const [p, c, r] = res;
         d[i - 1 < 0 ? d.length - 1 : i - 1] = p;
         d[i] = c;
         d.splice(i, 0, ...r);
