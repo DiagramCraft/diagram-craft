@@ -1,3 +1,6 @@
+import { DeepWriteable } from '@diagram-craft/utils/types';
+import { deepClone } from '@diagram-craft/utils/object';
+
 type GridType = 'lines' | 'dots';
 
 export function assertGridType(s: string | undefined): asserts s is GridType | undefined {
@@ -240,4 +243,10 @@ declare global {
 
     custom?: CustomNodeProps;
   }
+}
+
+export function withAdjustedProperties<T>(t: T, cb: (p: DeepWriteable<T>) => void) {
+  const p = deepClone(t) as DeepWriteable<T>;
+  cb(p);
+  return p;
 }

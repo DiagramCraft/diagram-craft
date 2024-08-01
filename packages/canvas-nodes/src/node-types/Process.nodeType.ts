@@ -11,6 +11,7 @@ import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinition
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { withAdjustedProperties } from '@diagram-craft/model/diagramProps';
 
 // NodeProps extension for custom props *****************************************
 
@@ -68,7 +69,12 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       pathBuilder.line(Point.of(x1, -1), Point.of(x1, 1));
       pathBuilder.line(Point.of(x2, -1), Point.of(x2, 1));
 
-      shapeBuilder.path(pathBuilder.getPaths().all(), props.nodeProps);
+      shapeBuilder.path(
+        pathBuilder.getPaths().all(),
+        withAdjustedProperties(props.nodeProps, p => {
+          p.shadow.enabled = false;
+        })
+      );
 
       // Draw all control points
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
