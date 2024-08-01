@@ -3,7 +3,6 @@ import { ArrowSelector } from './components/ArrowSelector';
 import { assertEdgeType } from '@diagram-craft/model/diagramProps';
 import { useDiagram } from '../../context/DiagramContext';
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { useEdgeDefaults } from '../../hooks/useDefaults';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
@@ -16,31 +15,29 @@ export const EdgeLinePanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
 
-  const defaults = useEdgeDefaults();
+  const strokeColor = useEdgeProperty($d, 'stroke.color');
+  const fillColor = useEdgeProperty($d, 'fill.color');
+  const pattern = useEdgeProperty($d, 'stroke.pattern');
 
-  const strokeColor = useEdgeProperty($d, 'stroke.color', defaults.stroke.color);
-  const fillColor = useEdgeProperty($d, 'fill.color', defaults.fill.color);
-  const pattern = useEdgeProperty($d, 'stroke.pattern', defaults.stroke.pattern ?? '');
-
-  const strokeSize = useEdgeProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
-  const strokeSpacing = useEdgeProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);
-  const strokeWidth = useEdgeProperty($d, 'stroke.width', defaults.stroke.width);
+  const strokeSize = useEdgeProperty($d, 'stroke.patternSize');
+  const strokeSpacing = useEdgeProperty($d, 'stroke.patternSpacing');
+  const strokeWidth = useEdgeProperty($d, 'stroke.width');
 
   const type = useEdgeProperty($d, 'type', 'straight');
 
-  const startType = useEdgeProperty($d, 'arrow.start.type', defaults.arrow.start.type);
-  const startSize = useEdgeProperty($d, 'arrow.start.size', defaults.arrow.start.size);
-  const endType = useEdgeProperty($d, 'arrow.end.type', defaults.arrow.end.type);
-  const endSize = useEdgeProperty($d, 'arrow.end.size', defaults.arrow.end.size);
+  const startType = useEdgeProperty($d, 'arrow.start.type');
+  const startSize = useEdgeProperty($d, 'arrow.start.size');
+  const endType = useEdgeProperty($d, 'arrow.end.type');
+  const endSize = useEdgeProperty($d, 'arrow.end.size');
 
-  const rounding = useEdgeProperty($d, 'routing.rounding', defaults.routing.rounding);
+  const rounding = useEdgeProperty($d, 'routing.rounding');
 
-  const lineHopsSize = useEdgeProperty($d, 'lineHops.size', defaults.lineHops.size);
-  const lineHopsType = useEdgeProperty($d, 'lineHops.type', defaults.lineHops.type);
+  const lineHopsSize = useEdgeProperty($d, 'lineHops.size');
+  const lineHopsType = useEdgeProperty($d, 'lineHops.type');
 
-  const lineCap = useEdgeProperty($d, 'stroke.lineCap', defaults.stroke.lineCap);
-  const lineJoin = useEdgeProperty($d, 'stroke.lineJoin', defaults.stroke.lineJoin);
-  const miterLimit = useEdgeProperty($d, 'stroke.miterLimit', defaults.stroke.miterLimit);
+  const lineCap = useEdgeProperty($d, 'stroke.lineCap');
+  const lineJoin = useEdgeProperty($d, 'stroke.lineJoin');
+  const miterLimit = useEdgeProperty($d, 'stroke.miterLimit');
 
   const supportsArrows =
     !$d.selectionState.isEdgesOnly() ||

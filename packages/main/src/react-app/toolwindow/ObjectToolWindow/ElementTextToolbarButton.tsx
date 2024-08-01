@@ -2,14 +2,12 @@ import { TbTextSize } from 'react-icons/tb';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { NodeTextPanel } from './NodeTextPanel';
 import { useDiagram } from '../../context/DiagramContext';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const ElementTextToolbarButton = () => {
   const diagram = useDiagram();
-  const defaults = useNodeDefaults();
-  const color = useNodeProperty(diagram, 'text.color', defaults.text.color);
+  const color = useNodeProperty(diagram, 'text.color');
 
   return (
     <Popover.Root>

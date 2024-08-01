@@ -1,7 +1,6 @@
 import { round } from '@diagram-craft/utils/math';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useDiagram } from '../../context/DiagramContext';
-import { useEdgeDefaults } from '../../hooks/useDefaults';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -13,16 +12,11 @@ import { Slider } from '@diagram-craft/app-components/Slider';
 export const EdgeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();
   const $d = useDiagram();
-  const defaults = useEdgeDefaults();
 
-  const opacity = useEdgeProperty($d, 'effects.opacity', defaults.effects.opacity);
+  const opacity = useEdgeProperty($d, 'effects.opacity');
 
-  const sketch = useEdgeProperty($d, 'effects.sketch', defaults.effects.sketch);
-  const sketchStrength = useEdgeProperty(
-    $d,
-    'effects.sketchStrength',
-    defaults.effects.sketchStrength
-  );
+  const sketch = useEdgeProperty($d, 'effects.sketch');
+  const sketchStrength = useEdgeProperty($d, 'effects.sketchStrength');
 
   useEventListener($d.selectionState, 'change', redraw);
 

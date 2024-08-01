@@ -15,7 +15,6 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { assertHAlign, assertVAlign } from '@diagram-craft/model/diagramProps';
@@ -26,23 +25,22 @@ export const NodeTextPanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
 
-  const defaults = useNodeDefaults();
   const { fonts } = useConfiguration();
 
-  const font = useNodeProperty($d, 'text.font', defaults.text.font);
-  const fontSize = useNodeProperty($d, 'text.fontSize', defaults.text.fontSize);
-  const lineHeight = useNodeProperty($d, 'text.lineHeight', defaults.text.lineHeight);
-  const isBold = useNodeProperty($d, 'text.bold', defaults.text.bold);
-  const isItalic = useNodeProperty($d, 'text.italic', defaults.text.italic);
-  const textDecoration = useNodeProperty($d, 'text.textDecoration', defaults.text.textDecoration);
-  const textTransform = useNodeProperty($d, 'text.textTransform', defaults.text.textTransform);
-  const color = useNodeProperty($d, 'text.color', defaults.text.color);
-  const align = useNodeProperty($d, 'text.align', defaults.text.align);
-  const valign = useNodeProperty($d, 'text.valign', defaults.text.valign);
-  const top = useNodeProperty($d, 'text.top', defaults.text.top);
-  const left = useNodeProperty($d, 'text.left', defaults.text.left);
-  const bottom = useNodeProperty($d, 'text.bottom', defaults.text.bottom);
-  const right = useNodeProperty($d, 'text.right', defaults.text.right);
+  const font = useNodeProperty($d, 'text.font');
+  const fontSize = useNodeProperty($d, 'text.fontSize');
+  const lineHeight = useNodeProperty($d, 'text.lineHeight');
+  const isBold = useNodeProperty($d, 'text.bold');
+  const isItalic = useNodeProperty($d, 'text.italic');
+  const textDecoration = useNodeProperty($d, 'text.textDecoration');
+  const textTransform = useNodeProperty($d, 'text.textTransform');
+  const color = useNodeProperty($d, 'text.color');
+  const align = useNodeProperty($d, 'text.align');
+  const valign = useNodeProperty($d, 'text.valign');
+  const top = useNodeProperty($d, 'text.top');
+  const left = useNodeProperty($d, 'text.left');
+  const bottom = useNodeProperty($d, 'text.bottom');
+  const right = useNodeProperty($d, 'text.right');
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Text'} id={'text'}>

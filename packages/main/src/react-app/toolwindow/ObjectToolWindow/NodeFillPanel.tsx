@@ -6,7 +6,6 @@ import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../context/DiagramContext';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { ColorPicker } from '../../components/ColorPicker';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useElementProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -128,36 +127,23 @@ const ImageAdjustments = (props: {
 export const NodeFillPanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
-  const defaults = useNodeDefaults();
   const redraw = useRedraw();
 
-  const color = useElementProperty($d, 'fill.color', defaults.fill.color);
+  const color = useElementProperty($d, 'fill.color');
   const pattern = useElementProperty($d, 'fill.pattern', '');
   const image = useElementProperty($d, 'fill.image.id', '');
-  const imageFit = useElementProperty($d, 'fill.image.fit', defaults.fill.image.fit);
-  const imageW = useElementProperty($d, 'fill.image.w', defaults.fill.image.w);
-  const imageH = useElementProperty($d, 'fill.image.h', defaults.fill.image.h);
-  const imageScale = useElementProperty($d, 'fill.image.scale', defaults.fill.image.scale);
-  const imageTint = useElementProperty($d, 'fill.image.tint', defaults.fill.image.tint);
-  const imageTintStrength = useElementProperty(
-    $d,
-    'fill.image.tintStrength',
-    defaults.fill.image.tintStrength
-  );
-  const imageBrightness = useElementProperty(
-    $d,
-    'fill.image.brightness',
-    defaults.fill.image.brightness
-  );
-  const imageContrast = useElementProperty($d, 'fill.image.contrast', defaults.fill.image.contrast);
-  const imageSaturation = useElementProperty(
-    $d,
-    'fill.image.saturation',
-    defaults.fill.image.saturation
-  );
-  const color2 = useElementProperty($d, 'fill.color2', defaults.fill.color2);
-  const type = useElementProperty($d, 'fill.type', defaults.fill.type);
-  const enabled = useElementProperty($d, 'fill.enabled', defaults.fill.enabled);
+  const imageFit = useElementProperty($d, 'fill.image.fit');
+  const imageW = useElementProperty($d, 'fill.image.w');
+  const imageH = useElementProperty($d, 'fill.image.h');
+  const imageScale = useElementProperty($d, 'fill.image.scale');
+  const imageTint = useElementProperty($d, 'fill.image.tint');
+  const imageTintStrength = useElementProperty($d, 'fill.image.tintStrength');
+  const imageBrightness = useElementProperty($d, 'fill.image.brightness');
+  const imageContrast = useElementProperty($d, 'fill.image.contrast');
+  const imageSaturation = useElementProperty($d, 'fill.image.saturation');
+  const color2 = useElementProperty($d, 'fill.color2');
+  const type = useElementProperty($d, 'fill.type');
+  const enabled = useElementProperty($d, 'fill.enabled');
   const gradientDirection = useElementProperty($d, 'fill.gradient.direction', 0);
   const gradientType = useElementProperty($d, 'fill.gradient.type', 'linear');
 

@@ -1,7 +1,6 @@
 import { round } from '@diagram-craft/utils/math';
 import { useDiagram } from '../../context/DiagramContext';
 import { useConfiguration } from '../../context/ConfigurationContext';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useElementProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ColorPicker } from '../../components/ColorPicker';
@@ -10,14 +9,13 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 export const ElementShadowPanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
-  const defaults = useNodeDefaults();
 
-  const color = useElementProperty($d, 'shadow.color', defaults.shadow.color);
-  const opacity = useElementProperty($d, 'shadow.opacity', defaults.shadow.opacity);
-  const x = useElementProperty($d, 'shadow.x', defaults.shadow.x);
-  const y = useElementProperty($d, 'shadow.y', defaults.shadow.y);
-  const blur = useElementProperty($d, 'shadow.blur', defaults.shadow.blur);
-  const enabled = useElementProperty($d, 'shadow.enabled', defaults.shadow.enabled);
+  const color = useElementProperty($d, 'shadow.color');
+  const opacity = useElementProperty($d, 'shadow.opacity');
+  const x = useElementProperty($d, 'shadow.x');
+  const y = useElementProperty($d, 'shadow.y');
+  const blur = useElementProperty($d, 'shadow.blur');
+  const enabled = useElementProperty($d, 'shadow.enabled');
 
   return (
     <ToolWindowPanel

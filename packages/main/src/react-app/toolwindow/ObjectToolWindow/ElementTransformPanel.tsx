@@ -7,7 +7,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { $c } from '@diagram-craft/utils/classname';
 import { round } from '@diagram-craft/utils/math';
 import { useDiagram } from '../../context/DiagramContext';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
@@ -27,14 +26,13 @@ const origins: Record<string, Point> = {
 
 export const ElementTransformPanel = (props: Props) => {
   const diagram = useDiagram();
-  const defaults = useNodeDefaults();
 
   const [bounds, setBounds] = useState<Box | undefined>(undefined);
   const [lockAspectRatio, setLockAspectRatio] = useState(false);
   const [origin, setOrigin] = useState('tl');
 
-  const flipV = useNodeProperty(diagram, 'geometry.flipV', defaults.geometry.flipV);
-  const flipH = useNodeProperty(diagram, 'geometry.flipH', defaults.geometry.flipH);
+  const flipV = useNodeProperty(diagram, 'geometry.flipV');
+  const flipH = useNodeProperty(diagram, 'geometry.flipH');
 
   const transformedBounds = {
     x: (bounds?.x ?? 0) + (bounds?.w ?? 1) * origins[origin].x,

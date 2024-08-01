@@ -2,18 +2,16 @@ import { EdgeLinePanel } from './EdgeLinePanel';
 import { ArrowPreview } from './components/ArrowPreview';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
 import { useDiagram } from '../../context/DiagramContext';
-import { useEdgeDefaults } from '../../hooks/useDefaults';
 import { useEdgeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const EdgeLineToolbarButton = () => {
   const diagram = useDiagram();
-  const defaults = useEdgeDefaults();
-  const strokeColor = useEdgeProperty(diagram, 'stroke.color', defaults.stroke.color);
+  const strokeColor = useEdgeProperty(diagram, 'stroke.color');
   const fillColor = useEdgeProperty(diagram, 'fill.color', strokeColor.val);
-  const arrowStart = useEdgeProperty(diagram, 'arrow.start.type', defaults.arrow.start.type);
-  const arrowEnd = useEdgeProperty(diagram, 'arrow.end.type', defaults.arrow.end.type);
+  const arrowStart = useEdgeProperty(diagram, 'arrow.start.type');
+  const arrowEnd = useEdgeProperty(diagram, 'arrow.end.type');
 
   return (
     <Popover.Root>

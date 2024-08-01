@@ -1,15 +1,13 @@
 import { TbBorderStyle2 } from 'react-icons/tb';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { NodeStrokePanel } from './NodeStrokePanel';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 export const NodeStrokeToolbarButton = () => {
   const diagram = useDiagram();
-  const defaults = useNodeDefaults();
-  const fill = useNodeProperty(diagram, 'stroke.color', defaults.stroke.color);
+  const fill = useNodeProperty(diagram, 'stroke.color');
 
   return (
     <Popover.Root>

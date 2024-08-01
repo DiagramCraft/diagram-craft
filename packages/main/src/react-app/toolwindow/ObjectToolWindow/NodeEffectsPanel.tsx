@@ -1,7 +1,6 @@
 import { round } from '@diagram-craft/utils/math';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useDiagram } from '../../context/DiagramContext';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -11,31 +10,18 @@ import { Select } from '@diagram-craft/app-components/Select';
 export const NodeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();
   const $d = useDiagram();
-  const defaults = useNodeDefaults();
 
   const rounding = useNodeProperty($d, 'effects.rounding');
   const roundingAmount = useNodeProperty($d, 'effects.roundingAmount');
 
-  const reflection = useNodeProperty($d, 'effects.reflection', defaults.effects.reflection);
-  const reflectionStrength = useNodeProperty(
-    $d,
-    'effects.reflectionStrength',
-    defaults.effects.reflectionStrength
-  );
-  const blur = useNodeProperty($d, 'effects.blur', defaults.effects.blur);
-  const opacity = useNodeProperty($d, 'effects.opacity', defaults.effects.opacity);
+  const reflection = useNodeProperty($d, 'effects.reflection');
+  const reflectionStrength = useNodeProperty($d, 'effects.reflectionStrength');
+  const blur = useNodeProperty($d, 'effects.blur');
+  const opacity = useNodeProperty($d, 'effects.opacity');
 
-  const sketch = useNodeProperty($d, 'effects.sketch', defaults.effects.sketch);
-  const sketchStrength = useNodeProperty(
-    $d,
-    'effects.sketchStrength',
-    defaults.effects.sketchStrength
-  );
-  const sketchFillType = useNodeProperty(
-    $d,
-    'effects.sketchFillType',
-    defaults.effects.sketchFillType
-  );
+  const sketch = useNodeProperty($d, 'effects.sketch');
+  const sketchStrength = useNodeProperty($d, 'effects.sketchStrength');
+  const sketchFillType = useNodeProperty($d, 'effects.sketchFillType');
 
   useEventListener($d.selectionState, 'change', redraw);
 

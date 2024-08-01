@@ -4,7 +4,6 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
-import { useNodeDefaults } from '../../hooks/useDefaults';
 import { PopoverButton } from '../../components/PopoverButton';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -13,19 +12,18 @@ import { DashSelector } from './components/DashSelector';
 export const NodeStrokePanel = (props: Props) => {
   const $d = useDiagram();
   const $cfg = useConfiguration();
-  const defaults = useNodeDefaults();
 
-  const strokeColor = useNodeProperty($d, 'stroke.color', defaults.stroke.color);
-  const pattern = useNodeProperty($d, 'stroke.pattern', defaults.stroke.pattern ?? '');
+  const strokeColor = useNodeProperty($d, 'stroke.color');
+  const pattern = useNodeProperty($d, 'stroke.pattern');
 
-  const strokeSize = useNodeProperty($d, 'stroke.patternSize', defaults.stroke.patternSize);
-  const strokeSpacing = useNodeProperty($d, 'stroke.patternSpacing', defaults.stroke.patternSize);
-  const strokeWidth = useNodeProperty($d, 'stroke.width', defaults.stroke.width);
-  const enabled = useNodeProperty($d, 'stroke.enabled', defaults.stroke.enabled);
+  const strokeSize = useNodeProperty($d, 'stroke.patternSize');
+  const strokeSpacing = useNodeProperty($d, 'stroke.patternSpacing');
+  const strokeWidth = useNodeProperty($d, 'stroke.width');
+  const enabled = useNodeProperty($d, 'stroke.enabled');
 
-  const lineCap = useNodeProperty($d, 'stroke.lineCap', defaults.stroke.lineCap);
-  const lineJoin = useNodeProperty($d, 'stroke.lineJoin', defaults.stroke.lineJoin);
-  const miterLimit = useNodeProperty($d, 'stroke.miterLimit', defaults.stroke.miterLimit);
+  const lineCap = useNodeProperty($d, 'stroke.lineCap');
+  const lineJoin = useNodeProperty($d, 'stroke.lineJoin');
+  const miterLimit = useNodeProperty($d, 'stroke.miterLimit');
 
   return (
     <ToolWindowPanel
