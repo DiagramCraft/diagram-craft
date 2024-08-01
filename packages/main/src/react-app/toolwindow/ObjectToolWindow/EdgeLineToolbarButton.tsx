@@ -35,8 +35,8 @@ export const EdgeLineToolbarButton = () => {
               color={strokeColor.val}
               width={65}
               type={arrowStart.val}
-              start={ARROW_SHAPES[arrowStart.val]?.(0.75)}
-              end={ARROW_SHAPES[arrowEnd.val]?.(0.75)}
+              start={ARROW_SHAPES[arrowStart.val]?.(0.75, 1)}
+              end={ARROW_SHAPES[arrowEnd.val]?.(0.75, 1)}
             />
           </div>
         </Toolbar.Button>

@@ -6,7 +6,9 @@ import { Angle } from '@diagram-craft/geometry/angle';
 type CommonPresentationAttributes = {
   'stroke'?: string;
   'stroke-width'?: string | number;
+  'stroke-linejoin'?: string;
   'stroke-linecap'?: string;
+  'stroke-miterlimit'?: string;
   'stroke-dasharray'?: string;
   'fill'?: string;
   'marker-start'?: string;
@@ -141,8 +143,6 @@ type MarkerAttributes = ElementAttributes & {
   refX?: string | number;
   refY?: string | number;
   markerUnits?: string;
-  strokeLinejoin?: string;
-  strokeLinecap?: string;
   markerWidth?: string | number;
   markerHeight?: string | number;
   orient?: string;

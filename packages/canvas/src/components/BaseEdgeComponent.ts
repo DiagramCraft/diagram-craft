@@ -56,8 +56,6 @@ const makeArrowMarker = (
       refX: arrow.anchor.x,
       refY: arrow.anchor.y,
       markerUnits: 'userSpaceOnUse',
-      strokeLinejoin: 'round',
-      strokeLinecap: 'round',
       markerWidth: arrow.width + 2,
       markerHeight: arrow.height + 2,
       orient: 'auto-start-reverse'
@@ -66,6 +64,9 @@ const makeArrowMarker = (
       'd': path,
       'stroke': color,
       'stroke-width': width,
+      'stroke-linejoin': 'miter',
+      'stroke-miterlimit': '40',
+      'stroke-linecap': 'butt',
       'fill': arrow.fill === 'fg' ? fillColor : arrow.fill === 'bg' ? 'white' : 'none'
     })
   );
@@ -262,7 +263,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
   protected getArrow(type: 'start' | 'end', edgeProps: DeepReadonly<DeepRequired<EdgeProps>>) {
     const size = (1 + (edgeProps.stroke.width - 1) * 10 + edgeProps.arrow[type].size) / 100;
-    return ARROW_SHAPES[edgeProps.arrow[type].type]?.(size);
+    return ARROW_SHAPES[edgeProps.arrow[type].type]?.(size, edgeProps.stroke.width);
   }
 }
 

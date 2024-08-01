@@ -28,8 +28,7 @@ const adjustForArrow = (
   if (arrow) {
     const baseTOS = PointOnPath.toTimeOffset(pointOnPath, path);
     const arrowL1 = TimeOffsetOnSegment.toLengthOffsetOnSegment(baseTOS, path);
-    // TODO: This 1 (adjust) is likely the stroke width of the edge
-    arrowL1.segmentD += (arrow.shortenBy ?? 0) + adjust;
+    arrowL1.segmentD += (arrow.shortenBy ?? 0) * adjust;
 
     return LengthOffsetOnSegment.toTimeOffsetOnSegment(arrowL1, path);
   } else {
@@ -76,13 +75,13 @@ export const clipPath = (
   const start =
     edge.start instanceof ConnectedEndpoint
       ? intersectWithNode(edge.start, edge.start.position, path, diagram)
-      : undefined;
+      : { point: path.start };
   const startOffset = adjustForArrow(start, startArrow, path, 1);
 
   const end =
     edge.end instanceof ConnectedEndpoint
       ? intersectWithNode(edge.end, edge.end.position, path, diagram)
-      : undefined;
+      : { point: path.end };
   const endOffset = adjustForArrow(end, endArrow, path, -1);
 
   let basePath: Path;

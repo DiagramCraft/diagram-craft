@@ -5,7 +5,7 @@ import { parseArrowSvgPath } from './sketch';
 describe('parseArrowSvgPath', () => {
   test('can parse ARROW_SHAPES', () => {
     Object.values(ARROW_SHAPES).forEach(shape => {
-      expect(parseArrowSvgPath(shape!(10).path)).toBeTruthy();
+      expect(parseArrowSvgPath(shape!(10, 1).path)).toBeTruthy();
     });
   });
 });

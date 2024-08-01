@@ -241,6 +241,10 @@ export class SegmentList {
       }
     }
 
+    if (!bestProject) {
+      return { segmentIndex: 0, t: 0, globalL: 0, distance: 0, point };
+    }
+
     const l = this.segments.slice(0, bestSegment).reduce((acc, cur) => acc + cur.length(), 0);
     return {
       segmentIndex: bestSegment,
