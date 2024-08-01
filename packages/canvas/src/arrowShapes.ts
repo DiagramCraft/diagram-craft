@@ -124,12 +124,19 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     fill: 'bg',
     shortenBy: 2 * s
   }),
-  BOX_FILLED: s => ({
-    width: s * 10,
-    height: s * 10,
-    anchor: { x: s * 10, y: s * 5 },
-    path: [`M 0 0`, `L ${s * 10} 0`, `L ${s * 10} ${s * 10}`, `L 0 ${s * 10}`, `z`].join('\n'),
-    fill: 'fg'
+  BOX_FILLED: (z, s) => ({
+    width: z * 10 + 2 * s,
+    height: z * 10 + 2 * s,
+    anchor: { x: z * 10, y: s + z * 5 },
+    path: [
+      `M ${s} ${s}`,
+      `L ${s + z * 10} ${s}`,
+      `L ${s + z * 10} ${s + z * 10}`,
+      `L ${s} ${s + z * 10}`,
+      `z`
+    ].join('\n'),
+    fill: 'fg',
+    shortenBy: 1.5 * s
   }),
   BOX_OUTLINE: (z, s) => ({
     width: z * 10 + 2 * s,
@@ -201,12 +208,20 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     fill: 'bg',
     shortenBy: 1.5 * s
   }),
-  FORK: s => ({
-    width: s * 15,
-    height: s * 10,
-    anchor: { x: s * 10, y: s * 5 },
-    path: [`M ${s * 10} 0`, `L 0 0`, `L 0 ${s * 10}`, `L ${s * 10} ${s * 10}`].join('\n'),
-    fill: 'transparent'
+  FORK: (z, s) => ({
+    width: z * 10,
+    height: z * 10 + 2 * s,
+    anchor: { x: 0, y: s + z * 5 },
+    path: [
+      `M ${z * 10} ${s}`,
+      `L 0 ${s}`,
+      `L 0 ${s + z * 10}`,
+      `L ${z * 10} ${s + z * 10}`,
+      `M 0 ${z * 5 + s}`,
+      `L ${z * 10}, ${z * 5 + s}`
+    ].join('\n'),
+    fill: 'transparent',
+    shortenBy: z * 10
   }),
   SQUARE_STICK_ARROW: (z, s) => ({
     width: z * 10 + 2 * s,
@@ -250,25 +265,26 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     fill: 'transparent',
     shortenBy: 2 * s
   }),
-  SQUARE_DOUBLE_STICK_ARROW: s => ({
-    width: s * 20,
-    height: s * 10,
-    anchor: { x: s * 20, y: s * 5 },
+  SQUARE_DOUBLE_STICK_ARROW: (z, s) => ({
+    width: z * 20 + 2 * s,
+    height: z * 10 + 2 * s,
+    anchor: { x: z * 20, y: s + z * 5 },
     path: [
-      `M 0 0`,
-      `L ${s * 10} ${s * 5}`,
-      `L 0 ${s * 10}`,
-      `M ${s * 10} 0`,
-      `L ${s * 20} ${s * 5}`,
-      `L ${s * 10} ${s * 10}`
+      `M ${s} ${s}`,
+      `L ${s + z * 10} ${s + z * 5}`,
+      `L ${s} ${s + z * 10}`,
+      `M ${s + z * 10} ${s}`,
+      `L ${s + z * 20} ${s + z * 5}`,
+      `L ${s + z * 10} ${s + z * 10}`
     ].join('\n'),
-    fill: 'transparent'
+    fill: 'transparent',
+    shortenBy: 2 * s
   }),
-  BAR: s => ({
-    width: s * 10,
-    height: s * 10,
-    anchor: { x: s * 8, y: s * 5 },
-    path: [`M 0 0`, `L 0 ${s * 10}`].join('\n'),
+  BAR: (z, s) => ({
+    width: 9 + s,
+    height: z * 10,
+    anchor: { x: 9 + s, y: z * 5 },
+    path: [`M 0 0`, `L 0 ${z * 10}`].join('\n'),
     fill: 'transparent'
   }),
   BAR_END: (z, s) => ({
@@ -279,11 +295,11 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     fill: 'transparent',
     shortenBy: 1 * s
   }),
-  BAR_DOUBLE: s => ({
-    width: s * 15,
-    height: s * 10,
-    anchor: { x: s * 15, y: s * 5 },
-    path: [`M 0 0`, `L 0 ${s * 10}`, `M 6 0`, `L 6 ${s * 10}`].join('\n'),
+  BAR_DOUBLE: (z, s) => ({
+    width: 14 + s,
+    height: z * 10,
+    anchor: { x: 14 + s, y: z * 5 },
+    path: [`M 0 0`, `L 0 ${z * 10}`, `M ${5 + s} 0`, `L ${5 + s} ${z * 10}`].join('\n'),
     fill: 'transparent'
   }),
   SHARP_ARROW_FILLED: (z, s) => {
@@ -426,12 +442,13 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     ].join('\n'),
     fill: 'transparent'
   }),
-  SOCKET: s => ({
-    width: s * 20,
-    height: s * 20,
-    anchor: { x: s * 10, y: s * 7.5 },
-    path: [`M ${s * 15} ${s * 3}`, `A ${s * 6},${s * 8} 0 1,0 ${s * 15} ${s * 12}`].join('\n'),
-    fill: 'bg'
+  SOCKET: (z, s) => ({
+    width: z * 20,
+    height: z * 20,
+    anchor: { x: z * 5 - s, y: z * 7.5 },
+    path: [`M ${z * 15} ${z * 3}`, `A ${z * 6},${z * 8} 0 1,0 ${z * 15} ${z * 12}`].join('\n'),
+    fill: 'transparent',
+    shortenBy: z * 7.5
   }),
   SLASH: s => ({
     width: s * 10,
