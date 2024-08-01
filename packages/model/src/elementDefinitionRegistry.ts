@@ -112,6 +112,10 @@ export class NodeDefinitionRegistry {
     this.preRegistrations.push({ shapes, type, opts });
   }
 
+  list() {
+    return this.nodes.keys();
+  }
+
   async load(s: string): Promise<boolean> {
     if (this.hasRegistration(s)) return true;
 

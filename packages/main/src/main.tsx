@@ -153,7 +153,9 @@ const diagrams: Array<DiagramRef> = [
   { url: '/diagrams/uml.drawio' },
   { url: '/diagrams/test5.drawio' },
   { url: '/sample/snap-test.json' },
-  { url: '/sample/test.json' }
+  { url: '/sample/test.json' },
+  { url: '/sample/arrows.json' },
+  { url: '/sample/shapes.json' }
 ];
 
 if (location.hash !== '') {

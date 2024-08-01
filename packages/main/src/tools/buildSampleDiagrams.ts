@@ -161,4 +161,263 @@ const arrowsTestFile = async () => {
   );
 };
 
+const writeShape = (shape: string, y: number, layer: Layer, diagram: Diagram) => {
+  const n = new DiagramNode(
+    newid(),
+    'text',
+    {
+      x: 10,
+      y: y,
+      w: 300,
+      h: 20,
+      r: 0
+    },
+    diagram,
+    layer,
+    {
+      text: {
+        align: 'left'
+      }
+    },
+    {},
+    {
+      text: shape
+    },
+    []
+  );
+  layer.addElement(n, UnitOfWork.immediate(diagram));
+
+  y += 30;
+  let x = 10;
+
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {},
+      {},
+      {
+        text: ''
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );
+  x += 110;
+
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {},
+      {},
+      {
+        text: 'With Text'
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );
+  x += 110;
+
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {
+        fill: {
+          color: '#ffffcc'
+        }
+      },
+      {},
+      {
+        text: ''
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );
+  x += 110;
+
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {
+        fill: {
+          color: 'white'
+        },
+        shadow: {
+          enabled: true,
+          color: 'black',
+          blur: 5,
+          x: 5,
+          y: 5
+        }
+      },
+      {},
+      {
+        text: ''
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );
+  x += 110;
+
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {
+        fill: {
+          color: 'white'
+        },
+        effects: {
+          rounding: true,
+          roundingAmount: 10
+        }
+      },
+      {},
+      {
+        text: ''
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );
+  x += 110;
+
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {
+        fill: {
+          color: 'white'
+        },
+        effects: {
+          sketch: true
+        }
+      },
+      {},
+      {
+        text: ''
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );
+  x += 110;
+
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {
+        fill: {
+          color: 'lightblue'
+        },
+        effects: {
+          sketch: true,
+          sketchFillType: 'fill'
+        }
+      },
+      {},
+      {
+        text: ''
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );
+  x += 110;
+  /*
+  layer.addElement(
+    new DiagramNode(
+      newid(),
+      shape,
+      { x: x, y: y, w: 100, h: 100, r: 0 },
+      diagram,
+      layer,
+      {
+        fill: {
+          color: 'lightblue'
+        },
+        effects: {
+          sketch: true,
+          sketchFillType: 'hachure'
+        }
+      },
+      {},
+      {
+        text: ''
+      },
+      []
+    ),
+    UnitOfWork.immediate(diagram)
+  );*/
+};
+
+const shapesTestFile = async () => {
+  const nodeDefinitions = defaultNodeRegistry();
+  const document = new DiagramDocument(nodeDefinitions, defaultEdgeRegistry());
+
+  const diagram = new Diagram('shapes', 'Shapes', document);
+  document.addDiagram(diagram);
+
+  const layer = new Layer('default', 'Default', [], diagram);
+  diagram.layers.add(layer, UnitOfWork.immediate(diagram));
+
+  let y = 10;
+
+  for (const shape of nodeDefinitions.list()) {
+    if (
+      shape === 'table' ||
+      shape === 'tableRow' ||
+      shape === 'group' ||
+      shape === 'container' ||
+      shape === 'swimlane' ||
+      shape === 'generic-path'
+    )
+      continue;
+    writeShape(shape, y, layer, diagram);
+    y += 200;
+  }
+
+  diagram.canvas = {
+    x: 0,
+    y: 0,
+    w: 1000,
+    h: y + 200
+  };
+
+  fs.writeFileSync(
+    path.join(__dirname, '..', '..', 'public', 'sample', 'shapes.json'),
+    JSON.stringify(await serializeDiagramDocument(document), undefined, '  ')
+  );
+};
+
 arrowsTestFile();
+shapesTestFile();
