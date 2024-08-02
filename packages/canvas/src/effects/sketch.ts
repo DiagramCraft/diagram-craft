@@ -14,7 +14,7 @@ import { hash } from '@diagram-craft/utils/hash';
 import { Random } from '@diagram-craft/utils/random';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { round } from '@diagram-craft/utils/math';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { parseSvgPath } from '@diagram-craft/geometry/svgPathUtils';
 
 export class SketchPathRenderer implements PathRenderer {
@@ -23,11 +23,6 @@ export class SketchPathRenderer implements PathRenderer {
       passes: 2,
       amount: node.renderProps.effects?.sketchStrength ?? 0.1
     });
-    const svgPathFill = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(node.id)), {
-      passes: 1,
-      amount: node.renderProps.effects?.sketchStrength ?? 0.1,
-      distortVertices: true
-    });
 
     const boundaryStyle = { ...path.style };
     const fillStyle = { ...path.style };
@@ -35,11 +30,12 @@ export class SketchPathRenderer implements PathRenderer {
     boundaryStyle.fill = 'none';
     fillStyle.stroke = 'none';
 
-    let hachure: string[] | undefined = undefined;
-
-    if (node.renderProps.effects?.sketchFillType === 'hachure') {
+    const dest: RenderedStyledPath[] = [];
+    if (isNode(node) && !node.getDefinition().supports('fill')) {
+      // Do nothing
+    } else if (node.renderProps.effects?.sketchFillType === 'hachure') {
       const lines = calculateHachureLines(node.bounds, path.path, Math.PI / 4, 10);
-      hachure = lines.map(l => {
+      const hachure = lines.map(l => {
         return asDistortedSvgPath(
           new Path(l.from, [['L', l.to.x, l.to.y]]),
           hash(new TextEncoder().encode(node.id)),
@@ -50,14 +46,15 @@ export class SketchPathRenderer implements PathRenderer {
           }
         );
       });
-    }
-
-    const dest: RenderedStyledPath[] = [];
-    if (hachure) {
       hachure.forEach(l => {
         dest.push({ path: l, style: { stroke: fillStyle.fill, strokeWidth: '1', fill: 'none' } });
       });
     } else {
+      const svgPathFill = asDistortedSvgPath(path.path, hash(new TextEncoder().encode(node.id)), {
+        passes: 1,
+        amount: node.renderProps.effects?.sketchStrength ?? 0.1,
+        distortVertices: true
+      });
       dest.push({ path: svgPathFill, style: fillStyle });
     }
 

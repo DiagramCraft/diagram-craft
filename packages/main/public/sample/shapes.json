@@ -1,0 +1,6311 @@
+{
+  "diagrams": [
+    {
+      "id": "shapes",
+      "name": "Shapes",
+      "layers": [
+        {
+          "id": "default",
+          "name": "Default",
+          "type": "layer",
+          "layerType": "basic",
+          "elements": [
+            {
+              "id": "7cxwrmp",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 10,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "rect"
+              }
+            },
+            {
+              "id": "6s314lf",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 10,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "vf0j09k",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 120,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "381478e",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 230,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "zjms47x",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 340,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "7p57vsd",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 450,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "3ejkw1o",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 560,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "xg3t87y",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 670,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "0y421xg",
+              "type": "node",
+              "nodeType": "rect",
+              "bounds": {
+                "x": 780,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "j2w4j9h",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 210,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "rounded-rect"
+              }
+            },
+            {
+              "id": "vt42bkn",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 10,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "fa51d1m",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 120,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "356556p",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 230,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "gbmys17",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 340,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "b4gmlo3",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 450,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "kvhn7m6",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 560,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "3az2gug",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 670,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "sg3uf8z",
+              "type": "node",
+              "nodeType": "rounded-rect",
+              "bounds": {
+                "x": 780,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "4u3morh",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 410,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "circle"
+              }
+            },
+            {
+              "id": "1j1ug3q",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 10,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "oqfcv8e",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 120,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "q2zrrxe",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 230,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "8698cvp",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 340,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "3hfzhis",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 450,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "s3tvedf",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 560,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "c4osfdy",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 670,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "wwkxtwk",
+              "type": "node",
+              "nodeType": "circle",
+              "bounds": {
+                "x": 780,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "znbx4t9",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 610,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "text"
+              }
+            },
+            {
+              "id": "jmsm2dz",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ru2nart",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 120,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "cs8vrs6",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 230,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "af3mgmd",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 340,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "2bz6co9",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 450,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "knswlec",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 560,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "eburf4g",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 670,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "kdjm4hd",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 780,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "pj7oovf",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 810,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "star"
+              }
+            },
+            {
+              "id": "fxfo9t9",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 10,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "bk0hm7f",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 120,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "z0dcah8",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 230,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "pbf1vb9",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 340,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "jxo66wf",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 450,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "9kgztmf",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 560,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ty1lmpt",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 670,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "w47eqzz",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 780,
+                "y": 840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "niy2xae",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 1010,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "regular-polygon"
+              }
+            },
+            {
+              "id": "lky7265",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 10,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ot3szlz",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 120,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "je6a9mj",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 230,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "uqveivb",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 340,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "fjxeplg",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 450,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "fdl5kbq",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 560,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "xhjys1w",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 670,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "pk8zzxt",
+              "type": "node",
+              "nodeType": "regular-polygon",
+              "bounds": {
+                "x": 780,
+                "y": 1040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "p6ygi8y",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 1210,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "parallelogram"
+              }
+            },
+            {
+              "id": "t59opc9",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 10,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "3uel6w6",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 120,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "fou9sgg",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 230,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rodr6e3",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 340,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "yyaqcss",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 450,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "3484h5p",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 560,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "laomkui",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 670,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rz3gfjz",
+              "type": "node",
+              "nodeType": "parallelogram",
+              "bounds": {
+                "x": 780,
+                "y": 1240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "2rrmcjn",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 1410,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "trapetzoid"
+              }
+            },
+            {
+              "id": "lfx778c",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 10,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "76bic5j",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 120,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "y0lziop",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 230,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "p2gr1p4",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 340,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "s2bpbo4",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 450,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "vbgfywf",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 560,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "myqf07n",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 670,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "1vd2r68",
+              "type": "node",
+              "nodeType": "trapetzoid",
+              "bounds": {
+                "x": 780,
+                "y": 1440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "csfh7qi",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 1610,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "diamond"
+              }
+            },
+            {
+              "id": "2bgcfye",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 10,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "x5gmfxy",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 120,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "3rex45f",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 230,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "iekzt23",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 340,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rj5yopr",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 450,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "nx29to6",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 560,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "29e29ky",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 670,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "z5brtfi",
+              "type": "node",
+              "nodeType": "diamond",
+              "bounds": {
+                "x": 780,
+                "y": 1640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "tgsbtr1",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 1810,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "hexagon"
+              }
+            },
+            {
+              "id": "vde398s",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 10,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "e4t10pd",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 120,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "322vfxx",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 230,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "fxyqs4o",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 340,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "8tttg5w",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 450,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "6856456",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 560,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "4379zcb",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 670,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "nij4x02",
+              "type": "node",
+              "nodeType": "hexagon",
+              "bounds": {
+                "x": 780,
+                "y": 1840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "qo13b52",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 2010,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "triangle"
+              }
+            },
+            {
+              "id": "uzqaner",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 10,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "miulsl9",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 120,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "0jqfjnd",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 230,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "6lrp9j4",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 340,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rl114bz",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 450,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "fev8rsa",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 560,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "jl0i5zl",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 670,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "eqli3ls",
+              "type": "node",
+              "nodeType": "triangle",
+              "bounds": {
+                "x": 780,
+                "y": 2040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "o3sgqbo",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 2210,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "process"
+              }
+            },
+            {
+              "id": "dngi3t5",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 10,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "1lx1esg",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 120,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "727qv1u",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 230,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "db7orek",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 340,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "qx8mj3o",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 450,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "xs4igis",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 560,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "25r13mi",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 670,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "vs17hnc",
+              "type": "node",
+              "nodeType": "process",
+              "bounds": {
+                "x": 780,
+                "y": 2240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "gzg5hm9",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 2410,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "cylinder"
+              }
+            },
+            {
+              "id": "cfv5lws",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 10,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "yssgt3n",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 120,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "7wbeifi",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 230,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "g66g4w4",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 340,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rp1mx58",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 450,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "r32h6f8",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 560,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "f9cbo5y",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 670,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "wb4q1fb",
+              "type": "node",
+              "nodeType": "cylinder",
+              "bounds": {
+                "x": 780,
+                "y": 2440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rpszs31",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 2610,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "curlyBracket"
+              }
+            },
+            {
+              "id": "esilga7",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 10,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "nt2pey9",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 120,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "nnrc4eh",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 230,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "twtbz77",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 340,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "eb1ggvt",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 450,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "isny53w",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 560,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "anxojkp",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 670,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ichtiup",
+              "type": "node",
+              "nodeType": "curlyBracket",
+              "bounds": {
+                "x": 780,
+                "y": 2640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "o7gjpql",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 2810,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "blockArc"
+              }
+            },
+            {
+              "id": "lotdwup",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 10,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "1x56bdl",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 120,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "4v0ld8x",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 230,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ndfqgjl",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 340,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "wicrtgw",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 450,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "c1rkgpa",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 560,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "r49nj0k",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 670,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "v5klho4",
+              "type": "node",
+              "nodeType": "blockArc",
+              "bounds": {
+                "x": 780,
+                "y": 2840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "wav4sbx",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 3010,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "cloud"
+              }
+            },
+            {
+              "id": "sjeh67m",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 10,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "t98ac3d",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 120,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "mzak0tr",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 230,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "tgti5nx",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 340,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "11v78qj",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 450,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "symt9nt",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 560,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "8ux8rqg",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 670,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "y50vaty",
+              "type": "node",
+              "nodeType": "cloud",
+              "bounds": {
+                "x": 780,
+                "y": 3040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "qf15n71",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 3210,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "step"
+              }
+            },
+            {
+              "id": "9xn4zlj",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 10,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "9p7nzz9",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 120,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "psycmbs",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 230,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "z9yncid",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 340,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "0ecftxf",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 450,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "h5s8c19",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 560,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "a00pp8i",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 670,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "yzadw49",
+              "type": "node",
+              "nodeType": "step",
+              "bounds": {
+                "x": 780,
+                "y": 3240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "05k42ob",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 3410,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "line"
+              }
+            },
+            {
+              "id": "q2g9eua",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 10,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "4hjov9y",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 120,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "tb7v4vq",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 230,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "4mr0xiy",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 340,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "emc3a0t",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 450,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "f0hb9sl",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 560,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "6h510in",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 670,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "6fr21fq",
+              "type": "node",
+              "nodeType": "line",
+              "bounds": {
+                "x": 780,
+                "y": 3440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "hiiixux",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 3610,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "delay"
+              }
+            },
+            {
+              "id": "ziu4ujc",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 10,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "vrnbs1w",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 120,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "evnl9ur",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 230,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "6g66p9k",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 340,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "umhhghi",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 450,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "gz3mdfe",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 560,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "opoh2y3",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 670,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ucgr36b",
+              "type": "node",
+              "nodeType": "delay",
+              "bounds": {
+                "x": 780,
+                "y": 3640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "vhx9tix",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 3810,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "cube"
+              }
+            },
+            {
+              "id": "n0m8ciu",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 10,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "zq9d9j9",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 120,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "9kv9xa5",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 230,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "un893l1",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 340,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "fly97kl",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 450,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "va9o6i0",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 560,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "lb5mlrk",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 670,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "8f6hgf5",
+              "type": "node",
+              "nodeType": "cube",
+              "bounds": {
+                "x": 780,
+                "y": 3840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "wiagi7c",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 4010,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "arrow-right"
+              }
+            },
+            {
+              "id": "cjdohzg",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 10,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "cew5ezd",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 120,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "rycbr6s",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 230,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "281jwxl",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 340,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "9gl6yf7",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 450,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "3c0vppx",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 560,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "qnjgyxt",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 670,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "4ilkl0m",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 780,
+                "y": 4040,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "95bx5xv",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 4210,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "arrow-up"
+              }
+            },
+            {
+              "id": "k7jax1e",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 10,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "fkbixat",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 120,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "xm19cq6",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 230,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "gshfs94",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 340,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "c3q9ogy",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 450,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "kn7lpog",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 560,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "die9b2r",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 670,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ha5iq4f",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 780,
+                "y": 4240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "en3nywh",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 4410,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "arrow-down"
+              }
+            },
+            {
+              "id": "4iptvzj",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 10,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "qviuulq",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 120,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "0ziq1fe",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 230,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "cgw4qfx",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 340,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "193fzhl",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 450,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "hiim2v7",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 560,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "n49fpbz",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 670,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "7d06r0q",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 780,
+                "y": 4440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "eggcr7f",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 4610,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "arrow-left"
+              }
+            },
+            {
+              "id": "oiwfk4c",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 10,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "3f3s3xq",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 120,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "kxks5hr",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 230,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "lbkw0jg",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 340,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "vtqfj0d",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 450,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "pcazakm",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 560,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "ypzn9ry",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 670,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "xlhy3cd",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 780,
+                "y": 4640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "w6imfnz",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 4810,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "partial-rect"
+              }
+            },
+            {
+              "id": "4orr4q0",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 10,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "t6l7hey",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 120,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "gl363nu",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 230,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "bat4fdm",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 340,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "7n8m52c",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 450,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "0kvizos",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 560,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rthub35",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 670,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "rgh9ovb",
+              "type": "node",
+              "nodeType": "partial-rect",
+              "bounds": {
+                "x": 780,
+                "y": 4840,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            }
+          ]
+        }
+      ],
+      "diagrams": [],
+      "zoom": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 1000,
+        "h": 5210
+      }
+    }
+  ],
+  "attachments": {},
+  "customPalette": [
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000"
+  ],
+  "styles": {
+    "edgeStyles": [
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default-edge",
+        "name": "Default",
+        "props": {
+          "stroke": {
+            "color": "var(--canvas-fg)"
+          },
+          "type": "straight"
+        },
+        "type": "edge"
+      }
+    ],
+    "nodeStyles": [
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default",
+        "name": "Default",
+        "props": {
+          "fill": {
+            "color": "var(--canvas-bg2)"
+          },
+          "stroke": {
+            "color": "var(--canvas-fg)"
+          }
+        },
+        "type": "node"
+      },
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default-text",
+        "name": "Text",
+        "props": {
+          "fill": {
+            "enabled": false
+          },
+          "stroke": {
+            "enabled": false
+          }
+        },
+        "type": "node"
+      }
+    ]
+  },
+  "schemas": [
+    {
+      "id": "default",
+      "name": "Default",
+      "fields": [
+        {
+          "id": "name",
+          "name": "Name",
+          "type": "text"
+        },
+        {
+          "id": "notes",
+          "name": "Notes",
+          "type": "longtext"
+        }
+      ]
+    }
+  ]
+}
