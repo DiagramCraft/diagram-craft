@@ -6,8 +6,8 @@ import { newid } from '@diagram-craft/utils/id';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
+import { Path } from '@diagram-craft/geometry/path';
 
-// TODO: Change this to use PathBuilder under the hood
 export class SVGGBuilder {
   #x: number;
   #y: number;
@@ -29,7 +29,7 @@ export class SVGGBuilder {
   #strokeStack: NodeProps['stroke'][] = [];
   #fillStack: NodeProps['fill'][] = [];
 
-  #shapes: VNode[] = [];
+  #shapes: (Path | PathBuilder)[] = [];
 
   constructor(
     private readonly g: VNode & { type: 's' },
@@ -54,11 +54,9 @@ export class SVGGBuilder {
   }
 
   static SVGPathBuilder = class {
-    #path: string[] = [];
-
     constructor(
       private readonly parent: SVGGBuilder,
-      private readonly path: VNode & { type: 's' },
+      private readonly b: PathBuilder,
       x?: number,
       y?: number
     ) {
@@ -76,61 +74,63 @@ export class SVGGBuilder {
       x: number,
       y: number
     ) {
-      this.#path.push(
-        `A ${rx * this.parent.#w} ${ry * this.parent.#h} ${rotation} ${largeArc} ${sweep} ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
+      this.b.arcTo(
+        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h),
+        rx * this.parent.#w,
+        ry * this.parent.#h,
+        rotation,
+        largeArc,
+        sweep
       );
-      this.path.data.d = this.#path.join(' ');
       return this;
     }
 
     line(x: number, y: number) {
-      this.#path.push(
-        `L ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
+      this.b.lineTo(
+        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h)
       );
-      this.path.data.d = this.#path.join(' ');
       return this;
     }
 
     move(x: number, y: number) {
-      this.#path.push(
-        `M ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
+      this.b.moveTo(
+        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h)
       );
-      this.path.data.d = this.#path.join(' ');
       return this;
     }
 
     curve(x1: number, y1: number, x2: number, y2: number, x: number, y: number) {
-      this.#path.push(
-        `C ${this.parent.#x + x1 * this.parent.#w} ${this.parent.#y + y1 * this.parent.#h} ${this.parent.#x + x2 * this.parent.#w} ${this.parent.#y + y2 * this.parent.#h} ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
+      this.b.cubicTo(
+        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h),
+        Point.of(this.parent.#x + x1 * this.parent.#w, this.parent.#y + y1 * this.parent.#h),
+        Point.of(this.parent.#x + x2 * this.parent.#w, this.parent.#y + y2 * this.parent.#h)
       );
-      this.path.data.d = this.#path.join(' ');
       return this;
     }
 
     quad(x1: number, y1: number, x: number, y: number) {
-      this.#path.push(
-        `Q ${this.parent.#x + x1 * this.parent.#w} ${this.parent.#y + y1 * this.parent.#h} ${this.parent.#x + x * this.parent.#w} ${this.parent.#y + y * this.parent.#h}`
+      this.b.quadTo(
+        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h),
+        Point.of(this.parent.#x + x1 * this.parent.#w, this.parent.#y + y1 * this.parent.#h)
       );
-      this.path.data.d = this.#path.join(' ');
+
       return this;
     }
 
     close() {
-      this.#path.push('Z');
-      this.path.data.d = this.#path.join(' ');
+      this.b.close();
       return this.end();
     }
 
     end() {
-      this.path.data.d = this.#path.join(' ');
       return parent;
     }
   };
 
   path(x?: number, y?: number) {
-    const path = svg.path({ d: '' });
-    this.#shapes.push(path);
-    return new SVGGBuilder.SVGPathBuilder(this, path, x, y);
+    const pb = new PathBuilder();
+    this.#shapes.push(pb);
+    return new SVGGBuilder.SVGPathBuilder(this, pb, x, y);
   }
 
   restore() {
@@ -193,8 +193,18 @@ export class SVGGBuilder {
 
   fill(fill?: NodeProps['fill']) {
     if (fill) this.setFill(fill);
-    this.#shapes.forEach(s => (s.data = { ...s.data, ...this.fillProps(), 'stroke-width': 0 }));
-    this.g.children.push(...this.#shapes);
+
+    this.g.children.push(
+      ...this.#shapes.map(s => {
+        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
+        return svg.path({
+          'd': p,
+          ...this.fillProps(),
+          'stroke-width': 0
+        });
+      })
+    );
+
     this.#shapes = [];
 
     return this;
@@ -206,8 +216,17 @@ export class SVGGBuilder {
 
     if (backing) this.applyBacking();
 
-    this.#shapes.forEach(s => (s.data = { ...s.data, ...this.fillProps(), ...this.strokeProps() }));
-    this.g.children.push(...this.#shapes);
+    this.g.children.push(
+      ...this.#shapes.map(s => {
+        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
+        return svg.path({
+          d: p,
+          ...this.fillProps(),
+          ...this.strokeProps()
+        });
+      })
+    );
+
     this.#shapes = [];
 
     return this;
@@ -218,8 +237,17 @@ export class SVGGBuilder {
 
     if (backing) this.applyBacking();
 
-    this.#shapes.forEach(s => (s.data = { ...s.data, ...this.strokeProps(), fill: 'transparent' }));
-    this.g.children.push(...this.#shapes);
+    this.g.children.push(
+      ...this.#shapes.map(s => {
+        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
+        return svg.path({
+          d: p,
+          ...this.strokeProps(),
+          fill: 'transparent'
+        });
+      })
+    );
+
     this.#shapes = [];
 
     return this;
@@ -232,16 +260,16 @@ export class SVGGBuilder {
    */
   private applyBacking() {
     this.g.children.push(
-      ...this.#shapes.map(s => ({
-        ...s,
-        data: {
-          ...s.data,
+      ...this.#shapes.map(s => {
+        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
+        return svg.path({
+          'd': p,
           'class': 'svg-node__backing',
           'fill': 'transparent',
           'stroke': 'transparent',
           'stroke-width': 10
-        }
-      }))
+        });
+      })
     );
   }
 
@@ -263,11 +291,7 @@ export class SVGGBuilder {
     pathBuilder.lineTo(Point.of(ex, ey + ry));
     if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex + rx, ey), rx, ry, 0, 0, 1);
 
-    this.#shapes.push(
-      svg.path({
-        d: pathBuilder.getPaths().asSvgPath()
-      })
-    );
+    this.#shapes.push(pathBuilder);
 
     return this;
   }
@@ -287,11 +311,7 @@ export class SVGGBuilder {
     b.arcTo(Point.of(ex - rx, ey), rx, ry, 0, 0, 1);
     b.arcTo(Point.of(ex, ey - ry), rx, ry, 0, 0, 1);
 
-    this.#shapes.push(
-      svg.path({
-        d: b.getPaths().asSvgPath()
-      })
-    );
+    this.#shapes.push(b);
 
     return this;
   }
@@ -323,7 +343,7 @@ export class SVGGBuilder {
 
   private strokeProps() {
     const d: Record<string, string | number | undefined> = {
-      'stroke': this.#stroke?.color,
+      'stroke': this.#stroke?.color ?? 'var(--canvas-fg)',
       'stroke-width': this.#stroke?.width
     };
     if (this.#stroke?.pattern) {

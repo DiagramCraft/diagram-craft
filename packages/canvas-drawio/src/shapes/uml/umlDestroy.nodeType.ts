@@ -15,6 +15,6 @@ export class UmlDestroy extends SimpleShapeNodeDefinition {
     const b = shapeBuilder.buildBoundary();
 
     b.path(w, 0).line(0, h).move(0, 0).line(w, h);
-    b.stroke();
+    b.stroke({}, true);
   }
 }
