@@ -16,6 +16,9 @@ import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
+import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/uml';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Scale } from '@diagram-craft/geometry/transform';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -163,7 +166,13 @@ const arrowsTestFile = async () => {
   );
 };
 
-const writeShape = (shape: string, y: number, layer: Layer, diagram: Diagram) => {
+const writeShape = (
+  shape: string,
+  factory: (diagram: Diagram) => DiagramNode,
+  y: number,
+  layer: Layer,
+  diagram: Diagram
+) => {
   const n = new DiagramNode(
     newid(),
     'text',
@@ -192,219 +201,135 @@ const writeShape = (shape: string, y: number, layer: Layer, diagram: Diagram) =>
   y += 30;
   let x = 10;
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {},
-      {},
-      {
-        text: ''
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
-  x += 110;
+  const uow = new UnitOfWork(diagram, false, false);
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {},
-      {},
-      {
-        text: 'With Text'
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
-  x += 110;
+  const xDiff = 110;
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {
-        fill: {
-          color: '#ffffcc'
-        }
-      },
-      {},
-      {
-        text: ''
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
-  x += 110;
+  const n1 = factory(diagram).duplicate(undefined, `${shape}-1`);
+  n1.transform([new Scale(100 / n1.bounds.w, 100 / n1.bounds.h)], uow);
+  n1.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n1.invalidateAnchors(uow);
+  layer.addElement(n1, uow);
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {
-        fill: {
-          color: 'white'
-        },
-        shadow: {
-          enabled: true,
-          color: 'black',
-          blur: 5,
-          x: 5,
-          y: 5
-        }
-      },
-      {},
-      {
-        text: ''
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
-  x += 110;
+  x += xDiff;
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {
-        fill: {
-          color: 'white'
-        },
-        effects: {
-          rounding: true,
-          roundingAmount: 10
-        }
-      },
-      {},
-      {
-        text: ''
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
-  x += 110;
+  const n2 = factory(diagram).duplicate(undefined, `${shape}-2`);
+  n2.transform([new Scale(100 / n2.bounds.w, 100 / n2.bounds.h)], uow);
+  n2.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n2.setText('With Text', uow);
+  n2.invalidateAnchors(uow);
+  layer.addElement(n2, uow);
+  x += xDiff;
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {
-        fill: {
-          color: 'white'
-        },
-        effects: {
-          sketch: true
-        }
-      },
-      {},
-      {
-        text: ''
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
-  x += 110;
+  const n3 = factory(diagram).duplicate(undefined, `${shape}-3`);
+  n3.transform([new Scale(100 / n3.bounds.w, 100 / n3.bounds.h)], uow);
+  n3.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n3.updateProps(p => {
+    p.fill ??= {};
+    p.fill.color = '#ffffcc';
+  }, uow);
+  n3.invalidateAnchors(uow);
+  layer.addElement(n3, uow);
+  x += xDiff;
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {
-        fill: {
-          color: 'lightblue'
-        },
-        effects: {
-          sketch: true,
-          sketchFillType: 'fill'
-        }
-      },
-      {},
-      {
-        text: ''
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
-  x += 110;
+  const n4 = factory(diagram).duplicate(undefined, `${shape}-4`);
+  n4.transform([new Scale(100 / n4.bounds.w, 100 / n4.bounds.h)], uow);
+  n4.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n4.updateProps(p => {
+    p.fill ??= {};
+    p.fill.color = 'white';
 
-  layer.addElement(
-    new DiagramNode(
-      newid(),
-      shape,
-      { x: x, y: y, w: 100, h: 100, r: 0 },
-      diagram,
-      layer,
-      {
-        fill: {
-          color: 'lightblue'
-        },
-        effects: {
-          sketch: true,
-          sketchFillType: 'hachure'
-        }
-      },
-      {},
-      {
-        text: ''
-      },
-      []
-    ),
-    UnitOfWork.immediate(diagram)
-  );
+    p.shadow = {
+      enabled: true,
+      color: 'black',
+      blur: 5,
+      x: 5,
+      y: 5
+    };
+  }, uow);
+  n4.invalidateAnchors(uow);
+  layer.addElement(n4, uow);
+  x += xDiff;
 
-  x += 160;
+  const n5 = factory(diagram).duplicate(undefined, `${shape}-5`);
+  n5.transform([new Scale(100 / n5.bounds.w, 100 / n5.bounds.h)], uow);
+  n5.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n5.updateProps(p => {
+    p.fill ??= {};
+    p.fill.color = 'white';
+
+    p.effects = {
+      rounding: true,
+      roundingAmount: 10
+    };
+  }, uow);
+  n5.invalidateAnchors(uow);
+  layer.addElement(n5, uow);
+  x += xDiff;
+
+  const n6 = factory(diagram).duplicate(undefined, `${shape}-6`);
+  n6.transform([new Scale(100 / n6.bounds.w, 100 / n6.bounds.h)], uow);
+  n6.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n6.updateProps(p => {
+    p.fill ??= {};
+    p.fill.color = 'white';
+
+    p.effects = {
+      sketch: true
+    };
+  }, uow);
+  n6.invalidateAnchors(uow);
+  layer.addElement(n6, uow);
+  x += xDiff;
+
+  const n7 = factory(diagram).duplicate(undefined, `${shape}-7`);
+  n7.transform([new Scale(100 / n7.bounds.w, 100 / n7.bounds.h)], uow);
+  n7.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n7.updateProps(p => {
+    p.fill ??= {};
+    p.fill.color = 'lightblue';
+
+    p.effects = {
+      sketch: true,
+      sketchFillType: 'fill'
+    };
+  }, uow);
+  n7.invalidateAnchors(uow);
+  layer.addElement(n7, uow);
+  x += xDiff;
+
+  const n8 = factory(diagram).duplicate(undefined, `${shape}-8`);
+  n8.transform([new Scale(100 / n8.bounds.w, 100 / n8.bounds.h)], uow);
+  n8.setBounds({ x: x, y: y, w: 100, h: 100, r: 0 }, uow);
+  n8.updateProps(p => {
+    p.fill ??= {};
+    p.fill.color = 'lightblue';
+
+    p.effects = {
+      sketch: true,
+      sketchFillType: 'hachure'
+    };
+  }, uow);
+  n8.invalidateAnchors(uow);
+  layer.addElement(n8, uow);
+  x += xDiff + 50;
 
   const rotation = Math.PI / 6;
-  const node = new DiagramNode(
-    newid(),
-    shape,
-    { x: x, y: y, w: 100, h: 100, r: rotation },
-    diagram,
-    layer,
-    {},
-    {},
-    {
-      text: 'With Text'
-    }
-  );
-  layer.addElement(node, UnitOfWork.immediate(diagram));
+  const n9 = factory(diagram).duplicate(undefined, `${shape}-9`);
+  n9.transform([new Scale(100 / n9.bounds.w, 100 / n9.bounds.h)], uow);
+  n9.setBounds({ x: x, y: y, w: 100, h: 100, r: rotation }, uow);
+  n9.setText('With Text', uow);
+  n9.invalidateAnchors(uow);
+  layer.addElement(n9, uow);
+  x += xDiff;
 
-  node.anchors.forEach(a => {
+  n9.anchors.forEach(a => {
     if (a.type === 'point') {
-      const start = node._getAnchorPosition(a.id);
+      const start = n9._getAnchorPosition(a.id);
       const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
       const e = new DiagramEdge(
         newid(),
-        new AnchorEndpoint(node, a.id),
+        new AnchorEndpoint(n9, a.id),
         new FreeEndpoint(dest),
         {
           stroke: {
@@ -424,8 +349,11 @@ const writeShape = (shape: string, y: number, layer: Layer, diagram: Diagram) =>
   });
 };
 
-const shapesTestFile = async () => {
-  const nodeDefinitions = defaultNodeRegistry();
+const shapesTestFile = async (
+  nodeDefinitions: NodeDefinitionRegistry,
+  pkg: string,
+  file: string
+) => {
   const document = new DiagramDocument(nodeDefinitions, defaultEdgeRegistry());
 
   const diagram = new Diagram('shapes', 'Shapes', document);
@@ -436,17 +364,9 @@ const shapesTestFile = async () => {
 
   let y = 10;
 
-  for (const shape of nodeDefinitions.list()) {
-    if (
-      shape === 'table' ||
-      shape === 'tableRow' ||
-      shape === 'group' ||
-      shape === 'container' ||
-      shape === 'swimlane' ||
-      shape === 'generic-path'
-    )
-      continue;
-    writeShape(shape, y, layer, diagram);
+  for (const stencil of nodeDefinitions.stencilRegistry.get(pkg)!.stencils) {
+    if (stencil.id === 'table' || stencil.id === 'container') continue;
+    writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram);
     y += 200;
   }
 
@@ -458,10 +378,14 @@ const shapesTestFile = async () => {
   };
 
   fs.writeFileSync(
-    path.join(__dirname, '..', '..', 'public', 'sample', 'shapes.json'),
+    path.join(__dirname, '..', '..', 'public', 'sample', file),
     JSON.stringify(await serializeDiagramDocument(document), undefined, '  ')
   );
 };
 
+const nodeDefinitions = defaultNodeRegistry();
+await registerUMLShapes(nodeDefinitions);
+
 arrowsTestFile();
-shapesTestFile();
+shapesTestFile(nodeDefinitions, 'default', 'shapes.json');
+shapesTestFile(nodeDefinitions, 'uml', 'shapes-uml.json');

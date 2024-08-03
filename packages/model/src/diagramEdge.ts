@@ -528,11 +528,11 @@ export class DiagramEdge
     this.#cache?.clear();
   }
 
-  duplicate(ctx?: DuplicationContext) {
+  duplicate(ctx?: DuplicationContext, id?: string | undefined) {
     const uow = new UnitOfWork(this.diagram);
 
     const edge = new DiagramEdge(
-      newid(),
+      id ?? newid(),
       this.start,
       this.end,
       deepClone(this.#props) as EdgeProps,
@@ -546,8 +546,10 @@ export class DiagramEdge
 
     // Clone any label nodes
     const newLabelNodes: ResolvedLabelNode[] = [];
-    for (const l of edge.labelNodes ?? []) {
-      const newNode = l.node.duplicate(ctx);
+    for (let i = 0; i < (edge.labelNodes ?? []).length; i++) {
+      const l = (edge.labelNodes ?? [])[i];
+
+      const newNode = l.node.duplicate(ctx, id ? `${id}-${i}` : undefined);
       newLabelNodes.push({
         ...l,
         node: newNode

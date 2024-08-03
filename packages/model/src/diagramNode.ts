@@ -480,7 +480,7 @@ export class DiagramNode
     }, uow);
   }
 
-  duplicate(ctx?: DuplicationContext): DiagramNode {
+  duplicate(ctx?: DuplicationContext | undefined, id?: string | undefined): DiagramNode {
     const isTopLevel = ctx === undefined;
     const context = ctx ?? {
       targetElementsInGroup: new Map()
@@ -492,7 +492,7 @@ export class DiagramNode
     }
 
     const node = new DiagramNode(
-      newid(),
+      id ?? newid(),
       this.nodeType,
       deepClone(this.bounds),
       this.diagram,
@@ -507,8 +507,9 @@ export class DiagramNode
 
     // Phase 1 - duplicate all elements in the group
     const newChildren: DiagramElement[] = [];
-    for (const c of this.children) {
-      const newElement = c.duplicate(context);
+    for (let i = 0; i < this.children.length; i++) {
+      const c = this.children[i];
+      const newElement = c.duplicate(context, id ? `${id}-${i}` : undefined);
       newChildren.push(newElement);
     }
     node.setChildren(newChildren, UnitOfWork.immediate(this.diagram));

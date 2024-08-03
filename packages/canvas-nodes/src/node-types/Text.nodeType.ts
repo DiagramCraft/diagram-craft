@@ -12,7 +12,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export class TextNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('text', 'Test', TextComponent);
+    super('text', 'Text', TextComponent);
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

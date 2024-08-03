@@ -23,7 +23,7 @@ export type ElementPropsForRendering = EdgePropsForRendering | NodePropsForRende
 export interface DiagramElement extends AbstractElement, AttachmentConsumer {
   invalidate(uow: UnitOfWork): void;
   detach(uow: UnitOfWork): void;
-  duplicate(ctx?: DuplicationContext): DiagramElement;
+  duplicate(ctx?: DuplicationContext, id?: string | undefined): DiagramElement;
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
   isLocked(): boolean;
 
