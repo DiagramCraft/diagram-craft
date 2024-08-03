@@ -61,6 +61,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
 
     this.capabilities.fill = true;
     this.capabilities.children = true;
+    this.capabilities.rounding = false;
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
@@ -244,12 +245,23 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     const pathBuilder = new PathBuilder();
 
-    if (shapeProps.outerBorder !== false) {
-      PathBuilderHelper.rect(pathBuilder, {
-        ...props.node.bounds,
-        y: props.node.bounds.y + (shapeProps.title ? shapeProps.titleSize : 0),
-        h: props.node.bounds.h - (shapeProps.title ? shapeProps.titleSize : 0)
-      });
+    const hasOuterBorder = shapeProps.outerBorder !== false;
+    const hasTitleBorder = shapeProps.titleBorder !== false;
+
+    if (hasOuterBorder) {
+      if (hasTitleBorder) {
+        PathBuilderHelper.rect(pathBuilder, {
+          ...props.node.bounds,
+          y: props.node.bounds.y,
+          h: props.node.bounds.h
+        });
+      } else {
+        PathBuilderHelper.rect(pathBuilder, {
+          ...props.node.bounds,
+          y: props.node.bounds.y + (shapeProps.title ? shapeProps.titleSize : 0),
+          h: props.node.bounds.h - (shapeProps.title ? shapeProps.titleSize : 0)
+        });
+      }
     }
 
     const bounds = props.node.bounds;
@@ -259,20 +271,38 @@ class SwimlaneComponent extends BaseNodeComponent {
       const titleSize = shapeProps.titleSize;
       startY += titleSize;
 
-      if (shapeProps.titleBorder !== false) {
+      if (hasTitleBorder) {
         const titlePathBuilder = new PathBuilder();
         titlePathBuilder.moveTo(Point.of(bounds.x, startY));
         titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
         titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, bounds.y));
         titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
+        titlePathBuilder.close();
 
         builder.path(titlePathBuilder.getPaths().all(), {
           ...nodeProps,
-          stroke: !nodeProps.stroke.enabled
-            ? { enabled: false, color: 'transparent' }
-            : nodeProps.stroke,
+          stroke:
+            !nodeProps.stroke.enabled || hasOuterBorder
+              ? { enabled: false, color: 'transparent' }
+              : nodeProps.stroke,
           fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
         });
+
+        // In case we have an outer border, the above code draws a transparent outline,
+        // so we are now missing the bottom border
+        if (hasOuterBorder) {
+          const titlePathBuilder = new PathBuilder();
+          titlePathBuilder.moveTo(Point.of(bounds.x, startY));
+          titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
+
+          builder.path(titlePathBuilder.getPaths().all(), {
+            ...nodeProps,
+            stroke: !nodeProps.stroke.enabled
+              ? { enabled: false, color: 'transparent' }
+              : nodeProps.stroke,
+            fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
+          });
+        }
       }
 
       builder.text(this, '1', props.node.getText(), nodeProps.text, {
