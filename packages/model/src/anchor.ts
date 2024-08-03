@@ -119,6 +119,8 @@ export const getAnchorPosition = (
   );
 };
 
+export type BoundaryDirection = 'clockwise' | 'counter-clockwise' | 'unknown';
+
 export const makeAnchorId = (p: Point) => {
   return `${Math.round(p.x * 1000)}_${Math.round(p.y * 1000)}`;
 };
@@ -163,11 +165,18 @@ export const AnchorStrategy = {
 
     return newAnchors;
   },
-  getEdgeAnchors: (node: DiagramNode, paths: CompoundPath, numberPerEdge = 1) => {
+  getEdgeAnchors: (
+    node: DiagramNode,
+    paths: CompoundPath,
+    numberPerEdge = 1,
+    direction: BoundaryDirection = 'unknown'
+  ) => {
     const newAnchors: Array<Anchor> = [];
     newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
 
     const d = 1 / (numberPerEdge + 1);
+
+    const minLength = Math.min(node.bounds.w, node.bounds.h) / 20;
 
     // Get anchors per side
     for (let i = 0; i < paths.all().length; i++) {
@@ -177,6 +186,8 @@ export const AnchorStrategy = {
           const p = path.segments[j];
           const pct = (n + 1) * d;
           const { x, y } = p.point(pct);
+
+          if (p.length() < minLength) continue;
 
           // Need to rotate back to get anchors in the [0,1],[0,1] coordinate system
           const rp = Point.rotateAround({ x, y }, -node.bounds.r, Box.center(node.bounds));
@@ -189,9 +200,13 @@ export const AnchorStrategy = {
 
           let normal = Vector.angle(Vector.tangentToNormal(p.tangent(0.5))) - node.bounds.r;
 
-          // Make sure normal is "outwards" from the center of the node
-          const tangent = Vector.from(Box.center(node.bounds), rp);
-          if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
+          if (direction === 'unknown') {
+            // Make sure normal is "outwards" from the center of the node
+            const tangent = Vector.from(Box.center(node.bounds), rp);
+            if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
+              normal += Math.PI;
+            }
+          } else if (direction === 'counter-clockwise') {
             normal += Math.PI;
           }
 

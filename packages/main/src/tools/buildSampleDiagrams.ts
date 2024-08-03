@@ -14,6 +14,8 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { Point } from '@diagram-craft/geometry/point';
+import { Vector } from '@diagram-craft/geometry/vector';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -378,6 +380,48 @@ const writeShape = (shape: string, y: number, layer: Layer, diagram: Diagram) =>
     ),
     UnitOfWork.immediate(diagram)
   );
+
+  x += 160;
+
+  const rotation = Math.PI / 6;
+  const node = new DiagramNode(
+    newid(),
+    shape,
+    { x: x, y: y, w: 100, h: 100, r: rotation },
+    diagram,
+    layer,
+    {},
+    {},
+    {
+      text: 'With Text'
+    }
+  );
+  layer.addElement(node, UnitOfWork.immediate(diagram));
+
+  node.anchors.forEach(a => {
+    if (a.type === 'point') {
+      const start = node._getAnchorPosition(a.id);
+      const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
+      const e = new DiagramEdge(
+        newid(),
+        new AnchorEndpoint(node, a.id),
+        new FreeEndpoint(dest),
+        {
+          stroke: {
+            color: 'pink'
+          },
+          lineHops: {
+            type: 'none'
+          }
+        },
+        {},
+        [],
+        diagram,
+        layer
+      );
+      layer.addElement(e, UnitOfWork.immediate(diagram));
+    }
+  });
 };
 
 const shapesTestFile = async () => {
@@ -409,7 +453,7 @@ const shapesTestFile = async () => {
   diagram.canvas = {
     x: 0,
     y: 0,
-    w: 1000,
+    w: 1200,
     h: y + 200
   };
 

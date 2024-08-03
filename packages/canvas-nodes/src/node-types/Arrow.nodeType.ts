@@ -14,6 +14,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { BoundaryDirection } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
 
@@ -149,6 +150,10 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
 
   isHorizontal() {
     return Angle.isHorizontal(this.rotation);
+  }
+
+  protected boundaryDirection(): BoundaryDirection {
+    return 'clockwise';
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

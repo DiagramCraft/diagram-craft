@@ -2,17 +2,72 @@ import { Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
 import { Angle } from './angle';
-import { assert, precondition, VerifyNotReached } from '@diagram-craft/utils/assert';
+import {
+  assert,
+  precondition,
+  VERIFY_NOT_REACHED,
+  VerifyNotReached
+} from '@diagram-craft/utils/assert';
 import { Transform, TransformFactory } from './transform';
 import { PathUtils } from './pathUtils';
 import { LengthOffsetOnPath, TimeOffsetOnSegment } from './pathPosition';
 import { LocalCoordinateSystem } from './lcs';
 import { parseSvgPath } from './svgPathUtils';
 
+/**
+ * Represents a raw cubic Bézier curve segment in an SVG path.
+ *
+ * @property {'C'} 0 - The command character for a cubic Bézier curve segment.
+ * @property {number} 1 - The x-coordinate of the first control point.
+ * @property {number} 2 - The y-coordinate of the first control point.
+ * @property {number} 3 - The x-coordinate of the second control point.
+ * @property {number} 4 - The y-coordinate of the second control point.
+ * @property {number} 5 - The x-coordinate of the end point of the curve.
+ * @property {number} 6 - The y-coordinate of the end point of the curve.
+ */
 export type RawCubicSegment = ['C', number, number, number, number, number, number];
+
+/**
+ * Represents a raw line segment in an SVG path.
+ *
+ * @property {'L'} 0 - The command character for a line segment.
+ * @property {number} 1 - The x-coordinate of the end point of the line.
+ * @property {number} 2 - The y-coordinate of the end point of the line.
+ */
 export type RawLineSegment = ['L', number, number];
+
+/**
+ * Represents a raw arc segment in an SVG path.
+ *
+ * @property {'A'} 0 - The command character for an arc segment.
+ * @property {number} 1 - The x-axis radius for the ellipse.
+ * @property {number} 2 - The y-axis radius for the ellipse.
+ * @property {number} 3 - The rotation angle in degrees for the ellipse's x-axis.
+ * @property {0 | 1} 4 - The large-arc-flag, which determines if the arc should be greater than or less than 180 degrees.
+ * @property {0 | 1} 5 - The sweep-flag, which determines if the arc should be drawn in a "positive-angle" direction or a "negative-angle" direction.
+ * @property {number} 6 - The x-coordinate of the end point of the arc.
+ * @property {number} 7 - The y-coordinate of the end point of the arc.
+ */
 export type RawArcSegment = ['A', number, number, number, 0 | 1, 0 | 1, number, number];
+
+/**
+ * Represents a raw curve segment in an SVG path.
+ *
+ * @property {'T'} 0 - The command character for a smooth quadratic Bézier curve segment.
+ * @property {number} 1 - The x-coordinate of the end point of the curve.
+ * @property {number} 2 - The y-coordinate of the end point of the curve.
+ */
 export type RawCurveSegment = ['T', number, number];
+
+/**
+ * Represents a raw quadratic Bézier curve segment in an SVG path.
+ *
+ * @property {'Q'} 0 - The command character for a quadratic Bézier curve segment.
+ * @property {number} 1 - The x-coordinate of the control point.
+ * @property {number} 2 - The y-coordinate of the control point.
+ * @property {number} 3 - The x-coordinate of the end point of the curve.
+ * @property {number} 4 - The y-coordinate of the end point of the curve.
+ */
 export type RawQuadSegment = ['Q', number, number, number, number];
 
 export type RawSegment =
@@ -108,18 +163,31 @@ export class CompoundPath {
 
 type PathBuilderTransform = (p: Point) => Point;
 
-export class PathBuilder {
-  private start: Point | undefined;
-  private path: RawSegment[] = [];
-  private rotation: number = 0;
-  private centerOfRotation: Point = Point.ORIGIN;
+/**
+ * This represents a path part with a starting point and a number
+ * of instructions
+ */
+type Part = {
+  start: Point | undefined;
+  instructions: RawSegment[];
+};
 
-  private paths: Path[] = [];
+export class PathBuilder {
+  private parts: Part[] = [{ start: undefined, instructions: [] }];
+
+  private transformList: Transform[] | undefined = undefined;
+  private rotation = {
+    amount: 0,
+    center: Point.ORIGIN
+  };
+
+  private pathCache: Path[] | undefined = undefined;
 
   constructor(private readonly transform: PathBuilderTransform = p => p) {}
 
   static fromString(path: string, transform: PathBuilderTransform = p => p) {
     const d = new PathBuilder(transform);
+
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
       const pn = params.map(p => parseFloat(p));
@@ -140,14 +208,18 @@ export class PathBuilder {
     return d;
   }
 
+  private get active(): Part {
+    return this.parts.at(-1)!;
+  }
+
   moveTo(p: Point) {
-    if (this.start) this.flushPath();
-    this.start = this.transform(p);
+    if (this.active.start) this.newSegment();
+    this.active.start = this.transform(p);
   }
 
   lineTo(p: Point) {
     const tp = this.transform(p);
-    this.path.push(['L', tp.x, tp.y]);
+    this.active.instructions.push(['L', tp.x, tp.y]);
   }
 
   line(p1: Point, p2: Point) {
@@ -156,8 +228,8 @@ export class PathBuilder {
   }
 
   close() {
-    precondition.is.present(this.start);
-    this.path.push(['L', this.start.x, this.start.y]);
+    precondition.is.present(this.active.start);
+    this.active.instructions.push(['L', this.active.start.x, this.active.start.y]);
   }
 
   arcTo(
@@ -174,7 +246,7 @@ export class PathBuilder {
     const o = this.transform(Point.ORIGIN);
     const tr = Point.subtract(g, o);
 
-    this.path.push([
+    this.active.instructions.push([
       'A',
       Math.abs(tr.x),
       Math.abs(tr.y),
@@ -188,94 +260,170 @@ export class PathBuilder {
 
   curveTo(p: Point) {
     const tp = this.transform(p);
-    this.path.push(['T', tp.x, tp.y]);
+    this.active.instructions.push(['T', tp.x, tp.y]);
   }
 
   quadTo(p: Point, p1: Point) {
     const tp = this.transform(p);
     const tp1 = this.transform(p1);
-    this.path.push(['Q', tp1.x, tp1.y, tp.x, tp.y]);
+    this.active.instructions.push(['Q', tp1.x, tp1.y, tp.x, tp.y]);
   }
 
   cubicTo(p: Point, p1: Point, p2: Point) {
     const tp = this.transform(p);
     const tp1 = this.transform(p1);
     const tp2 = this.transform(p2);
-    this.path.push(['C', tp1.x, tp1.y, tp2.x, tp2.y, tp.x, tp.y]);
+    this.active.instructions.push(['C', tp1.x, tp1.y, tp2.x, tp2.y, tp.x, tp.y]);
   }
 
-  append(path: PathBuilder) {
-    for (const p of path.path) {
-      this.path.push(p);
+  // TODO: Is there a way to not have to need this method
+  //       ... it's a bit weird that it just appends the instructions without
+  //       checking that the start corresponds to the end of the previous path
+  appendInstructions(path: PathBuilder) {
+    for (const p of path.active.instructions) {
+      this.active.instructions.push(p);
     }
   }
 
   setRotation(rotation: number, centerOfRotation: Point) {
-    this.rotation = rotation;
-    this.centerOfRotation = centerOfRotation;
+    this.rotation = {
+      amount: rotation,
+      center: centerOfRotation
+    };
+    this.clearCache();
+  }
+
+  setTransform(transform: Transform[]) {
+    this.transformList = transform;
+    this.clearCache();
   }
 
   getPaths() {
-    this.flushPath();
-    return new CompoundPath(this.paths);
+    return new CompoundPath(this.generatePaths());
   }
 
-  scaleTo(targetBounds: Box) {
-    this.paths = this.getPaths().scale(targetBounds).all();
+  private newSegment() {
+    this.parts.push({ start: undefined, instructions: [] });
   }
 
-  private flushPath() {
-    if (!this.start) return;
+  private clearCache() {
+    this.pathCache = undefined;
+  }
 
-    this.paths.push(
-      new Path(
-        Point.ofTuple(this.applyPointRotationArray(this.start ?? Point.ORIGIN)),
-        this.applyPathRotation(this.path)
-      )
-    );
+  private generatePaths() {
+    if (this.pathCache) return this.pathCache;
+    if (!this.active.start) return [];
 
-    this.start = undefined;
-    this.path = [];
+    this.pathCache = [];
+    for (const segment of this.parts) {
+      if (segment.instructions.length === 0) continue;
+      if (!segment.start) continue;
+
+      const transformed = {
+        instructions: this.transformList
+          ? this.applyTransforms(segment.instructions)
+          : segment.instructions,
+        start: Transform.point(segment.start ?? Point.ORIGIN, ...(this.transformList ?? []))
+      };
+
+      const rotated = {
+        start: this.applyPointRotationArray(transformed.start),
+        instructions: this.applyPathRotation(transformed.instructions)
+      };
+
+      this.pathCache.push(new Path(Point.ofTuple(rotated.start), rotated.instructions));
+    }
+
+    return this.pathCache;
+  }
+
+  private applyTransform(p: Point) {
+    const { x, y } = Transform.point(p, ...this.transformList!);
+    return [x, y] as const;
+  }
+
+  private applyTransforms(path: RawSegment[]) {
+    return path.map(s => {
+      switch (s[0]) {
+        case 'L':
+          return ['L', ...this.applyTransform({ x: s[1], y: s[2] })] satisfies RawLineSegment;
+        case 'C':
+          return [
+            'C',
+            ...this.applyTransform({ x: s[1], y: s[2] }),
+            ...this.applyTransform({ x: s[3], y: s[4] }),
+            ...this.applyTransform({ x: s[5], y: s[6] })
+          ] satisfies RawCubicSegment;
+        case 'Q':
+          return [
+            'Q',
+            ...this.applyTransform({ x: s[1], y: s[2] }),
+            ...this.applyTransform({ x: s[3], y: s[4] })
+          ] satisfies RawQuadSegment;
+        case 'T':
+          return ['T', ...this.applyTransform({ x: s[1], y: s[2] })] satisfies RawCurveSegment;
+        case 'A':
+          // TODO: Probably need to change the radiuses here as well
+          return [
+            'A',
+            s[1],
+            s[2],
+            s[3],
+            s[4],
+            s[5],
+            ...this.applyTransform({ x: s[6], y: s[7] })
+          ] satisfies RawArcSegment;
+        default:
+          VERIFY_NOT_REACHED('Unknown path segment');
+      }
+    });
   }
 
   private applyPointRotationArray(point: Point): [number, number] {
-    const np = Point.rotateAround(point, this.rotation, this.centerOfRotation);
+    const np = Point.rotateAround(point, this.rotation.amount, this.rotation.center);
     return [np.x, np.y];
   }
 
   private applyPathRotation(path: RawSegment[]) {
+    if (this.rotation.amount === 0) return path;
     return path.map(s => {
       switch (s[0]) {
         case 'L':
-          return ['L', ...this.applyPointRotationArray({ x: s[1], y: s[2] })] as RawLineSegment;
+          return [
+            'L',
+            ...this.applyPointRotationArray({ x: s[1], y: s[2] })
+          ] satisfies RawLineSegment;
         case 'C':
           return [
             'C',
             ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
             ...this.applyPointRotationArray({ x: s[3], y: s[4] }),
             ...this.applyPointRotationArray({ x: s[5], y: s[6] })
-          ] as RawCubicSegment;
+          ] satisfies RawCubicSegment;
         case 'Q':
           return [
             'Q',
             ...this.applyPointRotationArray({ x: s[1], y: s[2] }),
             ...this.applyPointRotationArray({ x: s[3], y: s[4] })
-          ] as RawQuadSegment;
+          ] satisfies RawQuadSegment;
         case 'T':
-          return ['T', ...this.applyPointRotationArray({ x: s[1], y: s[2] })] as RawCurveSegment;
+          return [
+            'T',
+            ...this.applyPointRotationArray({ x: s[1], y: s[2] })
+          ] satisfies RawCurveSegment;
         case 'A':
           // TODO: Probably need to change the rotation parameter as well
           return [
             'A',
             s[1],
             s[2],
-            s[3] + Angle.toDeg(this.rotation),
+            s[3] + Angle.toDeg(this.rotation.amount),
             s[4],
             s[5],
             ...this.applyPointRotationArray({ x: s[6], y: s[7] })
-          ] as RawArcSegment;
+          ] satisfies RawArcSegment;
         default:
-          throw new Error('Unknown path segment');
+          VERIFY_NOT_REACHED('Unknown path segment');
       }
     });
   }

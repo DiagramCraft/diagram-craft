@@ -10,13 +10,13 @@ export class NotImplementedYet extends Error {
   }
 }
 
-export const VERIFY_NOT_REACHED = (s?: string): never => {
+export function VERIFY_NOT_REACHED(s?: string): never {
   throw new VerifyNotReached(s);
-};
+}
 
-export const NOT_IMPLEMENTED_YET = (): never => {
+export function NOT_IMPLEMENTED_YET(): never {
   throw new NotImplementedYet();
-};
+}
 
 export const is = {
   present: <T = unknown>(arg: T): arg is NonNullable<T> => arg !== null && arg !== undefined,

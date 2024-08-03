@@ -2,6 +2,11 @@ import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefini
 import { BaseNodeComponent } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { Box } from '@diagram-craft/geometry/box';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { makeMemo } from '@diagram-craft/utils/memoize';
+
+const boundsCache = makeMemo<Box>();
 
 // NodeDefinition and Shape *****************************************************
 
@@ -12,19 +17,24 @@ export class CloudNodeDefinition extends ShapeNodeDefinition {
 
   static Shape = class extends BaseNodeComponent<CloudNodeDefinition> {};
 
-  // TODO: Round these numbers
   getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = PathBuilder.fromString(`
-      M -77.232385 12.876487,
-      C -124.99341999999999 -22.267629 -76.759479 -63.97993700000001 -53.35186499999999 -57.411744,
-      C -41.41160499999999 -110.12791999999999 -0.21532742999998788 -107.85114 30.229955000000004 -74.983802,
-      C 66.050734 -110.12791999999999 100.44281000000001 -83.094287 88.298834 -24.370202999999997,
-      C 106.14571000000001 0.7959394900000021 101.87151 48.020602000000004 66.050734 48.020602000000004,
-      C 42.170214 100.73678000000001 15.961382000000008 120.55901 -41.411604999999994 65.59266,
-      C -73.999863 93.65879199999999 -101.1129 65.59266 -77.232385 12.876486999999997
-    `);
+    const pathBuilder = PathBuilder.fromString(
+      `
+      M -77.23 12.88,
+      C -124.99 -22.27 -76.76 -63.98 -53.35 -57.41,
+      C -41.41 -110.13 -0.22 -107.85 30.23 -74.98,
+      C 66.05 -110.13 100.44 -83.09 88.30 -24.37,
+      C 106.15 0.79 101.87151 48.02 66.05 48.02,
+      C 42.17 100.74 15.96 120.55901 -41.41 65.59,
+      C -73.99 93.66 -101.11 65.59266 -77.23 12.88
+    `
+    );
 
-    pathBuilder.scaleTo(def.bounds);
+    const t = TransformFactory.fromTo(
+      boundsCache(() => pathBuilder.getPaths().bounds()),
+      Box.withoutRotation(def.bounds)
+    );
+    pathBuilder.setTransform(t);
 
     return pathBuilder;
   }

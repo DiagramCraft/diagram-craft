@@ -17,7 +17,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
-import { Anchor, AnchorStrategy } from '@diagram-craft/model/anchor';
+import { Anchor, AnchorStrategy, BoundaryDirection } from '@diagram-craft/model/anchor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
@@ -79,6 +79,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return [];
   }
 
+  protected boundaryDirection(): BoundaryDirection {
+    return 'unknown';
+  }
+
   getAnchors(node: DiagramNode) {
     const anchorStrategy = node.renderProps.anchors.type ?? 'shape-defaults';
 
@@ -86,12 +90,18 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       const shapeAnchors = this.getShapeAnchors(node);
       if (shapeAnchors.length > 0) return shapeAnchors;
 
-      return AnchorStrategy.getEdgeAnchors(node, this.getBoundingPath(node));
+      return AnchorStrategy.getEdgeAnchors(
+        node,
+        this.getBoundingPath(node),
+        1,
+        this.boundaryDirection()
+      );
     } else if (anchorStrategy === 'per-edge') {
       return AnchorStrategy.getEdgeAnchors(
         node,
         this.getBoundingPath(node),
-        node.renderProps.anchors.perEdgeCount
+        node.renderProps.anchors.perEdgeCount,
+        this.boundaryDirection()
       );
     } else if (anchorStrategy === 'none') {
       return [

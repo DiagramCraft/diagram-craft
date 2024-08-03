@@ -14,7 +14,7 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { Box } from '@diagram-craft/geometry/box';
 import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Anchor } from '@diagram-craft/model/anchor';
+import { BoundaryDirection } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
 
@@ -104,15 +104,6 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     super('blockArc', 'BlockArc', BlockArcNodeDefinition.Shape);
   }
 
-  getShapeAnchors(_def: DiagramNode): Anchor[] {
-    return [
-      { start: Point.of(0.5, 0), id: '1', type: 'point' },
-      { start: Point.of(1, 0.5), id: '2', type: 'point' },
-      { start: Point.of(0.5, 1), id: '3', type: 'point' },
-      { start: Point.of(0, 0.5), id: '4', type: 'point' }
-    ];
-  }
-
   static Shape = class extends BaseNodeComponent<BlockArcNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);
@@ -159,6 +150,10 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
       });
     }
   };
+
+  protected boundaryDirection(): BoundaryDirection {
+    return 'clockwise';
+  }
 
   getBoundingPathBuilder(def: DiagramNode) {
     const innerRadius = def.renderProps.custom.blockArc.innerRadius;
