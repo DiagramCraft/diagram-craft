@@ -4,6 +4,8 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { makeLinearGradient, makeRadialGradient } from './shapeFill';
 import { newid } from '@diagram-craft/utils/id';
 import { DASH_PATTERNS } from '../dashPatterns';
+import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
+import { Point } from '@diagram-craft/geometry/point';
 
 // TODO: Change this to use PathBuilder under the hood
 export class SVGGBuilder {
@@ -244,14 +246,26 @@ export class SVGGBuilder {
   }
 
   rect(x: number, y: number, w: number, h: number, rx = 0, ry = 0) {
+    const ex = this.#x + x * this.#w;
+    const ey = this.#y + y * this.#h;
+    const ew = w * this.#w;
+    const eh = h * this.#h;
+
+    const pathBuilder = new PathBuilder();
+
+    pathBuilder.moveTo(Point.of(ex + rx, ey));
+    pathBuilder.lineTo(Point.of(ex + ew - rx, ey));
+    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex + ew, ey + ry), rx, ry, 0, 0, 1);
+    pathBuilder.lineTo(Point.of(ex + ew, ey + eh - ry));
+    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex + ew - rx, ey + eh), rx, ry, 0, 0, 1);
+    pathBuilder.lineTo(Point.of(ex + rx, ey + eh));
+    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex, ey + eh - ry), rx, ry, 0, 0, 1);
+    pathBuilder.lineTo(Point.of(ex, ey + ry));
+    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex + rx, ey), rx, ry, 0, 0, 1);
+
     this.#shapes.push(
-      svg.rect({
-        x: this.#x + x * this.#w,
-        y: this.#y + y * this.#h,
-        width: w * this.#w,
-        height: h * this.#h,
-        rx,
-        ry
+      svg.path({
+        d: pathBuilder.getPaths().asSvgPath()
       })
     );
 
@@ -259,25 +273,26 @@ export class SVGGBuilder {
   }
 
   circle(cx: number, cy: number, r: number) {
-    this.#shapes.push(
-      svg.circle({
-        cx: this.#x + cx * this.#w,
-        cy: this.#y + cy * this.#h,
-        r: r
-      })
-    );
-    return this;
+    return this.ellipse(cx, cy, r, r);
   }
 
   ellipse(cx: number, cy: number, rx: number, ry: number) {
+    const ex = this.#x + cx * this.#w;
+    const ey = this.#y + cy * this.#h;
+
+    const b = new PathBuilder();
+    b.moveTo(Point.of(ex, ey - ry));
+    b.arcTo(Point.of(ex + rx, ey), rx, ry, 0, 0, 1);
+    b.arcTo(Point.of(ex, ey + ry), rx, ry, 0, 0, 1);
+    b.arcTo(Point.of(ex - rx, ey), rx, ry, 0, 0, 1);
+    b.arcTo(Point.of(ex, ey - ry), rx, ry, 0, 0, 1);
+
     this.#shapes.push(
-      svg.ellipse({
-        cx: this.#x + cx * this.#w,
-        cy: this.#y + cy * this.#h,
-        rx,
-        ry
+      svg.path({
+        d: b.getPaths().asSvgPath()
       })
     );
+
     return this;
   }
 

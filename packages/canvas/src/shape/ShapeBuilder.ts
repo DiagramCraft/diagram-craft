@@ -74,6 +74,16 @@ export class ShapeBuilder {
       }
     });
     this.nodes.push(g);
+    /*
+    const propsInEffect = this.props.element.renderProps as NodeProps;
+
+    // TODO: Can we apply multiple path renderers
+    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
+      ? new SketchPathRenderer()
+      : propsInEffect.effects?.rounding
+        ? new RoundingPathRenderer()
+        : new DefaultPathRenderer();*/
+
     return new SVGGBuilder(g, w, h, this.props.element);
   }
 
