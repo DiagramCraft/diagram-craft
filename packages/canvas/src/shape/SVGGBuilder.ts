@@ -1,4 +1,4 @@
-import { text, VNode } from '../component/vdom';
+import { text, toInlineCSS, VNode } from '../component/vdom';
 import * as svg from '../component/vdom-svg';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { makeLinearGradient, makeRadialGradient } from './shapeFill';
@@ -7,24 +7,32 @@ import { DASH_PATTERNS } from '../dashPatterns';
 import { PathBuilder } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { Path } from '@diagram-craft/geometry/path';
+import { RenderedStyledPath, StyledPath } from './PathRenderer';
+
+type Renderer = (p: StyledPath) => RenderedStyledPath[];
+
+const NOOP_RENDERER: Renderer = (p: StyledPath) => {
+  return [
+    {
+      path: p.path.asSvgPath(),
+      style: p.style
+    }
+  ];
+};
 
 export class SVGGBuilder {
-  #x: number;
-  #y: number;
-  #w: number;
-  #h: number;
+  readonly #x: number;
+  readonly #y: number;
+  readonly #w: number;
+  readonly #h: number;
 
-  #fill: NodeProps['fill'] = {
-    color: 'red'
-  };
+  readonly #initialStroke: NodeProps['stroke'];
+  readonly #initialFill: NodeProps['fill'];
+
+  #fill: NodeProps['fill'] = { color: 'red' };
   #fillGradientId: string | undefined;
-  #stroke: NodeProps['stroke'] = {
-    color: 'black'
-  };
+  #stroke: NodeProps['stroke'] = { color: 'black' };
   #font: NodeProps['text'] = {};
-
-  #initialStroke: NodeProps['stroke'];
-  #initialFill: NodeProps['fill'];
 
   #strokeStack: NodeProps['stroke'][] = [];
   #fillStack: NodeProps['fill'][] = [];
@@ -35,7 +43,8 @@ export class SVGGBuilder {
     private readonly g: VNode & { type: 's' },
     w: number,
     h: number,
-    el: DiagramElement
+    el: DiagramElement,
+    private readonly renderer: Renderer = NOOP_RENDERER
   ) {
     this.#x = el.bounds.x;
     this.#y = el.bounds.y;
@@ -75,7 +84,7 @@ export class SVGGBuilder {
       y: number
     ) {
       this.b.arcTo(
-        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h),
+        { x: this.parent.#x + x * this.parent.#w, y: this.parent.#y + y * this.parent.#h },
         rx * this.parent.#w,
         ry * this.parent.#h,
         rotation,
@@ -86,32 +95,34 @@ export class SVGGBuilder {
     }
 
     line(x: number, y: number) {
-      this.b.lineTo(
-        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h)
-      );
+      this.b.lineTo({
+        x: this.parent.#x + x * this.parent.#w,
+        y: this.parent.#y + y * this.parent.#h
+      });
       return this;
     }
 
     move(x: number, y: number) {
-      this.b.moveTo(
-        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h)
-      );
+      this.b.moveTo({
+        x: this.parent.#x + x * this.parent.#w,
+        y: this.parent.#y + y * this.parent.#h
+      });
       return this;
     }
 
     curve(x1: number, y1: number, x2: number, y2: number, x: number, y: number) {
       this.b.cubicTo(
-        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h),
-        Point.of(this.parent.#x + x1 * this.parent.#w, this.parent.#y + y1 * this.parent.#h),
-        Point.of(this.parent.#x + x2 * this.parent.#w, this.parent.#y + y2 * this.parent.#h)
+        { x: this.parent.#x + x * this.parent.#w, y: this.parent.#y + y * this.parent.#h },
+        { x: this.parent.#x + x1 * this.parent.#w, y: this.parent.#y + y1 * this.parent.#h },
+        { x: this.parent.#x + x2 * this.parent.#w, y: this.parent.#y + y2 * this.parent.#h }
       );
       return this;
     }
 
     quad(x1: number, y1: number, x: number, y: number) {
       this.b.quadTo(
-        Point.of(this.parent.#x + x * this.parent.#w, this.parent.#y + y * this.parent.#h),
-        Point.of(this.parent.#x + x1 * this.parent.#w, this.parent.#y + y1 * this.parent.#h)
+        { x: this.parent.#x + x * this.parent.#w, y: this.parent.#y + y * this.parent.#h },
+        { x: this.parent.#x + x1 * this.parent.#w, y: this.parent.#y + y1 * this.parent.#h }
       );
 
       return this;
@@ -130,6 +141,7 @@ export class SVGGBuilder {
   path(x?: number, y?: number) {
     const pb = new PathBuilder();
     this.#shapes.push(pb);
+
     return new SVGGBuilder.SVGPathBuilder(this, pb, x, y);
   }
 
@@ -194,16 +206,7 @@ export class SVGGBuilder {
   fill(fill?: NodeProps['fill']) {
     if (fill) this.setFill(fill);
 
-    this.g.children.push(
-      ...this.#shapes.map(s => {
-        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
-        return svg.path({
-          'd': p,
-          ...this.fillProps(),
-          'stroke-width': 0
-        });
-      })
-    );
+    this.renderWithStyle({ ...this.fillProps(), strokeWidth: '0' });
 
     this.#shapes = [];
 
@@ -216,16 +219,7 @@ export class SVGGBuilder {
 
     if (backing) this.applyBacking();
 
-    this.g.children.push(
-      ...this.#shapes.map(s => {
-        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
-        return svg.path({
-          d: p,
-          ...this.fillProps(),
-          ...this.strokeProps()
-        });
-      })
-    );
+    this.renderWithStyle({ ...this.fillProps(), ...this.strokeProps() });
 
     this.#shapes = [];
 
@@ -237,16 +231,7 @@ export class SVGGBuilder {
 
     if (backing) this.applyBacking();
 
-    this.g.children.push(
-      ...this.#shapes.map(s => {
-        const p = s instanceof PathBuilder ? s.getPaths().asSvgPath() : s.asSvgPath();
-        return svg.path({
-          d: p,
-          ...this.strokeProps(),
-          fill: 'transparent'
-        });
-      })
-    );
+    this.renderWithStyle({ ...this.strokeProps(), fill: 'transparent' });
 
     this.#shapes = [];
 
@@ -273,6 +258,31 @@ export class SVGGBuilder {
     );
   }
 
+  private renderWithStyle(style: Partial<CSSStyleDeclaration>) {
+    this.g.children.push(
+      ...this.#shapes.flatMap(s => {
+        const styledPaths: StyledPath[] = [];
+        if (s instanceof PathBuilder) {
+          const paths = s.getPaths().all();
+          for (const p of paths) {
+            styledPaths.push({ path: p, style });
+          }
+        } else {
+          styledPaths.push({ path: s, style });
+        }
+
+        return styledPaths
+          .flatMap(sp => this.renderer(sp))
+          .map(rp =>
+            svg.path({
+              d: rp.path,
+              style: toInlineCSS(rp.style)
+            })
+          );
+      })
+    );
+  }
+
   rect(x: number, y: number, w: number, h: number, rx = 0, ry = 0) {
     const ex = this.#x + x * this.#w;
     const ey = this.#y + y * this.#h;
@@ -283,13 +293,13 @@ export class SVGGBuilder {
 
     pathBuilder.moveTo(Point.of(ex + rx, ey));
     pathBuilder.lineTo(Point.of(ex + ew - rx, ey));
-    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex + ew, ey + ry), rx, ry, 0, 0, 1);
+    if (rx !== 0 || ry !== 0) pathBuilder.arcTo(Point.of(ex + ew, ey + ry), rx, ry, 0, 0, 1);
     pathBuilder.lineTo(Point.of(ex + ew, ey + eh - ry));
-    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex + ew - rx, ey + eh), rx, ry, 0, 0, 1);
+    if (rx !== 0 || ry !== 0) pathBuilder.arcTo(Point.of(ex + ew - rx, ey + eh), rx, ry, 0, 0, 1);
     pathBuilder.lineTo(Point.of(ex + rx, ey + eh));
-    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex, ey + eh - ry), rx, ry, 0, 0, 1);
+    if (rx !== 0 || ry !== 0) pathBuilder.arcTo(Point.of(ex, ey + eh - ry), rx, ry, 0, 0, 1);
     pathBuilder.lineTo(Point.of(ex, ey + ry));
-    if (ex !== 0 || ey !== 0) pathBuilder.arcTo(Point.of(ex + rx, ey), rx, ry, 0, 0, 1);
+    if (rx !== 0 || ry !== 0) pathBuilder.arcTo(Point.of(ex + rx, ey), rx, ry, 0, 0, 1);
 
     this.#shapes.push(pathBuilder);
 

@@ -1,7 +1,7 @@
 import { toInlineCSS, VNode } from '../component/vdom';
 import { $cmp, Component } from '../component/component';
 import { ShapeText, ShapeTextProps } from './ShapeText';
-import { DefaultPathRenderer, PathRenderer } from './PathRenderer';
+import { DefaultPathRenderer, PathRenderer, StyledPath } from './PathRenderer';
 import * as svg from '../component/vdom-svg';
 import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
 import { asDistortedSvgPath, SketchPathRenderer } from '@diagram-craft/canvas/effects/sketch';
@@ -74,17 +74,12 @@ export class ShapeBuilder {
       }
     });
     this.nodes.push(g);
-    /*
-    const propsInEffect = this.props.element.renderProps as NodeProps;
 
-    // TODO: Can we apply multiple path renderers
-    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
-      ? new SketchPathRenderer()
-      : propsInEffect.effects?.rounding
-        ? new RoundingPathRenderer()
-        : new DefaultPathRenderer();*/
+    const pathRenderer = this.getPathRenderer(this.props.element.renderProps);
 
-    return new SVGGBuilder(g, w, h, this.props.element);
+    return new SVGGBuilder(g, w, h, this.props.element, (p: StyledPath) => {
+      return pathRenderer.render(this.props.element, p);
+    });
   }
 
   buildInterior(w = 1, h = 1) {
@@ -92,7 +87,12 @@ export class ShapeBuilder {
       id: newid()
     });
     this.nodes.push(g);
-    return new SVGGBuilder(g, w, h, this.props.element);
+
+    const pathRenderer = this.getPathRenderer(this.props.element.renderProps);
+
+    return new SVGGBuilder(g, w, h, this.props.element, (p: StyledPath) => {
+      return pathRenderer.render(this.props.element, p);
+    });
   }
 
   // TODO: Maybe we can pass Component<any> in the constructor instead
@@ -291,12 +291,7 @@ export class ShapeBuilder {
   ) {
     const propsInEffect = props ?? (this.props.element.renderProps as NodeProps);
 
-    // TODO: Can we apply multiple path renderers
-    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
-      ? new SketchPathRenderer()
-      : propsInEffect.effects?.rounding
-        ? new RoundingPathRenderer()
-        : new DefaultPathRenderer();
+    const pathRenderer = this.getPathRenderer(propsInEffect);
 
     const style = deepMerge(
       {},
@@ -318,5 +313,15 @@ export class ShapeBuilder {
       });
     }
     return joinedPaths;
+  }
+
+  private getPathRenderer(propsInEffect: ElementProps) {
+    // TODO: Can we apply multiple path renderers
+    const pathRenderer: PathRenderer = propsInEffect.effects?.sketch
+      ? new SketchPathRenderer()
+      : propsInEffect.effects?.rounding
+        ? new RoundingPathRenderer()
+        : new DefaultPathRenderer();
+    return pathRenderer;
   }
 }
