@@ -19,8 +19,8 @@ export class ProvidedRequiredInterface extends SimpleShapeNodeDefinition {
     b.fillAndStroke();
 
     b.path(w / 2, 0)
-      .quad(w, 0, w, h / 2)
-      .quad(w, h, w / 2, h);
+      .arc(w / 2, w / 2, 0, 0, 1, w - inset, h / 2)
+      .arc(w / 2, w / 2, 0, 0, 1, w / 2, h);
     b.stroke();
   }
 }
