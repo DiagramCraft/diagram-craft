@@ -345,6 +345,28 @@ const writeShape = (
         layer
       );
       layer.addElement(e, UnitOfWork.immediate(diagram));
+    } else if (a.type === 'edge') {
+      const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
+      const start = n9._getPositionInBounds(Point.add(a.start, offset));
+      const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
+      const e = new DiagramEdge(
+        newid(),
+        new AnchorEndpoint(n9, a.id, offset),
+        new FreeEndpoint(dest),
+        {
+          stroke: {
+            color: 'green'
+          },
+          lineHops: {
+            type: 'none'
+          }
+        },
+        {},
+        [],
+        diagram,
+        layer
+      );
+      layer.addElement(e, UnitOfWork.immediate(diagram));
     }
   });
 };

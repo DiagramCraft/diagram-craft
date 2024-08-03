@@ -13,9 +13,11 @@ export class Folder extends SimpleShapeNodeDefinition {
     const { h, w } = props.node.bounds;
     const b = shapeBuilder.buildBoundary();
 
-    b.rect(0, 15, w, h - 15);
-    b.rect(0, 0, 50, 15);
+    b.path(0, 0).line(50, 0).line(50, 15).line(w, 15).line(w, h).line(0, h).line(0, 0);
     b.fillAndStroke();
+
+    b.path(0, 15).line(50, 15);
+    b.stroke();
 
     shapeBuilder.text(props.cmp);
   }

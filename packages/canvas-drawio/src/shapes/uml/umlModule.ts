@@ -99,8 +99,16 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
+    const width = JettyWidth.get(
+      def.renderProps.custom.umlModule as NodePropsForRendering['custom']['umlModule']
+    );
+
     const pathBuilder = new PathBuilder();
-    PathBuilderHelper.rect(pathBuilder, def.bounds);
+    PathBuilderHelper.rect(pathBuilder, {
+      ...def.bounds,
+      x: def.bounds.x + width / 2,
+      w: def.bounds.w - width / 2
+    });
     return pathBuilder;
   }
 
