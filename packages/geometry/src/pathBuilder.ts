@@ -237,6 +237,7 @@ export class PathBuilder {
   close() {
     precondition.is.present(this.active.start);
     this.active.instructions.push(['L', this.active.start.x, this.active.start.y]);
+    return this;
   }
 
   arcTo(

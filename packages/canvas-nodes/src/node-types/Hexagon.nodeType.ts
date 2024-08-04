@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -70,20 +70,17 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const sizePct = def.renderProps.custom.hexagon.size / 100;
 
-    const x1 = -1 + sizePct * 2;
-    const x2 = 1 - sizePct * 2;
+    const x1 = sizePct;
+    const x2 = 1 - sizePct;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-
-    pathBuilder.moveTo(Point.of(1, 0));
-    pathBuilder.lineTo(Point.of(x2, 1));
-    pathBuilder.lineTo(Point.of(x1, 1));
-    pathBuilder.lineTo(Point.of(-1, 0));
-    pathBuilder.lineTo(Point.of(x1, -1));
-    pathBuilder.lineTo(Point.of(x2, -1));
-    pathBuilder.close();
-
-    return pathBuilder;
+    return new PathBuilder(simpleCoordinateSystem(def.bounds))
+      .moveTo(_p(x1, 0))
+      .lineTo(_p(x2, 0))
+      .lineTo(_p(1, 0.5))
+      .lineTo(_p(x2, 1))
+      .lineTo(_p(x1, 1))
+      .lineTo(_p(0, 0.5))
+      .close();
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
