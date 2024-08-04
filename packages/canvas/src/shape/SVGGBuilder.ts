@@ -147,6 +147,7 @@ export class SVGGBuilder {
 
   addShape(shape: Path | PathBuilder) {
     this.#shapes.push(shape);
+    return this;
   }
 
   restore() {

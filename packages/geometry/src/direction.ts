@@ -2,6 +2,18 @@ import { Point } from './point';
 import { Angle } from './angle';
 
 export type Direction = 'n' | 's' | 'w' | 'e';
+export function assertDirection(value: string): asserts value is Direction {
+  if (!['n', 's', 'e', 'w'].includes(value)) {
+    throw new Error(`Invalid direction: ${value}`);
+  }
+}
+
+export type FullDirection = 'north' | 'south' | 'west' | 'east';
+export function assertFullDirection(value: string): asserts value is FullDirection {
+  if (!['north', 'south', 'east', 'west'].includes(value)) {
+    throw new Error(`Invalid direction: ${value}`);
+  }
+}
 
 export const Direction = {
   opposite(d: Direction): Direction {

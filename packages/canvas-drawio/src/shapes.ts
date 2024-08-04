@@ -7,6 +7,7 @@ import { Style } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
 import { HAlign } from '@diagram-craft/model/diagramProps';
+import { FullDirection } from '@diagram-craft/geometry/direction';
 
 const makeShape = (
   type: string,
@@ -149,7 +150,7 @@ export const parseBlockArc = makeShape('blockArc', (style, props) => {
 
 export const parseTriangle = makeShape('triangle', (style, props) => {
   props.custom.triangle = {
-    direction: (style.direction ?? 'east') as 'east' | 'north' | 'south' | 'west'
+    direction: (style.direction ?? 'east') as FullDirection
   };
 });
 

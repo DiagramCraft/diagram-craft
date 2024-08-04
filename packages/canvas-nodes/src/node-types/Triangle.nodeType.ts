@@ -8,11 +8,12 @@ import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathB
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { FullDirection } from '@diagram-craft/geometry/direction';
 
 // NodeProps extension for custom props *****************************************
 
 type ExtraProps = {
-  direction?: 'north' | 'south' | 'east' | 'west';
+  direction?: FullDirection;
 };
 
 declare global {
