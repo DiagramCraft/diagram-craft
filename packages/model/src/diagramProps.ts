@@ -168,6 +168,7 @@ declare global {
 
     debug?: {
       boundingPath?: boolean;
+      anchors?: boolean;
     };
   }
 

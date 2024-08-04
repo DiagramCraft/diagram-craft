@@ -133,7 +133,7 @@ export const AnchorStrategy = {
     const center = Box.center(node.bounds);
     const maxD = Math.max(node.bounds.w, node.bounds.h);
     for (let d = 0; d < 2 * Math.PI; d += (2 * Math.PI) / numberOfDirections) {
-      const l = Line.of(center, Point.add(center, Vector.fromPolar(d, maxD)));
+      const l = Line.of(center, Point.add(center, Vector.fromPolar(d + node.bounds.r, maxD)));
       const linePath = new Path(center, [['L', l.to.x, l.to.y]]);
       const firstPath = paths.all()[0];
       firstPath.intersections(linePath).forEach(p => {
@@ -153,7 +153,8 @@ export const AnchorStrategy = {
           type: 'point',
           normal:
             Vector.angle(Vector.tangentToNormal(firstPath.tangentAt(lengthOffsetOnPath))) -
-            node.bounds.r,
+            node.bounds.r +
+            Math.PI,
           isPrimary:
             round(d) === 0 ||
             round(d) === round(Math.PI / 2) ||

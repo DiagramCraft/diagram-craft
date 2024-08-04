@@ -93,7 +93,8 @@ const _elementDefaults: Pick<
     miterLimit: 4
   },
   debug: {
-    boundingPath: false
+    boundingPath: false,
+    anchors: false
   }
 };
 

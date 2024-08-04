@@ -265,30 +265,10 @@ export class BaseNodeComponent<
     }
 
     if (props.element.renderProps.debug.boundingPath === true) {
-      const boundary = this.def.getBoundingPathBuilder(props.element).getPaths();
-      children.push(
-        svg.marker(
-          {
-            id: 'boundary-path-arrow',
-            viewBox: '0 0 10 10',
-            refX: '5',
-            refY: '5',
-            markerWidth: '6',
-            markerHeight: '6',
-            orient: 'auto-start-reverse'
-          },
-          svg.path({
-            d: 'M 0 0 L 10 5 L 0 10 z'
-          })
-        )
-      );
-      children.push(
-        svg.path({
-          'd': boundary.asSvgPath(),
-          'style': 'stroke: red; stroke-width: 3; fill: none;',
-          'marker-end': 'url(#boundary-path-arrow)'
-        })
-      );
+      this.addBoundingPathDebug(props, children);
+    }
+    if (props.element.renderProps.debug.anchors === true) {
+      this.addAnchorsDebug(props, children);
     }
 
     const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`;
@@ -304,6 +284,63 @@ export class BaseNodeComponent<
         style: style.filter ? `filter: ${style.filter}` : ''
       },
       ...children
+    );
+  }
+
+  private addAnchorsDebug(props: NodeComponentProps, children: VNode[]) {
+    for (const anchor of props.element.anchors) {
+      if (anchor.type === 'edge') {
+        children.push(
+          svg.line({
+            x1: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
+            y1: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
+            x2: props.element.bounds.x + anchor.end!.x * props.element.bounds.w,
+            y2: props.element.bounds.y + anchor.end!.y * props.element.bounds.h,
+            style: 'stroke: rgba(200, 200, 255, 0.5); stroke-width: 8; pointer-events: none;'
+          })
+        );
+      } else {
+        children.push(
+          svg.circle({
+            cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
+            cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
+            r: 4,
+            style: 'stroke: blue; fill: rgba(200, 200, 255, 0.5);'
+          })
+        );
+      }
+    }
+  }
+
+  private addBoundingPathDebug(props: NodeComponentProps, children: VNode[]) {
+    const builder = this.def.getBoundingPathBuilder(props.element);
+
+    const boundary = builder.getPaths();
+
+    const color = boundary.all().some(p => builder.isPathIsClockwise(p)) ? 'red' : 'green';
+
+    children.push(
+      svg.marker(
+        {
+          id: 'boundary-path-arrow',
+          viewBox: '0 0 10 6',
+          refX: '10',
+          refY: '3',
+          markerWidth: '6',
+          markerHeight: '6',
+          orient: 'auto-start-reverse'
+        },
+        svg.path({
+          d: 'M 0 0 L 10 3 L 0 6 z'
+        })
+      )
+    );
+    children.push(
+      svg.path({
+        'd': boundary.asSvgPath(),
+        'style': `stroke: ${color}; stroke-width: 3; fill: none;`,
+        'marker-end': 'url(#boundary-path-arrow)'
+      })
     );
   }
 

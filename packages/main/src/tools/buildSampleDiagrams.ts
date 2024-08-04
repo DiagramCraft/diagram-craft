@@ -381,7 +381,57 @@ const writeShape = (
   }, uow);
   n10.invalidateAnchors(uow);
   layer.addElement(n10, uow);
-  x += xDiff;
+  x += xDiff + 50;
+
+  const n11 = factory(diagram).duplicate(undefined, `${shape}-11`);
+  n11.transform([new Scale(100 / n11.bounds.w, 100 / n11.bounds.h)], uow);
+  n11.setBounds({ x: x, y: y, w: 100, h: 100, r: rotation }, uow);
+  n11.setText('With Text', uow);
+  n11.updateProps(p => {
+    p.debug = {
+      anchors: true
+    };
+    p.anchors = {
+      type: 'shape-defaults'
+    };
+  }, uow);
+  n11.invalidateAnchors(uow);
+  layer.addElement(n11, uow);
+  x += xDiff + 50;
+
+  const n12 = factory(diagram).duplicate(undefined, `${shape}-12`);
+  n12.transform([new Scale(100 / n12.bounds.w, 100 / n12.bounds.h)], uow);
+  n12.setBounds({ x: x, y: y, w: 100, h: 100, r: rotation }, uow);
+  n12.setText('With Text', uow);
+  n12.updateProps(p => {
+    p.debug = {
+      anchors: true
+    };
+    p.anchors = {
+      type: 'per-edge',
+      perEdgeCount: 2
+    };
+  }, uow);
+  n12.invalidateAnchors(uow);
+  layer.addElement(n12, uow);
+  x += xDiff + 50;
+
+  const n13 = factory(diagram).duplicate(undefined, `${shape}-13`);
+  n13.transform([new Scale(100 / n13.bounds.w, 100 / n13.bounds.h)], uow);
+  n13.setBounds({ x: x, y: y, w: 100, h: 100, r: rotation }, uow);
+  n13.setText('With Text', uow);
+  n13.updateProps(p => {
+    p.debug = {
+      anchors: true
+    };
+    p.anchors = {
+      type: 'directions',
+      directionsCount: 4
+    };
+  }, uow);
+  n13.invalidateAnchors(uow);
+  layer.addElement(n13, uow);
+  x += xDiff + 50;
 };
 
 const shapesTestFile = async (
@@ -408,7 +458,7 @@ const shapesTestFile = async (
   diagram.canvas = {
     x: 0,
     y: 0,
-    w: 1400,
+    w: 1800,
     h: y + 200
   };
 

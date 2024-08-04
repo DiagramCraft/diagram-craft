@@ -312,13 +312,15 @@ export class PathBuilder {
   getPaths() {
     const paths = this.generatePaths();
     for (const p of paths) {
-      this.verifyPathIsClockwise(p);
+      if (!this.isPathIsClockwise(p)) {
+        //console.warn('Path is not clockwise', sum, new Error().stack);
+      }
     }
 
     return new CompoundPath(paths);
   }
 
-  private verifyPathIsClockwise(p: Path) {
+  isPathIsClockwise(p: Path) {
     const segments = p.segments;
     let sum = 0;
     for (let i = 0; i < segments.length; i++) {
@@ -327,9 +329,7 @@ export class PathBuilder {
       sum += (next.start.x - s.start.x) * (-next.start.y - s.start.y);
     }
 
-    if (sum < 0) {
-      //console.warn('Path is not clockwise', sum, new Error().stack);
-    }
+    return sum < 0;
   }
 
   private newSegment() {
