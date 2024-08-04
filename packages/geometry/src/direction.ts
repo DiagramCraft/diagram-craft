@@ -21,9 +21,9 @@ export const Direction = {
   },
   fromVector: (p: Point): Direction => {
     if (Math.abs(p.x) > Math.abs(p.y)) {
-      return p.x > 0 ? 'w' : 'e';
+      return p.x < 0 ? 'w' : 'e';
     } else {
-      return p.y > 0 ? 'n' : 's';
+      return p.y < 0 ? 'n' : 's';
     }
   },
   fromAngle: (angle: number, inverted = false): Direction => {

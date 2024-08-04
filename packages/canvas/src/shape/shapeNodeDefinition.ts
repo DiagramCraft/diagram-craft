@@ -3,7 +3,7 @@ import {
   CompoundPath,
   PathBuilder,
   PathBuilderHelper,
-  unitCoordinateSystem
+  simpleCoordinateSystem
 } from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
@@ -66,8 +66,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(node.bounds));
-    PathBuilderHelper.rect(pathBuilder, Box.unit());
+    const pathBuilder = new PathBuilder(simpleCoordinateSystem(node.bounds));
+    PathBuilderHelper.rect(pathBuilder, { x: 0, y: 0, w: 1, h: 1, r: 0 });
     return pathBuilder;
   }
 

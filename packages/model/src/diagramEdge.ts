@@ -10,7 +10,13 @@ import { DiagramElement, isEdge } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
 import { Layer } from './diagramLayer';
-import { AnchorEndpoint, ConnectedEndpoint, Endpoint, FreeEndpoint } from './endpoint';
+import {
+  AnchorEndpoint,
+  ConnectedEndpoint,
+  Endpoint,
+  FreeEndpoint,
+  PointInNodeEndpoint
+} from './endpoint';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical } from './labelNode';
@@ -606,6 +612,8 @@ export class DiagramEdge
       if (endpoint instanceof AnchorEndpoint && endpoint.getAnchor().normal !== undefined) {
         return Direction.fromAngle(endpoint.getAnchor().normal! + endpoint.node.bounds.r, true);
       }
+
+      if (endpoint instanceof PointInNodeEndpoint) return undefined;
 
       // ... else, we calculate the normal assuming the closest point to the
       // endpoint on the boundary path
