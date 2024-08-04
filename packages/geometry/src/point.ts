@@ -44,3 +44,5 @@ export const Point = {
     return Math.sqrt(Point.squareDistance(posA, posB));
   }
 };
+
+export const _p = Point.of;

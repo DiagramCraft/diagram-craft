@@ -77,6 +77,10 @@ export type RawSegment =
   | RawCurveSegment
   | RawQuadSegment;
 
+export const translateCoordinateSystem = (b: Box) => {
+  return (p: Point) => Point.add(p, b);
+};
+
 export const simpleCoordinateSystem = (b: Box) => {
   const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [0, 1], [0, 1], false);
   return (p: Point) => lcs.toGlobal(p);
@@ -215,16 +219,19 @@ export class PathBuilder {
   moveTo(p: Point) {
     if (this.active.start) this.newSegment();
     this.active.start = this.transform(p);
+    return this;
   }
 
   lineTo(p: Point) {
     const tp = this.transform(p);
     this.active.instructions.push(['L', tp.x, tp.y]);
+    return this;
   }
 
   line(p1: Point, p2: Point) {
     this.moveTo(p1);
     this.lineTo(p2);
+    return this;
   }
 
   close() {
@@ -256,17 +263,20 @@ export class PathBuilder {
       tp.x,
       tp.y
     ]);
+    return this;
   }
 
   curveTo(p: Point) {
     const tp = this.transform(p);
     this.active.instructions.push(['T', tp.x, tp.y]);
+    return this;
   }
 
   quadTo(p: Point, p1: Point) {
     const tp = this.transform(p);
     const tp1 = this.transform(p1);
     this.active.instructions.push(['Q', tp1.x, tp1.y, tp.x, tp.y]);
+    return this;
   }
 
   cubicTo(p: Point, p1: Point, p2: Point) {
@@ -274,6 +284,7 @@ export class PathBuilder {
     const tp1 = this.transform(p1);
     const tp2 = this.transform(p2);
     this.active.instructions.push(['C', tp1.x, tp1.y, tp2.x, tp2.y, tp.x, tp.y]);
+    return this;
   }
 
   // TODO: Is there a way to not have to need this method

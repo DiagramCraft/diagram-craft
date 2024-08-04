@@ -10,8 +10,9 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, translateCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { _p } from '@diagram-craft/geometry/point';
 
 type ExtraProps = {
   jettyWidth?: number;
@@ -76,20 +77,60 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
     super(id, name, UmlModuleNodeDefinition.Shape);
   }
 
+  /*
+     width
+     |-----|
+
+        0--------------------------------1   -- height
+        |                                |   |
+     A--B--|                             |   -- height
+     |     |                             |   |
+     9--8--|                             |   -- height
+        |                                |   |
+     6--7--|                             |   -- height
+     |     |                             |   |
+     5--4--|                             |   --
+        |                                |
+        |                                |
+        |                                |
+        |                                |
+        |                                |
+        |                                |
+        3--------------------------------2
+   */
+  getBoundingPathBuilder(node: DiagramNode) {
+    const width = JettyWidth.get(node.renderProps.custom.umlModule);
+    const height = JettyHeight.get(node.renderProps.custom.umlModule);
+    const hw = width / 2;
+
+    const pb = new PathBuilder(translateCoordinateSystem(node.bounds));
+    pb.moveTo(_p(hw, 0))
+      .lineTo(_p(node.bounds.w, 0))
+      .lineTo(_p(node.bounds.w, node.bounds.h))
+      .lineTo(_p(hw, node.bounds.h))
+      .lineTo(_p(hw, height * 4))
+      .lineTo(_p(0, height * 4))
+      .lineTo(_p(0, height * 3))
+      .lineTo(_p(hw, height * 3))
+      .lineTo(_p(hw, height * 2))
+      .lineTo(_p(0, height * 2))
+      .lineTo(_p(0, height))
+      .lineTo(_p(hw, height))
+      .lineTo(_p(hw, 0));
+
+    return pb;
+  }
+
   static Shape = class extends BaseNodeComponent<UmlModuleNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-      // TODO: Fix these type conversions
-      const width = JettyWidth.get(
-        props.nodeProps.custom.umlModule as NodePropsForRendering['custom']['umlModule']
-      );
-      const height = JettyHeight.get(
-        props.nodeProps.custom.umlModule as NodePropsForRendering['custom']['umlModule']
-      );
+      const width = JettyWidth.get(props.nodeProps.custom.umlModule);
+      const height = JettyHeight.get(props.nodeProps.custom.umlModule);
+      const hw = width / 2;
 
       const { h, w } = props.node.bounds;
       const b = shapeBuilder.buildBoundary();
 
-      b.rect(width / 2, 0, w - width / 2, h);
+      b.rect(hw, 0, w - hw, h);
       b.rect(0, height, width, height);
       b.rect(0, 3 * height, width, height);
       b.fillAndStroke();
@@ -97,20 +138,6 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.text(this);
     }
   };
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    const width = JettyWidth.get(
-      def.renderProps.custom.umlModule as NodePropsForRendering['custom']['umlModule']
-    );
-
-    const pathBuilder = new PathBuilder();
-    PathBuilderHelper.rect(pathBuilder, {
-      ...def.bounds,
-      x: def.bounds.x + width / 2,
-      w: def.bounds.w - width / 2
-    });
-    return pathBuilder;
-  }
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [JettyWidth.definition(node), JettyHeight.definition(node)];

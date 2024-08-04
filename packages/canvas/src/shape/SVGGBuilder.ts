@@ -145,6 +145,10 @@ export class SVGGBuilder {
     return new SVGGBuilder.SVGPathBuilder(this, pb, x, y);
   }
 
+  addShape(shape: Path | PathBuilder) {
+    this.#shapes.push(shape);
+  }
+
   restore() {
     if (this.#strokeStack.length === 0) {
       this.setStroke(this.#initialStroke);
