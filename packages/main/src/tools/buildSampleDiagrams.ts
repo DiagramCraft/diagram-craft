@@ -321,7 +321,7 @@ const writeShape = (
   n9.setText('With Text', uow);
   n9.invalidateAnchors(uow);
   layer.addElement(n9, uow);
-  x += xDiff;
+  x += xDiff + 50;
 
   n9.anchors.forEach(a => {
     if (a.type === 'point') {
@@ -369,6 +369,19 @@ const writeShape = (
       layer.addElement(e, UnitOfWork.immediate(diagram));
     }
   });
+
+  const n10 = factory(diagram).duplicate(undefined, `${shape}-10`);
+  n10.transform([new Scale(100 / n10.bounds.w, 100 / n10.bounds.h)], uow);
+  n10.setBounds({ x: x, y: y, w: 100, h: 100, r: rotation }, uow);
+  n10.setText('With Text', uow);
+  n10.updateProps(p => {
+    p.debug = {
+      boundingPath: true
+    };
+  }, uow);
+  n10.invalidateAnchors(uow);
+  layer.addElement(n10, uow);
+  x += xDiff;
 };
 
 const shapesTestFile = async (
@@ -395,7 +408,7 @@ const shapesTestFile = async (
   diagram.canvas = {
     x: 0,
     y: 0,
-    w: 1200,
+    w: 1400,
     h: y + 200
   };
 

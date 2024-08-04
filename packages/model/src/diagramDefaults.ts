@@ -41,56 +41,61 @@ export const DefaultStyles = {
   }
 };
 
-const _elementDefaults: Pick<ElementPropsForRendering, 'geometry' | 'fill' | 'shadow' | 'stroke'> =
-  {
-    geometry: {
-      flipV: false,
-      flipH: false
+const _elementDefaults: Pick<
+  ElementPropsForRendering,
+  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke'
+> = {
+  geometry: {
+    flipV: false,
+    flipH: false
+  },
+  shadow: {
+    enabled: false,
+    color: 'var(--canvas-fg)',
+    blur: 5,
+    opacity: 0.5,
+    x: 5,
+    y: 5
+  },
+  fill: {
+    color: 'var(--canvas-bg2)',
+    color2: 'blue',
+    type: 'solid',
+    enabled: true,
+    image: {
+      id: '',
+      fit: 'fill',
+      url: '',
+      w: 0,
+      h: 0,
+      scale: 1,
+      tint: '',
+      tintStrength: 1,
+      brightness: 1,
+      contrast: 1,
+      saturation: 1
     },
-    shadow: {
-      enabled: false,
-      color: 'var(--canvas-fg)',
-      blur: 5,
-      opacity: 0.5,
-      x: 5,
-      y: 5
-    },
-    fill: {
-      color: 'var(--canvas-bg2)',
-      color2: 'blue',
-      type: 'solid',
-      enabled: true,
-      image: {
-        id: '',
-        fit: 'fill',
-        url: '',
-        w: 0,
-        h: 0,
-        scale: 1,
-        tint: '',
-        tintStrength: 1,
-        brightness: 1,
-        contrast: 1,
-        saturation: 1
-      },
-      pattern: '',
-      gradient: {
-        direction: 0,
-        type: 'linear'
-      }
-    },
-    stroke: {
-      color: 'var(--canvas-fg)',
-      width: 1,
-      pattern: 'SOLID',
-      patternSize: 100,
-      patternSpacing: 100,
-      enabled: true,
-      lineCap: 'round',
-      lineJoin: 'round',
-      miterLimit: 4
+    pattern: '',
+    gradient: {
+      direction: 0,
+      type: 'linear'
     }
-  };
+  },
+  stroke: {
+    color: 'var(--canvas-fg)',
+    width: 1,
+    pattern: 'SOLID',
+    patternSize: 100,
+    patternSpacing: 100,
+    enabled: true,
+    lineCap: 'round',
+    lineJoin: 'round',
+    miterLimit: 4
+  },
+  debug: {
+    boundingPath: false
+  }
+};
 
 const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'custom'> = {
   ..._elementDefaults,

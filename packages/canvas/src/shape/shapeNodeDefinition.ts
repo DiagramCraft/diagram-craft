@@ -65,10 +65,6 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return this.capabilities[capability];
   }
 
-  /**
-   * For normals to work correctly, it's important to declare the in the counter-clockwise
-   * direction
-   */
   getBoundingPathBuilder(node: DiagramNode) {
     const pathBuilder = new PathBuilder(unitCoordinateSystem(node.bounds));
     PathBuilderHelper.rect(pathBuilder, Box.unit());

@@ -264,6 +264,33 @@ export class BaseNodeComponent<
       );
     }
 
+    if (props.element.renderProps.debug.boundingPath === true) {
+      const boundary = this.def.getBoundingPathBuilder(props.element).getPaths();
+      children.push(
+        svg.marker(
+          {
+            id: 'boundary-path-arrow',
+            viewBox: '0 0 10 10',
+            refX: '5',
+            refY: '5',
+            markerWidth: '6',
+            markerHeight: '6',
+            orient: 'auto-start-reverse'
+          },
+          svg.path({
+            d: 'M 0 0 L 10 5 L 0 10 z'
+          })
+        )
+      );
+      children.push(
+        svg.path({
+          'd': boundary.asSvgPath(),
+          'style': 'stroke: red; stroke-width: 3; fill: none;',
+          'marker-end': 'url(#boundary-path-arrow)'
+        })
+      );
+    }
+
     const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`;
     return svg.g(
       {

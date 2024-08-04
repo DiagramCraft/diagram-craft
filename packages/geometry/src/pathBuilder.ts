@@ -299,7 +299,26 @@ export class PathBuilder {
   }
 
   getPaths() {
-    return new CompoundPath(this.generatePaths());
+    const paths = this.generatePaths();
+    for (const p of paths) {
+      this.verifyPathIsClockwise(p);
+    }
+
+    return new CompoundPath(paths);
+  }
+
+  private verifyPathIsClockwise(p: Path) {
+    const segments = p.segments;
+    let sum = 0;
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i];
+      const next = segments[(i + 1) % segments.length];
+      sum += (next.start.x - s.start.x) * (-next.start.y - s.start.y);
+    }
+
+    if (sum < 0) {
+      //console.warn('Path is not clockwise', sum, new Error().stack);
+    }
   }
 
   private newSegment() {

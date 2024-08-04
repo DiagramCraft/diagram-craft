@@ -165,6 +165,10 @@ declare global {
       rounding?: boolean;
       roundingAmount?: number;
     };
+
+    debug?: {
+      boundingPath?: boolean;
+    };
   }
 
   interface EdgeProps extends ElementProps {
