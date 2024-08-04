@@ -12,7 +12,7 @@ export const ElementAnchorsPanel = (props: Props) => {
 
   const disabled =
     !diagram.selectionState.isNodesOnly() ||
-    diagram.selectionState.nodes.some(e => !e.getDefinition().supports('custom-anchors'));
+    diagram.selectionState.nodes.some(e => !e.getDefinition().supports('anchors-configurable'));
 
   return (
     <ToolWindowPanel

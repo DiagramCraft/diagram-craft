@@ -27,7 +27,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor(private readonly registry: NodeDefinitionRegistry) {
     super('umlLifeline', 'UML Lifeline');
     this.capabilities['connect-to-boundary'] = false;
-    this.capabilities['custom-anchors'] = false;
+    this.capabilities['anchors-configurable'] = false;
   }
 
   getShapeAnchors(node: DiagramNode): Anchor[] {

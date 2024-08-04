@@ -23,7 +23,7 @@ export type NodeCapability =
   | 'rounding'
   | 'select'
   | 'connect-to-boundary'
-  | 'custom-anchors';
+  | 'anchors-configurable';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 // TODO: Should we change these callbacks to have a UOW parameter?
