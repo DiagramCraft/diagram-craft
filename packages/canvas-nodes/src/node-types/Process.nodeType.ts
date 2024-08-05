@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -61,13 +61,9 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       const sizePct = props.nodeProps.custom.process.size / 100;
 
       // Draw additional shape details
-      const pathBuilder = new PathBuilder(unitCoordinateSystem(bounds));
-
-      const x1 = -1 + sizePct * 2;
-      const x2 = 1 - sizePct * 2;
-
-      pathBuilder.line(Point.of(x1, -1), Point.of(x1, 1));
-      pathBuilder.line(Point.of(x2, -1), Point.of(x2, 1));
+      const pathBuilder = new PathBuilder(simpleCoordinateSystem(bounds))
+        .line(_p(sizePct, 0), _p(sizePct, 1))
+        .line(_p(1 - sizePct, 0), _p(1 - sizePct, 1));
 
       shapeBuilder.path(
         pathBuilder.getPaths().all(),
@@ -77,7 +73,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       );
 
       // Draw all control points
-      shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
+      shapeBuilder.controlPoint(_p(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
         Size.set(newValue, props.node, uow);
         return `Size: ${props.node.renderProps.custom.process.size}%`;
