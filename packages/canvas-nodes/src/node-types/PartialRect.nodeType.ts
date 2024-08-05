@@ -1,6 +1,5 @@
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
   BaseNodeComponent,
@@ -35,22 +34,11 @@ export class PartialRectNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'partial-rect', displayName = 'PartialRectangle') {
     super(name, displayName, PartialRectComponent);
   }
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-    pathBuilder.moveTo(Point.of(-1, 1));
-    pathBuilder.lineTo(Point.of(1, 1));
-    pathBuilder.lineTo(Point.of(1, -1));
-    pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(-1, 1));
-
-    return pathBuilder;
-  }
 }
 
 class PartialRectComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const def = props.node;
+    const node = props.node;
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     shapeBuilder.boundaryPath(boundary.all(), {
@@ -63,31 +51,47 @@ class PartialRectComponent extends BaseNodeComponent {
     } as NodeProps);
 
     if (props.node.renderProps.custom.partialRect.north) {
-      const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-      pathBuilder.moveTo(Point.of(-1, 1));
-      pathBuilder.lineTo(Point.of(1, 1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
+      shapeBuilder.path(
+        new PathBuilder(simpleCoordinateSystem(node.bounds))
+          .moveTo(_p(0, 0))
+          .lineTo(_p(1, 0))
+          .getPaths()
+          .all(),
+        node.renderProps
+      );
     }
 
     if (props.node.renderProps.custom.partialRect.south) {
-      const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-      pathBuilder.moveTo(Point.of(-1, -1));
-      pathBuilder.lineTo(Point.of(1, -1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
+      shapeBuilder.path(
+        new PathBuilder(simpleCoordinateSystem(node.bounds))
+          .moveTo(_p(0, 1))
+          .lineTo(_p(1, 1))
+          .getPaths()
+          .all(),
+        node.renderProps
+      );
     }
 
     if (props.node.renderProps.custom.partialRect.east) {
-      const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-      pathBuilder.moveTo(Point.of(1, 1));
-      pathBuilder.lineTo(Point.of(1, -1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
+      shapeBuilder.path(
+        new PathBuilder(simpleCoordinateSystem(node.bounds))
+          .moveTo(_p(1, 0))
+          .lineTo(_p(1, 1))
+          .getPaths()
+          .all(),
+        node.renderProps
+      );
     }
 
     if (props.node.renderProps.custom.partialRect.west) {
-      const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-      pathBuilder.moveTo(Point.of(-1, 1));
-      pathBuilder.lineTo(Point.of(-1, -1));
-      shapeBuilder.path(pathBuilder.getPaths().all(), def.renderProps);
+      shapeBuilder.path(
+        new PathBuilder(simpleCoordinateSystem(node.bounds))
+          .moveTo(_p(0, 0))
+          .lineTo(_p(0, 1))
+          .getPaths()
+          .all(),
+        node.renderProps
+      );
     }
 
     shapeBuilder.text(this);
