@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -56,38 +56,35 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const slantLeft = def.renderProps.custom.trapetzoid.slantLeft;
-    const slantRight = def.renderProps.custom.trapetzoid.slantRight;
-    const bnd = def.bounds;
+  getBoundingPathBuilder(node: DiagramNode) {
+    const slantLeft = node.renderProps.custom.trapetzoid.slantLeft;
+    const slantRight = node.renderProps.custom.trapetzoid.slantRight;
 
-    const cdSl = (slantLeft / bnd.w) * 2;
-    const cdSR = (slantRight / bnd.w) * 2;
+    const slantLeftPct = slantLeft / node.bounds.w;
+    const slantRightPct = slantRight / node.bounds.w;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-
-    pathBuilder.moveTo(Point.of(-1 + cdSl, 1));
-    pathBuilder.lineTo(Point.of(1 - cdSR, 1));
-    pathBuilder.lineTo(Point.of(1, -1));
-    pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(-1 + cdSl, 1));
-
-    return pathBuilder;
+    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+      .moveTo(_p(slantLeftPct, 0))
+      .lineTo(_p(1 - slantRightPct, 0))
+      .lineTo(_p(1, 1))
+      .lineTo(_p(0, 1))
+      .lineTo(_p(slantLeftPct, 0));
   }
 }
 
 class TrapetzoidComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
+    shapeBuilder.boundaryPath(
+      new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPaths().all()
+    );
+
+    shapeBuilder.text(this);
+
     const slantLeft = props.nodeProps.custom.trapetzoid.slantLeft;
     const slantRight = props.nodeProps.custom.trapetzoid.slantRight;
 
-    const boundary = new TrapetzoidNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
-
-    shapeBuilder.boundaryPath(boundary.all());
-    shapeBuilder.text(this);
-
     shapeBuilder.controlPoint(
-      Point.of(props.node.bounds.x + slantLeft, props.node.bounds.y),
+      _p(props.node.bounds.x + slantLeft, props.node.bounds.y),
       ({ x }, uow) => {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
@@ -98,7 +95,7 @@ class TrapetzoidComponent extends BaseNodeComponent {
     );
 
     shapeBuilder.controlPoint(
-      Point.of(props.node.bounds.x + props.node.bounds.w - slantRight, props.node.bounds.y),
+      _p(props.node.bounds.x + props.node.bounds.w - slantRight, props.node.bounds.y),
       ({ x }, uow) => {
         const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
