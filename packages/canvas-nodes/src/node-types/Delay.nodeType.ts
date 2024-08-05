@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export class DelayNodeDefinition extends ShapeNodeDefinition {
@@ -13,32 +13,25 @@ export class DelayNodeDefinition extends ShapeNodeDefinition {
     super('delay', 'Delay', DelayComponent);
   }
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const bnd = def.bounds;
+  getBoundingPathBuilder(node: DiagramNode) {
+    const xr = (0.5 * node.bounds.h) / node.bounds.w;
+    const yr = 0.5;
 
-    const xr = bnd.h / bnd.w;
-    const yr = 1;
-    const cdx = 1 - xr;
-    const cdy = 1 - yr;
-
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-
-    pathBuilder.moveTo(Point.of(-1, 1));
-    pathBuilder.lineTo(Point.of(cdx, 1));
-    pathBuilder.arcTo(Point.of(1, cdy), xr, yr, 0, 0, 1);
-    pathBuilder.arcTo(Point.of(cdx, -1), xr, yr, 0, 0, 1);
-    pathBuilder.lineTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(-1, 1));
-
-    return pathBuilder;
+    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+      .moveTo(_p(0, 0))
+      .lineTo(_p(1 - xr, 0))
+      .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
+      .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
+      .lineTo(_p(0, 1))
+      .lineTo(_p(0, 0));
   }
 }
 
 class DelayComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new DelayNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
-
-    shapeBuilder.boundaryPath(boundary.all());
+    shapeBuilder.boundaryPath(
+      new DelayNodeDefinition().getBoundingPathBuilder(props.node).getPaths().all()
+    );
     shapeBuilder.text(this);
   }
 }
