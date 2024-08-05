@@ -1,7 +1,7 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent } from '../components/BaseNodeComponent';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 export class LineNodeDefinition extends ShapeNodeDefinition {
@@ -9,12 +9,10 @@ export class LineNodeDefinition extends ShapeNodeDefinition {
     super(name, displayName, LineComponent);
   }
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-    pathBuilder.moveTo(Point.of(-1, 0));
-    pathBuilder.lineTo(Point.of(1, 0));
-
-    return pathBuilder;
+  getBoundingPathBuilder(node: DiagramNode) {
+    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+      .moveTo(_p(0, 0.5))
+      .lineTo(_p(1, 0.5));
   }
 }
 
