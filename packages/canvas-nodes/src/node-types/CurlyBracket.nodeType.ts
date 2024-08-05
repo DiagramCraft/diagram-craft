@@ -4,13 +4,15 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { Box } from '@diagram-craft/geometry/box';
+import { Anchor } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
 
@@ -47,53 +49,54 @@ const Size = {
 
 // NodeDefinition and Shape *****************************************************
 
+const RADIUS = 10;
+
 export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('curlyBracket', 'CurlyBracket', CurlyBracketNodeDefinition.Shape);
     this.capabilities.fill = false;
+    this.capabilities['anchors-configurable'] = false;
   }
 
   static Shape = class extends BaseNodeComponent<CurlyBracketNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);
 
-      const bounds = props.node.bounds;
       const sizePct = props.nodeProps.custom.curlyBracket.size / 100;
 
-      shapeBuilder.controlPoint(
-        Point.of(bounds.x + sizePct * bounds.w, bounds.y + bounds.h / 2),
-        ({ x }, uow) => {
-          const distance = Math.max(0, x - bounds.x);
-          Size.set((distance / bounds.w) * 100, props.node, uow);
-          return `Size: ${props.node.renderProps.custom.curlyBracket.size}%`;
-        }
-      );
+      const bounds = props.node.bounds;
+      shapeBuilder.controlPoint(Box.fromOffset(bounds, _p(sizePct, 0.5)), ({ x }, uow) => {
+        const distance = Math.max(0, x - bounds.x);
+        Size.set((distance / bounds.w) * 100, props.node, uow);
+        return `Size: ${props.node.renderProps.custom.curlyBracket.size}%`;
+      });
     }
   };
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const sizePct = def.renderProps.custom.curlyBracket.size / 100;
+  getShapeAnchors(_node: DiagramNode): Anchor[] {
+    return [{ id: '1', type: 'point', start: _p(0, 0.5) }];
+  }
 
-    const rx = (2 * 10) / def.bounds.w;
-    const ry = (2 * 10) / def.bounds.h;
-    const bar = -1 + sizePct * 2;
+  getBoundingPathBuilder(node: DiagramNode) {
+    const sizePct = node.renderProps.custom.curlyBracket.size / 100;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+    const rx = RADIUS / node.bounds.w;
+    const ry = RADIUS / node.bounds.h;
+    const bar = sizePct;
 
-    pathBuilder.moveTo(Point.of(1, 1));
-    pathBuilder.lineTo(Point.of(bar + rx, 1));
-    pathBuilder.arcTo(Point.of(bar, 1 - ry), rx, ry, 0);
-    pathBuilder.lineTo(Point.of(bar, ry));
-    pathBuilder.arcTo(Point.of(bar - rx, 0), rx, ry, 0, 0, 1);
-    pathBuilder.lineTo(Point.of(-1, 0));
+    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+      .moveTo(_p(1, 1))
+      .lineTo(_p(bar + rx, 1))
+      .arcTo(_p(bar, 1 - ry), rx, ry, 0, 0, 1)
+      .lineTo(_p(bar, 0.5 + ry))
+      .arcTo(_p(bar - rx, 0.5), rx, ry, 0)
+      .lineTo(_p(0, 0.5))
 
-    pathBuilder.moveTo(Point.of(bar - rx, 0));
-    pathBuilder.arcTo(Point.of(bar, -ry), rx, ry, 0, 0, 1);
-    pathBuilder.lineTo(Point.of(bar, -1 + ry));
-    pathBuilder.arcTo(Point.of(bar + rx, -1), rx, ry, 0);
-    pathBuilder.lineTo(Point.of(1, -1));
-
-    return pathBuilder;
+      .moveTo(_p(bar - rx, 0.5))
+      .arcTo(_p(bar, 0.5 - ry), rx, ry)
+      .lineTo(_p(bar, ry))
+      .arcTo(_p(bar + rx, 0), rx, ry, 0, 0, 1)
+      .lineTo(_p(1, 0));
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {

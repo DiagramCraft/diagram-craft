@@ -80,7 +80,9 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getAnchors(node: DiagramNode) {
-    const anchorStrategy = node.renderProps.anchors.type ?? 'shape-defaults';
+    const anchorStrategy = node.getDefinition().supports('anchors-configurable')
+      ? node.renderProps.anchors.type ?? 'shape-defaults'
+      : 'shape-defaults';
 
     if (anchorStrategy === 'shape-defaults') {
       const shapeAnchors = this.getShapeAnchors(node);
