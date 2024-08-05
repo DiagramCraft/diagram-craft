@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { FullDirection } from '@diagram-craft/geometry/direction';
@@ -31,40 +31,22 @@ export class TriangleNodeDefinition extends ShapeNodeDefinition {
     super('triangle', 'Triangle', TriangleComponent);
   }
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
+  getBoundingPathBuilder(node: DiagramNode) {
+    const pathBuilder = new PathBuilder(simpleCoordinateSystem(node.bounds));
 
-    switch (def.renderProps.custom.triangle.direction) {
+    switch (node.renderProps.custom.triangle.direction) {
       case 'east':
-        pathBuilder.moveTo(Point.of(1, 0));
-        pathBuilder.lineTo(Point.of(-1, -1));
-        pathBuilder.lineTo(Point.of(-1, 1));
-        pathBuilder.close();
-        break;
+        return pathBuilder.moveTo(_p(1, 0.5)).lineTo(_p(0, 1)).lineTo(_p(0, 0)).close();
 
       case 'west':
-        pathBuilder.moveTo(Point.of(-1, 0));
-        pathBuilder.lineTo(Point.of(1, -1));
-        pathBuilder.lineTo(Point.of(1, 1));
-        pathBuilder.close();
-        break;
+        return pathBuilder.moveTo(_p(0, 0.5)).lineTo(_p(1, 1)).lineTo(_p(1, 0)).close();
 
       case 'north':
-        pathBuilder.moveTo(Point.of(0, -1));
-        pathBuilder.lineTo(Point.of(-1, 1));
-        pathBuilder.lineTo(Point.of(1, 1));
-        pathBuilder.close();
-        break;
+        return pathBuilder.moveTo(_p(0.5, 1)).lineTo(_p(0, 0)).lineTo(_p(1, 0)).close();
 
       case 'south':
-        pathBuilder.moveTo(Point.of(0, 1));
-        pathBuilder.lineTo(Point.of(-1, -1));
-        pathBuilder.lineTo(Point.of(1, -1));
-        pathBuilder.close();
-        break;
+        return pathBuilder.moveTo(_p(0.5, 0)).lineTo(_p(0, 1)).lineTo(_p(1, 1)).close();
     }
-
-    return pathBuilder;
   }
 }
 
