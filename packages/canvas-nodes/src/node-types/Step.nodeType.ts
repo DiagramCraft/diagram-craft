@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -59,31 +59,37 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
       const bounds = props.node.bounds;
       const size = props.nodeProps.custom.step.size;
 
-      shapeBuilder.controlPoint(
-        Point.of(bounds.x + size, bounds.y + bounds.h / 2),
-        ({ x }, uow) => {
-          const distance = Math.max(0, x - bounds.x);
-          Size.set(distance, props.node, uow);
-          return `Size: ${props.node.renderProps.custom.step.size}px`;
-        }
-      );
+      shapeBuilder.controlPoint(_p(bounds.x + size, bounds.y + bounds.h / 2), ({ x }, uow) => {
+        const distance = Math.max(0, x - bounds.x);
+        Size.set(distance, props.node, uow);
+        return `Size: ${props.node.renderProps.custom.step.size}px`;
+      });
     }
   };
 
+  /*
+      |--| size
+         |
+      0----------------1
+       \ |              \
+        \                \
+         5                2
+        /                /
+       /                /
+      4----------------3
+
+   */
   getBoundingPathBuilder(def: DiagramNode) {
     const sizePct = def.renderProps.custom.step.size / def.bounds.w;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-
-    pathBuilder.moveTo(Point.of(-1, -1));
-    pathBuilder.lineTo(Point.of(1 - 2 * sizePct, -1));
-    pathBuilder.lineTo(Point.of(1, 0));
-    pathBuilder.lineTo(Point.of(1 - 2 * sizePct, 1));
-    pathBuilder.lineTo(Point.of(-1, 1));
-    pathBuilder.lineTo(Point.of(-1 + 2 * sizePct, 0));
-    pathBuilder.lineTo(Point.of(-1, -1));
-
-    return pathBuilder;
+    return new PathBuilder(simpleCoordinateSystem(def.bounds))
+      .moveTo(_p(0, 0))
+      .lineTo(_p(1 - sizePct, 0))
+      .lineTo(_p(1, 0.5))
+      .lineTo(_p(1 - sizePct, 1))
+      .lineTo(_p(0, 1))
+      .lineTo(_p(sizePct, 0.5))
+      .lineTo(_p(0, 0));
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
