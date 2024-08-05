@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -31,11 +31,11 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
     return [
-      { id: '1', start: Point.of(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { id: '2', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { id: '3', start: Point.of(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
-      { id: '4', start: Point.of(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
-      { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
+      { id: '1', start: _p(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
+      { id: '2', start: _p(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
+      { id: '3', start: _p(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
+      { id: '4', start: _p(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
+      { id: 'c', start: _p(0.5, 0.5), clip: true, type: 'center' }
     ];
   }
 
@@ -57,41 +57,34 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const radius = def.renderProps.custom.roundedRect.radius;
-    const bnd = def.bounds;
+  getBoundingPathBuilder(node: DiagramNode) {
+    const radius = node.renderProps.custom.roundedRect.radius;
+    const xr = radius / node.bounds.w;
+    const yr = radius / node.bounds.h;
 
-    const xr = (2 * radius) / bnd.w;
-    const yr = (2 * radius) / bnd.h;
-    const cdx = 1 - xr;
-    const cdy = 1 - yr;
-
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-
-    pathBuilder.moveTo(Point.of(-cdx, 1));
-    pathBuilder.lineTo(Point.of(cdx, 1));
-    pathBuilder.arcTo(Point.of(1, cdy), xr, yr, 0, 0, 1);
-    pathBuilder.lineTo(Point.of(1, -cdy));
-    pathBuilder.arcTo(Point.of(cdx, -1), xr, yr, 0, 0, 1);
-    pathBuilder.lineTo(Point.of(-cdx, -1));
-    pathBuilder.arcTo(Point.of(-1, -cdy), xr, yr, 0, 0, 1);
-    pathBuilder.lineTo(Point.of(-1, cdy));
-    pathBuilder.arcTo(Point.of(-cdx, 1), xr, yr, 0, 0, 1);
-
-    return pathBuilder;
+    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+      .moveTo(_p(xr, 0))
+      .lineTo(_p(1 - xr, 0))
+      .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
+      .lineTo(_p(1, 1 - yr))
+      .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
+      .lineTo(_p(xr, 1))
+      .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
+      .lineTo(_p(0, yr))
+      .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
   }
 }
 
 export class RoundedRectComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const radius = props.nodeProps.custom.roundedRect?.radius ?? 10;
-    const boundary = new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
-
-    shapeBuilder.boundaryPath(boundary.all());
+    shapeBuilder.boundaryPath(
+      new RoundedRectNodeDefinition().getBoundingPathBuilder(props.node).getPaths().all()
+    );
     shapeBuilder.text(this);
 
+    const radius = props.nodeProps.custom.roundedRect?.radius ?? 10;
     shapeBuilder.controlPoint(
-      Point.of(props.node.bounds.x + radius, props.node.bounds.y),
+      _p(props.node.bounds.x + radius, props.node.bounds.y),
       ({ x }, uow) => {
         const distance = Math.max(0, x - props.node.bounds.x);
         if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
