@@ -1,10 +1,5 @@
 import { BaseNodeComponent } from '../components/BaseNodeComponent';
-import {
-  CompoundPath,
-  PathBuilder,
-  PathBuilderHelper,
-  simpleCoordinateSystem
-} from '@diagram-craft/geometry/pathBuilder';
+import { CompoundPath, PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
@@ -66,8 +61,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    const pathBuilder = new PathBuilder(simpleCoordinateSystem(node.bounds));
-    PathBuilderHelper.rect(pathBuilder, { x: 0, y: 0, w: 1, h: 1, r: 0 });
+    const pathBuilder = new PathBuilder();
+    PathBuilderHelper.rect(pathBuilder, node.bounds);
     return pathBuilder;
   }
 
