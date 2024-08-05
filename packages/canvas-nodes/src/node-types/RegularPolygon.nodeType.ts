@@ -4,8 +4,8 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -31,16 +31,16 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const sides = def.renderProps.custom.regularPolygon.numberOfSides;
 
-    const theta = Math.PI / 2;
+    const start = -Math.PI / 2;
     const dTheta = (2 * Math.PI) / sides;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-    pathBuilder.moveTo(Point.of(0, 1));
+    const pathBuilder = new PathBuilder(simpleCoordinateSystem(def.bounds));
+    pathBuilder.moveTo(_p(0.5, 0));
 
     for (let i = 0; i < sides; i++) {
-      const angle = theta - (i + 1) * dTheta;
+      const angle = start + (i + 1) * dTheta;
 
-      pathBuilder.lineTo(Point.of(Math.cos(angle), Math.sin(angle)));
+      pathBuilder.lineTo(Point.add(_p(0.5, 0.5), Vector.fromPolar(angle, 0.5)));
     }
 
     return pathBuilder;
