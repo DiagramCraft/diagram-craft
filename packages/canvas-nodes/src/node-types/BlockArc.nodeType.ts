@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -12,9 +12,8 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { Box } from '@diagram-craft/geometry/box';
-import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { BoundaryDirection } from '@diagram-craft/model/anchor';
+import { ScreenVector } from '@diagram-craft/geometry/vector';
 
 // NodeProps extension for custom props *****************************************
 
@@ -108,93 +107,69 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       super.buildShape(props, shapeBuilder);
 
+      const { start, end, startInner } = this.def.getPointsOfSignificance(props.node);
       const bounds = props.node.bounds;
+      const c = Box.center(bounds);
 
-      const innerRadius = props.nodeProps.custom.blockArc.innerRadius;
-      const startAngle = Angle.toRad(props.nodeProps.custom.blockArc.startAngle);
-      const endAngle = Angle.toRad(props.nodeProps.custom.blockArc.endAngle);
+      shapeBuilder.controlPoint(Box.fromOffset(bounds, startInner), (p, uow) => {
+        const distance = Point.distance(c, p);
+        const radius = Point.distance(c, Box.fromOffset(bounds, start));
 
-      const startInnerX = (innerRadius / 100) * Math.cos(startAngle);
-      const startInnerY = (innerRadius / 100) * Math.sin(startAngle);
+        InnerRadius.set((distance / radius) * 100, props.node, uow);
+        return `Inner Radius: ${props.node.renderProps.custom.blockArc.innerRadius}%`;
+      });
 
-      const startX = Math.cos(startAngle);
-      const startY = Math.sin(startAngle);
-
-      const endX = Math.cos(endAngle);
-      const endY = Math.sin(endAngle);
-
-      shapeBuilder.controlPoint(
-        pointInBounds(Point.of(startInnerX, startInnerY), bounds),
-        (p, uow) => {
-          const distance = Point.distance(Box.center(bounds), p);
-          const radius = Point.distance(
-            Box.center(bounds),
-            pointInBounds(Point.of(startX, startY), bounds)
-          );
-
-          InnerRadius.set((distance / radius) * 100, props.node, uow);
-          return `Inner Radius: ${props.node.renderProps.custom.blockArc.innerRadius}%`;
-        }
-      );
-
-      shapeBuilder.controlPoint(pointInBounds(Point.of(startX, startY), bounds), (p, uow) => {
-        const angle = Math.atan2(Box.center(bounds).y - p.y, p.x - Box.center(bounds).x);
+      shapeBuilder.controlPoint(Box.fromOffset(bounds, start), (p, uow) => {
+        const angle = Math.atan2(c.y - p.y, p.x - c.x);
         StartAngle.set(Angle.toDeg(angle), props.node, uow);
         return `Start Angle: ${props.node.renderProps.custom.blockArc.startAngle}°`;
       });
 
-      shapeBuilder.controlPoint(pointInBounds(Point.of(endX, endY), bounds), (p, uow) => {
-        const angle = Math.atan2(Box.center(bounds).y - p.y, p.x - Box.center(bounds).x);
+      shapeBuilder.controlPoint(Box.fromOffset(bounds, end), (p, uow) => {
+        const angle = Math.atan2(c.y - p.y, p.x - c.x);
         EndAngle.set(Angle.toDeg(angle), props.node, uow);
         return `End Angle: ${props.node.renderProps.custom.blockArc.endAngle}°`;
       });
     }
   };
 
-  protected boundaryDirection(): BoundaryDirection {
-    return 'clockwise';
-  }
+  getBoundingPathBuilder(node: DiagramNode) {
+    const startAngle = Angle.toRad(node.renderProps.custom.blockArc.startAngle);
+    const endAngle = Angle.toRad(node.renderProps.custom.blockArc.endAngle);
 
-  getBoundingPathBuilder(def: DiagramNode) {
-    const innerRadius = def.renderProps.custom.blockArc.innerRadius;
-    const startAngle = Angle.toRad(def.renderProps.custom.blockArc.startAngle);
-    const endAngle = Angle.toRad(def.renderProps.custom.blockArc.endAngle);
-
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
-
-    const startX = Math.cos(startAngle);
-    const startY = Math.sin(startAngle);
-    pathBuilder.moveTo(Point.of(startX, startY));
-
-    const endX = Math.cos(endAngle);
-    const endY = Math.sin(endAngle);
+    const { R, r, start, end, startInner, endInner } = this.getPointsOfSignificance(node);
 
     const da = Math.abs(endAngle - startAngle);
     const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
 
-    pathBuilder.arcTo(Point.of(endX, endY), 1, 1, 0, largeArcFlag);
-
-    const endInnerX = (innerRadius / 100) * Math.cos(endAngle);
-    const endInnerY = (innerRadius / 100) * Math.sin(endAngle);
-    pathBuilder.lineTo(Point.of(endInnerX, endInnerY));
-
-    const startInnerX = (innerRadius / 100) * Math.cos(startAngle);
-    const startInnerY = (innerRadius / 100) * Math.sin(startAngle);
-    pathBuilder.arcTo(
-      Point.of(startInnerX, startInnerY),
-      innerRadius / 100,
-      innerRadius / 100,
-      0,
-      largeArcFlag,
-      1
-    );
-
-    pathBuilder.close();
-
-    return pathBuilder;
+    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+      .moveTo(start)
+      .lineTo(startInner)
+      .arcTo(endInner, r, r, 0, largeArcFlag)
+      .lineTo(end)
+      .arcTo(start, R, R, 0, largeArcFlag, 1);
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [InnerRadius.definition(node), StartAngle.definition(node), EndAngle.definition(node)];
+  }
+
+  private getPointsOfSignificance(node: DiagramNode) {
+    const innerRadius = node.renderProps.custom.blockArc.innerRadius;
+    const startAngle = Angle.toRad(node.renderProps.custom.blockArc.startAngle);
+    const endAngle = Angle.toRad(node.renderProps.custom.blockArc.endAngle);
+
+    const R = 0.5;
+    const r = R * (innerRadius / 100);
+    const center = { x: 0.5, y: 0.5 };
+
+    return {
+      R,
+      r,
+      start: Point.add(center, ScreenVector.fromPolar(startAngle, R)),
+      end: Point.add(center, ScreenVector.fromPolar(endAngle, R)),
+      startInner: Point.add(center, ScreenVector.fromPolar(startAngle, r)),
+      endInner: Point.add(center, ScreenVector.fromPolar(endAngle, r))
+    };
   }
 }

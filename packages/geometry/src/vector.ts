@@ -36,3 +36,9 @@ export const Vector = {
     return v1.x * v2.x + v1.y * v2.y;
   }
 };
+
+export const ScreenVector = {
+  fromPolar: (angle: number, length: number) => {
+    return { x: length * Math.cos(angle), y: -length * Math.sin(angle) };
+  }
+};
