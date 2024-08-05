@@ -1,0 +1,4263 @@
+{
+  "diagrams": [
+    {
+      "id": "shapes",
+      "name": "Shapes",
+      "layers": [
+        {
+          "id": "default",
+          "name": "Default",
+          "type": "layer",
+          "layerType": "basic",
+          "elements": [
+            {
+              "id": "zt6mk3s",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 10,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "Arrow Right"
+              }
+            },
+            {
+              "id": "Arrow Right-1",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 10,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Right-2",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 120,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Right-3",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 230,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Right-4",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 340,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Right-5",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 450,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Right-6",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 560,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Right-7",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 670,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Right-8",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 780,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Right-9",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 940,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "oxgk7fi",
+              "type": "edge",
+              "start": {
+                "anchor": "1",
+                "node": {
+                  "id": "Arrow Right-9"
+                },
+                "position": {
+                  "x": 946.6987298107781,
+                  "y": 65
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 929.3782217350894,
+                  "y": 55.00000000000001
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "6lxi8pb",
+              "type": "edge",
+              "start": {
+                "anchor": "2",
+                "node": {
+                  "id": "Arrow Right-9"
+                },
+                "position": {
+                  "x": 1033.301270189222,
+                  "y": 115
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1050.6217782649107,
+                  "y": 125
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Right-10",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 1100,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "boundingPath": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Right-11",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 1260,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "normal": 0,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "shape-defaults"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Right-12",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 1420,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "870_670",
+                  "start": {
+                    "x": 0.87,
+                    "y": 0.67
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0.674740942223552,
+                  "isPrimary": false
+                },
+                {
+                  "id": "730_830",
+                  "start": {
+                    "x": 0.73,
+                    "y": 0.83
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0.674740942223552,
+                  "isPrimary": false
+                },
+                {
+                  "id": "600_900",
+                  "start": {
+                    "x": 0.6,
+                    "y": 0.9
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "600_800",
+                  "start": {
+                    "x": 0.6,
+                    "y": 0.8
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "400_700",
+                  "start": {
+                    "x": 0.4,
+                    "y": 0.7
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": false
+                },
+                {
+                  "id": "200_700",
+                  "start": {
+                    "x": 0.2,
+                    "y": 0.7
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": false
+                },
+                {
+                  "id": "0_630",
+                  "start": {
+                    "x": 0,
+                    "y": 0.63
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "0_570",
+                  "start": {
+                    "x": 0,
+                    "y": 0.57
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "0_430",
+                  "start": {
+                    "x": 0,
+                    "y": 0.43
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "0_370",
+                  "start": {
+                    "x": 0,
+                    "y": 0.37
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "200_300",
+                  "start": {
+                    "x": 0.2,
+                    "y": 0.3
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.71238898038469,
+                  "isPrimary": false
+                },
+                {
+                  "id": "400_300",
+                  "start": {
+                    "x": 0.4,
+                    "y": 0.3
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.71238898038469,
+                  "isPrimary": false
+                },
+                {
+                  "id": "600_200",
+                  "start": {
+                    "x": 0.6,
+                    "y": 0.2
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "600_100",
+                  "start": {
+                    "x": 0.6,
+                    "y": 0.1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "730_170",
+                  "start": {
+                    "x": 0.73,
+                    "y": 0.17
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 5.608444364956036,
+                  "isPrimary": false
+                },
+                {
+                  "id": "870_330",
+                  "start": {
+                    "x": 0.87,
+                    "y": 0.33
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 5.608444364956036,
+                  "isPrimary": false
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "per-edge",
+                  "perEdgeCount": 2
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Right-13",
+              "type": "node",
+              "nodeType": "arrow-right",
+              "bounds": {
+                "x": 1580,
+                "y": 40,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "1000_500",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5000000000000003
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0.674740942223552,
+                  "isPrimary": true
+                },
+                {
+                  "id": "1000_500",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5000000000000003
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0.674740942223552,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_700",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.7
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "0_500",
+                  "start": {
+                    "x": 0,
+                    "y": 0.49999999999999983
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_300",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.2999999999999999
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "directions",
+                  "directionsCount": 4
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "bge2mpc",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 210,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "Arrow Up"
+              }
+            },
+            {
+              "id": "Arrow Up-1",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 10,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Up-2",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 120,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Up-3",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 230,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Up-4",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 340,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Up-5",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 450,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Up-6",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 560,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Up-7",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 670,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Up-8",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 780,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Up-9",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 940,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "zvrcvu6",
+              "type": "edge",
+              "start": {
+                "anchor": "1",
+                "node": {
+                  "id": "Arrow Up-9"
+                },
+                "position": {
+                  "x": 965,
+                  "y": 333.30127018922195
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 955,
+                  "y": 350.62177826491074
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "7r5d8jy",
+              "type": "edge",
+              "start": {
+                "anchor": "2",
+                "node": {
+                  "id": "Arrow Up-9"
+                },
+                "position": {
+                  "x": 1015,
+                  "y": 246.69872981077805
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1025,
+                  "y": 229.37822173508928
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Up-10",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 1100,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "boundingPath": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Up-11",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 1260,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "shape-defaults"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Up-12",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 1420,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "670_130",
+                  "start": {
+                    "x": 0.67,
+                    "y": 0.13
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 5.387129922608244,
+                  "isPrimary": false
+                },
+                {
+                  "id": "830_270",
+                  "start": {
+                    "x": 0.83,
+                    "y": 0.27
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 5.387129922608244,
+                  "isPrimary": false
+                },
+                {
+                  "id": "900_400",
+                  "start": {
+                    "x": 0.9,
+                    "y": 0.4
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948983,
+                  "isPrimary": false
+                },
+                {
+                  "id": "800_400",
+                  "start": {
+                    "x": 0.8,
+                    "y": 0.4
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948983,
+                  "isPrimary": false
+                },
+                {
+                  "id": "700_600",
+                  "start": {
+                    "x": 0.7,
+                    "y": 0.6
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "700_800",
+                  "start": {
+                    "x": 0.7,
+                    "y": 0.8
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "630_1000",
+                  "start": {
+                    "x": 0.63,
+                    "y": 1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948948,
+                  "isPrimary": false
+                },
+                {
+                  "id": "570_1000",
+                  "start": {
+                    "x": 0.57,
+                    "y": 1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948948,
+                  "isPrimary": false
+                },
+                {
+                  "id": "430_1000",
+                  "start": {
+                    "x": 0.43,
+                    "y": 1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948948,
+                  "isPrimary": false
+                },
+                {
+                  "id": "370_1000",
+                  "start": {
+                    "x": 0.37,
+                    "y": 1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948948,
+                  "isPrimary": false
+                },
+                {
+                  "id": "300_800",
+                  "start": {
+                    "x": 0.3,
+                    "y": 0.8
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "300_600",
+                  "start": {
+                    "x": 0.3,
+                    "y": 0.6
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "200_400",
+                  "start": {
+                    "x": 0.2,
+                    "y": 0.4
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948983,
+                  "isPrimary": false
+                },
+                {
+                  "id": "100_400",
+                  "start": {
+                    "x": 0.1,
+                    "y": 0.4
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948983,
+                  "isPrimary": false
+                },
+                {
+                  "id": "170_270",
+                  "start": {
+                    "x": 0.17,
+                    "y": 0.27
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.037648038161136,
+                  "isPrimary": false
+                },
+                {
+                  "id": "330_130",
+                  "start": {
+                    "x": 0.33,
+                    "y": 0.13
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.037648038161136,
+                  "isPrimary": false
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "per-edge",
+                  "perEdgeCount": 2
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Up-13",
+              "type": "node",
+              "nodeType": "arrow-up",
+              "bounds": {
+                "x": 1580,
+                "y": 240,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "700_500",
+                  "start": {
+                    "x": 0.7,
+                    "y": 0.5
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_1000",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948948,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_1000",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948948,
+                  "isPrimary": true
+                },
+                {
+                  "id": "300_500",
+                  "start": {
+                    "x": 0.3,
+                    "y": 0.5000000000000006
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_0",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 5.387129922608244,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "directions",
+                  "directionsCount": 4
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "knqwxij",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 410,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "Arrow Down"
+              }
+            },
+            {
+              "id": "Arrow Down-1",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 10,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Down-2",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 120,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Down-3",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 230,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Down-4",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 340,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Down-5",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 450,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Down-6",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 560,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Down-7",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 670,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Down-8",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 780,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Down-9",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 940,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "51ix89n",
+              "type": "edge",
+              "start": {
+                "anchor": "1",
+                "node": {
+                  "id": "Arrow Down-9"
+                },
+                "position": {
+                  "x": 1015,
+                  "y": 446.69872981077805
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1025,
+                  "y": 429.37822173508926
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "2gitmo0",
+              "type": "edge",
+              "start": {
+                "anchor": "2",
+                "node": {
+                  "id": "Arrow Down-9"
+                },
+                "position": {
+                  "x": 965,
+                  "y": 533.3012701892219
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 955,
+                  "y": 550.6217782649106
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Down-10",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 1100,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "boundingPath": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Down-11",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 1260,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 0.49999999999999994,
+                    "y": 0
+                  },
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "shape-defaults"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Down-12",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 1420,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "330_870",
+                  "start": {
+                    "x": 0.33,
+                    "y": 0.87
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 2.24553726901845,
+                  "isPrimary": false
+                },
+                {
+                  "id": "170_730",
+                  "start": {
+                    "x": 0.17,
+                    "y": 0.73
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 2.24553726901845,
+                  "isPrimary": false
+                },
+                {
+                  "id": "100_600",
+                  "start": {
+                    "x": 0.1,
+                    "y": 0.6
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.7123889803846915,
+                  "isPrimary": false
+                },
+                {
+                  "id": "200_600",
+                  "start": {
+                    "x": 0.2,
+                    "y": 0.6
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.7123889803846915,
+                  "isPrimary": false
+                },
+                {
+                  "id": "300_400",
+                  "start": {
+                    "x": 0.3,
+                    "y": 0.4
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "300_200",
+                  "start": {
+                    "x": 0.3,
+                    "y": 0.2
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": false
+                },
+                {
+                  "id": "370_0",
+                  "start": {
+                    "x": 0.37,
+                    "y": 0
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.712388980384688,
+                  "isPrimary": false
+                },
+                {
+                  "id": "430_0",
+                  "start": {
+                    "x": 0.43,
+                    "y": 0
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.712388980384688,
+                  "isPrimary": false
+                },
+                {
+                  "id": "570_0",
+                  "start": {
+                    "x": 0.57,
+                    "y": 0
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.712388980384688,
+                  "isPrimary": false
+                },
+                {
+                  "id": "630_0",
+                  "start": {
+                    "x": 0.63,
+                    "y": 0
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.712388980384688,
+                  "isPrimary": false
+                },
+                {
+                  "id": "700_200",
+                  "start": {
+                    "x": 0.7,
+                    "y": 0.2
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "700_400",
+                  "start": {
+                    "x": 0.7,
+                    "y": 0.4
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "800_600",
+                  "start": {
+                    "x": 0.8,
+                    "y": 0.6
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.712388980384693,
+                  "isPrimary": false
+                },
+                {
+                  "id": "900_600",
+                  "start": {
+                    "x": 0.9,
+                    "y": 0.6
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.712388980384693,
+                  "isPrimary": false
+                },
+                {
+                  "id": "830_730",
+                  "start": {
+                    "x": 0.83,
+                    "y": 0.73
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0.896055384571345,
+                  "isPrimary": false
+                },
+                {
+                  "id": "670_870",
+                  "start": {
+                    "x": 0.67,
+                    "y": 0.87
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0.896055384571345,
+                  "isPrimary": false
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "per-edge",
+                  "perEdgeCount": 2
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Down-13",
+              "type": "node",
+              "nodeType": "arrow-down",
+              "bounds": {
+                "x": 1580,
+                "y": 440,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "700_500",
+                  "start": {
+                    "x": 0.7,
+                    "y": 0.5
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_1000",
+                  "start": {
+                    "x": 0.5,
+                    "y": 1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 2.24553726901845,
+                  "isPrimary": true
+                },
+                {
+                  "id": "300_500",
+                  "start": {
+                    "x": 0.3,
+                    "y": 0.5
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_0",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.712388980384688,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "directions",
+                  "directionsCount": 4
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "44206l4",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 610,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "Arrow Left"
+              }
+            },
+            {
+              "id": "Arrow Left-1",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 10,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Left-2",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 120,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Left-3",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 230,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "#ffffcc"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Left-4",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 340,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "shadow": {
+                  "enabled": true,
+                  "color": "black",
+                  "blur": 5,
+                  "x": 5,
+                  "y": 5
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Left-5",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 450,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "rounding": true,
+                  "roundingAmount": 10
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Left-6",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 560,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "white"
+                },
+                "effects": {
+                  "sketch": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Left-7",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 670,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "fill"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Left-8",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 780,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "fill": {
+                  "color": "lightblue"
+                },
+                "effects": {
+                  "sketch": true,
+                  "sketchFillType": "hachure"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": ""
+              }
+            },
+            {
+              "id": "Arrow Left-9",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 940,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {},
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "dcqmb5k",
+              "type": "edge",
+              "start": {
+                "anchor": "1",
+                "node": {
+                  "id": "Arrow Left-9"
+                },
+                "position": {
+                  "x": 1033.301270189222,
+                  "y": 715
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1050.6217782649107,
+                  "y": 725
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "m8fsr2p",
+              "type": "edge",
+              "start": {
+                "anchor": "2",
+                "node": {
+                  "id": "Arrow Left-9"
+                },
+                "position": {
+                  "x": 946.6987298107781,
+                  "y": 665
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 929.3782217350894,
+                  "y": 655
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Left-10",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 1100,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "boundingPath": true
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Left-11",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 1260,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "type": "center",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true
+                },
+                {
+                  "id": "1",
+                  "type": "point",
+                  "start": {
+                    "x": 1,
+                    "y": 0.49999999999999994
+                  },
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "2",
+                  "type": "point",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5000000000000001
+                  },
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "shape-defaults"
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Left-12",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 1420,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "130_330",
+                  "start": {
+                    "x": 0.13,
+                    "y": 0.33
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.816333595813346,
+                  "isPrimary": false
+                },
+                {
+                  "id": "270_170",
+                  "start": {
+                    "x": 0.27,
+                    "y": 0.17
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.816333595813346,
+                  "isPrimary": false
+                },
+                {
+                  "id": "400_100",
+                  "start": {
+                    "x": 0.4,
+                    "y": 0.1
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "400_200",
+                  "start": {
+                    "x": 0.4,
+                    "y": 0.2
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "600_300",
+                  "start": {
+                    "x": 0.6,
+                    "y": 0.3
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.71238898038469,
+                  "isPrimary": false
+                },
+                {
+                  "id": "800_300",
+                  "start": {
+                    "x": 0.8,
+                    "y": 0.3
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.71238898038469,
+                  "isPrimary": false
+                },
+                {
+                  "id": "1000_370",
+                  "start": {
+                    "x": 1,
+                    "y": 0.37
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 8.881784197001252e-16,
+                  "isPrimary": false
+                },
+                {
+                  "id": "1000_430",
+                  "start": {
+                    "x": 1,
+                    "y": 0.43
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 8.881784197001252e-16,
+                  "isPrimary": false
+                },
+                {
+                  "id": "1000_570",
+                  "start": {
+                    "x": 1,
+                    "y": 0.57
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 8.881784197001252e-16,
+                  "isPrimary": false
+                },
+                {
+                  "id": "1000_630",
+                  "start": {
+                    "x": 1,
+                    "y": 0.63
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 8.881784197001252e-16,
+                  "isPrimary": false
+                },
+                {
+                  "id": "800_700",
+                  "start": {
+                    "x": 0.8,
+                    "y": 0.7
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": false
+                },
+                {
+                  "id": "600_700",
+                  "start": {
+                    "x": 0.6,
+                    "y": 0.7
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": false
+                },
+                {
+                  "id": "400_800",
+                  "start": {
+                    "x": 0.4,
+                    "y": 0.8
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "400_900",
+                  "start": {
+                    "x": 0.4,
+                    "y": 0.9
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": false
+                },
+                {
+                  "id": "270_830",
+                  "start": {
+                    "x": 0.27,
+                    "y": 0.83
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 2.4668517113662416,
+                  "isPrimary": false
+                },
+                {
+                  "id": "130_670",
+                  "start": {
+                    "x": 0.13,
+                    "y": 0.67
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 2.4668517113662416,
+                  "isPrimary": false
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "per-edge",
+                  "perEdgeCount": 2
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            },
+            {
+              "id": "Arrow Left-13",
+              "type": "node",
+              "nodeType": "arrow-left",
+              "bounds": {
+                "x": 1580,
+                "y": 640,
+                "w": 100,
+                "h": 100,
+                "r": 0.5235987755982988
+              },
+              "anchors": [
+                {
+                  "id": "c",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.5
+                  },
+                  "clip": true,
+                  "type": "center"
+                },
+                {
+                  "id": "1000_500",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 8.881784197001252e-16,
+                  "isPrimary": true
+                },
+                {
+                  "id": "1000_500",
+                  "start": {
+                    "x": 1,
+                    "y": 0.5
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 8.881784197001252e-16,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_700",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.7
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "0_500",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.816333595813346,
+                  "isPrimary": true
+                },
+                {
+                  "id": "0_500",
+                  "start": {
+                    "x": 0,
+                    "y": 0.5
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.816333595813346,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_300",
+                  "start": {
+                    "x": 0.5,
+                    "y": 0.3
+                  },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                }
+              ],
+              "children": [],
+              "props": {
+                "debug": {
+                  "anchors": true
+                },
+                "anchors": {
+                  "type": "directions",
+                  "directionsCount": 4
+                }
+              },
+              "metadata": {
+                "style": "default",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "With Text"
+              }
+            }
+          ]
+        }
+      ],
+      "diagrams": [],
+      "zoom": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 1800,
+        "h": 1010
+      }
+    }
+  ],
+  "attachments": {},
+  "customPalette": [
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000"
+  ],
+  "styles": {
+    "edgeStyles": [
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default-edge",
+        "name": "Default",
+        "props": {
+          "stroke": {
+            "color": "var(--canvas-fg)"
+          },
+          "type": "straight"
+        },
+        "type": "edge"
+      }
+    ],
+    "nodeStyles": [
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default",
+        "name": "Default",
+        "props": {
+          "fill": {
+            "color": "var(--canvas-bg2)"
+          },
+          "stroke": {
+            "color": "var(--canvas-fg)"
+          }
+        },
+        "type": "node"
+      },
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default-text",
+        "name": "Text",
+        "props": {
+          "fill": {
+            "enabled": false
+          },
+          "stroke": {
+            "enabled": false
+          }
+        },
+        "type": "node"
+      }
+    ]
+  },
+  "schemas": [
+    {
+      "id": "default",
+      "name": "Default",
+      "fields": [
+        {
+          "id": "name",
+          "name": "Name",
+          "type": "text"
+        },
+        {
+          "id": "notes",
+          "name": "Notes",
+          "type": "longtext"
+        }
+      ]
+    }
+  ]
+}

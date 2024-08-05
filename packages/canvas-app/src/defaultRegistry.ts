@@ -106,8 +106,8 @@ export const defaultNodeRegistry = () => {
 
   // Arrow stencils
   registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-right', 'Arrow Right', 0));
-  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-up', 'Arrow Up', Math.PI / 2));
-  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', -Math.PI / 2));
+  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-up', 'Arrow Up', -Math.PI / 2));
+  registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', Math.PI / 2));
   registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
 
   // Hidden node definitions

@@ -4,17 +4,16 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
-import { Point } from '@diagram-craft/geometry/point';
+import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { Box } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { pointInBounds } from '@diagram-craft/canvas/pointInBounds';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { BoundaryDirection } from '@diagram-craft/model/anchor';
+import { Anchor, BoundaryDirection } from '@diagram-craft/model/anchor';
 
 // NodeProps extension for custom props *****************************************
 
@@ -107,15 +106,10 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
 
       // Notch
       const notch = $defaults(props.nodeProps.custom.arrow).notch;
-      const notchPct = 1 - (w - notch) / w;
+      const notchCP = Box.fromOffset(bounds, this.def.rotate(_p(notch / w, 0.5)));
 
-      const notchPoint = pointInBounds(
-        Point.rotate(Point.of(-1 + notchPct * 2, 0), this.def.rotation),
-        bounds
-      );
-
-      shapeBuilder.controlPoint(notchPoint, (pos, uow) => {
-        const p = Point.rotateAround(pos, this.def.rotation, Box.center(bounds));
+      shapeBuilder.controlPoint(notchCP, (pos, uow) => {
+        const p = Point.rotateAround(pos, -this.def.rotation, Box.center(bounds));
 
         const distance = Math.max(0, p.x - bounds.x);
         Notch.set(distance, props.node, uow);
@@ -123,19 +117,11 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
       });
 
       // Arrow control points
+      const { x, y } = props.nodeProps.custom.arrow;
+      const xyCP = Box.fromOffset(bounds, this.def.rotate(_p(1 - x / w, y / 100)));
 
-      const x = props.nodeProps.custom.arrow.x;
-      const y = props.nodeProps.custom.arrow.y;
-
-      const xPct = (w - x) / w;
-
-      const controlPoint = pointInBounds(
-        Point.rotate(Point.of(-1 + 2 * xPct, 1 - 2 * (y / 100)), this.def.rotation),
-        bounds
-      );
-
-      shapeBuilder.controlPoint(controlPoint, (pos, uow) => {
-        const p = Point.rotateAround(pos, this.def.rotation, Box.center(bounds));
+      shapeBuilder.controlPoint(xyCP, (pos, uow) => {
+        const p = Point.rotateAround(pos, -this.def.rotation, Box.center(bounds));
 
         const newX = Math.max(0, bounds.x + w - p.x);
         ArrowControlX.set(newX, props.node, uow);
@@ -147,10 +133,6 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
       });
     }
   };
-
-  isHorizontal() {
-    return Angle.isHorizontal(this.rotation);
-  }
 
   protected boundaryDirection(): BoundaryDirection {
     return 'clockwise';
@@ -167,35 +149,37 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
         notchOffset                arrayOffset
         |--|                       |---|
 
+                                   7
                                    |\        --
                                    | \       |  thicknessOffset
-        |--------------------------|  \      --
+        5--------------------------6  \      --
           \                            \
+           4                            0
           /                            /
-        |--------------------------|  /
+        3--------------------------2  /
                                    | /
                                    |/
-
+                                   1
      */
 
-    const arrowOffset = 2 * (1 - (w - x) / w);
-    const notchOffset = 2 * (1 - (w - notch) / w);
-    const thicknessOffset = 2 - (2 * y) / 100;
+    const arrowOffset = x / w;
+    const notchOffset = notch / w;
+    const thicknessOffset = y / 100;
 
-    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
     const points = [
-      Point.of(1, 0),
-      Point.of(1 - arrowOffset, 1),
-      Point.of(1 - arrowOffset, thicknessOffset - 1),
-      Point.of(-1, thicknessOffset - 1),
-      Point.of(-1 + notchOffset, 0),
-      Point.of(-1, 1 - thicknessOffset),
-      Point.of(1 - arrowOffset, 1 - thicknessOffset),
-      Point.of(1 - arrowOffset, -1)
+      _p(1, 0.5),
+      _p(1 - arrowOffset, 1),
+      _p(1 - arrowOffset, 1 - thicknessOffset),
+      _p(0, 1 - thicknessOffset),
+      _p(notchOffset, 0.5),
+      _p(0, thicknessOffset),
+      _p(1 - arrowOffset, thicknessOffset),
+      _p(1 - arrowOffset, 0)
     ];
 
+    const pathBuilder = new PathBuilder(simpleCoordinateSystem(def.bounds));
     points.forEach((point, index) => {
-      const rotatedPoint = Point.rotate(point, this.rotation);
+      const rotatedPoint = this.rotate(point);
       if (index === 0) {
         pathBuilder.moveTo(rotatedPoint);
       } else {
@@ -207,7 +191,39 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
+  protected getShapeAnchors(node: DiagramNode): Anchor[] {
+    const notch = node.renderProps.custom.arrow.notch;
+    const w = this.isHorizontal() ? node.bounds.w : node.bounds.h;
+    const notchOffset = notch / w;
+
+    return [
+      { id: 'c', type: 'center', start: _p(0.5, 0.5), clip: true },
+      {
+        id: 'b',
+        type: 'point',
+        start: this.rotate(_p(notchOffset, 0.5)),
+        normal: this.rotation + Math.PI,
+        isPrimary: true
+      },
+      {
+        id: 'f',
+        type: 'point',
+        start: this.rotate(_p(1, 0.5)),
+        normal: this.rotation,
+        isPrimary: true
+      }
+    ];
+  }
+
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [Notch.definition(node), ArrowControlX.definition(node), ArrowControlY.definition(node)];
+  }
+
+  private rotate(point: Point) {
+    return Point.rotateAround(point, this.rotation, _p(0.5, 0.5));
+  }
+
+  private isHorizontal() {
+    return Angle.isHorizontal(this.rotation);
   }
 }

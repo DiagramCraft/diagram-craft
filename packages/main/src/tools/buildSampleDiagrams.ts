@@ -473,4 +473,5 @@ await registerUMLShapes(nodeDefinitions);
 
 arrowsTestFile();
 shapesTestFile(nodeDefinitions, 'default', 'shapes.json');
+shapesTestFile(nodeDefinitions, 'arrow', 'shapes-arrow.json');
 shapesTestFile(nodeDefinitions, 'uml', 'shapes-uml.json');

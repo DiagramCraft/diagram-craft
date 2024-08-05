@@ -207,7 +207,7 @@ export const AnchorStrategy = {
             if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
               normal += Math.PI;
             }
-          } else if (direction === 'counter-clockwise') {
+          } else if (direction === 'clockwise') {
             normal += Math.PI;
           }
 
