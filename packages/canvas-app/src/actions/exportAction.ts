@@ -2,6 +2,7 @@ import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
+import { blobToDataURL } from '@diagram-craft/model/attachment';
 
 declare global {
   interface ActionMap {
@@ -71,7 +72,19 @@ class ExportImageAction extends AbstractAction {
         });
       }
 
-      // TODO: Should ideally embed other external images as well
+      // Download and embed all external images
+      for (const [, img] of clonedSvg.querySelectorAll('image').entries()) {
+        const href = img.href.baseVal;
+        if (href.startsWith('data:')) continue;
+
+        console.log('Downloading ' + href);
+
+        const connection = await fetch(href);
+        const data = await connection.blob();
+        img.setAttribute('href', await blobToDataURL(data));
+
+        console.log('... done');
+      }
 
       // TODO: Remove selection indicators etc
 

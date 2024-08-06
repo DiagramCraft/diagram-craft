@@ -1,7 +1,7 @@
 import { DiagramDocument } from './diagramDocument';
 import { hash64 } from '@diagram-craft/utils/hash';
 
-const blobToDataURL = (blob: Blob): Promise<string> =>
+export const blobToDataURL = (blob: Blob): Promise<string> =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = _e => resolve(reader.result as string);

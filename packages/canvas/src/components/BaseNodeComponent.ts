@@ -25,6 +25,7 @@ import { ShapeEdgeDefinition } from '../shape/shapeEdgeDefinition';
 import { Context, OnDoubleClick, OnMouseDown } from '../context';
 import { getHighlights, getHighlightValue, hasHighlight, Highlights } from '../highlight';
 import { Zoom } from './zoom';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -59,10 +60,42 @@ export class BaseNodeComponent<
     super();
   }
 
+  protected onTextSizeChange(props: BaseShapeBuildShapeProps) {
+    return (size: { w: number; h: number }) => {
+      const width = size.w;
+      const height = size.h;
+
+      if (width > props.node.bounds.w || height > props.node.bounds.h) {
+        UnitOfWork.execute(props.node.diagram!, uow => {
+          props.node.setBounds(
+            {
+              ...props.node.bounds,
+              h: height > props.node.bounds.h ? height : props.node.bounds.h,
+              w: width > props.node.bounds.w ? width : props.node.bounds.w
+            },
+            uow
+          );
+        });
+      }
+    };
+  }
+
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     shapeBuilder.boundaryPath(boundary.all());
-    shapeBuilder.text(this);
+
+    if (props.nodeProps.capabilities.textGrow) {
+      shapeBuilder.text(
+        this,
+        '1',
+        props.node.getText(),
+        props.nodeProps.text,
+        props.node.bounds,
+        this.onTextSizeChange(props)
+      );
+    } else {
+      shapeBuilder.text(this);
+    }
   }
 
   render(props: NodeComponentProps): VNode {

@@ -207,6 +207,7 @@ declare global {
       };
       moveable?: boolean;
       rotatable?: boolean;
+      textGrow?: boolean;
     };
 
     effects?: {

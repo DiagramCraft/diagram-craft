@@ -477,8 +477,8 @@ const getNodeProps = (style: Style, isEdge: boolean) => {
 
       // Note: It seems some needs a default spacing of 5 (e.g. aws2024 / groups)
       //       ... and some need a spacing of 0 (need to get which one)
-      top: parseNum(style.spacingTop, 5) + parseNum(style.spacing, 2),
-      bottom: parseNum(style.spacingBottom, 5) + parseNum(style.spacing, 2),
+      top: parseNum(style.spacingTop, 'text' in style ? 0 : 5) + parseNum(style.spacing, 2),
+      bottom: parseNum(style.spacingBottom, 'text' in style ? 0 : 5) + parseNum(style.spacing, 2),
 
       left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
       right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2),
@@ -749,7 +749,24 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         assertVAlign(valign);
         props.text!.valign = valign;
 
-        nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts));
+        nodes.push(
+          new DiagramNode(
+            id,
+            'rect',
+            bounds,
+            diagram,
+            layer,
+            {
+              ...props,
+              capabilities: {
+                ...(props.capabilities ?? {}),
+                textGrow: true
+              }
+            },
+            metadata,
+            texts
+          )
+        );
       } else if ($style.startsWith('edgeLabel;')) {
         // Handle free-standing edge labels
         const edge = diagram.edgeLookup.get(parent);
