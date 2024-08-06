@@ -66,7 +66,7 @@ import { registerVeeam3dShapes } from './shapes/veeam3d';
 import { registerVeeam2dShapes } from './shapes/veeam2d';
 import { registerCisco19Shapes } from './shapes/cisco19';
 import { registerAWS4Shapes } from './shapes/aws4';
-import { registerGCP2Shapes } from './shapes/gcp2';
+import { registerGCP2Shapes } from './shapes/gcp2/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
 import { registerUMLShapes } from './shapes/uml/uml';
