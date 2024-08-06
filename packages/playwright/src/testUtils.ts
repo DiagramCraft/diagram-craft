@@ -25,3 +25,8 @@ export const downloadDiagram = async (page: Page) => {
 
   return await stream2buffer(readable);
 };
+
+export const setTab = async (page: Page, n: number) => {
+  const tablist = page.getByRole('tablist').first();
+  await tablist.getByRole('tab').nth(n).click();
+};
