@@ -549,6 +549,7 @@ const getNodeProps = (style: Style, isEdge: boolean) => {
   if (style.rounded === '1' && style.shape !== 'mxgraph.android.rect') {
     props.effects ??= {};
     props.effects.rounding = true;
+    if (style.arcSize) props.effects.roundingAmount = parseNum(style.arcSize, 1);
   }
 
   if (style.shadow === '1') {
@@ -965,7 +966,14 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   { ...bounds },
                   diagram,
                   layer,
-                  props,
+                  {
+                    ...props,
+                    custom: {
+                      roundedRect: {
+                        radius: parseNum(style.arcSize, 5)
+                      }
+                    }
+                  },
                   metadata,
                   texts
                 );
