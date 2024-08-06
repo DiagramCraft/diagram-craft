@@ -18,7 +18,7 @@ import { RawSegment } from './pathBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
-import { round, roundHighPrecision } from '@diagram-craft/utils/math';
+import { roundHighPrecision } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 
@@ -339,7 +339,7 @@ export class Path {
       : this.#path;
 
     return (
-      `M ${round(this.#start.x)},${round(this.#start.y)} ` +
+      `M ${roundHighPrecision(this.#start.x)},${roundHighPrecision(this.#start.y)} ` +
       normalizedPath.map(r => this.rawSegmentAsSvgPath(r)).join(' ')
     );
   }
