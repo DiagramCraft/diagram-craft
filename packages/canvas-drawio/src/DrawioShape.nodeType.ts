@@ -1,10 +1,6 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  PathBuilder,
-  PathBuilderHelper,
-  unitCoordinateSystem
-} from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   BaseNodeComponent,
@@ -193,7 +189,7 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const shape = parse(def, this.stencil);
 
-    if (!shape) return new PathBuilder(unitCoordinateSystem(def.bounds));
+    if (!shape) return new PathBuilder();
 
     const h = xNum(shape, 'h', 100);
     const w = xNum(shape, 'w', 100);
