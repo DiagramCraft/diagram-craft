@@ -38,7 +38,8 @@
       "@diagram-craft/canvas-edges/*": ["./packages/canvas-edges/src/*"],
       "@diagram-craft/canvas-nodes/*": ["./packages/canvas-nodes/src/*"],
       "@diagram-craft/canvas-react/*": ["./packages/canvas-react/src/*"],
-      "@diagram-craft/canvas-drawio/*": ["./packages/canvas-drawio/src/*"]
+      "@diagram-craft/canvas-drawio/*": ["./packages/canvas-drawio/src/*"],
+      "@diagram-craft/playwright/*": ["./packages/playwright/src/*"]
     }
   },
   "exclude": ["node_modules", "dist", "**/vite.config.ts"],

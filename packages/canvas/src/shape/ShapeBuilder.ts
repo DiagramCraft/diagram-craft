@@ -219,7 +219,7 @@ export class ShapeBuilder {
     this.nodes.push(
       ...[
         svg.path({
-          'class': opts.className,
+          'class': opts.className + ` ${opts.className}__backing`,
           'd': path,
           'stroke': 'transparent',
           'stroke-width': 15

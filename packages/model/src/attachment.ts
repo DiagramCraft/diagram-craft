@@ -1,6 +1,15 @@
 import { DiagramDocument } from './diagramDocument';
 import { hash64 } from '@diagram-craft/utils/hash';
 
+const blobToDataURL = (blob: Blob): Promise<string> =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = _e => resolve(reader.result as string);
+    reader.onerror = _e => reject(reader.error);
+    reader.onabort = _e => reject(new Error('Read aborted'));
+    reader.readAsDataURL(blob);
+  });
+
 export class Attachment {
   hash: string;
   content: Blob;
@@ -27,6 +36,10 @@ export class Attachment {
 
   get url() {
     return this.#url;
+  }
+
+  async getDataUrl() {
+    return blobToDataURL(this.content);
   }
 
   /*detach() {

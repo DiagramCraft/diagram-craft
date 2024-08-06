@@ -23,6 +23,7 @@ import { tableActions } from '@diagram-craft/canvas/actions/tableActions';
 import { selectionMoveActions } from './actions/selectionMoveAction';
 import { selectionResizeActions } from './actions/selectionResizeAction';
 import { createLinkedNodeActions } from './actions/linkedNodeAction';
+import { exportActions } from './actions/exportAction';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
@@ -47,6 +48,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...duplicateActions(state),
   ...groupActions(state),
   ...saveActions(state),
+  ...exportActions(state),
   ...layerActions(state),
   ...toolActions(state)
 });
@@ -65,6 +67,7 @@ export const defaultMacKeymap: KeyMap = {
   'M-Digit6': 'TOOL_PEN',
   'M-Digit7': 'TOOL_NODE',
   'M-KeyS': 'FILE_SAVE',
+  'M-KeyE': 'FILE_EXPORT_IMAGE',
 
   'M-KeyG': 'GROUP_GROUP',
   'MS-KeyG': 'GROUP_UNGROUP',

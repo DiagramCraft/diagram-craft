@@ -16,7 +16,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useTable } from '../../hooks/useTable';
 
-export const NodeTableToolbarPanel = (_props: Props) => {
+export const NodeTableToolbarPanel = () => {
   const diagram = useDiagram();
   const redraw = useRedraw();
   const element = useTable(diagram);
@@ -62,5 +62,3 @@ export const NodeTableToolbarPanel = (_props: Props) => {
     </ToolWindowPanel>
   );
 };
-
-type Props = {};

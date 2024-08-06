@@ -150,7 +150,9 @@ export class GridComponent extends Component<CanvasState> {
     }
 
     return svg.g(
-      {},
+      {
+        class: 'svg-grid-container'
+      },
       svg.pattern(
         {
           id: 'grid-pattern',
