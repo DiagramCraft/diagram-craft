@@ -212,7 +212,7 @@ export class EditablePath {
     const nodePathBounds = nodePath.bounds();
 
     // Raw path and raw bounds represent the path in the original unit coordinate system,
-    // but since waypoints have been moved, some points may lie outside the [-1, 1] range
+    // but since waypoints have been moved, some points may lie outside the [0, 1] range
     const rawPath = PathBuilder.fromString(
       this.node.renderProps.custom.genericPath?.path ?? this.originalSvgPath
     ).getPaths();
@@ -225,10 +225,10 @@ export class EditablePath {
     const diff = Point.subtract(startPointAfter, startPointBefore);
 
     return {
-      path: PathBuilder.fromString(
-        rawPath.asSvgPath(),
-        inverseUnitCoordinateSystem(rawBounds, false)
-      ).getPaths(),
+      path: PathBuilder.fromString(rawPath.asSvgPath(), p => ({
+        x: p.x * (1 / rawBounds.w) - rawBounds.x,
+        y: p.y * (1 / rawBounds.h) - rawBounds.y
+      })).getPaths(),
       bounds: {
         ...nodePathBounds,
         x: nodePathBounds.x - diff.x,

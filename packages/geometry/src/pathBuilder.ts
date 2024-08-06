@@ -81,27 +81,20 @@ export const translateCoordinateSystem = (b: Box) => {
   return (p: Point) => Point.add(p, b);
 };
 
-export const simpleCoordinateSystem = (b: Box) => {
+export const unitCoordinateSystem = (b: Box) => {
   const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [0, 1], [0, 1], false);
   return (p: Point) => lcs.toGlobal(p);
 };
 
-/* This translates from a unit coordinate system (-1<x<1, -1<y<1) to a world coordinate system */
-export const unitCoordinateSystem = (b: Box) => {
-  const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [-1, 1], [-1, 1], true);
-  return (p: Point) => lcs.toGlobal(p);
-};
-
-export const inverseUnitCoordinateSystem = (b: Box, invert = true) => {
-  const lcs = new LocalCoordinateSystem(Box.withoutRotation(b), [-1, 1], [-1, 1], invert);
-  return (p: Point) => lcs.toLocal(p);
+export const inverseUnitCoordinateSystem = (b: Box) => {
+  return (p: Point) => ({ x: (p.x - b.x) / b.w, y: (p.y - b.y) / b.h });
 };
 
 export class CompoundPath {
   constructor(private readonly paths: Path[]) {}
 
   singularPath() {
-    assert.true(this.paths.length === 1, 'Expected a single path');
+    assert.true(this.paths.length === 1, `Expected a single path, ${this.paths.length} found`);
     return this.paths[0];
   }
 

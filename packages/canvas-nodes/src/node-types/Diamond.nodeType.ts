@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
@@ -14,7 +14,7 @@ export class DiamondNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathBuilder(simpleCoordinateSystem(def.bounds));
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
     pathBuilder.moveTo(Point.of(0.5, 0));
     pathBuilder.lineTo(Point.of(1, 0.5));
     pathBuilder.lineTo(Point.of(0.5, 1));

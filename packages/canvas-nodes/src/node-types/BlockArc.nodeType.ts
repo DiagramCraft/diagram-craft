@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -142,7 +142,7 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     const da = Math.abs(endAngle - startAngle);
     const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
 
-    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+    return new PathBuilder(unitCoordinateSystem(node.bounds))
       .moveTo(start)
       .lineTo(startInner)
       .arcTo(endInner, r, r, 0, largeArcFlag)

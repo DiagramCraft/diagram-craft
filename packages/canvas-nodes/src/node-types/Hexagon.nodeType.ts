@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -73,7 +73,7 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
     const x1 = sizePct;
     const x2 = 1 - sizePct;
 
-    return new PathBuilder(simpleCoordinateSystem(def.bounds))
+    return new PathBuilder(unitCoordinateSystem(def.bounds))
       .moveTo(_p(x1, 0))
       .lineTo(_p(x2, 0))
       .lineTo(_p(1, 0.5))

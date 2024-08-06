@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -61,7 +61,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       const sizePct = props.nodeProps.custom.process.size / 100;
 
       // Draw additional shape details
-      const pathBuilder = new PathBuilder(simpleCoordinateSystem(bounds))
+      const pathBuilder = new PathBuilder(unitCoordinateSystem(bounds))
         .line(_p(sizePct, 0), _p(sizePct, 1))
         .line(_p(1 - sizePct, 0), _p(1 - sizePct, 1));
 

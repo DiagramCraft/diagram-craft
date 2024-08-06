@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -63,7 +63,7 @@ export class TrapetzoidNodeDefinition extends ShapeNodeDefinition {
     const slantLeftPct = slantLeft / node.bounds.w;
     const slantRightPct = slantRight / node.bounds.w;
 
-    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+    return new PathBuilder(unitCoordinateSystem(node.bounds))
       .moveTo(_p(slantLeftPct, 0))
       .lineTo(_p(1 - slantRightPct, 0))
       .lineTo(_p(1, 1))

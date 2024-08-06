@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -84,7 +84,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
     const ry = RADIUS / node.bounds.h;
     const bar = sizePct;
 
-    return new PathBuilder(simpleCoordinateSystem(node.bounds))
+    return new PathBuilder(unitCoordinateSystem(node.bounds))
       .moveTo(_p(1, 1))
       .lineTo(_p(bar + rx, 1))
       .arcTo(_p(bar, 1 - ry), rx, ry, 0, 0, 1)

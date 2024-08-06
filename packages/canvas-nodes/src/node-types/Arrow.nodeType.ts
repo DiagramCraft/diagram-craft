@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -177,7 +177,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
       _p(1 - arrowOffset, 0)
     ];
 
-    const pathBuilder = new PathBuilder(simpleCoordinateSystem(def.bounds));
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(def.bounds));
     points.forEach((point, index) => {
       const rotatedPoint = this.rotate(point);
       if (index === 0) {

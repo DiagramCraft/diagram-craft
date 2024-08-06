@@ -1,6 +1,6 @@
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import {
   BaseNodeComponent,
@@ -24,7 +24,7 @@ export class GCPDoubleRectNodeDefinition extends ShapeNodeDefinition {
   getBoundingPathBuilder(def: DiagramNode) {
     const { offsetW, offsetH } = getNotch(def);
 
-    return new PathBuilder(simpleCoordinateSystem(def.bounds))
+    return new PathBuilder(unitCoordinateSystem(def.bounds))
       .moveTo(_p(0, 0))
       .lineTo(_p(1 - offsetW, 0))
       .lineTo(_p(1 - offsetW, offsetH))
@@ -44,7 +44,7 @@ export class GCPDoubleRectNodeDefinition extends ShapeNodeDefinition {
       const { offsetW, offsetH } = getNotch(props.node);
 
       // Draw additional shape details
-      const pathBuilder = new PathBuilder(simpleCoordinateSystem(bounds))
+      const pathBuilder = new PathBuilder(unitCoordinateSystem(bounds))
         .moveTo(_p(offsetW, 1 - offsetH))
         .lineTo(_p(1 - offsetW, 1 - offsetH))
         .lineTo(_p(1 - offsetW, offsetH));

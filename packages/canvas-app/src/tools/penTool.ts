@@ -2,7 +2,6 @@ import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { PathUtils } from '@diagram-craft/geometry/pathUtils';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -18,7 +17,7 @@ declare global {
   }
 }
 
-const UNIT_BOUNDS = { x: -1, y: 1, w: 2, h: -2, r: 0 };
+const UNIT_BOUNDS = { x: 0, y: 0, w: 1, h: 1, r: 0 };
 
 export class PenTool extends AbstractTool {
   private node: DiagramNode | undefined;
@@ -43,7 +42,7 @@ export class PenTool extends AbstractTool {
   onMouseDown(_id: string, point: Readonly<{ x: number; y: number }>, _modifiers: Modifiers): void {
     const diagramPoint = this.diagram.viewBox.toDiagramPoint(point);
     if (!this.node) {
-      const initialPath = 'M 0,0';
+      const initialPath = { x: 0, y: 0 };
 
       this.node = new DiagramNode(
         newid(),
@@ -51,13 +50,11 @@ export class PenTool extends AbstractTool {
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
         this.diagram,
         this.diagram.layers.active,
-        { custom: { genericPath: { path: initialPath } } },
+        { custom: { genericPath: { path: `M ${initialPath.x},${initialPath.y}` } } },
         {}
       );
 
-      this.path = PathBuilder.fromString(initialPath, unitCoordinateSystem(this.node!.bounds))
-        .getPaths()
-        .singularPath();
+      this.path = new Path(this.node.bounds, []);
 
       const uow = new UnitOfWork(this.diagram);
       this.diagram.layers.active.addElement(this.node, uow);

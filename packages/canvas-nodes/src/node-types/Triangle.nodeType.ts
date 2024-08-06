@@ -4,7 +4,7 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathBuilder, simpleCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
+import { PathBuilder, unitCoordinateSystem } from '@diagram-craft/geometry/pathBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -32,7 +32,7 @@ export class TriangleNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    const pathBuilder = new PathBuilder(simpleCoordinateSystem(node.bounds));
+    const pathBuilder = new PathBuilder(unitCoordinateSystem(node.bounds));
 
     switch (node.renderProps.custom.triangle.direction) {
       case 'east':
