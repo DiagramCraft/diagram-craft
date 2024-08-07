@@ -4,6 +4,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
+import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
   interface ActionMap {
@@ -17,20 +18,20 @@ declare global {
 }
 
 export const alignActions: ActionMapFactory = (state: State) => ({
-  ALIGN_TOP: new AlignAction(state.diagram, 'top'),
-  ALIGN_BOTTOM: new AlignAction(state.diagram, 'bottom'),
-  ALIGN_CENTER_HORIZONTAL: new AlignAction(state.diagram, 'center-horizontal'),
-  ALIGN_LEFT: new AlignAction(state.diagram, 'left'),
-  ALIGN_RIGHT: new AlignAction(state.diagram, 'right'),
-  ALIGN_CENTER_VERTICAL: new AlignAction(state.diagram, 'center-vertical')
+  ALIGN_TOP: new AlignAction('top', state.diagram),
+  ALIGN_BOTTOM: new AlignAction('bottom', state.diagram),
+  ALIGN_CENTER_HORIZONTAL: new AlignAction('center-horizontal', state.diagram),
+  ALIGN_LEFT: new AlignAction('left', state.diagram),
+  ALIGN_RIGHT: new AlignAction('right', state.diagram),
+  ALIGN_CENTER_VERTICAL: new AlignAction('center-vertical', state.diagram)
 });
 
 type Mode = 'top' | 'bottom' | 'right' | 'left' | 'center-vertical' | 'center-horizontal';
 
 export class AlignAction extends AbstractSelectionAction {
   constructor(
-    protected readonly diagram: Diagram,
-    private readonly mode: Mode
+    private readonly mode: Mode,
+    diagram: Diagram
   ) {
     super(diagram, MultipleType.MultipleOnly, ElementType.Node);
   }
@@ -39,6 +40,8 @@ export class AlignAction extends AbstractSelectionAction {
     const uow = new UnitOfWork(this.diagram, true);
 
     const first = this.diagram.selectionState.elements[0];
+    assert.present(first); // Note: this is safe as this is a AbstractSelectionAction
+
     switch (this.mode) {
       case 'top':
         this.alignY(first.bounds.y, 0, uow);

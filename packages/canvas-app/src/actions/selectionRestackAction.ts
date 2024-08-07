@@ -1,4 +1,4 @@
-import { AbstractSelectionAction } from './abstractSelectionAction';
+import { AbstractSelectionAction, MultipleType } from './abstractSelectionAction';
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -14,38 +14,43 @@ declare global {
 }
 
 export const selectionRestackActions: ActionMapFactory = (state: State) => ({
-  SELECTION_RESTACK_BOTTOM: new SelectionRestackAction(state.diagram, 'bottom'),
-  SELECTION_RESTACK_DOWN: new SelectionRestackAction(state.diagram, 'down'),
-  SELECTION_RESTACK_TOP: new SelectionRestackAction(state.diagram, 'top'),
-  SELECTION_RESTACK_UP: new SelectionRestackAction(state.diagram, 'up')
+  SELECTION_RESTACK_BOTTOM: new SelectionRestackAction('bottom', state.diagram),
+  SELECTION_RESTACK_DOWN: new SelectionRestackAction('down', state.diagram),
+  SELECTION_RESTACK_TOP: new SelectionRestackAction('top', state.diagram),
+  SELECTION_RESTACK_UP: new SelectionRestackAction('up', state.diagram)
 });
 
 type RestackMode = 'up' | 'down' | 'top' | 'bottom';
 
 export class SelectionRestackAction extends AbstractSelectionAction {
   constructor(
-    protected readonly diagram: Diagram,
-    private readonly mode: RestackMode = 'up'
+    private readonly mode: RestackMode = 'up',
+    diagram: Diagram
   ) {
-    super(diagram, 'both');
+    super(diagram, MultipleType.Both);
   }
 
   execute(): void {
     const uow = new UnitOfWork(this.diagram, true);
+    const activeLayer = this.diagram.layers.active;
+
+    /* Note: using Number.MAX_SAFE_INTEGER / 2 to ensure that the
+       modification is larger than the biggest feasible stack - yet
+       will not lead to overflow in the internal calculations */
 
     const elements = this.diagram.selectionState.elements;
     switch (this.mode) {
       case 'up':
-        this.diagram.layers.active.stackModify(elements, 2, uow);
+        activeLayer.stackModify(elements, 2, uow);
         break;
       case 'down':
-        this.diagram.layers.active.stackModify(elements, -2, uow);
+        activeLayer.stackModify(elements, -2, uow);
         break;
       case 'top':
-        this.diagram.layers.active.stackModify(elements, Number.MAX_SAFE_INTEGER / 4, uow);
+        activeLayer.stackModify(elements, Number.MAX_SAFE_INTEGER / 2, uow);
         break;
       case 'bottom':
-        this.diagram.layers.active.stackModify(elements, -(Number.MAX_SAFE_INTEGER / 4), uow);
+        activeLayer.stackModify(elements, -(Number.MAX_SAFE_INTEGER / 2), uow);
         break;
     }
 
