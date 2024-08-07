@@ -180,7 +180,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
   private calculateOffset(p: Point, ref: Point, bounds: Box) {
     const relativePoint = Point.subtract(p, ref);
-    const offset = Point.rotateAround(
+    return Point.rotateAround(
       {
         x: relativePoint.x / bounds.w,
         y: relativePoint.y / bounds.h
@@ -188,7 +188,6 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
       -bounds.r,
       { x: 0.5, y: 0.5 }
     );
-    return offset;
   }
 
   private setEndpoint(endpoint: Endpoint) {

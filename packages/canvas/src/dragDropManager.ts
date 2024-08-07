@@ -40,7 +40,7 @@ export interface Drag extends EventEmitter<DragEvents> {
 export abstract class AbstractDrag extends EventEmitter<DragEvents> implements Drag {
   #state: State;
 
-  constructor() {
+  protected constructor() {
     super();
     this.#state = {};
   }

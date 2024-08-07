@@ -19,8 +19,7 @@ export class DocumentBuilder {
   }
 
   newDiagram() {
-    const b = new DiagramBuilder(this.document);
-    return b;
+    return new DiagramBuilder(this.document);
   }
 
   build() {

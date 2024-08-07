@@ -134,7 +134,7 @@ export class BaseNodeComponent<
 
     /* Handle strokes **************************************************************** */
 
-    style.strokeWidth = nodeProps.stroke.width?.toString();
+    style.strokeWidth = nodeProps.stroke.width.toString();
     style.stroke = nodeProps.stroke.color;
     style.strokeLinecap = nodeProps.stroke.lineCap;
     style.strokeLinejoin = nodeProps.stroke.lineJoin;
@@ -165,12 +165,15 @@ export class BaseNodeComponent<
       style.fill = `url(#${gradientId})`;
 
       /* For a gradient we need to add its definition */
-      if (nodeProps.fill.gradient.type === 'linear') {
-        children.push(makeLinearGradient(gradientId, nodeProps));
-      } else if (nodeProps.fill.gradient.type === 'radial') {
-        children.push(makeRadialGradient(gradientId, nodeProps));
-      } else {
-        VERIFY_NOT_REACHED();
+      switch (nodeProps.fill.gradient.type) {
+        case 'linear':
+          children.push(makeLinearGradient(gradientId, nodeProps));
+          break;
+        case 'radial':
+          children.push(makeRadialGradient(gradientId, nodeProps));
+          break;
+        default:
+          VERIFY_NOT_REACHED();
       }
     } else if (nodeProps.fill.type === 'image' || nodeProps.fill.type === 'texture') {
       const patternId = `node-${props.element.id}-pattern`;
@@ -409,7 +412,7 @@ export type SimpleShapeNodeDefinitionProps = BaseShapeBuildShapeProps & {
 };
 
 export abstract class SimpleShapeNodeDefinition extends ShapeNodeDefinition {
-  constructor(type: string, name?: string) {
+  protected constructor(type: string, name?: string) {
     super(type, name ?? type, SimpleShapeNodeDefinition.Component);
   }
 

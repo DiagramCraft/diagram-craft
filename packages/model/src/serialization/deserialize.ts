@@ -11,7 +11,6 @@ import {
   SerializedAnchorEndpoint,
   SerializedDiagram,
   SerializedDiagramDocument,
-  SerializedEdge,
   SerializedElement,
   SerializedFreeEndpoint,
   SerializedLayer,
@@ -26,8 +25,6 @@ import { DefaultStyles } from '../diagramDefaults';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
-const isEdgeDef = (element: SerializedElement | SerializedLayer): element is SerializedEdge =>
-  element.type === 'edge';
 
 const unfoldGroup = (node: SerializedNode) => {
   const recurse = (
@@ -233,17 +230,6 @@ const deserializeDiagrams = <T extends Diagram>(
   for (const $d of diagrams) {
     const nodeLookup: Record<string, DiagramNode> = {};
     const edgeLookup: Record<string, DiagramEdge> = {};
-
-    const diagramElements: SerializedElement[] = [];
-    for (const l of $d.layers) {
-      for (const e of l.elements) {
-        if (isNodeDef(e)) {
-          diagramElements.push(e);
-        } else if (isEdgeDef(e)) {
-          diagramElements.push(e);
-        }
-      }
-    }
 
     const newDiagram = diagramFactory($d, doc);
     newDiagram.canvas = $d.canvas;

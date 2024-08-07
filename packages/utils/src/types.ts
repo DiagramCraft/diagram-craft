@@ -14,6 +14,5 @@ export const cloneAsWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> =>
 export const makeWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> => o as DeepWriteable<T>;
 
 export const isEnum = <T extends string>(o: unknown, values: T[]): o is T => {
-  if (typeof o !== 'string' || !values.includes(o as T)) return false;
-  return true;
+  return !(typeof o !== 'string' || !values.includes(o as T));
 };

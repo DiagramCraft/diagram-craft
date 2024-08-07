@@ -32,11 +32,7 @@ export class ToolAction extends AbstractToggleAction {
     this.state = defaultState ?? false;
     this.applicationState.on('toolChange', e => {
       const prevState = this.state;
-      if (e.tool === tool) {
-        this.state = true;
-      } else {
-        this.state = false;
-      }
+      this.state = e.tool === tool;
       if (this.state !== prevState) {
         this.emit('actionchanged', { action: this });
       }

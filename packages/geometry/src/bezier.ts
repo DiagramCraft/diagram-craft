@@ -225,9 +225,7 @@ export const BezierUtils = {
     const ut = (t1 * t1) / (t * t + t1 * t1);
 
     const C = Point.add(Vector.scale(start, ut), Vector.scale(end, 1 - ut));
-    const A = Point.add(B, Vector.scale(Point.subtract(B, C), 1 / ratio));
-
-    return A;
+    return Point.add(B, Vector.scale(Point.subtract(B, C), 1 / ratio));
   }
 };
 

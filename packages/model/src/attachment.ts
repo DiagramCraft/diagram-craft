@@ -56,8 +56,7 @@ export class AttachmentManager {
   #attachments: Map<string, Attachment> = new Map();
   #consumers: Array<AttachmentConsumer> = [];
 
-  // @ts-ignore
-  public constructor(private readonly diagramDocument: DiagramDocument) {
+  public constructor(diagramDocument: DiagramDocument) {
     this.#consumers.push(diagramDocument);
   }
 

@@ -1,9 +1,9 @@
 export const Browser = {
   isChrome: () => {
     return (
-      // @ts-ignore
+      // @ts-expect-error There's no type for userAgentData
       !!navigator.userAgentData &&
-      // @ts-ignore
+      // @ts-expect-error There's no type for userAgentData
       navigator.userAgentData.brands.some(data => data.brand == 'Chromium')
     );
   },

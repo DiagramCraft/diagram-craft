@@ -97,8 +97,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
     assert.true(Math.abs(localBounds.r) < 0.0001);
 
     let maxX = 0;
-    const startY = nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0;
-    let y = startY;
+    let y = nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0;
     for (const row of rows) {
       let targetHeight = row.row.bounds.h;
 

@@ -124,8 +124,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
 
     let maxX = 0;
-    const startY = nodeProps.custom.table.title ? nodeProps.custom.table.titleSize : 0;
-    let y = startY;
+    let y = nodeProps.custom.table.title ? nodeProps.custom.table.titleSize : 0;
     for (const row of cellsInOrder) {
       let targetHeight = Math.max(...row.columns.map(c => c.cell.bounds.h));
 

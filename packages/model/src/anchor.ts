@@ -37,7 +37,7 @@ export type Anchor = {
   isPrimary?: boolean;
 
   /**
-   * If true, edges connected to this anchor will clipped at the boundary
+   * If true, edges connected to this anchor will be clipped at the boundary
    * of the node
    */
   clip?: boolean;

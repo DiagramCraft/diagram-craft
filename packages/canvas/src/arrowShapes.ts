@@ -293,7 +293,7 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
     anchor: { x: -0.5 * s, y: z * 5 },
     path: [`M 0 0`, `L 0 ${z * 10}`].join('\n'),
     fill: 'transparent',
-    shortenBy: 1 * s
+    shortenBy: s
   }),
   BAR_DOUBLE: (z, s) => ({
     width: 14 + s,
@@ -362,7 +362,7 @@ export const ARROW_SHAPES: Partial<Record<string, ArrowShapeFactory>> = {
       `L ${s * 10} 0`,
       `M 0 ${s * 5}`,
       `L ${s * 10} ${s * 10}`,
-      `M 0 ${s * 0}`,
+      `M 0 0`,
       `L 0 ${s * 10}`
     ].join('\n'),
     fill: 'transparent'

@@ -27,11 +27,7 @@ export class ToggleRulerAction extends AbstractToggleAction {
 
   execute(): void {
     this.diagram.props.ruler ??= {};
-    if (this.state) {
-      this.diagram.props.ruler.enabled = false;
-    } else {
-      this.diagram.props.ruler.enabled = true;
-    }
+    this.diagram.props.ruler.enabled = !this.state;
     this.diagram.update();
   }
 }
