@@ -50,7 +50,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
   }
 
   let def: EdgeDefinition | NodeDefinition;
-  let customProperties: Array<CustomPropertyDefinition>;
+  let customProperties: ReadonlyArray<CustomPropertyDefinition>;
 
   if (element instanceof DiagramNode) {
     def = element.getDefinition();

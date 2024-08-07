@@ -58,7 +58,7 @@ export interface NodeDefinition {
   name: string;
 
   supports(capability: NodeCapability): boolean;
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition>;
+  getCustomPropertyDefinitions(node: DiagramNode): ReadonlyArray<CustomPropertyDefinition>;
 
   getBoundingPath(node: DiagramNode): CompoundPath;
 

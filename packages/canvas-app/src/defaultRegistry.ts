@@ -4,7 +4,7 @@ import { DiamondNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Di
 import { ParallelogramNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Parallelogram.nodeType';
 import { RegularPolygonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RegularPolygon.nodeType';
 import { StarNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Star.nodeType';
-import { TrapetzoidNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Trapetzoid.nodeType';
+import { TrapezoidNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Trapezoid.nodeType';
 import { TextNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Text.nodeType';
 import { ContainerNodeDefinition } from '@diagram-craft/canvas/node-types/Container.nodeType';
 import { GenericPathNodeDefinition } from '@diagram-craft/canvas/node-types/GenericPath.nodeType';
@@ -83,7 +83,7 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, defaults, new StarNodeDefinition());
   registerStencil(reg, defaults, new RegularPolygonNodeDefinition());
   registerStencil(reg, defaults, new ParallelogramNodeDefinition());
-  registerStencil(reg, defaults, new TrapetzoidNodeDefinition());
+  registerStencil(reg, defaults, new TrapezoidNodeDefinition());
   registerStencil(reg, defaults, new DiamondNodeDefinition());
   registerStencil(reg, defaults, new HexagonNodeDefinition());
   registerStencil(reg, defaults, new TriangleNodeDefinition());
