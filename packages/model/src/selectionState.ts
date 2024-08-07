@@ -53,6 +53,13 @@ export type SelectionType =
   | 'mixed'
   | 'single-label-node';
 
+type ElementPredicate = (e: DiagramElement) => boolean;
+
+export const excludeLabelNodes: ElementPredicate = (n: DiagramElement) =>
+  !(isNode(n) && n.renderProps.labelForEdgeId);
+
+export const includeAll: ElementPredicate = () => true;
+
 export class SelectionState extends EventEmitter<SelectionStateEvents> {
   readonly #marquee: Marquee;
 
@@ -103,6 +110,19 @@ export class SelectionState extends EventEmitter<SelectionStateEvents> {
 
   get edges(): Array<DiagramEdge> {
     return this.#elements.filter(isEdge);
+  }
+
+  filter(
+    type: 'all' | 'edges' | 'nodes',
+    predicate: ElementPredicate = includeAll
+  ): readonly DiagramElement[] {
+    if (type === 'all') {
+      return this.#elements.filter(predicate);
+    } else if (type === 'edges') {
+      return this.edges.filter(predicate);
+    } else {
+      return this.nodes.filter(predicate);
+    }
   }
 
   get guides() {

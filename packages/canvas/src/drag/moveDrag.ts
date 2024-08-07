@@ -9,14 +9,14 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model/diagram';
+import { Diagram } from '@diagram-craft/model/diagram';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canvasResizeHelper';
 import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
-import { SelectionState } from '@diagram-craft/model/selectionState';
+import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/model/selectionState';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
 import { ApplicationTriggers } from '../EditableCanvasComponent';
@@ -160,10 +160,12 @@ export class MoveDrag extends AbstractDrag {
 
     if (!Point.isEqual(Point.ORIGIN, Point.subtract(newBounds, selection.bounds))) {
       this.diagram.transformElements(
-        selection.elements,
+        selection.filter(
+          'all',
+          selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+        ),
         [new Translation(Point.subtract(newBounds, selection.bounds))],
-        this.uow,
-        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+        this.uow
       );
 
       // This is mainly a performance optimization and not strictly necessary
@@ -292,10 +294,12 @@ export class MoveDrag extends AbstractDrag {
 
     // Reset current selection back to original
     this.diagram.transformElements(
-      selection.nodes,
+      selection.filter(
+        'nodes',
+        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      ),
       [new Translation(Point.subtract(selection.source.boundingBox, selection.bounds))],
-      this.uow,
-      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      this.uow
     );
 
     enablePointerEvents(selection.elements);

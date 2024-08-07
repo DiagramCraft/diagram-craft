@@ -37,31 +37,18 @@ export type DiagramEvents = {
   elementHighlighted: { element: DiagramElement };
 };
 
-export type StackPosition = { element: DiagramElement; idx: number };
-
-export const excludeLabelNodes = (n: DiagramElement) =>
-  !(isNode(n) && n.renderProps.labelForEdgeId);
-
-export const includeAll = () => true;
-
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {
-  #canvas: Canvas = {
-    x: 0,
-    y: 0,
-    w: 640,
-    h: 640
-  };
-
-  diagrams: ReadonlyArray<this> = [];
+  #canvas: Canvas = { x: 0, y: 0, w: 640, h: 640 };
   #document: DiagramDocument | undefined;
 
+  diagrams: ReadonlyArray<Diagram> = [];
   mustCalculateIntersections = true;
 
   readonly props: DiagramProps = {};
   readonly viewBox = new Viewbox(this.#canvas);
   readonly nodeLookup = new Map<string, DiagramNode>();
   readonly edgeLookup = new Map<string, DiagramEdge>();
-  readonly selectionState: SelectionState = new SelectionState(this);
+  readonly selectionState = new SelectionState(this);
   readonly layers = new LayerManager(this, []);
   readonly snapManagerConfig = new SnapManagerConfig([
     'grid',
@@ -87,7 +74,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     const toggleMustCalculateIntersections = () => {
       const old = this.mustCalculateIntersections;
       this.mustCalculateIntersections = this.visibleElements().some(
-        e => isEdge(e) && (e.renderProps.lineHops?.type ?? 'none') !== 'none'
+        e => isEdge(e) && e.renderProps.lineHops.type !== 'none'
       );
       // Only trigger invalidation in case the value has changed to true
       if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {
@@ -117,32 +104,22 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   createSnapManager() {
-    const firstParent = this.selectionState.nodes[0]?.parent;
-    if (
-      this.selectionState.nodes.length > 0 &&
-      this.selectionState.nodes.every(n => n.parent === firstParent) &&
-      firstParent
-    ) {
+    const selection = this.selectionState.nodes;
+
+    const firstParent = selection[0]?.parent;
+    if (firstParent && selection.every(n => n.parent === firstParent)) {
       const selectionIds = new Set(firstParent.children.map(c => c.id));
-      for (const n of this.selectionState.nodes) {
+      for (const n of selection) {
         selectionIds.delete(n.id);
       }
 
-      return new SnapManager(
-        this,
-        id => selectionIds.has(id),
-        this.snapManagerConfig.magnetTypes,
-        this.snapManagerConfig.threshold,
-        this.snapManagerConfig.enabled
-      );
+      return new SnapManager(this, id => selectionIds.has(id), this.snapManagerConfig);
     } else {
       const selectionIds = new Set(this.selectionState.elements.map(e => e.id));
       return new SnapManager(
         this,
         id => !selectionIds.has(id) && !this.lookup(id)?.parent,
-        this.snapManagerConfig.magnetTypes,
-        this.snapManagerConfig.threshold,
-        this.snapManagerConfig.enabled
+        this.snapManagerConfig
       );
     }
   }
@@ -160,7 +137,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.update();
   }
 
-  findChildDiagramById(id: string): this | undefined {
+  findChildDiagramById(id: string): Diagram | undefined {
     return (
       this.diagrams.find(d => d.id === id) ??
       this.diagrams.map(d => d.findChildDiagramById(id)).find(d => d !== undefined)
@@ -248,17 +225,16 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   transformElements(
     elements: ReadonlyArray<DiagramElement>,
     transforms: ReadonlyArray<Transform>,
-    uow: UnitOfWork,
-    filter: (e: DiagramElement) => boolean = () => true
+    uow: UnitOfWork
   ) {
     for (const el of elements) {
-      if (filter(el)) el.transform(transforms, uow);
+      el.transform(transforms, uow);
     }
 
     // We do this in a separate loop to as nodes might move which will
     // affect the start and end location of connected edges
     for (const el of elements) {
-      if (filter(el)) uow.updateElement(el);
+      uow.updateElement(el);
     }
   }
 

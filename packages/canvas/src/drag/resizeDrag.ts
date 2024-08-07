@@ -5,9 +5,10 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model/diagram';
+import { Diagram } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -122,10 +123,12 @@ export class ResizeDrag extends AbstractDrag {
     selection.forceRotation(undefined);
 
     this.diagram.transformElements(
-      selection.elements,
+      selection.filter(
+        'all',
+        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      ),
       TransformFactory.fromTo(before, WritableBox.asBox(newBounds)),
-      this.uow,
-      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      this.uow
     );
     this.uow.notify();
 

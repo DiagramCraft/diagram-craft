@@ -4,9 +4,10 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Diagram, excludeLabelNodes, includeAll } from '@diagram-craft/model/diagram';
+import { Diagram } from '@diagram-craft/model/diagram';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selectionState';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
@@ -34,10 +35,12 @@ export class RotateDrag extends AbstractDrag {
     const adjustedAngle = isFreeDrag(modifiers) ? targetAngle : result.adjusted.r;
 
     this.diagram.transformElements(
-      selection.elements,
+      selection.filter(
+        'all',
+        selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      ),
       TransformFactory.fromTo(before, { ...selection.bounds, r: adjustedAngle }),
-      this.uow,
-      selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
+      this.uow
     );
 
     selection.forceRotation(adjustedAngle);

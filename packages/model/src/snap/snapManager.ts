@@ -15,6 +15,7 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 import { largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { SnapManagerConfig } from './snapManagerConfig';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -94,13 +95,19 @@ const orthogonalDistance = (a1: Magnet, a2: Magnet) => {
 };
 
 export class SnapManager {
+  private readonly magnetTypes: ReadonlyArray<MagnetType>;
+  private readonly threshold: number;
+  private readonly enabled: boolean;
+
   constructor(
     private readonly diagram: Diagram,
     private readonly eligibleNodePredicate: EligibleNodePredicate = () => true,
-    private readonly magnetTypes: ReadonlyArray<MagnetType> = [],
-    private readonly threshold: number,
-    private readonly enabled: boolean
-  ) {}
+    config: SnapManagerConfig
+  ) {
+    this.magnetTypes = config.magnetTypes;
+    this.threshold = config.threshold;
+    this.enabled = config.enabled;
+  }
 
   private matchMagnets(
     selfMagnets: ReadonlyArray<Magnet>,

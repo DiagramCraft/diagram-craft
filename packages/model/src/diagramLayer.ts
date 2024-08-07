@@ -2,11 +2,12 @@ import { DiagramNode } from './diagramNode';
 import { DiagramElement, isNode } from './diagramElement';
 import { LayerSnapshot, LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge } from './diagramEdge';
-import { Diagram, StackPosition } from './diagram';
+import { Diagram } from './diagram';
 import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
 
 export type LayerType = 'layer' | 'adjustment';
+export type StackPosition = { element: DiagramElement; idx: number };
 
 export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
   #elements: Array<DiagramElement> = [];
