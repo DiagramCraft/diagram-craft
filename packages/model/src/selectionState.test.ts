@@ -1,53 +1,7 @@
 import { Guide, SelectionState } from './selectionState';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DiagramNode } from './diagramNode';
-import { DiagramEdge } from './diagramEdge';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { TestNodeDefinition } from './TestNodeDefinition';
-import { Diagram } from './diagram';
-import { FreeEndpoint } from './endpoint';
-import { Layer } from './diagramLayer';
-import { UnitOfWork } from './unitOfWork';
-import { DiagramDocument } from './diagramDocument';
-
-const createNode = (diagram: Diagram) =>
-  new DiagramNode(
-    '1',
-    'rect',
-    {
-      x: 0,
-      y: 0,
-      w: 10,
-      h: 10,
-      r: 0
-    },
-    diagram,
-    diagram.layers.active,
-    {},
-    {}
-  );
-
-const createEdge = (diagram: Diagram) =>
-  new DiagramEdge(
-    '1',
-    new FreeEndpoint({ x: 0, y: 0 }),
-    new FreeEndpoint({ x: 10, y: 10 }),
-    {},
-    {},
-    [],
-    diagram,
-    diagram.layers.active
-  );
-
-function createDiagram() {
-  const registry = new NodeDefinitionRegistry();
-  registry.register(new TestNodeDefinition('rect', 'Rectangle'));
-
-  const d = new Diagram('1', 'test', new DiagramDocument(registry, new EdgeDefinitionRegistry()));
-  d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.immediate(d));
-
-  return d;
-}
+import { TestFactory } from './helpers/testFactory';
 
 describe('SelectionState', () => {
   beforeEach(() => {
@@ -58,15 +12,15 @@ describe('SelectionState', () => {
   });
 
   test('isEmpty()', () => {
-    const emptySelection = new SelectionState(createDiagram());
+    const emptySelection = new SelectionState(TestFactory.createDiagram());
     expect(emptySelection.isEmpty()).toBe(true);
     expect(emptySelection.bounds.w).toBe(0);
     expect(emptySelection.bounds.h).toBe(0);
   });
 
   test('toggle()', () => {
-    const diagram = createDiagram();
-    const element: DiagramNode = createNode(diagram);
+    const diagram = TestFactory.createDiagram();
+    const element: DiagramNode = TestFactory.createNode(diagram);
 
     const selectionState = new SelectionState(diagram);
 
@@ -105,69 +59,69 @@ describe('SelectionState', () => {
 
   describe('getSelectionType()', () => {
     test('empty selection', () => {
-      const selectionState = new SelectionState(createDiagram());
+      const selectionState = new SelectionState(TestFactory.createDiagram());
       expect(selectionState.getSelectionType()).toBe('empty');
     });
 
     test('single node', () => {
-      const d = createDiagram();
+      const d = TestFactory.createDiagram();
       const selectionState = new SelectionState(d);
-      selectionState.toggle(createNode(d));
+      selectionState.toggle(TestFactory.createNode(d));
       expect(selectionState.getSelectionType()).toBe('single-node');
     });
 
     test('single edge', () => {
-      const d = createDiagram();
+      const d = TestFactory.createDiagram();
       const selectionState = new SelectionState(d);
-      selectionState.toggle(createEdge(d));
+      selectionState.toggle(TestFactory.createEdge(d));
       expect(selectionState.getSelectionType()).toBe('single-edge');
     });
 
     test('multiple nodes', () => {
-      const d = createDiagram();
+      const d = TestFactory.createDiagram();
       const selectionState = new SelectionState(d);
-      selectionState.toggle(createNode(d));
-      selectionState.toggle(createNode(d));
+      selectionState.toggle(TestFactory.createNode(d));
+      selectionState.toggle(TestFactory.createNode(d));
       expect(selectionState.getSelectionType()).toBe('nodes');
     });
 
     test('multiple edges', () => {
-      const d = createDiagram();
+      const d = TestFactory.createDiagram();
       const selectionState = new SelectionState(d);
-      selectionState.toggle(createEdge(d));
-      selectionState.toggle(createEdge(d));
+      selectionState.toggle(TestFactory.createEdge(d));
+      selectionState.toggle(TestFactory.createEdge(d));
       expect(selectionState.getSelectionType()).toBe('edges');
     });
 
     test('mixed', () => {
-      const d = createDiagram();
+      const d = TestFactory.createDiagram();
       const selectionState = new SelectionState(d);
-      selectionState.toggle(createNode(d));
-      selectionState.toggle(createEdge(d));
+      selectionState.toggle(TestFactory.createNode(d));
+      selectionState.toggle(TestFactory.createEdge(d));
       expect(selectionState.getSelectionType()).toBe('mixed');
     });
   });
 
   test('isNodesOnly()', () => {
-    const d = createDiagram();
+    const d = TestFactory.createDiagram();
     const selectionState = new SelectionState(d);
-    selectionState.toggle(createNode(d));
+    selectionState.toggle(TestFactory.createNode(d));
     expect(selectionState.isNodesOnly()).toBe(true);
-    selectionState.toggle(createEdge(d));
+    selectionState.toggle(TestFactory.createEdge(d));
     expect(selectionState.isNodesOnly()).toBe(false);
   });
 
   test('isEdgesOnly()', () => {
-    const d = createDiagram();
+    const d = TestFactory.createDiagram();
     const selectionState = new SelectionState(d);
-    selectionState.toggle(createEdge(d));
+    selectionState.toggle(TestFactory.createEdge(d));
     expect(selectionState.isEdgesOnly()).toBe(true);
-    selectionState.toggle(createNode(d));
+    selectionState.toggle(TestFactory.createNode(d));
     expect(selectionState.isEdgesOnly()).toBe(false);
   });
 
   test('set guides', () => {
-    const selectionState = new SelectionState(createDiagram());
+    const selectionState = new SelectionState(TestFactory.createDiagram());
 
     const changeCb = vi.fn();
     selectionState.on('change', changeCb);

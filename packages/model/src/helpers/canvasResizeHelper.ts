@@ -6,57 +6,49 @@ import { Extent } from '@diagram-craft/geometry/extent';
 
 const AMOUNT_TO_GROW = 100;
 
+/**
+ * This expands the canvas to fit the given bounding box with a margin of
+ * AMOUNT_TO_GROW.
+ *
+ * It creates a new canvas and does not modify the original.
+ */
+const resizeCanvas = (orig: Canvas, bbox: Box) => {
+  const newCanvas = { ...orig };
+
+  if (bbox.x < newCanvas.x) {
+    const dx = newCanvas.x - bbox.x + AMOUNT_TO_GROW;
+    newCanvas.x -= dx;
+    newCanvas.w += dx;
+  }
+  if (bbox.y < newCanvas.y) {
+    const dy = newCanvas.y - bbox.y + AMOUNT_TO_GROW;
+    newCanvas.y -= dy;
+    newCanvas.h += dy;
+  }
+  if (bbox.x + bbox.w > newCanvas.x + newCanvas.w) {
+    newCanvas.w = bbox.x + bbox.w - newCanvas.x + AMOUNT_TO_GROW;
+  }
+  if (bbox.y + bbox.h > newCanvas.y + newCanvas.h) {
+    newCanvas.h = bbox.y + bbox.h - newCanvas.y + AMOUNT_TO_GROW;
+  }
+  return newCanvas;
+};
+
 export const createResizeCanvasActionToFit = (
   diagram: Diagram,
   bbox: Box
-): ResizeCanvasAction | undefined => {
-  const orig = diagram.canvas;
+): ResizeCanvasUndoableAction | undefined => {
+  const originalCanvas = diagram.canvas;
+  const newCanvas = resizeCanvas(diagram.canvas, bbox);
 
-  let canvas = diagram.canvas;
-
-  if (bbox.x < canvas.x) {
-    const dx = canvas.x - bbox.x + AMOUNT_TO_GROW;
-    canvas = {
-      w: canvas.w + dx,
-      h: canvas.h,
-      x: canvas.x - dx,
-      y: canvas.y
-    };
-  }
-  if (bbox.y < canvas.y) {
-    const dy = canvas.y - bbox.y + AMOUNT_TO_GROW;
-    canvas = {
-      w: canvas.w,
-      h: canvas.h + dy,
-      x: canvas.x,
-      y: canvas.y - dy
-    };
-  }
-  if (bbox.x + bbox.w > canvas.x + canvas.w) {
-    const dx = bbox.x + bbox.w - canvas.x - canvas.w + AMOUNT_TO_GROW;
-    canvas = {
-      w: canvas.x + canvas.w - canvas.x + dx,
-      h: canvas.h,
-      x: canvas.x,
-      y: canvas.y
-    };
-  }
-  if (bbox.y + bbox.h > canvas.y + canvas.h) {
-    const dy = bbox.y + bbox.h - canvas.y - canvas.h + AMOUNT_TO_GROW;
-    canvas = {
-      w: canvas.w,
-      h: canvas.y + canvas.h - canvas.y + dy,
-      x: canvas.x,
-      y: canvas.y
-    };
+  if (Point.isEqual(newCanvas, originalCanvas) && Extent.isEqual(newCanvas, originalCanvas)) {
+    return undefined;
   }
 
-  if (Point.isEqual(canvas, orig) && Extent.isEqual(canvas, orig)) return undefined;
-
-  return new ResizeCanvasAction(diagram, diagram.canvas, canvas);
+  return new ResizeCanvasUndoableAction(diagram, diagram.canvas, newCanvas);
 };
 
-class ResizeCanvasAction implements UndoableAction {
+class ResizeCanvasUndoableAction implements UndoableAction {
   description = 'Resize canvas';
 
   constructor(
@@ -73,3 +65,8 @@ class ResizeCanvasAction implements UndoableAction {
     this.diagram.canvas = this.after;
   }
 }
+
+export const _test = {
+  ResizeCanvasUndoableAction,
+  resizeCanvas
+};
