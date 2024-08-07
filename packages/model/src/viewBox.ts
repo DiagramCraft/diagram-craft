@@ -1,6 +1,6 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { Point } from '@diagram-craft/geometry/point';
+import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { newid } from '@diagram-craft/utils/id';
 
@@ -10,7 +10,7 @@ export type ViewboxEvents = {
 
 export class Viewbox extends EventEmitter<ViewboxEvents> {
   #dimensions: Extent;
-  #offset: Point = {
+  #offset: AbsoluteOffset = {
     x: 0,
     y: 0
   };
@@ -83,11 +83,11 @@ export class Viewbox extends EventEmitter<ViewboxEvents> {
     this.emit('viewbox', { viewbox: this, type: 'pan+zoom' });
   }
 
-  get offset(): Point {
+  get offset(): AbsoluteOffset {
     return this.#offset;
   }
 
-  set offset(o: Point) {
+  set offset(o: AbsoluteOffset) {
     this.#offset = o;
     this.#initialized = true;
     this.emit('viewbox', { viewbox: this, type: 'pan' });

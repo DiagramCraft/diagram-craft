@@ -1,7 +1,7 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
 import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
-import { Point } from '@diagram-craft/geometry/point';
+import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
@@ -11,17 +11,17 @@ declare global {
 }
 
 export class PanTool extends AbstractTool {
-  private mouseDown = false;
+  private isMouseDown = false;
   private clickPoint: Point | undefined = undefined;
-  private clickOffset: Point | undefined = undefined;
+  private clickOffset: AbsoluteOffset | undefined = undefined;
   private resetOnMouseUp = false;
 
   constructor(
-    protected readonly diagram: Diagram,
-    protected readonly drag: DragDopManager,
-    protected readonly svg: SVGSVGElement | null,
-    protected readonly applicationTriggers: ApplicationTriggers,
-    protected readonly resetTool: () => void
+    diagram: Diagram,
+    drag: DragDopManager,
+    svg: SVGSVGElement | null,
+    applicationTriggers: ApplicationTriggers,
+    resetTool: () => void
   ) {
     super('pan', diagram, drag, svg, applicationTriggers, resetTool);
 
@@ -32,32 +32,32 @@ export class PanTool extends AbstractTool {
     this.resetOnMouseUp = reset;
   }
 
-  onKeyUp(_e: KeyboardEvent) {
+  onKeyUp() {
     this.applicationTriggers.popHelp?.('pan');
     this.resetTool();
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
-    this.mouseDown = true;
+    this.isMouseDown = true;
     this.clickPoint = point;
     this.clickOffset = this.diagram.viewBox.offset;
   }
 
-  onMouseUp(_point: Point) {
-    this.mouseDown = false;
+  onMouseUp() {
+    this.isMouseDown = false;
     if (this.resetOnMouseUp) {
       this.resetTool();
     }
   }
 
   onMouseMove(point: Point, _modifiers: Modifiers) {
-    if (this.mouseDown) {
-      const mouseDiff = Point.subtract(
-        this.diagram.viewBox.toDiagramPoint(point),
-        this.diagram.viewBox.toDiagramPoint(this.clickPoint!)
-      );
-      const newOffset = Point.subtract(this.clickOffset!, mouseDiff);
-      this.diagram.viewBox.pan(newOffset);
-    }
+    if (!this.isMouseDown) return;
+
+    const mouseDiff = Point.subtract(
+      this.diagram.viewBox.toDiagramPoint(point),
+      this.diagram.viewBox.toDiagramPoint(this.clickPoint!)
+    );
+    const newOffset = Point.subtract(this.clickOffset!, mouseDiff);
+    this.diagram.viewBox.pan(newOffset);
   }
 }
