@@ -42,12 +42,13 @@ export class LayerDeleteAction extends AbstractAction {
   }
 
   execute(context: ActionContext): void {
+    precondition.is.present(context.id);
+
     const uow = new UnitOfWork(this.diagram, true);
 
-    assert.present(context.id);
     const layer = this.diagram.layers.byId(context.id);
-
     assert.present(layer);
+
     this.diagram.layers.remove(layer, uow);
 
     const snapshots = uow.commit();
@@ -95,10 +96,11 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction {
   }
 
   execute(context: ActionContext): void {
-    assert.present(context.id);
-    const layer = this.diagram.layers.byId(context.id);
+    precondition.is.present(context.id);
 
+    const layer = this.diagram.layers.byId(context.id);
     assert.present(layer);
+
     this.diagram.layers.toggleVisibility(layer);
     this.diagram.undoManager.add(
       new ToggleActionUndoableAction('Toggle layer visibility', this, context)
@@ -123,10 +125,11 @@ export class LayerToggleLockedAction extends AbstractToggleAction {
   }
 
   execute(context: ActionContext): void {
-    assert.present(context.id);
-    const layer = this.diagram.layers.byId(context.id);
+    precondition.is.present(context.id);
 
+    const layer = this.diagram.layers.byId(context.id);
     assert.present(layer);
+
     layer.locked = !layer.isLocked();
     this.diagram.undoManager.add(
       new ToggleActionUndoableAction('Toggle layer locked', this, context)
@@ -134,7 +137,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction {
   }
 }
 
-export class LayerRenameAction extends AbstractAction<string> {
+export class LayerRenameAction extends AbstractAction<string | undefined> {
   constructor(protected readonly diagram: Diagram) {
     super();
   }
@@ -143,10 +146,10 @@ export class LayerRenameAction extends AbstractAction<string> {
     return context.id !== undefined && this.diagram.layers.byId(context.id) !== undefined;
   }
 
-  execute(context: ActionContext, name: string): void {
-    assert.present(context.id);
-    const layer = this.diagram.layers.byId(context.id);
+  execute(context: ActionContext, name: string | undefined): void {
+    precondition.is.present(context.id);
 
+    const layer = this.diagram.layers.byId(context.id);
     assert.present(layer);
 
     const uow = new UnitOfWork(this.diagram, true);
@@ -215,7 +218,7 @@ export class LayerSelectionMoveAction extends AbstractAction {
     assert.present(layer);
 
     this.diagram.moveElement(this.diagram.selectionState.elements, uow, layer!);
-    commitWithUndo(uow, 'Move to layer ' + layer.name);
+    commitWithUndo(uow, `Move to layer ${layer.name}`);
   }
 }
 
