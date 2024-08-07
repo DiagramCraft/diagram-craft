@@ -12,8 +12,8 @@ import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { createResizeCanvasActionToFit } from '@diagram-craft/model/helpers/canvasResizeHelper';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { AbstractSelectionAction } from './abstractSelectionAction';
+import { State } from '@diagram-craft/canvas/keyMap';
+import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Angle } from '@diagram-craft/geometry/angle';
 
@@ -145,51 +145,37 @@ export const createLinkedNode = (
   return newNode;
 };
 
-declare global {
-  interface ActionMap {
-    CREATE_LINKED_NODE_E: CreateLinkedNodeAction;
-    CREATE_LINKED_NODE_W: CreateLinkedNodeAction;
-    CREATE_LINKED_NODE_N: CreateLinkedNodeAction;
-    CREATE_LINKED_NODE_S: CreateLinkedNodeAction;
-    CREATE_LINKED_NODE_KEEP_E: CreateLinkedNodeAction;
-    CREATE_LINKED_NODE_KEEP_W: CreateLinkedNodeAction;
-    CREATE_LINKED_NODE_KEEP_N: CreateLinkedNodeAction;
-    CREATE_LINKED_NODE_KEEP_S: CreateLinkedNodeAction;
-  }
-}
-
-export const createLinkedNodeActions: ActionMapFactory = (state: State) => {
-  const $d = state.diagram;
+export const createLinkedNodeActions = ({ diagram }: State) => {
   return {
-    CREATE_LINKED_NODE_E: new CreateLinkedNodeAction($d, 'e'),
-    CREATE_LINKED_NODE_W: new CreateLinkedNodeAction($d, 'w'),
-    CREATE_LINKED_NODE_N: new CreateLinkedNodeAction($d, 'n'),
-    CREATE_LINKED_NODE_S: new CreateLinkedNodeAction($d, 's'),
-    CREATE_LINKED_NODE_KEEP_E: new CreateLinkedNodeAction($d, 'e', true),
-    CREATE_LINKED_NODE_KEEP_W: new CreateLinkedNodeAction($d, 'w', true),
-    CREATE_LINKED_NODE_KEEP_N: new CreateLinkedNodeAction($d, 'n', true),
-    CREATE_LINKED_NODE_KEEP_S: new CreateLinkedNodeAction($d, 's', true)
+    CREATE_LINKED_NODE_E: new CreateLinkedNodeAction(diagram, 'e'),
+    CREATE_LINKED_NODE_W: new CreateLinkedNodeAction(diagram, 'w'),
+    CREATE_LINKED_NODE_N: new CreateLinkedNodeAction(diagram, 'n'),
+    CREATE_LINKED_NODE_S: new CreateLinkedNodeAction(diagram, 's'),
+    CREATE_LINKED_NODE_KEEP_E: new CreateLinkedNodeAction(diagram, 'e', true),
+    CREATE_LINKED_NODE_KEEP_W: new CreateLinkedNodeAction(diagram, 'w', true),
+    CREATE_LINKED_NODE_KEEP_N: new CreateLinkedNodeAction(diagram, 'n', true),
+    CREATE_LINKED_NODE_KEEP_S: new CreateLinkedNodeAction(diagram, 's', true)
   };
 };
 
+declare global {
+  interface ActionMap extends ReturnType<typeof createLinkedNodeActions> {}
+}
+
 export class CreateLinkedNodeAction extends AbstractSelectionAction {
   constructor(
-    protected readonly diagram: Diagram,
+    diagram: Diagram,
     protected readonly direction: Direction,
     protected readonly keepSelection: boolean = false
   ) {
-    super(diagram, 'single-only', 'node');
+    super(diagram, MultipleType.SingleOnly, ElementType.Node);
   }
 
   execute(): void {
     if (!this.enabled) return;
 
     const $sel = this.diagram.selectionState;
-    const nodes = $sel.nodes;
-
-    assert.true(nodes.length === 1);
-
-    const node = nodes[0];
+    const node = $sel.nodes[0];
 
     let best: [number, Anchor | undefined] = [Number.MAX_SAFE_INTEGER, undefined];
     for (const anchor of node.anchors) {
