@@ -1,10 +1,11 @@
 import { DiagramElement, isNode } from '../diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { Box } from '@diagram-craft/geometry/box';
-import { Point } from '@diagram-craft/geometry/point';
-import { Diagram } from '../diagram';
+import { Point, Scale } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '../unitOfWork';
 
+// TODO: Ensure linking between edges and nodes works
+//       See ElementsPasteHandler
 export const assignNewIds = (elements: readonly DiagramElement[]) => {
   for (const e of elements) {
     e.id = newid();
@@ -16,27 +17,26 @@ export const assignNewIds = (elements: readonly DiagramElement[]) => {
 
 export const assignNewBounds = (
   elements: readonly DiagramElement[],
-  point: Point,
-  scaleX: number,
-  scaleY: number,
-  $d: Diagram,
-  uow: UnitOfWork,
-  parentBounds?: Box
+  position: Point,
+  scale: Scale,
+  uow: UnitOfWork
 ) => {
-  const bounds = parentBounds ?? Box.boundingBox(elements.map(e => e.bounds));
-  for (const e of elements) {
-    e.setBounds(
-      {
-        x: (e.bounds.x - bounds.x) * scaleX + point.x,
-        y: (e.bounds.y - bounds.y) * scaleY + point.y,
-        w: e.bounds.w * scaleX,
-        h: e.bounds.h * scaleY,
-        r: e.bounds.r
-      },
-      uow
-    );
-    if (isNode(e)) {
-      assignNewBounds(e.children, point, scaleX, scaleY, $d, uow, bounds);
+  const process = (elements: readonly DiagramElement[], parentBounds: Box) => {
+    for (const e of elements) {
+      e.setBounds(
+        {
+          x: (e.bounds.x - parentBounds.x) * scale.x + position.x,
+          y: (e.bounds.y - parentBounds.y) * scale.y + position.y,
+          w: e.bounds.w * scale.x,
+          h: e.bounds.h * scale.y,
+          r: e.bounds.r
+        },
+        uow
+      );
+      if (isNode(e)) {
+        process(e.children, parentBounds);
+      }
     }
-  }
+  };
+  process(elements, Box.boundingBox(elements.map(e => e.bounds)));
 };

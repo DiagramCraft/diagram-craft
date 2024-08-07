@@ -6,6 +6,10 @@ export type Point = Readonly<{
   y: number;
 }>;
 
+export type Scale = Point;
+export type RelativeOffset = Point;
+export type AbsoluteOffset = Point;
+
 export const Point = {
   ORIGIN: { x: 0, y: 0 },
 

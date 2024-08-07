@@ -41,7 +41,7 @@ export const canvasDropHandler = ($d: Diagram) => {
     const scaleY = draggable.dimensions.h / bounds.h;
 
     const point = $d.viewBox.toDiagramPoint(EventHelper.point(e));
-    assignNewBounds(droppedElements, point, scaleX, scaleY, $d, UnitOfWork.immediate($d));
+    assignNewBounds(droppedElements, point, { x: scaleX, y: scaleY }, UnitOfWork.immediate($d));
 
     const uow = new UnitOfWork($d, false, true);
     droppedElements.forEach(e => {

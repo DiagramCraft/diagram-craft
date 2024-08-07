@@ -1,18 +1,16 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
 import { blobToDataURL } from '@diagram-craft/model/attachment';
 
-declare global {
-  interface ActionMap {
-    FILE_EXPORT_IMAGE: ExportImageAction;
-  }
-}
-
-export const exportActions: ActionMapFactory = (state: State) => ({
+export const exportActions = (state: State) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(state.diagram)
 });
+
+declare global {
+  interface ActionMap extends ReturnType<typeof exportActions> {}
+}
 
 const downloadImage = (data: string, filename = 'untitled.png') => {
   const a = document.createElement('a');

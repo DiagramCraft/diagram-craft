@@ -1,4 +1,4 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
@@ -6,17 +6,14 @@ import {
   serializeDiagramElement
 } from '@diagram-craft/model/serialization/serialize';
 
-declare global {
-  interface ActionMap {
-    FILE_SAVE: SaveAction;
-    SELECTION_DUMP: DumpSelectionAction;
-  }
-}
-
-export const saveActions: ActionMapFactory = (state: State) => ({
+export const saveActions = (state: State) => ({
   FILE_SAVE: new SaveAction(state.diagram),
   SELECTION_DUMP: new DumpSelectionAction(state.diagram)
 });
+
+declare global {
+  interface ActionMap extends ReturnType<typeof saveActions> {}
+}
 
 class SaveAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
