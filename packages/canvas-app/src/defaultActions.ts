@@ -55,7 +55,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
 
 export const defaultMacKeymap: KeyMap = {
   'M-KeyZ': 'UNDO',
-  'MS-KeyZ': 'REDO',
+  'M-S-KeyZ': 'REDO',
   'M-KeyC': 'CLIPBOARD_COPY',
   'M-KeyX': 'CLIPBOARD_CUT',
   'M-KeyV': 'CLIPBOARD_PASTE',
@@ -70,7 +70,7 @@ export const defaultMacKeymap: KeyMap = {
   'M-KeyE': 'FILE_EXPORT_IMAGE',
 
   'M-KeyG': 'GROUP_GROUP',
-  'MS-KeyG': 'GROUP_UNGROUP',
+  'M-S-KeyG': 'GROUP_UNGROUP',
 
   'ArrowRight': 'SELECTION_MOVE_RIGHT',
   'ArrowLeft': 'SELECTION_MOVE_LEFT',
@@ -85,17 +85,17 @@ export const defaultMacKeymap: KeyMap = {
   'M-ArrowLeft': 'SELECTION_RESIZE_LEFT',
   'M-ArrowUp': 'SELECTION_RESIZE_UP',
   'M-ArrowDown': 'SELECTION_RESIZE_DOWN',
-  'MS-ArrowRight': 'SELECTION_RESIZE_GRID_RIGHT',
-  'MS-ArrowLeft': 'SELECTION_RESIZE_GRID_LEFT',
-  'MS-ArrowUp': 'SELECTION_RESIZE_GRID_UP',
-  'MS-ArrowDown': 'SELECTION_RESIZE_GRID_DOWN',
+  'M-S-ArrowRight': 'SELECTION_RESIZE_GRID_RIGHT',
+  'M-S-ArrowLeft': 'SELECTION_RESIZE_GRID_LEFT',
+  'M-S-ArrowUp': 'SELECTION_RESIZE_GRID_UP',
+  'M-S-ArrowDown': 'SELECTION_RESIZE_GRID_DOWN',
 
-  'AC-ArrowUp': 'CREATE_LINKED_NODE_N',
-  'AC-ArrowDown': 'CREATE_LINKED_NODE_S',
-  'AC-ArrowLeft': 'CREATE_LINKED_NODE_W',
-  'AC-ArrowRight': 'CREATE_LINKED_NODE_E',
-  'ACS-ArrowUp': 'CREATE_LINKED_NODE_KEEP_N',
-  'ACS-ArrowDown': 'CREATE_LINKED_NODE_KEEP_S',
-  'ACS-ArrowLeft': 'CREATE_LINKED_NODE_KEEP_W',
-  'ACS-ArrowRight': 'CREATE_LINKED_NODE_KEEP_E'
+  'A-C-ArrowUp': 'CREATE_LINKED_NODE_N',
+  'A-C-ArrowDown': 'CREATE_LINKED_NODE_S',
+  'A-C-ArrowLeft': 'CREATE_LINKED_NODE_W',
+  'A-C-ArrowRight': 'CREATE_LINKED_NODE_E',
+  'A-C-S-ArrowUp': 'CREATE_LINKED_NODE_KEEP_N',
+  'A-C-S-ArrowDown': 'CREATE_LINKED_NODE_KEEP_S',
+  'A-C-S-ArrowLeft': 'CREATE_LINKED_NODE_KEEP_W',
+  'A-C-S-ArrowRight': 'CREATE_LINKED_NODE_KEEP_E'
 };

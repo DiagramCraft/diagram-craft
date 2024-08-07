@@ -170,7 +170,8 @@ export class MoveTool extends AbstractTool {
       !e.altKey &&
       this.diagram.selectionState.isNodesOnly() &&
       this.diagram.selectionState.nodes.length === 1 &&
-      e.target === document.body
+      e.target === document.body &&
+      e.key !== 'Shift'
     ) {
       const node = this.diagram.selectionState.nodes[0];
       node.getDefinition().requestFocus(node, false);

@@ -1,7 +1,7 @@
 import { SelectionComponent } from './components/SelectionComponent';
 import { SelectionMarqueeComponent } from './components/SelectionMarqueeComponent';
 import { GridComponent } from './components/GridComponent';
-import { Actions, executeAction } from './keyMap';
+import { Actions, findAndExecuteAction } from './keyMap';
 import { DocumentBoundsComponent } from './components/DocumentBoundsComponent';
 import { DRAG_DROP_MANAGER, Modifiers } from './dragDropManager';
 import { BACKGROUND, Tool, ToolContructor } from './tool';
@@ -195,7 +195,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           return;
         }
 
-        if (!executeAction(e, { point: this.point }, keyMap, actionMap)) {
+        if (!findAndExecuteAction(e, { point: this.point }, keyMap, actionMap)) {
           this.tool?.onKeyDown(e);
         }
       };

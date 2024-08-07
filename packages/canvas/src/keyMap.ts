@@ -11,7 +11,28 @@ export type AppState = State & {
   applicationState: ApplicationState;
 };
 
-export type KeyMap = Record<string, keyof ActionMap>;
+type Alt = 'A-' | '';
+type Control = 'C-' | '';
+type Meta = 'M-' | '';
+type Shift = 'S-' | '';
+type KeyCode =
+  | `Key${Uppercase<string>}`
+  | 'Space'
+  | 'Backspace'
+  | 'ArrowLeft'
+  | 'ArrowRight'
+  | 'ArrowUp'
+  | 'ArrowDown'
+  | `Digit${number}`;
+
+type KeyBinding = `${Alt}${Control}${Meta}${Shift}${KeyCode}` | KeyCode;
+
+const ALT = 'A-';
+const CTRL = 'C-';
+const META = 'M-';
+const SHIFT = 'S-';
+
+export type KeyMap = Partial<Record<KeyBinding, keyof ActionMap>>;
 
 declare global {
   interface ActionMap
@@ -38,19 +59,19 @@ export const makeActionMap = (...factories: ActionMapFactory[]): ActionMapFactor
   };
 };
 
-export const findAction = (
+const findAction = (
   e: KeyboardEvent,
   keyMap: KeyMap,
   actionMap: Partial<ActionMap>
 ): Action | undefined => {
-  const actionKey = `${e.altKey ? 'A' : ''}${e.ctrlKey ? 'C' : ''}${e.metaKey ? 'M' : ''}${
-    e.shiftKey ? 'S' : ''
-  }-${e.code}`;
-  if (actionKey.startsWith('-')) return actionMap[keyMap[actionKey.slice(1)]];
-  return actionMap[keyMap[actionKey]];
+  const actionKey: KeyBinding = `${e.altKey ? ALT : ''}${e.ctrlKey ? CTRL : ''}${e.metaKey ? META : ''}${
+    e.shiftKey ? SHIFT : ''
+  }${e.code as KeyCode}`;
+
+  return actionMap[keyMap[actionKey]!];
 };
 
-export const executeAction = (
+export const findAndExecuteAction = (
   e: KeyboardEvent,
   actionContext: ActionContext,
   keyMap: KeyMap,
@@ -58,12 +79,13 @@ export const executeAction = (
 ): boolean => {
   const target: HTMLElement = e.target as HTMLElement;
 
+  // TODO: Is this really the right place for this logic
   if (target.tagName === 'INPUT' || (target.tagName === 'TEXTAREA' && target.id !== 'clipboard'))
     return false;
-
   if (target.classList.contains('svg-node__text')) return false;
+
   const action = findAction(e, keyMap, actionMap);
-  if (!action || !action.isEnabled) return false;
+  if (action === undefined) return false;
 
   action.execute({ ...actionContext, source: 'keyboard' });
 
@@ -72,32 +94,48 @@ export const executeAction = (
   return true;
 };
 
-export const findKeyBindings = (action: keyof ActionMap, keyMap: KeyMap): string[] => {
+export const findKeyBindingsForAction = (action: keyof ActionMap, keyMap: KeyMap): KeyBinding[] => {
   return Object.entries(keyMap)
     .filter(([, a]) => a === action)
-    .map(([k]) => k);
+    .map(([k]) => k as KeyBinding);
 };
 
-export const formatKeyBinding = (s: string | undefined) => {
-  if (!s) return '';
-  const [m, k] = s.split('-');
+type FormattingConfig = Record<typeof ALT | typeof CTRL | typeof META | typeof SHIFT, string>;
 
-  if (window.navigator.platform.indexOf('Mac') != -1) {
-    return (
-      m.replace('M', '⌘').replace('A', '⌥').replace('C', '⌃').replace('S', '⇧') +
-      k.replace('Key', '').replace('Digit', '')
-    );
-  } else if (window.navigator.platform.indexOf('Linux') != -1) {
-    return (
-      m.replace('M', 'Ctrl').replace('A', 'Alt').replace('C', 'Ctrl').replace('S', 'Shift') +
-      '+' +
-      k.replace('Key', '').replace('Digit', '')
-    );
-  } else {
-    return (
-      m.replace('M', 'Ctrl').replace('A', 'Alt').replace('C', 'Ctrl').replace('S', 'Shift') +
-      '+' +
-      k.replace('Key', '').replace('Digit', '')
-    );
+const FORMATTING_MAC: FormattingConfig = { [ALT]: '⌥', [CTRL]: '⌃', [META]: '⌘', [SHIFT]: '⇧' };
+
+const FORMATTING_LINUX: FormattingConfig = {
+  [ALT]: 'Alt+',
+  [CTRL]: 'Ctrl+',
+  [META]: 'Meta+',
+  [SHIFT]: 'Shift+'
+};
+
+const FORMATTING_WINDOWS: FormattingConfig = {
+  [ALT]: 'Alt+',
+  [CTRL]: 'Ctrl+',
+  [META]: 'Win+',
+  [SHIFT]: 'Shift+'
+};
+
+export const formatKeyBinding = (
+  s: KeyBinding | undefined,
+  platform = window.navigator.platform
+) => {
+  if (!s) return '';
+
+  const formatted = s.replace('Key', '').replace('Digit', '');
+
+  let formattingConfig = FORMATTING_WINDOWS;
+  if (platform.indexOf('Mac') != -1) {
+    formattingConfig = FORMATTING_MAC;
+  } else if (platform.indexOf('Linux') != -1) {
+    formattingConfig = FORMATTING_LINUX;
   }
+
+  return formatted
+    .replace(ALT, formattingConfig[ALT])
+    .replace(CTRL, formattingConfig[CTRL])
+    .replace(META, formattingConfig[META])
+    .replace(SHIFT, formattingConfig[SHIFT]);
 };
