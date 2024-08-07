@@ -1,28 +1,20 @@
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
-import { AbstractAction } from '@diagram-craft/canvas/action';
+import { State } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 
-declare global {
-  interface ActionMap {
-    EDGE_FLIP: EdgeFlipAction;
-  }
-}
-
-export const edgeFlipActions: ActionMapFactory = (state: State) => ({
+export const edgeFlipActions = (state: State) => ({
   EDGE_FLIP: new EdgeFlipAction(state.diagram)
 });
 
-export class EdgeFlipAction extends AbstractAction {
-  constructor(private readonly diagram: Diagram) {
-    super();
-    const cb = () => {
-      this.enabled = this.diagram.selectionState.isEdgesOnly();
-      this.emit('actionchanged', { action: this });
-    };
-    this.diagram.selectionState.on('add', cb);
-    this.diagram.selectionState.on('remove', cb);
+declare global {
+  interface ActionMap extends ReturnType<typeof edgeFlipActions> {}
+}
+
+export class EdgeFlipAction extends AbstractSelectionAction {
+  constructor(diagram: Diagram) {
+    super(diagram, MultipleType.Both, ElementType.Edge);
   }
 
   execute(): void {
