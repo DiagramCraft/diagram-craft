@@ -146,7 +146,20 @@ export class CubicSegment extends CubicBezier implements PathSegment {
 
   intersectionsWith(other: PathSegment): Point[] | undefined {
     if (other instanceof LineSegment) {
-      return super.intersectsLine(Line.of(other.start, other.end));
+      const line = Line.of(other.start, other.end);
+      const intersections = super.intersectsLine(line);
+      // TODO: Ideally we should integrate this into the bezier algorithm
+      if (!intersections || intersections.length === 0) {
+        // Check for intersections with endpoints
+        if (Line.length(Line.of(this.start, Line.projectPoint(line, this.start))) < 0.0001) {
+          return [this.start];
+        }
+        if (Line.length(Line.of(this.end, Line.projectPoint(line, this.end))) < 0.0001) {
+          return [this.end];
+        }
+      } else {
+        return intersections;
+      }
     } else if (other instanceof CubicSegment) {
       return super.intersectsBezier(other);
     } else {
