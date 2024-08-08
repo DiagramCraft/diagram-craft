@@ -338,10 +338,17 @@ export class Path {
       ? this.segments.flatMap(e => e.raw())
       : this.#path;
 
-    return (
-      `M ${roundHighPrecision(this.#start.x)},${roundHighPrecision(this.#start.y)} ` +
-      normalizedPath.map(r => this.rawSegmentAsSvgPath(r)).join(' ')
-    );
+    return [
+      `M ${roundHighPrecision(this.#start.x)},${roundHighPrecision(this.#start.y)}`,
+      ...normalizedPath.map(r => {
+        // We know the first element of a raw segment is the command, followed
+        // by a number of numbers
+        const [command, ...numbers] = r;
+
+        const roundedNumbers = numbers.map(e => roundHighPrecision(e));
+        return `${command} ${roundedNumbers.join(',')}`;
+      })
+    ].join(' ');
   }
 
   bounds() {
@@ -351,15 +358,6 @@ export class Path {
 
   hash() {
     return this.asSvgPath();
-  }
-
-  private rawSegmentAsSvgPath(r: RawSegment) {
-    // We know the first element of a raw segment is the command, followed
-    // by a number of numbers
-    const [command, ...numbers] = r;
-
-    const roundedNumbers = numbers.map(e => roundHighPrecision(e));
-    return `${command} ${roundedNumbers.join(',')}`;
   }
 
   clean() {

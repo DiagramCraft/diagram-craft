@@ -1,5 +1,5 @@
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { PathBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import {
@@ -10,7 +10,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { deepClone } from '@diagram-craft/utils/object';
-import { cloneAsWriteable } from '@diagram-craft/utils/types';
+import { cloneAsWriteable, DeepWriteable } from '@diagram-craft/utils/types';
 import { Anchor } from '@diagram-craft/model/anchor';
 import {
   assertHAlign,
@@ -23,6 +23,7 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { coalesce } from '@diagram-craft/utils/strings';
 import { DrawioStencil } from './drawioStencilLoader';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Metrics } from '@diagram-craft/utils/metrics';
 
 declare global {
   interface CustomNodeProps {
@@ -78,7 +79,96 @@ const parse = (def: DiagramNode, stencil: DrawioStencil | undefined): Element | 
   return def.cache.get('element') as Element;
 };
 
+type CompiledShape = {
+  size: Extent;
+  boundingPath: string;
+  anchors: Array<Anchor> | undefined;
+};
+
+class Compiler {
+  constructor(private $el: Element | undefined) {}
+
+  compile() {
+    return {
+      size: this.compileSize(),
+      boundingPath: this.compileBoundingPath(),
+      anchors: this.compileAnchors()
+    };
+  }
+
+  private compileSize(): Extent {
+    if (!this.$el) return { w: 100, h: 100 };
+    return {
+      w: xNum(this.$el, 'w', 100),
+      h: xNum(this.$el, 'h', 100)
+    };
+  }
+
+  private compileBoundingPath(): string {
+    if (!this.$el) return '';
+
+    const pathBuilder = new PathBuilder();
+    const background = this.$el.querySelector('background');
+    this.parseElement(background, pathBuilder);
+
+    if (pathBuilder.getPaths().all().length === 0) {
+      const foreground = this.$el.querySelector('foreground');
+      this.parseElement(foreground, pathBuilder);
+    }
+    return pathBuilder.getPaths().asSvgPath();
+  }
+
+  private compileAnchors() {
+    if (!this.$el) return undefined;
+
+    const newAnchors: Array<Anchor> = [];
+    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
+
+    const $constraints = this.$el.getElementsByTagName('constraint');
+    for (let i = 0; i < $constraints.length; i++) {
+      const $constraint = $constraints.item(i)!;
+      if ($constraint.nodeType !== Node.ELEMENT_NODE) continue;
+
+      const x = xNum($constraint, 'x');
+      const y = xNum($constraint, 'y');
+      newAnchors.push({ id: i.toString(), start: Point.of(x, y), clip: false, type: 'point' });
+    }
+
+    return newAnchors;
+  }
+
+  private parseElement(element: Element | null, pathBuilder: PathBuilder) {
+    if (!element) return;
+
+    const outlines = element!.childNodes;
+    for (let i = 0; i < outlines.length; i++) {
+      const node = outlines.item(i);
+      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+      const $el = node as Element;
+      if (isShapeElement($el)) {
+        parseShapeElement($el, pathBuilder);
+      } else {
+        //console.log(`No support for ${$el.nodeName}`);
+        //VERIFY_NOT_REACHED();
+      }
+    }
+  }
+}
+
+const compile = (def: DiagramNode, $el: Element | undefined): CompiledShape => {
+  if (def.cache.has('compiledElement')) return def.cache.get('compiledElement') as CompiledShape;
+
+  const compiler = new Compiler($el);
+
+  const compiled = compiler.compile();
+  def.cache.set('compiledElement', compiled);
+  return compiled;
+};
+
 const parseShapeElement = ($el: Element, pathBuilder: PathBuilder) => {
+  Metrics.counter('parseShapeElement');
+
   if ($el.nodeName === 'rect') {
     PathBuilderHelper.rect(pathBuilder, {
       x: xNum($el, 'x'),
@@ -176,112 +266,92 @@ export class DrawioShapeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getSize(node: DiagramNode): Extent {
-    const shape = parse(node, this.stencil);
-
-    if (!shape) return { w: 100, h: 100 };
-
-    return {
-      w: xNum(shape, 'w', 100),
-      h: xNum(shape, 'h', 100)
-    };
+    const { size } = compile(node, parse(node, this.stencil));
+    return size;
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
     const shape = parse(def, this.stencil);
+    const compiledShape = compile(def, shape);
 
-    if (!shape) return new PathBuilder();
+    if (compiledShape.boundingPath === '') return new PathBuilder();
 
-    const h = xNum(shape, 'h', 100);
-    const w = xNum(shape, 'w', 100);
-
-    const pathBuilder = new PathBuilder(makeShapeTransform({ w, h }, def.bounds));
-
-    const background = shape.querySelector('background');
-    this.parseElement(background, pathBuilder);
-
-    if (pathBuilder.getPaths().all().length === 0) {
-      const foreground = shape.querySelector('foreground');
-      this.parseElement(foreground, pathBuilder);
-    }
-
-    return pathBuilder;
-  }
-
-  private parseElement(element: Element | null, pathBuilder: PathBuilder) {
-    if (!element) return;
-
-    const outlines = element!.childNodes;
-    for (let i = 0; i < outlines.length; i++) {
-      const node = outlines.item(i);
-      if (node.nodeType !== Node.ELEMENT_NODE) continue;
-
-      const $el = node as Element;
-      if (isShapeElement($el)) {
-        parseShapeElement($el, pathBuilder);
-      } else {
-        //console.log(`No support for ${$el.nodeName}`);
-        //VERIFY_NOT_REACHED();
-      }
-    }
+    return PathBuilder.fromString(
+      compiledShape.boundingPath,
+      makeShapeTransform(compiledShape.size, def.bounds)
+    );
   }
 
   // TODO: This needs to consider rotation
   getShapeAnchors(def: DiagramNode) {
     const shape = parse(def, this.stencil);
+    const anchors = compile(def, shape).anchors;
 
-    if (!shape) return super.getShapeAnchors(def);
+    if (!anchors) return super.getShapeAnchors(def);
 
-    const newAnchors: Array<Anchor> = [];
-    newAnchors.push({ id: 'c', start: { x: 0.5, y: 0.5 }, clip: true, type: 'center' });
-
-    const $constraints = shape.getElementsByTagName('constraint');
-    for (let i = 0; i < $constraints.length; i++) {
-      const $constraint = $constraints.item(i)!;
-      if ($constraint.nodeType !== Node.ELEMENT_NODE) continue;
-
-      const x = xNum($constraint, 'x');
-      const y = xNum($constraint, 'y');
-      newAnchors.push({ id: i.toString(), start: Point.of(x, y), clip: false, type: 'point' });
-    }
-
-    return newAnchors;
+    return anchors;
   }
 }
 
-const setColor = (c: string, alpha: number) => {
+const makeColor = (c: string, alpha: number) => {
   if (alpha === 1.0) return c;
   return `color(from ${c} srgb r g b / ${alpha})`;
 };
 
 class DrawioShapeComponent extends BaseNodeComponent {
+  // TODO: There's opportunity to make most of this "compiled"
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const shapeNodeDefinition = this.def as unknown as DrawioShapeNodeDefinition;
 
-    const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
-
     const $shape = parse(props.node, (this.def as unknown as DrawioShapeNodeDefinition).stencil);
-
     if (!$shape) return;
 
-    const w = xNum($shape, 'w', 100);
-    const h = xNum($shape, 'h', 100);
+    const compiledShape = compile(props.node, $shape);
 
-    let strokeAlpha = 1;
-    let strokeColor = props.nodeProps.stroke.color;
-    let fillAlpha = 1;
-    let fillColor = props.nodeProps.fill.color;
+    const boundary = shapeNodeDefinition.getBoundingPathBuilder(props.node).getPaths();
 
-    let style = cloneAsWriteable(props.nodeProps);
-    let savedStyle = { style, strokeAlpha, strokeColor, fillAlpha, fillColor };
+    const { w, h } = compiledShape.size;
 
-    let currentShape: (p: NodeProps) => void = p => {
-      return shapeBuilder.boundaryPath(boundary.all(), p);
+    const state: {
+      strokeAlpha: number;
+      strokeColor: string;
+      fillAlpha: number;
+      fillColor: string;
+      style: DeepWriteable<NodePropsForRendering>;
+      savedStyle: {
+        style: DeepWriteable<NodePropsForRendering>;
+        strokeAlpha: number;
+        strokeColor: string;
+        fillAlpha: number;
+        fillColor: string;
+      };
+      currentShape: (p: NodeProps) => void;
+    } = {
+      strokeAlpha: 1,
+      strokeColor: props.nodeProps.stroke.color,
+      fillAlpha: 1,
+      fillColor: props.nodeProps.fill.color,
+
+      style: cloneAsWriteable(props.nodeProps),
+      currentShape(p: NodeProps): void {
+        return shapeBuilder.boundaryPath(boundary.all(), p);
+      },
+
+      // @ts-expect-error - This is initialized in the next line
+      savedStyle: undefined
+    };
+    state.savedStyle = {
+      style: state.style,
+      strokeAlpha: state.strokeAlpha,
+      strokeColor: state.strokeColor,
+      fillAlpha: state.fillAlpha,
+      fillColor: state.fillColor
     };
 
     let backgroundDrawn = false;
 
     const drawBackground = () => {
-      currentShape({
+      state.currentShape({
         fill: {
           color: 'transparent'
         },
@@ -301,47 +371,53 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
         const $el = $node as Element;
         if ($el.nodeName === 'save') {
-          savedStyle = deepClone({ style, strokeAlpha, strokeColor, fillAlpha, fillColor });
+          state.savedStyle = deepClone({
+            style: state.style,
+            strokeAlpha: state.strokeAlpha,
+            strokeColor: state.strokeColor,
+            fillAlpha: state.fillAlpha,
+            fillColor: state.fillColor
+          });
         } else if ($el.nodeName === 'restore') {
-          const restored = deepClone(savedStyle);
-          style = restored.style;
-          strokeAlpha = restored.strokeAlpha;
-          strokeColor = restored.strokeColor;
-          fillAlpha = restored.fillAlpha;
-          fillAlpha = restored.fillAlpha;
+          const restored = deepClone(state.savedStyle);
+          state.style = restored.style;
+          state.strokeAlpha = restored.strokeAlpha;
+          state.strokeColor = restored.strokeColor;
+          state.fillAlpha = restored.fillAlpha;
+          state.fillAlpha = restored.fillAlpha;
         } else if ($el.nodeName === 'fontcolor') {
-          style.text!.color = $el.getAttribute('color')!;
+          state.style.text!.color = $el.getAttribute('color')!;
         } else if ($el.nodeName === 'fontsize') {
-          style.text!.fontSize = xNum($el, 'size')!;
+          state.style.text!.fontSize = xNum($el, 'size')!;
         } else if ($el.nodeName === 'strokecolor') {
-          strokeColor = $el.getAttribute('color')!;
-          style.stroke!.color = setColor(strokeColor, strokeAlpha);
+          state.strokeColor = $el.getAttribute('color')!;
+          state.style.stroke!.color = makeColor(state.strokeColor, state.strokeAlpha);
         } else if ($el.nodeName === 'fillcolor') {
-          fillColor = $el.getAttribute('color')!;
-          style.fill!.color = setColor(fillColor, fillAlpha);
-          style.fill!.type = 'solid';
+          state.fillColor = $el.getAttribute('color')!;
+          state.style.fill!.color = makeColor(state.fillColor, state.fillAlpha);
+          state.style.fill!.type = 'solid';
         } else if ($el.nodeName === 'fillalpha') {
-          fillAlpha = xNum($el, 'alpha')!;
-          style.fill!.color = setColor(fillColor, fillAlpha);
+          state.fillAlpha = xNum($el, 'alpha')!;
+          state.style.fill!.color = makeColor(state.fillColor, state.fillAlpha);
         } else if ($el.nodeName === 'strokealpha') {
-          strokeAlpha = xNum($el, 'alpha')!;
-          style.stroke!.color = setColor(strokeColor, strokeAlpha);
+          state.strokeAlpha = xNum($el, 'alpha')!;
+          state.style.stroke!.color = makeColor(state.strokeColor, state.strokeAlpha);
         } else if ($el.nodeName === 'alpha') {
-          fillAlpha = xNum($el, 'alpha')!;
-          strokeAlpha = xNum($el, 'alpha')!;
+          state.fillAlpha = xNum($el, 'alpha')!;
+          state.strokeAlpha = xNum($el, 'alpha')!;
 
-          style.fill!.color = setColor(fillColor, fillAlpha);
-          style.stroke!.color = setColor(strokeColor, strokeAlpha);
+          state.style.fill!.color = makeColor(state.fillColor, state.fillAlpha);
+          state.style.stroke!.color = makeColor(state.strokeColor, state.strokeAlpha);
         } else if ($el.nodeName === 'strokewidth') {
-          style.stroke!.width = xNum($el, 'width');
+          state.style.stroke!.width = xNum($el, 'width');
         } else if ($el.nodeName === 'dashpattern') {
-          style.stroke!.pattern = $el.getAttribute('pattern')!;
+          state.style.stroke!.pattern = $el.getAttribute('pattern')!;
         } else if ($el.nodeName === 'dashed') {
           if ($el.getAttribute('dashed') === '0') {
-            style.stroke!.pattern = null;
+            state.style.stroke!.pattern = null;
           }
         } else if ($el.nodeName === 'miterlimit') {
-          style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
+          state.style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
         } else if ($el.nodeName === 'linecap') {
           const lineCap =
             $el.getAttribute('linecap') === 'flat' ? 'round' : $el.getAttribute('linecap');
@@ -349,14 +425,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
           if (!lineCap) continue;
           assertLineCap(lineCap);
 
-          style.stroke!.lineCap = lineCap;
+          state.style.stroke!.lineCap = lineCap;
         } else if ($el.nodeName === 'linejoin') {
           const lineJoin = $el.getAttribute('linejoin');
 
           if (!lineJoin) continue;
           assertLineJoin(lineJoin);
 
-          style.stroke!.lineJoin = lineJoin;
+          state.style.stroke!.lineJoin = lineJoin;
         }
       }
     }
@@ -370,19 +446,19 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
       const $el = $node as Element;
       if ($el.nodeName === 'fillstroke') {
-        currentShape(style);
+        state.currentShape(state.style);
         backgroundDrawn = true;
       } else if ($el.nodeName === 'fill') {
-        const old = style.stroke!.color;
-        style.stroke!.color = 'transparent';
-        currentShape(style);
-        style.stroke!.color = old;
+        const old = state.style.stroke!.color;
+        state.style.stroke!.color = 'transparent';
+        state.currentShape(state.style);
+        state.style.stroke!.color = old;
         backgroundDrawn = true;
       } else if ($el.nodeName === 'stroke') {
-        const old = style.fill!.color;
-        style.fill!.color = 'transparent';
-        currentShape(style);
-        style.fill!.color = old;
+        const old = state.style.fill!.color;
+        state.style.fill!.color = 'transparent';
+        state.currentShape(state.style);
+        state.style.fill!.color = old;
         backgroundDrawn = true;
       } else if ($el.nodeName === 'text') {
         if (!backgroundDrawn) drawBackground();
@@ -400,8 +476,8 @@ class DrawioShapeComponent extends BaseNodeComponent {
           {
             align: align,
             valign: valign,
-            color: style.text.color ?? style.fill.color,
-            fontSize: (style.text.fontSize ?? 12) * (props.node.bounds.h / xNum($shape, 'h'))
+            color: state.style.text.color ?? state.style.fill.color,
+            fontSize: (state.style.text.fontSize ?? 12) * (props.node.bounds.h / xNum($shape, 'h'))
           },
           {
             x:
@@ -419,47 +495,53 @@ class DrawioShapeComponent extends BaseNodeComponent {
         );
         backgroundDrawn = true;
       } else if ($el.nodeName === 'save') {
-        savedStyle = deepClone({ style, strokeAlpha, strokeColor, fillAlpha, fillColor });
+        state.savedStyle = deepClone({
+          style: state.style,
+          strokeAlpha: state.strokeAlpha,
+          strokeColor: state.strokeColor,
+          fillAlpha: state.fillAlpha,
+          fillColor: state.fillColor
+        });
       } else if ($el.nodeName === 'restore') {
-        const restored = deepClone(savedStyle);
-        style = restored.style;
-        strokeAlpha = restored.strokeAlpha;
-        strokeColor = restored.strokeColor;
-        fillAlpha = restored.fillAlpha;
-        fillAlpha = restored.fillAlpha;
+        const restored = deepClone(state.savedStyle);
+        state.style = restored.style;
+        state.strokeAlpha = restored.strokeAlpha;
+        state.strokeColor = restored.strokeColor;
+        state.fillAlpha = restored.fillAlpha;
+        state.fillAlpha = restored.fillAlpha;
       } else if ($el.nodeName === 'strokecolor') {
-        strokeColor = $el.getAttribute('color')!;
-        style.stroke!.color = setColor(strokeColor, strokeAlpha);
+        state.strokeColor = $el.getAttribute('color')!;
+        state.style.stroke!.color = makeColor(state.strokeColor, state.strokeAlpha);
       } else if ($el.nodeName === 'fontcolor') {
-        style.text!.color = $el.getAttribute('color')!;
+        state.style.text!.color = $el.getAttribute('color')!;
       } else if ($el.nodeName === 'fontsize') {
-        style.text!.fontSize = xNum($el, 'size')!;
+        state.style.text!.fontSize = xNum($el, 'size')!;
       } else if ($el.nodeName === 'fillcolor') {
-        fillColor = $el.getAttribute('color')!;
-        style.fill!.color = setColor(fillColor, fillAlpha);
-        style.fill!.type = 'solid';
+        state.fillColor = $el.getAttribute('color')!;
+        state.style.fill!.color = makeColor(state.fillColor, state.fillAlpha);
+        state.style.fill!.type = 'solid';
       } else if ($el.nodeName === 'fillalpha') {
-        fillAlpha = xNum($el, 'alpha')!;
-        style.fill!.color = setColor(fillColor, fillAlpha);
+        state.fillAlpha = xNum($el, 'alpha')!;
+        state.style.fill!.color = makeColor(state.fillColor, state.fillAlpha);
       } else if ($el.nodeName === 'strokealpha') {
-        strokeAlpha = xNum($el, 'alpha')!;
-        style.stroke!.color = setColor(strokeColor, strokeAlpha);
+        state.strokeAlpha = xNum($el, 'alpha')!;
+        state.style.stroke!.color = makeColor(state.strokeColor, state.strokeAlpha);
       } else if ($el.nodeName === 'alpha') {
-        fillAlpha = xNum($el, 'alpha')!;
-        strokeAlpha = xNum($el, 'alpha')!;
+        state.fillAlpha = xNum($el, 'alpha')!;
+        state.strokeAlpha = xNum($el, 'alpha')!;
 
-        style.fill!.color = setColor(fillColor, fillAlpha);
-        style.stroke!.color = setColor(strokeColor, strokeAlpha);
+        state.style.fill!.color = makeColor(state.fillColor, state.fillAlpha);
+        state.style.stroke!.color = makeColor(state.strokeColor, state.strokeAlpha);
       } else if ($el.nodeName === 'strokewidth') {
-        style.stroke!.width = xNum($el, 'width');
+        state.style.stroke!.width = xNum($el, 'width');
       } else if ($el.nodeName === 'dashpattern') {
-        style.stroke!.pattern = $el.getAttribute('pattern')!;
+        state.style.stroke!.pattern = $el.getAttribute('pattern')!;
       } else if ($el.nodeName === 'dashed') {
         if ($el.getAttribute('dashed') === '0') {
-          style.stroke!.pattern = null;
+          state.style.stroke!.pattern = null;
         }
       } else if ($el.nodeName === 'miterlimit') {
-        style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
+        state.style.stroke!.miterLimit = xNum($el, 'miterlimit')!;
       } else if ($el.nodeName === 'linecap') {
         const lineCap =
           $el.getAttribute('linecap') === 'flat' ? 'round' : $el.getAttribute('linecap');
@@ -467,14 +549,14 @@ class DrawioShapeComponent extends BaseNodeComponent {
         if (!lineCap) continue;
         assertLineCap(lineCap);
 
-        style.stroke!.lineCap = lineCap;
+        state.style.stroke!.lineCap = lineCap;
       } else if ($el.nodeName === 'linejoin') {
         const lineJoin = $el.getAttribute('linejoin');
 
         if (!lineJoin) continue;
         assertLineJoin(lineJoin);
 
-        style.stroke!.lineJoin = lineJoin;
+        state.style.stroke!.lineJoin = lineJoin;
       } else if (isShapeElement($el)) {
         if (!backgroundDrawn) drawBackground();
 
@@ -483,7 +565,7 @@ class DrawioShapeComponent extends BaseNodeComponent {
 
         if (pathBuilder.getPaths().all().length === 0) continue;
 
-        currentShape = (p: NodeProps) => {
+        state.currentShape = (p: NodeProps) => {
           shapeBuilder.path(pathBuilder.getPaths().all(), p);
         };
       } else {

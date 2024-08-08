@@ -8,8 +8,7 @@ export type DeepRequired<T> = { [P in keyof T]-?: DeepRequired<T[P]> };
 
 export type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]> };
 
-export const cloneAsWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> =>
-  deepClone(o) as DeepWriteable<T>;
+export const cloneAsWriteable: <T>(o: DeepReadonly<T>) => DeepWriteable<T> = deepClone;
 
 export const makeWriteable = <T>(o: DeepReadonly<T>): DeepWriteable<T> => o as DeepWriteable<T>;
 
