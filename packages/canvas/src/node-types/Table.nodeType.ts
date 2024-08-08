@@ -180,11 +180,11 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
 
     // Only trigger parent.onChildChanged in case this node has indeed changed
-    const mark = `parent-${node.id})`;
-    if (node.parent && !Box.isEqual(node.bounds, boundsBefore) && !uow.hasMark(mark)) {
-      uow.mark(mark);
-      const parentDef = node.parent.getDefinition();
-      parentDef.onChildChanged(node.parent, uow);
+    if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
+      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+        const parentDef = node.parent!.getDefinition();
+        parentDef.onChildChanged(node.parent!, uow);
+      });
     }
   }
 

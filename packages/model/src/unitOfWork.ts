@@ -121,14 +121,12 @@ export class UnitOfWork {
   #elementsToAdd = new Map<string, Trackable>();
 
   #invalidatedElements = new Set<Trackable>();
-  #marks = new Set<string>();
 
   #shouldUpdateDiagram = false;
 
   #snapshots = new Map<string, undefined | Snapshot>();
 
-  // TODO: Will we really need #actions going forward
-  #actions = new Map<string, ActionCallback>();
+  #onCommitCallbacks = new Map<string, ActionCallback>();
 
   changeType: ChangeType = 'non-interactive';
 
@@ -149,14 +147,6 @@ export class UnitOfWork {
     const result = cb(uow);
     uow.commit();
     return result;
-  }
-
-  hasMark(mark: string) {
-    return this.#marks.has(mark);
-  }
-
-  mark(mark: string) {
-    this.#marks.add(mark);
   }
 
   snapshot(element: Trackable) {
@@ -195,38 +185,34 @@ export class UnitOfWork {
   }
 
   addElement(element: Trackable) {
-    /*assert.false(
-      this.trackChanges && this.#snapshots.has(element.id),
-      'Cannot add element that has a snapshot'
-    );*/
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.set(element.id, undefined);
     }
     this.#elementsToAdd.set(element.id, element);
   }
 
-  pushAction(name: string, element: Trackable, cb: ActionCallback) {
+  /**
+   * Register a callback to be executed after the commit phase. It's coalesced
+   * so that only one callback is executed per element/operation per commit phase.
+   */
+  registerOnCommitCallback(name: string, element: Trackable, cb: ActionCallback) {
     if (this.isThrowaway) {
       return cb();
     }
 
     const id = name + element.id;
-    if (this.#actions.has(id)) return;
+    if (this.#onCommitCallbacks.has(id)) return;
 
     // Note, a Map retains insertion order, so this ensure actions are
     // executed in the order they are added
-    this.#actions.set(id, cb);
+    this.#onCommitCallbacks.set(id, cb);
   }
 
   notify() {
     this.changeType = 'interactive';
 
-    // Note: we keep actions until the commit phase
-    this.processEvents(false);
+    this.processEvents();
 
-    this.#elementsToUpdate.clear();
-    this.#elementsToRemove.clear();
-    this.#elementsToAdd.clear();
     this.#invalidatedElements.clear();
 
     return this.#snapshots;
@@ -235,7 +221,9 @@ export class UnitOfWork {
   commit() {
     this.changeType = 'non-interactive';
 
-    this.processEvents(true);
+    // Note, onCommitCallbacks must run before elements events are emitted
+    this.processOnCommitCallbacks();
+    this.processEvents();
 
     if (this.#shouldUpdateDiagram) {
       this.diagram.emit('change', { diagram: this.diagram });
@@ -250,10 +238,7 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
-  private processEvents(processActions: boolean) {
-    // Note, actions must run before elements events are emitted
-    if (processActions) this.#actions.forEach(a => a());
-
+  private processEvents() {
     // At this point, any elements have been added and or removed
     this.#elementsToRemove.forEach(e => e.invalidate(this));
     this.#elementsToUpdate.forEach(e => e.invalidate(this));
@@ -275,6 +260,19 @@ export class UnitOfWork {
     this.#elementsToRemove.forEach(handle('elementRemove'));
     this.#elementsToUpdate.forEach(handle('elementChange'));
     this.#elementsToAdd.forEach(handle('elementAdd'));
+
+    this.#elementsToUpdate.clear();
+    this.#elementsToRemove.clear();
+    this.#elementsToAdd.clear();
+  }
+
+  private processOnCommitCallbacks() {
+    while (this.#onCommitCallbacks.size > 0) {
+      this.#onCommitCallbacks.forEach((callback, key) => {
+        this.#onCommitCallbacks.delete(key);
+        callback();
+      });
+    }
   }
 
   stopTracking() {

@@ -17,6 +17,17 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
   layoutChildren(_node: DiagramNode, _uow: UnitOfWork) {
     // Do nothing
   }
+
+  onChildChanged(node: DiagramNode, uow: UnitOfWork) {
+    // Here, we need to unconditionally delegate the onChildChanged to the parent (Table)
+    // as the row itself does not have any layout or rendering logic
+    if (node.parent) {
+      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+        const parentDef = node.parent!.getDefinition();
+        parentDef.onChildChanged(node.parent!, uow);
+      });
+    }
+  }
 }
 
 class TableRowComponent extends BaseNodeComponent {

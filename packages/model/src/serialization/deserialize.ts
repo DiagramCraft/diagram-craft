@@ -38,7 +38,7 @@ const unfoldGroup = (node: SerializedNode) => {
   };
 
   if ((node.children ?? []).length > 0) {
-    return [{ ...node }, ...recurse(node.children ?? [], node)];
+    return [...recurse(node.children ?? [], node), { ...node }];
   } else {
     return [{ ...node }];
   }
@@ -92,18 +92,17 @@ export const deserializeDiagramElements = (
   }
 
   // Resolve relations
+  const uow = new UnitOfWork(diagram, false);
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
       if (c.type === 'edge') continue;
-      nodeLookup[c.id].setChildren(
-        c.children?.map(c2 => nodeLookup[c2.id]) ?? [],
-        UnitOfWork.immediate(diagram)
-      );
+      nodeLookup[c.id].setChildren(c.children?.map(c2 => nodeLookup[c2.id]) ?? [], uow);
       if (c.parent) {
         nodeLookup[c.id]._setParent(nodeLookup[c.parent.id]);
       }
     }
   }
+  uow.commit();
 
   for (const e of diagramElements) {
     if (e.type !== 'edge') continue;

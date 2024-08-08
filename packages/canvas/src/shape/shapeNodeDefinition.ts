@@ -161,11 +161,15 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
     if (uow.changeType === 'interactive') return;
 
+    const boundsBefore = node.bounds;
+
     this.layoutChildren(node, uow);
 
-    if (node.parent) {
-      const parentDef = node.parent.getDefinition();
-      parentDef.onChildChanged(node.parent, uow);
+    if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
+      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+        const parentDef = node.parent!.getDefinition();
+        parentDef.onChildChanged(node.parent!, uow);
+      });
     }
   }
 

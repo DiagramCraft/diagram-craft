@@ -11,7 +11,7 @@
           "layerType": "basic",
           "elements": [
             {
-              "id": "c9dts0d",
+              "id": "mbw7cx7",
               "type": "node",
               "nodeType": "text",
               "bounds": {
@@ -25,7 +25,8 @@
               "children": [],
               "props": {
                 "text": {
-                  "align": "left"
+                  "align": "left",
+                  "bold": true
                 }
               },
               "metadata": {
@@ -37,12 +38,12 @@
               }
             },
             {
-              "id": "Arrow Right-1",
+              "id": "Arrow Right-0",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
                 "x": 10,
-                "y": 40,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -89,12 +90,38 @@
               }
             },
             {
-              "id": "Arrow Right-2",
+              "id": "Arrow Right-0-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "default"
+              }
+            },
+            {
+              "id": "Arrow Right-1",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 120,
-                "y": 40,
+                "x": 170,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -141,12 +168,38 @@
               }
             },
             {
-              "id": "Arrow Right-3",
+              "id": "Arrow Right-1-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 170,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with text"
+              }
+            },
+            {
+              "id": "Arrow Right-2",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 230,
-                "y": 40,
+                "x": 330,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -197,12 +250,38 @@
               }
             },
             {
-              "id": "Arrow Right-4",
+              "id": "Arrow Right-2-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 330,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with fill"
+              }
+            },
+            {
+              "id": "Arrow Right-3",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 340,
-                "y": 40,
+                "x": 490,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -260,12 +339,38 @@
               }
             },
             {
-              "id": "Arrow Right-5",
+              "id": "Arrow Right-3-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 490,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with shadow"
+              }
+            },
+            {
+              "id": "Arrow Right-4",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 450,
-                "y": 40,
+                "x": 650,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -320,12 +425,38 @@
               }
             },
             {
-              "id": "Arrow Right-6",
+              "id": "Arrow Right-4-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 650,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with rounding"
+              }
+            },
+            {
+              "id": "Arrow Right-5",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 560,
-                "y": 40,
+                "x": 810,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -379,12 +510,38 @@
               }
             },
             {
-              "id": "Arrow Right-7",
+              "id": "Arrow Right-5-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 810,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch"
+              }
+            },
+            {
+              "id": "Arrow Right-6",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 670,
-                "y": 40,
+                "x": 970,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -439,12 +596,38 @@
               }
             },
             {
-              "id": "Arrow Right-8",
+              "id": "Arrow Right-6-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 970,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-fill"
+              }
+            },
+            {
+              "id": "Arrow Right-7",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 780,
-                "y": 40,
+                "x": 1130,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -499,12 +682,110 @@
               }
             },
             {
-              "id": "Arrow Right-9",
+              "id": "Arrow Right-7-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1130,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-hachure"
+              }
+            },
+            {
+              "id": "asaorug",
+              "type": "edge",
+              "start": {
+                "anchor": "b",
+                "node": {
+                  "id": "Arrow Right-8"
+                },
+                "position": {
+                  "x": 1296.698729810778,
+                  "y": 105
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1279.3782217350893,
+                  "y": 95
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "8uroa74",
+              "type": "edge",
+              "start": {
+                "anchor": "f",
+                "node": {
+                  "id": "Arrow Right-8"
+                },
+                "position": {
+                  "x": 1383.301270189222,
+                  "y": 155
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1400.6217782649107,
+                  "y": 165
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Right-8",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 940,
-                "y": 40,
+                "x": 1290,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -551,84 +832,38 @@
               }
             },
             {
-              "id": "kxhqmwr",
-              "type": "edge",
-              "start": {
-                "anchor": "b",
-                "node": {
-                  "id": "Arrow Right-9"
-                },
-                "position": {
-                  "x": 946.6987298107781,
-                  "y": 65
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
+              "id": "Arrow Right-8-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1290,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
               },
-              "end": {
-                "position": {
-                  "x": 929.3782217350894,
-                  "y": 55.00000000000001
-                }
-              },
-              "waypoints": [],
+              "anchors": [],
+              "children": [],
               "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
+                "text": {
+                  "align": "left"
                 }
               },
               "metadata": {
-                "style": "default-edge"
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "rotated-primary-anchors"
               }
             },
             {
-              "id": "iibjkep",
-              "type": "edge",
-              "start": {
-                "anchor": "f",
-                "node": {
-                  "id": "Arrow Right-9"
-                },
-                "position": {
-                  "x": 1033.301270189222,
-                  "y": 115
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
-              },
-              "end": {
-                "position": {
-                  "x": 1050.6217782649107,
-                  "y": 125
-                }
-              },
-              "waypoints": [],
-              "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
-                }
-              },
-              "metadata": {
-                "style": "default-edge"
-              }
-            },
-            {
-              "id": "Arrow Right-10",
+              "id": "Arrow Right-9",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 1100,
-                "y": 40,
+                "x": 1450,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -679,12 +914,38 @@
               }
             },
             {
-              "id": "Arrow Right-11",
+              "id": "Arrow Right-9-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1450,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "bounding-path"
+              }
+            },
+            {
+              "id": "Arrow Right-10",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 1260,
-                "y": 40,
+                "x": 1610,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -738,12 +999,38 @@
               }
             },
             {
-              "id": "Arrow Right-12",
+              "id": "Arrow Right-10-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1610,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-defaults"
+              }
+            },
+            {
+              "id": "Arrow Right-11",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 1420,
-                "y": 40,
+                "x": 1770,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -788,7 +1075,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897927,
                   "isPrimary": false
                 },
                 {
@@ -799,7 +1086,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897927,
                   "isPrimary": false
                 },
                 {
@@ -810,7 +1097,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 1.5707963267948966,
+                  "normal": 1.5707963267948961,
                   "isPrimary": false
                 },
                 {
@@ -821,7 +1108,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 1.5707963267948966,
+                  "normal": 1.5707963267948961,
                   "isPrimary": false
                 },
                 {
@@ -854,7 +1141,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897936,
                   "isPrimary": false
                 },
                 {
@@ -865,7 +1152,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897936,
                   "isPrimary": false
                 },
                 {
@@ -954,12 +1241,38 @@
               }
             },
             {
-              "id": "Arrow Right-13",
+              "id": "Arrow Right-11-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1770,
+                "y": 35,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-per-edge"
+              }
+            },
+            {
+              "id": "Arrow Right-12",
               "type": "node",
               "nodeType": "arrow-right",
               "bounds": {
-                "x": 1580,
-                "y": 40,
+                "x": 1930,
+                "y": 80,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -1004,18 +1317,18 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 1.5707963267948966,
+                  "normal": 1.5707963267948961,
                   "isPrimary": true
                 },
                 {
                   "id": "0_500",
                   "start": {
                     "x": 0,
-                    "y": 0.49999999999999983
+                    "y": 0.5
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897936,
                   "isPrimary": true
                 },
                 {
@@ -1049,12 +1362,12 @@
               }
             },
             {
-              "id": "77r5pky",
+              "id": "Arrow Right-12-label",
               "type": "node",
               "nodeType": "text",
               "bounds": {
-                "x": 10,
-                "y": 210,
+                "x": 1930,
+                "y": 35,
                 "w": 300,
                 "h": 20,
                 "r": 0
@@ -1071,16 +1384,43 @@
                 "textStyle": "default-text-default"
               },
               "texts": {
+                "text": "anchor-per-direction"
+              }
+            },
+            {
+              "id": "p3ldz8c",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 210,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left",
+                  "bold": true
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
                 "text": "Arrow Up"
               }
             },
             {
-              "id": "Arrow Up-1",
+              "id": "Arrow Up-0",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
                 "x": 10,
-                "y": 240,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1127,12 +1467,38 @@
               }
             },
             {
-              "id": "Arrow Up-2",
+              "id": "Arrow Up-0-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "default"
+              }
+            },
+            {
+              "id": "Arrow Up-1",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 120,
-                "y": 240,
+                "x": 170,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1179,12 +1545,38 @@
               }
             },
             {
-              "id": "Arrow Up-3",
+              "id": "Arrow Up-1-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 170,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with text"
+              }
+            },
+            {
+              "id": "Arrow Up-2",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 230,
-                "y": 240,
+                "x": 330,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1235,12 +1627,38 @@
               }
             },
             {
-              "id": "Arrow Up-4",
+              "id": "Arrow Up-2-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 330,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with fill"
+              }
+            },
+            {
+              "id": "Arrow Up-3",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 340,
-                "y": 240,
+                "x": 490,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1298,12 +1716,38 @@
               }
             },
             {
-              "id": "Arrow Up-5",
+              "id": "Arrow Up-3-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 490,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with shadow"
+              }
+            },
+            {
+              "id": "Arrow Up-4",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 450,
-                "y": 240,
+                "x": 650,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1358,12 +1802,38 @@
               }
             },
             {
-              "id": "Arrow Up-6",
+              "id": "Arrow Up-4-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 650,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with rounding"
+              }
+            },
+            {
+              "id": "Arrow Up-5",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 560,
-                "y": 240,
+                "x": 810,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1417,12 +1887,38 @@
               }
             },
             {
-              "id": "Arrow Up-7",
+              "id": "Arrow Up-5-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 810,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch"
+              }
+            },
+            {
+              "id": "Arrow Up-6",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 670,
-                "y": 240,
+                "x": 970,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1477,12 +1973,38 @@
               }
             },
             {
-              "id": "Arrow Up-8",
+              "id": "Arrow Up-6-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 970,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-fill"
+              }
+            },
+            {
+              "id": "Arrow Up-7",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 780,
-                "y": 240,
+                "x": 1130,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -1537,12 +2059,110 @@
               }
             },
             {
-              "id": "Arrow Up-9",
+              "id": "Arrow Up-7-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1130,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-hachure"
+              }
+            },
+            {
+              "id": "cqg6nyv",
+              "type": "edge",
+              "start": {
+                "anchor": "b",
+                "node": {
+                  "id": "Arrow Up-8"
+                },
+                "position": {
+                  "x": 1315,
+                  "y": 373.30127018922195
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1305,
+                  "y": 390.62177826491074
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "4xb8791",
+              "type": "edge",
+              "start": {
+                "anchor": "f",
+                "node": {
+                  "id": "Arrow Up-8"
+                },
+                "position": {
+                  "x": 1365,
+                  "y": 286.69872981077805
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1375,
+                  "y": 269.37822173508926
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Up-8",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 940,
-                "y": 240,
+                "x": 1290,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -1589,84 +2209,38 @@
               }
             },
             {
-              "id": "dmry243",
-              "type": "edge",
-              "start": {
-                "anchor": "b",
-                "node": {
-                  "id": "Arrow Up-9"
-                },
-                "position": {
-                  "x": 965,
-                  "y": 333.30127018922195
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
+              "id": "Arrow Up-8-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1290,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
               },
-              "end": {
-                "position": {
-                  "x": 955,
-                  "y": 350.62177826491074
-                }
-              },
-              "waypoints": [],
+              "anchors": [],
+              "children": [],
               "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
+                "text": {
+                  "align": "left"
                 }
               },
               "metadata": {
-                "style": "default-edge"
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "rotated-primary-anchors"
               }
             },
             {
-              "id": "s6a29xg",
-              "type": "edge",
-              "start": {
-                "anchor": "f",
-                "node": {
-                  "id": "Arrow Up-9"
-                },
-                "position": {
-                  "x": 1015,
-                  "y": 246.69872981077805
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
-              },
-              "end": {
-                "position": {
-                  "x": 1025,
-                  "y": 229.37822173508928
-                }
-              },
-              "waypoints": [],
-              "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
-                }
-              },
-              "metadata": {
-                "style": "default-edge"
-              }
-            },
-            {
-              "id": "Arrow Up-10",
+              "id": "Arrow Up-9",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 1100,
-                "y": 240,
+                "x": 1450,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -1717,12 +2291,38 @@
               }
             },
             {
-              "id": "Arrow Up-11",
+              "id": "Arrow Up-9-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1450,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "bounding-path"
+              }
+            },
+            {
+              "id": "Arrow Up-10",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 1260,
-                "y": 240,
+                "x": 1610,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -1776,12 +2376,38 @@
               }
             },
             {
-              "id": "Arrow Up-12",
+              "id": "Arrow Up-10-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1610,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-defaults"
+              }
+            },
+            {
+              "id": "Arrow Up-11",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 1420,
-                "y": 240,
+                "x": 1770,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -1992,12 +2618,38 @@
               }
             },
             {
-              "id": "Arrow Up-13",
+              "id": "Arrow Up-11-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1770,
+                "y": 235,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-per-edge"
+              }
+            },
+            {
+              "id": "Arrow Up-12",
               "type": "node",
               "nodeType": "arrow-up",
               "bounds": {
-                "x": 1580,
-                "y": 240,
+                "x": 1930,
+                "y": 280,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -2049,7 +2701,7 @@
                   "id": "300_500",
                   "start": {
                     "x": 0.3,
-                    "y": 0.5000000000000006
+                    "y": 0.5
                   },
                   "clip": false,
                   "type": "point",
@@ -2087,12 +2739,12 @@
               }
             },
             {
-              "id": "celu05l",
+              "id": "Arrow Up-12-label",
               "type": "node",
               "nodeType": "text",
               "bounds": {
-                "x": 10,
-                "y": 410,
+                "x": 1930,
+                "y": 235,
                 "w": 300,
                 "h": 20,
                 "r": 0
@@ -2109,16 +2761,43 @@
                 "textStyle": "default-text-default"
               },
               "texts": {
+                "text": "anchor-per-direction"
+              }
+            },
+            {
+              "id": "6nkzvkb",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 410,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left",
+                  "bold": true
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
                 "text": "Arrow Down"
               }
             },
             {
-              "id": "Arrow Down-1",
+              "id": "Arrow Down-0",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
                 "x": 10,
-                "y": 440,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2165,12 +2844,38 @@
               }
             },
             {
-              "id": "Arrow Down-2",
+              "id": "Arrow Down-0-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "default"
+              }
+            },
+            {
+              "id": "Arrow Down-1",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 120,
-                "y": 440,
+                "x": 170,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2217,12 +2922,38 @@
               }
             },
             {
-              "id": "Arrow Down-3",
+              "id": "Arrow Down-1-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 170,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with text"
+              }
+            },
+            {
+              "id": "Arrow Down-2",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 230,
-                "y": 440,
+                "x": 330,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2273,12 +3004,38 @@
               }
             },
             {
-              "id": "Arrow Down-4",
+              "id": "Arrow Down-2-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 330,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with fill"
+              }
+            },
+            {
+              "id": "Arrow Down-3",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 340,
-                "y": 440,
+                "x": 490,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2336,12 +3093,38 @@
               }
             },
             {
-              "id": "Arrow Down-5",
+              "id": "Arrow Down-3-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 490,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with shadow"
+              }
+            },
+            {
+              "id": "Arrow Down-4",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 450,
-                "y": 440,
+                "x": 650,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2396,12 +3179,38 @@
               }
             },
             {
-              "id": "Arrow Down-6",
+              "id": "Arrow Down-4-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 650,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with rounding"
+              }
+            },
+            {
+              "id": "Arrow Down-5",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 560,
-                "y": 440,
+                "x": 810,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2455,12 +3264,38 @@
               }
             },
             {
-              "id": "Arrow Down-7",
+              "id": "Arrow Down-5-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 810,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch"
+              }
+            },
+            {
+              "id": "Arrow Down-6",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 670,
-                "y": 440,
+                "x": 970,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2515,12 +3350,38 @@
               }
             },
             {
-              "id": "Arrow Down-8",
+              "id": "Arrow Down-6-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 970,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-fill"
+              }
+            },
+            {
+              "id": "Arrow Down-7",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 780,
-                "y": 440,
+                "x": 1130,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -2575,12 +3436,110 @@
               }
             },
             {
-              "id": "Arrow Down-9",
+              "id": "Arrow Down-7-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1130,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-hachure"
+              }
+            },
+            {
+              "id": "98cvbfw",
+              "type": "edge",
+              "start": {
+                "anchor": "b",
+                "node": {
+                  "id": "Arrow Down-8"
+                },
+                "position": {
+                  "x": 1365,
+                  "y": 486.69872981077805
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1375,
+                  "y": 469.37822173508926
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "zmf7emd",
+              "type": "edge",
+              "start": {
+                "anchor": "f",
+                "node": {
+                  "id": "Arrow Down-8"
+                },
+                "position": {
+                  "x": 1315,
+                  "y": 573.3012701892219
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1305,
+                  "y": 590.6217782649106
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Down-8",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 940,
-                "y": 440,
+                "x": 1290,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -2627,84 +3586,38 @@
               }
             },
             {
-              "id": "dkrl7pl",
-              "type": "edge",
-              "start": {
-                "anchor": "b",
-                "node": {
-                  "id": "Arrow Down-9"
-                },
-                "position": {
-                  "x": 1015,
-                  "y": 446.69872981077805
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
+              "id": "Arrow Down-8-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1290,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
               },
-              "end": {
-                "position": {
-                  "x": 1025,
-                  "y": 429.37822173508926
-                }
-              },
-              "waypoints": [],
+              "anchors": [],
+              "children": [],
               "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
+                "text": {
+                  "align": "left"
                 }
               },
               "metadata": {
-                "style": "default-edge"
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "rotated-primary-anchors"
               }
             },
             {
-              "id": "mj9vylo",
-              "type": "edge",
-              "start": {
-                "anchor": "f",
-                "node": {
-                  "id": "Arrow Down-9"
-                },
-                "position": {
-                  "x": 965,
-                  "y": 533.3012701892219
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
-              },
-              "end": {
-                "position": {
-                  "x": 955,
-                  "y": 550.6217782649106
-                }
-              },
-              "waypoints": [],
-              "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
-                }
-              },
-              "metadata": {
-                "style": "default-edge"
-              }
-            },
-            {
-              "id": "Arrow Down-10",
+              "id": "Arrow Down-9",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 1100,
-                "y": 440,
+                "x": 1450,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -2755,12 +3668,38 @@
               }
             },
             {
-              "id": "Arrow Down-11",
+              "id": "Arrow Down-9-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1450,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "bounding-path"
+              }
+            },
+            {
+              "id": "Arrow Down-10",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 1260,
-                "y": 440,
+                "x": 1610,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -2814,12 +3753,38 @@
               }
             },
             {
-              "id": "Arrow Down-12",
+              "id": "Arrow Down-10-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1610,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-defaults"
+              }
+            },
+            {
+              "id": "Arrow Down-11",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 1420,
-                "y": 440,
+                "x": 1770,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -2842,7 +3807,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 2.24553726901845,
+                  "normal": 2.2455372690184494,
                   "isPrimary": false
                 },
                 {
@@ -2853,7 +3818,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 2.24553726901845,
+                  "normal": 2.2455372690184494,
                   "isPrimary": false
                 },
                 {
@@ -2886,7 +3851,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897927,
                   "isPrimary": false
                 },
                 {
@@ -2897,7 +3862,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897927,
                   "isPrimary": false
                 },
                 {
@@ -2952,7 +3917,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 0,
+                  "normal": -4.440892098500626e-16,
                   "isPrimary": false
                 },
                 {
@@ -2963,7 +3928,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 0,
+                  "normal": -4.440892098500626e-16,
                   "isPrimary": false
                 },
                 {
@@ -2974,7 +3939,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 4.712388980384693,
+                  "normal": 4.7123889803846915,
                   "isPrimary": false
                 },
                 {
@@ -2985,7 +3950,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 4.712388980384693,
+                  "normal": 4.7123889803846915,
                   "isPrimary": false
                 },
                 {
@@ -3030,12 +3995,38 @@
               }
             },
             {
-              "id": "Arrow Down-13",
+              "id": "Arrow Down-11-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1770,
+                "y": 435,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-per-edge"
+              }
+            },
+            {
+              "id": "Arrow Down-12",
               "type": "node",
               "nodeType": "arrow-down",
               "bounds": {
-                "x": 1580,
-                "y": 440,
+                "x": 1930,
+                "y": 480,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -3058,7 +4049,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 0,
+                  "normal": -4.440892098500626e-16,
                   "isPrimary": true
                 },
                 {
@@ -3069,7 +4060,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 2.24553726901845,
+                  "normal": 2.2455372690184494,
                   "isPrimary": true
                 },
                 {
@@ -3080,7 +4071,7 @@
                   },
                   "clip": false,
                   "type": "point",
-                  "normal": 3.141592653589793,
+                  "normal": 3.1415926535897927,
                   "isPrimary": true
                 },
                 {
@@ -3114,12 +4105,12 @@
               }
             },
             {
-              "id": "fyq8u1m",
+              "id": "Arrow Down-12-label",
               "type": "node",
               "nodeType": "text",
               "bounds": {
-                "x": 10,
-                "y": 610,
+                "x": 1930,
+                "y": 435,
                 "w": 300,
                 "h": 20,
                 "r": 0
@@ -3136,16 +4127,43 @@
                 "textStyle": "default-text-default"
               },
               "texts": {
+                "text": "anchor-per-direction"
+              }
+            },
+            {
+              "id": "pge6n05",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 610,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left",
+                  "bold": true
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
                 "text": "Arrow Left"
               }
             },
             {
-              "id": "Arrow Left-1",
+              "id": "Arrow Left-0",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
                 "x": 10,
-                "y": 640,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3192,12 +4210,38 @@
               }
             },
             {
-              "id": "Arrow Left-2",
+              "id": "Arrow Left-0-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 10,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "default"
+              }
+            },
+            {
+              "id": "Arrow Left-1",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 120,
-                "y": 640,
+                "x": 170,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3244,12 +4288,38 @@
               }
             },
             {
-              "id": "Arrow Left-3",
+              "id": "Arrow Left-1-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 170,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with text"
+              }
+            },
+            {
+              "id": "Arrow Left-2",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 230,
-                "y": 640,
+                "x": 330,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3300,12 +4370,38 @@
               }
             },
             {
-              "id": "Arrow Left-4",
+              "id": "Arrow Left-2-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 330,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with fill"
+              }
+            },
+            {
+              "id": "Arrow Left-3",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 340,
-                "y": 640,
+                "x": 490,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3363,12 +4459,38 @@
               }
             },
             {
-              "id": "Arrow Left-5",
+              "id": "Arrow Left-3-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 490,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with shadow"
+              }
+            },
+            {
+              "id": "Arrow Left-4",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 450,
-                "y": 640,
+                "x": 650,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3423,12 +4545,38 @@
               }
             },
             {
-              "id": "Arrow Left-6",
+              "id": "Arrow Left-4-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 650,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "with rounding"
+              }
+            },
+            {
+              "id": "Arrow Left-5",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 560,
-                "y": 640,
+                "x": 810,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3482,12 +4630,38 @@
               }
             },
             {
-              "id": "Arrow Left-7",
+              "id": "Arrow Left-5-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 810,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch"
+              }
+            },
+            {
+              "id": "Arrow Left-6",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 670,
-                "y": 640,
+                "x": 970,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3542,12 +4716,38 @@
               }
             },
             {
-              "id": "Arrow Left-8",
+              "id": "Arrow Left-6-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 970,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-fill"
+              }
+            },
+            {
+              "id": "Arrow Left-7",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 780,
-                "y": 640,
+                "x": 1130,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0
@@ -3602,12 +4802,110 @@
               }
             },
             {
-              "id": "Arrow Left-9",
+              "id": "Arrow Left-7-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1130,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "sketch-hachure"
+              }
+            },
+            {
+              "id": "2j3yan5",
+              "type": "edge",
+              "start": {
+                "anchor": "b",
+                "node": {
+                  "id": "Arrow Left-8"
+                },
+                "position": {
+                  "x": 1383.301270189222,
+                  "y": 755
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1400.6217782649107,
+                  "y": 765
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "01085ro",
+              "type": "edge",
+              "start": {
+                "anchor": "f",
+                "node": {
+                  "id": "Arrow Left-8"
+                },
+                "position": {
+                  "x": 1296.698729810778,
+                  "y": 705
+                },
+                "offset": {
+                  "x": 0,
+                  "y": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 1279.3782217350893,
+                  "y": 695
+                }
+              },
+              "waypoints": [],
+              "props": {
+                "stroke": {
+                  "color": "pink"
+                },
+                "lineHops": {
+                  "type": "none"
+                }
+              },
+              "metadata": {
+                "style": "default-edge"
+              }
+            },
+            {
+              "id": "Arrow Left-8",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 940,
-                "y": 640,
+                "x": 1290,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -3654,84 +4952,38 @@
               }
             },
             {
-              "id": "67ltpam",
-              "type": "edge",
-              "start": {
-                "anchor": "b",
-                "node": {
-                  "id": "Arrow Left-9"
-                },
-                "position": {
-                  "x": 1033.301270189222,
-                  "y": 715
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
+              "id": "Arrow Left-8-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1290,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
               },
-              "end": {
-                "position": {
-                  "x": 1050.6217782649107,
-                  "y": 725
-                }
-              },
-              "waypoints": [],
+              "anchors": [],
+              "children": [],
               "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
+                "text": {
+                  "align": "left"
                 }
               },
               "metadata": {
-                "style": "default-edge"
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "rotated-primary-anchors"
               }
             },
             {
-              "id": "e0deofd",
-              "type": "edge",
-              "start": {
-                "anchor": "f",
-                "node": {
-                  "id": "Arrow Left-9"
-                },
-                "position": {
-                  "x": 946.6987298107781,
-                  "y": 665
-                },
-                "offset": {
-                  "x": 0,
-                  "y": 0
-                }
-              },
-              "end": {
-                "position": {
-                  "x": 929.3782217350894,
-                  "y": 655
-                }
-              },
-              "waypoints": [],
-              "props": {
-                "stroke": {
-                  "color": "pink"
-                },
-                "lineHops": {
-                  "type": "none"
-                }
-              },
-              "metadata": {
-                "style": "default-edge"
-              }
-            },
-            {
-              "id": "Arrow Left-10",
+              "id": "Arrow Left-9",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 1100,
-                "y": 640,
+                "x": 1450,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -3782,12 +5034,38 @@
               }
             },
             {
-              "id": "Arrow Left-11",
+              "id": "Arrow Left-9-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1450,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "bounding-path"
+              }
+            },
+            {
+              "id": "Arrow Left-10",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 1260,
-                "y": 640,
+                "x": 1610,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -3841,12 +5119,38 @@
               }
             },
             {
-              "id": "Arrow Left-12",
+              "id": "Arrow Left-10-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1610,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-defaults"
+              }
+            },
+            {
+              "id": "Arrow Left-11",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 1420,
-                "y": 640,
+                "x": 1770,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -4057,12 +5361,38 @@
               }
             },
             {
-              "id": "Arrow Left-13",
+              "id": "Arrow Left-11-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1770,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-per-edge"
+              }
+            },
+            {
+              "id": "Arrow Left-12",
               "type": "node",
               "nodeType": "arrow-left",
               "bounds": {
-                "x": 1580,
-                "y": 640,
+                "x": 1930,
+                "y": 680,
                 "w": 100,
                 "h": 100,
                 "r": 0.5235987755982988
@@ -4161,6 +5491,32 @@
               "texts": {
                 "text": "With Text"
               }
+            },
+            {
+              "id": "Arrow Left-12-label",
+              "type": "node",
+              "nodeType": "text",
+              "bounds": {
+                "x": 1930,
+                "y": 635,
+                "w": 300,
+                "h": 20,
+                "r": 0
+              },
+              "anchors": [],
+              "children": [],
+              "props": {
+                "text": {
+                  "align": "left"
+                }
+              },
+              "metadata": {
+                "style": "default-text",
+                "textStyle": "default-text-default"
+              },
+              "texts": {
+                "text": "anchor-per-direction"
+              }
             }
           ]
         }
@@ -4174,7 +5530,7 @@
       "canvas": {
         "x": 0,
         "y": 0,
-        "w": 1800,
+        "w": 2100,
         "h": 1010
       }
     }
