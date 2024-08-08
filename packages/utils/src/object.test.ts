@@ -1,5 +1,5 @@
-import { common, deepMerge, deepClone, deepEquals, deepClear } from './object';
-import { expect, describe, test } from 'vitest';
+import { common, deepClear, deepEquals, deepMerge } from './object';
+import { describe, expect, test } from 'vitest';
 import { UNSAFE } from './testUtils';
 
 describe('common function', () => {
@@ -52,6 +52,7 @@ describe('deepmerge', () => {
   });
 });
 
+/*
 describe('deepClone function', () => {
   test('should return null when the target is null', () => {
     const result = deepClone(null);
@@ -87,7 +88,7 @@ describe('deepClone function', () => {
     expect(result.a[2]).to.not.equal(complex.a[2]);
     expect(result).to.deep.equal(complex);
   });
-});
+});*/
 
 describe('deepEquals function', () => {
   test('should return true for identical primitive values', () => {

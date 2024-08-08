@@ -87,7 +87,7 @@ export const deepMerge = <T extends Props>(target: Partial<T>, ...sources: Parti
  * // returns a new date object with the same time as the original
  * deepClone(new Date());
  */
-export const deepClone = <T>(target: T): T => {
+export const deepClone = structuredClone; /*<T>(target: T): T => {
   if (target === null) {
     return target;
   }
@@ -110,7 +110,7 @@ export const deepClone = <T>(target: T): T => {
   }
 
   return target;
-};
+};*/
 
 /**
  * Compares two objects and returns `true` if they are deeply equal, `false` otherwise.
