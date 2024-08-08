@@ -256,6 +256,7 @@ const SHAPES_DEFS = [
     const rotation = Math.PI / 6;
     n.setBounds({ ...n.bounds, r: rotation }, uow);
     n.setText('With Text', uow);
+    n.invalidateAnchors(uow);
     n.anchors.forEach(a => {
       if (a.type === 'point') {
         const start = n._getAnchorPosition(a.id);
@@ -399,7 +400,7 @@ const writeShape = (
   let maxX = startX;
   let x = startX;
 
-  const uow = new UnitOfWork(diagram, false, false);
+  const uow = new UnitOfWork(diagram);
 
   for (let i = 0; i < SHAPES_DEFS.length; i++) {
     const def = SHAPES_DEFS[i];

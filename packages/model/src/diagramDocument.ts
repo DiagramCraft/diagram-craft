@@ -105,7 +105,7 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
   async load() {
     const loadedTypes = new Set<string>();
     for (const diagram of this.diagrams) {
-      const uow = new UnitOfWork(diagram, false, true);
+      const uow = UnitOfWork.immediate(diagram);
       for (const layer of diagram.layers.all) {
         for (const element of layer.elements) {
           if (isNode(element)) {

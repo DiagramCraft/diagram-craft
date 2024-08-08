@@ -338,10 +338,11 @@ export class BaseNodeComponent<
       } else {
         children.push(
           svg.circle({
-            cx: props.element.bounds.x + anchor.start.x * props.element.bounds.w,
-            cy: props.element.bounds.y + anchor.start.y * props.element.bounds.h,
-            r: 4,
-            style: 'stroke: blue; fill: rgba(200, 200, 255, 0.5);'
+            'cx': props.element.bounds.x + anchor.start.x * props.element.bounds.w,
+            'cy': props.element.bounds.y + anchor.start.y * props.element.bounds.h,
+            'r': 4,
+            'style': 'stroke: blue; fill: rgba(200, 200, 255, 0.5);',
+            'data-id': anchor.id
           })
         );
       }

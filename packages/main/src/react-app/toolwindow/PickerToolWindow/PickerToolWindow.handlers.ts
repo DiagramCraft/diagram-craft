@@ -43,7 +43,7 @@ export const canvasDropHandler = ($d: Diagram) => {
     const point = $d.viewBox.toDiagramPoint(EventHelper.point(e));
     assignNewBounds(droppedElements, point, { x: scaleX, y: scaleY }, UnitOfWork.immediate($d));
 
-    const uow = new UnitOfWork($d, false, true);
+    const uow = UnitOfWork.immediate($d);
     droppedElements.forEach(e => {
       if (isNode(e)) {
         e.updateMetadata(meta => {

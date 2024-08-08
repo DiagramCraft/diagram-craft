@@ -22,6 +22,7 @@ import { Anchor, getAnchorPosition, getClosestAnchor } from '@diagram-craft/mode
 import { EdgeEndpointMoveDrag } from '@diagram-craft/canvas/drag/edgeEndpointMoveDrag';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 
 declare global {
   interface Tools {
@@ -45,6 +46,10 @@ export class EdgeTool extends AbstractTool {
   }
 
   onMouseDown(_id: string, point: Point, _modifiers: Modifiers) {
+    const undoManager = this.diagram.undoManager;
+
+    undoManager.setMark();
+
     const nd = new DiagramEdge(
       newid(),
       this.currentAnchor
@@ -63,31 +68,33 @@ export class EdgeTool extends AbstractTool {
       this.diagram.layers.active
     );
 
-    this.diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction([nd], this.diagram, 'Add edge')
-    );
+    undoManager.addAndExecute(new ElementAddUndoableAction([nd], this.diagram, 'Add edge'));
 
-    this.diagram.selectionState.clear();
-    this.diagram.selectionState.toggle(nd);
-
+    this.diagram.selectionState.setElements([nd]);
     this.resetTool();
-    DRAG_DROP_MANAGER.initiate(
-      new EdgeEndpointMoveDrag(this.diagram, nd, 'end', this.applicationTriggers),
-      () => {
-        if (this.currentElement) {
-          removeHighlight(this.diagram.lookup(this.currentElement!), Highlights.NODE__EDGE_CONNECT);
-        }
-        if (Point.distance(nd.end.position, nd.start.position) < 5) {
+
+    const drag = new EdgeEndpointMoveDrag(this.diagram, nd, 'end', this.applicationTriggers);
+    drag.on('dragEnd', () => {
+      // Coalesce the element add and edge endpoint move into one undoable action
+      undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
+    });
+
+    DRAG_DROP_MANAGER.initiate(drag, () => {
+      if (this.currentElement) {
+        removeHighlight(this.diagram.lookup(this.currentElement!), Highlights.NODE__EDGE_CONNECT);
+      }
+      if (Point.distance(nd.end.position, nd.start.position) < 5) {
+        UnitOfWork.execute(this.diagram, uow => {
           nd.setEnd(
             new FreeEndpoint({
               x: nd.start.position.x + 10,
               y: nd.start.position.y + 10
             }),
-            UnitOfWork.immediate(this.diagram)
+            uow
           );
-        }
+        });
       }
-    );
+    });
   }
 
   onMouseOver(id: string, point: Point) {

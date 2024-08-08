@@ -27,7 +27,7 @@ export const createLinkedNode = (
 ) => {
   const diagram = node.diagram;
 
-  const uow = new UnitOfWork(diagram, false, false);
+  const uow = new UnitOfWork(diagram);
   const newNode = node.duplicate();
 
   if (direction === 'w') {
