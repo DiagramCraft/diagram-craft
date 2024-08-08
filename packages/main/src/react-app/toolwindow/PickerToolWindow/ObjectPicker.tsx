@@ -6,12 +6,39 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { newid } from '@diagram-craft/utils/id';
-import { StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useMemo, useState } from 'react';
 import { Browser } from '@diagram-craft/canvas/browser';
 
 const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').replace('»', '&#187;');
+
+const NODE_CACHE = new Map<string, [Diagram, DiagramNode]>();
+
+const makeDiagramNode = (diagram: Diagram, n: Stencil) => {
+  if (NODE_CACHE.has(n.id)) {
+    return NODE_CACHE.get(n.id)!;
+  }
+
+  const uow = UnitOfWork.immediate(diagram);
+
+  const dest = new Diagram(
+    newid(),
+    n.node.name,
+    new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
+  );
+
+  dest.layers.add(new Layer('default', 'Default', [], dest), uow);
+
+  const node = n.node(dest);
+  dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+  dest.viewBox.offset = { x: -5, y: -5 };
+  dest.layers.active.addElement(node, uow);
+
+  NODE_CACHE.set(n.id, [dest, node]);
+
+  return [dest, node] as const;
+};
 
 export const ObjectPicker = (props: Props) => {
   const diagram = useDiagram();
@@ -19,24 +46,7 @@ export const ObjectPicker = (props: Props) => {
 
   const stencils = props.package.stencils;
   const diagrams = useMemo(() => {
-    return stencils.map((n): [Diagram, DiagramNode] => {
-      const uow = UnitOfWork.immediate(diagram);
-
-      const dest = new Diagram(
-        newid(),
-        n.node.name,
-        new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
-      );
-
-      dest.layers.add(new Layer('default', 'Default', [], dest), uow);
-
-      const node = n.node(dest);
-      dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
-      dest.viewBox.offset = { x: -5, y: -5 };
-      dest.layers.active.addElement(node, uow);
-
-      return [dest, node];
-    });
+    return stencils.map(n => makeDiagramNode(diagram, n));
   }, [diagram, stencils]);
 
   return (
