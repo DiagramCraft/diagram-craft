@@ -15,9 +15,11 @@ const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').repla
 
 const NODE_CACHE = new Map<string, [Diagram, DiagramNode]>();
 
-const makeDiagramNode = (diagram: Diagram, n: Stencil) => {
-  if (NODE_CACHE.has(n.id)) {
-    return NODE_CACHE.get(n.id)!;
+const makeDiagramNode = (diagram: Diagram, n: Stencil, pkg: string) => {
+  const cacheKey = pkg + '/' + n.id;
+
+  if (NODE_CACHE.has(cacheKey)) {
+    return NODE_CACHE.get(cacheKey)!;
   }
 
   const uow = UnitOfWork.immediate(diagram);
@@ -35,7 +37,7 @@ const makeDiagramNode = (diagram: Diagram, n: Stencil) => {
   dest.viewBox.offset = { x: -5, y: -5 };
   dest.layers.active.addElement(node, uow);
 
-  NODE_CACHE.set(n.id, [dest, node]);
+  NODE_CACHE.set(cacheKey, [dest, node]);
 
   return [dest, node] as const;
 };
@@ -46,7 +48,7 @@ export const ObjectPicker = (props: Props) => {
 
   const stencils = props.package.stencils;
   const diagrams = useMemo(() => {
-    return stencils.map(n => makeDiagramNode(diagram, n));
+    return stencils.map(n => makeDiagramNode(diagram, n, props.package.id));
   }, [diagram, stencils]);
 
   return (
