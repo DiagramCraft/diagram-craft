@@ -5,6 +5,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { UserState } from '@diagram-craft/canvas/UserState';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { unique } from '@diagram-craft/utils/array';
 
 const SIZE = 35;
 
@@ -14,11 +15,13 @@ export const PickerToolWindow = () => {
 
   const userState = UserState.get();
   const [open, setOpen] = useState(userState.stencils.filter(s => s.isOpen).map(s => s.id));
+  const [loaded, setLoaded] = useState(userState.stencils.filter(s => s.isOpen).map(s => s.id));
   const redraw = useRedraw();
 
   const setOpenStencils = useCallback(
     (ids: Array<string>) => {
       setOpen(ids);
+      setLoaded(unique([...loaded, ...ids]));
 
       // Keep all userState stencils toggling the isOpen state, then
       // add all missing ids
@@ -38,7 +41,7 @@ export const PickerToolWindow = () => {
       }
       userState.setStencils(newStencils);
     },
-    [userState]
+    [loaded, userState]
   );
 
   useEventListener(stencilRegistry, 'change', redraw);
@@ -59,8 +62,8 @@ export const PickerToolWindow = () => {
         .map(group => (
           <Accordion.Item key={group.id} value={group.id}>
             <Accordion.ItemHeader>{group.name}</Accordion.ItemHeader>
-            <Accordion.ItemContent>
-              <ObjectPicker size={SIZE} package={group} />
+            <Accordion.ItemContent forceMount={true}>
+              {loaded.includes(group.id) && <ObjectPicker size={SIZE} package={group} />}
             </Accordion.ItemContent>
           </Accordion.Item>
         ))}

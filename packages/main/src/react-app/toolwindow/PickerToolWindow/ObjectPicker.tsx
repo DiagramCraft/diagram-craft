@@ -55,7 +55,7 @@ export const ObjectPicker = (props: Props) => {
     <div className={'cmp-object-picker'}>
       {diagrams.map(([d, n], idx) => (
         <div
-          key={idx}
+          key={d.id}
           draggable={true}
           onDragStart={ev => {
             ev.dataTransfer.setData('text/plain', props.package + '/' + stencils[idx].id);

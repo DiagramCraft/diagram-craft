@@ -12,6 +12,19 @@ import { Browser } from './browser';
 
 // TODO: Would be nice to merge this with EditableCanvasComponent
 export class CanvasComponent extends Component<CanvasProps> {
+  // TODO: Maybe this should go into a PickerCanvasComponent subclass instead.
+  //       It's here to make the PickerCanvas more performant
+  protected getMemoKey(props: CanvasProps): unknown | undefined {
+    return {
+      id: props.diagram.id,
+      width: props.width,
+      height: props.height,
+      viewBox: props.viewBox,
+      onClick: props.onClick,
+      className: props.className
+    };
+  }
+
   render(props: CanvasProps) {
     const diagram = props.diagram;
 

@@ -86,7 +86,11 @@ type ItemHeaderButtonsProps = {
 
 const ItemContent = (props: ItemContentProps) => {
   return (
-    <RadixAccordion.Content className={styles.cmpAccordionContent}>
+    <RadixAccordion.Content
+      className={styles.cmpAccordionContent}
+      // @ts-ignore
+      forceMount={props.forceMount ?? false}
+    >
       <div className={styles.cmpAccordionContentText}>{props.children}</div>
     </RadixAccordion.Content>
   );
@@ -94,6 +98,7 @@ const ItemContent = (props: ItemContentProps) => {
 
 type ItemContentProps = {
   children: React.ReactNode;
+  forceMount?: boolean;
 };
 
 export const Accordion = {
