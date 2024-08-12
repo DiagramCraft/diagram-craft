@@ -1,0 +1,16 @@
+{
+  "name": "@diagram-craft/server-main",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest",
+    "dev":  "npx --yes listhen -w ./src/main.ts"
+  },
+  "keywords": [],
+  "author": "Magnus Johansson",
+  "dependencies": {
+    "h3": "^1.12.0"
+  }
+}
