@@ -57,6 +57,12 @@ const getAncestorDiagramElement = (
   return undefined;
 };
 
+export type DialogState = {
+  name: string;
+  onOk: (data: unknown) => void;
+  onCancel: () => void;
+};
+
 export interface ApplicationTriggers {
   showCanvasContextMenu?: (point: Point, mouseEvent: MouseEvent) => void;
   showSelectionContextMenu?: (point: Point, mouseEvent: MouseEvent) => void;
@@ -65,17 +71,20 @@ export interface ApplicationTriggers {
 
   showNodeLinkPopup?: (point: Point, sourceNodeId: string, edgeId: string) => void;
 
-  showDialog?: (
+  showMessageDialog?: (
     title: string,
     message: string,
     okLabel: string,
     cancelLabel: string,
     onClick: () => void
   ) => void;
+  showDialog?: (state: DialogState) => void;
 
   setHelp?: (message: string) => void;
   pushHelp?: (id: string, message: string) => void;
   popHelp?: (id: string) => void;
+
+  loadFromUrl?: (url: string) => void;
 }
 
 type ComponentProps = Props & Actions & { diagram: Diagram };
@@ -195,7 +204,14 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           return;
         }
 
-        if (!findAndExecuteAction(e, { point: this.point }, keyMap, actionMap)) {
+        if (
+          !findAndExecuteAction(
+            e,
+            { point: this.point, applicationTriggers: props.applicationTriggers },
+            keyMap,
+            actionMap
+          )
+        ) {
           this.tool?.onKeyDown(e);
         }
       };

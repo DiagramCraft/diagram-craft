@@ -71,7 +71,7 @@ export class NodeTool extends AbstractTool {
       if (el.nodeType === 'generic-path') {
         this.diagram.selectionState.setElements([el]);
       } else if (el.nodeType !== 'text') {
-        this.applicationTriggers.showDialog!(
+        this.applicationTriggers.showMessageDialog!(
           'Convert to path',
           'Do you want to convert this shape to a editable path?',
           'Yes',

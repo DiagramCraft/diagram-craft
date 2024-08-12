@@ -5,6 +5,7 @@ import {
   createRouter,
   defineEventHandler,
   H3Event,
+  handleCors,
   readRawBody,
   serveStatic
 } from 'h3';
@@ -15,6 +16,20 @@ import { readFile } from 'node:fs/promises';
 const OK = { status: 'ok' };
 
 export const app = createApp();
+app.use(
+  defineEventHandler(event => {
+    const didHandleCors = handleCors(event, {
+      origin: '*',
+      preflight: {
+        statusCode: 204
+      },
+      methods: '*'
+    });
+    if (didHandleCors) {
+      return;
+    }
+  })
+);
 
 const router = createRouter();
 app.use(router);
@@ -67,13 +82,16 @@ const get = async (relPath: string, event: H3Event) => {
   }
 
   return {
-    entries: fs.readdirSync(p).map(f => {
-      const stats = fs.statSync(path.join(p, f));
-      return {
-        name: f,
-        isDirectory: stats.isDirectory()
-      };
-    })
+    entries: fs
+      .readdirSync(p)
+      .filter(f => !f.startsWith('.'))
+      .map(f => {
+        const stats = fs.statSync(path.join(p, f));
+        return {
+          name: f,
+          isDirectory: stats.isDirectory()
+        };
+      })
   };
 };
 

@@ -85,6 +85,8 @@ import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ActionDropdownMenuItem } from './react-app/components/ActionDropdownMenuItem';
 import { ToggleActionDropdownMenuItem } from './react-app/components/ToggleActionDropdownMenuItem';
+import { FileDialog } from './react-app/FileDialog';
+import { ApplicationTriggers, DialogState } from '@diagram-craft/canvas/EditableCanvasComponent';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -171,7 +173,10 @@ export const App = (props: {
 
   const [dirty, setDirty] = useState(Autosave.exists());
   const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
-  const [dialogState, setDialogState] = useState<MessageDialogState>(MessageDialog.INITIAL_STATE);
+  const [messageDialogState, setMessageDialogState] = useState<MessageDialogState>(
+    MessageDialog.INITIAL_STATE
+  );
+  const [dialogState, setDialogState] = useState<DialogState | undefined>(undefined);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -201,6 +206,101 @@ export const App = (props: {
   useEventListener(doc, 'diagramchanged', autosave);
 
   const keyMap = defaultMacAppKeymap;
+
+  const applicationTriggers: ApplicationTriggers = {
+    pushHelp: (id: string, message: string) => {
+      const help = applicationState.current.help;
+      if (help && help.id === id && help.message === message) return;
+      queueMicrotask(() => {
+        applicationState.current.pushHelp({ id, message });
+      });
+    },
+    popHelp: (id: string) => {
+      applicationState.current.popHelp(id);
+    },
+    setHelp: (message: string) => {
+      applicationState.current.setHelp({ id: 'default', message });
+    },
+    showCanvasContextMenu: (point: Point, mouseEvent: MouseEvent) => {
+      oncePerEvent(mouseEvent, () => {
+        contextMenuTarget.current = { type: 'canvas', pos: point };
+      });
+    },
+    showEdgeContextMenu: (point: Point, id: string, mouseEvent: MouseEvent) => {
+      oncePerEvent(mouseEvent, () => {
+        contextMenuTarget.current = { type: 'edge', id, pos: point };
+      });
+    },
+    showNodeContextMenu: (_point: Point, _id: string, _mouseEvent: MouseEvent) => {
+      // TODO: To be implemented
+      //contextMenuTarget.current = { type: 'node', id, pos: point };
+    },
+    showSelectionContextMenu: (point: Point, mouseEvent: MouseEvent) => {
+      oncePerEvent(mouseEvent, () => {
+        contextMenuTarget.current = { type: 'selection', pos: point };
+      });
+    },
+    showNodeLinkPopup: (point: Point, sourceNodeId: string, edgId: string) => {
+      const screenPoint = $d.viewBox.toScreenPoint(point);
+      setPopoverState({
+        isOpen: true,
+        position: screenPoint,
+        nodeId: sourceNodeId,
+        edgeId: edgId
+      });
+    },
+    showDialog: (dialogState: DialogState) => {
+      setDialogState({
+        ...dialogState,
+        onOk: (data: unknown) => {
+          dialogState.onOk(data);
+          setDialogState(undefined);
+        },
+        onCancel: () => {
+          dialogState.onCancel();
+          setDialogState(undefined);
+        }
+      });
+    },
+    showMessageDialog: (
+      title: string,
+      message: string,
+      okLabel: string,
+      cancelLabel: string,
+      onClick: () => void
+    ) => {
+      setMessageDialogState({
+        isOpen: true,
+        title,
+        message,
+        buttons: [
+          {
+            label: okLabel,
+            type: 'default',
+            onClick: () => {
+              onClick();
+              setMessageDialogState(MessageDialog.INITIAL_STATE);
+            }
+          },
+          {
+            label: cancelLabel,
+            type: 'cancel',
+            onClick: () => {
+              setMessageDialogState(MessageDialog.INITIAL_STATE);
+            }
+          }
+        ]
+      });
+    },
+    loadFromUrl: async (url: string) => {
+      const doc = await loadFileFromUrl(url, props.documentFactory, props.diagramFactory);
+      setActiveDoc({ doc, url });
+      setActiveDiagram(createActiveDiagram(doc.diagrams[0], applicationState.current));
+      Autosave.clear();
+      setDirty(false);
+    }
+  };
+
   return (
     <DiagramContext.Provider value={$d}>
       <ActionsContext.Provider value={{ actionMap, keyMap }}>
@@ -228,6 +328,13 @@ export const App = (props: {
             }
           }}
         >
+          {/* Dialogs */}
+          <FileDialog
+            open={dialogState?.name === 'fileOpen'}
+            onOpen={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+          />
+
           <div id="app" className={'dark-theme'}>
             <div id="menu">
               <DropdownMenu.Root>
@@ -253,7 +360,7 @@ export const App = (props: {
                           alignOffset={-5}
                         >
                           <ActionDropdownMenuItem action={'FILE_SAVE'}>New</ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'FILE_SAVE'}>
+                          <ActionDropdownMenuItem action={'FILE_OPEN'}>
                             Open...
                           </ActionDropdownMenuItem>
                           <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
@@ -366,35 +473,14 @@ export const App = (props: {
                   documentFactory={props.documentFactory}
                   diagramFactory={props.diagramFactory}
                   selectedUrl={url}
-                  onChange={async url => {
-                    const doc = await loadFileFromUrl(
-                      url,
-                      props.documentFactory,
-                      props.diagramFactory
-                    );
-                    setActiveDoc({ doc, url });
-                    setActiveDiagram(
-                      createActiveDiagram(doc.diagrams[0], applicationState.current)
-                    );
-                    Autosave.clear();
-                    setDirty(false);
-                  }}
+                  onChange={url => applicationTriggers.loadFromUrl?.(url)}
                 />
 
                 <DirtyIndicator
                   dirty={dirty}
                   onDirtyChange={async () => {
-                    const newDoc = await loadFileFromUrl(
-                      url,
-                      props.documentFactory,
-                      props.diagramFactory
-                    );
-                    setActiveDoc({ doc: newDoc, url: url });
-                    setActiveDiagram(
-                      createActiveDiagram(newDoc.diagrams[0], applicationState.current)
-                    );
-                    Autosave.clear();
-                    setDirty(false);
+                    console.log(url);
+                    applicationTriggers.loadFromUrl?.(url);
                   }}
                 />
               </div>
@@ -504,91 +590,7 @@ export const App = (props: {
                         className={'canvas'}
                         onDrop={canvasDropHandler($d)}
                         onDragOver={canvasDragOverHandler()}
-                        applicationTriggers={{
-                          pushHelp: (id: string, message: string) => {
-                            const help = applicationState.current.help;
-                            if (help && help.id === id && help.message === message) return;
-                            queueMicrotask(() => {
-                              applicationState.current.pushHelp({ id, message });
-                            });
-                          },
-                          popHelp: (id: string) => {
-                            applicationState.current.popHelp(id);
-                          },
-                          setHelp: (message: string) => {
-                            applicationState.current.setHelp({ id: 'default', message });
-                          },
-                          showCanvasContextMenu: (point: Point, mouseEvent: MouseEvent) => {
-                            oncePerEvent(mouseEvent, () => {
-                              contextMenuTarget.current = { type: 'canvas', pos: point };
-                            });
-                          },
-                          showEdgeContextMenu: (
-                            point: Point,
-                            id: string,
-                            mouseEvent: MouseEvent
-                          ) => {
-                            oncePerEvent(mouseEvent, () => {
-                              contextMenuTarget.current = { type: 'edge', id, pos: point };
-                            });
-                          },
-                          showNodeContextMenu: (
-                            _point: Point,
-                            _id: string,
-                            _mouseEvent: MouseEvent
-                          ) => {
-                            // TODO: To be implemented
-                            //contextMenuTarget.current = { type: 'node', id, pos: point };
-                          },
-                          showSelectionContextMenu: (point: Point, mouseEvent: MouseEvent) => {
-                            oncePerEvent(mouseEvent, () => {
-                              contextMenuTarget.current = { type: 'selection', pos: point };
-                            });
-                          },
-                          showNodeLinkPopup: (
-                            point: Point,
-                            sourceNodeId: string,
-                            edgId: string
-                          ) => {
-                            const screenPoint = $d.viewBox.toScreenPoint(point);
-                            setPopoverState({
-                              isOpen: true,
-                              position: screenPoint,
-                              nodeId: sourceNodeId,
-                              edgeId: edgId
-                            });
-                          },
-                          showDialog: (
-                            title: string,
-                            message: string,
-                            okLabel: string,
-                            cancelLabel: string,
-                            onClick: () => void
-                          ) => {
-                            setDialogState({
-                              isOpen: true,
-                              title,
-                              message,
-                              buttons: [
-                                {
-                                  label: okLabel,
-                                  type: 'default',
-                                  onClick: () => {
-                                    onClick();
-                                    setDialogState(MessageDialog.INITIAL_STATE);
-                                  }
-                                },
-                                {
-                                  label: cancelLabel,
-                                  type: 'cancel',
-                                  onClick: () => {
-                                    setDialogState(MessageDialog.INITIAL_STATE);
-                                  }
-                                }
-                              ]
-                            });
-                          }
-                        }}
+                        applicationTriggers={applicationTriggers}
                       />
                     </ContextMenu.Trigger>
                     <ContextMenu.Portal>
@@ -619,8 +621,8 @@ export const App = (props: {
                 />
 
                 <MessageDialog
-                  {...dialogState}
-                  onClose={() => setDialogState(MessageDialog.INITIAL_STATE)}
+                  {...messageDialogState}
+                  onClose={() => setMessageDialogState(MessageDialog.INITIAL_STATE)}
                 />
               </div>
 
