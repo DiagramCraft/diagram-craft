@@ -6,6 +6,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import {
   TbCheck,
+  TbChevronRight,
   TbDatabaseEdit,
   TbFile,
   TbHelpSquare,
@@ -81,6 +82,9 @@ import { ErrorBoundary } from './react-app/ErrorBoundary';
 import { SelectToolWindow } from './react-app/toolwindow/SelectToolWindow/SelectToolWindow';
 import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { ActionDropdownMenuItem } from './react-app/components/ActionDropdownMenuItem';
+import { ToggleActionDropdownMenuItem } from './react-app/components/ToggleActionDropdownMenuItem';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -226,11 +230,107 @@ export const App = (props: {
         >
           <div id="app" className={'dark-theme'}>
             <div id="menu">
-              <div className={'_menu-button'}>
-                <div>
-                  <TbMenu2 size={'24px'} />
-                </div>
-              </div>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button className={'_menu-button'}>
+                    <TbMenu2 size={'24px'} />
+                  </button>
+                </DropdownMenu.Trigger>
+
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content className="cmp-context-menu" sideOffset={2} align={'start'}>
+                    <DropdownMenu.Sub>
+                      <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+                        File
+                        <div className="cmp-context-menu__right-slot">
+                          <TbChevronRight />
+                        </div>
+                      </DropdownMenu.SubTrigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.SubContent
+                          className="cmp-context-menu"
+                          sideOffset={2}
+                          alignOffset={-5}
+                        >
+                          <ActionDropdownMenuItem action={'FILE_SAVE'}>New</ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'FILE_SAVE'}>
+                            Open...
+                          </ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'FILE_SAVE'}>
+                            Save As...
+                          </ActionDropdownMenuItem>
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Sub>
+
+                    <DropdownMenu.Sub>
+                      <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+                        Edit
+                        <div className="cmp-context-menu__right-slot">
+                          <TbChevronRight />
+                        </div>
+                      </DropdownMenu.SubTrigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.SubContent
+                          className="cmp-context-menu"
+                          sideOffset={2}
+                          alignOffset={-5}
+                        >
+                          <ActionDropdownMenuItem action={'UNDO'}>Undo</ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'REDO'}>Redo</ActionDropdownMenuItem>
+                          <DropdownMenu.Separator className="cmp-context-menu__separator" />
+
+                          <ActionDropdownMenuItem action={'CLIPBOARD_CUT'}>
+                            Cut
+                          </ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'CLIPBOARD_COPY'}>
+                            Copy
+                          </ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'DUPLICATE'}>
+                            Duplicate
+                          </ActionDropdownMenuItem>
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Sub>
+
+                    <DropdownMenu.Sub>
+                      <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+                        View
+                        <div className="cmp-context-menu__right-slot">
+                          <TbChevronRight />
+                        </div>
+                      </DropdownMenu.SubTrigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.SubContent
+                          className="cmp-context-menu"
+                          sideOffset={2}
+                          alignOffset={-5}
+                        >
+                          <ActionDropdownMenuItem action={'ZOOM_IN'}>
+                            Zoom In
+                          </ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'ZOOM_OUT'}>
+                            Zoom Out
+                          </ActionDropdownMenuItem>
+                          <DropdownMenu.Separator className="cmp-context-menu__separator" />
+                          <ToggleActionDropdownMenuItem action={'TOGGLE_RULER'}>
+                            Ruler
+                          </ToggleActionDropdownMenuItem>
+                          <ToggleActionDropdownMenuItem action={'TOGGLE_HELP'}>
+                            Help
+                          </ToggleActionDropdownMenuItem>
+                          <ToggleActionDropdownMenuItem action={'TOGGLE_DARK_MODE'}>
+                            Dark Mode
+                          </ToggleActionDropdownMenuItem>
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Sub>
+
+                    <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
 
               <div className={'_tools'}>
                 <Toolbar.Root size={'large'}>

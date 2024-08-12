@@ -242,7 +242,6 @@ input::-webkit-input-placeholder {
 }
 
 
-
 #menu {
   align-items: center;
   grid-area: menu;
@@ -252,15 +251,29 @@ input::-webkit-input-placeholder {
   grid-template-columns: 80px 1fr 20fr 1fr;
 
   > ._menu-button {
+    position: relative;
     grid-area: menu;
     display: flex;
     gap: 1rem;
-    padding-left: 0.5rem;
+    margin-left: 0.25rem;
+    width: 2rem;
+    background-color: var(--primary-bg);
+
+    &[data-state='open'] {
+      background-color: var(--highlight-bg);
+      border: 1px solid var(--primary-border);
+      border-radius: 6px;
+
+      & svg {
+        color: var(--highlight-fg);
+      }
+    }
 
     & svg {
       display: block;
       color: var(--primary-fg);
     }
+
   }
   > ._tools {
     grid-area: tools;
