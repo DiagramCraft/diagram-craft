@@ -66,16 +66,20 @@ export class BaseNodeComponent<
       const height = size.h;
 
       if (width > props.node.bounds.w || height > props.node.bounds.h) {
-        UnitOfWork.execute(props.node.diagram!, uow => {
-          props.node.setBounds(
-            {
-              ...props.node.bounds,
-              h: height > props.node.bounds.h ? height : props.node.bounds.h,
-              w: width > props.node.bounds.w ? width : props.node.bounds.w
-            },
-            uow
-          );
-        });
+        UnitOfWork.execute(
+          props.node.diagram!,
+          uow => {
+            props.node.setBounds(
+              {
+                ...props.node.bounds,
+                h: height > props.node.bounds.h ? height : props.node.bounds.h,
+                w: width > props.node.bounds.w ? width : props.node.bounds.w
+              },
+              uow
+            );
+          },
+          false
+        );
       }
     };
   }

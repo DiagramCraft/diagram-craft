@@ -142,10 +142,10 @@ export class UnitOfWork {
     return new UnitOfWork(diagram, false, true);
   }
 
-  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
-    const uow = new UnitOfWork(diagram);
+  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T, commit = true): T {
+    const uow = new UnitOfWork(diagram, false, !commit);
     const result = cb(uow);
-    uow.commit();
+    if (commit) uow.commit();
     return result;
   }
 
