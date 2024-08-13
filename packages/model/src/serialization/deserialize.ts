@@ -92,7 +92,7 @@ export const deserializeDiagramElements = (
   }
 
   // Resolve relations
-  const uow = new UnitOfWork(diagram, false);
+  const uow = new UnitOfWork(diagram, false, true);
   for (const n of allNodes) {
     for (const c of unfoldGroup(n)) {
       if (c.type === 'edge') continue;
@@ -102,7 +102,6 @@ export const deserializeDiagramElements = (
       }
     }
   }
-  uow.commit();
 
   for (const e of diagramElements) {
     if (e.type !== 'edge') continue;
