@@ -87,6 +87,9 @@ import { ToggleActionDropdownMenuItem } from './react-app/components/ToggleActio
 import { FileDialog } from './react-app/FileDialog';
 import { ApplicationTriggers, DialogState } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { urlToName } from '@diagram-craft/utils/url';
+import { newid } from '@diagram-craft/utils/id';
+import { Layer } from '@diagram-craft/model/diagramLayer';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -303,6 +306,17 @@ export const App = (props: {
       setDirty(false);
 
       userState.current.addRecentFile(url);
+    },
+    newDocument: () => {
+      // TODO: This is partially duplicated in AppLoader.ts
+      const doc = props.documentFactory();
+      const diagram = new Diagram(newid(), 'Untitled', doc);
+      diagram.layers.add(new Layer(newid(), 'Default', [], diagram), UnitOfWork.immediate(diagram));
+      doc.addDiagram(diagram);
+      setActiveDoc({ doc, url: undefined });
+      setActiveDiagram(createActiveDiagram(diagram, applicationState.current));
+      Autosave.clear();
+      setDirty(false);
     }
   };
 
@@ -364,8 +378,16 @@ export const App = (props: {
                           sideOffset={2}
                           alignOffset={-5}
                         >
-                          <ActionDropdownMenuItem action={'FILE_SAVE'}>New</ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem action={'FILE_OPEN'}>
+                          <ActionDropdownMenuItem
+                            action={'FILE_NEW'}
+                            context={{ applicationTriggers }}
+                          >
+                            New
+                          </ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem
+                            action={'FILE_OPEN'}
+                            context={{ applicationTriggers }}
+                          >
                             Open...
                           </ActionDropdownMenuItem>
 

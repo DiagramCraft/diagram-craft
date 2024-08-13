@@ -24,7 +24,6 @@ import { selectionMoveActions } from './actions/selectionMoveAction';
 import { selectionResizeActions } from './actions/selectionResizeAction';
 import { createLinkedNodeActions } from './actions/linkedNodeAction';
 import { exportActions } from './actions/exportAction';
-import { fileOpenActions } from './actions/fileOpenAction';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
@@ -49,7 +48,6 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...duplicateActions(state),
   ...groupActions(state),
   ...saveActions(state),
-  ...fileOpenActions(state),
   ...exportActions(state),
   ...layerActions(state),
   ...toolActions(state)
@@ -68,7 +66,6 @@ export const defaultMacKeymap: KeyMap = {
   'M-Digit3': 'TOOL_EDGE',
   'M-Digit6': 'TOOL_PEN',
   'M-Digit7': 'TOOL_NODE',
-  'M-KeyS': 'FILE_SAVE',
   'M-KeyO': 'FILE_OPEN',
   'M-KeyE': 'FILE_EXPORT_IMAGE',
 

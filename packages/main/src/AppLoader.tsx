@@ -36,6 +36,7 @@ export const AppLoader = (props: Props) => {
         if (autosaved) setUrl(autosaved.url);
       });
     } else {
+      // TODO: This is duplicated in fileNewAction.ts
       const doc = props.documentFactory();
       const diagram = new Diagram(newid(), 'Untitled', doc);
       diagram.layers.add(new Layer(newid(), 'Default', [], diagram), UnitOfWork.immediate(diagram));

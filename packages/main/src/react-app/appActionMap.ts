@@ -4,6 +4,8 @@ import { sidebarActions } from './actions/SidebarAction';
 import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas/keyMap';
 import { defaultCanvasActions, defaultMacKeymap } from '@diagram-craft/canvas-app/defaultActions';
 import { ToggleHelpAction } from './actions/toggleHelp';
+import { fileNewActions } from './actions/fileNewAction';
+import { fileOpenActions } from './actions/fileOpenAction';
 
 export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...defaultCanvasActions(state),
@@ -12,7 +14,9 @@ export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ZOOM_IN: new ZoomAction(state.diagram, 'in'),
   ZOOM_OUT: new ZoomAction(state.diagram, 'out'),
 
-  ...sidebarActions(state)
+  ...sidebarActions(state),
+  ...fileOpenActions(state),
+  ...fileNewActions(state)
 });
 
 export const defaultMacAppKeymap: KeyMap = {
@@ -25,5 +29,8 @@ export const defaultMacAppKeymap: KeyMap = {
   'A-Digit5': 'SIDEBAR_HISTORY',
   'A-Digit6': 'SIDEBAR_STYLE',
   'A-Digit7': 'SIDEBAR_INFO',
-  'A-Digit8': 'SIDEBAR_DATA'
+  'A-Digit8': 'SIDEBAR_DATA',
+
+  'M-KeyS': 'FILE_SAVE',
+  'M-KeyN': 'FILE_NEW'
 };

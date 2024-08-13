@@ -85,6 +85,7 @@ export interface ApplicationTriggers {
   popHelp?: (id: string) => void;
 
   loadFromUrl?: (url: string) => void;
+  newDocument?: () => void;
 }
 
 type ComponentProps = Props & Actions & { diagram: Diagram };
