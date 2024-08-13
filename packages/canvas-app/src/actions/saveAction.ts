@@ -7,7 +7,7 @@ import {
 } from '@diagram-craft/model/serialization/serialize';
 
 export const saveActions = (state: State) => ({
-  FILE_SAVE: new SaveAction(state.diagram),
+  FILE_SAVE2: new SaveAction(state.diagram),
   SELECTION_DUMP: new DumpSelectionAction(state.diagram)
 });
 

@@ -33,6 +33,7 @@ export const AppLoader = (props: Props) => {
         loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)
       ]).then(([autosaved, defDiagram]) => {
         setDoc(autosaved?.document ?? defDiagram);
+        (autosaved?.document ?? defDiagram).url = props.diagram?.url;
         if (autosaved) setUrl(autosaved.url);
       });
     } else {

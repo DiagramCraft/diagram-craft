@@ -46,6 +46,7 @@ export const loadFileFromUrl = async (
       .then(r => r.text())
       .then(c => loader(c, documentFactory, diagramFactory))
   );
+  document.url = url;
 
   await document.load();
 

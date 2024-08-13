@@ -53,6 +53,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
 
   diagrams: Diagram[] = [];
 
+  url: string | undefined;
+
   constructor(
     public readonly nodeDefinitions: NodeDefinitionRegistry,
     public readonly edgeDefinitions: EdgeDefinitionRegistry

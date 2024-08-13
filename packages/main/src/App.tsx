@@ -320,6 +320,10 @@ export const App = (props: {
       setActiveDiagram(createActiveDiagram(diagram, applicationState.current));
       Autosave.clear();
       setDirty(false);
+    },
+    clearDirty: () => {
+      Autosave.clear();
+      setDirty(false);
     }
   };
 
@@ -427,7 +431,12 @@ export const App = (props: {
                               </DropdownMenu.SubContent>
                             </DropdownMenu.Portal>
                           </DropdownMenu.Sub>
-                          <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem
+                            action={'FILE_SAVE'}
+                            context={{ applicationTriggers }}
+                          >
+                            Save
+                          </ActionDropdownMenuItem>
                           <ActionDropdownMenuItem action={'FILE_SAVE'}>
                             Save As...
                           </ActionDropdownMenuItem>

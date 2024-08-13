@@ -86,6 +86,7 @@ export interface ApplicationTriggers {
 
   loadFromUrl?: (url: string) => void;
   newDocument?: () => void;
+  clearDirty?: () => void;
 }
 
 type ComponentProps = Props & Actions & { diagram: Diagram };
