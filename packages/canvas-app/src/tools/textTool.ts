@@ -1,5 +1,5 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -9,8 +9,11 @@ import { newid } from '@diagram-craft/utils/id';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
-  interface Tools {
-    text: TextTool;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {
+      text: TextTool;
+    }
   }
 }
 

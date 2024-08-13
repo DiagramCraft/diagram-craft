@@ -1,5 +1,5 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { PathUtils } from '@diagram-craft/geometry/pathUtils';
@@ -12,8 +12,11 @@ import { Path } from '@diagram-craft/geometry/path';
 import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
-  interface Tools {
-    pen: PenTool;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {
+      pen: PenTool;
+    }
   }
 }
 

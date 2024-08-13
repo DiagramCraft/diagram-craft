@@ -26,6 +26,7 @@ import { rawHTML } from './component/vdom';
 import styles from './canvas.css?inline';
 import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
+import { ApplicationTriggers } from './ApplicationTriggers';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -56,38 +57,6 @@ const getAncestorDiagramElement = (
   }
   return undefined;
 };
-
-export type DialogState = {
-  name: string;
-  onOk: (data: unknown) => void;
-  onCancel: () => void;
-};
-
-export interface ApplicationTriggers {
-  showCanvasContextMenu?: (point: Point, mouseEvent: MouseEvent) => void;
-  showSelectionContextMenu?: (point: Point, mouseEvent: MouseEvent) => void;
-  showEdgeContextMenu?: (point: Point, id: string, mouseEvent: MouseEvent) => void;
-  showNodeContextMenu?: (point: Point, id: string, mouseEvent: MouseEvent) => void;
-
-  showNodeLinkPopup?: (point: Point, sourceNodeId: string, edgeId: string) => void;
-
-  showMessageDialog?: (
-    title: string,
-    message: string,
-    okLabel: string,
-    cancelLabel: string,
-    onClick: () => void
-  ) => void;
-  showDialog?: (state: DialogState) => void;
-
-  setHelp?: (message: string) => void;
-  pushHelp?: (id: string, message: string) => void;
-  popHelp?: (id: string) => void;
-
-  loadFromUrl?: (url: string) => void;
-  newDocument?: () => void;
-  clearDirty?: () => void;
-}
 
 type ComponentProps = Props & Actions & { diagram: Diagram };
 
@@ -364,14 +333,18 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                 );
 
                 if (isClickOnSelection) {
-                  props.applicationTriggers.showSelectionContextMenu?.(
+                  props.applicationTriggers.showContextMenu?.(
+                    'selection',
                     diagram.viewBox.toDiagramPoint(point),
-                    event
+                    event,
+                    {}
                   );
                 } else {
-                  props.applicationTriggers.showCanvasContextMenu?.(
+                  props.applicationTriggers.showContextMenu?.(
+                    'canvas',
                     diagram.viewBox.toDiagramPoint(point),
-                    event
+                    event,
+                    {}
                   );
                 }
 

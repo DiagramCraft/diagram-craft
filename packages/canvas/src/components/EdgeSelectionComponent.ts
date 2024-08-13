@@ -5,8 +5,8 @@ import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { $c } from '@diagram-craft/utils/classname';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { Zoom } from './zoom';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 
 export class EdgeSelectionComponent extends Component<Props> {
   render(props: Props) {

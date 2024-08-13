@@ -1,12 +1,15 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
-  interface Tools {
-    pan: PanTool;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {
+      pan: PanTool;
+    }
   }
 }
 

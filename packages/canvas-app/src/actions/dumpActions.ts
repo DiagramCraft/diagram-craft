@@ -6,16 +6,16 @@ import {
   serializeDiagramElement
 } from '@diagram-craft/model/serialization/serialize';
 
-export const saveActions = (state: State) => ({
-  FILE_SAVE2: new SaveAction(state.diagram),
+export const dumpActions = (state: State) => ({
+  DOCUMENT_DUMP: new DumpDocument(state.diagram),
   SELECTION_DUMP: new DumpSelectionAction(state.diagram)
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof saveActions> {}
+  interface ActionMap extends ReturnType<typeof dumpActions> {}
 }
 
-class SaveAction extends AbstractAction {
+class DumpDocument extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
   }

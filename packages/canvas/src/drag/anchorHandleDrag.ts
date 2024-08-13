@@ -3,13 +3,13 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { EdgeEndpointMoveDrag } from './edgeEndpointMoveDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 
 export class AnchorHandleDrag extends AbstractDrag {
   edge: DiagramEdge;

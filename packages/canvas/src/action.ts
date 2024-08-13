@@ -1,7 +1,7 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { Emitter, EventEmitter } from '@diagram-craft/utils/event';
-import { ApplicationTriggers } from './EditableCanvasComponent';
+import { ApplicationTriggers } from './ApplicationTriggers';
 
 export type ActionEvents = {
   actionchanged: { action: Action };

@@ -1,7 +1,7 @@
 import { Tool } from './tool';
-import { ApplicationTriggers } from './EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import { Modifiers } from './dragDropManager';
+import { ApplicationTriggers } from './ApplicationTriggers';
 
 export type Context = {
   tool: Tool | undefined;

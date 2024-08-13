@@ -5,7 +5,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ControlPoints } from '@diagram-craft/model/types';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 

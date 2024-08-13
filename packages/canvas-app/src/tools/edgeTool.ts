@@ -1,5 +1,4 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   DRAG_DROP_MANAGER,
@@ -23,10 +22,14 @@ import { EdgeEndpointMoveDrag } from '@diagram-craft/canvas/drag/edgeEndpointMov
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 
 declare global {
-  interface Tools {
-    edge: EdgeTool;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {
+      edge: EdgeTool;
+    }
   }
 }
 

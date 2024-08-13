@@ -13,11 +13,11 @@ import {
 } from '@diagram-craft/model/endpoint';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
 import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;

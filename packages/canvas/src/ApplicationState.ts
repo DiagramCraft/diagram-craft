@@ -1,8 +1,13 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 
 declare global {
-  interface Tools {}
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {}
+  }
 }
+
+export interface Tools extends Extensions.Tools {}
 
 export type ToolType = keyof Tools;
 

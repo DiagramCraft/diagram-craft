@@ -3,7 +3,7 @@ import { AbstractDrag, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 
 export class GenericPathControlPointDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;

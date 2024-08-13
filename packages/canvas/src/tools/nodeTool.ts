@@ -1,6 +1,6 @@
 import { AbstractTool, BACKGROUND } from '../tool';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -9,8 +9,11 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 declare global {
-  interface Tools {
-    node: NodeTool;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {
+      node: NodeTool;
+    }
   }
 }
 

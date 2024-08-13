@@ -19,7 +19,7 @@ import {
 import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/model/selectionState';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 

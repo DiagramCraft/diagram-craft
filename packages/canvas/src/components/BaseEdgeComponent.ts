@@ -93,10 +93,11 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     };
 
     const onContextMenu = (event: MouseEvent) => {
-      props.applicationTriggers.showEdgeContextMenu?.(
+      props.applicationTriggers.showContextMenu?.(
+        'edge',
         $d.viewBox.toDiagramPoint(EventHelper.point(event)),
-        props.element.id,
-        event
+        event,
+        { id: props.element.id }
       );
     };
 

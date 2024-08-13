@@ -1,5 +1,4 @@
 import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { ApplicationTriggers } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { inverseUnitCoordinateSystem, PathBuilder } from '@diagram-craft/geometry/pathBuilder';
@@ -7,10 +6,14 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
+import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
 
 declare global {
-  interface Tools {
-    freehand: FreehandTool;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {
+      freehand: FreehandTool;
+    }
   }
 }
 

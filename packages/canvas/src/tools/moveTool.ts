@@ -1,5 +1,5 @@
 import { AbstractTool, BACKGROUND } from '../tool';
-import { ApplicationTriggers } from '../EditableCanvasComponent';
+import { ApplicationTriggers } from '../ApplicationTriggers';
 import { DragDopManager, Modifiers } from '../dragDropManager';
 import { MarqueeDrag } from '../drag/marqueeDrag';
 import { MoveDrag } from '../drag/moveDrag';
@@ -14,8 +14,11 @@ type DeferredMouseAction = {
 };
 
 declare global {
-  interface Tools {
-    move: MoveTool;
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Tools {
+      move: MoveTool;
+    }
   }
 }
 

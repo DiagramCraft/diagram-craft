@@ -85,11 +85,11 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ActionDropdownMenuItem } from './react-app/components/ActionDropdownMenuItem';
 import { ToggleActionDropdownMenuItem } from './react-app/components/ToggleActionDropdownMenuItem';
 import { FileDialog } from './react-app/FileDialog';
-import { ApplicationTriggers, DialogState } from '@diagram-craft/canvas/EditableCanvasComponent';
 import { urlToName } from '@diagram-craft/utils/url';
 import { newid } from '@diagram-craft/utils/id';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { ApplicationTriggers, ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -124,12 +124,6 @@ const DarkModeToggleButton = () => {
   );
 };
 
-export type ContextMenuTarget = { pos: Point } & (
-  | { type: 'canvas' }
-  | { type: 'edge'; id: string }
-  | { type: 'selection' }
-);
-
 export type DiagramRef = {
   name?: string;
   url: string;
@@ -155,6 +149,17 @@ const createActiveDiagram = ($d: Diagram, applicationState: ApplicationState): A
   };
 };
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface ApplicationTriggers {
+      loadFromUrl?: (url: string) => void;
+      newDocument?: () => void;
+      clearDirty?: () => void;
+    }
+  }
+}
+
 export const App = (props: {
   url?: string;
   doc: DiagramDocument;
@@ -178,7 +183,9 @@ export const App = (props: {
   const [messageDialogState, setMessageDialogState] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE
   );
-  const [dialogState, setDialogState] = useState<DialogState | undefined>(undefined);
+  const [dialogState, setDialogState] = useState<ApplicationTriggers.DialogState | undefined>(
+    undefined
+  );
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -230,23 +237,14 @@ export const App = (props: {
     setHelp: (message: string) => {
       applicationState.current.setHelp({ id: 'default', message });
     },
-    showCanvasContextMenu: (point: Point, mouseEvent: MouseEvent) => {
+    showContextMenu: <T extends keyof ApplicationTriggers.ContextMenus>(
+      type: T,
+      point: Point,
+      mouseEvent: MouseEvent,
+      args: ApplicationTriggers.ContextMenus[T]
+    ) => {
       oncePerEvent(mouseEvent, () => {
-        contextMenuTarget.current = { type: 'canvas', pos: point };
-      });
-    },
-    showEdgeContextMenu: (point: Point, id: string, mouseEvent: MouseEvent) => {
-      oncePerEvent(mouseEvent, () => {
-        contextMenuTarget.current = { type: 'edge', id, pos: point };
-      });
-    },
-    showNodeContextMenu: (_point: Point, _id: string, _mouseEvent: MouseEvent) => {
-      // TODO: To be implemented
-      //contextMenuTarget.current = { type: 'node', id, pos: point };
-    },
-    showSelectionContextMenu: (point: Point, mouseEvent: MouseEvent) => {
-      oncePerEvent(mouseEvent, () => {
-        contextMenuTarget.current = { type: 'selection', pos: point };
+        contextMenuTarget.current = { type, ...args, pos: point };
       });
     },
     showNodeLinkPopup: (point: Point, sourceNodeId: string, edgId: string) => {
@@ -258,7 +256,7 @@ export const App = (props: {
         edgeId: edgId
       });
     },
-    showDialog: (dialogState: DialogState) => {
+    showDialog: (dialogState: ApplicationTriggers.DialogState) => {
       setDialogState({
         ...dialogState,
         onOk: (data: unknown) => {
@@ -669,11 +667,15 @@ export const App = (props: {
                           state={contextMenuTarget}
                           createContextMenu={state => {
                             if (state.type === 'canvas') {
-                              return <CanvasContextMenu target={state} />;
+                              return (
+                                <CanvasContextMenu target={state as ContextMenuTarget<'canvas'>} />
+                              );
                             } else if (state.type === 'selection') {
                               return <SelectionContextMenu />;
                             } else {
-                              return <EdgeContextMenu target={state} />;
+                              return (
+                                <EdgeContextMenu target={state as ContextMenuTarget<'edge'>} />
+                              );
                             }
                           }}
                         />
