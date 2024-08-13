@@ -809,17 +809,6 @@ foreignObject {
 /* Adjustments of general components for specific use-cases */
 
 #menu {
-  .cmp-select-trigger {
-    background-color: transparent;
-    border: none;
-    font-size: 100%;
-    color: var(--primary-fg);
-  }
-  .cmp-select-trigger__icon {
-    color: var(--primary-fg);
-    margin-top: 0.2rem;
-  }
-
   .cmp-toolbar {
     overflow: auto;
     flex-wrap: nowrap;

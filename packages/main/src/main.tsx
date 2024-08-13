@@ -14,6 +14,7 @@ import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/regist
 import { fileLoaderRegistry, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { DiagramRef } from './App';
 import { Autosave } from './Autosave';
+import { UserState } from '@diagram-craft/canvas/UserState';
 
 stencilLoaderRegistry.drawioManual = () =>
   import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual);
@@ -147,21 +148,17 @@ const documentFactory = () => {
   return new DiagramDocument(nodeRegistry, edgeRegistry);
 };
 
-const diagrams: Array<DiagramRef> = [
-  { url: '/sample/shapes.json' },
-  { url: '/sample/simple.json' },
-  { url: '/diagrams/test6.drawio' },
-  { url: '/diagrams/uml.drawio' },
-  { url: '/diagrams/test5.drawio' },
-  { url: '/sample/snap-test.json' },
-  { url: '/sample/test.json' },
-  { url: '/sample/arrows.json' }
-];
+const diagrams: Array<DiagramRef> = [];
 
 if (location.hash !== '') {
   const url = location.hash.slice(1);
   diagrams.unshift({ url });
   Autosave.clear();
+} else {
+  const userState = new UserState();
+  if (userState.recentFiles.length > 0) {
+    diagrams.unshift({ url: userState.recentFiles[0] });
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -169,7 +166,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <AppLoader
       stencils={stencilRegistry}
       diagram={diagrams[0]}
-      recent={diagrams}
       diagramFactory={diagramFactory}
       documentFactory={documentFactory}
       nodeRegistry={nodeRegistry}

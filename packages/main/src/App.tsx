@@ -1,7 +1,6 @@
 import './App.css';
 import { useEffect, useRef, useState } from 'react';
 import { LayerToolWindow } from './react-app/toolwindow/LayerToolWindow/LayerToolWindow';
-import { DocumentSelector } from './react-app/DocumentSelector';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import {
@@ -87,6 +86,7 @@ import { ActionDropdownMenuItem } from './react-app/components/ActionDropdownMen
 import { ToggleActionDropdownMenuItem } from './react-app/components/ToggleActionDropdownMenuItem';
 import { FileDialog } from './react-app/FileDialog';
 import { ApplicationTriggers, DialogState } from '@diagram-craft/canvas/EditableCanvasComponent';
+import { urlToName } from '@diagram-craft/utils/url';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -134,7 +134,7 @@ export type DiagramRef = {
 
 type ActiveDocument = {
   doc: DiagramDocument;
-  url: string;
+  url?: string;
 };
 
 type ActiveDiagram = {
@@ -153,11 +153,10 @@ const createActiveDiagram = ($d: Diagram, applicationState: ApplicationState): A
 };
 
 export const App = (props: {
-  url: string;
+  url?: string;
   doc: DiagramDocument;
   documentFactory: DocumentFactory;
   diagramFactory: DiagramFactory<Diagram>;
-  recent: Array<DiagramRef>;
 }) => {
   const redraw = useRedraw();
   const applicationState = useRef(new ApplicationState());
@@ -180,6 +179,10 @@ export const App = (props: {
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (props.url) userState.current.addRecentFile(props.url);
+  }, [props.url]);
 
   // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
   //       Can be tested if ruler indicators work at startup immediately or not
@@ -298,6 +301,8 @@ export const App = (props: {
       setActiveDiagram(createActiveDiagram(doc.diagrams[0], applicationState.current));
       Autosave.clear();
       setDirty(false);
+
+      userState.current.addRecentFile(url);
     }
   };
 
@@ -363,6 +368,40 @@ export const App = (props: {
                           <ActionDropdownMenuItem action={'FILE_OPEN'}>
                             Open...
                           </ActionDropdownMenuItem>
+
+                          <DropdownMenu.Sub>
+                            <DropdownMenu.SubTrigger
+                              className="cmp-context-menu__sub-trigger"
+                              disabled={
+                                userState.current.recentFiles.filter(url => url !== activeDoc.url)
+                                  .length === 0
+                              }
+                            >
+                              Open Recent...
+                              <div className="cmp-context-menu__right-slot">
+                                <TbChevronRight />
+                              </div>
+                            </DropdownMenu.SubTrigger>
+                            <DropdownMenu.Portal>
+                              <DropdownMenu.SubContent
+                                className="cmp-context-menu"
+                                sideOffset={2}
+                                alignOffset={-5}
+                              >
+                                {userState.current.recentFiles
+                                  .filter(url => url !== activeDoc.url)
+                                  .map(url => (
+                                    <DropdownMenu.Item
+                                      key={url}
+                                      className="cmp-context-menu__item"
+                                      onSelect={() => applicationTriggers.loadFromUrl?.(url)}
+                                    >
+                                      {urlToName(url)}
+                                    </DropdownMenu.Item>
+                                  ))}
+                              </DropdownMenu.SubContent>
+                            </DropdownMenu.Portal>
+                          </DropdownMenu.Sub>
                           <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
                           <ActionDropdownMenuItem action={'FILE_SAVE'}>
                             Save As...
@@ -468,20 +507,17 @@ export const App = (props: {
               </div>
 
               <div className={'_document'}>
-                <DocumentSelector
-                  diagrams={props.recent}
-                  documentFactory={props.documentFactory}
-                  diagramFactory={props.diagramFactory}
-                  selectedUrl={url}
-                  onChange={url => applicationTriggers.loadFromUrl?.(url)}
-                />
+                {activeDoc.url ? urlToName(activeDoc.url) : 'Untitled'}
 
                 <DirtyIndicator
                   dirty={dirty}
-                  onDirtyChange={async () => {
-                    console.log(url);
-                    applicationTriggers.loadFromUrl?.(url);
-                  }}
+                  onDirtyChange={
+                    url
+                      ? async () => {
+                          applicationTriggers.loadFromUrl?.(url);
+                        }
+                      : undefined
+                  }
                 />
               </div>
 

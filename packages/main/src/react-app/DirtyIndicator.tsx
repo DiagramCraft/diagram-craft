@@ -15,18 +15,20 @@ export const DirtyIndicator = (props: Props) => {
       }}
     >
       <div>Unsaved changes</div>
-      <Button
-        type={'icon-only'}
-        style={{ padding: '1px 5px' }}
-        onClick={() => props.onDirtyChange()}
-      >
-        <TbTrash size={'14px'} />
-      </Button>
+      {props.onDirtyChange && (
+        <Button
+          type={'icon-only'}
+          style={{ padding: '1px 5px' }}
+          onClick={() => props.onDirtyChange!()}
+        >
+          <TbTrash size={'14px'} />
+        </Button>
+      )}
     </div>
   );
 };
 
 type Props = {
   dirty: boolean;
-  onDirtyChange: () => void;
+  onDirtyChange?: () => void;
 };

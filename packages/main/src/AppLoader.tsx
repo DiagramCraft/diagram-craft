@@ -7,10 +7,13 @@ import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRe
 import { loadFileFromUrl, stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import { Autosave } from './Autosave';
+import { newid } from '@diagram-craft/utils/id';
+import { Layer } from '@diagram-craft/model/diagramLayer';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const AppLoader = (props: Props) => {
   const [doc, setDoc] = useState<DiagramDocument | undefined>(undefined);
-  const [url, setUrl] = useState<string>(props.diagram.url);
+  const [url, setUrl] = useState<string | undefined>(props.diagram?.url);
 
   useEffect(() => {
     if (!doc) return;
@@ -24,14 +27,22 @@ export const AppLoader = (props: Props) => {
   }, [props.stencils, doc]);
 
   useEffect(() => {
-    Promise.all([
-      Autosave.load(props.documentFactory, props.diagramFactory, true),
-      loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)
-    ]).then(([autosaved, defDiagram]) => {
-      setDoc(autosaved?.document ?? defDiagram);
-      if (autosaved) setUrl(autosaved.url);
-    });
-  }, [props.diagramFactory, props.recent, props.documentFactory]);
+    if (props.diagram) {
+      Promise.all([
+        Autosave.load(props.documentFactory, props.diagramFactory, true),
+        loadFileFromUrl(props.diagram.url, props.documentFactory, props.diagramFactory)
+      ]).then(([autosaved, defDiagram]) => {
+        setDoc(autosaved?.document ?? defDiagram);
+        if (autosaved) setUrl(autosaved.url);
+      });
+    } else {
+      const doc = props.documentFactory();
+      const diagram = new Diagram(newid(), 'Untitled', doc);
+      diagram.layers.add(new Layer(newid(), 'Default', [], diagram), UnitOfWork.immediate(diagram));
+      doc.addDiagram(diagram);
+      setDoc(doc);
+    }
+  }, [props.diagramFactory, props.documentFactory]);
 
   if (doc && doc.diagrams.length === 0) {
     console.error('Doc contains no diagrams');
@@ -46,7 +57,6 @@ export const AppLoader = (props: Props) => {
       url={url}
       documentFactory={props.documentFactory}
       diagramFactory={props.diagramFactory}
-      recent={props.recent}
     />
   );
 };
@@ -61,8 +71,7 @@ export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof Stenc
 
 type Props = {
   stencils: StencilRegistryConfig;
-  recent: Array<DiagramRef>;
-  diagram: DiagramRef;
+  diagram?: DiagramRef;
   diagramFactory: DiagramFactory<Diagram>;
   documentFactory: DocumentFactory;
 

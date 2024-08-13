@@ -45,7 +45,7 @@ export const Autosave = {
 
   exists: () => !!localStorage.getItem(KEY),
 
-  save: async (url: string, doc: DiagramDocument) => {
+  save: async (url: string | undefined, doc: DiagramDocument) => {
     localStorage.setItem(
       KEY,
       JSON.stringify({

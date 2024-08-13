@@ -6,13 +6,16 @@ type UserStateEvents = {
 
 const DEFAULT_STENCILS = [{ id: 'basic-shapes', isOpen: true }];
 
+const MAX_RECENT_FILES = 10;
+
 export class UserState extends EventEmitter<UserStateEvents> {
   #panelLeft?: number;
   #panelRight?: number;
   #showHelp: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
+  #recentFiles: Array<string>;
 
-  private static instance: UserState;
+  private static instance: UserState | undefined;
 
   static get() {
     if (!UserState.instance) {
@@ -28,6 +31,23 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#panelRight = state.panelRight;
     this.#showHelp = state.showHelp;
     this.#stencils = state.stencils ?? DEFAULT_STENCILS;
+    this.#recentFiles = state.recentFiles ?? [];
+  }
+
+  addRecentFile(file: string) {
+    this.recentFiles = [file, ...this.recentFiles.filter(f => f !== file)].slice(
+      0,
+      MAX_RECENT_FILES
+    );
+  }
+
+  set recentFiles(recentFiles: Array<string>) {
+    this.#recentFiles = recentFiles;
+    this.triggerChange();
+  }
+
+  get recentFiles(): Array<string> {
+    return this.#recentFiles;
   }
 
   set panelLeft(panelLeft: number | undefined) {
@@ -73,7 +93,8 @@ export class UserState extends EventEmitter<UserStateEvents> {
         panelLeft: this.#panelLeft,
         panelRight: this.#panelRight,
         showHelp: this.#showHelp,
-        stencils: this.#stencils
+        stencils: this.#stencils,
+        recentFiles: this.#recentFiles
       })
     );
     this.emit('change', { after: this });
