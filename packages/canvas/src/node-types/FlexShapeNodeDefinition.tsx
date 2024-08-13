@@ -124,7 +124,10 @@ export class FlexShapeNodeDefinition<
         );
         const cmpNodeType = getValue(cmp.nodeType ?? cmpDef?.nodeType, props.nodeProps);
 
-        assert.present(cmpNodeType, 'nodeType must be specified in either def or component');
+        assert.present(
+          cmpNodeType,
+          `nodeType must be specified in either def or component for FlexShapeNodeDefinition.${this.def.type}`
+        );
 
         const adjustedBounds = {
           x: props.node.bounds.x + (cmpBounds?.x ?? 0) * props.node.bounds.w,

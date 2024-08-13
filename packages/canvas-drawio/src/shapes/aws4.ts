@@ -136,6 +136,7 @@ export const registerAWS4Shapes = async (
       components: [
         {
           id: 'icon',
+          nodeType: 'rect',
           props: {
             stroke: {
               enabled: false
@@ -155,6 +156,7 @@ export const registerAWS4Shapes = async (
       components: [
         {
           id: 'icon',
+          nodeType: 'rect',
           bounds: {
             w: 0,
             h: 0,
@@ -182,6 +184,7 @@ export const registerAWS4Shapes = async (
       components: [
         {
           id: 'icon',
+          nodeType: 'rect',
           bounds: {
             w: 0,
             h: 0,
