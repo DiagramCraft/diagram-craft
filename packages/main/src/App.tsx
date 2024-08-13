@@ -198,7 +198,10 @@ export const App = (props: {
   const doc = activeDoc.doc;
   const url = activeDoc.url;
 
-  const autosave = debounce(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const autosave = debounce((event: any) => {
+    if (event.silent) return;
+
     Autosave.save(url, doc);
     setDirty(true);
   }, 1000);

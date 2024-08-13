@@ -25,7 +25,7 @@ export type DiagramEvents = {
   change: { diagram: Diagram };
 
   /* A single element has changed (e.g. moved, resized, etc) */
-  elementChange: { element: DiagramElement };
+  elementChange: { element: DiagramElement; silent?: boolean };
 
   /* A new element has been added to the diagram */
   elementAdd: { element: DiagramElement };

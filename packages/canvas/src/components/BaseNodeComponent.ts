@@ -78,7 +78,7 @@ export class BaseNodeComponent<
               uow
             );
           },
-          false
+          true
         );
       }
     };

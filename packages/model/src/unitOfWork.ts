@@ -142,10 +142,10 @@ export class UnitOfWork {
     return new UnitOfWork(diagram, false, true);
   }
 
-  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T, commit = true): T {
-    const uow = new UnitOfWork(diagram, false, !commit);
+  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T, silent = false): T {
+    const uow = new UnitOfWork(diagram);
     const result = cb(uow);
-    if (commit) uow.commit();
+    uow.commit(silent);
     return result;
   }
 
@@ -218,12 +218,12 @@ export class UnitOfWork {
     return this.#snapshots;
   }
 
-  commit() {
+  commit(silent = false) {
     this.changeType = 'non-interactive';
 
     // Note, onCommitCallbacks must run before elements events are emitted
     this.processOnCommitCallbacks();
-    this.processEvents();
+    this.processEvents(silent);
 
     if (this.#shouldUpdateDiagram) {
       this.diagram.emit('change', { diagram: this.diagram });
@@ -238,7 +238,7 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
-  private processEvents() {
+  private processEvents(silent = false) {
     // At this point, any elements have been added and or removed
     this.#elementsToRemove.forEach(e => e.invalidate(this));
     this.#elementsToUpdate.forEach(e => e.invalidate(this));
@@ -251,7 +251,7 @@ export class UnitOfWork {
         this.#shouldUpdateDiagram = true;
       } else {
         //if (e.type === 'node' && (e as DiagramNode).isLabelNode()) return;
-        this.diagram.emit(s, { element: e });
+        this.diagram.emit(s, { element: e, silent });
       }
     };
 
