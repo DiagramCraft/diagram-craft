@@ -171,6 +171,7 @@ export const g = (attrs: Attr<GAttributes>, ...children: VNodeChildParam[]) => {
 
 type ImageAttributes = ElementAttributes & {
   href?: string;
+  transform?: string;
   preserveAspectRatio?: string;
   x?: string | number;
   y?: string | number;

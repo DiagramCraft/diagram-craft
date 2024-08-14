@@ -5,6 +5,40 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
+
+declare global {
+  interface CustomNodeProps {
+    drawioImage?: {
+      imageWidth?: string;
+      imageHeight?: string;
+      imageAlign?: 'left' | 'center' | 'right';
+      imageValign?: 'top' | 'middle' | 'bottom';
+      imageMargin?: number;
+      backgroundColor?: string;
+      textPosition?: '' | 'center' | 'bottom' | 'right';
+      stylename?: string;
+      keepAspect?: boolean;
+      flipV?: boolean;
+      flipH?: boolean;
+    };
+  }
+}
+
+registerCustomNodeDefaults('drawioImage', {
+  textPosition: '',
+  imageHeight: '0',
+  imageWidth: '0',
+  imageAlign: 'left',
+  imageValign: 'middle',
+  imageMargin: 8,
+  backgroundColor: 'none',
+  stylename: '',
+  keepAspect: true,
+  flipV: false,
+  flipH: false
+});
 
 export class DrawioImageNodeDefinition extends ShapeNodeDefinition {
   constructor(name = 'drawioImage', displayName = 'DrawIO Image') {
@@ -16,31 +50,81 @@ class DrawioImageComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const boundary = new DrawioImageNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
 
-    if (props.nodeProps.custom.drawio.imageWidth > 0) {
-      shapeBuilder.boundaryPath(boundary.all(), {
-        ...props.nodeProps,
-        fill: { enabled: false, color: 'transparent', type: 'solid' }
-      });
+    const customProps = props.nodeProps.custom.drawioImage;
 
-      shapeBuilder.add(
-        svg.image({
-          x: props.node.bounds.x + 4,
-          y: props.node.bounds.y + 4,
-          width: props.nodeProps.custom.drawio.imageWidth,
-          height: props.nodeProps.custom.drawio.imageHeight,
-          href: props.nodeProps.fill.image.url
-        })
-      );
-    } else {
-      // TODO: Is this branch ever taken?
-      shapeBuilder.boundaryPath(boundary.all());
+    const imageWidth = customProps.imageWidth.includes('%')
+      ? props.node.bounds.w * (parseInt(customProps.imageWidth) / 100)
+      : parseInt(customProps.imageWidth);
+    const imageHeight = customProps.imageHeight.includes('%')
+      ? props.node.bounds.h * (parseInt(customProps.imageHeight) / 100)
+      : parseInt(customProps.imageHeight);
+
+    let x = props.node.bounds.x + customProps.imageMargin;
+    let y = props.node.bounds.y + customProps.imageMargin;
+
+    if (customProps.imageAlign === 'center') {
+      x = props.node.bounds.x + (props.node.bounds.w - imageWidth) / 2;
+    } else if (customProps.imageAlign === 'right') {
+      x = props.node.bounds.x + props.node.bounds.w - imageWidth - customProps.imageMargin;
     }
 
-    const w = props.nodeProps.custom.drawio.imageWidth === 0 ? props.node.bounds.w : 0;
+    if (customProps.imageValign === 'middle') {
+      y = props.node.bounds.y + (props.node.bounds.h - imageHeight) / 2;
+    } else if (customProps.imageValign === 'bottom') {
+      y = props.node.bounds.y + props.node.bounds.h - imageHeight - customProps.imageMargin;
+    }
+
+    let url = props.nodeProps.fill.image.url;
+    if (props.nodeProps.fill.image.id) {
+      const att = props.node.diagram.document.attachments.getAttachment(
+        props.nodeProps.fill.image.id
+      );
+      url = att?.url ?? '';
+    }
+
+    if (
+      customProps.backgroundColor &&
+      customProps.backgroundColor !== 'none' &&
+      customProps.backgroundColor !== 'transparent'
+    ) {
+      shapeBuilder.add(
+        svg.rect({
+          x: props.node.bounds.x,
+          y: props.node.bounds.y,
+          width: props.node.bounds.w,
+          height: props.node.bounds.h,
+          fill: customProps.backgroundColor
+        })
+      );
+    }
+
+    if (url && url !== '') {
+      shapeBuilder.add(
+        svg.image({
+          x: x,
+          y: y,
+          width: imageWidth,
+          height: imageHeight,
+          href: url, //props.nodeProps.fill.image.url,
+          preserveAspectRatio: customProps.keepAspect ? 'xMidYMin meet' : 'none meet',
+          transform: `${customProps.flipH ? Transforms.flipH(props.node.bounds) : ''} ${customProps.flipV ? Transforms.flipV(props.node.bounds) : ''}`
+        })
+      );
+    }
+
+    shapeBuilder.boundaryPath(boundary.all(), {
+      ...props.nodeProps,
+      fill: {
+        enabled: false,
+        color: 'transparent',
+        type: 'solid'
+      }
+    });
+    const w = imageWidth; // imageWidth === 0 ? props.node.bounds.w : 0;
 
     const bounds = props.node.bounds;
 
-    const textPosition = props.nodeProps.custom.drawio.textPosition;
+    const textPosition = customProps.textPosition;
 
     let textBounds = bounds;
     if (textPosition === 'right') {

@@ -3,11 +3,12 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { parseNum } from './utils';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
-import { Style } from './drawioReader';
+import { Style, WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
 import { HAlign } from '@diagram-craft/model/diagramProps';
 import { FullDirection } from '@diagram-craft/geometry/direction';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const makeShape = (
   type: string,
@@ -194,8 +195,44 @@ export const parseImage = async (
   texts: NodeTexts,
   style: Style,
   diagram: Diagram,
-  layer: Layer
+  layer: Layer,
+  queue: WorkQueue
 ) => {
+  const defaults = {
+    image: {
+      margin: 0,
+      width: '100%',
+      height: '100%',
+      imageAlign: 'left',
+      imageValign: 'middle',
+      textPosition: 'bottom'
+    },
+    default: {
+      margin: 0,
+      width: '100%',
+      height: '100%',
+      imageAlign: 'left',
+      imageValign: 'middle',
+      textPosition: 'bottom'
+    },
+    label: {
+      margin: 8,
+      width: '42',
+      height: '42',
+      imageAlign: 'left',
+      imageValign: 'middle',
+      textPosition: 'center'
+    },
+    icon: {
+      margin: 0,
+      width: '48',
+      height: '48',
+      imageAlign: 'center',
+      imageValign: 'middle',
+      textPosition: 'bottom'
+    }
+  };
+
   const image = style.image ?? '';
 
   props.fill!.type = 'image';
@@ -204,42 +241,122 @@ export const parseImage = async (
   props.text!.align = 'center';
 
   props.custom ??= {};
-  props.custom.drawio ??= {};
+  props.custom.drawioImage ??= {};
 
   if ('label' in style) {
-    props.custom.drawio!.textPosition = 'right';
+    props.custom.drawioImage!.textPosition = 'right';
   }
 
-  props.custom.drawio.imageHeight = parseNum(style.imageHeight, 0);
-  props.custom.drawio.imageWidth = parseNum(style.imageWidth, 0);
+  const isImageShape = style.shape === 'image' || '_image' in style;
 
-  if (props.custom.drawio.textPosition === 'right') {
+  const stylename =
+    '_image' in style
+      ? 'image'
+      : '_label' in style
+        ? 'label'
+        : '_icon' in style
+          ? 'icon'
+          : 'default';
+
+  props.custom.drawioImage.stylename = stylename;
+  props.custom.drawioImage.imageMargin = defaults[stylename].margin ?? defaults.default.margin;
+
+  props.custom.drawioImage.imageHeight =
+    style.imageHeight ?? defaults[stylename].height ?? defaults.default.height;
+  props.custom.drawioImage.imageWidth =
+    style.imageWidth ?? defaults[stylename].width ?? defaults.default.width;
+
+  props.custom.drawioImage.keepAspect =
+    style.imageAspect !== '0' && !style.imageHeight && !style.imageWidth;
+  props.custom.drawioImage.flipV = style.imageFlipV === '1';
+  props.custom.drawioImage.flipH = style.imageFlipH === '1';
+
+  // TODO: Why is this on the drawio object?
+  if (props.custom.drawio?.textPosition === 'right') {
     props.text!.align = 'left';
     props.text!.valign = 'middle';
   }
+  // @ts-ignore
+  props.custom.drawioImage.textPosition =
+    props.custom.drawio?.textPosition ??
+    defaults[stylename].textPosition ??
+    defaults.default.textPosition;
 
   if (!style.imageBorder) {
-    props.stroke!.enabled = false;
+    if (style.strokeColor && !isImageShape) {
+      props.stroke!.enabled = true;
+      props.stroke!.color = style.strokeColor;
+    } else {
+      props.stroke!.enabled = false;
+
+      // TODO: Why is this needed
+      props.stroke!.color = 'transparent';
+      props.stroke!.width = 0;
+    }
+
+    if (style.rounded !== '0' && !isImageShape) {
+      props.effects ??= {};
+      props.effects.rounding = true;
+    }
   } else {
     props.stroke!.color = style.imageBorder;
   }
 
-  if (image.startsWith('data:')) {
+  if (image === 'none') {
+    // Do nothing
+  } else if (image.startsWith('data:')) {
     const blob = dataURItoBlob(image);
     const attachment = await diagram.document.attachments.addAttachment(blob);
 
     props.fill!.image = {
       id: attachment.hash,
-      fit: 'contain'
+      fit: 'keep'
     };
   } else {
     props.fill!.image = {
       url: image,
-      fit: 'contain'
+      fit: 'keep'
     };
   }
 
-  return new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props, metadata, texts);
+  props.custom.drawioImage.backgroundColor = style.imageBackground;
+  // @ts-ignore
+  props.custom.drawioImage.imageAlign =
+    style.imageAlign ?? defaults[stylename].imageAlign ?? defaults.default.imageAlign;
+  // @ts-ignore
+  props.custom.drawioImage.imageValign =
+    style.imageVerticalAlign ?? defaults[stylename].imageValign ?? defaults.default.imageValign;
+
+  const node = new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props, metadata, texts);
+
+  // Determine image size
+  queue.add(() => {
+    if (props.fill?.image?.url) {
+      const img = new Image();
+      img.onload = () => {
+        UnitOfWork.execute(
+          diagram,
+          uow => {
+            node.updateProps(props => {
+              if (props.custom!.drawioImage!.imageWidth === '0') {
+                props.custom!.drawioImage!.imageWidth = img.width.toString();
+              }
+              if (props.custom!.drawioImage!.imageHeight === '0') {
+                props.custom!.drawioImage!.imageHeight = img.height.toString();
+              }
+
+              props.fill!.image!.w = img.width;
+              props.fill!.image!.h = img.height;
+            }, uow);
+          },
+          true
+        );
+      };
+      img.src = props.fill!.image!.url!;
+    }
+  });
+
+  return node;
 };
 
 export const parseRoundedRect = async (

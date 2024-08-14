@@ -79,7 +79,7 @@ const drawioBuiltinShapes: Partial<Record<string, string>> = {
 
 export type Style = Partial<Record<string, string>>;
 
-class WorkQueue {
+export class WorkQueue {
   queue: [Array<() => void>, Array<() => void>] = [[], []];
 
   add(work: () => void, priority: 0 | 1 = 0) {
@@ -100,7 +100,8 @@ export type ShapeParser = (
   texts: NodeTexts,
   style: Style,
   diagram: Diagram,
-  layer: Layer
+  layer: Layer,
+  queue: WorkQueue
 ) => Promise<DiagramNode>;
 
 export const shapeParsers: Record<string, ShapeParser> = {
@@ -190,6 +191,9 @@ const parseStyle = (style: string) => {
   for (const part of parts) {
     const [key, ...value] = part.split('=');
     result[key] = value.join('=');
+    if (value.length === 0) {
+      result[`_${key}`] = '';
+    }
   }
   return result;
 };
@@ -926,7 +930,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         let node: DiagramNode;
         if (style.shape === 'table' || style.shape === 'tableRow') {
           const parser = getParser(style.shape!)!;
-          node = await parser(id, bounds, props, metadata, texts, style, diagram, layer);
+          node = await parser(id, bounds, props, metadata, texts, style, diagram, layer, queue);
           nodes.push(node);
           // TODO: Support more than stackLayout
         } else if ('swimlane' in style && style.childLayout === 'stackLayout') {
@@ -951,7 +955,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 texts,
                 style,
                 diagram,
-                layer
+                layer,
+                queue
               );
             } else if (style.shape?.startsWith('mxgraph.')) {
               const registry = diagram.document.nodeDefinitions;
@@ -979,7 +984,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   texts,
                   style,
                   diagram,
-                  layer
+                  layer,
+                  queue
                 );
               } else {
                 bgNode = new DiagramNode(
@@ -1037,7 +1043,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       } else if ('triangle' in style) {
         nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, diagram, layer));
       } else if ('image' in style) {
-        nodes.push(await parseImage(id, bounds, props, metadata, texts, style, diagram, layer));
+        nodes.push(
+          await parseImage(id, bounds, props, metadata, texts, style, diagram, layer, queue)
+        );
       } else if ('line' in style) {
         nodes.push(await parseLine(id, bounds, props, metadata, texts, style, diagram, layer));
       } else if (style.shape! in shapeParsers) {
@@ -1050,7 +1058,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             texts,
             style,
             diagram,
-            layer
+            layer,
+            queue
           )
         );
       } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
@@ -1104,7 +1113,9 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         const parser = getParser(style.shape!);
         if (parser) {
-          nodes.push(await parser(id, newBounds, props, metadata, texts, style, diagram, layer));
+          nodes.push(
+            await parser(id, newBounds, props, metadata, texts, style, diagram, layer, queue)
+          );
         } else {
           nodes.push(
             new DiagramNode(id, style.shape!, newBounds, diagram, layer, props, metadata, texts)

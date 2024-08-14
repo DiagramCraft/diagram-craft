@@ -27,21 +27,16 @@ import { Metrics } from '@diagram-craft/utils/metrics';
 
 declare global {
   interface CustomNodeProps {
-    // TODO: We should split this in shapeDrawio and shapeDrawioImage
     drawio?: {
       shape?: string;
       textPosition?: '' | 'center' | 'bottom' | 'right';
-      imageWidth?: number;
-      imageHeight?: number;
     };
   }
 }
 
 registerCustomNodeDefaults('drawio', {
   shape: '',
-  textPosition: '',
-  imageHeight: 0,
-  imageWidth: 0
+  textPosition: ''
 });
 
 const makeShapeTransform =
