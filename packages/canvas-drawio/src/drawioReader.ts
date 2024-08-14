@@ -718,6 +718,24 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         texts.text = $parent.getAttribute('label') ?? '';
       }
 
+      // We don't support label styles natively, so simulate using a wrapping span. Note, we only do this in case the
+      // text itself is not an HTML formatted
+      if (
+        !texts.text.startsWith('<') &&
+        texts.text !== '' &&
+        ((!!style.labelBackgroundColor && style.labelBackgroundColor !== 'none') ||
+          (!!style.labelBorderColor && style.labelBorderColor !== 'none'))
+      ) {
+        const s: string[] = [];
+        if (!!style.labelBackgroundColor && style.labelBackgroundColor !== 'none')
+          s.push(`background-color: ${style.labelBackgroundColor}`);
+        if (!!style.labelBorderColor && style.labelBorderColor !== 'none')
+          s.push(`border: 1px solid ${style.labelBorderColor}`);
+        if (s.length > 0) {
+          texts.text = `<span style="${s.join(';')}">${texts.text}</span>`;
+        }
+      }
+
       if ('rotation' in style) {
         bounds.r = Angle.toRad(parseNum(style.rotation, 0));
       }
