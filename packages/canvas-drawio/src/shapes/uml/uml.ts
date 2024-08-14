@@ -7,7 +7,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
-import { shapeParsers, Style } from '../../drawioReader';
+import { shapeParsers } from '../../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
@@ -24,6 +24,7 @@ import { UmlEntity } from './umlEntity.nodeType';
 import { UmlFrame } from './umlFrame.nodeType';
 import { ProvidedRequiredInterface } from './providedRequiredInterface.nodeType';
 import { RequiredInterface } from './requiredInterface.nodeType';
+import { StyleManager } from '../../styleManager';
 
 export const parseUMLShapes = async (
   id: string,
@@ -31,24 +32,24 @@ export const parseUMLShapes = async (
   props: NodeProps,
   metadata: ElementMetadata,
   texts: NodeTexts,
-  style: Style,
+  style: StyleManager,
   diagram: Diagram,
   layer: Layer
 ) => {
   props.custom ??= {};
-  if (style.shape === 'module' || style.shape === 'component') {
+  if (style.get('shape') === 'module' || style.get('shape') === 'component') {
     props.custom.umlModule = {
-      jettyWidth: parseNum(style.jettyWidth, 20),
-      jettyHeight: parseNum(style.jettyHeight, 10)
+      jettyWidth: parseNum(style.get('jettyWidth'), 20),
+      jettyHeight: parseNum(style.get('jettyHeight'), 10)
     };
     return new DiagramNode(id, 'module', bounds, diagram, layer, props, {});
-  } else if (style.shape === 'umlLifeline') {
+  } else if (style.get('shape') === 'umlLifeline') {
     props.custom.umlLifeline = {
-      participant: style.participant
+      participant: style.get('participant')
     };
   }
 
-  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata, texts);
+  return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata, texts);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {

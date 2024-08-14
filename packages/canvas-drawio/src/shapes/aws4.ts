@@ -6,7 +6,7 @@ import {
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import { ShapeParser, Style } from '../drawioReader';
+import { ShapeParser } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
@@ -14,6 +14,7 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { StyleManager } from '../styleManager';
 
 const stencilDimensions = new Map<string, Extent>();
 
@@ -36,7 +37,7 @@ export const parseAWS4Shapes = async (
   props: NodeProps,
   metadata: ElementMetadata,
   texts: NodeTexts,
-  style: Style,
+  style: StyleManager,
   diagram: Diagram,
   layer: Layer
 ): Promise<DiagramNode> => {
@@ -44,10 +45,10 @@ export const parseAWS4Shapes = async (
 
   props.custom ??= {};
 
-  if (style.shape === 'mxgraph.aws4.resourceIcon') {
+  if (style.get('shape') === 'mxgraph.aws4.resourceIcon') {
     const MARGIN = 0.1;
 
-    const dim = stencilDimensions.get(style!.resIcon!)!;
+    const dim = stencilDimensions.get(style!.get('resIcon')!)!;
 
     let fgBounds: Box;
     if (dim.h > dim.w) {
@@ -62,7 +63,7 @@ export const parseAWS4Shapes = async (
     props.custom.flex.components = [
       {
         id: 'icon',
-        nodeType: style!.resIcon!,
+        nodeType: style!.get('resIcon')!,
         bounds: fgBounds,
         props: {
           fill: {
@@ -83,8 +84,11 @@ export const parseAWS4Shapes = async (
       metadata,
       texts
     );
-  } else if (style.shape === 'mxgraph.aws4.group' || style.shape === 'mxgraph.aws4.groupCenter') {
-    if (style.grStroke === '0') {
+  } else if (
+    style.get('shape') === 'mxgraph.aws4.group' ||
+    style.get('shape') === 'mxgraph.aws4.groupCenter'
+  ) {
+    if (style.get('grStroke') === '0') {
       props.stroke = { enabled: false };
     }
 
@@ -92,7 +96,7 @@ export const parseAWS4Shapes = async (
     props.custom.flex.components = [
       {
         id: 'icon',
-        nodeType: style!.grIcon!,
+        nodeType: style!.get('grIcon')!,
         props: {
           fill: {
             color: fg,
@@ -102,15 +106,15 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, style.shape, bounds, diagram, layer, props, metadata, texts);
+    return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata, texts);
   }
 
-  if (style.shape?.includes('illustration')) {
+  if (style.get('shape')?.includes('illustration')) {
     props.custom.drawio ??= {};
     props.custom.drawio!.textPosition = 'bottom';
   }
 
-  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata);
+  return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata);
 };
 
 export const registerAWS4Shapes = async (

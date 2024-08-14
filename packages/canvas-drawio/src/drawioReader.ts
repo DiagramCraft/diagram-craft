@@ -71,13 +71,12 @@ import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
 import { registerUMLShapes } from './shapes/uml/uml';
 import { registerAndroidShapes } from './shapes/android/android';
+import { Style, StyleManager } from './styleManager';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
     'stencil(tZPtDoIgFIavhv8IZv1tVveBSsm0cPjZ3QeCNlBytbU5tvc8x8N74ABwXOekogDBHOATQCiAUK5S944mdUXTRgc7IhhJSqpJ3Qhe0J5ljanBHjkVrFEUnwE8yhz14TghaXETvH1kDgDo4mVXLugKmHBF1LYLMOE771R3g3Zmenk6vcntP5RIW6FrBHYRIyOjB2RjI8MJY613E8c2/85DsLdNhI6JmdumfCZ+8nDAtgfHwoz/exAQbpwEdC4kcny8E9zAhpOS19SbNc60ZzblTLOy1M9mpcD462Lqx6h+rGPgBQ==)'
 };
-
-export type Style = Partial<Record<string, string>>;
 
 export class WorkQueue {
   queue: [Array<() => void>, Array<() => void>] = [[], []];
@@ -98,7 +97,7 @@ export type ShapeParser = (
   props: NodeProps,
   metadata: ElementMetadata,
   texts: NodeTexts,
-  style: Style,
+  style: StyleManager,
   diagram: Diagram,
   layer: Layer,
   queue: WorkQueue
@@ -930,11 +929,30 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         let node: DiagramNode;
         if (style.shape === 'table' || style.shape === 'tableRow') {
           const parser = getParser(style.shape!)!;
-          node = await parser(id, bounds, props, metadata, texts, style, diagram, layer, queue);
+          node = await parser(
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            new StyleManager(style),
+            diagram,
+            layer,
+            queue
+          );
           nodes.push(node);
           // TODO: Support more than stackLayout
         } else if ('swimlane' in style && style.childLayout === 'stackLayout') {
-          node = await parseSwimlane(id, bounds, props, metadata, texts, style, diagram, layer);
+          node = await parseSwimlane(
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            new StyleManager(style),
+            diagram,
+            layer
+          );
           nodes.push(node);
         } else {
           node = new DiagramNode(id, 'group', bounds, diagram, layer, props, metadata, texts);
@@ -953,7 +971,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 props,
                 metadata,
                 texts,
-                style,
+                new StyleManager(style),
                 diagram,
                 layer,
                 queue
@@ -982,7 +1000,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   props,
                   metadata,
                   texts,
-                  style,
+                  new StyleManager(style),
                   diagram,
                   layer,
                   queue
@@ -1041,13 +1059,45 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         parents.set(id, node);
       } else if ('triangle' in style) {
-        nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, diagram, layer));
+        nodes.push(
+          await parseTriangle(
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            new StyleManager(style),
+            diagram,
+            layer
+          )
+        );
       } else if ('image' in style) {
         nodes.push(
-          await parseImage(id, bounds, props, metadata, texts, style, diagram, layer, queue)
+          await parseImage(
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            new StyleManager(style),
+            diagram,
+            layer,
+            queue
+          )
         );
       } else if ('line' in style) {
-        nodes.push(await parseLine(id, bounds, props, metadata, texts, style, diagram, layer));
+        nodes.push(
+          await parseLine(
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            new StyleManager(style),
+            diagram,
+            layer
+          )
+        );
       } else if (style.shape! in shapeParsers) {
         nodes.push(
           await shapeParsers[style.shape!](
@@ -1056,7 +1106,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             props,
             metadata,
             texts,
-            style,
+            new StyleManager(style),
             diagram,
             layer,
             queue
@@ -1114,7 +1164,17 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         const parser = getParser(style.shape!);
         if (parser) {
           nodes.push(
-            await parser(id, newBounds, props, metadata, texts, style, diagram, layer, queue)
+            await parser(
+              id,
+              newBounds,
+              props,
+              metadata,
+              texts,
+              new StyleManager(style),
+              diagram,
+              layer,
+              queue
+            )
           );
         } else {
           nodes.push(
@@ -1122,13 +1182,44 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           );
         }
       } else if ('ellipse' in style) {
-        nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, diagram, layer));
+        nodes.push(
+          await parseEllipse(
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            new StyleManager(style),
+            diagram,
+            layer
+          )
+        );
       } else if ('rhombus' in style) {
-        nodes.push(await parseDiamond(id, bounds, props, metadata, texts, style, diagram, layer));
+        nodes.push(
+          await parseDiamond(
+            id,
+            bounds,
+            props,
+            metadata,
+            texts,
+            new StyleManager(style),
+            diagram,
+            layer
+          )
+        );
       } else {
         if (style.rounded === '1') {
           nodes.push(
-            await parseRoundedRect(id, bounds, props, metadata, texts, style, diagram, layer)
+            await parseRoundedRect(
+              id,
+              bounds,
+              props,
+              metadata,
+              texts,
+              new StyleManager(style),
+              diagram,
+              layer
+            )
           );
         } else {
           nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts));

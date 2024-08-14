@@ -6,11 +6,12 @@ import {
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import { ShapeParser, Style } from '../drawioReader';
+import { ShapeParser } from '../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { StyleManager } from '../styleManager';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -30,15 +31,15 @@ export const parseCisco19Shapes = async (
   props: NodeProps,
   metadata: ElementMetadata,
   texts: NodeTexts,
-  style: Style,
+  style: StyleManager,
   diagram: Diagram,
   layer: Layer
 ): Promise<DiagramNode> => {
-  if (style.shape === 'mxgraph.cisco19.rect') {
+  if (style.get('shape') === 'mxgraph.cisco19.rect') {
     props.fill!.color = '#005073';
     return new DiagramNode(
       id,
-      'mxgraph.cisco19.' + style.prIcon,
+      'mxgraph.cisco19.' + style.get('prIcon'),
       bounds,
       diagram,
       layer,
@@ -47,7 +48,7 @@ export const parseCisco19Shapes = async (
     );
   }
 
-  return new DiagramNode(id, style.shape!, bounds, diagram, layer, props, metadata, texts);
+  return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata, texts);
 };
 
 export const registerCisco19Shapes = async (
