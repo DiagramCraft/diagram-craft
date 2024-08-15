@@ -55,6 +55,7 @@ type BooleanKey =
   | 'absoluteArcSize';
 type NumKey =
   | '_margin'
+  | 'textOpacity'
   | 'arcSize'
   | 'exitX'
   | 'exitY'

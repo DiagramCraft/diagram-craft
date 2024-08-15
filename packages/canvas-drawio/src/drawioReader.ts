@@ -720,6 +720,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           s.push(`background-color: ${style.str('labelBackgroundColor')}`);
         if (style.str('labelBorderColor', 'none') !== 'none')
           s.push(`border: 1px solid ${style.str('labelBorderColor')}`);
+        if (style.num('textOpacity', 100) !== 100) {
+          s.push(
+            `color: color-mix(in srgb, ${style.str('fontColor')}, transparent ${100 - style.num('textOpacity', 100)}%)`
+          );
+        }
         if (s.length > 0) {
           texts.text = `<span style="${s.join(';')}">${texts.text}</span>`;
         }
