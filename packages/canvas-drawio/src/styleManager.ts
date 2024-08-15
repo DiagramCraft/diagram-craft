@@ -115,7 +115,7 @@ export class StyleManager {
       align: 'center',
       verticalAlign: 'middle',
       overflow: 'visible',
-      whiteSpace: 'wrap'
+      whiteSpace: 'noWrap'
     },
     image: {
       _margin: '0',
