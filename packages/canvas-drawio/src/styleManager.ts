@@ -1,11 +1,98 @@
-import { assert } from '@diagram-craft/utils/assert';
+import { parseNum } from './utils';
 
-export type Style = Partial<Record<string, string>>;
+type Style = Partial<Record<string, string>>;
+
+const STYLENAME_KEY = '_stylename';
+
+type StringKey =
+  | '_textPosition'
+  | 'labelPosition'
+  | 'fontFamily'
+  | 'align'
+  | 'verticalAlign'
+  | 'fontColor'
+  | 'fillColor'
+  | 'shape'
+  | 'fontStyle'
+  | 'gradientColor'
+  | 'gradientDirection'
+  | 'strokeColor'
+  | 'dashPattern'
+  | 'labelBackgroundColor'
+  | 'labelBorderColor'
+  | 'endArrow'
+  | 'edgeStyle'
+  | 'childLayout'
+  | 'image'
+  | 'direction'
+  | 'resIcon'
+  | 'grStroke'
+  | 'grIcon'
+  | 'prIcon'
+  | 'label'
+  | 'imageHeight'
+  | 'imageWidth'
+  | 'imageBorder'
+  | 'imageBackground'
+  | 'imageAlign'
+  | 'imageVerticalAlign'
+  | 'participant';
+type BooleanKey =
+  | 'rounded'
+  | 'shadow'
+  | 'flipH'
+  | 'flipV'
+  | 'sketch'
+  | 'dashed'
+  | 'curved'
+  | 'top'
+  | 'left'
+  | 'right'
+  | 'bottom'
+  | 'imageAspect'
+  | 'imageFlipV'
+  | 'imageFlipH'
+  | 'absoluteArcSize';
+type NumKey =
+  | '_margin'
+  | 'arcSize'
+  | 'exitX'
+  | 'exitY'
+  | 'exitDx'
+  | 'exitDy'
+  | 'entryX'
+  | 'entryY'
+  | 'entryDx'
+  | 'entryDy'
+  | 'fontSize'
+  | 'spacingTop'
+  | 'spacingBottom'
+  | 'spacing'
+  | 'spacingRight'
+  | 'spacingLeft'
+  | 'opacity'
+  | 'strokeWidth'
+  | 'rotation'
+  | 'width'
+  | 'endWidth'
+  | 'endSize'
+  | 'dx1'
+  | 'dx2'
+  | 'dy'
+  | 'dx'
+  | 'size'
+  | 'startSize'
+  | 'arcWidth'
+  | 'endAngle'
+  | 'startAngle'
+  | 'notch'
+  | 'jettyHeight'
+  | 'jettyWidth';
 
 export class StyleManager {
-  defaults = {
+  defaults: Partial<Record<string, Style>> & { default: Style } = {
     image: {
-      _margin: 0,
+      _margin: '0',
       _textPosition: 'bottom',
       imageWidth: '100%',
       imageHeight: '100%',
@@ -13,15 +100,22 @@ export class StyleManager {
       imageValign: 'middle'
     },
     default: {
-      _margin: 0,
+      _margin: '0',
       _textPosition: 'bottom',
       imageWidth: '100%',
       imageHeight: '100%',
       imageAlign: 'left',
-      imageValign: 'middle'
+      imageValign: 'middle',
+      spacing: '2',
+      spacingLeft: '0',
+      spacingRight: '0',
+      spacingTop: '5',
+      spacingBottom: '5',
+      align: 'center',
+      verticalAlign: 'middle'
     },
     label: {
-      _margin: 8,
+      _margin: '8',
       _textPosition: 'center',
       imageWidth: '42',
       imageHeight: '42',
@@ -29,27 +123,64 @@ export class StyleManager {
       imageValign: 'middle'
     },
     icon: {
-      _margin: 0,
+      _margin: '0',
       _textPosition: 'bottom',
       imageWidth: '48',
       imageHeight: '48',
       imageAlign: 'center',
       imageValign: 'middle'
+    },
+    text: {
+      spacingTop: '0',
+      spacingBottom: '0',
+      align: 'left',
+      verticalAlign: 'top'
     }
   };
-  private stylename: string;
+  styleName: string;
+  shape: string | undefined;
+  styles: Style;
 
-  constructor(private readonly styles: Style) {
-    // TODO: More robust way to determine this
-    const styleNames = Object.keys(styles).filter(a => a.startsWith('_') && a !== '_');
-    assert.true(styleNames.length <= 1);
-    this.stylename = styleNames[0]?.slice(1) ?? 'default';
+  constructor(styleString: string) {
+    this.styles = this.parseStyle(styleString);
+    this.styleName = this.styles[STYLENAME_KEY] ?? 'default';
+
+    this.shape = this.get('shape');
+  }
+
+  private parseStyle(style: string) {
+    const parts = style.split(';');
+    const result: Style = {};
+    for (const part of parts) {
+      const [key, ...value] = part.split('=');
+      if (key === '') continue;
+
+      result[key] = value.join('=');
+
+      if (value.length === 0) {
+        result[STYLENAME_KEY] = key;
+      }
+    }
+    return result;
+  }
+
+  is(key: BooleanKey, def: boolean = false) {
+    return !this.has(key) ? def : this.get(key) === '1';
+  }
+
+  str(key: StringKey): string | undefined;
+  str(key: StringKey, def: string): string;
+  str(key: StringKey, def?: string | undefined): string | undefined {
+    return this.get(key) ?? def;
+  }
+
+  num(key: NumKey, def = 0) {
+    return parseNum(this.get(key), def);
   }
 
   get(key: string) {
     return (
-      // @ts-ignore
-      this.styles[key] ?? this.defaults[this.stylename]?.[key] ?? this.defaults['default'][key]
+      this.styles[key] ?? this.defaults[this.styleName]?.[key] ?? this.defaults['default'][key]
     );
   }
 
@@ -57,7 +188,8 @@ export class StyleManager {
     this.styles[key] = value;
   }
 
-  has(key: string) {
-    return key in this.styles;
+  // TODO: This is a bad implementation
+  has(key: StringKey | BooleanKey | NumKey) {
+    return /*this.get(key) !== undefined; // */ key in this.styles;
   }
 }

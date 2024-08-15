@@ -11,7 +11,6 @@ import { shapeParsers } from '../../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
-import { parseNum } from '../../utils';
 import { deepMerge } from '@diagram-craft/utils/object';
 import stencils from './uml.yaml';
 import { UmlLifeline } from './umlLifeline.nodeType';
@@ -37,19 +36,19 @@ export const parseUMLShapes = async (
   layer: Layer
 ) => {
   props.custom ??= {};
-  if (style.get('shape') === 'module' || style.get('shape') === 'component') {
+  if (style.str('shape') === 'module' || style.str('shape') === 'component') {
     props.custom.umlModule = {
-      jettyWidth: parseNum(style.get('jettyWidth'), 20),
-      jettyHeight: parseNum(style.get('jettyHeight'), 10)
+      jettyWidth: style.num('jettyWidth', 20),
+      jettyHeight: style.num('jettyHeight', 10)
     };
     return new DiagramNode(id, 'module', bounds, diagram, layer, props, {});
-  } else if (style.get('shape') === 'umlLifeline') {
+  } else if (style.str('shape') === 'umlLifeline') {
     props.custom.umlLifeline = {
-      participant: style.get('participant')
+      participant: style.str('participant')
     };
   }
 
-  return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata, texts);
+  return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {

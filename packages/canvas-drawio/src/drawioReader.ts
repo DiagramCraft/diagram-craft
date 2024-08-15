@@ -9,7 +9,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
-import { Point } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
@@ -71,7 +71,9 @@ import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
 import { registerUMLShapes } from './shapes/uml/uml';
 import { registerAndroidShapes } from './shapes/android/android';
-import { Style, StyleManager } from './styleManager';
+import { StyleManager } from './styleManager';
+import { coalesce } from '@diagram-craft/utils/strings';
+import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -166,12 +168,8 @@ const loaders: Array<[RegExp, Loader]> = [
 ];
 
 const getLoader = (shape: string | undefined): Loader | undefined => {
-  for (const [r, fn] of loaders) {
-    if (shape?.match(r)) {
-      return fn;
-    }
-  }
-  return undefined;
+  if (!shape) return undefined;
+  return loaders.find(([r]) => shape.match(r))?.[1];
 };
 
 const load = async (
@@ -184,35 +182,22 @@ const load = async (
   alreadyLoaded.add(loader);
 };
 
-const parseStyle = (style: string) => {
-  const parts = style.split(';');
-  const result: Style = {};
-  for (const part of parts) {
-    const [key, ...value] = part.split('=');
-    result[key] = value.join('=');
-    if (value.length === 0) {
-      result[`_${key}`] = '';
-    }
-  }
-  return result;
-};
-
-const parseShape = (shape: string | undefined) => {
-  if (getParser(shape)) return undefined;
-
-  if (getLoader(shape)) return undefined;
-
-  // TODO: Are these still needed
-  if (shape === 'mxgraph.basic.rect') return undefined;
-  if (shape === 'circle3') return undefined;
-  if (shape === 'flexArrow') return undefined;
-
+const parseStencil = (shape: string | undefined) => {
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
-    console.warn(`Unsupported shape ${shape}`);
-    return undefined;
+    if (getParser(shape) || getLoader(shape)) {
+      return undefined;
+    } else {
+      console.warn(`Unsupported shape ${shape}`);
+      return undefined;
+    }
   }
+
+  // TODO: Are these still needed
+  //if (shape === 'mxgraph.basic.rect') return undefined;
+  //if (shape === 'circle3') return undefined;
+  //if (shape === 'flexArrow') return undefined;
 
   return /^stencil\(([^)]+)\)$/.exec(shape)![1];
 };
@@ -264,10 +249,10 @@ const arrows: Record<string, keyof typeof ARROW_SHAPES> = {
   'manyOptional-outline': 'CROWS_FEET_BALL'
 };
 
-const parseEdgeArrow = (t: 'start' | 'end', style: Style, props: EdgeProps & NodeProps) => {
-  let type = style[`${t}Arrow`];
-  const size = style[`${t}Size`];
-  const fill = style[`${t}Fill`];
+const parseEdgeArrow = (t: 'start' | 'end', style: StyleManager, props: EdgeProps & NodeProps) => {
+  let type = style.get(`${t}Arrow`);
+  const size = style.get(`${t}Size`);
+  const fill = style.get(`${t}Fill`);
 
   if (type && type !== 'none') {
     if (fill === '0') {
@@ -324,7 +309,7 @@ const hasValue = (value: string | undefined | null): value is string => {
 };
 
 const calculateLabelNodeActualSize = (
-  style: Style,
+  style: StyleManager,
   textNode: DiagramNode,
   value: string,
   uow: UnitOfWork
@@ -338,8 +323,8 @@ const calculateLabelNodeActualSize = (
 
   const css: string[] = [];
 
-  css.push('font-size: ' + parseNum(style.fontSize, 12) + 'px');
-  css.push('font-family: ' + (style.fontFamily ?? 'Helvetica'));
+  css.push('font-size: ' + style.num('fontSize', 12) + 'px');
+  css.push('font-family: ' + (style.str('fontFamily') ?? 'Helvetica'));
   css.push('direction: ltr');
   css.push('line-height: 120%');
   css.push('color: black');
@@ -389,9 +374,7 @@ const createLabelNode = (
       }
     },
     {},
-    {
-      text
-    }
+    { text }
   );
 
   // Add text node to any parent group
@@ -463,84 +446,85 @@ const attachLabelNode = (
   );
 };
 
-const getNodeProps = (style: Style, isEdge: boolean) => {
-  // NOTE: test6.drawio suggests this should be center
-  const align = style.align ?? 'center';
+const getNodeProps = (style: StyleManager, isEdge: boolean) => {
+  const align = style.str('align');
   assertHAlign(align);
 
-  const valign = style.verticalAlign ?? 'middle';
+  const valign = style.str('verticalAlign');
   assertVAlign(valign);
 
   const props: NodeProps = {
     text: {
-      fontSize: parseNum(style.fontSize, isEdge ? 11 : 12),
-      font: style.fontFamily ?? 'Helvetica',
-      color: style.fontColor ?? 'black',
+      fontSize: style.num('fontSize', isEdge ? 11 : 12),
+      font: style.str('fontFamily', 'Helvetica'),
+      color: style.str('fontColor', 'black'),
       lineHeight: 0.97,
 
-      // Note: It seems some needs a default spacing of 5 (e.g. aws2024 / groups)
-      //       ... and some need a spacing of 0 (need to get which one)
-      top: parseNum(style.spacingTop, 'text' in style ? 0 : 5) + parseNum(style.spacing, 2),
-      bottom: parseNum(style.spacingBottom, 'text' in style ? 0 : 5) + parseNum(style.spacing, 2),
+      top: style.num('spacingTop') + style.num('spacing'),
+      bottom: style.num('spacingBottom') + style.num('spacing'),
 
-      left: parseNum(style.spacingLeft, 0) + parseNum(style.spacing, 2),
-      right: parseNum(style.spacingRight, 0) + parseNum(style.spacing, 2),
+      left: style.num('spacingLeft') + style.num('spacing'),
+      right: style.num('spacingRight') + style.num('spacing'),
       align: align,
       valign: valign
     },
     fill: {
-      color: style.fillColor ?? 'white'
+      color: style.str('fillColor', 'white')
     },
     geometry: {
       // Not sure checking if the object has a shape is correct
       // This is a workaround as flipping a shape doesn't flip the text?
-      flipH: 'shape' in style && style.flipH === '1',
-      flipV: 'shape' in style && style.flipV === '1'
+      flipH: style.has('shape') && style.is('flipH'),
+      flipV: style.has('shape') && style.is('flipV')
     }
   };
 
   if (props.text!.color === '#') props.text!.color = 'black';
 
-  if (style.fontStyle === '1') {
+  if (style.str('fontStyle') === '1') {
     props.text!.bold = true;
-  } else if (style.fontStyle === '2') {
+  } else if (style.str('fontStyle') === '2') {
     props.text!.italic = true;
-  } else if (style.fontStyle === '3') {
+  } else if (style.str('fontStyle') === '3') {
     props.text!.bold = true;
     props.text!.italic = true;
-  } else if (style.fontStyle === '4') {
+  } else if (style.str('fontStyle') === '4') {
     props.text!.textDecoration = 'underline';
   }
 
-  if (style.gradientColor && style.gradientColor !== 'none' && style.gradientColor !== 'inherit') {
+  if (
+    style.has('gradientColor') &&
+    style.str('gradientColor') !== 'none' &&
+    style.str('gradientColor') !== 'inherit'
+  ) {
     props.fill!.type = 'gradient';
-    props.fill!.color2 = style.gradientColor;
+    props.fill!.color2 = style.str('gradientColor');
     props.fill!.gradient = {
       type: 'linear',
-      direction: angleFromDirection(style.gradientDirection ?? 'south')
+      direction: angleFromDirection(style.str('gradientDirection') ?? 'south')
     };
   }
 
-  if (style.opacity && style.opacity !== '100') {
+  if (style.num('opacity', 100) !== 100) {
     props.effects ??= {};
-    props.effects.opacity = parseNum(style.opacity, 100) / 100;
+    props.effects.opacity = style.num('opacity', 100) / 100;
   }
 
-  if (style.sketch === '1') {
+  if (style.is('sketch')) {
     props.effects ??= {};
     props.effects.sketch = true;
     props.effects.sketchFillType = 'hachure';
   }
 
   props.stroke = {
-    color: style.strokeColor,
-    width: parseNum(style.strokeWidth, 1)
+    color: style.str('strokeColor'),
+    width: style.num('strokeWidth', 1)
   };
 
-  if (style.dashed === '1') {
-    const pattern = style.dashPattern ?? '4 4';
+  if (style.is('dashed')) {
+    const pattern: string = style.str('dashPattern') ?? '4 4';
     const [baseSize, baseGap] = pattern.split(' ').map(s => parseNum(s, 4));
-    const strokeWidth = parseNum(style.strokeWidth, 1);
+    const strokeWidth = style.num('strokeWidth', 1);
 
     props.stroke.pattern = 'DASHED';
     props.stroke.patternSpacing = baseGap * 10 * strokeWidth;
@@ -548,14 +532,13 @@ const getNodeProps = (style: Style, isEdge: boolean) => {
     props.stroke.lineCap = 'butt';
   }
 
-  // TODO: This is a bit ugly - need to fix
-  if (style.rounded === '1' && style.shape !== 'mxgraph.android.rect') {
+  if (style.is('rounded')) {
     props.effects ??= {};
     props.effects.rounding = true;
-    if (style.arcSize) props.effects.roundingAmount = parseNum(style.arcSize, 1);
+    props.effects.roundingAmount = style.num('arcSize', nodeDefaults.effects.roundingAmount);
   }
 
-  if (style.shadow === '1') {
+  if (style.is('shadow')) {
     props.shadow = {
       enabled: true,
       color: '#999999',
@@ -565,7 +548,8 @@ const getNodeProps = (style: Style, isEdge: boolean) => {
     };
   }
 
-  if (style.labelPosition === 'right') {
+  // TODO: This should not be in here
+  if (style.str('labelPosition') === 'right') {
     props.custom ??= {};
     props.custom.drawio ??= {};
     props.custom.drawio.textPosition = 'right';
@@ -574,23 +558,20 @@ const getNodeProps = (style: Style, isEdge: boolean) => {
   return props;
 };
 
-const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOfWork) => {
+const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow: UnitOfWork) => {
   const diagram = edge.diagram;
 
   const source = $cell.getAttribute('source')!;
   if (source) {
     const sourceNode = diagram.nodeLookup.get(source);
     if (sourceNode) {
-      const defaultPoint = Point.of(0.5, 0.5);
-
-      const x = parseNum(style.exitX, defaultPoint.x);
-      const y = parseNum(style.exitY, defaultPoint.y);
-
-      const dx = parseNum(style.exitDx, 0);
-      const dy = parseNum(style.exitDy, 0);
-
       edge.setStart(
-        new PointInNodeEndpoint(sourceNode, { x: x, y: y }, { x: dx, y: dy }, 'absolute'),
+        new PointInNodeEndpoint(
+          sourceNode,
+          _p(style.num('exitX', 0.5), style.num('exitY', 0.5)),
+          _p(style.num('exitDx', 0), style.num('exitDy', 0)),
+          'absolute'
+        ),
         uow
       );
     }
@@ -600,15 +581,15 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: Style, uow: UnitOf
   if (target) {
     const targetNode = diagram.nodeLookup.get(target);
     if (targetNode) {
-      const defaultPoint = Point.of(0.5, 0.5);
-
-      const x = parseNum(style.entryX, defaultPoint.x);
-      const y = parseNum(style.entryY, defaultPoint.y);
-
-      const dx = parseNum(style.entryDx, 0);
-      const dy = parseNum(style.entryDy, 0);
-
-      edge.setEnd(new PointInNodeEndpoint(targetNode, { x, y }, { x: dx, y: dy }, 'absolute'), uow);
+      edge.setEnd(
+        new PointInNodeEndpoint(
+          targetNode,
+          _p(style.num('entryX', 0.5), style.num('entryY', 0.5)),
+          _p(style.num('entryDx', 0), style.num('entryDy', 0)),
+          'absolute'
+        ),
+        uow
+      );
     }
   }
 };
@@ -626,6 +607,20 @@ const readMetadata = ($parent: HTMLElement) => {
   return dest;
 };
 
+function* iterNodes(collection: HTMLCollectionOf<Element>) {
+  for (let i = 0; i < collection.length; i++) {
+    const $cell = collection.item(i)!;
+    if ($cell.nodeType !== Node.ELEMENT_NODE) continue;
+    yield $cell;
+  }
+}
+
+/**
+ * Naming convention for variables are:
+ *   - $$abc - collection of XML Elements
+ *   - $abc - XML element
+ *   - abc - regular value
+ */
 const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const alreadyLoaded = new Set<Loader>();
 
@@ -634,46 +629,41 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
   const parentChild = new Map<string, string[]>();
 
-  const $cells = $el.getElementsByTagName('root').item(0)!.getElementsByTagName('mxCell');
+  const $$cells = $el.getElementsByTagName('root').item(0)!.getElementsByTagName('mxCell');
 
-  const rootId = $cells.item(0)!.getAttribute('id')!;
+  const rootId = $$cells.item(0)!.getAttribute('id')!;
 
   // Phase 1 - Determine parent child relationships
-  for (let i = 0; i < $cells.length; i++) {
-    const $cell = $cells.item(i)!;
-    if ($cell.nodeType !== Node.ELEMENT_NODE) continue;
-
+  for (const $cell of iterNodes($$cells)) {
     const parent = $cell.getAttribute('parent')!;
-    if (parent !== '0') {
-      if (!parentChild.has(parent)) {
-        parentChild.set(parent, []);
-      }
-      if ($cell.getAttribute('style')?.startsWith('edgeLabel;')) continue;
+    if (parent !== rootId) {
+      // TODO: Replace with parsing of stylename
+      //.      Unclear if this is needed
+      //if ($cell.getAttribute('style')?.startsWith('edgeLabel;')) continue;
 
-      parentChild.get(parent)!.push($cell.getAttribute('id')!);
+      const id = $cell.getAttribute('id')!;
+      parentChild.set(parent, [...(parentChild.get(parent) ?? []), id]);
     }
   }
 
   // Phase 2 - process all objects
   const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
-  for (let i = 0; i < $cells.length; i++) {
-    const $cell = $cells.item(i)!;
-    if ($cell.nodeType !== Node.ELEMENT_NODE) continue;
-
+  for (const $cell of iterNodes($$cells)) {
     const $parent = $cell.parentElement!;
     const isWrappedByObject = $parent!.tagName === 'object' || $parent!.tagName === 'UserObject';
 
-    const parent = $cell.getAttribute('parent')!;
     const id =
       $cell.getAttribute('id')! ?? (isWrappedByObject ? $parent.getAttribute('id') : newid());
-    const value = $cell.getAttribute('value')!;
 
     // Ignore the root
     if (id === rootId) continue;
 
-    // is layer?
+    const parent = $cell.getAttribute('parent')!;
+    const value = $cell.getAttribute('value')!;
+
+    // is layer? - first level of elements constitutes layers
     if (parent === rootId) {
-      const layer = new Layer(id, value! === '' || !value ? 'Background' : value!, [], diagram);
+      const layer = new Layer(id, coalesce(value, 'Background')!, [], diagram);
       diagram.layers.add(layer, uow);
       if ($cell.getAttribute('visible') === '0') {
         diagram.layers.toggleVisibility(layer);
@@ -681,9 +671,13 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       parents.set(id, layer);
     } else {
+      const style = new StyleManager($cell.getAttribute('style')!);
+
       const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
       let bounds = MxGeometry.boundsFrom($geometry);
+      bounds.r = Angle.toRad(style.num('rotation', 0));
 
+      // TODO: Is parents used for groups or only layers
       let p = parents.get(parent);
       if (!p) {
         const parentNode = diagram.nodeLookup.get(parent);
@@ -704,9 +698,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       const layer = p instanceof Layer ? p : p!.layer;
 
-      const $style = $cell.getAttribute('style')!;
-      const style = parseStyle($style);
-
       const metadata: ElementMetadata = {};
 
       const props = getNodeProps(style, $cell.getAttribute('edge') === '1');
@@ -723,52 +714,34 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       // We don't support label styles natively, so simulate using a wrapping span. Note, we only do this in case the
       // text itself is not an HTML formatted
-      if (
-        !texts.text.startsWith('<') &&
-        texts.text !== '' &&
-        ((!!style.labelBackgroundColor && style.labelBackgroundColor !== 'none') ||
-          (!!style.labelBorderColor && style.labelBorderColor !== 'none'))
-      ) {
+      if (!texts.text.startsWith('<') && texts.text !== '') {
         const s: string[] = [];
-        if (!!style.labelBackgroundColor && style.labelBackgroundColor !== 'none')
-          s.push(`background-color: ${style.labelBackgroundColor}`);
-        if (!!style.labelBorderColor && style.labelBorderColor !== 'none')
-          s.push(`border: 1px solid ${style.labelBorderColor}`);
+        if (style.str('labelBackgroundColor', 'none') !== 'none')
+          s.push(`background-color: ${style.str('labelBackgroundColor')}`);
+        if (style.str('labelBorderColor', 'none') !== 'none')
+          s.push(`border: 1px solid ${style.str('labelBorderColor')}`);
         if (s.length > 0) {
           texts.text = `<span style="${s.join(';')}">${texts.text}</span>`;
         }
       }
 
-      if ('rotation' in style) {
-        bounds.r = Angle.toRad(parseNum(style.rotation, 0));
-      }
-
       const nodes: DiagramElement[] = [];
 
-      const shape = parseShape(drawioBuiltinShapes[style.shape!] ?? style.shape);
+      const stencil = parseStencil(drawioBuiltinShapes[style.shape!] ?? style.shape);
 
-      if (shape) {
+      if (stencil) {
         props.custom ??= {};
-        props.custom.drawio = { shape: btoa(await decode(shape)) };
+        props.custom.drawio = { shape: btoa(await decode(stencil)) };
         nodes.push(new DiagramNode(id, 'drawio', bounds, diagram, layer, props, metadata, texts));
-      } else if ($style.startsWith('text;')) {
-        if (!style.strokeColor || style.strokeColor === 'none') {
+      } else if (style.styleName == 'text') {
+        // TODO: We should be able to move these two to the global style parsing/conversion
+        if (style.str('strokeColor', 'none') === 'none') {
           props.stroke!.enabled = false;
         }
 
-        if (!style.fillColor || style.fillColor === 'none') {
+        if (style.str('fillColor', 'none') === 'none') {
           props.fill!.enabled = false;
         }
-
-        // There are different defaults for align and valign for a text node
-
-        const align = style.align ?? 'left';
-        assertHAlign(align);
-        props.text!.align = align;
-
-        const valign = style.verticalAlign ?? 'top';
-        assertVAlign(valign);
-        props.text!.valign = valign;
 
         nodes.push(
           new DiagramNode(
@@ -788,7 +761,11 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             texts
           )
         );
-      } else if ($style.startsWith('edgeLabel;')) {
+      } else if (style.styleName === 'image' || style.has('image')) {
+        nodes.push(
+          await parseImage(id, bounds, props, metadata, texts, style, diagram, layer, queue)
+        );
+      } else if (style.styleName === 'edgeLabel') {
         // Handle free-standing edge labels
         const edge = diagram.edgeLookup.get(parent);
         assert.present(edge);
@@ -801,6 +778,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
         queue.add(() => edge.invalidate(uow), 1);
+      } else if (style.styleName === 'triangle') {
+        nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, diagram, layer));
+      } else if (style.styleName === 'line') {
+        nodes.push(await parseLine(id, bounds, props, metadata, texts, style, diagram, layer));
       } else if ($cell.getAttribute('edge') === '1') {
         // Handle edge creation
 
@@ -819,7 +800,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
         // Note, apparently the lack of an arrow specified, means by default a
         // classic end arrow is assumed
-        if (!style.endArrow) style.endArrow = 'classic';
+        if (!style.has('endArrow')) style.set('endArrow', 'classic');
         parseEdgeArrow('end', style, props);
 
         const edgeProps = props as EdgeProps;
@@ -827,16 +808,16 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         edgeProps.stroke!.lineJoin = 'round';
 
         const isNonCurveEdgeStyle =
-          style.edgeStyle === 'orthogonalEdgeStyle' ||
-          style.edgeStyle === 'elbowEdgeStyle' ||
-          style.edgeStyle === 'isometricEdgeStyle' ||
-          style.edgeStyle === 'entityRelationEdgeStyle';
+          style.str('edgeStyle') === 'orthogonalEdgeStyle' ||
+          style.str('edgeStyle') === 'elbowEdgeStyle' ||
+          style.str('edgeStyle') === 'isometricEdgeStyle' ||
+          style.str('edgeStyle') === 'entityRelationEdgeStyle';
 
         if (isNonCurveEdgeStyle) {
           edgeProps.type = 'orthogonal';
         }
 
-        if (style.curved === '1') {
+        if (style.is('curved')) {
           if (isNonCurveEdgeStyle) {
             edgeProps.type = 'curved';
           } else {
@@ -848,19 +829,19 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           edgeProps.shape = 'BlockArrow';
           edgeProps.custom ??= {};
           edgeProps.custom.blockArrow = {
-            width: parseNum(style.width, 10),
-            arrowWidth: parseNum(style.width, 10) + parseNum(style.endWidth, 20),
-            arrowDepth: parseNum(style.endSize, 7) * 3
+            width: style.num('width', 10),
+            arrowWidth: style.num('width', 10) + style.num('endWidth', 20),
+            arrowDepth: style.num('endSize', 7) * 3
           };
           edgeProps.fill = {
-            color: style.fillColor ?? 'none'
+            color: style.str('fillColor') ?? 'none'
           };
           edgeProps.effects = {
-            opacity: style.opacity ? parseNum(style.opacity, 100) / 100 : 1
+            opacity: style.has('opacity') ? style.num('opacity', 100) / 100 : 1
           };
         }
 
-        if (style.rounded === '1') {
+        if (style.is('rounded')) {
           edgeProps.routing!.rounding = 10;
         }
 
@@ -914,7 +895,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         if (hasValue(value)) {
           props.stroke!.enabled = false;
 
-          const labelBg = style.labelBackgroundColor ?? 'transparent';
+          const labelBg = style.str('labelBackgroundColor') ?? 'transparent';
 
           const textNode = createLabelNode(`${id}-label`, edge, value, props, labelBg, uow);
           nodes.push(textNode);
@@ -923,44 +904,25 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
           queue.add(() => edge.invalidate(uow), 1);
         }
-      } else if (parentChild.has(id) || 'group' in style) {
+      } else if (parentChild.has(id) || style.styleName == 'group') {
         // Handle groups
 
         let node: DiagramNode;
         if (style.shape === 'table' || style.shape === 'tableRow') {
           const parser = getParser(style.shape!)!;
-          node = await parser(
-            id,
-            bounds,
-            props,
-            metadata,
-            texts,
-            new StyleManager(style),
-            diagram,
-            layer,
-            queue
-          );
+          node = await parser(id, bounds, props, metadata, texts, style, diagram, layer, queue);
           nodes.push(node);
           // TODO: Support more than stackLayout
-        } else if ('swimlane' in style && style.childLayout === 'stackLayout') {
-          node = await parseSwimlane(
-            id,
-            bounds,
-            props,
-            metadata,
-            texts,
-            new StyleManager(style),
-            diagram,
-            layer
-          );
+        } else if (style.styleName === 'swimlane' && style.str('childLayout') === 'stackLayout') {
+          node = await parseSwimlane(id, bounds, props, metadata, texts, style, diagram, layer);
           nodes.push(node);
         } else {
           node = new DiagramNode(id, 'group', bounds, diagram, layer, props, metadata, texts);
           nodes.push(node);
 
           if (
-            !('group' in style) &&
-            (style.fillColor || style.strokeColor || value || style.shape)
+            style.styleName != 'group' &&
+            (style.str('fillColor') || style.str('strokeColor') || value || style.shape)
           ) {
             // TODO: This is all a bit duplication - we should refactor this
             let bgNode: DiagramNode;
@@ -971,7 +933,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 props,
                 metadata,
                 texts,
-                new StyleManager(style),
+                style,
                 diagram,
                 layer,
                 queue
@@ -1000,7 +962,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                   props,
                   metadata,
                   texts,
-                  new StyleManager(style),
+                  style,
                   diagram,
                   layer,
                   queue
@@ -1018,7 +980,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                 );
               }
             } else {
-              if (style.rounded === '1') {
+              if (style.is('rounded')) {
                 bgNode = new DiagramNode(
                   newid(),
                   'rounded-rect',
@@ -1029,7 +991,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
                     ...props,
                     custom: {
                       roundedRect: {
-                        radius: parseNum(style.arcSize, 5)
+                        radius: style.num('arcSize', 5)
                       }
                     }
                   },
@@ -1058,46 +1020,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         parents.set(id, node);
-      } else if ('triangle' in style) {
-        nodes.push(
-          await parseTriangle(
-            id,
-            bounds,
-            props,
-            metadata,
-            texts,
-            new StyleManager(style),
-            diagram,
-            layer
-          )
-        );
-      } else if ('image' in style) {
-        nodes.push(
-          await parseImage(
-            id,
-            bounds,
-            props,
-            metadata,
-            texts,
-            new StyleManager(style),
-            diagram,
-            layer,
-            queue
-          )
-        );
-      } else if ('line' in style) {
-        nodes.push(
-          await parseLine(
-            id,
-            bounds,
-            props,
-            metadata,
-            texts,
-            new StyleManager(style),
-            diagram,
-            layer
-          )
-        );
       } else if (style.shape! in shapeParsers) {
         nodes.push(
           await shapeParsers[style.shape!](
@@ -1106,7 +1028,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             props,
             metadata,
             texts,
-            new StyleManager(style),
+            style,
             diagram,
             layer,
             queue
@@ -1127,7 +1049,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         let newBounds = { ...bounds };
-        if (style.direction === 'south') {
+        if (style.str('direction') === 'south') {
           const p = Point.rotateAround(
             Point.add(newBounds, { x: 0, y: newBounds.w }),
             Math.PI / 2,
@@ -1142,7 +1064,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             x: newBounds.x + (newBounds.x - p.x),
             y: newBounds.y + (newBounds.y - p.y)
           };
-        } else if (style.direction === 'north') {
+        } else if (style.str('direction') === 'north') {
           const p = Point.rotateAround(
             Point.add(newBounds, { x: newBounds.h, y: 0 }),
             -Math.PI / 2,
@@ -1157,69 +1079,28 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
             x: newBounds.x + (newBounds.x - p.x),
             y: newBounds.y + (newBounds.y - p.y)
           };
-        } else if (style.direction === 'west') {
+        } else if (style.str('direction') === 'west') {
           newBounds = { ...newBounds, r: Math.PI };
         }
 
         const parser = getParser(style.shape!);
         if (parser) {
           nodes.push(
-            await parser(
-              id,
-              newBounds,
-              props,
-              metadata,
-              texts,
-              new StyleManager(style),
-              diagram,
-              layer,
-              queue
-            )
+            await parser(id, newBounds, props, metadata, texts, style, diagram, layer, queue)
           );
         } else {
           nodes.push(
             new DiagramNode(id, style.shape!, newBounds, diagram, layer, props, metadata, texts)
           );
         }
-      } else if ('ellipse' in style) {
-        nodes.push(
-          await parseEllipse(
-            id,
-            bounds,
-            props,
-            metadata,
-            texts,
-            new StyleManager(style),
-            diagram,
-            layer
-          )
-        );
-      } else if ('rhombus' in style) {
-        nodes.push(
-          await parseDiamond(
-            id,
-            bounds,
-            props,
-            metadata,
-            texts,
-            new StyleManager(style),
-            diagram,
-            layer
-          )
-        );
+      } else if (style.styleName === 'ellipse') {
+        nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, diagram, layer));
+      } else if (style.styleName === 'rhombus') {
+        nodes.push(await parseDiamond(id, bounds, props, metadata, texts, style, diagram, layer));
       } else {
-        if (style.rounded === '1') {
+        if (style.is('rounded')) {
           nodes.push(
-            await parseRoundedRect(
-              id,
-              bounds,
-              props,
-              metadata,
-              texts,
-              new StyleManager(style),
-              diagram,
-              layer
-            )
+            await parseRoundedRect(id, bounds, props, metadata, texts, style, diagram, layer)
           );
         } else {
           nodes.push(new DiagramNode(id, 'rect', bounds, diagram, layer, props, metadata, texts));

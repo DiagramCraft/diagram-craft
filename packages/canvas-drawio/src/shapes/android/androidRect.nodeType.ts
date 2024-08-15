@@ -4,5 +4,6 @@ import { RoundedRectComponent } from '@diagram-craft/canvas-nodes/node-types/Rou
 export class AndroidRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('mxgraph.android.rect', RoundedRectComponent);
+    this.capabilities.rounding = false;
   }
 }

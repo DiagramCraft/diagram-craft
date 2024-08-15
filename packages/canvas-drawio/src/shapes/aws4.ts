@@ -45,10 +45,10 @@ export const parseAWS4Shapes = async (
 
   props.custom ??= {};
 
-  if (style.get('shape') === 'mxgraph.aws4.resourceIcon') {
+  if (style.str('shape') === 'mxgraph.aws4.resourceIcon') {
     const MARGIN = 0.1;
 
-    const dim = stencilDimensions.get(style!.get('resIcon')!)!;
+    const dim = stencilDimensions.get(style!.str('resIcon')!)!;
 
     let fgBounds: Box;
     if (dim.h > dim.w) {
@@ -63,7 +63,7 @@ export const parseAWS4Shapes = async (
     props.custom.flex.components = [
       {
         id: 'icon',
-        nodeType: style!.get('resIcon')!,
+        nodeType: style!.str('resIcon')!,
         bounds: fgBounds,
         props: {
           fill: {
@@ -85,10 +85,10 @@ export const parseAWS4Shapes = async (
       texts
     );
   } else if (
-    style.get('shape') === 'mxgraph.aws4.group' ||
-    style.get('shape') === 'mxgraph.aws4.groupCenter'
+    style.str('shape') === 'mxgraph.aws4.group' ||
+    style.str('shape') === 'mxgraph.aws4.groupCenter'
   ) {
-    if (style.get('grStroke') === '0') {
+    if (style.str('grStroke') === '0') {
       props.stroke = { enabled: false };
     }
 
@@ -96,7 +96,7 @@ export const parseAWS4Shapes = async (
     props.custom.flex.components = [
       {
         id: 'icon',
-        nodeType: style!.get('grIcon')!,
+        nodeType: style!.str('grIcon')!,
         props: {
           fill: {
             color: fg,
@@ -106,15 +106,15 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata, texts);
+    return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
   }
 
-  if (style.get('shape')?.includes('illustration')) {
+  if (style.str('shape')?.includes('illustration')) {
     props.custom.drawio ??= {};
     props.custom.drawio!.textPosition = 'bottom';
   }
 
-  return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata);
+  return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata);
 };
 
 export const registerAWS4Shapes = async (

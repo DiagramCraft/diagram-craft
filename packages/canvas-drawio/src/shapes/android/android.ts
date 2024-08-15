@@ -10,7 +10,6 @@ import { ShapeParser } from '../../drawioReader';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
-import { parseNum } from '../../utils';
 import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
 import { Spinner2NodeDefinition } from './spinner2.nodeType';
 import { AndroidRectNodeDefinition } from './androidRect.nodeType';
@@ -48,33 +47,33 @@ export const parseAndroidShapes = async (
   layer: Layer
 ): Promise<DiagramNode> => {
   const $c = (props.custom ??= {});
-  if (style.get('shape') === 'mxgraph.android.progressBar') {
+  if (style.str('shape') === 'mxgraph.android.progressBar') {
     $c.androidProgressBar ??= {};
-    $c.androidProgressBar.width = parseNum(style.get('strokeWidth'), 2);
-    $c.androidProgressBar.dx1 = parseNum(style.get('dx1'), 0.25);
-    $c.androidProgressBar.dx2 = parseNum(style.get('dx2'), 0.75);
-  } else if (style.get('shape')?.startsWith('mxgraph.android.quickscroll2')) {
+    $c.androidProgressBar.width = style.num('strokeWidth', 2);
+    $c.androidProgressBar.dx1 = style.num('dx1', 0.25);
+    $c.androidProgressBar.dx2 = style.num('dx2', 0.75);
+  } else if (style.str('shape')?.startsWith('mxgraph.android.quickscroll2')) {
     $c.androidQuickscroll2 ??= {};
-    $c.androidQuickscroll2.dy = parseNum(style.get('dy'), 0.5);
-  } else if (style.get('shape')?.startsWith('mxgraph.android.quickscroll3')) {
+    $c.androidQuickscroll2.dy = style.num('dy', 0.5);
+  } else if (style.str('shape')?.startsWith('mxgraph.android.quickscroll3')) {
     $c.androidQuickscroll3 ??= {};
-    $c.androidQuickscroll3.dy = parseNum(style.get('dy'), 0.5);
-  } else if (style.get('shape')?.startsWith('mxgraph.android.progressScrubber')) {
+    $c.androidQuickscroll3.dy = style.num('dy', 0.5);
+  } else if (style.str('shape')?.startsWith('mxgraph.android.progressScrubber')) {
     $c.androidProgressScrubber ??= {};
-    $c.androidProgressScrubber.dx = parseNum(style.get('dx'), 0.5);
-    if (style.get('shape') === 'mxgraph.android.progressScrubberDisabled') {
+    $c.androidProgressScrubber.dx = style.num('dx', 0.5);
+    if (style.str('shape') === 'mxgraph.android.progressScrubberDisabled') {
       $c.androidProgressScrubber.state = 'disabled';
       style.set('shape', 'mxgraph.android.progressScrubber');
-    } else if (style.get('shape') === 'mxgraph.android.progressScrubberPressed') {
+    } else if (style.str('shape') === 'mxgraph.android.progressScrubberPressed') {
       $c.androidProgressScrubber.state = 'pressed';
       style.set('shape', 'mxgraph.android.progressScrubber');
-    } else if (style.get('shape') === 'mxgraph.android.progressScrubberFocused') {
+    } else if (style.str('shape') === 'mxgraph.android.progressScrubberFocused') {
       $c.androidProgressScrubber.state = 'focused';
       style.set('shape', 'mxgraph.android.progressScrubber');
     }
   }
 
-  return new DiagramNode(id, style.get('shape')!, bounds, diagram, layer, props, metadata, texts);
+  return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
 };
 
 export const registerAndroidShapes = async (
