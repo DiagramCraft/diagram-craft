@@ -491,6 +491,16 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
   } else if (style.str('fontStyle') === '4') {
     props.text!.textDecoration = 'underline';
   }
+  props.text!.wrap = style.str('whiteSpace') === 'wrap';
+  props.text!.overflow = style.str('overflow') === 'hidden' ? 'hidden' : 'visible';
+
+  /*
+  if (style.str('overflow', 'visible') === 'fill' || style.str('overflow', 'visible') === 'width') {
+    props.text!.top = 0;
+    props.text!.bottom = 0;
+    props.text!.left = 0;
+    props.text!.right = 0;
+  }*/
 
   if (
     style.has('gradientColor') &&

@@ -1,10 +1,9 @@
 import { parseNum } from './utils';
 
-type Style = Partial<Record<string, string>>;
-
 const STYLENAME_KEY = '_stylename';
 
 type StringKey =
+  | typeof STYLENAME_KEY
   | '_textPosition'
   | 'labelPosition'
   | 'fontFamily'
@@ -36,7 +35,10 @@ type StringKey =
   | 'imageBackground'
   | 'imageAlign'
   | 'imageVerticalAlign'
-  | 'participant';
+  | 'participant'
+  | 'overflow'
+  | 'whiteSpace';
+
 type BooleanKey =
   | 'rounded'
   | 'shadow'
@@ -52,7 +54,9 @@ type BooleanKey =
   | 'imageAspect'
   | 'imageFlipV'
   | 'imageFlipH'
+  | 'noLabel'
   | 'absoluteArcSize';
+
 type NumKey =
   | '_margin'
   | 'textOpacity'
@@ -90,30 +94,35 @@ type NumKey =
   | 'jettyHeight'
   | 'jettyWidth';
 
+type AllKeys = StringKey | BooleanKey | NumKey;
+
+type Style = Partial<Record<AllKeys, string>>;
+
 export class StyleManager {
   defaults: Partial<Record<string, Style>> & { default: Style } = {
-    image: {
-      _margin: '0',
-      _textPosition: 'bottom',
-      imageWidth: '100%',
-      imageHeight: '100%',
-      imageAlign: 'left',
-      imageValign: 'middle'
-    },
     default: {
       _margin: '0',
       _textPosition: 'bottom',
       imageWidth: '100%',
       imageHeight: '100%',
       imageAlign: 'left',
-      imageValign: 'middle',
+      imageVerticalAlign: 'middle',
       spacing: '2',
       spacingLeft: '0',
       spacingRight: '0',
       spacingTop: '5',
       spacingBottom: '5',
       align: 'center',
-      verticalAlign: 'middle'
+      verticalAlign: 'middle',
+      overflow: 'visible',
+      whiteSpace: 'wrap'
+    },
+    image: {
+      _margin: '0',
+      _textPosition: 'bottom',
+      imageWidth: '100%',
+      imageHeight: '100%',
+      imageAlign: 'left'
     },
     label: {
       _margin: '8',
@@ -121,15 +130,16 @@ export class StyleManager {
       imageWidth: '42',
       imageHeight: '42',
       imageAlign: 'left',
-      imageValign: 'middle'
+      fontSize: '12',
+      fontStyle: '1',
+      verticalAlign: 'middle'
     },
     icon: {
       _margin: '0',
       _textPosition: 'bottom',
       imageWidth: '48',
       imageHeight: '48',
-      imageAlign: 'center',
-      imageValign: 'middle'
+      imageAlign: 'center'
     },
     text: {
       spacingTop: '0',
@@ -156,7 +166,7 @@ export class StyleManager {
       const [key, ...value] = part.split('=');
       if (key === '') continue;
 
-      result[key] = value.join('=');
+      result[key as AllKeys] = value.join('=');
 
       if (value.length === 0) {
         result[STYLENAME_KEY] = key;
@@ -181,16 +191,18 @@ export class StyleManager {
 
   get(key: string) {
     return (
-      this.styles[key] ?? this.defaults[this.styleName]?.[key] ?? this.defaults['default'][key]
+      this.styles[key as AllKeys] ??
+      this.defaults[this.styleName]?.[key as AllKeys] ??
+      this.defaults['default'][key as AllKeys]
     );
   }
 
   set(key: string, value: string) {
-    this.styles[key] = value;
+    this.styles[key as AllKeys] = value;
   }
 
   // TODO: This is a bad implementation
-  has(key: StringKey | BooleanKey | NumKey) {
+  has(key: AllKeys) {
     return /*this.get(key) !== undefined; // */ key in this.styles;
   }
 }

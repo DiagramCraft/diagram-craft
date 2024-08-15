@@ -226,6 +226,7 @@ export const parseImage = async (
     style.is('imageAspect', true) && !style.has('imageHeight') && !style.has('imageWidth');
   props.custom.drawioImage.flipV = style.is('imageFlipV');
   props.custom.drawioImage.flipH = style.is('imageFlipH');
+  props.custom.drawioImage.showLabel = !style.is('noLabel');
 
   // TODO: Why is this on the drawio object?
   if (props.custom.drawio?.textPosition === 'right') {

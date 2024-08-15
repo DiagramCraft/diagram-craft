@@ -88,7 +88,9 @@ export class ShapeText extends Component<ShapeTextProps> {
       paddingLeft: withPx(props.textProps?.left) ?? '0',
       paddingRight: withPx(props.textProps?.right) ?? '0',
       paddingTop: withPx(props.textProps?.top) ?? '0',
-      paddingBottom: withPx(props.textProps?.bottom) ?? '0'
+      paddingBottom: withPx(props.textProps?.bottom) ?? '0',
+      whiteSpace: props.textProps?.wrap ? 'normal' : 'nowrap',
+      overflow: props.textProps?.overflow === 'visible' ? 'unset' : 'hidden'
     };
 
     const metadata = props.metadata ?? {};

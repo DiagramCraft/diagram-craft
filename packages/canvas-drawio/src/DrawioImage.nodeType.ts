@@ -22,6 +22,7 @@ declare global {
       keepAspect?: boolean;
       flipV?: boolean;
       flipH?: boolean;
+      showLabel?: boolean;
     };
   }
 }
@@ -37,7 +38,8 @@ registerCustomNodeDefaults('drawioImage', {
   stylename: '',
   keepAspect: true,
   flipV: false,
-  flipH: false
+  flipH: false,
+  showLabel: true
 });
 
 export class DrawioImageNodeDefinition extends ShapeNodeDefinition {
@@ -120,33 +122,43 @@ class DrawioImageComponent extends BaseNodeComponent {
         type: 'solid'
       }
     });
-    const w = imageWidth; // imageWidth === 0 ? props.node.bounds.w : 0;
 
-    const bounds = props.node.bounds;
+    if (customProps.showLabel) {
+      const w = imageWidth; // imageWidth === 0 ? props.node.bounds.w : 0;
 
-    const textPosition = customProps.textPosition;
+      const bounds = props.node.bounds;
 
-    let textBounds = bounds;
-    if (textPosition === 'right') {
-      textBounds = {
-        x: bounds.x + w,
-        y: bounds.y,
-        w: 200,
-        h: bounds.h,
-        r: bounds.r
-      };
-    } else if (textPosition === 'bottom' || textPosition === '') {
-      textBounds = {
-        x: bounds.x - 50,
-        y: bounds.y + bounds.h,
-        w: bounds.w + 100,
-        h: 100,
-        r: bounds.r
-      };
-    } else {
-      console.warn('Unknown text position: ', textPosition);
+      const textPosition = customProps.textPosition;
+
+      let textBounds = bounds;
+      if (textPosition === 'right') {
+        textBounds = {
+          x: bounds.x + w,
+          y: bounds.y,
+          w: 200,
+          h: bounds.h,
+          r: bounds.r
+        };
+      } else if (textPosition === 'bottom' || textPosition === '') {
+        textBounds = {
+          x: bounds.x - 50,
+          y: bounds.y + bounds.h,
+          w: bounds.w + 100,
+          h: 100,
+          r: bounds.r
+        };
+      } else {
+        console.warn('Unknown text position: ', textPosition);
+      }
+
+      shapeBuilder.text(
+        this,
+        '1',
+        props.node.getText(),
+        props.nodeProps.text,
+        textBounds,
+        undefined
+      );
     }
-
-    shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, textBounds, undefined);
   }
 }

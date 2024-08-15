@@ -239,6 +239,8 @@ declare global {
       left?: number;
       right?: number;
       bottom?: number;
+      wrap?: boolean;
+      overflow?: 'hidden' | 'visible';
     };
 
     anchors?: {
