@@ -202,15 +202,9 @@ export const parseImage = async (
 
   props.fill!.type = 'image';
   props.fill!.color = 'transparent';
-  props.text!.valign = 'top';
-  props.text!.align = 'center';
 
   props.custom ??= {};
   props.custom.drawioImage ??= {};
-
-  if (style.has('label')) {
-    props.custom.drawioImage!.textPosition = 'right';
-  }
 
   const isImageShape = style.str('shape') === 'image' || style.styleName === 'image';
 
@@ -227,15 +221,6 @@ export const parseImage = async (
   props.custom.drawioImage.flipV = style.is('imageFlipV');
   props.custom.drawioImage.flipH = style.is('imageFlipH');
   props.custom.drawioImage.showLabel = !style.is('noLabel');
-
-  // TODO: Why is this on the drawio object?
-  if (props.custom.drawio?.textPosition === 'right') {
-    props.text!.align = 'left';
-    props.text!.valign = 'middle';
-  }
-  // @ts-ignore
-  props.custom.drawioImage.textPosition =
-    props.custom.drawio?.textPosition ?? style.str('_textPosition');
 
   if (!style.str('imageBorder')) {
     if (style.str('strokeColor') && !isImageShape) {

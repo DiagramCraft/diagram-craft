@@ -241,6 +241,7 @@ declare global {
       bottom?: number;
       wrap?: boolean;
       overflow?: 'hidden' | 'visible';
+      position?: 'c' | 'e' | 'w' | 'n' | 's' | 'ne' | 'nw' | 'se' | 'sw';
     };
 
     anchors?: {

@@ -104,12 +104,19 @@ export class ShapeText extends Component<ShapeTextProps> {
       props.onSizeChange?.({ w, h });
     };
 
+    const pos = props.textProps?.position;
     const foreignObject = svg.foreignObject(
       {
         class: 'svg-node__fo',
         id: props.id,
-        x: props.bounds.x.toString(),
-        y: props.bounds.y.toString(),
+        x: (
+          props.bounds.x +
+          (pos?.includes('w') ? -props.bounds.w : pos?.includes('e') ? props.bounds.w : 0)
+        ).toString(),
+        y: (
+          props.bounds.y +
+          (pos?.includes('n') ? -props.bounds.h : pos?.includes('s') ? props.bounds.h : 0)
+        ).toString(),
         width: props.bounds.w.toString(),
         height: props.bounds.h.toString(),
         style: toInlineCSS({ pointerEvents: 'none' })

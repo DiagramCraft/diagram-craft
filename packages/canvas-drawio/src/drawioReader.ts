@@ -447,6 +447,24 @@ const attachLabelNode = (
   );
 };
 
+const POSITIONS: Record<string, Record<string, string>> = {
+  left: {
+    top: 'nw',
+    middle: 'w',
+    bottom: 'sw'
+  },
+  center: {
+    top: 'n',
+    middle: 'c',
+    bottom: 's'
+  },
+  right: {
+    top: 'ne',
+    middle: 'e',
+    bottom: 'se'
+  }
+};
+
 const getNodeProps = (style: StyleManager, isEdge: boolean) => {
   const align = style.str('align');
   assertHAlign(align);
@@ -469,7 +487,13 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       left: style.num('spacingLeft') + style.num('spacing'),
       right: style.num('spacingRight') + style.num('spacing'),
       align: align,
-      valign: valign
+      valign: valign,
+
+      // @ts-ignore
+      position:
+        POSITIONS[style.str('labelPosition', 'center')][
+          style.str('verticalLabelPosition', 'middle')
+        ]
     },
     fill: {
       color: style.str('fillColor', 'white')
@@ -488,18 +512,6 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
   props.text!.bold = (fontStyle & 1) !== 0;
   props.text!.italic = (fontStyle & 2) !== 0;
   props.text!.textDecoration = (fontStyle & 4) !== 0 ? 'underline' : 'none';
-  /*
-
-  if (style.str('fontStyle') === '1') {
-    props.text!.bold = true;
-  } else if (style.str('fontStyle') === '2') {
-    props.text!.italic = true;
-  } else if (style.str('fontStyle') === '3') {
-    props.text!.bold = true;
-    props.text!.italic = true;
-  } else if (style.str('fontStyle') === '4') {
-    props.text!.textDecoration = 'underline';
-  }*/
 
   props.text!.wrap = style.str('whiteSpace') === 'wrap';
   props.text!.overflow =
@@ -570,13 +582,6 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       y: 3,
       blur: 3
     };
-  }
-
-  // TODO: This should not be in here
-  if (style.str('labelPosition') === 'right') {
-    props.custom ??= {};
-    props.custom.drawio ??= {};
-    props.custom.drawio.textPosition = 'right';
   }
 
   return props;

@@ -109,11 +109,6 @@ export const parseAWS4Shapes = async (
     return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata, texts);
   }
 
-  if (style.str('shape')?.includes('illustration')) {
-    props.custom.drawio ??= {};
-    props.custom.drawio!.textPosition = 'bottom';
-  }
-
   return new DiagramNode(id, style.str('shape')!, bounds, diagram, layer, props, metadata);
 };
 

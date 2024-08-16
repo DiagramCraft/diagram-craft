@@ -140,7 +140,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'cu
     right: 6,
     bottom: 6,
     wrap: true,
-    overflow: 'visible'
+    overflow: 'visible',
+    position: 'c'
   },
 
   anchors: {

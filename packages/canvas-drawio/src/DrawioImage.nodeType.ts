@@ -17,7 +17,6 @@ declare global {
       imageValign?: 'top' | 'middle' | 'bottom';
       imageMargin?: number;
       backgroundColor?: string;
-      textPosition?: '' | 'center' | 'bottom' | 'right';
       stylename?: string;
       keepAspect?: boolean;
       flipV?: boolean;
@@ -28,7 +27,6 @@ declare global {
 }
 
 registerCustomNodeDefaults('drawioImage', {
-  textPosition: '',
   imageHeight: '0',
   imageWidth: '0',
   imageAlign: 'left',
@@ -128,10 +126,10 @@ class DrawioImageComponent extends BaseNodeComponent {
 
       const bounds = props.node.bounds;
 
-      const textPosition = customProps.textPosition;
+      const textPosition = props.nodeProps.text.position;
 
       let textBounds = bounds;
-      if (textPosition === 'right') {
+      if (textPosition === 'e') {
         textBounds = {
           x: bounds.x + w,
           y: bounds.y,
@@ -139,7 +137,7 @@ class DrawioImageComponent extends BaseNodeComponent {
           h: bounds.h,
           r: bounds.r
         };
-      } else if (textPosition === 'bottom' || textPosition === '') {
+      } else if (textPosition === 's') {
         textBounds = {
           x: bounds.x - 50,
           y: bounds.y + bounds.h,
@@ -155,7 +153,10 @@ class DrawioImageComponent extends BaseNodeComponent {
         this,
         '1',
         props.node.getText(),
-        props.nodeProps.text,
+        {
+          ...props.nodeProps.text,
+          position: 'c'
+        },
         textBounds,
         undefined
       );

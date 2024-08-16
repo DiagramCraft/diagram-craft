@@ -4,8 +4,8 @@ const STYLENAME_KEY = '_stylename';
 
 type StringKey =
   | typeof STYLENAME_KEY
-  | '_textPosition'
   | 'labelPosition'
+  | 'verticalLabelPosition'
   | 'fontFamily'
   | 'align'
   | 'verticalAlign'
@@ -102,7 +102,6 @@ export class StyleManager {
   defaults: Partial<Record<string, Style>> & { default: Style } = {
     default: {
       _margin: '0',
-      _textPosition: 'bottom',
       imageWidth: '100%',
       imageHeight: '100%',
       imageAlign: 'left',
@@ -119,14 +118,14 @@ export class StyleManager {
     },
     image: {
       _margin: '0',
-      _textPosition: 'bottom',
       imageWidth: '100%',
       imageHeight: '100%',
-      imageAlign: 'left'
+      imageAlign: 'left',
+      verticalAlign: 'top',
+      verticalLabelPosition: 'bottom'
     },
     label: {
       _margin: '8',
-      _textPosition: 'center',
       imageWidth: '42',
       imageHeight: '42',
       imageAlign: 'left',
@@ -137,10 +136,11 @@ export class StyleManager {
     },
     icon: {
       _margin: '0',
-      _textPosition: 'bottom',
       imageWidth: '48',
       imageHeight: '48',
-      imageAlign: 'center'
+      imageAlign: 'center',
+      verticalLabelPosition: 'bottom',
+      verticalAlign: 'top'
     },
     text: {
       spacingTop: '0',

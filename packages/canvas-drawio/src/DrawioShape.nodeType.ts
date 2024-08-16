@@ -29,14 +29,12 @@ declare global {
   interface CustomNodeProps {
     drawio?: {
       shape?: string;
-      textPosition?: '' | 'center' | 'bottom' | 'right';
     };
   }
 }
 
 registerCustomNodeDefaults('drawio', {
-  shape: '',
-  textPosition: ''
+  shape: ''
 });
 
 const makeShapeTransform =
@@ -445,15 +443,9 @@ class DrawioShapeComponent extends BaseNodeComponent {
             fontSize: (style.text.fontSize ?? 12) * (props.node.bounds.h / xNum($shape, 'h'))
           },
           {
-            x:
-              props.nodeProps.custom.drawio.textPosition === 'right'
-                ? props.node.bounds.x + props.node.bounds.w
-                : props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
-            y:
-              props.nodeProps.custom.drawio.textPosition === 'bottom'
-                ? props.node.bounds.y + props.node.bounds.h
-                : props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
-            w: props.nodeProps.custom.drawio.textPosition === 'right' ? 200 : 60,
+            x: props.node.bounds.x + (xNum($el, 'x') / w) * props.node.bounds.w - 30,
+            y: props.node.bounds.y + (xNum($el, 'y') / h) * props.node.bounds.h - 20,
+            w: 60,
             h: 40,
             r: 0
           }
@@ -533,17 +525,23 @@ class DrawioShapeComponent extends BaseNodeComponent {
       }
     }
 
-    shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, {
-      ...props.node.bounds,
-      x:
-        props.nodeProps.custom.drawio.textPosition === 'right'
-          ? props.node.bounds.x + props.node.bounds.w
-          : props.node.bounds.x,
-      y:
-        props.nodeProps.custom.drawio.textPosition === 'bottom'
-          ? props.node.bounds.y + props.node.bounds.h
-          : props.node.bounds.y,
-      w: props.nodeProps.custom.drawio.textPosition === 'right' ? 200 : props.node.bounds.w
-    });
+    shapeBuilder.text(
+      this,
+      '1',
+      props.node.getText(),
+      { ...props.nodeProps.text, position: 'c' },
+      {
+        ...props.node.bounds,
+        x:
+          props.nodeProps.text.position === 'e'
+            ? props.node.bounds.x + props.node.bounds.w
+            : props.node.bounds.x,
+        y:
+          props.nodeProps.text.position === 's'
+            ? props.node.bounds.y + props.node.bounds.h
+            : props.node.bounds.y,
+        w: props.nodeProps.text.position === 'e' ? 200 : props.node.bounds.w
+      }
+    );
   }
 }
