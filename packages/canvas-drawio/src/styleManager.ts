@@ -1,4 +1,4 @@
-import { parseNum } from './utils';
+import { parseNum } from '@diagram-craft/utils/number';
 
 const STYLENAME_KEY = '_stylename';
 

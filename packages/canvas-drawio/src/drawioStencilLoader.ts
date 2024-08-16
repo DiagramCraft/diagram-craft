@@ -1,4 +1,3 @@
-import { xNum } from './utils';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { newid } from '@diagram-craft/utils/id';
@@ -7,6 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert } from '@diagram-craft/utils/assert';
 import { Box } from '@diagram-craft/geometry/box';
 import { assertDrawioShapeNodeDefinition } from './DrawioShape.nodeType';
+import { xNum } from '@diagram-craft/utils/xml';
 
 export type DrawioStencil = {
   key: string;

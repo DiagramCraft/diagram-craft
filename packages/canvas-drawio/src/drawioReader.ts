@@ -4,7 +4,6 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
-import { parseNum, xNum } from './utils';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -74,6 +73,8 @@ import { registerAndroidShapes } from './shapes/android/android';
 import { StyleManager } from './styleManager';
 import { coalesce } from '@diagram-craft/utils/strings';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { xIterElements, xNum } from '@diagram-craft/utils/xml';
+import { parseNum } from '@diagram-craft/utils/number';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -481,6 +482,12 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
 
   if (props.text!.color === '#') props.text!.color = 'black';
 
+  const fontStyle = parseNum(style.str('fontStyle'), 0);
+  props.text!.bold = (fontStyle & 1) !== 0;
+  props.text!.italic = (fontStyle & 2) !== 0;
+  props.text!.textDecoration = (fontStyle & 4) !== 0 ? 'underline' : 'none';
+  /*
+
   if (style.str('fontStyle') === '1') {
     props.text!.bold = true;
   } else if (style.str('fontStyle') === '2') {
@@ -490,7 +497,8 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     props.text!.italic = true;
   } else if (style.str('fontStyle') === '4') {
     props.text!.textDecoration = 'underline';
-  }
+  }*/
+
   props.text!.wrap = style.str('whiteSpace') === 'wrap';
   props.text!.overflow =
     style.str('overflow') === 'hidden' ||
@@ -621,14 +629,6 @@ const readMetadata = ($parent: HTMLElement) => {
   return dest;
 };
 
-function* iterNodes(collection: HTMLCollectionOf<Element>) {
-  for (let i = 0; i < collection.length; i++) {
-    const $cell = collection.item(i)!;
-    if ($cell.nodeType !== Node.ELEMENT_NODE) continue;
-    yield $cell;
-  }
-}
-
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
@@ -648,7 +648,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   const rootId = $$cells.item(0)!.getAttribute('id')!;
 
   // Phase 1 - Determine parent child relationships
-  for (const $cell of iterNodes($$cells)) {
+  for (const $cell of xIterElements($$cells)) {
     const parent = $cell.getAttribute('parent')!;
     if (parent !== rootId) {
       // TODO: Replace with parsing of stylename
@@ -662,7 +662,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
   // Phase 2 - process all objects
   const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
-  for (const $cell of iterNodes($$cells)) {
+  for (const $cell of xIterElements($$cells)) {
     const $parent = $cell.parentElement!;
     const isWrappedByObject = $parent!.tagName === 'object' || $parent!.tagName === 'UserObject';
 
@@ -1220,8 +1220,7 @@ async function decode(data: string) {
 export const drawioReader = async (
   contents: string,
   documentFactory: DocumentFactory,
-  // @ts-ignore
-  diagramFactor: DiagramFactory<Diagram>
+  _diagramFactory: DiagramFactory<Diagram>
 ): Promise<DiagramDocument> => {
   const start = new Date().getTime();
 
