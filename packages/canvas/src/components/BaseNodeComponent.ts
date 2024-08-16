@@ -62,24 +62,23 @@ export class BaseNodeComponent<
 
   protected onTextSizeChange(props: BaseShapeBuildShapeProps) {
     return (size: { w: number; h: number }) => {
-      const width = size.w;
-      const height = size.h;
+      const { w: width, h: height } = size;
+      const { bounds } = props.node;
 
-      if (width > props.node.bounds.w || height > props.node.bounds.h) {
-        UnitOfWork.execute(
-          props.node.diagram!,
-          uow => {
-            props.node.setBounds(
-              {
-                ...props.node.bounds,
-                h: height > props.node.bounds.h ? height : props.node.bounds.h,
-                w: width > props.node.bounds.w ? width : props.node.bounds.w
-              },
-              uow
-            );
-          },
-          true
-        );
+      if (width > bounds.w || height > bounds.h) {
+        const newBounds = {
+          x: bounds.x,
+          y: bounds.y,
+          r: bounds.r,
+          h: Math.max(height, bounds.h),
+          w: Math.max(width, bounds.w)
+        };
+
+        if (props.node.renderProps.text.align === 'center' && width > bounds.w) {
+          newBounds.x = bounds.x - (width - bounds.w) / 2;
+        }
+
+        UnitOfWork.execute(props.node.diagram!, uow => props.node.setBounds(newBounds, uow), true);
       }
     };
   }
