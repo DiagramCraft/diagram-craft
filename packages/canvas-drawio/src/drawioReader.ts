@@ -461,8 +461,10 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       color: style.str('fontColor', 'black'),
       lineHeight: 0.97,
 
-      top: style.num('spacingTop') + style.num('spacing'),
-      bottom: style.num('spacingBottom') + style.num('spacing'),
+      // Note, it seems drawio applies a special spacing of 5 and 1 in addition
+      // to the base spacing in case vertical alignment is top or bottom
+      top: style.num('spacingTop') + style.num('spacing') + (valign === 'top' ? 5 : 0),
+      bottom: style.num('spacingBottom') + style.num('spacing') + (valign === 'bottom' ? 1 : 0),
 
       left: style.num('spacingLeft') + style.num('spacing'),
       right: style.num('spacingRight') + style.num('spacing'),

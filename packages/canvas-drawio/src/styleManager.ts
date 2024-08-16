@@ -110,8 +110,8 @@ export class StyleManager {
       spacing: '2',
       spacingLeft: '0',
       spacingRight: '0',
-      spacingTop: '5',
-      spacingBottom: '5',
+      spacingTop: '0',
+      spacingBottom: '0',
       align: 'center',
       verticalAlign: 'middle',
       overflow: 'visible',
@@ -130,6 +130,7 @@ export class StyleManager {
       imageWidth: '42',
       imageHeight: '42',
       imageAlign: 'left',
+      spacingLeft: '52',
       fontSize: '12',
       fontStyle: '1',
       verticalAlign: 'middle'
