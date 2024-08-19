@@ -113,8 +113,8 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
 
       const normal = Vector.fromPolar(a.normal ?? 0, z.num(10, 7));
 
-      const x = node.renderProps.geometry.flipH ? 1 - a.start.x : a.start.x;
-      const y = node.renderProps.geometry.flipV ? 1 - a.start.y : a.start.y;
+      const x = a.start.x;
+      const y = a.start.y;
       children.push(
         svg.g(
           {
