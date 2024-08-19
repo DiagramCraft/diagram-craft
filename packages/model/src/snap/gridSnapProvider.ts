@@ -10,6 +10,10 @@ import { Point } from '@diagram-craft/geometry/point';
 export class GridSnapProvider implements SnapProvider<'grid'> {
   constructor(private readonly diagram: Diagram) {}
 
+  static snapPoint(point: Point, grid: number): Point {
+    return Point.of(Math.round(point.x / grid) * grid, Math.round(point.y / grid) * grid);
+  }
+
   getMagnets(box: Box): ReadonlyArray<MagnetOfType<'grid'>> {
     const magnets: MagnetOfType<'grid'>[] = [];
 

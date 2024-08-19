@@ -19,9 +19,9 @@ import { SnapManagerConfig } from './snapManagerConfig';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-type SnapResult = {
+type SnapResult<T> = {
   guides: ReadonlyArray<Guide>;
-  adjusted: Box;
+  adjusted: T;
   magnets: ReadonlyArray<Magnet>;
 };
 
@@ -131,7 +131,18 @@ export class SnapManager {
     return dest;
   }
 
-  snapRotate(b: Box): SnapResult {
+  snapPoint(p: Point): SnapResult<Point> {
+    if (!this.enabled) return { guides: [], magnets: [], adjusted: p };
+    if (!this.magnetTypes.find(a => a === 'grid')) return { guides: [], magnets: [], adjusted: p };
+
+    return {
+      guides: [],
+      magnets: [],
+      adjusted: GridSnapProvider.snapPoint(p, this.diagram.props.grid?.size ?? 10)
+    };
+  }
+
+  snapRotate(b: Box): SnapResult<Box> {
     if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
 
     const newBounds = Box.asReadWrite(b);
@@ -147,7 +158,7 @@ export class SnapManager {
   }
 
   // TODO: We should be able to merge snapResize and snapMove
-  snapResize(b: Box, directions: ReadonlyArray<Direction>): SnapResult {
+  snapResize(b: Box, directions: ReadonlyArray<Direction>): SnapResult<Box> {
     if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
 
     const enabledSnapProviders: ReadonlyArray<MagnetType> = [...this.magnetTypes];
@@ -202,7 +213,7 @@ export class SnapManager {
     };
   }
 
-  snapMove(b: Box, directions: ReadonlyArray<Direction> = ['n', 'w', 'e', 's']): SnapResult {
+  snapMove(b: Box, directions: ReadonlyArray<Direction> = ['n', 'w', 'e', 's']): SnapResult<Box> {
     if (!this.enabled) return { guides: [], magnets: [], adjusted: b };
 
     const enabledSnapProviders: ReadonlyArray<MagnetType> = this.magnetTypes.filter(

@@ -18,6 +18,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { ApplicationTriggers } from '../ApplicationTriggers';
+import { SnapManager } from '@diagram-craft/model/snap/snapManager';
 
 export class EdgeEndpointMoveDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
@@ -25,6 +26,7 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
   private modifiers: Modifiers | undefined;
 
   point: Point | undefined;
+  private snapManager: SnapManager;
 
   constructor(
     private readonly diagram: Diagram,
@@ -40,8 +42,10 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
 
     this.applicationTriggers.pushHelp?.(
       'EdgeEndpointMoveDrag',
-      'Move waypoint. Shift-drag to attach to any point in node.'
+      'Move waypoint. Cmd-drag to attach to any point in node.'
     );
+
+    this.snapManager = this.diagram.createSnapManager();
   }
 
   onDragEnter(id: string): void {
@@ -87,18 +91,23 @@ export class EdgeEndpointMoveDrag extends AbstractDrag {
     const selection = this.diagram.selectionState;
     selection.guides = [];
 
-    this.setEndpoint(new FreeEndpoint(p));
-
     this.point = p;
 
     this.modifiers = modifiers;
 
     if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      if (modifiers.shiftKey) {
+      if (modifiers.metaKey) {
         this.attachToPoint(p);
       } else {
         this.attachToClosestAnchor(p);
       }
+    } else {
+      if (!this.modifiers.shiftKey) {
+        const res = this.snapManager.snapPoint(this.point!);
+        this.point = res.adjusted;
+      }
+
+      this.setEndpoint(new FreeEndpoint(this.point));
     }
 
     this.uow.notify();
