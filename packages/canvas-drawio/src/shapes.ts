@@ -9,6 +9,7 @@ import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagram
 import { FullDirection } from '@diagram-craft/geometry/direction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { StyleManager } from './styleManager';
+import { parseNum } from '@diagram-craft/utils/number';
 
 const makeShape = (
   type: string,
@@ -70,8 +71,7 @@ export const parseCube = makeShape('cube');
 
 export const parseTransparent = makeShape('transparent', (style, props) => {
   props.text!.valign = 'middle';
-  // @ts-ignore
-  props.text!.align = style.align ?? 'center';
+  props.text!.top = parseNum(style.getOverride('spacingTop'), 2);
 });
 
 export const parseLine = makeShape('line');

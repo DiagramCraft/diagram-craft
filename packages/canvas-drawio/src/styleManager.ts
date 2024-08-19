@@ -56,6 +56,7 @@ type BooleanKey =
   | 'imageFlipH'
   | 'noLabel'
   | 'glass'
+  | 'orthogonal'
   | 'absoluteArcSize';
 
 type NumKey =
@@ -194,6 +195,10 @@ export class StyleManager {
 
   num(key: NumKey, def = 0) {
     return parseNum(this.get(key), def);
+  }
+
+  getOverride(key: AllKeys) {
+    return this.styles[key];
   }
 
   get(key: string) {

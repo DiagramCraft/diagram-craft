@@ -913,6 +913,10 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         nodes.push(edge);
         parents.set(id, edge);
 
+        if (style.is('orthogonal')) {
+          edgeProps.type = 'orthogonal';
+        }
+
         // Post-pone attaching the edge to the source and target nodes until all
         // nodes have been processed
         queue.add(() => attachEdge(edge, $cell, style, uow));
