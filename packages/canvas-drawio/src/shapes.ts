@@ -5,7 +5,7 @@ import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
-import { HAlign } from '@diagram-craft/model/diagramProps';
+import { assertHAlign, assertVAlign, HAlign } from '@diagram-craft/model/diagramProps';
 import { FullDirection } from '@diagram-craft/geometry/direction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { StyleManager } from './styleManager';
@@ -208,10 +208,8 @@ export const parseImage = async (
 
   const isImageShape = style.str('shape') === 'image' || style.styleName === 'image';
 
-  const stylename = style.styleName ?? 'default';
-
-  props.custom.drawioImage.stylename = stylename;
-  props.custom.drawioImage.imageMargin = style.num('_margin');
+  props.custom.drawioImage.stylename = style.styleName;
+  props.custom.drawioImage.imageMargin = style.num('_imageMargin');
 
   props.custom.drawioImage.imageHeight = style.str('imageHeight');
   props.custom.drawioImage.imageWidth = style.str('imageWidth');
@@ -260,10 +258,14 @@ export const parseImage = async (
   }
 
   props.custom.drawioImage.backgroundColor = style.str('imageBackground');
-  // @ts-ignore
-  props.custom.drawioImage.imageAlign = style.str('imageAlign');
-  // @ts-ignore
-  props.custom.drawioImage.imageValign = style.str('imageVerticalAlign');
+
+  const align = style.str('imageAlign');
+  assertHAlign(align);
+  props.custom.drawioImage.imageAlign = align;
+
+  const valign = style.str('imageVerticalAlign');
+  assertVAlign(valign);
+  props.custom.drawioImage.imageValign = valign;
 
   const node = new DiagramNode(id, 'drawioImage', bounds, diagram, layer, props, metadata, texts);
 

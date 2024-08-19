@@ -39,9 +39,9 @@ export function assertHAlign(s: string | undefined): asserts s is HAlign | undef
   if (!(s === 'left' || s === 'center' || s === 'right' || s === undefined)) throw new Error();
 }
 
-export type Valign = 'top' | 'middle' | 'bottom';
+export type VAlign = 'top' | 'middle' | 'bottom';
 
-export function assertVAlign(s: string | undefined): asserts s is Valign | undefined {
+export function assertVAlign(s: string | undefined): asserts s is VAlign | undefined {
   if (!(s === 'top' || s === 'middle' || s === 'bottom' || s === undefined)) throw new Error();
 }
 
@@ -234,7 +234,7 @@ declare global {
       textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
       color?: string;
       align?: HAlign;
-      valign?: Valign;
+      valign?: VAlign;
       top?: number;
       left?: number;
       right?: number;

@@ -58,7 +58,7 @@ type BooleanKey =
   | 'absoluteArcSize';
 
 type NumKey =
-  | '_margin'
+  | '_imageMargin'
   | 'textOpacity'
   | 'arcSize'
   | 'exitX'
@@ -101,7 +101,7 @@ type Style = Partial<Record<AllKeys, string>>;
 export class StyleManager {
   defaults: Partial<Record<string, Style>> & { default: Style } = {
     default: {
-      _margin: '0',
+      _imageMargin: '0',
       imageWidth: '100%',
       imageHeight: '100%',
       imageAlign: 'left',
@@ -117,7 +117,6 @@ export class StyleManager {
       whiteSpace: 'noWrap'
     },
     image: {
-      _margin: '0',
       imageWidth: '100%',
       imageHeight: '100%',
       imageAlign: 'left',
@@ -125,7 +124,7 @@ export class StyleManager {
       verticalLabelPosition: 'bottom'
     },
     label: {
-      _margin: '8',
+      _imageMargin: '7',
       imageWidth: '42',
       imageHeight: '42',
       imageAlign: 'left',
@@ -135,7 +134,7 @@ export class StyleManager {
       verticalAlign: 'middle'
     },
     icon: {
-      _margin: '0',
+      spacing: '0',
       imageWidth: '48',
       imageHeight: '48',
       imageAlign: 'center',
