@@ -37,6 +37,7 @@ import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-type
 import stencils from './defaultStencils.yaml';
 import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
+import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
 
 export const defaultNodeRegistry = () => {
   const reg = new NodeDefinitionRegistry();
@@ -101,6 +102,7 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, defaults, new StepNodeDefinition());
   registerStencil(reg, defaults, new LineNodeDefinition());
   registerStencil(reg, defaults, new DelayNodeDefinition());
+  registerStencil(reg, defaults, new DocumentNodeDefinition());
   registerStencil(reg, defaults, new CubeNodeDefinition());
   registerStencil(reg, defaults, new ContainerNodeDefinition());
 

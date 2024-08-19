@@ -28,6 +28,7 @@ import {
   parseCylinder,
   parseDelay,
   parseDiamond,
+  parseDocument,
   parseEllipse,
   parseHexagon,
   parseImage,
@@ -128,7 +129,8 @@ export const shapeParsers: Record<string, ShapeParser> = {
   'line': parseLine,
   'ellipse': parseEllipse,
   'table': parseTable,
-  'tableRow': parseTableRow
+  'tableRow': parseTableRow,
+  'document': parseDocument
 };
 
 const getParser = (shape: string | undefined): ShapeParser | undefined =>

@@ -80,6 +80,8 @@ export const parseDelay = makeShape('delay');
 
 export const parseCloud = makeShape('cloud');
 
+export const parseDocument = makeShape('document');
+
 export const parseTable = makeShape('table', (style, props) => {
   props.custom.table = {
     gap: 0,
