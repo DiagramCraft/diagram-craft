@@ -205,9 +205,11 @@ declare global {
         vertical?: boolean;
         horizontal?: boolean;
       };
-      moveable?: boolean;
+      movable?: boolean;
       rotatable?: boolean;
       textGrow?: boolean;
+      editable?: boolean;
+      deletable?: boolean;
     };
 
     effects?: {

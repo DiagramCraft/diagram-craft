@@ -57,6 +57,11 @@ type BooleanKey =
   | 'noLabel'
   | 'glass'
   | 'orthogonal'
+  | 'rotatable'
+  | 'editable'
+  | 'resizable'
+  | 'movable'
+  | 'deletable'
   | 'absoluteArcSize';
 
 type NumKey =

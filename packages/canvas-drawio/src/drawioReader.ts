@@ -591,6 +591,34 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     };
   }
 
+  if (!style.is('rotatable', true)) {
+    props.capabilities ??= {};
+    props.capabilities.rotatable = false;
+  }
+
+  if (!style.is('resizable', true)) {
+    props.capabilities ??= {};
+    props.capabilities.resizable = {
+      vertical: false,
+      horizontal: false
+    };
+  }
+
+  if (!style.is('movable', true)) {
+    props.capabilities ??= {};
+    props.capabilities.movable = false;
+  }
+
+  if (!style.is('editable', true)) {
+    props.capabilities ??= {};
+    props.capabilities.editable = false;
+  }
+
+  if (!style.is('deletable', true)) {
+    props.capabilities ??= {};
+    props.capabilities.deletable = false;
+  }
+
   return props;
 };
 

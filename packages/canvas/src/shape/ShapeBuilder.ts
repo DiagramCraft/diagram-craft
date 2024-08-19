@@ -240,6 +240,12 @@ export class ShapeBuilder {
   }
 
   makeOnDblclickHandle(textId: string | undefined = '1') {
+    if (
+      isNode(this.props.element) &&
+      this.props.element.renderProps.capabilities.editable === false
+    ) {
+      return;
+    }
     return () => {
       ShapeText.edit(textId, this.props.element.id);
     };

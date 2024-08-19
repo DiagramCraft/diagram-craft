@@ -138,6 +138,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   requestFocus(node: DiagramNode, selectAll = true): void {
+    if (node.renderProps.capabilities.editable === false) return;
+
     const editable = document
       .getElementById(`text_1_${node.id}`)
       ?.getElementsByClassName('svg-node__text')

@@ -120,7 +120,9 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'cu
       vertical: true,
       horizontal: true
     },
-    moveable: true,
+    editable: true,
+    deletable: true,
+    movable: true,
     rotatable: true,
     textGrow: false
   },

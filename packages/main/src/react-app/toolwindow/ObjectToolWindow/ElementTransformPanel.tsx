@@ -53,8 +53,8 @@ export const ElementTransformPanel = (props: Props) => {
   const resizeableHorizontally = diagram.selectionState.nodes.every(
     p => p.renderProps.capabilities.resizable.horizontal !== false
   );
-  const moveable = diagram.selectionState.nodes.every(
-    p => p.renderProps.capabilities.moveable !== false
+  const movable = diagram.selectionState.nodes.every(
+    p => p.renderProps.capabilities.movable !== false
   );
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export const ElementTransformPanel = (props: Props) => {
                 label={'x'}
                 value={round(transformedBounds.x)}
                 defaultUnit={'px'}
-                disabled={!moveable}
+                disabled={!movable}
                 min={0}
                 onChange={ev => updateBounds({ ...transformedBounds, x: ev ?? 0 })}
               />
@@ -145,7 +145,7 @@ export const ElementTransformPanel = (props: Props) => {
                 label={'y'}
                 value={round(transformedBounds.y)}
                 defaultUnit={'px'}
-                disabled={!moveable}
+                disabled={!movable}
                 min={0}
                 onChange={ev => updateBounds({ ...transformedBounds, y: ev ?? 0 })}
               />

@@ -6,7 +6,9 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
   const resizableH = useNodeProperty(diagram, 'capabilities.resizable.horizontal');
   const resizableV = useNodeProperty(diagram, 'capabilities.resizable.vertical');
-  const moveable = useNodeProperty(diagram, 'capabilities.moveable');
+  const movable = useNodeProperty(diagram, 'capabilities.movable');
+  const editable = useNodeProperty(diagram, 'capabilities.editable');
+  const deletable = useNodeProperty(diagram, 'capabilities.deletable');
   const rotatable = useNodeProperty(diagram, 'capabilities.rotatable');
 
   return (
@@ -39,8 +41,8 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value'}>
           <input
             type={'checkbox'}
-            checked={moveable.val === true}
-            onChange={() => moveable.set(!moveable.val)}
+            checked={movable.val === true}
+            onChange={() => movable.set(!movable.val)}
           />
         </div>
 
@@ -50,6 +52,24 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             type={'checkbox'}
             checked={rotatable.val === true}
             onChange={() => rotatable.set(!rotatable.val)}
+          />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Editable:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <input
+            type={'checkbox'}
+            checked={editable.val === true}
+            onChange={() => editable.set(!editable.val)}
+          />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Deletable:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <input
+            type={'checkbox'}
+            checked={deletable.val === true}
+            onChange={() => deletable.set(!deletable.val)}
           />
         </div>
       </div>

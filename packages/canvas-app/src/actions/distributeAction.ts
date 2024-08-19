@@ -63,7 +63,7 @@ export class DistributeAction extends AbstractSelectionAction {
 
     let currentPosition = min + Math.abs(minimal.bounds[size] + difference);
     for (const e of elementsInOrder.slice(1)) {
-      if (isNode(e) && e.renderProps.capabilities.moveable === false) continue;
+      if (isNode(e) && e.renderProps.capabilities.movable === false) continue;
       if (e.bounds[size] >= 0) {
         e.setBounds(
           orientation === 'y'
