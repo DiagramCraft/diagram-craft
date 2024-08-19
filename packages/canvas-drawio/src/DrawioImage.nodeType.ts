@@ -146,6 +146,8 @@ class DrawioImageComponent extends BaseNodeComponent {
           h: 100,
           r: bounds.r
         };
+      } else if (textPosition === 'c') {
+        textBounds = bounds;
       } else {
         console.warn('Unknown text position: ', textPosition);
       }

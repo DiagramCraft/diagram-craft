@@ -103,6 +103,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'cu
 
   effects: {
     blur: 0,
+    glass: false,
     opacity: 1,
     reflection: false,
     reflectionStrength: 0.7,

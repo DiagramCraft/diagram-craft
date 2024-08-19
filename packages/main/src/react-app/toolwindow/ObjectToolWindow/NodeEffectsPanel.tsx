@@ -19,6 +19,8 @@ export const NodeEffectsPanel = (props: Props) => {
   const blur = useNodeProperty($d, 'effects.blur');
   const opacity = useNodeProperty($d, 'effects.opacity');
 
+  const glass = useNodeProperty($d, 'effects.glass');
+
   const sketch = useNodeProperty($d, 'effects.sketch');
   const sketchStrength = useNodeProperty($d, 'effects.sketchStrength');
   const sketchFillType = useNodeProperty($d, 'effects.sketchFillType');
@@ -71,6 +73,17 @@ export const NodeEffectsPanel = (props: Props) => {
               value={round(opacity.val * 100)}
               onChange={v => {
                 opacity.set(Number(v) / 100);
+              }}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Glass:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <input
+              type="checkbox"
+              checked={glass.val}
+              onChange={() => {
+                glass.set(!glass.val);
               }}
             />
           </div>

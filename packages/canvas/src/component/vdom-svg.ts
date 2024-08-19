@@ -16,6 +16,7 @@ type CommonPresentationAttributes = {
   'marker-end'?: string;
   'transform'?: string;
   'cursor'?: string;
+  'clip-path'?: string;
   'pointer-events'?: string;
 };
 
@@ -64,6 +65,18 @@ export const path = (
   ...children: VNode[]
 ) => {
   return s('path', attrs, ...children);
+};
+
+export const clipPath = (
+  attrs: Attr<
+    {
+      id: string;
+    } & ElementAttributes &
+      CommonPresentationAttributes
+  >,
+  ...children: VNode[]
+) => {
+  return s('clipPath', attrs, ...children);
 };
 
 export const rect = (

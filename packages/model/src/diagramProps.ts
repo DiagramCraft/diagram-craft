@@ -218,6 +218,8 @@ declare global {
       sketchStrength?: number;
       sketchFillType?: 'fill' | 'hachure';
 
+      glass?: boolean;
+
       opacity?: number;
 
       rounding?: boolean;

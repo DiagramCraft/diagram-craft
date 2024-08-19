@@ -310,6 +310,54 @@ export class BaseNodeComponent<
       this.addAnchorsDebug(props, children);
     }
 
+    if (props.element.renderProps.effects.glass) {
+      const { x, y, w, h } = props.element.bounds;
+      children.push(
+        makeLinearGradient(`${props.element.id}-glass-gradient`, {
+          // @ts-ignore
+          fill: {
+            color: 'rgba(255, 255, 255, 0.1)',
+            color2: 'rgba(255, 255, 255, 0.8)',
+            gradient: {
+              type: 'linear',
+              direction: -Math.PI / 2
+            },
+            type: 'gradient',
+            enabled: true
+          }
+        })
+      );
+
+      // TODO: This is quite ugly... can we expose the boundary nodes from ShapeBuilder somehow
+      children.push(
+        svg.clipPath(
+          {
+            id: `${props.element.id}-glass-clip`
+          },
+          svg.path({
+            d: shapeBuilder.nodes.find(
+              n =>
+                n.tag === 'path' &&
+                (n.data.class as string | undefined)?.includes('svg-node__boundary')
+            )?.data.d as string
+          })
+        )
+      );
+      children.push(
+        svg.path({
+          'd': `
+            M ${x} ${y} 
+            L ${x} ${y + h * 0.3} 
+            A ${w / 2} ${h * 0.2} 0 0 0 ${x + w / 2} ${y + h * 0.5} 
+            A ${w / 2} ${h * 0.2} 0 0 0 ${x + w} ${y + h * 0.3} 
+            L ${x + w} ${y}
+            Z`,
+          'clip-path': `url(#${props.element.id}-glass-clip)`,
+          'fill': `url(#${props.element.id}-glass-gradient)`
+        })
+      );
+    }
+
     const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''}`;
     return svg.g(
       {

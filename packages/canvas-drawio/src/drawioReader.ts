@@ -552,6 +552,11 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     props.effects.sketchFillType = 'hachure';
   }
 
+  if (style.is('glass')) {
+    props.effects ??= {};
+    props.effects.glass = true;
+  }
+
   props.stroke = {
     color: style.str('strokeColor'),
     width: style.num('strokeWidth', 1)
