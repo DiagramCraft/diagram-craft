@@ -658,10 +658,6 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
   for (const $cell of xIterElements($$cells)) {
     const parent = $cell.getAttribute('parent')!;
     if (parent !== rootId) {
-      // TODO: Replace with parsing of stylename
-      //.      Unclear if this is needed
-      //if ($cell.getAttribute('style')?.startsWith('edgeLabel;')) continue;
-
       const id = $cell.getAttribute('id')!;
       parentChild.set(parent, [...(parentChild.get(parent) ?? []), id]);
     }
@@ -692,7 +688,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       parents.set(id, layer);
     } else {
-      const style = new StyleManager($cell.getAttribute('style')!);
+      const style = new StyleManager($cell.getAttribute('style')!, parentChild.has(id));
 
       const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
       let bounds = MxGeometry.boundsFrom($geometry);

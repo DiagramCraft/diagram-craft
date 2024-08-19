@@ -147,15 +147,21 @@ export class StyleManager {
       spacingBottom: '0',
       align: 'left',
       verticalAlign: 'top'
+    },
+    group: {
+      verticalAlign: 'top'
     }
   };
   styleName: string;
   shape: string | undefined;
   styles: Style;
 
-  constructor(styleString: string) {
+  private styleKey: string;
+
+  constructor(styleString: string, isGroup?: boolean) {
     this.styles = this.parseStyle(styleString);
     this.styleName = this.styles[STYLENAME_KEY] ?? 'default';
+    this.styleKey = this.styles[STYLENAME_KEY] ?? (isGroup ? 'group' : 'default');
 
     this.shape = this.get('shape');
   }
@@ -193,7 +199,7 @@ export class StyleManager {
   get(key: string) {
     return (
       this.styles[key as AllKeys] ??
-      this.defaults[this.styleName]?.[key as AllKeys] ??
+      this.defaults[this.styleKey]?.[key as AllKeys] ??
       this.defaults['default'][key as AllKeys]
     );
   }
