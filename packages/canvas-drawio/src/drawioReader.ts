@@ -767,18 +767,23 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       // We don't support label styles natively, so simulate using a wrapping span. Note, we only do this in case the
       // text itself is not an HTML formatted
       if (!texts.text.startsWith('<') && texts.text !== '') {
-        const s: string[] = [];
+        const spanStyles: string[] = [];
+        const divStyles: string[] = [];
         if (style.str('labelBackgroundColor', 'none') !== 'none')
-          s.push(`background-color: ${style.str('labelBackgroundColor')}`);
+          spanStyles.push(`background-color: ${style.str('labelBackgroundColor')}`);
         if (style.str('labelBorderColor', 'none') !== 'none')
-          s.push(`border: 1px solid ${style.str('labelBorderColor')}`);
+          spanStyles.push(`border: 1px solid ${style.str('labelBorderColor')}`);
         if (style.num('textOpacity', 100) !== 100) {
-          s.push(
+          spanStyles.push(
             `color: color-mix(in srgb, ${style.str('fontColor')}, transparent ${100 - style.num('textOpacity', 100)}%)`
           );
         }
-        if (s.length > 0) {
-          texts.text = `<span style="${s.join(';')}">${texts.text}</span>`;
+        if (!style.is('horizontal', true)) divStyles.push('transform: rotate(-90deg)');
+        if (spanStyles.length > 0) {
+          texts.text = `<span style="${spanStyles.join(';')}">${texts.text}</span>`;
+        }
+        if (divStyles.length > 0) {
+          texts.text = `<div style="${divStyles.join(';')}">${texts.text}</div>`;
         }
       }
 

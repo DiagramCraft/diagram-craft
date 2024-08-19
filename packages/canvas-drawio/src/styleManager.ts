@@ -55,6 +55,7 @@ type BooleanKey =
   | 'imageFlipV'
   | 'imageFlipH'
   | 'noLabel'
+  | 'horizontal'
   | 'glass'
   | 'orthogonal'
   | 'rotatable'
