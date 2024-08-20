@@ -8,6 +8,7 @@ import { fileNewActions } from './actions/fileNewAction';
 import { fileOpenActions } from './actions/fileOpenAction';
 import { fileSaveActions } from './actions/fileSaveAction';
 import { imageInsertActions } from './actions/imageInsertAction';
+import { tableInsertActions } from './actions/tableInsertAction';
 
 export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...defaultCanvasActions(state),
@@ -20,7 +21,8 @@ export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...fileOpenActions(state),
   ...fileNewActions(state),
   ...fileSaveActions(state),
-  ...imageInsertActions(state)
+  ...imageInsertActions(state),
+  ...tableInsertActions(state)
 });
 
 export const defaultMacAppKeymap: KeyMap = {

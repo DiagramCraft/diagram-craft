@@ -19,11 +19,14 @@ import {
   TbPencil,
   TbPentagonPlus,
   TbPhotoPlus,
+  TbPlus,
   TbPointer,
   TbPolygon,
   TbSearch,
+  TbSquarePlus2,
   TbStack,
   TbSun,
+  TbTablePlus,
   TbTextSize,
   TbZoomIn,
   TbZoomOut
@@ -93,6 +96,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ApplicationTriggers, ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
 import { ActionToolbarButton } from './react-app/toolbar/ActionToolbarButton';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
+import { TableInsertDialog } from './react-app/TableInsertDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -361,12 +365,16 @@ export const App = (props: {
             onOpen={dialogState?.onOk}
             onCancel={dialogState?.onCancel}
           />
-
           <ImageInsertDialog
             open={dialogState?.name === 'imageInsert'}
             onInsert={dialogState?.onOk}
             onCancel={dialogState?.onCancel}
             diagram={$d}
+          />
+          <TableInsertDialog
+            open={dialogState?.name === 'tableInsert'}
+            onInsert={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
           />
 
           <div id="app" className={'dark-theme'}>
@@ -527,7 +535,7 @@ export const App = (props: {
                   </ActionToggleButton>
                   <Toolbar.ToggleGroup type={'single'}>
                     <Toolbar.ToggleItem value={'a'}>
-                      <TbPentagonPlus size={'17.5px'} />
+                      <TbSquarePlus2 size={'17.5px'} />
                     </Toolbar.ToggleItem>
                   </Toolbar.ToggleGroup>
                   <ActionToggleButton action={'TOOL_EDGE'}>
@@ -545,8 +553,15 @@ export const App = (props: {
                   <ActionToggleButton action={'TOOL_NODE'}>
                     <TbLocation size={'17.5px'} transform={'scale(-1,1)'} />
                   </ActionToggleButton>
+                  <Toolbar.Separator />
                   <ActionToolbarButton action={'IMAGE_INSERT'} context={{ applicationTriggers }}>
                     <TbPhotoPlus size={'17.5px'} />
+                  </ActionToolbarButton>
+                  <ActionToolbarButton action={'TABLE_INSERT'} context={{ applicationTriggers }}>
+                    <TbTablePlus size={'17.5px'} />
+                  </ActionToolbarButton>
+                  <ActionToolbarButton action={'IMAGE_INSERT'} context={{ applicationTriggers }}>
+                    <TbPlus size={'17.5px'} />
                   </ActionToolbarButton>
                 </Toolbar.Root>
               </div>
