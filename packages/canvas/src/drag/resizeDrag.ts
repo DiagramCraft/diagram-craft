@@ -17,6 +17,7 @@ const isFreeDrag = (m: Modifiers) => m.altKey;
 
 export class ResizeDrag extends AbstractDrag {
   private readonly uow: UnitOfWork;
+  private readonly originalBounds: Box;
 
   constructor(
     private readonly diagram: Diagram,
@@ -25,18 +26,19 @@ export class ResizeDrag extends AbstractDrag {
   ) {
     super();
     this.uow = new UnitOfWork(this.diagram, true);
+    this.originalBounds = this.diagram.selectionState.bounds;
   }
 
   onDrag(coord: Point, modifiers: Modifiers): void {
     const selection = this.diagram.selectionState;
 
-    const before = selection.bounds;
+    const before = this.originalBounds;
     const original = selection.source.boundingBox;
 
-    const lcs = LocalCoordinateSystem.fromBox(selection.bounds);
+    const lcs = LocalCoordinateSystem.fromBox(before);
 
     // TODO: Need some sort of utility for this piece
-    const localTarget = Box.asReadWrite(lcs.toLocal(selection.bounds));
+    const localTarget = Box.asReadWrite(lcs.toLocal(before));
     const localOriginal = lcs.toLocal(original);
 
     const delta = Point.subtract(lcs.toLocal(coord), lcs.toLocal(this.offset));
@@ -122,12 +124,25 @@ export class ResizeDrag extends AbstractDrag {
 
     selection.forceRotation(undefined);
 
+    if (newBounds.w < 0) {
+      newBounds.x += newBounds.w;
+      newBounds.w = -newBounds.w;
+    }
+
+    if (newBounds.h < 0) {
+      newBounds.y += newBounds.h;
+      newBounds.h = -newBounds.h;
+    }
+
+    newBounds.w = Math.max(0.1, newBounds.w);
+    newBounds.h = Math.max(0.1, newBounds.h);
+
     this.diagram.transformElements(
       selection.filter(
         'all',
         selection.getSelectionType() === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
-      TransformFactory.fromTo(before, WritableBox.asBox(newBounds)),
+      TransformFactory.fromTo(selection.bounds, WritableBox.asBox(newBounds)),
       this.uow
     );
     this.uow.notify();
