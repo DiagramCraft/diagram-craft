@@ -147,6 +147,7 @@ export class ResizeDrag extends AbstractDrag {
     }
 
     selection.rebaseline();
+    this.emit('dragEnd');
   }
 
   private applyAspectRatioContraint(
