@@ -18,6 +18,7 @@ import {
   TbPalette,
   TbPencil,
   TbPentagonPlus,
+  TbPhotoPlus,
   TbPointer,
   TbPolygon,
   TbSearch,
@@ -90,6 +91,8 @@ import { newid } from '@diagram-craft/utils/id';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ApplicationTriggers, ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
+import { ActionToolbarButton } from './react-app/toolbar/ActionToolbarButton';
+import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -359,6 +362,13 @@ export const App = (props: {
             onCancel={dialogState?.onCancel}
           />
 
+          <ImageInsertDialog
+            open={dialogState?.name === 'imageInsert'}
+            onInsert={dialogState?.onOk}
+            onCancel={dialogState?.onCancel}
+            diagram={$d}
+          />
+
           <div id="app" className={'dark-theme'}>
             <div id="menu">
               <DropdownMenu.Root>
@@ -535,6 +545,9 @@ export const App = (props: {
                   <ActionToggleButton action={'TOOL_NODE'}>
                     <TbLocation size={'17.5px'} transform={'scale(-1,1)'} />
                   </ActionToggleButton>
+                  <ActionToolbarButton action={'IMAGE_INSERT'} context={{ applicationTriggers }}>
+                    <TbPhotoPlus size={'17.5px'} />
+                  </ActionToolbarButton>
                 </Toolbar.Root>
               </div>
 

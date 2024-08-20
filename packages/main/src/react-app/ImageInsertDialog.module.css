@@ -1,0 +1,45 @@
+.cmp-insert-image-dialog {
+  .cmp-insert-image-dialog__list {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--primary-border);
+    border-radius: var(--cmp-radius);
+    padding: 0.5rem 0 0.5rem 0.5rem;
+
+    & > div {
+      height: 10rem;
+      overflow: scroll;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 0;
+    }
+    ul > li {
+      list-style: none;
+      margin-bottom: 0.25rem;
+
+      a {
+        color: var(--secondary-fg);
+        &:hover {
+          color: var(--highlight-fg);
+        }
+      }
+    }
+  }
+
+  .cmp-insert-image-dialog__path {
+    margin-bottom: 0.5rem;
+    & > a {
+      color: var(--secondary-fg);
+      margin-right: 0.25rem;
+
+      &:hover {
+        color: var(--highlight-fg);
+      }
+
+      &:not(:first-child) {
+        margin-left: 0.25rem;
+      }
+    }
+  }
+}

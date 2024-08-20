@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
 import { useActions } from '../context/ActionsContext';
-import { ActionEvents } from '@diagram-craft/canvas/action';
+import { ActionContext, ActionEvents } from '@diagram-craft/canvas/action';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 
@@ -29,7 +29,7 @@ export const ActionToolbarButton = (props: Props) => {
       <Toolbar.Button
         disabled={!enabled}
         onClick={() => {
-          actionMap[props.action]!.execute({});
+          actionMap[props.action]!.execute(props.context ?? {});
         }}
       >
         {props.children}
@@ -41,4 +41,5 @@ export const ActionToolbarButton = (props: Props) => {
 type Props = {
   action: keyof ActionMap;
   children: React.ReactNode;
+  context?: ActionContext;
 };

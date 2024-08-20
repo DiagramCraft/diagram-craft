@@ -7,6 +7,7 @@ import { ToggleHelpAction } from './actions/toggleHelp';
 import { fileNewActions } from './actions/fileNewAction';
 import { fileOpenActions } from './actions/fileOpenAction';
 import { fileSaveActions } from './actions/fileSaveAction';
+import { imageInsertActions } from './actions/imageInsertAction';
 
 export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...defaultCanvasActions(state),
@@ -18,7 +19,8 @@ export const defaultAppActions: ActionMapFactory = (state: AppState) => ({
   ...sidebarActions(state),
   ...fileOpenActions(state),
   ...fileNewActions(state),
-  ...fileSaveActions(state)
+  ...fileSaveActions(state),
+  ...imageInsertActions(state)
 });
 
 export const defaultMacAppKeymap: KeyMap = {
