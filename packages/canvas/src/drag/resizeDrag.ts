@@ -20,8 +20,8 @@ export class ResizeDrag extends AbstractDrag {
 
   constructor(
     private readonly diagram: Diagram,
-    private readonly type: ResizeType,
-    private readonly offset: Point
+    private type: ResizeType,
+    private offset: Point
   ) {
     super();
     this.uow = new UnitOfWork(this.diagram, true);

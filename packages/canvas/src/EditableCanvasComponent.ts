@@ -168,7 +168,14 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
-        if (e.code === 'Space' && !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+        if (
+          e.code === 'Space' &&
+          !(e.srcElement as HTMLElement | undefined)?.className.includes('svg-node__text') &&
+          !e.ctrlKey &&
+          !e.altKey &&
+          !e.metaKey &&
+          !e.shiftKey
+        ) {
           if (this.tool?.type !== 'pan') {
             props.applicationState.tool = 'pan';
           }
