@@ -97,6 +97,7 @@ import { ApplicationTriggers, ContextMenuTarget } from '@diagram-craft/canvas/Ap
 import { ActionToolbarButton } from './react-app/toolbar/ActionToolbarButton';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
+import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -113,7 +114,8 @@ const tools: Record<ToolType, ToolContructor> = {
   node: NodeTool,
   pen: PenTool,
   freehand: FreehandTool,
-  pan: PanTool
+  pan: PanTool,
+  rect: RectTool
 };
 
 const DarkModeToggleButton = () => {
@@ -533,11 +535,9 @@ export const App = (props: {
                   <ActionToggleButton action={'TOOL_MOVE'}>
                     <TbPointer size={'17.5px'} />
                   </ActionToggleButton>
-                  <Toolbar.ToggleGroup type={'single'}>
-                    <Toolbar.ToggleItem value={'a'}>
-                      <TbSquarePlus2 size={'17.5px'} />
-                    </Toolbar.ToggleItem>
-                  </Toolbar.ToggleGroup>
+                  <ActionToggleButton action={'TOOL_RECT'}>
+                    <TbSquarePlus2 size={'17.5px'} />
+                  </ActionToggleButton>
                   <ActionToggleButton action={'TOOL_EDGE'}>
                     <TbLine size={'17.5px'} />
                   </ActionToggleButton>

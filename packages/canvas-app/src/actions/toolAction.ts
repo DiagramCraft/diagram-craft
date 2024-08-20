@@ -1,26 +1,20 @@
-import { ActionMapFactory, AppState } from '@diagram-craft/canvas/keyMap';
+import { AppState } from '@diagram-craft/canvas/keyMap';
 import { ApplicationState, ToolType } from '@diagram-craft/canvas/ApplicationState';
 import { AbstractToggleAction } from '@diagram-craft/canvas/action';
 
-declare global {
-  interface ActionMap {
-    TOOL_MOVE: ToolAction;
-    TOOL_TEXT: ToolAction;
-    TOOL_EDGE: ToolAction;
-    TOOL_NODE: ToolAction;
-    TOOL_PEN: ToolAction;
-    TOOL_FREEHAND: ToolAction;
-  }
-}
-
-export const toolActions: ActionMapFactory = (state: AppState) => ({
+export const toolActions = (state: AppState) => ({
   TOOL_MOVE: new ToolAction('move', state.applicationState, true),
   TOOL_TEXT: new ToolAction('text', state.applicationState),
   TOOL_EDGE: new ToolAction('edge', state.applicationState),
   TOOL_NODE: new ToolAction('node', state.applicationState),
   TOOL_PEN: new ToolAction('pen', state.applicationState),
-  TOOL_FREEHAND: new ToolAction('freehand', state.applicationState)
+  TOOL_FREEHAND: new ToolAction('freehand', state.applicationState),
+  TOOL_RECT: new ToolAction('rect', state.applicationState)
 });
+
+declare global {
+  interface ActionMap extends ReturnType<typeof toolActions> {}
+}
 
 export class ToolAction extends AbstractToggleAction {
   constructor(
