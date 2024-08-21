@@ -27,6 +27,7 @@ import styles from './canvas.css?inline';
 import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { ApplicationTriggers } from './ApplicationTriggers';
+import { unique } from '@diagram-craft/utils/array';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -185,12 +186,18 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     }, [diagram]);
 
     createEffect(() => {
-      const cb = (e: { element: DiagramElement }) => this.redrawElement(e);
-      diagram.on('elementChange', cb);
-      diagram.on('elementHighlighted', cb);
+      const highlightCb = (e: { element: DiagramElement }) => this.redrawElements([e.element]);
+      diagram.on('elementHighlighted', highlightCb);
       return () => {
-        diagram.off('elementChange', cb);
-        diagram.off('elementHighlighted', cb);
+        diagram.off('elementHighlighted', highlightCb);
+      };
+    }, [diagram]);
+
+    createEffect(() => {
+      const commitCb = (e: { updated: DiagramElement[] }) => this.redrawElements(e.updated);
+      diagram.on('uowCommit', commitCb);
+      return () => {
+        diagram.off('uowCommit', commitCb);
       };
     }, [diagram]);
 
@@ -200,7 +207,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
       const cb = ({ type }: ViewboxEvents['viewbox']) => {
         if (type === 'pan') return;
         for (const e of this.currentProps?.diagram?.selectionState.elements ?? []) {
-          this.redrawElement({ element: e });
+          this.redrawElements([e]);
         }
       };
       diagram.viewBox.on('viewbox', cb);
@@ -476,15 +483,17 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     this.svgRef?.classList.add(`tool-${s}`);
   }
 
-  private redrawElement = (e: { element: DiagramElement }) => {
-    if (isNode(e.element)) {
-      const nodeToRepaint = getTopMostNode(e.element);
-      this.nodeRefs.get(nodeToRepaint.id)?.redraw();
-      for (const edge of nodeToRepaint.listEdges()) {
-        this.edgeRefs.get(edge.id)?.redraw();
+  private redrawElements = (e: DiagramElement[]) => {
+    const resolvedElements = unique(e.map(e => (isNode(e) ? getTopMostNode(e) : e)));
+    for (const element of resolvedElements) {
+      if (isNode(element)) {
+        this.nodeRefs.get(element.id)?.redraw();
+        for (const edge of element.listEdges()) {
+          this.edgeRefs.get(edge.id)?.redraw();
+        }
+      } else {
+        this.edgeRefs.get(element.id)?.redraw();
       }
-    } else {
-      this.edgeRefs.get(e.element.id)?.redraw();
     }
   };
 
@@ -499,14 +508,14 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
   private onSelectionRedrawElement(selection: SelectionState) {
     createEffect(() => {
       const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
-        this.redrawElement(e);
+        this.redrawElements([e.element]);
       selection.on('add', cb);
       return () => selection.off('add', cb);
     }, [selection]);
 
     createEffect(() => {
       const cb = (e: SelectionStateEvents['add'] | SelectionStateEvents['remove']) =>
-        this.redrawElement(e);
+        this.redrawElements([e.element]);
       selection.on('remove', cb);
       return () => selection.off('remove', cb);
     }, [selection]);

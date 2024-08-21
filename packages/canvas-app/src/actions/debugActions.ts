@@ -5,14 +5,17 @@ import {
   serializeDiagramDocument,
   serializeDiagramElement
 } from '@diagram-craft/model/serialization/serialize';
+import { Translation } from '@diagram-craft/geometry/transform';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
-export const dumpActions = (state: State) => ({
+export const debugActions = (state: State) => ({
   DOCUMENT_DUMP: new DumpDocument(state.diagram),
-  SELECTION_DUMP: new DumpSelectionAction(state.diagram)
+  SELECTION_DUMP: new DumpSelectionAction(state.diagram),
+  SELECTION_REDRAW: new RedrawAction(state.diagram)
 });
 
 declare global {
-  interface ActionMap extends ReturnType<typeof dumpActions> {}
+  interface ActionMap extends ReturnType<typeof debugActions> {}
 }
 
 class DumpDocument extends AbstractAction {
@@ -37,5 +40,23 @@ class DumpSelectionAction extends AbstractAction {
       const s = serializeDiagramElement(e);
       console.log(JSON.stringify(s, undefined, '  '));
     });
+  }
+}
+
+class RedrawAction extends AbstractAction {
+  constructor(private readonly diagram: Diagram) {
+    super();
+  }
+
+  execute(): void {
+    UnitOfWork.execute(this.diagram, uow => {
+      this.diagram.selectionState.nodes[0].transform([new Translation({ x: 10, y: 10 })], uow);
+    });
+
+    setTimeout(() => {
+      UnitOfWork.execute(this.diagram, uow => {
+        this.diagram.selectionState.nodes[0].transform([new Translation({ x: -10, y: -10 })], uow);
+      });
+    }, 200);
   }
 }

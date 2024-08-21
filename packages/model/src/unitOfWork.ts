@@ -6,6 +6,8 @@ import { Layer, LayerManager, LayerType } from './diagramLayer';
 import { AdjustmentRule } from './diagramAdjustmentLayer';
 import { Diagram, DiagramEvents } from './diagram';
 import { EventKey } from '@diagram-craft/utils/event';
+import { DiagramNode } from './diagramNode';
+import { DiagramEdge } from './diagramEdge';
 
 type ActionCallback = () => void;
 
@@ -260,6 +262,18 @@ export class UnitOfWork {
     this.#elementsToRemove.forEach(handle('elementRemove'));
     this.#elementsToUpdate.forEach(handle('elementChange'));
     this.#elementsToAdd.forEach(handle('elementAdd'));
+
+    this.diagram.emit('uowCommit', {
+      removed: [...this.#elementsToRemove.values()].filter(
+        e => e instanceof DiagramNode || e instanceof DiagramEdge
+      ) as DiagramElement[],
+      updated: [...this.#elementsToUpdate.values()].filter(
+        e => e instanceof DiagramNode || e instanceof DiagramEdge
+      ) as DiagramElement[],
+      added: [...this.#elementsToAdd.values()].filter(
+        e => e instanceof DiagramNode || e instanceof DiagramEdge
+      ) as DiagramElement[]
+    });
 
     this.#elementsToUpdate.clear();
     this.#elementsToRemove.clear();

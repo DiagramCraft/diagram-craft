@@ -23,7 +23,20 @@ export const SelectionContextMenu = () => {
       <ActionContextMenuItem action={'GROUP_UNGROUP'}>Ungroup</ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
-      <ActionContextMenuItem action={'SELECTION_DUMP'}>Dump</ActionContextMenuItem>
+      <ContextMenu.Sub>
+        <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
+          Debug
+          <div className="cmp-context-menu__right-slot">
+            <TbChevronRight />
+          </div>
+        </ContextMenu.SubTrigger>
+        <ContextMenu.Portal>
+          <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
+            <ActionContextMenuItem action={'SELECTION_DUMP'}>Dump</ActionContextMenuItem>
+            <ActionContextMenuItem action={'SELECTION_REDRAW'}>Redraw</ActionContextMenuItem>
+          </ContextMenu.SubContent>
+        </ContextMenu.Portal>
+      </ContextMenu.Sub>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
       <ContextMenu.Sub>

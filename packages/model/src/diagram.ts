@@ -35,6 +35,9 @@ export type DiagramEvents = {
 
   /* An element has highlights changed */
   elementHighlighted: { element: DiagramElement };
+
+  /* A unit of work has been commited - useful for batch operations */
+  uowCommit: { removed: DiagramElement[]; added: DiagramElement[]; updated: DiagramElement[] };
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer {

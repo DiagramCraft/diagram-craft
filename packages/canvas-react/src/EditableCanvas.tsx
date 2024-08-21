@@ -19,6 +19,7 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props & Actions>((props,
   };
 
   if (ref.current) {
+    // TODO: Is this needed or not?
     cmpRef.current.update(cmpProps);
   }
 

@@ -14,7 +14,7 @@ import { toggleRulerActions } from './actions/toggleRulerAction';
 import { textActions } from './actions/textActions';
 import { edgeFlipActions } from './actions/edgeFlipAction';
 import { duplicateActions } from './actions/duplicateAction';
-import { dumpActions } from './actions/dumpActions';
+import { debugActions } from './actions/debugActions';
 import { layerActions } from './actions/layerActions';
 import { toolActions } from './actions/toolAction';
 import { ActionMapFactory, AppState, KeyMap } from '@diagram-craft/canvas/src/keyMap';
@@ -47,7 +47,7 @@ export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeFlipActions(state),
   ...duplicateActions(state),
   ...groupActions(state),
-  ...dumpActions(state),
+  ...debugActions(state),
   ...exportActions(state),
   ...layerActions(state),
   ...toolActions(state)
