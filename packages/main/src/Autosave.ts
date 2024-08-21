@@ -9,6 +9,8 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 
 const KEY = 'autosave';
 
+let needsSave: { url: string | undefined; doc: DiagramDocument } | undefined = undefined;
+
 export const Autosave = {
   load: async (
     documentFactory: DocumentFactory,
@@ -53,5 +55,17 @@ export const Autosave = {
         diagram: await serializeDiagramDocument(doc)
       })
     );
+  },
+
+  // TODO: Handle multiple different URLs and docs
+  asyncSave: (url: string | undefined, doc: DiagramDocument) => {
+    needsSave = { url, doc };
   }
 };
+
+setInterval(() => {
+  if (needsSave) {
+    Autosave.save(needsSave.url, needsSave.doc);
+    needsSave = undefined;
+  }
+}, 1000);

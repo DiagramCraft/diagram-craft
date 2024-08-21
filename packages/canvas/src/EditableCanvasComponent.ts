@@ -146,26 +146,6 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
 
     // ---> end useCanvasZoomAndPan
 
-    // Keep track of last diagram position (in this.point) in order to
-    // e.g. paste at the location of the cursor
-    createEffect(() => {
-      const cb = (e: MouseEvent) => {
-        const canvas = document.getElementById(`diagram-${diagram.id}`);
-        if (!canvas) return;
-
-        const b = canvas.getBoundingClientRect();
-
-        if (e.x >= b.left && e.x <= b.right && e.y >= b.top && e.y <= b.bottom) {
-          this.point = diagram.viewBox.toDiagramPoint({
-            x: e.x - b.left,
-            y: e.y - b.top
-          });
-        }
-      };
-      document.addEventListener('mousemove', cb);
-      return () => document.removeEventListener('mousemove', cb);
-    }, [diagram]);
-
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
         if (
@@ -318,14 +298,21 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               },
               mouseup: e => this.tool!.onMouseUp(EventHelper.point(e)),
               mousemove: e => {
-                const r = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
+                // TODO: Could we cache this and only update in case a resize happens?
+                const b = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
                 this.tool!.onMouseMove(
                   {
-                    x: e.clientX - r.x,
-                    y: e.clientY - r.y
+                    x: e.clientX - b.x,
+                    y: e.clientY - b.y
                   },
                   e
                 );
+                if (e.x >= b.left && e.x <= b.right && e.y >= b.top && e.y <= b.bottom) {
+                  this.point = diagram.viewBox.toDiagramPoint({
+                    x: e.x - b.left,
+                    y: e.y - b.top
+                  });
+                }
               },
               contextmenu: event => {
                 const bounds = this.svgRef!.getBoundingClientRect();

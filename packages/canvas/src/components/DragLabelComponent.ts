@@ -46,7 +46,7 @@ export class DragLabelComponent extends Component<CanvasState> {
 
     const s = this.state!;
 
-    return html.div({ class: 'cmp-drag-label', style: 'z-index: 1000;' }, [
+    return html.div({ class: 'cmp-drag-label' }, [
       html.div({}, [text(s.label ?? '')]),
       s.props &&
         html.div(

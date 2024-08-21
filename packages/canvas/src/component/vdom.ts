@@ -1,13 +1,25 @@
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
 
-const toKebabCase = (key: string) =>
-  key.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+// Note: this seems a bit insane, but this is actually making a significant
+//       difference in performance.
+const _cache = new Map<string, string>();
+const toKebabCase = (key: string) => {
+  if (_cache.has(key)) return _cache.get(key)!;
+  const result = key.replace(/[A-Z]/g, match => '-' + match.toLowerCase());
+  _cache.set(key, result);
+  return result;
+};
 
 export const toInlineCSS = (style: Partial<CSSStyleDeclaration>) => {
-  return Object.entries(style!)
-    .filter(([, value]) => value !== undefined && value !== null && value !== '')
-    .map(([key, value]) => `${toKebabCase(key)}: ${value}`)
-    .join(';');
+  let s = '';
+  for (const key in style) {
+    const value = style[key];
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+    s += `${toKebabCase(key)}: ${value};`;
+  }
+  return s;
 };
 
 type EventListenerMap = {
@@ -97,8 +109,11 @@ export const rawHTML = (text: string): VNode => {
 const elCache = new WeakMap<HTMLElement, string>();
 
 const onUpdate = (oldVNode: VNode, newVNode: VNode, parentElement: VNode | undefined) => {
-  updateAttrs(oldVNode, newVNode);
-  updateEvents(oldVNode, newVNode);
+  // Optimization: no need to process props and events for components, text or raw nodes
+  if (newVNode.type === 'h' || newVNode.type === 's') {
+    updateAttrs(oldVNode, newVNode);
+    updateEvents(oldVNode, newVNode);
+  }
 
   if (newVNode.type === 't' || newVNode.type === 'r') {
     // TODO: Checking for contentEditable here is a bit of a hack
@@ -143,17 +158,20 @@ const onRemove = (node: VNode) => {
 
 const updateAttrs = (oldVNode: VNode, newVNode: VNode) => {
   if (oldVNode.type === 't' || newVNode.type === 't') return;
+  if (!newVNode.data) return;
 
   const oldAttrs = oldVNode.data ?? {};
-  const newAttrs = newVNode.data ?? {};
+  const newAttrs = newVNode.data;
   const newNode = newVNode.el! as DOMElement;
 
-  Object.entries(newAttrs).forEach(([key, value]) => {
+  for (const key in newAttrs) {
     if (key === 'on' || key === 'hooks' || key === 'component') return;
+
+    const value = newAttrs[key];
     if (oldAttrs[key] !== value) {
       newNode.setAttribute(key, value as string);
     }
-  });
+  }
 };
 
 const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
@@ -161,18 +179,26 @@ const updateEvents = (oldVNode: VNode, newVNode: VNode) => {
 
   const oldEvents = oldVNode.data.on ?? {};
   const newEvents = newVNode.data.on ?? {};
+
+  const oldKeys = Object.keys(oldEvents);
+  const newKeys = Object.keys(newEvents);
+
+  if (oldKeys.length === 0 && newKeys.length === 0) return;
+
   const newNode = newVNode.el! as DOMElement;
   const oldNode = oldVNode.el! as DOMElement;
 
-  Object.entries(oldEvents).forEach(([key, value]) => {
+  for (const key of oldKeys) {
+    const value = oldEvents[key as keyof EventListenerMap];
     oldNode.removeEventListener(key, value! as EventListener);
-  });
+  }
 
-  Object.entries(newEvents).forEach(([key, value]) => {
+  for (const key of newKeys) {
+    const value = newEvents[key as keyof EventListenerMap];
     //if (oldEvents[key as keyof EventListenerMap] !== value) {
     newNode.addEventListener(key, value as EventListener);
     //}
-  });
+  }
 };
 
 const createElement = (e: VNode, parentElement: VNode | undefined, insertQueue: VNode[]) => {
@@ -294,8 +320,6 @@ export const apply = (oldElement: VNode, newElement: VNode) => {
   // TODO: Not sure if queueMicrotask is the best way to do this
   queueMicrotask(() => {
     insertQueue.forEach(onInsert);
-  });
-  queueMicrotask(() => {
     childChangedQueue.forEach(onChildrenChanged);
   });
   return newRoot;

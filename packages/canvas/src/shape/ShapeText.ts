@@ -1,7 +1,7 @@
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import * as html from '../component/vdom-html';
-import { rawHTML, toInlineCSS, VNode } from '../component/vdom';
+import { rawHTML, VNode } from '../component/vdom';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
 import { DeepReadonly } from '@diagram-craft/utils/types';
@@ -69,33 +69,40 @@ export class ShapeText extends Component<ShapeTextProps> {
   }
 
   render(props: ShapeTextProps) {
-    const style: Partial<CSSStyleDeclaration> = {
-      // TODO: color is not supported when using text
-      color: props.textProps?.color ?? 'unset',
-      fill: props.textProps?.color ?? 'unset',
+    const textProps = props.textProps ?? {};
 
-      fontFamily: props.textProps?.font ?? 'unset',
-      fontSize: withPx(props.textProps?.fontSize) ?? 'unset',
-      fontWeight: props.textProps?.bold ? 'bold' : 'normal',
-      fontStyle: props.textProps?.italic ? 'italic' : 'normal',
-      lineHeight: `${1.2 * (props.textProps?.lineHeight ?? 1) * 100}%`,
-      minWidth: 'min-content',
-      textDecoration: props.textProps?.textDecoration
-        ? `${props.textProps.textDecoration} ${props.textProps.color ?? 'black'}`
+    const style = {
+      // TODO: color is not supported when using text
+      'color': textProps.color ?? 'unset',
+      'fill': textProps.color ?? 'unset',
+
+      'font-family': textProps.font ?? 'unset',
+      'font-size': withPx(textProps.fontSize) ?? 'unset',
+      'font-weight': textProps.bold ? 'bold' : 'normal',
+      'font-style': textProps.italic ? 'italic' : 'normal',
+      'line-height': `${1.2 * (textProps.lineHeight ?? 1) * 100}%`,
+      'min-width': 'min-content',
+      'text-decoration': textProps.textDecoration
+        ? `${textProps.textDecoration} ${textProps.color ?? 'black'}`
         : 'none',
-      textTransform: props.textProps?.textTransform ?? 'none',
-      textAlign: props.textProps?.align ?? 'unset',
-      paddingLeft: withPx(props.textProps?.left) ?? '0',
-      paddingRight: withPx(props.textProps?.right) ?? '0',
-      paddingTop: withPx(props.textProps?.top) ?? '0',
-      paddingBottom: withPx(props.textProps?.bottom) ?? '0',
-      whiteSpace: props.textProps?.wrap ? 'normal' : 'nowrap',
-      overflow: props.textProps?.overflow === 'visible' ? 'unset' : 'hidden'
+      'text-transform': textProps.textTransform ?? 'none',
+      'text-align': textProps.align ?? 'unset',
+      'padding-left': withPx(textProps.left) ?? '0',
+      'padding-right': withPx(textProps.right) ?? '0',
+      'padding-top': withPx(textProps.top) ?? '0',
+      'padding-bottom': withPx(textProps.bottom) ?? '0',
+      'white-space': textProps.wrap ? 'normal' : 'nowrap',
+      'overflow': textProps.overflow === 'visible' ? 'unset' : 'hidden'
     };
+    let styleString = '';
+    for (const k in style) {
+      const v = style[k as keyof typeof style];
+      styleString += `${k}: ${v};`;
+    }
 
     const metadata = props.metadata ?? {};
 
-    const valign = VALIGN_TO_FLEX_JUSTIFY[props.textProps?.valign ?? 'middle'];
+    const valign = VALIGN_TO_FLEX_JUSTIFY[textProps.valign ?? 'middle'];
 
     const updateBounds = (w: number, h: number) => {
       if (w === this.width && h === this.height) return;
@@ -104,7 +111,7 @@ export class ShapeText extends Component<ShapeTextProps> {
       props.onSizeChange?.({ w, h });
     };
 
-    const pos = props.textProps?.position;
+    const pos = textProps.position;
     const foreignObject = svg.foreignObject(
       {
         class: 'svg-node__fo',
@@ -119,7 +126,7 @@ export class ShapeText extends Component<ShapeTextProps> {
         ).toString(),
         width: props.bounds.w.toString(),
         height: props.bounds.h.toString(),
-        style: toInlineCSS({ pointerEvents: 'none' })
+        style: 'pointer-events: none;'
       },
       html.div(
         {
@@ -130,7 +137,7 @@ export class ShapeText extends Component<ShapeTextProps> {
           html.div(
             {
               class: 'svg-node__text',
-              style: toInlineCSS(style),
+              style: styleString,
               on: {
                 paste: (e: ClipboardEvent) => {
                   const data = e.clipboardData!.getData('text/html');
@@ -202,7 +209,7 @@ export class ShapeText extends Component<ShapeTextProps> {
           'y': props.bounds.y.toString(),
           'data-width': props.bounds.w.toString(),
           'data-height': props.bounds.h.toString(),
-          'style': toInlineCSS({ pointerEvents: 'none', ...style }),
+          'style': styleString + 'pointer-events: none;',
           'hooks': {
             onChildrenChanged: (n: VNode) => {
               const target = n.el! as SVGTextElement;
@@ -211,7 +218,7 @@ export class ShapeText extends Component<ShapeTextProps> {
               const newHash = hash64(
                 new TextEncoder().encode(
                   JSON.stringify({
-                    ...props.textProps,
+                    ...textProps,
                     width: props.bounds.w,
                     height: props.bounds.h
                   })
@@ -223,10 +230,7 @@ export class ShapeText extends Component<ShapeTextProps> {
               if (currentHash !== newHash) {
                 svgTextHelper.reflow();
               }
-              svgTextHelper.realign(
-                props.textProps?.align ?? 'left',
-                props.textProps?.valign ?? 'middle'
-              );
+              svgTextHelper.realign(textProps.align ?? 'left', textProps.valign ?? 'middle');
               svgTextHelper.apply();
 
               target.dataset['hash'] = newHash;

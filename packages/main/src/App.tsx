@@ -73,7 +73,6 @@ import { UserState } from '@diagram-craft/canvas/UserState';
 import { makeActionMap } from '@diagram-craft/canvas/keyMap';
 import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { debounce } from '@diagram-craft/utils/debounce';
 import { Autosave } from './Autosave';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { HelpMessage } from './react-app/components/HelpMessage';
@@ -215,12 +214,12 @@ export const App = (props: {
   const url = activeDoc.url;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const autosave = debounce((event: any) => {
+  const autosave = (event: any) => {
     if (event.silent) return;
 
-    Autosave.save(url, doc);
+    Autosave.asyncSave(url, doc);
     setDirty(true);
-  }, 1000);
+  };
 
   useEventListener($d, 'change', autosave);
   useEventListener($d, 'elementAdd', autosave);
