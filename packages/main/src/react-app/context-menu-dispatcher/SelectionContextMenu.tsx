@@ -19,6 +19,10 @@ export const SelectionContextMenu = () => {
       <ActionContextMenuItem action={'DUPLICATE'}>Duplicate</ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />
 
+      <ActionContextMenuItem action={'STYLE_COPY'}>Copy Style</ActionContextMenuItem>
+      <ActionContextMenuItem action={'STYLE_PASTE'}>Paste Style</ActionContextMenuItem>
+      <ContextMenu.Separator className="cmp-context-menu__separator" />
+
       <ActionContextMenuItem action={'GROUP_GROUP'}>Group</ActionContextMenuItem>
       <ActionContextMenuItem action={'GROUP_UNGROUP'}>Ungroup</ActionContextMenuItem>
       <ContextMenu.Separator className="cmp-context-menu__separator" />

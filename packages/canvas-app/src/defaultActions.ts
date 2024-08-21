@@ -24,11 +24,13 @@ import { selectionMoveActions } from './actions/selectionMoveAction';
 import { selectionResizeActions } from './actions/selectionResizeAction';
 import { createLinkedNodeActions } from './actions/linkedNodeAction';
 import { exportActions } from './actions/exportAction';
+import { styleCopyActions } from './actions/styleCopyAction';
 
 export const defaultCanvasActions: ActionMapFactory = (state: AppState) => ({
   ...edgeTextAddActions(state),
   ...tableActions(state),
   ...clipboardActions(state),
+  ...styleCopyActions(state),
   ...undoActions(state),
   ...redoActions(state),
   ...selectAllActions(state),
@@ -97,5 +99,8 @@ export const defaultMacKeymap: KeyMap = {
   'A-C-S-ArrowUp': 'CREATE_LINKED_NODE_KEEP_N',
   'A-C-S-ArrowDown': 'CREATE_LINKED_NODE_KEEP_S',
   'A-C-S-ArrowLeft': 'CREATE_LINKED_NODE_KEEP_W',
-  'A-C-S-ArrowRight': 'CREATE_LINKED_NODE_KEEP_E'
+  'A-C-S-ArrowRight': 'CREATE_LINKED_NODE_KEEP_E',
+
+  'M-S-KeyC': 'STYLE_COPY',
+  'M-S-KeyV': 'STYLE_PASTE'
 };
