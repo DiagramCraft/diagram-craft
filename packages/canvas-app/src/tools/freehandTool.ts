@@ -7,6 +7,8 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -113,7 +115,8 @@ export class FreehandTool extends AbstractTool {
     );
 
     const uow = new UnitOfWork(this.diagram);
-    this.diagram.layers.active.addElement(node, uow);
+    assert.true(this.diagram.layers.active instanceof RegularLayer);
+    (this.diagram.layers.active as RegularLayer).addElement(node, uow);
     uow.commit();
 
     this.path!.remove();

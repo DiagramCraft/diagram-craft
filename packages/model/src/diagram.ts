@@ -1,7 +1,7 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { Layer, LayerManager } from './diagramLayer';
+import { Layer, LayerManager, RegularLayer } from './diagramLayer';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -82,9 +82,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       // Only trigger invalidation in case the value has changed to true
       if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {
         const uow = new UnitOfWork(this);
-        this.layers.active.elements
-          .filter(e => isEdge(e))
-          .forEach(e => (e as DiagramEdge).invalidate(uow));
+        if (this.layers.active instanceof RegularLayer) {
+          this.layers.active.elements
+            .filter(e => isEdge(e))
+            .forEach(e => (e as DiagramEdge).invalidate(uow));
+        }
         uow.commit();
       }
     };
@@ -128,7 +130,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   visibleElements() {
-    return this.layers.visible.flatMap(l => l.elements);
+    return this.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []));
   }
 
   get canvas() {
@@ -166,9 +168,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // Remove from existing layers
     const sourceLayers = new Set(elementLayers);
     for (const l of sourceLayers) {
+      assert.true(l instanceof RegularLayer);
       uow.snapshot(l);
-      l.setElements(
-        l.elements.filter(e => !elements.includes(e)),
+      (l as RegularLayer).setElements(
+        (l as RegularLayer).elements.filter(e => !elements.includes(e)),
         uow
       );
     }
@@ -186,10 +189,17 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     // Move into the new layer
     if (ref === undefined) {
+      assert.true(layer instanceof RegularLayer);
       if (layer.isAbove(topMostLayer)) {
-        layer.setElements([...layer.elements, ...elements], uow);
+        (layer as RegularLayer).setElements(
+          [...(layer as RegularLayer).elements, ...elements],
+          uow
+        );
       } else {
-        layer.setElements([...elements, ...layer.elements], uow);
+        (layer as RegularLayer).setElements(
+          [...elements, ...(layer as RegularLayer).elements],
+          uow
+        );
       }
     } else if (isNode(ref.element) && ref.element.parent) {
       const parent = ref.element.parent;
@@ -208,18 +218,26 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       assert.true(ref.element.layer === layer);
       uow.snapshot(ref.element);
 
-      const idx = layer.elements.indexOf(ref.element);
+      assert.true(layer instanceof RegularLayer);
+      const idx = (layer as RegularLayer).elements.indexOf(ref.element);
       if (ref.relation === 'above') {
-        layer.setElements(layer.elements.toSpliced(idx + 1, 0, ...elements), uow);
+        (layer as RegularLayer).setElements(
+          (layer as RegularLayer).elements.toSpliced(idx + 1, 0, ...elements),
+          uow
+        );
       } else if (ref.relation === 'below') {
-        layer.setElements(layer.elements.toSpliced(idx, 0, ...elements), uow);
+        (layer as RegularLayer).setElements(
+          (layer as RegularLayer).elements.toSpliced(idx, 0, ...elements),
+          uow
+        );
       } else if (isNode(ref.element)) {
         ref.element.setChildren([...ref.element.children, ...elements], uow);
       }
     }
 
     // Assign new layer
-    elements.forEach(e => layer.addElement(e, uow));
+    assert.true(layer instanceof RegularLayer);
+    elements.forEach(e => (layer as RegularLayer).addElement(e, uow));
 
     // TODO: Not clear if this is needed or not
     uow.updateDiagram();

@@ -28,6 +28,8 @@ import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { ApplicationTriggers } from './ApplicationTriggers';
 import { unique } from '@diagram-craft/utils/array';
+import { assert } from '@diagram-craft/utils/assert';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -379,7 +381,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             svg.g(
               {},
               ...diagram.layers.visible.flatMap(layer => {
-                return layer.elements.map(e => {
+                assert.true(layer instanceof RegularLayer);
+                return (layer as RegularLayer).elements.map(e => {
                   const id = e.id;
                   if (e.type === 'edge') {
                     const edge = diagram.edgeLookup.get(id)!;

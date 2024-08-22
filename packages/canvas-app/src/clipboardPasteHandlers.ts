@@ -11,6 +11,7 @@ import { precondition } from '@diagram-craft/utils/assert';
 import { isSerializedEndpointFree } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { ELEMENTS_CONTENT_TYPE } from './clipboard';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 /* This contains paste handlers which are the code that is executed once
  * an item is pasted. Depending on the type of item pasted (image, node, etc)
@@ -55,11 +56,16 @@ export abstract class PasteHandler {
     PasteHandler.lastPastePoint = point;
   }
 
-  abstract paste(content: Blob, diagram: Diagram, context: ActionContext): Promise<void>;
+  abstract paste(
+    content: Blob,
+    diagram: Diagram,
+    layer: RegularLayer,
+    context: ActionContext
+  ): Promise<void>;
 }
 
 class ImagePasteHandler extends PasteHandler {
-  async paste(content: Blob, diagram: Diagram, context: ActionContext) {
+  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: ActionContext) {
     const hash = await this.hash(content);
 
     const point = (await this.getPastePoint(hash)) ?? context.point!;
@@ -87,7 +93,7 @@ class ImagePasteHandler extends PasteHandler {
       )
     ];
 
-    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram));
+    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer));
     diagram.selectionState.setElements(newElements);
 
     this.registerPastePoint(hash, point);
@@ -95,7 +101,7 @@ class ImagePasteHandler extends PasteHandler {
 }
 
 class TextPasteHandler extends PasteHandler {
-  async paste(content: Blob, diagram: Diagram, context: ActionContext) {
+  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: ActionContext) {
     const hash = await this.hash(content);
 
     const point = (await this.getPastePoint(hash)) ?? context.point!;
@@ -118,7 +124,7 @@ class TextPasteHandler extends PasteHandler {
       )
     ];
 
-    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram));
+    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer));
     diagram.selectionState.setElements(newElements);
 
     this.registerPastePoint(hash, point);
@@ -126,7 +132,7 @@ class TextPasteHandler extends PasteHandler {
 }
 
 class ElementsPasteHandler extends PasteHandler {
-  async paste(content: Blob, diagram: Diagram, context: ActionContext) {
+  async paste(content: Blob, diagram: Diagram, layer: RegularLayer, context: ActionContext) {
     const hash = await this.hash(content);
 
     const text = await content.text();
@@ -208,7 +214,7 @@ class ElementsPasteHandler extends PasteHandler {
       {}
     );
 
-    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram));
+    diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer));
     diagram.selectionState.setElements(newElements);
 
     this.registerPastePoint(hash, point);

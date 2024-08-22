@@ -15,7 +15,8 @@ export type SerializedLayer = {
   id: string;
   name: string;
   type: 'layer';
-  layerType: 'basic' | 'reference' | 'adjustment';
+  // TODO: Align with LayerType
+  layerType: 'regular' | 'reference' | 'adjustment';
   elements: ReadonlyArray<SerializedElement>;
 };
 

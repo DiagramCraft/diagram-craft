@@ -9,7 +9,7 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { DiagramElement, isEdge } from './diagramElement';
 import { DiagramEdgeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { Diagram } from './diagram';
-import { Layer } from './diagramLayer';
+import { Layer, RegularLayer } from './diagramLayer';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -32,6 +32,7 @@ import { isDifferent } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { EdgeDefinition } from './elementDefinitionRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
+import { assert } from '@diagram-craft/utils/assert';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -716,8 +717,9 @@ export class DiagramEdge
     this.diagram.edgeLookup.delete(this.id);
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
-    if (this.layer.elements.includes(this)) {
-      this.layer.removeElement(this, uow);
+    assert.true(this.layer instanceof RegularLayer);
+    if ((this.layer as RegularLayer).elements.includes(this)) {
+      (this.layer as RegularLayer).removeElement(this, uow);
     }
   }
 

@@ -338,7 +338,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
           {},
           {}
         )[0] as DiagramNode;
-        dest.layers.active.addElement(node, uow);
+        assert.true(dest.layers.active instanceof RegularLayer);
+        (dest.layers.active as RegularLayer).addElement(node, uow);
 
         return node;
       }

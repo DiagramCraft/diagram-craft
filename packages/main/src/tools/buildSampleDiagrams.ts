@@ -4,7 +4,7 @@ import {
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import * as fs from 'node:fs';
@@ -27,7 +27,7 @@ const WIDTHS = [1, 2, 3, 4, 5];
 const writeArrow = (
   arrow: keyof typeof ARROW_SHAPES,
   y: number,
-  layer: Layer,
+  layer: RegularLayer,
   diagram: Diagram
 ) => {
   const n = new DiagramNode(
@@ -278,7 +278,7 @@ const SHAPES_DEFS = [
           n.diagram,
           n.layer
         );
-        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
+        (n.layer as RegularLayer).addElement(e, UnitOfWork.immediate(n.diagram));
       } else if (a.type === 'edge') {
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
@@ -300,7 +300,7 @@ const SHAPES_DEFS = [
           n.diagram,
           n.layer
         );
-        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
+        (n.layer as RegularLayer).addElement(e, UnitOfWork.immediate(n.diagram));
       }
     });
     return 'rotated-primary-anchors';
@@ -366,7 +366,7 @@ const writeShape = (
   shape: string,
   factory: (diagram: Diagram) => DiagramNode,
   y: number,
-  layer: Layer,
+  layer: RegularLayer,
   diagram: Diagram,
   { xDiff, yDiff, startX, dimensions, shapesPerLine }: ShapeOpts
 ): { x: number; y: number } => {

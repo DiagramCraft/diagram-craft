@@ -6,9 +6,10 @@ import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { range } from '@diagram-craft/utils/array';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { precondition } from '@diagram-craft/utils/assert';
+import { assert, precondition } from '@diagram-craft/utils/assert';
 import { isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
+import { RegularLayer } from './diagramLayer';
 
 export type DocumentEvents = {
   diagramchanged: { after: Diagram };
@@ -109,7 +110,8 @@ export class DiagramDocument extends EventEmitter<DocumentEvents> implements Att
     for (const diagram of this.diagrams) {
       const uow = UnitOfWork.immediate(diagram);
       for (const layer of diagram.layers.all) {
-        for (const element of layer.elements) {
+        assert.true(layer instanceof RegularLayer);
+        for (const element of (layer as RegularLayer).elements) {
           if (isNode(element)) {
             const s = element.nodeType;
             if (!this.nodeDefinitions.hasRegistration(s)) {

@@ -67,7 +67,7 @@ describe('Diagram', () => {
     const layer = diagram.layers.active;
 
     const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer, {}, {});
-    diagram.layers.active.addElement(node1, uow);
+    (diagram.layers.active as RegularLayer).addElement(node1, uow);
 
     const node2 = new DiagramNode(
       '2',
@@ -84,7 +84,7 @@ describe('Diagram', () => {
       {},
       {}
     );
-    diagram.layers.active.addElement(node2, uow);
+    (diagram.layers.active as RegularLayer).addElement(node2, uow);
 
     const nodes = [node1, node2];
 

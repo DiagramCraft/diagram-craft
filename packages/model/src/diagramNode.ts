@@ -5,7 +5,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramNodeSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { Diagram } from './diagram';
-import { Layer } from './diagramLayer';
+import { Layer, RegularLayer } from './diagramLayer';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
   AnchorEndpoint,
@@ -652,8 +652,9 @@ export class DiagramNode
     }
 
     // Note, need to check if the element is still in the layer to avoid infinite recursion
-    if (this.layer.elements.includes(this)) {
-      this.layer.removeElement(this, uow);
+    assert.true(this.layer instanceof RegularLayer);
+    if ((this.layer as RegularLayer).elements.includes(this)) {
+      (this.layer as RegularLayer).removeElement(this, uow);
     }
   }
 

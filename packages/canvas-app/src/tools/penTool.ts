@@ -10,6 +10,7 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { newid } from '@diagram-craft/utils/id';
 import { Path } from '@diagram-craft/geometry/path';
 import { assert } from '@diagram-craft/utils/assert';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -60,7 +61,9 @@ export class PenTool extends AbstractTool {
       this.path = new Path(this.node.bounds, []);
 
       const uow = new UnitOfWork(this.diagram);
-      this.diagram.layers.active.addElement(this.node, uow);
+
+      assert.true(this.diagram.layers.active instanceof RegularLayer);
+      (this.diagram.layers.active as RegularLayer).addElement(this.node, uow);
       uow.commit();
     } else {
       this.addPoint(diagramPoint);
@@ -92,7 +95,8 @@ export class PenTool extends AbstractTool {
     if (this.node) {
       if (e.key === 'Escape') {
         const uow = new UnitOfWork(this.diagram);
-        this.node.layer.removeElement(this.node, uow);
+        assert.true(this.node.layer instanceof RegularLayer);
+        (this.node.layer as RegularLayer).removeElement(this.node, uow);
         uow.commit();
 
         this.resetState();

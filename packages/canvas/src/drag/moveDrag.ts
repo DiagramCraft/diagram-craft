@@ -17,9 +17,10 @@ import {
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
 import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/model/selectionState';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
 import { ApplicationTriggers } from '../ApplicationTriggers';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 
@@ -227,14 +228,15 @@ export class MoveDrag extends AbstractDrag {
         // Move elements out of a container
       } else if (selection.elements.every(e => e.parent?.nodeType === 'container')) {
         const activeLayer = this.diagram.layers.active;
+        assert.true(activeLayer instanceof RegularLayer);
         this.diagram.moveElement(
           selection.elements,
           this.uow,
           activeLayer,
-          activeLayer.elements.length > 0
+          (activeLayer as RegularLayer).elements.length > 0
             ? {
                 relation: 'above',
-                element: this.diagram.layers.active.elements.at(-1)!
+                element: (activeLayer as RegularLayer).elements.at(-1)!
               }
             : undefined
         );
@@ -286,10 +288,12 @@ export class MoveDrag extends AbstractDrag {
 
     const selection = this.diagram.selectionState;
 
+    assert.true(this.diagram.layers.active instanceof RegularLayer);
+
     // Clone the current selection to keep in its original position
     const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
     newElements.forEach(e => {
-      this.diagram.layers.active.addElement(e, this.uow);
+      (this.diagram.layers.active as RegularLayer).addElement(e, this.uow);
     });
 
     // Reset current selection back to original
@@ -327,7 +331,8 @@ export class MoveDrag extends AbstractDrag {
     selection.guides = [];
 
     elementsToRemove.forEach(e => {
-      e.layer.removeElement(e, this.uow);
+      assert.true(e.layer instanceof RegularLayer);
+      (e.layer as RegularLayer).removeElement(e, this.uow);
     });
 
     // Reset the original selection back to the position of the now

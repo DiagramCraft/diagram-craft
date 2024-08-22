@@ -1,4 +1,4 @@
-import { AbstractSelectionAction } from './abstractSelectionAction';
+import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { State } from '@diagram-craft/canvas/keyMap';
 import { Box } from '@diagram-craft/geometry/box';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
@@ -7,6 +7,8 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
+import { assert } from '@diagram-craft/utils/assert';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export const groupActions = (state: State) => ({
   GROUP_GROUP: new GroupAction(state.diagram, 'group'),
@@ -54,7 +56,8 @@ class UndoableGroupAction implements UndoableAction {
     }
 
     this.#elements.forEach(e => {
-      e.layer.removeElement(e, uow);
+      assert.true(e.layer instanceof RegularLayer);
+      (e.layer as RegularLayer).removeElement(e, uow);
     });
 
     this.#group = new DiagramNode(
@@ -68,7 +71,8 @@ class UndoableGroupAction implements UndoableAction {
     );
     this.#group.setChildren([...this.#elements], uow);
 
-    this.diagram.layers.active.addElement(this.#group, uow);
+    assert.true(this.diagram.layers.active instanceof RegularLayer);
+    (this.diagram.layers.active as RegularLayer).addElement(this.#group, uow);
 
     this.diagram.selectionState.setElements([this.#group]);
   }
@@ -81,15 +85,18 @@ class UndoableGroupAction implements UndoableAction {
     const children = this.#group.children;
 
     this.#group.children.forEach(e => {
-      e.layer.removeElement(e, uow);
+      assert.true(e.layer instanceof RegularLayer);
+      (e.layer as RegularLayer).removeElement(e, uow);
     });
 
-    this.#group.layer.removeElement(this.#group!, uow);
+    assert.true(this.#group?.layer instanceof RegularLayer);
+    (this.#group.layer as RegularLayer).removeElement(this.#group!, uow);
     this.#elements = this.#group.children;
 
     children.forEach(e => {
       this.#group?.removeChild(e, uow);
-      this.diagram.layers.active.addElement(e, uow);
+      assert.true(this.diagram.layers.active instanceof RegularLayer);
+      (this.diagram.layers.active as RegularLayer).addElement(e, uow);
     });
 
     this.diagram.selectionState.setElements(children);
@@ -101,7 +108,12 @@ export class GroupAction extends AbstractSelectionAction {
     protected readonly diagram: Diagram,
     private readonly type: 'group' | 'ungroup'
   ) {
-    super(diagram, type === 'group' ? 'multiple-only' : 'both');
+    super(
+      diagram,
+      type === 'group' ? MultipleType.MultipleOnly : MultipleType.Both,
+      ElementType.Both,
+      ['regular']
+    );
 
     if (type === 'ungroup') {
       this.addSelectionListener(() => {

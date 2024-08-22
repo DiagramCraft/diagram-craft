@@ -1,5 +1,6 @@
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { LayerType } from '@diagram-craft/model/diagramLayer';
 
 export type MultipleType = 'single-only' | 'multiple-only' | 'both';
 
@@ -21,7 +22,8 @@ export abstract class AbstractSelectionAction extends AbstractAction {
   protected constructor(
     protected readonly diagram: Diagram,
     protected readonly multipleType: MultipleType,
-    protected readonly elementType: ElementType = 'both'
+    protected readonly elementType: ElementType = 'both',
+    protected readonly layerTypes: LayerType[] | undefined = undefined
   ) {
     super();
 
@@ -31,6 +33,24 @@ export abstract class AbstractSelectionAction extends AbstractAction {
         this.enabled = false;
         return;
       }
+
+      if (
+        this.layerTypes !== undefined &&
+        !$s.elements.every(e => this.layerTypes!.includes(e.layer.type))
+      ) {
+        this.enabled = false;
+        return;
+      }
+
+      /*
+      if (
+        this.layerTypes !== undefined &&
+        !this.layerTypes.includes(this.diagram.layers.active.type)
+      ) {
+        this.enabled = false;
+        return;
+      }
+       */
 
       const elements =
         this.elementType === 'both'

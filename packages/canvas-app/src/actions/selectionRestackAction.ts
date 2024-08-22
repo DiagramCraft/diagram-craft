@@ -3,6 +3,8 @@ import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { assert } from '@diagram-craft/utils/assert';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   interface ActionMap {
@@ -38,19 +40,21 @@ export class SelectionRestackAction extends AbstractSelectionAction {
        modification is larger than the biggest feasible stack - yet
        will not lead to overflow in the internal calculations */
 
+    assert.true(activeLayer instanceof RegularLayer);
+
     const elements = this.diagram.selectionState.elements;
     switch (this.mode) {
       case 'up':
-        activeLayer.stackModify(elements, 2, uow);
+        (activeLayer as RegularLayer).stackModify(elements, 2, uow);
         break;
       case 'down':
-        activeLayer.stackModify(elements, -2, uow);
+        (activeLayer as RegularLayer).stackModify(elements, -2, uow);
         break;
       case 'top':
-        activeLayer.stackModify(elements, Number.MAX_SAFE_INTEGER / 2, uow);
+        (activeLayer as RegularLayer).stackModify(elements, Number.MAX_SAFE_INTEGER / 2, uow);
         break;
       case 'bottom':
-        activeLayer.stackModify(elements, -(Number.MAX_SAFE_INTEGER / 2), uow);
+        (activeLayer as RegularLayer).stackModify(elements, -(Number.MAX_SAFE_INTEGER / 2), uow);
         break;
     }
 

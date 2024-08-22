@@ -34,7 +34,8 @@ export const NodeTypePopup = (props: Props) => {
         meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
       }, uow);
 
-      diagram.layers.active.addElement(node, uow);
+      assert.true(diagram.layers.active instanceof RegularLayer);
+      (diagram.layers.active as RegularLayer).addElement(node, uow);
 
       const edge = diagram.edgeLookup.get(props.edgeId);
       assert.present(edge);
@@ -61,7 +62,8 @@ export const NodeTypePopup = (props: Props) => {
     const edge = diagram.edgeLookup.get(props.edgeId);
     assert.present(edge);
     UnitOfWork.execute(diagram, uow => {
-      edge.layer.removeElement(edge, uow);
+      assert.true(edge.layer instanceof RegularLayer);
+      (edge.layer as RegularLayer).removeElement(edge, uow);
     });
     diagram.selectionState.clear();
   }, [diagram, props.edgeId]);
@@ -85,7 +87,8 @@ export const NodeTypePopup = (props: Props) => {
       const node = n.node(dest);
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
       dest.viewBox.offset = { x: -5, y: -5 };
-      dest.layers.active.addElement(node, UnitOfWork.immediate(dest));
+      assert.true(dest.layers.active instanceof RegularLayer);
+      (dest.layers.active as RegularLayer).addElement(node, UnitOfWork.immediate(dest));
 
       return [n, dest];
     });

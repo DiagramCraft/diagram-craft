@@ -10,27 +10,21 @@ export type LayerType = 'regular' | 'adjustment' | 'rule';
 export type StackPosition = { element: DiagramElement; idx: number };
 
 export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
-  #elements: Array<DiagramElement> = [];
   #locked = false;
   #name: string;
   protected _type: LayerType = 'regular';
 
-  readonly #diagram: Diagram;
+  protected readonly diagram: Diagram;
 
   protected constructor(
     public readonly id: string,
     name: string,
-    elements: ReadonlyArray<DiagramElement>,
     diagram: Diagram,
     type?: LayerType
   ) {
     this.#name = name;
-    this.#diagram = diagram;
+    this.diagram = diagram;
     this._type = type ?? 'regular';
-
-    const uow = new UnitOfWork(diagram);
-    elements.forEach(e => this.addElement(e, uow));
-    uow.abort();
   }
 
   get type() {
@@ -47,10 +41,6 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
     uow.updateElement(this);
   }
 
-  get elements(): ReadonlyArray<DiagramElement> {
-    return this.#elements;
-  }
-
   isLocked() {
     return this.#locked;
   }
@@ -58,7 +48,7 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
   // TODO: Add uow here
   set locked(value: boolean) {
     this.#locked = value;
-    this.#diagram.emit('change', { diagram: this.#diagram });
+    this.diagram.emit('change', { diagram: this.diagram });
   }
 
   /* Snapshot ************************************************************************************************ */
@@ -67,7 +57,6 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
     return {
       name: this.name,
       locked: this.isLocked(),
-      elements: this.elements,
       type: this.type
     };
   }
@@ -77,125 +66,29 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
       _snapshotType: 'layer',
       name: this.name,
       locked: this.isLocked(),
-      elements: this.elements.map(e => e.id),
+      // TODO: Remove elements from here
+      elements: [],
       type: this.type
     };
   }
 
   restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
-    this.setElements(
-      snapshot.elements.map(id => this.#diagram.lookup(id)!),
-      uow
-    );
     this.setName(snapshot.name, uow);
     this.locked = snapshot.locked;
     this._type = snapshot.type;
     uow.updateElement(this);
   }
 
-  // TODO: Add some tests for the stack operations
-  stackModify(elements: ReadonlyArray<DiagramElement>, positionDelta: number, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    const byParent = groupBy(elements, e => e.parent);
-
-    const snapshot = new Map<DiagramNode | undefined, StackPosition[]>();
-    const newPositions = new Map<DiagramNode | undefined, StackPosition[]>();
-
-    for (const [parent, elements] of byParent) {
-      const existing = parent?.children ?? this.elements;
-
-      const oldStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
-      snapshot.set(parent, oldStackPositions);
-
-      const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
-      for (const p of newStackPositions) {
-        if (!elements.includes(p.element)) continue;
-        p.idx += positionDelta;
-      }
-      newPositions.set(parent, newStackPositions);
-    }
-
-    this.stackSet(newPositions, uow);
-
-    return snapshot;
-  }
-
-  stackSet(newPositions: Map<DiagramNode | undefined, StackPosition[]>, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    for (const [parent, positions] of newPositions) {
-      positions.sort((a, b) => a.idx - b.idx);
-      if (parent) {
-        parent.setChildren(
-          positions.map(e => e.element),
-          uow
-        );
-      } else {
-        this.#elements = positions.map(e => e.element);
-      }
-    }
-
-    uow.updateElement(this);
-  }
-
-  addElement(element: DiagramElement, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    if (!element.parent && !this.#elements.includes(element)) this.#elements.push(element);
-    this.processElementForAdd(element);
-    uow.addElement(element);
-    uow.updateElement(this);
-  }
-
-  removeElement(element: DiagramElement, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    this.#elements = this.elements.filter(e => e !== element);
-    element.detach(uow);
-    uow.removeElement(element);
-    uow.updateElement(this);
-  }
-
-  setElements(elements: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    const added = elements.filter(e => !this.#elements.includes(e));
-    const removed = this.#elements.filter(e => !elements.includes(e));
-    this.#elements = elements as Array<DiagramElement>;
-    for (const e of added) {
-      this.processElementForAdd(e);
-      uow.addElement(e);
-    }
-    for (const e of removed) {
-      uow.removeElement(e);
-    }
-
-    uow.updateElement(this);
-  }
-
   isAbove(layer: Layer) {
-    return this.#diagram.layers.all.indexOf(this) < this.#diagram.layers.all.indexOf(layer);
+    return this.diagram.layers.all.indexOf(this) < this.diagram.layers.all.indexOf(layer);
   }
 
   invalidate(_uow: UnitOfWork) {
     // Nothing for now...
   }
 
-  private processElementForAdd(e: DiagramElement) {
-    e._setLayer(this, this.#diagram);
-    if (isNode(e)) {
-      this.#diagram.nodeLookup.set(e.id, e);
-      for (const child of e.children) {
-        this.processElementForAdd(child);
-      }
-    } else {
-      this.#diagram.edgeLookup.set(e.id, e as DiagramEdge);
-    }
-  }
-
-  getAttachmentsInUse() {
-    return this.elements.flatMap(e => e.getAttachmentsInUse());
+  getAttachmentsInUse(): string[] {
+    return [];
   }
 }
 
@@ -232,8 +125,8 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     const l1 = this.#layers.indexOf(a.layer);
     const l2 = this.#layers.indexOf(b.layer);
 
-    if (l1 === l2) {
-      return this.#layers[l1].elements.indexOf(a) > this.#layers[l2].elements.indexOf(b);
+    if (l1 === l2 && a.layer instanceof RegularLayer && b.layer instanceof RegularLayer) {
+      return a.layer.elements.indexOf(a) > b.layer.elements.indexOf(b);
     }
 
     return l1 > l2;
@@ -336,13 +229,142 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
 }
 
 export class RegularLayer extends Layer {
+  #elements: Array<DiagramElement> = [];
+
   constructor(id: string, name: string, elements: ReadonlyArray<DiagramElement>, diagram: Diagram) {
-    super(id, name, elements, diagram, 'regular');
+    super(id, name, diagram, 'regular');
+
+    const uow = new UnitOfWork(diagram);
+    elements.forEach(e => this.addElement(e, uow));
+    uow.abort();
+  }
+
+  get elements(): ReadonlyArray<DiagramElement> {
+    return this.#elements;
+  }
+
+  // TODO: Add some tests for the stack operations
+  stackModify(elements: ReadonlyArray<DiagramElement>, positionDelta: number, uow: UnitOfWork) {
+    uow.snapshot(this);
+
+    const byParent = groupBy(elements, e => e.parent);
+
+    const snapshot = new Map<DiagramNode | undefined, StackPosition[]>();
+    const newPositions = new Map<DiagramNode | undefined, StackPosition[]>();
+
+    for (const [parent, elements] of byParent) {
+      const existing = parent?.children ?? this.elements;
+
+      const oldStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
+      snapshot.set(parent, oldStackPositions);
+
+      const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
+      for (const p of newStackPositions) {
+        if (!elements.includes(p.element)) continue;
+        p.idx += positionDelta;
+      }
+      newPositions.set(parent, newStackPositions);
+    }
+
+    this.stackSet(newPositions, uow);
+
+    return snapshot;
+  }
+
+  stackSet(newPositions: Map<DiagramNode | undefined, StackPosition[]>, uow: UnitOfWork) {
+    uow.snapshot(this);
+
+    for (const [parent, positions] of newPositions) {
+      positions.sort((a, b) => a.idx - b.idx);
+      if (parent) {
+        parent.setChildren(
+          positions.map(e => e.element),
+          uow
+        );
+      } else {
+        this.#elements = positions.map(e => e.element);
+      }
+    }
+
+    uow.updateElement(this);
+  }
+
+  addElement(element: DiagramElement, uow: UnitOfWork) {
+    uow.snapshot(this);
+
+    if (!element.parent && !this.#elements.includes(element)) this.#elements.push(element);
+    this.processElementForAdd(element);
+    uow.addElement(element);
+    uow.updateElement(this);
+  }
+
+  removeElement(element: DiagramElement, uow: UnitOfWork) {
+    uow.snapshot(this);
+
+    this.#elements = this.elements.filter(e => e !== element);
+    element.detach(uow);
+    uow.removeElement(element);
+    uow.updateElement(this);
+  }
+
+  setElements(elements: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    uow.snapshot(this);
+
+    const added = elements.filter(e => !this.#elements.includes(e));
+    const removed = this.#elements.filter(e => !elements.includes(e));
+    this.#elements = elements as Array<DiagramElement>;
+    for (const e of added) {
+      this.processElementForAdd(e);
+      uow.addElement(e);
+    }
+    for (const e of removed) {
+      uow.removeElement(e);
+    }
+
+    uow.updateElement(this);
+  }
+
+  private processElementForAdd(e: DiagramElement) {
+    e._setLayer(this, this.diagram);
+    if (isNode(e)) {
+      this.diagram.nodeLookup.set(e.id, e);
+      for (const child of e.children) {
+        this.processElementForAdd(child);
+      }
+    } else {
+      this.diagram.edgeLookup.set(e.id, e as DiagramEdge);
+    }
+  }
+
+  restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
+    super.restore(snapshot, uow);
+    this.setElements(
+      snapshot.elements.map(id => this.diagram.lookup(id)!),
+      uow
+    );
+  }
+
+  toJSON() {
+    return {
+      ...super.toJSON(),
+      elements: this.elements
+    };
+  }
+
+  snapshot(): LayerSnapshot {
+    return {
+      ...super.snapshot(),
+      elements: this.elements.map(e => e.id)
+    };
+  }
+
+  getAttachmentsInUse() {
+    return this.elements.flatMap(e => e.getAttachmentsInUse());
   }
 }
 
 export class RuleLayer extends Layer {
   constructor(id: string, name: string, diagram: Diagram) {
-    super(id, name, [], diagram, 'rule');
+    super(id, name, diagram, 'rule');
   }
 }

@@ -1,6 +1,6 @@
 import { Diagram } from '../diagram';
 import { DiagramDocument } from '../diagramDocument';
-import { Layer } from '../diagramLayer';
+import { Layer, RegularLayer } from '../diagramLayer';
 import { DiagramElement, isEdge, isNode } from '../diagramElement';
 import {
   SerializedAnchorEndpoint,
@@ -14,7 +14,7 @@ import {
   SerializedNode,
   SerializedStyles
 } from './types';
-import { VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { AttachmentManager } from '../attachment';
 import { DiagramPalette } from '../diagramPalette';
 import { DiagramStyles } from '../diagramStyles';
@@ -95,12 +95,14 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
 };
 
 export const serializeLayer = (layer: Layer): SerializedLayer => {
+  // TODO: Support other layer types
+  assert.true(layer instanceof RegularLayer);
   return {
     id: layer.id,
     name: layer.name,
     type: 'layer',
-    layerType: 'basic',
-    elements: layer.elements.map(serializeDiagramElement)
+    layerType: 'regular',
+    elements: (layer as RegularLayer).elements.map(serializeDiagramElement)
   };
 };
 

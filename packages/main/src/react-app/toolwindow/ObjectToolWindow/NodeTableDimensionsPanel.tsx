@@ -7,6 +7,8 @@ import { useTable } from '../../hooks/useTable';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assert } from '@diagram-craft/utils/assert';
 
 export const NodeTableDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -29,7 +31,8 @@ export const NodeTableDimensionsPanel = (props: Props) => {
         const row = (table.children.at(-1) as DiagramNode).duplicate();
         uow.snapshot(row);
         table.addChild(row, uow);
-        table.layer.addElement(row, uow);
+        assert.true(table.layer instanceof RegularLayer);
+        (table.layer as RegularLayer).addElement(row, uow);
       }
 
       commitWithUndo(uow, 'Adding row');
@@ -39,7 +42,8 @@ export const NodeTableDimensionsPanel = (props: Props) => {
         const row = table.children.at(-1) as DiagramNode;
         uow.snapshot(row);
         table.removeChild(row, uow);
-        row.layer.removeElement(row, uow);
+        assert.true(row.layer instanceof RegularLayer);
+        (row.layer as RegularLayer).removeElement(row, uow);
       }
       commitWithUndo(uow, 'Deleting row');
     }
@@ -56,7 +60,8 @@ export const NodeTableDimensionsPanel = (props: Props) => {
             const child = (row.children.at(-1) as DiagramNode).duplicate();
             uow.snapshot(child);
             row.addChild(child, uow);
-            table.layer.addElement(child, uow);
+            assert.true(table.layer instanceof RegularLayer);
+            (table.layer as RegularLayer).addElement(child, uow);
           }
         }
       }
@@ -70,7 +75,8 @@ export const NodeTableDimensionsPanel = (props: Props) => {
           const child = row.children.at(-1) as DiagramNode;
           uow.snapshot(child);
           row.removeChild(child, uow);
-          table.layer.removeElement(child, uow);
+          assert.true(table.layer instanceof RegularLayer);
+          (table.layer as RegularLayer).removeElement(child, uow);
         }
       }
       commitWithUndo(uow, 'Deleting column');

@@ -15,9 +15,9 @@ import {
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { LayerContextMenu } from './LayerContextMenu';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
@@ -100,6 +100,8 @@ const LayerEntry = (props: { layer: Layer }) => {
     }
   );
 
+  assert.true(layer instanceof RegularLayer);
+
   return (
     <LayerContextMenu layer={layer}>
       <Tree.Node
@@ -126,7 +128,7 @@ const LayerEntry = (props: { layer: Layer }) => {
         </Tree.NodeAction>
         <Tree.Children>
           <div style={{ display: 'contents' }}>
-            {layer.elements.toReversed().map(e => (
+            {(layer as RegularLayer).elements.toReversed().map(e => (
               <ElementEntry key={e.id} element={e} />
             ))}
           </div>
@@ -230,7 +232,9 @@ export const LayerList = () => {
   const ref = useRef<HTMLDivElement>(null);
 
   const names = Object.fromEntries(
-    diagram.layers.all.flatMap(l => l.elements.map(e => [e.id, e.name]))
+    diagram.layers.all.flatMap(l =>
+      l instanceof RegularLayer ? l.elements.map(e => [e.id, e.name]) : []
+    )
   );
 
   useEventListener(diagram, 'change', redraw);

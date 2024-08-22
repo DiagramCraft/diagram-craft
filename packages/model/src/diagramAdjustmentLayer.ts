@@ -13,8 +13,13 @@ export type AdjustmentRule = {
 export class AdjustmentLayer extends Layer {
   #rules: Array<AdjustmentRule> = [];
 
-  constructor(id: string, name: string, elements: ReadonlyArray<DiagramElement>, diagram: Diagram) {
-    super(id, name, elements, diagram, 'adjustment');
+  constructor(
+    id: string,
+    name: string,
+    _elements: ReadonlyArray<DiagramElement>,
+    diagram: Diagram
+  ) {
+    super(id, name, diagram);
   }
 
   matchingRules(_element: DiagramElement): Array<AdjustmentRule> {

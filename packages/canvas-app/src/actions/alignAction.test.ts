@@ -1,13 +1,18 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { AlignAction } from './alignAction';
-import { DiagramBuilder, DocumentBuilder } from '@diagram-craft/model/test-support/builder';
+import {
+  DiagramBuilder,
+  DocumentBuilder,
+  LayerBuilder
+} from '@diagram-craft/model/test-support/builder';
 
 describe('AlignActions', () => {
   let diagram: DiagramBuilder;
+  let layer: LayerBuilder;
 
   beforeEach(() => {
     diagram = new DocumentBuilder().newDiagram();
-    const layer = diagram.newLayer();
+    layer = diagram.newLayer();
     layer.addNode('1', 'rect', {
       bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 }
     });
@@ -24,19 +29,19 @@ describe('AlignActions', () => {
       diagram.selectionState.setElements([]);
       expect(new AlignAction('top', diagram).isEnabled({})).toBe(false);
 
-      diagram.selectionState.setElements([diagram.layers.active.elements[0]]);
+      diagram.selectionState.setElements([layer.elements[0]]);
       expect(new AlignAction('top', diagram).isEnabled({})).toBe(false);
     });
 
     test('should be enabled when there are more than one element selected', () => {
-      diagram.selectionState.setElements(diagram.layers.active.elements);
+      diagram.selectionState.setElements(layer.elements);
       expect(new AlignAction('top', diagram).isEnabled({})).toBe(true);
     });
   });
 
   describe('align', () => {
     test('should align the selected elements to the top', () => {
-      const [e1, e2, e3] = diagram.layers.active.elements;
+      const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
       new AlignAction('top', diagram).execute();
@@ -46,7 +51,7 @@ describe('AlignActions', () => {
     });
 
     test('should align the selected elements to the bottom', () => {
-      const [e1, e2, e3] = diagram.layers.active.elements;
+      const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
       new AlignAction('bottom', diagram).execute();
@@ -56,7 +61,7 @@ describe('AlignActions', () => {
     });
 
     test('should align the selected elements to the center-horizontal', () => {
-      const [e1, e2, e3] = diagram.layers.active.elements;
+      const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
       new AlignAction('center-horizontal', diagram).execute();
@@ -66,7 +71,7 @@ describe('AlignActions', () => {
     });
 
     test('should align the selected elements to the left', () => {
-      const [e1, e2, e3] = diagram.layers.active.elements;
+      const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
       new AlignAction('left', diagram).execute();
@@ -76,7 +81,7 @@ describe('AlignActions', () => {
     });
 
     test('should align the selected elements to the right', () => {
-      const [e1, e2, e3] = diagram.layers.active.elements;
+      const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
       new AlignAction('right', diagram).execute();
@@ -86,7 +91,7 @@ describe('AlignActions', () => {
     });
 
     test('should align the selected elements to the center-vertical', () => {
-      const [e1, e2, e3] = diagram.layers.active.elements;
+      const [e1, e2, e3] = layer.elements;
       diagram.selectionState.setElements([e1, e2, e3]);
 
       new AlignAction('center-vertical', diagram).execute();

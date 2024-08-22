@@ -1,24 +1,21 @@
 import { AbstractSelectionAction, MultipleType } from './abstractSelectionAction';
-import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
+import { State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { Clipboard, ELEMENTS_CONTENT_TYPE } from '../clipboard';
 import { PASTE_HANDLERS, PasteHandler } from '../clipboardPasteHandlers';
+import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
-  interface ActionMap {
-    CLIPBOARD_COPY: ClipboardCopyAction;
-    CLIPBOARD_PASTE: ClipboardPasteAction;
-    CLIPBOARD_CUT: ClipboardCopyAction;
-  }
+  interface ActionMap extends ReturnType<typeof clipboardActions> {}
 }
 
-export const clipboardActions: ActionMapFactory = (state: State) => ({
+export const clipboardActions = (state: State) => ({
   CLIPBOARD_COPY: new ClipboardCopyAction('copy', state.diagram),
   CLIPBOARD_CUT: new ClipboardCopyAction('cut', state.diagram),
   CLIPBOARD_PASTE: new ClipboardPasteAction(state.diagram)
@@ -28,18 +25,17 @@ const CLIPBOARD = Clipboard.get();
 
 export class PasteUndoableAction implements UndoableAction {
   description = 'Paste';
-  private layer: Layer;
 
   constructor(
     private readonly elements: DiagramElement[],
-    private readonly diagram: Diagram
-  ) {
-    this.layer = this.diagram.layers.active;
-  }
+    private readonly diagram: Diagram,
+    private readonly layer: RegularLayer
+  ) {}
 
   undo(uow: UnitOfWork) {
     this.elements.forEach(e => {
-      e.layer.removeElement(e, uow);
+      assert.true(e.layer instanceof RegularLayer);
+      (e.layer as RegularLayer).removeElement(e, uow);
     });
 
     this.diagram.selectionState.setElements(
@@ -57,8 +53,21 @@ export class PasteUndoableAction implements UndoableAction {
 }
 
 export class ClipboardPasteAction extends AbstractAction {
+  layer: RegularLayer | undefined;
+
   constructor(protected readonly diagram: Diagram) {
     super();
+    diagram.on('change', () => {
+      const activeLayer = diagram.layers.active;
+      if (activeLayer instanceof RegularLayer) {
+        this.enabled = true;
+        this.layer = activeLayer;
+      } else {
+        this.enabled = false;
+        this.layer = undefined;
+      }
+      this.emit('actionchanged', { action: this });
+    });
   }
 
   execute(context: ActionContext) {
@@ -66,7 +75,7 @@ export class ClipboardPasteAction extends AbstractAction {
       for (const c of clip) {
         for (const [contentType, handler] of Object.entries(PASTE_HANDLERS)) {
           if (c.type.includes(contentType)) {
-            c.blob.then(blob => handler.paste(blob, this.diagram, context));
+            c.blob.then(blob => handler.paste(blob, this.diagram, this.layer!, context));
             return;
           }
         }
@@ -102,7 +111,8 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   private deleteSelection() {
     UnitOfWork.execute(this.diagram, uow => {
       for (const element of this.diagram.selectionState.elements) {
-        element.layer.removeElement(element, uow);
+        assert.true(element.layer instanceof RegularLayer);
+        (element.layer as RegularLayer).removeElement(element, uow);
       }
     });
     this.diagram.selectionState.clear();

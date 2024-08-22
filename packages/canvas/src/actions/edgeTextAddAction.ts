@@ -1,7 +1,7 @@
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { precondition } from '@diagram-craft/utils/assert';
+import { assert, precondition } from '@diagram-craft/utils/assert';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -11,6 +11,7 @@ import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   interface ActionMap {
@@ -62,7 +63,8 @@ export class EdgeTextAddAction extends AbstractAction {
       edge.parent.setChildren([...edge.parent.children, textNode], uow);
     }
 
-    edge.layer.addElement(textNode, uow);
+    assert.true(edge.layer instanceof RegularLayer);
+    (edge.layer as RegularLayer).addElement(textNode, uow);
 
     edge.addLabelNode(
       {

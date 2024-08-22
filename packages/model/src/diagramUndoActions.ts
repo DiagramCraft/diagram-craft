@@ -3,7 +3,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork';
 import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
-import { Layer } from './diagramLayer';
+import { Layer, RegularLayer } from './diagramLayer';
 import { hasSameElements } from '@diagram-craft/utils/array';
 
 export const commitWithUndo = (uow: UnitOfWork, description: string) => {
@@ -115,7 +115,8 @@ export class ElementAddUndoableAction implements UndoableAction {
 
   undo() {
     UnitOfWork.execute(this.diagram, uow => {
-      this.elements.forEach(node => node.layer.removeElement(node, uow));
+      assert.true(this.#layer instanceof RegularLayer);
+      this.elements.forEach(node => (node.layer as RegularLayer).removeElement(node, uow));
     });
     this.diagram.selectionState.setElements(
       this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
@@ -128,7 +129,8 @@ export class ElementAddUndoableAction implements UndoableAction {
         if (isNode(node)) {
           node.invalidateAnchors(uow);
         }
-        this.#layer.addElement(node, uow);
+        assert.true(this.#layer instanceof RegularLayer);
+        (this.#layer as RegularLayer).addElement(node, uow);
       });
     });
   }
@@ -151,7 +153,8 @@ export class ElementDeleteUndoableAction implements UndoableAction {
 
   undo(uow: UnitOfWork): void {
     for (const element of this.elements) {
-      this.layer.addElement(element, uow);
+      assert.true(this.layer instanceof RegularLayer);
+      (this.layer as RegularLayer).addElement(element, uow);
     }
 
     assert.present(this.snapshot);
@@ -166,7 +169,8 @@ export class ElementDeleteUndoableAction implements UndoableAction {
     uow.trackChanges = true;
     for (const element of this.elements) {
       uow.snapshot(element);
-      element.layer.removeElement(element, uow);
+      assert.true(element.layer instanceof RegularLayer);
+      (element.layer as RegularLayer).removeElement(element, uow);
     }
     this.snapshot = uow.commit();
 

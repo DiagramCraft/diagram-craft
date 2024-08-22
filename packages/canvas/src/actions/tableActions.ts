@@ -6,6 +6,8 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { assert } from '@diagram-craft/utils/assert';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   interface ActionMap {
@@ -162,7 +164,8 @@ export class TableRemoveAction extends AbstractAction {
       const row = table.children[rowIdx];
       uow.snapshot(row);
       table.removeChild(row, uow);
-      row.layer.removeElement(row, uow);
+      assert.true(row.layer instanceof RegularLayer);
+      (row.layer as RegularLayer).removeElement(row, uow);
       commitWithUndo(uow, 'Remove row');
     } else {
       if (colIdx === undefined) return;
@@ -172,7 +175,8 @@ export class TableRemoveAction extends AbstractAction {
         const cell = (r as DiagramNode).children[colIdx];
         uow.snapshot(cell);
         (r as DiagramNode).removeChild(cell, uow);
-        cell.layer.removeElement(cell, uow);
+        assert.true(cell.layer instanceof RegularLayer);
+        (cell.layer as RegularLayer).removeElement(cell, uow);
       }
       commitWithUndo(uow, 'Remove column');
     }
@@ -233,7 +237,8 @@ export class TableInsertAction extends AbstractAction {
         ref: current,
         type: this.position === -1 ? 'before' : 'after'
       });
-      table.layer.addElement(newRow, uow);
+      assert.true(table.layer instanceof RegularLayer);
+      (table.layer as RegularLayer).addElement(newRow, uow);
 
       commitWithUndo(uow, 'Insert row');
     } else {
@@ -264,7 +269,8 @@ export class TableInsertAction extends AbstractAction {
           ref: cell,
           type: this.position === -1 ? 'before' : 'after'
         });
-        table.layer.addElement(newCell, uow);
+        assert.true(table.layer instanceof RegularLayer);
+        (table.layer as RegularLayer).addElement(newCell, uow);
       }
 
       commitWithUndo(uow, 'Insert column');

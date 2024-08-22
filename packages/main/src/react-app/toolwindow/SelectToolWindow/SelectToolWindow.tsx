@@ -6,12 +6,15 @@ import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { Tree } from '@diagram-craft/app-components/Tree';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export const SelectToolWindow = (props: Props) => {
   const redraw = useRedraw();
 
   const names = Object.fromEntries(
-    props.diagram.layers.all.flatMap(l => l.elements.map(e => [e.id, e.name]))
+    props.diagram.layers.all.flatMap(l =>
+      l instanceof RegularLayer ? l.elements.map(e => [e.id, e.name]) : []
+    )
   );
 
   useEventListener(props.diagram.selectionState, 'add', redraw);

@@ -5,7 +5,7 @@ import {
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '../diagram';
 import { UnitOfWork } from '../unitOfWork';
-import { Layer } from '../diagramLayer';
+import { RegularLayer } from '../diagramLayer';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
@@ -39,7 +39,7 @@ export class DiagramBuilder extends Diagram {
   }
 }
 
-export class LayerBuilder extends Layer {
+export class LayerBuilder extends RegularLayer {
   constructor(
     id: string,
     protected readonly diagram: Diagram

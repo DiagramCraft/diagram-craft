@@ -1222,7 +1222,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           // the group local coordinates
           queue.add(() => p.setChildren([...p.children, node], uow));
         } else {
-          layer.addElement(node, uow);
+          assert.true(layer instanceof RegularLayer);
+          (layer as RegularLayer).addElement(node, uow);
         }
       }
     }
