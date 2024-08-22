@@ -4,7 +4,7 @@ import {
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import * as fs from 'node:fs';
@@ -143,7 +143,7 @@ const arrowsTestFile = async () => {
   const diagram = new Diagram('arrows', 'Arrows', document);
   document.addDiagram(diagram);
 
-  const layer = new Layer('default', 'Default', [], diagram);
+  const layer = new RegularLayer('default', 'Default', [], diagram);
   diagram.layers.add(layer, UnitOfWork.immediate(diagram));
 
   let y = 10;
@@ -467,7 +467,7 @@ const shapesTestFile = async (
   const diagram = new Diagram('shapes', 'Shapes', document);
   document.addDiagram(diagram);
 
-  const layer = new Layer('default', 'Default', [], diagram);
+  const layer = new RegularLayer('default', 'Default', [], diagram);
   diagram.layers.add(layer, UnitOfWork.immediate(diagram));
 
   if (pkg.startsWith('pkg:')) {

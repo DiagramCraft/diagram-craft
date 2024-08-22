@@ -23,7 +23,7 @@ export const LayerIndicator = () => {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button className="cmp-layer-indicator" aria-label="Customise options">
-            {diagram.layers.active.type === 'layer' ? (
+            {diagram.layers.active.type === 'regular' ? (
               <TbStack2 />
             ) : (
               <div style={{ color: 'var(--blue-11)', display: 'flex', alignItems: 'center' }}>

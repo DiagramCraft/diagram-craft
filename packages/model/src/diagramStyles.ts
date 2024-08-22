@@ -236,7 +236,7 @@ const isPropsDirty = (
         if (dirty) return true;
       }
     } else if (props[key] !== undefined && props[key] !== stylesheetProps[key]) {
-      console.log('key', key, props[key], stylesheetProps[key]);
+      //      console.log('key', key, props[key], stylesheetProps[key]);
       return true;
     }
   }

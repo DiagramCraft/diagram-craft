@@ -1,7 +1,7 @@
 import { SnapManager } from './snapManager';
 import { DiagramNode } from '../diagramNode';
 import { Diagram } from '../diagram';
-import { Layer } from '../diagramLayer';
+import { RegularLayer } from '../diagramLayer';
 import { UnitOfWork } from '../unitOfWork';
 import { PerformanceTest } from '@diagram-craft/utils/perftest';
 import { DiagramDocument } from '../diagramDocument';
@@ -19,7 +19,7 @@ export class SnapManagerPerftest implements PerformanceTest {
       '1',
       new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry())
     );
-    d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.immediate(d));
+    d.layers.add(new RegularLayer('default', 'Default', [], d), UnitOfWork.immediate(d));
 
     UnitOfWork.execute(d, uow => {
       for (let i = 0; i < 1000; i++) {

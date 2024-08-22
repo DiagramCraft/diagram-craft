@@ -1,7 +1,7 @@
 import { useDiagram } from '../../context/DiagramContext';
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
@@ -30,7 +30,7 @@ const makeDiagramNode = (diagram: Diagram, n: Stencil, pkg: string) => {
     new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
   );
 
-  dest.layers.add(new Layer('default', 'Default', [], dest), uow);
+  dest.layers.add(new RegularLayer('default', 'Default', [], dest), uow);
 
   const node = n.node(dest);
   dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };

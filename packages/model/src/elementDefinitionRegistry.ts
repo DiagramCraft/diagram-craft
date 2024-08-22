@@ -12,7 +12,7 @@ import { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { unique } from '@diagram-craft/utils/array';
 import { DiagramDocument } from './diagramDocument';
-import { Layer } from './diagramLayer';
+import { RegularLayer } from './diagramLayer';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { stencilLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
@@ -329,7 +329,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
           new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
         );
 
-        dest.layers.add(new Layer('default', 'Default', [], dest), uow);
+        dest.layers.add(new RegularLayer('default', 'Default', [], dest), uow);
 
         const node = deserializeDiagramElements(
           [stencil.node],

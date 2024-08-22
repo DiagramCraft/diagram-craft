@@ -3,7 +3,7 @@ import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { TbFiles, TbPlus } from 'react-icons/tb';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
@@ -88,7 +88,7 @@ export const DocumentTabs = (props: Props) => {
             props.document
           );
           diagram.layers.add(
-            new Layer('default', 'Default', [], diagram),
+            new RegularLayer('default', 'Default', [], diagram),
             UnitOfWork.immediate(diagram)
           );
 

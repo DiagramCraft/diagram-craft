@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { Diagram } from './diagram';
 import { DiagramNode } from './diagramNode';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { Layer } from './diagramLayer';
+import { RegularLayer } from './diagramLayer';
 import { UnitOfWork } from './unitOfWork';
 import { TestNodeDefinition } from './TestNodeDefinition';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -28,10 +28,10 @@ describe('Diagram', () => {
       new DiagramDocument(registry, new EdgeDefinitionRegistry())
     );
 
-    const layer1 = new Layer(newid(), 'Layer 1', [], diagram);
+    const layer1 = new RegularLayer(newid(), 'Layer 1', [], diagram);
     diagram.layers.add(layer1, new UnitOfWork(diagram));
 
-    const layer2 = new Layer(newid(), 'Layer 2', [], diagram);
+    const layer2 = new RegularLayer(newid(), 'Layer 2', [], diagram);
     diagram.layers.add(layer2, new UnitOfWork(diagram));
 
     const uow = new UnitOfWork(diagram);
@@ -57,7 +57,10 @@ describe('Diagram', () => {
       '1',
       new DiagramDocument(nodeDefinitionRegistry, new EdgeDefinitionRegistry())
     );
-    diagram.layers.add(new Layer('default', 'Default', [], diagram), new UnitOfWork(diagram));
+    diagram.layers.add(
+      new RegularLayer('default', 'Default', [], diagram),
+      new UnitOfWork(diagram)
+    );
 
     const uow = new UnitOfWork(diagram);
 

@@ -8,7 +8,7 @@ import { loadFileFromUrl, stencilLoaderRegistry } from '@diagram-craft/canvas-ap
 import { assert } from '@diagram-craft/utils/assert';
 import { Autosave } from './Autosave';
 import { newid } from '@diagram-craft/utils/id';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const AppLoader = (props: Props) => {
@@ -40,7 +40,10 @@ export const AppLoader = (props: Props) => {
       // TODO: This is duplicated in fileNewAction.ts
       const doc = props.documentFactory();
       const diagram = new Diagram(newid(), 'Untitled', doc);
-      diagram.layers.add(new Layer(newid(), 'Default', [], diagram), UnitOfWork.immediate(diagram));
+      diagram.layers.add(
+        new RegularLayer(newid(), 'Default', [], diagram),
+        UnitOfWork.immediate(diagram)
+      );
       doc.addDiagram(diagram);
       setDoc(doc);
     }

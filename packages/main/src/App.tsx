@@ -90,7 +90,7 @@ import { ToggleActionDropdownMenuItem } from './react-app/components/ToggleActio
 import { FileDialog } from './react-app/FileDialog';
 import { urlToName } from '@diagram-craft/utils/url';
 import { newid } from '@diagram-craft/utils/id';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ApplicationTriggers, ContextMenuTarget } from '@diagram-craft/canvas/ApplicationTriggers';
 import { ActionToolbarButton } from './react-app/toolbar/ActionToolbarButton';
@@ -320,7 +320,10 @@ export const App = (props: {
       // TODO: This is partially duplicated in AppLoader.ts
       const doc = props.documentFactory();
       const diagram = new Diagram(newid(), 'Untitled', doc);
-      diagram.layers.add(new Layer(newid(), 'Default', [], diagram), UnitOfWork.immediate(diagram));
+      diagram.layers.add(
+        new RegularLayer(newid(), 'Default', [], diagram),
+        UnitOfWork.immediate(diagram)
+      );
       doc.addDiagram(diagram);
       setActiveDoc({ doc, url: undefined });
       setActiveDiagram(createActiveDiagram(diagram, applicationState.current));

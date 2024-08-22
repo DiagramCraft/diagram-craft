@@ -6,18 +6,18 @@ import { Diagram } from './diagram';
 import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
 
-export type LayerType = 'layer' | 'adjustment';
+export type LayerType = 'regular' | 'adjustment' | 'rule';
 export type StackPosition = { element: DiagramElement; idx: number };
 
 export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
   #elements: Array<DiagramElement> = [];
   #locked = false;
   #name: string;
-  #type: LayerType = 'layer';
+  protected _type: LayerType = 'regular';
 
   readonly #diagram: Diagram;
 
-  constructor(
+  protected constructor(
     public readonly id: string,
     name: string,
     elements: ReadonlyArray<DiagramElement>,
@@ -26,7 +26,7 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
   ) {
     this.#name = name;
     this.#diagram = diagram;
-    this.#type = type ?? 'layer';
+    this._type = type ?? 'regular';
 
     const uow = new UnitOfWork(diagram);
     elements.forEach(e => this.addElement(e, uow));
@@ -34,7 +34,7 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
   }
 
   get type() {
-    return this.#type;
+    return this._type;
   }
 
   get name() {
@@ -89,7 +89,7 @@ export class Layer implements UOWTrackable<LayerSnapshot>, AttachmentConsumer {
     );
     this.setName(snapshot.name, uow);
     this.locked = snapshot.locked;
-    this.#type = snapshot.type;
+    this._type = snapshot.type;
     uow.updateElement(this);
   }
 
@@ -217,12 +217,12 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     });
 
     this.diagram.selectionState.on('add', () => {
-      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'layer') {
+      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'regular') {
         this.active = this.diagram.selectionState.elements[0].layer;
       }
     });
     this.diagram.selectionState.on('remove', () => {
-      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'layer') {
+      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'regular') {
         this.active = this.diagram.selectionState.elements[0].layer;
       }
     });
@@ -329,7 +329,20 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     };
   }
 
+  // TODO: Doesn't this always return an empty array?
   getAttachmentsInUse() {
     return this.#layers.flatMap(e => e.getAttachmentsInUse());
+  }
+}
+
+export class RegularLayer extends Layer {
+  constructor(id: string, name: string, elements: ReadonlyArray<DiagramElement>, diagram: Diagram) {
+    super(id, name, elements, diagram, 'regular');
+  }
+}
+
+export class RuleLayer extends Layer {
+  constructor(id: string, name: string, diagram: Diagram) {
+    super(id, name, [], diagram, 'rule');
   }
 }

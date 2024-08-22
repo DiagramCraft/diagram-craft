@@ -6,7 +6,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
@@ -80,7 +80,7 @@ export const NodeTypePopup = (props: Props) => {
         n.name ?? n.id,
         new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
       );
-      dest.layers.add(new Layer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
+      dest.layers.add(new RegularLayer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
 
       const node = n.node(dest);
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };

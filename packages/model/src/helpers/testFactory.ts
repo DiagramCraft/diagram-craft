@@ -5,7 +5,7 @@ import { FreeEndpoint } from '../endpoint';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from '../elementDefinitionRegistry';
 import { TestNodeDefinition } from '../TestNodeDefinition';
 import { DiagramDocument } from '../diagramDocument';
-import { Layer } from '../diagramLayer';
+import { RegularLayer } from '../diagramLayer';
 import { UnitOfWork } from '../unitOfWork';
 
 const createNode = (diagram: Diagram) =>
@@ -42,7 +42,7 @@ const createDiagram = () => {
   registry.register(new TestNodeDefinition('rect', 'Rectangle'));
 
   const d = new Diagram('1', 'test', new DiagramDocument(registry, new EdgeDefinitionRegistry()));
-  d.layers.add(new Layer('default', 'Default', [], d), UnitOfWork.immediate(d));
+  d.layers.add(new RegularLayer('default', 'Default', [], d), UnitOfWork.immediate(d));
 
   return d;
 };

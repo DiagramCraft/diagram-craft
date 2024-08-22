@@ -13,7 +13,7 @@ import {
   ElementDeleteUndoableAction,
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
-import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
+import { Layer, LayerType, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { precondition, assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 
@@ -22,7 +22,7 @@ export const layerActions = (state: State) => ({
   LAYER_TOGGLE_VISIBILITY: new LayerToggleVisibilityAction(state.diagram),
   LAYER_TOGGLE_LOCK: new LayerToggleLockedAction(state.diagram),
   LAYER_RENAME: new LayerRenameAction(state.diagram),
-  LAYER_ADD: new LayerAddAction(state.diagram, 'layer'),
+  LAYER_ADD: new LayerAddAction(state.diagram, 'regular'),
   LAYER_ADD_ADJUSTMENT: new LayerAddAction(state.diagram, 'adjustment'),
   LAYER_SELECTION_MOVE: new LayerSelectionMoveAction(state.diagram),
   LAYER_SELECTION_MOVE_NEW: new LayerSelectionMoveNewAction(state.diagram)
@@ -168,12 +168,15 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
 
   execute(_context: ActionContext, name: string | undefined): void {
     const uow = new UnitOfWork(this.diagram, true);
-    const layer = new Layer(
+
+    // TODO: Handle other types of layers
+    assert.true(this.type === 'regular');
+
+    const layer = new RegularLayer(
       newid(),
       typeof name === 'string' ? name : 'New Layer',
       [],
-      this.diagram,
-      this.type
+      this.diagram
     );
     this.diagram.layers.add(layer, uow);
 
@@ -230,7 +233,7 @@ export class LayerSelectionMoveNewAction extends AbstractAction {
   execute(): void {
     const uow = new UnitOfWork(this.diagram, true);
 
-    const layer = new Layer(newid(), 'New Layer', [], this.diagram, 'layer');
+    const layer = new RegularLayer(newid(), 'New Layer', [], this.diagram);
     this.diagram.layers.add(layer, uow);
 
     this.diagram.moveElement(this.diagram.selectionState.elements, uow, layer!);

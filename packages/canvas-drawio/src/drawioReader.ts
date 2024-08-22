@@ -1,7 +1,7 @@
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
@@ -715,7 +715,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
     // is layer? - first level of elements constitutes layers
     if (parent === rootId) {
-      const layer = new Layer(id, coalesce(value, 'Background')!, [], diagram);
+      const layer = new RegularLayer(id, coalesce(value, 'Background')!, [], diagram);
       diagram.layers.add(layer, uow);
       if ($cell.getAttribute('visible') === '0') {
         diagram.layers.toggleVisibility(layer);

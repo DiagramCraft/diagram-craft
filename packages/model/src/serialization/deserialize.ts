@@ -2,7 +2,7 @@ import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
-import { Layer } from '../diagramLayer';
+import { Layer, RegularLayer } from '../diagramLayer';
 import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
 import { DiagramElement } from '../diagramElement';
@@ -234,7 +234,7 @@ const deserializeDiagrams = <T extends Diagram>(
 
     const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {
-      const layer = new Layer(l.id, l.name, [], newDiagram);
+      const layer = new RegularLayer(l.id, l.name, [], newDiagram);
       newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
 
       const elements = deserializeDiagramElements(
