@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { Diagram } from './diagram';
 import { DiagramNode } from './diagramNode';
 import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { RegularLayer } from './diagramLayer';
+import { assertRegularLayer, RegularLayer } from './diagramLayer';
 import { UnitOfWork } from './unitOfWork';
 import { TestNodeDefinition } from './TestNodeDefinition';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -64,10 +64,11 @@ describe('Diagram', () => {
 
     const uow = new UnitOfWork(diagram);
 
-    const layer = diagram.layers.active;
+    const layer = diagram.activeLayer;
+    assertRegularLayer(layer);
 
     const node1 = new DiagramNode('1', 'rect', bounds, diagram, layer, {}, {});
-    (diagram.layers.active as RegularLayer).addElement(node1, uow);
+    layer.addElement(node1, uow);
 
     const node2 = new DiagramNode(
       '2',
@@ -84,7 +85,7 @@ describe('Diagram', () => {
       {},
       {}
     );
-    (diagram.layers.active as RegularLayer).addElement(node2, uow);
+    layer.addElement(node2, uow);
 
     const nodes = [node1, node2];
 

@@ -129,7 +129,7 @@ export class MoveTool extends AbstractTool {
     }
 
     const isMoveable = selection.nodes.every(p => p.renderProps.capabilities.movable !== false);
-    if (!selection.isEmpty() && isMoveable) {
+    if (!selection.isEmpty() && isMoveable && this.diagram.activeLayer.type === 'regular') {
       this.drag.initiate(
         new MoveDrag(
           this.diagram,

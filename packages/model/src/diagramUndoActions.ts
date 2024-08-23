@@ -3,7 +3,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork';
 import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
-import { Layer, RegularLayer } from './diagramLayer';
+import { assertRegularLayer, RegularLayer } from './diagramLayer';
 import { hasSameElements } from '@diagram-craft/utils/array';
 
 export const commitWithUndo = (uow: UnitOfWork, description: string) => {
@@ -103,20 +103,19 @@ export class SnapshotUndoableAction implements UndoableAction {
 }
 
 export class ElementAddUndoableAction implements UndoableAction {
-  readonly #layer: Layer;
-
   constructor(
     private readonly elements: ReadonlyArray<DiagramElement>,
     private readonly diagram: Diagram,
+    private readonly layer: RegularLayer,
     public readonly description: string = 'Add node'
-  ) {
-    this.#layer = this.diagram.layers.active;
-  }
+  ) {}
 
   undo() {
     UnitOfWork.execute(this.diagram, uow => {
-      assert.true(this.#layer instanceof RegularLayer);
-      this.elements.forEach(node => (node.layer as RegularLayer).removeElement(node, uow));
+      this.elements.forEach(node => {
+        assertRegularLayer(node.layer);
+        node.layer.removeElement(node, uow);
+      });
     });
     this.diagram.selectionState.setElements(
       this.diagram.selectionState.elements.filter(e => !this.elements.includes(e))
@@ -129,8 +128,7 @@ export class ElementAddUndoableAction implements UndoableAction {
         if (isNode(node)) {
           node.invalidateAnchors(uow);
         }
-        assert.true(this.#layer instanceof RegularLayer);
-        (this.#layer as RegularLayer).addElement(node, uow);
+        this.layer.addElement(node, uow);
       });
     });
   }
@@ -138,23 +136,21 @@ export class ElementAddUndoableAction implements UndoableAction {
 
 export class ElementDeleteUndoableAction implements UndoableAction {
   description = 'Delete elements';
-  private layer: Layer;
   private readonly elements: DiagramElement[];
   private snapshot: ElementsSnapshot | undefined;
 
   constructor(
     private readonly diagram: Diagram,
+    private readonly layer: RegularLayer,
     elements: ReadonlyArray<DiagramElement>,
     private readonly restoreSelection: boolean
   ) {
-    this.layer = this.diagram.layers.active;
     this.elements = [...elements];
   }
 
   undo(uow: UnitOfWork): void {
     for (const element of this.elements) {
-      assert.true(this.layer instanceof RegularLayer);
-      (this.layer as RegularLayer).addElement(element, uow);
+      this.layer.addElement(element, uow);
     }
 
     assert.present(this.snapshot);
@@ -169,8 +165,8 @@ export class ElementDeleteUndoableAction implements UndoableAction {
     uow.trackChanges = true;
     for (const element of this.elements) {
       uow.snapshot(element);
-      assert.true(element.layer instanceof RegularLayer);
-      (element.layer as RegularLayer).removeElement(element, uow);
+      assertRegularLayer(element.layer);
+      element.layer.removeElement(element, uow);
     }
     this.snapshot = uow.commit();
 

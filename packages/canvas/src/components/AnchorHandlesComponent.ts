@@ -127,6 +127,8 @@ export class AnchorHandlesComponent extends Component<CanvasState> {
                 this.triggerMouseOut(shouldScale);
               },
               mousedown: e => {
+                if (diagram.activeLayer.type !== 'regular') return;
+
                 DRAG_DROP_MANAGER.initiate(
                   new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.applicationTriggers)
                 );

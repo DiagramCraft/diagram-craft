@@ -7,8 +7,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
-import { assert } from '@diagram-craft/utils/assert';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export const groupActions = (state: State) => ({
   GROUP_GROUP: new GroupAction(state.diagram, 'group'),
@@ -56,8 +55,8 @@ class UndoableGroupAction implements UndoableAction {
     }
 
     this.#elements.forEach(e => {
-      assert.true(e.layer instanceof RegularLayer);
-      (e.layer as RegularLayer).removeElement(e, uow);
+      assertRegularLayer(e.layer);
+      e.layer.removeElement(e, uow);
     });
 
     this.#group = new DiagramNode(
@@ -65,14 +64,14 @@ class UndoableGroupAction implements UndoableAction {
       'group',
       Box.boundingBox(this.#elements.map(e => e.bounds)),
       this.diagram,
-      this.diagram.layers.active,
+      this.diagram.activeLayer,
       {},
       {}
     );
     this.#group.setChildren([...this.#elements], uow);
 
-    assert.true(this.diagram.layers.active instanceof RegularLayer);
-    (this.diagram.layers.active as RegularLayer).addElement(this.#group, uow);
+    assertRegularLayer(this.diagram.activeLayer);
+    this.diagram.activeLayer.addElement(this.#group, uow);
 
     this.diagram.selectionState.setElements([this.#group]);
   }
@@ -85,18 +84,18 @@ class UndoableGroupAction implements UndoableAction {
     const children = this.#group.children;
 
     this.#group.children.forEach(e => {
-      assert.true(e.layer instanceof RegularLayer);
-      (e.layer as RegularLayer).removeElement(e, uow);
+      assertRegularLayer(e.layer);
+      e.layer.removeElement(e, uow);
     });
 
-    assert.true(this.#group?.layer instanceof RegularLayer);
-    (this.#group.layer as RegularLayer).removeElement(this.#group!, uow);
+    assertRegularLayer(this.#group.layer);
+    this.#group.layer.removeElement(this.#group!, uow);
     this.#elements = this.#group.children;
 
     children.forEach(e => {
       this.#group?.removeChild(e, uow);
-      assert.true(this.diagram.layers.active instanceof RegularLayer);
-      (this.diagram.layers.active as RegularLayer).addElement(e, uow);
+      assertRegularLayer(this.diagram.activeLayer);
+      this.diagram.activeLayer.addElement(e, uow);
     });
 
     this.diagram.selectionState.setElements(children);
@@ -115,10 +114,15 @@ export class GroupAction extends AbstractSelectionAction {
       ['regular']
     );
 
+    this.addCriterion(diagram, 'change', () => this.diagram.activeLayer instanceof RegularLayer);
+
     if (type === 'ungroup') {
-      this.addSelectionListener(() => {
-        this.enabled = this.diagram.selectionState.nodes.some(e => e.nodeType === 'group');
-      });
+      this.addCriterion(this.diagram.selectionState, 'add', () =>
+        this.diagram.selectionState.nodes.some(e => e.nodeType === 'group')
+      );
+      this.addCriterion(this.diagram.selectionState, 'remove', () =>
+        this.diagram.selectionState.nodes.some(e => e.nodeType === 'group')
+      );
     }
   }
 

@@ -4,7 +4,7 @@ import {
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import * as fs from 'node:fs';
@@ -258,6 +258,7 @@ const SHAPES_DEFS = [
     n.setText('With Text', uow);
     n.invalidateAnchors(uow);
     n.anchors.forEach(a => {
+      assertRegularLayer(n.layer);
       if (a.type === 'point') {
         const start = n._getAnchorPosition(a.id);
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
@@ -278,7 +279,7 @@ const SHAPES_DEFS = [
           n.diagram,
           n.layer
         );
-        (n.layer as RegularLayer).addElement(e, UnitOfWork.immediate(n.diagram));
+        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
       } else if (a.type === 'edge') {
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
@@ -300,7 +301,7 @@ const SHAPES_DEFS = [
           n.diagram,
           n.layer
         );
-        (n.layer as RegularLayer).addElement(e, UnitOfWork.immediate(n.diagram));
+        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
       }
     });
     return 'rotated-primary-anchors';

@@ -1,6 +1,6 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { Emitter, EventEmitter } from '@diagram-craft/utils/event';
+import { Emitter, EventEmitter, EventKey, EventMap } from '@diagram-craft/utils/event';
 import { ApplicationTriggers } from './ApplicationTriggers';
 
 export type ActionEvents = {
@@ -24,6 +24,7 @@ export abstract class AbstractAction<T = unknown>
   extends EventEmitter<ActionEvents>
   implements Action<T>
 {
+  protected criteria: Array<() => boolean> = [];
   protected enabled: boolean = true;
 
   isEnabled(_context: ActionContext): boolean {
@@ -31,6 +32,26 @@ export abstract class AbstractAction<T = unknown>
   }
 
   abstract execute(context: ActionContext, arg?: T): void;
+
+  addCriterion<T extends EventMap>(
+    target: EventEmitter<T>,
+    k: EventKey<T>,
+    callback: () => boolean
+  ) {
+    this.criteria.push(callback);
+
+    const listener = () => {
+      const result = this.criteria.reduce((acc, criterion) => acc && criterion(), true);
+      if (result === this.enabled) return;
+
+      this.enabled = result;
+      // @ts-ignore
+      this.emit('actionchanged', { action: this });
+    };
+
+    target.on(k, listener);
+    listener();
+  }
 }
 
 export abstract class AbstractToggleAction<T = unknown>

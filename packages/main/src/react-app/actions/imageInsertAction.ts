@@ -5,6 +5,7 @@ import { Attachment } from '@diagram-craft/model/attachment';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export const imageInsertActions = (state: State) => ({
   IMAGE_INSERT: new ImageInsertAction(state.diagram)
@@ -17,6 +18,7 @@ declare global {
 class ImageInsertAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
+    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
   execute(context: ActionContext): void {
@@ -48,7 +50,7 @@ class ImageInsertAction extends AbstractAction {
             r: 0
           },
           this.diagram,
-          this.diagram.layers.active,
+          this.diagram.activeLayer,
           {
             fill: {
               type: 'image',
@@ -61,8 +63,9 @@ class ImageInsertAction extends AbstractAction {
           {}
         );
 
+        assertRegularLayer(this.diagram.activeLayer);
         this.diagram.undoManager.addAndExecute(
-          new ElementAddUndoableAction([e], this.diagram, 'Insert image')
+          new ElementAddUndoableAction([e], this.diagram, this.diagram.activeLayer, 'Insert image')
         );
       },
       onCancel: () => {}

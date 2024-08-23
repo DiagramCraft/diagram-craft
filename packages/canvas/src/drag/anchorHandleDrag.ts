@@ -10,8 +10,7 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { Direction } from '@diagram-craft/geometry/direction';
 import { createLinkedNode } from '@diagram-craft/canvas-app/actions/linkedNodeAction';
 import { ApplicationTriggers } from '../ApplicationTriggers';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { assert } from '@diagram-craft/utils/assert';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export class AnchorHandleDrag extends AbstractDrag {
   edge: DiagramEdge;
@@ -26,6 +25,7 @@ export class AnchorHandleDrag extends AbstractDrag {
     super();
 
     const diagram = this.node.diagram;
+    assertRegularLayer(diagram.activeLayer);
 
     this.edge = new DiagramEdge(
       newid(),
@@ -37,14 +37,13 @@ export class AnchorHandleDrag extends AbstractDrag {
       },
       [],
       diagram,
-      diagram.layers.active
+      diagram.activeLayer
     );
 
     diagram.undoManager.setMark();
 
     const uow = new UnitOfWork(diagram);
-    assert.true(diagram.layers.active instanceof RegularLayer);
-    (diagram.layers.active as RegularLayer).addElement(this.edge, uow);
+    diagram.activeLayer.addElement(this.edge, uow);
 
     uow.updateElement(this.node);
     uow.commit();
@@ -66,8 +65,9 @@ export class AnchorHandleDrag extends AbstractDrag {
       // Undo work to drag new edge
       this.delegate.cancel();
       UnitOfWork.execute(this.node.diagram, uow => {
-        assert.true(this.edge.layer instanceof RegularLayer);
-        (this.edge.layer as RegularLayer).removeElement(this.edge, uow);
+        if (this.edge.layer instanceof RegularLayer) {
+          this.edge.layer.removeElement(this.edge, uow);
+        }
         this.edge.detach(uow);
       });
       diagram.selectionState.setElements([]);
@@ -81,7 +81,10 @@ export class AnchorHandleDrag extends AbstractDrag {
       return;
     }
 
-    this.node.diagram.undoManager.add(new ElementAddUndoableAction([this.edge], this.node.diagram));
+    assertRegularLayer(this.node.diagram.activeLayer);
+    this.node.diagram.undoManager.add(
+      new ElementAddUndoableAction([this.edge], this.node.diagram, this.node.diagram.activeLayer)
+    );
 
     // TODO: Need to prevent undoable action from being added twice
     this.delegate.onDragEnd();

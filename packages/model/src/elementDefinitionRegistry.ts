@@ -225,7 +225,7 @@ export const makeStencilNode =
         opts?.aspectRatio ?? 1
       ),
       $d,
-      $d.layers.active,
+      $d.activeLayer,
       opts?.props?.('picker') ?? {},
       opts?.metadata ?? {},
       opts?.texts
@@ -329,17 +329,17 @@ export const loadStencilsFromYaml = (stencils: any) => {
           new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
         );
 
-        dest.layers.add(new RegularLayer('default', 'Default', [], dest), uow);
+        const layer = new RegularLayer('default', 'Default', [], dest);
+        dest.layers.add(layer, uow);
 
         const node = deserializeDiagramElements(
           [stencil.node],
           dest,
-          dest.layers.active,
+          dest.activeLayer,
           {},
           {}
         )[0] as DiagramNode;
-        assert.true(dest.layers.active instanceof RegularLayer);
-        (dest.layers.active as RegularLayer).addElement(node, uow);
+        layer.addElement(node, uow);
 
         return node;
       }

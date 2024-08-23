@@ -16,7 +16,7 @@ import { State } from '@diagram-craft/canvas/keyMap';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 const OFFSET = 100;
 const SECONDARY_OFFSET = 20;
@@ -27,6 +27,8 @@ export const createLinkedNode = (
   direction: Direction
 ) => {
   const diagram = node.diagram;
+  assertRegularLayer(diagram.activeLayer);
+  assertRegularLayer(node.diagram.activeLayer);
 
   const uow = new UnitOfWork(diagram);
   const newNode = node.duplicate();
@@ -62,12 +64,10 @@ export const createLinkedNode = (
 
   const origBounds = newNode.bounds;
 
-  assert.true(diagram.layers.active instanceof RegularLayer);
-
   // Move "right"
   let secondaryOffset = 0;
   do {
-    const intersectingNode = (diagram.layers.active as RegularLayer).elements.find(e =>
+    const intersectingNode = diagram.activeLayer.elements.find(e =>
       Box.intersects(e.bounds, newNode.bounds)
     );
     if (!intersectingNode) break;
@@ -92,7 +92,7 @@ export const createLinkedNode = (
   newNode.setBounds(origBounds, uow);
   secondaryOffset = 0;
   do {
-    const intersectingNode = (diagram.layers.active as RegularLayer).elements.find(e =>
+    const intersectingNode = diagram.activeLayer.elements.find(e =>
       Box.intersects(e.bounds, newNode.bounds)
     );
     if (!intersectingNode) break;
@@ -139,7 +139,12 @@ export const createLinkedNode = (
   const resizeAction = createResizeCanvasActionToFit(node.diagram, newNode.bounds);
   node.diagram.undoManager.addAndExecute(
     new CompoundUndoableAction([
-      new ElementAddUndoableAction([newNode, edge], node.diagram, 'Link to new node'),
+      new ElementAddUndoableAction(
+        [newNode, edge],
+        node.diagram,
+        node.diagram.activeLayer,
+        'Link to new node'
+      ),
       ...(resizeAction ? [resizeAction] : [])
     ])
   );
@@ -171,7 +176,7 @@ export class CreateLinkedNodeAction extends AbstractSelectionAction {
     protected readonly direction: Direction,
     protected readonly keepSelection: boolean = false
   ) {
-    super(diagram, MultipleType.SingleOnly, ElementType.Node);
+    super(diagram, MultipleType.SingleOnly, ElementType.Node, ['regular']);
   }
 
   execute(): void {

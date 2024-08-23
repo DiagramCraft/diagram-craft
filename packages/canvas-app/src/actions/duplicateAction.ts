@@ -5,6 +5,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   interface ActionMap {
@@ -21,6 +22,7 @@ const OFFSET = 10;
 export class DuplicateAction extends AbstractSelectionAction {
   constructor(protected readonly diagram: Diagram) {
     super(diagram, 'both');
+    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
   execute() {
@@ -34,8 +36,14 @@ export class DuplicateAction extends AbstractSelectionAction {
       newElements.push(newEl);
     }
 
+    assertRegularLayer(this.diagram.activeLayer);
     this.diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction(newElements, this.diagram, 'Duplicate nodes')
+      new ElementAddUndoableAction(
+        newElements,
+        this.diagram,
+        this.diagram.activeLayer,
+        'Duplicate nodes'
+      )
     );
 
     // We commit after adding to the layer so that any change events

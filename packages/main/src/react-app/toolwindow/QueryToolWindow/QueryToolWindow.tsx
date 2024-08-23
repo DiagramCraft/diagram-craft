@@ -33,7 +33,7 @@ const replacer = (key: string, value: unknown) => {
 const getSource = (source: string, diagram: Diagram) => {
   switch (source) {
     case 'active-layer':
-      return diagram.layers.active;
+      return diagram.activeLayer;
     case 'active-diagram':
       return diagram;
     case 'active-document':

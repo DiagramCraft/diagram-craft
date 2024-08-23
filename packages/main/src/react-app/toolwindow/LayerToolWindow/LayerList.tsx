@@ -107,7 +107,7 @@ const LayerEntry = (props: { layer: Layer }) => {
       <Tree.Node
         key={layer.id}
         isOpen={true}
-        className={diagram.layers.active === layer ? 'cmp-layer-list__layer--selected' : ''}
+        className={diagram.activeLayer === layer ? 'cmp-layer-list__layer--selected' : ''}
         {...drag.eventHandlers}
         {...dropTarget.eventHandlers}
         onClick={() => {
@@ -127,11 +127,16 @@ const LayerEntry = (props: { layer: Layer }) => {
           <VisibilityToggle layer={layer} diagram={diagram} />
         </Tree.NodeAction>
         <Tree.Children>
-          <div style={{ display: 'contents' }}>
-            {(layer as RegularLayer).elements.toReversed().map(e => (
-              <ElementEntry key={e.id} element={e} />
-            ))}
-          </div>
+          {layer instanceof RegularLayer && (
+            <div style={{ display: 'contents' }}>
+              {layer.elements.toReversed().map(e => (
+                <ElementEntry key={e.id} element={e} />
+              ))}
+            </div>
+          )}
+          {!(layer instanceof RegularLayer) && (
+            <div style={{ color: 'red' }}>Not implemented yet</div>
+          )}
         </Tree.Children>
       </Tree.Node>
     </LayerContextMenu>

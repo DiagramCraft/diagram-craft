@@ -1,7 +1,7 @@
 import { DiagramFactory, DocumentFactory } from '@diagram-craft/model/serialization/deserialize';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer, Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
@@ -749,6 +749,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       assert.present(p);
 
       const layer = p instanceof Layer ? p : p!.layer;
+      assertRegularLayer(layer);
 
       const metadata: ElementMetadata = {};
 
@@ -1222,8 +1223,7 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           // the group local coordinates
           queue.add(() => p.setChildren([...p.children, node], uow));
         } else {
-          assert.true(layer instanceof RegularLayer);
-          (layer as RegularLayer).addElement(node, uow);
+          layer.addElement(node, uow);
         }
       }
     }

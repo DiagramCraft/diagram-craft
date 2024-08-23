@@ -3,6 +3,7 @@ import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   interface ActionMap {
@@ -17,6 +18,7 @@ export const selectionDeleteActions: ActionMapFactory = (state: State) => ({
 export class SelectionDeleteAction extends AbstractSelectionAction {
   constructor(protected readonly diagram: Diagram) {
     super(diagram, 'both');
+    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
   execute(): void {
@@ -28,8 +30,14 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
 
     if (deletableElements.length === 0) return;
 
+    assertRegularLayer(this.diagram.activeLayer);
     this.diagram.undoManager.addAndExecute(
-      new ElementDeleteUndoableAction(this.diagram, deletableElements, true)
+      new ElementDeleteUndoableAction(
+        this.diagram,
+        this.diagram.activeLayer,
+        deletableElements,
+        true
+      )
     );
 
     this.emit('actiontriggered', { action: this });

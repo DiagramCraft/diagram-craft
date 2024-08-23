@@ -14,6 +14,7 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ResizeDrag } from '@diagram-craft/canvas/drag/resizeDrag';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -37,6 +38,7 @@ export class TextTool extends AbstractTool {
   ) {
     super('text', diagram, drag, svg, applicationTriggers, resetTool);
 
+    assertRegularLayer(diagram.activeLayer);
     applicationTriggers.setHelp?.('Click to add text');
   }
 
@@ -52,7 +54,7 @@ export class TextTool extends AbstractTool {
         r: 0
       },
       this.diagram,
-      this.diagram.layers.active,
+      this.diagram.activeLayer,
       // TODO: This is partially duplicated in defaultRegistry.ts
       //       - perhaps make static member of Text.nodeType.ts
       {
@@ -80,8 +82,9 @@ export class TextTool extends AbstractTool {
 
     const undoManager = this.diagram.undoManager;
     undoManager.setMark();
+    assertRegularLayer(this.diagram.activeLayer);
     this.diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction([this.node], this.diagram, 'Add text')
+      new ElementAddUndoableAction([this.node], this.diagram, this.diagram.activeLayer, 'Add text')
     );
 
     this.diagram.selectionState.setElements([this.node]);

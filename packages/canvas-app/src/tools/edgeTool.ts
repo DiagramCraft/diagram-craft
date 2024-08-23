@@ -23,6 +23,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -45,6 +46,7 @@ export class EdgeTool extends AbstractTool {
   ) {
     super('edge', diagram, drag, svg, applicationTriggers, resetTool);
 
+    assertRegularLayer(diagram.activeLayer);
     applicationTriggers.setHelp?.('Click to add edge');
   }
 
@@ -68,10 +70,13 @@ export class EdgeTool extends AbstractTool {
       },
       [],
       this.diagram,
-      this.diagram.layers.active
+      this.diagram.activeLayer
     );
 
-    undoManager.addAndExecute(new ElementAddUndoableAction([nd], this.diagram, 'Add edge'));
+    assertRegularLayer(this.diagram.activeLayer);
+    undoManager.addAndExecute(
+      new ElementAddUndoableAction([nd], this.diagram, this.diagram.activeLayer, 'Add edge')
+    );
 
     this.diagram.selectionState.setElements([nd]);
     this.resetTool();

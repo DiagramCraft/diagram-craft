@@ -1,7 +1,7 @@
 import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { Layer, LayerManager, RegularLayer } from './diagramLayer';
+import { assertRegularLayer, Layer, LayerManager, RegularLayer } from './diagramLayer';
 import { SelectionState } from './selectionState';
 import { UndoManager } from './undoManager';
 import { SnapManager } from './snap/snapManager';
@@ -82,8 +82,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       // Only trigger invalidation in case the value has changed to true
       if (this.mustCalculateIntersections && this.mustCalculateIntersections !== old) {
         const uow = new UnitOfWork(this);
-        if (this.layers.active instanceof RegularLayer) {
-          this.layers.active.elements
+        if (this.activeLayer instanceof RegularLayer) {
+          this.activeLayer.elements
             .filter(e => isEdge(e))
             .forEach(e => (e as DiagramEdge).invalidate(uow));
         }
@@ -94,6 +94,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.on('elementAdd', toggleMustCalculateIntersections);
     this.on('elementRemove', toggleMustCalculateIntersections);
     toggleMustCalculateIntersections();
+  }
+
+  get activeLayer() {
+    return this.layers.active;
   }
 
   set document(d: DiagramDocument) {
@@ -158,8 +162,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   ) {
     elements.forEach(e => uow.snapshot(e));
 
-    const elementLayers = elements.map(e => e.layer);
-    const topMostLayer = this.layers.all.findLast(layer => elementLayers.includes(layer));
+    const elementLayers = elements.map(e => {
+      assertRegularLayer(e.layer);
+      return e.layer;
+    });
+    const topMostLayer = this.layers.all.findLast(
+      layer => layer instanceof RegularLayer && elementLayers.includes(layer)
+    );
     assert.present(topMostLayer);
 
     // Cannot move an element into itself, so abort if this is the case
@@ -168,10 +177,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // Remove from existing layers
     const sourceLayers = new Set(elementLayers);
     for (const l of sourceLayers) {
-      assert.true(l instanceof RegularLayer);
       uow.snapshot(l);
-      (l as RegularLayer).setElements(
-        (l as RegularLayer).elements.filter(e => !elements.includes(e)),
+      l.setElements(
+        l.elements.filter(e => !elements.includes(e)),
         uow
       );
     }

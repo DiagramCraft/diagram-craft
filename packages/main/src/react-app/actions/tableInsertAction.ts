@@ -6,6 +6,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 export const tableInsertActions = (state: State) => ({
   TABLE_INSERT: new TableInsertAction(state.diagram)
@@ -18,9 +19,12 @@ declare global {
 class TableInsertAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
+    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
   execute(context: ActionContext): void {
+    assertRegularLayer(this.diagram.activeLayer);
+
     context.applicationTriggers?.showDialog?.({
       name: 'tableInsert',
       onOk: async props => {
@@ -44,7 +48,7 @@ class TableInsertAction extends AbstractAction {
           'table',
           bounds,
           this.diagram,
-          this.diagram.layers.active,
+          this.diagram.activeLayer,
           {},
           {}
         );
@@ -56,7 +60,7 @@ class TableInsertAction extends AbstractAction {
             'tableRow',
             { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
             this.diagram,
-            this.diagram.layers.active,
+            this.diagram.activeLayer,
             {},
             {}
           );
@@ -69,7 +73,7 @@ class TableInsertAction extends AbstractAction {
               'text',
               { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
               this.diagram,
-              this.diagram.layers.active,
+              this.diagram.activeLayer,
               {
                 fill: {
                   enabled: true
@@ -86,8 +90,14 @@ class TableInsertAction extends AbstractAction {
         }
 
         uow.commit();
+        assertRegularLayer(this.diagram.activeLayer);
         this.diagram.undoManager.addAndExecute(
-          new ElementAddUndoableAction(elements, this.diagram, 'Add table')
+          new ElementAddUndoableAction(
+            elements,
+            this.diagram,
+            this.diagram.activeLayer,
+            'Add table'
+          )
         );
       },
       onCancel: () => {}

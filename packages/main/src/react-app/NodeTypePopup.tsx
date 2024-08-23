@@ -6,7 +6,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
@@ -34,8 +34,8 @@ export const NodeTypePopup = (props: Props) => {
         meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
       }, uow);
 
-      assert.true(diagram.layers.active instanceof RegularLayer);
-      (diagram.layers.active as RegularLayer).addElement(node, uow);
+      assertRegularLayer(diagram.activeLayer);
+      diagram.activeLayer.addElement(node, uow);
 
       const edge = diagram.edgeLookup.get(props.edgeId);
       assert.present(edge);
@@ -62,8 +62,8 @@ export const NodeTypePopup = (props: Props) => {
     const edge = diagram.edgeLookup.get(props.edgeId);
     assert.present(edge);
     UnitOfWork.execute(diagram, uow => {
-      assert.true(edge.layer instanceof RegularLayer);
-      (edge.layer as RegularLayer).removeElement(edge, uow);
+      assertRegularLayer(edge.layer);
+      edge.layer.removeElement(edge, uow);
     });
     diagram.selectionState.clear();
   }, [diagram, props.edgeId]);
@@ -82,17 +82,19 @@ export const NodeTypePopup = (props: Props) => {
         n.name ?? n.id,
         new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
       );
-      dest.layers.add(new RegularLayer('default', 'Default', [], dest), UnitOfWork.immediate(dest));
+      const layer = new RegularLayer('default', 'Default', [], dest);
+      dest.layers.add(layer, UnitOfWork.immediate(dest));
 
       const node = n.node(dest);
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
       dest.viewBox.offset = { x: -5, y: -5 };
-      assert.true(dest.layers.active instanceof RegularLayer);
-      (dest.layers.active as RegularLayer).addElement(node, UnitOfWork.immediate(dest));
+      layer.addElement(node, UnitOfWork.immediate(dest));
 
       return [n, dest];
     });
   }, [diagram]);
+
+  if (!(diagram.activeLayer instanceof RegularLayer)) return <div></div>;
 
   return (
     <Popover.Root

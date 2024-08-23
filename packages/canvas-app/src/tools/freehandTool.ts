@@ -7,8 +7,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { ApplicationTriggers } from '@diagram-craft/canvas/ApplicationTriggers';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
-import { assert } from '@diagram-craft/utils/assert';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -58,6 +57,7 @@ export class FreehandTool extends AbstractTool {
     super('freehand', diagram, drag, svg, applicationTriggers, resetTool);
 
     applicationTriggers.setHelp?.('Draw shape');
+    assertRegularLayer(diagram.activeLayer);
   }
 
   onMouseDown(_id: string, point: Readonly<{ x: number; y: number }>, _modifiers: Modifiers): void {
@@ -109,14 +109,14 @@ export class FreehandTool extends AbstractTool {
       'generic-path',
       { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
       this.diagram,
-      this.diagram.layers.active,
+      this.diagram.activeLayer,
       { custom: { genericPath: { path: path } }, fill: { enabled: false } },
       {}
     );
 
     const uow = new UnitOfWork(this.diagram);
-    assert.true(this.diagram.layers.active instanceof RegularLayer);
-    (this.diagram.layers.active as RegularLayer).addElement(node, uow);
+    assertRegularLayer(this.diagram.activeLayer);
+    this.diagram.activeLayer.addElement(node, uow);
     uow.commit();
 
     this.path!.remove();

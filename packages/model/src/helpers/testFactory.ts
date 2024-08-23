@@ -20,7 +20,7 @@ const createNode = (diagram: Diagram) =>
       r: 0
     },
     diagram,
-    diagram.layers.active,
+    diagram.activeLayer,
     {},
     {}
   );
@@ -34,7 +34,7 @@ const createEdge = (diagram: Diagram) =>
     {},
     [],
     diagram,
-    diagram.layers.active
+    diagram.activeLayer
   );
 
 const createDiagram = () => {

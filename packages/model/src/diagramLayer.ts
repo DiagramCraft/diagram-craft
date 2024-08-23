@@ -228,6 +228,12 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
   }
 }
 
+export function assertRegularLayer(l: Layer): asserts l is RegularLayer {
+  if (l.type !== 'regular') {
+    throw new Error('Layer is not a regular layer');
+  }
+}
+
 export class RegularLayer extends Layer {
   #elements: Array<DiagramElement> = [];
 

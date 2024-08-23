@@ -74,7 +74,7 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
       const def = $d.document.nodeDefinitions.get(type);
       assertDrawioShapeNodeDefinition(def);
 
-      const n = new DiagramNode(newid(), type, Box.unit(), $d, $d.layers.active, drawio.props, {});
+      const n = new DiagramNode(newid(), type, Box.unit(), $d, $d.activeLayer, drawio.props, {});
 
       const size = def.getSize(n);
       n.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, UnitOfWork.immediate($d));

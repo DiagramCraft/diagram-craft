@@ -10,7 +10,7 @@ import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoAction
 import { newid } from '@diagram-craft/utils/id';
 import { Path } from '@diagram-craft/geometry/path';
 import { assert } from '@diagram-craft/utils/assert';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -38,6 +38,8 @@ export class PenTool extends AbstractTool {
     super('pen', diagram, drag, svg, applicationTriggers, resetTool);
     if (this.svg) this.svg.style.cursor = 'default';
 
+    assertRegularLayer(diagram.activeLayer);
+
     applicationTriggers.setHelp?.(
       "Click to add corners. Press 'Escape' to cancel or any other key to complete the shape"
     );
@@ -53,7 +55,7 @@ export class PenTool extends AbstractTool {
         'generic-path',
         { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
         this.diagram,
-        this.diagram.layers.active,
+        this.diagram.activeLayer,
         { custom: { genericPath: { path: `M ${initialPath.x},${initialPath.y}` } } },
         {}
       );
@@ -62,8 +64,8 @@ export class PenTool extends AbstractTool {
 
       const uow = new UnitOfWork(this.diagram);
 
-      assert.true(this.diagram.layers.active instanceof RegularLayer);
-      (this.diagram.layers.active as RegularLayer).addElement(this.node, uow);
+      assertRegularLayer(this.diagram.activeLayer);
+      this.diagram.activeLayer.addElement(this.node, uow);
       uow.commit();
     } else {
       this.addPoint(diagramPoint);
@@ -95,8 +97,8 @@ export class PenTool extends AbstractTool {
     if (this.node) {
       if (e.key === 'Escape') {
         const uow = new UnitOfWork(this.diagram);
-        assert.true(this.node.layer instanceof RegularLayer);
-        (this.node.layer as RegularLayer).removeElement(this.node, uow);
+        assertRegularLayer(this.node.layer);
+        this.node.layer.removeElement(this.node, uow);
         uow.commit();
 
         this.resetState();
@@ -110,8 +112,14 @@ export class PenTool extends AbstractTool {
 
       this.updateNode();
 
+      assertRegularLayer(this.diagram.activeLayer);
       this.diagram.undoManager.add(
-        new ElementAddUndoableAction([this.node], this.diagram, 'Add path')
+        new ElementAddUndoableAction(
+          [this.node],
+          this.diagram,
+          this.diagram.activeLayer,
+          'Add path'
+        )
       );
 
       this.resetTool();

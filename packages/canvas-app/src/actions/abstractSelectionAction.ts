@@ -27,30 +27,18 @@ export abstract class AbstractSelectionAction extends AbstractAction {
   ) {
     super();
 
-    this.addSelectionListener(() => {
+    const cb = () => {
       const $s = this.diagram.selectionState;
       if ($s.isEmpty()) {
-        this.enabled = false;
-        return;
+        return false;
       }
 
       if (
         this.layerTypes !== undefined &&
         !$s.elements.every(e => this.layerTypes!.includes(e.layer.type))
       ) {
-        this.enabled = false;
-        return;
+        return false;
       }
-
-      /*
-      if (
-        this.layerTypes !== undefined &&
-        !this.layerTypes.includes(this.diagram.layers.active.type)
-      ) {
-        this.enabled = false;
-        return;
-      }
-       */
 
       const elements =
         this.elementType === 'both'
@@ -60,34 +48,21 @@ export abstract class AbstractSelectionAction extends AbstractAction {
             : $s.nodes;
 
       if (elements.length === 0) {
-        this.enabled = false;
-        return;
+        return false;
       }
 
       if (this.multipleType === 'single-only' && elements.length > 1) {
-        this.enabled = false;
-        return;
+        return false;
       }
 
       if (this.multipleType === 'multiple-only' && elements.length === 1) {
-        this.enabled = false;
-        return;
+        return false;
       }
 
-      this.enabled = true;
-    });
-  }
-
-  protected addSelectionListener(cb: () => void) {
-    this.diagram.selectionState.on('add', () => {
-      cb();
-      this.emit('actionchanged', { action: this });
-    });
-    this.diagram.selectionState.on('remove', () => {
-      cb();
-      this.emit('actionchanged', { action: this });
-    });
-    cb();
+      return true;
+    };
+    this.addCriterion(this.diagram.selectionState, 'add', cb);
+    this.addCriterion(this.diagram.selectionState, 'remove', cb);
   }
 
   abstract execute(): void;

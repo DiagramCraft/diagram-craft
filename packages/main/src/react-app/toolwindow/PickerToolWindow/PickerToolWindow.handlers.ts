@@ -9,6 +9,7 @@ import { Extent } from '@diagram-craft/geometry/extent';
 import { assignNewBounds, assignNewIds } from '@diagram-craft/model/helpers/cloneHelper';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 type ElementsDraggable = {
   elements: Array<SerializedElement>;
@@ -18,6 +19,8 @@ type ElementsDraggable = {
 
 export const canvasDropHandler = ($d: Diagram) => {
   return (e: DragEvent) => {
+    assertRegularLayer($d.activeLayer);
+
     const draggable = JSON.parse(
       e.dataTransfer!.getData('application/x-diagram-craft-elements')
     ) as ElementsDraggable;
@@ -27,7 +30,7 @@ export const canvasDropHandler = ($d: Diagram) => {
     const droppedElements = deserializeDiagramElements(
       draggable.elements,
       $d,
-      $d.layers.active,
+      $d.activeLayer,
       {},
       {}
     );
@@ -58,7 +61,7 @@ export const canvasDropHandler = ($d: Diagram) => {
         e.updateMetadata(meta => (meta.style = $d.document.styles.activeEdgeStylesheet.id), uow);
       }
     });
-    $d.undoManager.addAndExecute(new ElementAddUndoableAction(droppedElements, $d));
+    $d.undoManager.addAndExecute(new ElementAddUndoableAction(droppedElements, $d, $d.activeLayer));
 
     $d.selectionState.clear();
     $d.selectionState.setElements(droppedElements);

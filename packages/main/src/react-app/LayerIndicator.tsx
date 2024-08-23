@@ -23,7 +23,7 @@ export const LayerIndicator = () => {
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button className="cmp-layer-indicator" aria-label="Customise options">
-            {diagram.layers.active.type === 'regular' ? (
+            {diagram.activeLayer.type === 'regular' ? (
               <TbStack2 />
             ) : (
               <div style={{ color: 'var(--blue-11)', display: 'flex', alignItems: 'center' }}>
@@ -31,8 +31,8 @@ export const LayerIndicator = () => {
               </div>
             )}
 
-            <span>{diagram.layers.active.name}</span>
-            {diagram.layers.active.isLocked() && (
+            <span>{diagram.activeLayer.name}</span>
+            {diagram.activeLayer.isLocked() && (
               <div className={'cmp-layer-indicator__lock'}>
                 <TbLock />
               </div>
@@ -87,7 +87,7 @@ export const LayerIndicator = () => {
             </DropdownMenu.Item>
             <ToggleActionDropdownMenuItem
               action={'LAYER_TOGGLE_LOCK'}
-              context={{ id: diagram.layers.active.id }}
+              context={{ id: diagram.activeLayer.id }}
             >
               Locked
             </ToggleActionDropdownMenuItem>
@@ -100,7 +100,7 @@ export const LayerIndicator = () => {
                 }}
                 key={layer.id}
               >
-                {diagram.layers.active === layer && (
+                {diagram.activeLayer === layer && (
                   <div className="cmp-context-menu__item-indicator">
                     <TbCheck />
                   </div>

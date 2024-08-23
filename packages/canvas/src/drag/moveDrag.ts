@@ -17,10 +17,10 @@ import {
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
 import { excludeLabelNodes, includeAll, SelectionState } from '@diagram-craft/model/selectionState';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
 import { ApplicationTriggers } from '../ApplicationTriggers';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 
 const getId = (e: DiagramElement) => (isNode(e) ? `node-${e.id}` : `edge-${e.id}`);
 
@@ -65,6 +65,8 @@ export class MoveDrag extends AbstractDrag {
     if (isDuplicateDrag(this.modifiers)) {
       this.duplicate();
     }
+
+    assertRegularLayer(this.diagram.activeLayer);
 
     this.applicationTriggers.pushHelp?.(
       'MoveDrag',
@@ -177,6 +179,9 @@ export class MoveDrag extends AbstractDrag {
   }
 
   onDragEnd(): void {
+    const activeLayer = this.diagram.activeLayer;
+    assertRegularLayer(activeLayer);
+
     const selection = this.diagram.selectionState;
     selection.setDragging(false);
     selection.guides = [];
@@ -204,10 +209,12 @@ export class MoveDrag extends AbstractDrag {
 
       const addedElements = snapshots.onlyAdded().keys;
       if (addedElements.length > 0) {
+        assertRegularLayer(this.diagram.activeLayer);
         compoundUndoAction.addAction(
           new ElementAddUndoableAction(
             addedElements.map(e => this.diagram.lookup(e)!),
-            this.diagram
+            this.diagram,
+            this.diagram.activeLayer
           )
         );
       }
@@ -227,16 +234,14 @@ export class MoveDrag extends AbstractDrag {
 
         // Move elements out of a container
       } else if (selection.elements.every(e => e.parent?.nodeType === 'container')) {
-        const activeLayer = this.diagram.layers.active;
-        assert.true(activeLayer instanceof RegularLayer);
         this.diagram.moveElement(
           selection.elements,
           this.uow,
           activeLayer,
-          (activeLayer as RegularLayer).elements.length > 0
+          activeLayer.elements.length > 0
             ? {
                 relation: 'above',
-                element: (activeLayer as RegularLayer).elements.at(-1)!
+                element: activeLayer.elements.at(-1)!
               }
             : undefined
         );
@@ -282,18 +287,18 @@ export class MoveDrag extends AbstractDrag {
   }
 
   private duplicate() {
+    const activeLayer = this.diagram.activeLayer;
+    assertRegularLayer(activeLayer);
     if (this.#hasDuplicatedSelection) return;
 
     this.#hasDuplicatedSelection = true;
 
     const selection = this.diagram.selectionState;
 
-    assert.true(this.diagram.layers.active instanceof RegularLayer);
-
     // Clone the current selection to keep in its original position
     const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
     newElements.forEach(e => {
-      (this.diagram.layers.active as RegularLayer).addElement(e, this.uow);
+      activeLayer.addElement(e, this.uow);
     });
 
     // Reset current selection back to original
@@ -331,8 +336,9 @@ export class MoveDrag extends AbstractDrag {
     selection.guides = [];
 
     elementsToRemove.forEach(e => {
-      assert.true(e.layer instanceof RegularLayer);
-      (e.layer as RegularLayer).removeElement(e, this.uow);
+      if (e.layer instanceof RegularLayer) {
+        e.layer.removeElement(e, this.uow);
+      }
     });
 
     // Reset the original selection back to the position of the now

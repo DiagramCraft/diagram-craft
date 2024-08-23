@@ -1,15 +1,14 @@
-import { AbstractSelectionAction, MultipleType } from './abstractSelectionAction';
+import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { Clipboard, ELEMENTS_CONTENT_TYPE } from '../clipboard';
 import { PASTE_HANDLERS, PasteHandler } from '../clipboardPasteHandlers';
-import { assert } from '@diagram-craft/utils/assert';
 
 declare global {
   interface ActionMap extends ReturnType<typeof clipboardActions> {}
@@ -34,8 +33,8 @@ export class PasteUndoableAction implements UndoableAction {
 
   undo(uow: UnitOfWork) {
     this.elements.forEach(e => {
-      assert.true(e.layer instanceof RegularLayer);
-      (e.layer as RegularLayer).removeElement(e, uow);
+      assertRegularLayer(e.layer);
+      e.layer.removeElement(e, uow);
     });
 
     this.diagram.selectionState.setElements(
@@ -58,7 +57,7 @@ export class ClipboardPasteAction extends AbstractAction {
   constructor(protected readonly diagram: Diagram) {
     super();
     diagram.on('change', () => {
-      const activeLayer = diagram.layers.active;
+      const activeLayer = diagram.activeLayer;
       if (activeLayer instanceof RegularLayer) {
         this.enabled = true;
         this.layer = activeLayer;
@@ -91,7 +90,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
     private readonly mode: 'copy' | 'cut',
     diagram: Diagram
   ) {
-    super(diagram, MultipleType.Both);
+    super(diagram, MultipleType.Both, ElementType.Both, ['regular']);
   }
 
   execute(): void {
@@ -111,8 +110,8 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
   private deleteSelection() {
     UnitOfWork.execute(this.diagram, uow => {
       for (const element of this.diagram.selectionState.elements) {
-        assert.true(element.layer instanceof RegularLayer);
-        (element.layer as RegularLayer).removeElement(element, uow);
+        assertRegularLayer(element.layer);
+        element.layer.removeElement(element, uow);
       }
     });
     this.diagram.selectionState.clear();

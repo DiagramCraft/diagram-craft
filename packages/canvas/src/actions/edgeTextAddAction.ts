@@ -1,7 +1,7 @@
 import { ActionMapFactory, State } from '@diagram-craft/canvas/keyMap';
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { assert, precondition } from '@diagram-craft/utils/assert';
+import { precondition } from '@diagram-craft/utils/assert';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -11,7 +11,7 @@ import {
   ElementAddUndoableAction,
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayer';
 
 declare global {
   interface ActionMap {
@@ -26,6 +26,7 @@ export const edgeTextAddActions: ActionMapFactory = (state: State) => ({
 export class EdgeTextAddAction extends AbstractAction {
   constructor(private readonly diagram: Diagram) {
     super();
+    this.addCriterion(diagram, 'change', () => diagram.activeLayer.type === 'regular');
   }
 
   execute(context: ActionContext): void {
@@ -34,6 +35,8 @@ export class EdgeTextAddAction extends AbstractAction {
     const edge = this.diagram.edgeLookup.get(context.id!);
 
     precondition.is.present(edge);
+    assertRegularLayer(edge.layer);
+    assertRegularLayer(this.diagram.activeLayer);
 
     const path = edge.path();
     const projection = path.projectPoint(context.point);
@@ -45,7 +48,7 @@ export class EdgeTextAddAction extends AbstractAction {
       'text',
       { ...projection.point, r: 0, w: 100, h: 10 },
       this.diagram,
-      this.diagram.layers.active,
+      this.diagram.activeLayer,
       {
         text: { align: 'center' },
         labelForEdgeId: edge.id,
@@ -63,8 +66,7 @@ export class EdgeTextAddAction extends AbstractAction {
       edge.parent.setChildren([...edge.parent.children, textNode], uow);
     }
 
-    assert.true(edge.layer instanceof RegularLayer);
-    (edge.layer as RegularLayer).addElement(textNode, uow);
+    edge.layer.addElement(textNode, uow);
 
     edge.addLabelNode(
       {
@@ -82,7 +84,7 @@ export class EdgeTextAddAction extends AbstractAction {
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
       new CompoundUndoableAction([
-        new ElementAddUndoableAction([textNode], this.diagram),
+        new ElementAddUndoableAction([textNode], this.diagram, this.diagram.activeLayer),
         new SnapshotUndoableAction(`Add edge text`, this.diagram, snapshots.onlyUpdated())
       ])
     );

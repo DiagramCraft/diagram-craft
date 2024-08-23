@@ -79,7 +79,7 @@ class ImagePasteHandler extends PasteHandler {
         'rect',
         { x: point!.x, y: point!.y, w: img.width, h: img.height, r: 0 },
         diagram,
-        diagram.layers.active,
+        diagram.activeLayer,
         {
           fill: {
             type: 'image',
@@ -113,7 +113,7 @@ class TextPasteHandler extends PasteHandler {
         'text',
         { x: point!.x, y: point!.y, w: 200, h: 20, r: 0 },
         diagram,
-        diagram.layers.active,
+        diagram.activeLayer,
         {
           stroke: {
             enabled: false
@@ -206,13 +206,7 @@ class ElementsPasteHandler extends PasteHandler {
       }
     }
 
-    const newElements = deserializeDiagramElements(
-      elements,
-      diagram,
-      diagram.layers.active,
-      {},
-      {}
-    );
+    const newElements = deserializeDiagramElements(elements, diagram, diagram.activeLayer, {}, {});
 
     diagram.undoManager.addAndExecute(new PasteUndoableAction(newElements, diagram, layer));
     diagram.selectionState.setElements(newElements);

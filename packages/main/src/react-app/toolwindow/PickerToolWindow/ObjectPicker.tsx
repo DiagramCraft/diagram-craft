@@ -1,7 +1,7 @@
 import { useDiagram } from '../../context/DiagramContext';
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
@@ -10,7 +10,6 @@ import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionR
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useMemo, useState } from 'react';
 import { Browser } from '@diagram-craft/canvas/browser';
-import { assert } from '@diagram-craft/utils/assert';
 
 const encodeSvg = (svgString: string) => svgString.replace('«', '&#171;').replace('»', '&#187;');
 
@@ -31,13 +30,13 @@ const makeDiagramNode = (diagram: Diagram, n: Stencil, pkg: string) => {
     new DiagramDocument(diagram.document.nodeDefinitions, diagram.document.edgeDefinitions)
   );
 
-  dest.layers.add(new RegularLayer('default', 'Default', [], dest), uow);
+  const layer = new RegularLayer('default', 'Default', [], dest);
+  dest.layers.add(layer, uow);
 
   const node = n.node(dest);
   dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
   dest.viewBox.offset = { x: -5, y: -5 };
-  assert.true(dest.layers.active instanceof RegularLayer);
-  (dest.layers.active as RegularLayer).addElement(node, uow);
+  layer.addElement(node, uow);
 
   NODE_CACHE.set(cacheKey, [dest, node]);
 
@@ -63,7 +62,8 @@ export const ObjectPicker = (props: Props) => {
             ev.dataTransfer.setData('text/plain', props.package + '/' + stencils[idx].id);
 
             // Note: we know for a fact that there's only one layer in the diagram
-            const elements = (d.layers.active as RegularLayer).elements;
+            assertRegularLayer(d.activeLayer);
+            const elements = d.activeLayer.elements;
             ev.dataTransfer.setData(
               'application/x-diagram-craft-elements',
               JSON.stringify({
