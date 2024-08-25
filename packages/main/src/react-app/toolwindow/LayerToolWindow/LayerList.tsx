@@ -15,7 +15,7 @@ import {
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { LayerContextMenu } from './LayerContextMenu';
 import { Layer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -24,6 +24,7 @@ import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { useLayoutEffect, useRef } from 'react';
+import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -46,12 +47,16 @@ const VisibilityToggle = (props: { layer: Layer; diagram: Diagram }) => {
 const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
   return (
     <span
-      style={{ cursor: 'pointer' }}
-      onClick={e => {
-        props.layer.locked = !props.layer.isLocked();
-        e.preventDefault();
-        e.stopPropagation();
-      }}
+      style={{ cursor: props.layer.type === 'reference' ? 'inherit' : 'pointer' }}
+      onClick={
+        props.layer.type === 'reference'
+          ? undefined
+          : e => {
+              props.layer.locked = !props.layer.isLocked();
+              e.preventDefault();
+              e.stopPropagation();
+            }
+      }
     >
       {props.layer.isLocked() ? <TbLock /> : <TbLockOff />}
     </span>
@@ -100,8 +105,6 @@ const LayerEntry = (props: { layer: Layer }) => {
     }
   );
 
-  assert.true(layer instanceof RegularLayer);
-
   return (
     <LayerContextMenu layer={layer}>
       <Tree.Node
@@ -126,18 +129,20 @@ const LayerEntry = (props: { layer: Layer }) => {
           <LockToggle layer={layer} diagram={diagram} />
           <VisibilityToggle layer={layer} diagram={diagram} />
         </Tree.NodeAction>
-        <Tree.Children>
-          {layer instanceof RegularLayer && (
-            <div style={{ display: 'contents' }}>
-              {layer.elements.toReversed().map(e => (
-                <ElementEntry key={e.id} element={e} />
-              ))}
-            </div>
-          )}
-          {!(layer instanceof RegularLayer) && (
-            <div style={{ color: 'red' }}>Not implemented yet</div>
-          )}
-        </Tree.Children>
+        {!(layer instanceof ReferenceLayer) && (
+          <Tree.Children>
+            {layer instanceof RegularLayer && (
+              <div style={{ display: 'contents' }}>
+                {layer.elements.toReversed().map(e => (
+                  <ElementEntry key={e.id} element={e} />
+                ))}
+              </div>
+            )}
+            {!(layer instanceof RegularLayer) && (
+              <div style={{ color: 'red' }}>Not implemented yet</div>
+            )}
+          </Tree.Children>
+        )}
       </Tree.Node>
     </LayerContextMenu>
   );

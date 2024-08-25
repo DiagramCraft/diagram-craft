@@ -8,17 +8,18 @@ import {
   SerializedDiagramDocument,
   SerializedElement,
   SerializedEndpoint,
-  SerializedPointInNodeEndpoint,
   SerializedFreeEndpoint,
   SerializedLayer,
   SerializedNode,
+  SerializedPointInNodeEndpoint,
   SerializedStyles
 } from './types';
-import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { AttachmentManager } from '../attachment';
 import { DiagramPalette } from '../diagramPalette';
 import { DiagramStyles } from '../diagramStyles';
 import { DiagramDataSchemas } from '../diagramDataSchemas';
+import { ReferenceLayer } from '../diagramLayerReference';
 
 export const isSerializedEndpointAnchor = (
   endpoint: SerializedEndpoint
@@ -95,15 +96,26 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
 };
 
 export const serializeLayer = (layer: Layer): SerializedLayer => {
-  // TODO: Support other layer types
-  assert.true(layer instanceof RegularLayer);
-  return {
-    id: layer.id,
-    name: layer.name,
-    type: 'layer',
-    layerType: 'regular',
-    elements: (layer as RegularLayer).elements.map(serializeDiagramElement)
-  };
+  if (layer.type === 'regular') {
+    return {
+      id: layer.id,
+      name: layer.name,
+      type: 'layer',
+      layerType: 'regular',
+      elements: (layer as RegularLayer).elements.map(serializeDiagramElement)
+    };
+  } else if (layer.type === 'reference') {
+    return {
+      id: layer.id,
+      name: layer.name,
+      type: 'layer',
+      layerType: 'reference',
+      layerId: (layer as ReferenceLayer).reference.layerId,
+      diagramId: (layer as ReferenceLayer).reference.diagramId
+    };
+  } else {
+    throw new NotImplementedYet();
+  }
 };
 
 export const serializeDiagramElement = (element: DiagramElement): SerializedElement => {

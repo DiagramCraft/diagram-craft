@@ -456,6 +456,50 @@
         "w": 640,
         "h": 640
       }
+    },
+    {
+      "id": "doc3",
+      "name": "Sheet 3",
+      "diagrams": [],
+      "canvas": {
+        "x": 0,
+        "y": 0,
+        "w": 640,
+        "h": 640
+      },
+      "layers": [
+        {
+          "id": "reference",
+          "name": "Reference",
+          "type": "layer",
+          "layerType": "reference",
+          "diagramId": "doc1",
+          "layerId": "layer1"
+        },
+        {
+          "id": "layer1",
+          "name": "Layer 1",
+          "type": "layer",
+          "layerType": "basic",
+          "elements": [
+            {
+              "id": "2",
+              "type": "node",
+              "nodeType": "star",
+              "bounds": {
+                "x": 400,
+                "y": 270,
+                "w": 150,
+                "h": 150,
+                "r": 0
+              },
+              "children": [],
+              "props": {
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "attachments": {}

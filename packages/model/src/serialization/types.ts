@@ -11,14 +11,22 @@ interface Reference {
   id: string;
 }
 
-export type SerializedLayer = {
-  id: string;
-  name: string;
-  type: 'layer';
-  // TODO: Align with LayerType
-  layerType: 'regular' | 'reference' | 'adjustment';
-  elements: ReadonlyArray<SerializedElement>;
-};
+export type SerializedLayer =
+  | {
+      id: string;
+      name: string;
+      type: 'layer';
+      layerType: 'regular' | 'basic';
+      elements: ReadonlyArray<SerializedElement>;
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'layer';
+      layerType: 'reference';
+      diagramId: string;
+      layerId: string;
+    };
 
 export type SerializedDiagram = {
   id: string;

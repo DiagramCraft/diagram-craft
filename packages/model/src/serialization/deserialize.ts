@@ -6,7 +6,7 @@ import { Layer, RegularLayer } from '../diagramLayer';
 import { isSerializedEndpointAnchor, isSerializedEndpointConnected } from './serialize';
 import { DiagramDocument } from '../diagramDocument';
 import { DiagramElement } from '../diagramElement';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
 import {
   SerializedAnchorEndpoint,
   SerializedDiagram,
@@ -22,6 +22,7 @@ import { Endpoint } from '../endpoint';
 import { Waypoint } from '../types';
 import { Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
+import { ReferenceLayer } from '../diagramLayerReference';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -234,21 +235,31 @@ const deserializeDiagrams = <T extends Diagram>(
 
     const uow = new UnitOfWork(newDiagram);
     for (const l of $d.layers) {
-      const layer = new RegularLayer(l.id, l.name, [], newDiagram);
-      newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+      if (l.layerType === 'regular' || l.layerType === 'basic') {
+        const layer = new RegularLayer(l.id, l.name, [], newDiagram);
+        newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
 
-      const elements = deserializeDiagramElements(
-        l.elements,
-        newDiagram,
-        layer,
-        nodeLookup,
-        edgeLookup
-      );
-      elements.forEach(e => {
-        layer.addElement(e, uow);
-      });
+        const elements = deserializeDiagramElements(
+          l.elements,
+          newDiagram,
+          layer,
+          nodeLookup,
+          edgeLookup
+        );
+        elements.forEach(e => {
+          layer.addElement(e, uow);
+        });
 
-      layer.elements.forEach(e => e.invalidate(uow));
+        layer.elements.forEach(e => e.invalidate(uow));
+      } else if (l.layerType === 'reference') {
+        const layer = new ReferenceLayer(l.id, l.name, newDiagram, {
+          diagramId: l.diagramId,
+          layerId: l.layerId
+        });
+        newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+      } else {
+        throw new VerifyNotReached();
+      }
     }
 
     if ($d.zoom) {

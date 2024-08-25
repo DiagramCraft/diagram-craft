@@ -26,7 +26,7 @@ import { Zoom } from './zoom';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
-  onMouseDown: OnMouseDown;
+  onMouseDown?: OnMouseDown;
   onDoubleClick?: OnDoubleClick;
 } & Context;
 
@@ -88,7 +88,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
-      props.onMouseDown(props.element.id, EventHelper.point(e), e);
+      props.onMouseDown!(props.element.id, EventHelper.point(e), e);
       e.stopPropagation();
     };
 
@@ -249,11 +249,16 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
           .map(h => `svg-edge--highlight-${h}`)
           .join(' ')}`,
         on: {
-          mousedown: onMouseDown,
-          dblclick: e => props.onDoubleClick?.(props.element.id, EventHelper.point(e)),
+          ...(props.onMouseDown ? { mousedown: onMouseDown } : {}),
+          ...(props.onDoubleClick
+            ? { dblclick: e => props.onDoubleClick?.(props.element.id, EventHelper.point(e)) }
+            : {}),
           contextmenu: onContextMenu
         },
-        style: `pointer-events: ${isDraggingThisEdge ? 'none' : 'unset'}`
+        style: `
+          pointer-events: ${!props.onMouseDown || isDraggingThisEdge ? 'none' : 'unset'};
+          ${!props.onMouseDown ? 'cursor: default;' : ''}
+        `
       },
       ...arrowMarkers,
       ...shapeBuilder.nodes,
