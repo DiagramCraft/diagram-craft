@@ -351,6 +351,13 @@
               }
             }
           ]
+        },
+        {
+          "id": "adjustment",
+          "name": "Adjustment",
+          "type": "layer",
+          "layerType": "rule",
+          "rules": []
         }
       ],
       "diagrams": [

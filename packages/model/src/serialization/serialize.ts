@@ -20,6 +20,7 @@ import { DiagramPalette } from '../diagramPalette';
 import { DiagramStyles } from '../diagramStyles';
 import { DiagramDataSchemas } from '../diagramDataSchemas';
 import { ReferenceLayer } from '../diagramLayerReference';
+import { RuleLayer } from '../diagramLayerRule';
 
 export const isSerializedEndpointAnchor = (
   endpoint: SerializedEndpoint
@@ -112,6 +113,14 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
       layerType: 'reference',
       layerId: (layer as ReferenceLayer).reference.layerId,
       diagramId: (layer as ReferenceLayer).reference.diagramId
+    };
+  } else if (layer.type === 'rule') {
+    return {
+      id: layer.id,
+      name: layer.name,
+      type: 'layer',
+      layerType: 'rule',
+      rules: (layer as RuleLayer).rules
     };
   } else {
     throw new NotImplementedYet();

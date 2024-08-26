@@ -96,6 +96,18 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     toggleMustCalculateIntersections();
   }
 
+  /*emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
+    if (eventName === 'change') {
+      for (const k of this.edgeLookup.values()) {
+        k.cache.clear();
+      }
+      for (const k of this.nodeLookup.values()) {
+        k.cache.clear();
+      }
+    }
+    super.emit(eventName, params);
+  }*/
+
   get activeLayer() {
     return this.layers.active;
   }

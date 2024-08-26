@@ -23,6 +23,7 @@ import { Waypoint } from '../types';
 import { Stylesheet } from '../diagramStyles';
 import { DefaultStyles } from '../diagramDefaults';
 import { ReferenceLayer } from '../diagramLayerReference';
+import { RuleLayer } from '../diagramLayerRule';
 
 const isNodeDef = (element: SerializedElement | SerializedLayer): element is SerializedNode =>
   element.type === 'node';
@@ -256,6 +257,9 @@ const deserializeDiagrams = <T extends Diagram>(
           diagramId: l.diagramId,
           layerId: l.layerId
         });
+        newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
+      } else if (l.layerType === 'rule') {
+        const layer = new RuleLayer(l.id, l.name, newDiagram, l.rules ?? []);
         newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
       } else {
         throw new VerifyNotReached();

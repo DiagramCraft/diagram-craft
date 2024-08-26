@@ -28,12 +28,8 @@ import { Browser } from './browser';
 import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { ApplicationTriggers } from './ApplicationTriggers';
 import { unique } from '@diagram-craft/utils/array';
-import {
-  assertReferenceLayer,
-  assertRegularLayer,
-  RegularLayer
-} from '@diagram-craft/model/diagramLayer';
-import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
+import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
+import { assertReferenceLayer, ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -388,7 +384,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
                 if (layer.type === 'reference') {
                   assertReferenceLayer(layer);
                   return this.renderLayer(layer, diagram, onEdgeDoubleClick, props, actionMap);
-                } else {
+                } else if (layer.type === 'regular') {
                   assertRegularLayer(layer);
                   return this.renderLayer(layer, diagram, onEdgeDoubleClick, props, actionMap);
                 }

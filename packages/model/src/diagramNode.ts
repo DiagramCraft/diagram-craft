@@ -23,6 +23,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { applyTemplate } from './template';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
+import { RuleLayer } from './diagramLayerRule';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -175,6 +176,12 @@ export class DiagramNode
     // to set this on individual nodes
     parentProps.debug = {};
 
+    const ruleProps: NodeProps =
+      this.diagram.layers.visible
+        .filter(l => l.type === 'rule')
+        .map(l => ((l as RuleLayer).adjustments()[this.id] ?? {}) as NodeProps)
+        .reduce((p, c) => deepMerge<NodeProps>({}, p, c), {}) ?? {};
+
     const propsForEditing = deepMerge<NodeProps>(
       {},
       styleProps ?? {},
@@ -183,7 +190,12 @@ export class DiagramNode
       this.#props
     ) as DeepRequired<NodeProps>;
 
-    const propsForRendering = deepMerge({}, makeWriteable(nodeDefaults), propsForEditing);
+    const propsForRendering = deepMerge(
+      {},
+      makeWriteable(nodeDefaults),
+      propsForEditing,
+      ruleProps
+    );
 
     this.cache.set('props.forEditing', propsForEditing);
     this.cache.set('props.forRendering', propsForRendering);

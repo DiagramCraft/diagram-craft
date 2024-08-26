@@ -6,27 +6,27 @@ import { OffsetType } from '../endpoint';
 import { StylesheetSnapshot } from '../unitOfWork';
 import { DataSchema } from '../diagramDataSchemas';
 import { Canvas } from '../diagram';
+import { AdjustmentRule } from '../diagramLayerRule';
 
 interface Reference {
   id: string;
 }
 
-export type SerializedLayer =
+export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
   | {
-      id: string;
-      name: string;
-      type: 'layer';
       layerType: 'regular' | 'basic';
       elements: ReadonlyArray<SerializedElement>;
     }
   | {
-      id: string;
-      name: string;
-      type: 'layer';
       layerType: 'reference';
       diagramId: string;
       layerId: string;
-    };
+    }
+  | {
+      layerType: 'rule';
+      rules: ReadonlyArray<AdjustmentRule>;
+    }
+);
 
 export type SerializedDiagram = {
   id: string;

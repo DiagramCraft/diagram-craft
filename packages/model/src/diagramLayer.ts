@@ -5,7 +5,6 @@ import { DiagramEdge } from './diagramEdge';
 import { Diagram } from './diagram';
 import { groupBy } from '@diagram-craft/utils/array';
 import { AttachmentConsumer } from './attachment';
-import { ReferenceLayer } from './diagramLayerReference';
 
 export type LayerType = 'regular' | 'adjustment' | 'rule' | 'reference';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -241,12 +240,6 @@ export function assertRegularLayer(l: Layer): asserts l is RegularLayer {
   }
 }
 
-export function assertReferenceLayer(l: Layer): asserts l is ReferenceLayer {
-  if (l.type !== 'reference') {
-    throw new Error('Layer is not a reference layer');
-  }
-}
-
 export class RegularLayer extends Layer {
   #elements: Array<DiagramElement> = [];
 
@@ -379,11 +372,5 @@ export class RegularLayer extends Layer {
 
   getAttachmentsInUse() {
     return this.elements.flatMap(e => e.getAttachmentsInUse());
-  }
-}
-
-export class RuleLayer extends Layer {
-  constructor(id: string, name: string, diagram: Diagram) {
-    super(id, name, diagram, 'rule');
   }
 }

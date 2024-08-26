@@ -26,6 +26,7 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import { shorten } from '@diagram-craft/utils/strings';
 import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
+import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -143,7 +144,7 @@ const LayerEntry = (props: { layer: Layer }) => {
                 ))}
               </div>
             )}
-            {!(layer instanceof RegularLayer) && (
+            {!(layer instanceof RegularLayer) && !(layer instanceof RuleLayer) && (
               <div style={{ color: 'red' }}>Not implemented yet</div>
             )}
           </Tree.Children>

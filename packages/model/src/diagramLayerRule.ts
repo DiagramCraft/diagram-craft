@@ -1,29 +1,35 @@
-import { DiagramElement } from './diagramElement';
 import { LayerSnapshot, UnitOfWork } from './unitOfWork';
 import { Layer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { deepClone } from '@diagram-craft/utils/object';
 
 export type AdjustmentRule = {
-  props: ElementProps;
+  id: string;
+  name: string;
   query: string;
+  props: ElementProps;
   metadata: Record<string, unknown>;
 };
 
-export class AdjustmentLayer extends Layer {
+export type Adjustment = NodeProps | EdgeProps;
+
+export class RuleLayer extends Layer {
   #rules: Array<AdjustmentRule> = [];
 
-  constructor(
-    id: string,
-    name: string,
-    _elements: ReadonlyArray<DiagramElement>,
-    diagram: Diagram
-  ) {
-    super(id, name, diagram);
+  constructor(id: string, name: string, diagram: Diagram, rules: Readonly<Array<AdjustmentRule>>) {
+    super(id, name, diagram, 'rule');
+    // @ts-ignore
+    this.#rules = rules;
   }
 
-  matchingRules(_element: DiagramElement): Array<AdjustmentRule> {
-    return this.#rules;
+  adjustments(): Record<string, Adjustment> {
+    return {
+      '3': {
+        fill: {
+          color: 'pink'
+        }
+      }
+    };
   }
 
   get rules() {
@@ -45,7 +51,7 @@ export class AdjustmentLayer extends Layer {
   moveRule(
     rule: AdjustmentRule,
     uow: UnitOfWork,
-    ref: { layer: AdjustmentLayer; rule: AdjustmentRule; position: 'before' | 'after' }
+    ref: { layer: RuleLayer; rule: AdjustmentRule; position: 'before' | 'after' }
   ) {
     // TODO: Support moving to a different AdjustmentLayer
     uow.snapshot(this);

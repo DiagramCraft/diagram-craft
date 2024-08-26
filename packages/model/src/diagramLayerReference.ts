@@ -11,6 +11,12 @@ type RegularLayerSnapshot = LayerSnapshot & {
   reference: LayerReference;
 };
 
+export function assertReferenceLayer(l: Layer): asserts l is ReferenceLayer {
+  if (l.type !== 'reference') {
+    throw new Error('Layer is not a reference layer');
+  }
+}
+
 export class ReferenceLayer extends Layer {
   #reference: LayerReference;
 
