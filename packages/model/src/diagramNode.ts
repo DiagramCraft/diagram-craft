@@ -170,7 +170,7 @@ export class DiagramNode
     )?.props;
 
     const parentProps: Partial<NodeProps> = deepClone(
-      this.#parent ? makeWriteable(this.#parent.editProps) : {}
+      this.#parent && this.#props.inheritStyle ? makeWriteable(this.#parent.editProps) : {}
     );
     // Let's not inherit the debug property - as it's useful to be able
     // to set this on individual nodes

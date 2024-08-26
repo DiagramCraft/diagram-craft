@@ -11,7 +11,7 @@ import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { EventEmitter } from '@diagram-craft/utils/event';
+import { EventEmitter, EventKey } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
@@ -96,7 +96,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     toggleMustCalculateIntersections();
   }
 
-  /*emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
+  emit<K extends EventKey<DiagramEvents>>(eventName: K, params?: DiagramEvents[K]) {
     if (eventName === 'change') {
       for (const k of this.edgeLookup.values()) {
         k.cache.clear();
@@ -106,7 +106,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       }
     }
     super.emit(eventName, params);
-  }*/
+  }
 
   get activeLayer() {
     return this.layers.active;

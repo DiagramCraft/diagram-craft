@@ -43,7 +43,7 @@ export const DefaultStyles = {
 
 const _elementDefaults: Pick<
   ElementPropsForRendering,
-  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke'
+  'debug' | 'geometry' | 'fill' | 'shadow' | 'stroke' | 'inheritStyle'
 > = {
   geometry: {
     flipV: false,
@@ -95,7 +95,8 @@ const _elementDefaults: Pick<
   debug: {
     boundingPath: false,
     anchors: false
-  }
+  },
+  inheritStyle: true
 };
 
 const _nodeDefaults: Omit<NodePropsForRendering, 'labelForEdgeId' | 'name' | 'custom'> = {

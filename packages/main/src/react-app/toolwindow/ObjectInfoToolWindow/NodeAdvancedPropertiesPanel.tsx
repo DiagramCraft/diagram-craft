@@ -10,6 +10,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
   const editable = useNodeProperty(diagram, 'capabilities.editable');
   const deletable = useNodeProperty(diagram, 'capabilities.deletable');
   const rotatable = useNodeProperty(diagram, 'capabilities.rotatable');
+  const inheritStyle = useNodeProperty(diagram, 'inheritStyle');
 
   return (
     <ToolWindowPanel
@@ -70,6 +71,15 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             type={'checkbox'}
             checked={deletable.val === true}
             onChange={() => deletable.set(!deletable.val)}
+          />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Inherit Style:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <input
+            type={'checkbox'}
+            checked={inheritStyle.val === true}
+            onChange={() => inheritStyle.set(!inheritStyle.val)}
           />
         </div>
       </div>

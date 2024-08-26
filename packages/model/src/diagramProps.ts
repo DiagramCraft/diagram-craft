@@ -170,6 +170,8 @@ declare global {
       boundingPath?: boolean;
       anchors?: boolean;
     };
+
+    inheritStyle?: boolean;
   }
 
   interface EdgeProps extends ElementProps {

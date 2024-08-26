@@ -505,7 +505,8 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       // This is a workaround as flipping a shape doesn't flip the text?
       flipH: style.has('shape') && style.is('flipH'),
       flipV: style.has('shape') && style.is('flipV')
-    }
+    },
+    inheritStyle: false
   };
 
   if (props.text!.color === '#') props.text!.color = 'black';
