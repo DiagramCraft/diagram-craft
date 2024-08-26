@@ -53,7 +53,6 @@ export class LayerDeleteAction extends AbstractAction {
 
     this.diagram.layers.remove(layer, uow);
 
-    assert.true(layer instanceof RegularLayer);
     const snapshots = uow.commit();
     this.diagram.undoManager.add(
       new CompoundUndoableAction([
