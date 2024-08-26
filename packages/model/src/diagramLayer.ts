@@ -111,13 +111,19 @@ export class LayerManager implements UOWTrackable<LayersSnapshot>, AttachmentCon
     });
 
     this.diagram.selectionState.on('add', () => {
-      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'regular') {
-        this.active = this.diagram.selectionState.elements[0].layer;
+      const firstRegularLayer = this.diagram.selectionState.elements
+        .map(e => e.layer)
+        .filter(e => e.type === 'regular')[0];
+      if (!this.diagram.selectionState.isEmpty() && !!firstRegularLayer) {
+        this.active = firstRegularLayer;
       }
     });
     this.diagram.selectionState.on('remove', () => {
-      if (!this.diagram.selectionState.isEmpty() && this.active.type === 'regular') {
-        this.active = this.diagram.selectionState.elements[0].layer;
+      const firstRegularLayer = this.diagram.selectionState.elements
+        .map(e => e.layer)
+        .filter(e => e.type === 'regular')[0];
+      if (!this.diagram.selectionState.isEmpty() && !!firstRegularLayer) {
+        this.active = firstRegularLayer;
       }
     });
   }
