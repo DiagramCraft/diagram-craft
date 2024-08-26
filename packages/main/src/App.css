@@ -310,12 +310,13 @@ input::-webkit-input-placeholder {
 }
 
 #tabs {
+  --__layer-indicator-width: 150px;
   grid-area: tabs;
   background: var(--primary-bg);
   border-top: 1px solid var(--primary-border);
 
   display: grid;
-  grid-template-columns: 1fr 100px;
+  grid-template-columns: 1fr var(--__layer-indicator-width);
 }
 
 
@@ -608,14 +609,13 @@ foreignObject {
   }
 }
 
-/* TODO: Perhaps rename as document tabs */
 .cmp-document-tabs {
   overflow: hidden;
   display: flex;
   max-width: 100%;
 
   > div:first-child {
-    max-width: calc(100% - 100px);
+    max-width: calc(100% - 50px);
     overflow: scroll;
     scrollbar-width: none;
   }
@@ -676,7 +676,7 @@ foreignObject {
 }
 
 .cmp-layer-indicator {
-  display: flex;
+  display: grid;
   align-items: center;
   margin-left: auto;
   font-size: 11px;
@@ -687,6 +687,15 @@ foreignObject {
   background-color: var(--primary-bg);
   border-radius: 0;
   color: var(--primary-fg);
+  max-width: calc(var(--__layer-indicator-width) - 20px);
+
+  & > span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  grid-template-columns: min-content 1fr min-content;
 
   .cmp-layer-indicator__lock {
     color: var(--error-fg);

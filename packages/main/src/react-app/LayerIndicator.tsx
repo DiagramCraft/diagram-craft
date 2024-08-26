@@ -1,4 +1,4 @@
-import { TbAdjustments, TbCheck, TbEye, TbEyeOff, TbLock, TbStack2 } from 'react-icons/tb';
+import { TbAdjustments, TbCheck, TbEye, TbEyeOff, TbLink, TbLock, TbStack2 } from 'react-icons/tb';
 import { useRedraw } from './hooks/useRedraw';
 import { useDiagram } from './context/DiagramContext';
 import { useEventListener } from './hooks/useEventListener';
@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { StringInputDialog, StringInputDialogState } from './components/StringInputDialog';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
+import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 
 export const LayerIndicator = () => {
   const redraw = useRedraw();
@@ -25,13 +26,19 @@ export const LayerIndicator = () => {
           <button className="cmp-layer-indicator" aria-label="Customise options">
             {diagram.activeLayer.type === 'regular' ? (
               <TbStack2 />
+            ) : diagram.activeLayer.type === 'reference' ? (
+              <div style={{ color: 'var(--blue-11)', display: 'flex', alignItems: 'center' }}>
+                <TbLink />
+              </div>
             ) : (
               <div style={{ color: 'var(--blue-11)', display: 'flex', alignItems: 'center' }}>
                 <TbAdjustments />
               </div>
             )}
 
-            <span>{diagram.activeLayer.name}</span>
+            <Tooltip message={`Layer: ${diagram.activeLayer.name}`}>
+              <span>{diagram.activeLayer.name}</span>
+            </Tooltip>
             {diagram.activeLayer.isLocked() && (
               <div className={'cmp-layer-indicator__lock'}>
                 <TbLock />
