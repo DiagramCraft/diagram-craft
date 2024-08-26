@@ -32,6 +32,7 @@ export type NodeComponentProps = {
   onMouseDown: OnMouseDown;
   onDoubleClick?: OnDoubleClick;
   mode?: 'picker' | 'canvas';
+  isReadOnly?: boolean;
 } & Context;
 
 /**
@@ -46,6 +47,7 @@ export type BaseShapeBuildShapeProps = {
 
   onMouseDown: (e: MouseEvent) => void;
   onDoubleClick?: (e: MouseEvent) => void;
+  isReadOnly: boolean;
 
   childProps: {
     onMouseDown: OnMouseDown;
@@ -211,6 +213,7 @@ export class BaseNodeComponent<
 
       onMouseDown,
       onDoubleClick,
+      isReadOnly: props.isReadOnly ?? false,
 
       childProps: {
         onMouseDown: props.onMouseDown,
@@ -364,6 +367,8 @@ export class BaseNodeComponent<
         id: `node-${props.element.id}`,
         class:
           'svg-node ' +
+          (props.isReadOnly ? 'svg-readonly' : '') +
+          ' ' +
           getHighlights(props.element)
             .map(h => `svg-node--highlight-${h}`)
             .join(' '),
@@ -439,6 +444,7 @@ export class BaseNodeComponent<
       element: child,
       onDoubleClick: props.childProps.onDoubleClick,
       onMouseDown: props.childProps.onMouseDown,
+      isReadOnly: props.isReadOnly,
 
       tool: props.tool,
       applicationTriggers: props.applicationTriggers,

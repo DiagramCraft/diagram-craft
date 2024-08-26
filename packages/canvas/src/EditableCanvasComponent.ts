@@ -387,16 +387,10 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
               ...diagram.layers.visible.flatMap(layer => {
                 if (layer.type === 'reference') {
                   assertReferenceLayer(layer);
-                  return this.renderReferenceLayer(layer, diagram, props, actionMap);
+                  return this.renderLayer(layer, diagram, onEdgeDoubleClick, props, actionMap);
                 } else {
                   assertRegularLayer(layer);
-                  return this.renderRegularLayer(
-                    layer,
-                    diagram,
-                    onEdgeDoubleClick,
-                    props,
-                    actionMap
-                  );
+                  return this.renderLayer(layer, diagram, onEdgeDoubleClick, props, actionMap);
                 }
               })
             ),
@@ -416,88 +410,15 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     );
   }
 
-  private renderReferenceLayer(
-    layer: ReferenceLayer,
+  private renderLayer(
+    layer: RegularLayer | ReferenceLayer,
     $d: Diagram,
-    props: ComponentProps,
-    actionMap: Partial<ActionMap>
-  ) {
-    const diagram = $d.document.getById(layer.reference.diagramId)!;
-    return layer.elements.map(e => {
-      const id = e.id;
-      if (e.type === 'edge') {
-        const edge = diagram.edgeLookup.get(id)!;
-        const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
-
-        return this.subComponent(
-          () => new (edgeDef as ShapeEdgeDefinition).component!(edgeDef as ShapeEdgeDefinition),
-          {
-            key: `edge-${id}`,
-            element: edge,
-            applicationTriggers: props.applicationTriggers,
-            tool: this.tool,
-            actionMap
-          },
-          {
-            onCreate: element => {
-              this.edgeRefs.set(
-                id,
-                (element.data as ComponentVNodeData<unknown>).component.instance!
-              );
-            },
-            onRemove: element => {
-              /* Note: Need to check if the instance is the same as the one we have stored,
-               *       as removes and adds can come out of order */
-              const instance = element.data as ComponentVNodeData<unknown>;
-              if (this.edgeRefs.get(id) === instance.component.instance) {
-                this.edgeRefs.set(id, null);
-              }
-            }
-          }
-        );
-      } else {
-        const node = diagram.nodeLookup.get(id)!;
-        const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
-
-        return this.subComponent<NodeComponentProps>(
-          () => new (nodeDef as ShapeNodeDefinition).component!(nodeDef as ShapeNodeDefinition),
-          {
-            key: `node-${node.nodeType}-${id}`,
-            element: node,
-            tool: this.tool,
-            onMouseDown: () => {},
-            applicationTriggers: props.applicationTriggers,
-            actionMap
-          },
-          {
-            onCreate: element => {
-              this.nodeRefs.set(
-                id,
-                (element.data as ComponentVNodeData<NodeComponentProps>).component.instance!
-              );
-            },
-            onRemove: element => {
-              /* Note: Need to check if the instance is the same as the one we have stored,
-               *       as removes and adds can come out of order */
-              const instance = (element.data as ComponentVNodeData<NodeComponentProps>).component
-                .instance;
-              if (this.nodeRefs.get(id) === instance) {
-                this.nodeRefs.set(id, null);
-              }
-            }
-          }
-        );
-      }
-    });
-  }
-
-  private renderRegularLayer(
-    layer: RegularLayer,
-    diagram: Diagram,
     onEdgeDoubleClick: (id: string, coord: Point) => void,
     props: ComponentProps,
     actionMap: Partial<ActionMap>
   ) {
+    const diagram =
+      layer instanceof RegularLayer ? $d : $d.document.getById(layer.reference.diagramId)!;
     return layer.elements.map(e => {
       const id = e.id;
       if (e.type === 'edge') {
@@ -514,7 +435,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             element: edge,
             applicationTriggers: props.applicationTriggers,
             tool: this.tool,
-            actionMap
+            actionMap,
+            isReadOnly: layer.type === 'reference'
           },
           {
             onCreate: element => {
@@ -546,7 +468,8 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
             onMouseDown: (id: string, coord: Point, modifiers: Modifiers) =>
               this.tool!.onMouseDown(id, coord, modifiers),
             applicationTriggers: props.applicationTriggers,
-            actionMap
+            actionMap,
+            isReadOnly: layer.type === 'reference'
           },
           {
             onCreate: element => {

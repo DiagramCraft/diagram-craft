@@ -28,6 +28,7 @@ export type EdgeComponentProps = {
   element: DiagramEdge;
   onMouseDown?: OnMouseDown;
   onDoubleClick?: OnDoubleClick;
+  isReadOnly?: boolean;
 } & Context;
 
 const makeArrowMarker = (
@@ -245,12 +246,12 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     return svg.g(
       {
         id: `edge-${props.element.id}`,
-        class: `${getHighlights(props.element)
+        class: `${props.isReadOnly ? 'svg-readonly' : ''} ${getHighlights(props.element)
           .map(h => `svg-edge--highlight-${h}`)
           .join(' ')}`,
         on: {
-          ...(props.onMouseDown ? { mousedown: onMouseDown } : {}),
-          ...(props.onDoubleClick
+          ...(!props.isReadOnly && props.onMouseDown ? { mousedown: onMouseDown } : {}),
+          ...(!props.isReadOnly && props.onDoubleClick
             ? { dblclick: e => props.onDoubleClick?.(props.element.id, EventHelper.point(e)) }
             : {}),
           contextmenu: onContextMenu

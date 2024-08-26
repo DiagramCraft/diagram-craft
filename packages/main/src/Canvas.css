@@ -213,6 +213,17 @@
     fill: none;
   }
 
+  .svg-readonly {
+    .svg-edge {
+      cursor: unset;
+      pointer-events: none;
+    }
+    .svg-node {
+      cursor: unset;
+      pointer-events: none;
+    }
+  }
+
   .svg-edge--highlight-node__drop-target {
     .svg-edge {
       stroke: var(--green) !important;

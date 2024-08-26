@@ -37,6 +37,7 @@ type ShapeBuilderProps = {
   isSingleSelected: boolean;
   onMouseDown: (e: MouseEvent) => void;
   onDoubleClick?: (e: MouseEvent) => void;
+  isReadOnly?: boolean;
   style: Partial<CSSStyleDeclaration>;
 };
 
@@ -236,6 +237,7 @@ export class ShapeBuilder {
   }
 
   controlPoint(p: Point, cb: ControlPointCallback) {
+    if (this.props.isReadOnly) return;
     this.controlPoints.push({ ...p, cb });
   }
 
