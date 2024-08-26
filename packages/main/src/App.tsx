@@ -98,6 +98,7 @@ import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
+import { StringInputDialog } from './react-app/components/StringInputDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -391,6 +392,13 @@ export const App = (props: {
             diagram={$d}
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             onCreate={dialogState?.onOk as any}
+            onCancel={dialogState?.onCancel}
+          />
+          <StringInputDialog
+            open={dialogState?.name === 'stringInput'}
+            {...dialogState?.props}
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            onSave={dialogState?.onOk as any}
             onCancel={dialogState?.onCancel}
           />
 

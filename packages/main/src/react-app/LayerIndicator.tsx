@@ -4,8 +4,6 @@ import { useDiagram } from './context/DiagramContext';
 import { useEventListener } from './hooks/useEventListener';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useActions } from './context/ActionsContext';
-import { useState } from 'react';
-import { StringInputDialog, StringInputDialogState } from './components/StringInputDialog';
 import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
 import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
@@ -17,7 +15,6 @@ export const LayerIndicator = () => {
   const actions = useActions();
 
   useEventListener(diagram, 'change', redraw);
-  const [nameDialog, setNameDialog] = useState<StringInputDialogState | undefined>(undefined);
 
   return (
     <>
@@ -49,43 +46,13 @@ export const LayerIndicator = () => {
 
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-            <ActionDropdownMenuItem
-              action={'LAYER_ADD'}
-              onBeforeSelect={async () => {
-                return new Promise<string | boolean>(resolve => {
-                  setNameDialog({
-                    open: true,
-                    title: 'New layer',
-                    description: 'Enter a new name for the layer.',
-                    saveButtonLabel: 'Create',
-                    name: '',
-                    onSave: (v: string) => resolve(v)
-                  });
-                });
-              }}
-            >
-              New layer...
-            </ActionDropdownMenuItem>
+            <ActionDropdownMenuItem action={'LAYER_ADD'}>New layer...</ActionDropdownMenuItem>
 
             <ActionDropdownMenuItem action={'LAYER_ADD_REFERENCE'}>
               New reference layer...
             </ActionDropdownMenuItem>
 
-            <ActionDropdownMenuItem
-              action={'LAYER_ADD_ADJUSTMENT'}
-              onBeforeSelect={async () => {
-                return new Promise<string | boolean>(resolve => {
-                  setNameDialog({
-                    open: true,
-                    title: 'New adjustment layer',
-                    description: 'Enter a new name for the adjustment layer.',
-                    saveButtonLabel: 'Create',
-                    name: '',
-                    onSave: (v: string) => resolve(v)
-                  });
-                });
-              }}
-            >
+            <ActionDropdownMenuItem action={'LAYER_ADD_ADJUSTMENT'}>
               New adjustment layer...
             </ActionDropdownMenuItem>
             <DropdownMenu.Item
@@ -134,10 +101,6 @@ export const LayerIndicator = () => {
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
-      <StringInputDialog
-        {...(nameDialog ?? { open: false })}
-        onClose={() => setNameDialog(undefined)}
-      />
     </>
   );
 };

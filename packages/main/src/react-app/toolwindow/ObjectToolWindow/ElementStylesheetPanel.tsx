@@ -199,11 +199,11 @@ export const ElementStylesheetPanel = (props: Props) => {
 
           <StringInputDialog
             open={newDialog}
-            onClose={() => setNewDialog(!newDialog)}
+            onCancel={() => setNewDialog(!newDialog)}
             label={'Name'}
             title={'New style'}
             saveButtonLabel={'Create'}
-            name={renameDialog?.name ?? ''}
+            value={renameDialog?.name ?? ''}
             onSave={v => {
               const id = newid();
               const commonProps = getCommonProps(
@@ -257,12 +257,12 @@ export const ElementStylesheetPanel = (props: Props) => {
 
           <StringInputDialog
             open={renameDialog !== undefined}
-            onClose={() => setRenameDialog(undefined)}
+            onCancel={() => setRenameDialog(undefined)}
             label={'Name'}
             title={'Rename style'}
             description={'Enter a new name for the style.'}
             saveButtonLabel={'Rename'}
-            name={renameDialog?.name ?? ''}
+            value={renameDialog?.name ?? ''}
             onSave={v => {
               const uow = new UnitOfWork($d, true);
               const stylesheet = $d.document.styles.get(renameDialog!.id)!;

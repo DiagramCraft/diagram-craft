@@ -3,14 +3,14 @@ import { ActionContextMenuItem } from '../../components/ActionContextMenuItem';
 import React, { useState } from 'react';
 import { ToggleActionContextMenuItem } from '../../components/ToggleActionContextMenuItem';
 import { MessageDialog, MessageDialogState } from '../../components/MessageDialog';
-import { StringInputDialog, StringInputDialogState } from '../../components/StringInputDialog';
 import { Layer } from '@diagram-craft/model/diagramLayer';
+import { useApplicationTriggers } from '../../context/ActionsContext';
 
 export const LayerContextMenu = (props: Props) => {
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE
   );
-  const [nameDialog, setNameDialog] = useState<StringInputDialogState | undefined>(undefined);
+  const applicationTriggers = useApplicationTriggers();
 
   return (
     <>
@@ -20,19 +20,7 @@ export const LayerContextMenu = (props: Props) => {
           <ContextMenu.Content className="cmp-context-menu">
             <ActionContextMenuItem
               action={'LAYER_RENAME'}
-              context={{ id: props.layer?.id }}
-              onBeforeSelect={async () => {
-                return new Promise<string | boolean>(resolve => {
-                  setNameDialog({
-                    open: true,
-                    title: 'Rename layer',
-                    description: 'Enter a new name for the layer.',
-                    saveButtonLabel: 'Rename',
-                    name: props.layer?.name ?? '',
-                    onSave: (v: string) => resolve(v)
-                  });
-                });
-              }}
+              context={{ id: props.layer?.id, applicationTriggers }}
             >
               Rename...
             </ActionContextMenuItem>
@@ -76,43 +64,13 @@ export const LayerContextMenu = (props: Props) => {
               Delete
             </ActionContextMenuItem>
             <ContextMenu.Separator className="cmp-context-menu__separator" />
-            <ActionContextMenuItem
-              action={'LAYER_ADD'}
-              onBeforeSelect={async () => {
-                return new Promise<string | boolean>(resolve => {
-                  setNameDialog({
-                    open: true,
-                    title: 'New layer',
-                    description: 'Enter a new name for the layer.',
-                    saveButtonLabel: 'Create',
-                    name: '',
-                    onSave: (v: string) => resolve(v)
-                  });
-                });
-              }}
-            >
-              New layer...
-            </ActionContextMenuItem>
+            <ActionContextMenuItem action={'LAYER_ADD'}>New layer...</ActionContextMenuItem>
 
             <ActionContextMenuItem action={'LAYER_ADD_REFERENCE'}>
               New reference layer...
             </ActionContextMenuItem>
 
-            <ActionContextMenuItem
-              action={'LAYER_ADD_ADJUSTMENT'}
-              onBeforeSelect={async () => {
-                return new Promise<string | boolean>(resolve => {
-                  setNameDialog({
-                    open: true,
-                    title: 'New adjustment layer',
-                    description: 'Enter a new name for the adjustment layer.',
-                    saveButtonLabel: 'Create',
-                    name: '',
-                    onSave: (v: string) => resolve(v)
-                  });
-                });
-              }}
-            >
+            <ActionContextMenuItem action={'LAYER_ADD_ADJUSTMENT'}>
               New adjustment layer...
             </ActionContextMenuItem>
           </ContextMenu.Content>
@@ -122,11 +80,6 @@ export const LayerContextMenu = (props: Props) => {
       <MessageDialog
         {...confirmDeleteDialog}
         onClose={() => setConfirmDeleteDialog(MessageDialog.INITIAL_STATE)}
-      />
-
-      <StringInputDialog
-        {...(nameDialog ?? { open: false })}
-        onClose={() => setNameDialog(undefined)}
       />
     </>
   );

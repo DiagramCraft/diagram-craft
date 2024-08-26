@@ -156,9 +156,27 @@ export class LayerRenameAction extends AbstractAction<string | undefined> {
     const layer = this.diagram.layers.byId(context.id);
     assert.present(layer);
 
-    const uow = new UnitOfWork(this.diagram, true);
-    layer.setName(typeof name === 'string' ? name : 'New name', uow);
-    commitWithUndo(uow, `Rename layer`);
+    if (typeof name === 'string') {
+      const uow = new UnitOfWork(this.diagram, true);
+      layer.setName(typeof name === 'string' ? name : 'New name', uow);
+      commitWithUndo(uow, `Rename layer`);
+    } else {
+      context.applicationTriggers?.showDialog?.({
+        name: 'stringInput',
+        props: {
+          title: 'Rename layer',
+          description: 'Enter a new name for the layer.',
+          saveButtonLabel: 'Rename',
+          value: layer.name
+        },
+        onOk: async name => {
+          const uow = new UnitOfWork(this.diagram, true);
+          layer.setName(name, uow);
+          commitWithUndo(uow, `Rename layer`);
+        },
+        onCancel: () => {}
+      });
+    }
   }
 }
 
@@ -171,7 +189,20 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
   }
 
   execute(context: ActionContext, name: string | undefined): void {
-    if (this.type === 'reference') {
+    if (typeof name === 'string') {
+      const uow = new UnitOfWork(this.diagram, true);
+
+      const layer = new RegularLayer(newid(), name, [], this.diagram);
+      this.diagram.layers.add(layer, uow);
+
+      const snapshots = uow.commit();
+      this.diagram.undoManager.add(
+        new CompoundUndoableAction([
+          new LayerAddUndoableAction(this.diagram, layer),
+          new SnapshotUndoableAction('Add layer', this.diagram, snapshots)
+        ])
+      );
+    } else if (this.type === 'reference') {
       context.applicationTriggers?.showDialog?.({
         name: 'newReferenceLayer',
         props: {},
@@ -197,26 +228,35 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
         onCancel: () => {}
       });
     } else {
-      const uow = new UnitOfWork(this.diagram, true);
+      context.applicationTriggers?.showDialog?.({
+        name: 'stringInput',
+        props: {
+          title: 'New adjustment layer',
+          description: 'Enter a new name for the adjustment layer.',
+          saveButtonLabel: 'Create',
+          value: ''
+        },
+        onOk: async name => {
+          const uow = new UnitOfWork(this.diagram, true);
 
-      // TODO: Handle other types of layers
-      assert.true(this.type === 'regular');
+          const layer = new RegularLayer(
+            newid(),
+            typeof name === 'string' ? name : 'New Layer',
+            [],
+            this.diagram
+          );
+          this.diagram.layers.add(layer, uow);
 
-      const layer = new RegularLayer(
-        newid(),
-        typeof name === 'string' ? name : 'New Layer',
-        [],
-        this.diagram
-      );
-      this.diagram.layers.add(layer, uow);
-
-      const snapshots = uow.commit();
-      this.diagram.undoManager.add(
-        new CompoundUndoableAction([
-          new LayerAddUndoableAction(this.diagram, layer),
-          new SnapshotUndoableAction('Add layer', this.diagram, snapshots)
-        ])
-      );
+          const snapshots = uow.commit();
+          this.diagram.undoManager.add(
+            new CompoundUndoableAction([
+              new LayerAddUndoableAction(this.diagram, layer),
+              new SnapshotUndoableAction('Add layer', this.diagram, snapshots)
+            ])
+          );
+        },
+        onCancel: () => {}
+      });
     }
   }
 }
