@@ -20,7 +20,11 @@ const Root = (props: RootProps) => {
       >
         <ReactSelect.Value
           placeholder={
-            props.hasMultipleValues ? <div style={{ color: 'var(--primary-fg)' }}>···</div> : ''
+            props.hasMultipleValues ? (
+              <div style={{ color: 'var(--primary-fg)' }}>···</div>
+            ) : (
+              props.placeholder ?? ''
+            )
           }
         />
         <ReactSelect.Icon className={styles.cmpSelectTriggerIcon}>
@@ -44,6 +48,7 @@ type RootProps = {
   onValueChange: (value: string) => void;
   open?: boolean;
   disabled?: boolean;
+  placeholder?: string;
 };
 
 const Item = (props: ItemProps) => {

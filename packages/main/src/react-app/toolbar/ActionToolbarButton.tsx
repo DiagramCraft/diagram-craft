@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
-import { useActions } from '../context/ActionsContext';
+import { useActions, useApplicationTriggers } from '../context/ActionsContext';
 import { ActionContext, ActionEvents } from '@diagram-craft/canvas/action';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
@@ -8,6 +8,7 @@ import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 export const ActionToolbarButton = (props: Props) => {
   const { actionMap } = useActions();
   const [enabled, setEnabled] = useState(false);
+  const applicationTriggers = useApplicationTriggers();
 
   useEventListener(
     actionMap[props.action]!,
@@ -29,7 +30,7 @@ export const ActionToolbarButton = (props: Props) => {
       <Toolbar.Button
         disabled={!enabled}
         onClick={() => {
-          actionMap[props.action]!.execute(props.context ?? {});
+          actionMap[props.action]!.execute(props.context ?? { applicationTriggers });
         }}
       >
         {props.children}

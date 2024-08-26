@@ -94,6 +94,10 @@ export const LayerContextMenu = (props: Props) => {
               New layer...
             </ActionContextMenuItem>
 
+            <ActionContextMenuItem action={'LAYER_ADD_REFERENCE'}>
+              New reference layer...
+            </ActionContextMenuItem>
+
             <ActionContextMenuItem
               action={'LAYER_ADD_ADJUSTMENT'}
               onBeforeSelect={async () => {

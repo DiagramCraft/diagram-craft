@@ -60,6 +60,10 @@ export const LayerIndicator = () => {
               New layer...
             </ActionDropdownMenuItem>
 
+            <ActionDropdownMenuItem action={'LAYER_ADD_REFERENCE'}>
+              New reference layer...
+            </ActionDropdownMenuItem>
+
             <ActionDropdownMenuItem
               action={'LAYER_ADD_ADJUSTMENT'}
               onBeforeSelect={async () => {

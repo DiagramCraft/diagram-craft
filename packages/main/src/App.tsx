@@ -97,6 +97,7 @@ import { ActionToolbarButton } from './react-app/toolbar/ActionToolbarButton';
 import { ImageInsertDialog } from './react-app/ImageInsertDialog';
 import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
+import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -191,9 +192,9 @@ export const App = (props: {
   const [messageDialogState, setMessageDialogState] = useState<MessageDialogState>(
     MessageDialog.INITIAL_STATE
   );
-  const [dialogState, setDialogState] = useState<ApplicationTriggers.DialogState | undefined>(
-    undefined
-  );
+  const [dialogState, setDialogState] = useState<
+    ApplicationTriggers.DialogState<keyof ApplicationTriggers.Dialogs> | undefined
+  >(undefined);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -264,10 +265,13 @@ export const App = (props: {
         edgeId: edgId
       });
     },
-    showDialog: (dialogState: ApplicationTriggers.DialogState) => {
+    showDialog: <T extends keyof ApplicationTriggers.Dialogs>(
+      dialogState: ApplicationTriggers.DialogState<T>
+    ) => {
       setDialogState({
         ...dialogState,
-        onOk: (data: unknown) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onOk: (data: any) => {
           dialogState.onOk(data);
           setDialogState(undefined);
         },
@@ -338,7 +342,9 @@ export const App = (props: {
 
   return (
     <DiagramContext.Provider value={$d}>
-      <ActionsContext.Provider value={{ actionMap, keyMap }}>
+      <ActionsContext.Provider
+        value={{ actions: { actionMap, keyMap }, applicationTriggers: applicationTriggers }}
+      >
         <ConfigurationContext.Provider
           value={{
             palette: {
@@ -380,6 +386,13 @@ export const App = (props: {
             onInsert={dialogState?.onOk}
             onCancel={dialogState?.onCancel}
           />
+          <ReferenceLayerDialog
+            open={dialogState?.name === 'newReferenceLayer'}
+            diagram={$d}
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            onCreate={dialogState?.onOk as any}
+            onCancel={dialogState?.onCancel}
+          />
 
           <div id="app" className={'dark-theme'}>
             <div id="menu">
@@ -405,16 +418,8 @@ export const App = (props: {
                           sideOffset={2}
                           alignOffset={-5}
                         >
-                          <ActionDropdownMenuItem
-                            action={'FILE_NEW'}
-                            context={{ applicationTriggers }}
-                          >
-                            New
-                          </ActionDropdownMenuItem>
-                          <ActionDropdownMenuItem
-                            action={'FILE_OPEN'}
-                            context={{ applicationTriggers }}
-                          >
+                          <ActionDropdownMenuItem action={'FILE_NEW'}>New</ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'FILE_OPEN'}>
                             Open...
                           </ActionDropdownMenuItem>
 
@@ -451,12 +456,7 @@ export const App = (props: {
                               </DropdownMenu.SubContent>
                             </DropdownMenu.Portal>
                           </DropdownMenu.Sub>
-                          <ActionDropdownMenuItem
-                            action={'FILE_SAVE'}
-                            context={{ applicationTriggers }}
-                          >
-                            Save
-                          </ActionDropdownMenuItem>
+                          <ActionDropdownMenuItem action={'FILE_SAVE'}>Save</ActionDropdownMenuItem>
                           <ActionDropdownMenuItem action={'FILE_SAVE'}>
                             Save As...
                           </ActionDropdownMenuItem>
@@ -556,13 +556,13 @@ export const App = (props: {
                     <TbLocation size={'17.5px'} transform={'scale(-1,1)'} />
                   </ActionToggleButton>
                   <Toolbar.Separator />
-                  <ActionToolbarButton action={'IMAGE_INSERT'} context={{ applicationTriggers }}>
+                  <ActionToolbarButton action={'IMAGE_INSERT'}>
                     <TbPhotoPlus size={'17.5px'} />
                   </ActionToolbarButton>
-                  <ActionToolbarButton action={'TABLE_INSERT'} context={{ applicationTriggers }}>
+                  <ActionToolbarButton action={'TABLE_INSERT'}>
                     <TbTablePlus size={'17.5px'} />
                   </ActionToolbarButton>
-                  <ActionToolbarButton action={'IMAGE_INSERT'} context={{ applicationTriggers }}>
+                  <ActionToolbarButton action={'IMAGE_INSERT'}>
                     <TbPlus size={'17.5px'} />
                   </ActionToolbarButton>
                 </Toolbar.Root>

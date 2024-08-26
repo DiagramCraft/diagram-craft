@@ -6,6 +6,7 @@ import {
   TbEye,
   TbEyeOff,
   TbLine,
+  TbLink,
   TbLock,
   TbLockOff,
   TbRectangle,
@@ -122,6 +123,10 @@ const LayerEntry = (props: { layer: Layer }) => {
           {layer.type === 'adjustment' ? (
             <div style={{ color: 'var(--blue-11)' }}>
               <TbAdjustments />
+            </div>
+          ) : layer.type === 'reference' ? (
+            <div style={{ color: 'var(--blue-11)' }}>
+              <TbLink />
             </div>
           ) : (
             ''

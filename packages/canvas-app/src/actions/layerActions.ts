@@ -16,6 +16,7 @@ import {
 import { Layer, LayerType, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { precondition, assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
+import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 
 export const layerActions = (state: State) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(state.diagram),
@@ -24,6 +25,7 @@ export const layerActions = (state: State) => ({
   LAYER_RENAME: new LayerRenameAction(state.diagram),
   LAYER_ADD: new LayerAddAction(state.diagram, 'regular'),
   LAYER_ADD_ADJUSTMENT: new LayerAddAction(state.diagram, 'adjustment'),
+  LAYER_ADD_REFERENCE: new LayerAddAction(state.diagram, 'reference'),
   LAYER_SELECTION_MOVE: new LayerSelectionMoveAction(state.diagram),
   LAYER_SELECTION_MOVE_NEW: new LayerSelectionMoveNewAction(state.diagram)
 });
@@ -169,27 +171,54 @@ export class LayerAddAction extends AbstractAction<string | undefined> {
     super();
   }
 
-  execute(_context: ActionContext, name: string | undefined): void {
-    const uow = new UnitOfWork(this.diagram, true);
+  execute(context: ActionContext, name: string | undefined): void {
+    if (this.type === 'reference') {
+      context.applicationTriggers?.showDialog?.({
+        name: 'newReferenceLayer',
+        props: {},
+        onOk: async ({ diagramId, layerId, name }) => {
+          const uow = new UnitOfWork(this.diagram, true);
 
-    // TODO: Handle other types of layers
-    assert.true(this.type === 'regular');
+          const layer = new ReferenceLayer(
+            newid(),
+            typeof name === 'string' ? name : 'New Layer',
+            this.diagram,
+            { diagramId, layerId }
+          );
+          this.diagram.layers.add(layer, uow);
 
-    const layer = new RegularLayer(
-      newid(),
-      typeof name === 'string' ? name : 'New Layer',
-      [],
-      this.diagram
-    );
-    this.diagram.layers.add(layer, uow);
+          const snapshots = uow.commit();
+          this.diagram.undoManager.add(
+            new CompoundUndoableAction([
+              new LayerAddUndoableAction(this.diagram, layer),
+              new SnapshotUndoableAction('Add layer', this.diagram, snapshots)
+            ])
+          );
+        },
+        onCancel: () => {}
+      });
+    } else {
+      const uow = new UnitOfWork(this.diagram, true);
 
-    const snapshots = uow.commit();
-    this.diagram.undoManager.add(
-      new CompoundUndoableAction([
-        new LayerAddUndoableAction(this.diagram, layer),
-        new SnapshotUndoableAction('Add layer', this.diagram, snapshots)
-      ])
-    );
+      // TODO: Handle other types of layers
+      assert.true(this.type === 'regular');
+
+      const layer = new RegularLayer(
+        newid(),
+        typeof name === 'string' ? name : 'New Layer',
+        [],
+        this.diagram
+      );
+      this.diagram.layers.add(layer, uow);
+
+      const snapshots = uow.commit();
+      this.diagram.undoManager.add(
+        new CompoundUndoableAction([
+          new LayerAddUndoableAction(this.diagram, layer),
+          new SnapshotUndoableAction('Add layer', this.diagram, snapshots)
+        ])
+      );
+    }
   }
 }
 

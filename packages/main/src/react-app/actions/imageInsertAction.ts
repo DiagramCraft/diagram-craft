@@ -13,6 +13,16 @@ export const imageInsertActions = (state: State) => ({
 
 declare global {
   interface ActionMap extends ReturnType<typeof imageInsertActions> {}
+
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Dialogs {
+      imageInsert: {
+        props: Record<string, never>;
+        callback: Blob | string;
+      };
+    }
+  }
 }
 
 class ImageInsertAction extends AbstractAction {
@@ -24,6 +34,7 @@ class ImageInsertAction extends AbstractAction {
   execute(context: ActionContext): void {
     context.applicationTriggers?.showDialog?.({
       name: 'imageInsert',
+      props: {},
       onOk: async data => {
         let att: Attachment;
         if (data instanceof Blob) {

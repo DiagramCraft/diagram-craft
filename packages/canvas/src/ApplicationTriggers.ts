@@ -17,7 +17,10 @@ export interface ApplicationTriggers extends Extensions.ApplicationTriggers {
     cancelLabel: string,
     onClick: () => void
   ) => void;
-  showDialog?: (state: ApplicationTriggers.DialogState) => void;
+
+  showDialog?: <T extends keyof ApplicationTriggers.Dialogs>(
+    state: ApplicationTriggers.DialogState<T>
+  ) => void;
 
   setHelp?: (message: string) => void;
   pushHelp?: (id: string, message: string) => void;
@@ -33,11 +36,21 @@ export namespace ApplicationTriggers {
     node: { id: string };
   }
 
-  export type DialogState = {
-    name: string;
-    onOk: (data: unknown) => void;
+  export type DialogState<T extends keyof Dialogs> = {
+    name: T;
+    props: Dialogs[T]['props'];
+    onOk: (data: Dialogs[T]['callback']) => void;
     onCancel: () => void;
   };
+
+  export interface Dialogs extends Extensions.Dialogs {}
+}
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Dialogs {}
+  }
 }
 
 export type ContextMenuTarget<

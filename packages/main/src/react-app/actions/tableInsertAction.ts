@@ -14,6 +14,16 @@ export const tableInsertActions = (state: State) => ({
 
 declare global {
   interface ActionMap extends ReturnType<typeof tableInsertActions> {}
+
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Extensions {
+    interface Dialogs {
+      tableInsert: {
+        props: Record<string, never>;
+        callback: { width: number; height: number };
+      };
+    }
+  }
 }
 
 class TableInsertAction extends AbstractAction {
@@ -27,6 +37,7 @@ class TableInsertAction extends AbstractAction {
 
     context.applicationTriggers?.showDialog?.({
       name: 'tableInsert',
+      props: {},
       onOk: async props => {
         const { width, height } = props as { width: number; height: number };
 
