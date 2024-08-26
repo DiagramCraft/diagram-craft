@@ -249,4 +249,26 @@
     fill: white;
     stroke-width: calc(1 * var(--zoom));
   }
+
+  .svg-edge--highlight-search-match, .svg-node--highlight-search-match {
+    .svg-edge {
+      animation: search-match 0.25s ease-in-out infinite;
+      stroke-dasharray: none !important;
+    }
+    .svg-node {
+      animation: search-match 0.25s ease-in-out infinite;
+      stroke-dasharray: none !important;
+    }
+  }
+}
+
+@keyframes search-match {
+  from {
+    stroke: var(--blue-8) !important;
+    stroke-width: calc(1.5 * var(--zoom)) !important;
+  }
+  to {
+    stroke-width: calc(3 * var(--zoom)) !important;
+    stroke: var(--blue-8) !important;
+  }
 }

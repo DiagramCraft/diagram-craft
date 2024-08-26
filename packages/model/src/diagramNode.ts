@@ -179,7 +179,7 @@ export class DiagramNode
     const ruleProps: NodeProps =
       this.diagram.layers.visible
         .filter(l => l.type === 'rule')
-        .map(l => ((l as RuleLayer).adjustments()[this.id] ?? {}) as NodeProps)
+        .map(l => ((l as RuleLayer).adjustments().get(this.id) ?? {}) as NodeProps)
         .reduce((p, c) => deepMerge<NodeProps>({}, p, c), {}) ?? {};
 
     const propsForEditing = deepMerge<NodeProps>(

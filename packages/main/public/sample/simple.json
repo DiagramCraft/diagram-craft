@@ -357,7 +357,18 @@
           "name": "Adjustment",
           "type": "layer",
           "layerType": "rule",
-          "rules": []
+          "rules": [
+            {
+              "id": "1",
+              "name": "id=3",
+              "query": "select(.id==\"3\") | .id",
+              "props": {
+                "fill": {
+                  "color": "pink"
+                }
+              }
+            }
+          ]
         }
       ],
       "diagrams": [

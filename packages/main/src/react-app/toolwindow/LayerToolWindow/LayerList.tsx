@@ -5,6 +5,7 @@ import {
   TbBoxMultiple,
   TbEye,
   TbEyeOff,
+  TbFilterCog,
   TbLine,
   TbLink,
   TbLock,
@@ -26,7 +27,8 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import { shorten } from '@diagram-craft/utils/strings';
 import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
-import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
+import { AdjustmentRule, RuleLayer } from '@diagram-craft/model/diagramLayerRule';
+import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -144,6 +146,13 @@ const LayerEntry = (props: { layer: Layer }) => {
                 ))}
               </div>
             )}
+            {layer instanceof RuleLayer && (
+              <div style={{ display: 'contents' }}>
+                {layer.rules.toReversed().map(e => (
+                  <RuleEntry key={e.id} diagram={diagram} rule={e} layer={layer} />
+                ))}
+              </div>
+            )}
             {!(layer instanceof RegularLayer) && !(layer instanceof RuleLayer) && (
               <div style={{ color: 'red' }}>Not implemented yet</div>
             )}
@@ -151,6 +160,33 @@ const LayerEntry = (props: { layer: Layer }) => {
         )}
       </Tree.Node>
     </LayerContextMenu>
+  );
+};
+
+const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Diagram }) => {
+  const e = props.rule;
+
+  const icon = <TbFilterCog />;
+
+  return (
+    <Tree.Node
+      key={e.id}
+      onClick={() => {
+        const keys = [...props.layer.runRule(props.rule).keys()];
+        for (const key of keys) {
+          addHighlight(props.diagram.lookup(key)!, 'search-match');
+        }
+        setTimeout(() => {
+          for (const key of keys) {
+            removeHighlight(props.diagram.lookup(key)!, 'search-match');
+          }
+        }, 1000);
+      }}
+    >
+      <Tree.NodeLabel>
+        {icon} &nbsp;{shorten(e.name, 25)}
+      </Tree.NodeLabel>
+    </Tree.Node>
   );
 };
 
