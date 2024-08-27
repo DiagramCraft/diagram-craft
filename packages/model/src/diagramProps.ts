@@ -17,7 +17,7 @@ export function assertEdgeType(s: string | undefined): asserts s is EdgeType | u
     throw new Error();
 }
 
-type FillType = 'solid' | 'gradient' | 'image' | 'texture' | 'pattern';
+export type FillType = 'solid' | 'gradient' | 'image' | 'texture' | 'pattern';
 
 export function assertFillType(s: string | undefined): asserts s is FillType | undefined {
   if (

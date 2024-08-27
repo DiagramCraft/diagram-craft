@@ -3,7 +3,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 
-type ConfigurationContextType = {
+export type ConfigurationContextType = {
   palette: {
     primary: string[][];
   };
