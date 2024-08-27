@@ -62,9 +62,18 @@
   padding: 0;
   margin: 0;
   background: none;
-  border-width: 0;
   appearance: none;
   font-size: 11px;
+  border: 1px solid transparent;
+
+  &:hover,
+  &[data-hover="true"] {
+    background: none;
+    color: var(--blue-11);
+  }
+  &:disabled {
+    border: 1px solid transparent;
+  }
 }
 
 

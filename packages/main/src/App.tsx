@@ -99,6 +99,7 @@ import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
 import { StringInputDialog } from './react-app/components/StringInputDialog';
+import { RuleEditorDialog } from './react-app/components/RuleEditorDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line
@@ -396,6 +397,13 @@ export const App = (props: {
           />
           <StringInputDialog
             open={dialogState?.name === 'stringInput'}
+            {...dialogState?.props}
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            onSave={dialogState?.onOk as any}
+            onCancel={dialogState?.onCancel}
+          />
+          <RuleEditorDialog
+            open={dialogState?.name === 'ruleEditor'}
             {...dialogState?.props}
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             onSave={dialogState?.onOk as any}

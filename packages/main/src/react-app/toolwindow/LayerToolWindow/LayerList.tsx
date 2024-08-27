@@ -10,6 +10,7 @@ import {
   TbLink,
   TbLock,
   TbLockOff,
+  TbPencil,
   TbRectangle,
   TbTable,
   TbTableRow
@@ -29,6 +30,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { AdjustmentRule, RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { addHighlight, removeHighlight } from '@diagram-craft/canvas/highlight';
+import { useApplicationTriggers } from '../../context/ActionsContext';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -164,6 +166,7 @@ const LayerEntry = (props: { layer: Layer }) => {
 };
 
 const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Diagram }) => {
+  const applicationTriggers = useApplicationTriggers();
   const e = props.rule;
 
   const icon = <TbFilterCog />;
@@ -186,6 +189,29 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
       <Tree.NodeLabel>
         {icon} &nbsp;{shorten(e.name, 25)}
       </Tree.NodeLabel>
+      <Tree.NodeAction style={{ display: 'flex', gap: '0.35rem' }}>
+        <span
+          style={{ cursor: 'pointer' }}
+          onClick={e => {
+            applicationTriggers.showDialog?.({
+              name: 'ruleEditor',
+              props: {
+                rule: props.rule
+              },
+              onCancel: () => {
+                console.log('cancel');
+              },
+              onOk: (rule: AdjustmentRule) => {
+                console.log('ok', rule);
+              }
+            });
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <TbPencil />
+        </span>
+      </Tree.NodeAction>
     </Tree.Node>
   );
 };
