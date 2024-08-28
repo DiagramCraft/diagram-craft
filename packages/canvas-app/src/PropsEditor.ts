@@ -1,22 +1,21 @@
 import { assert } from '@diagram-craft/utils/assert';
 import { deepIsEmpty } from '@diagram-craft/utils/object';
 
-export type EditorRegistry<E> = Record<
-  string,
-  {
-    editor: E;
-    name: string;
-    pick: (props: NodeProps | EdgeProps) => Partial<NodeProps | EdgeProps>;
-  }
->;
+type Entry<E, T> = {
+  editor: E;
+  name: string;
+  type: T;
+  pick: (props: NodeProps | EdgeProps) => Partial<NodeProps | EdgeProps>;
+};
+export type EditorRegistry<E, T> = Record<string, Entry<E, T>>;
 
 /**
  * Supports editing of ElementProps using partial editors.
  * It provides methods to retrieve entries for editing and to retrieve all registered editors.
  */
-export class PropsEditor<E> {
+export class PropsEditor<E, T> {
   constructor(
-    private readonly editors: EditorRegistry<E>,
+    private readonly editors: EditorRegistry<E, T>,
     private readonly props?: NodeProps | EdgeProps
   ) {}
 
@@ -29,7 +28,9 @@ export class PropsEditor<E> {
       .filter(e => !deepIsEmpty(e.props));
   }
 
-  getAllEntries() {
-    return Object.entries(this.editors).map(([k, e]) => ({ ...e, kind: k }));
+  getAllEntries(filter: (e: Entry<E, T>) => boolean = () => true) {
+    return Object.entries(this.editors)
+      .filter(([, e]) => filter(e))
+      .map(([k, e]) => ({ ...e, kind: k }));
   }
 }

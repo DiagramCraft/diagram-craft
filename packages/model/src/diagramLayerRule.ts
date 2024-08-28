@@ -147,6 +147,12 @@ export class RuleLayer extends Layer {
     uow.updateElement(this);
   }
 
+  replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
+    uow.snapshot(this);
+    this.#rules = this.#rules.map(r => (r !== existing ? r : newRule));
+    uow.updateElement(this);
+  }
+
   snapshot(): LayerSnapshot {
     return {
       ...super.snapshot(),

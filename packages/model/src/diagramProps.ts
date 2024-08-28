@@ -45,13 +45,13 @@ export function assertVAlign(s: string | undefined): asserts s is VAlign | undef
   if (!(s === 'top' || s === 'middle' || s === 'bottom' || s === undefined)) throw new Error();
 }
 
-type LineCap = 'butt' | 'round' | 'square';
+export type LineCap = 'butt' | 'round' | 'square';
 
 export function assertLineCap(s: string | undefined): asserts s is LineCap | undefined {
   if (!(s === 'butt' || s === 'round' || s === 'square' || s === undefined)) throw new Error();
 }
 
-type LineJoin = 'miter' | 'round' | 'bevel';
+export type LineJoin = 'miter' | 'round' | 'bevel';
 
 export function assertLineJoin(s: string | undefined): asserts s is LineJoin | undefined {
   if (!(s === 'miter' || s === 'round' || s === 'bevel' || s === undefined)) throw new Error();

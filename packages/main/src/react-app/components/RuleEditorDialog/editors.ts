@@ -2,23 +2,35 @@ import { EditorRegistry } from '@diagram-craft/canvas-app/PropsEditor';
 import { ReactElement } from 'react';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { Property } from '../../toolwindow/ObjectToolWindow/types';
-import { FillColor } from './FillColorEditor';
+import { NodeFillEditor } from './NodeFillEditor';
+import { NodeStrokeEditor } from './NodeStrokeEditor';
+import { ElementShadowEditor } from './ElementShadowEditor';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
   onChange: () => void;
 }) => ReactElement;
 
-export const EDITORS: EditorRegistry<Editor> = {
+export type EditorTypes = 'node' | 'edge' | 'both';
+
+export const EDITORS: EditorRegistry<Editor, EditorTypes> = {
   fill: {
     name: 'Fill',
-    editor: FillColor,
+    type: 'node',
+    editor: NodeFillEditor,
     pick: (props: NodeProps | EdgeProps) => ({ fill: props.fill })
   },
   stroke: {
     name: 'Stroke',
-    editor: FillColor,
+    type: 'node',
+    editor: NodeStrokeEditor,
     pick: (props: NodeProps | EdgeProps) => ({ stroke: props.stroke })
+  },
+  shadow: {
+    name: 'Shadow',
+    type: 'both',
+    editor: ElementShadowEditor,
+    pick: (props: NodeProps | EdgeProps) => ({ shadow: props.shadow })
   }
 };
 

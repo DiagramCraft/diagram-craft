@@ -1,7 +1,7 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
-import { EDITORS } from './editors';
+import { EDITORS, EditorTypes } from './editors';
 import { EditableAdjustmentRuleAction } from './RuleEditorDialog';
 
 export const StyleAction = (props: Props) => {
@@ -26,13 +26,17 @@ export const StyleAction = (props: Props) => {
           props.onChange(props.action);
         }}
       >
-        {propsEditor.getAllEntries().map(e => {
-          return (
-            <Select.Item key={e.kind} value={e.kind}>
-              {e.name}
-            </Select.Item>
-          );
-        })}
+        {propsEditor
+          .getAllEntries(
+            e => e.type === 'both' || e.type === props.type || props.type === undefined
+          )
+          .map(e => {
+            return (
+              <Select.Item key={e.kind} value={e.kind}>
+                {e.name}
+              </Select.Item>
+            );
+          })}
       </Select.Root>
 
       {entry && (
@@ -60,4 +64,5 @@ export const StyleAction = (props: Props) => {
 type Props = {
   action: EditableAdjustmentRuleAction;
   onChange: (a: EditableAdjustmentRuleAction) => void;
+  type: EditorTypes;
 };

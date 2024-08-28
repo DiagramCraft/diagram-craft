@@ -4,12 +4,13 @@ import { NodeFillPanelForm } from '../../toolwindow/ObjectToolWindow/NodeFillPan
 import { elementDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Editor, makeProperty } from './editors';
 
-export const FillColor: Editor = props => {
+export const NodeFillEditor: Editor = props => {
   const $p = props.props;
+  $p.fill ??= {};
+  $p.fill.enabled = true;
 
   const $cfg = useConfiguration();
   const diagram = useDiagram();
-  //  const redraw = useRedraw();
 
   const onChange = () => {
     props.onChange();

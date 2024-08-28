@@ -12,7 +12,7 @@ import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { deepClone } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
-import { Editor, EDITORS } from './editors';
+import { Editor, EDITORS, EditorTypes } from './editors';
 import { StyleAction } from './StyleAction';
 
 declare global {
@@ -40,7 +40,7 @@ const normalizeRuleActions = (
   const dest: Array<EditableAdjustmentRuleAction> = [];
   for (const a of rule.actions) {
     if (a.type === 'set-props') {
-      const propsEditor = new PropsEditor<Editor>(EDITORS, a.props);
+      const propsEditor = new PropsEditor<Editor, EditorTypes>(EDITORS, a.props);
       for (const e of propsEditor.getEntries()) {
         dest.push({
           id: newid(),
@@ -72,7 +72,7 @@ export const RuleEditorDialog = (props: Props) => {
     setClauses(deepClone(props.rule)?.clauses ?? []);
   }, [props.rule, props.open]);
 
-  const [type, setType] = useState<'edge' | 'node' | 'both'>('node');
+  const [type, setType] = useState<EditorTypes>('node');
 
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -114,7 +114,9 @@ export const RuleEditorDialog = (props: Props) => {
               // TODO: Additional validations
               .filter(a => a.type !== undefined)
               .map(a => a as AdjustmentRuleAction);
-            console.log(rule);
+            //console.log(rule);
+
+            props.onSave(rule);
           },
           label: 'Save'
         }
@@ -176,8 +178,8 @@ export const RuleEditorDialog = (props: Props) => {
         <div
           style={{
             display: 'grid',
-            margin: '0.5rem -1rem 2rem 0',
-            padding: '0 0.5rem 0 0',
+            margin: '0.5rem -1rem 2rem -0.5rem',
+            padding: '0 0.5rem 0 0.5rem',
             gap: '0.5rem',
             gridTemplateColumns: '8rem 8fr min-content min-content',
             gridAutoRows: 'min-content',
@@ -281,7 +283,11 @@ export const RuleEditorDialog = (props: Props) => {
                 </Select.Root>
 
                 {action.type === 'set-props' && (
-                  <StyleAction action={action} onChange={a => changeAction(action, a)} />
+                  <StyleAction
+                    action={action}
+                    type={type}
+                    onChange={a => changeAction(action, a)}
+                  />
                 )}
                 {action.type !== 'set-props' && <div></div>}
 

@@ -5,9 +5,132 @@ import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { PopoverButton } from '../../components/PopoverButton';
-import { useConfiguration } from '../../context/ConfigurationContext';
+import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { DashSelector } from './components/DashSelector';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { Property } from './types';
+import { LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
+
+type FormProps = {
+  diagram: Diagram;
+  config: ConfigurationContextType;
+  strokeColor: Property<string>;
+  strokeWidth: Property<number>;
+  pattern: Property<string>;
+  strokeSize: Property<number>;
+  strokeSpacing: Property<number>;
+  lineCap: Property<LineCap>;
+  lineJoin: Property<LineJoin>;
+  miterLimit: Property<number>;
+};
+
+export const NodeStrokePanelForm = ({
+  config: $cfg,
+  diagram: $d,
+  strokeColor,
+  strokeWidth,
+  pattern,
+  strokeSize,
+  strokeSpacing,
+  lineCap,
+  lineJoin,
+  miterLimit
+}: FormProps) => {
+  return (
+    <div className={'cmp-labeled-table'}>
+      <div className={'cmp-labeled-table__label'}>Color:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <ColorPicker
+          palette={$cfg.palette.primary}
+          color={strokeColor.val}
+          onChange={strokeColor.set}
+          hasMultipleValues={strokeColor.hasMultipleValues}
+          customPalette={$d.document.customPalette.colors}
+          onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}>Style:</div>
+      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+        <NumberInput
+          defaultUnit={'px'}
+          value={strokeWidth.val}
+          min={1}
+          style={{ width: '35px' }}
+          onChange={n => strokeWidth.set(n!)}
+          hasMultipleValues={strokeWidth.hasMultipleValues}
+        />
+        <DashSelector
+          value={pattern.val}
+          onValueChange={value => {
+            pattern.set(value!);
+          }}
+          hasMultipleValues={pattern.hasMultipleValues}
+        />
+        <PopoverButton label={<TbAdjustmentsHorizontal />}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Stroke:</div>
+            <div className={'cmp-labeled-table__value util-hstack'}>
+              <NumberInput
+                defaultUnit={'%'}
+                value={strokeSize.val}
+                min={1}
+                style={{ width: '45px' }}
+                onChange={n => strokeSize.set(n!)}
+              />
+              <NumberInput
+                defaultUnit={'%'}
+                value={strokeSpacing.val}
+                min={1}
+                style={{ width: '45px' }}
+                onChange={n => strokeSpacing.set(n!)}
+              />
+            </div>
+
+            <div className={'cmp-labeled-table__label'}>Line cap:</div>
+            <div className={'cmp-labeled-table__value util-hstack'}>
+              <Select.Root
+                onValueChange={v => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  lineCap.set(v as any);
+                }}
+                value={lineCap.val}
+              >
+                <Select.Item value={'butt'}>Butt</Select.Item>
+                <Select.Item value={'round'}>Round</Select.Item>
+                <Select.Item value={'square'}>Square</Select.Item>
+              </Select.Root>
+            </div>
+            <div className={'cmp-labeled-table__label'}>Line join:</div>
+            <div className={'cmp-labeled-table__value util-hstack'}>
+              <Select.Root
+                onValueChange={v => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  lineJoin.set(v as any);
+                }}
+                value={lineJoin.val}
+              >
+                <Select.Item value={'miter'}>Miter</Select.Item>
+                <Select.Item value={'round'}>Round</Select.Item>
+                <Select.Item value={'bevel'}>Bevel</Select.Item>
+              </Select.Root>
+
+              {lineJoin.val === 'miter' && (
+                <NumberInput
+                  value={miterLimit.val * 10}
+                  min={0}
+                  style={{ width: '50px' }}
+                  onChange={v => miterLimit.set((v ?? 1) / 10)}
+                />
+              )}
+            </div>
+          </div>
+        </PopoverButton>
+      </div>
+    </div>
+  );
+};
 
 export const NodeStrokePanel = (props: Props) => {
   const $d = useDiagram();
@@ -34,97 +157,18 @@ export const NodeStrokePanel = (props: Props) => {
       value={enabled.val}
       onChange={enabled.set}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Color:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <ColorPicker
-            palette={$cfg.palette.primary}
-            color={strokeColor.val}
-            onChange={strokeColor.set}
-            hasMultipleValues={strokeColor.hasMultipleValues}
-            customPalette={$d.document.customPalette.colors}
-            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-          />
-        </div>
-
-        <div className={'cmp-labeled-table__label'}>Style:</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <NumberInput
-            defaultUnit={'px'}
-            value={strokeWidth.val}
-            min={1}
-            style={{ width: '35px' }}
-            onChange={strokeWidth.set}
-            hasMultipleValues={strokeWidth.hasMultipleValues}
-          />
-          <DashSelector
-            value={pattern.val}
-            onValueChange={value => {
-              pattern.set(value);
-            }}
-            hasMultipleValues={pattern.hasMultipleValues}
-          />
-          <PopoverButton label={<TbAdjustmentsHorizontal />}>
-            <div className={'cmp-labeled-table'}>
-              <div className={'cmp-labeled-table__label'}>Stroke:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
-                <NumberInput
-                  defaultUnit={'%'}
-                  value={strokeSize.val}
-                  min={1}
-                  style={{ width: '45px' }}
-                  onChange={strokeSize.set}
-                />
-                <NumberInput
-                  defaultUnit={'%'}
-                  value={strokeSpacing.val}
-                  min={1}
-                  style={{ width: '45px' }}
-                  onChange={strokeSpacing.set}
-                />
-              </div>
-
-              <div className={'cmp-labeled-table__label'}>Line cap:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
-                <Select.Root
-                  onValueChange={v => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    lineCap.set(v as any);
-                  }}
-                  value={lineCap.val}
-                >
-                  <Select.Item value={'butt'}>Butt</Select.Item>
-                  <Select.Item value={'round'}>Round</Select.Item>
-                  <Select.Item value={'square'}>Square</Select.Item>
-                </Select.Root>
-              </div>
-              <div className={'cmp-labeled-table__label'}>Line join:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
-                <Select.Root
-                  onValueChange={v => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    lineJoin.set(v as any);
-                  }}
-                  value={lineJoin.val}
-                >
-                  <Select.Item value={'miter'}>Miter</Select.Item>
-                  <Select.Item value={'round'}>Round</Select.Item>
-                  <Select.Item value={'bevel'}>Bevel</Select.Item>
-                </Select.Root>
-
-                {lineJoin.val === 'miter' && (
-                  <NumberInput
-                    value={miterLimit.val * 10}
-                    min={0}
-                    style={{ width: '50px' }}
-                    onChange={v => miterLimit.set((v ?? 1) / 10)}
-                  />
-                )}
-              </div>
-            </div>
-          </PopoverButton>
-        </div>
-      </div>
+      <NodeStrokePanelForm
+        diagram={$d}
+        config={$cfg}
+        strokeWidth={strokeWidth}
+        pattern={pattern}
+        strokeSize={strokeSize}
+        strokeColor={strokeColor}
+        strokeSpacing={strokeSpacing}
+        lineCap={lineCap}
+        lineJoin={lineJoin}
+        miterLimit={miterLimit}
+      />
     </ToolWindowPanel>
   );
 };
