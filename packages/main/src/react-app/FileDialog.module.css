@@ -1,4 +1,6 @@
 .cmp-file-dialog {
+  width: 25rem;
+
   .cmp-file-dialog__list {
     background-color: var(--secondary-bg);
     border: 1px solid var(--primary-border);
@@ -7,7 +9,7 @@
 
     & > div {
       height: 200px;
-      overflow: scroll;
+      overflow-y: auto;
     }
 
     ul {

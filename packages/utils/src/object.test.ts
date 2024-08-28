@@ -1,4 +1,4 @@
-import { common, deepClear, deepEquals, deepMerge } from './object';
+import { common, deepClear, deepEquals, deepIsEmpty, deepMerge } from './object';
 import { describe, expect, test } from 'vitest';
 import { UNSAFE } from './testUtils';
 
@@ -205,5 +205,37 @@ describe('deepClear function', () => {
     const target = { a: 1, b: 2 };
     deepClear(source, target);
     expect(target).toEqual({});
+  });
+});
+
+describe('deepIsEmpty function', () => {
+  test('should return true for null or undefined', () => {
+    expect(deepIsEmpty(null)).toBe(true);
+    expect(deepIsEmpty(undefined)).toBe(true);
+  });
+
+  test('should return true for an empty object', () => {
+    const obj = {};
+    expect(deepIsEmpty(obj)).toBe(true);
+  });
+
+  test('should return false for an object with non-empty primitive values', () => {
+    const obj = { a: 1 };
+    expect(deepIsEmpty(obj)).toBe(false);
+  });
+
+  test('should return true for an object with undefined or null values', () => {
+    const obj = { a: undefined, b: null };
+    expect(deepIsEmpty(obj)).toBe(true);
+  });
+
+  test('should handle nested objects', () => {
+    const obj = { a: { b: undefined }, c: null };
+    expect(deepIsEmpty(obj)).toBe(true);
+  });
+
+  test('should return false for nested objects with non-empty primitive values', () => {
+    const obj = { a: { b: 1 } };
+    expect(deepIsEmpty(obj)).toBe(false);
   });
 });

@@ -1,21 +1,19 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
-import { AdjustmentRule, AdjustmentRuleAction } from '@diagram-craft/model/diagramLayerRule';
-import React, { ReactElement, useEffect, useRef, useState } from 'react';
+import {
+  AdjustmentRule,
+  AdjustmentRuleAction,
+  AdjustmentRuleClause
+} from '@diagram-craft/model/diagramLayerRule';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
 import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
-import { useConfiguration } from '../../context/ConfigurationContext';
-import { useDiagram } from '../../context/DiagramContext';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
-import { NodeFillPanelForm } from '../../toolwindow/ObjectToolWindow/NodeFillPanel';
-import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { Property } from '../../toolwindow/ObjectToolWindow/types';
-import { useRedraw } from '../../hooks/useRedraw';
 import { deepClone } from '@diagram-craft/utils/object';
-import { elementDefaults } from '@diagram-craft/model/diagramDefaults';
-import { assert, NotImplementedYet } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
+import { Editor, EDITORS } from './editors';
+import { StyleAction } from './StyleAction';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -31,64 +29,15 @@ declare global {
   }
 }
 
-type Editor = (props: { props: NodeProps | EdgeProps }) => ReactElement;
+export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kind?: string };
+export type EditableAdjustmentRuleClause = Partial<AdjustmentRuleClause>;
 
-function makeProperty<TObj, K extends PropPath<TObj>, V extends PropPathValue<TObj, K>>(
-  obj: TObj,
-  propertyPath: PropPath<TObj>,
-  defaults: TObj,
-  onChange: (v: V) => void
-): Property<V> {
-  const accessor = new DynamicAccessor<TObj>();
-  return {
-    val: (accessor.get(obj, propertyPath) as V) ?? (accessor.get(defaults, propertyPath) as V),
-    set: (v: V) => {
-      accessor.set(obj, propertyPath, v);
-      onChange(v);
-    },
-    hasMultipleValues: false
-  } as Property<V>;
-}
+const normalizeRuleActions = (
+  rule: AdjustmentRule | undefined
+): Array<EditableAdjustmentRuleAction> => {
+  if (!rule) return [];
 
-const FillColor: Editor = (props: { props: NodeProps | EdgeProps }) => {
-  const $p = props.props;
-
-  const $cfg = useConfiguration();
-  const diagram = useDiagram();
-  const redraw = useRedraw();
-
-  return (
-    <NodeFillPanelForm
-      config={$cfg}
-      diagram={diagram}
-      type={makeProperty($p, 'fill.type', elementDefaults, redraw)}
-      imageBrightness={makeProperty($p, 'fill.image.brightness', elementDefaults, redraw)}
-      imageScale={makeProperty($p, 'fill.image.scale', elementDefaults, redraw)}
-      imageContrast={makeProperty($p, 'fill.image.contrast', elementDefaults, redraw)}
-      color={makeProperty($p, 'fill.color', elementDefaults, redraw)}
-      imageSaturation={makeProperty($p, 'fill.image.saturation', elementDefaults, redraw)}
-      color2={makeProperty($p, 'fill.color2', elementDefaults, redraw)}
-      image={makeProperty($p, 'fill.image.id', elementDefaults, redraw)}
-      gradientDirection={makeProperty($p, 'fill.gradient.direction', elementDefaults, redraw)}
-      gradientType={makeProperty($p, 'fill.gradient.type', elementDefaults, redraw)}
-      imageFit={makeProperty($p, 'fill.image.fit', elementDefaults, redraw)}
-      imageH={makeProperty($p, 'fill.image.h', elementDefaults, redraw)}
-      imageTint={makeProperty($p, 'fill.image.tint', elementDefaults, redraw)}
-      imageTintStrength={makeProperty($p, 'fill.image.tintStrength', elementDefaults, redraw)}
-      imageW={makeProperty($p, 'fill.image.w', elementDefaults, redraw)}
-      pattern={makeProperty($p, 'fill.pattern', elementDefaults, redraw)}
-    />
-  );
-};
-
-const EDITORS = {
-  fill: FillColor
-};
-
-const normalizeRuleActions = (rule: AdjustmentRule | undefined) => {
-  if (!rule) return rule;
-
-  const dest: Array<AdjustmentRuleAction> = [];
+  const dest: Array<EditableAdjustmentRuleAction> = [];
   for (const a of rule.actions) {
     if (a.type === 'set-props') {
       const propsEditor = new PropsEditor<Editor>(EDITORS, a.props);
@@ -96,32 +45,50 @@ const normalizeRuleActions = (rule: AdjustmentRule | undefined) => {
         dest.push({
           id: newid(),
           type: 'set-props',
-          props: e.props
+          props: e.props,
+          kind: e.kind
         });
       }
     } else {
       dest.push(a);
     }
   }
-  rule.actions = dest;
-  return rule;
+
+  return dest;
 };
 
 export const RuleEditorDialog = (props: Props) => {
-  const [rule, setRule] = useState(normalizeRuleActions(deepClone(props.rule)));
+  const [rule, setRule] = useState(deepClone(props.rule));
+  const [actions, setActions] = useState<EditableAdjustmentRuleAction[]>(
+    normalizeRuleActions(deepClone(props.rule))
+  );
+  const [clauses, setClauses] = useState<EditableAdjustmentRuleClause[]>(
+    deepClone(props.rule)?.clauses ?? []
+  );
+
   useEffect(() => {
-    setRule(normalizeRuleActions(deepClone(props.rule)));
-  }, [props.rule]);
+    setActions(normalizeRuleActions(deepClone(props.rule)));
+    setRule(deepClone(props.rule));
+    setClauses(deepClone(props.rule)?.clauses ?? []);
+  }, [props.rule, props.open]);
+
+  const [type, setType] = useState<'edge' | 'node' | 'both'>('node');
 
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!props.open) return;
-    setTimeout(() => {
-      ref.current?.focus();
-    }, 100);
-  });
+    setTimeout(() => ref.current?.focus(), 100);
+  }, [props.open]);
 
   if (!props.rule || !rule) return null;
+
+  const changeAction = (
+    existing: EditableAdjustmentRuleAction,
+    newAction: EditableAdjustmentRuleAction
+  ) => {
+    console.log(newAction);
+    setActions(actions.map(a => (a === existing ? newAction : a)));
+  };
 
   return (
     <Dialog
@@ -136,13 +103,17 @@ export const RuleEditorDialog = (props: Props) => {
           label: 'Cancel'
         },
         {
-          type: 'secondary',
-          onClick: () => {},
-          label: 'Preview'
-        },
-        {
           type: 'default',
           onClick: () => {
+            rule!.name = ref.current!.value;
+            rule!.clauses = clauses
+              // TODO: Additional validations
+              .filter(c => c.type !== undefined)
+              .map(c => c as AdjustmentRuleClause);
+            rule!.actions = actions
+              // TODO: Additional validations
+              .filter(a => a.type !== undefined)
+              .map(a => a as AdjustmentRuleAction);
             console.log(rule);
           },
           label: 'Save'
@@ -150,7 +121,14 @@ export const RuleEditorDialog = (props: Props) => {
       ]}
       title={'Rule Editor'}
     >
-      <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: '1fr max-content' }}>
+      <div
+        style={{
+          display: 'grid',
+          gap: '0.5rem',
+          minWidth: '35rem',
+          gridTemplateColumns: '1fr max-content'
+        }}
+      >
         <div>
           <label>{'Name'}:</label>
           <div className={'cmp-text-input'}>
@@ -171,8 +149,13 @@ export const RuleEditorDialog = (props: Props) => {
           <div>
             <ToggleButtonGroup.Root
               type={'multiple'}
-              value={['node', 'edge']}
-              onValueChange={(_value: string[]) => {}}
+              value={type === 'both' ? ['node', 'edge'] : [type]}
+              onValueChange={value => {
+                if (value.length === 0) return;
+                if (value.length === 2) return setType('both');
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setType(value[0] as any);
+              }}
             >
               <ToggleButtonGroup.Item value={'node'}>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -193,9 +176,17 @@ export const RuleEditorDialog = (props: Props) => {
         <div
           style={{
             display: 'grid',
-            margin: '0.5rem 0 2rem 0',
+            margin: '0.5rem -1rem 2rem 0',
+            padding: '0 0.5rem 0 0',
             gap: '0.5rem',
-            gridTemplateColumns: '2fr 8fr min-content min-content'
+            gridTemplateColumns: '8rem 8fr min-content min-content',
+            gridAutoRows: 'min-content',
+            scrollbarGutter: 'stable',
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'var(--tertiary-fg) var(--primary-bg)',
+            maxHeight: '20rem',
+            height: '20rem',
+            overflowY: 'auto'
           }}
         >
           <h4 style={{ margin: '0.5rem 0 0 0' }}>If</h4>
@@ -203,36 +194,67 @@ export const RuleEditorDialog = (props: Props) => {
           <div></div>
           <div></div>
 
-          {rule.clauses.map(c => {
-            if (c.type === 'query') {
-              return (
-                <React.Fragment key={c.id}>
-                  <Select.Root value={'query'} onValueChange={() => {}}>
-                    <Select.Item value={'query'}>Query</Select.Item>
-                  </Select.Root>
+          {clauses.map((c, idx) => {
+            return (
+              <React.Fragment key={c.id}>
+                <Select.Root
+                  value={c.type ?? ''}
+                  placeholder={'Select Rule Type'}
+                  onValueChange={t => {
+                    const newClauses = [...clauses];
+                    // @ts-ignore
+                    newClauses[idx].type = t;
+                    setClauses(newClauses);
+                  }}
+                >
+                  <Select.Item value={'query'}>Query</Select.Item>
+                </Select.Root>
+                {c.type === 'query' && (
+                  <>
+                    <div className={'cmp-text-input'}>
+                      <textarea
+                        style={{ height: '3rem', resize: 'vertical' }}
+                        defaultValue={c.query ?? ''}
+                        onKeyDown={e => {
+                          // TODO: Why is this needed?
+                          e.stopPropagation();
+                        }}
+                        onChange={e => {
+                          console.log(e.target.value);
+                          const newClauses = [...clauses];
+                          // @ts-ignore
+                          newClauses[idx].query = e.target.value;
+                          setClauses(newClauses);
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+                {c.type !== 'query' && <div></div>}
 
-                  <div className={'cmp-text-input'}>
-                    <textarea
-                      style={{ height: '3rem' }}
-                      defaultValue={c.query ?? ''}
-                      onKeyDown={e => {
-                        // TODO: Why is this needed?
-                        e.stopPropagation();
-                      }}
-                    />
-                  </div>
-
-                  <Button type={'icon-only'}>
-                    <TbPlus />
-                  </Button>
-                  <Button type={'icon-only'} disabled={true}>
-                    <TbTrash />
-                  </Button>
-                </React.Fragment>
-              );
-            } else {
-              throw new NotImplementedYet();
-            }
+                <Button
+                  type={'icon-only'}
+                  onClick={() => {
+                    const newClauses = clauses.toSpliced(idx + 1, 0, {
+                      id: newid()
+                    });
+                    setClauses(newClauses);
+                  }}
+                >
+                  <TbPlus />
+                </Button>
+                <Button
+                  type={'icon-only'}
+                  disabled={idx === 0 && clauses.length === 1}
+                  onClick={() => {
+                    const newClauses = clauses.toSpliced(idx, 1);
+                    setClauses(newClauses);
+                  }}
+                >
+                  <TbTrash />
+                </Button>
+              </React.Fragment>
+            );
           })}
 
           <h4 style={{ margin: '0.5rem 0 0 0' }}>Then</h4>
@@ -240,56 +262,52 @@ export const RuleEditorDialog = (props: Props) => {
           <div></div>
           <div></div>
 
-          {rule?.actions.map(action => {
-            if (action.type === 'set-props') {
-              const propsEditor = new PropsEditor(EDITORS, action.props);
-              const entries = propsEditor.getEntries();
-              assert.arrayWithExactlyOneElement(entries);
-              const entry = entries[0];
+          {actions.map((action, idx) => {
+            return (
+              <React.Fragment key={action.id}>
+                <Select.Root
+                  value={action.type ?? ''}
+                  placeholder={'Select action'}
+                  onValueChange={s => {
+                    const newActions = [...actions];
+                    // @ts-ignore
+                    newActions[idx].type = s;
+                    setActions(newActions);
+                  }}
+                >
+                  <Select.Item value={'set-props'}>Set style</Select.Item>
+                  <Select.Item value={'set-stylesheet'}>Set stylesheet</Select.Item>
+                  <Select.Item value={'hide'}>Hide</Select.Item>
+                </Select.Root>
 
-              return (
-                <React.Fragment key={action.id}>
-                  <Select.Root value={'style'} onValueChange={() => {}}>
-                    <Select.Item value={'style'}>Set style</Select.Item>
-                    <Select.Item value={'stylesheet'}>Set stylesheet</Select.Item>
-                    <Select.Item value={'hide'}>Hide</Select.Item>
-                  </Select.Root>
+                {action.type === 'set-props' && (
+                  <StyleAction action={action} onChange={a => changeAction(action, a)} />
+                )}
+                {action.type !== 'set-props' && <div></div>}
 
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <Select.Root value={entry.id} placeholder={'Style'} onValueChange={() => {}}>
-                      {propsEditor.getAllEntries().map(e => {
-                        return (
-                          <Select.Item key={e.id} value={e.id}>
-                            {e.name}
-                          </Select.Item>
-                        );
-                      })}
-                    </Select.Root>
-
-                    <div
-                      style={{
-                        border: '1px solid var(--cmp-border)',
-                        borderRadius: 'var(--cmp-radius)',
-                        padding: '0.5rem',
-                        width: '250px',
-                        maxWidth: '250px'
-                      }}
-                    >
-                      <entry.editor props={action.props ?? {}} />
-                    </div>
-                  </div>
-
-                  <Button type={'icon-only'}>
-                    <TbPlus />
-                  </Button>
-                  <Button type={'icon-only'} disabled={true}>
-                    <TbTrash />
-                  </Button>
-                </React.Fragment>
-              );
-            } else {
-              throw new NotImplementedYet();
-            }
+                <Button
+                  type={'icon-only'}
+                  onClick={() => {
+                    const newActions = actions.toSpliced(idx + 1, 0, {
+                      id: newid()
+                    });
+                    setActions(newActions);
+                  }}
+                >
+                  <TbPlus />
+                </Button>
+                <Button
+                  type={'icon-only'}
+                  disabled={idx === 0 && actions.length === 1}
+                  onClick={() => {
+                    const newActions = actions.toSpliced(idx, 1);
+                    setActions(newActions);
+                  }}
+                >
+                  <TbTrash />
+                </Button>
+              </React.Fragment>
+            );
           })}
         </div>
       </div>

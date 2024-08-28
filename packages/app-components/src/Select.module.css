@@ -1,7 +1,7 @@
 .cmp-select-trigger {
   display: inline-flex;
   align-items: center;
-  justify-content: left;
+  justify-content: space-between;
   border-radius: var(--cmp-radius);
   padding: 0 5px;
   font-size: 11px;

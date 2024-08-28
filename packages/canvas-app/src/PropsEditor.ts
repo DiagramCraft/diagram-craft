@@ -1,20 +1,22 @@
 import { assert } from '@diagram-craft/utils/assert';
+import { deepIsEmpty } from '@diagram-craft/utils/object';
 
-const propsEntries = {
-  fill: {
-    name: 'Fill',
-    isSet: (props: NodeProps | EdgeProps) => {
-      return !!props.fill;
-    },
-    pick: (props: NodeProps | EdgeProps) => {
-      return { fill: props.fill };
-    }
+export type EditorRegistry<E> = Record<
+  string,
+  {
+    editor: E;
+    name: string;
+    pick: (props: NodeProps | EdgeProps) => Partial<NodeProps | EdgeProps>;
   }
-};
+>;
 
-export class PropsEditor<T> {
+/**
+ * Supports editing of ElementProps using partial editors.
+ * It provides methods to retrieve entries for editing and to retrieve all registered editors.
+ */
+export class PropsEditor<E> {
   constructor(
-    private readonly editors: Record<keyof typeof propsEntries, T>,
+    private readonly editors: EditorRegistry<E>,
     private readonly props?: NodeProps | EdgeProps
   ) {}
 
@@ -22,21 +24,12 @@ export class PropsEditor<T> {
     const props = this.props;
     assert.present(props);
 
-    return Object.entries(propsEntries)
-      .filter(([, v]) => v.isSet(props))
-      .map(([k, v]) => ({
-        id: k,
-        ...v,
-        props: v.pick(props),
-        editor: this.editors[k as keyof typeof propsEntries]
-      }));
+    return Object.entries(this.editors)
+      .map(([k, e]) => ({ ...e, kind: k, props: e.pick(props) }))
+      .filter(e => !deepIsEmpty(e.props));
   }
 
   getAllEntries() {
-    return Object.entries(propsEntries).map(([k, v]) => ({
-      id: k,
-      ...v,
-      editor: this.editors[k as keyof typeof propsEntries]
-    }));
+    return Object.entries(this.editors).map(([k, e]) => ({ ...e, kind: k }));
   }
 }

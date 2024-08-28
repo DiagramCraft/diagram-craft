@@ -209,3 +209,19 @@ export const deepClear = <T extends Props>(source: T, target: T) => {
     }
   }
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const deepIsEmpty = (obj: any | undefined | null) => {
+  if (obj === null || obj === undefined) return true;
+
+  for (const key of Object.keys(obj)) {
+    if (obj[key] === null || obj[key] === undefined) continue;
+    if (isObject(obj[key])) {
+      if (!deepIsEmpty(obj[key])) return false;
+    } else {
+      return false;
+    }
+  }
+
+  return true;
+};
