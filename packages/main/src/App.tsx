@@ -99,7 +99,7 @@ import { TableInsertDialog } from './react-app/TableInsertDialog';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
 import { StringInputDialog } from './react-app/components/StringInputDialog';
-import { RuleEditorDialog } from './react-app/components/RuleEditorDialog';
+import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // eslint-disable-next-line

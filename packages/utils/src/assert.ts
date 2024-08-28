@@ -81,6 +81,10 @@ export const assert: AssertType = makeAssertions(m => {
   throw new Error(m);
 });
 
+export const notImplemented: AssertType = makeAssertions(m => {
+  throw new NotImplementedYet(m);
+});
+
 export const precondition: { is: AssertType } = { is: assert };
 
 export const postcondition: { is: AssertType } = { is: assert };

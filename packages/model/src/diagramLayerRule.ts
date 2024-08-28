@@ -3,13 +3,45 @@ import { Layer, RegularLayer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { parseAndQuery } from '@diagram-craft/query/query';
+import { notImplemented } from '@diagram-craft/utils/assert';
 
 export type AdjustmentRule = {
   id: string;
   name: string;
-  query: string;
-  props: ElementProps;
+  clauses: AdjustmentRuleClause[];
+  actions: AdjustmentRuleAction[];
 };
+
+export type AdjustmentRuleClause = { id: string } & (
+  | {
+      type: 'query';
+      query: string;
+    }
+  | {
+      type: 'any';
+      clauses: AdjustmentRuleClause[];
+    }
+  | {
+      type: 'props';
+      path: string;
+      relation: 'eq' | 'neq' | 'gt' | 'lt' | 'contains';
+      value: string;
+    }
+);
+
+export type AdjustmentRuleAction = { id: string } & (
+  | {
+      type: 'set-props';
+      props: ElementProps;
+    }
+  | {
+      type: 'set-stylesheet';
+      stylesheet: string;
+    }
+  | {
+      type: 'hide';
+    }
+);
 
 export type Adjustment = NodeProps | EdgeProps;
 
@@ -53,14 +85,30 @@ export class RuleLayer extends Layer {
 
   runRule(rule: AdjustmentRule): Result {
     const res: Result = new Map<string, Adjustment>();
-    const result = parseAndQuery(
-      rule.query,
-      this.diagram.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []))
-    );
-    for (const k of result as string[]) {
-      if (!res.has(k)) res.set(k, rule.props);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      else res.set(k, deepMerge(res.get(k) as any, rule.props));
+
+    const results: Set<string>[] = [];
+
+    for (const clause of rule.clauses) {
+      notImplemented.true(clause.type === 'query', 'Not implemented yet');
+      if (clause.type === 'query') {
+        const r = parseAndQuery(
+          clause.query,
+          this.diagram.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []))
+        );
+        results.push(new Set(...(r as string[])));
+      }
+    }
+
+    const result = results.reduce((p, c) => p.intersection(c), results[0]);
+    for (const k of result) {
+      for (const action of rule.actions) {
+        notImplemented.true(action.type === 'set-props', 'Not implemented yet');
+        if (action.type === 'set-props') {
+          if (!res.has(k)) res.set(k, action.props);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          else res.set(k, deepMerge(res.get(k) as any, action.props));
+        }
+      }
     }
     return res;
   }

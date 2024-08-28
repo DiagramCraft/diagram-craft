@@ -5,6 +5,9 @@ const propsEntries = {
     name: 'Fill',
     isSet: (props: NodeProps | EdgeProps) => {
       return !!props.fill;
+    },
+    pick: (props: NodeProps | EdgeProps) => {
+      return { fill: props.fill };
     }
   }
 };
@@ -21,7 +24,12 @@ export class PropsEditor<T> {
 
     return Object.entries(propsEntries)
       .filter(([, v]) => v.isSet(props))
-      .map(([k, v]) => ({ id: k, ...v, editor: this.editors[k as keyof typeof propsEntries] }));
+      .map(([k, v]) => ({
+        id: k,
+        ...v,
+        props: v.pick(props),
+        editor: this.editors[k as keyof typeof propsEntries]
+      }));
   }
 
   getAllEntries() {

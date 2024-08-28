@@ -1,19 +1,21 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Select } from '@diagram-craft/app-components/Select';
-import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRule';
+import { AdjustmentRule, AdjustmentRuleAction } from '@diagram-craft/model/diagramLayerRule';
 import React, { ReactElement, useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
 import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
-import { useConfiguration } from '../context/ConfigurationContext';
-import { useDiagram } from '../context/DiagramContext';
+import { useConfiguration } from '../../context/ConfigurationContext';
+import { useDiagram } from '../../context/DiagramContext';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
-import { NodeFillPanelForm } from '../toolwindow/ObjectToolWindow/NodeFillPanel';
+import { NodeFillPanelForm } from '../../toolwindow/ObjectToolWindow/NodeFillPanel';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { Property } from '../toolwindow/ObjectToolWindow/types';
-import { useRedraw } from '../hooks/useRedraw';
+import { Property } from '../../toolwindow/ObjectToolWindow/types';
+import { useRedraw } from '../../hooks/useRedraw';
 import { deepClone } from '@diagram-craft/utils/object';
 import { elementDefaults } from '@diagram-craft/model/diagramDefaults';
+import { assert, NotImplementedYet } from '@diagram-craft/utils/assert';
+import { newid } from '@diagram-craft/utils/id';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -79,10 +81,36 @@ const FillColor: Editor = (props: { props: NodeProps | EdgeProps }) => {
   );
 };
 
+const EDITORS = {
+  fill: FillColor
+};
+
+const normalizeRuleActions = (rule: AdjustmentRule | undefined) => {
+  if (!rule) return rule;
+
+  const dest: Array<AdjustmentRuleAction> = [];
+  for (const a of rule.actions) {
+    if (a.type === 'set-props') {
+      const propsEditor = new PropsEditor<Editor>(EDITORS, a.props);
+      for (const e of propsEditor.getEntries()) {
+        dest.push({
+          id: newid(),
+          type: 'set-props',
+          props: e.props
+        });
+      }
+    } else {
+      dest.push(a);
+    }
+  }
+  rule.actions = dest;
+  return rule;
+};
+
 export const RuleEditorDialog = (props: Props) => {
-  const [rule, setRule] = useState(deepClone(props.rule));
+  const [rule, setRule] = useState(normalizeRuleActions(deepClone(props.rule)));
   useEffect(() => {
-    setRule(deepClone(props.rule));
+    setRule(normalizeRuleActions(deepClone(props.rule)));
   }, [props.rule]);
 
   const ref = useRef<HTMLInputElement>(null);
@@ -93,12 +121,7 @@ export const RuleEditorDialog = (props: Props) => {
     }, 100);
   });
 
-  const propsEditor = new PropsEditor<Editor>(
-    {
-      fill: FillColor
-    },
-    props.rule?.props ?? {}
-  );
+  if (!props.rule || !rule) return null;
 
   return (
     <Dialog
@@ -180,74 +203,93 @@ export const RuleEditorDialog = (props: Props) => {
           <div></div>
           <div></div>
 
-          <Select.Root value={'query'} onValueChange={() => {}}>
-            <Select.Item value={'query'}>Query</Select.Item>
-          </Select.Root>
+          {rule.clauses.map(c => {
+            if (c.type === 'query') {
+              return (
+                <React.Fragment key={c.id}>
+                  <Select.Root value={'query'} onValueChange={() => {}}>
+                    <Select.Item value={'query'}>Query</Select.Item>
+                  </Select.Root>
 
-          <div className={'cmp-text-input'}>
-            <textarea
-              style={{ height: '3rem' }}
-              defaultValue={rule?.query ?? ''}
-              onKeyDown={e => {
-                // TODO: Why is this needed?
-                e.stopPropagation();
-              }}
-            />
-          </div>
+                  <div className={'cmp-text-input'}>
+                    <textarea
+                      style={{ height: '3rem' }}
+                      defaultValue={c.query ?? ''}
+                      onKeyDown={e => {
+                        // TODO: Why is this needed?
+                        e.stopPropagation();
+                      }}
+                    />
+                  </div>
 
-          <Button type={'icon-only'}>
-            <TbPlus />
-          </Button>
-          <Button type={'icon-only'} disabled={true}>
-            <TbTrash />
-          </Button>
+                  <Button type={'icon-only'}>
+                    <TbPlus />
+                  </Button>
+                  <Button type={'icon-only'} disabled={true}>
+                    <TbTrash />
+                  </Button>
+                </React.Fragment>
+              );
+            } else {
+              throw new NotImplementedYet();
+            }
+          })}
 
           <h4 style={{ margin: '0.5rem 0 0 0' }}>Then</h4>
           <div></div>
           <div></div>
           <div></div>
 
-          {propsEditor.getEntries().map(entry => {
-            return (
-              <React.Fragment key={entry.id}>
-                <Select.Root value={'style'} onValueChange={() => {}}>
-                  <Select.Item value={'style'}>Set style</Select.Item>
-                  <Select.Item value={'stylesheet'}>Set stylesheet</Select.Item>
-                  <Select.Item value={'hide'}>Hide</Select.Item>
-                </Select.Root>
+          {rule?.actions.map(action => {
+            if (action.type === 'set-props') {
+              const propsEditor = new PropsEditor(EDITORS, action.props);
+              const entries = propsEditor.getEntries();
+              assert.arrayWithExactlyOneElement(entries);
+              const entry = entries[0];
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Select.Root value={entry.id} placeholder={'Style'} onValueChange={() => {}}>
-                    {propsEditor.getAllEntries().map(e => {
-                      return (
-                        <Select.Item key={e.id} value={e.id}>
-                          {e.name}
-                        </Select.Item>
-                      );
-                    })}
+              return (
+                <React.Fragment key={action.id}>
+                  <Select.Root value={'style'} onValueChange={() => {}}>
+                    <Select.Item value={'style'}>Set style</Select.Item>
+                    <Select.Item value={'stylesheet'}>Set stylesheet</Select.Item>
+                    <Select.Item value={'hide'}>Hide</Select.Item>
                   </Select.Root>
 
-                  <div
-                    style={{
-                      border: '1px solid var(--cmp-border)',
-                      borderRadius: 'var(--cmp-radius)',
-                      padding: '0.5rem',
-                      width: '250px',
-                      maxWidth: '250px'
-                    }}
-                  >
-                    <entry.editor props={rule?.props ?? {}} />
-                  </div>
-                </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <Select.Root value={entry.id} placeholder={'Style'} onValueChange={() => {}}>
+                      {propsEditor.getAllEntries().map(e => {
+                        return (
+                          <Select.Item key={e.id} value={e.id}>
+                            {e.name}
+                          </Select.Item>
+                        );
+                      })}
+                    </Select.Root>
 
-                <Button type={'icon-only'}>
-                  <TbPlus />
-                </Button>
-                <Button type={'icon-only'} disabled={true}>
-                  <TbTrash />
-                </Button>
-              </React.Fragment>
-            );
+                    <div
+                      style={{
+                        border: '1px solid var(--cmp-border)',
+                        borderRadius: 'var(--cmp-radius)',
+                        padding: '0.5rem',
+                        width: '250px',
+                        maxWidth: '250px'
+                      }}
+                    >
+                      <entry.editor props={action.props ?? {}} />
+                    </div>
+                  </div>
+
+                  <Button type={'icon-only'}>
+                    <TbPlus />
+                  </Button>
+                  <Button type={'icon-only'} disabled={true}>
+                    <TbTrash />
+                  </Button>
+                </React.Fragment>
+              );
+            } else {
+              throw new NotImplementedYet();
+            }
           })}
         </div>
       </div>

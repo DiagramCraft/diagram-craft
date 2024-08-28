@@ -361,12 +361,24 @@
             {
               "id": "1",
               "name": "id=3",
-              "query": "select(.id==\"3\") | .id",
-              "props": {
-                "fill": {
-                  "color": "pink"
+              "clauses": [
+                {
+                  "id": "1",
+                  "type": "query",
+                  "query": "select(.id==\"3\") | .id"
                 }
-              }
+              ],
+              "actions": [
+                {
+                  "id": "1",
+                  "type": "set-props",
+                  "props": {
+                    "fill": {
+                      "color": "pink"
+                    }
+                  }
+                }
+              ]
             }
           ]
         }
