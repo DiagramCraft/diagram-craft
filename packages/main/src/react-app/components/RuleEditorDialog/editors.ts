@@ -5,6 +5,9 @@ import { Property } from '../../toolwindow/ObjectToolWindow/types';
 import { NodeFillEditor } from './NodeFillEditor';
 import { NodeStrokeEditor } from './NodeStrokeEditor';
 import { ElementShadowEditor } from './ElementShadowEditor';
+import { DeepReadonly } from '@diagram-craft/utils/types';
+import { NodeEffectsEditor } from './NodeEffectsEditor';
+import { NodeTextEditor } from './NodeTextEditor';
 
 export type Editor = (props: {
   props: NodeProps | EdgeProps;
@@ -31,16 +34,32 @@ export const EDITORS: EditorRegistry<Editor, EditorTypes> = {
     type: 'both',
     editor: ElementShadowEditor,
     pick: (props: NodeProps | EdgeProps) => ({ shadow: props.shadow })
+  },
+  effects: {
+    name: 'Effects',
+    type: 'node',
+    editor: NodeEffectsEditor,
+    pick: (props: NodeProps | EdgeProps) => ({ effects: props.effects })
+  },
+  text: {
+    name: 'Text',
+    type: 'node',
+    editor: NodeTextEditor,
+    pick: (props: NodeProps | EdgeProps) => ({ text: (props as NodeProps).text })
   }
 };
 
-export function makeProperty<TObj, K extends PropPath<TObj>, V extends PropPathValue<TObj, K>>(
+export function makeProperty<
+  TObj,
+  K extends PropPath<TObj | DeepReadonly<TObj>>,
+  V extends PropPathValue<TObj | DeepReadonly<TObj>, K>
+>(
   obj: TObj,
-  propertyPath: PropPath<TObj>,
-  defaults: TObj,
+  propertyPath: PropPath<TObj | DeepReadonly<TObj>>,
+  defaults: TObj | DeepReadonly<TObj>,
   onChange: (v: V) => void
 ): Property<V> {
-  const accessor = new DynamicAccessor<TObj>();
+  const accessor = new DynamicAccessor<TObj | DeepReadonly<TObj>>();
   return {
     val: (accessor.get(obj, propertyPath) as V) ?? (accessor.get(defaults, propertyPath) as V),
     set: (v: V) => {

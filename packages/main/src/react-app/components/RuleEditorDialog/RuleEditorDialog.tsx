@@ -150,13 +150,11 @@ export const RuleEditorDialog = (props: Props) => {
           <label>{'Type'}:</label>
           <div>
             <ToggleButtonGroup.Root
-              type={'multiple'}
-              value={type === 'both' ? ['node', 'edge'] : [type]}
+              type={'single'}
+              value={type}
               onValueChange={value => {
-                if (value.length === 0) return;
-                if (value.length === 2) return setType('both');
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setType(value[0] as any);
+                setType(value as any);
               }}
             >
               <ToggleButtonGroup.Item value={'node'}>

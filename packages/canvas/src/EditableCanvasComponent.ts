@@ -30,6 +30,8 @@ import { ApplicationTriggers } from './ApplicationTriggers';
 import { unique } from '@diagram-craft/utils/array';
 import { assertRegularLayer, RegularLayer } from '@diagram-craft/model/diagramLayer';
 import { assertReferenceLayer, ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 
 const removeSuffix = (s: string) => {
   return s.replace(/---.+$/, '');
@@ -413,12 +415,11 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
     props: ComponentProps,
     actionMap: Partial<ActionMap>
   ) {
-    const diagram =
-      layer instanceof RegularLayer ? $d : $d.document.getById(layer.reference.diagramId)!;
+    const diagram = $d;
     return layer.elements.map(e => {
       const id = e.id;
       if (e.type === 'edge') {
-        const edge = diagram.edgeLookup.get(id)!;
+        const edge = e as DiagramEdge;
         const edgeDef = diagram.document.edgeDefinitions.get(edge.renderProps.shape);
 
         return this.subComponent(
@@ -452,7 +453,7 @@ export class EditableCanvasComponent extends Component<ComponentProps> {
           }
         );
       } else {
-        const node = diagram.nodeLookup.get(id)!;
+        const node = e as DiagramNode;
         const nodeDef = diagram.document.nodeDefinitions.get(node.nodeType);
 
         return this.subComponent<NodeComponentProps>(

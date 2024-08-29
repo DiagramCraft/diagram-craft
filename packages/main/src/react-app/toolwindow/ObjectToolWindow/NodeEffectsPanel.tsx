@@ -6,6 +6,154 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { Property } from './types';
+
+type FormProps = {
+  diagram: Diagram;
+  reflection: Property<boolean>;
+  reflectionStrength: Property<number>;
+  blur: Property<number>;
+  opacity: Property<number>;
+  glass: Property<boolean>;
+  sketch: Property<boolean>;
+  sketchStrength: Property<number>;
+  sketchFillType: Property<'fill' | 'hachure'>;
+  rounding: Property<boolean>;
+  roundingAmount: Property<number | undefined>;
+};
+
+export const NodeEffectsPanelForm = ({
+  diagram: $d,
+  reflection,
+  reflectionStrength,
+  blur,
+  opacity,
+  glass,
+  sketch,
+  sketchStrength,
+  sketchFillType,
+  rounding,
+  roundingAmount
+}: FormProps) => {
+  return (
+    <div className={'cmp-labeled-table'}>
+      <div className={'cmp-labeled-table__label'}>Reflection:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <input
+          type="checkbox"
+          checked={reflection.val}
+          onChange={() => {
+            reflection.set(!reflection.val);
+          }}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}></div>
+      <div className={'cmp-labeled-table__value'}>
+        <Slider
+          value={round(reflectionStrength.val * 100)}
+          onChange={v => {
+            reflectionStrength.set(Number(v) / 100);
+          }}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}>Blur:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <Slider
+          value={round(blur.val * 100)}
+          onChange={v => {
+            blur.set(Number(v) / 100);
+          }}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}>Opacity:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <Slider
+          value={round(opacity.val * 100)}
+          onChange={v => {
+            opacity.set(Number(v) / 100);
+          }}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}>Glass:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <input
+          type="checkbox"
+          checked={glass.val}
+          onChange={() => {
+            glass.set(!glass.val);
+          }}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}>Sketch:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <input
+          type="checkbox"
+          checked={sketch.val}
+          onChange={() => {
+            sketch.set(!sketch.val);
+          }}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}></div>
+      <div className={'cmp-labeled-table__value'}>
+        <Slider
+          value={round(sketchStrength.val * 100)}
+          onChange={v => {
+            sketchStrength.set(Number(v) / 100);
+          }}
+          max={25}
+        />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}></div>
+      <div className={'cmp-labeled-table__value'}>
+        <Select.Root
+          onValueChange={v => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            sketchFillType.set(v as any);
+          }}
+          value={sketchFillType.val}
+        >
+          <Select.Item value={'fill'}>Solid</Select.Item>
+          <Select.Item value={'hachure'}>Hachure</Select.Item>
+        </Select.Root>
+      </div>
+
+      {$d.selectionState.nodes.some(e => e.getDefinition().supports('rounding')) && (
+        <>
+          <div className={'cmp-labeled-table__label'}>Rounding:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <input
+              type="checkbox"
+              checked={rounding.val}
+              onChange={() => {
+                rounding.set(!rounding.val);
+              }}
+            />
+          </div>
+          <div className={'cmp-labeled-table__label'}></div>
+          <div className={'cmp-labeled-table__value'}>
+            <Slider
+              value={round(roundingAmount.val)}
+              onChange={v => {
+                roundingAmount.set(v);
+              }}
+              unit={'px'}
+              max={200}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 export const NodeEffectsPanel = (props: Props) => {
   const redraw = useRedraw();
@@ -34,123 +182,19 @@ export const NodeEffectsPanel = (props: Props) => {
       title={'Effects'}
       hasCheckbox={false}
     >
-      <div>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Reflection:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <input
-              type="checkbox"
-              checked={reflection.val}
-              onChange={() => {
-                reflection.set(!reflection.val);
-              }}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}></div>
-          <div className={'cmp-labeled-table__value'}>
-            <Slider
-              value={round(reflectionStrength.val * 100)}
-              onChange={v => {
-                reflectionStrength.set(Number(v) / 100);
-              }}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}>Blur:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <Slider
-              value={round(blur.val * 100)}
-              onChange={v => {
-                blur.set(Number(v) / 100);
-              }}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}>Opacity:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <Slider
-              value={round(opacity.val * 100)}
-              onChange={v => {
-                opacity.set(Number(v) / 100);
-              }}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}>Glass:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <input
-              type="checkbox"
-              checked={glass.val}
-              onChange={() => {
-                glass.set(!glass.val);
-              }}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}>Sketch:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <input
-              type="checkbox"
-              checked={sketch.val}
-              onChange={() => {
-                sketch.set(!sketch.val);
-              }}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}></div>
-          <div className={'cmp-labeled-table__value'}>
-            <Slider
-              value={round(sketchStrength.val * 100)}
-              onChange={v => {
-                sketchStrength.set(Number(v) / 100);
-              }}
-              max={25}
-            />
-          </div>
-
-          <div className={'cmp-labeled-table__label'}></div>
-          <div className={'cmp-labeled-table__value'}>
-            <Select.Root
-              onValueChange={v => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                sketchFillType.set(v as any);
-              }}
-              value={sketchFillType.val}
-            >
-              <Select.Item value={'fill'}>Solid</Select.Item>
-              <Select.Item value={'hachure'}>Hachure</Select.Item>
-            </Select.Root>
-          </div>
-
-          {$d.selectionState.nodes.some(e => e.getDefinition().supports('rounding')) && (
-            <>
-              <div className={'cmp-labeled-table__label'}>Rounding:</div>
-              <div className={'cmp-labeled-table__value'}>
-                <input
-                  type="checkbox"
-                  checked={rounding.val}
-                  onChange={() => {
-                    rounding.set(!rounding.val);
-                  }}
-                />
-              </div>
-              <div className={'cmp-labeled-table__label'}></div>
-              <div className={'cmp-labeled-table__value'}>
-                <Slider
-                  value={round(roundingAmount.val)}
-                  onChange={v => {
-                    roundingAmount.set(v);
-                  }}
-                  unit={'px'}
-                  max={200}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      <NodeEffectsPanelForm
+        diagram={$d}
+        reflection={reflection}
+        reflectionStrength={reflectionStrength}
+        blur={blur}
+        opacity={opacity}
+        glass={glass}
+        sketch={sketch}
+        sketchStrength={sketchStrength}
+        sketchFillType={sketchFillType}
+        rounding={rounding}
+        roundingAmount={roundingAmount}
+      />
     </ToolWindowPanel>
   );
 };
