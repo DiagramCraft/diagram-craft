@@ -8,6 +8,7 @@ import { notImplemented } from '@diagram-craft/utils/assert';
 export type AdjustmentRule = {
   id: string;
   name: string;
+  type: 'edge' | 'node';
   clauses: AdjustmentRuleClause[];
   actions: AdjustmentRuleAction[];
 };

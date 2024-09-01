@@ -59,7 +59,7 @@ const normalizeRuleActions = (
 };
 
 export const RuleEditorDialog = (props: Props) => {
-  const [type, setType] = useState<EditorTypes>('node');
+  const [type, setType] = useState<EditorTypes>(props.rule?.type ?? 'node');
   const [rule, setRule] = useState(deepClone(props.rule));
   const [actions, setActions] = useState<EditableAdjustmentRuleAction[]>(
     normalizeRuleActions(deepClone(props.rule), type === 'node' ? NODE_EDITORS : EDGE_EDITORS)
@@ -91,6 +91,17 @@ export const RuleEditorDialog = (props: Props) => {
     setActions(actions.map(a => (a === existing ? newAction : a)));
   };
 
+  const editors = type === 'node' ? NODE_EDITORS : EDGE_EDITORS;
+
+  const filteredActions = actions.filter(
+    action => action.type !== 'set-props' || (action.kind ?? '') in editors
+  );
+  if (filteredActions.length === 0) {
+    const newAction = { id: newid() };
+    actions.push(newAction);
+    filteredActions.push(newAction);
+  }
+
   return (
     <Dialog
       open={props.open}
@@ -107,6 +118,7 @@ export const RuleEditorDialog = (props: Props) => {
           type: 'default',
           onClick: () => {
             rule!.name = ref.current!.value;
+            rule!.type = type;
             rule!.clauses = clauses
               // TODO: Additional validations
               .filter(c => c.type !== undefined)
@@ -262,7 +274,7 @@ export const RuleEditorDialog = (props: Props) => {
           <div></div>
           <div></div>
 
-          {actions.map((action, idx) => {
+          {filteredActions.map((action, idx) => {
             return (
               <React.Fragment key={action.id}>
                 <Select.Root
