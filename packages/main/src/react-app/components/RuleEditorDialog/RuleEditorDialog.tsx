@@ -8,11 +8,11 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbLine, TbPentagon, TbPlus, TbTrash } from 'react-icons/tb';
-import { PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
+import { EditorRegistry, PropsEditor } from '@diagram-craft/canvas-app/PropsEditor';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { deepClone } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
-import { Editor, EDITORS, EditorTypes } from './editors';
+import { EDGE_EDITORS, Editor, EditorTypes, NODE_EDITORS } from './editors';
 import { StyleAction } from './StyleAction';
 
 declare global {
@@ -33,14 +33,15 @@ export type EditableAdjustmentRuleAction = Partial<AdjustmentRuleAction> & { kin
 export type EditableAdjustmentRuleClause = Partial<AdjustmentRuleClause>;
 
 const normalizeRuleActions = (
-  rule: AdjustmentRule | undefined
+  rule: AdjustmentRule | undefined,
+  registry: EditorRegistry<Editor>
 ): Array<EditableAdjustmentRuleAction> => {
   if (!rule) return [];
 
   const dest: Array<EditableAdjustmentRuleAction> = [];
   for (const a of rule.actions) {
     if (a.type === 'set-props') {
-      const propsEditor = new PropsEditor<Editor, EditorTypes>(EDITORS, a.props);
+      const propsEditor = new PropsEditor<Editor>(registry, a.props);
       for (const e of propsEditor.getEntries()) {
         dest.push({
           id: newid(),
@@ -58,21 +59,22 @@ const normalizeRuleActions = (
 };
 
 export const RuleEditorDialog = (props: Props) => {
+  const [type, setType] = useState<EditorTypes>('node');
   const [rule, setRule] = useState(deepClone(props.rule));
   const [actions, setActions] = useState<EditableAdjustmentRuleAction[]>(
-    normalizeRuleActions(deepClone(props.rule))
+    normalizeRuleActions(deepClone(props.rule), type === 'node' ? NODE_EDITORS : EDGE_EDITORS)
   );
   const [clauses, setClauses] = useState<EditableAdjustmentRuleClause[]>(
     deepClone(props.rule)?.clauses ?? []
   );
 
   useEffect(() => {
-    setActions(normalizeRuleActions(deepClone(props.rule)));
+    setActions(
+      normalizeRuleActions(deepClone(props.rule), type === 'node' ? NODE_EDITORS : EDGE_EDITORS)
+    );
     setRule(deepClone(props.rule));
     setClauses(deepClone(props.rule)?.clauses ?? []);
   }, [props.rule, props.open]);
-
-  const [type, setType] = useState<EditorTypes>('node');
 
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -86,7 +88,6 @@ export const RuleEditorDialog = (props: Props) => {
     existing: EditableAdjustmentRuleAction,
     newAction: EditableAdjustmentRuleAction
   ) => {
-    console.log(newAction);
     setActions(actions.map(a => (a === existing ? newAction : a)));
   };
 
@@ -220,7 +221,6 @@ export const RuleEditorDialog = (props: Props) => {
                           e.stopPropagation();
                         }}
                         onChange={e => {
-                          console.log(e.target.value);
                           const newClauses = [...clauses];
                           // @ts-ignore
                           newClauses[idx].query = e.target.value;

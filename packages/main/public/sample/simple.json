@@ -372,6 +372,7 @@
                 {
                   "id": "1",
                   "type": "set-props",
+                  "kind": "fill",
                   "props": {
                     "fill": {
                       "color": "pink"

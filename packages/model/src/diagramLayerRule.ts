@@ -104,7 +104,7 @@ export class RuleLayer extends Layer {
       for (const action of rule.actions) {
         notImplemented.true(action.type === 'set-props', 'Not implemented yet');
         if (action.type === 'set-props') {
-          if (!res.has(k)) res.set(k, action.props);
+          if (!res.has(k)) res.set(k, deepClone(action.props));
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           else res.set(k, deepMerge(res.get(k) as any, action.props));
         }
