@@ -3,7 +3,7 @@ import { TbCheck, TbChevronDown } from 'react-icons/tb';
 import { usePortal } from './PortalContext';
 import styles from './Select.module.css';
 import { extractDataAttributes } from './utils';
-import { ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 const Root = (props: RootProps) => {
   const portal = usePortal();
@@ -17,6 +17,7 @@ const Root = (props: RootProps) => {
         className={styles.cmpSelectTrigger}
         {...extractDataAttributes(props)}
         disabled={props.disabled}
+        style={props.style ?? {}}
       >
         <ReactSelect.Value
           placeholder={
@@ -49,6 +50,7 @@ type RootProps = {
   open?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  style?: CSSProperties;
 };
 
 const Item = (props: ItemProps) => {

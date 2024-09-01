@@ -58,6 +58,105 @@ const normalizeRuleActions = (
   return dest;
 };
 
+const ClauseList = (props: ClauseListProps) => {
+  return (
+    <>
+      {props.clauses.map((c, idx) => {
+        return (
+          <React.Fragment key={c.id}>
+            <Select.Root
+              value={c.type ?? ''}
+              placeholder={'Select Rule'}
+              style={props.indent ? { marginLeft: '1rem' } : {}}
+              onValueChange={t => {
+                const newClauses = [...props.clauses];
+                // @ts-ignore
+                newClauses[idx].type = t;
+                props.onChange(newClauses);
+              }}
+            >
+              <Select.Item value={'query'}>Query</Select.Item>
+              {!props.indent && <Select.Item value={'any'}>Any</Select.Item>}
+            </Select.Root>
+            {c.type === 'query' && (
+              <>
+                <div className={'cmp-text-input'}>
+                  <textarea
+                    style={{ height: '3rem', resize: 'vertical' }}
+                    defaultValue={c.query ?? ''}
+                    onKeyDown={e => {
+                      // TODO: Why is this needed?
+                      e.stopPropagation();
+                    }}
+                    onChange={e => {
+                      const newClauses = [...props.clauses];
+                      // @ts-ignore
+                      newClauses[idx].query = e.target.value;
+                      props.onChange(newClauses);
+                    }}
+                  />
+                </div>
+              </>
+            )}
+            {c.type === 'any' && (
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '1px',
+                    borderTop: '1px solid var(--slate-4)'
+                  }}
+                ></div>
+              </div>
+            )}
+            {c.type !== 'query' && c.type !== 'any' && <div></div>}
+
+            <Button
+              type={'icon-only'}
+              onClick={() => {
+                const newClauses = props.clauses.toSpliced(idx + 1, 0, {
+                  id: newid()
+                });
+                props.onChange(newClauses);
+              }}
+            >
+              <TbPlus />
+            </Button>
+            <Button
+              type={'icon-only'}
+              disabled={idx === 0 && props.clauses.length === 1}
+              onClick={() => {
+                const newClauses = props.clauses.toSpliced(idx, 1);
+                props.onChange(newClauses);
+              }}
+            >
+              <TbTrash />
+            </Button>
+
+            {c.type === 'any' && (
+              <ClauseList
+                clauses={c.clauses ?? [{ id: newid() }]}
+                onChange={newClauses => {
+                  c.clauses = newClauses as AdjustmentRuleClause[];
+                  // Note: the clone here is to force rerender
+                  props.onChange([...props.clauses]);
+                }}
+                indent={true}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+};
+
+type ClauseListProps = {
+  clauses: EditableAdjustmentRuleClause[];
+  onChange: (newClauses: EditableAdjustmentRuleClause[]) => void;
+  indent: boolean;
+};
+
 export const RuleEditorDialog = (props: Props) => {
   const [type, setType] = useState<EditorTypes>(props.rule?.type ?? 'node');
   const [rule, setRule] = useState(deepClone(props.rule));
@@ -207,67 +306,7 @@ export const RuleEditorDialog = (props: Props) => {
           <div></div>
           <div></div>
 
-          {clauses.map((c, idx) => {
-            return (
-              <React.Fragment key={c.id}>
-                <Select.Root
-                  value={c.type ?? ''}
-                  placeholder={'Select Rule Type'}
-                  onValueChange={t => {
-                    const newClauses = [...clauses];
-                    // @ts-ignore
-                    newClauses[idx].type = t;
-                    setClauses(newClauses);
-                  }}
-                >
-                  <Select.Item value={'query'}>Query</Select.Item>
-                </Select.Root>
-                {c.type === 'query' && (
-                  <>
-                    <div className={'cmp-text-input'}>
-                      <textarea
-                        style={{ height: '3rem', resize: 'vertical' }}
-                        defaultValue={c.query ?? ''}
-                        onKeyDown={e => {
-                          // TODO: Why is this needed?
-                          e.stopPropagation();
-                        }}
-                        onChange={e => {
-                          const newClauses = [...clauses];
-                          // @ts-ignore
-                          newClauses[idx].query = e.target.value;
-                          setClauses(newClauses);
-                        }}
-                      />
-                    </div>
-                  </>
-                )}
-                {c.type !== 'query' && <div></div>}
-
-                <Button
-                  type={'icon-only'}
-                  onClick={() => {
-                    const newClauses = clauses.toSpliced(idx + 1, 0, {
-                      id: newid()
-                    });
-                    setClauses(newClauses);
-                  }}
-                >
-                  <TbPlus />
-                </Button>
-                <Button
-                  type={'icon-only'}
-                  disabled={idx === 0 && clauses.length === 1}
-                  onClick={() => {
-                    const newClauses = clauses.toSpliced(idx, 1);
-                    setClauses(newClauses);
-                  }}
-                >
-                  <TbTrash />
-                </Button>
-              </React.Fragment>
-            );
-          })}
+          <ClauseList clauses={clauses} onChange={setClauses} indent={false} />
 
           <h4 style={{ margin: '0.5rem 0 0 0' }}>Then</h4>
           <div></div>
