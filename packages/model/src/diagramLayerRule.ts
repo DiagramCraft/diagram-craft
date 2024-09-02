@@ -87,18 +87,7 @@ export class RuleLayer extends Layer {
   runRule(rule: AdjustmentRule): Result {
     const res: Result = new Map<string, Adjustment>();
 
-    const results: Set<string>[] = [];
-
-    for (const clause of rule.clauses) {
-      notImplemented.true(clause.type === 'query', 'Not implemented yet');
-      if (clause.type === 'query') {
-        const r = parseAndQuery(
-          clause.query,
-          this.diagram.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []))
-        );
-        results.push(new Set(...(r as string[])));
-      }
-    }
+    const results = this.evaluateClauses(rule.clauses);
 
     const result = results.reduce((p, c) => p.intersection(c), results[0]);
     for (const k of result) {
@@ -112,6 +101,25 @@ export class RuleLayer extends Layer {
       }
     }
     return res;
+  }
+
+  private evaluateClauses(clauses: AdjustmentRuleClause[]) {
+    const results: Set<string>[] = [];
+    for (const clause of clauses) {
+      notImplemented.true(clause.type === 'query' || clause.type === 'any', 'Not implemented yet');
+      if (clause.type === 'query') {
+        const r = parseAndQuery(
+          clause.query,
+          this.diagram.layers.visible.flatMap(l => (l instanceof RegularLayer ? l.elements : []))
+        );
+        results.push(new Set(...(r as string[])));
+      } else if (clause.type === 'any') {
+        const anyResult = this.evaluateClauses(clause.clauses);
+        const result = anyResult.reduce((p, c) => p.union(c), anyResult[0]);
+        results.push(result);
+      }
+    }
+    return results;
   }
 
   get rules() {
