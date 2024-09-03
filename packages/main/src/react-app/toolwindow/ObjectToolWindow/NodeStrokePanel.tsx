@@ -22,7 +22,7 @@ type FormProps = {
   strokeSpacing: Property<number>;
   lineCap: Property<LineCap>;
   lineJoin: Property<LineJoin>;
-  miterLimit: Property<number>;
+  miterLimit: Property<number | undefined>;
 };
 
 export const NodeStrokePanelForm = ({
@@ -48,6 +48,8 @@ export const NodeStrokePanelForm = ({
           hasMultipleValues={strokeColor.hasMultipleValues}
           customPalette={$d.document.customPalette.colors}
           onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+          isDefaultValue={strokeColor.isDefaultVal()}
+          defaultValue={strokeColor.defaultVal}
         />
       </div>
 
@@ -69,6 +71,8 @@ export const NodeStrokePanelForm = ({
             pattern.set(value!);
           }}
           hasMultipleValues={pattern.hasMultipleValues}
+          defaultValue={pattern.defaultVal}
+          isDefaultValue={pattern.isDefaultVal()}
         />
         <PopoverButton label={<TbAdjustmentsHorizontal />}>
           <div className={'cmp-labeled-table'}>
@@ -80,6 +84,8 @@ export const NodeStrokePanelForm = ({
                 min={1}
                 style={{ width: '45px' }}
                 onChange={n => strokeSize.set(n!)}
+                isDefaultValue={strokeSize.isDefaultVal()}
+                defaultValue={strokeSize.defaultVal}
               />
               <NumberInput
                 defaultUnit={'%'}
@@ -87,6 +93,8 @@ export const NodeStrokePanelForm = ({
                 min={1}
                 style={{ width: '45px' }}
                 onChange={n => strokeSpacing.set(n!)}
+                isDefaultValue={strokeSpacing.isDefaultVal()}
+                defaultValue={strokeSpacing.defaultVal}
               />
             </div>
 
@@ -98,6 +106,8 @@ export const NodeStrokePanelForm = ({
                   lineCap.set(v as any);
                 }}
                 value={lineCap.val}
+                isDefaultValue={lineCap.isDefaultVal()}
+                defaultValue={lineCap.defaultVal}
               >
                 <Select.Item value={'butt'}>Butt</Select.Item>
                 <Select.Item value={'round'}>Round</Select.Item>
@@ -112,6 +122,8 @@ export const NodeStrokePanelForm = ({
                   lineJoin.set(v as any);
                 }}
                 value={lineJoin.val}
+                isDefaultValue={lineJoin.isDefaultVal()}
+                defaultValue={lineJoin.defaultVal}
               >
                 <Select.Item value={'miter'}>Miter</Select.Item>
                 <Select.Item value={'round'}>Round</Select.Item>
@@ -123,7 +135,9 @@ export const NodeStrokePanelForm = ({
                   value={miterLimit.val * 10}
                   min={0}
                   style={{ width: '50px' }}
-                  onChange={v => miterLimit.set((v ?? 1) / 10)}
+                  onChange={v => miterLimit.set(v === undefined ? undefined : (v ?? 1) / 10)}
+                  isDefaultValue={miterLimit.isDefaultVal()}
+                  defaultValue={miterLimit.defaultVal * 10}
                 />
               )}
             </div>

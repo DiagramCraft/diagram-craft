@@ -142,7 +142,12 @@ export const EdgeLinePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Dash:</div>
           <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-            <DashSelector value={pattern.val} onValueChange={pattern.set} />
+            <DashSelector
+              value={pattern.val}
+              onValueChange={pattern.set}
+              isDefaultValue={pattern.isDefaultVal()}
+              defaultValue={pattern.defaultVal}
+            />
             <NumberInput
               defaultUnit={'%'}
               value={strokeSize.val}

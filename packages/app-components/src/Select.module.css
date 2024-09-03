@@ -12,8 +12,15 @@
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
 
+  svg {
+    stroke: var(--secondary-fg);
+  }
+
   &[data-is-default-value='true'] {
     color: var(--cmp-is-default-fg);
+    svg {
+      stroke: var(--cmp-is-default-fg);
+    }
   }
 
   &:hover:not(:disabled),
@@ -43,6 +50,10 @@
   z-index: 100;
   border-radius: 6px;
   box-shadow: var(--popover-shadow);
+
+  svg {
+    stroke: var(--secondary-fg);
+  }
 
   .cmp-select-content__viewpoint {
     padding: 5px;

@@ -5,7 +5,6 @@ const DashPatternPreview = (props: { type: string; pattern?: string; width?: num
   <svg width={props.width ?? 30} height={10}>
     <path
       d={`M 0 5 L ${props.width ?? 30} 5`}
-      stroke={'var(--secondary-fg)'}
       strokeWidth={'1'}
       strokeDasharray={props.pattern ?? undefined}
       style={{ fill: 'none' }}
@@ -19,6 +18,8 @@ export const DashSelector = (props: Props) => {
       value={props.value ?? 'SOLID'}
       hasMultipleValues={props.hasMultipleValues}
       onValueChange={props.onValueChange}
+      defaultValue={props.defaultValue}
+      isDefaultValue={props.isDefaultValue}
     >
       {Object.keys(DASH_PATTERNS).map(type => {
         const pattern = DASH_PATTERNS[type];
@@ -36,4 +37,6 @@ interface Props {
   value?: string;
   hasMultipleValues?: boolean;
   onValueChange: (value: string | undefined) => void;
+  defaultValue?: string;
+  isDefaultValue: boolean;
 }

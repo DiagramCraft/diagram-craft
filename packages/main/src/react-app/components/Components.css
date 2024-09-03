@@ -207,6 +207,7 @@
   padding: 5px;
   box-shadow: var(--menu-shadow);
   border: 1px solid var(--primary-border);
+  z-index: 250;
 
   .cmp-context-menu__item,
   .cmp-context-menu__checkbox-item,
