@@ -1,5 +1,5 @@
 import * as ReactDropdownMenu from '@radix-ui/react-dropdown-menu';
-import { TbChevronRight, TbDotsDiagonal2 } from 'react-icons/tb';
+import { TbChevronRight, TbDots } from 'react-icons/tb';
 import { usePortal } from './PortalContext';
 import styles from './Select.module.css';
 import { extractDataAttributes } from './utils';
@@ -82,7 +82,7 @@ const Root = (props: RootProps) => {
             valueLabel ?? props.placeholder ?? ''
           )}
           <div className={styles.cmpSelectTriggerIcon}>
-            <TbDotsDiagonal2 />
+            <TbDots />
           </div>
         </button>
       </ReactDropdownMenu.Trigger>
