@@ -91,6 +91,7 @@ export const makePropertyArrayHook = <
 >(
   getArr: (obj: TBase) => TItem[],
   getObj: (e: TItem) => DeepReadonly<TObj>,
+  getStoredObj: (e: TItem) => DeepReadonly<TObj>,
   updateObj: (obj: TBase, e: TItem, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
   defaults: TObj,
@@ -140,8 +141,7 @@ export const makePropertyArrayHook = <
       isDefaultVal: () => {
         if (multiple) return false;
         const accessor = new DynamicAccessor<TObj>();
-        const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path)));
-
+        const arr = unique(getArr(obj).map(obj => accessor.get(getStoredObj(obj) as TObj, path)));
         if (arr.length === 1 && arr[0] === undefined) return true;
         return false;
       }

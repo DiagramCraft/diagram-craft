@@ -5,7 +5,7 @@ export const ResetContextMenu = (props: Props) => {
   const portal = usePortal();
   return (
     <ContextMenu.Root>
-      <ContextMenu.Trigger asChild={true} disabled={props.disabled}>
+      <ContextMenu.Trigger asChild={true} {...props}>
         {props.children}
       </ContextMenu.Trigger>
 

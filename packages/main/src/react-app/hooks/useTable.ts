@@ -61,6 +61,7 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
     return [];
   }) as (d: Diagram) => DiagramNode[],
   node => node.editProps,
+  node => node.storedProps,
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);

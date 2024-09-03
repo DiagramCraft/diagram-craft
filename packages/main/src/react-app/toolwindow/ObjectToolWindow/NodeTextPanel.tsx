@@ -32,7 +32,7 @@ type FormProps = {
   isItalic: Property<boolean>;
   textDecoration: Property<'none' | 'underline' | 'line-through' | 'overline' | undefined>;
   textTransform: Property<'none' | 'uppercase' | 'lowercase' | 'capitalize' | undefined>;
-  color: Property<string>;
+  color: Property<string | undefined>;
   top: Property<number | undefined>;
   left: Property<number | undefined>;
   bottom: Property<number | undefined>;

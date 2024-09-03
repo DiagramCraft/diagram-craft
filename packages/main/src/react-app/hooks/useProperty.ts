@@ -63,6 +63,7 @@ export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makeProper
 >(
   diagram => diagram.selectionState.edges,
   edge => edge.editProps,
+  edge => edge.storedProps,
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
@@ -92,6 +93,7 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
 >(
   diagram => diagram.selectionState.nodes,
   node => node.editProps,
+  node => node.storedProps,
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
@@ -123,6 +125,7 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
   //       maybe change makePropertyArrayHook
   diagram => [...diagram.selectionState.elements],
   element => element.editProps,
+  element => element.storedProps,
   (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selectionState, 'change', handler);
@@ -150,6 +153,7 @@ export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
     // TODO: This is to avoid issue with Readonly, but it's not ideal
     //       maybe change makePropertyArrayHook
     diagram => [...diagram.selectionState.elements],
+    element => element.metadata,
     element => element.metadata,
     (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateMetadata(cb, uow)),
     (diagram, handler) => {

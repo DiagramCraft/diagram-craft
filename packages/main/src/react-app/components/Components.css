@@ -3,6 +3,10 @@
 
 
 .cmp-color-picker {
+  &[data-is-default-value="true"] {
+    > button { color: var(--cmp-is-default-fg); }
+  }
+
   > button {
     display: flex;
     align-items: center;
@@ -23,6 +27,7 @@
       outline: none;
       box-shadow: var(--cmp-focus-shadow);
     }
+
   }
 
   .cmp-color-picker__well {

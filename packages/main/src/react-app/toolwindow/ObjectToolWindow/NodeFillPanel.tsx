@@ -47,23 +47,23 @@ const PATTERNS = [
   `<pattern id="#ID#" x="2" y="2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="8" height="8" fill="#BG#" /><rect x="0" y="0" width="4" height="4" fill="#FG#" /><rect x="4" y="4" width="4" height="4" fill="#FG#" /></pattern>`
 ];
 
-const ImageScale = (props: {
-  fillImageScale: number;
-  onChange: (v: number | undefined) => void;
-}) => (
+const ImageScale = (props: { imageScale: Property<number | undefined> }) => (
   <>
     <div className={'cmp-labeled-table__label'}>Scale:</div>
     <div className={'cmp-labeled-table__value'}>
-      <Slider value={round(props.fillImageScale * 100)} onChange={props.onChange} />
+      <Slider
+        value={round(props.imageScale.val * 100)}
+        onChange={v => props.imageScale.set(v === undefined ? undefined : Number(v) / 100)}
+        isDefaultValue={props.imageScale.isDefaultVal()}
+        defaultValue={round(props.imageScale.defaultVal * 100)}
+      />
     </div>
   </>
 );
 
 const ImageTint = (props: {
-  tint: string;
-  onChangeTint: (v: string) => void;
-  tintStrength: number;
-  onChangeTintStrength: (v: number | undefined) => void;
+  tint: Property<string | undefined>;
+  tintStrength: Property<number | undefined>;
 }) => {
   const $cfg = useConfiguration();
   const $d = useDiagram();
@@ -74,16 +74,23 @@ const ImageTint = (props: {
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
             palette={$cfg.palette.primary}
-            color={props.tint}
-            onChange={props.onChangeTint}
+            color={props.tint.val}
+            onChange={v => props.tint.set(v)}
             canClearColor={true}
             customPalette={$d.document.customPalette.colors}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            isDefaultValue={props.tint.isDefaultVal()}
+            defaultValue={props.tint.defaultVal}
           />
         </div>
         <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Slider value={round(props.tintStrength * 100)} onChange={props.onChangeTintStrength} />
+          <Slider
+            value={round(props.tintStrength.val * 100)}
+            onChange={v => props.tintStrength.set(v === undefined ? undefined : Number(v) / 100)}
+            isDefaultValue={props.tintStrength.isDefaultVal()}
+            defaultValue={props.tintStrength.defaultVal * 100}
+          />
         </div>
       </div>
     </Collapsible>
@@ -91,26 +98,31 @@ const ImageTint = (props: {
 };
 
 const ImageAdjustments = (props: {
-  contrast: number;
-  onChangeContrast: (v: number | undefined) => void;
-  brightness: number;
-  onChangeBrightness: (v: number | undefined) => void;
-  saturation: number;
-  onChangeSaturation: (v: number | undefined) => void;
+  contrast: Property<number | undefined>;
+  brightness: Property<number | undefined>;
+  saturation: Property<number | undefined>;
 }) => (
   <Collapsible label={'Adjustments'}>
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label util-a-top-center'}>Contrast:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider max={200} value={round(props.contrast * 100)} onChange={props.onChangeContrast} />
+        <Slider
+          max={200}
+          value={round(props.contrast.val * 100)}
+          onChange={v => props.contrast.set(v === undefined ? undefined : Number(v) / 100)}
+          isDefaultValue={props.contrast.isDefaultVal()}
+          defaultValue={props.contrast.defaultVal * 100}
+        />
       </div>
 
       <div className={'cmp-labeled-table__label util-a-top-center'}>Brightness:</div>
       <div className={'cmp-labeled-table__value'}>
         <Slider
           max={200}
-          value={round(props.brightness * 100)}
-          onChange={props.onChangeBrightness}
+          value={round(props.brightness.val * 100)}
+          onChange={v => props.brightness.set(v === undefined ? undefined : Number(v) / 100)}
+          isDefaultValue={props.brightness.isDefaultVal()}
+          defaultValue={props.brightness.defaultVal * 100}
         />
       </div>
 
@@ -118,8 +130,10 @@ const ImageAdjustments = (props: {
       <div className={'cmp-labeled-table__value'}>
         <Slider
           max={200}
-          value={round(props.saturation * 100)}
-          onChange={props.onChangeSaturation}
+          value={round(props.saturation.val * 100)}
+          onChange={v => props.saturation.set(v === undefined ? undefined : Number(v) / 100)}
+          isDefaultValue={props.saturation.isDefaultVal()}
+          defaultValue={props.saturation.defaultVal * 100}
         />
       </div>
     </div>
@@ -178,6 +192,8 @@ export const NodeFillPanelForm = ({
               hasMultipleValues={color.hasMultipleValues}
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              isDefaultValue={color.isDefaultVal()}
+              defaultValue={color.defaultVal}
             />
             {type.val === 'gradient' && (
               <>
@@ -188,6 +204,8 @@ export const NodeFillPanelForm = ({
                   hasMultipleValues={color2.hasMultipleValues}
                   customPalette={$d.document.customPalette.colors}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                  isDefaultValue={color2.isDefaultVal()}
+                  defaultValue={color2.defaultVal}
                 />
               </>
             )}
@@ -205,6 +223,8 @@ export const NodeFillPanelForm = ({
                 gradientType.set(v as any);
               }}
               value={gradientType.val}
+              isDefaultValue={gradientType.isDefaultVal()}
+              defaultValue={gradientType.defaultVal}
             >
               <Select.Item value={'linear'}>Linear</Select.Item>
               <Select.Item value={'radial'}>Radial</Select.Item>
@@ -220,6 +240,8 @@ export const NodeFillPanelForm = ({
                   max={360}
                   value={round(Angle.toDeg(gradientDirection.val))}
                   onChange={v => gradientDirection.set(Angle.toRad(Number(v)))}
+                  isDefaultValue={gradientDirection.isDefaultVal()}
+                  defaultValue={Angle.toDeg(gradientDirection.defaultVal)}
                 />
               </div>
             </>
@@ -269,6 +291,8 @@ export const NodeFillPanelForm = ({
               hasMultipleValues={color.hasMultipleValues}
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              isDefaultValue={color.isDefaultVal()}
+              defaultValue={color.defaultVal}
             />
             <ColorPicker
               palette={$cfg.palette.primary}
@@ -277,6 +301,8 @@ export const NodeFillPanelForm = ({
               hasMultipleValues={color2.hasMultipleValues}
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              isDefaultValue={color2.isDefaultVal()}
+              defaultValue={color2.defaultVal}
             />
           </div>
         </>
@@ -317,36 +343,15 @@ export const NodeFillPanelForm = ({
             ))}
           </div>
 
-          <ImageScale
-            fillImageScale={imageScale.val}
-            onChange={v => {
-              imageScale.set(Number(v) / 100);
-            }}
-          />
+          <ImageScale imageScale={imageScale} />
 
           <ImageAdjustments
-            contrast={imageContrast.val}
-            onChangeContrast={v => {
-              imageContrast.set(Number(v) / 100);
-            }}
-            brightness={imageBrightness.val}
-            onChangeBrightness={v => {
-              imageBrightness.set(Number(v) / 100);
-            }}
-            saturation={imageSaturation.val}
-            onChangeSaturation={v => {
-              imageSaturation.set(Number(v) / 100);
-            }}
+            contrast={imageContrast}
+            brightness={imageBrightness}
+            saturation={imageSaturation}
           />
 
-          <ImageTint
-            tint={imageTint.val}
-            onChangeTint={imageTint.set}
-            tintStrength={imageTintStrength.val}
-            onChangeTintStrength={v => {
-              imageTintStrength.set(Number(v) / 100);
-            }}
-          />
+          <ImageTint tint={imageTint} tintStrength={imageTintStrength} />
         </>
       )}
 
@@ -417,6 +422,8 @@ export const NodeFillPanelForm = ({
                 imageFit.set(v as any);
               }}
               value={imageFit.val}
+              isDefaultValue={imageFit.isDefaultVal()}
+              defaultValue={imageFit.defaultVal}
             >
               <Select.Item value={'fill'}>Fill</Select.Item>
               <Select.Item value={'contain'}>Contain</Select.Item>
@@ -426,38 +433,15 @@ export const NodeFillPanelForm = ({
             </Select.Root>
           </div>
 
-          {imageFit.val === 'tile' && (
-            <ImageScale
-              fillImageScale={imageScale.val}
-              onChange={v => {
-                imageScale.set(Number(v) / 100);
-              }}
-            />
-          )}
+          {imageFit.val === 'tile' && <ImageScale imageScale={imageScale} />}
 
           <ImageAdjustments
-            contrast={imageContrast.val}
-            onChangeContrast={v => {
-              imageContrast.set(Number(v) / 100);
-            }}
-            brightness={imageBrightness.val}
-            onChangeBrightness={v => {
-              imageBrightness.set(Number(v) / 100);
-            }}
-            saturation={imageSaturation.val}
-            onChangeSaturation={v => {
-              imageSaturation.set(Number(v) / 100);
-            }}
+            contrast={imageContrast}
+            brightness={imageBrightness}
+            saturation={imageSaturation}
           />
 
-          <ImageTint
-            tint={imageTint.val}
-            onChangeTint={imageTint.set}
-            tintStrength={imageTintStrength.val}
-            onChangeTintStrength={v => {
-              imageTintStrength.set(Number(v) / 100);
-            }}
-          />
+          <ImageTint tint={imageTint} tintStrength={imageTintStrength} />
         </>
       )}
     </div>
@@ -466,8 +450,8 @@ export const NodeFillPanelForm = ({
 
 type FormProps = {
   type: Property<FillType | undefined>;
-  color: Property<string>;
-  color2: Property<string>;
+  color: Property<string | undefined>;
+  color2: Property<string | undefined>;
   gradientType: Property<'linear' | 'radial'>;
   gradientDirection: Property<number>;
   pattern: Property<string>;
@@ -475,12 +459,12 @@ type FormProps = {
   imageFit: Property<'fill' | 'contain' | 'cover' | 'keep' | 'tile'>;
   imageW: Property<number>;
   imageH: Property<number>;
-  imageScale: Property<number>;
-  imageContrast: Property<number>;
-  imageBrightness: Property<number>;
-  imageSaturation: Property<number>;
-  imageTint: Property<string>;
-  imageTintStrength: Property<number>;
+  imageScale: Property<number | undefined>;
+  imageContrast: Property<number | undefined>;
+  imageBrightness: Property<number | undefined>;
+  imageSaturation: Property<number | undefined>;
+  imageTint: Property<string | undefined>;
+  imageTintStrength: Property<number | undefined>;
   diagram: Diagram;
   config: ConfigurationContextType;
 };

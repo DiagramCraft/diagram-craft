@@ -11,7 +11,7 @@ import { Property } from './types';
 type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
-  color: Property<string>;
+  color: Property<string | undefined>;
   opacity: Property<number>;
   x: Property<number | undefined>;
   y: Property<number | undefined>;

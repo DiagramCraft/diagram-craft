@@ -15,7 +15,7 @@ import { LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
-  strokeColor: Property<string>;
+  strokeColor: Property<string | undefined>;
   strokeWidth: Property<number>;
   pattern: Property<string>;
   strokeSize: Property<number>;

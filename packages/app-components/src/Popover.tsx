@@ -19,7 +19,11 @@ type RootProps = {
 };
 
 const Trigger = (props: TriggerProps) => {
-  return <RadixPopover.Trigger asChild>{props.children}</RadixPopover.Trigger>;
+  return (
+    <RadixPopover.Trigger asChild {...props}>
+      {props.children}
+    </RadixPopover.Trigger>
+  );
 };
 
 type TriggerProps = {

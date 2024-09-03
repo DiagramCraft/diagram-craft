@@ -41,6 +41,7 @@ export interface DiagramElement extends AbstractElement, AttachmentConsumer {
 
   editProps: ElementPropsForEditing;
   renderProps: ElementPropsForRendering;
+  storedProps: ElementProps;
   updateProps(callback: (props: NodeProps | EdgeProps) => void, uow: UnitOfWork): void;
 
   metadata: DeepReadonly<ElementMetadata>;
