@@ -8,10 +8,11 @@ import { Slider } from '@diagram-craft/app-components/Slider';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 type FormProps = {
   diagram: Diagram;
-  reflection: Property<boolean>;
+  reflection: Property<boolean | undefined>;
   reflectionStrength: Property<number | undefined>;
   blur: Property<number>;
   opacity: Property<number>;
@@ -40,12 +41,11 @@ export const NodeEffectsPanelForm = ({
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Reflection:</div>
       <div className={'cmp-labeled-table__value'}>
-        <input
-          type="checkbox"
-          checked={reflection.val}
-          onChange={() => {
-            reflection.set(!reflection.val);
-          }}
+        <Checkbox
+          value={reflection.val}
+          onChange={v => reflection.set(v)}
+          isDefaultValue={reflection.isDefaultVal()}
+          defaultValue={reflection.defaultVal}
         />
       </div>
 

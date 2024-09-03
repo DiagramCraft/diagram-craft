@@ -188,6 +188,13 @@ input[type="checkbox"] {
 
   display: grid;
   place-content: center;
+
+  --__fg: var(--cmp-fg);
+}
+
+input[type="checkbox"][data-is-default-value="true"] {
+  --__fg: var(--cmp-is-default-fg);
+  border: 1px solid transparent;
 }
 
 input[type="checkbox"]::before {
@@ -198,7 +205,7 @@ input[type="checkbox"]::before {
   transform: scale(0);
   transform-origin: bottom left;
   transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em var(--cmp-fg);
+  box-shadow: inset 1em 1em var(--__fg);
 }
 
 input[type="checkbox"]:checked::before {
