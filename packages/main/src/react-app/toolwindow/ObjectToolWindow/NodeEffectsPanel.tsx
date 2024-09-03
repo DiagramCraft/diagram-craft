@@ -12,7 +12,7 @@ import { Property } from './types';
 type FormProps = {
   diagram: Diagram;
   reflection: Property<boolean>;
-  reflectionStrength: Property<number>;
+  reflectionStrength: Property<number | undefined>;
   blur: Property<number>;
   opacity: Property<number>;
   glass: Property<boolean>;
@@ -54,8 +54,10 @@ export const NodeEffectsPanelForm = ({
         <Slider
           value={round(reflectionStrength.val * 100)}
           onChange={v => {
-            reflectionStrength.set(Number(v) / 100);
+            reflectionStrength.set(v !== undefined ? Number(v) / 100 : undefined);
           }}
+          defaultValue={reflectionStrength.defaultVal * 100}
+          isDefaultValue={reflectionStrength.isDefaultVal()}
         />
       </div>
 

@@ -32,6 +32,8 @@ export const Slider = (props: Props) => {
         style={{ width: '50px' }}
         onChange={props.onChange}
         disabled={props.disabled}
+        defaultValue={props.defaultValue}
+        isDefaultValue={props.isDefaultValue}
       />
     </div>
   );
@@ -43,4 +45,6 @@ type Props = {
   unit?: string;
   disabled?: boolean;
   onChange: (value: number | undefined) => void;
+  defaultValue?: number;
+  isDefaultValue?: boolean;
 };
