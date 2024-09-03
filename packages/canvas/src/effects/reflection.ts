@@ -1,6 +1,6 @@
 import * as svg from '../component/vdom-svg';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { deepClone } from '@diagram-craft/utils/object';
+import { resilientDeepClone } from '@diagram-craft/utils/object';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { VNode } from '../component/vdom';
@@ -58,7 +58,7 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
 
       // TODO: This means text is not reflected, but if we don't filter it out
       //       there's an infinite recursion
-      ...children.filter(e => !e.tag.startsWith('text_')).map(e => deepClone(e))
+      ...children.filter(e => !e.tag.startsWith('text_')).map(e => resilientDeepClone(e))
     )
   ];
 };

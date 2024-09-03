@@ -87,7 +87,28 @@ export const deepMerge = <T extends Props>(target: Partial<T>, ...sources: Parti
  * // returns a new date object with the same time as the original
  * deepClone(new Date());
  */
-export const deepClone = structuredClone; /*<T>(target: T): T => {
+export const deepClone = structuredClone;
+
+/**
+ * Creates a deep clone of the provided target object. It handles objects such as
+ * window that is not compatible with the structured clone algorithm.
+ *
+ * @param target - The object to be cloned.
+ * @returns A deep clone of the target object.
+ *
+ * @example
+ * // returns a new object with the same properties as the original
+ * resilientDeepClone({ a: 1, b: 2 });
+ *
+ * @example
+ * // returns a new array with the same elements as the original
+ * resilientDeepClone([1, 2, 3]);
+ *
+ * @example
+ * // returns a new date object with the same time as the original
+ * resilientDeepClone(new Date());
+ */
+export const resilientDeepClone = <T>(target: T): T => {
   if (target === null) {
     return target;
   }
@@ -98,19 +119,19 @@ export const deepClone = structuredClone; /*<T>(target: T): T => {
 
   // T extends unknown[] specifies that T should be an array and would return T type
   if (Array.isArray(target)) {
-    return (target as T extends unknown[] ? T : never).map(item => deepClone(item)) as T;
+    return (target as T extends unknown[] ? T : never).map(item => resilientDeepClone(item)) as T;
   }
 
   if (typeof target === 'object') {
     const cp = { ...(target as Record<string, unknown>) };
     Object.keys(cp).forEach(key => {
-      cp[key] = deepClone(cp[key]);
+      cp[key] = resilientDeepClone(cp[key]);
     });
     return cp as T;
   }
 
   return target;
-};*/
+};
 
 /**
  * Compares two objects and returns `true` if they are deeply equal, `false` otherwise.
