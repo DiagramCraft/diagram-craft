@@ -50,7 +50,7 @@ export const QueryToolWindow = () => {
   const downloadRef = useRef<HTMLAnchorElement>(null);
   const [queryString, setQueryString] = useState<string>('.elements[]');
   const [expanded, setExpanded] = useState<number[]>([]);
-  const [source, setSource] = useState<string>('active-layer');
+  const [source, setSource] = useState<string | undefined>('active-layer');
   const [downloadLink, setDownloadLink] = useState('');
   const [queryIdx, setQueryIdx] = useState(0);
   const [queryInput, setQueryInput] = useState<unknown>({});
@@ -79,7 +79,7 @@ export const QueryToolWindow = () => {
   let error = undefined;
   try {
     const q = queries[queryIdx].q;
-    const input = queryIdx === 0 ? getSource(source, diagram) : queryInput;
+    const input = queryIdx === 0 ? getSource(source!, diagram) : queryInput;
 
     res = parseAndQuery(q, [input]);
 
@@ -160,7 +160,7 @@ export const QueryToolWindow = () => {
                       onClick={() => {
                         diagram.document.props.query ??= {};
                         diagram.document.props.query.saved ??= [];
-                        diagram.document.props.query.saved.push([source, ref.current!.value]);
+                        diagram.document.props.query.saved.push([source!, ref.current!.value]);
                       }}
                     >
                       Save

@@ -27,7 +27,7 @@ type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
   fontSize: Property<number | undefined>;
-  font: Property<string>;
+  font: Property<string | undefined>;
   isBold: Property<boolean>;
   isItalic: Property<boolean>;
   textDecoration: Property<'none' | 'underline' | 'line-through' | 'overline' | undefined>;

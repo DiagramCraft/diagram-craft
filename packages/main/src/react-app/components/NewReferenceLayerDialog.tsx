@@ -31,13 +31,13 @@ export const ReferenceLayerDialog = (props: Props) => {
     }, 100);
   });
 
-  const onDiagramChange = (diagram: string) => {
-    setSelectedDiagram(props.diagram.document.getById(diagram)!);
+  const onDiagramChange = (diagram: string | undefined) => {
+    setSelectedDiagram(props.diagram.document.getById(diagram!)!);
     setSelectedLayer(null);
   };
 
-  const onLayerChange = (layer: string) => {
-    setSelectedLayer(selectedDiagram!.layers.byId(layer)!);
+  const onLayerChange = (layer: string | undefined) => {
+    setSelectedLayer(selectedDiagram!.layers.byId(layer!)!);
   };
 
   return (

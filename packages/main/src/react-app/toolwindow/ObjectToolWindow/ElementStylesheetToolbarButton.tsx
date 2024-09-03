@@ -24,10 +24,10 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
 
   if (props.selectionType === 'mixed') return <></>;
 
-  const onValueChange = (v: string, type: 'style' | 'text-style' = 'style') => {
+  const onValueChange = (v: string | undefined, type: 'style' | 'text-style' = 'style') => {
     const uow = new UnitOfWork($d, true);
     $d.selectionState.elements.forEach(n => {
-      $d.document.styles.setStylesheet(n, v, uow, true);
+      $d.document.styles.setStylesheet(n, v!, uow, true);
     });
     if (type === 'style') style.set(v);
     else {

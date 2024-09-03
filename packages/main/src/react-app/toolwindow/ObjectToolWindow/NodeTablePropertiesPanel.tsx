@@ -84,7 +84,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
                   <Select.Root
                     onValueChange={v => {
                       const uow = new UnitOfWork(diagram, true);
-                      value.onChange(v, uow);
+                      value.onChange(v!, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
                     value={value.value}

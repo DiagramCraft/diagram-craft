@@ -4,34 +4,50 @@ import { usePortal } from './PortalContext';
 import styles from './Select.module.css';
 import { extractDataAttributes } from './utils';
 import { CSSProperties, ReactNode } from 'react';
+import { ResetContextMenu } from './ResetContextMenu';
 
 const Root = (props: RootProps) => {
   const portal = usePortal();
+
+  const isDefaultValue =
+    !props.hasMultipleValues &&
+    props.isDefaultValue &&
+    props.defaultValue !== undefined &&
+    props.value === props.defaultValue;
+
   return (
     <ReactSelect.Root
       onValueChange={props.onValueChange}
       value={props.hasMultipleValues ? undefined : props.value}
       open={props.open}
     >
-      <ReactSelect.Trigger
-        className={styles.cmpSelectTrigger}
-        {...extractDataAttributes(props)}
-        disabled={props.disabled}
-        style={props.style ?? {}}
+      <ResetContextMenu
+        disabled={props.defaultValue === undefined}
+        onReset={() => {
+          props.onValueChange(undefined);
+        }}
       >
-        <ReactSelect.Value
-          placeholder={
-            props.hasMultipleValues ? (
-              <div style={{ color: 'var(--primary-fg)' }}>···</div>
-            ) : (
-              props.placeholder ?? ''
-            )
-          }
-        />
-        <ReactSelect.Icon className={styles.cmpSelectTriggerIcon}>
-          <TbChevronDown />
-        </ReactSelect.Icon>
-      </ReactSelect.Trigger>
+        <ReactSelect.Trigger
+          className={styles.cmpSelectTrigger}
+          {...extractDataAttributes(props)}
+          data-is-default-value={isDefaultValue}
+          disabled={props.disabled}
+          style={props.style ?? {}}
+        >
+          <ReactSelect.Value
+            placeholder={
+              props.hasMultipleValues ? (
+                <div style={{ color: 'var(--primary-fg)' }}>···</div>
+              ) : (
+                props.placeholder ?? ''
+              )
+            }
+          />
+          <ReactSelect.Icon className={styles.cmpSelectTriggerIcon}>
+            <TbChevronDown />
+          </ReactSelect.Icon>
+        </ReactSelect.Trigger>
+      </ResetContextMenu>
       <ReactSelect.Portal container={portal}>
         <ReactSelect.Content className={styles.cmpSelectContent}>
           <ReactSelect.Viewport className={styles.cmpSelectContentViewpoint}>
@@ -45,8 +61,10 @@ const Root = (props: RootProps) => {
 type RootProps = {
   hasMultipleValues?: boolean;
   children: ReactNode;
-  value: string;
-  onValueChange: (value: string) => void;
+  value: string | undefined;
+  defaultValue?: string;
+  isDefaultValue?: boolean;
+  onValueChange: (value: string | undefined) => void;
   open?: boolean;
   disabled?: boolean;
   placeholder?: string;

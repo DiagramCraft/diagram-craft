@@ -156,6 +156,8 @@ export const NodeFillPanelForm = ({
             type.set(v);
           }}
           value={type.val}
+          isDefaultValue={type.isDefaultVal()}
+          defaultValue={type.defaultVal}
         >
           <Select.Item value={'solid'}>Solid</Select.Item>
           <Select.Item value={'gradient'}>Gradient</Select.Item>
@@ -463,7 +465,7 @@ export const NodeFillPanelForm = ({
 };
 
 type FormProps = {
-  type: Property<FillType>;
+  type: Property<FillType | undefined>;
   color: Property<string>;
   color2: Property<string>;
   gradientType: Property<'linear' | 'radial'>;

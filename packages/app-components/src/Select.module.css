@@ -12,6 +12,10 @@
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
 
+  &[data-is-default-value='true'] {
+    color: var(--cmp-is-default-fg);
+  }
+
   &:hover:not(:disabled),
   &[data-hover="true"] {
     background-color: var(--cmp-hover-bg);
