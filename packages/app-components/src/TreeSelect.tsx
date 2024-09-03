@@ -13,7 +13,7 @@ const ItemsList = (props: { items: Item[]; onValueChange: (v: string) => void })
       {props.items.map(item => {
         if (item.items && item.items.length > 0) {
           return (
-            <ReactDropdownMenu.Sub>
+            <ReactDropdownMenu.Sub key={item.value}>
               <ReactDropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger">
                 {item.label}
                 <div className="cmp-context-menu__right-slot">
@@ -34,6 +34,7 @@ const ItemsList = (props: { items: Item[]; onValueChange: (v: string) => void })
         } else {
           return (
             <ReactDropdownMenu.Item
+              key={item.value}
               className={'cmp-context-menu__item'}
               onClick={() => props.onValueChange(item.value)}
             >

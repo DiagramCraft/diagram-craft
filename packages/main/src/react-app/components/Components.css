@@ -284,7 +284,8 @@
   }
 
   .cmp-context-menu__arrow {
-    fill: var(--cmp-fg);
+    transform: translateY(-1px);
+    fill: var(--primary-bg);
   }
 }
 

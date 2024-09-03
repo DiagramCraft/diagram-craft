@@ -59,6 +59,7 @@ const Item = (props: ItemProps) => {
       className={styles.cmpSelectContentItem}
       key={props.value}
       value={props.value}
+      disabled={props.disabled ?? false}
       {...extractDataAttributes(props)}
     >
       <ReactSelect.ItemText>{props.children}</ReactSelect.ItemText>
@@ -72,6 +73,7 @@ const Item = (props: ItemProps) => {
 type ItemProps = {
   value: string;
   children: ReactNode;
+  disabled?: boolean;
 };
 
 export const Select = {

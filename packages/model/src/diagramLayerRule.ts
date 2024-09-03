@@ -3,7 +3,8 @@ import { Layer, RegularLayer } from './diagramLayer';
 import { Diagram } from './diagram';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { parseAndQuery } from '@diagram-craft/query/query';
-import { notImplemented } from '@diagram-craft/utils/assert';
+import { assert, notImplemented } from '@diagram-craft/utils/assert';
+import { nodeDefaults } from './diagramDefaults';
 
 export type AdjustmentRule = {
   id: string;
@@ -25,7 +26,7 @@ export type AdjustmentRuleClause = { id: string } & (
   | {
       type: 'props';
       path: string;
-      relation: 'eq' | 'neq' | 'gt' | 'lt' | 'contains';
+      relation: 'eq' | 'neq' | 'gt' | 'lt' | 'contains' | 'matches' | 'set';
       value: string;
     }
 );
@@ -47,6 +48,40 @@ export type AdjustmentRuleAction = { id: string } & (
 export type Adjustment = NodeProps | EdgeProps;
 
 type Result = Map<string, Adjustment>;
+
+type Prop = { value: string; label: string; type?: string; items?: Prop[] };
+export const validProps = (_type: 'edge' | 'node'): Prop[] => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const defaultProps = (d: any, path = '') => {
+    if (d === null || d === undefined) return [];
+
+    const dest: Prop[] = [];
+    for (const key of Object.keys(d)) {
+      if (typeof d[key] === 'object') {
+        dest.push({
+          value: path === '' ? key : path + '.' + key,
+          label: key,
+          items: defaultProps(d[key], path === '' ? key : path + '.' + key)
+        });
+      } else {
+        dest.push({
+          value: path === '' ? key : path + '.' + key,
+          label: key,
+          type: typeof d[key]
+        });
+      }
+    }
+    return dest;
+  };
+
+  return [
+    { value: 'id', label: 'ID', type: 'string' },
+    { value: 'metadata.name', label: 'Name', type: 'string' },
+    { value: 'metadata.style', label: 'Style', type: 'string' },
+    { value: 'metadata.textStyle', label: 'Text Style', type: 'string' },
+    { value: 'props', label: 'Style properties', items: defaultProps(nodeDefaults, 'renderProps') }
+  ];
+};
 
 export class RuleLayer extends Layer {
   #rules: Array<AdjustmentRule> = [];
@@ -106,7 +141,10 @@ export class RuleLayer extends Layer {
   private evaluateClauses(clauses: AdjustmentRuleClause[]) {
     const results: Set<string>[] = [];
     for (const clause of clauses) {
-      notImplemented.true(clause.type === 'query' || clause.type === 'any', 'Not implemented yet');
+      notImplemented.true(
+        clause.type === 'query' || clause.type === 'any' || clause.type === 'props',
+        'Not implemented yet'
+      );
       if (clause.type === 'query') {
         const r = parseAndQuery(
           clause.query,
@@ -116,6 +154,45 @@ export class RuleLayer extends Layer {
       } else if (clause.type === 'any') {
         const anyResult = this.evaluateClauses(clause.clauses);
         const result = anyResult.reduce((p, c) => p.union(c), anyResult[0]);
+        results.push(result);
+      } else if (clause.type === 'props') {
+        const re = clause.relation === 'matches' ? new RegExp(clause.value) : undefined;
+
+        const result = new Set<string>();
+        for (const layer of this.diagram.layers.visible) {
+          if (layer instanceof RegularLayer) {
+            for (const element of (layer as RegularLayer).elements) {
+              // @ts-ignore
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const value: any = clause.path.split('.').reduce((p, c) => p[c], element);
+
+              switch (clause.relation) {
+                case 'eq':
+                  if (value === clause.value) result.add(element.id);
+                  break;
+                case 'neq':
+                  if (value !== clause.value) result.add(element.id);
+                  break;
+                case 'gt':
+                  if (value > clause.value) result.add(element.id);
+                  break;
+                case 'lt':
+                  if (value < clause.value) result.add(element.id);
+                  break;
+                case 'contains':
+                  if (value.includes(clause.value)) result.add(element.id);
+                  break;
+                case 'matches':
+                  assert.present(re);
+                  if (re.test(value)) result.add(element.id);
+                  break;
+                case 'set':
+                  if (value) result.add(element.id);
+                  break;
+              }
+            }
+          }
+        }
         results.push(result);
       }
     }

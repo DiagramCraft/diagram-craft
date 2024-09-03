@@ -3,7 +3,8 @@ import { Select } from '@diagram-craft/app-components/Select';
 import {
   AdjustmentRule,
   AdjustmentRuleAction,
-  AdjustmentRuleClause
+  AdjustmentRuleClause,
+  validProps
 } from '@diagram-craft/model/diagramLayerRule';
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -14,6 +15,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
 import { EDGE_EDITORS, Editor, EditorTypes, NODE_EDITORS } from './editors';
 import { StyleAction } from './StyleAction';
+import { TreeSelect } from '@diagram-craft/app-components/TreeSelect';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -76,6 +78,7 @@ const ClauseList = (props: ClauseListProps) => {
               }}
             >
               <Select.Item value={'query'}>Query</Select.Item>
+              <Select.Item value={'props'}>Property</Select.Item>
               {!props.indent && <Select.Item value={'any'}>Any</Select.Item>}
             </Select.Root>
             {c.type === 'query' && (
@@ -109,7 +112,48 @@ const ClauseList = (props: ClauseListProps) => {
                 ></div>
               </div>
             )}
-            {c.type !== 'query' && c.type !== 'any' && <div></div>}
+            {c.type === 'props' && (
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <TreeSelect.Root
+                  value={c.path ?? ''}
+                  onValueChange={v => {
+                    c.path = v;
+                    c.relation ??= 'eq';
+                    props.onChange([...props.clauses]);
+                  }}
+                  items={validProps(props.type)}
+                  placeholder={'Select property'}
+                />
+                {/* TODO: Filter relations based on type */}
+                <Select.Root
+                  value={'eq'}
+                  onValueChange={cond => {
+                    // @ts-ignore
+                    c.relation = cond;
+                    props.onChange([...props.clauses]);
+                  }}
+                >
+                  <Select.Item value={'eq'}>Is</Select.Item>
+                  <Select.Item value={'neq'}>Is Not</Select.Item>
+                  <Select.Item value={'contains'}>Contains</Select.Item>
+                  <Select.Item value={'matches'}>Matches</Select.Item>
+                  <Select.Item value={'gt'}>Greater Than</Select.Item>
+                  <Select.Item value={'lt'}>Less Than</Select.Item>
+                </Select.Root>
+                <div className={'cmp-text-input'}>
+                  <input
+                    value={c.value ?? ''}
+                    type={'text'}
+                    onChange={e => {
+                      c.value = e.target.value;
+                      c.relation ??= 'eq';
+                      props.onChange([...props.clauses]);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {c.type !== 'query' && c.type !== 'any' && c.type !== 'props' && <div></div>}
 
             <Button
               type={'icon-only'}
@@ -142,6 +186,7 @@ const ClauseList = (props: ClauseListProps) => {
                   props.onChange([...props.clauses]);
                 }}
                 indent={true}
+                type={props.type}
               />
             )}
           </React.Fragment>
@@ -155,6 +200,7 @@ type ClauseListProps = {
   clauses: EditableAdjustmentRuleClause[];
   onChange: (newClauses: EditableAdjustmentRuleClause[]) => void;
   indent: boolean;
+  type: 'edge' | 'node';
 };
 
 export const RuleEditorDialog = (props: Props) => {
@@ -306,7 +352,7 @@ export const RuleEditorDialog = (props: Props) => {
           <div></div>
           <div></div>
 
-          <ClauseList clauses={clauses} onChange={setClauses} indent={false} />
+          <ClauseList clauses={clauses} onChange={setClauses} indent={false} type={type} />
 
           <h4 style={{ margin: '0.5rem 0 0 0' }}>Then</h4>
           <div></div>
