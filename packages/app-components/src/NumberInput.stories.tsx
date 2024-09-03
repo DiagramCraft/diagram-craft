@@ -42,6 +42,14 @@ export const Error: Story = {
   }
 };
 
+export const WithDefaultValue: Story = {
+  args: {
+    value: '77 px',
+    onChange: fn(),
+    isDefaultValue: true
+  }
+};
+
 export const Disabled: Story = {
   args: {
     value: '77 px',

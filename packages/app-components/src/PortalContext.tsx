@@ -6,7 +6,10 @@ export const PortalContextProvider = ({ children }: { children: React.ReactNode 
   const [ref, setRef] = useState<HTMLDivElement | null>(null);
   return (
     <PortalContext.Provider value={ref}>
-      <div ref={setRef} style={{ position: 'absolute', left: '0px', top: '0px' }}></div>
+      <div
+        ref={setRef}
+        style={{ position: 'absolute', left: '0px', top: '0px', zIndex: 100 }}
+      ></div>
       {children}
     </PortalContext.Provider>
   );

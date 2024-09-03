@@ -18,6 +18,8 @@ export type PropertyHook<TBase, TObj> = <
 ) => {
   val: V;
   set: (value: V) => void;
+  defaultVal: NonNullable<V>;
+  isDefaultVal: () => boolean;
 };
 
 export type PropertyArrayHook<TBase, TObj> = <
@@ -32,6 +34,8 @@ export type PropertyArrayHook<TBase, TObj> = <
   val: NonNullable<V>;
   set: (value: V) => void;
   hasMultipleValues: boolean;
+  defaultVal: NonNullable<V>;
+  isDefaultVal: () => boolean;
 };
 
 export const makePropertyHook = <
@@ -66,7 +70,13 @@ export const makePropertyHook = <
           new DynamicAccessor<TObj>().set(p, path, v);
         });
         callbacks?.onAfterSet?.(obj, path, value, v);
-        setValue(v);
+        setValue(v ?? defaultValue);
+      },
+      defaultVal: defaultValue,
+      isDefaultVal: () => {
+        const accessor = new DynamicAccessor<TObj>();
+        const value = accessor.get(getObj(obj), path);
+        return value === undefined;
       }
     };
   }) as PropertyHook<TBase, TObj>;
@@ -122,10 +132,19 @@ export const makePropertyArrayHook = <
           });
         });
         callbacks?.onAfterSet?.(obj, getArr(obj), path, oldValues as TValue[], v);
-        setValue(v);
+        setValue(v ?? defaultValue);
         setMultiple(false);
       },
-      hasMultipleValues: multiple
+      hasMultipleValues: multiple,
+      defaultVal: defaultValue,
+      isDefaultVal: () => {
+        if (multiple) return false;
+        const accessor = new DynamicAccessor<TObj>();
+        const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path)));
+
+        if (arr.length === 1 && arr[0] === undefined) return true;
+        return false;
+      }
     };
   }) as PropertyArrayHook<TBase, TObj>;
 };

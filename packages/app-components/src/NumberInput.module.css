@@ -23,6 +23,16 @@
     }
   }
 
+  &[data-is-default-value='true'] {
+    > input {
+      color: var(--cmp-is-default-fg);
+    }
+  }
+
+  &:has(> input:disabled) {
+    border-color: transparent;
+  }
+
   > input {
     color: var(--primary-fg);
     border: none;

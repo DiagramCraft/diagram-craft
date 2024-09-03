@@ -69,6 +69,8 @@ export function makeProperty<
       accessor.set(obj, propertyPath, v);
       onChange(v);
     },
-    hasMultipleValues: false
+    hasMultipleValues: false,
+    defaultVal: accessor.get(defaults, propertyPath) as V,
+    isDefaultVal: () => accessor.get(obj, propertyPath) === undefined
   } as Property<V>;
 }

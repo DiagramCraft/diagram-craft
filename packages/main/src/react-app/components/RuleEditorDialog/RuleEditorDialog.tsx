@@ -239,7 +239,8 @@ export const RuleEditorDialog = (props: Props) => {
   const editors = type === 'node' ? NODE_EDITORS : EDGE_EDITORS;
 
   const filteredActions = actions.filter(
-    action => action.type !== 'set-props' || (action.kind ?? '') in editors
+    action =>
+      action.type !== 'set-props' || action.kind === undefined || (action.kind ?? '') in editors
   );
   if (filteredActions.length === 0) {
     const newAction = { id: newid() };

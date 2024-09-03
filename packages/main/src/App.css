@@ -66,6 +66,7 @@
   --cmp-border: var(--slate-6);
 
   --cmp-hover-bg: var(--slate-4);
+  --cmp-is-default-fg: var(--slate-8);
   --cmp-disabled-fg: var(--slate-8);
 
   --cmp-focus-border: var(--blue-8);
@@ -104,6 +105,7 @@
   --cmp-border: var(--slate-6);
 
   --cmp-hover-bg: var(--slate-4);
+  --cmp-is-default-fg: var(--slate-9);
   --cmp-disabled-fg: var(--slate-8);
 
   --cmp-focus-border: var(--blue-8);

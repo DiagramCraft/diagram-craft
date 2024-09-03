@@ -55,6 +55,8 @@ export const NodeStrokePanelForm = ({
       <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
         <NumberInput
           defaultUnit={'px'}
+          defaultValue={strokeWidth.defaultVal}
+          isDefaultValue={strokeWidth.isDefaultVal()}
           value={strokeWidth.val}
           min={1}
           style={{ width: '35px' }}
