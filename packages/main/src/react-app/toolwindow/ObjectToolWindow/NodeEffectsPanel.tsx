@@ -14,13 +14,13 @@ type FormProps = {
   diagram: Diagram;
   reflection: Property<boolean | undefined>;
   reflectionStrength: Property<number | undefined>;
-  blur: Property<number>;
-  opacity: Property<number>;
-  glass: Property<boolean>;
-  sketch: Property<boolean>;
-  sketchStrength: Property<number>;
+  blur: Property<number | undefined>;
+  opacity: Property<number | undefined>;
+  glass: Property<boolean | undefined>;
+  sketch: Property<boolean | undefined>;
+  sketchStrength: Property<number | undefined>;
   sketchFillType: Property<'fill' | 'hachure'>;
-  rounding: Property<boolean>;
+  rounding: Property<boolean | undefined>;
   roundingAmount: Property<number | undefined>;
 };
 
@@ -54,7 +54,7 @@ export const NodeEffectsPanelForm = ({
         <Slider
           value={round(reflectionStrength.val * 100)}
           onChange={v => {
-            reflectionStrength.set(v !== undefined ? Number(v) / 100 : undefined);
+            reflectionStrength.set(v === undefined ? undefined : Number(v) / 100);
           }}
           defaultValue={reflectionStrength.defaultVal * 100}
           isDefaultValue={reflectionStrength.isDefaultVal()}
@@ -66,8 +66,10 @@ export const NodeEffectsPanelForm = ({
         <Slider
           value={round(blur.val * 100)}
           onChange={v => {
-            blur.set(Number(v) / 100);
+            blur.set(v === undefined ? undefined : Number(v) / 100);
           }}
+          defaultValue={blur.defaultVal * 100}
+          isDefaultValue={blur.isDefaultVal()}
         />
       </div>
 
@@ -76,30 +78,30 @@ export const NodeEffectsPanelForm = ({
         <Slider
           value={round(opacity.val * 100)}
           onChange={v => {
-            opacity.set(Number(v) / 100);
+            opacity.set(v === undefined ? undefined : Number(v) / 100);
           }}
+          defaultValue={opacity.defaultVal * 100}
+          isDefaultValue={opacity.isDefaultVal()}
         />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Glass:</div>
       <div className={'cmp-labeled-table__value'}>
-        <input
-          type="checkbox"
-          checked={glass.val}
-          onChange={() => {
-            glass.set(!glass.val);
-          }}
+        <Checkbox
+          value={glass.val}
+          onChange={b => glass.set(b)}
+          defaultValue={glass.defaultVal}
+          isDefaultValue={glass.isDefaultVal()}
         />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Sketch:</div>
       <div className={'cmp-labeled-table__value'}>
-        <input
-          type="checkbox"
-          checked={sketch.val}
-          onChange={() => {
-            sketch.set(!sketch.val);
-          }}
+        <Checkbox
+          value={sketch.val}
+          onChange={b => sketch.set(b)}
+          defaultValue={sketch.defaultVal}
+          isDefaultValue={sketch.isDefaultVal()}
         />
       </div>
 
@@ -108,9 +110,11 @@ export const NodeEffectsPanelForm = ({
         <Slider
           value={round(sketchStrength.val * 100)}
           onChange={v => {
-            sketchStrength.set(Number(v) / 100);
+            sketchStrength.set(v === undefined ? undefined : Number(v) / 100);
           }}
           max={25}
+          defaultValue={round(sketchStrength.defaultVal * 100)}
+          isDefaultValue={sketchStrength.isDefaultVal()}
         />
       </div>
 
@@ -122,6 +126,8 @@ export const NodeEffectsPanelForm = ({
             sketchFillType.set(v as any);
           }}
           value={sketchFillType.val}
+          defaultValue={sketchFillType.defaultVal}
+          isDefaultValue={sketchFillType.isDefaultVal()}
         >
           <Select.Item value={'fill'}>Solid</Select.Item>
           <Select.Item value={'hachure'}>Hachure</Select.Item>
@@ -132,12 +138,11 @@ export const NodeEffectsPanelForm = ({
         <>
           <div className={'cmp-labeled-table__label'}>Rounding:</div>
           <div className={'cmp-labeled-table__value'}>
-            <input
-              type="checkbox"
-              checked={rounding.val}
-              onChange={() => {
-                rounding.set(!rounding.val);
-              }}
+            <Checkbox
+              value={glass.val}
+              onChange={b => rounding.set(b)}
+              defaultValue={rounding.defaultVal}
+              isDefaultValue={rounding.isDefaultVal()}
             />
           </div>
           <div className={'cmp-labeled-table__label'}></div>
@@ -149,6 +154,8 @@ export const NodeEffectsPanelForm = ({
               }}
               unit={'px'}
               max={200}
+              defaultValue={round(roundingAmount.defaultVal)}
+              isDefaultValue={roundingAmount.isDefaultVal()}
             />
           </div>
         </>
