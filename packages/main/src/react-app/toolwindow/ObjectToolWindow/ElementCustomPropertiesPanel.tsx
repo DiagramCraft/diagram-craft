@@ -16,6 +16,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 export const ElementCustomPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -57,7 +58,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
     customProperties = def.getCustomPropertyDefinitions(element);
   } else if (element instanceof DiagramEdge) {
     def = element.getDefinition();
-    customProperties = def.getCustomProperties(element);
+    customProperties = def.getCustomPropertyDefinitions(element);
   } else {
     throw new VerifyNotReached();
   }
@@ -79,13 +80,15 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
                     defaultUnit={value.unit ?? ''}
                     validUnits={value.unit ? [value.unit] : []}
                     value={value.value}
+                    defaultValue={value.defaultValue}
+                    isDefaultValue={!value.isSet}
                     min={value.minValue ?? 0}
                     max={value.maxValue ?? 100}
                     step={value.step ?? 1}
                     style={{ width: '50px' }}
                     onChange={ev => {
                       const uow = new UnitOfWork(diagram, true);
-                      value.onChange(ev ?? 0, uow);
+                      value.onChange(ev, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
                   />
@@ -97,14 +100,15 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <input
-                    type="checkbox"
-                    checked={value.value}
-                    onChange={() => {
+                  <Checkbox
+                    value={value.value}
+                    onChange={b => {
                       const uow = new UnitOfWork(diagram, true);
-                      value.onChange(!value.value, uow);
+                      value.onChange(b, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
+                    defaultValue={value.defaultValue}
+                    isDefaultValue={!value.isSet}
                   />
                 </div>
               </React.Fragment>
@@ -117,10 +121,12 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
                   <Select.Root
                     onValueChange={v => {
                       const uow = new UnitOfWork(diagram, true);
-                      value.onChange(v!, uow);
+                      value.onChange(v, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
                     value={value.value}
+                    defaultValue={value.defaultValue}
+                    isDefaultValue={value.isSet}
                   >
                     {value.options.map(o => (
                       <Select.Item key={o.value} value={o.value}>

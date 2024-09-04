@@ -14,7 +14,7 @@ import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { assertFullDirection, FullDirection } from '@diagram-craft/geometry/direction';
+import { assertFullDirectionOrUndefined, FullDirection } from '@diagram-craft/geometry/direction';
 
 // NodeProps extension for custom props *****************************************
 
@@ -29,7 +29,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('cylinder', { size: 30, direction: 'north' });
+const $defaults = registerCustomNodeDefaults('cylinder', { size: 30, direction: 'north' });
 
 // Custom properties ************************************************************
 
@@ -41,12 +41,18 @@ const Size = {
     value: node.renderProps.custom.cylinder.size,
     maxValue: Number.MAX_VALUE,
     unit: 'px',
-    onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
+    defaultValue: $defaults().size,
+    isSet: node.editProps.custom?.cylinder?.size !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= node.bounds.h || value <= 0) return;
-    node.updateCustomProps('cylinder', props => (props.size = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('cylinder', props => (props.size = undefined), uow);
+    } else {
+      if (value >= node.bounds.h || value <= 0) return;
+      node.updateCustomProps('cylinder', props => (props.size = round(value)), uow);
+    }
   }
 };
 
@@ -62,11 +68,13 @@ const Direction = {
       { value: 'west', label: 'West' }
     ],
     value: node.renderProps.custom.cylinder.direction,
-    onChange: (value: string, uow: UnitOfWork) => Direction.set(value, node, uow)
+    defaultValue: $defaults().direction,
+    isSet: node.editProps.custom?.cylinder?.direction !== undefined,
+    onChange: (value: string | undefined, uow: UnitOfWork) => Direction.set(value, node, uow)
   }),
 
-  set: (value: string, node: DiagramNode, uow: UnitOfWork) => {
-    assertFullDirection(value);
+  set: (value: string | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    assertFullDirectionOrUndefined(value);
     node.updateCustomProps('cylinder', props => (props.direction = value), uow);
   }
 };

@@ -19,7 +19,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('parallelogram', { slant: 5 });
+const $defaults = registerCustomNodeDefaults('parallelogram', { slant: 5 });
 
 export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -35,8 +35,9 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
         value: node.renderProps.custom.parallelogram.slant,
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number, uow: UnitOfWork) => {
-          if (value >= node.bounds.w / 2 || value >= node.bounds.h / 2) return;
+        defaultValue: $defaults().slant,
+        isSet: node.editProps.custom?.parallelogram?.slant !== undefined,
+        onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('parallelogram', props => (props.slant = value), uow);
         }
       }

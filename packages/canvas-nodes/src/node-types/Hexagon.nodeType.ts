@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('hexagon', { size: 25 });
+const $defaults = registerCustomNodeDefaults('hexagon', { size: 25 });
 
 // Custom properties ************************************************************
 
@@ -36,12 +36,18 @@ const Size = {
     value: node.renderProps.custom.hexagon.size,
     maxValue: 50,
     unit: '%',
-    onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
+    defaultValue: $defaults().size,
+    isSet: node.editProps.custom?.hexagon?.size !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= 50 || value <= 0) return;
-    node.updateCustomProps('hexagon', props => (props.size = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('hexagon', props => (props.size = undefined), uow);
+    } else {
+      if (value >= 50 || value <= 0) return;
+      node.updateCustomProps('hexagon', props => (props.size = round(value)), uow);
+    }
   }
 };
 

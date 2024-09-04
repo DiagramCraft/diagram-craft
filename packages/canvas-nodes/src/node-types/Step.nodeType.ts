@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('step', { size: 25 });
+const $defaults = registerCustomNodeDefaults('step', { size: 25 });
 
 // Custom properties ************************************************************
 
@@ -36,12 +36,18 @@ const Size = {
     value: node.renderProps.custom.step.size,
     maxValue: 50,
     unit: 'px',
-    onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
+    defaultValue: $defaults().size,
+    isSet: node.editProps.custom?.step?.size !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= node.bounds.w / 2 || value <= 0) return;
-    node.updateCustomProps('step', props => (props.size = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('step', props => (props.size = undefined), uow);
+    } else {
+      if (value >= node.bounds.w / 2 || value <= 0) return;
+      node.updateCustomProps('step', props => (props.size = round(value)), uow);
+    }
   }
 };
 

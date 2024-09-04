@@ -28,7 +28,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('table', {
+const $defaults = registerCustomNodeDefaults('table', {
   gap: 0,
   horizontalBorder: true,
   verticalBorder: true,
@@ -196,7 +196,9 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         label: 'Padding',
         value: node.renderProps.custom.table.gap,
         unit: 'px',
-        onChange: (value: number, uow: UnitOfWork) => {
+        defaultValue: $defaults().gap,
+        isSet: node.editProps.custom?.table?.gap !== undefined,
+        onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('table', props => (props.gap = value), uow);
         }
       },
@@ -205,7 +207,9 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         type: 'boolean',
         label: 'Title',
         value: node.renderProps.custom.table.title,
-        onChange: (value: boolean, uow: UnitOfWork) => {
+        defaultValue: $defaults().title,
+        isSet: node.editProps.custom?.table?.title !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('table', props => (props.title = value), uow);
         }
       },
@@ -215,7 +219,9 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         label: 'Title Size',
         unit: 'px',
         value: node.renderProps.custom.table.titleSize,
-        onChange: (value: number, uow: UnitOfWork) => {
+        defaultValue: $defaults().titleSize,
+        isSet: node.editProps.custom?.table?.titleSize !== undefined,
+        onChange: (value: number | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('table', props => (props.titleSize = value), uow);
         }
       }

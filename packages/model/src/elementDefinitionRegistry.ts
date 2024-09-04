@@ -30,26 +30,30 @@ export type NodeCapability =
 export type CustomPropertyDefinition = {
   id: string;
   label: string;
+  isSet: boolean;
 } & (
   | {
       type: 'number';
       value: number;
+      defaultValue: number;
       minValue?: number;
       maxValue?: number;
       step?: number;
       unit?: string;
-      onChange: (value: number, uow: UnitOfWork) => void;
+      onChange: (value: number | undefined, uow: UnitOfWork) => void;
     }
   | {
       type: 'select';
       value: string;
+      defaultValue: string;
       options: ReadonlyArray<{ value: string; label: string }>;
-      onChange: (value: string, uow: UnitOfWork) => void;
+      onChange: (value: string | undefined, uow: UnitOfWork) => void;
     }
   | {
       type: 'boolean';
       value: boolean;
-      onChange: (value: boolean, uow: UnitOfWork) => void;
+      defaultValue: boolean;
+      onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
     }
 );
 
@@ -175,7 +179,7 @@ export interface EdgeDefinition {
     operation: string
   ): void;
 
-  getCustomProperties(edge: DiagramEdge): Array<CustomPropertyDefinition>;
+  getCustomPropertyDefinitions(edge: DiagramEdge): Array<CustomPropertyDefinition>;
 }
 
 export class EdgeDefinitionRegistry {

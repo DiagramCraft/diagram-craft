@@ -103,7 +103,7 @@ export class BaseEdgeDefinition implements EdgeDefinition {
     uow.updateElement(edge);
   }
 
-  getCustomProperties(_edge: DiagramEdge): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(_edge: DiagramEdge): Array<CustomPropertyDefinition> {
     return [];
   }
 }

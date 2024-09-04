@@ -25,7 +25,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('process', { size: 10 });
+const $defaults = registerCustomNodeDefaults('process', { size: 10 });
 
 // Custom properties ************************************************************
 
@@ -37,12 +37,18 @@ const Size = {
     value: node.renderProps.custom.process.size,
     maxValue: 50,
     unit: '%',
-    onChange: (value: number, uow: UnitOfWork) => Size.set(value, node, uow)
+    defaultValue: $defaults().size,
+    isSet: node.editProps.custom?.process?.size !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= 50 || value <= 0) return;
-    node.updateCustomProps('process', props => (props.size = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('process', props => (props.size = undefined), uow);
+    } else {
+      if (value >= 50 || value <= 0) return;
+      node.updateCustomProps('process', props => (props.size = round(value)), uow);
+    }
   }
 };
 

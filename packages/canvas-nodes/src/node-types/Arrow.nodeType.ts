@@ -41,12 +41,18 @@ const Notch = {
     value: $defaults(node.renderProps.custom.arrow).notch,
     maxValue: 50,
     unit: 'px',
-    onChange: (value: number, uow: UnitOfWork) => Notch.set(value, node, uow)
+    defaultValue: $defaults().notch,
+    isSet: node.editProps.custom?.arrow?.notch !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => Notch.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= node.bounds.w - $defaults(node.editProps.custom?.arrow).x || value <= 0) return;
-    node.updateCustomProps('arrow', props => (props.notch = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('arrow', props => (props.notch = undefined), uow);
+    } else {
+      if (value >= node.bounds.w - $defaults(node.editProps.custom?.arrow).x || value <= 0) return;
+      node.updateCustomProps('arrow', props => (props.notch = round(value)), uow);
+    }
   }
 };
 
@@ -56,14 +62,20 @@ const ArrowControlX = {
     label: 'Pointiness',
     type: 'number',
     value: $defaults(node.renderProps.custom.arrow).x,
+    defaultValue: $defaults().x,
+    isSet: node.editProps.custom?.arrow?.x !== undefined,
     maxValue: 50,
     unit: 'px',
-    onChange: (value: number, uow: UnitOfWork) => ArrowControlX.set(value, node, uow)
+    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowControlX.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= Math.min(node.bounds.w, node.bounds.h) || value <= 0) return;
-    node.updateCustomProps('arrow', props => (props.x = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('arrow', props => (props.x = undefined), uow);
+    } else {
+      if (value >= Math.min(node.bounds.w, node.bounds.h) || value <= 0) return;
+      node.updateCustomProps('arrow', props => (props.x = round(value)), uow);
+    }
   }
 };
 
@@ -73,14 +85,20 @@ const ArrowControlY = {
     label: 'Thickness',
     type: 'number',
     value: $defaults(node.renderProps.custom.arrow).y,
+    defaultValue: $defaults().y,
+    isSet: node.editProps.custom?.arrow?.y !== undefined,
     maxValue: 50,
     unit: '%',
-    onChange: (value: number, uow: UnitOfWork) => ArrowControlY.set(value, node, uow)
+    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowControlY.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value <= 0 || value >= 50) return;
-    node.updateCustomProps('arrow', props => (props.y = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('arrow', props => (props.y = undefined), uow);
+    } else {
+      if (value <= 0 || value >= 50) return;
+      node.updateCustomProps('arrow', props => (props.y = round(value)), uow);
+    }
   }
 };
 

@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('trapezoid', { slantLeft: 5, slantRight: 5 });
+const $defaults = registerCustomNodeDefaults('trapezoid', { slantLeft: 5, slantRight: 5 });
 
 const slantLeftPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 'number' } => ({
   id: 'slantLeft',
@@ -29,9 +29,15 @@ const slantLeftPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 
   value: def.renderProps.custom.trapezoid.slantLeft,
   maxValue: 60,
   unit: 'px',
-  onChange: (value: number, uow: UnitOfWork) => {
-    if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-    def.updateCustomProps('trapezoid', props => (props.slantLeft = value), uow);
+  defaultValue: $defaults().slantLeft,
+  isSet: def.editProps.custom?.trapezoid?.slantLeft !== undefined,
+  onChange: (value: number | undefined, uow: UnitOfWork) => {
+    if (value === undefined) {
+      def.updateCustomProps('trapezoid', props => (props.slantLeft = undefined), uow);
+    } else {
+      if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
+      def.updateCustomProps('trapezoid', props => (props.slantLeft = value), uow);
+    }
   }
 });
 
@@ -42,9 +48,15 @@ const slantRightPropDef = (def: DiagramNode): CustomPropertyDefinition & { type:
   value: def.renderProps.custom.trapezoid.slantRight,
   maxValue: 60,
   unit: 'px',
-  onChange: (value: number, uow: UnitOfWork) => {
-    if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-    def.updateCustomProps('trapezoid', props => (props.slantRight = value), uow);
+  defaultValue: $defaults().slantRight,
+  isSet: def.editProps.custom?.trapezoid?.slantRight !== undefined,
+  onChange: (value: number | undefined, uow: UnitOfWork) => {
+    if (value === undefined) {
+      def.updateCustomProps('trapezoid', props => (props.slantRight = undefined), uow);
+    } else {
+      if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
+      def.updateCustomProps('trapezoid', props => (props.slantRight = value), uow);
+    }
   }
 });
 

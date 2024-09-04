@@ -197,7 +197,7 @@ export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(
   // TODO: Maybe we can use a Proxy here to make it immutable and more performant
 
   // @ts-ignore
-  return (d: CustomNodeProps[K]) => deepMerge({}, v, d);
+  return (d?: CustomNodeProps[K]) => deepMerge({}, v, d ?? undefined);
 }
 
 export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
@@ -212,7 +212,7 @@ export function registerCustomEdgeDefaults<K extends keyof CustomEdgeProps>(
   // TODO: Maybe we can use a Proxy here to make it immutable and more performant
 
   // @ts-ignore
-  return (d: CustomEdgeProps[K]) => deepMerge({}, v, d);
+  return (d?: CustomEdgeProps[K]) => deepMerge({}, v, d ?? {});
 }
 
 export const elementDefaults: DeepReadonly<ElementProps> =

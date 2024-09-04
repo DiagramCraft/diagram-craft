@@ -46,12 +46,18 @@ const ArrowDepth = {
     type: 'number',
     value: round(edge.renderProps.custom.blockArrow.arrowDepth),
     unit: 'px',
-    onChange: (value: number, uow: UnitOfWork) => ArrowDepth.set(value, edge, uow)
+    defaultValue: $defaults().arrowDepth,
+    isSet: edge.editProps.custom?.blockArrow?.arrowDepth !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowDepth.set(value, edge, uow)
   }),
 
-  set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value <= 0) return;
-    edge.updateCustomProps('blockArrow', props => (props.arrowDepth = round(value)), uow);
+  set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
+    if (value === undefined) {
+      edge.updateCustomProps('blockArrow', props => (props.arrowDepth = undefined), uow);
+    } else {
+      if (value <= 0) return;
+      edge.updateCustomProps('blockArrow', props => (props.arrowDepth = round(value)), uow);
+    }
   }
 };
 
@@ -62,12 +68,18 @@ const ArrowWidth = {
     type: 'number',
     value: round(edge.renderProps.custom.blockArrow.arrowWidth),
     unit: 'px',
-    onChange: (value: number, uow: UnitOfWork) => ArrowWidth.set(value, edge, uow)
+    defaultValue: $defaults().arrowWidth,
+    isSet: edge.editProps.custom?.blockArrow?.arrowWidth !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowWidth.set(value, edge, uow)
   }),
 
-  set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value <= 0) return;
-    edge.updateCustomProps('blockArrow', props => (props.arrowWidth = round(value)), uow);
+  set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
+    if (value === undefined) {
+      edge.updateCustomProps('blockArrow', props => (props.arrowWidth = undefined), uow);
+    } else {
+      if (value <= 0) return;
+      edge.updateCustomProps('blockArrow', props => (props.arrowWidth = round(value)), uow);
+    }
   }
 };
 
@@ -78,13 +90,19 @@ const Width = {
     type: 'number',
     value: round(edge.renderProps.custom.blockArrow.width),
     unit: 'px',
-    onChange: (value: number, uow: UnitOfWork) => Width.set(value, edge, uow)
+    defaultValue: $defaults().width,
+    isSet: edge.editProps.custom?.blockArrow?.width !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => Width.set(value, edge, uow)
   }),
 
-  set: (value: number, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value <= 0 || value >= round($defaults(edge.editProps.custom?.blockArrow).arrowWidth))
-      return;
-    edge.updateCustomProps('blockArrow', props => (props.width = round(value)), uow);
+  set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
+    if (value === undefined) {
+      edge.updateCustomProps('blockArrow', props => (props.width = undefined), uow);
+    } else {
+      if (value <= 0 || value >= round($defaults(edge.editProps.custom?.blockArrow).arrowWidth))
+        return;
+      edge.updateCustomProps('blockArrow', props => (props.width = round(value)), uow);
+    }
   }
 };
 
@@ -202,7 +220,7 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
     return !['arrows', 'line-hops'].includes(capability);
   }
 
-  getCustomProperties(edge: DiagramEdge): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(edge: DiagramEdge): Array<CustomPropertyDefinition> {
     return [Width.definition(edge), ArrowWidth.definition(edge), ArrowDepth.definition(edge)];
   }
 }

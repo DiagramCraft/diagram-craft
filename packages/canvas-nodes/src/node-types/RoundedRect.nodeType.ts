@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('roundedRect', {
+const $defaults = registerCustomNodeDefaults('roundedRect', {
   radius: 5
 });
 
@@ -48,10 +48,16 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
         value: def.renderProps.custom.roundedRect.radius,
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number, uow: UnitOfWork) => {
-          if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
+        defaultValue: $defaults().radius,
+        isSet: def.editProps.custom?.roundedRect?.radius !== undefined,
+        onChange: (value: number | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('roundedRect', props => (props.radius = undefined), uow);
+          } else {
+            if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
 
-          def.updateCustomProps('roundedRect', props => (props.radius = value), uow);
+            def.updateCustomProps('roundedRect', props => (props.radius = value), uow);
+          }
         }
       }
     ];

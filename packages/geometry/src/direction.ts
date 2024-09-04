@@ -14,6 +14,13 @@ export function assertFullDirection(value: string): asserts value is FullDirecti
     throw new Error(`Invalid direction: ${value}`);
   }
 }
+export function assertFullDirectionOrUndefined(
+  value: string | undefined
+): asserts value is FullDirection | undefined {
+  if (value !== undefined && !['north', 'south', 'east', 'west'].includes(value)) {
+    throw new Error(`Invalid direction: ${value}`);
+  }
+}
 
 export const Direction = {
   opposite(d: Direction): Direction {

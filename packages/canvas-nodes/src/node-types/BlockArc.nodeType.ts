@@ -45,12 +45,18 @@ const InnerRadius = {
     value: node.renderProps.custom.blockArc.innerRadius,
     maxValue: 99,
     unit: '%',
-    onChange: (value: number, uow: UnitOfWork) => InnerRadius.set(value, node, uow)
+    defaultValue: $defaults().innerRadius,
+    isSet: node.editProps.custom?.blockArc?.innerRadius !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => InnerRadius.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= 99 || value <= 0) return;
-    node.updateCustomProps('blockArc', props => (props.innerRadius = round(value)), uow);
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('blockArc', props => (props.innerRadius = undefined), uow);
+    } else {
+      if (value >= 99 || value <= 0) return;
+      node.updateCustomProps('blockArc', props => (props.innerRadius = round(value)), uow);
+    }
   }
 };
 
@@ -62,16 +68,22 @@ const StartAngle = {
     value: node.renderProps.custom.blockArc.startAngle,
     maxValue: 360,
     unit: '°',
-    onChange: (value: number, uow: UnitOfWork) => StartAngle.set(value, node, uow)
+    defaultValue: $defaults().startAngle,
+    isSet: node.editProps.custom?.blockArc?.startAngle !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => StartAngle.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= 360 || value <= -360) return;
-    if (value >= $defaults(node.editProps.custom!.blockArc!).endAngle) {
-      StartAngle.set(value - 360, node, uow);
-      return;
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('blockArc', props => (props.startAngle = undefined), uow);
+    } else {
+      if (value >= 360 || value <= -360) return;
+      if (value >= $defaults(node.editProps.custom!.blockArc!).endAngle) {
+        StartAngle.set(value - 360, node, uow);
+        return;
+      }
+      node.updateCustomProps('blockArc', props => (props.startAngle = round(value)), uow);
     }
-    node.updateCustomProps('blockArc', props => (props.startAngle = round(value)), uow);
   }
 };
 
@@ -83,16 +95,22 @@ const EndAngle = {
     value: node.renderProps.custom.blockArc.endAngle,
     maxValue: 360,
     unit: '°',
-    onChange: (value: number, uow: UnitOfWork) => EndAngle.set(value, node, uow)
+    defaultValue: $defaults().endAngle,
+    isSet: node.editProps.custom?.blockArc?.endAngle !== undefined,
+    onChange: (value: number | undefined, uow: UnitOfWork) => EndAngle.set(value, node, uow)
   }),
 
-  set: (value: number, node: DiagramNode, uow: UnitOfWork) => {
-    if (value >= 360 || value <= -360) return;
-    if (value <= $defaults(node.editProps.custom?.blockArc).startAngle) {
-      EndAngle.set(value + 360, node, uow);
-      return;
+  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
+    if (value === undefined) {
+      node.updateCustomProps('blockArc', props => (props.endAngle = undefined), uow);
+    } else {
+      if (value >= 360 || value <= -360) return;
+      if (value <= $defaults(node.editProps.custom?.blockArc).startAngle) {
+        EndAngle.set(value + 360, node, uow);
+        return;
+      }
+      node.updateCustomProps('blockArc', props => (props.endAngle = round(value)), uow);
     }
-    node.updateCustomProps('blockArc', props => (props.endAngle = round(value)), uow);
   }
 };
 
