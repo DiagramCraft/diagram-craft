@@ -4,6 +4,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique } from '@diagram-craft/utils/array';
+import { useRedraw } from './useRedraw';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -53,6 +54,7 @@ export const makePropertyHook = <
 ): PropertyHook<TBase, TObj> => {
   return ((obj: TBase, path: TPath, defaultValue: TValue) => {
     const [value, setValue] = useState<TValue>(defaultValue);
+    const redraw = useRedraw();
     const handler = () => {
       const accessor = new DynamicAccessor<TObj>();
       const value = accessor.get(getObj(obj), path);
@@ -71,6 +73,10 @@ export const makePropertyHook = <
         });
         callbacks?.onAfterSet?.(obj, path, value, v);
         setValue(v ?? defaultValue);
+
+        // Need to force redraw, as the current value may be the same as
+        // the default value - but the isDefaultVal might result in a different result
+        redraw();
       },
       defaultVal: defaultValue,
       isDefaultVal: () => {
@@ -111,6 +117,7 @@ export const makePropertyArrayHook = <
     const defaultValue = defaultValueOverride ?? (accessor.get(defaults, path) as TValue);
     const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
+    const redraw = useRedraw();
     const handler = () => {
       const accessor = new DynamicAccessor<TObj>();
       const arr = unique(getArr(obj).map(obj => accessor.get(getObj(obj) as TObj, path)));
@@ -135,6 +142,10 @@ export const makePropertyArrayHook = <
         callbacks?.onAfterSet?.(obj, getArr(obj), path, oldValues as TValue[], v);
         setValue(v ?? defaultValue);
         setMultiple(false);
+
+        // Need to force redraw, as the current value may be the same as
+        // the default value - but the isDefaultVal might result in a different result
+        redraw();
       },
       hasMultipleValues: multiple,
       defaultVal: defaultValue,
