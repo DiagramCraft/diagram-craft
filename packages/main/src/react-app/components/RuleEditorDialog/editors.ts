@@ -63,6 +63,7 @@ export function makeProperty<
   onChange: (v: V) => void
 ): Property<V> {
   const accessor = new DynamicAccessor<TObj | DeepReadonly<TObj>>();
+  const isSet = accessor.get(obj, propertyPath) !== undefined;
   return {
     val: (accessor.get(obj, propertyPath) as V) ?? (accessor.get(defaults, propertyPath) as V),
     set: (v: V) => {
@@ -71,6 +72,6 @@ export function makeProperty<
     },
     hasMultipleValues: false,
     defaultVal: accessor.get(defaults, propertyPath) as V,
-    isDefaultVal: () => accessor.get(obj, propertyPath) === undefined
+    isSet: isSet
   } as Property<V>;
 }

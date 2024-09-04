@@ -27,7 +27,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             value={resizableH.val}
             onChange={b => resizableH.set(b)}
             defaultValue={resizableH.defaultVal}
-            isDefaultValue={resizableH.isDefaultVal()}
+            isDefaultValue={!resizableH.isSet}
           />
         </div>
 
@@ -37,7 +37,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             value={resizableV.val}
             onChange={b => resizableV.set(b)}
             defaultValue={resizableV.defaultVal}
-            isDefaultValue={resizableV.isDefaultVal()}
+            isDefaultValue={!resizableV.isSet}
           />
         </div>
 
@@ -47,7 +47,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             value={movable.val}
             onChange={b => movable.set(b)}
             defaultValue={movable.defaultVal}
-            isDefaultValue={movable.isDefaultVal()}
+            isDefaultValue={!movable.isSet}
           />
         </div>
 
@@ -57,7 +57,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             value={rotatable.val}
             onChange={b => rotatable.set(b)}
             defaultValue={rotatable.defaultVal}
-            isDefaultValue={rotatable.isDefaultVal()}
+            isDefaultValue={!rotatable.isSet}
           />
         </div>
 
@@ -67,7 +67,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             value={editable.val}
             onChange={b => editable.set(b)}
             defaultValue={editable.defaultVal}
-            isDefaultValue={editable.isDefaultVal()}
+            isDefaultValue={!editable.isSet}
           />
         </div>
 
@@ -77,7 +77,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             value={deletable.val}
             onChange={b => deletable.set(b)}
             defaultValue={deletable.defaultVal}
-            isDefaultValue={deletable.isDefaultVal()}
+            isDefaultValue={!deletable.isSet}
           />
         </div>
 
@@ -87,7 +87,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
             value={inheritStyle.val}
             onChange={b => inheritStyle.set(b)}
             defaultValue={inheritStyle.defaultVal}
-            isDefaultValue={inheritStyle.isDefaultVal()}
+            isDefaultValue={!inheritStyle.isSet}
           />
         </div>
       </div>

@@ -106,7 +106,7 @@ export const NodeTableStrokePanel = (props: Props) => {
               pattern.set(value);
             }}
             hasMultipleValues={pattern.hasMultipleValues}
-            isDefaultValue={pattern.isDefaultVal()}
+            isDefaultValue={!pattern.isSet}
             defaultValue={pattern.defaultVal}
           />
           <PopoverButton label={<TbAdjustmentsHorizontal />}>

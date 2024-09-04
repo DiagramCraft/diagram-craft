@@ -37,7 +37,7 @@ export const ElementShadowPanelForm = ({
           onChange={color.set}
           customPalette={$d.document.customPalette.colors}
           onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-          isDefaultValue={color.isDefaultVal()}
+          isDefaultValue={!color.isSet}
           defaultValue={color.defaultVal}
         />
         <NumberInput
@@ -47,7 +47,7 @@ export const ElementShadowPanelForm = ({
           min={0}
           max={100}
           defaultUnit={'%'}
-          isDefaultValue={opacity.isDefaultVal()}
+          isDefaultValue={!opacity.isSet}
           defaultValue={round((1 - opacity.val) * 100)}
         />
       </div>
@@ -58,7 +58,7 @@ export const ElementShadowPanelForm = ({
           onChange={x.set}
           style={{ width: '45px' }}
           defaultUnit={'px'}
-          isDefaultValue={x.isDefaultVal()}
+          isDefaultValue={!x.isSet}
           defaultValue={x.defaultVal}
         />
         <NumberInput
@@ -66,7 +66,7 @@ export const ElementShadowPanelForm = ({
           onChange={y.set}
           style={{ width: '45px' }}
           defaultUnit={'px'}
-          isDefaultValue={y.isDefaultVal()}
+          isDefaultValue={!y.isSet}
           defaultValue={y.defaultVal}
         />
         <NumberInput
@@ -75,7 +75,7 @@ export const ElementShadowPanelForm = ({
           min={0}
           style={{ width: '45px' }}
           defaultUnit={'px'}
-          isDefaultValue={blur.isDefaultVal()}
+          isDefaultValue={!blur.isSet}
           defaultValue={blur.defaultVal}
         />
       </div>

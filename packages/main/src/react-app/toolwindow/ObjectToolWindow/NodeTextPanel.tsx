@@ -28,8 +28,8 @@ type FormProps = {
   config: ConfigurationContextType;
   fontSize: Property<number | undefined>;
   font: Property<string | undefined>;
-  isBold: Property<boolean>;
-  isItalic: Property<boolean>;
+  isBold: Property<boolean | undefined>;
+  isItalic: Property<boolean | undefined>;
   textDecoration: Property<'none' | 'underline' | 'line-through' | 'overline' | undefined>;
   textTransform: Property<'none' | 'uppercase' | 'lowercase' | 'capitalize' | undefined>;
   color: Property<string | undefined>;
@@ -37,9 +37,9 @@ type FormProps = {
   left: Property<number | undefined>;
   bottom: Property<number | undefined>;
   right: Property<number | undefined>;
-  align: Property<HAlign>;
-  valign: Property<VAlign>;
-  lineHeight: Property<number>;
+  align: Property<HAlign | undefined>;
+  valign: Property<VAlign | undefined>;
+  lineHeight: Property<number | undefined>;
 };
 
 export const NodeTextPanelForm = ({

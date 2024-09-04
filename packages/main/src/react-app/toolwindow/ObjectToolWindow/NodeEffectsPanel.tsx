@@ -19,7 +19,7 @@ type FormProps = {
   glass: Property<boolean | undefined>;
   sketch: Property<boolean | undefined>;
   sketchStrength: Property<number | undefined>;
-  sketchFillType: Property<'fill' | 'hachure'>;
+  sketchFillType: Property<'fill' | 'hachure' | undefined>;
   rounding: Property<boolean | undefined>;
   roundingAmount: Property<number | undefined>;
 };
@@ -44,7 +44,7 @@ export const NodeEffectsPanelForm = ({
         <Checkbox
           value={reflection.val}
           onChange={v => reflection.set(v)}
-          isDefaultValue={reflection.isDefaultVal()}
+          isDefaultValue={!reflection.isSet}
           defaultValue={reflection.defaultVal}
         />
       </div>
@@ -57,7 +57,7 @@ export const NodeEffectsPanelForm = ({
             reflectionStrength.set(v === undefined ? undefined : Number(v) / 100);
           }}
           defaultValue={reflectionStrength.defaultVal * 100}
-          isDefaultValue={reflectionStrength.isDefaultVal()}
+          isDefaultValue={!reflectionStrength.isSet}
         />
       </div>
 
@@ -69,7 +69,7 @@ export const NodeEffectsPanelForm = ({
             blur.set(v === undefined ? undefined : Number(v) / 100);
           }}
           defaultValue={blur.defaultVal * 100}
-          isDefaultValue={blur.isDefaultVal()}
+          isDefaultValue={!blur.isSet}
         />
       </div>
 
@@ -81,7 +81,7 @@ export const NodeEffectsPanelForm = ({
             opacity.set(v === undefined ? undefined : Number(v) / 100);
           }}
           defaultValue={opacity.defaultVal * 100}
-          isDefaultValue={opacity.isDefaultVal()}
+          isDefaultValue={!opacity.isSet}
         />
       </div>
 
@@ -91,7 +91,7 @@ export const NodeEffectsPanelForm = ({
           value={glass.val}
           onChange={b => glass.set(b)}
           defaultValue={glass.defaultVal}
-          isDefaultValue={glass.isDefaultVal()}
+          isDefaultValue={!glass.isSet}
         />
       </div>
 
@@ -101,7 +101,7 @@ export const NodeEffectsPanelForm = ({
           value={sketch.val}
           onChange={b => sketch.set(b)}
           defaultValue={sketch.defaultVal}
-          isDefaultValue={sketch.isDefaultVal()}
+          isDefaultValue={!sketch.isSet}
         />
       </div>
 
@@ -114,7 +114,7 @@ export const NodeEffectsPanelForm = ({
           }}
           max={25}
           defaultValue={round(sketchStrength.defaultVal * 100)}
-          isDefaultValue={sketchStrength.isDefaultVal()}
+          isDefaultValue={!sketchStrength.isSet}
         />
       </div>
 
@@ -127,7 +127,7 @@ export const NodeEffectsPanelForm = ({
           }}
           value={sketchFillType.val}
           defaultValue={sketchFillType.defaultVal}
-          isDefaultValue={sketchFillType.isDefaultVal()}
+          isDefaultValue={!sketchFillType.isSet}
         >
           <Select.Item value={'fill'}>Solid</Select.Item>
           <Select.Item value={'hachure'}>Hachure</Select.Item>
@@ -142,7 +142,7 @@ export const NodeEffectsPanelForm = ({
               value={glass.val}
               onChange={b => rounding.set(b)}
               defaultValue={rounding.defaultVal}
-              isDefaultValue={rounding.isDefaultVal()}
+              isDefaultValue={!rounding.isSet}
             />
           </div>
           <div className={'cmp-labeled-table__label'}></div>
@@ -155,7 +155,7 @@ export const NodeEffectsPanelForm = ({
               unit={'px'}
               max={200}
               defaultValue={round(roundingAmount.defaultVal)}
-              isDefaultValue={roundingAmount.isDefaultVal()}
+              isDefaultValue={!roundingAmount.isSet}
             />
           </div>
         </>

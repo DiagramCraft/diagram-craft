@@ -5,6 +5,7 @@ import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/p
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { unique } from '@diagram-craft/utils/array';
 import { useRedraw } from './useRedraw';
+import { Property } from '../toolwindow/ObjectToolWindow/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -16,12 +17,7 @@ export type PropertyHook<TBase, TObj> = <
   obj: TBase,
   propertyPath: K,
   defaultValue?: DV
-) => {
-  val: V;
-  set: (value: V) => void;
-  defaultVal: NonNullable<V>;
-  isDefaultVal: () => boolean;
-};
+) => Property<V>;
 
 export type PropertyArrayHook<TBase, TObj> = <
   K extends PropPath<TObj>,
@@ -31,13 +27,7 @@ export type PropertyArrayHook<TBase, TObj> = <
   obj: TBase,
   propertyPath: K,
   defaultValue?: NonNullable<DV>
-) => {
-  val: NonNullable<V>;
-  set: (value: V) => void;
-  hasMultipleValues: boolean;
-  defaultVal: NonNullable<V>;
-  isDefaultVal: () => boolean;
-};
+) => Property<V>;
 
 export const makePropertyHook = <
   TBase,
@@ -65,6 +55,9 @@ export const makePropertyHook = <
     subscribe(obj, handler);
     useEffect(handler, [defaultValue, obj, path]);
 
+    const accessor = new DynamicAccessor<TObj>();
+    const isSet = accessor.get(getObj(obj), path) !== undefined;
+
     return {
       val: value,
       set: (v: TValue) => {
@@ -79,11 +72,8 @@ export const makePropertyHook = <
         redraw();
       },
       defaultVal: defaultValue,
-      isDefaultVal: () => {
-        const accessor = new DynamicAccessor<TObj>();
-        const value = accessor.get(getObj(obj), path);
-        return value === undefined;
-      }
+      hasMultipleValues: false,
+      isSet: isSet
     };
   }) as PropertyHook<TBase, TObj>;
 };
@@ -130,6 +120,13 @@ export const makePropertyArrayHook = <
     subscribe(obj, handler);
     useEffect(handler, [defaultValue, obj, path]);
 
+    let isSet = true;
+    if (!multiple) {
+      const accessor = new DynamicAccessor<TObj>();
+      const arr = unique(getArr(obj).map(obj => accessor.get(getStoredObj(obj) as TObj, path)));
+      isSet = arr.length === 1 && arr[0] !== undefined;
+    }
+
     return {
       val: value,
       set: (v: TValue) => {
@@ -149,13 +146,7 @@ export const makePropertyArrayHook = <
       },
       hasMultipleValues: multiple,
       defaultVal: defaultValue,
-      isDefaultVal: () => {
-        if (multiple) return false;
-        const accessor = new DynamicAccessor<TObj>();
-        const arr = unique(getArr(obj).map(obj => accessor.get(getStoredObj(obj) as TObj, path)));
-        if (arr.length === 1 && arr[0] === undefined) return true;
-        return false;
-      }
+      isSet: isSet
     };
   }) as PropertyArrayHook<TBase, TObj>;
 };

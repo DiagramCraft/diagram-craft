@@ -3,5 +3,5 @@ export type Property<V> = {
   set: (value: V) => void;
   hasMultipleValues: boolean;
   defaultVal: NonNullable<V>;
-  isDefaultVal: () => boolean;
+  isSet: boolean;
 };

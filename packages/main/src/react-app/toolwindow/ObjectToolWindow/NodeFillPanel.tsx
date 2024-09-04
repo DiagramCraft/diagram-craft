@@ -54,7 +54,7 @@ const ImageScale = (props: { imageScale: Property<number | undefined> }) => (
       <Slider
         value={round(props.imageScale.val * 100)}
         onChange={v => props.imageScale.set(v === undefined ? undefined : Number(v) / 100)}
-        isDefaultValue={props.imageScale.isDefaultVal()}
+        isDefaultValue={!props.imageScale.isSet}
         defaultValue={round(props.imageScale.defaultVal * 100)}
       />
     </div>
@@ -79,7 +79,7 @@ const ImageTint = (props: {
             canClearColor={true}
             customPalette={$d.document.customPalette.colors}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-            isDefaultValue={props.tint.isDefaultVal()}
+            isDefaultValue={!props.tint.isSet}
             defaultValue={props.tint.defaultVal}
           />
         </div>
@@ -88,7 +88,7 @@ const ImageTint = (props: {
           <Slider
             value={round(props.tintStrength.val * 100)}
             onChange={v => props.tintStrength.set(v === undefined ? undefined : Number(v) / 100)}
-            isDefaultValue={props.tintStrength.isDefaultVal()}
+            isDefaultValue={!props.tintStrength.isSet}
             defaultValue={props.tintStrength.defaultVal * 100}
           />
         </div>
@@ -110,7 +110,7 @@ const ImageAdjustments = (props: {
           max={200}
           value={round(props.contrast.val * 100)}
           onChange={v => props.contrast.set(v === undefined ? undefined : Number(v) / 100)}
-          isDefaultValue={props.contrast.isDefaultVal()}
+          isDefaultValue={!props.contrast.isSet}
           defaultValue={props.contrast.defaultVal * 100}
         />
       </div>
@@ -121,7 +121,7 @@ const ImageAdjustments = (props: {
           max={200}
           value={round(props.brightness.val * 100)}
           onChange={v => props.brightness.set(v === undefined ? undefined : Number(v) / 100)}
-          isDefaultValue={props.brightness.isDefaultVal()}
+          isDefaultValue={!props.brightness.isSet}
           defaultValue={props.brightness.defaultVal * 100}
         />
       </div>
@@ -132,7 +132,7 @@ const ImageAdjustments = (props: {
           max={200}
           value={round(props.saturation.val * 100)}
           onChange={v => props.saturation.set(v === undefined ? undefined : Number(v) / 100)}
-          isDefaultValue={props.saturation.isDefaultVal()}
+          isDefaultValue={!props.saturation.isSet}
           defaultValue={props.saturation.defaultVal * 100}
         />
       </div>
@@ -170,7 +170,7 @@ export const NodeFillPanelForm = ({
             type.set(v);
           }}
           value={type.val}
-          isDefaultValue={type.isDefaultVal()}
+          isDefaultValue={!type.isSet}
           defaultValue={type.defaultVal}
         >
           <Select.Item value={'solid'}>Solid</Select.Item>
@@ -192,7 +192,7 @@ export const NodeFillPanelForm = ({
               hasMultipleValues={color.hasMultipleValues}
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              isDefaultValue={color.isDefaultVal()}
+              isDefaultValue={!color.isSet}
               defaultValue={color.defaultVal}
             />
             {type.val === 'gradient' && (
@@ -204,7 +204,7 @@ export const NodeFillPanelForm = ({
                   hasMultipleValues={color2.hasMultipleValues}
                   customPalette={$d.document.customPalette.colors}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                  isDefaultValue={color2.isDefaultVal()}
+                  isDefaultValue={!color2.isSet}
                   defaultValue={color2.defaultVal}
                 />
               </>
@@ -223,7 +223,7 @@ export const NodeFillPanelForm = ({
                 gradientType.set(v as any);
               }}
               value={gradientType.val}
-              isDefaultValue={gradientType.isDefaultVal()}
+              isDefaultValue={!gradientType.isSet}
               defaultValue={gradientType.defaultVal}
             >
               <Select.Item value={'linear'}>Linear</Select.Item>
@@ -240,7 +240,7 @@ export const NodeFillPanelForm = ({
                   max={360}
                   value={round(Angle.toDeg(gradientDirection.val))}
                   onChange={v => gradientDirection.set(Angle.toRad(Number(v)))}
-                  isDefaultValue={gradientDirection.isDefaultVal()}
+                  isDefaultValue={!gradientDirection.isSet}
                   defaultValue={Angle.toDeg(gradientDirection.defaultVal)}
                 />
               </div>
@@ -291,7 +291,7 @@ export const NodeFillPanelForm = ({
               hasMultipleValues={color.hasMultipleValues}
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              isDefaultValue={color.isDefaultVal()}
+              isDefaultValue={!color.isSet}
               defaultValue={color.defaultVal}
             />
             <ColorPicker
@@ -301,7 +301,7 @@ export const NodeFillPanelForm = ({
               hasMultipleValues={color2.hasMultipleValues}
               customPalette={$d.document.customPalette.colors}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              isDefaultValue={color2.isDefaultVal()}
+              isDefaultValue={!color2.isSet}
               defaultValue={color2.defaultVal}
             />
           </div>
@@ -422,7 +422,7 @@ export const NodeFillPanelForm = ({
                 imageFit.set(v as any);
               }}
               value={imageFit.val}
-              isDefaultValue={imageFit.isDefaultVal()}
+              isDefaultValue={!imageFit.isSet}
               defaultValue={imageFit.defaultVal}
             >
               <Select.Item value={'fill'}>Fill</Select.Item>
@@ -452,13 +452,13 @@ type FormProps = {
   type: Property<FillType | undefined>;
   color: Property<string | undefined>;
   color2: Property<string | undefined>;
-  gradientType: Property<'linear' | 'radial'>;
-  gradientDirection: Property<number>;
-  pattern: Property<string>;
-  image: Property<string>;
+  gradientType: Property<'linear' | 'radial' | undefined>;
+  gradientDirection: Property<number | undefined>;
+  pattern: Property<string | undefined>;
+  image: Property<string | undefined>;
   imageFit: Property<'fill' | 'contain' | 'cover' | 'keep' | 'tile'>;
-  imageW: Property<number>;
-  imageH: Property<number>;
+  imageW: Property<number | undefined>;
+  imageH: Property<number | undefined>;
   imageScale: Property<number | undefined>;
   imageContrast: Property<number | undefined>;
   imageBrightness: Property<number | undefined>;

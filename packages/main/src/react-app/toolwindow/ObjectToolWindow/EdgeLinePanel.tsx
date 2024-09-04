@@ -145,7 +145,7 @@ export const EdgeLinePanel = (props: Props) => {
             <DashSelector
               value={pattern.val}
               onValueChange={pattern.set}
-              isDefaultValue={pattern.isDefaultVal()}
+              isDefaultValue={!pattern.isSet}
               defaultValue={pattern.defaultVal}
             />
             <NumberInput

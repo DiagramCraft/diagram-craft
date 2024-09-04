@@ -16,12 +16,12 @@ type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
   strokeColor: Property<string | undefined>;
-  strokeWidth: Property<number>;
-  pattern: Property<string>;
-  strokeSize: Property<number>;
-  strokeSpacing: Property<number>;
-  lineCap: Property<LineCap>;
-  lineJoin: Property<LineJoin>;
+  strokeWidth: Property<number | undefined>;
+  pattern: Property<string | undefined>;
+  strokeSize: Property<number | undefined>;
+  strokeSpacing: Property<number | undefined>;
+  lineCap: Property<LineCap | undefined>;
+  lineJoin: Property<LineJoin | undefined>;
   miterLimit: Property<number | undefined>;
 };
 
@@ -48,7 +48,7 @@ export const NodeStrokePanelForm = ({
           hasMultipleValues={strokeColor.hasMultipleValues}
           customPalette={$d.document.customPalette.colors}
           onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-          isDefaultValue={strokeColor.isDefaultVal()}
+          isDefaultValue={!strokeColor.isSet}
           defaultValue={strokeColor.defaultVal}
         />
       </div>
@@ -58,7 +58,7 @@ export const NodeStrokePanelForm = ({
         <NumberInput
           defaultUnit={'px'}
           defaultValue={strokeWidth.defaultVal}
-          isDefaultValue={strokeWidth.isDefaultVal()}
+          isDefaultValue={!strokeWidth.isSet}
           value={strokeWidth.val}
           min={1}
           style={{ width: '35px' }}
@@ -72,7 +72,7 @@ export const NodeStrokePanelForm = ({
           }}
           hasMultipleValues={pattern.hasMultipleValues}
           defaultValue={pattern.defaultVal}
-          isDefaultValue={pattern.isDefaultVal()}
+          isDefaultValue={!pattern.isSet}
         />
         <PopoverButton label={<TbAdjustmentsHorizontal />}>
           <div className={'cmp-labeled-table'}>
@@ -84,7 +84,7 @@ export const NodeStrokePanelForm = ({
                 min={1}
                 style={{ width: '45px' }}
                 onChange={n => strokeSize.set(n!)}
-                isDefaultValue={strokeSize.isDefaultVal()}
+                isDefaultValue={!strokeSize.isSet}
                 defaultValue={strokeSize.defaultVal}
               />
               <NumberInput
@@ -93,7 +93,7 @@ export const NodeStrokePanelForm = ({
                 min={1}
                 style={{ width: '45px' }}
                 onChange={n => strokeSpacing.set(n!)}
-                isDefaultValue={strokeSpacing.isDefaultVal()}
+                isDefaultValue={!strokeSpacing.isSet}
                 defaultValue={strokeSpacing.defaultVal}
               />
             </div>
@@ -106,7 +106,7 @@ export const NodeStrokePanelForm = ({
                   lineCap.set(v as any);
                 }}
                 value={lineCap.val}
-                isDefaultValue={lineCap.isDefaultVal()}
+                isDefaultValue={!lineCap.isSet}
                 defaultValue={lineCap.defaultVal}
               >
                 <Select.Item value={'butt'}>Butt</Select.Item>
@@ -122,7 +122,7 @@ export const NodeStrokePanelForm = ({
                   lineJoin.set(v as any);
                 }}
                 value={lineJoin.val}
-                isDefaultValue={lineJoin.isDefaultVal()}
+                isDefaultValue={!lineJoin.isSet}
                 defaultValue={lineJoin.defaultVal}
               >
                 <Select.Item value={'miter'}>Miter</Select.Item>
@@ -136,7 +136,7 @@ export const NodeStrokePanelForm = ({
                   min={0}
                   style={{ width: '50px' }}
                   onChange={v => miterLimit.set(v === undefined ? undefined : (v ?? 1) / 10)}
-                  isDefaultValue={miterLimit.isDefaultVal()}
+                  isDefaultValue={!miterLimit.isSet}
                   defaultValue={miterLimit.defaultVal * 10}
                 />
               )}
@@ -177,6 +177,7 @@ export const NodeStrokePanel = (props: Props) => {
         diagram={$d}
         config={$cfg}
         strokeWidth={strokeWidth}
+        /* @ts-ignore */
         pattern={pattern}
         strokeSize={strokeSize}
         strokeColor={strokeColor}
