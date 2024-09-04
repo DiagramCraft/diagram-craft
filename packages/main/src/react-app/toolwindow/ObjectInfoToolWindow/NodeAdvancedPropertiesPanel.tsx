@@ -1,6 +1,7 @@
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 export const NodeAdvancedPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -22,64 +23,71 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
       <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
         <div className={'cmp-labeled-table__label'}>Resize Horizontally:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'checkbox'}
-            checked={resizableH.val === true}
-            onChange={() => resizableH.set(!resizableH.val)}
+          <Checkbox
+            value={resizableH.val}
+            onChange={b => resizableH.set(b)}
+            defaultValue={resizableH.defaultVal}
+            isDefaultValue={resizableH.isDefaultVal()}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Resize Vertically:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'checkbox'}
-            checked={resizableV.val === true}
-            onChange={() => resizableV.set(!resizableV.val)}
+          <Checkbox
+            value={resizableV.val}
+            onChange={b => resizableV.set(b)}
+            defaultValue={resizableV.defaultVal}
+            isDefaultValue={resizableV.isDefaultVal()}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Movable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'checkbox'}
-            checked={movable.val === true}
-            onChange={() => movable.set(!movable.val)}
+          <Checkbox
+            value={movable.val}
+            onChange={b => movable.set(b)}
+            defaultValue={movable.defaultVal}
+            isDefaultValue={movable.isDefaultVal()}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Rotatable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'checkbox'}
-            checked={rotatable.val === true}
-            onChange={() => rotatable.set(!rotatable.val)}
+          <Checkbox
+            value={rotatable.val}
+            onChange={b => rotatable.set(b)}
+            defaultValue={rotatable.defaultVal}
+            isDefaultValue={rotatable.isDefaultVal()}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Editable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'checkbox'}
-            checked={editable.val === true}
-            onChange={() => editable.set(!editable.val)}
+          <Checkbox
+            value={editable.val}
+            onChange={b => editable.set(b)}
+            defaultValue={editable.defaultVal}
+            isDefaultValue={editable.isDefaultVal()}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Deletable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'checkbox'}
-            checked={deletable.val === true}
-            onChange={() => deletable.set(!deletable.val)}
+          <Checkbox
+            value={deletable.val}
+            onChange={b => deletable.set(b)}
+            defaultValue={deletable.defaultVal}
+            isDefaultValue={deletable.isDefaultVal()}
           />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Inherit Style:</div>
         <div className={'cmp-labeled-table__value'}>
-          <input
-            type={'checkbox'}
-            checked={inheritStyle.val === true}
-            onChange={() => inheritStyle.set(!inheritStyle.val)}
+          <Checkbox
+            value={inheritStyle.val}
+            onChange={b => inheritStyle.set(b)}
+            defaultValue={inheritStyle.defaultVal}
+            isDefaultValue={inheritStyle.isDefaultVal()}
           />
         </div>
       </div>
