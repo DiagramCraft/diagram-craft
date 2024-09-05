@@ -5,6 +5,7 @@ import { useEdgeProperty } from '../../hooks/useProperty';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Slider } from '@diagram-craft/app-components/Slider';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 // TODO: We should merge this with NodeEffectsPanel
 //       ... only sketch is common between the two
@@ -34,19 +35,22 @@ export const EdgeEffectsPanel = (props: Props) => {
             <Slider
               value={round(opacity.val * 100)}
               onChange={v => {
-                opacity.set(Number(v) / 100);
+                opacity.set(v === undefined ? undefined : Number(v) / 100);
               }}
+              defaultValue={round(opacity.defaultVal * 100)}
+              isDefaultValue={!opacity.isSet}
             />
           </div>
 
           <div className={'cmp-labeled-table__label'}>Sketch:</div>
           <div className={'cmp-labeled-table__value'}>
-            <input
-              type="checkbox"
-              checked={sketch.val}
-              onChange={() => {
-                sketch.set(!sketch.val);
+            <Checkbox
+              value={sketch.val}
+              onChange={b => {
+                sketch.set(b);
               }}
+              defaultValue={sketch.defaultVal}
+              isDefaultValue={!sketch.isSet}
             />
           </div>
 
@@ -55,9 +59,11 @@ export const EdgeEffectsPanel = (props: Props) => {
             <Slider
               value={round(sketchStrength.val * 100)}
               onChange={v => {
-                sketchStrength.set(Number(v) / 100);
+                sketchStrength.set(v === undefined ? undefined : Number(v) / 100);
               }}
               max={25}
+              defaultValue={round(sketchStrength.defaultVal * 100)}
+              isDefaultValue={!sketchStrength.isSet}
             />
           </div>
         </div>
