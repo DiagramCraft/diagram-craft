@@ -1,9 +1,10 @@
+import { extractMouseEvents } from './utils';
+
 export const Checkbox = (props: Props) => {
   // TODO: Implement interminate state
   return (
-    /* @ts-ignore */
     <input
-      {...props}
+      {...extractMouseEvents(props)}
       type="checkbox"
       checked={props.value}
       data-is-default-value={props.state === 'unset'}

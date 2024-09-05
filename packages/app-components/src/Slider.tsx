@@ -1,11 +1,11 @@
 import * as ReactSlider from '@radix-ui/react-slider';
 import { NumberInput } from './NumberInput';
 import styles from './Slider.module.css';
-import { extractDataAttributes } from './utils';
+import { extractDataAttributes, extractMouseEvents } from './utils';
 
 export const Slider = (props: Props) => {
   return (
-    <div className={styles.cmpSlider}>
+    <div className={styles.cmpSlider} {...extractMouseEvents(props)}>
       <ReactSlider.Root
         className={styles.cmpSliderSlider}
         defaultValue={[props.value]}
@@ -30,6 +30,7 @@ export const Slider = (props: Props) => {
         min={0}
         max={100}
         style={{ width: '50px' }}
+        state={props.state}
         onChange={props.onChange}
         disabled={props.disabled}
       />
@@ -42,7 +43,7 @@ type Props = {
   max?: number;
   unit?: string;
   disabled?: boolean;
+  isIndeterminate?: boolean;
+  state?: 'set' | 'unset' | 'overridden';
   onChange: (value: number | undefined) => void;
-  defaultValue?: number;
-  isDefaultValue?: boolean;
 };

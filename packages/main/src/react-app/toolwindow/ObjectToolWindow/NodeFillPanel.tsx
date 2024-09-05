@@ -52,11 +52,11 @@ const ImageScale = (props: { imageScale: Property<number> }) => (
   <>
     <div className={'cmp-labeled-table__label'}>Scale:</div>
     <div className={'cmp-labeled-table__value'}>
-      <Slider
-        value={round(props.imageScale.val * 100)}
-        onChange={v => props.imageScale.set(v === undefined ? undefined : Number(v) / 100)}
-        isDefaultValue={!props.imageScale.isSet}
-        defaultValue={round(props.imageScale.defaultVal * 100)}
+      <PropertyEditor
+        property={props.imageScale}
+        formatValue={v => round(v * 100)}
+        storeValue={v => v / 100}
+        render={props => <Slider {...props} />}
       />
     </div>
   </>
@@ -85,11 +85,11 @@ const ImageTint = (props: { tint: Property<string>; tintStrength: Property<numbe
         </div>
         <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Slider
-            value={round(props.tintStrength.val * 100)}
-            onChange={v => props.tintStrength.set(v === undefined ? undefined : Number(v) / 100)}
-            isDefaultValue={!props.tintStrength.isSet}
-            defaultValue={props.tintStrength.defaultVal * 100}
+          <PropertyEditor
+            property={props.tintStrength}
+            formatValue={v => round(v * 100)}
+            storeValue={v => v / 100}
+            render={props => <Slider {...props} />}
           />
         </div>
       </div>
@@ -106,34 +106,31 @@ const ImageAdjustments = (props: {
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label util-a-top-center'}>Contrast:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider
-          max={200}
-          value={round(props.contrast.val * 100)}
-          onChange={v => props.contrast.set(v === undefined ? undefined : Number(v) / 100)}
-          isDefaultValue={!props.contrast.isSet}
-          defaultValue={props.contrast.defaultVal * 100}
+        <PropertyEditor
+          property={props.contrast}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => <Slider {...props} max={200} />}
         />
       </div>
 
       <div className={'cmp-labeled-table__label util-a-top-center'}>Brightness:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider
-          max={200}
-          value={round(props.brightness.val * 100)}
-          onChange={v => props.brightness.set(v === undefined ? undefined : Number(v) / 100)}
-          isDefaultValue={!props.brightness.isSet}
-          defaultValue={props.brightness.defaultVal * 100}
+        <PropertyEditor
+          property={props.brightness}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => <Slider {...props} max={200} />}
         />
       </div>
 
       <div className={'cmp-labeled-table__label util-a-top-center'}>Saturation:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider
-          max={200}
-          value={round(props.saturation.val * 100)}
-          onChange={v => props.saturation.set(v === undefined ? undefined : Number(v) / 100)}
-          isDefaultValue={!props.saturation.isSet}
-          defaultValue={props.saturation.defaultVal * 100}
+        <PropertyEditor
+          property={props.saturation}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => <Slider {...props} max={200} />}
         />
       </div>
     </div>
@@ -232,13 +229,11 @@ export const NodeFillPanelForm = ({
             <>
               <div className={'cmp-labeled-table__label'}>Direction:</div>
               <div className={'cmp-labeled-table__value util-hstack'}>
-                <Slider
-                  unit={'°'}
-                  max={360}
-                  value={round(Angle.toDeg(gradientDirection.val))}
-                  onChange={v => gradientDirection.set(Angle.toRad(Number(v)))}
-                  isDefaultValue={!gradientDirection.isSet}
-                  defaultValue={Angle.toDeg(gradientDirection.defaultVal)}
+                <PropertyEditor
+                  property={gradientDirection}
+                  formatValue={v => round(Angle.toDeg(v))}
+                  storeValue={v => Angle.toRad(Number(v))}
+                  render={props => <Slider {...props} unit={'°'} max={360} />}
                 />
               </div>
             </>

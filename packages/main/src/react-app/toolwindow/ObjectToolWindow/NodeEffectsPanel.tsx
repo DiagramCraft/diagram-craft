@@ -47,37 +47,31 @@ export const NodeEffectsPanelForm = ({
 
       <div className={'cmp-labeled-table__label'}></div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider
-          value={round(reflectionStrength.val * 100)}
-          onChange={v => {
-            reflectionStrength.set(v === undefined ? undefined : Number(v) / 100);
-          }}
-          defaultValue={reflectionStrength.defaultVal * 100}
-          isDefaultValue={!reflectionStrength.isSet}
+        <PropertyEditor
+          property={reflectionStrength}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => <Slider {...props} />}
         />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Blur:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider
-          value={round(blur.val * 100)}
-          onChange={v => {
-            blur.set(v === undefined ? undefined : Number(v) / 100);
-          }}
-          defaultValue={blur.defaultVal * 100}
-          isDefaultValue={!blur.isSet}
+        <PropertyEditor
+          property={blur}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => <Slider {...props} />}
         />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Opacity:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider
-          value={round(opacity.val * 100)}
-          onChange={v => {
-            opacity.set(v === undefined ? undefined : Number(v) / 100);
-          }}
-          defaultValue={opacity.defaultVal * 100}
-          isDefaultValue={!opacity.isSet}
+        <PropertyEditor
+          property={opacity}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => <Slider {...props} />}
         />
       </div>
 
@@ -93,14 +87,11 @@ export const NodeEffectsPanelForm = ({
 
       <div className={'cmp-labeled-table__label'}></div>
       <div className={'cmp-labeled-table__value'}>
-        <Slider
-          value={round(sketchStrength.val * 100)}
-          onChange={v => {
-            sketchStrength.set(v === undefined ? undefined : Number(v) / 100);
-          }}
-          max={25}
-          defaultValue={round(sketchStrength.defaultVal * 100)}
-          isDefaultValue={!sketchStrength.isSet}
+        <PropertyEditor
+          property={sketchStrength}
+          formatValue={v => round(v * 100)}
+          storeValue={v => v / 100}
+          render={props => <Slider {...props} max={25} />}
         />
       </div>
 
@@ -125,15 +116,11 @@ export const NodeEffectsPanelForm = ({
           </div>
           <div className={'cmp-labeled-table__label'}></div>
           <div className={'cmp-labeled-table__value'}>
-            <Slider
-              value={round(roundingAmount.val)}
-              onChange={v => {
-                roundingAmount.set(v);
-              }}
-              unit={'px'}
-              max={200}
-              defaultValue={round(roundingAmount.defaultVal)}
-              isDefaultValue={!roundingAmount.isSet}
+            <PropertyEditor
+              property={roundingAmount}
+              formatValue={v => round(v * 100)}
+              storeValue={v => v / 100}
+              render={props => <Slider {...props} max={200} unit={'px'} />}
             />
           </div>
         </>
