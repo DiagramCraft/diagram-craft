@@ -39,7 +39,7 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
             palette={$cfg.palette.primary}
-            color={color.val ?? 'transparent'}
+            value={color.val ?? 'transparent'}
             onChange={color.set}
             customPalette={$d.document.customPalette.colors}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
@@ -73,7 +73,7 @@ export const CanvasGridPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <ColorPicker
             palette={$cfg.palette.primary}
-            color={majorColor.val ?? 'transparent'}
+            value={majorColor.val ?? 'transparent'}
             onChange={majorColor.set}
             customPalette={$d.document.customPalette.colors}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}

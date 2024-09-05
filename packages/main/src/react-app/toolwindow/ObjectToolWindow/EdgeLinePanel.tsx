@@ -113,24 +113,29 @@ export const EdgeLinePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Color:</div>
           <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-            <ColorPicker
-              palette={$cfg.palette.primary}
-              color={strokeColor.val}
-              onChange={strokeColor.set}
-              customPalette={$d.document.customPalette.colors}
-              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              defaultValue={strokeColor.defaultVal}
-              isDefaultValue={!strokeColor.isSet}
+            <PropertyEditor
+              property={strokeColor}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  palette={$cfg.palette.primary}
+                  customPalette={$d.document.customPalette.colors}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
             />
+
             {!supportsFill && (
-              <ColorPicker
-                palette={$cfg.palette.primary}
-                color={fillColor.val}
-                onChange={fillColor.set}
-                customPalette={$d.document.customPalette.colors}
-                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                defaultValue={fillColor.defaultVal}
-                isDefaultValue={!fillColor.isSet}
+              <PropertyEditor
+                property={fillColor}
+                render={props => (
+                  <ColorPicker
+                    {...props}
+                    palette={$cfg.palette.primary}
+                    customPalette={$d.document.customPalette.colors}
+                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                  />
+                )}
               />
             )}
           </div>

@@ -70,15 +70,17 @@ const ImageTint = (props: { tint: Property<string>; tintStrength: Property<numbe
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
         <div className={'cmp-labeled-table__value'}>
-          <ColorPicker
-            palette={$cfg.palette.primary}
-            color={props.tint.val}
-            onChange={v => props.tint.set(v)}
-            canClearColor={true}
-            customPalette={$d.document.customPalette.colors}
-            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-            isDefaultValue={!props.tint.isSet}
-            defaultValue={props.tint.defaultVal}
+          <PropertyEditor
+            property={props.tint}
+            render={props => (
+              <ColorPicker
+                {...props}
+                palette={$cfg.palette.primary}
+                canClearColor={true}
+                customPalette={$d.document.customPalette.colors}
+                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              />
+            )}
           />
         </div>
         <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
@@ -180,27 +182,30 @@ export const NodeFillPanelForm = ({
         <>
           <div className={'cmp-labeled-table__label'}>Color:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>
-            <ColorPicker
-              palette={$cfg.palette.primary}
-              color={color.val}
-              onChange={color.set}
-              hasMultipleValues={color.hasMultipleValues}
-              customPalette={$d.document.customPalette.colors}
-              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              isDefaultValue={!color.isSet}
-              defaultValue={color.defaultVal}
-            />
-            {type.val === 'gradient' && (
-              <>
+            <PropertyEditor
+              property={color}
+              render={props => (
                 <ColorPicker
+                  {...props}
                   palette={$cfg.palette.primary}
-                  color={color2.val}
-                  onChange={color2.set}
-                  hasMultipleValues={color2.hasMultipleValues}
                   customPalette={$d.document.customPalette.colors}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                  isDefaultValue={!color2.isSet}
-                  defaultValue={color2.defaultVal}
+                />
+              )}
+            />
+
+            {type.val === 'gradient' && (
+              <>
+                <PropertyEditor
+                  property={color2}
+                  render={props => (
+                    <ColorPicker
+                      {...props}
+                      palette={$cfg.palette.primary}
+                      customPalette={$d.document.customPalette.colors}
+                      onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                    />
+                  )}
                 />
               </>
             )}
@@ -276,25 +281,27 @@ export const NodeFillPanelForm = ({
 
           <div className={'cmp-labeled-table__label util-a-top-center'}>Color:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>
-            <ColorPicker
-              palette={$cfg.palette.primary}
-              color={color.val}
-              onChange={color.set}
-              hasMultipleValues={color.hasMultipleValues}
-              customPalette={$d.document.customPalette.colors}
-              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              isDefaultValue={!color.isSet}
-              defaultValue={color.defaultVal}
+            <PropertyEditor
+              property={color}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  palette={$cfg.palette.primary}
+                  customPalette={$d.document.customPalette.colors}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
             />
-            <ColorPicker
-              palette={$cfg.palette.primary}
-              color={color2.val}
-              onChange={color2.set}
-              hasMultipleValues={color2.hasMultipleValues}
-              customPalette={$d.document.customPalette.colors}
-              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              isDefaultValue={!color2.isSet}
-              defaultValue={color2.defaultVal}
+            <PropertyEditor
+              property={color2}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  palette={$cfg.palette.primary}
+                  customPalette={$d.document.customPalette.colors}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
             />
           </div>
         </>

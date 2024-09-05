@@ -2,7 +2,7 @@ import { TbChevronDown, TbDots } from 'react-icons/tb';
 import React, { useCallback, useRef } from 'react';
 import { range } from '@diagram-craft/utils/array';
 import { Popover } from '@diagram-craft/app-components/Popover';
-import { ResetContextMenu } from '@diagram-craft/app-components/ResetContextMenu';
+import { extractMouseEvents } from '@diagram-craft/app-components/utils';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]).map(colNumber =>
@@ -42,12 +42,6 @@ export const ColorPicker = (props: Props) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = React.useState(false);
 
-  const isDefaultValue =
-    !props.hasMultipleValues &&
-    props.isDefaultValue &&
-    props.defaultValue !== undefined &&
-    props.color === props.defaultValue;
-
   const close = () => {
     setOpen(false);
   };
@@ -65,29 +59,22 @@ export const ColorPicker = (props: Props) => {
   );
 
   return (
-    <div className={'cmp-color-picker'} data-is-default-value={isDefaultValue}>
+    <div className={'cmp-color-picker'} data-is-default-value={props.state === 'unset'}>
       <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
-        <ResetContextMenu
-          disabled={props.defaultValue === undefined}
-          onReset={() => {
-            props.onChange(undefined);
-          }}
-        >
-          <Popover.Trigger>
-            <button>
-              <div
-                className={'cmp-color-picker__well'}
-                style={{
-                  backgroundColor: props.color,
-                  border: props.hasMultipleValues ? '1px dotted var(--slate-8)' : undefined
-                }}
-              >
-                {props.hasMultipleValues && <TbDots style={{ margin: '0px' }} />}
-              </div>
-              <TbChevronDown size={'11px'} />
-            </button>
-          </Popover.Trigger>
-        </ResetContextMenu>
+        <Popover.Trigger>
+          <button {...extractMouseEvents(props)}>
+            <div
+              className={'cmp-color-picker__well'}
+              style={{
+                backgroundColor: props.value,
+                border: props.isIndeterminate ? '1px dotted var(--slate-8)' : undefined
+              }}
+            >
+              {props.isIndeterminate && <TbDots style={{ margin: '0px' }} />}
+            </div>
+            <TbChevronDown size={'11px'} />
+          </button>
+        </Popover.Trigger>
         <Popover.Content sideOffset={5} ref={contentRef}>
           <div className={'cmp-color-grid'}>
             <h2>Colors</h2>
@@ -169,11 +156,10 @@ export const ColorPicker = (props: Props) => {
 
 type Props = {
   palette: string[][];
-  hasMultipleValues?: boolean;
+  isIndeterminate?: boolean;
+  state?: 'set' | 'unset' | 'overridden';
   customPalette: string[];
-  color: string;
-  defaultValue?: string | number;
-  isDefaultValue?: boolean;
+  value: string;
   onChange: (s: string | undefined) => void;
   onChangeCustomPalette: (idx: number, s: string) => void;
   canClearColor?: boolean;

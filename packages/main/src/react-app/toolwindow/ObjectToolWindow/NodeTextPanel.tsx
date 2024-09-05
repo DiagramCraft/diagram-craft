@@ -160,15 +160,16 @@ export const NodeTextPanelForm = ({
 
       <div className={'cmp-labeled-table__label'}>Color:</div>
       <div className={'cmp-labeled-table__value'}>
-        <ColorPicker
-          palette={$cfg.palette.primary}
-          color={color.val}
-          onChange={color.set}
-          hasMultipleValues={color.hasMultipleValues}
-          customPalette={$d.document.customPalette.colors}
-          onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-          defaultValue={color.defaultVal}
-          isDefaultValue={!color.isSet}
+        <PropertyEditor
+          property={color}
+          render={props => (
+            <ColorPicker
+              {...props}
+              palette={$cfg.palette.primary}
+              customPalette={$d.document.customPalette.colors}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            />
+          )}
         />
       </div>
 

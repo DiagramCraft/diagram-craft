@@ -90,15 +90,16 @@ export const NodeTableStrokePanel = (props: Props) => {
 
         <div className={'cmp-labeled-table__label'}>Color:</div>
         <div className={'cmp-labeled-table__value'}>
-          <ColorPicker
-            palette={$cfg.palette.primary}
-            color={strokeColor.val}
-            onChange={strokeColor.set}
-            hasMultipleValues={strokeColor.hasMultipleValues}
-            customPalette={$d.document.customPalette.colors}
-            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-            defaultValue={strokeColor.defaultVal}
-            isDefaultValue={!strokeColor.isSet}
+          <PropertyEditor
+            property={strokeColor}
+            render={props => (
+              <ColorPicker
+                {...props}
+                palette={$cfg.palette.primary}
+                customPalette={$d.document.customPalette.colors}
+                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              />
+            )}
           />
         </div>
 

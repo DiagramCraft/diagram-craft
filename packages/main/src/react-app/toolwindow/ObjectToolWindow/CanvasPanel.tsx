@@ -35,7 +35,7 @@ export const CanvasPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value'}>
           <ColorPicker
             palette={$cfg.palette.primary}
-            color={bg.val ?? 'transparent'}
+            value={bg.val ?? 'transparent'}
             onChange={v => {
               bg.set(v);
             }}
