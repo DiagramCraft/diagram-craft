@@ -10,6 +10,17 @@
     border: 1px solid var(--cmp-focus-border);
   }
 
+  &[data-is-default-value="true"] {
+    > .cmp-toggle-button-group__item {
+      color: var(--cmp-is-default-fg);
+      &[data-state='on'] {
+        background-color: var(--secondary-bg);
+        color: var(--highlight-fg);
+      }
+
+    }
+  }
+
   .cmp-toggle-button-group__item {
     flex: 0 0 auto;
     color: var(--cmp-fg);

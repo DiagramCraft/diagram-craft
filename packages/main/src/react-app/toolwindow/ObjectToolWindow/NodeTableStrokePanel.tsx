@@ -58,12 +58,12 @@ export const NodeTableStrokePanel = (props: Props) => {
               .filter(([_, value]) => value)
               .map(([key, _]) => key)}
             onValueChange={value => {
-              if (!!outerBorder.val !== value.includes('outer'))
-                outerBorder.set(value.includes('outer'));
-              if (!!horizontalBorder.val !== value.includes('horizontal'))
-                horizontalBorder.set(value.includes('horizontal'));
-              if (!!verticalBorder.val !== value.includes('vertical'))
-                verticalBorder.set(value.includes('vertical'));
+              if (!!outerBorder.val !== value?.includes('outer'))
+                outerBorder.set(value?.includes('outer'));
+              if (!!horizontalBorder.val !== value?.includes('horizontal'))
+                horizontalBorder.set(value?.includes('horizontal'));
+              if (!!verticalBorder.val !== value?.includes('vertical'))
+                verticalBorder.set(value?.includes('vertical'));
             }}
           >
             <ToggleButtonGroup.Item value={'outer'}>

@@ -72,12 +72,15 @@ export const NodeTextPanelForm = ({
           style={{ width: '45px' }}
           onChange={fontSize.set}
           hasMultipleValues={fontSize.hasMultipleValues}
+          defaultValue={fontSize.defaultVal}
+          isDefaultValue={!fontSize.isSet}
         />
-        {/* TODO: Can we use Select here - need to support hasMultipleValues */}
         <Select.Root
           value={font.val}
           hasMultipleValues={font.hasMultipleValues}
           onValueChange={font.set}
+          defaultValue={font.defaultVal}
+          isDefaultValue={!font.isSet}
         >
           {Object.entries(fonts).map(([label, value]) => (
             <Select.Item key={value} value={value}>
@@ -92,6 +95,15 @@ export const NodeTextPanelForm = ({
         <ToggleButtonGroup.Root
           aria-label="Formatting options"
           type={'multiple'}
+          defaultValue={Object.entries({
+            bold: isBold.defaultVal,
+            italic: isItalic.defaultVal,
+            underline: textDecoration.defaultVal === 'underline',
+            strikethrough: textDecoration.defaultVal === 'line-through'
+          })
+            .filter(([_, value]) => value)
+            .map(([key, _]) => key)}
+          isDefaultValue={!isBold.isSet && !isItalic.isSet && !textDecoration.isSet}
           value={Object.entries({
             bold: isBold.val,
             italic: isItalic.val,
@@ -101,16 +113,17 @@ export const NodeTextPanelForm = ({
             .filter(([_, value]) => value)
             .map(([key, _]) => key)}
           onValueChange={value => {
-            if (!!isBold.val !== value.includes('bold')) isBold.set(value.includes('bold'));
-            if (!!isItalic.val !== value.includes('italic')) isItalic.set(value.includes('italic'));
+            if (!!isBold.val !== value?.includes('bold')) isBold.set(value?.includes('bold'));
+            if (!!isItalic.val !== value?.includes('italic'))
+              isItalic.set(value?.includes('italic'));
 
             const isUnderlineChanged =
-              value.includes('underline') !== (textDecoration.val === 'underline');
+              value?.includes('underline') !== (textDecoration.val === 'underline');
             const isStrikethroughChanged =
-              value.includes('strikethrough') !== (textDecoration.val === 'line-through');
+              value?.includes('strikethrough') !== (textDecoration.val === 'line-through');
 
             if (isUnderlineChanged) {
-              textDecoration.set(value.includes('underline') ? 'underline' : undefined);
+              textDecoration.set(value?.includes('underline') ? 'underline' : undefined);
             } else if (isStrikethroughChanged) {
               textDecoration.set(value.includes('strikethrough') ? 'line-through' : undefined);
             }
@@ -134,9 +147,11 @@ export const NodeTextPanelForm = ({
           aria-label="Formatting options"
           type={'single'}
           value={textTransform.val}
-          onValueChange={(value: string) => {
+          onValueChange={(value: string | undefined) => {
             textTransform.set(value as NonNullable<NodeProps['text']>['textTransform']);
           }}
+          defaultValue={textTransform.defaultVal}
+          isDefaultValue={!textTransform.isSet}
         >
           <ToggleButtonGroup.Item value={'capitalize'}>
             <TbLetterCase />
@@ -156,6 +171,8 @@ export const NodeTextPanelForm = ({
           hasMultipleValues={color.hasMultipleValues}
           customPalette={$d.document.customPalette.colors}
           onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+          defaultValue={color.defaultVal}
+          isDefaultValue={!color.isSet}
         />
       </div>
 
@@ -169,6 +186,8 @@ export const NodeTextPanelForm = ({
             assertHAlign(v);
             align.set(v);
           }}
+          defaultValue={align.defaultVal}
+          isDefaultValue={!align.isSet}
         >
           <ToggleButtonGroup.Item value={'left'}>
             <TbAlignLeft />
@@ -188,6 +207,8 @@ export const NodeTextPanelForm = ({
             assertVAlign(v);
             valign.set(v);
           }}
+          defaultValue={valign.defaultVal}
+          isDefaultValue={!valign.isSet}
         >
           <ToggleButtonGroup.Item value={'top'}>
             <RxTextAlignTop />
@@ -212,6 +233,8 @@ export const NodeTextPanelForm = ({
             lineHeight.set(v ? v / 100 : 0);
           }}
           hasMultipleValues={lineHeight.hasMultipleValues}
+          defaultValue={round(lineHeight.defaultVal * 100)}
+          isDefaultValue={!lineHeight.isSet}
         />
       </div>
 
@@ -240,6 +263,8 @@ export const NodeTextPanelForm = ({
             style={{ gridArea: 'top', width: '100%' }}
             onChange={top.set}
             hasMultipleValues={top.hasMultipleValues}
+            defaultValue={top.defaultVal}
+            isDefaultValue={!top.isSet}
           />
           <NumberInput
             defaultUnit={'px'}
@@ -248,6 +273,8 @@ export const NodeTextPanelForm = ({
             style={{ gridArea: 'left', width: '100%' }}
             onChange={left.set}
             hasMultipleValues={left.hasMultipleValues}
+            defaultValue={left.defaultVal}
+            isDefaultValue={!left.isSet}
           />
           <NumberInput
             defaultUnit={'px'}
@@ -256,6 +283,8 @@ export const NodeTextPanelForm = ({
             style={{ gridArea: 'bottom', width: '100%' }}
             onChange={bottom.set}
             hasMultipleValues={bottom.hasMultipleValues}
+            defaultValue={bottom.defaultVal}
+            isDefaultValue={!bottom.isSet}
           />
           <NumberInput
             defaultUnit={'px'}
@@ -264,6 +293,8 @@ export const NodeTextPanelForm = ({
             style={{ gridArea: 'right', width: '100%' }}
             onChange={right.set}
             hasMultipleValues={right.hasMultipleValues}
+            defaultValue={right.defaultVal}
+            isDefaultValue={!right.isSet}
           />
         </div>
       </div>
