@@ -63,15 +63,7 @@ export const NodeStrokePanelForm = ({
           )}
         />
 
-        <DashSelector
-          value={pattern.val}
-          onValueChange={value => {
-            pattern.set(value!);
-          }}
-          hasMultipleValues={pattern.hasMultipleValues}
-          defaultValue={pattern.defaultVal}
-          isDefaultValue={!pattern.isSet}
-        />
+        <DashSelector property={pattern} />
         <PopoverButton label={<TbAdjustmentsHorizontal />}>
           <div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label'}>Stroke:</div>
@@ -93,35 +85,29 @@ export const NodeStrokePanelForm = ({
 
             <div className={'cmp-labeled-table__label'}>Line cap:</div>
             <div className={'cmp-labeled-table__value util-hstack'}>
-              <Select.Root
-                onValueChange={v => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  lineCap.set(v as any);
-                }}
-                value={lineCap.val}
-                isDefaultValue={!lineCap.isSet}
-                defaultValue={lineCap.defaultVal}
-              >
-                <Select.Item value={'butt'}>Butt</Select.Item>
-                <Select.Item value={'round'}>Round</Select.Item>
-                <Select.Item value={'square'}>Square</Select.Item>
-              </Select.Root>
+              <PropertyEditor
+                property={lineCap as Property<string>}
+                render={props => (
+                  <Select.Root {...props}>
+                    <Select.Item value={'butt'}>Butt</Select.Item>
+                    <Select.Item value={'round'}>Round</Select.Item>
+                    <Select.Item value={'square'}>Square</Select.Item>
+                  </Select.Root>
+                )}
+              />
             </div>
             <div className={'cmp-labeled-table__label'}>Line join:</div>
             <div className={'cmp-labeled-table__value util-hstack'}>
-              <Select.Root
-                onValueChange={v => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  lineJoin.set(v as any);
-                }}
-                value={lineJoin.val}
-                isDefaultValue={!lineJoin.isSet}
-                defaultValue={lineJoin.defaultVal}
-              >
-                <Select.Item value={'miter'}>Miter</Select.Item>
-                <Select.Item value={'round'}>Round</Select.Item>
-                <Select.Item value={'bevel'}>Bevel</Select.Item>
-              </Select.Root>
+              <PropertyEditor
+                property={lineJoin as Property<string>}
+                render={props => (
+                  <Select.Root {...props}>
+                    <Select.Item value={'miter'}>Miter</Select.Item>
+                    <Select.Item value={'round'}>Round</Select.Item>
+                    <Select.Item value={'bevel'}>Bevel</Select.Item>
+                  </Select.Root>
+                )}
+              />
 
               {lineJoin.val === 'miter' && (
                 <PropertyEditor

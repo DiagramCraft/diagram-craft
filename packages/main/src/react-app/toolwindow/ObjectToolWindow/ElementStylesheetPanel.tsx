@@ -75,8 +75,8 @@ export const ElementStylesheetPanel = (props: Props) => {
         <div className={'cmp-labeled-table__value util-hstack'}>
           <Select.Root
             value={$s.val}
-            hasMultipleValues={$s.hasMultipleValues}
-            onValueChange={v => {
+            isIndeterminate={$s.hasMultipleValues}
+            onChange={v => {
               const uow = new UnitOfWork($d, true);
               $d.selectionState.elements.forEach(n => {
                 $d.document.styles.setStylesheet(n, v!, uow, true);

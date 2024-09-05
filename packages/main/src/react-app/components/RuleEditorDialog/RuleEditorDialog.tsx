@@ -70,7 +70,7 @@ const ClauseList = (props: ClauseListProps) => {
               value={c.type ?? ''}
               placeholder={'Select Rule'}
               style={props.indent ? { marginLeft: '1rem' } : {}}
-              onValueChange={t => {
+              onChange={t => {
                 const newClauses = [...props.clauses];
                 // @ts-ignore
                 newClauses[idx].type = t;
@@ -127,7 +127,7 @@ const ClauseList = (props: ClauseListProps) => {
                 {/* TODO: Filter relations based on type */}
                 <Select.Root
                   value={'eq'}
-                  onValueChange={cond => {
+                  onChange={cond => {
                     // @ts-ignore
                     c.relation = cond;
                     props.onChange([...props.clauses]);
@@ -366,7 +366,7 @@ export const RuleEditorDialog = (props: Props) => {
                 <Select.Root
                   value={action.type ?? ''}
                   placeholder={'Select action'}
-                  onValueChange={s => {
+                  onChange={s => {
                     const newActions = [...actions];
                     // @ts-ignore
                     newActions[idx].type = s;

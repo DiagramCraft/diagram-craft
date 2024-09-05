@@ -90,7 +90,7 @@ export const ReferenceLayerDialog = (props: Props) => {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Select.Root
             value={selectedDiagram?.id ?? ''}
-            onValueChange={onDiagramChange}
+            onChange={onDiagramChange}
             placeholder={'Sheet'}
           >
             {props.diagram.document.diagrams
@@ -106,7 +106,7 @@ export const ReferenceLayerDialog = (props: Props) => {
 
           <Select.Root
             value={selectedLayer?.id ?? ''}
-            onValueChange={onLayerChange}
+            onChange={onLayerChange}
             placeholder={'Layer'}
           >
             {selectedDiagram?.layers.all

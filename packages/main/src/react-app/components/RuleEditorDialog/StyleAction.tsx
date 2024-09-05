@@ -21,7 +21,7 @@ export const StyleAction = (props: Props) => {
       <Select.Root
         value={props.action?.kind ?? ''}
         placeholder={'Style'}
-        onValueChange={k => {
+        onChange={k => {
           props.action.kind = k;
           props.onChange(props.action);
         }}

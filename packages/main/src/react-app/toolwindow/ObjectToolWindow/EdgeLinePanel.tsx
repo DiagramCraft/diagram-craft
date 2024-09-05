@@ -11,6 +11,7 @@ import { DashSelector } from './components/DashSelector';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { PropertyEditor } from '../../components/PropertyEditor';
+import { Property } from './types';
 
 export const EdgeLinePanel = (props: Props) => {
   const $d = useDiagram();
@@ -88,12 +89,7 @@ export const EdgeLinePanel = (props: Props) => {
             <>
               <div className={'cmp-labeled-table__label'}>Line start:</div>
               <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-                <ArrowSelector
-                  value={startType.val}
-                  onValueChange={startType.set}
-                  defaultValue={startType.defaultVal}
-                  isDefaultValue={!startType.isSet}
-                />
+                <ArrowSelector property={startType} />
                 <PropertyEditor
                   property={startSize}
                   render={props => (
@@ -104,12 +100,7 @@ export const EdgeLinePanel = (props: Props) => {
 
               <div className={'cmp-labeled-table__label'}>Line end:</div>
               <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-                <ArrowSelector
-                  value={endType.val}
-                  onValueChange={endType.set}
-                  defaultValue={endType.defaultVal}
-                  isDefaultValue={!endType.isSet}
-                />
+                <ArrowSelector property={endType} />
                 <PropertyEditor
                   property={endSize}
                   render={props => (
@@ -156,12 +147,7 @@ export const EdgeLinePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Dash:</div>
           <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-            <DashSelector
-              value={pattern.val}
-              onValueChange={pattern.set}
-              isDefaultValue={!pattern.isSet}
-              defaultValue={pattern.defaultVal}
-            />
+            <DashSelector property={pattern} />
             <PropertyEditor
               property={strokeSize}
               render={props => (
@@ -182,21 +168,18 @@ export const EdgeLinePanel = (props: Props) => {
               <div className={'cmp-labeled-table__label util-a-top-center'}>Line hops:</div>
               <div className={'cmp-labeled-table__value util-vcenter'}>
                 <div className={'util-vstack'} style={{ width: '100%' }}>
-                  <Select.Root
-                    onValueChange={v => {
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      lineHopsType.set(v as any);
-                    }}
-                    value={lineHopsType.val}
-                    defaultValue={lineHopsType.defaultVal}
-                    isDefaultValue={!lineHopsType.isSet}
-                  >
-                    <Select.Item value={'none'}>None</Select.Item>
-                    <Select.Item value={'below-hide'}>Gap when below</Select.Item>
-                    <Select.Item value={'below-line'}>Gap with line when below</Select.Item>
-                    <Select.Item value={'below-arc'}>Arc when below</Select.Item>
-                    <Select.Item value={'above-arc'}>Arc when above</Select.Item>
-                  </Select.Root>
+                  <PropertyEditor
+                    property={lineHopsType as Property<string>}
+                    render={props => (
+                      <Select.Root {...props}>
+                        <Select.Item value={'none'}>None</Select.Item>
+                        <Select.Item value={'below-hide'}>Gap when below</Select.Item>
+                        <Select.Item value={'below-line'}>Gap with line when below</Select.Item>
+                        <Select.Item value={'below-arc'}>Arc when below</Select.Item>
+                        <Select.Item value={'above-arc'}>Arc when above</Select.Item>
+                      </Select.Root>
+                    )}
+                  />
 
                   <PropertyEditor
                     property={lineHopsSize}
@@ -216,36 +199,30 @@ export const EdgeLinePanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Line cap:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>
-            <Select.Root
-              onValueChange={v => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                lineCap.set(v as any);
-              }}
-              value={lineCap.val}
-              defaultValue={lineCap.defaultVal}
-              isDefaultValue={!lineCap.isSet}
-            >
-              <Select.Item value={'butt'}>Butt</Select.Item>
-              <Select.Item value={'round'}>Round</Select.Item>
-              <Select.Item value={'square'}>Square</Select.Item>
-            </Select.Root>
+            <PropertyEditor
+              property={lineCap as Property<string>}
+              render={props => (
+                <Select.Root {...props}>
+                  <Select.Item value={'butt'}>Butt</Select.Item>
+                  <Select.Item value={'round'}>Round</Select.Item>
+                  <Select.Item value={'square'}>Square</Select.Item>
+                </Select.Root>
+              )}
+            />
           </div>
 
           <div className={'cmp-labeled-table__label'}>Line join:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>
-            <Select.Root
-              onValueChange={v => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                lineJoin.set(v as any);
-              }}
-              value={lineJoin.val}
-              defaultValue={lineJoin.defaultVal}
-              isDefaultValue={!lineJoin.isSet}
-            >
-              <Select.Item value={'miter'}>Miter</Select.Item>
-              <Select.Item value={'round'}>Round</Select.Item>
-              <Select.Item value={'bevel'}>Bevel</Select.Item>
-            </Select.Root>
+            <PropertyEditor
+              property={lineJoin as Property<string>}
+              render={props => (
+                <Select.Root {...props}>
+                  <Select.Item value={'miter'}>Miter</Select.Item>
+                  <Select.Item value={'round'}>Round</Select.Item>
+                  <Select.Item value={'bevel'}>Bevel</Select.Item>
+                </Select.Root>
+              )}
+            />
 
             {lineJoin.val === 'miter' && (
               <PropertyEditor

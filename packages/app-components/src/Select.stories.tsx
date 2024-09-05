@@ -37,7 +37,7 @@ export const Primary: Story = {
         Amet
       </Select.Item>
     ],
-    onValueChange: fn()
+    onChange: fn()
   }
 };
 
@@ -61,7 +61,7 @@ export const Hover: Story = {
         Amet
       </Select.Item>
     ],
-    'onValueChange': fn(),
+    'onChange': fn(),
     // @ts-ignore
     'data-hover': true
   }
@@ -87,7 +87,7 @@ export const Focus: Story = {
         Amet
       </Select.Item>
     ],
-    'onValueChange': fn(),
+    'onChange': fn(),
     // @ts-ignore
     'data-focus': true
   }
@@ -113,7 +113,7 @@ export const Disabled: Story = {
         Amet
       </Select.Item>
     ],
-    onValueChange: fn(),
+    onChange: fn(),
     disabled: true
   }
 };
@@ -129,7 +129,7 @@ export const Open: Story = {
         Ipsum
       </Select.Item>
     ],
-    'onValueChange': fn(),
+    'onChange': fn(),
     'open': true,
     // @ts-ignore
     'data-focus': true

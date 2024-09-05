@@ -1,5 +1,5 @@
 import { Angle } from '@diagram-craft/geometry/angle';
-import { assertFillType, FillType } from '@diagram-craft/model/diagramProps';
+import { FillType } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
@@ -14,6 +14,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -161,21 +162,18 @@ export const NodeFillPanelForm = ({
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Type:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Select.Root
-          onValueChange={v => {
-            assertFillType(v);
-            type.set(v);
-          }}
-          value={type.val}
-          isDefaultValue={!type.isSet}
-          defaultValue={type.defaultVal}
-        >
-          <Select.Item value={'solid'}>Solid</Select.Item>
-          <Select.Item value={'gradient'}>Gradient</Select.Item>
-          <Select.Item value={'pattern'}>Pattern</Select.Item>
-          <Select.Item value={'texture'}>Texture</Select.Item>
-          <Select.Item value={'image'}>Image</Select.Item>
-        </Select.Root>
+        <PropertyEditor
+          property={type as Property<string>}
+          render={props => (
+            <Select.Root {...props}>
+              <Select.Item value={'solid'}>Solid</Select.Item>
+              <Select.Item value={'gradient'}>Gradient</Select.Item>
+              <Select.Item value={'pattern'}>Pattern</Select.Item>
+              <Select.Item value={'texture'}>Texture</Select.Item>
+              <Select.Item value={'image'}>Image</Select.Item>
+            </Select.Root>
+          )}
+        />
       </div>
 
       {(type.val === 'gradient' || type.val === 'solid') && (
@@ -214,18 +212,15 @@ export const NodeFillPanelForm = ({
         <>
           <div className={'cmp-labeled-table__label'}>Type:</div>
           <div className={'cmp-labeled-table__value util-hstack'}>
-            <Select.Root
-              onValueChange={v => {
-                // eslint-disable-next-line
-                gradientType.set(v as any);
-              }}
-              value={gradientType.val}
-              isDefaultValue={!gradientType.isSet}
-              defaultValue={gradientType.defaultVal}
-            >
-              <Select.Item value={'linear'}>Linear</Select.Item>
-              <Select.Item value={'radial'}>Radial</Select.Item>
-            </Select.Root>
+            <PropertyEditor
+              property={gradientType as Property<string>}
+              render={props => (
+                <Select.Root {...props}>
+                  <Select.Item value={'linear'}>Linear</Select.Item>
+                  <Select.Item value={'radial'}>Radial</Select.Item>
+                </Select.Root>
+              )}
+            />
           </div>
 
           {gradientType.val === 'linear' && (
@@ -413,21 +408,18 @@ export const NodeFillPanelForm = ({
           </div>
           <div className={'cmp-labeled-table__label util-a-top-center'}>Fit:</div>
           <div className={'cmp-labeled-table__value'}>
-            <Select.Root
-              onValueChange={v => {
-                // eslint-disable-next-line
-                imageFit.set(v as any);
-              }}
-              value={imageFit.val}
-              isDefaultValue={!imageFit.isSet}
-              defaultValue={imageFit.defaultVal}
-            >
-              <Select.Item value={'fill'}>Fill</Select.Item>
-              <Select.Item value={'contain'}>Contain</Select.Item>
-              <Select.Item value={'cover'}>Cover</Select.Item>
-              <Select.Item value={'keep'}>Keep</Select.Item>
-              <Select.Item value={'tile'}>Tile</Select.Item>
-            </Select.Root>
+            <PropertyEditor
+              property={imageFit as Property<string>}
+              render={props => (
+                <Select.Root {...props}>
+                  <Select.Item value={'fill'}>Fill</Select.Item>
+                  <Select.Item value={'contain'}>Contain</Select.Item>
+                  <Select.Item value={'cover'}>Cover</Select.Item>
+                  <Select.Item value={'keep'}>Keep</Select.Item>
+                  <Select.Item value={'tile'}>Tile</Select.Item>
+                </Select.Root>
+              )}
+            />
           </div>
 
           {imageFit.val === 'tile' && <ImageScale imageScale={imageScale} />}

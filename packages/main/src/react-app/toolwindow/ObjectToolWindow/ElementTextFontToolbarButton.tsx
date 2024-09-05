@@ -10,7 +10,7 @@ export const ElementTextFontToolbarButton = (_props: Props) => {
   const font = useNodeProperty($d, 'text.font');
 
   return (
-    <Select.Root value={font.val} onValueChange={font.set}>
+    <Select.Root value={font.val} onChange={font.set}>
       {Object.entries(fonts).map(([label, value]) => (
         <Select.Item key={value} value={value}>
           {label}

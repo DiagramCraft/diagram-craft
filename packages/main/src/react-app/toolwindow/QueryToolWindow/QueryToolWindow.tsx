@@ -116,7 +116,7 @@ export const QueryToolWindow = () => {
               alignItems: 'center'
             }}
           >
-            <Select.Root onValueChange={setSource} value={source}>
+            <Select.Root onChange={setSource} value={source}>
               <Select.Item value={'active-layer'}>Active Layer</Select.Item>
               <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
               <Select.Item value={'active-document'}>Active Document</Select.Item>

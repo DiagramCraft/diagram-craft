@@ -23,7 +23,7 @@ export const ElementTextFontSizeToolbarButton = (_props: Props) => {
   const fontSize = useNodeProperty($d, 'text.fontSize');
 
   return (
-    <Select.Root value={fontSize.val.toString()} onValueChange={a => fontSize.set(Number(a))}>
+    <Select.Root value={fontSize.val.toString()} onChange={a => fontSize.set(Number(a))}>
       {Object.entries(SIZES).map(([k, v]) => (
         <Select.Item key={v.toString()} value={v.toString()}>
           {k}

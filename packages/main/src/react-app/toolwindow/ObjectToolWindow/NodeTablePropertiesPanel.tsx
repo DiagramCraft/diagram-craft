@@ -16,6 +16,7 @@ import { useTable } from '../../hooks/useTable';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
+import { Property } from './types';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -84,22 +85,18 @@ export const NodeTablePropertiesPanel = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <Select.Root
-                    onValueChange={v => {
-                      const uow = new UnitOfWork(diagram, true);
-                      value.onChange(v, uow);
-                      commitWithUndo(uow, `Change ${value.label}`);
-                    }}
-                    value={value.value}
-                    defaultValue={value.defaultValue}
-                    isDefaultValue={!value.isSet}
-                  >
-                    {value.options.map(o => (
-                      <Select.Item key={o.value} value={o.value}>
-                        {o.label}
-                      </Select.Item>
-                    ))}
-                  </Select.Root>
+                  <PropertyEditor
+                    property={prop as Property<string>}
+                    render={props => (
+                      <Select.Root {...props}>
+                        {value.options.map(o => (
+                          <Select.Item key={o.value} value={o.value}>
+                            {o.label}
+                          </Select.Item>
+                        ))}
+                      </Select.Root>
+                    )}
+                  />
                 </div>
               </React.Fragment>
             );

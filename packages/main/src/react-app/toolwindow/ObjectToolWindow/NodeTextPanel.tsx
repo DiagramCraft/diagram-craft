@@ -72,19 +72,18 @@ export const NodeTextPanelForm = ({
             <NumberInput {...props} defaultUnit={'pt'} min={1} style={{ width: '45px' }} />
           )}
         />
-        <Select.Root
-          value={font.val}
-          hasMultipleValues={font.hasMultipleValues}
-          onValueChange={font.set}
-          defaultValue={font.defaultVal}
-          isDefaultValue={!font.isSet}
-        >
-          {Object.entries(fonts).map(([label, value]) => (
-            <Select.Item key={value} value={value}>
-              {label}
-            </Select.Item>
-          ))}
-        </Select.Root>
+        <PropertyEditor
+          property={font}
+          render={props => (
+            <Select.Root {...props}>
+              {Object.entries(fonts).map(([label, value]) => (
+                <Select.Item key={value} value={value}>
+                  {label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          )}
+        />
       </div>
 
       <div></div>

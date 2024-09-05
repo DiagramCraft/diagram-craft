@@ -3,6 +3,8 @@ import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { PropertyEditor } from '../../components/PropertyEditor';
+import { Property } from '../ObjectToolWindow/types';
 
 export const ElementAnchorsPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -24,21 +26,19 @@ export const ElementAnchorsPanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Type:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Select.Root
-            value={type.val}
-            onValueChange={v => {
-              // @ts-ignore
-              type.set(v);
-            }}
-            disabled={disabled}
-          >
-            <Select.Item value={'none'}>No anchors</Select.Item>
-            <Select.Item value={'shape-defaults'}>Default</Select.Item>
-            <Select.Item value={'north-south'}>North/South</Select.Item>
-            <Select.Item value={'east-west'}>East/West</Select.Item>
-            <Select.Item value={'directions'}>x number of anchors</Select.Item>
-            <Select.Item value={'per-edge'}>x number per edge</Select.Item>
-          </Select.Root>
+          <PropertyEditor
+            property={type as Property<string>}
+            render={props => (
+              <Select.Root {...props}>
+                <Select.Item value={'none'}>No anchors</Select.Item>
+                <Select.Item value={'shape-defaults'}>Default</Select.Item>
+                <Select.Item value={'north-south'}>North/South</Select.Item>
+                <Select.Item value={'east-west'}>East/West</Select.Item>
+                <Select.Item value={'directions'}>x number of anchors</Select.Item>
+                <Select.Item value={'per-edge'}>x number per edge</Select.Item>
+              </Select.Root>
+            )}
+          />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Number:</div>

@@ -106,18 +106,15 @@ export const NodeEffectsPanelForm = ({
 
       <div className={'cmp-labeled-table__label'}></div>
       <div className={'cmp-labeled-table__value'}>
-        <Select.Root
-          onValueChange={v => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            sketchFillType.set(v as any);
-          }}
-          value={sketchFillType.val}
-          defaultValue={sketchFillType.defaultVal}
-          isDefaultValue={!sketchFillType.isSet}
-        >
-          <Select.Item value={'fill'}>Solid</Select.Item>
-          <Select.Item value={'hachure'}>Hachure</Select.Item>
-        </Select.Root>
+        <PropertyEditor
+          property={sketchFillType as Property<string>}
+          render={props => (
+            <Select.Root {...props}>
+              <Select.Item value={'fill'}>Solid</Select.Item>
+              <Select.Item value={'hachure'}>Hachure</Select.Item>
+            </Select.Root>
+          )}
+        />
       </div>
 
       {$d.selectionState.nodes.some(e => e.getDefinition().supports('rounding')) && (

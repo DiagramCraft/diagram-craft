@@ -53,7 +53,7 @@ export const LabelNodePanel = (props: Props) => {
           <div className={'cmp-labeled-table__value'}>
             <Select.Root
               value={type}
-              onValueChange={v => {
+              onChange={v => {
                 UnitOfWork.execute(edge.diagram, uow => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   node.updateLabelNode({ type: v as any, offset: { x: 0, y: 0 } }, uow);

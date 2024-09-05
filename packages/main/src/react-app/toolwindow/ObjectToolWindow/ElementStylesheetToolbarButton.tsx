@@ -8,6 +8,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TbBaseline, TbPalette } from 'react-icons/tb';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 export const ElementStylesheetToolbarButton = (props: Props) => {
   const $d = useDiagram();
@@ -46,32 +47,34 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
         <div className={'cmp-toolbar__button'}>
           <TbPalette />
         </div>
-        <Select.Root
-          value={style.val}
-          onValueChange={onValueChange}
-          hasMultipleValues={style.hasMultipleValues}
-        >
-          {nodeStyles.map(e => (
-            <Select.Item key={e.id} value={e.id}>
-              {isDirty && e.id === style.val ? `${e.name} ∗` : e.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
+        <PropertyEditor
+          property={style}
+          render={props => (
+            <Select.Root {...props} onChange={onValueChange}>
+              {nodeStyles.map(e => (
+                <Select.Item key={e.id} value={e.id}>
+                  {isDirty && e.id === style.val ? `${e.name} ∗` : e.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          )}
+        />
 
         <div className={'cmp-toolbar__button'} style={{ marginLeft: '0.5rem' }}>
           <TbBaseline />
         </div>
-        <Select.Root
-          value={textStyle.val}
-          onValueChange={v => onValueChange(v, 'text-style')}
-          hasMultipleValues={textStyle.hasMultipleValues}
-        >
-          {textStyles.map(e => (
-            <Select.Item key={e.id} value={e.id}>
-              {isTextDirty && e.id === textStyle.val ? `${e.name} ∗` : e.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
+        <PropertyEditor
+          property={textStyle}
+          render={props => (
+            <Select.Root {...props} onChange={v => onValueChange(v, 'text-style')}>
+              {textStyles.map(e => (
+                <Select.Item key={e.id} value={e.id}>
+                  {isTextDirty && e.id === textStyle.val ? `${e.name} ∗` : e.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          )}
+        />
 
         <Toolbar.Separator style={{ marginRight: '5px' }} />
       </>
@@ -82,17 +85,19 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
         <div className={'cmp-toolbar__button'}>
           <TbPalette />
         </div>
-        <Select.Root
-          value={style.val}
-          onValueChange={onValueChange}
-          hasMultipleValues={style.hasMultipleValues}
-        >
-          {edgeStyles.map(e => (
-            <Select.Item key={e.id} value={e.id}>
-              {isDirty && e.id === style.val ? `${e.name} ∗` : e.name}
-            </Select.Item>
-          ))}
-        </Select.Root>
+        <PropertyEditor
+          property={style}
+          render={props => (
+            <Select.Root {...props} onChange={onValueChange}>
+              {edgeStyles.map(e => (
+                <Select.Item key={e.id} value={e.id}>
+                  {isDirty && e.id === style.val ? `${e.name} ∗` : e.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          )}
+        />
+
         <Toolbar.Separator style={{ marginRight: '0px' }} />
       </>
     );
