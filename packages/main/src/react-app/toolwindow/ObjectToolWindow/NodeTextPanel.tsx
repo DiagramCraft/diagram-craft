@@ -26,20 +26,20 @@ import { Property } from './types';
 type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
-  fontSize: Property<number | undefined>;
-  font: Property<string | undefined>;
-  isBold: Property<boolean | undefined>;
-  isItalic: Property<boolean | undefined>;
-  textDecoration: Property<'none' | 'underline' | 'line-through' | 'overline' | undefined>;
-  textTransform: Property<'none' | 'uppercase' | 'lowercase' | 'capitalize' | undefined>;
-  color: Property<string | undefined>;
-  top: Property<number | undefined>;
-  left: Property<number | undefined>;
-  bottom: Property<number | undefined>;
-  right: Property<number | undefined>;
-  align: Property<HAlign | undefined>;
-  valign: Property<VAlign | undefined>;
-  lineHeight: Property<number | undefined>;
+  fontSize: Property<number>;
+  font: Property<string>;
+  isBold: Property<boolean>;
+  isItalic: Property<boolean>;
+  textDecoration: Property<'none' | 'underline' | 'line-through' | 'overline'>;
+  textTransform: Property<'none' | 'uppercase' | 'lowercase' | 'capitalize'>;
+  color: Property<string>;
+  top: Property<number>;
+  left: Property<number>;
+  bottom: Property<number>;
+  right: Property<number>;
+  align: Property<HAlign>;
+  valign: Property<VAlign>;
+  lineHeight: Property<number>;
 };
 
 export const NodeTextPanelForm = ({

@@ -12,16 +12,16 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 type FormProps = {
   diagram: Diagram;
-  reflection: Property<boolean | undefined>;
-  reflectionStrength: Property<number | undefined>;
-  blur: Property<number | undefined>;
-  opacity: Property<number | undefined>;
-  glass: Property<boolean | undefined>;
-  sketch: Property<boolean | undefined>;
-  sketchStrength: Property<number | undefined>;
-  sketchFillType: Property<'fill' | 'hachure' | undefined>;
-  rounding: Property<boolean | undefined>;
-  roundingAmount: Property<number | undefined>;
+  reflection: Property<boolean>;
+  reflectionStrength: Property<number>;
+  blur: Property<number>;
+  opacity: Property<number>;
+  glass: Property<boolean>;
+  sketch: Property<boolean>;
+  sketchStrength: Property<number>;
+  sketchFillType: Property<'fill' | 'hachure'>;
+  rounding: Property<boolean>;
+  roundingAmount: Property<number>;
 };
 
 export const NodeEffectsPanelForm = ({

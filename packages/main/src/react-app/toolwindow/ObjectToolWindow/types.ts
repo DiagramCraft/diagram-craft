@@ -1,7 +1,7 @@
 export type Property<V> = {
-  val: NonNullable<V>;
-  set: (value: V) => void;
+  val: V;
+  set: (value: V | undefined) => void;
   hasMultipleValues: boolean;
-  defaultVal: NonNullable<V>;
+  defaultVal: V;
   isSet: boolean;
 };

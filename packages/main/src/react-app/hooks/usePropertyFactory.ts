@@ -17,7 +17,7 @@ export type PropertyHook<TBase, TObj> = <
   obj: TBase,
   propertyPath: K,
   defaultValue?: DV
-) => Property<V>;
+) => Property<NonNullable<V>>;
 
 export type PropertyArrayHook<TBase, TObj> = <
   K extends PropPath<TObj>,
@@ -27,7 +27,7 @@ export type PropertyArrayHook<TBase, TObj> = <
   obj: TBase,
   propertyPath: K,
   defaultValue?: NonNullable<DV>
-) => Property<V>;
+) => Property<NonNullable<V>>;
 
 export const makePropertyHook = <
   TBase,

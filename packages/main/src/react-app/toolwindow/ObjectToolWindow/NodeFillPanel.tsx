@@ -47,7 +47,7 @@ const PATTERNS = [
   `<pattern id="#ID#" x="2" y="2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="8" height="8" fill="#BG#" /><rect x="0" y="0" width="4" height="4" fill="#FG#" /><rect x="4" y="4" width="4" height="4" fill="#FG#" /></pattern>`
 ];
 
-const ImageScale = (props: { imageScale: Property<number | undefined> }) => (
+const ImageScale = (props: { imageScale: Property<number> }) => (
   <>
     <div className={'cmp-labeled-table__label'}>Scale:</div>
     <div className={'cmp-labeled-table__value'}>
@@ -61,10 +61,7 @@ const ImageScale = (props: { imageScale: Property<number | undefined> }) => (
   </>
 );
 
-const ImageTint = (props: {
-  tint: Property<string | undefined>;
-  tintStrength: Property<number | undefined>;
-}) => {
+const ImageTint = (props: { tint: Property<string>; tintStrength: Property<number> }) => {
   const $cfg = useConfiguration();
   const $d = useDiagram();
   return (
@@ -98,9 +95,9 @@ const ImageTint = (props: {
 };
 
 const ImageAdjustments = (props: {
-  contrast: Property<number | undefined>;
-  brightness: Property<number | undefined>;
-  saturation: Property<number | undefined>;
+  contrast: Property<number>;
+  brightness: Property<number>;
+  saturation: Property<number>;
 }) => (
   <Collapsible label={'Adjustments'}>
     <div className={'cmp-labeled-table'}>
@@ -449,22 +446,22 @@ export const NodeFillPanelForm = ({
 };
 
 type FormProps = {
-  type: Property<FillType | undefined>;
-  color: Property<string | undefined>;
-  color2: Property<string | undefined>;
-  gradientType: Property<'linear' | 'radial' | undefined>;
-  gradientDirection: Property<number | undefined>;
-  pattern: Property<string | undefined>;
-  image: Property<string | undefined>;
+  type: Property<FillType>;
+  color: Property<string>;
+  color2: Property<string>;
+  gradientType: Property<'linear' | 'radial'>;
+  gradientDirection: Property<number>;
+  pattern: Property<string>;
+  image: Property<string>;
   imageFit: Property<'fill' | 'contain' | 'cover' | 'keep' | 'tile'>;
-  imageW: Property<number | undefined>;
-  imageH: Property<number | undefined>;
-  imageScale: Property<number | undefined>;
-  imageContrast: Property<number | undefined>;
-  imageBrightness: Property<number | undefined>;
-  imageSaturation: Property<number | undefined>;
-  imageTint: Property<string | undefined>;
-  imageTintStrength: Property<number | undefined>;
+  imageW: Property<number>;
+  imageH: Property<number>;
+  imageScale: Property<number>;
+  imageContrast: Property<number>;
+  imageBrightness: Property<number>;
+  imageSaturation: Property<number>;
+  imageTint: Property<string>;
+  imageTintStrength: Property<number>;
   diagram: Diagram;
   config: ConfigurationContextType;
 };

@@ -11,11 +11,11 @@ import { Property } from './types';
 type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
-  color: Property<string | undefined>;
-  opacity: Property<number | undefined>;
-  x: Property<number | undefined>;
-  y: Property<number | undefined>;
-  blur: Property<number | undefined>;
+  color: Property<string>;
+  opacity: Property<number>;
+  x: Property<number>;
+  y: Property<number>;
+  blur: Property<number>;
 };
 
 export const ElementShadowPanelForm = ({

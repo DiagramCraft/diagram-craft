@@ -15,14 +15,14 @@ import { LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
-  strokeColor: Property<string | undefined>;
-  strokeWidth: Property<number | undefined>;
-  pattern: Property<string | undefined>;
-  strokeSize: Property<number | undefined>;
-  strokeSpacing: Property<number | undefined>;
-  lineCap: Property<LineCap | undefined>;
-  lineJoin: Property<LineJoin | undefined>;
-  miterLimit: Property<number | undefined>;
+  strokeColor: Property<string>;
+  strokeWidth: Property<number>;
+  pattern: Property<string>;
+  strokeSize: Property<number>;
+  strokeSpacing: Property<number>;
+  lineCap: Property<LineCap>;
+  lineJoin: Property<LineJoin>;
+  miterLimit: Property<number>;
 };
 
 export const NodeStrokePanelForm = ({
