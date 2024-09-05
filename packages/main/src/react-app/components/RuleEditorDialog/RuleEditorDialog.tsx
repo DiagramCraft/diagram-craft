@@ -311,7 +311,7 @@ export const RuleEditorDialog = (props: Props) => {
             <ToggleButtonGroup.Root
               type={'single'}
               value={type}
-              onValueChange={value => {
+              onChange={value => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 setType(value as any);
               }}

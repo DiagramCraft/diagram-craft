@@ -14,8 +14,9 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { useTableProperty } from '../../hooks/useTable';
 import { DashSelector } from './components/DashSelector';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
-import { PropertyEditor } from '../../components/PropertyEditor';
+import { Editor, PropertyEditor } from '../../components/PropertyEditor';
 import { Property } from './types';
+import { asValueArray } from '@diagram-craft/app-components/utils';
 
 export const NodeTableStrokePanel = (props: Props) => {
   const $d = useDiagram();
@@ -50,16 +51,13 @@ export const NodeTableStrokePanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         <div className={'cmp-labeled-table__label'}>Border:</div>
         <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <ToggleButtonGroup.Root
-            type={'multiple'}
-            value={Object.entries({
+          <Editor
+            val={asValueArray({
               outer: outerBorder.val,
               horizontal: horizontalBorder.val,
               vertical: verticalBorder.val
-            })
-              .filter(([_, value]) => value)
-              .map(([key, _]) => key)}
-            onValueChange={value => {
+            })}
+            set={value => {
               if (!!outerBorder.val !== value?.includes('outer'))
                 outerBorder.set(value?.includes('outer'));
               if (!!horizontalBorder.val !== value?.includes('horizontal'))
@@ -67,25 +65,30 @@ export const NodeTableStrokePanel = (props: Props) => {
               if (!!verticalBorder.val !== value?.includes('vertical'))
                 verticalBorder.set(value?.includes('vertical'));
             }}
-            defaultValue={Object.entries({
-              outer: outerBorder.defaultVal,
-              horizontal: horizontalBorder.defaultVal,
-              vertical: verticalBorder.defaultVal
-            })
-              .filter(([_, value]) => value)
-              .map(([key, _]) => key)}
-            isDefaultValue={!outerBorder.isSet && !horizontalBorder.isSet && !verticalBorder.isSet}
-          >
-            <ToggleButtonGroup.Item value={'outer'}>
-              <TbBorderOuter />
-            </ToggleButtonGroup.Item>
-            <ToggleButtonGroup.Item value={'horizontal'}>
-              <TbBorderHorizontal />
-            </ToggleButtonGroup.Item>
-            <ToggleButtonGroup.Item value={'vertical'}>
-              <TbBorderVertical />
-            </ToggleButtonGroup.Item>
-          </ToggleButtonGroup.Root>
+            isIndeterminate={
+              outerBorder.hasMultipleValues ||
+              horizontalBorder.hasMultipleValues ||
+              verticalBorder.hasMultipleValues
+            }
+            state={
+              !outerBorder.isSet && !horizontalBorder.isSet && !verticalBorder.isSet
+                ? 'unset'
+                : 'set'
+            }
+            render={props => (
+              <ToggleButtonGroup.Root {...props} type={'multiple'}>
+                <ToggleButtonGroup.Item value={'outer'}>
+                  <TbBorderOuter />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'horizontal'}>
+                  <TbBorderHorizontal />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'vertical'}>
+                  <TbBorderVertical />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Color:</div>

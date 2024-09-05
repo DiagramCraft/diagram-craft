@@ -1,6 +1,5 @@
 import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
 import { ArrowSelector } from './components/ArrowSelector';
-import { assertEdgeType } from '@diagram-craft/model/diagramProps';
 import { useDiagram } from '../../context/DiagramContext';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { useEdgeProperty } from '../../hooks/useProperty';
@@ -59,30 +58,25 @@ export const EdgeLinePanel = (props: Props) => {
         <div className={'cmp-labeled-table'}>
           <div className={'cmp-labeled-table__label'}>Type:</div>
           <div className={'cmp-labeled-table__value'}>
-            <ToggleButtonGroup.Root
-              aria-label="Formatting options"
-              type={'single'}
-              value={type.val}
-              onValueChange={value => {
-                assertEdgeType(value);
-                type.set(value);
-              }}
-              defaultValue={type.defaultVal}
-              isDefaultValue={!type.isSet}
-            >
-              <ToggleButtonGroup.Item value={'straight'}>
-                <TbLine />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'orthogonal'}>
-                <TbShape3 />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'curved'}>
-                <TbVectorSpline />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'bezier'}>
-                <TbVectorBezier2 />
-              </ToggleButtonGroup.Item>
-            </ToggleButtonGroup.Root>
+            <PropertyEditor
+              property={type as Property<string>}
+              render={props => (
+                <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+                  <ToggleButtonGroup.Item value={'straight'}>
+                    <TbLine />
+                  </ToggleButtonGroup.Item>
+                  <ToggleButtonGroup.Item value={'orthogonal'}>
+                    <TbShape3 />
+                  </ToggleButtonGroup.Item>
+                  <ToggleButtonGroup.Item value={'curved'}>
+                    <TbVectorSpline />
+                  </ToggleButtonGroup.Item>
+                  <ToggleButtonGroup.Item value={'bezier'}>
+                    <TbVectorBezier2 />
+                  </ToggleButtonGroup.Item>
+                </ToggleButtonGroup.Root>
+              )}
+            />
           </div>
 
           {supportsArrows && (

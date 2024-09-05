@@ -55,7 +55,7 @@ export const CanvasGridPanel = (props: Props) => {
             aria-label="Grid type"
             type={'single'}
             value={type.val}
-            onValueChange={v => {
+            onChange={v => {
               assertGridType(v);
               type.set(v);
             }}
@@ -87,7 +87,7 @@ export const CanvasGridPanel = (props: Props) => {
             aria-label="Grid type"
             type={'single'}
             value={majorType.val}
-            onValueChange={v => {
+            onChange={v => {
               assertGridType(v);
               majorType.set(v);
             }}

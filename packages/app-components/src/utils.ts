@@ -38,3 +38,9 @@ export const extractMouseEvents = (props: Record<string, unknown>) =>
 
     return acc;
   }, {});
+
+export const asValueArray = (d: Record<string, boolean>) => {
+  return Object.entries(d)
+    .filter(([_, v]) => v)
+    .map(([k, _]) => k);
+};

@@ -17,12 +17,13 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../context/DiagramContext';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { Select } from '@diagram-craft/app-components/Select';
-import { assertHAlign, assertVAlign, HAlign, VAlign } from '@diagram-craft/model/diagramProps';
+import { HAlign, VAlign } from '@diagram-craft/model/diagramProps';
 import { round } from '@diagram-craft/utils/math';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
-import { PropertyEditor } from '../../components/PropertyEditor';
+import { Editor, PropertyEditor } from '../../components/PropertyEditor';
+import { asValueArray } from '@diagram-craft/app-components/utils';
 
 type FormProps = {
   diagram: Diagram;
@@ -88,27 +89,14 @@ export const NodeTextPanelForm = ({
 
       <div></div>
       <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <ToggleButtonGroup.Root
-          aria-label="Formatting options"
-          type={'multiple'}
-          defaultValue={Object.entries({
-            bold: isBold.defaultVal,
-            italic: isItalic.defaultVal,
-            underline: textDecoration.defaultVal === 'underline',
-            strikethrough: textDecoration.defaultVal === 'line-through'
-          })
-            .filter(([_, value]) => value)
-            .map(([key, _]) => key)}
-          isDefaultValue={!isBold.isSet && !isItalic.isSet && !textDecoration.isSet}
-          value={Object.entries({
+        <Editor
+          val={asValueArray({
             bold: isBold.val,
             italic: isItalic.val,
             underline: textDecoration.val === 'underline',
             strikethrough: textDecoration.val === 'line-through'
-          })
-            .filter(([_, value]) => value)
-            .map(([key, _]) => key)}
-          onValueChange={value => {
+          })}
+          set={value => {
             if (!!isBold.val !== value?.includes('bold')) isBold.set(value?.includes('bold'));
             if (!!isItalic.val !== value?.includes('italic'))
               isItalic.set(value?.includes('italic'));
@@ -124,38 +112,43 @@ export const NodeTextPanelForm = ({
               textDecoration.set(value.includes('strikethrough') ? 'line-through' : undefined);
             }
           }}
-        >
-          <ToggleButtonGroup.Item value={'bold'}>
-            <TbBold />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'italic'}>
-            <TbItalic />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'underline'}>
-            <TbUnderline />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'strikethrough'}>
-            <TbStrikethrough />
-          </ToggleButtonGroup.Item>
-        </ToggleButtonGroup.Root>
+          state={!isBold.isSet && !isItalic.isSet && !textDecoration.isSet ? 'unset' : 'set'}
+          isIndeterminate={
+            isBold.hasMultipleValues ||
+            isItalic.hasMultipleValues ||
+            textDecoration.hasMultipleValues
+          }
+          render={props => (
+            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'multiple'}>
+              <ToggleButtonGroup.Item value={'bold'}>
+                <TbBold />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'italic'}>
+                <TbItalic />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'underline'}>
+                <TbUnderline />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'strikethrough'}>
+                <TbStrikethrough />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
+          )}
+        />
 
-        <ToggleButtonGroup.Root
-          aria-label="Formatting options"
-          type={'single'}
-          value={textTransform.val}
-          onValueChange={(value: string | undefined) => {
-            textTransform.set(value as NonNullable<NodeProps['text']>['textTransform']);
-          }}
-          defaultValue={textTransform.defaultVal}
-          isDefaultValue={!textTransform.isSet}
-        >
-          <ToggleButtonGroup.Item value={'capitalize'}>
-            <TbLetterCase />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'uppercase'}>
-            <TbLetterCaseUpper />
-          </ToggleButtonGroup.Item>
-        </ToggleButtonGroup.Root>
+        <PropertyEditor
+          property={textTransform as Property<string>}
+          render={props => (
+            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+              <ToggleButtonGroup.Item value={'capitalize'}>
+                <TbLetterCase />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'uppercase'}>
+                <TbLetterCaseUpper />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
+          )}
+        />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Color:</div>
@@ -175,48 +168,39 @@ export const NodeTextPanelForm = ({
 
       <div className={'cmp-labeled-table__label'}>Align:</div>
       <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <ToggleButtonGroup.Root
-          aria-label="Formatting options"
-          type={'single'}
-          value={align.val}
-          onValueChange={v => {
-            assertHAlign(v);
-            align.set(v);
-          }}
-          defaultValue={align.defaultVal}
-          isDefaultValue={!align.isSet}
-        >
-          <ToggleButtonGroup.Item value={'left'}>
-            <TbAlignLeft />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'center'}>
-            <TbAlignCenter />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'right'}>
-            <TbAlignRight />
-          </ToggleButtonGroup.Item>
-        </ToggleButtonGroup.Root>
-        <ToggleButtonGroup.Root
-          aria-label="Formatting options"
-          type={'single'}
-          value={valign.val}
-          onValueChange={v => {
-            assertVAlign(v);
-            valign.set(v);
-          }}
-          defaultValue={valign.defaultVal}
-          isDefaultValue={!valign.isSet}
-        >
-          <ToggleButtonGroup.Item value={'top'}>
-            <RxTextAlignTop />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'middle'}>
-            <RxTextAlignMiddle />
-          </ToggleButtonGroup.Item>
-          <ToggleButtonGroup.Item value={'bottom'}>
-            <RxTextAlignBottom />
-          </ToggleButtonGroup.Item>
-        </ToggleButtonGroup.Root>
+        <PropertyEditor
+          property={align as Property<string>}
+          render={props => (
+            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+              <ToggleButtonGroup.Item value={'left'}>
+                <TbAlignLeft />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'center'}>
+                <TbAlignCenter />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'right'}>
+                <TbAlignRight />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
+          )}
+        />
+
+        <PropertyEditor
+          property={valign as Property<string>}
+          render={props => (
+            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+              <ToggleButtonGroup.Item value={'top'}>
+                <RxTextAlignTop />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'middle'}>
+                <RxTextAlignMiddle />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'bottom'}>
+                <RxTextAlignBottom />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
+          )}
+        />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Line height:</div>

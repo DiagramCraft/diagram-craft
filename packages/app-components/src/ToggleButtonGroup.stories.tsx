@@ -22,7 +22,7 @@ export const Primary: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onValueChange: fn(),
+    onChange: fn(),
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -41,7 +41,7 @@ export const Multiple: Story = {
   args: {
     type: 'multiple',
     value: ['bold', 'italic'],
-    onValueChange: fn(),
+    onChange: fn(),
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -60,7 +60,7 @@ export const Focus: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onValueChange: fn(),
+    onChange: fn(),
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -79,7 +79,7 @@ export const Hover: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onValueChange: fn(),
+    onChange: fn(),
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -98,7 +98,7 @@ export const Disabled: Story = {
   args: {
     type: 'single',
     value: 'bold',
-    onValueChange: fn(),
+    onChange: fn(),
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
@@ -118,7 +118,7 @@ export const AllDisabled: Story = {
     type: 'single',
     value: 'bold',
     disabled: true,
-    onValueChange: fn(),
+    onChange: fn(),
     children: [
       <ToggleButtonGroup.Item key={1} value={'bold'}>
         <TbBold />
