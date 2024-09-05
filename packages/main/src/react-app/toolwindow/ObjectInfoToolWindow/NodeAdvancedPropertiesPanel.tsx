@@ -2,6 +2,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { useDiagram } from '../../context/DiagramContext';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 export const NodeAdvancedPropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -23,72 +24,37 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
       <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
         <div className={'cmp-labeled-table__label'}>Resize Horizontally:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Checkbox
-            value={resizableH.val}
-            onChange={b => resizableH.set(b)}
-            defaultValue={resizableH.defaultVal}
-            isDefaultValue={!resizableH.isSet}
-          />
+          <PropertyEditor property={resizableH} render={props => <Checkbox {...props} />} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Resize Vertically:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Checkbox
-            value={resizableV.val}
-            onChange={b => resizableV.set(b)}
-            defaultValue={resizableV.defaultVal}
-            isDefaultValue={!resizableV.isSet}
-          />
+          <PropertyEditor property={resizableV} render={props => <Checkbox {...props} />} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Movable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Checkbox
-            value={movable.val}
-            onChange={b => movable.set(b)}
-            defaultValue={movable.defaultVal}
-            isDefaultValue={!movable.isSet}
-          />
+          <PropertyEditor property={movable} render={props => <Checkbox {...props} />} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Rotatable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Checkbox
-            value={rotatable.val}
-            onChange={b => rotatable.set(b)}
-            defaultValue={rotatable.defaultVal}
-            isDefaultValue={!rotatable.isSet}
-          />
+          <PropertyEditor property={rotatable} render={props => <Checkbox {...props} />} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Editable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Checkbox
-            value={editable.val}
-            onChange={b => editable.set(b)}
-            defaultValue={editable.defaultVal}
-            isDefaultValue={!editable.isSet}
-          />
+          <PropertyEditor property={editable} render={props => <Checkbox {...props} />} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Deletable:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Checkbox
-            value={deletable.val}
-            onChange={b => deletable.set(b)}
-            defaultValue={deletable.defaultVal}
-            isDefaultValue={!deletable.isSet}
-          />
+          <PropertyEditor property={deletable} render={props => <Checkbox {...props} />} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Inherit Style:</div>
         <div className={'cmp-labeled-table__value'}>
-          <Checkbox
-            value={inheritStyle.val}
-            onChange={b => inheritStyle.set(b)}
-            defaultValue={inheritStyle.defaultVal}
-            isDefaultValue={!inheritStyle.isSet}
-          />
+          <PropertyEditor property={inheritStyle} render={props => <Checkbox {...props} />} />
         </div>
       </div>
     </ToolWindowPanel>

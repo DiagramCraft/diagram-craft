@@ -6,6 +6,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Slider } from '@diagram-craft/app-components/Slider';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 // TODO: We should merge this with NodeEffectsPanel
 //       ... only sketch is common between the two
@@ -44,14 +45,7 @@ export const EdgeEffectsPanel = (props: Props) => {
 
           <div className={'cmp-labeled-table__label'}>Sketch:</div>
           <div className={'cmp-labeled-table__value'}>
-            <Checkbox
-              value={sketch.val}
-              onChange={b => {
-                sketch.set(b);
-              }}
-              defaultValue={sketch.defaultVal}
-              isDefaultValue={!sketch.isSet}
-            />
+            <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
           </div>
 
           <div className={'cmp-labeled-table__label'}></div>

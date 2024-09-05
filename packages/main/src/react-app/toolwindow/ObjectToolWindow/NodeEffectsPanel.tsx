@@ -9,6 +9,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Property } from './types';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { PropertyEditor } from '../../components/PropertyEditor';
 
 type FormProps = {
   diagram: Diagram;
@@ -41,12 +42,7 @@ export const NodeEffectsPanelForm = ({
     <div className={'cmp-labeled-table'}>
       <div className={'cmp-labeled-table__label'}>Reflection:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Checkbox
-          value={reflection.val}
-          onChange={v => reflection.set(v)}
-          isDefaultValue={!reflection.isSet}
-          defaultValue={reflection.defaultVal}
-        />
+        <PropertyEditor property={reflection} render={props => <Checkbox {...props} />} />
       </div>
 
       <div className={'cmp-labeled-table__label'}></div>
@@ -87,22 +83,12 @@ export const NodeEffectsPanelForm = ({
 
       <div className={'cmp-labeled-table__label'}>Glass:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Checkbox
-          value={glass.val}
-          onChange={b => glass.set(b)}
-          defaultValue={glass.defaultVal}
-          isDefaultValue={!glass.isSet}
-        />
+        <PropertyEditor property={glass} render={props => <Checkbox {...props} />} />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Sketch:</div>
       <div className={'cmp-labeled-table__value'}>
-        <Checkbox
-          value={sketch.val}
-          onChange={b => sketch.set(b)}
-          defaultValue={sketch.defaultVal}
-          isDefaultValue={!sketch.isSet}
-        />
+        <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
       </div>
 
       <div className={'cmp-labeled-table__label'}></div>
@@ -138,12 +124,7 @@ export const NodeEffectsPanelForm = ({
         <>
           <div className={'cmp-labeled-table__label'}>Rounding:</div>
           <div className={'cmp-labeled-table__value'}>
-            <Checkbox
-              value={glass.val}
-              onChange={b => rounding.set(b)}
-              defaultValue={rounding.defaultVal}
-              isDefaultValue={!rounding.isSet}
-            />
+            <PropertyEditor property={rounding} render={props => <Checkbox {...props} />} />
           </div>
           <div className={'cmp-labeled-table__label'}></div>
           <div className={'cmp-labeled-table__value'}>

@@ -107,16 +107,8 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <Checkbox
-                    value={value.value}
-                    onChange={b => {
-                      const uow = new UnitOfWork(diagram, true);
-                      value.onChange(b, uow);
-                      commitWithUndo(uow, `Change ${value.label}`);
-                    }}
-                    defaultValue={value.defaultValue}
-                    isDefaultValue={!value.isSet}
-                  />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <PropertyEditor<any> property={prop} render={props => <Checkbox {...props} />} />
                 </div>
               </React.Fragment>
             );
