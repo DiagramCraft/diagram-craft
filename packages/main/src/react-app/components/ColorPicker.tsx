@@ -59,10 +59,13 @@ export const ColorPicker = (props: Props) => {
   );
 
   return (
-    <div className={'cmp-color-picker'} data-is-default-value={props.state === 'unset'}>
+    <div className={'cmp-color-picker'}>
       <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
         <Popover.Trigger>
-          <button {...extractMouseEvents(props)}>
+          <button
+            {...extractMouseEvents(props)}
+            data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
+          >
             <div
               className={'cmp-color-picker__well'}
               style={{

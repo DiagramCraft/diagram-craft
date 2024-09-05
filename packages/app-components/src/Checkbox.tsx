@@ -7,7 +7,7 @@ export const Checkbox = (props: Props) => {
       {...extractMouseEvents(props)}
       type="checkbox"
       checked={props.value}
-      data-is-default-value={props.state === 'unset'}
+      data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       onChange={e => {
         props.onChange(e.target.checked);
       }}

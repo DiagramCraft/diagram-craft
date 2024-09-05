@@ -192,11 +192,6 @@ input[type="checkbox"] {
   --__fg: var(--cmp-fg);
 }
 
-input[type="checkbox"][data-is-default-value="true"] {
-  --__fg: var(--cmp-is-default-fg);
-  border: 1px solid transparent;
-}
-
 input[type="checkbox"]::before {
   content: "";
   width: 0.65em;
@@ -225,6 +220,20 @@ input[type="checkbox"]:disabled {
 input::-webkit-input-placeholder {
   color: var(--primary-fg);
 }
+
+
+div[data-field-state='set'],
+button[data-field-state='set'],
+input[type="checkbox"][data-field-state='set']
+{
+  border: 1px solid var(--blue-7);
+}
+div[data-field-state='overridden'],
+button[data-field-state='overridden'],
+input[type="checkbox"][data-field-state='overridden'] {
+  background: repeating-linear-gradient(-45deg, var(--slate-5), var(--slate-5) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
+}
+
 
 
 /* App layout */

@@ -8,7 +8,7 @@ const Root = (props: RootProps) => {
     /* @ts-ignore */
     <RadixToggleGroup.Root
       className={styles.cmpToggleButtonGroup}
-      data-is-default-value={props.state === 'unset'}
+      data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       aria-label={props['aria-label']}
       type={props.type}
       value={props.value}

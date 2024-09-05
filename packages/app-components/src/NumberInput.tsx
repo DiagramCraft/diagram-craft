@@ -72,7 +72,6 @@ export const NumberInput = (props: Props) => {
     formatValue(props.value.toString(), props.defaultUnit, props.value.toString())
   );
   const hasFocus = useRef(false);
-  const isDefaultValue = props.state === 'unset' && !props.isIndeterminate;
 
   const updateCurrentValue = useCallback(() => {
     setCurrentValue(formatValue(props.value.toString(), props.defaultUnit, currentValue));
@@ -106,10 +105,10 @@ export const NumberInput = (props: Props) => {
   return (
     <div
       className={styles.cmpNumberInput} /*$c('cmp-number-input', { error: error })}*/
-      data-error={error}
-      data-is-default-value={isDefaultValue}
-      style={props.style ?? {}}
       {...extractDataAttributes(props)}
+      data-error={error}
+      data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
+      style={props.style ?? {}}
     >
       {props.label && <div className={styles.cmpNumberInputLabel}>{props.label}</div>}
       <input

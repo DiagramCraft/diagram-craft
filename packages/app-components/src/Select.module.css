@@ -16,13 +16,6 @@
     stroke: var(--secondary-fg);
   }
 
-  &[data-is-default-value='true'] {
-    color: var(--cmp-is-default-fg);
-    svg {
-      stroke: var(--cmp-is-default-fg);
-    }
-  }
-
   &:hover:not(:disabled),
   &[data-hover="true"] {
     background-color: var(--cmp-hover-bg);

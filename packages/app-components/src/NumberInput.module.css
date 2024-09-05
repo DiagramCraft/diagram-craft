@@ -13,19 +13,13 @@
 
   &:focus-within,
   &:has(*[data-focus="true"]) {
-    box-shadow: var(--cmp-focus-shadow);
+    box-shadow: var(--cmp-focus-shadow) !important;
   }
 
   &[data-error='true'] {
     color: var(--error-fg);
     > input {
       color: var(--error-fg);
-    }
-  }
-
-  &[data-is-default-value='true'] {
-    > input {
-      color: var(--cmp-is-default-fg);
     }
   }
 

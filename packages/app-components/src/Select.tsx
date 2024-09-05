@@ -18,7 +18,7 @@ const Root = (props: RootProps) => {
         className={styles.cmpSelectTrigger}
         {...extractDataAttributes(props)}
         {...extractMouseEvents(props)}
-        data-is-default-value={props.state === 'unset'}
+        data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
         disabled={props.disabled}
         style={props.style ?? {}}
       >
