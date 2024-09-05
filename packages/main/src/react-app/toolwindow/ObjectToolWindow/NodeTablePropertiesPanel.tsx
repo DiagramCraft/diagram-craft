@@ -13,6 +13,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { useTable } from '../../hooks/useTable';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -52,9 +53,11 @@ export const NodeTablePropertiesPanel = (props: Props) => {
                     style={{ width: '50px' }}
                     onChange={ev => {
                       const uow = new UnitOfWork(diagram, true);
-                      value.onChange(ev ?? 0, uow);
+                      value.onChange(ev, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
+                    defaultValue={value.defaultValue}
+                    isDefaultValue={!value.isSet}
                   />
                 </div>
               </React.Fragment>
@@ -64,14 +67,15 @@ export const NodeTablePropertiesPanel = (props: Props) => {
               <React.Fragment key={key}>
                 <div className={'cmp-labeled-table__label'}>{value.label}:</div>
                 <div className={'cmp-labeled-table__value'}>
-                  <input
-                    type="checkbox"
-                    checked={value.value}
-                    onChange={() => {
+                  <Checkbox
+                    value={value.value}
+                    onChange={b => {
                       const uow = new UnitOfWork(diagram, true);
-                      value.onChange(!value.value, uow);
+                      value.onChange(b, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
+                    defaultValue={value.defaultValue}
+                    isDefaultValue={!value.isSet}
                   />
                 </div>
               </React.Fragment>
@@ -84,10 +88,12 @@ export const NodeTablePropertiesPanel = (props: Props) => {
                   <Select.Root
                     onValueChange={v => {
                       const uow = new UnitOfWork(diagram, true);
-                      value.onChange(v!, uow);
+                      value.onChange(v, uow);
                       commitWithUndo(uow, `Change ${value.label}`);
                     }}
                     value={value.value}
+                    defaultValue={value.defaultValue}
+                    isDefaultValue={!value.isSet}
                   >
                     {value.options.map(o => (
                       <Select.Item key={o.value} value={o.value}>

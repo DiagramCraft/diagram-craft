@@ -65,6 +65,14 @@ export const NodeTableStrokePanel = (props: Props) => {
               if (!!verticalBorder.val !== value?.includes('vertical'))
                 verticalBorder.set(value?.includes('vertical'));
             }}
+            defaultValue={Object.entries({
+              outer: outerBorder.defaultVal,
+              horizontal: horizontalBorder.defaultVal,
+              vertical: verticalBorder.defaultVal
+            })
+              .filter(([_, value]) => value)
+              .map(([key, _]) => key)}
+            isDefaultValue={!outerBorder.isSet && !horizontalBorder.isSet && !verticalBorder.isSet}
           >
             <ToggleButtonGroup.Item value={'outer'}>
               <TbBorderOuter />
@@ -87,6 +95,8 @@ export const NodeTableStrokePanel = (props: Props) => {
             hasMultipleValues={strokeColor.hasMultipleValues}
             customPalette={$d.document.customPalette.colors}
             onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            defaultValue={strokeColor.defaultVal}
+            isDefaultValue={!strokeColor.isSet}
           />
         </div>
 
@@ -99,6 +109,8 @@ export const NodeTableStrokePanel = (props: Props) => {
             style={{ width: '35px' }}
             onChange={strokeWidth.set}
             hasMultipleValues={strokeWidth.hasMultipleValues}
+            defaultValue={strokeWidth.defaultVal}
+            isDefaultValue={!strokeWidth.isSet}
           />
           <DashSelector
             value={pattern.val}
@@ -119,6 +131,8 @@ export const NodeTableStrokePanel = (props: Props) => {
                   min={1}
                   style={{ width: '45px' }}
                   onChange={strokeSize.set}
+                  defaultValue={strokeSize.defaultVal}
+                  isDefaultValue={!strokeSize.isSet}
                 />
                 <NumberInput
                   defaultUnit={'%'}
@@ -126,6 +140,8 @@ export const NodeTableStrokePanel = (props: Props) => {
                   min={1}
                   style={{ width: '45px' }}
                   onChange={strokeSpacing.set}
+                  defaultValue={strokeSpacing.defaultVal}
+                  isDefaultValue={!strokeSpacing.isSet}
                 />
               </div>
 
@@ -137,6 +153,8 @@ export const NodeTableStrokePanel = (props: Props) => {
                     lineCap.set(v as any);
                   }}
                   value={lineCap.val}
+                  defaultValue={lineCap.defaultVal}
+                  isDefaultValue={!lineCap.isSet}
                 >
                   <Select.Item value={'butt'}>Butt</Select.Item>
                   <Select.Item value={'round'}>Round</Select.Item>
@@ -151,6 +169,8 @@ export const NodeTableStrokePanel = (props: Props) => {
                     lineJoin.set(v as any);
                   }}
                   value={lineJoin.val}
+                  defaultValue={lineJoin.defaultVal}
+                  isDefaultValue={!lineJoin.isSet}
                 >
                   <Select.Item value={'miter'}>Miter</Select.Item>
                   <Select.Item value={'round'}>Round</Select.Item>
@@ -163,6 +183,8 @@ export const NodeTableStrokePanel = (props: Props) => {
                     min={0}
                     style={{ width: '50px' }}
                     onChange={v => miterLimit.set((v ?? 1) / 10)}
+                    defaultValue={miterLimit.defaultVal}
+                    isDefaultValue={!miterLimit.isSet}
                   />
                 )}
               </div>
